@@ -863,12 +863,13 @@ def expire_old_orders():
 def get_order_book_depth(company_shares_id: int, depth: int = 10) -> dict:
     """
     Get current order book depth (bid/ask ladder).
-    
+
     Returns:
         {
             'bids': [(price, quantity), ...],  # Highest to lowest
             'asks': [(price, quantity), ...],  # Lowest to highest
             'spread': float,
+            'spread_pct': float,
             'mid_price': float
         }
     """
@@ -896,11 +897,13 @@ def get_order_book_depth(company_shares_id: int, depth: int = 10) -> dict:
         
         spread = best_ask - best_bid if (best_bid > 0 and best_ask > 0) else 0.0
         mid_price = (best_bid + best_ask) / 2 if (best_bid > 0 and best_ask > 0) else 0.0
-        
+        spread_pct = (spread / mid_price * 100) if mid_price > 0 else 0.0
+
         return {
             'bids': bids,
             'asks': asks,
             'spread': spread,
+            'spread_pct': spread_pct,
             'mid_price': mid_price,
             'best_bid': best_bid,
             'best_ask': best_ask
