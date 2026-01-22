@@ -2073,22 +2073,26 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             CompanyShares, ShareholderPosition, get_player_credit,
             calculate_margin_multiplier, get_db as get_firm_db, BANK_PLAYER_ID
         )
-        
+        from brokerage_order_book import (
+            get_order_book_depth, get_recent_fills, OrderBook, OrderStatus,
+            get_db as get_book_db
+        )
+
         db = get_firm_db()
         try:
             # Get all public companies
             companies = db.query(CompanyShares).filter(
                 CompanyShares.is_delisted == False
             ).order_by(CompanyShares.ticker_symbol).all()
-            
+
             # Get player's positions
             player_positions = {
-                pos.company_shares_id: pos 
+                pos.company_shares_id: pos
                 for pos in db.query(ShareholderPosition).filter(
                     ShareholderPosition.player_id == player.id
                 ).all()
             }
-            
+
             # Selected company details
             selected_company = None
             if ticker:
@@ -2098,9 +2102,9 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 ).first()
             elif companies:
                 selected_company = companies[0]
-            
+
             player_credit = get_player_credit(player.id)
-            
+
         finally:
             db.close()
         
@@ -2124,6 +2128,24 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             <a href="/brokerage/ipo" class="btn-blue">Launch the First IPO</a>
             '''
             return shell("SCPE Trading", body, player.cash_balance, player.id)
+
+        # Get order book data for selected company
+        order_book = get_order_book_depth(selected_company.id, depth=10)
+        recent_trades = get_recent_fills(selected_company.id, limit=10)
+
+        # Get player's pending orders for this company
+        book_db = get_book_db()
+        try:
+            pending_orders = book_db.query(OrderBook).filter(
+                OrderBook.player_id == player.id,
+                OrderBook.company_shares_id == selected_company.id,
+                OrderBook.status.in_([
+                    OrderStatus.PENDING.value,
+                    OrderStatus.PARTIAL.value
+                ])
+            ).order_by(OrderBook.created_at.desc()).all()
+        finally:
+            book_db.close()
         
         # Get player's position in selected company
         player_position = player_positions.get(selected_company.id)
@@ -2232,13 +2254,23 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 <h3 style="color: #22c55e;">Buy Shares</h3>
                 <form action="/api/brokerage/buy" method="post">
                     <input type="hidden" name="company_id" value="{selected_company.id}">
-                    
+
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Quantity</label>
-                        <input type="number" name="quantity" min="1" required 
+                        <input type="number" name="quantity" min="1" required
                                style="width: 100%; padding: 10px;" placeholder="Number of shares">
                     </div>
-                    
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Limit Price (optional)</label>
+                        <input type="number" name="limit_price" step="0.0001"
+                               style="width: 100%; padding: 10px;"
+                               placeholder="Leave blank for Market Order (${selected_company.current_price:.4f})">
+                        <p style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">
+                            Market: ${selected_company.current_price:.4f} | Best Ask: ${order_book['asks'][0]['price']:.4f if order_book['asks'] else 'N/A'}
+                        </p>
+                    </div>
+
                     <div style="margin-bottom: 15px;">
                         <label style="display: flex; align-items: center; gap: 8px; color: #94a3b8;">
                             <input type="checkbox" name="use_margin" value="1">
@@ -2248,38 +2280,194 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             Your credit: {player_credit.credit_score} ({player_credit.tier.upper()})
                         </p>
                     </div>
-                    
-                    <button type="submit" class="btn-blue" style="width: 100%; padding: 12px; background: #22c55e;" 
+
+                    <button type="submit" class="btn-blue" style="width: 100%; padding: 12px; background: #22c55e;"
                             {"disabled" if is_halted else ""}>
-                        Buy at ${selected_company.current_price:.4f}
+                        Place Buy Order
                     </button>
                 </form>
             </div>
-            
+
             <!-- Sell Form -->
             <div class="card" style="border-left: 4px solid #ef4444;">
                 <h3 style="color: #ef4444;">Sell Shares</h3>
                 <form action="/api/brokerage/sell" method="post">
                     <input type="hidden" name="company_id" value="{selected_company.id}">
-                    
+
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Quantity</label>
-                        <input type="number" name="quantity" min="1" max="{player_shares}" required 
+                        <input type="number" name="quantity" min="1" max="{player_shares}" required
                                style="width: 100%; padding: 10px;" placeholder="Max: {player_shares}">
                     </div>
-                    
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Limit Price (optional)</label>
+                        <input type="number" name="limit_price" step="0.0001"
+                               style="width: 100%; padding: 10px;"
+                               placeholder="Leave blank for Market Order (${selected_company.current_price:.4f})">
+                        <p style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">
+                            Market: ${selected_company.current_price:.4f} | Best Bid: ${order_book['bids'][0]['price']:.4f if order_book['bids'] else 'N/A'}
+                        </p>
+                    </div>
+
                     <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;">
                         Available to sell: {player_shares:,} shares
                     </p>
-                    
-                    <button type="submit" class="btn-red" style="width: 100%; padding: 12px;" 
+
+                    <button type="submit" class="btn-red" style="width: 100%; padding: 12px;"
                             {"disabled" if is_halted or player_shares == 0 else ""}>
-                        Sell at ${selected_company.current_price:.4f}
+                        Place Sell Order
                     </button>
                 </form>
             </div>
         </div>
-        
+        '''
+
+        # Add Order Book & Recent Trades section
+        body += '''
+        <!-- Order Book & Recent Trades -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
+            <!-- Order Book -->
+            <div class="card">
+                <h3>Order Book</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <!-- Bids -->
+                    <div>
+                        <h4 style="color: #22c55e; margin-bottom: 10px;">Bids (Buy Orders)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                            <span>Price</span>
+                            <span>Qty</span>
+                            <span>Total</span>
+                        </div>'''
+
+        if order_book['bids']:
+            for bid in order_book['bids']:
+                total_value = bid['price'] * bid['quantity']
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #22c55e; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${bid['price']:.4f}</span>
+                            <span>{bid['quantity']:,}</span>
+                            <span style="font-size: 0.85rem; color: #64748b;">${total_value:,.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No buy orders</p>'
+
+        body += '''
+                    </div>
+
+                    <!-- Asks -->
+                    <div>
+                        <h4 style="color: #ef4444; margin-bottom: 10px;">Asks (Sell Orders)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                            <span>Price</span>
+                            <span>Qty</span>
+                            <span>Total</span>
+                        </div>'''
+
+        if order_book['asks']:
+            for ask in order_book['asks']:
+                total_value = ask['price'] * ask['quantity']
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #ef4444; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${ask['price']:.4f}</span>
+                            <span>{ask['quantity']:,}</span>
+                            <span style="font-size: 0.85rem; color: #64748b;">${total_value:,.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No sell orders</p>'
+
+        spread = order_book['spread']
+        spread_pct = order_book['spread_pct']
+        body += f'''
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #1e293b; text-align: center; color: #94a3b8; font-size: 0.9rem;">
+                    Spread: ${spread:.4f} ({spread_pct:.2f}%)
+                </div>
+            </div>
+
+            <!-- Recent Trades -->
+            <div class="card">
+                <h3>Recent Trades</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                    <span>Price</span>
+                    <span>Qty</span>
+                </div>'''
+
+        if recent_trades:
+            for trade in recent_trades:
+                trade_time = trade.get('timestamp', '')
+                if isinstance(trade_time, str):
+                    from datetime import datetime
+                    try:
+                        trade_dt = datetime.fromisoformat(trade_time.replace('Z', '+00:00'))
+                        time_str = trade_dt.strftime("%H:%M")
+                    except:
+                        time_str = ""
+                else:
+                    time_str = trade_time.strftime("%H:%M") if trade_time else ""
+
+                body += f'''
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #94a3b8;">
+                    <span>${trade['price']:.4f}</span>
+                    <span>{trade['quantity']:,}</span>
+                </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No recent trades</p>'
+
+        body += '''
+            </div>
+        </div>
+
+        <!-- Your Pending Orders -->'''
+
+        if pending_orders:
+            body += f'''
+        <div class="card" style="margin-top: 20px;">
+            <h3>Your Pending Orders ({len(pending_orders)})</h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #1e293b; color: #64748b;">
+                            <th style="text-align: left; padding: 8px;">Type</th>
+                            <th style="text-align: left; padding: 8px;">Side</th>
+                            <th style="text-align: right; padding: 8px;">Price</th>
+                            <th style="text-align: right; padding: 8px;">Quantity</th>
+                            <th style="text-align: right; padding: 8px;">Filled</th>
+                            <th style="text-align: right; padding: 8px;">Status</th>
+                            <th style="text-align: center; padding: 8px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>'''
+
+            for order in pending_orders:
+                side_color = "#22c55e" if order.order_side == "BUY" else "#ef4444"
+                order_type_display = order.order_type.replace("_", " ").title()
+                price_display = f"${order.limit_price:.4f}" if order.limit_price else "Market"
+
+                body += f'''
+                        <tr style="border-bottom: 1px solid #0f172a;">
+                            <td style="padding: 8px;">{order_type_display}</td>
+                            <td style="padding: 8px; color: {side_color}; font-weight: bold;">{order.order_side}</td>
+                            <td style="padding: 8px; text-align: right;">{price_display}</td>
+                            <td style="padding: 8px; text-align: right;">{order.quantity:,}</td>
+                            <td style="padding: 8px; text-align: right;">{order.filled_quantity:,}</td>
+                            <td style="padding: 8px; text-align: right; color: #f59e0b;">{order.status}</td>
+                            <td style="padding: 8px; text-align: center;">
+                                <form action="/api/brokerage/cancel-order" method="post" style="display: inline;">
+                                    <input type="hidden" name="order_id" value="{order.id}">
+                                    <button type="submit" class="btn-red" style="padding: 4px 8px; font-size: 0.75rem;">Cancel</button>
+                                </form>
+                            </td>
+                        </tr>'''
+
+            body += '''
+                    </tbody>
+                </table>
+            </div>
+        </div>'''
+
+        body += '''
         <!-- Short Selling Link -->
         <div class="card" style="margin-top: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
