@@ -152,7 +152,7 @@ def get_db():
 
 def get_company_ticker(company_shares_id: int) -> Optional[str]:
     """Get ticker symbol for a company."""
-    from brokerage_firm import CompanyShares
+    from banks.brokerage_firm import CompanyShares
     db = get_db()
     try:
         company = db.query(CompanyShares).filter(
@@ -176,7 +176,7 @@ def get_player_cash(player_id: int) -> float:
 
 def get_player_shares(player_id: int, company_shares_id: int) -> int:
     """Get player's available shares (not lent out or reserved)."""
-    from brokerage_firm import ShareholderPosition
+    from banks.brokerage_firm import ShareholderPosition
     db = get_db()
     try:
         position = db.query(ShareholderPosition).filter(
@@ -245,7 +245,7 @@ def place_limit_order(
     
     db = get_db()
     try:
-        from brokerage_firm import CompanyShares, get_player_credit, get_max_leverage_for_player
+        from banks.brokerage_firm import CompanyShares, get_player_credit, get_max_leverage_for_player
         
         # Verify company exists and is tradeable
         company = db.query(CompanyShares).filter(
@@ -362,7 +362,7 @@ def place_market_order(
     
     db = get_db()
     try:
-        from brokerage_firm import CompanyShares
+        from banks.brokerage_firm import CompanyShares
         
         company = db.query(CompanyShares).filter(
             CompanyShares.id == company_shares_id
@@ -457,7 +457,7 @@ def match_orders(company_shares_id: int):
     """
     db = get_db()
     try:
-        from brokerage_firm import (
+        from banks.brokerage_firm import (
             CompanyShares, ShareholderPosition, firm_add_cash,
             EQUITY_TRADE_COMMISSION, record_price, BANK_NAME, BANK_PLAYER_ID
         )
@@ -584,7 +584,7 @@ def execute_trade(
     - Trade recording
     """
     try:
-        from brokerage_firm import (
+        from banks.brokerage_firm import (
             ShareholderPosition, firm_add_cash, firm_deduct_cash,
             EQUITY_TRADE_COMMISSION, record_price, BANK_PLAYER_ID
         )
@@ -950,7 +950,7 @@ def tick(current_tick: int):
     - Order expiry
     """
     # Match orders every tick
-    from brokerage_firm import CompanyShares
+    from banks.brokerage_firm import CompanyShares
     db = get_db()
     try:
         active_companies = db.query(CompanyShares).filter(
