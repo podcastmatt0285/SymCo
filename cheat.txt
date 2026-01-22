@@ -1,0 +1,26 @@
+INSERT INTO inventory (player_id, item_type, quantity) VALUES 
+-- Seeds
+(1, 'apple_seeds', 10000),
+(1, 'orange_seeds', 10000),
+-- Fruits
+(1, 'apples', 10000),
+(1, 'oranges', 10000),
+-- Liquids & Energy
+(1, 'water', 10000),
+(1, 'energy', 10000),
+-- Livestock & Feed
+(1, 'horse', 10000),
+(1, 'cow', 10000),
+(1, 'grass', 10000),
+-- Industrial & Materials
+(1, 'glue', 10000),
+(1, 'paper', 10000),
+(1, 'leather', 10000),
+(1, 'lard', 10000),
+-- Food
+(1, 'beef', 10000),
+-- Textiles
+(1, 'cotton', 10000),
+(1, 'burlap', 10000),
+(1, 'polyester', 10000),
+(1, 'silk', 10000);

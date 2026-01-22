@@ -1,0 +1,921 @@
+{
+  "bookbindery": {
+    "name": "Book Bindery",
+    "description": "Binds books for SymCo.",
+    "startup_cost": 28750,
+    "cycles_to_complete": 3600,
+    "base_wage_cost": 1500,
+    "allowed_terrain": ["prairie", "forest", "desert", "marsh", "mountain", "tundra", "jungle", "savanna", "hills", "island"],
+    "allowed_proximity": ["urban"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "religious_book",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "paper", "quantity": 20050 },
+          { "item": "leather", "quantity": 5 },
+          { "item": "glue", "quantity": 10 },
+          { "item": "energy", "quantity": 50 }
+        ]
+      }
+    ]
+  },
+
+  "dairy_and_fermentation": {
+    "name": "Dairy and Fermentation",
+    "description": "Fermentation plant and dairy.",
+    "startup_cost": 59750,
+    "cycles_to_complete": 6000,
+    "base_wage_cost": 2500,
+    "allowed_terrain": ["prairie", "forest", "desert", "mountain"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "milk",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "paper", "quantity": 10 },
+          { "item": "cow", "quantity": 0.1 },
+          { "item": "grass", "quantity": 5000 },
+          { "item": "energy", "quantity": 500 }
+        ]
+      },
+      {
+        "output_item": "cream",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "milk", "quantity": 10 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "energy", "quantity": 500 }
+        ]
+      },
+      {
+        "output_item": "ice_cream",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "cream", "quantity": 4 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "energy", "quantity": 500 },
+          { "item": "sugar", "quantity": 90 }
+        ]
+      },
+      {
+        "output_item": "butter",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "cream", "quantity": 4 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "energy", "quantity": 1550 }
+        ]
+      }
+    ]
+  },
+
+  "solar_plant": {
+    "name": "Solar Power Station",
+    "description": "Generates power. (Does not require paper as it is intangible energy).",
+    "startup_cost": 5000,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 10.0,
+    "allowed_terrain": ["desert", "prairie", "savanna", "hills", "tundra"],
+    "allowed_proximity": ["coastal", "oasis", "road", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "energy",
+        "output_qty": 625,
+        "inputs": []
+      }
+    ]
+  },
+
+  "water_facility": {
+    "name": "Water Treatment Facility",
+    "description": "Requires paper for testing logs.",
+    "startup_cost": 3500,
+    "cycles_to_complete": 115,
+    "base_wage_cost": 4.0,
+    "allowed_terrain": ["marsh", "prairie", "jungle"],
+    "allowed_proximity": ["riverside", "lakeside", "oasis", "hot_springs"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "water",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "energy", "quantity": 5 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "free_range_pasture": {
+    "name": "Animal Pasture",
+    "description": "Breeds animals.",
+    "startup_cost": 7500,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 30.0,
+    "allowed_terrain": ["prairie", "savanna"],
+    "allowed_proximity": ["riverside", "oasis", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "grass",
+        "output_qty": 901,
+        "inputs": [
+          { "item": "water", "quantity": 1050 }
+        ]
+      },
+      {
+        "output_item": "horse",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "water", "quantity": 500 },
+          { "item": "apples", "quantity": 100 }
+        ]
+      },
+      {
+        "output_item": "silk_worm",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "water", "quantity": 75 },
+          { "item": "paper", "quantity": 10 }
+        ]
+      },
+      {
+        "output_item": "cow",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "water", "quantity": 600 },
+          { "item": "grass", "quantity": 300 }
+        ]
+      }
+    ]
+  },
+
+  "rendering_plant": {
+    "name": "Industrial Rendering Plant",
+    "description": "Processes livestock into glue, lard, and beef. Requires paper for labeling.",
+    "startup_cost": 6000,
+    "cycles_to_complete": 40,
+    "base_wage_cost": 80.0,
+    "allowed_terrain": ["mountain", "prairie", "hills"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "glue",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "horse", "quantity": 1 },
+          { "item": "energy", "quantity": 25 },
+          { "item": "water", "quantity": 25 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "lard",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "cow", "quantity": 1 },
+          { "item": "energy", "quantity": 25 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "beef",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "cow", "quantity": 1 },
+          { "item": "energy", "quantity": 25 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "paper_mill": {
+    "name": "SymCo Paper Mill",
+    "description": "Foundation of the economy. High yield; no paper input required to prevent deadlock.",
+    "startup_cost": 4500,
+    "cycles_to_complete": 140,
+    "base_wage_cost": 30.0,
+    "allowed_terrain": ["prairie", "forest", "jungle"],
+    "allowed_proximity": ["riverside", "road", "urban"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "paper",
+        "output_qty": 2500,
+        "inputs": [
+          { "item": "apple_seeds", "quantity": 250 },
+          { "item": "orange_seeds", "quantity": 375 },
+          { "item": "water", "quantity": 10 },
+          { "item": "glue", "quantity": 15 }
+        ]
+      },
+      {
+        "output_item": "paper",
+        "output_qty": 4750,
+        "inputs": [
+          { "item": "sawdust", "quantity": 60 },
+          { "item": "water", "quantity": 375 },
+          { "item": "glue", "quantity": 2.5 }
+        ]
+      }
+    ]
+  },
+
+  "plantation": {
+    "name": "Mixed Fruit & Vegetable Plantation",
+    "description": "Grows fruit, vegetables and extracts seeds. Each line requires paper packaging.",
+    "startup_cost": 3000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 12.25,
+    "allowed_terrain": ["prairie", "savanna", "forest"],
+    "allowed_proximity": ["riverside", "oasis", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "apples",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "apple_seeds", "quantity": 1 },
+          { "item": "water", "quantity": 5 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "oranges",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "orange_seeds", "quantity": 1 },
+          { "item": "water", "quantity": 5 },
+          { "item": "energy", "quantity": 15 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "potatoes",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "potato_sack", "quantity": 1 },
+          { "item": "water", "quantity": 10 },
+          { "item": "energy", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "carrots",
+        "output_qty": 45,
+        "inputs": [
+          { "item": "carrot_sack", "quantity": 1 },
+          { "item": "water", "quantity": 8 },
+          { "item": "energy", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "apple_seeds",
+        "output_qty": 80,
+        "inputs": [
+          { "item": "apples", "quantity": 1 },
+          { "item": "water", "quantity": 2.5 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "orange_seeds",
+        "output_qty": 60,
+        "inputs": [
+          { "item": "oranges", "quantity": 1 },
+          { "item": "water", "quantity": 5 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "grocery_store": {
+    "name": "Local Grocery Store",
+    "class": "retail",
+    "description": "Consumes fresh produce and generates retail revenue.",
+    "startup_cost": 2500,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 140.0,
+    "allowed_terrain": ["prairie", "hills", "island"],
+    "allowed_proximity": ["urban", "road"],
+    "products": {
+      "apples": { "elasticity": 1.5, "base_sale_chance": 0.03 },
+      "oranges": { "elasticity": 1.1, "base_sale_chance": 0.02 },
+      "potatoes": { "elasticity": 1.3, "base_sale_chance": 0.025 },
+      "carrots": { "elasticity": 1.4, "base_sale_chance": 0.022 }
+    }
+  },
+
+  "stationery_store": {
+    "name": "SymCo Stationery & Office",
+    "class": "retail",
+    "description": "Retail outlet for surplus industrial paper.",
+    "startup_cost": 2000,
+    "cycles_to_complete": 3200,
+    "base_wage_cost": 145.0,
+    "allowed_terrain": ["prairie", "hills"],
+    "allowed_proximity": ["urban", "road"],
+    "products": {
+      "paper": { "elasticity": 0.85, "base_sale_chance": 0.25 },
+      "religious_book": { "elasticity": 0.3, "base_sale_chance": 0.02}
+    }
+  },
+
+  "textile_and_tannery": {
+    "name": "Textile Mill & Tannery",
+    "description": "Processes fibers and hides into textiles and leather goods.",
+    "startup_cost": 8000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 15.0,
+    "allowed_terrain": ["forest", "savanna", "mountain", "jungle", "hills"],
+    "allowed_proximity": ["urban", "riverside", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "leather",
+        "output_qty": 3.5,
+        "inputs": [
+          { "item": "cow", "quantity": 1 },
+          { "item": "energy", "quantity": 20 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "burlap",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "cotton", "quantity": 10 },
+          { "item": "energy", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "polyester",
+        "output_qty": 60,
+        "inputs": [
+          { "item": "bio_fuel", "quantity": 25 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "oil", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "silk",
+        "output_qty": 1,
+        "inputs": [
+          { "item": "water", "quantity": 15 },
+          { "item": "energy", "quantity": 20 },
+          { "item": "silk_worm", "quantity": 20 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "cotton_fields": {
+    "name": "Cotton Fields",
+    "description": "Cultivates raw cotton and collects seeds for replanting.",
+    "startup_cost": 4500,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 45.0,
+    "allowed_terrain": ["prairie", "savanna", "hills"],
+    "allowed_proximity": ["riverside", "oasis", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cotton",
+        "output_qty": 42,
+        "inputs": [
+          { "item": "water", "quantity": 13 },
+          { "item": "energy", "quantity": 5 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "cotton_seeds", "quantity": 24 }
+        ]
+      },
+      {
+        "output_item": "cotton_seeds",
+        "output_qty": 2.5,
+        "inputs": [
+          { "item": "water", "quantity": 3.5 },
+          { "item": "energy", "quantity": 5 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "lumber_mill": {
+    "name": "Lumber Mill",
+    "description": "Processes timber into lumber and sawdust for manufacturing.",
+    "startup_cost": 5500,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 60.0,
+    "allowed_terrain": ["forest", "jungle", "mountain"],
+    "allowed_proximity": ["riverside", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "timber",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "water", "quantity": 20 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "lumber",
+        "output_qty": 42,
+        "inputs": [
+          { "item": "timber", "quantity": 48 },
+          { "item": "energy", "quantity": 30 },
+          { "item": "water", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "sawdust",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "timber", "quantity": 2 },
+          { "item": "energy", "quantity": 75 },
+          { "item": "water", "quantity": 5 },
+          { "item": "paper", "quantity": 10 }
+        ]
+      }
+    ]
+  },
+
+  "mineral_mine": {
+    "name": "Mineral Mine",
+    "description": "Extracts raw ore from the earth using heavy machinery.",
+    "startup_cost": 150000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 550.0,
+    "allowed_terrain": ["mountain", "hills", "desert"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "copper_ore",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "energy", "quantity": 200 },
+          { "item": "bio_fuel", "quantity": 50 },
+          { "item": "water", "quantity": 100 },
+          { "item": "paper", "quantity": 2 }
+        ]
+      },
+      {
+        "output_item": "iron_ore",
+        "output_qty": 120,
+        "inputs": [
+          { "item": "energy", "quantity": 75 },
+          { "item": "bio_fuel", "quantity": 15 },
+          { "item": "water", "quantity": 30 },
+          { "item": "paper", "quantity": 2 }
+        ]
+      },
+      {
+        "output_item": "zinc_ore",
+        "output_qty": 80,
+        "inputs": [
+          { "item": "energy", "quantity": 180 },
+          { "item": "bio_fuel", "quantity": 45 },
+          { "item": "water", "quantity": 90 },
+          { "item": "paper", "quantity": 2 }
+        ]
+      }
+    ]
+  },
+
+  "refinery": {
+    "name": "Metal Refinery",
+    "description": "Refines raw ore into usable metals and alloys.",
+    "startup_cost": 12000,
+    "cycles_to_complete": 150,
+    "base_wage_cost": 120.0,
+    "allowed_terrain": ["mountain", "hills", "prairie", "desert"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "copper",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "copper_ore", "quantity": 150 },
+          { "item": "energy", "quantity": 150 },
+          { "item": "water", "quantity": 50 },
+          { "item": "paper", "quantity": 2 }
+        ]
+      },
+      {
+        "output_item": "iron",
+        "output_qty": 34,
+        "inputs": [
+          { "item": "iron_ore", "quantity": 160 },
+          { "item": "energy", "quantity": 200 },
+          { "item": "water", "quantity": 60 },
+          { "item": "paper", "quantity": 2 }
+        ]
+      },
+      {
+        "output_item": "brass",
+        "output_qty": 125,
+        "inputs": [
+          { "item": "copper", "quantity": 65 },
+          { "item": "zinc_ore", "quantity": 30 },
+          { "item": "energy", "quantity": 100 },
+          { "item": "polyester", "quantity": 30 },
+          { "item": "paper", "quantity": 2 }
+        ]
+      }
+    ]
+  },
+
+  "fastener_factory": {
+    "name": "Fastener Factory",
+    "description": "Manufactures zippers and buttons for apparel industry.",
+    "startup_cost": 7000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 75.0,
+    "allowed_terrain": ["prairie", "hills", "urban"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "zippers",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "brass", "quantity": 20 },
+          { "item": "copper", "quantity": 10 },
+          { "item": "energy", "quantity": 40 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "buttons",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "sawdust", "quantity": 15 },
+          { "item": "glue", "quantity": 5 },
+          { "item": "energy", "quantity": 25 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "apparel_factory": {
+    "name": "Apparel Factory",
+    "description": "Manufactures clothing from textiles and components.",
+    "startup_cost": 9000,
+    "cycles_to_complete": 420,
+    "base_wage_cost": 90.0,
+    "allowed_terrain": ["prairie", "hills", "savanna"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "blouse",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "silk", "quantity": 3 },
+          { "item": "energy", "quantity": 20 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "bra",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "silk", "quantity": 2 },
+          { "item": "polyester", "quantity": 1 },
+          { "item": "energy", "quantity": 15 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "panties",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "silk", "quantity": 1 },
+          { "item": "polyester", "quantity": 2 },
+          { "item": "energy", "quantity": 15 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "dress",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "cotton", "quantity": 5 },
+          { "item": "polyester", "quantity": 3 },
+          { "item": "energy", "quantity": 25 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "leggings",
+        "output_qty": 12,
+        "inputs": [
+          { "item": "polyester", "quantity": 4 },
+          { "item": "energy", "quantity": 18 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "bomber_jacket",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "leather", "quantity": 3 },
+          { "item": "silk", "quantity": 2 },
+          { "item": "zippers", "quantity": 2 },
+          { "item": "energy", "quantity": 35 },
+          { "item": "polyester", "quantity": 8 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "suit_jacket",
+        "output_qty": 6,
+        "inputs": [
+          { "item": "leather", "quantity": 2 },
+          { "item": "silk", "quantity": 3 },
+          { "item": "buttons", "quantity": 8 },
+          { "item": "energy", "quantity": 30 },
+          { "item": "polyester", "quantity": 3 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "trousers",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "polyester", "quantity": 4 },
+          { "item": "energy", "quantity": 22 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "bag_and_luggage": {
+    "name": "Bag & Luggage Manufacturer",
+    "description": "Produces sacks, bags, and luggage for various purposes.",
+    "startup_cost": 6500,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 70.0,
+    "allowed_terrain": ["prairie", "hills", "savanna"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "potato_sack",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "burlap", "quantity": 5 },
+          { "item": "energy", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "carrot_sack",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "burlap", "quantity": 5 },
+          { "item": "energy", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "purse",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "leather", "quantity": 2 },
+          { "item": "silk", "quantity": 1 },
+          { "item": "polyester", "quantity": 1 },
+          { "item": "cotton", "quantity": 1 },
+          { "item": "zippers", "quantity": 2 },
+          { "item": "buttons", "quantity": 4 },
+          { "item": "energy", "quantity": 30 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "wallet",
+        "output_qty": 12,
+        "inputs": [
+          { "item": "leather", "quantity": 1 },
+          { "item": "silk", "quantity": 1 },
+          { "item": "polyester", "quantity": 1 },
+          { "item": "cotton", "quantity": 1 },
+          { "item": "zippers", "quantity": 1 },
+          { "item": "buttons", "quantity": 2 },
+          { "item": "energy", "quantity": 20 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "cheap_luggage",
+        "output_qty": 6,
+        "inputs": [
+          { "item": "polyester", "quantity": 8 },
+          { "item": "zippers", "quantity": 4 },
+          { "item": "energy", "quantity": 35 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "cane_plantation": {
+    "name": "Sugar Cane Plantation",
+    "description": "Grows cane, refines sugar, and produces biofuel.",
+    "startup_cost": 8500,
+    "cycles_to_complete": 140,
+    "base_wage_cost": 65.0,
+    "allowed_terrain": ["jungle", "savanna", "marsh"],
+    "allowed_proximity": ["riverside", "oasis", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cane",
+        "output_qty": 1000,
+        "inputs": [
+          { "item": "water", "quantity": 80 },
+          { "item": "energy", "quantity": 40 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "sugar",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "cane", "quantity": 100 },
+          { "item": "energy", "quantity": 60 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "bio_fuel",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "cane", "quantity": 20 },
+          { "item": "energy", "quantity": 50 },
+          { "item": "sugar", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "blackstrap_molasses",
+        "output_qty": 1.7,
+        "inputs": [
+          { "item": "water", "quantity": 200 },
+          { "item": "energy", "quantity": 500 },
+          { "item": "sugar", "quantity": 100 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "rum_molasses",
+        "output_qty": 17,
+        "inputs": [
+          { "item": "water", "quantity": 200 },
+          { "item": "energy", "quantity": 500 },
+          { "item": "sugar", "quantity": 100 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "caramel",
+        "output_qty": 1700,
+        "inputs": [
+          { "item": "water", "quantity": 20 },
+          { "item": "energy", "quantity": 50 },
+          { "item": "sugar", "quantity": 10 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "bistro": {
+    "name": "Bistro",
+    "class": "retail",
+    "description": "Serves fresh prepared soups and stews to customers.",
+    "startup_cost": 4000,
+    "cycles_to_complete": 70,
+    "base_wage_cost": 300.0,
+    "allowed_terrain": ["prairie", "hills", "island"],
+    "allowed_proximity": ["urban", "road"],
+    "products": {
+      "stew": { "elasticity": 1.2, "base_sale_chance": 0.04 },
+      "cider_soup": { "elasticity": 0.85, "base_sale_chance": 0.03 },
+      "apple_sauce": { "elasticity": 0.75, "base_sale_chance": 0.15 }
+    }
+  },
+
+  "soup_kitchen": {
+    "name": "Soup Kitchen",
+    "description": "Prepares soups and stews for retail sale.",
+    "startup_cost": 5000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 50.0,
+    "allowed_terrain": ["prairie", "hills", "savanna"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "stew",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "carrots", "quantity": 10 },
+          { "item": "potatoes", "quantity": 2 },
+          { "item": "water", "quantity": 128 },
+          { "item": "beef", "quantity": 15 },
+          { "item": "energy", "quantity": 25 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "lard", "quantity": 5 },
+          { "item": "cream", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "cider_soup",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "apples", "quantity": 15 },
+          { "item": "water", "quantity": 20 },
+          { "item": "beef", "quantity": 3 },
+          { "item": "energy", "quantity": 20 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "sugar", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "apple_sauce",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "apples", "quantity": 60 },
+          { "item": "sugar", "quantity": 15 },
+          { "item": "water", "quantity": 150 },
+          { "item": "energy", "quantity": 180 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "oil_rig": {
+    "name": "Offshore & Desert Oil Rig",
+    "description": "Extracts crude oil from deep underground reservoirs.",
+    "startup_cost": 15000,
+    "cycles_to_complete": 150,
+    "base_wage_cost": 120.0,
+    "allowed_terrain": ["desert", "marsh", "ocean"], 
+    "allowed_proximity": ["coastal", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "oil",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "energy", "quantity": 200 },
+          { "item": "paper", "quantity": 1 }
+        ]
+      }
+    ]
+  },
+
+  "fashion_outlet": {
+    "name": "Fashion Outlet",
+    "class": "retail",
+    "description": "Retail store for apparel and accessories.",
+    "startup_cost": 75000,
+    "cycles_to_complete": 110,
+    "base_wage_cost": 320.0,
+    "allowed_terrain": ["prairie", "hills", "island"],
+    "allowed_proximity": ["urban", "road"],
+    "products": {
+      "blouse": { "elasticity": 0.8, "base_sale_chance": 0.015 },
+      "bra": { "elasticity": 1.0, "base_sale_chance": 0.02 },
+      "panties": { "elasticity": 1.0, "base_sale_chance": 0.02 },
+      "dress": { "elasticity": 0.7, "base_sale_chance": 0.012 },
+      "leggings": { "elasticity": 1.1, "base_sale_chance": 0.018 },
+      "bomber_jacket": { "elasticity": 0.4, "base_sale_chance": 0.008 },
+      "suit_jacket": { "elasticity": 0.3, "base_sale_chance": 0.006 },
+      "trousers": { "elasticity": 0.9, "base_sale_chance": 0.016 },
+      "purse": { "elasticity": 0.6, "base_sale_chance": 0.01 },
+      "wallet": { "elasticity": 0.8, "base_sale_chance": 0.014 },
+      "cheap_luggage": { "elasticity": 1.3, "base_sale_chance": 0.011 }
+    }
+  }
+}

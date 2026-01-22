@@ -1,0 +1,322 @@
+{
+  "apple_seeds": {
+    "name": "Apple Seeds",
+    "description": "Seeds for growing apple trees",
+    "category": "seeds"
+  },
+  "orange_seeds": {
+    "name": "Orange Seeds",
+    "description": "Seeds for growing orange trees",
+    "category": "seeds"
+  },
+  "apples": {
+    "name": "Apples",
+    "description": "Fresh apples from the orchard",
+    "category": "fruits"
+  },
+  "oranges": {
+    "name": "Oranges",
+    "description": "Fresh oranges from the grove",
+    "category": "fruits"
+  },
+  "potatoes": {
+    "name": "Potatoes",
+    "description": "Fresh potatoes from the field",
+    "category": "vegetables"
+  },
+  "carrots": {
+    "name": "Carrots",
+    "description": "Fresh carrots from the field",
+    "category": "vegetables"
+  },
+  "cotton_seeds": {
+    "name": "Cotton Seeds",
+    "description": "Seeds for planting cotton fields",
+    "category": "seeds"
+  },
+  "water": {
+    "name": "Water",
+    "description": "Clean water for irrigation and production",
+    "category": "liquids"
+  },
+  "energy": {
+    "name": "Energy",
+    "description": "Electrical energy from solar panels",
+    "category": "energy"
+  },
+  "bio_fuel": {
+    "name": "Bio Fuel",
+    "description": "Renewable fuel from agricultural products",
+    "category": "energy"
+  },
+  "horse": {
+    "name": "Horse",
+    "description": "Livestock used for industrial rendering",
+    "category": "livestock"
+  },
+  "cow": {
+    "name": "Cow",
+    "description": "Livestock for meat, leather, and dairy products",
+    "category": "livestock"
+  },
+  "grass": {
+    "name": "Grass",
+    "description": "Food for grazing animals",
+    "category": "feed"
+  },
+  "glue": {
+    "name": "Industrial Glue",
+    "description": "Industrial adhesive made from rendered animals",
+    "category": "industrial"
+  },
+  "paper": {
+    "name": "Paper",
+    "description": "Universal industrial requirement for all production and documentation",
+    "category": "industrial"
+  },
+  "leather": {
+    "name": "Leather",
+    "description": "High-quality hides for bookbinding and luxury goods",
+    "category": "materials"
+  },
+  "lard": {
+    "name": "Lard",
+    "description": "Rendered animal fat used for industrial lubricants and food processing",
+    "category": "industrial"
+  },
+  "beef": {
+    "name": "Beef",
+    "description": "Processed meat ready for retail distribution",
+    "category": "food"
+  },
+  "milk": {
+    "name": "Milk",
+    "description": "Milk",
+    "category": "food"
+  },
+  "cream": {
+    "name": "Cream",
+    "description": "Dairy ingredient",
+    "category": "food"
+  },
+  "ice_cream": {
+    "name": "Ice Cream",
+    "description": "Dairy ingredient",
+    "category": "food"
+  },
+  "cotton": {
+    "name": "Cotton",
+    "description": "Processed cotton fiber for textile manufacturing",
+    "category": "textiles"
+  },
+  "burlap": {
+    "name": "Burlap",
+    "description": "Coarse woven fabric used for sacks and industrial packaging",
+    "category": "textiles"
+  },
+  "polyester": {
+    "name": "Polyester",
+    "description": "Synthetic textile fiber used in modern manufacturing",
+    "category": "textiles"
+  },
+  "silk": {
+    "name": "Silk",
+    "description": "Luxury textile fiber for high-end goods",
+    "category": "textiles"
+  },
+  "timber": {
+    "name": "Timber",
+    "description": "Raw logs from the forest",
+    "category": "wood"
+  },
+  "lumber": {
+    "name": "Lumber",
+    "description": "Processed wood for construction and manufacturing",
+    "category": "wood"
+  },
+  "sawdust": {
+    "name": "Sawdust",
+    "description": "Wood byproduct used in manufacturing",
+    "category": "wood"
+  },
+  "copper_ore": {
+    "name": "Copper Ore",
+    "description": "Raw copper extracted from mines",
+    "category": "ore"
+  },
+  "iron_ore": {
+    "name": "Iron Ore",
+    "description": "Raw iron extracted from mines",
+    "category": "ore"
+  },
+  "zinc_ore": {
+    "name": "Zinc Ore",
+    "description": "Raw zinc extracted from mines",
+    "category": "ore"
+  },
+  "copper": {
+    "name": "Copper",
+    "description": "Refined copper metal for industrial use",
+    "category": "metals"
+  },
+  "brass": {
+    "name": "Brass",
+    "description": "Copper-zinc alloy for hardware and fasteners",
+    "category": "metals"
+  },
+  "iron": {
+    "name": "Iron",
+    "description": "Refined iron metal for industrial use",
+    "category": "metals"
+  },
+  "zippers": {
+    "name": "Zippers",
+    "description": "Metal fasteners for clothing and bags",
+    "category": "components"
+  },
+  "buttons": {
+    "name": "Buttons",
+    "description": "Fasteners for clothing",
+    "category": "components"
+  },
+  "cane": {
+    "name": "Sugar Cane",
+    "description": "Raw cane for sugar production",
+    "category": "crops"
+  },
+  "sugar": {
+    "name": "Sugar",
+    "description": "Refined sugar for food production",
+    "category": "food"
+  },
+  "potato_sack": {
+    "name": "Potato Sack",
+    "description": "Burlap sack for storing potatoes",
+    "category": "packaging"
+  },
+  "carrot_sack": {
+    "name": "Carrot Sack",
+    "description": "Burlap sack for storing carrots",
+    "category": "packaging"
+  },
+  "blouse": {
+    "name": "Silk Blouse",
+    "description": "Elegant silk blouse",
+    "category": "apparel"
+  },
+  "bra": {
+    "name": "Bra",
+    "description": "Silk and polyester undergarment",
+    "category": "apparel"
+  },
+  "panties": {
+    "name": "Panties",
+    "description": "Silk and polyester undergarment",
+    "category": "apparel"
+  },
+  "dress": {
+    "name": "Dress",
+    "description": "Cotton and polyester dress",
+    "category": "apparel"
+  },
+  "leggings": {
+    "name": "Leggings",
+    "description": "Polyester athletic wear",
+    "category": "apparel"
+  },
+  "bomber_jacket": {
+    "name": "Bomber Jacket",
+    "description": "Leather and silk jacket with zipper",
+    "category": "apparel"
+  },
+  "suit_jacket": {
+    "name": "Suit Jacket",
+    "description": "Formal leather and silk jacket with buttons",
+    "category": "apparel"
+  },
+  "trousers": {
+    "name": "Trousers",
+    "description": "Polyester dress pants",
+    "category": "apparel"
+  },
+  "purse": {
+    "name": "Purse",
+    "description": "Luxury handbag with mixed materials",
+    "category": "accessories"
+  },
+  "wallet": {
+    "name": "Wallet",
+    "description": "Leather wallet with hardware",
+    "category": "accessories"
+  },
+  "cheap_luggage": {
+    "name": "Budget Luggage",
+    "description": "Polyester travel bag",
+    "category": "accessories"
+  },
+  "stew": {
+    "name": "Beef Stew",
+    "description": "Hearty vegetable and beef stew",
+    "category": "prepared_food"
+  },
+  "cider_soup": {
+    "name": "Apple Cider Soup",
+    "description": "Sweet and savory apple beef soup",
+    "category": "prepared_food"
+  },
+  "apple_sauce": {
+    "name": "Apple Sauce",
+    "description": "Sweet apple sauce",
+    "category": "prepared_food"
+  },
+  "religious_book": {
+    "name": "Religious Text",
+    "description": "A thick, leather-bound spiritual manuscript. High value.",
+    "category": "luxury"
+  },
+  "land_bank_shares": {
+    "name": "Land Bank Shares",
+    "description": "Tradeable equity shares in the Land Bank",
+    "category": "financial"
+  },
+  "apple_seeds_etf_shares": {
+    "name": "Apple Seeds ETF Shares",
+    "description": "Tradeable ETF shares backed by apple seed reserves",
+    "category": "financial"
+  },
+  "energy_etf_shares": {
+    "name": "Energy ETF Shares",
+    "description": "Tradeable ETF shares backed by energy reserves",
+    "category": "financial"
+  },
+  "cotton_seeds": {
+    "name": "Cotton Seeds",
+    "description": "Seeds collected from cotton harvesting for replanting.",
+    "category": "seeds"
+  },
+  "blackstrap_molasses": {
+    "name": "Blackstrap Molasses",
+    "description": "Thick, dark, and bitter molasses byproduct of sugar refining.",
+    "category": "food"
+  },
+  "rum_molasses": {
+    "name": "Rum Molasses",
+    "description": "High-quality molasses suitable for fermentation and distillation.",
+    "category": "food"
+  },
+  "oil": {
+    "name": "Crude Oil",
+    "description": "Unrefined petroleum extracted from the earth.",
+    "category": "liquids"
+  },
+  "silk_worm": {
+    "name": "Silkworm",
+    "description": "Larvae used to produce silk threads.",
+    "category": "livestock"
+  },
+  "caramel": {
+    "name": "Caramel",
+    "description": "Confectionery product made by heating sugar.",
+    "category": "food"
+  }
+}
