@@ -884,6 +884,19 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                         </div>'''
         
         # Render bid orders
+        if order_book['bids']:
+            for price, qty, order_id, player_name, player_id in order_book['bids']:
+                is_own = (player_id == player.id)
+                player_display = f'<strong style="color: #38bdf8;">{player_name}</strong>' if is_own else player_name
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #22c55e; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${price:.2f}</span>
+                            <span>{qty:.0f}</span>
+                            <span style="color: #94a3b8; font-size: 0.85rem;">{player_display}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No buy orders</p>'
+        
         market_html += '''
                     </div>
                     
@@ -897,6 +910,19 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                         </div>'''
         
         # Render ask orders
+        if order_book['asks']:
+            for price, qty, order_id, player_name, player_id in order_book['asks']:
+                is_own = (player_id == player.id)
+                player_display = f'<strong style="color: #38bdf8;">{player_name}</strong>' if is_own else player_name
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #ef4444; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${price:.2f}</span>
+                            <span>{qty:.0f}</span>
+                            <span style="color: #94a3b8; font-size: 0.85rem;">{player_display}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No sell orders</p>'
+        
         market_html += '''
                     </div>
                 </div>
@@ -2277,6 +2303,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                                style="width: 100%; padding: 10px;"
                                placeholder="Leave blank for Market Order (${selected_company.current_price:.4f})">
                         <p style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">
+                            Market: ${selected_company.current_price:.4f} | Best Bid: ${order_book['bids'][0]['price']:.4f if order_book['bids'] else 'N/A'}
                         </p>
                     </div>
 
@@ -2310,6 +2337,18 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Total</span>
                         </div>'''
 
+        if order_book['bids']:
+            for bid in order_book['bids']:
+                total_value = bid['price'] * bid['quantity']
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #22c55e; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${bid['price']:.4f}</span>
+                            <span>{bid['quantity']:,}</span>
+                            <span style="font-size: 0.85rem; color: #64748b;">${total_value:,.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No buy orders</p>'
+
         body += '''
                     </div>
 
@@ -2321,6 +2360,18 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Qty</span>
                             <span>Total</span>
                         </div>'''
+
+        if order_book['asks']:
+            for ask in order_book['asks']:
+                total_value = ask['price'] * ask['quantity']
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #ef4444; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${ask['price']:.4f}</span>
+                            <span>{ask['quantity']:,}</span>
+                            <span style="font-size: 0.85rem; color: #64748b;">${total_value:,.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No sell orders</p>'
 
         spread = order_book['spread']
         spread_pct = order_book['spread_pct']

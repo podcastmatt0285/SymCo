@@ -884,6 +884,17 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                         </div>'''
         
         # Render bid orders
+                is_own = (player_id == player.id)
+                player_display = f'<strong style="color: #38bdf8;">{player_name}</strong>' if is_own else player_name
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #22c55e; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${price:.2f}</span>
+                            <span>{qty:.0f}</span>
+                            <span style="color: #94a3b8; font-size: 0.85rem;">{player_display}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No buy orders</p>'
+        
         market_html += '''
                     </div>
                     
@@ -897,6 +908,17 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                         </div>'''
         
         # Render ask orders
+                is_own = (player_id == player.id)
+                player_display = f'<strong style="color: #38bdf8;">{player_name}</strong>' if is_own else player_name
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #ef4444; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${price:.2f}</span>
+                            <span>{qty:.0f}</span>
+                            <span style="color: #94a3b8; font-size: 0.85rem;">{player_display}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No sell orders</p>'
+        
         market_html += '''
                     </div>
                 </div>
@@ -2310,6 +2332,16 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Total</span>
                         </div>'''
 
+                total_value = bid['price'] * bid['quantity']
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #22c55e; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${bid['price']:.4f}</span>
+                            <span>{bid['quantity']:,}</span>
+                            <span style="font-size: 0.85rem; color: #64748b;">${total_value:,.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No buy orders</p>'
+
         body += '''
                     </div>
 
@@ -2322,8 +2354,16 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Total</span>
                         </div>'''
 
-        spread = order_book['spread']
-        spread_pct = order_book['spread_pct']
+                total_value = ask['price'] * ask['quantity']
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; color: #ef4444; font-size: 0.9rem; padding: 4px 0;">
+                            <span style="font-weight: bold;">${ask['price']:.4f}</span>
+                            <span>{ask['quantity']:,}</span>
+                            <span style="font-size: 0.85rem; color: #64748b;">${total_value:,.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No sell orders</p>'
+
         body += f'''
                     </div>
                 </div>
