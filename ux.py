@@ -2032,6 +2032,11 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
                 <p style="color: #64748b; font-size: 0.9rem;">Your credit rating and debts</p>
                 <a href="/brokerage/credit" class="btn-blue" style="display: inline-block; margin-top: 10px;">View Credit</a>
             </div>
+            <div class="card">
+                <h3>⚙️ Corporate Actions</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Automate buybacks, splits, offerings</p>
+                <a href="/corporate-actions/dashboard" class="btn-blue" style="display: inline-block; margin-top: 10px;">Manage Actions</a>
+            </div>
         </div>
         
         <!-- Active Positions Summary -->

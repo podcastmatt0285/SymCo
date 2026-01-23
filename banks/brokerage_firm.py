@@ -44,6 +44,7 @@ from brokerage_order_book import (
     get_order_book_depth, get_recent_fills,
     OrderBook, OrderFill, OrderType, OrderSide, OrderStatus
 )
+
 import brokerage_order_book
 
 # ==========================
@@ -463,9 +464,10 @@ class ShareLoan(Base):
     borrowed_at = Column(DateTime, default=datetime.utcnow)
     due_date = Column(DateTime, nullable=False)
     returned_at = Column(DateTime, nullable=True)
-    
+
     # Fees paid
     total_fees_paid = Column(Float, default=0.0)
+    last_interest_charge = Column(DateTime, default=datetime.utcnow)
     fees_to_lender = Column(Float, default=0.0)
     fees_to_firm = Column(Float, default=0.0)
     
@@ -1440,8 +1442,6 @@ def create_player_ipo(
         traceback.print_exc()
         db.rollback()
         return None
-# CORRECTED IPO PROCESSING FUNCTIONS
-# Replace in brokerage_firm.py around line 1447
 
 def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
     """
@@ -1454,7 +1454,18 @@ def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
     
     db = get_db()
     try:
-        # Firm buys all shares from founder
+        # Calculate payment
+        discount_pct = config.get('firm_discount_pct', 0.15)
+        payment_per_share = company.ipo_price * (1 - discount_pct)
+        total_payment = payment_per_share * shares
+        
+        # ✅ FIXED: Use the safety function instead of direct manipulation
+        if not firm_deduct_cash(total_payment, "ipo_underwrite", 
+                               f"Underwriting {company.ticker_symbol} IPO"):
+            print(f"[{BANK_NAME}] Cannot afford to underwrite ${total_payment:,.2f}")
+            db.rollback()
+            return
+        
         # Create position for firm
         firm_position = db.query(ShareholderPosition).filter(
             ShareholderPosition.player_id == BANK_PLAYER_ID,
@@ -1478,16 +1489,7 @@ def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
         # Update company records
         company.shares_held_by_firm = shares
         
-        # Pay founder for shares (firm buys at discount per config)
-        discount_pct = config.get('firm_discount_pct', 0.15)
-        payment_per_share = company.ipo_price * (1 - discount_pct)
-        total_payment = payment_per_share * shares
-        
-        # Deduct from firm cash
-        firm = get_firm_entity()
-        firm.cash_reserves -= total_payment
-        
-        # Credit founder (need to access player account)
+        # Credit founder for shares
         from auth import Player, get_db as get_auth_db
         auth_db = get_auth_db()
         try:
@@ -1503,15 +1505,14 @@ def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
         print(f"[{BANK_NAME}] Underwritten IPO: Firm bought {shares:,} shares of {company.ticker_symbol} for ${total_payment:,.2f}")
         
         # Place initial sell orders to start market making
-        # Firm sells at IPO price + small markup
-        initial_offering = min(shares // 10, 10000)  # Offer 10% or 10k shares initially
+        initial_offering = min(shares // 10, 10000)
         if initial_offering > 0:
             place_limit_order(
                 player_id=BANK_PLAYER_ID,
                 company_shares_id=company.id,
                 side=OrderSide.SELL,
                 quantity=initial_offering,
-                limit_price=company.ipo_price * 1.02  # 2% markup
+                limit_price=company.ipo_price * 1.02
             )
             print(f"[{BANK_NAME}] Placed initial sell order: {initial_offering:,} shares @ ${company.ipo_price * 1.02:.4f}")
         
@@ -1522,7 +1523,6 @@ def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
         db.rollback()
     finally:
         db.close()
-
 
 def process_direct_ipo(company: CompanyShares, shares: int, config: dict):
     """
@@ -1535,7 +1535,10 @@ def process_direct_ipo(company: CompanyShares, shares: int, config: dict):
     
     db = get_db()
     try:
-        # Create founder's initial position with all shares
+        # FIXED: Create founder's initial position with ALL shares
+        # (both retained shares AND shares being offered)
+        total_founder_shares = company.shares_held_by_founder + shares
+        
         founder_position = db.query(ShareholderPosition).filter(
             ShareholderPosition.player_id == company.founder_id,
             ShareholderPosition.company_shares_id == company.id
@@ -1545,11 +1548,14 @@ def process_direct_ipo(company: CompanyShares, shares: int, config: dict):
             founder_position = ShareholderPosition(
                 player_id=company.founder_id,
                 company_shares_id=company.id,
-                shares_owned=company.shares_held_by_founder,
-                shares_available_to_lend=company.shares_held_by_founder,
+                shares_owned=total_founder_shares,  # ✅ NOW HAS ALL SHARES
+                shares_available_to_lend=total_founder_shares,
                 average_cost_basis=0.0  # Founder's shares have zero cost basis
             )
             db.add(founder_position)
+        else:
+            founder_position.shares_owned = total_founder_shares
+            founder_position.shares_available_to_lend = total_founder_shares
         
         db.commit()
         
@@ -1572,6 +1578,7 @@ def process_direct_ipo(company: CompanyShares, shares: int, config: dict):
         db.rollback()
     finally:
         db.close()
+
 def create_ipo(
     founder_id: int,
     business_id: int,
@@ -2017,6 +2024,8 @@ def close_short_position(loan_id: int) -> bool:
     
     Returns True if successful.
     """
+    from brokerage_order_book import place_market_order, OrderSide
+    
     db = get_db()
     try:
         loan = db.query(ShareLoan).filter(
@@ -2034,7 +2043,7 @@ def close_short_position(loan_id: int) -> bool:
         if not company:
             return False
         
-        # Borrower needs to have/buy the shares to return
+        # Check if borrower has shares
         borrower_position = db.query(ShareholderPosition).filter(
             ShareholderPosition.player_id == loan.borrower_player_id,
             ShareholderPosition.company_shares_id == loan.company_shares_id
@@ -2043,8 +2052,11 @@ def close_short_position(loan_id: int) -> bool:
         has_shares = borrower_position and borrower_position.shares_owned >= loan.shares_borrowed
         
         if not has_shares:
-            # Must buy shares at current price
-            buy_cost = loan.shares_borrowed * company.current_price
+            # ✅ FIXED: Actually buy the shares from the market
+            print(f"[{BANK_NAME}] SHORT COVER: Buying {loan.shares_borrowed} shares from market")
+            
+            # Estimate cost (actual cost determined by order book)
+            estimated_cost = loan.shares_borrowed * company.current_price
             
             from auth import get_db as get_auth_db, Player
             auth_db = get_auth_db()
@@ -2054,41 +2066,78 @@ def close_short_position(loan_id: int) -> bool:
                 # Can use collateral if short on cash
                 available_cash = borrower.cash_balance + loan.collateral_locked
                 
-                if available_cash < buy_cost:
+                if available_cash < estimated_cost:
                     print(f"[{BANK_NAME}] Cannot afford to close short")
                     return False
                 
-                # Deduct from cash first, then collateral
-                cash_used = min(borrower.cash_balance, buy_cost)
-                borrower.cash_balance -= cash_used
-                collateral_used = buy_cost - cash_used
+                # Ensure borrower has enough cash for the market order
+                # (may need to use collateral)
+                if borrower.cash_balance < estimated_cost:
+                    needed_from_collateral = estimated_cost - borrower.cash_balance
+                    # Temporarily credit borrower from their collateral
+                    borrower.cash_balance += needed_from_collateral
+                    loan.collateral_locked -= needed_from_collateral
                 
                 auth_db.commit()
             finally:
                 auth_db.close()
             
-            remaining_collateral = loan.collateral_locked - collateral_used
+            # ✅ Place ACTUAL market order to buy shares
+            # This creates upward price pressure (short squeeze potential)
+            success = place_market_order(
+                player_id=loan.borrower_player_id,
+                company_shares_id=loan.company_shares_id,
+                side=OrderSide.BUY,
+                quantity=loan.shares_borrowed
+            )
+            
+            if not success:
+                print(f"[{BANK_NAME}] Failed to buy shares from market")
+                # Refund the temporary collateral credit if order failed
+                auth_db = get_auth_db()
+                try:
+                    borrower = auth_db.query(Player).filter(Player.id == loan.borrower_player_id).first()
+                    if borrower and needed_from_collateral > 0:
+                        borrower.cash_balance -= needed_from_collateral
+                        loan.collateral_locked += needed_from_collateral
+                        auth_db.commit()
+                finally:
+                    auth_db.close()
+                return False
+            
+            # Refresh borrower position after market order
+            db.refresh(borrower_position)
+            
+            # Now deduct the shares from position (they were bought via market order)
+            borrower_position.shares_owned -= loan.shares_borrowed
         else:
             # Has shares, just return them
             borrower_position.shares_owned -= loan.shares_borrowed
-            remaining_collateral = loan.collateral_locked
-            buy_cost = 0
         
-        # Calculate profit/loss
+        # Calculate profit/loss (using actual final costs)
         original_value = loan.shares_borrowed * loan.borrow_price
-        close_value = loan.shares_borrowed * company.current_price
-        pnl = original_value - close_value - loan.total_fees_paid
         
-        # Return remaining collateral
-        from auth import get_db as get_auth_db, Player
+        # Get actual close cost from borrower's cash spent
         auth_db = get_auth_db()
         try:
             borrower = auth_db.query(Player).filter(Player.id == loan.borrower_player_id).first()
-            if borrower and remaining_collateral > 0:
-                borrower.cash_balance += remaining_collateral
-                auth_db.commit()
+            # Calculate how much was actually spent
+            close_value = loan.shares_borrowed * company.current_price  # Approximation
         finally:
             auth_db.close()
+        
+        pnl = original_value - close_value - loan.total_fees_paid
+        
+        # Return remaining collateral
+        if loan.collateral_locked > 0:
+            auth_db = get_auth_db()
+            try:
+                borrower = auth_db.query(Player).filter(Player.id == loan.borrower_player_id).first()
+                if borrower:
+                    borrower.cash_balance += loan.collateral_locked
+                    auth_db.commit()
+            finally:
+                auth_db.close()
         
         # Update lender's position
         lender_position = db.query(ShareholderPosition).filter(
@@ -2123,7 +2172,6 @@ def close_short_position(loan_id: int) -> bool:
         return False
     finally:
         db.close()
-
 
 # ==========================
 # SCCE: COMMODITY LENDING
@@ -2997,6 +3045,8 @@ def trigger_liquidation(player_id: int, source: str):
     """
     Trigger liquidation cascade for a player.
     
+    ✅ FIXED: Actually sells shares in the market, creating price impact
+    
     Levels:
     1. Warning (already sent via margin call)
     2. Force sell stocks
@@ -3005,6 +3055,8 @@ def trigger_liquidation(player_id: int, source: str):
     5. Create lien
     6. Bankruptcy (optional)
     """
+    from brokerage_order_book import place_market_order, OrderSide
+    
     print(f"[{BANK_NAME}] 🚨 LIQUIDATION TRIGGERED: Player {player_id} ({source})")
     
     # Level 2: Force sell stocks
@@ -3015,41 +3067,59 @@ def trigger_liquidation(player_id: int, source: str):
             ShareholderPosition.shares_owned > 0
         ).all()
         
-        total_raised = 0.0
+        liquidation_proceeds = 0.0
         
         for position in positions:
             company = db.query(CompanyShares).filter(
                 CompanyShares.id == position.company_shares_id
             ).first()
             
-            if company:
-                # Sell all shares
-                proceeds = position.shares_owned * company.current_price
-                total_raised += proceeds
+            if company and position.shares_owned > 0:
+                print(f"[{BANK_NAME}] L2: Liquidating {position.shares_owned} shares of {company.ticker_symbol}")
                 
-                # Update company
-                company.shares_in_float += position.shares_owned
+                # ✅ FIXED: Place ACTUAL market order to sell shares
+                # This creates downward price pressure during liquidation
+                success = place_market_order(
+                    player_id=player_id,
+                    company_shares_id=position.company_shares_id,
+                    side=OrderSide.SELL,
+                    quantity=position.shares_owned
+                )
                 
-                # Clear position
-                position.shares_owned = 0
-                position.margin_debt = 0
-                position.margin_shares = 0
-                position.is_margin_position = False
+                if success:
+                    # The market order handler will:
+                    # 1. Match against buy orders in the book
+                    # 2. Reduce player's shares
+                    # 3. Credit player's cash balance
+                    # 4. Update the current price based on fills
+                    
+                    # Clear margin debt for this position
+                    position.margin_debt = 0
+                    position.margin_shares = 0
+                    position.is_margin_position = False
+                    
+                    print(f"[{BANK_NAME}] L2: Sold {position.shares_owned} {company.ticker_symbol} via market")
+                else:
+                    print(f"[{BANK_NAME}] L2: Failed to liquidate position (no buyers?)")
+                    # If market order fails (no liquidity), add shares back to float
+                    # and give player cash at current price (last resort)
+                    proceeds = position.shares_owned * company.current_price
+                    company.shares_in_float += position.shares_owned
+                    position.shares_owned = 0
+                    
+                    from auth import get_db as get_auth_db, Player
+                    auth_db = get_auth_db()
+                    try:
+                        player = auth_db.query(Player).filter(Player.id == player_id).first()
+                        if player:
+                            player.cash_balance += proceeds
+                            auth_db.commit()
+                    finally:
+                        auth_db.close()
+                    
+                    print(f"[{BANK_NAME}] L2: EMERGENCY LIQUIDATION at ${company.current_price:.2f}/share")
         
         db.commit()
-        
-        if total_raised > 0:
-            from auth import get_db as get_auth_db, Player
-            auth_db = get_auth_db()
-            try:
-                player = auth_db.query(Player).filter(Player.id == player_id).first()
-                if player:
-                    player.cash_balance += total_raised
-                    auth_db.commit()
-            finally:
-                auth_db.close()
-            
-            print(f"[{BANK_NAME}] L2: Sold stocks for ${total_raised:,.2f}")
     finally:
         db.close()
     
@@ -3083,7 +3153,6 @@ def trigger_liquidation(player_id: int, source: str):
             print(f"[{BANK_NAME}] L5: Created lien for ${total_debt:,.2f}")
     finally:
         db.close()
-
 
 def create_lien(player_id: int, amount: float, source: str):
     """Create or update a lien for a player."""
@@ -3278,7 +3347,14 @@ def initialize():
     print(f"[{BANK_NAME}] Creating database tables...")
     Base.metadata.create_all(bind=engine)
     
-    brokerage_order_book.initialize() 
+    brokerage_order_book.initialize()
+    init_corporate_actions()
+
+    try:
+        from corporate_actions import initialize as init_corporate_actions
+        init_corporate_actions()
+    except ImportError:
+        print(f"[{BANK_NAME}] Corporate actions module not available")
 
     # Get or create Firm entity
     firm = get_firm_entity()
@@ -3296,6 +3372,78 @@ def initialize():
 # ==========================
 # TICK HANDLER
 # ==========================
+def process_share_loan_interest():
+    """
+    Process interest accrual for active share loans.
+    Called every tick (or every hour) to charge borrowing fees.
+    """
+    db = get_db()
+    try:
+        active_loans = db.query(ShareLoan).filter(
+            ShareLoan.status == ShareLoanStatus.ACTIVE.value
+        ).all()
+        
+        now = datetime.utcnow()
+        
+        for loan in active_loans:
+            # Calculate time since last interest charge (or loan start)
+            if hasattr(loan, 'last_interest_charge') and loan.last_interest_charge:
+                time_since_charge = now - loan.last_interest_charge
+            else:
+                time_since_charge = now - loan.borrowed_at
+            
+            # Convert to weeks (or fractions thereof)
+            weeks_elapsed = time_since_charge.total_seconds() / (7 * 24 * 3600)
+            
+            if weeks_elapsed < 0.01:  # Less than ~1 hour, skip
+                continue
+            
+            # Calculate interest owed
+            borrow_value = loan.shares_borrowed * loan.borrow_price
+            interest_owed = borrow_value * loan.borrow_rate_weekly * weeks_elapsed
+            
+            # Try to charge from collateral
+            if loan.collateral_locked >= interest_owed:
+                loan.collateral_locked -= interest_owed
+                loan.total_fees_paid += interest_owed
+                
+                # Split 50/50 between lender and Firm
+                fee_to_lender = interest_owed * 0.5
+                fee_to_firm = interest_owed * 0.5
+                
+                # Pay lender
+                from auth import get_db as get_auth_db, Player
+                auth_db = get_auth_db()
+                try:
+                    lender = auth_db.query(Player).filter(Player.id == loan.lender_player_id).first()
+                    if lender:
+                        lender.cash_balance += fee_to_lender
+                        auth_db.commit()
+                finally:
+                    auth_db.close()
+                
+                # Pay Firm
+                firm_add_cash(fee_to_firm, "short_interest", 
+                             f"Short interest from Player {loan.borrower_player_id}", 
+                             loan.borrower_player_id)
+                
+                # Update last charge time
+                if not hasattr(loan, 'last_interest_charge'):
+                    # Add column if doesn't exist (migration needed)
+                    pass
+                loan.last_interest_charge = now
+                
+                print(f"[{BANK_NAME}] SHORT INTEREST: ${interest_owed:.2f} charged " +
+                      f"(Lender: ${fee_to_lender:.2f}, Firm: ${fee_to_firm:.2f})")
+            else:
+                # Collateral insufficient - trigger margin call or force close
+                print(f"[{BANK_NAME}] ⚠️ SHORT LOAN #{loan.id}: Insufficient collateral for interest")
+                # Consider force-closing the position or creating a lien
+                
+        db.commit()
+    finally:
+        db.close()
+
 
 async def tick(current_tick: int, now: datetime, bank_entity=None):
     """
@@ -3313,9 +3461,17 @@ async def tick(current_tick: int, now: datetime, bank_entity=None):
     """
 
     brokerage_order_book.tick(current_tick)
+    process_corporate_actions()
 
     # Every tick: process liens
     process_liens()
+
+    if current_tick % 60 == 0:
+        process_share_loan_interest()  # NEW!
+        check_margin_calls()
+        process_margin_call_deadlines()
+        check_commodity_loan_due_dates()
+        check_firm_can_operate()
     
     # Every 60 ticks (1 minute): check margins and loans
     if current_tick % 60 == 0:
@@ -3324,11 +3480,18 @@ async def tick(current_tick: int, now: datetime, bank_entity=None):
         check_commodity_loan_due_dates()
         check_firm_can_operate()
     
-    # Every 3600 ticks (1 hour): update TBTF status
+    # Every 3600 ticks (1 hour): corporate actions and TBTF
     if current_tick % 3600 == 0:
         update_tbtf_status()
         process_stabilization()
-    
+        
+        # ✅ Import HERE instead of at top
+        try:
+            from corporate_actions import process_corporate_actions
+            process_corporate_actions()
+        except ImportError:
+            pass  # Corporate actions not installed
+
     # Process dividends (handled by frequency in config)
     process_dividends(current_tick)
     

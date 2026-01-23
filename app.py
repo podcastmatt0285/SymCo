@@ -178,6 +178,20 @@ except ModuleNotFoundError:
             "api_status": "/api/status"
         }
 
+try:
+    from corporate_actions_ux import router as corporate_actions_router
+    app.include_router(corporate_actions_router)
+    print("Corporate Actions routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from corporate_actions_ui import router as corporate_actions_ui_router
+    app.include_router(corporate_actions_ui_router)
+    print("Corporate Actions UI routes registered")
+except ModuleNotFoundError:
+    pass
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
