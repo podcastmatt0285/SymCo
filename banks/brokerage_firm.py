@@ -1206,6 +1206,12 @@ def calculate_business_valuation(business_id: int) -> dict:
     finally:
         db.close()
 
+
+# ==========================
+# IPO SYSTEM
+# ==========================
+
+
 # ==========================
 # PLAYER HOLDING COMPANY VALUATION
 # ==========================
@@ -1227,7 +1233,7 @@ def calculate_player_company_valuation(player_id: int) -> dict:
         - suggested_share_price: valuation / shares
     """
     from business import Business, BUSINESS_TYPES
-    from land import LandPlot
+    from land import LandPlot, get_db as get_land_db
     
     db = get_db()
     try:
@@ -1252,7 +1258,7 @@ def calculate_player_company_valuation(player_id: int) -> dict:
         total_earnings_value = 0
         businesses_breakdown = []
         
-        land_db = get_db()
+        land_db = get_land_db()
         try:
             for biz in businesses:
                 # Get land value
@@ -1296,7 +1302,6 @@ def calculate_player_company_valuation(player_id: int) -> dict:
         total_valuation = total_book_value + total_earnings_value
         
         # Suggest share count based on valuation
-        # Small: 10k shares, Medium: 100k, Large: 1M
         if total_valuation < 50000:
             suggested_shares = 10000
         elif total_valuation < 500000:
@@ -1324,10 +1329,6 @@ def calculate_player_company_valuation(player_id: int) -> dict:
     finally:
         db.close()
 
-
-# ==========================
-# IPO CREATION - PLAYER COMPANY
-# ==========================
 
 def create_player_ipo(
     founder_id: int,
@@ -1412,15 +1413,10 @@ def create_player_ipo(
             shares_in_float=shares_to_offer,
             shares_held_by_founder=shares_to_founder,
             dividend_config=dividend_config,
-            business_id=0,  # Use 0 to indicate holding company (no migration needed)
+            business_id=0,  # 0 = holding company
             high_52_week=suggested_price,
             low_52_week=suggested_price
         )
-
-# This way:
-# - business_id = 0 means holding company
-# - business_id > 0 means individual business (old system)
-# - No database migration required!
         
         db.add(company)
         db.commit()
@@ -1444,26 +1440,138 @@ def create_player_ipo(
         traceback.print_exc()
         db.rollback()
         return None
+# CORRECTED IPO PROCESSING FUNCTIONS
+# Replace in brokerage_firm.py around line 1447
+
+def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
+    """
+    Process firm-underwritten IPO.
+    
+    The firm buys all shares from the founder at the IPO price,
+    then gradually sells them to the market.
+    """
+    from brokerage_order_book import place_limit_order, OrderSide
+    
+    db = get_db()
+    try:
+        # Firm buys all shares from founder
+        # Create position for firm
+        firm_position = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == BANK_PLAYER_ID,
+            ShareholderPosition.company_shares_id == company.id
+        ).first()
+        
+        if not firm_position:
+            firm_position = ShareholderPosition(
+                player_id=BANK_PLAYER_ID,
+                company_shares_id=company.id,
+                shares_owned=0,
+                shares_available_to_lend=0,
+                average_cost_basis=company.ipo_price
+            )
+            db.add(firm_position)
+        
+        # Firm takes possession of shares
+        firm_position.shares_owned += shares
+        firm_position.shares_available_to_lend += shares
+        
+        # Update company records
+        company.shares_held_by_firm = shares
+        
+        # Pay founder for shares (firm buys at discount per config)
+        discount_pct = config.get('firm_discount_pct', 0.15)
+        payment_per_share = company.ipo_price * (1 - discount_pct)
+        total_payment = payment_per_share * shares
+        
+        # Deduct from firm cash
+        firm = get_firm_entity()
+        firm.cash_reserves -= total_payment
+        
+        # Credit founder (need to access player account)
+        from auth import Player, get_db as get_auth_db
+        auth_db = get_auth_db()
+        try:
+            founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
+            if founder:
+                founder.cash_balance += total_payment
+                auth_db.commit()
+        finally:
+            auth_db.close()
+        
+        db.commit()
+        
+        print(f"[{BANK_NAME}] Underwritten IPO: Firm bought {shares:,} shares of {company.ticker_symbol} for ${total_payment:,.2f}")
+        
+        # Place initial sell orders to start market making
+        # Firm sells at IPO price + small markup
+        initial_offering = min(shares // 10, 10000)  # Offer 10% or 10k shares initially
+        if initial_offering > 0:
+            place_limit_order(
+                player_id=BANK_PLAYER_ID,
+                company_shares_id=company.id,
+                side=OrderSide.SELL,
+                quantity=initial_offering,
+                limit_price=company.ipo_price * 1.02  # 2% markup
+            )
+            print(f"[{BANK_NAME}] Placed initial sell order: {initial_offering:,} shares @ ${company.ipo_price * 1.02:.4f}")
+        
+    except Exception as e:
+        print(f"[{BANK_NAME}] Error processing underwritten IPO: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
     finally:
         db.close()
 
 
-# Helper functions remain the same but now work with holding companies
-def process_underwritten_ipo(company: CompanyShares, shares: int, config: dict):
-    """Process firm-underwritten IPO."""
-    # Existing logic works fine
-    pass
-
 def process_direct_ipo(company: CompanyShares, shares: int, config: dict):
-    """Process direct-to-market IPO."""
-    # Existing logic works fine
-    pass
-
-
-# ==========================
-# IPO SYSTEM
-# ==========================
-
+    """
+    Process direct-to-market IPO.
+    
+    Shares are placed directly in the order book for public trading.
+    Founder retains ownership initially and sells to market.
+    """
+    from brokerage_order_book import place_limit_order, OrderSide
+    
+    db = get_db()
+    try:
+        # Create founder's initial position with all shares
+        founder_position = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == company.founder_id,
+            ShareholderPosition.company_shares_id == company.id
+        ).first()
+        
+        if not founder_position:
+            founder_position = ShareholderPosition(
+                player_id=company.founder_id,
+                company_shares_id=company.id,
+                shares_owned=company.shares_held_by_founder,
+                shares_available_to_lend=company.shares_held_by_founder,
+                average_cost_basis=0.0  # Founder's shares have zero cost basis
+            )
+            db.add(founder_position)
+        
+        db.commit()
+        
+        # Place shares being offered as sell orders at IPO price
+        # This makes them available for trading
+        place_limit_order(
+            player_id=company.founder_id,
+            company_shares_id=company.id,
+            side=OrderSide.SELL,
+            quantity=shares,
+            limit_price=company.ipo_price
+        )
+        
+        print(f"[{BANK_NAME}] Direct IPO: Placed {shares:,} shares of {company.ticker_symbol} @ ${company.ipo_price:.4f}")
+        
+    except Exception as e:
+        print(f"[{BANK_NAME}] Error processing direct IPO: {e}")
+        import traceback
+        traceback.print_exc()
+        db.rollback()
+    finally:
+        db.close()
 def create_ipo(
     founder_id: int,
     business_id: int,

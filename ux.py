@@ -189,10 +189,8 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 .card {{ padding: 16px; }}
                 input, select {{ font-size: 16px; }}
                 
-                /* Stack grids on mobile - including 2, 3, and 4 column grids */
-                div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"],
-                div[style*="display: grid"][style*="grid-template-columns: repeat(3, 1fr)"],
-                div[style*="display: grid"][style*="grid-template-columns: repeat(4, 1fr)"] {{
+                /* Stack grids on mobile */
+                div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {{
                     display: flex !important;
                     flex-direction: column !important;
                 }}
@@ -886,6 +884,17 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                         </div>'''
         
         # Render bid orders
+        if order_book and order_book.get('bids'):
+            for price, qty, order_id, player_name, player_id in order_book['bids']:
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
+                            <span>${price:.2f}</span>
+                            <span>{qty:,}</span>
+                            <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No bids</p>'
+        
         market_html += '''
                     </div>
                     
@@ -899,6 +908,17 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                         </div>'''
         
         # Render ask orders
+        if order_book and order_book.get('asks'):
+            for price, qty, order_id, player_name, player_id in order_book['asks']:
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
+                            <span>${price:.2f}</span>
+                            <span>{qty:,}</span>
+                            <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
+        
         market_html += '''
                     </div>
                 </div>
@@ -2313,18 +2333,6 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Total</span>
                         </div>'''
 
-        # Display bid rows
-        if order_book.get('bids'):
-            for bid in order_book['bids']:
-                body += f'''
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
-                            <span>${bid['price']:.4f}</span>
-                            <span>{bid['quantity']:,}</span>
-                            <span>${bid['total']:.2f}</span>
-                        </div>'''
-        else:
-            body += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No bids</p>'
-
         body += '''
                     </div>
 
@@ -2336,18 +2344,6 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Qty</span>
                             <span>Total</span>
                         </div>'''
-
-        # Display ask rows
-        if order_book.get('asks'):
-            for ask in order_book['asks']:
-                body += f'''
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
-                            <span>${ask['price']:.4f}</span>
-                            <span>{ask['quantity']:,}</span>
-                            <span>${ask['total']:.2f}</span>
-                        </div>'''
-        else:
-            body += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
 
         spread = order_book['spread']
         spread_pct = order_book['spread_pct']
@@ -2461,6 +2457,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         import traceback
         traceback.print_exc()
         return shell("SCPE Trading", f"Error: {e}", player.cash_balance, player.id)
+
 
 # CORRECTED IPO PAGE - Replace in ux.py
 # The helper functions need to be INSIDE the route handler
@@ -2845,7 +2842,6 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
         import traceback
         traceback.print_exc()
         return shell("IPO Center", f"Error: {e}", player.cash_balance, player.id)
-
 # NEW IPO CREATION ENDPOINT
 # Add this to ux.py after the existing IPO page
 
@@ -2938,7 +2934,6 @@ async def create_player_ipo_endpoint(
             url="/brokerage/ipo?error=exception",
             status_code=303
         )
-
 
 @router.get("/brokerage/portfolio", response_class=HTMLResponse)
 def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
