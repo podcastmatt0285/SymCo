@@ -152,7 +152,7 @@ def get_db():
 
 def get_company_ticker(company_shares_id: int) -> Optional[str]:
     """Get ticker symbol for a company."""
-    from banks.banks.brokerage_firm import CompanyShares
+    from banks.brokerage_firm import CompanyShares
     db = get_db()
     try:
         company = db.query(CompanyShares).filter(
@@ -245,7 +245,7 @@ def place_limit_order(
     
     db = get_db()
     try:
-        from bsnks.brokerage_firm import CompanyShares, get_player_credit, get_max_leverage_for_player
+        from banks.brokerage_firm import CompanyShares, get_player_credit, get_max_leverage_for_player
         
         # Verify company exists and is tradeable
         company = db.query(CompanyShares).filter(

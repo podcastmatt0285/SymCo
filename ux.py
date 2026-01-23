@@ -189,8 +189,10 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 .card {{ padding: 16px; }}
                 input, select {{ font-size: 16px; }}
                 
-                /* Stack grids on mobile */
-                div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {{
+                /* Stack grids on mobile - including 2, 3, and 4 column grids */
+                div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"],
+                div[style*="display: grid"][style*="grid-template-columns: repeat(3, 1fr)"],
+                div[style*="display: grid"][style*="grid-template-columns: repeat(4, 1fr)"] {{
                     display: flex !important;
                     flex-direction: column !important;
                 }}
@@ -1881,8 +1883,9 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
         for company in public_companies:
             change_indicator = "▲" if company.current_price >= company.ipo_price else "▼"
             change_color = "#22c55e" if company.current_price >= company.ipo_price else "#ef4444"
+            # Make ticker clickable
             ticker_items.append(
-                f'<span style="color: {change_color};">{company.ticker_symbol}</span>: ${company.current_price:.2f} {change_indicator}'
+                f'<a href="/brokerage/trading?ticker={company.ticker_symbol}" style="color: {change_color}; text-decoration: none; font-weight: bold;">{company.ticker_symbol}</a>: ${company.current_price:.2f} {change_indicator}'
             )
         company_ticker = " &nbsp;│&nbsp; ".join(ticker_items) if ticker_items else "NO LISTED COMPANIES"
         
@@ -2310,6 +2313,18 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Total</span>
                         </div>'''
 
+        # Display bid rows
+        if order_book.get('bids'):
+            for bid in order_book['bids']:
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
+                            <span>${bid['price']:.4f}</span>
+                            <span>{bid['quantity']:,}</span>
+                            <span>${bid['total']:.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No bids</p>'
+
         body += '''
                     </div>
 
@@ -2321,6 +2336,18 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <span>Qty</span>
                             <span>Total</span>
                         </div>'''
+
+        # Display ask rows
+        if order_book.get('asks'):
+            for ask in order_book['asks']:
+                body += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
+                            <span>${ask['price']:.4f}</span>
+                            <span>{ask['quantity']:,}</span>
+                            <span>${ask['total']:.2f}</span>
+                        </div>'''
+        else:
+            body += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
 
         spread = order_book['spread']
         spread_pct = order_book['spread_pct']
@@ -2435,215 +2462,381 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         traceback.print_exc()
         return shell("SCPE Trading", f"Error: {e}", player.cash_balance, player.id)
 
+# CORRECTED IPO PAGE - Replace in ux.py
+# The helper functions need to be INSIDE the route handler
 
 @router.get("/brokerage/ipo", response_class=HTMLResponse)
 def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
-    """IPO creation page."""
+    """IPO creation page - redesigned for player holding companies."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
 
+    # HELPER FUNCTIONS (must be defined here where IPOType is imported)
+    def get_ipo_how_it_works(ipo_type) -> str:
+        """Get how-it-works explanation for IPO type."""
+        explanations = {
+            "dutch_auction": '''
+                <li>You set a minimum price</li>
+                <li>Investors bid on how many shares they want and at what price</li>
+                <li>System finds the "clearing price" where supply meets demand</li>
+                <li>Everyone who bid at or above clearing price gets shares at that price</li>
+                <li>Democratic and fair - no favoritism</li>
+            ''',
+            "direct_listing": '''
+                <li>You list existing shares directly on the exchange</li>
+                <li>No new capital raised - just opens trading</li>
+                <li>Market sets the price naturally through supply/demand</li>
+                <li>Cheapest option - flat $5,000 fee</li>
+                <li>Good if you don't need to raise money</li>
+            ''',
+        }
+        ipo_key = ipo_type.value if hasattr(ipo_type, 'value') else str(ipo_type)
+        return explanations.get(ipo_key, "<li>Details coming soon</li>")
+
+    def get_ipo_pros(ipo_type) -> str:
+        """Get pros for IPO type."""
+        pros = {
+            "dutch_auction": '''
+                <li>Fair price discovery - market decides</li>
+                <li>All investors get same price</li>
+                <li>Lower fees (3%)</li>
+                <li>Democratic process</li>
+            ''',
+            "direct_listing": '''
+                <li>Cheapest option ($5k flat fee)</li>
+                <li>Quick and simple</li>
+                <li>No dilution</li>
+                <li>Market sets natural price</li>
+            ''',
+        }
+        ipo_key = ipo_type.value if hasattr(ipo_type, 'value') else str(ipo_type)
+        return pros.get(ipo_key, "<li>Various benefits</li>")
+
+    def get_ipo_cons(ipo_type) -> str:
+        """Get cons for IPO type."""
+        cons = {
+            "dutch_auction": '''
+                <li>No guarantee shares will sell</li>
+                <li>Price could be lower than you want</li>
+                <li>Need investor interest</li>
+            ''',
+            "direct_listing": '''
+                <li>No new capital raised</li>
+                <li>Price volatility on day one</li>
+                <li>No guarantee of liquidity</li>
+            ''',
+        }
+        ipo_key = ipo_type.value if hasattr(ipo_type, 'value') else str(ipo_type)
+        return cons.get(ipo_key, "<li>Various tradeoffs</li>")
+
     try:
         from banks.brokerage_firm import (
             get_firm_entity, IPO_CONFIG, IPOType, DividendType, DividendFrequency,
-            calculate_business_valuation, CompanyShares, get_db as get_firm_db
+            calculate_player_company_valuation, CompanyShares, get_db as get_firm_db
         )
-        from business import Business, BUSINESS_TYPES
-        from land import get_db as get_land_db
+        from auth import get_db as get_auth_db
         
         firm = get_firm_entity()
         
-        # Get player's businesses that aren't already public
-        land_db = get_land_db()
+        # Check if player already has a public company
         firm_db = get_firm_db()
         try:
-            player_businesses = land_db.query(Business).filter(
-                Business.owner_id == player.id
-            ).all()
-            
-            # Filter out already-public businesses
-            public_business_ids = {
-                cs.business_id for cs in firm_db.query(CompanyShares).filter(
-                    CompanyShares.is_delisted == False
-                ).all()
-            }
-            
-            eligible_businesses = [
-                b for b in player_businesses 
-                if b.id not in public_business_ids
-            ]
-            
+            existing_company = firm_db.query(CompanyShares).filter(
+                CompanyShares.founder_id == player.id,
+                CompanyShares.is_delisted == False
+            ).first()
         finally:
-            land_db.close()
             firm_db.close()
         
-        # Build IPO type options
-        direct_ipos = []
-        underwritten_ipos = []
-        for ipo_type, config in IPO_CONFIG.items():
-            ipo_html = f'''
-            <option value="{ipo_type.value}" data-underwritten="{1 if config['firm_underwritten'] else 0}">
-                {config['name']} - {config['description'][:50]}...
-            </option>'''
-            if config['firm_underwritten']:
-                underwritten_ipos.append(ipo_html)
-            else:
-                direct_ipos.append(ipo_html)
+        if existing_company:
+            # Player already has a public company
+            body = f'''
+            <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
+            <h1>IPO Center</h1>
+            
+            <div class="card" style="border: 2px solid #f59e0b; background: #451a03;">
+                <h3 style="color: #fbbf24;">⚠️ Already Public</h3>
+                <p style="color: #fbbf24;">You've already taken your company public as <strong>{existing_company.ticker_symbol}</strong> ({existing_company.company_name}).</p>
+                <p style="color: #fbbf24; font-size: 0.9rem;">Each player can only have one publicly traded company. To change this, you would need to delist your current company.</p>
+                <a href="/brokerage/trading?ticker={existing_company.ticker_symbol}" class="btn-blue">Trade Your Stock</a>
+            </div>
+            '''
+            return shell("IPO Center", body, player.cash_balance, player.id)
         
-        # Build business selector
-        business_options = ""
-        for biz in eligible_businesses:
-            config = BUSINESS_TYPES.get(biz.business_type, {})
-            valuation = calculate_business_valuation(biz.id)
-            val_str = f"${valuation['total_valuation']:,.0f}" if valuation else "N/A"
-            business_options += f'<option value="{biz.id}">{config.get("name", biz.business_type)} (ID: {biz.id}) - Est. Value: {val_str}</option>'
+        # Get player's company valuation
+        valuation = calculate_player_company_valuation(player.id)
+        
+        if not valuation or valuation["total_businesses"] == 0:
+            body = '''
+            <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
+            <h1>IPO Center</h1>
+            
+            <div class="card" style="border: 2px solid #ef4444; background: #450a0a;">
+                <h3 style="color: #fca5a5;">❌ No Businesses to IPO</h3>
+                <p style="color: #fca5a5;">You need to build at least one business before going public.</p>
+                <a href="/land" class="btn-blue" style="margin-top: 10px;">Get Land & Build</a>
+            </div>
+            '''
+            return shell("IPO Center", body, player.cash_balance, player.id)
+        
+        # Build business breakdown
+        biz_list_html = ""
+        for biz in valuation["businesses_breakdown"]:
+            biz_list_html += f'''
+            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b;">
+                <span style="color: #94a3b8;">{biz["business_name"]}</span>
+                <span style="color: #38bdf8;">${biz["total_value"]:,.0f}</span>
+            </div>'''
+        
+        # IPO type cards with detailed explanations
+        ipo_cards_html = ""
+        
+        # Group IPO types
+        beginner_ipos = []
+        advanced_ipos = []
+        firm_ipos = []
+        
+        for ipo_type, config in IPO_CONFIG.items():
+            if config['firm_underwritten']:
+                firm_ipos.append((ipo_type, config))
+            elif ipo_type in [IPOType.DUTCH_AUCTION, IPOType.DIRECT_LISTING]:
+                beginner_ipos.append((ipo_type, config))
+            else:
+                advanced_ipos.append((ipo_type, config))
+        
+        # Beginner section
+        ipo_cards_html += '''
+        <div style="margin-bottom: 30px;">
+            <h3 style="color: #22c55e; margin-bottom: 15px;">🟢 BEGINNER FRIENDLY</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 15px;">
+                Recommended for your first IPO. Simple, transparent, low fees.
+            </p>
+            <div style="display: grid; gap: 15px;">'''
+        
+        for ipo_type, config in beginner_ipos:
+            fee_text = f"{config.get('fee_pct', 0)*100:.1f}% fee" if config.get('fee_pct') else f"${config.get('flat_fee', 0):,.0f} flat fee"
+            
+            # Determine risk/reward
+            risk_level = "🟢 LOW RISK" if ipo_type == IPOType.DIRECT_LISTING else "🟡 MEDIUM RISK"
+            
+            ipo_cards_html += f'''
+            <div class="card ipo-option" data-ipo-type="{ipo_type.value}" style="cursor: pointer; border: 2px solid #1e293b; transition: all 0.2s;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <h4 style="margin: 0; color: #38bdf8;">{config['name']}</h4>
+                    <span class="badge" style="background: #0f172a; color: #94a3b8; font-size: 0.7rem;">{fee_text}</span>
+                </div>
+                
+                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 12px;">
+                    {config['description']}
+                </p>
+                
+                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e293b;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem;">
+                        <div>
+                            <strong style="color: #64748b;">Risk Level:</strong><br>
+                            <span style="color: {'#22c55e' if 'LOW' in risk_level else '#f59e0b'};">{risk_level}</span>
+                        </div>
+                        <div>
+                            <strong style="color: #64748b;">Best For:</strong><br>
+                            <span style="color: #94a3b8;">{'First-time IPOs' if ipo_type == IPOType.DUTCH_AUCTION else 'Established companies'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ipo-details" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #1e293b;">
+                    <h5 style="color: #38bdf8; margin-bottom: 8px;">How It Works:</h5>
+                    <ul style="color: #94a3b8; font-size: 0.85rem; line-height: 1.8; margin: 0; padding-left: 20px;">
+                        {get_ipo_how_it_works(ipo_type)}
+                    </ul>
+                    
+                    <div style="margin-top: 15px;">
+                        <h5 style="color: #22c55e; margin-bottom: 5px;">✅ Pros:</h5>
+                        <ul style="color: #94a3b8; font-size: 0.85rem; line-height: 1.6; margin: 0 0 10px 0; padding-left: 20px;">
+                            {get_ipo_pros(ipo_type)}
+                        </ul>
+                        
+                        <h5 style="color: #ef4444; margin-bottom: 5px;">❌ Cons:</h5>
+                        <ul style="color: #94a3b8; font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 20px;">
+                            {get_ipo_cons(ipo_type)}
+                        </ul>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px;">
+                    Select {config['name']}
+                </button>
+            </div>'''
+        
+        ipo_cards_html += '''
+            </div>
+        </div>'''
+        
+        # Firm underwritten section
+        if firm.is_accepting_ipos:
+            ipo_cards_html += '''
+            <div style="margin-bottom: 30px;">
+                <h3 style="color: #f59e0b; margin-bottom: 15px;">🟡 FIRM UNDERWRITTEN</h3>
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 15px;">
+                    The Firm guarantees your capital (higher fees, lower risk).
+                </p>
+                <div style="display: grid; gap: 15px;">'''
+            
+            for ipo_type, config in firm_ipos:
+                # Similar card structure for firm IPOs
+                ipo_cards_html += f'''
+                <div class="card ipo-option" data-ipo-type="{ipo_type.value}" style="cursor: pointer; border: 2px solid #1e293b;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <h4 style="margin: 0; color: #f59e0b;">{config['name']}</h4>
+                        <span class="badge" style="background: #451a03; color: #fbbf24;">GUARANTEED</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px;">{config['description']}</p>
+                    <button type="button" class="btn-orange select-ipo-btn" style="width: 100%; margin-top: 10px;">
+                        Select {config['name']}
+                    </button>
+                </div>'''
+            
+            ipo_cards_html += '''
+                </div>
+            </div>'''
         
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>IPO Center</h1>
-        <p style="color: #64748b;">Take your business public on the SymCo Player Exchange (SCPE)</p>
+        <p style="color: #64748b;">Take <strong>{player.business_name}</strong>'s business empire public on SCPE</p>
         
-        {"<div class='card' style='border: 2px solid #f59e0b; background: #451a03;'><p style='color: #fbbf24;'>⚠️ The Firm is not currently accepting IPO underwriting. Only direct-to-market IPOs are available.</p></div>" if not firm.is_accepting_ipos else ""}
-        
-        <div class="card">
-            <h3>Create IPO</h3>
+        <!-- Company Valuation -->
+        <div class="card" style="border-left: 4px solid #38bdf8;">
+            <h3>Your Company Valuation</h3>
             
-            {f"<p style='color: #ef4444;'>You have no eligible businesses. Build a business first!</p><a href='/land' class='btn-blue'>Go to Land</a>" if not eligible_businesses else f'''
-            <form action="/api/brokerage/create-ipo" method="post">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Select Business</label>
-                            <select name="business_id" required style="width: 100%; padding: 10px;">
-                                <option value="">Choose a business...</option>
-                                {business_options}
-                            </select>
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Company Name</label>
-                            <input type="text" name="company_name" required style="width: 100%; padding: 10px;" 
-                                   placeholder="e.g., Acme Corporation">
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Ticker Symbol (3-5 chars)</label>
-                            <input type="text" name="ticker_symbol" required maxlength="5" style="width: 100%; padding: 10px; text-transform: uppercase;" 
-                                   placeholder="e.g., ACME">
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Share Class</label>
-                            <select name="share_class" style="width: 100%; padding: 10px;">
-                                <option value="A">Class A (Standard)</option>
-                                <option value="B">Class B (Reduced Voting)</option>
-                                <option value="Preferred">Preferred (Priority Dividend)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">IPO Type</label>
-                            <select name="ipo_type" required style="width: 100%; padding: 10px;">
-                                <optgroup label="Direct-to-Market (No Firm Commitment)">
-                                    {"".join(direct_ipos)}
-                                </optgroup>
-                                <optgroup label="Firm-Underwritten (Guaranteed Sale)">
-                                    {"".join(underwritten_ipos)}
-                                </optgroup>
-                            </select>
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Total Shares to Authorize</label>
-                            <input type="number" name="total_shares" required min="1000" value="10000" 
-                                   style="width: 100%; padding: 10px;">
-                        </div>
-                        
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Shares to Offer (% of total)</label>
-                            <input type="number" name="offer_percentage" required min="1" max="100" value="25" 
-                                   style="width: 100%; padding: 10px;">
-                            <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
-                                You keep the rest. Offering more = more capital raised.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Dividend Configuration -->
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #1e293b;">
-                    <h4>Dividend Configuration (Optional)</h4>
-                    <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;">
-                        Dividends attract investors but commit you to regular payments.
-                    </p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Type</label>
-                            <select name="dividend_type" style="width: 100%; padding: 10px;">
-                                <option value="">No Dividend</option>
-                                <option value="cash">Cash</option>
-                                <option value="commodity">Commodity</option>
-                                <option value="scrip">Stock (Scrip)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Amount/Rate</label>
-                            <input type="number" name="dividend_amount" step="0.01" min="0" 
-                                   style="width: 100%; padding: 10px;" placeholder="e.g., 0.05 for 5%">
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Frequency</label>
-                            <select name="dividend_frequency" style="width: 100%; padding: 10px;">
-                                <option value="weekly">Weekly</option>
-                                <option value="biweekly">Bi-Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="quarterly">Quarterly</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Commodity (if applicable)</label>
-                            <input type="text" name="dividend_commodity" style="width: 100%; padding: 10px;" 
-                                   placeholder="e.g., apple_seeds">
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-blue" style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1.1rem;">
-                    🚀 Launch IPO
-                </button>
-            </form>
-            '''}
-        </div>
-        
-        <!-- IPO Types Reference -->
-        <div class="card" style="margin-top: 20px;">
-            <h3>IPO Types Reference</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0;">
                 <div>
-                    <h4 style="color: #38bdf8;">Direct-to-Market</h4>
-                    <ul style="color: #94a3b8; line-height: 1.8;">
-                        <li><strong>Dutch Auction:</strong> Players bid, highest bids win at clearing price (3% fee)</li>
-                        <li><strong>Private Placement:</strong> Sell to one specific player (1% fee)</li>
-                        <li><strong>Rights Offering:</strong> Existing shareholders only (2% fee)</li>
-                        <li><strong>Direct Listing:</strong> List existing shares, no new capital ($5k flat)</li>
-                    </ul>
+                    <div style="font-size: 0.8rem; color: #64748b;">ACTIVE BUSINESSES</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: #38bdf8;">{valuation["total_businesses"]}</div>
                 </div>
                 <div>
-                    <h4 style="color: #f59e0b;">Firm-Underwritten</h4>
-                    <ul style="color: #94a3b8; line-height: 1.8;">
-                        <li><strong>Standard:</strong> Firm buys at 85%, resells (guaranteed capital)</li>
-                        <li><strong>Best Efforts:</strong> Firm tries to sell, returns unsold (8% fee)</li>
-                        <li><strong>Bought Deal:</strong> Firm buys ALL at 80% (higher risk premium)</li>
-                        <li><strong>Stabilized:</strong> Price floor protection (88% + commitment)</li>
-                        <li><strong>Drip Release:</strong> Scarcity strategy, 5%/week release (75%)</li>
-                        <li><strong>Shelf Registration:</strong> Draw down over time (10%/tranche)</li>
-                    </ul>
+                    <div style="font-size: 0.8rem; color: #64748b;">TOTAL VALUATION</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: #22c55e;">${valuation["total_valuation"]:,.0f}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: #64748b;">SUGGESTED PRICE</div>
+                    <div style="font-size: 2rem; font-weight: bold;">${valuation["suggested_share_price"]:.2f}/share</div>
                 </div>
             </div>
+            
+            <details style="margin-top: 15px;">
+                <summary style="cursor: pointer; color: #38bdf8; font-weight: 500;">View Business Breakdown</summary>
+                <div style="margin-top: 10px;">
+                    {biz_list_html}
+                </div>
+            </details>
         </div>
+        
+        <!-- IPO Type Selection -->
+        <div class="card">
+            <h3>Choose Your IPO Type</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">
+                Different IPO types offer different tradeoffs. Click any option to see full details.
+            </p>
+            
+            {ipo_cards_html}
+        </div>
+        
+        <!-- IPO Configuration Form (hidden until type selected) -->
+        <div id="ipo-form-section" style="display: none;">
+            <div class="card">
+                <h3>Configure Your IPO</h3>
+                <form action="/api/brokerage/create-player-ipo" method="post">
+                    <input type="hidden" name="ipo_type" id="selected-ipo-type" value="">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Company Name</label>
+                                <input type="text" name="company_name" required 
+                                       style="width: 100%; padding: 10px;"
+                                       placeholder="e.g., {player.business_name} Corporation"
+                                       value="{player.business_name} Co.">
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Ticker Symbol (3-5 chars)</label>
+                                <input type="text" name="ticker_symbol" required maxlength="5" minlength="3"
+                                       style="width: 100%; padding: 10px; text-transform: uppercase;"
+                                       placeholder="e.g., {player.business_name[:4].upper()}">
+                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">This will appear on SCPE ticker</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Total Shares to Issue</label>
+                                <input type="number" name="total_shares" required min="10000" 
+                                       value="{valuation['suggested_ipo_shares']}"
+                                       style="width: 100%; padding: 10px;">
+                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
+                                    Suggested: {valuation['suggested_ipo_shares']:,} shares
+                                </p>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Shares to Offer (% of total)</label>
+                                <input type="number" name="offer_percentage" required min="10" max="100" value="25"
+                                       style="width: 100%; padding: 10px;">
+                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
+                                    You keep the rest. Most IPOs offer 20-40%.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-blue" style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1.1rem;">
+                        🚀 Launch IPO
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <script>
+            // Toggle IPO card details
+            document.querySelectorAll('.ipo-option').forEach(card => {{
+                card.addEventListener('click', function(e) {{
+                    if (e.target.classList.contains('select-ipo-btn')) return;
+                    
+                    const details = this.querySelector('.ipo-details');
+                    if (details) {{
+                        details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                    }}
+                }});
+            }});
+            
+            // Select IPO type
+            document.querySelectorAll('.select-ipo-btn').forEach(btn => {{
+                btn.addEventListener('click', function(e) {{
+                    e.stopPropagation();
+                    
+                    const card = this.closest('.ipo-option');
+                    const ipoType = card.dataset.ipoType;
+                    
+                    // Remove selection from all cards
+                    document.querySelectorAll('.ipo-option').forEach(c => {{
+                        c.style.borderColor = '#1e293b';
+                    }});
+                    
+                    // Highlight selected card
+                    card.style.borderColor = '#38bdf8';
+                    
+                    // Set hidden field
+                    document.getElementById('selected-ipo-type').value = ipoType;
+                    
+                    // Show form
+                    document.getElementById('ipo-form-section').style.display = 'block';
+                    
+                    // Scroll to form
+                    document.getElementById('ipo-form-section').scrollIntoView({{ behavior: 'smooth' }});
+                }});
+            }});
+        </script>
         '''
         
         return shell("IPO Center", body, player.cash_balance, player.id)
@@ -2652,6 +2845,99 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
         import traceback
         traceback.print_exc()
         return shell("IPO Center", f"Error: {e}", player.cash_balance, player.id)
+
+# NEW IPO CREATION ENDPOINT
+# Add this to ux.py after the existing IPO page
+
+@router.post("/api/brokerage/create-player-ipo")
+async def create_player_ipo_endpoint(
+    company_name: str = Form(...),
+    ticker_symbol: str = Form(...),
+    ipo_type: str = Form(...),
+    total_shares: int = Form(...),
+    offer_percentage: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """
+    Create a player holding company IPO.
+    
+    This replaces the old per-business IPO system with a proper
+    holding company structure where players IPO their entire empire.
+    """
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    
+    try:
+        from banks.brokerage_firm import (
+            create_player_ipo, IPOType, get_db as get_firm_db
+        )
+        
+        # Validate ticker symbol
+        ticker_symbol = ticker_symbol.upper().strip()
+        if len(ticker_symbol) < 3 or len(ticker_symbol) > 5:
+            return RedirectResponse(
+                url="/brokerage/ipo?error=invalid_ticker",
+                status_code=303
+            )
+        
+        # Validate shares
+        if total_shares < 10000:
+            return RedirectResponse(
+                url="/brokerage/ipo?error=insufficient_shares",
+                status_code=303
+            )
+        
+        # Calculate shares to offer
+        shares_to_offer = int((offer_percentage / 100) * total_shares)
+        
+        if shares_to_offer < 1:
+            return RedirectResponse(
+                url="/brokerage/ipo?error=must_offer_shares",
+                status_code=303
+            )
+        
+        # Convert IPO type string to enum
+        try:
+            ipo_type_enum = IPOType(ipo_type)
+        except ValueError:
+            return RedirectResponse(
+                url="/brokerage/ipo?error=invalid_ipo_type",
+                status_code=303
+            )
+        
+        # Create the IPO
+        company = create_player_ipo(
+            founder_id=player.id,
+            company_name=company_name,
+            ticker_symbol=ticker_symbol,
+            ipo_type=ipo_type_enum,
+            shares_to_offer=shares_to_offer,
+            total_shares=total_shares,
+            share_class="A",  # Default to Class A
+            dividend_config=None  # Will add dividend config in phase 2
+        )
+        
+        if not company:
+            return RedirectResponse(
+                url="/brokerage/ipo?error=ipo_failed",
+                status_code=303
+            )
+        
+        # Success! Redirect to trading page for their new stock
+        return RedirectResponse(
+            url=f"/brokerage/trading?ticker={ticker_symbol}&success=ipo_created",
+            status_code=303
+        )
+    
+    except Exception as e:
+        print(f"[UX] IPO creation error: {e}")
+        import traceback
+        traceback.print_exc()
+        return RedirectResponse(
+            url="/brokerage/ipo?error=exception",
+            status_code=303
+        )
 
 
 @router.get("/brokerage/portfolio", response_class=HTMLResponse)
