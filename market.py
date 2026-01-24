@@ -93,7 +93,14 @@ STARTER_INVENTORY = {
     "orange_seeds": 1,
     "water": 5000,
     "energy": 1500,
-    "paper": 15000
+    "paper": 15000,
+    "wheat_seeds": 5,
+    "barley_seeds": 3,
+    "corn_seeds": 5,
+    "coffee_seeds": 2,
+    "cherry_seeds": 2,
+    "cocoa_seeds": 2,
+    "grape_seeds": 2
 }
 
 # ==========================

@@ -895,6 +895,5294 @@
     ]
   },
 
+  "grain_farm": {
+    "name": "Grain & Cereal Farm",
+    "description": "Cultivates wheat, barley, and corn - foundation of baking and brewing industries.",
+    "startup_cost": 8500,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 55.0,
+    "allowed_terrain": [
+      "prairie",
+      "savanna",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "wheat",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "wheat_seeds",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "wheat_seeds",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "wheat",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "barley",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "barley_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "barley_seeds",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "barley",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "corn",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "corn_seeds",
+            "quantity": 12
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "corn_seeds",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "corn",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "orchard": {
+    "name": "Stone Fruit Orchard",
+    "description": "Cultivates cherries and other stone fruits. Requires patience for tree maturity.",
+    "startup_cost": 7500,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 45.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "forest"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "lakeside",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cherries",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "cherry_seeds",
+            "quantity": 3
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cherry_seeds",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "cherries",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "vegetable_farm": {
+    "name": "Root Vegetable Farm",
+    "description": "Specialized cultivation of onions and root vegetables.",
+    "startup_cost": 4500,
+    "cycles_to_complete": 70,
+    "base_wage_cost": 35.0,
+    "allowed_terrain": [
+      "prairie",
+      "savanna",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "oasis",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "onions",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "onion_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "onion_seeds",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "onions",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "vineyard_estate": {
+    "name": "Vineyard Estate",
+    "description": "Terraced hillside growing premium wine grapes. High land value terrain yields finest vintages.",
+    "startup_cost": 25000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 75.0,
+    "allowed_terrain": [
+      "hills",
+      "mountain"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "riverside",
+      "lakeside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "grapes",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "grape_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "grape_seeds",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "coffee_plantation": {
+    "name": "Highland Coffee Plantation",
+    "description": "Cultivates arabica coffee at high altitude for premium beans.",
+    "startup_cost": 18000,
+    "cycles_to_complete": 160,
+    "base_wage_cost": 60.0,
+    "allowed_terrain": [
+      "hills",
+      "mountain",
+      "jungle"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "coffee_beans",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "coffee_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "burlap",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "coffee_seeds",
+        "output_qty": 18,
+        "inputs": [
+          {
+            "item": "coffee_beans",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "tea_plantation": {
+    "name": "Tea Plantation",
+    "description": "Highland estate growing fine tea leaves in misty conditions.",
+    "startup_cost": 15000,
+    "cycles_to_complete": 140,
+    "base_wage_cost": 50.0,
+    "allowed_terrain": [
+      "hills",
+      "mountain",
+      "jungle"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "volcanic",
+      "lakeside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tea_leaves",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "tea_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tea_seeds",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "tea_leaves",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "cocoa_plantation": {
+    "name": "Cacao Plantation",
+    "description": "Tropical estate cultivating cacao trees for chocolate production.",
+    "startup_cost": 22000,
+    "cycles_to_complete": 180,
+    "base_wage_cost": 65.0,
+    "allowed_terrain": [
+      "jungle",
+      "island",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "coastal"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cocoa_beans",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "cocoa_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cocoa_seeds",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "cocoa_beans",
+            "quantity": 12
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "hop_farm": {
+    "name": "Hop & Herb Farm",
+    "description": "Specialized cultivation of hops, juniper, and brewing herbs.",
+    "startup_cost": 12000,
+    "cycles_to_complete": 110,
+    "base_wage_cost": 45.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "forest"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "hops",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "juniper_berries",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "mint",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "spice_plantation": {
+    "name": "Spice & Vanilla Plantation",
+    "description": "Tropical estate cultivating vanilla, cinnamon, and aromatic spices.",
+    "startup_cost": 20000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 55.0,
+    "allowed_terrain": [
+      "jungle",
+      "island",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "vanilla_beans",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cinnamon",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "agave_plantation": {
+    "name": "Agave Plantation",
+    "description": "Desert farm cultivating blue agave for tequila. Long maturation period.",
+    "startup_cost": 16000,
+    "cycles_to_complete": 300,
+    "base_wage_cost": 40.0,
+    "allowed_terrain": [
+      "desert",
+      "savanna"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "agave",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "poultry_farm": {
+    "name": "Poultry & Swine Farm",
+    "description": "Raises pigs, ducks, and chickens for meat, eggs, and feathers.",
+    "startup_cost": 9500,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 50.0,
+    "allowed_terrain": [
+      "prairie",
+      "savanna",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "pig",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "corn",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "duck",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "corn",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "eggs",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "corn",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "apiary": {
+    "name": "Apiary & Honey Farm",
+    "description": "Beekeeping operation producing honey and beeswax.",
+    "startup_cost": 6000,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 30.0,
+    "allowed_terrain": [
+      "prairie",
+      "forest",
+      "hills",
+      "savanna"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "lakeside",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "honey",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "sugar",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "salt_works": {
+    "name": "Salt Works",
+    "description": "Evaporates seawater or mines rock salt for food and industrial use.",
+    "startup_cost": 8000,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 40.0,
+    "allowed_terrain": [
+      "desert",
+      "marsh",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "lakeside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "salt",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "flour_mill": {
+    "name": "Flour Mill",
+    "description": "Grinds wheat and corn into flour and meal. Foundation of baking industry.",
+    "startup_cost": 12000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 55.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "urban"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "flour",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "wheat",
+            "quantity": 120
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "corn_syrup",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "corn",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "yeast",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 10
+          },
+          {
+            "item": "sugar",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "sand_quarry": {
+    "name": "Sand & Gravel Quarry",
+    "description": "Extracts silica sand for glass production and construction.",
+    "startup_cost": 25000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 80.0,
+    "allowed_terrain": [
+      "desert",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "coastal",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "sand",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "glass_works": {
+    "name": "Glass Works",
+    "description": "Melts sand into glass sheets, bottles, and jars. Critical for beverages and automotive.",
+    "startup_cost": 35000,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 120.0,
+    "allowed_terrain": [
+      "desert",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "glass",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "sand",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "bottle",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "jar",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "rubber_plant": {
+    "name": "Synthetic Rubber Plant",
+    "description": "Processes crude oil into synthetic rubber for tires and industrial use.",
+    "startup_cost": 45000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 150.0,
+    "allowed_terrain": [
+      "prairie",
+      "desert",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban",
+      "coastal"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "rubber",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "oil",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "fiberglass",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 20
+          },
+          {
+            "item": "oil",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "coffee_roastery": {
+    "name": "Coffee Roastery",
+    "description": "Roasts and grinds coffee beans for caf\u00e9s and retail.",
+    "startup_cost": 14000,
+    "cycles_to_complete": 50,
+    "base_wage_cost": 65.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "roasted_coffee",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "coffee_beans",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ground_coffee",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "roasted_coffee",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      }
+    ]
+  },
+  "chocolate_factory": {
+    "name": "Chocolate Factory",
+    "description": "Processes cocoa beans into chocolate, cocoa powder, and cocoa butter.",
+    "startup_cost": 40000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 130.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cocoa_powder",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "cocoa_beans",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cocoa_butter",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "cocoa_beans",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "chocolate",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "cocoa_powder",
+            "quantity": 30
+          },
+          {
+            "item": "cocoa_butter",
+            "quantity": 20
+          },
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "cream",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "malting_house": {
+    "name": "Malting House",
+    "description": "Processes barley into malt for brewing and distilling.",
+    "startup_cost": 18000,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 60.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "urban"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "malt",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "barley",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "gelatin_plant": {
+    "name": "Gelatin Processing Plant",
+    "description": "Produces gelatin from animal byproducts for candy and pharmaceutical use.",
+    "startup_cost": 20000,
+    "cycles_to_complete": 70,
+    "base_wage_cost": 75.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "gelatin",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "beef",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "pill_bottle",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "meat_processing": {
+    "name": "Meat Processing Plant",
+    "description": "Processes pork and duck into cuts, sausage, and specialty meats.",
+    "startup_cost": 15000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 90.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "mountain"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "pork",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "pig",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "duck_meat",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "duck",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "feathers",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "duck",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "sausage",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "pork",
+            "quantity": 40
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "onions",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "bacon",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "pork",
+            "quantity": 35
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "sugar",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "cooperage": {
+    "name": "Cooperage & Barrel Works",
+    "description": "Crafts oak barrels for wine and whiskey aging.",
+    "startup_cost": 16000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 70.0,
+    "allowed_terrain": [
+      "forest",
+      "hills",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "wine_barrel",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "lumber",
+            "quantity": 60
+          },
+          {
+            "item": "iron",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "ink_factory": {
+    "name": "Ink & Dye Factory",
+    "description": "Produces printing ink for publishing industry.",
+    "startup_cost": 10000,
+    "cycles_to_complete": 50,
+    "base_wage_cost": 55.0,
+    "allowed_terrain": [
+      "prairie",
+      "urban",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "ink",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "oil",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "bedding_factory": {
+    "name": "Bedding & Pillow Factory",
+    "description": "Manufactures feather pillows and down comforters.",
+    "startup_cost": 11000,
+    "cycles_to_complete": 70,
+    "base_wage_cost": 60.0,
+    "allowed_terrain": [
+      "prairie",
+      "urban",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "pillow",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "feathers",
+            "quantity": 50
+          },
+          {
+            "item": "cotton",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "comforter",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "feathers",
+            "quantity": 100
+          },
+          {
+            "item": "cotton",
+            "quantity": 40
+          },
+          {
+            "item": "polyester",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "industrial_bakery": {
+    "name": "Industrial Bakery",
+    "description": "Large-scale bread and dough production. Foundation of baked goods supply chain.",
+    "startup_cost": 28000,
+    "cycles_to_complete": 55,
+    "base_wage_cost": 95.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "dough",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 60
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "yeast",
+            "quantity": 8
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "bread",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "dough",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "baguette",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "dough",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "pretzel",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "dough",
+            "quantity": 50
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "pastry_kitchen": {
+    "name": "Pastry Kitchen",
+    "description": "Artisan facility crafting croissants, danishes, and fine pastries.",
+    "startup_cost": 22000,
+    "cycles_to_complete": 65,
+    "base_wage_cost": 100.0,
+    "allowed_terrain": [
+      "urban",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "pastry_dough",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 30
+          },
+          {
+            "item": "butter",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "croissant",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "pastry_dough",
+            "quantity": 40
+          },
+          {
+            "item": "butter",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "donut",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "dough",
+            "quantity": 50
+          },
+          {
+            "item": "sugar",
+            "quantity": 30
+          },
+          {
+            "item": "lard",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cinnamon_roll",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "dough",
+            "quantity": 40
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 10
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "butter",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "muffin",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 25
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "eggs",
+            "quantity": 15
+          },
+          {
+            "item": "butter",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "pie_bakery": {
+    "name": "Pie & Cake Bakery",
+    "description": "Specialty bakery producing pies, cakes, and celebration desserts.",
+    "startup_cost": 20000,
+    "cycles_to_complete": 75,
+    "base_wage_cost": 90.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "pie_crust",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 25
+          },
+          {
+            "item": "butter",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "fruit_filling",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "cherries",
+            "quantity": 50
+          },
+          {
+            "item": "sugar",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cherry_pie",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "pie_crust",
+            "quantity": 25
+          },
+          {
+            "item": "fruit_filling",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "apple_pie",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "pie_crust",
+            "quantity": 25
+          },
+          {
+            "item": "apples",
+            "quantity": 50
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "frosting",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "butter",
+            "quantity": 15
+          },
+          {
+            "item": "sugar",
+            "quantity": 30
+          },
+          {
+            "item": "cream",
+            "quantity": 8
+          },
+          {
+            "item": "vanilla_beans",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "chocolate_cake",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 15
+          },
+          {
+            "item": "chocolate",
+            "quantity": 25
+          },
+          {
+            "item": "eggs",
+            "quantity": 12
+          },
+          {
+            "item": "frosting",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cheesecake",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "cream",
+            "quantity": 30
+          },
+          {
+            "item": "eggs",
+            "quantity": 15
+          },
+          {
+            "item": "sugar",
+            "quantity": 25
+          },
+          {
+            "item": "vanilla_beans",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "cookie_factory": {
+    "name": "Cookie & Brownie Factory",
+    "description": "High-volume production of cookies, brownies, and sweet snacks.",
+    "startup_cost": 16000,
+    "cycles_to_complete": 45,
+    "base_wage_cost": 75.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cookie",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 30
+          },
+          {
+            "item": "butter",
+            "quantity": 20
+          },
+          {
+            "item": "sugar",
+            "quantity": 25
+          },
+          {
+            "item": "chocolate",
+            "quantity": 15
+          },
+          {
+            "item": "eggs",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "brownie",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 20
+          },
+          {
+            "item": "chocolate",
+            "quantity": 35
+          },
+          {
+            "item": "butter",
+            "quantity": 15
+          },
+          {
+            "item": "eggs",
+            "quantity": 12
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "candy_factory": {
+    "name": "Candy Factory",
+    "description": "Large-scale confectionery producing hard candy, gummies, and sugar sweets.",
+    "startup_cost": 35000,
+    "cycles_to_complete": 70,
+    "base_wage_cost": 105.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "hard_candy",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "sugar",
+            "quantity": 50
+          },
+          {
+            "item": "corn_syrup",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "lollipop",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "corn_syrup",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "gummy_bears",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "gelatin",
+            "quantity": 25
+          },
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "corn_syrup",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "taffy",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "sugar",
+            "quantity": 45
+          },
+          {
+            "item": "corn_syrup",
+            "quantity": 30
+          },
+          {
+            "item": "butter",
+            "quantity": 15
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "marshmallow",
+        "output_qty": 110,
+        "inputs": [
+          {
+            "item": "gelatin",
+            "quantity": 20
+          },
+          {
+            "item": "sugar",
+            "quantity": 50
+          },
+          {
+            "item": "corn_syrup",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "licorice",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 20
+          },
+          {
+            "item": "blackstrap_molasses",
+            "quantity": 25
+          },
+          {
+            "item": "sugar",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "peppermint",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "mint",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "chocolate_confectioner": {
+    "name": "Artisan Chocolatier",
+    "description": "Premium chocolate confectionery producing truffles, fudge, and chocolate bars.",
+    "startup_cost": 28000,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 120.0,
+    "allowed_terrain": [
+      "urban"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "candy_bar",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "chocolate",
+            "quantity": 40
+          },
+          {
+            "item": "sugar",
+            "quantity": 25
+          },
+          {
+            "item": "cream",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "truffles",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "chocolate",
+            "quantity": 40
+          },
+          {
+            "item": "cream",
+            "quantity": 20
+          },
+          {
+            "item": "cocoa_powder",
+            "quantity": 15
+          },
+          {
+            "item": "butter",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "fudge",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "chocolate",
+            "quantity": 35
+          },
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "butter",
+            "quantity": 20
+          },
+          {
+            "item": "cream",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "toffee",
+        "output_qty": 55,
+        "inputs": [
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "butter",
+            "quantity": 30
+          },
+          {
+            "item": "chocolate",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "distillery": {
+    "name": "Spirit Distillery",
+    "description": "Craft distillery producing vodka, whiskey, rum, and moonshine.",
+    "startup_cost": 55000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 160.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "mountain"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "vodka",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "potatoes",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 70
+          },
+          {
+            "item": "bottle",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "whiskey",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "malt",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "wine_barrel",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rum",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "rum_molasses",
+            "quantity": 60
+          },
+          {
+            "item": "water",
+            "quantity": 45
+          },
+          {
+            "item": "wine_barrel",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 65
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "moonshine",
+        "output_qty": 45,
+        "inputs": [
+          {
+            "item": "corn",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 55
+          },
+          {
+            "item": "bottle",
+            "quantity": 45
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "gin_distillery": {
+    "name": "Botanical Gin Distillery",
+    "description": "Specialist distillery producing gin and botanical spirits.",
+    "startup_cost": 42000,
+    "cycles_to_complete": 160,
+    "base_wage_cost": 130.0,
+    "allowed_terrain": [
+      "hills",
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "gin",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "malt",
+            "quantity": 50
+          },
+          {
+            "item": "juniper_berries",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "bottle",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "brandy",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "wine_barrel",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 70
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "tequila_distillery": {
+    "name": "Tequila Distillery",
+    "description": "Traditional distillery producing tequila from blue agave.",
+    "startup_cost": 48000,
+    "cycles_to_complete": 220,
+    "base_wage_cost": 140.0,
+    "allowed_terrain": [
+      "desert",
+      "savanna"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tequila",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "agave",
+            "quantity": 60
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 65
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "winery": {
+    "name": "Estate Winery",
+    "description": "Traditional winery producing red, white, ros\u00e9, and sparkling wines.",
+    "startup_cost": 65000,
+    "cycles_to_complete": 280,
+    "base_wage_cost": 170.0,
+    "allowed_terrain": [
+      "hills",
+      "mountain"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "lakeside",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "red_wine",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 120
+          },
+          {
+            "item": "wine_barrel",
+            "quantity": 4
+          },
+          {
+            "item": "bottle",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "white_wine",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 120
+          },
+          {
+            "item": "bottle",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rose_wine",
+        "output_qty": 45,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 110
+          },
+          {
+            "item": "bottle",
+            "quantity": 45
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "champagne",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 100
+          },
+          {
+            "item": "sugar",
+            "quantity": 15
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "brewery": {
+    "name": "Craft Brewery",
+    "description": "Microbrewery producing ales, lagers, stouts, and cider.",
+    "startup_cost": 38000,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 120.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "beer",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "malt",
+            "quantity": 50
+          },
+          {
+            "item": "hops",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "bottle",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 45
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lager",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "malt",
+            "quantity": 60
+          },
+          {
+            "item": "hops",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "bottle",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "stout",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "malt",
+            "quantity": 70
+          },
+          {
+            "item": "hops",
+            "quantity": 35
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "bottle",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 48
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cider",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "apples",
+            "quantity": 100
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "bottle",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "pharmaceutical_lab": {
+    "name": "Pharmaceutical Laboratory",
+    "description": "Research facility synthesizing medicines, vitamins, and health products.",
+    "startup_cost": 120000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 500.0,
+    "allowed_terrain": [
+      "urban"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "active_ingredient",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "medicine",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "active_ingredient",
+            "quantity": 30
+          },
+          {
+            "item": "gelatin",
+            "quantity": 15
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "painkillers",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "active_ingredient",
+            "quantity": 25
+          },
+          {
+            "item": "gelatin",
+            "quantity": 20
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "vitamins",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "oranges",
+            "quantity": 40
+          },
+          {
+            "item": "carrots",
+            "quantity": 30
+          },
+          {
+            "item": "gelatin",
+            "quantity": 25
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "cough_syrup",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "caramel",
+            "quantity": 25
+          },
+          {
+            "item": "honey",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "bottle",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "antiseptic",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "bottle",
+            "quantity": 90
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "bandage",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "cotton",
+            "quantity": 50
+          },
+          {
+            "item": "antiseptic",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "ointment",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "lard",
+            "quantity": 25
+          },
+          {
+            "item": "active_ingredient",
+            "quantity": 15
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 22
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "publishing_house": {
+    "name": "Publishing House",
+    "description": "Prints newspapers, magazines, novels, and textbooks.",
+    "startup_cost": 45000,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 180.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "newspaper",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "ink",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "magazine",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 150
+          },
+          {
+            "item": "ink",
+            "quantity": 40
+          },
+          {
+            "item": "glue",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 45
+          }
+        ]
+      },
+      {
+        "output_item": "novel",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "ink",
+            "quantity": 25
+          },
+          {
+            "item": "glue",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          }
+        ]
+      },
+      {
+        "output_item": "textbook",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 500
+          },
+          {
+            "item": "ink",
+            "quantity": 35
+          },
+          {
+            "item": "glue",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      }
+    ]
+  },
+  "gourmet_kitchen": {
+    "name": "Gourmet Kitchen",
+    "description": "Produces specialty duck and pork dishes for fine dining.",
+    "startup_cost": 25000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 140.0,
+    "allowed_terrain": [
+      "urban",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "duck_confit",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "duck_meat",
+            "quantity": 25
+          },
+          {
+            "item": "lard",
+            "quantity": 15
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "onions",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "pate",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "duck_meat",
+            "quantity": 20
+          },
+          {
+            "item": "pork",
+            "quantity": 15
+          },
+          {
+            "item": "butter",
+            "quantity": 10
+          },
+          {
+            "item": "onions",
+            "quantity": 8
+          },
+          {
+            "item": "cream",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "jar",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "coffeehouse_production": {
+    "name": "Coffee & Tea Production",
+    "description": "Prepares espresso drinks, teas, and hot beverages for retail.",
+    "startup_cost": 12000,
+    "cycles_to_complete": 30,
+    "base_wage_cost": 70.0,
+    "allowed_terrain": [
+      "urban",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "espresso",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "ground_coffee",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "latte",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "espresso",
+            "quantity": 40
+          },
+          {
+            "item": "milk",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cappuccino",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "espresso",
+            "quantity": 35
+          },
+          {
+            "item": "milk",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 18
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "hot_chocolate",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "chocolate",
+            "quantity": 20
+          },
+          {
+            "item": "milk",
+            "quantity": 50
+          },
+          {
+            "item": "sugar",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 18
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tea",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "tea_leaves",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "iced_tea",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "tea_leaves",
+            "quantity": 35
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "auto_parts_factory": {
+    "name": "Auto Parts Factory",
+    "description": "Manufactures tires, glass, batteries, and automotive components.",
+    "startup_cost": 150000,
+    "cycles_to_complete": 140,
+    "base_wage_cost": 380.0,
+    "allowed_terrain": [
+      "prairie",
+      "desert"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tires",
+        "output_qty": 24,
+        "inputs": [
+          {
+            "item": "rubber",
+            "quantity": 60
+          },
+          {
+            "item": "iron",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "windshield",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 50
+          },
+          {
+            "item": "rubber",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "headlights",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 25
+          },
+          {
+            "item": "copper",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 45
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "car_battery",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "lead",
+            "quantity": 30
+          },
+          {
+            "item": "copper",
+            "quantity": 15
+          },
+          {
+            "item": "rubber",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 55
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "brake_pads",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 35
+          },
+          {
+            "item": "rubber",
+            "quantity": 15
+          },
+          {
+            "item": "copper",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "radiator",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "copper",
+            "quantity": 30
+          },
+          {
+            "item": "iron",
+            "quantity": 20
+          },
+          {
+            "item": "rubber",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 55
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "spark_plugs",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "copper",
+            "quantity": 20
+          },
+          {
+            "item": "iron",
+            "quantity": 15
+          },
+          {
+            "item": "ceramic",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "exhaust",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 50
+          },
+          {
+            "item": "copper",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "fuel_tank",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 40
+          },
+          {
+            "item": "rubber",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 55
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "engine_plant": {
+    "name": "Engine Manufacturing Plant",
+    "description": "Heavy industry producing engine blocks, complete engines, and transmissions.",
+    "startup_cost": 220000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 600.0,
+    "allowed_terrain": [
+      "prairie",
+      "desert"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "engine_block",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 100
+          },
+          {
+            "item": "copper",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "engine",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "engine_block",
+            "quantity": 8
+          },
+          {
+            "item": "spark_plugs",
+            "quantity": 32
+          },
+          {
+            "item": "copper",
+            "quantity": 25
+          },
+          {
+            "item": "rubber",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "transmission",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 80
+          },
+          {
+            "item": "copper",
+            "quantity": 15
+          },
+          {
+            "item": "oil",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "chassis_factory": {
+    "name": "Chassis & Interior Factory",
+    "description": "Manufactures vehicle frames, seats, steering wheels, and interior components.",
+    "startup_cost": 180000,
+    "cycles_to_complete": 160,
+    "base_wage_cost": 480.0,
+    "allowed_terrain": [
+      "prairie",
+      "desert"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "chassis",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 150
+          },
+          {
+            "item": "rubber",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "car_seat",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "leather",
+            "quantity": 25
+          },
+          {
+            "item": "polyester",
+            "quantity": 20
+          },
+          {
+            "item": "iron",
+            "quantity": 15
+          },
+          {
+            "item": "feathers",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "steering_wheel",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "leather",
+            "quantity": 12
+          },
+          {
+            "item": "iron",
+            "quantity": 8
+          },
+          {
+            "item": "copper",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "auto_assembly": {
+    "name": "Automobile Assembly Plant",
+    "description": "Final assembly producing sedans, trucks, and motorcycles.",
+    "startup_cost": 400000,
+    "cycles_to_complete": 300,
+    "base_wage_cost": 950.0,
+    "allowed_terrain": [
+      "prairie",
+      "desert"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "car",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "chassis",
+            "quantity": 4
+          },
+          {
+            "item": "engine",
+            "quantity": 4
+          },
+          {
+            "item": "transmission",
+            "quantity": 4
+          },
+          {
+            "item": "tires",
+            "quantity": 16
+          },
+          {
+            "item": "windshield",
+            "quantity": 4
+          },
+          {
+            "item": "headlights",
+            "quantity": 8
+          },
+          {
+            "item": "car_battery",
+            "quantity": 4
+          },
+          {
+            "item": "radiator",
+            "quantity": 4
+          },
+          {
+            "item": "exhaust",
+            "quantity": 4
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 4
+          },
+          {
+            "item": "brake_pads",
+            "quantity": 16
+          },
+          {
+            "item": "car_seat",
+            "quantity": 16
+          },
+          {
+            "item": "steering_wheel",
+            "quantity": 4
+          },
+          {
+            "item": "glass",
+            "quantity": 20
+          },
+          {
+            "item": "polyester",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ]
+      },
+      {
+        "output_item": "truck",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "chassis",
+            "quantity": 3
+          },
+          {
+            "item": "engine",
+            "quantity": 3
+          },
+          {
+            "item": "transmission",
+            "quantity": 3
+          },
+          {
+            "item": "tires",
+            "quantity": 12
+          },
+          {
+            "item": "windshield",
+            "quantity": 3
+          },
+          {
+            "item": "headlights",
+            "quantity": 6
+          },
+          {
+            "item": "car_battery",
+            "quantity": 3
+          },
+          {
+            "item": "radiator",
+            "quantity": 3
+          },
+          {
+            "item": "exhaust",
+            "quantity": 3
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 3
+          },
+          {
+            "item": "brake_pads",
+            "quantity": 12
+          },
+          {
+            "item": "car_seat",
+            "quantity": 6
+          },
+          {
+            "item": "steering_wheel",
+            "quantity": 3
+          },
+          {
+            "item": "iron",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 350
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ]
+      },
+      {
+        "output_item": "motorcycle",
+        "output_qty": 6,
+        "inputs": [
+          {
+            "item": "engine",
+            "quantity": 6
+          },
+          {
+            "item": "transmission",
+            "quantity": 6
+          },
+          {
+            "item": "tires",
+            "quantity": 12
+          },
+          {
+            "item": "headlights",
+            "quantity": 6
+          },
+          {
+            "item": "car_battery",
+            "quantity": 6
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 6
+          },
+          {
+            "item": "brake_pads",
+            "quantity": 12
+          },
+          {
+            "item": "leather",
+            "quantity": 20
+          },
+          {
+            "item": "iron",
+            "quantity": 60
+          },
+          {
+            "item": "rubber",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      }
+    ]
+  },
+  "luxury_auto_plant": {
+    "name": "Luxury Automobile Plant",
+    "description": "Premium vehicle assembly for luxury sedans.",
+    "startup_cost": 550000,
+    "cycles_to_complete": 400,
+    "base_wage_cost": 1300.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "luxury_car",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "chassis",
+            "quantity": 2
+          },
+          {
+            "item": "engine",
+            "quantity": 4
+          },
+          {
+            "item": "transmission",
+            "quantity": 2
+          },
+          {
+            "item": "tires",
+            "quantity": 8
+          },
+          {
+            "item": "windshield",
+            "quantity": 2
+          },
+          {
+            "item": "headlights",
+            "quantity": 4
+          },
+          {
+            "item": "car_battery",
+            "quantity": 2
+          },
+          {
+            "item": "radiator",
+            "quantity": 4
+          },
+          {
+            "item": "exhaust",
+            "quantity": 2
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 2
+          },
+          {
+            "item": "brake_pads",
+            "quantity": 8
+          },
+          {
+            "item": "car_seat",
+            "quantity": 8
+          },
+          {
+            "item": "steering_wheel",
+            "quantity": 2
+          },
+          {
+            "item": "leather",
+            "quantity": 80
+          },
+          {
+            "item": "silk",
+            "quantity": 10
+          },
+          {
+            "item": "glass",
+            "quantity": 40
+          },
+          {
+            "item": "copper",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 450
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      }
+    ]
+  },
+  "marine_factory": {
+    "name": "Marine Manufacturing",
+    "description": "Produces boat hulls, motors, and propellers.",
+    "startup_cost": 120000,
+    "cycles_to_complete": 150,
+    "base_wage_cost": 320.0,
+    "allowed_terrain": [
+      "marsh",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "riverside",
+      "lakeside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "hull",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "fiberglass",
+            "quantity": 50
+          },
+          {
+            "item": "lumber",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "outboard_motor",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "engine_block",
+            "quantity": 5
+          },
+          {
+            "item": "copper",
+            "quantity": 20
+          },
+          {
+            "item": "iron",
+            "quantity": 30
+          },
+          {
+            "item": "rubber",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 90
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "propeller",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "brass",
+            "quantity": 40
+          },
+          {
+            "item": "iron",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "boat_yard": {
+    "name": "Boat Yard",
+    "description": "Assembles motorboats, fishing boats, and luxury yachts.",
+    "startup_cost": 200000,
+    "cycles_to_complete": 250,
+    "base_wage_cost": 450.0,
+    "allowed_terrain": [
+      "marsh",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "riverside",
+      "lakeside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "boat",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 3
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 3
+          },
+          {
+            "item": "propeller",
+            "quantity": 3
+          },
+          {
+            "item": "glass",
+            "quantity": 15
+          },
+          {
+            "item": "leather",
+            "quantity": 20
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 3
+          },
+          {
+            "item": "car_battery",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "fishing_boat",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 4
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 4
+          },
+          {
+            "item": "propeller",
+            "quantity": 4
+          },
+          {
+            "item": "iron",
+            "quantity": 50
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 4
+          },
+          {
+            "item": "car_battery",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "yacht",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 2
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 2
+          },
+          {
+            "item": "propeller",
+            "quantity": 2
+          },
+          {
+            "item": "glass",
+            "quantity": 40
+          },
+          {
+            "item": "leather",
+            "quantity": 60
+          },
+          {
+            "item": "silk",
+            "quantity": 15
+          },
+          {
+            "item": "lumber",
+            "quantity": 50
+          },
+          {
+            "item": "brass",
+            "quantity": 30
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 2
+          },
+          {
+            "item": "car_battery",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      }
+    ]
+  },
+  "ceramics_factory": {
+    "name": "Ceramics Factory",
+    "description": "Produces ceramic components for industrial use.",
+    "startup_cost": 18000,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 70.0,
+    "allowed_terrain": [
+      "prairie",
+      "desert",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "ceramic",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "sand",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "lead_mine": {
+    "name": "Lead Mine",
+    "description": "Extracts lead ore for battery and industrial production.",
+    "startup_cost": 90000,
+    "cycles_to_complete": 180,
+    "base_wage_cost": 400.0,
+    "allowed_terrain": [
+      "mountain",
+      "hills",
+      "desert"
+    ],
+    "allowed_proximity": [
+      "remote",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "lead_ore",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lead",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "lead_ore",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "candy_store": {
+    "name": "Sweet Tooth Candy Shop",
+    "class": "retail",
+    "description": "Colorful retail shop selling candies, chocolates, and sweet treats.",
+    "startup_cost": 12000,
+    "cycles_to_complete": 35,
+    "base_wage_cost": 75.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "island"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "coastal"
+    ],
+    "products": {
+      "chocolate": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
+      },
+      "candy_bar": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.07
+      },
+      "lollipop": {
+        "elasticity": 1.5,
+        "base_sale_chance": 0.09
+      },
+      "gummy_bears": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.07
+      },
+      "hard_candy": {
+        "elasticity": 1.4,
+        "base_sale_chance": 0.08
+      },
+      "taffy": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.06
+      },
+      "fudge": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.05
+      },
+      "truffles": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.03
+      },
+      "toffee": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "licorice": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.05
+      },
+      "marshmallow": {
+        "elasticity": 1.4,
+        "base_sale_chance": 0.07
+      },
+      "peppermint": {
+        "elasticity": 1.5,
+        "base_sale_chance": 0.08
+      },
+      "caramel": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
+      },
+      "ice_cream": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.08
+      },
+      "cookie": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.07
+      },
+      "brownie": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.05
+      }
+    }
+  },
+  "pharmacy": {
+    "name": "Community Pharmacy",
+    "class": "retail",
+    "description": "Health and wellness retailer with essential medicines and supplements.",
+    "startup_cost": 22000,
+    "cycles_to_complete": 50,
+    "base_wage_cost": 180.0,
+    "allowed_terrain": [
+      "urban"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "products": {
+      "medicine": {
+        "elasticity": 0.25,
+        "base_sale_chance": 0.05
+      },
+      "bandage": {
+        "elasticity": 0.35,
+        "base_sale_chance": 0.06
+      },
+      "painkillers": {
+        "elasticity": 0.3,
+        "base_sale_chance": 0.06
+      },
+      "vitamins": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "cough_syrup": {
+        "elasticity": 0.35,
+        "base_sale_chance": 0.05
+      },
+      "antiseptic": {
+        "elasticity": 0.4,
+        "base_sale_chance": 0.05
+      },
+      "ointment": {
+        "elasticity": 0.45,
+        "base_sale_chance": 0.04
+      }
+    }
+  },
+  "coffeehouse": {
+    "name": "Artisan Coffeehouse",
+    "class": "retail",
+    "description": "Trendy caf\u00e9 serving espresso drinks, teas, and pastries.",
+    "startup_cost": 16000,
+    "cycles_to_complete": 30,
+    "base_wage_cost": 100.0,
+    "allowed_terrain": [
+      "urban",
+      "hills",
+      "island"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "lakeside"
+    ],
+    "products": {
+      "espresso": {
+        "elasticity": 0.55,
+        "base_sale_chance": 0.12
+      },
+      "latte": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.1
+      },
+      "cappuccino": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.09
+      },
+      "hot_chocolate": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.07
+      },
+      "tea": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.08
+      },
+      "iced_tea": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.07
+      },
+      "croissant": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.07
+      },
+      "donut": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.08
+      },
+      "muffin": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.07
+      },
+      "cookie": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.08
+      },
+      "cinnamon_roll": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.05
+      }
+    }
+  },
+  "bakery_retail": {
+    "name": "Neighborhood Bakery",
+    "class": "retail",
+    "description": "Fresh-baked bread, pastries, and cakes sold daily.",
+    "startup_cost": 14000,
+    "cycles_to_complete": 35,
+    "base_wage_cost": 90.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "products": {
+      "bread": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.1
+      },
+      "baguette": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.08
+      },
+      "croissant": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.07
+      },
+      "donut": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.09
+      },
+      "muffin": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.08
+      },
+      "cinnamon_roll": {
+        "elasticity": 0.95,
+        "base_sale_chance": 0.06
+      },
+      "pretzel": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.07
+      },
+      "cookie": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.08
+      },
+      "brownie": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.06
+      },
+      "cherry_pie": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.04
+      },
+      "apple_pie": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.04
+      },
+      "chocolate_cake": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.03
+      },
+      "cheesecake": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.03
+      }
+    }
+  },
+  "wine_bar": {
+    "name": "Wine & Spirits Bar",
+    "class": "retail",
+    "description": "Upscale establishment serving fine wines and premium spirits.",
+    "startup_cost": 30000,
+    "cycles_to_complete": 45,
+    "base_wage_cost": 140.0,
+    "allowed_terrain": [
+      "urban",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "lakeside"
+    ],
+    "products": {
+      "red_wine": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.05
+      },
+      "white_wine": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.05
+      },
+      "rose_wine": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.04
+      },
+      "champagne": {
+        "elasticity": 0.55,
+        "base_sale_chance": 0.03
+      },
+      "whiskey": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.04
+      },
+      "vodka": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.05
+      },
+      "gin": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.04
+      },
+      "rum": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.04
+      },
+      "brandy": {
+        "elasticity": 0.55,
+        "base_sale_chance": 0.03
+      },
+      "tequila": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.04
+      }
+    }
+  },
+  "pub": {
+    "name": "Neighborhood Pub",
+    "class": "retail",
+    "description": "Friendly local bar serving craft beers and casual drinks.",
+    "startup_cost": 18000,
+    "cycles_to_complete": 40,
+    "base_wage_cost": 95.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "products": {
+      "beer": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.09
+      },
+      "lager": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.1
+      },
+      "stout": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.06
+      },
+      "cider": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.07
+      },
+      "whiskey": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.05
+      },
+      "vodka": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.06
+      },
+      "rum": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.05
+      },
+      "moonshine": {
+        "elasticity": 0.95,
+        "base_sale_chance": 0.04
+      }
+    }
+  },
+  "auto_dealership": {
+    "name": "Auto Dealership",
+    "class": "retail",
+    "description": "Vehicle showroom selling cars, trucks, and motorcycles.",
+    "startup_cost": 180000,
+    "cycles_to_complete": 150,
+    "base_wage_cost": 550.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "products": {
+      "car": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.006
+      },
+      "truck": {
+        "elasticity": 0.95,
+        "base_sale_chance": 0.005
+      },
+      "motorcycle": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.008
+      }
+    }
+  },
+  "luxury_showroom": {
+    "name": "Luxury Auto Showroom",
+    "class": "retail",
+    "description": "Premium dealership for luxury vehicles.",
+    "startup_cost": 450000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 900.0,
+    "allowed_terrain": [
+      "urban"
+    ],
+    "allowed_proximity": [
+      "urban"
+    ],
+    "products": {
+      "luxury_car": {
+        "elasticity": 0.5,
+        "base_sale_chance": 0.002
+      }
+    }
+  },
+  "marina": {
+    "name": "Marina & Boat Sales",
+    "class": "retail",
+    "description": "Waterfront dealership selling boats and yachts.",
+    "startup_cost": 250000,
+    "cycles_to_complete": 180,
+    "base_wage_cost": 500.0,
+    "allowed_terrain": [
+      "marsh",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "lakeside",
+      "riverside"
+    ],
+    "products": {
+      "boat": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.004
+      },
+      "fishing_boat": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.005
+      },
+      "yacht": {
+        "elasticity": 0.4,
+        "base_sale_chance": 0.001
+      }
+    }
+  },
+  "bookstore": {
+    "name": "Bookstore & Newsstand",
+    "class": "retail",
+    "description": "Sells books, magazines, and newspapers.",
+    "startup_cost": 10000,
+    "cycles_to_complete": 40,
+    "base_wage_cost": 70.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "products": {
+      "newspaper": {
+        "elasticity": 1.5,
+        "base_sale_chance": 0.15
+      },
+      "magazine": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.08
+      },
+      "novel": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "textbook": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.02
+      },
+      "religious_book": {
+        "elasticity": 0.3,
+        "base_sale_chance": 0.015
+      }
+    }
+  },
+  "butcher_shop": {
+    "name": "Butcher Shop & Deli",
+    "class": "retail",
+    "description": "Fresh meats, sausages, and specialty cuts.",
+    "startup_cost": 15000,
+    "cycles_to_complete": 45,
+    "base_wage_cost": 110.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "products": {
+      "beef": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.06
+      },
+      "pork": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.06
+      },
+      "duck_meat": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.04
+      },
+      "sausage": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.07
+      },
+      "bacon": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.08
+      }
+    }
+  },
+  "gourmet_restaurant": {
+    "name": "Fine Dining Restaurant",
+    "class": "retail",
+    "description": "Upscale restaurant serving gourmet prepared dishes.",
+    "startup_cost": 35000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 200.0,
+    "allowed_terrain": [
+      "urban",
+      "hills",
+      "island"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "lakeside"
+    ],
+    "products": {
+      "stew": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.05
+      },
+      "cider_soup": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.04
+      },
+      "duck_confit": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.03
+      },
+      "pate": {
+        "elasticity": 0.55,
+        "base_sale_chance": 0.025
+      },
+      "cheesecake": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.04
+      },
+      "red_wine": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.05
+      },
+      "champagne": {
+        "elasticity": 0.5,
+        "base_sale_chance": 0.03
+      }
+    }
+  },
+  "home_goods_store": {
+    "name": "Home & Bedding Store",
+    "class": "retail",
+    "description": "Pillows, comforters, and household textiles.",
+    "startup_cost": 20000,
+    "cycles_to_complete": 55,
+    "base_wage_cost": 100.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "products": {
+      "pillow": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "comforter": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.025
+      }
+    }
+  },
+  "farmers_market": {
+    "name": "Farmers Market",
+    "class": "retail",
+    "description": "Fresh eggs, honey, and artisan farm products.",
+    "startup_cost": 8000,
+    "cycles_to_complete": 30,
+    "base_wage_cost": 60.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "savanna"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban",
+      "remote"
+    ],
+    "products": {
+      "eggs": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.1
+      },
+      "honey": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.06
+      },
+      "milk": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.08
+      },
+      "butter": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.07
+      },
+      "cream": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.05
+      },
+      "cherries": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.05
+      },
+      "apples": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.06
+      },
+      "grapes": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      }
+    }
+  },
+
   "fashion_outlet": {
     "name": "Fashion Outlet",
     "class": "retail",

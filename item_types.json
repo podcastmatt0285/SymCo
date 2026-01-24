@@ -1,4 +1,609 @@
 {
+  "grapes": {
+    "name": "Wine Grapes",
+    "description": "Premium varietal grapes for winemaking",
+    "category": "fruits"
+  },
+  "grape_seeds": {
+    "name": "Grape Seeds",
+    "description": "Seeds for vineyard propagation",
+    "category": "seeds"
+  },
+  "coffee_beans": {
+    "name": "Coffee Beans",
+    "description": "Green arabica beans ready for roasting",
+    "category": "crops"
+  },
+  "coffee_seeds": {
+    "name": "Coffee Seeds",
+    "description": "Seeds for coffee plant cultivation",
+    "category": "seeds"
+  },
+  "tea_leaves": {
+    "name": "Tea Leaves",
+    "description": "Fresh picked tea leaves",
+    "category": "crops"
+  },
+  "tea_seeds": {
+    "name": "Tea Seeds",
+    "description": "Seeds for tea plant cultivation",
+    "category": "seeds"
+  },
+  "hops": {
+    "name": "Hops",
+    "description": "Aromatic flowers for brewing",
+    "category": "crops"
+  },
+  "barley": {
+    "name": "Barley",
+    "description": "Cereal grain for malting and feed",
+    "category": "crops"
+  },
+  "barley_seeds": {
+    "name": "Barley Seeds",
+    "description": "Seeds for barley cultivation",
+    "category": "seeds"
+  },
+  "wheat_seeds": {
+    "name": "Wheat Seeds",
+    "description": "Seeds for wheat cultivation",
+    "category": "seeds"
+  },
+  "cocoa_seeds": {
+    "name": "Cocoa Seeds",
+    "description": "Seeds for cacao tree cultivation",
+    "category": "seeds"
+  },
+  "agave": {
+    "name": "Blue Agave",
+    "description": "Desert succulent for tequila production",
+    "category": "crops"
+  },
+  "juniper_berries": {
+    "name": "Juniper Berries",
+    "description": "Aromatic berries for gin production",
+    "category": "crops"
+  },
+  "vanilla_beans": {
+    "name": "Vanilla Beans",
+    "description": "Aromatic flavoring pods",
+    "category": "crops"
+  },
+  "cinnamon": {
+    "name": "Cinnamon",
+    "description": "Sweet aromatic bark spice",
+    "category": "crops"
+  },
+  "mint": {
+    "name": "Fresh Mint",
+    "description": "Aromatic herb for flavoring",
+    "category": "crops"
+  },
+  "corn": {
+    "name": "Corn",
+    "description": "Versatile grain crop",
+    "category": "crops"
+  },
+  "corn_seeds": {
+    "name": "Corn Seeds",
+    "description": "Seeds for corn cultivation",
+    "category": "seeds"
+  },
+  "eggs": {
+    "name": "Eggs",
+    "description": "Fresh poultry eggs",
+    "category": "food"
+  },
+  "honey": {
+    "name": "Honey",
+    "description": "Natural sweetener from bees",
+    "category": "food"
+  },
+  "salt": {
+    "name": "Salt",
+    "description": "Essential mineral for food and industry",
+    "category": "minerals"
+  },
+  "yeast": {
+    "name": "Baker's Yeast",
+    "description": "Living culture for leavening and fermentation",
+    "category": "ingredients"
+  },
+  "malt": {
+    "name": "Malted Barley",
+    "description": "Processed grain for brewing and distilling",
+    "category": "ingredients"
+  },
+  "roasted_coffee": {
+    "name": "Roasted Coffee",
+    "description": "Roasted beans ready for grinding",
+    "category": "ingredients"
+  },
+  "ground_coffee": {
+    "name": "Ground Coffee",
+    "description": "Ready-to-brew coffee grounds",
+    "category": "ingredients"
+  },
+  "cocoa_powder": {
+    "name": "Cocoa Powder",
+    "description": "Processed cacao for baking",
+    "category": "ingredients"
+  },
+  "cocoa_butter": {
+    "name": "Cocoa Butter",
+    "description": "Fat extracted from cacao beans",
+    "category": "ingredients"
+  },
+  "dough": {
+    "name": "Raw Dough",
+    "description": "Prepared bread dough",
+    "category": "ingredients"
+  },
+  "pastry_dough": {
+    "name": "Pastry Dough",
+    "description": "Buttery laminated dough",
+    "category": "ingredients"
+  },
+  "pie_crust": {
+    "name": "Pie Crust",
+    "description": "Pre-made pastry shell",
+    "category": "ingredients"
+  },
+  "fruit_filling": {
+    "name": "Fruit Filling",
+    "description": "Cooked sweetened fruit for pies",
+    "category": "ingredients"
+  },
+  "frosting": {
+    "name": "Frosting",
+    "description": "Sweet cake topping",
+    "category": "ingredients"
+  },
+  "gelatin": {
+    "name": "Gelatin",
+    "description": "Gelling agent from animal collagen",
+    "category": "ingredients"
+  },
+  "corn_syrup": {
+    "name": "Corn Syrup",
+    "description": "Sweet liquid sugar from corn",
+    "category": "ingredients"
+  },
+  "ink": {
+    "name": "Printing Ink",
+    "description": "Ink for publishing",
+    "category": "industrial"
+  },
+  "baguette": {
+    "name": "French Baguette",
+    "description": "Crusty artisan bread",
+    "category": "food"
+  },
+  "croissant": {
+    "name": "Butter Croissant",
+    "description": "Flaky French pastry",
+    "category": "food"
+  },
+  "donut": {
+    "name": "Glazed Donut",
+    "description": "Fried ring pastry",
+    "category": "food"
+  },
+  "muffin": {
+    "name": "Muffin",
+    "description": "Sweet breakfast cake",
+    "category": "food"
+  },
+  "cinnamon_roll": {
+    "name": "Cinnamon Roll",
+    "description": "Spiraled sweet bread",
+    "category": "food"
+  },
+  "cookie": {
+    "name": "Cookie",
+    "description": "Baked sweet treat",
+    "category": "food"
+  },
+  "brownie": {
+    "name": "Fudge Brownie",
+    "description": "Dense chocolate square",
+    "category": "food"
+  },
+  "cherry_pie": {
+    "name": "Cherry Pie",
+    "description": "Classic fruit pie",
+    "category": "prepared_food"
+  },
+  "chocolate_cake": {
+    "name": "Chocolate Cake",
+    "description": "Layered celebration cake",
+    "category": "prepared_food"
+  },
+  "cheesecake": {
+    "name": "Cheesecake",
+    "description": "Rich cream cheese dessert",
+    "category": "prepared_food"
+  },
+  "pretzel": {
+    "name": "Soft Pretzel",
+    "description": "Salted twisted bread",
+    "category": "food"
+  },
+  "gummy_bears": {
+    "name": "Gummy Bears",
+    "description": "Chewy fruit candy",
+    "category": "food"
+  },
+  "hard_candy": {
+    "name": "Hard Candy",
+    "description": "Classic boiled sweets",
+    "category": "food"
+  },
+  "taffy": {
+    "name": "Salt Water Taffy",
+    "description": "Chewy pulled candy",
+    "category": "food"
+  },
+  "fudge": {
+    "name": "Chocolate Fudge",
+    "description": "Dense chocolate candy",
+    "category": "food"
+  },
+  "truffles": {
+    "name": "Chocolate Truffles",
+    "description": "Premium chocolate confection",
+    "category": "food"
+  },
+  "toffee": {
+    "name": "English Toffee",
+    "description": "Buttery hard candy",
+    "category": "food"
+  },
+  "licorice": {
+    "name": "Licorice",
+    "description": "Chewy anise candy",
+    "category": "food"
+  },
+  "marshmallow": {
+    "name": "Marshmallows",
+    "description": "Fluffy sugar confection",
+    "category": "food"
+  },
+  "peppermint": {
+    "name": "Peppermints",
+    "description": "Refreshing mint candy",
+    "category": "food"
+  },
+  "espresso": {
+    "name": "Espresso",
+    "description": "Concentrated coffee shot",
+    "category": "beverage"
+  },
+  "latte": {
+    "name": "Caffè Latte",
+    "description": "Espresso with steamed milk",
+    "category": "beverage"
+  },
+  "cappuccino": {
+    "name": "Cappuccino",
+    "description": "Espresso with foam",
+    "category": "beverage"
+  },
+  "hot_chocolate": {
+    "name": "Hot Chocolate",
+    "description": "Rich cocoa drink",
+    "category": "beverage"
+  },
+  "tea": {
+    "name": "Brewed Tea",
+    "description": "Hot steeped tea",
+    "category": "beverage"
+  },
+  "iced_tea": {
+    "name": "Iced Tea",
+    "description": "Chilled sweet tea",
+    "category": "beverage"
+  },
+  "vodka": {
+    "name": "Vodka",
+    "description": "Neutral grain spirit",
+    "category": "alcohol"
+  },
+  "whiskey": {
+    "name": "Whiskey",
+    "description": "Oak-aged grain spirit",
+    "category": "alcohol"
+  },
+  "rum": {
+    "name": "Aged Rum",
+    "description": "Molasses-based spirit",
+    "category": "alcohol"
+  },
+  "gin": {
+    "name": "London Dry Gin",
+    "description": "Juniper-flavored spirit",
+    "category": "alcohol"
+  },
+  "tequila": {
+    "name": "Tequila",
+    "description": "Agave spirit",
+    "category": "alcohol"
+  },
+  "brandy": {
+    "name": "Brandy",
+    "description": "Distilled wine",
+    "category": "alcohol"
+  },
+  "moonshine": {
+    "name": "Moonshine",
+    "description": "Unaged corn whiskey",
+    "category": "alcohol"
+  },
+  "red_wine": {
+    "name": "Red Wine",
+    "description": "Full-bodied cabernet",
+    "category": "alcohol"
+  },
+  "white_wine": {
+    "name": "White Wine",
+    "description": "Crisp chardonnay",
+    "category": "alcohol"
+  },
+  "rose_wine": {
+    "name": "Rosé Wine",
+    "description": "Light pink wine",
+    "category": "alcohol"
+  },
+  "champagne": {
+    "name": "Champagne",
+    "description": "Sparkling celebration wine",
+    "category": "alcohol"
+  },
+  "beer": {
+    "name": "Craft Beer",
+    "description": "Hoppy ale",
+    "category": "alcohol"
+  },
+  "lager": {
+    "name": "Lager",
+    "description": "Crisp pilsner",
+    "category": "alcohol"
+  },
+  "stout": {
+    "name": "Stout",
+    "description": "Dark roasted beer",
+    "category": "alcohol"
+  },
+  "cider": {
+    "name": "Hard Cider",
+    "description": "Fermented apple beverage",
+    "category": "alcohol"
+  },
+  "painkillers": {
+    "name": "Pain Relievers",
+    "description": "Over-the-counter analgesic",
+    "category": "health"
+  },
+  "vitamins": {
+    "name": "Vitamins",
+    "description": "Daily supplements",
+    "category": "health"
+  },
+  "cough_syrup": {
+    "name": "Cough Syrup",
+    "description": "Liquid cold medicine",
+    "category": "health"
+  },
+  "antiseptic": {
+    "name": "Antiseptic",
+    "description": "Wound cleaner",
+    "category": "health"
+  },
+  "ointment": {
+    "name": "Medicinal Ointment",
+    "description": "Topical treatment cream",
+    "category": "health"
+  },
+  "pill_bottle": {
+    "name": "Pill Bottles",
+    "description": "Pharmaceutical containers",
+    "category": "packaging"
+  },
+  "active_ingredient": {
+    "name": "Active Pharmaceutical Ingredient",
+    "description": "Synthesized medicinal compound",
+    "category": "ingredients"
+  },
+  "engine": {
+    "name": "Combustion Engine",
+    "description": "Vehicle power unit",
+    "category": "auto_parts"
+  },
+  "engine_block": {
+    "name": "Engine Block",
+    "description": "Core engine casting",
+    "category": "auto_parts"
+  },
+  "transmission": {
+    "name": "Transmission",
+    "description": "Vehicle gear system",
+    "category": "auto_parts"
+  },
+  "tires": {
+    "name": "Rubber Tires",
+    "description": "Set of 4 vehicle tires",
+    "category": "auto_parts"
+  },
+  "chassis": {
+    "name": "Vehicle Chassis",
+    "description": "Structural frame",
+    "category": "auto_parts"
+  },
+  "windshield": {
+    "name": "Windshield",
+    "description": "Safety glass panel",
+    "category": "auto_parts"
+  },
+  "headlights": {
+    "name": "Headlight Assembly",
+    "description": "Front lighting pair",
+    "category": "auto_parts"
+  },
+  "car_battery": {
+    "name": "Car Battery",
+    "description": "12V starter battery",
+    "category": "auto_parts"
+  },
+  "exhaust": {
+    "name": "Exhaust System",
+    "description": "Emissions control",
+    "category": "auto_parts"
+  },
+  "brake_pads": {
+    "name": "Brake Pads",
+    "description": "Stopping system",
+    "category": "auto_parts"
+  },
+  "car_seat": {
+    "name": "Vehicle Seat",
+    "description": "Upholstered seat",
+    "category": "auto_parts"
+  },
+  "steering_wheel": {
+    "name": "Steering Wheel",
+    "description": "Driver control",
+    "category": "auto_parts"
+  },
+  "radiator": {
+    "name": "Radiator",
+    "description": "Cooling system",
+    "category": "auto_parts"
+  },
+  "spark_plugs": {
+    "name": "Spark Plugs",
+    "description": "Ignition components",
+    "category": "auto_parts"
+  },
+  "fuel_tank": {
+    "name": "Fuel Tank",
+    "description": "Gas reservoir",
+    "category": "auto_parts"
+  },
+  "truck": {
+    "name": "Pickup Truck",
+    "description": "Utility work vehicle",
+    "category": "vehicle"
+  },
+  "luxury_car": {
+    "name": "Luxury Sedan",
+    "description": "Premium automobile",
+    "category": "vehicle"
+  },
+  "motorcycle": {
+    "name": "Motorcycle",
+    "description": "Two-wheeled transport",
+    "category": "vehicle"
+  },
+  "hull": {
+    "name": "Boat Hull",
+    "description": "Fiberglass boat body",
+    "category": "marine_parts"
+  },
+  "outboard_motor": {
+    "name": "Outboard Motor",
+    "description": "Boat propulsion unit",
+    "category": "marine_parts"
+  },
+  "propeller": {
+    "name": "Propeller",
+    "description": "Marine propulsion blade",
+    "category": "marine_parts"
+  },
+  "yacht": {
+    "name": "Luxury Yacht",
+    "description": "Premium watercraft",
+    "category": "vehicle"
+  },
+  "fishing_boat": {
+    "name": "Fishing Boat",
+    "description": "Commercial fishing vessel",
+    "category": "vehicle"
+  },
+  "fiberglass": {
+    "name": "Fiberglass",
+    "description": "Reinforced plastic composite",
+    "category": "industrial"
+  },
+  "lead": {
+    "name": "Lead",
+    "description": "Heavy metal for batteries",
+    "category": "metals"
+  },
+  "lead_ore": {
+    "name": "Lead Ore",
+    "description": "Raw lead from mines",
+    "category": "ore"
+  },
+  "bottle": {
+    "name": "Glass Bottles",
+    "description": "Container for beverages",
+    "category": "packaging"
+  },
+  "jar": {
+    "name": "Glass Jars",
+    "description": "Container for preserves",
+    "category": "packaging"
+  },
+  "newspaper": {
+    "name": "Daily Newspaper",
+    "description": "Current events publication",
+    "category": "media"
+  },
+  "textbook": {
+    "name": "Textbook",
+    "description": "Educational publication",
+    "category": "media"
+  },
+  "pillow": {
+    "name": "Feather Pillow",
+    "description": "Down-filled bedding",
+    "category": "home_goods"
+  },
+  "comforter": {
+    "name": "Down Comforter",
+    "description": "Feather-filled blanket",
+    "category": "home_goods"
+  },
+  "sausage": {
+    "name": "Sausage",
+    "description": "Processed pork links",
+    "category": "food"
+  },
+  "bacon": {
+    "name": "Bacon",
+    "description": "Cured pork belly",
+    "category": "food"
+  },
+  "duck_confit": {
+    "name": "Duck Confit",
+    "description": "Slow-cooked preserved duck",
+    "category": "prepared_food"
+  },
+  "pate": {
+    "name": "Pâté",
+    "description": "Rich liver spread",
+    "category": "prepared_food"
+  },
+  "wine_barrel": {
+    "name": "Wine Barrel",
+    "description": "Oak aging barrel",
+    "category": "industrial"
+  },
+  "ceramic": {
+    "name": "Ceramics",
+    "description": "Fired clay products",
+    "category": "industrial"
+  },
   "apple_seeds": {
     "name": "Apple Seeds",
     "description": "Seeds for growing apple trees",
@@ -17,6 +622,16 @@
   "oranges": {
     "name": "Oranges",
     "description": "Fresh oranges from the grove",
+    "category": "fruits"
+  },
+  "chocolate": {
+    "name": "Chocolate",
+    "description": "Delicious Food",
+    "category": "food"
+  },
+  "cocoa_beans": {
+    "name": "Cocoa Beans",
+    "description": "Fresh cocoa",
     "category": "fruits"
   },
   "potatoes": {
@@ -318,5 +933,125 @@
     "name": "Caramel",
     "description": "Confectionery product made by heating sugar.",
     "category": "food"
+  },
+  "pig": { 
+    "name": "Pig", 
+    "description": "Livestock for pork production", 
+    "category": "livestock" 
+  },
+  "duck": { 
+    "name": "Duck", 
+    "description": "Waterfowl for meat and feathers", 
+    "category": "livestock" 
+  },
+  "pork": { 
+    "name": "Pork", 
+    "description": "Fresh pork cuts", 
+    "category": "food" 
+  },
+  "duck_meat": { 
+    "name": "Duck Meat", 
+    "description": "Rich poultry meat", 
+    "category": "food" 
+  },
+  "feathers": { 
+    "name": "Feathers", 
+    "description": "Down feathers for upholstery", 
+    "category": "materials" 
+  },
+  "cherry_seeds": { 
+    "name": "Cherry Seeds", 
+    "description": "Seeds for cherry trees", 
+    "category": "seeds" 
+  },
+  "onion_seeds": { 
+    "name": "Onion Seeds", 
+    "description": "Seeds for planting onions", 
+    "category": "seeds" 
+  },
+  "cherries": { 
+    "name": "Cherries", 
+    "description": "Sweet red fruit", 
+    "category": "fruits" 
+  },
+  "onions": { 
+    "name": "Onions", 
+    "description": "Essential savory vegetable", 
+    "category": "vegetables" 
+  },
+  "wheat": { 
+    "name": "Wheat", 
+    "description": "Grain for baking", 
+    "category": "crops" 
+  },
+  "flour": { 
+    "name": "Flour", 
+    "description": "Milled wheat powder", 
+    "category": "food" 
+  },
+  "sand": { 
+    "name": "Silica Sand", 
+    "description": "Raw material for glass", 
+    "category": "ore" 
+  },
+  "glass": { 
+    "name": "Glass", 
+    "description": "Industrial glass sheets", 
+    "category": "industrial" 
+  },
+  "rubber": { 
+    "name": "Synthetic Rubber", 
+    "description": "Derived from oil for tires and seals", 
+    "category": "industrial" 
+  },
+  "car": { 
+    "name": "Sedan", 
+    "description": "Standard consumer vehicle", 
+    "category": "vehicle" 
+  },
+  "boat": { 
+    "name": "Motorboat", 
+    "description": "Recreational watercraft", 
+    "category": "vehicle" 
+  },
+  "candy_bar": { 
+    "name": "Chocolate Bar", 
+    "description": "Sugar and cocoa treat", 
+    "category": "food" 
+  },
+  "lollipop": { 
+    "name": "Lollipop", 
+    "description": "Hard candy on a stick", 
+    "category": "food" 
+  },
+  "apple_pie": { 
+    "name": "Apple Pie", 
+    "description": "Fresh baked pie", 
+    "category": "prepared_food" 
+  },
+  "bread": { 
+    "name": "Artisan Bread", 
+    "description": "Fresh baked loaf", 
+    "category": "food" 
+  },
+  "medicine": { 
+    "name": "Antibiotics", 
+    "description": "Standard medical supplies", 
+    "category": "health" 
+  },
+  "bandage": { 
+    "name": "Bandages", 
+    "description": "Cotton medical dressings", 
+    "category": "health" 
+  },
+  "magazine": { 
+    "name": "Lifestyle Magazine", 
+    "description": "Weekly glossy publication", 
+    "category": "media" 
+  },
+  "novel": { 
+    "name": "Mystery Novel", 
+    "description": "Paperback fiction", 
+    "category": "media" 
   }
 }
