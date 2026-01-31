@@ -1,0 +1,1427 @@
+{
+  "steel": {
+    "name": "Steel",
+    "description": "High-strength alloy for construction and manufacturing",
+    "category": "metals"
+  },
+  "aluminum": {
+    "name": "Aluminum",
+    "description": "Lightweight metal for vehicles and electronics",
+    "category": "metals"
+  },
+  "plastic": {
+    "name": "Plastic",
+    "description": "Petroleum-derived polymer for manufacturing",
+    "category": "industrial"
+  },
+  "copper_wire": {
+    "name": "Copper Wire",
+    "description": "Electrical wiring for all electronics",
+    "category": "industrial"
+  },
+  "drinking_water": {
+    "name": "Drinking Water",
+    "description": "Purified water for residential consumption",
+    "category": "utilities"
+  },
+  "wastewater_service": {
+    "name": "Wastewater Service",
+    "description": "Sewage treatment and disposal",
+    "category": "utilities"
+  },
+  "residential_electricity": {
+    "name": "Residential Electricity",
+    "description": "Converted power for home use",
+    "category": "utilities"
+  },
+  "natural_gas": {
+    "name": "Natural Gas",
+    "description": "Refined gas for heating and cooking",
+    "category": "utilities"
+  },
+  "heating_oil": {
+    "name": "Heating Oil",
+    "description": "Fuel oil for home heating systems",
+    "category": "utilities"
+  },
+  "jet_fuel": {
+    "name": "Jet Fuel",
+    "description": "Aviation-grade kerosene",
+    "category": "fuel"
+  },
+  "diesel": {
+    "name": "Diesel Fuel",
+    "description": "Heavy fuel for trucks and ships",
+    "category": "fuel"
+  },
+  "concrete": {
+    "name": "Concrete",
+    "description": "Building material from cement and aggregate",
+    "category": "construction"
+  },
+  "cement": {
+    "name": "Cement",
+    "description": "ite powder for making concrete",
+    "category": "construction"
+  },
+  "rebar": {
+    "name": "Rebar",
+    "description": "Steel reinforcement bars",
+    "category": "construction"
+  },
+  "microchip": {
+    "name": "Microchip",
+    "description": "Integrated circuit for electronics",
+    "category": "electronics"
+  },
+  "processor": {
+    "name": "Processor",
+    "description": "CPU for computers and devices",
+    "category": "electronics"
+  },
+  "memory_module": {
+    "name": "Memory Module",
+    "description": "RAM for computing devices",
+    "category": "electronics"
+  },
+  "circuit_board": {
+    "name": "Circuit Board",
+    "description": "PCB for electronic assembly",
+    "category": "electronics"
+  },
+  "lcd_panel": {
+    "name": "LCD Panel",
+    "description": "Display screen for devices",
+    "category": "electronics"
+  },
+  "battery_cell": {
+    "name": "Battery Cell",
+    "description": "Lithium-ion power storage",
+    "category": "electronics"
+  },
+  "smartphone": {
+    "name": "Smartphone",
+    "description": "Mobile computing and communication device",
+    "category": "electronics"
+  },
+  "laptop": {
+    "name": "Laptop",
+    "description": "Portable computer",
+    "category": "electronics"
+  },
+  "tablet": {
+    "name": "Tablet",
+    "description": "Touchscreen computing device",
+    "category": "electronics"
+  },
+  "television": {
+    "name": "Television",
+    "description": "Large display for entertainment",
+    "category": "electronics"
+  },
+  "desktop_computer": {
+    "name": "Desktop Computer",
+    "description": "Stationary computing workstation",
+    "category": "electronics"
+  },
+  "server": {
+    "name": "Server",
+    "description": "Enterprise computing hardware",
+    "category": "electronics"
+  },
+  "router": {
+    "name": "Router",
+    "description": "Network routing equipment",
+    "category": "electronics"
+  },
+  "security_camera": {
+    "name": "Security Camera",
+    "description": "Surveillance recording device",
+    "category": "electronics"
+  },
+  "alarm_system": {
+    "name": "Alarm System",
+    "description": "Intrusion detection equipment",
+    "category": "electronics"
+  },
+  "hvac_unit": {
+    "name": "HVAC Unit",
+    "description": "Heating and cooling system",
+    "category": "appliances"
+  },
+  "water_heater": {
+    "name": "Water Heater",
+    "description": "Residential hot water system",
+    "category": "appliances"
+  },
+  "washer_dryer": {
+    "name": "Washer/Dryer Set",
+    "description": "Laundry appliances",
+    "category": "appliances"
+  },
+  "refrigerator": {
+    "name": "Refrigerator",
+    "description": "Food storage appliance",
+    "category": "appliances"
+  },
+  "stove": {
+    "name": "Stove",
+    "description": "Cooking appliance",
+    "category": "appliances"
+  },
+  "microscope": {
+    "name": "Microscope",
+    "description": "Scientific magnification instrument",
+    "category": "equipment"
+  },
+  "lab_equipment": {
+    "name": "Laboratory Equipment",
+    "description": "Scientific research apparatus",
+    "category": "equipment"
+  },
+  "medical_scanner": {
+    "name": "Medical Scanner",
+    "description": "MRI/CT diagnostic equipment",
+    "category": "medical_equipment"
+  },
+  "surgical_tools": {
+    "name": "Surgical Tools",
+    "description": "Precision medical instruments",
+    "category": "medical_equipment"
+  },
+  "hospital_bed": {
+    "name": "Hospital Bed",
+    "description": "Adjustable patient bed",
+    "category": "medical_equipment"
+  },
+  "defibrillator": {
+    "name": "Defibrillator",
+    "description": "Cardiac emergency device",
+    "category": "medical_equipment"
+  },
+  "ventilator": {
+    "name": "Ventilator",
+    "description": "Breathing assistance machine",
+    "category": "medical_equipment"
+  },
+  "iv_pump": {
+    "name": "IV Pump",
+    "description": "Intravenous fluid delivery system",
+    "category": "medical_equipment"
+  },
+  "wheelchair": {
+    "name": "Wheelchair",
+    "description": "Patient mobility device",
+    "category": "medical_equipment"
+  },
+  "crutches": {
+    "name": "Crutches",
+    "description": "Walking assistance devices",
+    "category": "medical_equipment"
+  },
+  "prosthetic": {
+    "name": "Prosthetic Limb",
+    "description": "Artificial limb replacement",
+    "category": "medical_equipment"
+  },
+  "bus_chassis": {
+    "name": "Bus Chassis",
+    "description": "Heavy-duty vehicle frame for buses",
+    "category": "vehicle_parts"
+  },
+  "bus_engine": {
+    "name": "Bus Engine",
+    "description": "Heavy-duty diesel engine",
+    "category": "vehicle_parts"
+  },
+  "bus_seats": {
+    "name": "Bus Seating",
+    "description": "Commercial vehicle seating",
+    "category": "vehicle_parts"
+  },
+  "marine_engine": {
+    "name": "Marine Engine",
+    "description": "Large vessel propulsion system",
+    "category": "vehicle_parts"
+  },
+  "ship_hull": {
+    "name": "Ship Hull",
+    "description": "Large vessel body structure",
+    "category": "vehicle_parts"
+  },
+  "aircraft_engine": {
+    "name": "Aircraft Engine",
+    "description": "Jet turbine propulsion system",
+    "category": "vehicle_parts"
+  },
+  "aircraft_fuselage": {
+    "name": "Aircraft Fuselage",
+    "description": "Airplane body structure",
+    "category": "vehicle_parts"
+  },
+  "aircraft_wing": {
+    "name": "Aircraft Wing",
+    "description": "Airplane lift surface",
+    "category": "vehicle_parts"
+  },
+  "train_car_frame": {
+    "name": "Train Car Frame",
+    "description": "Railway vehicle structure",
+    "category": "vehicle_parts"
+  },
+  "locomotive_engine": {
+    "name": "Locomotive Engine",
+    "description": "Railway propulsion system",
+    "category": "vehicle_parts"
+  },
+  "school_bus": {
+    "name": "School Bus",
+    "description": "Student transportation vehicle",
+    "category": "vehicles"
+  },
+  "city_bus": {
+    "name": "City Bus",
+    "description": "Public transit vehicle",
+    "category": "vehicles"
+  },
+  "charter_bus": {
+    "name": "Charter Bus",
+    "description": "Long-distance coach",
+    "category": "vehicles"
+  },
+  "ambulance": {
+    "name": "Ambulance",
+    "description": "Emergency medical vehicle",
+    "category": "vehicles"
+  },
+  "fire_truck": {
+    "name": "Fire Truck",
+    "description": "Emergency firefighting vehicle",
+    "category": "vehicles"
+  },
+  "garbage_truck": {
+    "name": "Garbage Truck",
+    "description": "Waste collection vehicle",
+    "category": "vehicles"
+  },
+  "delivery_truck": {
+    "name": "Delivery Truck",
+    "description": "Commercial freight vehicle",
+    "category": "vehicles"
+  },
+  "semi_truck": {
+    "name": "Semi Truck",
+    "description": "Heavy freight hauler",
+    "category": "vehicles"
+  },
+  "cruise_ship": {
+    "name": "Cruise Ship",
+    "description": "Luxury passenger vessel",
+    "category": "vehicles"
+  },
+  "cargo_freighter": {
+    "name": "Cargo Freighter",
+    "description": "International shipping vessel",
+    "category": "vehicles"
+  },
+  "ferry": {
+    "name": "Ferry",
+    "description": "Passenger and vehicle transport",
+    "category": "vehicles"
+  },
+  "tugboat": {
+    "name": "Tugboat",
+    "description": "Harbor assistance vessel",
+    "category": "vehicles"
+  },
+  "passenger_jet": {
+    "name": "Passenger Jet",
+    "description": "Commercial airliner",
+    "category": "vehicles"
+  },
+  "cargo_plane": {
+    "name": "Cargo Plane",
+    "description": "Freight aircraft",
+    "category": "vehicles"
+  },
+  "private_jet": {
+    "name": "Private Jet",
+    "description": "Executive aircraft",
+    "category": "vehicles"
+  },
+  "helicopter": {
+    "name": "Helicopter",
+    "description": "Rotary-wing aircraft",
+    "category": "vehicles"
+  },
+  "passenger_train": {
+    "name": "Passenger Train",
+    "description": "Railway passenger car",
+    "category": "vehicles"
+  },
+  "freight_car": {
+    "name": "Freight Car",
+    "description": "Railway cargo car",
+    "category": "vehicles"
+  },
+  "locomotive": {
+    "name": "Locomotive",
+    "description": "Railway engine",
+    "category": "vehicles"
+  },
+  "tank": {
+    "name": "Battle Tank",
+    "description": "Armored combat vehicle",
+    "category": "military"
+  },
+  "humvee": {
+    "name": "Military Humvee",
+    "description": "Tactical transport vehicle",
+    "category": "military"
+  },
+  "apc": {
+    "name": "Armored Personnel Carrier",
+    "description": "Troop transport vehicle",
+    "category": "military"
+  },
+  "fighter_jet": {
+    "name": "Fighter Jet",
+    "description": "Combat aircraft",
+    "category": "military"
+  },
+  "military_helicopter": {
+    "name": "Military Helicopter",
+    "description": "Attack/transport rotorcraft",
+    "category": "military"
+  },
+  "destroyer": {
+    "name": "Naval Destroyer",
+    "description": "Warship",
+    "category": "military"
+  },
+  "submarine": {
+    "name": "Submarine",
+    "description": "Underwater naval vessel",
+    "category": "military"
+  },
+  "prison_bus": {
+    "name": "Prison Bus",
+    "description": "Secure inmate transport",
+    "category": "vehicles"
+  },
+  "antibiotic": {
+    "name": "Antibiotic",
+    "description": "Bacterial infection treatment",
+    "category": "pharmaceuticals"
+  },
+  "painkiller": {
+    "name": "Painkiller",
+    "description": "Pain management medication",
+    "category": "pharmaceuticals"
+  },
+  "insulin": {
+    "name": "Insulin",
+    "description": "Diabetes treatment",
+    "category": "pharmaceuticals"
+  },
+  "vaccine": {
+    "name": "Vaccine",
+    "description": "Disease immunization",
+    "category": "pharmaceuticals"
+  },
+  "anesthesia": {
+    "name": "Anesthesia",
+    "description": "Surgical sedation drugs",
+    "category": "pharmaceuticals"
+  },
+  "chemotherapy_drug": {
+    "name": "Chemotherapy Drug",
+    "description": "Cancer treatment medication",
+    "category": "pharmaceuticals"
+  },
+  "antidepressant": {
+    "name": "Antidepressant",
+    "description": "Mental health medication",
+    "category": "pharmaceuticals"
+  },
+  "blood_pressure_med": {
+    "name": "Blood Pressure Medication",
+    "description": "Cardiovascular treatment",
+    "category": "pharmaceuticals"
+  },
+  "surgical_gloves": {
+    "name": "Surgical Gloves",
+    "description": "Sterile medical gloves",
+    "category": "medical_supplies"
+  },
+  "surgical_mask": {
+    "name": "Surgical Mask",
+    "description": "Sterile face covering",
+    "category": "medical_supplies"
+  },
+  "syringe": {
+    "name": "Syringe",
+    "description": "Injection device",
+    "category": "medical_supplies"
+  },
+  "iv_bag": {
+    "name": "IV Bag",
+    "description": "Intravenous fluid container",
+    "category": "medical_supplies"
+  },
+  "blood_bag": {
+    "name": "Blood Bag",
+    "description": "Blood storage container",
+    "category": "medical_supplies"
+  },
+  "gauze": {
+    "name": "Gauze",
+    "description": "Sterile wound dressing",
+    "category": "medical_supplies"
+  },
+  "sutures": {
+    "name": "Sutures",
+    "description": "Surgical stitching material",
+    "category": "medical_supplies"
+  },
+  "cast_material": {
+    "name": "Cast Material",
+    "description": "Bone immobilization plaster",
+    "category": "medical_supplies"
+  },
+  "burger": {
+    "name": "Burger",
+    "description": "Grilled beef sandwich",
+    "category": "fast_food"
+  },
+  "hot_dog": {
+    "name": "Hot Dog",
+    "description": "Grilled sausage in bun",
+    "category": "fast_food"
+  },
+  "fries": {
+    "name": "French Fries",
+    "description": "Fried potato strips",
+    "category": "fast_food"
+  },
+  "chicken_nuggets": {
+    "name": "Chicken Nuggets",
+    "description": "Breaded chicken pieces",
+    "category": "fast_food"
+  },
+  "pizza_slice": {
+    "name": "Pizza Slice",
+    "description": "Single pizza serving",
+    "category": "fast_food"
+  },
+  "taco": {
+    "name": "Taco",
+    "description": "Mexican filled tortilla",
+    "category": "fast_food"
+  },
+  "burrito": {
+    "name": "Burrito",
+    "description": "Wrapped Mexican meal",
+    "category": "fast_food"
+  },
+  "sushi_roll": {
+    "name": "Sushi Roll",
+    "description": "Japanese rice and fish roll",
+    "category": "fast_food"
+  },
+  "ramen_bowl": {
+    "name": "Ramen Bowl",
+    "description": "Japanese noodle soup",
+    "category": "fast_food"
+  },
+  "fried_rice": {
+    "name": "Fried Rice",
+    "description": "Wok-fried rice dish",
+    "category": "fast_food"
+  },
+  "pad_thai": {
+    "name": "Pad Thai",
+    "description": "Thai stir-fried noodles",
+    "category": "fast_food"
+  },
+  "gyro": {
+    "name": "Gyro",
+    "description": "Greek meat wrap",
+    "category": "fast_food"
+  },
+  "soft_serve": {
+    "name": "Soft Serve",
+    "description": "Dispensed ice cream",
+    "category": "fast_food"
+  },
+  "milkshake": {
+    "name": "Milkshake",
+    "description": "Blended ice cream drink",
+    "category": "fast_food"
+  },
+  "soda_cup": {
+    "name": "Fountain Soda",
+    "description": "Dispensed soft drink",
+    "category": "fast_food"
+  },
+  "smoothie": {
+    "name": "Smoothie",
+    "description": "Blended fruit drink",
+    "category": "fast_food"
+  },
+  "food_tray": {
+    "name": "Food Tray",
+    "description": "Disposable serving tray",
+    "category": "packaging"
+  },
+  "takeout_container": {
+    "name": "Takeout Container",
+    "description": "Food packaging box",
+    "category": "packaging"
+  },
+  "disposable_utensils": {
+    "name": "Disposable Utensils",
+    "description": "Plastic cutlery set",
+    "category": "packaging"
+  },
+  "curriculum_package": {
+    "name": "Curriculum Package",
+    "description": "Complete course materials",
+    "category": "education"
+  },
+  "standardized_test": {
+    "name": "Standardized Test",
+    "description": "Assessment examination",
+    "category": "education"
+  },
+  "diploma_certificate": {
+    "name": "Diploma Certificate",
+    "description": "Graduation document",
+    "category": "education"
+  },
+  "lab_kit": {
+    "name": "Science Lab Kit",
+    "description": "Experiment supplies",
+    "category": "education"
+  },
+  "dissection_kit": {
+    "name": "Dissection Kit",
+    "description": "Biology lab supplies",
+    "category": "education"
+  },
+  "art_supplies": {
+    "name": "Art Supplies",
+    "description": "Creative materials set",
+    "category": "education"
+  },
+  "sports_equipment": {
+    "name": "Sports Equipment",
+    "description": "Athletic gear set",
+    "category": "education"
+  },
+  "band_instruments": {
+    "name": "Band Instruments",
+    "description": "Musical instrument set",
+    "category": "education"
+  },
+  "school_lunch": {
+    "name": "School Lunch",
+    "description": "Cafeteria meal",
+    "category": "education"
+  },
+  "school_uniform": {
+    "name": "School Uniform",
+    "description": "Student dress code attire",
+    "category": "education"
+  },
+  "student_desk": {
+    "name": "Student Desk",
+    "description": "Classroom furniture",
+    "category": "education"
+  },
+  "smartboard": {
+    "name": "Smartboard",
+    "description": "Interactive whiteboard",
+    "category": "education"
+  },
+  "projector": {
+    "name": "Projector",
+    "description": "Classroom display device",
+    "category": "education"
+  },
+  "stadium_seat": {
+    "name": "Stadium Seat",
+    "description": "Arena seating unit",
+    "category": "entertainment"
+  },
+  "scoreboard": {
+    "name": "Scoreboard",
+    "description": "Digital score display",
+    "category": "entertainment"
+  },
+  "jumbotron": {
+    "name": "Jumbotron",
+    "description": "Giant video screen",
+    "category": "entertainment"
+  },
+  "goal_post": {
+    "name": "Goal Post",
+    "description": "Football uprights",
+    "category": "entertainment"
+  },
+  "basketball_hoop": {
+    "name": "Basketball Hoop",
+    "description": "Court equipment",
+    "category": "entertainment"
+  },
+  "artificial_turf": {
+    "name": "Artificial Turf",
+    "description": "Synthetic playing surface",
+    "category": "entertainment"
+  },
+  "team_jersey": {
+    "name": "Team Jersey",
+    "description": "Sports uniform",
+    "category": "entertainment"
+  },
+  "sports_ball": {
+    "name": "Sports Ball",
+    "description": "Game ball",
+    "category": "entertainment"
+  },
+  "athlete_contract": {
+    "name": "Athlete Contract",
+    "description": "Player employment agreement",
+    "category": "entertainment"
+  },
+  "championship_trophy": {
+    "name": "Championship Trophy",
+    "description": "Victory award",
+    "category": "entertainment"
+  },
+  "concert_stage": {
+    "name": "Concert Stage",
+    "description": "Performance platform",
+    "category": "entertainment"
+  },
+  "sound_system": {
+    "name": "Sound System",
+    "description": "Audio equipment array",
+    "category": "entertainment"
+  },
+  "lighting_rig": {
+    "name": "Lighting Rig",
+    "description": "Stage lighting system",
+    "category": "entertainment"
+  },
+  "pyrotechnics": {
+    "name": "Pyrotechnics",
+    "description": "Special effects fireworks",
+    "category": "entertainment"
+  },
+  "band_merchandise": {
+    "name": "Band Merchandise",
+    "description": "Concert souvenirs",
+    "category": "entertainment"
+  },
+  "movie_screen": {
+    "name": "Movie Screen",
+    "description": "Cinema projection surface",
+    "category": "entertainment"
+  },
+  "theater_seat": {
+    "name": "Theater Seat",
+    "description": "Cinema seating",
+    "category": "entertainment"
+  },
+  "popcorn_machine": {
+    "name": "Popcorn Machine",
+    "description": "Concession equipment",
+    "category": "entertainment"
+  },
+  "film_reel": {
+    "name": "Film Reel",
+    "description": "Movie content",
+    "category": "entertainment"
+  },
+  "slot_machine": {
+    "name": "Slot Machine",
+    "description": "Casino gaming device",
+    "category": "entertainment"
+  },
+  "poker_table": {
+    "name": "Poker Table",
+    "description": "Card game surface",
+    "category": "entertainment"
+  },
+  "roulette_wheel": {
+    "name": "Roulette Wheel",
+    "description": "Casino spinning game",
+    "category": "entertainment"
+  },
+  "casino_chips": {
+    "name": "Casino Chips",
+    "description": "Gaming currency",
+    "category": "entertainment"
+  },
+  "playing_cards": {
+    "name": "Playing Cards",
+    "description": "Deck of cards",
+    "category": "entertainment"
+  },
+  "lion": {
+    "name": "Lion",
+    "description": "African big cat",
+    "category": "animals"
+  },
+  "elephant": {
+    "name": "Elephant",
+    "description": "African pachyderm",
+    "category": "animals"
+  },
+  "giraffe": {
+    "name": "Giraffe",
+    "description": "Tall African mammal",
+    "category": "animals"
+  },
+  "zebra": {
+    "name": "Zebra",
+    "description": "Striped African equine",
+    "category": "animals"
+  },
+  "rhino": {
+    "name": "Rhinoceros",
+    "description": "Horned African mammal",
+    "category": "animals"
+  },
+  "hippo": {
+    "name": "Hippopotamus",
+    "description": "Semi-aquatic African mammal",
+    "category": "animals"
+  },
+  "gorilla": {
+    "name": "Gorilla",
+    "description": "Great ape",
+    "category": "animals"
+  },
+  "chimpanzee": {
+    "name": "Chimpanzee",
+    "description": "Intelligent primate",
+    "category": "animals"
+  },
+  "orangutan": {
+    "name": "Orangutan",
+    "description": "Asian great ape",
+    "category": "animals"
+  },
+  "polar_bear": {
+    "name": "Polar Bear",
+    "description": "Arctic predator",
+    "category": "animals"
+  },
+  "penguin": {
+    "name": "Penguin",
+    "description": "Flightless aquatic bird",
+    "category": "animals"
+  },
+  "seal": {
+    "name": "Seal",
+    "description": "Marine mammal",
+    "category": "animals"
+  },
+  "dolphin": {
+    "name": "Dolphin",
+    "description": "Intelligent marine mammal",
+    "category": "animals"
+  },
+  "shark": {
+    "name": "Shark",
+    "description": "Ocean predator",
+    "category": "animals"
+  },
+  "sea_turtle": {
+    "name": "Sea Turtle",
+    "description": "Marine reptile",
+    "category": "animals"
+  },
+  "jellyfish": {
+    "name": "Jellyfish",
+    "description": "Gelatinous sea creature",
+    "category": "animals"
+  },
+  "octopus": {
+    "name": "Octopus",
+    "description": "Eight-armed cephalopod",
+    "category": "animals"
+  },
+  "tropical_fish": {
+    "name": "Tropical Fish",
+    "description": "Colorful aquarium fish",
+    "category": "animals"
+  },
+  "parrot": {
+    "name": "Parrot",
+    "description": "Colorful talking bird",
+    "category": "animals"
+  },
+  "flamingo": {
+    "name": "Flamingo",
+    "description": "Pink wading bird",
+    "category": "animals"
+  },
+  "eagle": {
+    "name": "Eagle",
+    "description": "Bird of prey",
+    "category": "animals"
+  },
+  "python": {
+    "name": "Python",
+    "description": "Large constrictor snake",
+    "category": "animals"
+  },
+  "crocodile": {
+    "name": "Crocodile",
+    "description": "Large reptilian predator",
+    "category": "animals"
+  },
+  "tortoise": {
+    "name": "Tortoise",
+    "description": "Land-dwelling turtle",
+    "category": "animals"
+  },
+  "tiger": {
+    "name": "Tiger",
+    "description": "Striped Asian big cat",
+    "category": "animals"
+  },
+  "panda": {
+    "name": "Giant Panda",
+    "description": "Bamboo-eating bear",
+    "category": "animals"
+  },
+  "koala": {
+    "name": "Koala",
+    "description": "Australian marsupial",
+    "category": "animals"
+  },
+  "kangaroo": {
+    "name": "Kangaroo",
+    "description": "Australian hopping mammal",
+    "category": "animals"
+  },
+  "animal_enclosure": {
+    "name": "Animal Enclosure",
+    "description": "Habitat containment structure",
+    "category": "zoo_infrastructure"
+  },
+  "aquarium_tank": {
+    "name": "Aquarium Tank",
+    "description": "Large water display",
+    "category": "zoo_infrastructure"
+  },
+  "habitat_landscape": {
+    "name": "Habitat Landscape",
+    "description": "Natural environment design",
+    "category": "zoo_infrastructure"
+  },
+  "viewing_platform": {
+    "name": "Viewing Platform",
+    "description": "Guest observation area",
+    "category": "zoo_infrastructure"
+  },
+  "feeding_station": {
+    "name": "Feeding Station",
+    "description": "Animal nutrition area",
+    "category": "zoo_infrastructure"
+  },
+  "animal_feed": {
+    "name": "Animal Feed",
+    "description": "Zoo nutrition supplies",
+    "category": "zoo_supplies"
+  },
+  "veterinary_supplies": {
+    "name": "Veterinary Supplies",
+    "description": "Animal medical equipment",
+    "category": "zoo_supplies"
+  },
+  "tranquilizer": {
+    "name": "Tranquilizer",
+    "description": "Animal sedation drug",
+    "category": "zoo_supplies"
+  },
+  "animal_microchip": {
+    "name": "Animal Microchip",
+    "description": "Tracking implant",
+    "category": "zoo_supplies"
+  },
+  "inmate_jumpsuit": {
+    "name": "Inmate Jumpsuit",
+    "description": "Prison uniform",
+    "category": "prison"
+  },
+  "prison_bedding": {
+    "name": "Prison Bedding",
+    "description": "Institutional linens",
+    "category": "prison"
+  },
+  "prison_meal": {
+    "name": "Prison Meal",
+    "description": "Institutional food tray",
+    "category": "prison"
+  },
+  "commissary_snacks": {
+    "name": "Commissary Snacks",
+    "description": "Inmate purchase items",
+    "category": "prison"
+  },
+  "hygiene_kit": {
+    "name": "Hygiene Kit",
+    "description": "Basic toiletries",
+    "category": "prison"
+  },
+  "phone_card": {
+    "name": "Phone Card",
+    "description": "Prepaid calling minutes",
+    "category": "prison"
+  },
+  "cell_door": {
+    "name": "Cell Door",
+    "description": "Secure prison gate",
+    "category": "prison_infrastructure"
+  },
+  "surveillance_system": {
+    "name": "Surveillance System",
+    "description": "Security monitoring",
+    "category": "prison_infrastructure"
+  },
+  "razor_wire": {
+    "name": "Razor Wire",
+    "description": "Perimeter security",
+    "category": "prison_infrastructure"
+  },
+  "handcuffs": {
+    "name": "Handcuffs",
+    "description": "Restraint devices",
+    "category": "prison_infrastructure"
+  },
+  "taser": {
+    "name": "Taser",
+    "description": "Non-lethal weapon",
+    "category": "prison_infrastructure"
+  },
+  "body_scanner": {
+    "name": "Body Scanner",
+    "description": "Security screening",
+    "category": "prison_infrastructure"
+  },
+  "ged_materials": {
+    "name": "GED Materials",
+    "description": "Education program supplies",
+    "category": "prison"
+  },
+  "counseling_materials": {
+    "name": "Counseling Materials",
+    "description": "Rehabilitation supplies",
+    "category": "prison"
+  },
+  "vocational_kit": {
+    "name": "Vocational Kit",
+    "description": "Job training supplies",
+    "category": "prison"
+  },
+  "rifle": {
+    "name": "Service Rifle",
+    "description": "Standard infantry weapon",
+    "category": "military"
+  },
+  "ammunition": {
+    "name": "Ammunition",
+    "description": "Small arms rounds",
+    "category": "military"
+  },
+  "grenade": {
+    "name": "Grenade",
+    "description": "Hand-thrown explosive",
+    "category": "military"
+  },
+  "missile": {
+    "name": "Missile",
+    "description": "Guided munition",
+    "category": "military"
+  },
+  "body_armor": {
+    "name": "Body Armor",
+    "description": "Protective vest",
+    "category": "military"
+  },
+  "combat_helmet": {
+    "name": "Combat Helmet",
+    "description": "Head protection",
+    "category": "military"
+  },
+  "tactical_vest": {
+    "name": "Tactical Vest",
+    "description": "Load-bearing equipment",
+    "category": "military"
+  },
+  "night_vision": {
+    "name": "Night Vision Goggles",
+    "description": "Low-light optics",
+    "category": "military"
+  },
+  "military_radio": {
+    "name": "Military Radio",
+    "description": "Tactical communications",
+    "category": "military"
+  },
+  "encryption_device": {
+    "name": "Encryption Device",
+    "description": "Secure communications",
+    "category": "military"
+  },
+  "radar_array": {
+    "name": "Radar Array",
+    "description": "Detection system",
+    "category": "military"
+  },
+  "satellite_uplink": {
+    "name": "Satellite Uplink",
+    "description": "Space communications",
+    "category": "military"
+  },
+  "drone": {
+    "name": "Military Drone",
+    "description": "Unmanned aerial vehicle",
+    "category": "military"
+  },
+  "mre": {
+    "name": "MRE",
+    "description": "Meal Ready to Eat",
+    "category": "military"
+  },
+  "military_uniform": {
+    "name": "Military Uniform",
+    "description": "Combat dress",
+    "category": "military"
+  },
+  "dog_tags": {
+    "name": "Dog Tags",
+    "description": "Identification tags",
+    "category": "military"
+  },
+  "barracks_bunk": {
+    "name": "Barracks Bunk",
+    "description": "Military bed",
+    "category": "military"
+  },
+  "obstacle_course": {
+    "name": "Obstacle Course",
+    "description": "Training facility",
+    "category": "military"
+  },
+  "firing_range": {
+    "name": "Firing Range",
+    "description": "Weapons practice facility",
+    "category": "military"
+  },
+  "combat_simulator": {
+    "name": "Combat Simulator",
+    "description": "Training system",
+    "category": "military"
+  },
+  "fast_food_combo": {
+    "name": "Fast Food Combo",
+    "description": "Burger, fries, and drink meal",
+    "category": "retail_food"
+  },
+  "international_platter": {
+    "name": "International Platter",
+    "description": "Multi-cuisine sampler",
+    "category": "retail_food"
+  },
+  "dessert_sampler": {
+    "name": "Dessert Sampler",
+    "description": "Sweet treats assortment",
+    "category": "retail_food"
+  },
+  "beverage_package": {
+    "name": "Beverage Package",
+    "description": "Drink combo deal",
+    "category": "retail_food"
+  },
+  "kids_meal": {
+    "name": "Kids Meal",
+    "description": "Child-sized meal with toy",
+    "category": "retail_food"
+  },
+  "monthly_utility_bill": {
+    "name": "Monthly Utility Bill",
+    "description": "Electric, water, gas service",
+    "category": "retail_service"
+  },
+  "home_maintenance_package": {
+    "name": "Home Maintenance Package",
+    "description": "Repair and upkeep services",
+    "category": "retail_service"
+  },
+  "lawn_service": {
+    "name": "Lawn & Garden Service",
+    "description": "Landscaping maintenance",
+    "category": "retail_service"
+  },
+  "waste_service": {
+    "name": "Waste Management Service",
+    "description": "Garbage and recycling",
+    "category": "retail_service"
+  },
+  "internet_bundle": {
+    "name": "Internet & Cable Bundle",
+    "description": "Home connectivity package",
+    "category": "retail_service"
+  },
+  "security_package": {
+    "name": "Home Security Package",
+    "description": "Alarm and monitoring",
+    "category": "retail_service"
+  },
+  "fashion_bundle": {
+    "name": "Fashion Haul Bundle",
+    "description": "Clothing and accessories",
+    "category": "retail_shopping"
+  },
+  "electronics_package": {
+    "name": "Electronics Package",
+    "description": "Tech devices bundle",
+    "category": "retail_shopping"
+  },
+  "furnishing_set": {
+    "name": "Home Furnishing Set",
+    "description": "Furniture package",
+    "category": "retail_shopping"
+  },
+  "beauty_kit": {
+    "name": "Beauty & Cosmetics Kit",
+    "description": "Makeup and skincare",
+    "category": "retail_shopping"
+  },
+  "sporting_goods": {
+    "name": "Sporting Goods Package",
+    "description": "Athletic equipment",
+    "category": "retail_shopping"
+  },
+  "toy_bundle": {
+    "name": "Toy & Game Bundle",
+    "description": "Entertainment products",
+    "category": "retail_shopping"
+  },
+  "emergency_room_visit": {
+    "name": "Emergency Room Visit",
+    "description": "Urgent medical care",
+    "category": "retail_medical"
+  },
+  "surgery_package": {
+    "name": "Surgical Procedure Package",
+    "description": "Operation and recovery",
+    "category": "retail_medical"
+  },
+  "diagnostic_panel": {
+    "name": "Diagnostic Lab Panel",
+    "description": "Medical testing",
+    "category": "retail_medical"
+  },
+  "therapy_program": {
+    "name": "Physical Therapy Program",
+    "description": "Rehabilitation sessions",
+    "category": "retail_medical"
+  },
+  "maternity_package": {
+    "name": "Maternity Care Package",
+    "description": "Pregnancy and delivery",
+    "category": "retail_medical"
+  },
+  "prescription_bundle": {
+    "name": "Pharmacy Prescription Bundle",
+    "description": "Medication package",
+    "category": "retail_medical"
+  },
+  "high_school_diploma": {
+    "name": "High School Diploma",
+    "description": "Secondary education completion",
+    "category": "retail_education"
+  },
+  "bachelors_degree": {
+    "name": "Bachelor's Degree",
+    "description": "4-year undergraduate program",
+    "category": "retail_education"
+  },
+  "masters_degree": {
+    "name": "Master's Degree",
+    "description": "Graduate program",
+    "category": "retail_education"
+  },
+  "vocational_certificate": {
+    "name": "Vocational Certificate",
+    "description": "Trade school certification",
+    "category": "retail_education"
+  },
+  "research_grant": {
+    "name": "Research Grant Program",
+    "description": "Funded research initiative",
+    "category": "retail_education"
+  },
+  "study_abroad": {
+    "name": "Study Abroad Experience",
+    "description": "International semester",
+    "category": "retail_education"
+  },
+  "concert_package": {
+    "name": "Concert Experience Package",
+    "description": "Show, VIP, merchandise",
+    "category": "retail_entertainment"
+  },
+  "sports_package": {
+    "name": "Sports Game Package",
+    "description": "Tickets, food, gear",
+    "category": "retail_entertainment"
+  },
+  "casino_night": {
+    "name": "Casino Night Package",
+    "description": "Gaming, dining, show",
+    "category": "retail_entertainment"
+  },
+  "movie_premier": {
+    "name": "Movie Premier Experience",
+    "description": "Screening and events",
+    "category": "retail_entertainment"
+  },
+  "theme_park_pass": {
+    "name": "Theme Park Day Pass",
+    "description": "Rides and attractions",
+    "category": "retail_entertainment"
+  },
+  "nightclub_vip": {
+    "name": "Nightclub VIP Package",
+    "description": "Entry and bottle service",
+    "category": "retail_entertainment"
+  },
+  "airline_ticket": {
+    "name": "Airline Ticket Package",
+    "description": "Flight and services",
+    "category": "retail_transport"
+  },
+  "cruise_package": {
+    "name": "Cruise Vacation Package",
+    "description": "Cabin and excursions",
+    "category": "retail_transport"
+  },
+  "rail_pass": {
+    "name": "Commuter Rail Pass",
+    "description": "Monthly train access",
+    "category": "retail_transport"
+  },
+  "freight_contract": {
+    "name": "Freight Shipping Service",
+    "description": "Cargo transport",
+    "category": "retail_transport"
+  },
+  "rental_car": {
+    "name": "Rental Car Package",
+    "description": "Vehicle rental",
+    "category": "retail_transport"
+  },
+  "charter_service": {
+    "name": "Charter Bus Service",
+    "description": "Group transport",
+    "category": "retail_transport"
+  },
+  "zoo_pass": {
+    "name": "Zoo Day Pass",
+    "description": "General admission",
+    "category": "retail_zoo"
+  },
+  "safari_tour": {
+    "name": "Safari Adventure Tour",
+    "description": "Guided wildlife experience",
+    "category": "retail_zoo"
+  },
+  "animal_adoption": {
+    "name": "Animal Adoption Certificate",
+    "description": "Symbolic sponsorship",
+    "category": "retail_zoo"
+  },
+  "conservation_membership": {
+    "name": "Conservation Membership",
+    "description": "Annual support package",
+    "category": "retail_zoo"
+  },
+  "behind_scenes_tour": {
+    "name": "Behind-the-Scenes Tour",
+    "description": "Keeper experience",
+    "category": "retail_zoo"
+  },
+  "wildlife_program": {
+    "name": "Wildlife Education Program",
+    "description": "School group curriculum",
+    "category": "retail_zoo"
+  },
+  "inmate_housing": {
+    "name": "Inmate Housing Unit",
+    "description": "Cell block capacity",
+    "category": "retail_prison"
+  },
+  "rehabilitation_program": {
+    "name": "Rehabilitation Program",
+    "description": "Education and counseling",
+    "category": "retail_prison"
+  },
+  "commissary_package": {
+    "name": "Commissary Package",
+    "description": "Inmate purchases",
+    "category": "retail_prison"
+  },
+  "work_release": {
+    "name": "Work Release Program",
+    "description": "Labor assignment",
+    "category": "retail_prison"
+  },
+  "legal_aid": {
+    "name": "Legal Aid Service",
+    "description": "Court and appeal support",
+    "category": "retail_prison"
+  },
+  "reentry_package": {
+    "name": "Reentry Support Package",
+    "description": "Release preparation",
+    "category": "retail_prison"
+  },
+  "defense_contract": {
+    "name": "Defense Equipment Contract",
+    "description": "Weapons systems deal",
+    "category": "retail_military"
+  },
+  "military_training": {
+    "name": "Military Training Program",
+    "description": "Boot camp and specialization",
+    "category": "retail_military"
+  },
+  "base_housing": {
+    "name": "Base Housing Assignment",
+    "description": "Family housing unit",
+    "category": "retail_military"
+  },
+  "veterans_package": {
+    "name": "Veterans Support Package",
+    "description": "Benefits and services",
+    "category": "retail_military"
+  },
+  "security_clearance": {
+    "name": "Security Clearance Service",
+    "description": "Background investigation",
+    "category": "retail_military"
+  },
+  "logistics_contract": {
+    "name": "Logistics Support Contract",
+    "description": "Supply chain management",
+    "category": "retail_military"
+  }
+}

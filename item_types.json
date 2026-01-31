@@ -706,7 +706,7 @@
   },
   "milk": {
     "name": "Milk",
-    "description": "Milk",
+    "description": "Cows Milk",
     "category": "food"
   },
   "cream": {
@@ -1053,5 +1053,110 @@
     "name": "Mystery Novel", 
     "description": "Paperback fiction", 
     "category": "media" 
+  },
+  "butter": {
+    "name": "Butter",
+    "description": "Churned dairy product for baking and cooking",
+    "category": "food"
+  },
+  "art_book": {
+    "name": "Art Book",
+    "description": "High-quality art and design publication",
+    "category": "media"
+  },
+  "law_book": {
+    "name": "Law Book",
+    "description": "Legal reference and case law compilation",
+    "category": "media"
+  },
+  "encyclopedia": {
+    "name": "Encyclopedia",
+    "description": "Comprehensive multi-volume reference work",
+    "category": "media"
+  },
+  "paint": {
+    "name": "Paint",
+    "description": "Pigmented coating for artistic and industrial use",
+    "category": "industrial"
+  },
+  "cheese": {
+    "name": "Cheese",
+    "description": "Dairy product for cooking and consumption",
+    "category": "food"
+  },
+  "coal": {
+    "name": "Coal",
+    "description": "Fossil fuel for smelting and energy",
+    "category": "minerals"
+  },
+  "jewelry": {
+    "name": "Jewelry",
+    "description": "Precious metal accessories",
+    "category": "accessories"
+  },
+  "law_book": {
+    "name": "Law Book",
+    "description": "Legal reference text",
+    "category": "media"
+  },
+  "lettuce": {
+    "name": "Lettuce",
+    "description": "Fresh leafy greens",
+    "category": "vegetables"
+  },
+  "lotion": {
+    "name": "Body Lotion",
+    "description": "Skincare moisturizer",
+    "category": "personal_care"
+  },
+  "paint": {
+    "name": "Paint",
+    "description": "Colored coating for surfaces",
+    "category": "industrial"
+  },
+  "peanut": {
+    "name": "Peanuts",
+    "description": "Legume for cooking and snacks",
+    "category": "crops"
+  },
+  "perfume": {
+    "name": "Perfume",
+    "description": "Fragrance product",
+    "category": "personal_care"
+  },
+  "rope": {
+    "name": "Rope",
+    "description": "Twisted fiber cord",
+    "category": "industrial"
+  },
+  "shampoo": {
+    "name": "Shampoo",
+    "description": "Hair cleaning product",
+    "category": "personal_care"
+  },
+  "shoes": {
+    "name": "Shoes",
+    "description": "Footwear",
+    "category": "apparel"
+  },
+  "soap": {
+    "name": "Soap",
+    "description": "Cleaning product",
+    "category": "personal_care"
+  },
+  "soda": {
+    "name": "Soda",
+    "description": "Carbonated beverage",
+    "category": "beverages"
+  },
+  "toothpaste": {
+    "name": "Toothpaste",
+    "description": "Dental hygiene product",
+    "category": "personal_care"
+  },
+  "towel": {
+    "name": "Towel",
+    "description": "Absorbent cloth",
+    "category": "home_goods"
   }
 }

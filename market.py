@@ -19,7 +19,7 @@ from enum import Enum
 from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from stats_ux import log_transaction
 # ==========================
 # DATABASE SETUP
 # ==========================
@@ -94,13 +94,13 @@ STARTER_INVENTORY = {
     "water": 5000,
     "energy": 1500,
     "paper": 15000,
-    "wheat_seeds": 5,
-    "barley_seeds": 3,
-    "corn_seeds": 5,
-    "coffee_seeds": 2,
-    "cherry_seeds": 2,
-    "cocoa_seeds": 2,
-    "grape_seeds": 2
+    "wheat_seeds": 15,
+    "barley_seeds": 13,
+    "corn_seeds": 15,
+    "coffee_seeds": 12,
+    "cherry_seeds": 12,
+    "cocoa_seeds": 12,
+    "grape_seeds": 12
 }
 
 # ==========================
@@ -365,8 +365,47 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     # 7. Commit everything
     db.commit()
     
-    trade_type = "IPO" if is_bank_ipo else "P2P"
-    print(f"[Market] {trade_type} TRADE: {quantity} {buy_order.item_type} @ ${price:.4f} | Buyer: {buy_order.player_id}, Seller: {sell_order.player_id}")
+    # 8. Log transactions
+    # Log buyer's resource gain
+    log_transaction(
+        buy_order.player_id,
+        "resource_gain",
+        "resource",
+        quantity,
+        f"Market buy: {buy_order.item_type}",
+        buy_order.item_type
+    )
+    
+    # Log buyer's cash payment
+    log_transaction(
+        buy_order.player_id,
+        "cash_out",
+        "money",
+        -total_cost,  # negative for expense
+        f"Market purchase: {quantity} {buy_order.item_type}",
+        buy_order.item_type
+    )
+    
+    # Log seller's cash receipt (only for non-bank sales)
+    if not is_bank_ipo:
+        log_transaction(
+            sell_order.player_id,
+            "cash_in",
+            "money",
+            total_cost,
+            f"Market sale: {quantity} {buy_order.item_type}",
+            buy_order.item_type
+        )
+        
+        # Log seller's resource loss
+        log_transaction(
+            sell_order.player_id,
+            "resource_loss",
+            "resource",
+            -quantity,  # negative because sold
+            f"Market sale: {buy_order.item_type}",
+            buy_order.item_type
+        )
 
 # ==========================
 # MARKET DATA FUNCTIONS

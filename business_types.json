@@ -13,7 +13,37 @@
         "output_item": "religious_book",
         "output_qty": 50,
         "inputs": [
-          { "item": "paper", "quantity": 20050 },
+          { "item": "paper", "quantity": 2050 },
+          { "item": "leather", "quantity": 15 },
+          { "item": "glue", "quantity": 10 },
+          { "item": "energy", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "law_book",
+        "output_qty": 64,
+        "inputs": [
+          { "item": "paper", "quantity": 5750 },
+          { "item": "leather", "quantity": 5 },
+          { "item": "glue", "quantity": 10 },
+          { "item": "energy", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "art_book",
+        "output_qty": 68,
+        "inputs": [
+          { "item": "paper", "quantity": 5750 },
+          { "item": "leather", "quantity": 5 },
+          { "item": "glue", "quantity": 10 },
+          { "item": "energy", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "encyclopedia",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "paper", "quantity": 50750 },
           { "item": "leather", "quantity": 5 },
           { "item": "glue", "quantity": 10 },
           { "item": "energy", "quantity": 50 }
@@ -211,8 +241,8 @@
         "output_item": "paper",
         "output_qty": 2500,
         "inputs": [
-          { "item": "apple_seeds", "quantity": 250 },
-          { "item": "orange_seeds", "quantity": 375 },
+          { "item": "cotton_seeds", "quantity": 250 },
+          { "item": "cotton", "quantity": 375 },
           { "item": "water", "quantity": 10 },
           { "item": "glue", "quantity": 15 }
         ]
@@ -327,7 +357,10 @@
     "allowed_proximity": ["urban", "road"],
     "products": {
       "paper": { "elasticity": 0.85, "base_sale_chance": 0.25 },
-      "religious_book": { "elasticity": 0.3, "base_sale_chance": 0.02}
+      "religious_book": { "elasticity": 0.3, "base_sale_chance": 0.02},
+      "art_book": { "elasticity": 0.35, "base_sale_chance": 0.52},
+      "ink": { "elasticity": 1, "base_sale_chance": 0.9},
+      "paint": { "elasticity": 0.76, "base_sale_chance": 0.45}
     }
   },
 
@@ -335,7 +368,7 @@
     "name": "Textile Mill & Tannery",
     "description": "Processes fibers and hides into textiles and leather goods.",
     "startup_cost": 8000,
-    "cycles_to_complete": 7200,
+    "cycles_to_complete": 720,
     "base_wage_cost": 15.0,
     "allowed_terrain": ["forest", "savanna", "mountain", "jungle", "hills"],
     "allowed_proximity": ["urban", "riverside", "road"],
@@ -772,7 +805,10 @@
           { "item": "cane", "quantity": 20 },
           { "item": "energy", "quantity": 50 },
           { "item": "sugar", "quantity": 10 },
-          { "item": "paper", "quantity": 1 }
+          { "item": "grass", "quantity": 75 },
+          { "item": "paper", "quantity": 1 },
+          { "item": "apple_seeds", "quantity": 100 },
+          { "item": "orange_seeds", "quantity": 100 }
         ]
       },
       {
@@ -1338,7 +1374,7 @@
     ]
   },
   "cocoa_plantation": {
-    "name": "Cacao Plantation",
+    "name": "Cocoa Plantation",
     "description": "Tropical estate cultivating cacao trees for chocolate production.",
     "startup_cost": 22000,
     "cycles_to_complete": 180,
@@ -2415,6 +2451,40 @@
           },
           {
             "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "paint",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "oil",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "orange_seeds",
+            "quantity": 25
+          },
+          {
+            "item": "apple_seeds",
+            "quantity": 25
+          },
+          {
+            "item": "grass",
+            "quantity": 25
+          },
+          {
+            "item": "cotton_seeds",
             "quantity": 25
           },
           {
@@ -4113,11 +4183,11 @@
     "production_lines": [
       {
         "output_item": "newspaper",
-        "output_qty": 500,
+        "output_qty": 50,
         "inputs": [
           {
             "item": "paper",
-            "quantity": 200
+            "quantity": 20
           },
           {
             "item": "ink",
@@ -4126,10 +4196,6 @@
           {
             "item": "energy",
             "quantity": 40
-          },
-          {
-            "item": "paper",
-            "quantity": 5
           }
         ]
       },
@@ -4139,7 +4205,7 @@
         "inputs": [
           {
             "item": "paper",
-            "quantity": 150
+            "quantity": 1500
           },
           {
             "item": "ink",
@@ -4157,11 +4223,11 @@
       },
       {
         "output_item": "novel",
-        "output_qty": 80,
+        "output_qty": 2,
         "inputs": [
           {
             "item": "paper",
-            "quantity": 300
+            "quantity": 200
           },
           {
             "item": "ink",
@@ -4179,11 +4245,11 @@
       },
       {
         "output_item": "textbook",
-        "output_qty": 50,
+        "output_qty": 5,
         "inputs": [
           {
             "item": "paper",
-            "quantity": 500
+            "quantity": 2500
           },
           {
             "item": "ink",
@@ -5989,7 +6055,8 @@
     "cycles_to_complete": 40,
     "base_wage_cost": 70.0,
     "allowed_terrain": [
-      "urban",
+      "marsh",
+      "mountain",
       "prairie"
     ],
     "allowed_proximity": [
@@ -6181,6 +6248,141 @@
         "base_sale_chance": 0.04
       }
     }
+  },
+
+  "coal_mine": {
+    "name": "Coal Mine",
+    "description": "Extracts coal from underground deposits",
+    "startup_cost": 75000,
+    "cycles_to_complete": 180,
+    "base_wage_cost": 400,
+    "allowed_terrain": ["mountain", "hills"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "coal", "output_qty": 50, "inputs": [{"item": "energy", "quantity": 30}, {"item": "water", "quantity": 20}, {"item": "paper", "quantity": 1}]}
+    ]
+  },
+  "creamery": {
+    "name": "Creamery",
+    "description": "Produces cheese and dairy products",
+    "startup_cost": 45000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 250,
+    "allowed_terrain": ["prairie", "hills"],
+    "allowed_proximity": ["riverside", "road", "urban"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "cheese", "output_qty": 30, "inputs": [{"item": "milk", "quantity": 60}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 2}]}
+    ]
+  },
+  "jeweler": {
+    "name": "Jeweler Workshop",
+    "description": "Crafts fine jewelry from precious metals",
+    "startup_cost": 60000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 350,
+    "allowed_terrain": ["urban", "prairie"],
+    "allowed_proximity": ["urban"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "jewelry", "output_qty": 10, "inputs": [{"item": "brass", "quantity": 15}, {"item": "glass", "quantity": 5}, {"item": "energy", "quantity": 20}, {"item": "paper", "quantity": 2}]}
+    ]
+  },
+  "personal_care_factory": {
+    "name": "Personal Care Factory",
+    "description": "Produces hygiene and beauty products",
+    "startup_cost": 55000,
+    "cycles_to_complete": 150,
+    "base_wage_cost": 300,
+    "allowed_terrain": ["urban", "prairie"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "soap", "output_qty": 40, "inputs": [{"item": "lard", "quantity": 20}, {"item": "water", "quantity": 15}, {"item": "energy", "quantity": 10}, {"item": "paper", "quantity": 2}]},
+      {"output_item": "shampoo", "output_qty": 35, "inputs": [{"item": "water", "quantity": 25}, {"item": "oil", "quantity": 10}, {"item": "bottle", "quantity": 35}, {"item": "energy", "quantity": 12}, {"item": "paper", "quantity": 2}]},
+      {"output_item": "lotion", "output_qty": 30, "inputs": [{"item": "water", "quantity": 20}, {"item": "oil", "quantity": 15}, {"item": "bottle", "quantity": 30}, {"item": "energy", "quantity": 10}, {"item": "paper", "quantity": 2}]},
+      {"output_item": "toothpaste", "output_qty": 40, "inputs": [{"item": "water", "quantity": 15}, {"item": "salt", "quantity": 10}, {"item": "plastic", "quantity": 20}, {"item": "energy", "quantity": 8}, {"item": "paper", "quantity": 2}]},
+      {"output_item": "perfume", "output_qty": 15, "inputs": [{"item": "water", "quantity": 10}, {"item": "oil", "quantity": 8}, {"item": "bottle", "quantity": 15}, {"item": "energy", "quantity": 12}, {"item": "paper", "quantity": 3}]}
+    ]
+  },
+  "shoe_factory": {
+    "name": "Shoe Factory",
+    "description": "Manufactures footwear",
+    "startup_cost": 50000,
+    "cycles_to_complete": 160,
+    "base_wage_cost": 280,
+    "allowed_terrain": ["urban", "prairie", "hills"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "shoes", "output_qty": 25, "inputs": [{"item": "leather", "quantity": 30}, {"item": "rubber", "quantity": 15}, {"item": "glue", "quantity": 10}, {"item": "energy", "quantity": 15}, {"item": "paper", "quantity": 2}]}
+    ]
+  },
+  "bottling_plant": {
+    "name": "Bottling Plant",
+    "description": "Produces carbonated beverages",
+    "startup_cost": 65000,
+    "cycles_to_complete": 100,
+    "base_wage_cost": 320,
+    "allowed_terrain": ["urban", "prairie"],
+    "allowed_proximity": ["urban", "road", "riverside"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "soda", "output_qty": 60, "inputs": [{"item": "water", "quantity": 50}, {"item": "sugar", "quantity": 20}, {"item": "corn_syrup", "quantity": 15}, {"item": "bottle", "quantity": 60}, {"item": "energy", "quantity": 20}, {"item": "paper", "quantity": 3}]}
+    ]
+  },
+  "rope_works": {
+    "name": "Rope Works",
+    "description": "Twists fibers into rope and cordage",
+    "startup_cost": 30000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 180,
+    "allowed_terrain": ["prairie", "forest", "hills"],
+    "allowed_proximity": ["road", "riverside"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "rope", "output_qty": 40, "inputs": [{"item": "cotton", "quantity": 30}, {"item": "energy", "quantity": 8}, {"item": "paper", "quantity": 1}]}
+    ]
+  },
+  "paint_factory": {
+    "name": "Paint Factory",
+    "description": "Produces paints and coatings",
+    "startup_cost": 48000,
+    "cycles_to_complete": 130,
+    "base_wage_cost": 260,
+    "allowed_terrain": ["urban", "prairie"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "paint", "output_qty": 35, "inputs": [{"item": "oil", "quantity": 20}, {"item": "water", "quantity": 15}, {"item": "jar", "quantity": 35}, {"item": "energy", "quantity": 12}, {"item": "paper", "quantity": 2}]}
+    ]
+  },
+  "towel_mill": {
+    "name": "Towel Mill",
+    "description": "Weaves absorbent textiles",
+    "startup_cost": 35000,
+    "cycles_to_complete": 110,
+    "base_wage_cost": 200,
+    "allowed_terrain": ["prairie", "hills"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "towel", "output_qty": 30, "inputs": [{"item": "cotton", "quantity": 40}, {"item": "energy", "quantity": 10}, {"item": "paper", "quantity": 2}]}
+    ]
+  },
+  "peanut_farm": {
+    "name": "Peanut Farm",
+    "description": "Grows peanuts and legumes",
+    "startup_cost": 25000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 150,
+    "allowed_terrain": ["prairie", "savanna"],
+    "allowed_proximity": ["riverside", "road", "remote"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "peanut", "output_qty": 50, "inputs": [{"item": "water", "quantity": 30}, {"item": "energy", "quantity": 5}, {"item": "paper", "quantity": 1}]}
+    ]
   },
 
   "fashion_outlet": {

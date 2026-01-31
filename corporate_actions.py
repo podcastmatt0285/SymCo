@@ -17,14 +17,14 @@ from enum import Enum
 
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, JSON
 from sqlalchemy.ext.declarative import declarative_base
-
+from stats_ux import log_transaction
 # Import from existing brokerage firm
 from banks.brokerage_firm import (
     get_db, Base, CompanyShares, ShareholderPosition, 
     BANK_PLAYER_ID, BANK_NAME, get_firm_entity, firm_deduct_cash, firm_add_cash,
     modify_credit_score, record_price
 )
-from brokerage_order_book import place_market_order, OrderSide
+from banks.brokerage_order_book import place_market_order, OrderSide
 
 # ==========================
 # CONSTANTS
@@ -376,6 +376,15 @@ def check_and_execute_buyback(program_id: int) -> bool:
             # Deduct from founder
             founder.cash_balance -= total_cost
             auth_db.commit()
+            # Log buyback cost for founder
+            log_transaction(
+                company.founder_id,
+                "cash_out",
+                "money",
+                -total_cost,
+                f"Buyback: {shares_to_buy} {company.ticker_symbol}",
+                company.ticker_symbol
+            )
         finally:
             auth_db.close()
         
@@ -824,6 +833,19 @@ def check_and_execute_offering(offering_id: int) -> bool:
     finally:
         db.close()
 
+def log_dividend_payment(shareholder_id: int, company_ticker: str, amount: float):
+    """
+    Helper function to log dividend payments.
+    Call this whenever dividends are paid to shareholders.
+    """
+    log_transaction(
+        shareholder_id,
+        "cash_in",
+        "money",
+        amount,
+        f"Dividend: {company_ticker}",
+        company_ticker
+    )
 
 # ==========================
 # UTILITY FUNCTIONS

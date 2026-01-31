@@ -17,7 +17,7 @@ import random
 from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
+from stats_ux import log_transaction
 # ==========================
 # DATABASE SETUP
 # ==========================
@@ -107,22 +107,22 @@ class EconomicMilestone(Base):
 # CONSTANTS
 # ==========================
 
-AUCTION_DURATION_TICKS = 86400  # 24 hours at 1 tick/second
-PRICE_DROP_RATE = 0.95  # Price drops to 95% every hour
-ECONOMIC_THRESHOLD = 100000  # $100k triggers 1 new plot
+AUCTION_DURATION_TICKS = 400
+PRICE_DROP_RATE = 0.35  # Price drops to 35% every hour
+ECONOMIC_THRESHOLD = 1000000  # $1M triggers 1 new plot
 LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
 
 # Base prices by terrain
 TERRAIN_BASE_PRICES = {
-    "prairie": 15000,
-    "forest": 18000,
-    "desert": 12000,
-    "marsh": 14000,
-    "mountain": 20000,
-    "tundra": 13000,
-    "jungle": 17000,
-    "savanna": 16000
+    "prairie": 150000,
+    "forest": 180000,
+    "desert": 120000,
+    "marsh": 140000,
+    "mountain": 200000,
+    "tundra": 130000,
+    "jungle": 170000,
+    "savanna": 160000
 }
 
 # ==========================
@@ -210,15 +210,22 @@ def list_land_for_sale(seller_id: int, land_plot_id: int, asking_price: float) -
             print("[LandMarket] Invalid price")
             return None
         
-        # Check if already listed
-        existing = db.query(LandListing).filter(
+        # Check if already listed (active)
+        existing_active = db.query(LandListing).filter(
             LandListing.land_plot_id == land_plot_id,
             LandListing.is_active == True
         ).first()
         
-        if existing:
+        if existing_active:
             print("[LandMarket] Land already listed")
             return None
+        
+        # Delete any inactive listings for this plot (to avoid UNIQUE constraint)
+        db.query(LandListing).filter(
+            LandListing.land_plot_id == land_plot_id,
+            LandListing.is_active == False
+        ).delete()
+        db.commit()
         
         # Create listing
         listing = LandListing(
@@ -276,6 +283,11 @@ def buy_listed_land(buyer_id: int, listing_id: int) -> bool:
             # Refund if land transfer fails
             transfer_cash(listing.seller_id, buyer_id, listing.asking_price)
             return False
+       
+        # Get plot details for logging
+        from land import get_land_plot
+        plot = get_land_plot(listing.land_plot_id)
+        terrain = plot.terrain_type if plot else "unknown"
         
         # Record sale
         sale = LandSale(
@@ -292,8 +304,47 @@ def buy_listed_land(buyer_id: int, listing_id: int) -> bool:
         
         db.commit()
         
+        # Log transactions
+        # Buyer logs
+        log_transaction(
+            buyer_id,
+            "land_buy",
+            "land",
+            1,  # 1 plot acquired
+            f"Purchased plot #{listing.land_plot_id} ({terrain})",
+            str(listing.land_plot_id)
+        )
+        
+        log_transaction(
+            buyer_id,
+            "cash_out",
+            "money",
+            -listing.asking_price,
+            f"Land purchase: Plot #{listing.land_plot_id}",
+            str(listing.land_plot_id)
+        )
+        
+        # Seller logs
+        log_transaction(
+            listing.seller_id,
+            "land_sell",
+            "land",
+            -1,  # 1 plot sold (negative)
+            f"Sold plot #{listing.land_plot_id}",
+            str(listing.land_plot_id)
+        )
+        
+        log_transaction(
+            listing.seller_id,
+            "cash_in",
+            "money",
+            listing.asking_price,
+            f"Land sale: Plot #{listing.land_plot_id}",
+            str(listing.land_plot_id)
+        )
+        
         print(f"[LandMarket] Plot {listing.land_plot_id} sold for ${listing.asking_price:,.2f}")
-        return True
+        return True 
     finally:
         db.close()
 
@@ -535,14 +586,21 @@ def create_government_auction(from_land_bank: bool = False, bank_entry: Optional
     db = get_db()
     try:
         # Check if plot already has an active auction
-        existing = db.query(GovernmentAuction).filter(
+        existing_active = db.query(GovernmentAuction).filter(
             GovernmentAuction.land_plot_id == plot.id,
             GovernmentAuction.is_active == True
         ).first()
         
-        if existing:
+        if existing_active:
             print(f"[LandMarket] Plot {plot.id} already has active auction")
             return None
+        
+        # Delete any inactive auctions for this plot (to avoid UNIQUE constraint)
+        db.query(GovernmentAuction).filter(
+            GovernmentAuction.land_plot_id == plot.id,
+            GovernmentAuction.is_active == False
+        ).delete()
+        db.commit()
         
         auction = GovernmentAuction(
             land_plot_id=plot.id,
@@ -678,6 +736,29 @@ def buy_auction_land(buyer_id: int, auction_id: int) -> bool:
         
         db.commit()
         
+        # Log auction purchase
+        from land import get_land_plot
+        plot = get_land_plot(auction.land_plot_id)
+        terrain = plot.terrain_type if plot else "unknown"
+        
+        log_transaction(
+            buyer_id,
+            "land_buy",
+            "land",
+            1,
+            f"Won auction: plot #{auction.land_plot_id} ({terrain})",
+            str(auction.land_plot_id)
+        )
+        
+        log_transaction(
+            buyer_id,
+            "cash_out",
+            "money",
+            -auction.current_price,
+            f"Auction payment: Plot #{auction.land_plot_id}",
+            str(auction.land_plot_id)
+        )
+        
         print(f"[LandMarket] Auction won by player {buyer_id} for ${auction.current_price:,.2f}")
         
         # Record revenue to land bank
@@ -746,8 +827,7 @@ async def tick(current_tick: int, now: datetime):
     # Update auction prices every tick
     update_auction_prices(current_tick)
     
-    # Check for new land creation every 10 minutes (600 ticks)
-    if current_tick % 3600 == 0:
+    if current_tick % 30 == 0:
         plots_needed = check_economic_triggers()
         
         if plots_needed > 0:
@@ -779,7 +859,7 @@ async def tick(current_tick: int, now: datetime):
                 db.close()
     
     # Re-auction plots from land bank every 30 minutes (1800 ticks)
-    if current_tick % 18400 == 0:
+    if current_tick % 140 == 0:
         bank_plots = get_land_bank_plots()
         
         if bank_plots:
@@ -789,7 +869,7 @@ async def tick(current_tick: int, now: datetime):
             create_government_auction(from_land_bank=True, bank_entry=oldest)
     
     # Log stats every hour
-    if current_tick % 3600 == 0:
+    if current_tick % 36 == 0:
         db = get_db()
         try:
             active_listings = db.query(LandListing).filter(LandListing.is_active == True).count()

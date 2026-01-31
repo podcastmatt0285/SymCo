@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, DateTime, Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
+from stats_ux import log_transaction
 # Integrated Algebraic Engine
 from supplydemand import SupplyDemandEngine
 
@@ -22,11 +22,12 @@ class Business(Base):
     __tablename__ = "businesses"
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, index=True, nullable=False)
-    land_plot_id = Column(Integer, unique=True, nullable=False)
+    land_plot_id = Column(Integer, unique=True, nullable=True)
     business_type = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     progress_ticks = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
+    district_id = Column(Integer, nullable=True)  # District ID if business is on a district
 
 class RetailPrice(Base):
     __tablename__ = "retail_prices"
@@ -185,6 +186,11 @@ def get_dismantling_status(business_id: int):
 # CORE SIMULATION LOGIC
 # ==========================
 
+# ==========================
+# FIXED process_business_tick FUNCTION
+# ==========================
+# Replace the process_business_tick function in business.py with this corrected version
+
 def process_business_tick(db):
     from inventory import add_item, remove_item, get_player_inventory
     from land import LandPlot
@@ -196,9 +202,13 @@ def process_business_tick(db):
         sale = db.query(BusinessSale).filter(BusinessSale.business_id == biz.id).first()
         if sale:
             continue
-            
-        config = BUSINESS_TYPES.get(biz.business_type)
-        if not config: continue
+        
+        # FIXED: Check if this is a district business and load appropriate config
+        if biz.district_id:
+            district_business_types = get_district_business_types()
+            config = district_business_types.get(biz.business_type, {})
+        else:
+            config = BUSINESS_TYPES.get(biz.business_type, {})
         
         cycles = config.get("cycles_to_complete", 1)
         if biz.progress_ticks < cycles:
@@ -208,11 +218,21 @@ def process_business_tick(db):
             continue
             
         player = db.query(Player).filter(Player.id == biz.owner_id).first()
-        plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
-        if not player or not plot: continue
+        
+        # FIXED: For district businesses, skip plot lookup
+        if biz.district_id:
+            # District businesses don't have plots, use default efficiency
+            eff_multiplier = 1.0
+        else:
+            plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
+            if not plot:
+                continue
+            eff_multiplier = max(0.5, (plot.efficiency / 100.0))
+        
+        if not player:
+            continue
         
         base_wage = config.get("base_wage_cost", 0.0)
-        eff_multiplier = max(0.5, (plot.efficiency / 100.0))
         wage_cost = base_wage / eff_multiplier
         
         if player.cash_balance < wage_cost:
@@ -250,10 +270,20 @@ def process_business_tick(db):
                     lines_successfully_produced += 1
             
             # Always pay wages and reset progress for retail, even if no sales
-            # This prevents the business from getting stuck
-            player.cash_balance += (total_revenue - wage_cost)
+            net_revenue = total_revenue - wage_cost  # ← DEFINE net_revenue here!
+            player.cash_balance += net_revenue
             biz.progress_ticks = 0
             db.commit()
+            # Log retail revenue (if any)
+            if net_revenue > 0:
+                log_transaction(
+                    biz.owner_id,
+                    "cash_in",
+                    "money",
+                    net_revenue,
+                    f"Retail revenue: {biz.business_type}",
+                    str(biz.id)
+                )
             continue
 
         # ===== PRODUCTION CLASS =====
@@ -268,8 +298,26 @@ def process_business_tick(db):
             if line_can_run:
                 for req in line.get("inputs", []):
                     remove_item(player.id, req["item"], req["quantity"])
+                    # Log resource consumption
+                    log_transaction(
+                        biz.owner_id,
+                        "resource_use",
+                        "resource",
+                        -req["quantity"],  # negative because consumed
+                        f"Used {req['quantity']} {req['item']} in production",
+                        str(biz.id)
+                    )
                     player_inv[req["item"]] -= req["quantity"]
                 add_item(player.id, line["output_item"], line["output_qty"])
+                # Log resource production
+                log_transaction(
+                    biz.owner_id,
+                    "resource_gain",
+                    "resource",
+                    line["output_qty"],
+                    f"Produced {line['output_qty']} {line['output_item']}",
+                    str(biz.id)
+                )
                 lines_successfully_produced += 1
                 
         if lines_successfully_produced > 0:
@@ -400,6 +448,114 @@ def set_retail_price(player_id: int, item_type: str, price: float) -> bool:
         return False
     finally:
         db.close()
+
+# =========================
+# Districts
+# =========================
+
+def get_district_business_types():
+    """Load district business types from district_businesses.json"""
+    try:
+        with open('district_businesses.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("[Business] Warning: district_businesses.json not found")
+        return {}
+
+# ==========================
+# FIXED create_district_business FUNCTION
+# ==========================
+# Replace the create_district_business function in business.py with this corrected version
+
+def create_district_business(owner_id: int, district_id: int, business_type: str):
+    """
+    Create a business on a district.
+    Similar to create_business() but for districts instead of land plots.
+    
+    Args:
+        owner_id: Player ID who owns the district
+        district_id: District ID to build on
+        business_type: Type of district business to create
+    
+    Returns:
+        (Business instance or None, error message)
+    """
+    from districts import get_district, occupy_district
+    from auth import Player
+    
+    db = SessionLocal()  # FIXED: Use SessionLocal() not get_db()
+    
+    try:
+        # Verify district exists and is owned by player
+        district = get_district(district_id)
+        if not district:
+            return None, "District not found"
+        
+        if district.owner_id != owner_id:
+            return None, "You don't own this district"
+        
+        if district.occupied_by_business_id is not None:
+            return None, "District already has a business"
+        
+        # Load district business types
+        district_business_types = get_district_business_types()
+        
+        if business_type not in district_business_types:
+            return None, f"Invalid district business type: {business_type}"
+        
+        config = district_business_types[business_type]
+        
+        # Verify terrain compatibility
+        district_terrain_key = f"district_{district.district_type}"
+        if district_terrain_key not in config.get("allowed_terrain", []):
+            return None, f"This business cannot be built on a {district.district_type} district"
+        
+        # Calculate cost with multiplier
+        base_cost = config.get("startup_cost", 2500.0)
+        owned_businesses = db.query(Business).filter(Business.owner_id == owner_id).count()
+        
+        # FIXED: Use same multiplier formula as create_business
+        multiplier = 1.0 + (owned_businesses * 0.25)
+        total_cost = base_cost * multiplier
+        
+        # Check player has enough money
+        player = db.query(Player).filter(Player.id == owner_id).first()
+        if not player:
+            return None, "Player not found"
+        
+        if player.cash_balance < total_cost:
+            return None, f"Insufficient funds. Need ${total_cost:,.2f}"
+        
+        # Deduct cost
+        player.cash_balance -= total_cost
+        
+        # Create business
+        business = Business(
+            owner_id=owner_id,
+            business_type=business_type,
+            district_id=district_id,  # District businesses use this
+            land_plot_id=None,  # No land plot for district businesses (REQUIRES nullable column)
+            progress_ticks=0,
+            is_active=True
+        )
+        
+        db.add(business)
+        db.commit()
+        db.refresh(business)
+        
+        # Occupy the district
+        occupy_district(district_id, business.id)
+        
+        print(f"[Business] Created district business {business.id} ({business_type}) for player {owner_id} on district {district_id}")
+        return business, "Success"
+        
+    except Exception as e:
+        print(f"[Business] Error creating district business: {e}")
+        import traceback
+        traceback.print_exc()
+        return None, str(e)
+    finally:
+        db.close()  # FIXED: Always close the session
 
 # ==========================
 # PUBLIC API

@@ -1,0 +1,4412 @@
+{
+  "steel_mill": {
+    "name": "Steel Mill",
+    "description": "Smelts iron ore into high-grade steel",
+    "startup_cost": 5000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 25000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "steel",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "iron_ore", "quantity": 2000 },
+          { "item": "coal", "quantity": 1000 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "water", "quantity": 5000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "rebar",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "iron_ore", "quantity": 800 },
+          { "item": "coal", "quantity": 400 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 25 }
+        ]
+      }
+    ]
+  },
+
+  "aluminum_foundry": {
+    "name": "Aluminum Foundry",
+    "description": "Processes bauxite into aluminum",
+    "startup_cost": 4500000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 22000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "aluminum",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "iron_ore", "quantity": 1500 },
+          { "item": "energy", "quantity": 80000 },
+          { "item": "water", "quantity": 3000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      }
+    ]
+  },
+
+  "plastics_factory": {
+    "name": "Plastics Factory",
+    "description": "Converts petroleum into plastic polymers",
+    "startup_cost": 3500000,
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 18000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "plastic",
+        "output_qty": 600,
+        "inputs": [
+          { "item": "oil", "quantity": 2000 },
+          { "item": "energy", "quantity": 30000 },
+          { "item": "water", "quantity": 2000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      }
+    ]
+  },
+
+  "wire_plant": {
+    "name": "Wire & Cable Plant",
+    "description": "Draws copper into electrical wiring",
+    "startup_cost": 2800000,
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 15000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "copper_wire",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "copper", "quantity": 800 },
+          { "item": "rubber", "quantity": 200 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 25 }
+        ]
+      }
+    ]
+  },
+
+  "water_treatment": {
+    "name": "Water Treatment Plant",
+    "description": "Purifies water for residential use",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 20000,
+    "allowed_terrain": ["district_utilities"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "drinking_water",
+        "output_qty": 1000,
+        "inputs": [
+          { "item": "water", "quantity": 5000 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "wastewater_service",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "water", "quantity": 2000 },
+          { "item": "energy", "quantity": 15000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      }
+    ]
+  },
+
+  "power_company": {
+    "name": "Power Utility Company",
+    "description": "Converts raw energy into residential electricity",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 25000,
+    "allowed_terrain": ["district_utilities"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "residential_electricity",
+        "output_qty": 800,
+        "inputs": [
+          { "item": "energy", "quantity": 50000 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      }
+    ]
+  },
+
+  "gas_refinery": {
+    "name": "Gas & Fuel Refinery",
+    "description": "Refines crude oil into fuels",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 30000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "natural_gas",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "oil", "quantity": 1500 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      },
+      {
+        "output_item": "heating_oil",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "oil", "quantity": 1200 },
+          { "item": "energy", "quantity": 15000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      },
+      {
+        "output_item": "jet_fuel",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "oil", "quantity": 2000 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "diesel",
+        "output_qty": 350,
+        "inputs": [
+          { "item": "oil", "quantity": 1400 },
+          { "item": "energy", "quantity": 18000 },
+          { "item": "paper", "quantity": 35 }
+        ]
+      }
+    ]
+  },
+
+  "concrete_plant": {
+    "name": "Concrete & Cement Plant",
+    "description": "Produces construction materials",
+    "startup_cost": 3000000,
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 16000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cement",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "sand", "quantity": 1000 },
+          { "item": "coal", "quantity": 500 },
+          { "item": "energy", "quantity": 30000 },
+          { "item": "paper", "quantity": 20 }
+        ]
+      },
+      {
+        "output_item": "concrete",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "cement", "quantity": 200 },
+          { "item": "sand", "quantity": 500 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "rebar", "quantity": 50 },
+          { "item": "energy", "quantity": 15000 },
+          { "item": "paper", "quantity": 15 }
+        ]
+      }
+    ]
+  },
+
+  "semiconductor_fab": {
+    "name": "Semiconductor Fabrication Plant",
+    "description": "Manufactures microelectronic components",
+    "startup_cost": 15000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_tech"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "microchip",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "sand", "quantity": 500 },
+          { "item": "copper", "quantity": 300 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "water", "quantity": 5000 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      },
+      {
+        "output_item": "processor",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "microchip", "quantity": 50 },
+          { "item": "copper", "quantity": 200 },
+          { "item": "energy", "quantity": 80000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      },
+      {
+        "output_item": "memory_module",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "microchip", "quantity": 75 },
+          { "item": "copper", "quantity": 100 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "circuit_board",
+        "output_qty": 250,
+        "inputs": [
+          { "item": "copper", "quantity": 400 },
+          { "item": "plastic", "quantity": 200 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      },
+      {
+        "output_item": "lcd_panel",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "glass", "quantity": 500 },
+          { "item": "microchip", "quantity": 25 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "energy", "quantity": 60000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      },
+      {
+        "output_item": "battery_cell",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "copper", "quantity": 300 },
+          { "item": "lead", "quantity": 200 },
+          { "item": "plastic", "quantity": 150 },
+          { "item": "energy", "quantity": 35000 },
+          { "item": "paper", "quantity": 35 }
+        ]
+      }
+    ]
+  },
+
+  "_comment2": "=== TIER 2: COMPONENT MANUFACTURING ===",
+
+  "electronics_factory": {
+    "name": "Electronics Assembly Plant",
+    "description": "Assembles consumer electronics",
+    "startup_cost": 10000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 35000,
+    "allowed_terrain": ["district_tech"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "smartphone",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "processor", "quantity": 100 },
+          { "item": "memory_module", "quantity": 100 },
+          { "item": "lcd_panel", "quantity": 100 },
+          { "item": "battery_cell", "quantity": 100 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "glass", "quantity": 200 },
+          { "item": "aluminum", "quantity": 50 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      },
+      {
+        "output_item": "laptop",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "processor", "quantity": 50 },
+          { "item": "memory_module", "quantity": 100 },
+          { "item": "lcd_panel", "quantity": 50 },
+          { "item": "battery_cell", "quantity": 50 },
+          { "item": "circuit_board", "quantity": 75 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "aluminum", "quantity": 75 },
+          { "item": "copper_wire", "quantity": 50 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 75 }
+        ]
+      },
+      {
+        "output_item": "tablet",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "processor", "quantity": 75 },
+          { "item": "memory_module", "quantity": 75 },
+          { "item": "lcd_panel", "quantity": 75 },
+          { "item": "battery_cell", "quantity": 75 },
+          { "item": "circuit_board", "quantity": 75 },
+          { "item": "glass", "quantity": 150 },
+          { "item": "aluminum", "quantity": 40 },
+          { "item": "energy", "quantity": 35000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      },
+      {
+        "output_item": "television",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "lcd_panel", "quantity": 80 },
+          { "item": "circuit_board", "quantity": 40 },
+          { "item": "processor", "quantity": 20 },
+          { "item": "plastic", "quantity": 200 },
+          { "item": "copper_wire", "quantity": 80 },
+          { "item": "energy", "quantity": 30000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "desktop_computer",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "processor", "quantity": 30 },
+          { "item": "memory_module", "quantity": 60 },
+          { "item": "circuit_board", "quantity": 45 },
+          { "item": "steel", "quantity": 30 },
+          { "item": "copper_wire", "quantity": 60 },
+          { "item": "plastic", "quantity": 60 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 45 }
+        ]
+      },
+      {
+        "output_item": "server",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "processor", "quantity": 80 },
+          { "item": "memory_module", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 60 },
+          { "item": "steel", "quantity": 100 },
+          { "item": "copper_wire", "quantity": 150 },
+          { "item": "energy", "quantity": 60000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      },
+      {
+        "output_item": "router",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "microchip", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      }
+    ]
+  },
+
+  "appliance_factory": {
+    "name": "Home Appliance Factory",
+    "description": "Manufactures household appliances",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 25000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "hvac_unit",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "copper_wire", "quantity": 150 },
+          { "item": "copper", "quantity": 100 },
+          { "item": "circuit_board", "quantity": 25 },
+          { "item": "plastic", "quantity": 50 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "water_heater",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "steel", "quantity": 160 },
+          { "item": "copper_wire", "quantity": 80 },
+          { "item": "glass", "quantity": 40 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      },
+      {
+        "output_item": "washer_dryer",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "steel", "quantity": 180 },
+          { "item": "copper_wire", "quantity": 90 },
+          { "item": "circuit_board", "quantity": 30 },
+          { "item": "rubber", "quantity": 60 },
+          { "item": "plastic", "quantity": 90 },
+          { "item": "energy", "quantity": 30000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      },
+      {
+        "output_item": "refrigerator",
+        "output_qty": 35,
+        "inputs": [
+          { "item": "steel", "quantity": 175 },
+          { "item": "copper_wire", "quantity": 70 },
+          { "item": "circuit_board", "quantity": 35 },
+          { "item": "plastic", "quantity": 105 },
+          { "item": "glass", "quantity": 35 },
+          { "item": "energy", "quantity": 28000 },
+          { "item": "paper", "quantity": 35 }
+        ]
+      },
+      {
+        "output_item": "stove",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "copper_wire", "quantity": 60 },
+          { "item": "glass", "quantity": 80 },
+          { "item": "energy", "quantity": 22000 },
+          { "item": "paper", "quantity": 25 }
+        ]
+      }
+    ]
+  },
+
+  "medical_equipment_factory": {
+    "name": "Medical Equipment Factory",
+    "description": "Manufactures hospital equipment",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_medical"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "medical_scanner",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 500 },
+          { "item": "copper_wire", "quantity": 300 },
+          { "item": "processor", "quantity": 25 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "lcd_panel", "quantity": 10 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "paper", "quantity": 200 }
+        ]
+      },
+      {
+        "output_item": "surgical_tools",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "rubber", "quantity": 25 },
+          { "item": "plastic", "quantity": 50 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "hospital_bed",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "cotton", "quantity": 100 },
+          { "item": "circuit_board", "quantity": 20 },
+          { "item": "copper_wire", "quantity": 40 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      },
+      {
+        "output_item": "defibrillator",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 30 },
+          { "item": "battery_cell", "quantity": 60 },
+          { "item": "copper_wire", "quantity": 45 },
+          { "item": "plastic", "quantity": 45 },
+          { "item": "energy", "quantity": 18000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      },
+      {
+        "output_item": "ventilator",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 30 },
+          { "item": "processor", "quantity": 15 },
+          { "item": "plastic", "quantity": 75 },
+          { "item": "rubber", "quantity": 45 },
+          { "item": "copper_wire", "quantity": 30 },
+          { "item": "energy", "quantity": 30000 },
+          { "item": "paper", "quantity": 45 }
+        ]
+      },
+      {
+        "output_item": "iv_pump",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 40 },
+          { "item": "plastic", "quantity": 80 },
+          { "item": "copper_wire", "quantity": 40 },
+          { "item": "energy", "quantity": 15000 },
+          { "item": "paper", "quantity": 25 }
+        ]
+      },
+      {
+        "output_item": "wheelchair",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 150 },
+          { "item": "rubber", "quantity": 100 },
+          { "item": "cotton", "quantity": 50 },
+          { "item": "energy", "quantity": 12000 },
+          { "item": "paper", "quantity": 20 }
+        ]
+      },
+      {
+        "output_item": "crutches",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "aluminum", "quantity": 100 },
+          { "item": "rubber", "quantity": 50 },
+          { "item": "energy", "quantity": 8000 },
+          { "item": "paper", "quantity": 15 }
+        ]
+      },
+      {
+        "output_item": "prosthetic",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "aluminum", "quantity": 60 },
+          { "item": "plastic", "quantity": 40 },
+          { "item": "circuit_board", "quantity": 20 },
+          { "item": "rubber", "quantity": 30 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      }
+    ]
+  },
+
+  "security_equipment_factory": {
+    "name": "Security Equipment Factory",
+    "description": "Manufactures security and surveillance systems",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 20000,
+    "allowed_terrain": ["district_tech"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "security_camera",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "lcd_panel", "quantity": 50 },
+          { "item": "plastic", "quantity": 150 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      },
+      {
+        "output_item": "alarm_system",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 75 },
+          { "item": "copper_wire", "quantity": 150 },
+          { "item": "plastic", "quantity": 75 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      },
+      {
+        "output_item": "surveillance_system",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "security_camera", "quantity": 100 },
+          { "item": "server", "quantity": 5 },
+          { "item": "router", "quantity": 25 },
+          { "item": "copper_wire", "quantity": 200 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      },
+      {
+        "output_item": "body_scanner",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "processor", "quantity": 20 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      }
+    ]
+  },
+
+  "scientific_equipment_factory": {
+    "name": "Scientific Equipment Laboratory",
+    "description": "Manufactures laboratory and research equipment",
+    "startup_cost": 5000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 22000,
+    "allowed_terrain": ["district_tech"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "microscope",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "glass", "quantity": 200 },
+          { "item": "steel", "quantity": 100 },
+          { "item": "brass", "quantity": 50 },
+          { "item": "circuit_board", "quantity": 25 },
+          { "item": "energy", "quantity": 20000 },
+          { "item": "paper", "quantity": 40 }
+        ]
+      },
+      {
+        "output_item": "lab_equipment",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "glass", "quantity": 300 },
+          { "item": "steel", "quantity": 150 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "rubber", "quantity": 50 },
+          { "item": "energy", "quantity": 25000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      }
+    ]
+  },
+
+  "_comment3": "=== TIER 3A: VEHICLE PARTS ===",
+
+  "bus_parts_factory": {
+    "name": "Bus Components Factory",
+    "description": "Manufactures heavy vehicle components",
+    "startup_cost": 7000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 28000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "bus_chassis",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "steel", "quantity": 400 },
+          { "item": "aluminum", "quantity": 100 },
+          { "item": "rubber", "quantity": 80 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      },
+      {
+        "output_item": "bus_engine",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "iron", "quantity": 100 },
+          { "item": "copper_wire", "quantity": 80 },
+          { "item": "rubber", "quantity": 40 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "paper", "quantity": 50 }
+        ]
+      },
+      {
+        "output_item": "bus_seats",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "cotton", "quantity": 200 },
+          { "item": "polyester", "quantity": 150 },
+          { "item": "leather", "quantity": 50 },
+          { "item": "energy", "quantity": 15000 },
+          { "item": "paper", "quantity": 30 }
+        ]
+      }
+    ]
+  },
+
+  "marine_parts_factory": {
+    "name": "Marine Components Factory",
+    "description": "Manufactures ship components",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 40000,
+    "allowed_terrain": ["district_shipyard"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "ship_hull",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 2000 },
+          { "item": "fiberglass", "quantity": 500 },
+          { "item": "aluminum", "quantity": 300 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "paper", "quantity": 150 }
+        ]
+      },
+      {
+        "output_item": "marine_engine",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 500 },
+          { "item": "iron", "quantity": 300 },
+          { "item": "copper_wire", "quantity": 200 },
+          { "item": "rubber", "quantity": 100 },
+          { "item": "energy", "quantity": 80000 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      }
+    ]
+  },
+
+  "aircraft_parts_factory": {
+    "name": "Aircraft Components Factory",
+    "description": "Manufactures airplane components",
+    "startup_cost": 20000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 60000,
+    "allowed_terrain": ["district_aerospace"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "aircraft_engine",
+        "output_qty": 4,
+        "inputs": [
+          { "item": "steel", "quantity": 400 },
+          { "item": "aluminum", "quantity": 600 },
+          { "item": "copper_wire", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "rubber", "quantity": 100 },
+          { "item": "energy", "quantity": 150000 },
+          { "item": "paper", "quantity": 200 }
+        ]
+      },
+      {
+        "output_item": "aircraft_fuselage",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "aluminum", "quantity": 2000 },
+          { "item": "steel", "quantity": 500 },
+          { "item": "fiberglass", "quantity": 300 },
+          { "item": "copper_wire", "quantity": 400 },
+          { "item": "energy", "quantity": 200000 },
+          { "item": "paper", "quantity": 250 }
+        ]
+      },
+      {
+        "output_item": "aircraft_wing",
+        "output_qty": 4,
+        "inputs": [
+          { "item": "aluminum", "quantity": 1000 },
+          { "item": "steel", "quantity": 200 },
+          { "item": "fiberglass", "quantity": 200 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "paper", "quantity": 150 }
+        ]
+      }
+    ]
+  },
+
+  "train_parts_factory": {
+    "name": "Railway Components Factory",
+    "description": "Manufactures railway equipment",
+    "startup_cost": 10000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 35000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "train_car_frame",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 800 },
+          { "item": "aluminum", "quantity": 200 },
+          { "item": "energy", "quantity": 60000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      },
+      {
+        "output_item": "locomotive_engine",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 600 },
+          { "item": "iron", "quantity": 400 },
+          { "item": "copper_wire", "quantity": 300 },
+          { "item": "circuit_board", "quantity": 30 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "paper", "quantity": 120 }
+        ]
+      }
+    ]
+  },
+
+  "_comment4": "=== TIER 3B: VEHICLE ASSEMBLY ===",
+
+  "bus_factory": {
+    "name": "Bus Assembly Plant",
+    "description": "Assembles buses from components",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 32000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "school_bus",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 10 },
+          { "item": "bus_engine", "quantity": 10 },
+          { "item": "bus_seats", "quantity": 400 },
+          { "item": "glass", "quantity": 200 },
+          { "item": "rubber", "quantity": 80 },
+          { "item": "paint", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "energy", "quantity": 60000 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      },
+      {
+        "output_item": "city_bus",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 8 },
+          { "item": "bus_engine", "quantity": 8 },
+          { "item": "bus_seats", "quantity": 240 },
+          { "item": "glass", "quantity": 160 },
+          { "item": "rubber", "quantity": 64 },
+          { "item": "circuit_board", "quantity": 24 },
+          { "item": "copper_wire", "quantity": 80 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      },
+      {
+        "output_item": "charter_bus",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 5 },
+          { "item": "bus_engine", "quantity": 5 },
+          { "item": "bus_seats", "quantity": 275 },
+          { "item": "glass", "quantity": 100 },
+          { "item": "rubber", "quantity": 40 },
+          { "item": "leather", "quantity": 50 },
+          { "item": "television", "quantity": 10 },
+          { "item": "copper_wire", "quantity": 75 },
+          { "item": "energy", "quantity": 45000 },
+          { "item": "paper", "quantity": 70 }
+        ]
+      },
+      {
+        "output_item": "prison_bus",
+        "output_qty": 4,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 4 },
+          { "item": "bus_engine", "quantity": 4 },
+          { "item": "bus_seats", "quantity": 120 },
+          { "item": "steel", "quantity": 200 },
+          { "item": "glass", "quantity": 40 },
+          { "item": "handcuffs", "quantity": 40 },
+          { "item": "copper_wire", "quantity": 60 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      }
+    ]
+  },
+
+  "emergency_vehicle_factory": {
+    "name": "Emergency Vehicle Factory",
+    "description": "Builds ambulances and emergency vehicles",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 28000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "ambulance",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "chassis", "quantity": 10 },
+          { "item": "engine", "quantity": 10 },
+          { "item": "hospital_bed", "quantity": 10 },
+          { "item": "defibrillator", "quantity": 10 },
+          { "item": "iv_pump", "quantity": 10 },
+          { "item": "glass", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "energy", "quantity": 50000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      },
+      {
+        "output_item": "fire_truck",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 5 },
+          { "item": "bus_engine", "quantity": 5 },
+          { "item": "steel", "quantity": 300 },
+          { "item": "rubber", "quantity": 100 },
+          { "item": "aluminum", "quantity": 100 },
+          { "item": "copper_wire", "quantity": 75 },
+          { "item": "energy", "quantity": 60000 },
+          { "item": "paper", "quantity": 90 }
+        ]
+      },
+      {
+        "output_item": "garbage_truck",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 8 },
+          { "item": "bus_engine", "quantity": 8 },
+          { "item": "steel", "quantity": 400 },
+          { "item": "rubber", "quantity": 64 },
+          { "item": "copper_wire", "quantity": 80 },
+          { "item": "energy", "quantity": 45000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      }
+    ]
+  },
+
+  "truck_factory": {
+    "name": "Commercial Truck Factory",
+    "description": "Manufactures freight trucks",
+    "startup_cost": 7000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 26000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "delivery_truck",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "chassis", "quantity": 15 },
+          { "item": "engine", "quantity": 15 },
+          { "item": "steel", "quantity": 150 },
+          { "item": "glass", "quantity": 60 },
+          { "item": "rubber", "quantity": 90 },
+          { "item": "copper_wire", "quantity": 75 },
+          { "item": "energy", "quantity": 40000 },
+          { "item": "paper", "quantity": 60 }
+        ]
+      },
+      {
+        "output_item": "semi_truck",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "bus_chassis", "quantity": 8 },
+          { "item": "bus_engine", "quantity": 8 },
+          { "item": "steel", "quantity": 320 },
+          { "item": "glass", "quantity": 40 },
+          { "item": "rubber", "quantity": 64 },
+          { "item": "diesel", "quantity": 160 },
+          { "item": "copper_wire", "quantity": 80 },
+          { "item": "energy", "quantity": 55000 },
+          { "item": "paper", "quantity": 80 }
+        ]
+      }
+    ]
+  },
+
+  "shipyard": {
+    "name": "Commercial Shipyard",
+    "description": "Builds passenger and cargo vessels",
+    "startup_cost": 25000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 80000,
+    "allowed_terrain": ["district_shipyard"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cruise_ship",
+        "output_qty": 1,
+        "inputs": [
+          { "item": "ship_hull", "quantity": 3 },
+          { "item": "marine_engine", "quantity": 6 },
+          { "item": "steel", "quantity": 3000 },
+          { "item": "aluminum", "quantity": 500 },
+          { "item": "glass", "quantity": 1000 },
+          { "item": "copper_wire", "quantity": 2000 },
+          { "item": "circuit_board", "quantity": 200 },
+          { "item": "hvac_unit", "quantity": 50 },
+          { "item": "refrigerator", "quantity": 100 },
+          { "item": "hospital_bed", "quantity": 20 },
+          { "item": "energy", "quantity": 500000 },
+          { "item": "paper", "quantity": 500 }
+        ]
+      },
+      {
+        "output_item": "cargo_freighter",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "ship_hull", "quantity": 4 },
+          { "item": "marine_engine", "quantity": 8 },
+          { "item": "steel", "quantity": 4000 },
+          { "item": "copper_wire", "quantity": 1000 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "energy", "quantity": 400000 },
+          { "item": "paper", "quantity": 400 }
+        ]
+      },
+      {
+        "output_item": "ferry",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "ship_hull", "quantity": 3 },
+          { "item": "marine_engine", "quantity": 6 },
+          { "item": "steel", "quantity": 1500 },
+          { "item": "glass", "quantity": 300 },
+          { "item": "copper_wire", "quantity": 450 },
+          { "item": "bus_seats", "quantity": 600 },
+          { "item": "energy", "quantity": 200000 },
+          { "item": "paper", "quantity": 250 }
+        ]
+      },
+      {
+        "output_item": "tugboat",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "ship_hull", "quantity": 5 },
+          { "item": "marine_engine", "quantity": 10 },
+          { "item": "steel", "quantity": 500 },
+          { "item": "copper_wire", "quantity": 250 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      }
+    ]
+  },
+
+  "aircraft_assembly": {
+    "name": "Aircraft Assembly Plant",
+    "description": "Assembles commercial aircraft",
+    "startup_cost": 50000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 100000,
+    "allowed_terrain": ["district_aerospace"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "passenger_jet",
+        "output_qty": 1,
+        "inputs": [
+          { "item": "aircraft_fuselage", "quantity": 1 },
+          { "item": "aircraft_wing", "quantity": 2 },
+          { "item": "aircraft_engine", "quantity": 4 },
+          { "item": "aluminum", "quantity": 1000 },
+          { "item": "copper_wire", "quantity": 1000 },
+          { "item": "circuit_board", "quantity": 200 },
+          { "item": "processor", "quantity": 50 },
+          { "item": "lcd_panel", "quantity": 100 },
+          { "item": "glass", "quantity": 300 },
+          { "item": "rubber", "quantity": 200 },
+          { "item": "bus_seats", "quantity": 300 },
+          { "item": "energy", "quantity": 600000 },
+          { "item": "paper", "quantity": 600 }
+        ]
+      },
+      {
+        "output_item": "cargo_plane",
+        "output_qty": 1,
+        "inputs": [
+          { "item": "aircraft_fuselage", "quantity": 1 },
+          { "item": "aircraft_wing", "quantity": 2 },
+          { "item": "aircraft_engine", "quantity": 4 },
+          { "item": "aluminum", "quantity": 800 },
+          { "item": "steel", "quantity": 200 },
+          { "item": "copper_wire", "quantity": 800 },
+          { "item": "circuit_board", "quantity": 150 },
+          { "item": "energy", "quantity": 500000 },
+          { "item": "paper", "quantity": 500 }
+        ]
+      },
+      {
+        "output_item": "private_jet",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "aircraft_fuselage", "quantity": 1 },
+          { "item": "aircraft_wing", "quantity": 2 },
+          { "item": "aircraft_engine", "quantity": 2 },
+          { "item": "aluminum", "quantity": 400 },
+          { "item": "copper_wire", "quantity": 400 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "leather", "quantity": 200 },
+          { "item": "glass", "quantity": 100 },
+          { "item": "energy", "quantity": 300000 },
+          { "item": "paper", "quantity": 300 }
+        ]
+      },
+      {
+        "output_item": "helicopter",
+        "output_qty": 4,
+        "inputs": [
+          { "item": "aircraft_engine", "quantity": 4 },
+          { "item": "aluminum", "quantity": 400 },
+          { "item": "steel", "quantity": 200 },
+          { "item": "copper_wire", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 80 },
+          { "item": "glass", "quantity": 80 },
+          { "item": "energy", "quantity": 200000 },
+          { "item": "paper", "quantity": 200 }
+        ]
+      }
+    ]
+  },
+
+  "rail_factory": {
+    "name": "Railway Vehicle Factory",
+    "description": "Manufactures trains and locomotives",
+    "startup_cost": 15000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_industrial"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "passenger_train",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "train_car_frame", "quantity": 5 },
+          { "item": "steel", "quantity": 500 },
+          { "item": "bus_seats", "quantity": 400 },
+          { "item": "glass", "quantity": 200 },
+          { "item": "copper_wire", "quantity": 250 },
+          { "item": "hvac_unit", "quantity": 10 },
+          { "item": "energy", "quantity": 150000 },
+          { "item": "paper", "quantity": 150 }
+        ]
+      },
+      {
+        "output_item": "freight_car",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "train_car_frame", "quantity": 10 },
+          { "item": "steel", "quantity": 800 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "energy", "quantity": 100000 },
+          { "item": "paper", "quantity": 100 }
+        ]
+      },
+      {
+        "output_item": "locomotive",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "locomotive_engine", "quantity": 3 },
+          { "item": "train_car_frame", "quantity": 3 },
+          { "item": "steel", "quantity": 600 },
+          { "item": "copper_wire", "quantity": 450 },
+          { "item": "circuit_board", "quantity": 60 },
+          { "item": "diesel", "quantity": 300 },
+          { "item": "energy", "quantity": 200000 },
+          { "item": "paper", "quantity": 200 }
+        ]
+      }
+    ]
+  },
+
+  "_comment5": "=== TIER 4: PHARMACEUTICAL & MEDICAL SUPPLIES ===",
+
+  "pharmaceutical_plant": {
+    "name": "Pharmaceutical Manufacturing Plant",
+    "description": "Produces medications and vaccines",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_medical"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "antibiotic",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 100 },
+          { "item": "water", "quantity": 500 },
+          { "item": "pill_bottle", "quantity": 200 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "painkiller",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 150 },
+          { "item": "water", "quantity": 300 },
+          { "item": "pill_bottle", "quantity": 300 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "insulin",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 200 },
+          { "item": "water", "quantity": 200 },
+          { "item": "glass", "quantity": 100 },
+          { "item": "rubber", "quantity": 50 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "vaccine",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 250 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "glass", "quantity": 500 },
+          { "item": "rubber", "quantity": 250 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "anesthesia",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 100 },
+          { "item": "water", "quantity": 100 },
+          { "item": "glass", "quantity": 50 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 45000 }
+        ]
+      },
+      {
+        "output_item": "chemotherapy_drug",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 200 },
+          { "item": "water", "quantity": 50 },
+          { "item": "glass", "quantity": 25 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "antidepressant",
+        "output_qty": 250,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 125 },
+          { "item": "water", "quantity": 250 },
+          { "item": "pill_bottle", "quantity": 250 },
+          { "item": "paper", "quantity": 125 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "blood_pressure_med",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 150 },
+          { "item": "water", "quantity": 300 },
+          { "item": "pill_bottle", "quantity": 300 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 28000 }
+        ]
+      }
+    ]
+  },
+
+  "medical_supplies_factory": {
+    "name": "Medical Supplies Factory",
+    "description": "Produces disposable medical supplies",
+    "startup_cost": 5000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 22000,
+    "allowed_terrain": ["district_medical"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "surgical_gloves",
+        "output_qty": 1000,
+        "inputs": [
+          { "item": "rubber", "quantity": 200 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "surgical_mask",
+        "output_qty": 2000,
+        "inputs": [
+          { "item": "cotton", "quantity": 200 },
+          { "item": "polyester", "quantity": 100 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "syringe",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "plastic", "quantity": 100 },
+          { "item": "steel", "quantity": 25 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "iv_bag",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "plastic", "quantity": 150 },
+          { "item": "water", "quantity": 600 },
+          { "item": "salt", "quantity": 30 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "blood_bag",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "plastic", "quantity": 100 },
+          { "item": "rubber", "quantity": 40 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 16000 }
+        ]
+      },
+      {
+        "output_item": "gauze",
+        "output_qty": 800,
+        "inputs": [
+          { "item": "cotton", "quantity": 400 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 10000 }
+        ]
+      },
+      {
+        "output_item": "sutures",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "silk", "quantity": 100 },
+          { "item": "steel", "quantity": 20 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 14000 }
+        ]
+      },
+      {
+        "output_item": "cast_material",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "cotton", "quantity": 150 },
+          { "item": "cement", "quantity": 75 },
+          { "item": "water", "quantity": 150 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment6": "=== TIER 4: MILITARY PRODUCTION ===",
+
+  "weapons_factory": {
+    "name": "Weapons Manufacturing Plant",
+    "description": "Produces military armaments",
+    "startup_cost": 25000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 65000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "rifle",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "lumber", "quantity": 50 },
+          { "item": "plastic", "quantity": 50 },
+          { "item": "copper", "quantity": 30 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "ammunition",
+        "output_qty": 5000,
+        "inputs": [
+          { "item": "brass", "quantity": 500 },
+          { "item": "lead", "quantity": 300 },
+          { "item": "copper", "quantity": 200 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "grenade",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "iron", "quantity": 100 },
+          { "item": "copper_wire", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 45000 }
+        ]
+      },
+      {
+        "output_item": "missile",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "aluminum", "quantity": 150 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "processor", "quantity": 20 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "jet_fuel", "quantity": 50 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 150000 }
+        ]
+      }
+    ]
+  },
+
+  "tactical_gear_factory": {
+    "name": "Tactical Gear Factory",
+    "description": "Produces military equipment and gear",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 35000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "body_armor",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "polyester", "quantity": 150 },
+          { "item": "cotton", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "combat_helmet",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "plastic", "quantity": 50 },
+          { "item": "cotton", "quantity": 30 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "tactical_vest",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "polyester", "quantity": 150 },
+          { "item": "cotton", "quantity": 75 },
+          { "item": "plastic", "quantity": 75 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "night_vision",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "glass", "quantity": 60 },
+          { "item": "circuit_board", "quantity": 60 },
+          { "item": "processor", "quantity": 30 },
+          { "item": "battery_cell", "quantity": 60 },
+          { "item": "plastic", "quantity": 45 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "military_radio",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "battery_cell", "quantity": 50 },
+          { "item": "plastic", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "encryption_device",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "processor", "quantity": 50 },
+          { "item": "memory_module", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 50 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "radar_array",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "processor", "quantity": 25 },
+          { "item": "copper_wire", "quantity": 300 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "satellite_uplink",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 150 },
+          { "item": "aluminum", "quantity": 100 },
+          { "item": "circuit_board", "quantity": 75 },
+          { "item": "processor", "quantity": 25 },
+          { "item": "copper_wire", "quantity": 200 },
+          { "item": "paper", "quantity": 75 },
+          { "item": "energy", "quantity": 120000 }
+        ]
+      }
+    ]
+  },
+
+  "military_vehicle_plant": {
+    "name": "Military Vehicle Plant",
+    "description": "Manufactures armored military vehicles",
+    "startup_cost": 35000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 75000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tank",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "steel", "quantity": 1500 },
+          { "item": "aluminum", "quantity": 300 },
+          { "item": "bus_engine", "quantity": 3 },
+          { "item": "circuit_board", "quantity": 60 },
+          { "item": "copper_wire", "quantity": 300 },
+          { "item": "rubber", "quantity": 150 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 300000 }
+        ]
+      },
+      {
+        "output_item": "humvee",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 400 },
+          { "item": "chassis", "quantity": 10 },
+          { "item": "engine", "quantity": 10 },
+          { "item": "rubber", "quantity": 80 },
+          { "item": "glass", "quantity": 40 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "apc",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 800 },
+          { "item": "bus_chassis", "quantity": 5 },
+          { "item": "bus_engine", "quantity": 5 },
+          { "item": "circuit_board", "quantity": 40 },
+          { "item": "rubber", "quantity": 60 },
+          { "item": "copper_wire", "quantity": 150 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 180000 }
+        ]
+      },
+      {
+        "output_item": "drone",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "aluminum", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "processor", "quantity": 40 },
+          { "item": "security_camera", "quantity": 40 },
+          { "item": "battery_cell", "quantity": 80 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      }
+    ]
+  },
+
+  "military_aircraft_plant": {
+    "name": "Military Aircraft Plant",
+    "description": "Manufactures combat aircraft",
+    "startup_cost": 60000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 120000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "fighter_jet",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "aircraft_fuselage", "quantity": 2 },
+          { "item": "aircraft_wing", "quantity": 4 },
+          { "item": "aircraft_engine", "quantity": 4 },
+          { "item": "aluminum", "quantity": 800 },
+          { "item": "steel", "quantity": 400 },
+          { "item": "circuit_board", "quantity": 200 },
+          { "item": "processor", "quantity": 100 },
+          { "item": "radar_array", "quantity": 2 },
+          { "item": "missile", "quantity": 8 },
+          { "item": "copper_wire", "quantity": 600 },
+          { "item": "paper", "quantity": 400 },
+          { "item": "energy", "quantity": 800000 }
+        ]
+      },
+      {
+        "output_item": "military_helicopter",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "aircraft_engine", "quantity": 10 },
+          { "item": "aluminum", "quantity": 500 },
+          { "item": "steel", "quantity": 250 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "processor", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 250 },
+          { "item": "missile", "quantity": 10 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 400000 }
+        ]
+      }
+    ]
+  },
+
+  "naval_shipyard": {
+    "name": "Naval Shipyard",
+    "description": "Builds military vessels",
+    "startup_cost": 80000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 150000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "destroyer",
+        "output_qty": 1,
+        "inputs": [
+          { "item": "ship_hull", "quantity": 4 },
+          { "item": "marine_engine", "quantity": 8 },
+          { "item": "steel", "quantity": 5000 },
+          { "item": "aluminum", "quantity": 1000 },
+          { "item": "circuit_board", "quantity": 300 },
+          { "item": "processor", "quantity": 100 },
+          { "item": "radar_array", "quantity": 4 },
+          { "item": "missile", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 2000 },
+          { "item": "paper", "quantity": 600 },
+          { "item": "energy", "quantity": 1000000 }
+        ]
+      },
+      {
+        "output_item": "submarine",
+        "output_qty": 1,
+        "inputs": [
+          { "item": "ship_hull", "quantity": 3 },
+          { "item": "marine_engine", "quantity": 4 },
+          { "item": "steel", "quantity": 4000 },
+          { "item": "circuit_board", "quantity": 400 },
+          { "item": "processor", "quantity": 150 },
+          { "item": "copper_wire", "quantity": 2500 },
+          { "item": "missile", "quantity": 24 },
+          { "item": "paper", "quantity": 500 },
+          { "item": "energy", "quantity": 900000 }
+        ]
+      }
+    ]
+  },
+
+  "military_support_facility": {
+    "name": "Military Support Facility",
+    "description": "Produces military consumables and support items",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 25000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "mre",
+        "output_qty": 1000,
+        "inputs": [
+          { "item": "beef", "quantity": 200 },
+          { "item": "bread", "quantity": 300 },
+          { "item": "carrots", "quantity": 150 },
+          { "item": "potatoes", "quantity": 150 },
+          { "item": "plastic", "quantity": 200 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "military_uniform",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "cotton", "quantity": 400 },
+          { "item": "polyester", "quantity": 200 },
+          { "item": "leather", "quantity": 50 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "dog_tags",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "steel", "quantity": 25 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 8000 }
+        ]
+      },
+      {
+        "output_item": "barracks_bunk",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "lumber", "quantity": 50 },
+          { "item": "cotton", "quantity": 100 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      }
+    ]
+  },
+
+  "military_training_center": {
+    "name": "Military Training Center",
+    "description": "Produces training facilities and equipment",
+    "startup_cost": 10000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 40000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "obstacle_course",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "lumber", "quantity": 500 },
+          { "item": "steel", "quantity": 200 },
+          { "item": "concrete", "quantity": 100 },
+          { "item": "rope", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "firing_range",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "concrete", "quantity": 200 },
+          { "item": "steel", "quantity": 300 },
+          { "item": "sand", "quantity": 500 },
+          { "item": "lumber", "quantity": 100 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "combat_simulator",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "desktop_computer", "quantity": 20 },
+          { "item": "lcd_panel", "quantity": 30 },
+          { "item": "server", "quantity": 5 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment7": "=== TIER 4: ZOO PRODUCTION ===",
+
+  "african_wildlife_preserve": {
+    "name": "African Wildlife Preserve",
+    "description": "Breeds and houses African wildlife",
+    "startup_cost": 15000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "lion",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "beef", "quantity": 500 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "animal_feed", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "elephant",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "grass", "quantity": 2000 },
+          { "item": "water", "quantity": 3000 },
+          { "item": "veterinary_supplies", "quantity": 20 },
+          { "item": "animal_feed", "quantity": 200 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "giraffe",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "grass", "quantity": 1000 },
+          { "item": "timber", "quantity": 200 },
+          { "item": "water", "quantity": 1500 },
+          { "item": "veterinary_supplies", "quantity": 15 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "zebra",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "grass", "quantity": 800 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "rhino",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "grass", "quantity": 1500 },
+          { "item": "water", "quantity": 2000 },
+          { "item": "veterinary_supplies", "quantity": 25 },
+          { "item": "tranquilizer", "quantity": 10 },
+          { "item": "paper", "quantity": 55 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "hippo",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "grass", "quantity": 1200 },
+          { "item": "water", "quantity": 5000 },
+          { "item": "veterinary_supplies", "quantity": 15 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      }
+    ]
+  },
+
+  "primate_conservation": {
+    "name": "Primate Conservation Center",
+    "description": "Houses and breeds great apes",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 40000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "gorilla",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "grass", "quantity": 800 },
+          { "item": "apples", "quantity": 300 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "veterinary_supplies", "quantity": 20 },
+          { "item": "lumber", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "chimpanzee",
+        "output_qty": 4,
+        "inputs": [
+          { "item": "apples", "quantity": 400 },
+          { "item": "grass", "quantity": 400 },
+          { "item": "water", "quantity": 800 },
+          { "item": "veterinary_supplies", "quantity": 15 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 28000 }
+        ]
+      },
+      {
+        "output_item": "orangutan",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "apples", "quantity": 350 },
+          { "item": "timber", "quantity": 150 },
+          { "item": "water", "quantity": 600 },
+          { "item": "veterinary_supplies", "quantity": 12 },
+          { "item": "paper", "quantity": 38 },
+          { "item": "energy", "quantity": 26000 }
+        ]
+      }
+    ]
+  },
+
+  "arctic_habitat_center": {
+    "name": "Arctic Habitat Center",
+    "description": "Houses cold-climate animals",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "polar_bear",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "beef", "quantity": 400 },
+          { "item": "water", "quantity": 3000 },
+          { "item": "veterinary_supplies", "quantity": 20 },
+          { "item": "hvac_unit", "quantity": 2 },
+          { "item": "paper", "quantity": 55 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "penguin",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "beef", "quantity": 200 },
+          { "item": "water", "quantity": 2000 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "hvac_unit", "quantity": 1 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "seal",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "beef", "quantity": 250 },
+          { "item": "water", "quantity": 2500 },
+          { "item": "veterinary_supplies", "quantity": 12 },
+          { "item": "paper", "quantity": 42 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      }
+    ]
+  },
+
+  "marine_life_aquarium": {
+    "name": "Marine Life Aquarium",
+    "description": "Houses sea creatures",
+    "startup_cost": 20000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "dolphin",
+        "output_qty": 4,
+        "inputs": [
+          { "item": "beef", "quantity": 400 },
+          { "item": "water", "quantity": 10000 },
+          { "item": "veterinary_supplies", "quantity": 20 },
+          { "item": "aquarium_tank", "quantity": 1 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "shark",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "beef", "quantity": 500 },
+          { "item": "water", "quantity": 15000 },
+          { "item": "veterinary_supplies", "quantity": 25 },
+          { "item": "aquarium_tank", "quantity": 1 },
+          { "item": "paper", "quantity": 70 },
+          { "item": "energy", "quantity": 90000 }
+        ]
+      },
+      {
+        "output_item": "sea_turtle",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "grass", "quantity": 200 },
+          { "item": "water", "quantity": 5000 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "jellyfish",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "water", "quantity": 3000 },
+          { "item": "salt", "quantity": 100 },
+          { "item": "paper", "quantity": 20 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "octopus",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "beef", "quantity": 150 },
+          { "item": "water", "quantity": 2000 },
+          { "item": "veterinary_supplies", "quantity": 8 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "tropical_fish",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "water", "quantity": 2000 },
+          { "item": "salt", "quantity": 50 },
+          { "item": "animal_feed", "quantity": 50 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      }
+    ]
+  },
+
+  "exotic_animal_facility": {
+    "name": "Exotic Animal Facility",
+    "description": "Houses rare and exotic species",
+    "startup_cost": 14000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 42000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tiger",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "beef", "quantity": 400 },
+          { "item": "water", "quantity": 800 },
+          { "item": "veterinary_supplies", "quantity": 15 },
+          { "item": "tranquilizer", "quantity": 10 },
+          { "item": "paper", "quantity": 48 },
+          { "item": "energy", "quantity": 32000 }
+        ]
+      },
+      {
+        "output_item": "panda",
+        "output_qty": 2,
+        "inputs": [
+          { "item": "grass", "quantity": 2000 },
+          { "item": "timber", "quantity": 300 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "veterinary_supplies", "quantity": 25 },
+          { "item": "paper", "quantity": 65 },
+          { "item": "energy", "quantity": 45000 }
+        ]
+      },
+      {
+        "output_item": "koala",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "timber", "quantity": 400 },
+          { "item": "water", "quantity": 500 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 28000 }
+        ]
+      },
+      {
+        "output_item": "kangaroo",
+        "output_qty": 6,
+        "inputs": [
+          { "item": "grass", "quantity": 600 },
+          { "item": "water", "quantity": 800 },
+          { "item": "veterinary_supplies", "quantity": 12 },
+          { "item": "paper", "quantity": 38 },
+          { "item": "energy", "quantity": 24000 }
+        ]
+      },
+      {
+        "output_item": "python",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "beef", "quantity": 100 },
+          { "item": "water", "quantity": 200 },
+          { "item": "veterinary_supplies", "quantity": 5 },
+          { "item": "paper", "quantity": 22 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "crocodile",
+        "output_qty": 3,
+        "inputs": [
+          { "item": "beef", "quantity": 300 },
+          { "item": "water", "quantity": 2000 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "paper", "quantity": 32 },
+          { "item": "energy", "quantity": 26000 }
+        ]
+      },
+      {
+        "output_item": "tortoise",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "grass", "quantity": 300 },
+          { "item": "water", "quantity": 400 },
+          { "item": "veterinary_supplies", "quantity": 6 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      }
+    ]
+  },
+
+  "aviary_sanctuary": {
+    "name": "Aviary Sanctuary",
+    "description": "Houses exotic birds",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 30000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "parrot",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "apples", "quantity": 100 },
+          { "item": "corn", "quantity": 100 },
+          { "item": "water", "quantity": 200 },
+          { "item": "veterinary_supplies", "quantity": 8 },
+          { "item": "paper", "quantity": 28 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "flamingo",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "beef", "quantity": 75 },
+          { "item": "water", "quantity": 500 },
+          { "item": "veterinary_supplies", "quantity": 6 },
+          { "item": "paper", "quantity": 24 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "eagle",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "beef", "quantity": 150 },
+          { "item": "water", "quantity": 100 },
+          { "item": "veterinary_supplies", "quantity": 10 },
+          { "item": "paper", "quantity": 32 },
+          { "item": "energy", "quantity": 22000 }
+        ]
+      }
+    ]
+  },
+
+  "zoo_infrastructure_factory": {
+    "name": "Zoo Infrastructure Factory",
+    "description": "Produces zoo facilities and equipment",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 25000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "animal_enclosure",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 500 },
+          { "item": "concrete", "quantity": 300 },
+          { "item": "glass", "quantity": 200 },
+          { "item": "lumber", "quantity": 200 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "aquarium_tank",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "glass", "quantity": 500 },
+          { "item": "steel", "quantity": 200 },
+          { "item": "plastic", "quantity": 150 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "circuit_board", "quantity": 25 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "habitat_landscape",
+        "output_qty": 8,
+        "inputs": [
+          { "item": "grass", "quantity": 500 },
+          { "item": "timber", "quantity": 300 },
+          { "item": "sand", "quantity": 200 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "concrete", "quantity": 100 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "viewing_platform",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "steel", "quantity": 150 },
+          { "item": "lumber", "quantity": 200 },
+          { "item": "glass", "quantity": 100 },
+          { "item": "concrete", "quantity": 150 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "feeding_station",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "lumber", "quantity": 80 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      }
+    ]
+  },
+
+  "zoo_supplies_factory": {
+    "name": "Zoo Supplies Factory",
+    "description": "Produces animal care supplies",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 18000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "animal_feed",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "corn", "quantity": 300 },
+          { "item": "wheat", "quantity": 200 },
+          { "item": "beef", "quantity": 100 },
+          { "item": "water", "quantity": 200 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "veterinary_supplies",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "medicine", "quantity": 50 },
+          { "item": "bandage", "quantity": 100 },
+          { "item": "syringe", "quantity": 50 },
+          { "item": "surgical_gloves", "quantity": 100 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "tranquilizer",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "active_ingredient", "quantity": 50 },
+          { "item": "syringe", "quantity": 50 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "animal_microchip",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "microchip", "quantity": 200 },
+          { "item": "plastic", "quantity": 50 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment8": "=== TIER 4: PRISON PRODUCTION ===",
+
+  "prison_supply_factory": {
+    "name": "Prison Supply Factory",
+    "description": "Produces inmate supplies and uniforms",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 18000,
+    "allowed_terrain": ["district_prison"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "inmate_jumpsuit",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "cotton", "quantity": 300 },
+          { "item": "polyester", "quantity": 100 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "prison_bedding",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "cotton", "quantity": 300 },
+          { "item": "polyester", "quantity": 150 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "hygiene_kit",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "soap", "quantity": 300 },
+          { "item": "toothpaste", "quantity": 300 },
+          { "item": "shampoo", "quantity": 300 },
+          { "item": "towel", "quantity": 150 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "commissary_snacks",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "candy_bar", "quantity": 200 },
+          { "item": "lollipop", "quantity": 200 },
+          { "item": "soda", "quantity": 100 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 10000 }
+        ]
+      },
+      {
+        "output_item": "phone_card",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "plastic", "quantity": 50 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      }
+    ]
+  },
+
+  "prison_food_service": {
+    "name": "Prison Food Service",
+    "description": "Prepares institutional meals",
+    "startup_cost": 3000000,
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 15000,
+    "allowed_terrain": ["district_prison"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "prison_meal",
+        "output_qty": 1000,
+        "inputs": [
+          { "item": "bread", "quantity": 500 },
+          { "item": "beef", "quantity": 300 },
+          { "item": "carrots", "quantity": 400 },
+          { "item": "potatoes", "quantity": 500 },
+          { "item": "milk", "quantity": 300 },
+          { "item": "water", "quantity": 1000 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      }
+    ]
+  },
+
+  "prison_security_factory": {
+    "name": "Prison Security Factory",
+    "description": "Produces security and restraint equipment",
+    "startup_cost": 5000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 22000,
+    "allowed_terrain": ["district_prison"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cell_door",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 250 },
+          { "item": "copper_wire", "quantity": 50 },
+          { "item": "circuit_board", "quantity": 25 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "razor_wire",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "paper", "quantity": 20 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "handcuffs",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "taser",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "plastic", "quantity": 50 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "battery_cell", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 50 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      }
+    ]
+  },
+
+  "prison_rehabilitation_center": {
+    "name": "Prison Rehabilitation Center",
+    "description": "Produces rehabilitation materials and programs",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 20000,
+    "allowed_terrain": ["district_prison"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "ged_materials",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "textbook", "quantity": 200 },
+          { "item": "paper", "quantity": 500 },
+          { "item": "ink", "quantity": 50 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "counseling_materials",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "paper", "quantity": 300 },
+          { "item": "textbook", "quantity": 100 },
+          { "item": "ink", "quantity": 30 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "vocational_kit",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 50 },
+          { "item": "lumber", "quantity": 100 },
+          { "item": "textbook", "quantity": 50 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment9": "=== TIER 4: FOOD SERVICE PRODUCTION ===",
+
+  "fast_food_kitchen": {
+    "name": "Fast Food Kitchen",
+    "description": "Mass produces fast food items",
+    "startup_cost": 3000000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 15000,
+    "allowed_terrain": ["district_food"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "burger",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "beef", "quantity": 250 },
+          { "item": "bread", "quantity": 500 },
+          { "item": "onions", "quantity": 100 },
+          { "item": "lettuce", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "hot_dog",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "sausage", "quantity": 400 },
+          { "item": "bread", "quantity": 400 },
+          { "item": "onions", "quantity": 80 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "fries",
+        "output_qty": 600,
+        "inputs": [
+          { "item": "potatoes", "quantity": 600 },
+          { "item": "oil", "quantity": 100 },
+          { "item": "salt", "quantity": 30 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "chicken_nuggets",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "duck_meat", "quantity": 300 },
+          { "item": "flour", "quantity": 100 },
+          { "item": "oil", "quantity": 80 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 22000 }
+        ]
+      },
+      {
+        "output_item": "pizza_slice",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "flour", "quantity": 200 },
+          { "item": "cheese", "quantity": 200 },
+          { "item": "pork", "quantity": 100 },
+          { "item": "onions", "quantity": 50 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "taco",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "corn", "quantity": 200 },
+          { "item": "beef", "quantity": 200 },
+          { "item": "cheese", "quantity": 100 },
+          { "item": "onions", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "burrito",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "flour", "quantity": 150 },
+          { "item": "beef", "quantity": 150 },
+          { "item": "cheese", "quantity": 75 },
+          { "item": "onions", "quantity": 40 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 16000 }
+        ]
+      }
+    ]
+  },
+
+  "international_cuisine_kitchen": {
+    "name": "International Cuisine Kitchen",
+    "description": "Prepares international food items",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 20000,
+    "allowed_terrain": ["district_food"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "sushi_roll",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "beef", "quantity": 150 },
+          { "item": "flour", "quantity": 200 },
+          { "item": "water", "quantity": 150 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "ramen_bowl",
+        "output_qty": 250,
+        "inputs": [
+          { "item": "flour", "quantity": 200 },
+          { "item": "pork", "quantity": 125 },
+          { "item": "eggs", "quantity": 125 },
+          { "item": "onions", "quantity": 60 },
+          { "item": "water", "quantity": 500 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 22000 }
+        ]
+      },
+      {
+        "output_item": "fried_rice",
+        "output_qty": 350,
+        "inputs": [
+          { "item": "flour", "quantity": 250 },
+          { "item": "eggs", "quantity": 175 },
+          { "item": "carrots", "quantity": 100 },
+          { "item": "pork", "quantity": 100 },
+          { "item": "oil", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "pad_thai",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "flour", "quantity": 150 },
+          { "item": "eggs", "quantity": 100 },
+          { "item": "beef", "quantity": 80 },
+          { "item": "peanut", "quantity": 50 },
+          { "item": "paper", "quantity": 38 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "gyro",
+        "output_qty": 250,
+        "inputs": [
+          { "item": "pork", "quantity": 200 },
+          { "item": "flour", "quantity": 125 },
+          { "item": "onions", "quantity": 60 },
+          { "item": "paper", "quantity": 42 },
+          { "item": "energy", "quantity": 19000 }
+        ]
+      }
+    ]
+  },
+
+  "beverage_production": {
+    "name": "Beverage Production Facility",
+    "description": "Produces drinks and beverages",
+    "startup_cost": 2500000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 12000,
+    "allowed_terrain": ["district_food"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "soda_cup",
+        "output_qty": 800,
+        "inputs": [
+          { "item": "soda", "quantity": 400 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "water", "quantity": 400 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "milkshake",
+        "output_qty": 300,
+        "inputs": [
+          { "item": "milk", "quantity": 300 },
+          { "item": "ice_cream", "quantity": 150 },
+          { "item": "sugar", "quantity": 50 },
+          { "item": "plastic", "quantity": 75 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "smoothie",
+        "output_qty": 350,
+        "inputs": [
+          { "item": "apples", "quantity": 200 },
+          { "item": "milk", "quantity": 175 },
+          { "item": "sugar", "quantity": 50 },
+          { "item": "plastic", "quantity": 90 },
+          { "item": "paper", "quantity": 38 },
+          { "item": "energy", "quantity": 14000 }
+        ]
+      },
+      {
+        "output_item": "soft_serve",
+        "output_qty": 400,
+        "inputs": [
+          { "item": "ice_cream", "quantity": 400 },
+          { "item": "sugar", "quantity": 80 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      }
+    ]
+  },
+
+  "food_packaging_factory": {
+    "name": "Food Packaging Factory",
+    "description": "Produces food service supplies",
+    "startup_cost": 2000000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 10000,
+    "allowed_terrain": ["district_food"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "food_tray",
+        "output_qty": 1000,
+        "inputs": [
+          { "item": "plastic", "quantity": 200 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 10000 }
+        ]
+      },
+      {
+        "output_item": "takeout_container",
+        "output_qty": 800,
+        "inputs": [
+          { "item": "plastic", "quantity": 200 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "disposable_utensils",
+        "output_qty": 2000,
+        "inputs": [
+          { "item": "plastic", "quantity": 150 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 8000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment10": "=== TIER 4: ENTERTAINMENT PRODUCTION ===",
+
+  "stadium_construction": {
+    "name": "Stadium Construction Company",
+    "description": "Builds sports and entertainment facilities",
+    "startup_cost": 20000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 60000,
+    "allowed_terrain": ["district_entertainment"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "stadium_seat",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "steel", "quantity": 250 },
+          { "item": "plastic", "quantity": 500 },
+          { "item": "cotton", "quantity": 250 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "scoreboard",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "lcd_panel", "quantity": 50 },
+          { "item": "circuit_board", "quantity": 30 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "jumbotron",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 500 },
+          { "item": "lcd_panel", "quantity": 200 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "processor", "quantity": 25 },
+          { "item": "copper_wire", "quantity": 300 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "goal_post",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "steel", "quantity": 200 },
+          { "item": "paint", "quantity": 40 },
+          { "item": "concrete", "quantity": 100 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "basketball_hoop",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "steel", "quantity": 90 },
+          { "item": "glass", "quantity": 60 },
+          { "item": "rubber", "quantity": 30 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "artificial_turf",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "plastic", "quantity": 500 },
+          { "item": "rubber", "quantity": 250 },
+          { "item": "sand", "quantity": 200 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      }
+    ]
+  },
+
+  "sports_team_operations": {
+    "name": "Sports Team Operations",
+    "description": "Manages professional sports teams",
+    "startup_cost": 15000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_entertainment"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "athlete_contract",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "paper", "quantity": 500 },
+          { "item": "ink", "quantity": 50 },
+          { "item": "laptop", "quantity": 10 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "team_jersey",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "polyester", "quantity": 500 },
+          { "item": "cotton", "quantity": 250 },
+          { "item": "ink", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "sports_ball",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "leather", "quantity": 200 },
+          { "item": "rubber", "quantity": 100 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "championship_trophy",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "brass", "quantity": 50 },
+          { "item": "lumber", "quantity": 25 },
+          { "item": "glass", "quantity": 10 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      }
+    ]
+  },
+
+  "concert_production": {
+    "name": "Concert Production Company",
+    "description": "Produces concert and show equipment",
+    "startup_cost": 10000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 40000,
+    "allowed_terrain": ["district_entertainment"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "concert_stage",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "steel", "quantity": 500 },
+          { "item": "aluminum", "quantity": 200 },
+          { "item": "lumber", "quantity": 300 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "sound_system",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "copper_wire", "quantity": 200 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "steel", "quantity": 60 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "lighting_rig",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "steel", "quantity": 150 },
+          { "item": "aluminum", "quantity": 75 },
+          { "item": "circuit_board", "quantity": 75 },
+          { "item": "copper_wire", "quantity": 150 },
+          { "item": "glass", "quantity": 100 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 35000 }
+        ]
+      },
+      {
+        "output_item": "pyrotechnics",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "iron", "quantity": 100 },
+          { "item": "copper", "quantity": 50 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "band_merchandise",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "cotton", "quantity": 300 },
+          { "item": "polyester", "quantity": 150 },
+          { "item": "ink", "quantity": 100 },
+          { "item": "paper", "quantity": 75 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      }
+    ]
+  },
+
+  "cinema_production": {
+    "name": "Cinema Production Studio",
+    "description": "Produces movie theater equipment",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 35000,
+    "allowed_terrain": ["district_entertainment"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "movie_screen",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "cotton", "quantity": 200 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "aluminum", "quantity": 100 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "theater_seat",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "steel", "quantity": 100 },
+          { "item": "cotton", "quantity": 200 },
+          { "item": "leather", "quantity": 100 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "popcorn_machine",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "steel", "quantity": 60 },
+          { "item": "glass", "quantity": 30 },
+          { "item": "copper_wire", "quantity": 30 },
+          { "item": "circuit_board", "quantity": 15 },
+          { "item": "paper", "quantity": 25 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "film_reel",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "plastic", "quantity": 100 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "ink", "quantity": 50 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      }
+    ]
+  },
+
+  "casino_equipment_factory": {
+    "name": "Casino Equipment Factory",
+    "description": "Manufactures gaming equipment",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_entertainment"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "slot_machine",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "steel", "quantity": 150 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "lcd_panel", "quantity": 50 },
+          { "item": "processor", "quantity": 25 },
+          { "item": "copper_wire", "quantity": 100 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "poker_table",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "lumber", "quantity": 150 },
+          { "item": "cotton", "quantity": 90 },
+          { "item": "leather", "quantity": 60 },
+          { "item": "brass", "quantity": 30 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "roulette_wheel",
+        "output_qty": 15,
+        "inputs": [
+          { "item": "lumber", "quantity": 75 },
+          { "item": "brass", "quantity": 45 },
+          { "item": "steel", "quantity": 30 },
+          { "item": "paint", "quantity": 15 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "casino_chips",
+        "output_qty": 5000,
+        "inputs": [
+          { "item": "plastic", "quantity": 200 },
+          { "item": "paint", "quantity": 50 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "playing_cards",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "paper", "quantity": 200 },
+          { "item": "ink", "quantity": 50 },
+          { "item": "plastic", "quantity": 25 },
+          { "item": "energy", "quantity": 10000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment11": "=== TIER 4: EDUCATION PRODUCTION ===",
+
+  "educational_publishing": {
+    "name": "Educational Publishing House",
+    "description": "Produces educational materials and curriculum",
+    "startup_cost": 5000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 25000,
+    "allowed_terrain": ["district_education"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "curriculum_package",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "textbook", "quantity": 200 },
+          { "item": "paper", "quantity": 1000 },
+          { "item": "ink", "quantity": 100 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "standardized_test",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "paper", "quantity": 2000 },
+          { "item": "ink", "quantity": 200 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "diploma_certificate",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "paper", "quantity": 200 },
+          { "item": "ink", "quantity": 50 },
+          { "item": "leather", "quantity": 50 },
+          { "item": "energy", "quantity": 10000 }
+        ]
+      }
+    ]
+  },
+
+  "school_supplies_factory": {
+    "name": "School Supplies Factory",
+    "description": "Produces school equipment and supplies",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 20000,
+    "allowed_terrain": ["district_education"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "lab_kit",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "glass", "quantity": 200 },
+          { "item": "plastic", "quantity": 150 },
+          { "item": "rubber", "quantity": 50 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "dissection_kit",
+        "output_qty": 150,
+        "inputs": [
+          { "item": "steel", "quantity": 75 },
+          { "item": "plastic", "quantity": 75 },
+          { "item": "rubber", "quantity": 30 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "art_supplies",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "paper", "quantity": 500 },
+          { "item": "paint", "quantity": 100 },
+          { "item": "lumber", "quantity": 50 },
+          { "item": "cotton", "quantity": 50 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "sports_equipment",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "rubber", "quantity": 100 },
+          { "item": "leather", "quantity": 50 },
+          { "item": "steel", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "band_instruments",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "brass", "quantity": 100 },
+          { "item": "lumber", "quantity": 75 },
+          { "item": "steel", "quantity": 25 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      }
+    ]
+  },
+
+  "school_cafeteria": {
+    "name": "School Cafeteria Service",
+    "description": "Prepares school meals",
+    "startup_cost": 2000000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 12000,
+    "allowed_terrain": ["district_education"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "school_lunch",
+        "output_qty": 500,
+        "inputs": [
+          { "item": "bread", "quantity": 250 },
+          { "item": "beef", "quantity": 150 },
+          { "item": "carrots", "quantity": 150 },
+          { "item": "milk", "quantity": 250 },
+          { "item": "apples", "quantity": 150 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      }
+    ]
+  },
+
+  "school_uniform_factory": {
+    "name": "School Uniform Factory",
+    "description": "Produces school uniforms and attire",
+    "startup_cost": 3000000,
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 15000,
+    "allowed_terrain": ["district_education"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "school_uniform",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "cotton", "quantity": 300 },
+          { "item": "polyester", "quantity": 150 },
+          { "item": "buttons", "quantity": 200 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 16000 }
+        ]
+      }
+    ]
+  },
+
+  "classroom_furniture_factory": {
+    "name": "Classroom Furniture Factory",
+    "description": "Manufactures classroom equipment",
+    "startup_cost": 4000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 18000,
+    "allowed_terrain": ["district_education"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "student_desk",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "steel", "quantity": 150 },
+          { "item": "lumber", "quantity": 200 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "smartboard",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "lcd_panel", "quantity": 50 },
+          { "item": "circuit_board", "quantity": 50 },
+          { "item": "processor", "quantity": 25 },
+          { "item": "aluminum", "quantity": 50 },
+          { "item": "copper_wire", "quantity": 75 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "projector",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "lcd_panel", "quantity": 40 },
+          { "item": "circuit_board", "quantity": 40 },
+          { "item": "glass", "quantity": 40 },
+          { "item": "plastic", "quantity": 60 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      }
+    ]
+  },
+
+  "_comment12": "=== RETAIL DISTRICTS ===",
+
+  "food_court_district": {
+    "name": "Food Court District",
+    "description": "Multi-vendor food service destination",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 35000,
+    "allowed_terrain": ["district_food_court"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "fast_food_combo": { "elasticity": 0.8, "base_sale_chance": 0.0005 },
+      "international_platter": { "elasticity": 0.6, "base_sale_chance": 0.0003 },
+      "dessert_sampler": { "elasticity": 0.7, "base_sale_chance": 0.0004 },
+      "beverage_package": { "elasticity": 0.9, "base_sale_chance": 0.0006 },
+      "kids_meal": { "elasticity": 0.8, "base_sale_chance": 0.0004 }
+    },
+    "production_lines": [
+      {
+        "output_item": "fast_food_combo",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "burger", "quantity": 100 },
+          { "item": "fries", "quantity": 100 },
+          { "item": "soda_cup", "quantity": 100 },
+          { "item": "food_tray", "quantity": 100 },
+          { "item": "disposable_utensils", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 10000 }
+        ]
+      },
+      {
+        "output_item": "international_platter",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "sushi_roll", "quantity": 50 },
+          { "item": "ramen_bowl", "quantity": 25 },
+          { "item": "taco", "quantity": 50 },
+          { "item": "fried_rice", "quantity": 50 },
+          { "item": "food_tray", "quantity": 50 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "dessert_sampler",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "soft_serve", "quantity": 75 },
+          { "item": "cheesecake", "quantity": 40 },
+          { "item": "donut", "quantity": 75 },
+          { "item": "food_tray", "quantity": 75 },
+          { "item": "paper", "quantity": 35 },
+          { "item": "energy", "quantity": 8000 }
+        ]
+      },
+      {
+        "output_item": "beverage_package",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "soda_cup", "quantity": 50 },
+          { "item": "milkshake", "quantity": 25 },
+          { "item": "smoothie", "quantity": 25 },
+          { "item": "paper", "quantity": 30 },
+          { "item": "energy", "quantity": 6000 }
+        ]
+      },
+      {
+        "output_item": "kids_meal",
+        "output_qty": 80,
+        "inputs": [
+          { "item": "chicken_nuggets", "quantity": 80 },
+          { "item": "fries", "quantity": 40 },
+          { "item": "soda_cup", "quantity": 80 },
+          { "item": "takeout_container", "quantity": 80 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 8000 }
+        ]
+      }
+    ]
+  },
+
+  "neighborhood_district": {
+    "name": "Neighborhood District",
+    "description": "Residential services hub",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_neighborhood"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "monthly_utility_bill": { "elasticity": 0.2, "base_sale_chance": 0.0008 },
+      "home_maintenance_package": { "elasticity": 0.4, "base_sale_chance": 0.0003 },
+      "lawn_service": { "elasticity": 0.5, "base_sale_chance": 0.0003 },
+      "waste_service": { "elasticity": 0.2, "base_sale_chance": 0.0006 },
+      "internet_bundle": { "elasticity": 0.3, "base_sale_chance": 0.0005 },
+      "security_package": { "elasticity": 0.4, "base_sale_chance": 0.0003 }
+    },
+    "production_lines": [
+      {
+        "output_item": "monthly_utility_bill",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "residential_electricity", "quantity": 200 },
+          { "item": "drinking_water", "quantity": 300 },
+          { "item": "natural_gas", "quantity": 100 },
+          { "item": "wastewater_service", "quantity": 150 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "home_maintenance_package",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "hvac_unit", "quantity": 10 },
+          { "item": "water_heater", "quantity": 10 },
+          { "item": "copper_wire", "quantity": 60 },
+          { "item": "lumber", "quantity": 100 },
+          { "item": "paint", "quantity": 30 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "lawn_service",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "grass", "quantity": 200 },
+          { "item": "water", "quantity": 500 },
+          { "item": "diesel", "quantity": 25 },
+          { "item": "paper", "quantity": 40 },
+          { "item": "energy", "quantity": 12000 }
+        ]
+      },
+      {
+        "output_item": "waste_service",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "garbage_truck", "quantity": 1 },
+          { "item": "diesel", "quantity": 50 },
+          { "item": "plastic", "quantity": 100 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "internet_bundle",
+        "output_qty": 60,
+        "inputs": [
+          { "item": "router", "quantity": 60 },
+          { "item": "copper_wire", "quantity": 180 },
+          { "item": "server", "quantity": 3 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "security_package",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "alarm_system", "quantity": 40 },
+          { "item": "security_camera", "quantity": 80 },
+          { "item": "copper_wire", "quantity": 120 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      }
+    ]
+  },
+
+  "shopping_mall_district": {
+    "name": "Shopping Mall District",
+    "description": "Premium retail destination",
+    "startup_cost": 15000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_mall"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "fashion_bundle": { "elasticity": 0.6, "base_sale_chance": 0.0004 },
+      "electronics_package": { "elasticity": 0.5, "base_sale_chance": 0.0003 },
+      "furnishing_set": { "elasticity": 0.4, "base_sale_chance": 0.0002 },
+      "beauty_kit": { "elasticity": 0.7, "base_sale_chance": 0.0004 },
+      "sporting_goods": { "elasticity": 0.5, "base_sale_chance": 0.0003 },
+      "toy_bundle": { "elasticity": 0.6, "base_sale_chance": 0.0004 }
+    },
+    "production_lines": [
+      {
+        "output_item": "fashion_bundle",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "blouse", "quantity": 100 },
+          { "item": "trousers", "quantity": 100 },
+          { "item": "dress", "quantity": 50 },
+          { "item": "shoes", "quantity": 100 },
+          { "item": "purse", "quantity": 50 },
+          { "item": "jewelry", "quantity": 25 },
+          { "item": "paper", "quantity": 75 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "electronics_package",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "smartphone", "quantity": 30 },
+          { "item": "laptop", "quantity": 15 },
+          { "item": "tablet", "quantity": 15 },
+          { "item": "television", "quantity": 10 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "furnishing_set",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "pillow", "quantity": 80 },
+          { "item": "comforter", "quantity": 40 },
+          { "item": "refrigerator", "quantity": 10 },
+          { "item": "stove", "quantity": 10 },
+          { "item": "washer_dryer", "quantity": 10 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 22000 }
+        ]
+      },
+      {
+        "output_item": "beauty_kit",
+        "output_qty": 60,
+        "inputs": [
+          { "item": "perfume", "quantity": 60 },
+          { "item": "soap", "quantity": 120 },
+          { "item": "shampoo", "quantity": 120 },
+          { "item": "lotion", "quantity": 60 },
+          { "item": "paper", "quantity": 45 },
+          { "item": "energy", "quantity": 15000 }
+        ]
+      },
+      {
+        "output_item": "sporting_goods",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "sports_equipment", "quantity": 40 },
+          { "item": "sports_ball", "quantity": 40 },
+          { "item": "team_jersey", "quantity": 80 },
+          { "item": "shoes", "quantity": 40 },
+          { "item": "paper", "quantity": 50 },
+          { "item": "energy", "quantity": 18000 }
+        ]
+      },
+      {
+        "output_item": "toy_bundle",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "plastic", "quantity": 200 },
+          { "item": "cotton", "quantity": 100 },
+          { "item": "battery_cell", "quantity": 50 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 16000 }
+        ]
+      }
+    ]
+  },
+
+  "hospital_district": {
+    "name": "Hospital District",
+    "description": "Comprehensive medical care facility",
+    "startup_cost": 25000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 80000,
+    "allowed_terrain": ["district_hospital"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "emergency_room_visit": { "elasticity": 0.1, "base_sale_chance": 0.0004 },
+      "surgery_package": { "elasticity": 0.15, "base_sale_chance": 0.0002 },
+      "diagnostic_panel": { "elasticity": 0.2, "base_sale_chance": 0.0003 },
+      "therapy_program": { "elasticity": 0.3, "base_sale_chance": 0.0003 },
+      "maternity_package": { "elasticity": 0.2, "base_sale_chance": 0.0002 },
+      "prescription_bundle": { "elasticity": 0.2, "base_sale_chance": 0.0005 }
+    },
+    "production_lines": [
+      {
+        "output_item": "emergency_room_visit",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "hospital_bed", "quantity": 10 },
+          { "item": "defibrillator", "quantity": 5 },
+          { "item": "iv_bag", "quantity": 100 },
+          { "item": "gauze", "quantity": 200 },
+          { "item": "surgical_gloves", "quantity": 200 },
+          { "item": "antibiotic", "quantity": 50 },
+          { "item": "painkiller", "quantity": 100 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "surgery_package",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "medical_scanner", "quantity": 2 },
+          { "item": "surgical_tools", "quantity": 20 },
+          { "item": "anesthesia", "quantity": 20 },
+          { "item": "surgical_gloves", "quantity": 200 },
+          { "item": "surgical_mask", "quantity": 200 },
+          { "item": "sutures", "quantity": 100 },
+          { "item": "blood_bag", "quantity": 40 },
+          { "item": "hospital_bed", "quantity": 20 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "diagnostic_panel",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "medical_scanner", "quantity": 1 },
+          { "item": "syringe", "quantity": 80 },
+          { "item": "blood_bag", "quantity": 40 },
+          { "item": "surgical_gloves", "quantity": 80 },
+          { "item": "microscope", "quantity": 5 },
+          { "item": "lab_equipment", "quantity": 5 },
+          { "item": "paper", "quantity": 120 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "therapy_program",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "wheelchair", "quantity": 15 },
+          { "item": "crutches", "quantity": 30 },
+          { "item": "prosthetic", "quantity": 5 },
+          { "item": "cast_material", "quantity": 30 },
+          { "item": "paper", "quantity": 90 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "maternity_package",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "hospital_bed", "quantity": 25 },
+          { "item": "iv_pump", "quantity": 25 },
+          { "item": "iv_bag", "quantity": 75 },
+          { "item": "surgical_gloves", "quantity": 150 },
+          { "item": "gauze", "quantity": 100 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 45000 }
+        ]
+      },
+      {
+        "output_item": "prescription_bundle",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "antibiotic", "quantity": 50 },
+          { "item": "painkiller", "quantity": 100 },
+          { "item": "insulin", "quantity": 25 },
+          { "item": "blood_pressure_med", "quantity": 75 },
+          { "item": "antidepressant", "quantity": 50 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      }
+    ]
+  },
+
+  "education_district": {
+    "name": "High School & University District",
+    "description": "Comprehensive educational institution",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 60000,
+    "allowed_terrain": ["district_education"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "high_school_diploma": { "elasticity": 0.3, "base_sale_chance": 0.0003 },
+      "bachelors_degree": { "elasticity": 0.25, "base_sale_chance": 0.0002 },
+      "masters_degree": { "elasticity": 0.2, "base_sale_chance": 0.0001 },
+      "vocational_certificate": { "elasticity": 0.35, "base_sale_chance": 0.0003 },
+      "research_grant": { "elasticity": 0.15, "base_sale_chance": 0.00008 },
+      "study_abroad": { "elasticity": 0.3, "base_sale_chance": 0.0001 }
+    },
+    "production_lines": [
+      {
+        "output_item": "high_school_diploma",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "school_bus", "quantity": 5 },
+          { "item": "curriculum_package", "quantity": 10 },
+          { "item": "standardized_test", "quantity": 200 },
+          { "item": "student_desk", "quantity": 50 },
+          { "item": "school_lunch", "quantity": 400 },
+          { "item": "school_uniform", "quantity": 100 },
+          { "item": "textbook", "quantity": 500 },
+          { "item": "diploma_certificate", "quantity": 100 },
+          { "item": "paper", "quantity": 500 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "bachelors_degree",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "curriculum_package", "quantity": 20 },
+          { "item": "laptop", "quantity": 50 },
+          { "item": "textbook", "quantity": 500 },
+          { "item": "lab_kit", "quantity": 25 },
+          { "item": "smartboard", "quantity": 10 },
+          { "item": "projector", "quantity": 20 },
+          { "item": "diploma_certificate", "quantity": 50 },
+          { "item": "paper", "quantity": 1000 },
+          { "item": "energy", "quantity": 120000 }
+        ]
+      },
+      {
+        "output_item": "masters_degree",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "curriculum_package", "quantity": 15 },
+          { "item": "laptop", "quantity": 25 },
+          { "item": "textbook", "quantity": 300 },
+          { "item": "lab_equipment", "quantity": 10 },
+          { "item": "microscope", "quantity": 10 },
+          { "item": "diploma_certificate", "quantity": 25 },
+          { "item": "paper", "quantity": 800 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "vocational_certificate",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "curriculum_package", "quantity": 8 },
+          { "item": "vocational_kit", "quantity": 75 },
+          { "item": "textbook", "quantity": 150 },
+          { "item": "diploma_certificate", "quantity": 75 },
+          { "item": "paper", "quantity": 300 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "research_grant",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "lab_equipment", "quantity": 20 },
+          { "item": "microscope", "quantity": 15 },
+          { "item": "desktop_computer", "quantity": 10 },
+          { "item": "server", "quantity": 3 },
+          { "item": "textbook", "quantity": 100 },
+          { "item": "paper", "quantity": 500 },
+          { "item": "energy", "quantity": 150000 }
+        ]
+      },
+      {
+        "output_item": "study_abroad",
+        "output_qty": 20,
+        "inputs": [
+          { "item": "airline_ticket", "quantity": 20 },
+          { "item": "curriculum_package", "quantity": 5 },
+          { "item": "laptop", "quantity": 20 },
+          { "item": "textbook", "quantity": 100 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      }
+    ]
+  },
+
+  "entertainment_district": {
+    "name": "Sports & Entertainment District",
+    "description": "Premier entertainment destination",
+    "startup_cost": 30000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 75000,
+    "allowed_terrain": ["district_entertainment"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "concert_package": { "elasticity": 0.5, "base_sale_chance": 0.0003 },
+      "sports_package": { "elasticity": 0.5, "base_sale_chance": 0.0004 },
+      "casino_night": { "elasticity": 0.4, "base_sale_chance": 0.0003 },
+      "movie_premier": { "elasticity": 0.6, "base_sale_chance": 0.0004 },
+      "theme_park_pass": { "elasticity": 0.5, "base_sale_chance": 0.0004 },
+      "nightclub_vip": { "elasticity": 0.4, "base_sale_chance": 0.0003 }
+    },
+    "production_lines": [
+      {
+        "output_item": "concert_package",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "concert_stage", "quantity": 1 },
+          { "item": "sound_system", "quantity": 5 },
+          { "item": "lighting_rig", "quantity": 3 },
+          { "item": "pyrotechnics", "quantity": 50 },
+          { "item": "stadium_seat", "quantity": 250 },
+          { "item": "band_merchandise", "quantity": 250 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "sports_package",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "stadium_seat", "quantity": 500 },
+          { "item": "scoreboard", "quantity": 2 },
+          { "item": "jumbotron", "quantity": 1 },
+          { "item": "athlete_contract", "quantity": 10 },
+          { "item": "team_jersey", "quantity": 200 },
+          { "item": "sports_ball", "quantity": 50 },
+          { "item": "burger", "quantity": 200 },
+          { "item": "soda_cup", "quantity": 200 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "casino_night",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "slot_machine", "quantity": 20 },
+          { "item": "poker_table", "quantity": 10 },
+          { "item": "roulette_wheel", "quantity": 5 },
+          { "item": "casino_chips", "quantity": 2000 },
+          { "item": "playing_cards", "quantity": 100 },
+          { "item": "champagne", "quantity": 100 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "movie_premier",
+        "output_qty": 60,
+        "inputs": [
+          { "item": "movie_screen", "quantity": 5 },
+          { "item": "theater_seat", "quantity": 150 },
+          { "item": "popcorn_machine", "quantity": 10 },
+          { "item": "projector", "quantity": 5 },
+          { "item": "film_reel", "quantity": 10 },
+          { "item": "corn", "quantity": 100 },
+          { "item": "soda_cup", "quantity": 120 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "theme_park_pass",
+        "output_qty": 80,
+        "inputs": [
+          { "item": "steel", "quantity": 500 },
+          { "item": "concrete", "quantity": 300 },
+          { "item": "circuit_board", "quantity": 100 },
+          { "item": "rubber", "quantity": 200 },
+          { "item": "fast_food_combo", "quantity": 80 },
+          { "item": "paper", "quantity": 120 },
+          { "item": "energy", "quantity": 120000 }
+        ]
+      },
+      {
+        "output_item": "nightclub_vip",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "sound_system", "quantity": 3 },
+          { "item": "lighting_rig", "quantity": 2 },
+          { "item": "champagne", "quantity": 150 },
+          { "item": "beer", "quantity": 200 },
+          { "item": "red_wine", "quantity": 100 },
+          { "item": "paper", "quantity": 60 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      }
+    ]
+  },
+
+  "transportation_district": {
+    "name": "Transportation District",
+    "description": "Multi-modal transit hub",
+    "startup_cost": 40000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 90000,
+    "allowed_terrain": ["district_transport"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "airline_ticket": { "elasticity": 0.4, "base_sale_chance": 0.0003 },
+      "cruise_package": { "elasticity": 0.3, "base_sale_chance": 0.0001 },
+      "rail_pass": { "elasticity": 0.5, "base_sale_chance": 0.0004 },
+      "freight_contract": { "elasticity": 0.3, "base_sale_chance": 0.0002 },
+      "rental_car": { "elasticity": 0.5, "base_sale_chance": 0.0004 },
+      "charter_service": { "elasticity": 0.4, "base_sale_chance": 0.0002 }
+    },
+    "production_lines": [
+      {
+        "output_item": "airline_ticket",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "passenger_jet", "quantity": 1 },
+          { "item": "jet_fuel", "quantity": 100 },
+          { "item": "fast_food_combo", "quantity": 200 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 150000 }
+        ]
+      },
+      {
+        "output_item": "cruise_package",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "cruise_ship", "quantity": 1 },
+          { "item": "diesel", "quantity": 500 },
+          { "item": "international_platter", "quantity": 100 },
+          { "item": "beverage_package", "quantity": 100 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 200000 }
+        ]
+      },
+      {
+        "output_item": "rail_pass",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "passenger_train", "quantity": 2 },
+          { "item": "locomotive", "quantity": 1 },
+          { "item": "diesel", "quantity": 100 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "freight_contract",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "cargo_freighter", "quantity": 1 },
+          { "item": "cargo_plane", "quantity": 1 },
+          { "item": "freight_car", "quantity": 5 },
+          { "item": "semi_truck", "quantity": 5 },
+          { "item": "diesel", "quantity": 300 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 180000 }
+        ]
+      },
+      {
+        "output_item": "rental_car",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "car", "quantity": 50 },
+          { "item": "diesel", "quantity": 100 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "charter_service",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "charter_bus", "quantity": 10 },
+          { "item": "diesel", "quantity": 150 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      }
+    ]
+  },
+
+  "zoo_district": {
+    "name": "Zoo District",
+    "description": "World-class wildlife attraction",
+    "startup_cost": 35000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 70000,
+    "allowed_terrain": ["district_zoo"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "zoo_pass": { "elasticity": 0.5, "base_sale_chance": 0.0005 },
+      "safari_tour": { "elasticity": 0.4, "base_sale_chance": 0.0002 },
+      "animal_adoption": { "elasticity": 0.6, "base_sale_chance": 0.0003 },
+      "conservation_membership": { "elasticity": 0.4, "base_sale_chance": 0.0002 },
+      "behind_scenes_tour": { "elasticity": 0.5, "base_sale_chance": 0.0002 },
+      "wildlife_program": { "elasticity": 0.4, "base_sale_chance": 0.0002 }
+    },
+    "production_lines": [
+      {
+        "output_item": "zoo_pass",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "lion", "quantity": 1 },
+          { "item": "elephant", "quantity": 1 },
+          { "item": "giraffe", "quantity": 1 },
+          { "item": "gorilla", "quantity": 1 },
+          { "item": "dolphin", "quantity": 2 },
+          { "item": "penguin", "quantity": 10 },
+          { "item": "animal_enclosure", "quantity": 5 },
+          { "item": "viewing_platform", "quantity": 10 },
+          { "item": "fast_food_combo", "quantity": 200 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 100000 }
+        ]
+      },
+      {
+        "output_item": "safari_tour",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "lion", "quantity": 2 },
+          { "item": "elephant", "quantity": 2 },
+          { "item": "zebra", "quantity": 5 },
+          { "item": "rhino", "quantity": 1 },
+          { "item": "hippo", "quantity": 1 },
+          { "item": "city_bus", "quantity": 2 },
+          { "item": "habitat_landscape", "quantity": 3 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "animal_adoption",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "panda", "quantity": 1 },
+          { "item": "tiger", "quantity": 1 },
+          { "item": "polar_bear", "quantity": 1 },
+          { "item": "diploma_certificate", "quantity": 100 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "conservation_membership",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "gorilla", "quantity": 1 },
+          { "item": "orangutan", "quantity": 1 },
+          { "item": "chimpanzee", "quantity": 2 },
+          { "item": "animal_microchip", "quantity": 50 },
+          { "item": "veterinary_supplies", "quantity": 30 },
+          { "item": "paper", "quantity": 120 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "behind_scenes_tour",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "shark", "quantity": 1 },
+          { "item": "dolphin", "quantity": 2 },
+          { "item": "aquarium_tank", "quantity": 2 },
+          { "item": "feeding_station", "quantity": 5 },
+          { "item": "veterinary_supplies", "quantity": 20 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "wildlife_program",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "school_bus", "quantity": 2 },
+          { "item": "parrot", "quantity": 5 },
+          { "item": "tortoise", "quantity": 3 },
+          { "item": "tropical_fish", "quantity": 50 },
+          { "item": "curriculum_package", "quantity": 5 },
+          { "item": "textbook", "quantity": 100 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 45000 }
+        ]
+      }
+    ]
+  },
+
+  "prison_district": {
+    "name": "Prison District",
+    "description": "Correctional facility complex",
+    "startup_cost": 20000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_prison"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "inmate_housing": { "elasticity": 0.1, "base_sale_chance": 0.0003 },
+      "rehabilitation_program": { "elasticity": 0.3, "base_sale_chance": 0.0002 },
+      "commissary_package": { "elasticity": 0.5, "base_sale_chance": 0.0004 },
+      "work_release": { "elasticity": 0.3, "base_sale_chance": 0.0002 },
+      "legal_aid": { "elasticity": 0.2, "base_sale_chance": 0.0002 },
+      "reentry_package": { "elasticity": 0.3, "base_sale_chance": 0.0002 }
+    },
+    "production_lines": [
+      {
+        "output_item": "inmate_housing",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "cell_door", "quantity": 100 },
+          { "item": "prison_bedding", "quantity": 200 },
+          { "item": "inmate_jumpsuit", "quantity": 200 },
+          { "item": "surveillance_system", "quantity": 10 },
+          { "item": "razor_wire", "quantity": 100 },
+          { "item": "prison_meal", "quantity": 1000 },
+          { "item": "concrete", "quantity": 200 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "rehabilitation_program",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "ged_materials", "quantity": 50 },
+          { "item": "counseling_materials", "quantity": 50 },
+          { "item": "vocational_kit", "quantity": 25 },
+          { "item": "textbook", "quantity": 150 },
+          { "item": "laptop", "quantity": 20 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 40000 }
+        ]
+      },
+      {
+        "output_item": "commissary_package",
+        "output_qty": 200,
+        "inputs": [
+          { "item": "commissary_snacks", "quantity": 400 },
+          { "item": "hygiene_kit", "quantity": 200 },
+          { "item": "phone_card", "quantity": 200 },
+          { "item": "paper", "quantity": 100 },
+          { "item": "energy", "quantity": 20000 }
+        ]
+      },
+      {
+        "output_item": "work_release",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "prison_bus", "quantity": 2 },
+          { "item": "inmate_jumpsuit", "quantity": 80 },
+          { "item": "handcuffs", "quantity": 40 },
+          { "item": "taser", "quantity": 10 },
+          { "item": "paper", "quantity": 80 },
+          { "item": "energy", "quantity": 30000 }
+        ]
+      },
+      {
+        "output_item": "legal_aid",
+        "output_qty": 30,
+        "inputs": [
+          { "item": "law_book", "quantity": 60 },
+          { "item": "laptop", "quantity": 15 },
+          { "item": "paper", "quantity": 300 },
+          { "item": "ink", "quantity": 30 },
+          { "item": "energy", "quantity": 25000 }
+        ]
+      },
+      {
+        "output_item": "reentry_package",
+        "output_qty": 40,
+        "inputs": [
+          { "item": "vocational_kit", "quantity": 20 },
+          { "item": "diploma_certificate", "quantity": 40 },
+          { "item": "counseling_materials", "quantity": 40 },
+          { "item": "paper", "quantity": 120 },
+          { "item": "energy", "quantity": 22000 }
+        ]
+      }
+    ]
+  },
+
+  "military_base_district": {
+    "name": "Military Base District",
+    "description": "Defense and military operations complex",
+    "startup_cost": 50000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 100000,
+    "allowed_terrain": ["district_military"],
+    "allowed_proximity": [],
+    "class": "retail",
+    "products": {
+      "defense_contract": { "elasticity": 0.1, "base_sale_chance": 0.0001 },
+      "military_training": { "elasticity": 0.2, "base_sale_chance": 0.0002 },
+      "base_housing": { "elasticity": 0.3, "base_sale_chance": 0.0002 },
+      "veterans_package": { "elasticity": 0.3, "base_sale_chance": 0.0002 },
+      "security_clearance": { "elasticity": 0.2, "base_sale_chance": 0.0002 },
+      "logistics_contract": { "elasticity": 0.2, "base_sale_chance": 0.0002 }
+    },
+    "production_lines": [
+      {
+        "output_item": "defense_contract",
+        "output_qty": 5,
+        "inputs": [
+          { "item": "tank", "quantity": 3 },
+          { "item": "fighter_jet", "quantity": 2 },
+          { "item": "destroyer", "quantity": 1 },
+          { "item": "missile", "quantity": 50 },
+          { "item": "rifle", "quantity": 500 },
+          { "item": "ammunition", "quantity": 10000 },
+          { "item": "radar_array", "quantity": 5 },
+          { "item": "paper", "quantity": 500 },
+          { "item": "energy", "quantity": 500000 }
+        ]
+      },
+      {
+        "output_item": "military_training",
+        "output_qty": 100,
+        "inputs": [
+          { "item": "obstacle_course", "quantity": 3 },
+          { "item": "firing_range", "quantity": 3 },
+          { "item": "combat_simulator", "quantity": 5 },
+          { "item": "rifle", "quantity": 100 },
+          { "item": "ammunition", "quantity": 5000 },
+          { "item": "body_armor", "quantity": 100 },
+          { "item": "combat_helmet", "quantity": 100 },
+          { "item": "military_uniform", "quantity": 200 },
+          { "item": "mre", "quantity": 500 },
+          { "item": "paper", "quantity": 300 },
+          { "item": "energy", "quantity": 150000 }
+        ]
+      },
+      {
+        "output_item": "base_housing",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "barracks_bunk", "quantity": 100 },
+          { "item": "hvac_unit", "quantity": 25 },
+          { "item": "refrigerator", "quantity": 25 },
+          { "item": "stove", "quantity": 25 },
+          { "item": "concrete", "quantity": 150 },
+          { "item": "lumber", "quantity": 200 },
+          { "item": "paper", "quantity": 150 },
+          { "item": "energy", "quantity": 80000 }
+        ]
+      },
+      {
+        "output_item": "veterans_package",
+        "output_qty": 75,
+        "inputs": [
+          { "item": "prescription_bundle", "quantity": 50 },
+          { "item": "therapy_program", "quantity": 25 },
+          { "item": "vocational_certificate", "quantity": 25 },
+          { "item": "dog_tags", "quantity": 75 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 50000 }
+        ]
+      },
+      {
+        "output_item": "security_clearance",
+        "output_qty": 50,
+        "inputs": [
+          { "item": "desktop_computer", "quantity": 10 },
+          { "item": "server", "quantity": 3 },
+          { "item": "encryption_device", "quantity": 10 },
+          { "item": "body_scanner", "quantity": 5 },
+          { "item": "paper", "quantity": 250 },
+          { "item": "energy", "quantity": 60000 }
+        ]
+      },
+      {
+        "output_item": "logistics_contract",
+        "output_qty": 25,
+        "inputs": [
+          { "item": "semi_truck", "quantity": 10 },
+          { "item": "cargo_plane", "quantity": 1 },
+          { "item": "humvee", "quantity": 10 },
+          { "item": "diesel", "quantity": 500 },
+          { "item": "satellite_uplink", "quantity": 3 },
+          { "item": "military_radio", "quantity": 50 },
+          { "item": "paper", "quantity": 200 },
+          { "item": "energy", "quantity": 120000 }
+        ]
+      }
+    ]
+  }
+}

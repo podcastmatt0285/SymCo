@@ -73,7 +73,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 font-family: 'JetBrains Mono', monospace;
                 margin: 0;
                 padding-bottom: 60px;
-                font-size: 14px;
+                font-size: 18px;
             }}
 
             a {{ color: #38bdf8; text-decoration: none; }}
@@ -103,7 +103,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 
             .balance {{
                 color: #22c55e;
-                font-size: 0.9rem;
+                font-size: 0.75rem;
                 white-space: nowrap;
             }}
 
@@ -129,7 +129,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 white-space: nowrap;
             }}
 
-            .btn-blue, .btn-orange, .btn-red {{
+            .btn-blue, .btn-orange, .btn-red, .btn-gold {{
                 border: none;
                 padding: 6px 12px;
                 cursor: pointer;
@@ -140,6 +140,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             .btn-blue {{ background: #38bdf8; color: #020617; }}
             .btn-orange {{ background: #f59e0b; color: #020617; }}
             .btn-red {{ background: #ef4444; color: #fff; }}
+            .btn-gold {{ background: #d4af37; color: #fff; }}
 
             input, select {{
                 background: #020617;
@@ -168,7 +169,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 background: #020617;
                 border-top: 1px solid #1e293b;
                 padding: 6px 0;
-                font-size: 0.75rem;
+                font-size: 0.85rem;
                 color: #64748b;
                 white-space: nowrap;
                 overflow: hidden;
@@ -218,7 +219,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 
                 /* Make tab links inline-block for wrapping */
                 div[style*="overflow-x: auto"] a {{
-                    display: inline-block !important;
+                    display: inline-block;
                     margin-right: 0 !important;
                     padding: 6px 10px !important;
                     background: #1e293b !important;
@@ -233,7 +234,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             <div class="header-right">
                 {lien_html}
                 <span class="balance">$ {balance:,.2f}</span>
-                <a href="/api/logout" style="color: #ef4444;">Logout</a>
+                <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
 
@@ -454,7 +455,7 @@ def home(session_token: Optional[str] = Cookie(None)):
     return shell(
         "Dashboard",
         f"""
-        <h1>Welcome, CEO of {player.business_name}</h1>
+        <h2>Welcome, CEO of {player.business_name}</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="card">
                 <h3>Businesses</h3>
@@ -485,6 +486,11 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <h3>Banks</h3>
                 <p>Investment funds and share trading</p>
                 <a href="/banks" class="btn-blue">Banking</a>
+            </div>
+            <div class="card">
+                <h3>Stats & Leaderboard</h3>
+                <p>Statistics, Leaderboard and Data</p>
+                <a href="/stats" class="btn-gold">📊 Stats 🪙</a>
             </div>
         </div>
         """,
@@ -600,7 +606,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
     try:
         import inventory as inv_mod
         inv = inv_mod.get_player_inventory(player.id)
-        
+
         categories = {"all": "All", "seeds": "Seeds", "fruits": "Fruits", "liquids": "Liquids", "energy": "Energy"}
         filter_tabs = '<div style="margin-bottom: 20px;">'
         for k, v in categories.items():
@@ -616,7 +622,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                 if filter == "fruits" and item not in ["apples", "oranges"]: continue
                 if filter == "liquids" and not ("water" in item or "_juice" in item): continue
                 if filter == "energy" and item != "energy": continue
-            
+
             item_info = inv_mod.get_item_info(item) or {}
             items_html += f'''
             <div class="card">
@@ -636,8 +642,8 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                     </div>
                 </div>
             </div>'''
-            
-        return shell("Inventory", f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Your Inventory</h1>{filter_tabs}{items_html if items_html else "<p>No items found.</p>"}', player.cash_balance, player.id)
+
+        return shell("Inventory", f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Your Inventory</h1>{filter_tabs}{items_html}', player.cash_balance, player.id)
     except Exception as e:
         return shell("Inventory", f"Error: {e}", player.cash_balance, player.id)
 
@@ -657,7 +663,7 @@ def land(session_token: Optional[str] = Cookie(None)):
         land_db = get_land_db()
         owned_businesses_count = land_db.query(Business).filter(Business.owner_id == player.id).count()
         
-        land_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Land Portfolio</h1>'
+        land_html = '''<a href="/" style="color: #38bdf8;"><- Dashboard</a> <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;"> <h1 style="margin: 0;">Land Portfolio</h1> <a href="/districts" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;"> 🏛️ Districts </a></div>'''
         
         for plot in plots:
             status = 'OCCUPIED' if plot.occupied_by_business_id else 'VACANT'
@@ -673,7 +679,7 @@ def land(session_token: Optional[str] = Cookie(None)):
             
             if not plot.occupied_by_business_id:
                 land_html += f'''
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex: 1; gap: 24px;">
                     <form action="/api/business/create" method="post" style="display: flex; gap: 10px; align-items: center;">
                         <input type="hidden" name="land_plot_id" value="{plot.id}">
                         <select name="business_type" required>
@@ -841,12 +847,62 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         stats = market_mod.get_market_stats()
         order_book = market_mod.get_order_book(item)
         
+        # Search bar
+        search_bar = '''
+        <div style="margin-bottom: 16px;">
+            <input 
+                type="text" 
+                id="itemSearch" 
+                placeholder="🔍 Search commodities..." 
+                style="width: 100%; padding: 12px; background: #0f172a; border: 1px solid #1e293b; color: #e5e7eb; font-family: 'JetBrains Mono', monospace; font-size: 14px; border-radius: 4px;"
+                oninput="filterItems()"
+                autofocus
+            >
+            <div id="searchResults" style="color: #64748b; font-size: 0.85rem; margin-top: 8px;"></div>
+        </div>
+        '''
+        
         # Item filter tabs
-        filter_tabs = '<div style="margin-bottom: 20px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">'
+        filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">'
         for i in items:
             color = "#38bdf8" if i == item else "#64748b"
-            filter_tabs += f'<a href="/market?item={i}" style="color: {color}; margin-right: 15px; text-decoration: none;">{i.replace("_", " ").upper()}</a>'
+            display_name = i.replace("_", " ").upper()
+            filter_tabs += f'<a href="/market?item={i}" class="item-tab" data-item="{i}" data-display="{display_name}" style="color: {color}; margin-right: 15px; text-decoration: none; display: inline-block;">{display_name}</a>'
         filter_tabs += '</div>'
+
+        # JavaScript for real-time search
+        search_script = '''
+        <script>
+        function filterItems() {
+            const searchInput = document.getElementById('itemSearch').value.toLowerCase();
+            const tabs = document.querySelectorAll('.item-tab');
+            const resultsDiv = document.getElementById('searchResults');
+            let visibleCount = 0;
+            
+            tabs.forEach(tab => {
+                const itemName = tab.getAttribute('data-item').toLowerCase();
+                const displayName = tab.getAttribute('data-display').toLowerCase();
+                
+                if (itemName.includes(searchInput) || displayName.includes(searchInput)) {
+                    tab.style.display = 'inline-block';
+                    visibleCount++;
+                } else {
+                    tab.style.display = 'none';
+                }
+            });
+            
+            if (searchInput && visibleCount === 0) {
+                resultsDiv.textContent = '⚠ No items found';
+                resultsDiv.style.color = '#ef4444';
+            } else if (searchInput) {
+                resultsDiv.textContent = `✓ Showing ${visibleCount} item${visibleCount !== 1 ? 's' : ''}`;
+                resultsDiv.style.color = '#22c55e';
+            } else {
+                resultsDiv.textContent = '';
+            }
+        }
+        </script>
+        '''
 
         # Build market HTML
         market_html = f'''
@@ -854,7 +910,9 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         <div style="display: flex; gap: 20px;">
             <div style="flex: 2;">
                 <h1>Market: {item.replace("_", " ").title()}</h1>
+                {search_bar}
                 {filter_tabs}
+                {search_script}
                 
                 <!-- Order Placement Form -->
                 <div class="card">
@@ -2075,7 +2133,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             CompanyShares, ShareholderPosition, get_player_credit,
             calculate_margin_multiplier, get_db as get_firm_db, BANK_PLAYER_ID
         )
-        from brokerage_order_book import (
+        from banks.brokerage_order_book import (
             get_order_book_depth, get_recent_fills, OrderBook, OrderStatus,
             get_db as get_book_db
         )
@@ -2464,7 +2522,6 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         return shell("SCPE Trading", f"Error: {e}", player.cash_balance, player.id)
 
 
-# CORRECTED IPO PAGE - Replace in ux.py
 # The helper functions need to be INSIDE the route handler
 
 @router.get("/brokerage/ipo", response_class=HTMLResponse)
@@ -2478,13 +2535,6 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
     def get_ipo_how_it_works(ipo_type) -> str:
         """Get how-it-works explanation for IPO type."""
         explanations = {
-            "dutch_auction": '''
-                <li>You set a minimum price</li>
-                <li>Investors bid on how many shares they want and at what price</li>
-                <li>System finds the "clearing price" where supply meets demand</li>
-                <li>Everyone who bid at or above clearing price gets shares at that price</li>
-                <li>Democratic and fair - no favoritism</li>
-            ''',
             "direct_listing": '''
                 <li>You list existing shares directly on the exchange</li>
                 <li>No new capital raised - just opens trading</li>
@@ -2602,7 +2652,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
         for ipo_type, config in IPO_CONFIG.items():
             if config['firm_underwritten']:
                 firm_ipos.append((ipo_type, config))
-            elif ipo_type in [IPOType.DUTCH_AUCTION, IPOType.DIRECT_LISTING]:
+            elif ipo_type in [IPOType.DIRECT_LISTING]:
                 beginner_ipos.append((ipo_type, config))
             else:
                 advanced_ipos.append((ipo_type, config))
@@ -2641,7 +2691,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
                         </div>
                         <div>
                             <strong style="color: #64748b;">Best For:</strong><br>
-                            <span style="color: #94a3b8;">{'First-time IPOs' if ipo_type == IPOType.DUTCH_AUCTION else 'Established companies'}</span>
+                            <span style="color: #94a3b8;">{'First-time IPOs'}</span>
                         </div>
                     </div>
                 </div>
@@ -3533,7 +3583,7 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
         
         # Build credit tiers reference
         tiers_html = ""
-        for tier, (min_score, max_score, rate, leverage) in CREDIT_TIERS.items():
+        for tier, (min_score, max_score, rate, leverage, _) in CREDIT_TIERS.items():
             is_current = tier == credit_tier
             border = f"border: 2px solid {tier_colors.get(tier.value, '#64748b')};" if is_current else ""
             tiers_html += f'''
@@ -4565,9 +4615,8 @@ async def brokerage_buy_shares(
     if isinstance(player, RedirectResponse): return player
     
     try:
-        from banks.brokerage_firm import (
-            player_place_buy_order, CompanyShares, get_db as get_firm_db
-        )
+        from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
+        from banks.brokerage_order_book import player_place_buy_order
         
         # Get ticker for the redirect URL
         db = get_firm_db()
@@ -4608,9 +4657,8 @@ async def brokerage_sell_shares(
     if isinstance(player, RedirectResponse): return player
     
     try:
-        from banks.brokerage_firm import (
-            player_place_sell_order, CompanyShares, get_db as get_firm_db
-        )
+        from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
+        from banks.brokerage_order_book import player_place_sell_order
         
         db = get_firm_db()
         try:
@@ -4646,7 +4694,7 @@ async def brokerage_cancel_order(
     if isinstance(player, RedirectResponse): return player
     
     try:
-        from brokerage_order_book import cancel_order
+        from banks.brokerage_order_book import cancel_order
         
         success = cancel_order(player.id, order_id)
         
@@ -4671,7 +4719,7 @@ async def get_orderbook_data(
 ):
     """Get raw orderbook data (JSON)."""
     # Auth optional for viewing, but good practice
-    from brokerage_order_book import get_order_book_depth
+    from banks.brokerage_order_book import get_order_book_depth
     return get_order_book_depth(company_shares_id, depth)
 
 
@@ -4681,7 +4729,7 @@ async def get_recent_trades_data(
     limit: int = 20
 ):
     """Get recent fills (JSON)."""
-    from brokerage_order_book import get_recent_fills
+    from banks.brokerage_order_book import get_recent_fills
     return {"trades": get_recent_fills(company_shares_id, limit)}
 
 
@@ -4694,7 +4742,7 @@ async def get_my_open_orders(
     if isinstance(player, RedirectResponse): return {"error": "Unauthorized"}
     
     try:
-        from brokerage_order_book import OrderBook, OrderStatus, get_db as get_book_db
+        from banks.brokerage_order_book import OrderBook, OrderStatus, get_db as get_book_db
         db = get_book_db()
         try:
             orders = db.query(OrderBook).filter(

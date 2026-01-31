@@ -22,6 +22,7 @@ from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from stats_ux import log_transaction
 # ==========================
 # DATABASE SETUP
 # ==========================
@@ -662,6 +663,26 @@ def execute_trade(
             if buyer:
                 buyer.cash_balance -= buyer_commission
                 auth_db.commit()
+                
+                # Log share purchase and payment
+                log_transaction(
+                    buyer_id, 
+                    "share_buy", 
+                    "share", 
+                    quantity,
+                    f"Bought {quantity} {company.ticker_symbol} @ ${price:.2f}",
+                    company.ticker_symbol
+                )
+                
+                total_cost = (quantity * price) + buyer_commission
+                log_transaction(
+                    buyer_id,
+                    "cash_out",
+                    "money",
+                    -total_cost,
+                    f"Share purchase: {company.ticker_symbol}",
+                    company.ticker_symbol
+                )
         finally:
             auth_db.close()
         
@@ -721,6 +742,25 @@ def execute_trade(
             if seller:
                 seller.cash_balance += proceeds
                 auth_db.commit()
+                
+                # Log share sale and payment
+                log_transaction(
+                    seller_id,
+                    "share_sell",
+                    "share",
+                    -quantity,  # negative because shares leaving
+                    f"Sold {quantity} {company.ticker_symbol} @ ${price:.2f}",
+                    company.ticker_symbol
+                )
+                
+                log_transaction(
+                    seller_id,
+                    "cash_in",
+                    "money",
+                    proceeds,
+                    f"Share sale: {company.ticker_symbol}",
+                    company.ticker_symbol
+                )
         finally:
             auth_db.close()
         
@@ -934,6 +974,100 @@ def get_recent_fills(company_shares_id: int, limit: int = 20) -> List[dict]:
 # INITIALIZATION & TICK
 # ==========================
 
+def player_place_buy_order(
+    player_id: int,
+    company_shares_id: int,
+    quantity: int,
+    limit_price: Optional[float] = None,
+    use_margin: bool = False,
+    margin_multiplier: float = 1.0
+) -> bool:
+    """
+    Simplified buy order interface for UX layer.
+    
+    Args:
+        player_id: Player placing the order
+        company_shares_id: Company to buy shares from
+        quantity: Number of shares to buy
+        limit_price: Price per share (None = market order)
+        use_margin: Whether to use margin
+        margin_multiplier: Leverage multiplier (if margin)
+    
+    Returns:
+        True if order was placed successfully
+    """
+    try:
+        if limit_price is not None:
+            # Place limit order
+            order = place_limit_order(
+                player_id=player_id,
+                company_shares_id=company_shares_id,
+                side=OrderSide.BUY,
+                quantity=quantity,
+                limit_price=limit_price,
+                use_margin=use_margin,
+                margin_multiplier=margin_multiplier
+            )
+            return order is not None
+        else:
+            # Place market order
+            return place_market_order(
+                player_id=player_id,
+                company_shares_id=company_shares_id,
+                side=OrderSide.BUY,
+                quantity=quantity,
+                use_margin=use_margin,
+                margin_multiplier=margin_multiplier
+            )
+    except Exception as e:
+        print(f"[OrderBook] player_place_buy_order error: {e}")
+        return False
+
+
+def player_place_sell_order(
+    player_id: int,
+    company_shares_id: int,
+    quantity: int,
+    limit_price: Optional[float] = None
+) -> bool:
+    """
+    Simplified sell order interface for UX layer.
+    
+    Args:
+        player_id: Player placing the order
+        company_shares_id: Company to sell shares from
+        quantity: Number of shares to sell
+        limit_price: Price per share (None = market order)
+    
+    Returns:
+        True if order was placed successfully
+    """
+    try:
+        if limit_price is not None:
+            # Place limit order
+            order = place_limit_order(
+                player_id=player_id,
+                company_shares_id=company_shares_id,
+                side=OrderSide.SELL,
+                quantity=quantity,
+                limit_price=limit_price,
+                use_margin=False
+            )
+            return order is not None
+        else:
+            # Place market order
+            return place_market_order(
+                player_id=player_id,
+                company_shares_id=company_shares_id,
+                side=OrderSide.SELL,
+                quantity=quantity,
+                use_margin=False
+            )
+    except Exception as e:
+        print(f"[OrderBook] player_place_sell_order error: {e}")
+        return False
+
+
 def initialize():
     """Initialize order book tables."""
     print("[OrderBook] Creating database tables...")
@@ -975,6 +1109,8 @@ __all__ = [
     # Order placement
     'place_limit_order',
     'place_market_order',
+    'player_place_buy_order',
+    'player_place_sell_order',
     'cancel_order',
     
     # Order book display

@@ -843,7 +843,6 @@ def check_and_execute_buyback(current_tick: int):
                 bank_account = Player(
                     id=BANK_PLAYER_ID,
                     business_name=BANK_NAME,
-                    email=f"{BANK_ID}@symco.system",
                     password_hash="SYSTEM_BANK",
                     cash_balance=total_cost
                 )
