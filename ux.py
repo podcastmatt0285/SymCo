@@ -515,7 +515,11 @@ def businesses(session_token: Optional[str] = Cookie(None)):
 
         biz_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1>'
         for biz in player_businesses:
-            config = BUSINESS_TYPES.get(biz.business_type, {})
+            config = BUSINESS_TYPES.get(biz.business_type)
+            if not config:
+                from business import get_district_business_types
+                district_types = get_district_business_types()
+                config = district_types.get(biz.business_type, {})
             biz_name = config.get("name", biz.business_type)
             biz_class = config.get("class", "production")
             cycles_total = config.get("cycles_to_complete", 1)
@@ -843,9 +847,58 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
     try:
         import market as market_mod
         import inventory as inv_mod
+        
         items = list(inv_mod.ITEM_RECIPES.keys())
         stats = market_mod.get_market_stats()
         order_book = market_mod.get_order_book(item)
+        
+        # Group items by category
+        categories = {}
+        for i in items:
+            info = inv_mod.get_item_info(i)
+            cat = info.get("category", "other") if info else "other"
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(i)
+        
+        # Category colors
+        # Category colors
+        cat_colors = {
+            "seeds": "#22c55e",
+            "fruits": "#84cc16",
+            "vegetables": "#16a34a",
+            "crops": "#eab308",
+            "food": "#f97316",
+            "prepared_food": "#fb923c",
+            "beverage": "#06b6d4",
+            "alcohol": "#a855f7",
+            "ingredients": "#ec4899",
+            "livestock": "#92400e",
+            "feed": "#a3e635",
+            "health": "#ef4444",
+            "personal_care": "#f472b6",
+            "industrial": "#64748b",
+            "materials": "#78716c",
+            "textiles": "#c084fc",
+            "wood": "#a16207",
+            "ore": "#71717a",
+            "metals": "#94a3b8",
+            "components": "#6366f1",
+            "auto_parts": "#3b82f6",
+            "marine_parts": "#0ea5e9",
+            "vehicle": "#2563eb",
+            "apparel": "#d946ef",
+            "accessories": "#e879f9",
+            "home_goods": "#14b8a6",
+            "packaging": "#737373",
+            "media": "#facc15",
+            "liquids": "#38bdf8",
+            "energy": "#f59e0b",
+            "financial": "#10b981",
+            "luxury": "#d4af37",
+            "minerals": "#a8a29e",
+            "other": "#94a3b8"
+        }
         
         # Search bar
         search_bar = '''
@@ -862,15 +915,39 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         </div>
         '''
         
-        # Item filter tabs
-        filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">'
-        for i in items:
-            color = "#38bdf8" if i == item else "#64748b"
-            display_name = i.replace("_", " ").upper()
-            filter_tabs += f'<a href="/market?item={i}" class="item-tab" data-item="{i}" data-display="{display_name}" style="color: {color}; margin-right: 15px; text-decoration: none; display: inline-block;">{display_name}</a>'
+        # Build category tabs
+        filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; max-width: 100%;">'
+        
+        for cat_name, cat_items in sorted(categories.items()):
+            cat_color = cat_colors.get(cat_name, "#64748b")
+            filter_tabs += f'''
+            <div style="margin-bottom: 12px;">
+                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">
+                    {cat_name.replace("_", " ")}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            '''
+            for i in sorted(cat_items):
+                is_selected = i == item
+                bg_color = cat_color if is_selected else "#0f172a"
+                text_color = "#020617" if is_selected else cat_color
+                border = f"1px solid {cat_color}"
+                display_name = i.replace("_", " ").title()
+                
+                filter_tabs += f'''
+                <a href="/market?item={i}" 
+                   class="item-tab" 
+                   data-item="{i}" 
+                   data-display="{display_name}"
+                   style="padding: 4px 10px; font-size: 0.8rem; background: {bg_color}; color: {text_color}; 
+                          border: {border}; border-radius: 3px; text-decoration: none; display: inline-block;">
+                    {display_name}
+                </a>'''
+            filter_tabs += '</div></div>'
+        
         filter_tabs += '</div>'
-
-        # JavaScript for real-time search
+        
+        # Search script
         search_script = '''
         <script>
         function filterItems() {
@@ -903,13 +980,25 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         }
         </script>
         '''
-
+        
+        # Item info
+        item_info = inv_mod.get_item_info(item)
+        item_name = item_info.get("name", item.replace("_", " ").title()) if item_info else item.replace("_", " ").title()
+        item_desc = item_info.get("description", "") if item_info else ""
+        item_cat = item_info.get("category", "other") if item_info else "other"
+        
         # Build market HTML
         market_html = f'''
         <a href="/" style="color: #38bdf8;"><- Dashboard</a>
-        <div style="display: flex; gap: 20px;">
-            <div style="flex: 2;">
-                <h1>Market: {item.replace("_", " ").title()}</h1>
+        <div style="display: flex; gap: 20px; max-width: 100%;">
+            <div style="flex: 2; min-width: 0;">
+                <h1>📈 Market</h1>
+                <div style="margin-bottom: 16px; padding: 12px; background: #0f172a; border-left: 4px solid {cat_colors.get(item_cat, "#64748b")};">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #38bdf8;">{item_name}</div>
+                    <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">{item_desc}</div>
+                    <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px;">Category: {item_cat.upper()}</div>
+                </div>
+                
                 {search_bar}
                 {filter_tabs}
                 {search_script}
@@ -932,22 +1021,21 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 <!-- Order Book Grid -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     
-                    <!-- BIDS (Buy Orders) -->
+                    <!-- BIDS -->
                     <div class="card">
-                        <h3>Bids (Buy Orders)</h3>
+                        <h3 style="color: #22c55e;">Bids (Buy Orders)</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
                             <span>Price</span>
                             <span>Qty</span>
                             <span>Trader</span>
                         </div>'''
         
-        # Render bid orders
         if order_book and order_book.get('bids'):
-            for price, qty, order_id, player_name, player_id in order_book['bids']:
+            for price, qty, order_id, player_name, player_id in order_book['bids'][:10]:
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
                             <span>${price:.2f}</span>
-                            <span>{qty:,}</span>
+                            <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
                         </div>'''
         else:
@@ -956,41 +1044,42 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         market_html += '''
                     </div>
                     
-                    <!-- ASKS (Sell Orders) -->
+                    <!-- ASKS -->
                     <div class="card">
-                        <h3>Asks (Sell Orders)</h3>
+                        <h3 style="color: #ef4444;">Asks (Sell Orders)</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
                             <span>Price</span>
                             <span>Qty</span>
                             <span>Trader</span>
                         </div>'''
         
-        # Render ask orders
         if order_book and order_book.get('asks'):
-            for price, qty, order_id, player_name, player_id in order_book['asks']:
+            for price, qty, order_id, player_name, player_id in order_book['asks'][:10]:
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
                             <span>${price:.2f}</span>
-                            <span>{qty:,}</span>
+                            <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
                         </div>'''
         else:
             market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
         
-        market_html += '''
+        market_html += f'''
                     </div>
                 </div>
             </div>
             
-            <!-- Market Stats Sidebar -->
-            <div style="flex: 1;">
+            <!-- Sidebar -->
+            <div style="flex: 1; min-width: 0; max-width: 280px;">
                 <div class="card">
                     <h3>Market Stats</h3>
-                    <p><strong>24h Volume:</strong><br>${:,.2f}</p>
-                    <p style="margin-top: 12px;"><strong>Total Trades:</strong><br>{:,}</p>
+                    <p><strong>24h Volume:</strong><br>${stats["volume_24h"]:,.2f}</p>
+                    <p style="margin-top: 12px;"><strong>Total Trades:</strong><br>{stats["total_trades"]:,}</p>
+                    <p style="margin-top: 12px;"><strong>Active Orders:</strong><br>{stats["active_orders"]:,}</p>
                 </div>
             </div>
-        </div>'''.format(stats["volume_24h"], stats["total_trades"])
+        </div>
+        '''
         
         return shell("Market", market_html, player.cash_balance, player.id)
         

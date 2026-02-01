@@ -45,65 +45,124 @@ FIBONACCI_START = [5, 8]
 
 # District types and their allowed terrain
 DISTRICT_TYPES = {
-    "airport": {
-        "name": "International Airport",
-        "description": "Aviation hub with aircraft assembly and passenger terminals",
+    "aerospace": {
+        "name": "Aerospace Complex",
+        "description": "Aircraft parts manufacturing and assembly",
         "allowed_terrain": ["prairie", "desert", "savanna"],
-        "base_tax": 50000.0
+        "base_tax": 65000.0,
+        "district_terrain": "district_aerospace"
     },
-    "mega_mall": {
-        "name": "Mega Shopping Mall",
-        "description": "Massive retail complex with wholesale distribution",
-        "allowed_terrain": ["prairie", "hills", "island"],
-        "base_tax": 45000.0
+    "education": {
+        "name": "Education Campus",
+        "description": "Schools, universities, and educational publishing",
+        "allowed_terrain": ["prairie", "hills", "forest"],
+        "base_tax": 48000.0,
+        "district_terrain": "district_education"
+    },
+    "entertainment": {
+        "name": "Entertainment District",
+        "description": "Stadiums, concert venues, casinos, and cinemas",
+        "allowed_terrain": ["prairie", "island", "hills"],
+        "base_tax": 55000.0,
+        "district_terrain": "district_entertainment"
+    },
+    "food": {
+        "name": "Food Production Zone",
+        "description": "Fast food kitchens, beverage plants, and packaging",
+        "allowed_terrain": ["prairie", "hills"],
+        "base_tax": 36000.0,
+        "district_terrain": "district_food"
     },
     "food_court": {
         "name": "Food Court District",
-        "description": "Central kitchen complex serving diverse cuisines",
+        "description": "Multi-vendor food service destination",
         "allowed_terrain": ["prairie", "hills"],
-        "base_tax": 35000.0
+        "base_tax": 35000.0,
+        "district_terrain": "district_food_court"
     },
-    "prison_complex": {
-        "name": "Correctional Complex",
-        "description": "Secure facility with commissary operations",
-        "allowed_terrain": ["desert", "mountain", "tundra"],
-        "base_tax": 40000.0
-    },
-    "seaport": {
-        "name": "International Seaport",
-        "description": "Maritime shipping hub with container operations",
-        "allowed_terrain": ["marsh", "island"],
-        "base_tax": 60000.0
-    },
-    "convention_center": {
-        "name": "Convention Center",
-        "description": "Large-scale event and trade show facility",
+    "hospital": {
+        "name": "Hospital District",
+        "description": "Comprehensive medical care facility",
         "allowed_terrain": ["prairie", "hills", "island"],
-        "base_tax": 42000.0
+        "base_tax": 58000.0,
+        "district_terrain": "district_hospital"
     },
-    "military_base": {
-        "name": "Military Installation",
-        "description": "Defense manufacturing and supply operations",
-        "allowed_terrain": ["mountain", "desert", "tundra"],
-        "base_tax": 55000.0
+    "industrial": {
+        "name": "Industrial Zone",
+        "description": "Steel mills, foundries, refineries, and heavy manufacturing",
+        "allowed_terrain": ["prairie", "mountain", "desert", "hills"],
+        "base_tax": 42000.0,
+        "district_terrain": "district_industrial"
     },
-    "research_campus": {
-        "name": "Research & Education Campus",
-        "description": "Advanced research facilities and university operations",
-        "allowed_terrain": ["prairie", "hills", "forest"],
-        "base_tax": 48000.0
+    "mall": {
+        "name": "Shopping Mall District",
+        "description": "Premium retail for fashion, electronics, and furnishings",
+        "allowed_terrain": ["prairie", "hills", "island"],
+        "base_tax": 45000.0,
+        "district_terrain": "district_mall"
     },
-    "tech_park": {
-        "name": "Technology Park",
-        "description": "Silicon valley-style tech campus with data centers",
+    "medical": {
+        "name": "Medical Production Zone",
+        "description": "Pharmaceuticals, medical equipment, and supplies",
         "allowed_terrain": ["prairie", "hills"],
-        "base_tax": 52000.0
+        "base_tax": 54000.0,
+        "district_terrain": "district_medical"
     },
-    "entertainment_district": {
-        "name": "Entertainment District",
-        "description": "Casinos, theaters, and entertainment venues",
-        "allowed_terrain": ["prairie", "island", "hills"],
-        "base_tax": 46000.0
+    "military": {
+        "name": "Military Base",
+        "description": "Weapons, vehicles, aircraft, ships, and training",
+        "allowed_terrain": ["mountain", "desert", "tundra"],
+        "base_tax": 70000.0,
+        "district_terrain": "district_military"
+    },
+    "neighborhood": {
+        "name": "Neighborhood Services Hub",
+        "description": "Utilities, home maintenance, and security services",
+        "allowed_terrain": ["prairie", "hills", "forest"],
+        "base_tax": 38000.0,
+        "district_terrain": "district_neighborhood"
+    },
+    "prison": {
+        "name": "Prison Complex",
+        "description": "Correctional facilities, supplies, and rehabilitation",
+        "allowed_terrain": ["desert", "mountain", "tundra"],
+        "base_tax": 40000.0,
+        "district_terrain": "district_prison"
+    },
+    "shipyard": {
+        "name": "Shipyard District",
+        "description": "Marine parts and commercial vessel construction",
+        "allowed_terrain": ["marsh", "island"],
+        "base_tax": 60000.0,
+        "district_terrain": "district_shipyard"
+    },
+    "tech": {
+        "name": "Technology Park",
+        "description": "Semiconductor fabs, electronics, and scientific equipment",
+        "allowed_terrain": ["prairie", "hills"],
+        "base_tax": 52000.0,
+        "district_terrain": "district_tech"
+    },
+    "transport": {
+        "name": "Transportation Hub",
+        "description": "Airlines, cruises, rail, and freight operations",
+        "allowed_terrain": ["prairie", "hills", "desert"],
+        "base_tax": 56000.0,
+        "district_terrain": "district_transport"
+    },
+    "utilities": {
+        "name": "Utilities Zone",
+        "description": "Water treatment and power generation",
+        "allowed_terrain": ["prairie", "desert", "marsh"],
+        "base_tax": 44000.0,
+        "district_terrain": "district_utilities"
+    },
+    "zoo": {
+        "name": "Zoo & Wildlife District",
+        "description": "Animal preserves, aquariums, and conservation centers",
+        "allowed_terrain": ["prairie", "jungle", "savanna", "forest"],
+        "base_tax": 48000.0,
+        "district_terrain": "district_zoo"
     }
 }
 
@@ -311,10 +370,11 @@ def create_district(
     
     # Get plots
     plots = db.query(LandPlot).filter(LandPlot.id.in_(plot_ids)).all()
-    terrain_type = plots[0].terrain_type
+    source_terrain = plots[0].terrain_type  # Original terrain (for validation)
+    terrain_type = DISTRICT_TYPES[district_type]["district_terrain"]  # District's special terrain
     
     # Check terrain compatibility with district type
-    if terrain_type not in DISTRICT_TYPES[district_type]["allowed_terrain"]:
+    if source_terrain not in DISTRICT_TYPES[district_type]["allowed_terrain"]:
         db.close()
         return None, f"{DISTRICT_TYPES[district_type]['name']} cannot be built on {terrain_type} terrain"
     

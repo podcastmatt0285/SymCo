@@ -11,7 +11,7 @@ Provides:
 - Dark terminal aesthetic
 """
 
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Cookie, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -88,6 +88,12 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None)):
         html = f'''
         <a href="/land" style="color: #38bdf8;"><- Land Portfolio</a>
         <h1>🏛️ Districts Management System</h1>
+
+        <div style="margin-bottom: 16px;">
+            <a href="/district-market" class="btn-blue" style="display: inline-block; padding: 10px 20px; font-size: 1rem;">
+                📈 District Market
+            </a>
+        </div>
         
         <div class="card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #38bdf8;">
             <h2 style="margin-top: 0; color: #38bdf8;">📊 District Overview</h2>
@@ -517,6 +523,19 @@ def district_details(district_id: int, session_token: Optional[str] = Cookie(Non
                 district_businesses = get_district_business_types()
                 district_terrain_key = f"district_{district.district_type}"
                 
+                # DEBUG: Show what we're working with
+                html += f'''
+                <div class="card" style="background: #1e1e2e; border-left: 4px solid #f59e0b;">
+                    <h4 style="margin: 0 0 8px 0; color: #f59e0b;">🔍 Debug Info</h4>
+                    <div style="font-size: 0.8rem; color: #94a3b8; font-family: monospace;">
+                        <div>district.district_type = "{district.district_type}"</div>
+                        <div>district.terrain_type = "{district.terrain_type}"</div>
+                        <div>district_terrain_key = "{district_terrain_key}"</div>
+                        <div>district_businesses loaded = {len(district_businesses)} types</div>
+                    </div>
+                </div>
+                '''
+                
                 # Get owned businesses count for cost calculation
                 from business import Business
                 owned_businesses_count = db.query(Business).filter(Business.owner_id == player.id).count()
@@ -532,6 +551,8 @@ def district_details(district_id: int, session_token: Optional[str] = Cookie(Non
                 
                 available_businesses = []
                 for btype, config in district_businesses.items():
+                    if not isinstance(config, dict):
+                        continue
                     if district_terrain_key in config.get("allowed_terrain", []):
                         base_cost = config.get("startup_cost", 2500.0)
                         multiplier = 1.0 + (owned_businesses_count * 0.25)
@@ -646,10 +667,10 @@ async def api_create_district_business(
 
 @router.post("/api/districts/create")
 async def api_create_district(
-    district_type: str = Form(...),
-    plot_ids: list = Form(...),
-    session_token: Optional[str] = Cookie(None)
-):
+        district_type: str = Form(...),
+        plot_ids: list[str] = Form(...),
+        session_token: Optional[str] = Cookie(None)
+    ):
     """API endpoint to create a district."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): 
@@ -672,3 +693,302 @@ async def api_create_district(
         import traceback
         traceback.print_exc()
         return RedirectResponse(url=f"/districts/create?error={str(e)}", status_code=303)
+
+# ==========================
+# DISTRICT MARKET PAGE
+# ==========================
+
+@router.get("/district-market", response_class=HTMLResponse)
+def district_market_page(session_token: Optional[str] = Cookie(None), item: str = "steel"):
+    """District market view with order book."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    
+    try:
+        import district_market as dm
+        
+        items = list(dm.DISTRICT_ITEMS.keys())
+        
+        if item not in items and items:
+            item = items[0]
+        
+        stats = dm.get_market_stats()
+        order_book = dm.get_order_book(item)
+        
+        # Group items by category
+        categories = {}
+        for i in items:
+            info = dm.get_district_item_info(i)
+            cat = info.get("category", "other") if info else "other"
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(i)
+        
+        # Category colors
+        cat_colors = {
+            "metals": "#f59e0b",
+            "industrial": "#64748b",
+            "utilities": "#22c55e",
+            "fuel": "#ef4444",
+            "construction": "#8b5cf6",
+            "electronics": "#38bdf8",
+            "chemicals": "#ec4899",
+            "aerospace": "#06b6d4",
+            "military": "#dc2626",
+            "medical": "#10b981",
+            "food": "#f97316",
+            "other": "#94a3b8"
+        }
+        
+        # Search bar
+        search_bar = '''
+        <div style="margin-bottom: 16px;">
+            <input 
+                type="text" 
+                id="itemSearch" 
+                placeholder="🔍 Search district items..." 
+                style="width: 100%; padding: 12px; background: #0f172a; border: 1px solid #1e293b; color: #e5e7eb; font-family: 'JetBrains Mono', monospace; font-size: 14px; border-radius: 4px;"
+                oninput="filterItems()"
+                autofocus
+            >
+            <div id="searchResults" style="color: #64748b; font-size: 0.85rem; margin-top: 8px;"></div>
+        </div>
+        '''
+        
+        # Build category tabs
+        filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; max-width: 100%;">'
+        
+        for cat_name, cat_items in sorted(categories.items()):
+            cat_color = cat_colors.get(cat_name, "#64748b")
+            filter_tabs += f'''
+            <div style="margin-bottom: 12px;">
+                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">
+                    {cat_name.replace("_", " ")}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            '''
+            for i in sorted(cat_items):
+                is_selected = i == item
+                bg_color = cat_color if is_selected else "#0f172a"
+                text_color = "#020617" if is_selected else cat_color
+                border = f"1px solid {cat_color}"
+                display_name = i.replace("_", " ").title()
+                
+                filter_tabs += f'''
+                <a href="/district-market?item={i}" 
+                   class="item-tab" 
+                   data-item="{i}" 
+                   data-display="{display_name}"
+                   style="padding: 4px 10px; font-size: 0.8rem; background: {bg_color}; color: {text_color}; 
+                          border: {border}; border-radius: 3px; text-decoration: none; display: inline-block;">
+                    {display_name}
+                </a>'''
+            filter_tabs += '</div></div>'
+        
+        filter_tabs += '</div>'
+        
+        # Search script
+        search_script = '''
+        <script>
+        function filterItems() {
+            const searchInput = document.getElementById('itemSearch').value.toLowerCase();
+            const tabs = document.querySelectorAll('.item-tab');
+            const resultsDiv = document.getElementById('searchResults');
+            let visibleCount = 0;
+            
+            tabs.forEach(tab => {
+                const itemName = tab.getAttribute('data-item').toLowerCase();
+                const displayName = tab.getAttribute('data-display').toLowerCase();
+                
+                if (itemName.includes(searchInput) || displayName.includes(searchInput)) {
+                    tab.style.display = 'inline-block';
+                    visibleCount++;
+                } else {
+                    tab.style.display = 'none';
+                }
+            });
+            
+            if (searchInput && visibleCount === 0) {
+                resultsDiv.textContent = '⚠ No items found';
+                resultsDiv.style.color = '#ef4444';
+            } else if (searchInput) {
+                resultsDiv.textContent = `✓ Showing ${visibleCount} item${visibleCount !== 1 ? 's' : ''}`;
+                resultsDiv.style.color = '#22c55e';
+            } else {
+                resultsDiv.textContent = '';
+            }
+        }
+        </script>
+        '''
+        
+        # Item info
+        item_info = dm.get_district_item_info(item)
+        item_name = item_info.get("name", item.replace("_", " ").title()) if item_info else item.replace("_", " ").title()
+        item_desc = item_info.get("description", "") if item_info else ""
+        item_cat = item_info.get("category", "other") if item_info else "other"
+        
+        # Build market HTML
+        market_html = f'''
+        <a href="/districts" style="color: #38bdf8;"><- Districts Dashboard</a>
+        <div style="display: flex; gap: 20px; max-width: 100%;">
+            <div style="flex: 2; min-width: 0;">
+                <h1>📈 District Market</h1>
+                <div style="margin-bottom: 16px; padding: 12px; background: #0f172a; border-left: 4px solid {cat_colors.get(item_cat, "#64748b")};">
+                    <div style="font-size: 1.2rem; font-weight: bold; color: #38bdf8;">{item_name}</div>
+                    <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">{item_desc}</div>
+                    <div style="color: #94a3b8; font-size: 0.75rem; margin-top: 4px;">Category: {item_cat.upper()}</div>
+                </div>
+                
+                {search_bar}
+                {filter_tabs}
+                {search_script}
+                
+                <!-- Order Placement Form -->
+                <div class="card">
+                    <h3>Place Limit Order</h3>
+                    <form action="/api/district-market/order" method="post" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
+                        <input type="hidden" name="item_type" value="{item}">
+                        <select name="order_type">
+                            <option value="buy">BUY</option>
+                            <option value="sell">SELL</option>
+                        </select>
+                        <input type="number" name="quantity" placeholder="Quantity" step="0.01" required>
+                        <input type="number" name="price" step="0.01" placeholder="Price" required>
+                        <button type="submit" class="btn-blue">Submit</button>
+                    </form>
+                </div>
+                
+                <!-- Order Book Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    
+                    <!-- BIDS -->
+                    <div class="card">
+                        <h3 style="color: #22c55e;">Bids (Buy Orders)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                            <span>Price</span>
+                            <span>Qty</span>
+                            <span>Trader</span>
+                        </div>'''
+        
+        if order_book and order_book.get('bids'):
+            for price, qty, order_id, player_name, player_id in order_book['bids'][:10]:
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
+                            <span>${price:.2f}</span>
+                            <span>{qty:,.2f}</span>
+                            <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No bids</p>'
+        
+        market_html += '''
+                    </div>
+                    
+                    <!-- ASKS -->
+                    <div class="card">
+                        <h3 style="color: #ef4444;">Asks (Sell Orders)</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                            <span>Price</span>
+                            <span>Qty</span>
+                            <span>Trader</span>
+                        </div>'''
+        
+        if order_book and order_book.get('asks'):
+            for price, qty, order_id, player_name, player_id in order_book['asks'][:10]:
+                market_html += f'''
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
+                            <span>${price:.2f}</span>
+                            <span>{qty:,.2f}</span>
+                            <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
+                        </div>'''
+        else:
+            market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
+        
+        market_html += f'''
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div style="flex: 1; min-width: 0; max-width: 280px;">
+                <div class="card">
+                    <h3>District Market Stats</h3>
+                    <p><strong>24h Volume:</strong><br>${stats["volume_24h"]:,.2f}</p>
+                    <p style="margin-top: 12px;"><strong>Total Trades:</strong><br>{stats["total_trades"]:,}</p>
+                    <p style="margin-top: 12px;"><strong>Active Orders:</strong><br>{stats["active_orders"]:,}</p>
+                </div>
+            </div>
+        </div>
+        
+        {dm.get_district_ticker_html()}
+        '''
+        
+        return shell("District Market", market_html, player.cash_balance, player.id)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return shell("District Market", f"Error loading district market: {e}", player.cash_balance, player.id)
+
+
+@router.post("/api/district-market/order")
+async def api_district_market_order(
+    item_type: str = Form(...),
+    order_type: str = Form(...),
+    quantity: float = Form(...),
+    price: float = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Place a district market order."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    
+    try:
+        import district_market as dm
+        
+        ot = dm.OrderType.BUY if order_type == "buy" else dm.OrderType.SELL
+        order = dm.create_order(
+            player_id=player.id,
+            order_type=ot,
+            order_mode=dm.OrderMode.LIMIT,
+            item_type=item_type,
+            quantity=quantity,
+            price=price
+        )
+        
+        if order:
+            return RedirectResponse(url=f"/district-market?item={item_type}&success=order_placed", status_code=303)
+        else:
+            return RedirectResponse(url=f"/district-market?item={item_type}&error=order_failed", status_code=303)
+            
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return RedirectResponse(url=f"/district-market?item={item_type}&error={str(e)}", status_code=303)
+
+
+@router.post("/api/district-market/cancel")
+async def api_district_market_cancel(
+    order_id: int = Form(...),
+    item_type: str = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Cancel a district market order."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    
+    try:
+        import district_market as dm
+        
+        success = dm.cancel_order(order_id, player.id)
+        
+        if success:
+            return RedirectResponse(url=f"/district-market?item={item_type}&success=order_cancelled", status_code=303)
+        else:
+            return RedirectResponse(url=f"/district-market?item={item_type}&error=cancel_failed", status_code=303)
+            
+    except Exception as e:
+        return RedirectResponse(url=f"/district-market?item={item_type}&error={str(e)}", status_code=303)
