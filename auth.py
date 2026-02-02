@@ -150,8 +150,6 @@ def create_player(db: Session, business_name: str, password: str) -> Optional[Pl
         create_starter_plot(player_id)
         create_starter_plot(player_id)
         create_starter_plot(player_id)
-        create_starter_plot(player_id)
-        create_starter_plot(player_id)
         print(f"[Auth] Created 3 starter land plots for player {player_id}")
     except Exception as e:
         print(f"[Auth] Failed to create starter plot: {e}")

@@ -107,9 +107,9 @@ class EconomicMilestone(Base):
 # CONSTANTS
 # ==========================
 
-AUCTION_DURATION_TICKS = 400
-PRICE_DROP_RATE = 0.35  # Price drops to 35% every hour
-ECONOMIC_THRESHOLD = 1000000  # $1M triggers 1 new plot
+AUCTION_DURATION_TICKS = 4000
+PRICE_DROP_RATE = 0.15  # Price drops to 35% every hour
+ECONOMIC_THRESHOLD = 10000000  # $1M triggers 1 new plot
 LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
 
