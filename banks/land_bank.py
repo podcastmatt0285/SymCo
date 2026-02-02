@@ -28,17 +28,17 @@ BANK_PLAYER_ID = -2
 # ==========================
 
 # IPO Settings
-IPO_SHARES = 1000000
-IPO_PRICE = 0.20
+IPO_SHARES = 1000000000000
+IPO_PRICE = 2.5
 SEED_CAPITAL = 0
 
 # Dividend system
 DIVIDEND_INTERVAL_TICKS = 64
 DIVIDEND_PAYOUT_PERCENTAGE = 0.35
-MIN_RESERVE_FOR_DIVIDENDS = 50000
+MIN_RESERVE_FOR_DIVIDENDS = 5000000000
 
 # Stock split triggers
-SPLIT_PRICE_THRESHOLD = 25.0
+SPLIT_PRICE_THRESHOLD = 800.0
 SPLIT_RATIO = 5
 SPLIT_CHECK_INTERVAL = 36  # 1 hour
 MAX_TOTAL_SHARES = 50000000000000
@@ -63,7 +63,7 @@ LIEN_INTEREST_RATE = 0.0001  # 0.01% per minute (~5.3% annual)
 LIEN_GARNISHMENT_PERCENTAGE = 0.5  # Take 50% of available cash each minute
 
 # Quantitative Easing (Land Printing)
-QE_TRIGGER_SHARE_PRICE = -24.99  # Emergency land creation threshold
+QE_TRIGGER_SHARE_PRICE = -4.99  # Emergency land creation threshold
 QE_AUCTION_INTERVAL = 60
 QE_PRICE_DISCOUNT = 1.0  # No markup (vs normal 1.5x)
 QE_MINIMUM_PRICE_RATIO = 0.75  # Floor at 75% of base

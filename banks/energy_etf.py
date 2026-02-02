@@ -33,7 +33,7 @@ BANK_PLAYER_ID = -4
 # IPO Settings
 IPO_SHARES = 250000000000
 IPO_PRICE = None  # Calculated dynamically
-SEED_CAPITAL = 500000.0
+SEED_CAPITAL = 50000000000000.0
 
 # Target commodity
 TARGET_COMMODITY = "energy"
@@ -48,7 +48,7 @@ SELL_DISCOUNT = 0.95  # Sell at 5% below market price
 SELL_PERCENTAGE = 1.0  # Sell 100% of inventory
 
 # Fee System
-HOLDER_FEE_PER_TICK = 0.0000011918  # 3.75% annual
+HOLDER_FEE_PER_TICK = 0.00011918
 
 # Dividend system
 DIVIDEND_INTERVAL_TICKS = 1200  # 7 days (weekly)
@@ -57,9 +57,9 @@ MIN_RESERVE_FOR_DIVIDENDS = 10000
 
 # Stock split triggers
 SPLIT_PRICE_THRESHOLD = 1.0  # Split when share price exceeds $1
-SPLIT_RATIO = 50  # 50-for-1 split
-SPLIT_CHECK_INTERVAL = 600
-MAX_TOTAL_SHARES = 100000000
+SPLIT_RATIO = 5  # 5-for-1 split
+SPLIT_CHECK_INTERVAL = 60
+MAX_TOTAL_SHARES = 100000000000
 
 # Buyback triggers
 BUYBACK_PRICE_THRESHOLD = None  # Calculated as 50% of IPO price
@@ -75,7 +75,7 @@ INSOLVENCY_THRESHOLD = 0.0
 LEVY_FREQUENCY = 60
 
 # Lien System
-LIEN_INTEREST_RATE = 0.0001
+LIEN_INTEREST_RATE = 0.001
 LIEN_GARNISHMENT_PERCENTAGE = 0.33
 
 # Quantitative Easing
