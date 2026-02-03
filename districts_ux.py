@@ -93,6 +93,9 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None)):
             <a href="/district-market" class="btn-blue" style="display: inline-block; padding: 10px 20px; font-size: 1rem;">
                 📈 District Market
             </a>
+            <a href="/cities" class="btn-blue" style="display: inline-block; padding: 10px 20px; font-size: 1rem;">
+                🏙️ Cities
+            </a>
         </div>
         
         <div class="card" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #38bdf8;">

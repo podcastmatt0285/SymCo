@@ -333,6 +333,15 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     else:
         # Standard player-to-player cash transfer
         try:
+            from cities import handle_outsider_trade
+            proceed, msg = handle_outsider_trade(buy_order.player_id, sell_order.player_id, 
+                                                  buy_order.item_type, quantity, price)
+            if not proceed:
+                print(f"[Market] Trade blocked: {msg}")
+                return
+        except ImportError:
+            pass
+        try:
             from auth import transfer_cash
             success = transfer_cash(buy_order.player_id, sell_order.player_id, total_cost)
             if not success:
