@@ -1061,7 +1061,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     averages = db.query(PlayerCostAverage).filter(
         PlayerCostAverage.player_id == player.id,
         PlayerCostAverage.total_quantity > 0
-    ).order_by(desc(PlayerCostAverage.total_spent)).limit(20).all()
+    ).order_by(desc(PlayerCostAverage.total_spent)).limit(200).all()
     
     db.close()
     

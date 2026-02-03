@@ -730,6 +730,15 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 </div>
                 """
         
+        # Build currency options from item types
+        from inventory import ITEM_RECIPES
+        currency_options = ""
+        for item_type in sorted(ITEM_RECIPES.keys()):
+            item_info = ITEM_RECIPES[item_type]
+            item_name = item_info.get("name", item_type)
+            selected = "selected" if city.currency_type == item_type else ""
+            currency_options += f'<option value="{item_type}" {selected}>{item_name}</option>'
+        
         mayor_controls = f"""
         <div class="card">
             <h2>👑 Mayor Controls</h2>
@@ -757,7 +766,10 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <form action="/api/city/currency-vote" method="post">
                         <div class="form-group">
                             <label>New Currency (Item Type)</label>
-                            <input type="text" name="currency" placeholder="e.g., gold, silver, oil" required>
+                            <select name="currency" required>
+                                <option value="">-- Select Currency --</option>
+                                {currency_options}
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Poll Tax (max ${bank.cash_reserves * 0.035:,.2f})</label>

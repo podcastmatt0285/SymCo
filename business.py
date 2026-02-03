@@ -53,7 +53,7 @@ class BusinessSale(Base):
 # ==========================
 
 BUSINESS_TYPES = {}
-DISMANTLING_TICKS = 100 # Number of ticks to dismantle a business
+DISMANTLING_TICKS = 250 # Number of ticks to dismantle a business
 
 def load_business_config():
     global BUSINESS_TYPES
@@ -320,19 +320,19 @@ def process_business_tick(db):
                 )
                 lines_successfully_produced += 1
                 
-        if lines_successfully_produced > 0:
-            try:
-                from cities import pay_production_subsidy
-                import market
-                production_cost = sum(
-                    (market.get_market_price(req["item"]) or 1.0) * req["quantity"]
-                    for line in production_lines for req in line.get("inputs", [])
-                )
-                subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
-                if subsidy > 0:
-                    player.cash_balance += subsidy  # Already added in cities.py, remove this if double-adding
-            except ImportError:
-                pass
+            if lines_successfully_produced > 0:
+                try:
+                    from cities import pay_production_subsidy
+                    import market
+                    production_cost = sum(
+                        (market.get_market_price(req["item"]) or 1.0) * req["quantity"]
+                        for line in production_lines for req in line.get("inputs", [])
+                    )
+                    subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
+                    if subsidy > 0:
+                        player.cash_balance += subsidy  # Already added in cities.py, remove this if double-adding
+                except ImportError:
+                    pass
             player.cash_balance -= wage_cost
             biz.progress_ticks = 0
             db.commit()

@@ -332,6 +332,9 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             return
     else:
         # Standard player-to-player cash transfer
+        cities_handled_transfer = False
+        
+        # Check if cities module needs to handle currency conversion
         try:
             from cities import handle_outsider_trade
             proceed, msg = handle_outsider_trade(buy_order.player_id, sell_order.player_id, 
@@ -339,19 +342,26 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             if not proceed:
                 print(f"[Market] Trade blocked: {msg}")
                 return
+            
+            # Check if cities module already handled the cash transfer
+            cities_handled_transfer = "handled" in msg.lower()
+            
         except ImportError:
             pass
-        try:
-            from auth import transfer_cash
-            success = transfer_cash(buy_order.player_id, sell_order.player_id, total_cost)
-            if not success:
-                print(f"[Market] P2P transfer failed: Player {buy_order.player_id} → Player {sell_order.player_id} ${total_cost:.2f}")
+        
+        # Only do P2P transfer if cities module didn't already handle it
+        if not cities_handled_transfer:
+            try:
+                from auth import transfer_cash
+                success = transfer_cash(buy_order.player_id, sell_order.player_id, total_cost)
+                if not success:
+                    print(f"[Market] P2P transfer failed: Player {buy_order.player_id} → Player {sell_order.player_id} ${total_cost:.2f}")
+                    db.rollback()
+                    return
+            except ImportError:
+                print("[Market] ERROR: Auth module not available for cash transfer")
                 db.rollback()
                 return
-        except ImportError:
-            print("[Market] ERROR: Auth module not available for cash transfer")
-            db.rollback()
-            return
 
     # 6. Transfer inventory
     try:

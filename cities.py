@@ -1624,13 +1624,20 @@ def set_relocation_fee(mayor_id: int, city_id: int, fee_percent: float) -> Tuple
 def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantity: float, price: float) -> Tuple[bool, str]:
     """
     Handle a trade where an outsider is trading with a city member.
-    Outsider must pay in city currency - bank handles conversion.
     
-    This should be called from market.py before executing trades involving city members.
+    PETRODOLLAR SYSTEM:
+    When outsider BUYS from city member:
+    1. Outsider pays cash → City Bank
+    2. Bank BUYS city currency from the open market using that cash
+    3. Bank deposits purchased currency to seller's inventory
+    4. Customs fee taken (5% - split between bank and gov)
+    
+    When outsider SELLS to city member:
+    - Normal trade, no conversion needed
     
     Returns:
         (should_proceed, message)
-        If should_proceed is False, the trade should be blocked.
+        - "handled" in message means cash transfer was done internally
     """
     import market
     import inventory
@@ -1656,32 +1663,39 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
         city = None
         city_member_id = None
         outsider_id = None
+        outsider_is_buyer = False
         
         if seller_membership:
             city = db.query(City).filter(City.id == seller_membership.city_id).first()
             city_member_id = seller_id
             outsider_id = buyer_id
+            outsider_is_buyer = True
         elif buyer_membership:
             city = db.query(City).filter(City.id == buyer_membership.city_id).first()
             city_member_id = buyer_id
             outsider_id = seller_id
+            outsider_is_buyer = False
         
         if not city or not city.currency_type:
             return True, "City has no currency requirement"
         
-        # Calculate the trade value
+        # If outsider is SELLER, no currency conversion needed
+        if not outsider_is_buyer:
+            return True, "Outsider is seller - normal transfer"
+        
+        # ========================================
+        # PETRODOLLAR: Outsider BUYS from city member
+        # ========================================
         trade_value = quantity * price
         
-        # Bank converts outsider's cash to city currency
+        if trade_value <= 0:
+            return True, "Zero value trade"
+        
         bank = db.query(CityBank).filter(CityBank.city_id == city.id).first()
         if not bank:
             return True, "No city bank"
         
-        # Get currency market price
-        currency_price = market.get_market_price(city.currency_type) or 1.0
-        currency_needed = trade_value / currency_price
-        
-        # Bank buys currency from market (or uses reserves)
+        # Validate outsider (buyer)
         outsider = db.query(Player).filter(Player.id == outsider_id).first()
         if not outsider:
             return False, "Outsider not found"
@@ -1689,29 +1703,136 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
         if outsider.cash_balance < trade_value:
             return False, "Outsider has insufficient funds"
         
-        # Deduct from outsider, add to bank (bank handles conversion)
+        # Validate seller exists
+        seller = db.query(Player).filter(Player.id == seller_id).first()
+        if not seller:
+            return False, "Seller not found"
+        
+        # ---- STEP 1: Calculate customs fee (5%) ----
+        customs_fee = trade_value * 0.05
+        cash_for_currency = trade_value - customs_fee  # What bank uses to buy currency
+        
+        # ---- STEP 2: Check market for available currency ----
+        currency_price = market.get_market_price(city.currency_type)
+        if not currency_price or currency_price <= 0:
+            # No market price - can't do conversion, fall back to normal trade
+            print(f"[Cities] No market price for {city.currency_type}, falling back to normal trade")
+            return True, "No currency market price"
+        
+        currency_needed = cash_for_currency / currency_price
+        
+        # Check if there's enough currency available on the market
+        order_book = market.get_order_book(city.currency_type)
+        available_currency = sum(ask[1] for ask in order_book.get("asks", []))  # ask[1] is quantity
+        
+        if available_currency < currency_needed:
+            # Not enough currency on market - check bank reserves
+            total_available = available_currency + bank.currency_quantity
+            if total_available < currency_needed:
+                print(f"[Cities] Insufficient {city.currency_type} on market ({available_currency:.2f}) and bank reserves ({bank.currency_quantity:.2f}) for trade needing {currency_needed:.2f}")
+                return False, f"Insufficient {city.currency_type} available for conversion"
+        
+        # ---- STEP 3: Outsider pays cash to bank ----
         outsider.cash_balance -= trade_value
         bank.cash_reserves += trade_value
+        db.commit()  # Commit the cash transfer first
         
-        # Bank provides currency equivalent to the city member (seller)
-        # The actual item transfer happens in market.py
+        # ---- STEP 4: Bank buys currency from market ----
+        # Use a special bank player ID for market orders
+        bank_player_id = -(1000 + city.id)
         
-        # Customs and duties fee (let's say 5% to the government)
-        customs_fee = trade_value * 0.05
+        # Give the bank cash to buy with (temporarily in player account)
+        # We need to create a pseudo-player balance for the bank to place orders
+        bank_pseudo = db.query(Player).filter(Player.id == bank_player_id).first()
+        if not bank_pseudo:
+            # Bank doesn't have a player record - we'll handle this differently
+            # Instead, directly execute purchases from the order book
+            pass
+        
+        # Buy from market by matching against sell orders directly
+        currency_acquired = 0.0
+        cash_spent = 0.0
+        
+        # Get fresh order book
+        from market import MarketOrder, OrderType, OrderStatus
+        sell_orders = db.query(MarketOrder).filter(
+            MarketOrder.item_type == city.currency_type,
+            MarketOrder.order_type == OrderType.SELL,
+            MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+            MarketOrder.price != None
+        ).order_by(MarketOrder.price.asc()).all()
+        
+        for sell_order in sell_orders:
+            if currency_acquired >= currency_needed:
+                break
+            if cash_spent >= cash_for_currency:
+                break
+            
+            available_in_order = sell_order.quantity - sell_order.quantity_filled
+            still_need = currency_needed - currency_acquired
+            can_afford = (cash_for_currency - cash_spent) / sell_order.price
+            
+            buy_qty = min(available_in_order, still_need, can_afford)
+            
+            if buy_qty <= 0:
+                continue
+            
+            cost = buy_qty * sell_order.price
+            
+            # Execute this purchase
+            # 1. Bank pays the seller
+            order_seller = db.query(Player).filter(Player.id == sell_order.player_id).first()
+            if order_seller:
+                bank.cash_reserves -= cost
+                order_seller.cash_balance += cost
+            
+            # 2. Transfer inventory from seller to bank's holding
+            inventory.remove_item(sell_order.player_id, city.currency_type, buy_qty)
+            
+            # 3. Update the sell order
+            sell_order.quantity_filled += buy_qty
+            if sell_order.quantity_filled >= sell_order.quantity:
+                sell_order.status = OrderStatus.FILLED
+            else:
+                sell_order.status = OrderStatus.PARTIALLY_FILLED
+            
+            currency_acquired += buy_qty
+            cash_spent += cost
+            
+            print(f"[Cities] Bank bought {buy_qty:.2f} {city.currency_type} @ ${sell_order.price:.2f} from order {sell_order.id}")
+        
+        # If we didn't get enough from market, use bank's own reserves
+        if currency_acquired < currency_needed and bank.currency_quantity > 0:
+            from_reserves = min(bank.currency_quantity, currency_needed - currency_acquired)
+            bank.currency_quantity -= from_reserves
+            currency_acquired += from_reserves
+            print(f"[Cities] Bank used {from_reserves:.2f} {city.currency_type} from reserves")
+        
+        # ---- STEP 5: Deposit currency to seller ----
+        if currency_acquired > 0:
+            inventory.add_item(seller_id, city.currency_type, currency_acquired)
+        
+        # ---- STEP 6: Government gets share of customs ----
         government = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if government:
-            bank.cash_reserves -= customs_fee
-            government.cash_balance += customs_fee
+            gov_share = customs_fee * 0.5  # 50% of customs to gov
+            bank.cash_reserves -= gov_share
+            government.cash_balance += gov_share
         
         db.commit()
         
-        print(f"[Cities] Outsider trade: {outsider_id} → {city_member_id}, bank converted ${trade_value:,.2f}")
+        print(f"[Cities] PETRODOLLAR: Outsider {outsider_id} paid ${trade_value:,.2f}")
+        print(f"[Cities]   → Bank bought {currency_acquired:.2f} {city.currency_type} for ${cash_spent:,.2f}")
+        print(f"[Cities]   → Seller {city_member_id} received {currency_acquired:.2f} {city.currency_type}")
+        print(f"[Cities]   → Customs: ${customs_fee:,.2f} (bank: ${customs_fee * 0.5:,.2f}, gov: ${customs_fee * 0.5:,.2f})")
         
-        return True, "Currency converted by city bank"
+        return True, "Currency converted - transfer handled"
         
     except Exception as e:
         db.rollback()
         print(f"[Cities] Error handling outsider trade: {e}")
+        import traceback
+        traceback.print_exc()
         return True, str(e)  # Allow trade to proceed on error
     finally:
         db.close()
