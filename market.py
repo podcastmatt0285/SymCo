@@ -291,13 +291,17 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     elif sell_order.player_id == -4 and sell_order.item_type == "energy_etf_shares":
         is_bank_ipo = True
         bank_id = "energy_etf"
+
+    # City Bank sale detection (IDs are -(1000 + city_id), so <= -1001)
+    elif sell_order.player_id <= -1001:
+        is_bank_ipo = True  # Reuse the IPO logic (money goes to bank reserves)
+        bank_id = f"city_bank_{-sell_order.player_id - 1000}"  # Extract city_id
     
     # 5. Handle cash transfer
     if is_bank_ipo:
         # Special bank IPO handling: buyer pays, money goes to BANK RESERVES (not player account)
         try:
             from auth import Player
-            import banks
             
             # Get buyer
             buyer = db.query(Player).filter(Player.id == buy_order.player_id).first()
@@ -315,53 +319,37 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             # Deduct from buyer's account
             buyer.cash_balance -= total_cost
             
-            # Add to bank reserves (this is the economic sink)
-            banks.add_bank_revenue(
-                bank_id, 
-                total_cost, 
-                f"IPO Sale: {quantity} shares to Player {buy_order.player_id}"
-            )
-            
-            print(f"[Market] {bank_id.upper()} IPO SALE: Player {buy_order.player_id} paid ${total_cost:.2f} → Bank Reserves")
+            # Route to appropriate bank
+            if bank_id.startswith("city_bank_"):
+                # City bank sale - money goes to city bank reserves
+                city_id = int(bank_id.replace("city_bank_", ""))
+                try:
+                    from cities import CityBank
+                    city_db = db  # Reuse same session
+                    city_bank = city_db.query(CityBank).filter(CityBank.city_id == city_id).first()
+                    if city_bank:
+                        city_bank.cash_reserves += total_cost
+                        print(f"[Market] CITY BANK SALE: Player {buy_order.player_id} paid ${total_cost:.2f} → City {city_id} Bank Reserves")
+                    else:
+                        print(f"[Market] WARNING: City bank {city_id} not found, funds lost!")
+                except Exception as e:
+                    print(f"[Market] City bank transfer error: {e}")
+            else:
+                # ETF/Land bank sale
+                import banks
+                banks.add_bank_revenue(
+                    bank_id, 
+                    total_cost, 
+                    f"IPO Sale: {quantity} shares to Player {buy_order.player_id}"
+                )
+                print(f"[Market] {bank_id.upper()} IPO SALE: Player {buy_order.player_id} paid ${total_cost:.2f} → Bank Reserves")
             
         except Exception as e:
-            print(f"[Market] Bank IPO Transfer Error: {e}")
+            print(f"[Market] Bank Transfer Error: {e}")
             import traceback
             traceback.print_exc()
             db.rollback()
             return
-    else:
-        # Standard player-to-player cash transfer
-        cities_handled_transfer = False
-        
-        # Check if cities module needs to handle currency conversion
-        try:
-            from cities import handle_outsider_trade
-            proceed, msg = handle_outsider_trade(buy_order.player_id, sell_order.player_id, 
-                                                  buy_order.item_type, quantity, price)
-            if not proceed:
-                print(f"[Market] Trade blocked: {msg}")
-                return
-            
-            # Check if cities module already handled the cash transfer
-            cities_handled_transfer = "handled" in msg.lower()
-            
-        except ImportError:
-            pass
-        
-        # Only do P2P transfer if cities module didn't already handle it
-        if not cities_handled_transfer:
-            try:
-                from auth import transfer_cash
-                success = transfer_cash(buy_order.player_id, sell_order.player_id, total_cost)
-                if not success:
-                    print(f"[Market] P2P transfer failed: Player {buy_order.player_id} → Player {sell_order.player_id} ${total_cost:.2f}")
-                    db.rollback()
-                    return
-            except ImportError:
-                print("[Market] ERROR: Auth module not available for cash transfer")
-                db.rollback()
-                return
 
     # 6. Transfer inventory
     try:

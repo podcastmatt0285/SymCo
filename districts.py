@@ -393,6 +393,15 @@ def create_district(
     government = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
     if government:
         government.cash_balance += merge_cost
+        # Log the district merge transaction
+        log_transaction(
+            player_id,
+            "district_merge",
+            "money",
+            -merge_cost,
+            f"District merge: {DISTRICT_TYPES[district_type]['name']}",
+            reference_id=f"merge_{player_id}_{len(plot_ids)}_plots"
+        )
     
     # Calculate total size
     total_size = sum(plot.size for plot in plots)
@@ -540,6 +549,15 @@ def collect_district_taxes(current_month: int):
                 government.cash_balance += district.monthly_tax
             total_tax_collected += district.monthly_tax
             district.last_tax_payment = datetime.utcnow()
+            # Log the tax transaction
+            log_transaction(
+                owner.id,
+                "district_tax",
+                "money",
+                -district.monthly_tax,
+                f"District tax: {district.district_type}",
+                reference_id=f"district_{district.id}"
+            )
             print(f"[Districts] Player {owner.id} paid ${district.monthly_tax:,.2f} tax for district {district.id}")
         else:
             print(f"[Districts] WARNING: Player {owner.id} cannot afford tax for district {district.id}")

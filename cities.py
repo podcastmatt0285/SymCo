@@ -22,6 +22,7 @@ from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from enum import Enum
+from stats_ux import log_transaction
 
 # ==========================
 # DATABASE SETUP
@@ -415,6 +416,15 @@ def create_city(founder_id: int, city_name: str, district_ids: List[int]) -> Tup
         
         # Deduct creation cost
         player.cash_balance -= CITY_CREATION_COST
+        # Log city creation cost
+        log_transaction(
+            founder_id,
+            "city_creation",
+            "money",
+            -CITY_CREATION_COST,
+            f"Founded city: {city_name}",
+            reference_id=f"city_creation"
+        )
         
         # Create the city
         city = City(
@@ -587,6 +597,23 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
         
         player.cash_balance -= application.calculated_fee
         mayor.cash_balance += application.calculated_fee
+        # Log application fee transactions
+        log_transaction(
+            application.applicant_id,
+            "city_application_fee",
+            "money",
+            -application.calculated_fee,
+            f"City membership fee: {city.name}",
+            reference_id=f"city_{city.id}_join"
+        )
+        log_transaction(
+            city.mayor_id,
+            "city_application_income",
+            "money",
+            application.calculated_fee,
+            f"Membership fee received from new member",
+            reference_id=f"city_{city.id}_join"
+        )
         
         # Create membership
         membership = CityMember(
@@ -649,6 +676,15 @@ def leave_city(player_id: int) -> Tuple[bool, str]:
         if bank:
             player.cash_balance -= relocation_fee
             bank.cash_reserves += relocation_fee
+            # Log relocation fee
+            log_transaction(
+                player_id,
+                "city_relocation_fee",
+                "money",
+                -relocation_fee,
+                f"Left city: {city.name}",
+                reference_id=f"city_{city.id}_leave"
+            )
         
         # Remove membership
         db.delete(membership)
@@ -1062,6 +1098,15 @@ def pay_production_subsidy(player_id: int, business_id: int, production_cost: fl
         # Pay subsidy
         bank.cash_reserves -= subsidy
         player.cash_balance += subsidy
+        # Log the subsidy transaction
+        log_transaction(
+            player_id,
+            "city_subsidy",
+            "money",
+            subsidy,
+            f"Production subsidy from city bank",
+            reference_id=f"business_{business_id}"
+        )
         
         # Log the subsidy
         log = CityProductionLog(

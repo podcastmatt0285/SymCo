@@ -408,6 +408,224 @@ async def my_city(session_token: Optional[str] = Cookie(None)):
 
 
 # ==========================
+# VIEW APPLICANT PROFILE - Must be before /city/{city_id}
+# ==========================
+@router.get("/city/{city_id}/applicant/{applicant_id}", response_class=HTMLResponse)
+async def view_applicant_profile(city_id: int, applicant_id: int, session_token: Optional[str] = Cookie(None)):
+    """View detailed profile of a city applicant. Only accessible by city members."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    
+    from cities import is_city_member, get_city_by_id, get_player_total_value, CityApplication
+    from auth import Player, get_db
+    from business import Business, BUSINESS_TYPES
+    from land import LandPlot
+    from districts import District
+    from market import Trade
+    import inventory
+    import market
+    
+    # Verify viewer is a city member
+    if not is_city_member(player.id, city_id):
+        return RedirectResponse(url=f"/city/{city_id}?msg=Members+only", status_code=303)
+    
+    city = get_city_by_id(city_id)
+    if not city:
+        return RedirectResponse(url="/cities?msg=City+not+found", status_code=303)
+    
+    db = get_db()
+    
+    # Get applicant info
+    applicant = db.query(Player).filter(Player.id == applicant_id).first()
+    if not applicant:
+        db.close()
+        return RedirectResponse(url=f"/city/{city_id}?msg=Applicant+not+found", status_code=303)
+    
+    # Get pending application
+    application = db.query(CityApplication).filter(
+        CityApplication.city_id == city_id,
+        CityApplication.applicant_id == applicant_id,
+        CityApplication.status == "pending"
+    ).first()
+    
+    if not application:
+        db.close()
+        return RedirectResponse(url=f"/city/{city_id}?msg=No+pending+application", status_code=303)
+    
+    # Calculate total value
+    total_value = get_player_total_value(applicant_id)
+    
+    # Get businesses
+    businesses = db.query(Business).filter(Business.owner_id == applicant_id).all()
+    businesses_html = ""
+    if businesses:
+        businesses_html = "<table class='table'><thead><tr><th>Type</th><th>Status</th><th>Location</th></tr></thead><tbody>"
+        for biz in businesses:
+            config = BUSINESS_TYPES.get(biz.business_type, {})
+            biz_name = config.get("name", biz.business_type)
+            status = "Active" if biz.is_active else "Paused"
+            location = f"Plot #{biz.land_plot_id}" if biz.land_plot_id else f"District #{biz.district_id}"
+            businesses_html += f"<tr><td>{biz_name}</td><td>{status}</td><td>{location}</td></tr>"
+        businesses_html += "</tbody></table>"
+    else:
+        businesses_html = "<p style='color: #64748b;'>No businesses</p>"
+    
+    # Get land plots
+    plots = db.query(LandPlot).filter(LandPlot.owner_id == applicant_id).all()
+    land_html = ""
+    if plots:
+        land_html = "<table class='table'><thead><tr><th>Plot</th><th>Terrain</th><th>Efficiency</th><th>Status</th></tr></thead><tbody>"
+        for plot in plots:
+            status = "Occupied" if plot.occupied_by_business_id else "Vacant"
+            land_html += f"<tr><td>#{plot.id}</td><td>{plot.terrain_type}</td><td>{plot.efficiency:.0f}%</td><td>{status}</td></tr>"
+        land_html += "</tbody></table>"
+    else:
+        land_html = "<p style='color: #64748b;'>No land plots</p>"
+    
+    # Get districts
+    districts = db.query(District).filter(District.owner_id == applicant_id).all()
+    districts_html = ""
+    if districts:
+        districts_html = "<table class='table'><thead><tr><th>District</th><th>Type</th><th>Size</th><th>Status</th></tr></thead><tbody>"
+        for dist in districts:
+            status = "Occupied" if dist.occupied_by_business_id else "Vacant"
+            districts_html += f"<tr><td>#{dist.id}</td><td>{dist.district_type}</td><td>{dist.size:.0f}</td><td>{status}</td></tr>"
+        districts_html += "</tbody></table>"
+    else:
+        districts_html = "<p style='color: #64748b;'>No districts</p>"
+    
+    # Get inventory summary (top 10 by value)
+    player_inv = inventory.get_player_inventory(applicant_id)
+    inv_items = []
+    for item_type, qty in player_inv.items():
+        if qty > 0:
+            price = market.get_market_price(item_type) or 1.0
+            value = qty * price
+            inv_items.append((item_type, qty, price, value))
+    inv_items.sort(key=lambda x: x[3], reverse=True)
+    
+    inventory_html = ""
+    if inv_items:
+        inventory_html = "<table class='table'><thead><tr><th>Item</th><th>Quantity</th><th>Market Price</th><th>Value</th></tr></thead><tbody>"
+        for item_type, qty, price, value in inv_items[:15]:
+            inventory_html += f"<tr><td>{item_type}</td><td>{qty:,.2f}</td><td>${price:,.2f}</td><td>${value:,.2f}</td></tr>"
+        if len(inv_items) > 15:
+            inventory_html += f"<tr><td colspan='4' style='color:#64748b;'>...and {len(inv_items) - 15} more items</td></tr>"
+        inventory_html += "</tbody></table>"
+    else:
+        inventory_html = "<p style='color: #64748b;'>No inventory</p>"
+    
+    # Get recent trades (last 20)
+    recent_trades = db.query(Trade).filter(
+        (Trade.buyer_id == applicant_id) | (Trade.seller_id == applicant_id)
+    ).order_by(Trade.executed_at.desc()).limit(20).all()
+    
+    trades_html = ""
+    if recent_trades:
+        trades_html = "<table class='table'><thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>"
+        for trade in recent_trades:
+            trade_type = "BUY" if trade.buyer_id == applicant_id else "SELL"
+            type_color = "#4ade80" if trade_type == "SELL" else "#f87171"
+            date_str = trade.executed_at.strftime("%m/%d %H:%M") if trade.executed_at else "?"
+            trades_html += f"<tr><td>{date_str}</td><td style='color:{type_color};'>{trade_type}</td><td>{trade.item_type}</td><td>{trade.quantity:,.2f}</td><td>${trade.price:,.2f}</td></tr>"
+        trades_html += "</tbody></table>"
+    else:
+        trades_html = "<p style='color: #64748b;'>No recent trades</p>"
+    
+    db.close()
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Applicant: {applicant.business_name} · SymCo</title>
+        {CITY_STYLES}
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>📋 Applicant Profile</h1>
+                <div>
+                    <a href="/city/{city_id}" class="nav-link">← Back to City</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>{applicant.business_name}</h2>
+                <div class="grid grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+                    <div>
+                        <div class="stat">
+                            <span class="stat-label">Player ID</span>
+                            <span class="stat-value">#{applicant_id}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Cash Balance</span>
+                            <span class="stat-value positive">${applicant.cash_balance:,.2f}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Total Value</span>
+                            <span class="stat-value">${total_value:,.2f}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="stat">
+                            <span class="stat-label">Application Fee</span>
+                            <span class="stat-value">${application.calculated_fee:,.2f}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Businesses</span>
+                            <span class="stat-value">{len(businesses)}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Land Plots</span>
+                            <span class="stat-value">{len(plots)}</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Districts</span>
+                            <span class="stat-value">{len(districts)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🏭 Businesses ({len(businesses)})</h2>
+                {businesses_html}
+            </div>
+            
+            <div class="card">
+                <h2>📦 Inventory (Top 15 by Value)</h2>
+                {inventory_html}
+            </div>
+            
+            <div class="card">
+                <h2>🏞️ Land Plots ({len(plots)})</h2>
+                {land_html}
+            </div>
+            
+            <div class="card">
+                <h2>🏛️ Districts ({len(districts)})</h2>
+                {districts_html}
+            </div>
+            
+            <div class="card">
+                <h2>📈 Recent Trades</h2>
+                {trades_html}
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="/city/{city_id}" class="btn btn-primary">← Back to City</a>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+
+# ==========================
 # VIEW CITY DETAIL
 # ==========================
 @router.get("/city/{city_id}", response_class=HTMLResponse)
@@ -498,10 +716,15 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 </div>
                 """
             
+            # Add profile link for application polls
+            profile_link = ""
+            if poll.poll_type == PollType.APPLICATION and poll.target_player_id:
+                profile_link = f'<a href="/city/{city_id}/applicant/{poll.target_player_id}" class="btn btn-secondary btn-sm" style="margin-left: 8px;">📋 View Profile</a>'
+            
             polls_html += f"""
             <div class="poll-card">
                 <div class="poll-header">
-                    <strong>{poll_title}</strong>
+                    <strong>{poll_title}</strong>{profile_link}
                     <span class="badge badge-warning">Closes: {poll.closes_at.strftime('%Y-%m-%d %H:%M')}</span>
                 </div>
                 {vote_buttons}
@@ -646,24 +869,46 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         
         # Exchange currency form
         exchange_form = ""
-        if city.currency_type and currency_qty > 0:
-            exchange_form = f'''
-            <h3 style="margin-top: 20px;">Exchange Currency with Bank</h3>
-            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 8px;">
-                Sell your {city.currency_type} to the bank at market price. Bank will list it at 3% discount.
-            </p>
-            <form action="/api/city/exchange-currency" method="post" style="display: flex; gap: 8px; align-items: end;">
-                <div class="form-group" style="margin-bottom: 0; flex: 1;">
-                    <label>Quantity (you have {currency_qty:,.2f})</label>
-                    <input type="number" name="quantity" min="0.01" max="{currency_qty}" step="0.01" required>
+        if city.currency_type:
+            currency_price = market.get_market_price(city.currency_type) or 0
+            price_display = f"${currency_price:,.2f}" if currency_price else "No market price"
+            
+            sell_form = ""
+            if currency_qty > 0:
+                sell_form = f'''
+                <div style="background: #0b1220; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                    <strong>Sell to Bank</strong>
+                    <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 8px 0;">
+                        Bank pays market price. You have {currency_qty:,.2f} {city.currency_type}.
+                    </p>
+                    <form action="/api/city/exchange-currency" method="post" style="display: flex; gap: 8px;">
+                        <input type="number" name="quantity" min="0.01" max="{currency_qty}" step="0.01" 
+                               placeholder="Quantity" style="flex: 1; padding: 8px;" required>
+                        <button type="submit" class="btn btn-primary">Sell</button>
+                    </form>
                 </div>
-                <button type="submit" class="btn btn-primary">Sell to Bank</button>
-            </form>
-            '''
-        elif city.currency_type:
+                '''
+            
             exchange_form = f'''
-            <h3 style="margin-top: 20px;">Exchange Currency with Bank</h3>
-            <p style="color: #64748b;">You don't have any {city.currency_type} to exchange.</p>
+            <h3 style="margin-top: 20px;">💱 Currency Exchange</h3>
+            <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
+                City Currency: <strong>{city.currency_type}</strong> | Market Price: <strong>{price_display}</strong>
+            </p>
+            
+            {sell_form}
+            
+            <div style="background: #0b1220; padding: 12px; border-radius: 8px;">
+                <strong>Buy from Market</strong>
+                <p style="color: #94a3b8; font-size: 12px; margin: 4px 0 8px 0;">
+                    Purchase {city.currency_type} on the open market to meet reserve requirements.
+                </p>
+                <a href="/market?item={city.currency_type}" class="btn btn-secondary">Go to Market →</a>
+            </div>
+            '''
+        else:
+            exchange_form = '''
+            <h3 style="margin-top: 20px;">💱 Currency Exchange</h3>
+            <p style="color: #64748b;">No city currency has been set yet. The Mayor must initiate a currency vote.</p>
             '''
         
         banking_section = f'''
@@ -730,15 +975,6 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 </div>
                 """
         
-        # Build currency options from item types
-        from inventory import ITEM_RECIPES
-        currency_options = ""
-        for item_type in sorted(ITEM_RECIPES.keys()):
-            item_info = ITEM_RECIPES[item_type]
-            item_name = item_info.get("name", item_type)
-            selected = "selected" if city.currency_type == item_type else ""
-            currency_options += f'<option value="{item_type}" {selected}>{item_name}</option>'
-        
         mayor_controls = f"""
         <div class="card">
             <h2>👑 Mayor Controls</h2>
@@ -766,10 +1002,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <form action="/api/city/currency-vote" method="post">
                         <div class="form-group">
                             <label>New Currency (Item Type)</label>
-                            <select name="currency" required>
-                                <option value="">-- Select Currency --</option>
-                                {currency_options}
-                            </select>
+                            <input type="text" name="currency" placeholder="e.g., gold, silver, oil" required>
                         </div>
                         <div class="form-group">
                             <label>Poll Tax (max ${bank.cash_reserves * 0.035:,.2f})</label>

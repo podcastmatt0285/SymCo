@@ -513,7 +513,7 @@ def businesses(session_token: Optional[str] = Cookie(None)):
             land_db.close()
             return shell("Businesses", "<h3>No businesses found.</h3><a href='/land' class='btn-blue'>Go to Land</a>", player.cash_balance, player.id)
 
-        biz_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1>'
+        biz_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1><a href="/stats/production-costs" class="btn-blue">📊 Production Costs</a>'
         for biz in player_businesses:
             config = BUSINESS_TYPES.get(biz.business_type)
             if not config:
@@ -4111,6 +4111,460 @@ def liens_page(session_token: Optional[str] = Cookie(None)):
     """
     
     return shell("Liens", lien_html, player.cash_balance, player.id)
+
+"""
+PRODUCTION COSTS UX ROUTES
+Add these routes to ux.py
+
+Copy everything below into your ux.py file.
+"""
+
+# ==========================
+# PRODUCTION COSTS PAGES
+# ==========================
+
+@router.get("/stats/production-costs", response_class=HTMLResponse)
+def production_costs_page(
+    session_token: Optional[str] = Cookie(None),
+    category: str = "all",
+    sort: str = "cost",
+    order: str = "asc",
+    search: str = ""
+):
+    """Interactive production cost explorer."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    
+    try:
+        from production_costs import get_calculator
+        
+        calc = get_calculator()
+        summary = calc.get_summary()
+        categories = calc.get_categories()
+        
+        # Get items based on filters
+        if search:
+            items = calc.search_items(search)
+        elif category != "all":
+            by_cat = calc.get_by_category()
+            items = by_cat.get(category, [])
+        else:
+            items = calc.get_all_items_sorted(sort_by=sort, ascending=(order == "asc"))
+        
+        # Category filter tabs
+        cat_colors = {
+            "seeds": "#22c55e", "fruits": "#84cc16", "vegetables": "#16a34a",
+            "crops": "#eab308", "food": "#f97316", "prepared_food": "#fb923c",
+            "beverage": "#06b6d4", "alcohol": "#a855f7", "ingredients": "#ec4899",
+            "livestock": "#92400e", "feed": "#a3e635", "health": "#ef4444",
+            "personal_care": "#f472b6", "industrial": "#64748b", "materials": "#78716c",
+            "textiles": "#c084fc", "wood": "#a16207", "ore": "#71717a",
+            "metals": "#94a3b8", "components": "#6366f1", "auto_parts": "#3b82f6",
+            "marine_parts": "#0ea5e9", "vehicle": "#2563eb", "apparel": "#d946ef",
+            "accessories": "#e879f9", "home_goods": "#14b8a6", "packaging": "#737373",
+            "media": "#facc15", "liquids": "#38bdf8", "energy": "#f59e0b",
+            "financial": "#10b981", "luxury": "#d4af37", "minerals": "#a8a29e",
+            "utilities": "#0891b2", "fuel": "#dc2626", "unknown": "#64748b"
+        }
+        
+        # Build category tabs
+        cat_tabs = f'''
+        <a href="/stats/production-costs?category=all&sort={sort}&order={order}" 
+           style="padding: 6px 12px; margin-right: 8px; border-radius: 4px; text-decoration: none;
+                  background: {'#38bdf8' if category == 'all' else '#1e293b'}; 
+                  color: {'#020617' if category == 'all' else '#94a3b8'};">
+            All ({summary['total_items']})
+        </a>'''
+        
+        for cat in categories:
+            cat_count = len(calc.get_by_category().get(cat, []))
+            color = cat_colors.get(cat, "#64748b")
+            is_selected = category == cat
+            cat_tabs += f'''
+            <a href="/stats/production-costs?category={cat}&sort={sort}&order={order}" 
+               style="padding: 6px 12px; margin-right: 8px; margin-bottom: 8px; border-radius: 4px; 
+                      text-decoration: none; display: inline-block;
+                      background: {color if is_selected else '#1e293b'}; 
+                      color: {'#020617' if is_selected else color};">
+                {cat.replace('_', ' ').title()} ({cat_count})
+            </a>'''
+        
+        # Build items table
+        items_html = ""
+        if items:
+            # Sort controls
+            sort_indicator = "▲" if order == "asc" else "▼"
+            next_order = "desc" if order == "asc" else "asc"
+            
+            items_html = f'''
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #1e293b; text-align: left;">
+                        <th style="padding: 12px 8px;">
+                            <a href="/stats/production-costs?category={category}&sort=name&order={next_order if sort == 'name' else 'asc'}&search={search}" 
+                               style="color: #94a3b8; text-decoration: none;">
+                                Item {'↕' if sort != 'name' else sort_indicator}
+                            </a>
+                        </th>
+                        <th style="padding: 12px 8px;">Category</th>
+                        <th style="padding: 12px 8px; text-align: right;">
+                            <a href="/stats/production-costs?category={category}&sort=cost&order={next_order if sort == 'cost' else 'asc'}&search={search}" 
+                               style="color: #94a3b8; text-decoration: none;">
+                                Cost {'↕' if sort != 'cost' else sort_indicator}
+                            </a>
+                        </th>
+                        <th style="padding: 12px 8px;">Producer</th>
+                        <th style="padding: 12px 8px; text-align: center;">Details</th>
+                    </tr>
+                </thead>
+                <tbody>'''
+            
+            for item in items:
+                cat_color = cat_colors.get(item.get('category', 'unknown'), '#64748b')
+                cost_color = "#22c55e" if item['cost'] < 1 else "#38bdf8" if item['cost'] < 100 else "#f59e0b" if item['cost'] < 1000 else "#ef4444"
+                
+                items_html += f'''
+                <tr style="border-bottom: 1px solid #1e293b; cursor: pointer;" 
+                    onclick="window.location='/stats/production-costs/{item['item_key']}'">
+                    <td style="padding: 12px 8px;">
+                        <strong>{item['name']}</strong><br>
+                        <span style="color: #64748b; font-size: 0.8rem;">{item['item_key']}</span>
+                    </td>
+                    <td style="padding: 12px 8px;">
+                        <span style="padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;
+                                     background: {cat_color}20; color: {cat_color};">
+                            {item.get('category', 'unknown').replace('_', ' ').upper()}
+                        </span>
+                    </td>
+                    <td style="padding: 12px 8px; text-align: right; font-family: monospace; color: {cost_color};">
+                        ${item['cost']:,.4f}
+                    </td>
+                    <td style="padding: 12px 8px; color: #64748b; font-size: 0.85rem;">
+                        {item.get('business', '-') or '<span style="color: #ef4444;">No recipe</span>'}
+                    </td>
+                    <td style="padding: 12px 8px; text-align: center;">
+                        <a href="/stats/production-costs/{item['item_key']}" class="btn-blue" 
+                           style="padding: 4px 12px; font-size: 0.8rem;">View</a>
+                    </td>
+                </tr>'''
+            
+            items_html += '</tbody></table>'
+        else:
+            items_html = '<p style="color: #64748b; text-align: center; padding: 40px;">No items found.</p>'
+        
+        body = f'''
+        <a href="/stats" style="color: #38bdf8;">← Stats Dashboard</a>
+        <h1>📊 Production Cost Explorer</h1>
+        <p style="color: #64748b;">Base production costs assuming full vertical integration (you produce all inputs yourself).</p>
+        
+        <!-- Summary Cards -->
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin: 20px 0;">
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 0.8rem; color: #64748b;">TOTAL ITEMS</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">{summary['total_items']}</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 0.8rem; color: #64748b;">CHEAPEST</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #22c55e;">${summary['min_cost']:.4f}</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 0.8rem; color: #64748b;">MEDIAN</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;">${summary['median_cost']:.2f}</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 0.8rem; color: #64748b;">MOST EXPENSIVE</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #ef4444;">${summary['max_cost']:,.0f}</div>
+            </div>
+            <div class="card" style="text-align: center; padding: 15px;">
+                <div style="font-size: 0.8rem; color: #64748b;">MISSING RECIPES</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #64748b;">{len(summary['missing_items'])}</div>
+            </div>
+        </div>
+        
+        <!-- Search -->
+        <div class="card">
+            <form action="/stats/production-costs" method="get" style="display: flex; gap: 10px;">
+                <input type="hidden" name="category" value="{category}">
+                <input type="hidden" name="sort" value="{sort}">
+                <input type="hidden" name="order" value="{order}">
+                <input type="text" name="search" value="{search}" placeholder="🔍 Search items..." 
+                       style="flex: 1; padding: 12px; font-size: 1rem;">
+                <button type="submit" class="btn-blue" style="padding: 12px 24px;">Search</button>
+                {f'<a href="/stats/production-costs?category={category}&sort={sort}&order={order}" class="btn-orange" style="padding: 12px 24px;">Clear</a>' if search else ''}
+            </form>
+        </div>
+        
+        <!-- Category Filters -->
+        <div class="card" style="margin-top: 15px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                {cat_tabs}
+            </div>
+        </div>
+        
+        <!-- Items Table -->
+        <div class="card" style="margin-top: 15px; overflow-x: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">
+                    {f'Search results for "{search}"' if search else f'{category.replace("_", " ").title()} Items' if category != 'all' else 'All Items'}
+                    <span style="color: #64748b; font-weight: normal;">({len(items)} items)</span>
+                </h3>
+            </div>
+            {items_html}
+        </div>
+        '''
+        
+        return shell("Production Costs", body, player.cash_balance, player.id)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return shell("Production Costs", f"Error: {e}", player.cash_balance, player.id)
+
+
+@router.get("/stats/production-costs/{item_key}", response_class=HTMLResponse)
+def production_cost_detail_page(
+    item_key: str,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Detailed cost breakdown for a specific item."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    
+    try:
+        from production_costs import get_calculator
+        
+        calc = get_calculator()
+        breakdown = calc.get_cost_breakdown(item_key)
+        
+        if not breakdown:
+            return shell("Not Found", f"<p>Item '{item_key}' not found.</p>", player.cash_balance, player.id)
+        
+        # Build inputs breakdown
+        inputs_html = ""
+        if breakdown['has_recipe'] and breakdown['inputs']:
+            inputs_html = '''
+            <div class="card">
+                <h3>Input Costs Breakdown</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #1e293b;">
+                            <th style="padding: 10px 8px; text-align: left;">Input</th>
+                            <th style="padding: 10px 8px; text-align: right;">Quantity</th>
+                            <th style="padding: 10px 8px; text-align: right;">Unit Cost</th>
+                            <th style="padding: 10px 8px; text-align: right;">Total Cost</th>
+                            <th style="padding: 10px 8px; text-align: right;">% of Batch</th>
+                        </tr>
+                    </thead>
+                    <tbody>'''
+            
+            for inp in breakdown['inputs']:
+                pct = (inp['total_cost'] / breakdown['batch_cost'] * 100) if breakdown['batch_cost'] > 0 else 0
+                bar_width = min(pct, 100)
+                
+                inputs_html += f'''
+                <tr style="border-bottom: 1px solid #1e293b;">
+                    <td style="padding: 10px 8px;">
+                        <a href="/stats/production-costs/{inp['item_key']}" style="color: #38bdf8;">
+                            {inp['name']}
+                        </a>
+                    </td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace;">{inp['quantity']:,.2f}</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace;">${inp['unit_cost']:,.4f}</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color: #f59e0b;">${inp['total_cost']:,.4f}</td>
+                    <td style="padding: 10px 8px; text-align: right;">
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                            <div style="width: 80px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
+                                <div style="width: {bar_width}%; height: 100%; background: #38bdf8;"></div>
+                            </div>
+                            <span style="font-size: 0.85rem; color: #94a3b8;">{pct:.1f}%</span>
+                        </div>
+                    </td>
+                </tr>'''
+            
+            # Add wage row
+            wage_pct = breakdown['wage_pct']
+            inputs_html += f'''
+                <tr style="border-bottom: 1px solid #1e293b; background: #0f172a;">
+                    <td style="padding: 10px 8px;"><strong>Labor (Wages)</strong></td>
+                    <td style="padding: 10px 8px; text-align: right;">-</td>
+                    <td style="padding: 10px 8px; text-align: right;">-</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color: #22c55e;">${breakdown['wage']:,.2f}</td>
+                    <td style="padding: 10px 8px; text-align: right;">
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                            <div style="width: 80px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
+                                <div style="width: {min(wage_pct, 100)}%; height: 100%; background: #22c55e;"></div>
+                            </div>
+                            <span style="font-size: 0.85rem; color: #94a3b8;">{wage_pct:.1f}%</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr style="background: #1e293b;">
+                    <td style="padding: 10px 8px;" colspan="3"><strong>BATCH TOTAL</strong></td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-size: 1.1rem; color: #38bdf8;">
+                        ${breakdown['batch_cost']:,.4f}
+                    </td>
+                    <td style="padding: 10px 8px; text-align: right; color: #64748b;">
+                        ÷ {breakdown['output_qty']} = ${breakdown['cost']:,.4f}/unit
+                    </td>
+                </tr>
+            </tbody></table>
+            </div>'''
+        elif not breakdown['has_recipe']:
+            inputs_html = '''
+            <div class="card" style="border-left: 4px solid #ef4444;">
+                <h3 style="color: #ef4444;">⚠️ No Production Recipe</h3>
+                <p style="color: #94a3b8;">This item cannot be produced. It may be a raw material that needs to be obtained through other means (mining, harvesting, etc.) or the recipe is missing from the configuration.</p>
+            </div>'''
+        
+        # Find items that use this as an input
+        used_by = []
+        all_items = calc.get_all_items_sorted()
+        for item in all_items:
+            item_breakdown = calc.get_cost_breakdown(item['item_key'])
+            if item_breakdown['has_recipe']:
+                for inp in item_breakdown.get('inputs', []):
+                    if inp['item_key'] == item_key:
+                        used_by.append({
+                            'item_key': item['item_key'],
+                            'name': item['name'],
+                            'cost': item['cost'],
+                            'quantity_needed': inp['quantity']
+                        })
+                        break
+        
+        used_by_html = ""
+        if used_by:
+            used_by.sort(key=lambda x: x['cost'], reverse=True)
+            used_by_html = '''
+            <div class="card" style="margin-top: 15px;">
+                <h3>Used In Production Of</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">'''
+            
+            for item in used_by[:20]:
+                used_by_html += f'''
+                <a href="/stats/production-costs/{item['item_key']}" 
+                   style="padding: 8px 12px; background: #1e293b; border-radius: 4px; text-decoration: none; color: #94a3b8;">
+                    <strong style="color: #38bdf8;">{item['name']}</strong><br>
+                    <span style="font-size: 0.8rem;">needs {item['quantity_needed']:,.1f}</span>
+                </a>'''
+            
+            if len(used_by) > 20:
+                used_by_html += f'<span style="padding: 8px 12px; color: #64748b;">+{len(used_by)-20} more...</span>'
+            
+            used_by_html += '</div></div>'
+        
+        body = f'''
+        <a href="/stats/production-costs" style="color: #38bdf8;">← Production Costs</a>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px;">
+            <div>
+                <h1 style="margin: 0;">{breakdown['name']}</h1>
+                <p style="color: #64748b; margin: 5px 0;">
+                    {item_key} · {breakdown.get('category', 'unknown').replace('_', ' ').title()}
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 3rem; font-weight: bold; color: #38bdf8;">
+                    ${breakdown['cost']:,.4f}
+                </div>
+                <div style="color: #64748b;">per unit (vertical integration)</div>
+            </div>
+        </div>
+        
+        <!-- Production Info -->
+        {f'''
+        <div class="card" style="margin-top: 20px;">
+            <h3>Production Method</h3>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748b;">Producer</div>
+                    <div style="font-size: 1.2rem;">{breakdown['business_name']}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748b;">Output per Batch</div>
+                    <div style="font-size: 1.2rem;">{breakdown['output_qty']:,} units</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748b;">Batch Cost</div>
+                    <div style="font-size: 1.2rem; color: #f59e0b;">${breakdown['batch_cost']:,.4f}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: #64748b;">Wages</div>
+                    <div style="font-size: 1.2rem; color: #22c55e;">${breakdown['wage']:,.2f}</div>
+                </div>
+            </div>
+        </div>
+        ''' if breakdown['has_recipe'] else ''}
+        
+        {inputs_html}
+        
+        {used_by_html}
+        '''
+        
+        return shell(f"Cost: {breakdown['name']}", body, player.cash_balance, player.id)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return shell("Production Costs", f"Error: {e}", player.cash_balance, player.id)
+
+
+# ==========================
+# JSON API ENDPOINT
+# ==========================
+
+@router.get("/api/production-costs")
+async def api_production_costs(
+    category: str = None,
+    search: str = None,
+    session_token: Optional[str] = Cookie(None)
+):
+    """JSON API for production costs."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return {"error": "Unauthorized"}
+    
+    try:
+        from production_costs import get_calculator
+        
+        calc = get_calculator()
+        
+        if search:
+            items = calc.search_items(search)
+        elif category:
+            by_cat = calc.get_by_category()
+            items = by_cat.get(category, [])
+        else:
+            items = calc.get_all_items_sorted()
+        
+        return {
+            "summary": calc.get_summary(),
+            "items": items,
+            "categories": calc.get_categories()
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/api/production-costs/{item_key}")
+async def api_production_cost_detail(
+    item_key: str,
+    session_token: Optional[str] = Cookie(None)
+):
+    """JSON API for single item cost breakdown."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return {"error": "Unauthorized"}
+    
+    try:
+        from production_costs import get_calculator
+        
+        calc = get_calculator()
+        return calc.get_cost_breakdown(item_key)
+    except Exception as e:
+        return {"error": str(e)}
 
 # ==========================
 # API ENDPOINTS

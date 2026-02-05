@@ -673,6 +673,57 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
     <script>
         function money(v) {{ return '$' + v.toFixed(2).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ','); }}
         function num(v) {{ return v.toString().replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ','); }}
+        
+        function filterTx(type) {{
+            const items = document.querySelectorAll('.transaction-item');
+            const tabs = document.querySelectorAll('#transactions').length ? 
+                document.querySelectorAll('.filter-tabs .filter-tab') : [];
+            
+            // Update active tab
+            tabs.forEach(tab => {{
+                tab.classList.remove('active');
+                if (tab.textContent.toLowerCase().replace(/\\s+/g, '') === type || 
+                    (type === 'all' && tab.textContent === 'All')) {{
+                    tab.classList.add('active');
+                }}
+            }});
+            if (event && event.target) event.target.classList.add('active');
+            
+            items.forEach(item => {{
+                const badge = item.querySelector('.badge');
+                const txType = badge ? badge.textContent.toLowerCase() : '';
+                const desc = item.querySelector('.transaction-desc');
+                const descText = desc ? desc.textContent.toLowerCase() : '';
+                
+                let show = false;
+                
+                if (type === 'all') {{
+                    show = true;
+                }} else if (type === 'market') {{
+                    show = txType.includes('market') || txType.includes('cash_in') || txType.includes('cash_out');
+                }} else if (type === 'production') {{
+                    show = txType.includes('production');
+                }} else if (type === 'retail') {{
+                    show = txType.includes('retail') || txType.includes('sale');
+                }} else if (type === 'banking') {{
+                    show = txType.includes('banking') || txType.includes('dividend') || 
+                           txType.includes('interest') || txType.includes('loan') ||
+                           descText.includes('bank') || descText.includes('dividend');
+                }} else if (type === 'district') {{
+                    show = txType.includes('district') || txType.includes('merge') ||
+                           descText.includes('district');
+                }} else if (type === 'city') {{
+                    show = txType.includes('city') || txType.includes('subsidy') || 
+                           txType.includes('poll') || descText.includes('city');
+                }} else if (type === 'tax') {{
+                    show = txType.includes('tax') || descText.includes('tax');
+                }} else {{
+                    show = txType.includes(type) || descText.includes(type);
+                }}
+                
+                item.style.display = show ? 'grid' : 'none';
+            }});
+        }}
     </script>
 </body>
 </html>
@@ -1055,7 +1106,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     # Get recent transactions
     txs = db.query(TransactionLog).filter(
         TransactionLog.player_id == player.id
-    ).order_by(desc(TransactionLog.timestamp)).limit(20).all()
+    ).order_by(desc(TransactionLog.timestamp)).limit(200).all()
     
     # Get cost averages
     averages = db.query(PlayerCostAverage).filter(
@@ -1124,12 +1175,15 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
                 <span class="card-title">Recent Transactions</span>
                 <span class="card-icon">📝</span>
             </div>
-            <div class="filter-tabs" style="margin-top: 12px;">
+            <div class="filter-tabs" style="margin-top: 12px; flex-wrap: wrap;">
                 <button class="filter-tab active" onclick="filterTx('all')">All</button>
                 <button class="filter-tab" onclick="filterTx('market')">Market</button>
                 <button class="filter-tab" onclick="filterTx('production')">Production</button>
                 <button class="filter-tab" onclick="filterTx('retail')">Retail</button>
                 <button class="filter-tab" onclick="filterTx('banking')">Banking</button>
+                <button class="filter-tab" onclick="filterTx('district')">District</button>
+                <button class="filter-tab" onclick="filterTx('city')">City</button>
+                <button class="filter-tab" onclick="filterTx('tax')">Tax</button>
             </div>
             <div id="transactions">
                 {tx_html if tx_html else '<div style="padding: 20px; text-align: center; color: #64748b;">No transactions yet</div>'}

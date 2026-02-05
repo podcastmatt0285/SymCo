@@ -325,6 +325,14 @@
           { "item": "water", "quantity": 5 },
           { "item": "paper", "quantity": 1 }
         ]
+      },
+      {
+        "output_item": "lettuce",
+        "output_qty": 9,
+        "inputs": [
+          { "item": "water", "quantity": 9.5 },
+          { "item": "paper", "quantity": 1 }
+        ]
       }
     ]
   },
