@@ -525,31 +525,28 @@ def collect_district_taxes(current_month: int):
     """
     Collect monthly taxes from all districts.
     Districts pay heavy taxes to government (player ID 0).
+    Uses a join to avoid N+1 queries (one query per district owner).
     """
     from auth import Player
-    
+
     db = get_db()
-    
-    districts = db.query(District).all()
+
+    # Single query: join districts with their owners to avoid N+1
+    district_owner_pairs = db.query(District, Player).join(
+        Player, District.owner_id == Player.id
+    ).all()
+
     government = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-    
+
     total_tax_collected = 0.0
-    
-    for district in districts:
-        # Get owner
-        owner = db.query(Player).filter(Player.id == district.owner_id).first()
-        
-        if not owner:
-            continue
-        
-        # Check if owner can pay
+
+    for district, owner in district_owner_pairs:
         if owner.cash_balance >= district.monthly_tax:
             owner.cash_balance -= district.monthly_tax
             if government:
                 government.cash_balance += district.monthly_tax
             total_tax_collected += district.monthly_tax
             district.last_tax_payment = datetime.utcnow()
-            # Log the tax transaction
             log_transaction(
                 owner.id,
                 "district_tax",
@@ -561,11 +558,10 @@ def collect_district_taxes(current_month: int):
             print(f"[Districts] Player {owner.id} paid ${district.monthly_tax:,.2f} tax for district {district.id}")
         else:
             print(f"[Districts] WARNING: Player {owner.id} cannot afford tax for district {district.id}")
-            # TODO: Implement foreclosure/seizure
-    
+
     db.commit()
     db.close()
-    
+
     print(f"[Districts] Monthly district tax collection: ${total_tax_collected:,.2f}")
 
 

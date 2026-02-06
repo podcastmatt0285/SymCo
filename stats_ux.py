@@ -220,12 +220,16 @@ def calculate_player_stats(player_id: int) -> dict:
             "districts_owned": 0
         }
 
-        # Land value
+        # Land value - use SQL aggregation instead of loading all plots
         try:
             from land import LandPlot
-            lands = db.query(LandPlot).filter(LandPlot.owner_id == player_id).all()
-            stats["lands_owned"] = len(lands)
-            stats["land_value"] = sum(plot.monthly_tax * 12 for plot in lands)
+            from sqlalchemy import func as sqlfunc
+            land_agg = db.query(
+                sqlfunc.count(LandPlot.id),
+                sqlfunc.coalesce(sqlfunc.sum(LandPlot.monthly_tax * 12), 0.0)
+            ).filter(LandPlot.owner_id == player_id).first()
+            stats["lands_owned"] = land_agg[0] or 0
+            stats["land_value"] = land_agg[1] or 0.0
         except:
             pass
 

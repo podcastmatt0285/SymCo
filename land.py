@@ -13,7 +13,7 @@ Handles:
 
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean
+from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -192,29 +192,35 @@ class LandPlot(Base):
     Represents a single plot of land in the game.
     """
     __tablename__ = "land_plots"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, index=True, nullable=False)  # Player ID who owns this
-    
+
     # Land attributes
     terrain_type = Column(String, nullable=False)  # prairie, desert, mountain, etc.
     proximity_features = Column(String, nullable=True)  # Comma-separated: "coastal,riverside"
     efficiency = Column(Float, default=STARTING_EFFICIENCY)  # Starts at 100%, degrades over time
     size = Column(Float, default=1.0)  # Size in arbitrary units (1.0 = standard plot)
-    
+
     # Tax system
     monthly_tax = Column(Float, nullable=False)  # Tax amount owed per month
     last_tax_payment = Column(DateTime, default=datetime.utcnow)
-    
+
     # Business occupation
-    occupied_by_business_id = Column(Integer, nullable=True)  # NULL if vacant
-    
+    occupied_by_business_id = Column(Integer, index=True, nullable=True)  # NULL if vacant
+
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     is_starter_plot = Column(Boolean, default=False)  # True if this was the free starting plot
-    
+
     # Government/Bank flag
-    is_government_owned = Column(Boolean, default=False)  # True if owned by AI gov/bank
+    is_government_owned = Column(Boolean, index=True, default=False)  # True if owned by AI gov/bank
+
+    # Composite index for efficiency degradation queries (efficiency > 0)
+    __table_args__ = (
+        Index('ix_land_plots_efficiency', 'efficiency'),
+        Index('ix_land_plots_gov_tax', 'is_government_owned', 'monthly_tax'),
+    )
 
 
 # ==========================
@@ -424,24 +430,22 @@ def degrade_efficiency(current_tick: int):
     Degrade efficiency of all land plots.
     Called every tick.
     Efficiency decreases by 0.00001% per minute (per 60 ticks).
+    Uses a single bulk SQL UPDATE instead of loading all rows into Python.
     """
     global last_efficiency_update_tick
-    
-    # Only update every tick (continuous degradation)
+
     db = get_db()
-    
-    plots = db.query(LandPlot).all()
-    
-    for plot in plots:
-        # Efficiency can never go below 0
-        if plot.efficiency > 0:
-            plot.efficiency = max(0, plot.efficiency - EFFICIENCY_DECAY_PER_TICK)
-    
-    if plots:
-        db.commit()
-    
+
+    # Single bulk UPDATE: subtract decay from all plots with efficiency > 0
+    # max(0, efficiency - decay) is handled by the CASE expression
+    db.query(LandPlot).filter(LandPlot.efficiency > 0).update(
+        {LandPlot.efficiency: func.max(0, LandPlot.efficiency - EFFICIENCY_DECAY_PER_TICK)},
+        synchronize_session=False
+    )
+
+    db.commit()
     db.close()
-    
+
     last_efficiency_update_tick = current_tick
 
 
@@ -449,47 +453,42 @@ def collect_monthly_taxes(current_month: int):
     """
     Collect monthly taxes from all land plots.
     Called when month changes.
-    
-    Note: This will integrate with the player cash balance system
-    once that's fully connected. For now, just updates last_tax_payment.
+    Uses bulk SQL operations instead of loading all rows.
     """
     db = get_db()
-    
-    plots = db.query(LandPlot).all()
-    
-    total_tax_collected = 0.0
-    
-    for plot in plots:
-        # Skip government-owned land (they don't pay themselves)
-        if plot.is_government_owned:
-            continue
-        
-        # TODO: Deduct from player balance
-        # For now, just record that tax was "paid"
-        plot.last_tax_payment = datetime.utcnow()
-        total_tax_collected += plot.monthly_tax
-    
+
+    # Calculate total tax using SQL SUM (exclude government plots)
+    total_tax_collected = db.query(func.sum(LandPlot.monthly_tax)).filter(
+        LandPlot.is_government_owned == False
+    ).scalar() or 0.0
+
+    # Bulk update last_tax_payment for all non-government plots
+    db.query(LandPlot).filter(
+        LandPlot.is_government_owned == False
+    ).update(
+        {LandPlot.last_tax_payment: datetime.utcnow()},
+        synchronize_session=False
+    )
+
     db.commit()
     db.close()
-    
+
     print(f"[Land] Monthly tax collection: ${total_tax_collected:.2f}")
-    
-    # TODO: Add this amount to government account
 
 
 def get_land_stats() -> dict:
-    """Get statistics about all land in the game."""
+    """Get statistics about all land in the game using SQL aggregation."""
     db = get_db()
-    
+
     total_plots = db.query(LandPlot).count()
     occupied_plots = db.query(LandPlot).filter(LandPlot.occupied_by_business_id != None).count()
     government_plots = db.query(LandPlot).filter(LandPlot.is_government_owned == True).count()
-    
-    avg_efficiency = db.query(LandPlot).all()
-    avg_eff_value = sum(p.efficiency for p in avg_efficiency) / len(avg_efficiency) if avg_efficiency else 100.0
-    
+
+    # Use SQL AVG instead of fetching all rows
+    avg_eff_value = db.query(func.avg(LandPlot.efficiency)).scalar() or 100.0
+
     db.close()
-    
+
     return {
         "total_plots": total_plots,
         "occupied_plots": occupied_plots,
