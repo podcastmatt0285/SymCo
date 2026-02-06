@@ -52,12 +52,50 @@
     ]
   },
 
+  "pet_store": {
+    "name": "Pet Store",
+    "description": "Retail shop selling companion birds and aquarium fish.",
+    "startup_cost": 4500,
+    "cycles_to_complete": 80,
+    "base_wage_cost": 160.0,
+    "allowed_terrain": [
+      "prairie",
+      "forest",
+      "desert",
+      "marsh",
+      "mountain",
+      "tundra",
+      "jungle",
+      "savanna",
+      "hills",
+      "island",
+      "ocean"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road",
+      "coastal",
+      "oasis",
+      "remote",
+      "riverside",
+      "lakeside",
+      "hot_springs",
+      "volcanic"
+    ],
+    "class": "retail",
+    "products": {
+      "canary": { "elasticity": 0.1, "base_sale_chance": 0.02 },
+      "tropical_fish": { "elasticity": 0.4, "base_sale_chance": 0.035 },
+      "parrot": { "elasticity": 0.6, "base_sale_chance": 0.015 }
+    }
+  },
+
   "dairy_and_fermentation": {
     "name": "Dairy and Fermentation",
     "description": "Fermentation plant and dairy.",
     "startup_cost": 59750,
-    "cycles_to_complete": 6000,
-    "base_wage_cost": 2500,
+    "cycles_to_complete": 600,
+    "base_wage_cost": 350,
     "allowed_terrain": ["prairie", "forest", "desert", "mountain"],
     "allowed_proximity": ["urban", "road"],
     "class": "production",
@@ -85,10 +123,10 @@
         "output_item": "ice_cream",
         "output_qty": 5,
         "inputs": [
-          { "item": "cream", "quantity": 4 },
+          { "item": "cream", "quantity": 2 },
           { "item": "paper", "quantity": 1 },
           { "item": "energy", "quantity": 500 },
-          { "item": "sugar", "quantity": 90 }
+          { "item": "sugar", "quantity": 40 }
         ]
       },
       {
@@ -350,6 +388,7 @@
       "apples": { "elasticity": 1.5, "base_sale_chance": 0.03 },
       "oranges": { "elasticity": 1.1, "base_sale_chance": 0.02 },
       "potatoes": { "elasticity": 1.3, "base_sale_chance": 0.025 },
+      "lettuce": { "elasticity": 0.3, "base_sale_chance": 0.425 },
       "carrots": { "elasticity": 1.4, "base_sale_chance": 0.022 }
     }
   },

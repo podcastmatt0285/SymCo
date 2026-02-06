@@ -2285,6 +2285,18 @@
         ]
       },
       {
+        "output_item": "canary",
+        "output_qty": 450,
+        "inputs": [
+          { "item": "apple_seeds", "quantity": 750 },
+          { "item": "orange_seeds", "quantity": 750 },
+          { "item": "water", "quantity": 50 },
+          { "item": "veterinary_supplies", "quantity": 1 },
+          { "item": "paper", "quantity": 750 },
+          { "item": "energy", "quantity": 18 }
+        ]
+      },
+      {
         "output_item": "eagle",
         "output_qty": 5,
         "inputs": [

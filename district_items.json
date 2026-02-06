@@ -864,6 +864,11 @@
     "description": "Colorful talking bird",
     "category": "animals"
   },
+  "canary": {
+    "name": "Canary",
+    "description": "Cheap family bird that dies quickly",
+    "category": "animals"
+  },
   "flamingo": {
     "name": "Flamingo",
     "description": "Pink wading bird",
