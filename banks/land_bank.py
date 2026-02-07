@@ -172,11 +172,10 @@ def execute_ipo():
             existing = db.query(market.MarketOrder).filter(
                 market.MarketOrder.player_id == BANK_PLAYER_ID,
                 market.MarketOrder.item_type == SHARE_ITEM_TYPE,
-                market.MarketOrder.status == market.OrderStatus.ACTIVE
             ).first()
-            
+
             if existing:
-                print(f"[{BANK_NAME}] IPO already exists (Order #{existing.id})")
+                print(f"[{BANK_NAME}] IPO already executed (Order #{existing.id}, status: {existing.status})")
                 return
         finally:
             db.close()
