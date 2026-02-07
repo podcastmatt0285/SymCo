@@ -497,6 +497,11 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <p>Statistics, Leaderboard and Data</p>
                 <a href="/stats" class="btn-gold">📊 Stats 🪙</a>
             </div>
+            <div class="card">
+                <h3>Estate & Succession</h3>
+                <p>Heirs, account deletion, and deceased registry</p>
+                <a href="/estate" style="display:inline-block;padding:10px 20px;background:#475569;color:#e5e7eb;text-decoration:none;border-radius:6px;font-weight:bold;">Estate</a>
+            </div>
         </div>
         """,
         player.cash_balance,
