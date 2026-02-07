@@ -96,6 +96,8 @@ CREDIT_RATING_MAX = 100
 class IPOType(str, Enum):
     DIRECT_LISTING = "direct_listing"
     FIRM_UNDERWRITTEN = "firm_underwritten"
+    INCOME_SHARES = "income_shares"
+    # Legacy types kept for backward compatibility with existing companies
     PREFERRED_OFFERING = "preferred_offering"
     SERIES_A_GROWTH = "series_a_growth"
     SERIES_B_INCOME = "series_b_income"
@@ -194,7 +196,7 @@ CREDIT_MODIFIERS = {
 IPO_CONFIG = {
     IPOType.DIRECT_LISTING: {
         "name": "Direct Listing",
-        "description": "List shares directly on exchange. Flat $5,000 fee, you sell at market price.",
+        "description": "List your shares on the exchange with no underwriter. You pay a flat $5,000 listing fee and place your own sell orders. The market decides the price \u2014 nobody guarantees your shares will sell.",
         "share_class": ShareClass.COMMON,
         "firm_underwritten": False,
         "fee_type": "flat",
@@ -204,8 +206,8 @@ IPO_CONFIG = {
         "min_valuation": 25000,
     },
     IPOType.FIRM_UNDERWRITTEN: {
-        "name": "Firm Underwritten IPO",
-        "description": "The Firm purchases your shares at 7% discount, guaranteeing immediate capital.",
+        "name": "Underwritten IPO",
+        "description": "The Firm buys your shares upfront at a 7% discount and resells them on the exchange at full price. You get guaranteed capital immediately \u2014 the Firm takes on the risk of finding buyers.",
         "share_class": ShareClass.COMMON,
         "firm_underwritten": True,
         "discount_rate": 0.07,
@@ -213,49 +215,16 @@ IPO_CONFIG = {
         "max_float_pct": 0.60,
         "min_valuation": 50000,
     },
-    IPOType.PREFERRED_OFFERING: {
-        "name": "Preferred Stock Offering",
-        "description": "Issue preferred shares with a guaranteed 8% annual dividend paid quarterly.",
-        "share_class": ShareClass.PREFERRED,
-        "firm_underwritten": True,
-        "discount_rate": 0.05,
-        "min_shares": 5000,
-        "max_float_pct": 0.40,
-        "min_valuation": 75000,
-        "fixed_dividend_rate": 0.08,
-    },
-    IPOType.SERIES_A_GROWTH: {
-        "name": "Series A Growth Shares",
-        "description": "Growth-stage shares sold at a steep 10% discount. Low float limit keeps founder ownership high.",
-        "share_class": ShareClass.SERIES_A,
-        "firm_underwritten": True,
-        "discount_rate": 0.10,
-        "min_shares": 10000,
-        "max_float_pct": 0.30,
-        "min_valuation": 100000,
-    },
-    IPOType.SERIES_B_INCOME: {
-        "name": "Series B Income Shares",
-        "description": "High fixed dividends for income seekers. 12% annual dividend paid quarterly.",
-        "share_class": ShareClass.SERIES_B,
+    IPOType.INCOME_SHARES: {
+        "name": "Income Shares IPO",
+        "description": "The Firm buys your shares at only a 3% discount \u2014 the best price available. In exchange, you commit to paying investors a 10% annual dividend every quarter. Miss a payment and your credit score takes a serious hit.",
+        "share_class": ShareClass.COMMON,
         "firm_underwritten": True,
         "discount_rate": 0.03,
         "min_shares": 5000,
-        "max_float_pct": 0.25,
-        "min_valuation": 100000,
-        "fixed_dividend_rate": 0.12,
-    },
-    IPOType.DUAL_CLASS: {
-        "name": "Dual-Class Structure",
-        "description": "Sell shares to the public while keeping a separate founder stake. You must retain at least 51% ownership.",
-        "share_class": ShareClass.CLASS_B,
-        "founder_class": ShareClass.CLASS_A,
-        "firm_underwritten": True,
-        "discount_rate": 0.08,
-        "min_shares": 20000,
-        "max_float_pct": 0.70,
-        "min_valuation": 150000,
-        "founder_control_minimum": 0.51,
+        "max_float_pct": 0.40,
+        "min_valuation": 75000,
+        "fixed_dividend_rate": 0.10,
     },
 }
 
@@ -1184,12 +1153,6 @@ def create_player_ipo(
                 shares_to_offer, total_shares, share_price, actual_share_class,
                 dividend_config, total_valuation
             )
-        elif ipo_type == IPOType.DUAL_CLASS:
-            return _process_dual_class_ipo(
-                db, founder_id, company_name, ticker_symbol, config,
-                shares_to_offer, total_shares, share_price,
-                dividend_config, total_valuation
-            )
         else:
             return _process_underwritten_ipo(
                 db, founder_id, company_name, ticker_symbol, ipo_type, config,
@@ -1488,6 +1451,171 @@ def create_ipo(founder_id, business_id, ipo_type, shares_to_offer, total_shares,
         share_class=share_class,
         dividend_config=dividend_config
     )
+
+
+# ==========================
+# GO PRIVATE / DELISTING
+# ==========================
+
+DELISTING_FEE_PCT = 0.02  # 2% of market cap
+BUYBACK_PREMIUM = 0.10  # 10% premium over market price to buy back shares
+RELIST_COOLDOWN_DAYS = 30  # Must wait 30 days before re-IPOing
+
+
+def calculate_delisting_cost(company_id: int):
+    """Calculate what it would cost a founder to take their company private.
+
+    Returns a dict with cost breakdown, or (None, error) on failure.
+    """
+    db = get_db()
+    try:
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == company_id,
+            CompanyShares.is_delisted == False
+        ).first()
+        if not company:
+            return None, "Company not found or already delisted."
+
+        # Count shares held by others (not the founder)
+        positions = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company.id,
+            ShareholderPosition.shares_owned > 0,
+            ShareholderPosition.player_id != company.founder_id
+        ).all()
+
+        public_shares = sum(p.shares_owned for p in positions)
+        buyback_price = company.current_price * (1 + BUYBACK_PREMIUM)
+        buyback_cost = public_shares * buyback_price
+
+        market_cap = company.current_price * company.shares_outstanding
+        delisting_fee = market_cap * DELISTING_FEE_PCT
+
+        total_cost = buyback_cost + delisting_fee
+
+        return {
+            "company": company,
+            "public_shares": public_shares,
+            "buyback_price_per_share": buyback_price,
+            "buyback_cost": buyback_cost,
+            "delisting_fee": delisting_fee,
+            "total_cost": total_cost,
+            "current_price": company.current_price,
+            "market_cap": market_cap,
+        }, None
+    finally:
+        db.close()
+
+
+def delist_company(founder_id: int, company_id: int):
+    """Take a company private by buying back all public shares and delisting.
+
+    Returns (True, None) on success, or (False, error_message) on failure.
+    """
+    db = get_db()
+    try:
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == company_id,
+            CompanyShares.founder_id == founder_id,
+            CompanyShares.is_delisted == False
+        ).first()
+        if not company:
+            return False, "Company not found, you're not the founder, or it's already delisted."
+
+        # Calculate costs
+        cost_info, err = calculate_delisting_cost(company_id)
+        if err:
+            return False, err
+
+        total_cost = cost_info["total_cost"]
+        buyback_price = cost_info["buyback_price_per_share"]
+
+        # Check founder can afford it
+        from auth import Player, get_db as get_auth_db
+        auth_db = get_auth_db()
+        try:
+            founder = auth_db.query(Player).filter(Player.id == founder_id).first()
+            if not founder or founder.cash_balance < total_cost:
+                needed = total_cost - (founder.cash_balance if founder else 0)
+                return False, f"You need ${total_cost:,.0f} to go private but you're ${needed:,.0f} short. This includes buying back {cost_info['public_shares']:,} public shares at ${buyback_price:,.2f} each (10% premium) plus a ${cost_info['delisting_fee']:,.0f} delisting fee."
+
+            # Deduct the total cost from founder
+            founder.cash_balance -= total_cost
+            auth_db.commit()
+        finally:
+            auth_db.close()
+
+        # Pay the delisting fee to the firm
+        firm_add_cash(cost_info["delisting_fee"], "delisting_fee",
+                      f"Delisting: {company.ticker_symbol}", founder_id, company.id)
+
+        # Buy back shares from all public holders and pay them
+        positions = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company.id,
+            ShareholderPosition.shares_owned > 0,
+            ShareholderPosition.player_id != founder_id
+        ).all()
+
+        auth_db = get_auth_db()
+        try:
+            for position in positions:
+                payout = position.shares_owned * buyback_price
+                holder = auth_db.query(Player).filter(Player.id == position.player_id).first()
+                if holder:
+                    holder.cash_balance += payout
+
+                # Transfer shares to founder
+                position.shares_owned = 0
+                position.shares_available_to_lend = 0
+
+            auth_db.commit()
+        finally:
+            auth_db.close()
+
+        # Cancel all open orders for this stock
+        try:
+            from banks.brokerage_order_book import OrderBook, OrderStatus, get_db as get_ob_db
+            ob_db = get_ob_db()
+            try:
+                open_orders = ob_db.query(OrderBook).filter(
+                    OrderBook.company_shares_id == company.id,
+                    OrderBook.status.in_([OrderStatus.PENDING.value, OrderStatus.PARTIAL.value])
+                ).all()
+                for order in open_orders:
+                    order.status = OrderStatus.CANCELLED.value
+                ob_db.commit()
+            finally:
+                ob_db.close()
+        except ImportError:
+            pass
+
+        # Update company record
+        founder_position = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company.id,
+            ShareholderPosition.player_id == founder_id
+        ).first()
+        if founder_position:
+            founder_position.shares_owned = company.total_shares_authorized
+            founder_position.shares_available_to_lend = 0
+
+        company.is_delisted = True
+        company.delisted_at = datetime.utcnow()
+        company.can_relist_after = datetime.utcnow() + timedelta(days=RELIST_COOLDOWN_DAYS)
+        company.shares_held_by_founder = company.total_shares_authorized
+        company.shares_held_by_firm = 0
+        company.shares_in_float = 0
+        company.trading_halted = True
+        company.halt_reason = "Delisted - company taken private"
+
+        db.commit()
+
+        print(f"[{BANK_NAME}] Company {company.ticker_symbol} delisted (taken private by founder)")
+        return True, None
+
+    except Exception as e:
+        print(f"[{BANK_NAME}] Delisting error: {e}")
+        return False, f"An unexpected error occurred: {e}"
+    finally:
+        db.close()
 
 
 # ==========================
@@ -2491,12 +2619,9 @@ def initialize():
     print(f"[{BANK_NAME}] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"[{BANK_NAME}] Cash Reserves: ${firm.cash_reserves:,.2f}")
     print(f"[{BANK_NAME}] IPO Types: {len(IPO_CONFIG)}")
-    print(f"[{BANK_NAME}]   • Direct Listing ($5k flat)")
-    print(f"[{BANK_NAME}]   • Firm Underwritten (7% spread)")
-    print(f"[{BANK_NAME}]   • Preferred Stock (8% fixed dividend)")
-    print(f"[{BANK_NAME}]   • Series A Growth (10% discount, low float)")
-    print(f"[{BANK_NAME}]   • Series B Income (12% fixed dividend)")
-    print(f"[{BANK_NAME}]   • Dual-Class (founder retains Class A shares)")
+    print(f"[{BANK_NAME}]   • Direct Listing ($5k flat fee, no underwriter)")
+    print(f"[{BANK_NAME}]   • Underwritten IPO (7% discount, guaranteed capital)")
+    print(f"[{BANK_NAME}]   • Income Shares IPO (3% discount, mandatory 10% dividend)")
     print(f"[{BANK_NAME}] SCCE Commodity Lending: ACTIVE")
     print(f"[{BANK_NAME}] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
@@ -2570,7 +2695,8 @@ __all__ = [
     'PlayerCreditRating', 'CreditTier',
     'calculate_player_total_net_worth', 'calculate_player_company_valuation',
     'calculate_business_valuation',
-    'create_player_ipo', 'create_ipo', 'IPOType', 'IPO_CONFIG', 'ShareClass',
+    'create_player_ipo', 'create_ipo', 'delist_company', 'calculate_delisting_cost',
+    'IPOType', 'IPO_CONFIG', 'ShareClass',
     'calculate_margin_multiplier', 'record_price',
     'calculate_stock_volatility', 'calculate_commodity_volatility',
     'short_sell_shares', 'close_short_position',
