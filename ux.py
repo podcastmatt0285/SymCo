@@ -3105,7 +3105,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
 # The helper functions need to be INSIDE the route handler
 
 @router.get("/brokerage/ipo", response_class=HTMLResponse)
-def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
+def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optional[str] = None):
     """IPO creation page - redesigned for player holding companies."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
@@ -3332,11 +3332,21 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None)):
                 </div>
             </div>'''
         
+        from html import escape as html_escape
+        error_html = ""
+        if error:
+            error_html = f'''
+            <div class="card" style="border: 2px solid #ef4444; background: #450a0a; margin-bottom: 20px;">
+                <h3 style="color: #fca5a5; margin: 0 0 5px 0;">IPO Failed</h3>
+                <p style="color: #fca5a5; margin: 0;">{html_escape(error)}</p>
+            </div>'''
+
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>IPO Center</h1>
+        {error_html}
         <p style="color: #64748b;">Take <strong>{player.business_name}</strong>'s business empire public on SCPE</p>
-        
+
         <!-- Company Valuation -->
         <div class="card" style="border-left: 4px solid #38bdf8;">
             <h3>Your Company Valuation</h3>
@@ -3538,7 +3548,7 @@ async def create_player_ipo_endpoint(
             )
         
         # Create the IPO
-        company = create_player_ipo(
+        company, error_msg = create_player_ipo(
             founder_id=player.id,
             company_name=company_name,
             ticker_symbol=ticker_symbol,
@@ -3548,10 +3558,11 @@ async def create_player_ipo_endpoint(
             share_class="A",  # Default to Class A
             dividend_config=None  # Will add dividend config in phase 2
         )
-        
+
         if not company:
+            from urllib.parse import quote
             return RedirectResponse(
-                url="/brokerage/ipo?error=ipo_failed",
+                url=f"/brokerage/ipo?error={quote(error_msg or 'IPO creation failed.')}",
                 status_code=303
             )
         
@@ -5220,7 +5231,7 @@ async def brokerage_create_ipo(
         # Clean ticker
         ticker_clean = ticker_symbol.upper().strip()[:5]
         
-        result = create_ipo(
+        result, error_msg = create_ipo(
             founder_id=player.id,
             business_id=business_id,
             ipo_type=ipo_type_enum,
@@ -5231,10 +5242,11 @@ async def brokerage_create_ipo(
             ticker_symbol=ticker_clean,
             dividend_config=dividend_config
         )
-        
+
         if result:
             return RedirectResponse(url=f"/brokerage/trading?ticker={ticker_clean}&success=ipo_created", status_code=303)
-        return RedirectResponse(url="/brokerage/ipo?error=ipo_failed", status_code=303)
+        from urllib.parse import quote
+        return RedirectResponse(url=f"/brokerage/ipo?error={quote(error_msg or 'IPO creation failed.')}", status_code=303)
         
     except Exception as e:
         print(f"[UX] Create IPO error: {e}")

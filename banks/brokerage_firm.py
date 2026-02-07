@@ -1214,7 +1214,7 @@ def _process_direct_listing_ipo(db, founder_id, company_name, ticker_symbol, con
     try:
         founder = auth_db.query(Player).filter(Player.id == founder_id).first()
         if not founder or founder.cash_balance < listing_fee:
-            return None
+            return None, f"You need ${listing_fee:,.0f} cash for the listing fee but don't have enough."
         
         founder.cash_balance -= listing_fee
         auth_db.commit()
@@ -1273,8 +1273,8 @@ def _process_direct_listing_ipo(db, founder_id, company_name, ticker_symbol, con
     modify_credit_score(founder_id, "ipo_completed")
     
     print(f"[{BANK_NAME}] 🎉 DIRECT LISTING: {ticker_symbol}")
-    
-    return company
+
+    return company, None
 
 
 def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_type, config,
@@ -1285,7 +1285,7 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
     total_cost = shares_to_offer * discounted_price
     
     if not firm_deduct_cash(total_cost, "underwriting_cost", f"Underwriting {ticker_symbol}"):
-        return None
+        return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
     
     actual_dividend_config = dividend_config or []
     
@@ -1373,8 +1373,8 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
     modify_credit_score(founder_id, "ipo_completed")
     
     print(f"[{BANK_NAME}] 🎉 {ipo_type.value.upper()}: {ticker_symbol}")
-    
-    return company
+
+    return company, None
 
 
 def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
@@ -1385,8 +1385,8 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     total_cost = shares_to_offer * discounted_price
     
     if not firm_deduct_cash(total_cost, "underwriting_cost", f"Dual-class {ticker_symbol}"):
-        return None
-    
+        return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
+
     class_b_shares = shares_to_offer
     class_a_shares = total_shares - shares_to_offer
 
@@ -1394,7 +1394,7 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
 
     min_control = config.get("founder_control_minimum", 0.51)
     if founder_ownership_pct < min_control:
-        return None
+        return None, f"You must retain at least {min_control*100:.0f}% ownership. Reduce the number of shares you're offering."
     
     company = CompanyShares(
         founder_id=founder_id,
@@ -1471,8 +1471,8 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     modify_credit_score(founder_id, "ipo_completed")
     
     print(f"[{BANK_NAME}] 🎉 DUAL-CLASS: {ticker_symbol} (founder {class_a_shares} Class A, public {class_b_shares} Class B)")
-    
-    return company
+
+    return company, None
 
 
 def create_ipo(founder_id, business_id, ipo_type, shares_to_offer, total_shares,
