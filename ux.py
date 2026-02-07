@@ -652,67 +652,231 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         return shell("Inventory", f"Error: {e}", player.cash_balance, player.id)
 
 @router.get("/land", response_class=HTMLResponse)
-def land(session_token: Optional[str] = Cookie(None)):
-    """Land management view with accurate startup cost display."""
+def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc"):
+    """Land management view with organized layout, sorting, and explanatory info."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
     try:
-        from land import get_player_land, TERRAIN_TYPES
+        from land import get_player_land, TERRAIN_TYPES, PROXIMITY_FEATURES
         from business import BUSINESS_TYPES
         plots = get_player_land(player.id)
-        
+
         # Calculate player's business count for cost multiplier
         from business import Business
         from land import get_db as get_land_db
         land_db = get_land_db()
         owned_businesses_count = land_db.query(Business).filter(Business.owner_id == player.id).count()
-        
-        land_html = '''<a href="/" style="color: #38bdf8;"><- Dashboard</a> <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;"> <h1 style="margin: 0;">Land Portfolio</h1> <a href="/districts" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;"> 🏛️ Districts </a></div>'''
-        
-        for plot in plots:
-            status = 'OCCUPIED' if plot.occupied_by_business_id else 'VACANT'
-            color = "#ef4444" if plot.occupied_by_business_id else "#22c55e"
-            
-            land_html += f'''
-            <div class="card">
-                <div style="display: flex; justify-content: space-between;">
-                    <div>
-                        <h3>Plot #{plot.id} <span class="badge" style="background: {color}; color: #020617;">{status}</span></h3>
-                        <p>{plot.terrain_type.title()} | Eff: {plot.efficiency:.3f}% | Tax: ${plot.monthly_tax:.2f}</p>
-                    </div>'''
-            
-            if not plot.occupied_by_business_id:
-                land_html += f'''
-                <div style="display: flex: 1; gap: 24px;">
-                    <form action="/api/business/create" method="post" style="display: flex; gap: 10px; align-items: center;">
-                        <input type="hidden" name="land_plot_id" value="{plot.id}">
-                        <select name="business_type" required>
-                            <option value="">Build Business...</option>'''
-                
-                # Calculate actual startup costs for each business type
-                for btype, config in BUSINESS_TYPES.items():
-                    if plot.terrain_type in config.get("allowed_terrain", []):
-                        base_cost = config.get("startup_cost", 2500.0)
-                        
-                        # CRITICAL FIX: Calculate the ACTUAL cost with multiplier
-                        # Match the logic from business.py create_business()
-                        multiplier = max(1.25, owned_businesses_count)
-                        actual_cost = base_cost * multiplier
-                        
-                        business_name = config.get("name", btype)
-                        land_html += f'<option value="{btype}">{business_name} (${actual_cost:,.0f})</option>'
-                
-                land_html += '''</select><button type="submit" class="btn-blue">Build</button>
-                    </form>
-                    <form action="/api/land-market/list-land" method="post" style="display: flex; gap: 10px; align-items: center;">
-                    <input type="hidden" name="land_plot_id" value="''' + str(plot.id) + '''">
-                    <input type="number" name="asking_price" step="0.01" placeholder="Asking Price" style="width: 120px;" required>
-                    <button type="submit" class="btn-orange">List for Sale</button>
-                </form>
+
+        # Sort plots
+        def sort_key(p):
+            if sort == "terrain": return p.terrain_type
+            if sort == "efficiency": return p.efficiency
+            if sort == "tax": return p.monthly_tax
+            if sort == "status": return (0 if p.occupied_by_business_id else 1)
+            if sort == "size": return p.size
+            return p.id
+
+        reverse = (order == "desc")
+        plots = sorted(plots, key=sort_key, reverse=reverse)
+
+        # Compute portfolio stats
+        total_plots = len(plots)
+        occupied_count = sum(1 for p in plots if p.occupied_by_business_id)
+        vacant_count = total_plots - occupied_count
+        total_monthly_tax = sum(p.monthly_tax for p in plots)
+        avg_efficiency = (sum(p.efficiency for p in plots) / total_plots) if total_plots else 0
+
+        # Terrain colors for visual grouping
+        terrain_colors = {
+            "prairie": "#22c55e", "forest": "#16a34a", "desert": "#f59e0b",
+            "marsh": "#06b6d4", "mountain": "#94a3b8", "tundra": "#38bdf8",
+            "jungle": "#10b981", "savanna": "#eab308", "hills": "#a3e635",
+            "island": "#3b82f6", "district_food": "#f97316", "district_hospital": "#ef4444",
+            "district_industrial": "#64748b", "district_medical": "#ec4899",
+            "district_neighborhood": "#a855f7", "district_transport": "#6366f1",
+            "district_utilities": "#0ea5e9", "district_zoo": "#84cc16"
+        }
+
+        # Build sort toggle helper
+        def sort_link(field, label):
+            new_order = "desc" if (sort == field and order == "asc") else "asc"
+            arrow = ""
+            if sort == field:
+                arrow = " ▲" if order == "asc" else " ▼"
+            return f'<a href="/land?sort={field}&order={new_order}" style="padding: 6px 12px; font-size: 0.8rem; background: {"#1e293b" if sort == field else "#0f172a"}; color: {"#38bdf8" if sort == field else "#94a3b8"}; border: 1px solid #1e293b; border-radius: 3px; text-decoration: none; white-space: nowrap;">{label}{arrow}</a>'
+
+        land_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+
+        # Header with navigation
+        land_html += '''
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+            <h1 style="margin: 0;">Land Portfolio</h1>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="/land-market" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; text-decoration: none;">Buy Land</a>
+                <a href="/districts" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #6366f1; text-decoration: none;">Districts</a>
+            </div>
+        </div>'''
+
+        # Explainer box
+        land_html += '''
+        <div style="padding: 12px 16px; background: #0f172a; border-left: 4px solid #38bdf8; margin-bottom: 20px; font-size: 0.85rem; color: #94a3b8; line-height: 1.5;">
+            Your land plots generate value through the businesses you build on them.
+            <strong style="color: #e5e7eb;">Vacant</strong> plots can host new businesses or be listed for sale on the land market.
+            <strong style="color: #e5e7eb;">Efficiency</strong> degrades slowly over time and affects business output.
+            <strong style="color: #e5e7eb;">Tax</strong> is charged monthly based on terrain type, size, and proximity features.
+        </div>'''
+
+        if total_plots == 0:
+            land_html += '''
+            <div class="card" style="text-align: center; padding: 40px;">
+                <p style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 16px;">You don't own any land yet.</p>
+                <a href="/land-market" class="btn-blue" style="padding: 12px 24px; font-size: 1rem; text-decoration: none;">Browse the Land Market</a>
             </div>'''
-            
-            land_html += '</div></div>'
-        
+        else:
+            # Portfolio Summary Stats
+            land_html += f'''
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+                <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #38bdf8;">{total_plots}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">TOTAL PLOTS</div>
+                </div>
+                <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #ef4444;">{occupied_count}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">OCCUPIED</div>
+                </div>
+                <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #22c55e;">{vacant_count}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">VACANT</div>
+                </div>
+                <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #f59e0b;">${total_monthly_tax:,.0f}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">MONTHLY TAX</div>
+                </div>
+                <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #a855f7;">{avg_efficiency:.2f}%</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">AVG EFFICIENCY</div>
+                </div>
+            </div>'''
+
+            # Sort controls
+            land_html += f'''
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; color: #64748b;">Sort by:</span>
+                {sort_link("id", "Plot ID")}
+                {sort_link("terrain", "Terrain")}
+                {sort_link("efficiency", "Efficiency")}
+                {sort_link("tax", "Tax")}
+                {sort_link("status", "Status")}
+                {sort_link("size", "Size")}
+            </div>'''
+
+            # Plot cards
+            for plot in plots:
+                status = 'OCCUPIED' if plot.occupied_by_business_id else 'VACANT'
+                status_color = "#ef4444" if plot.occupied_by_business_id else "#22c55e"
+                terrain_color = terrain_colors.get(plot.terrain_type, "#64748b")
+                terrain_info = TERRAIN_TYPES.get(plot.terrain_type, {})
+                terrain_desc = terrain_info.get("description", "")
+
+                # Parse proximity features
+                features = plot.proximity_features.split(",") if plot.proximity_features else []
+                features_html = ""
+                if features:
+                    for feat in features:
+                        feat = feat.strip()
+                        feat_info = PROXIMITY_FEATURES.get(feat, {})
+                        feat_desc = feat_info.get("description", feat)
+                        features_html += f'<span style="font-size: 0.7rem; padding: 2px 6px; background: #1e293b; border: 1px solid #334155; border-radius: 3px; color: #94a3b8;" title="{feat_desc}">{feat.replace("_", " ").title()}</span>'
+
+                # Efficiency color
+                eff = plot.efficiency
+                if eff >= 90: eff_color = "#22c55e"
+                elif eff >= 70: eff_color = "#eab308"
+                elif eff >= 50: eff_color = "#f59e0b"
+                else: eff_color = "#ef4444"
+
+                # Efficiency bar width
+                eff_width = min(100, max(0, eff))
+
+                land_html += f'''
+                <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                        <div style="flex: 1; min-width: 250px;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <h3 style="margin: 0;">Plot #{plot.id}</h3>
+                                <span class="badge" style="background: {status_color}; color: #020617;">{status}</span>
+                                <span class="badge" style="background: {terrain_color}22; color: {terrain_color}; border: 1px solid {terrain_color}44;">{plot.terrain_type.replace("_", " ").title()}</span>
+                            </div>
+                            <p style="color: #64748b; font-size: 0.8rem; margin: 4px 0;">{terrain_desc}</p>
+
+                            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 0.85rem;">
+                                <div>
+                                    <span style="color: #64748b;">Size:</span>
+                                    <span style="color: #e5e7eb;">{plot.size:.1f}</span>
+                                </div>
+                                <div>
+                                    <span style="color: #64748b;">Tax:</span>
+                                    <span style="color: #f59e0b;">${plot.monthly_tax:,.2f}/mo</span>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 0.8rem; color: #64748b;">Efficiency:</span>
+                                    <span style="font-size: 0.85rem; color: {eff_color}; font-weight: bold;">{eff:.3f}%</span>
+                                </div>
+                                <div style="background: #020617; height: 6px; border-radius: 3px; margin-top: 4px; width: 200px;">
+                                    <div style="background: {eff_color}; height: 6px; border-radius: 3px; width: {eff_width}%;"></div>
+                                </div>
+                            </div>'''
+
+                if features:
+                    land_html += f'''
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+                                <span style="font-size: 0.75rem; color: #64748b;">Features:</span>
+                                {features_html}
+                            </div>'''
+
+                land_html += '</div>'
+
+                # Actions column
+                if not plot.occupied_by_business_id:
+                    land_html += f'''
+                        <div style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">
+                            <form action="/api/business/create" method="post" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <input type="hidden" name="land_plot_id" value="{plot.id}">
+                                <select name="business_type" required style="flex: 1; min-width: 140px;">
+                                    <option value="">Build Business...</option>'''
+
+                    # Calculate actual startup costs for each business type
+                    for btype, config in sorted(BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
+                        if plot.terrain_type in config.get("allowed_terrain", []):
+                            base_cost = config.get("startup_cost", 2500.0)
+                            multiplier = max(1.25, owned_businesses_count)
+                            actual_cost = base_cost * multiplier
+                            business_name = config.get("name", btype)
+                            land_html += f'<option value="{btype}">{business_name} (${actual_cost:,.0f})</option>'
+
+                    land_html += '''</select><button type="submit" class="btn-blue">Build</button>
+                            </form>
+                            <form action="/api/land-market/list-land" method="post" style="display: flex; gap: 8px; align-items: center;">
+                                <input type="hidden" name="land_plot_id" value="''' + str(plot.id) + '''">
+                                <input type="number" name="asking_price" step="0.01" placeholder="Asking $" style="width: 110px;" required>
+                                <button type="submit" class="btn-orange">List for Sale</button>
+                            </form>
+                        </div>'''
+                else:
+                    # Show which business occupies this plot
+                    biz = land_db.query(Business).filter(Business.id == plot.occupied_by_business_id).first()
+                    biz_name = biz.business_type.replace("_", " ").title() if biz else f"Business #{plot.occupied_by_business_id}"
+                    land_html += f'''
+                        <div style="min-width: 180px; text-align: right;">
+                            <div style="font-size: 0.8rem; color: #64748b;">Business</div>
+                            <div style="font-size: 0.9rem; color: #e5e7eb; font-weight: 500;">{biz_name}</div>
+                        </div>'''
+
+                land_html += '</div></div>'
+
         land_db.close()
         return shell("Land", land_html, player.cash_balance, player.id)
     except Exception as e:
@@ -721,116 +885,433 @@ def land(session_token: Optional[str] = Cookie(None)):
         return shell("Land", f"Error: {e}", player.cash_balance, player.id)
 
 @router.get("/land-market", response_class=HTMLResponse)
-def land_market_page(session_token: Optional[str] = Cookie(None)):
-    """Land market view - government auctions and player listings."""
+def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions"):
+    """Land market view - government auctions and player listings with search, sort, and filter."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    
+
     try:
-        from land_market import get_active_auctions, get_active_listings, get_land_bank_plots
-        from land import get_land_plot, TERRAIN_TYPES
-        
+        from land_market import get_active_auctions, get_active_listings, get_land_bank_plots, get_recent_sales
+        from land import get_land_plot, TERRAIN_TYPES, PROXIMITY_FEATURES
+
         auctions = get_active_auctions()
         listings = get_active_listings()
         bank_plots = get_land_bank_plots()
-        
-        market_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Land Market</h1>'
-        
-        # Government Auctions Section
-        market_html += '<h2 style="margin-top: 30px;">Government Auctions (Dutch Auction)</h2>'
-        if auctions:
-            for auction in auctions:
-                plot = get_land_plot(auction.land_plot_id)
-                if not plot:
+        recent_sales = get_recent_sales(limit=8)
+
+        # Terrain colors
+        terrain_colors = {
+            "prairie": "#22c55e", "forest": "#16a34a", "desert": "#f59e0b",
+            "marsh": "#06b6d4", "mountain": "#94a3b8", "tundra": "#38bdf8",
+            "jungle": "#10b981", "savanna": "#eab308", "hills": "#a3e635",
+            "island": "#3b82f6"
+        }
+
+        # Gather all plots for terrain filter tabs
+        all_terrains = set()
+        auction_plots = {}
+        for a in auctions:
+            p = get_land_plot(a.land_plot_id)
+            if p:
+                auction_plots[a.id] = p
+                all_terrains.add(p.terrain_type)
+        listing_plots = {}
+        for l in listings:
+            p = get_land_plot(l.land_plot_id)
+            if p:
+                listing_plots[l.id] = p
+                all_terrains.add(p.terrain_type)
+
+        # Market stats
+        total_auctions = len(auctions)
+        total_listings = len(listings)
+        total_available = total_auctions + total_listings
+        avg_auction_price = (sum(a.current_price for a in auctions) / total_auctions) if total_auctions else 0
+        avg_listing_price = (sum(l.asking_price for l in listings) / total_listings) if total_listings else 0
+
+        market_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+
+        # Header
+        market_html += '''
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+            <h1 style="margin: 0;">Land Market</h1>
+            <a href="/land" class="btn-blue" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; text-decoration: none;">Your Land Portfolio</a>
+        </div>'''
+
+        # Explainer
+        market_html += '''
+        <div style="padding: 12px 16px; background: #0f172a; border-left: 4px solid #f59e0b; margin-bottom: 20px; font-size: 0.85rem; color: #94a3b8; line-height: 1.5;">
+            <strong style="color: #f59e0b;">Government Auctions</strong> use a Dutch auction system &mdash; the price starts high and drops over time until someone buys.
+            Wait for a lower price, but risk losing the plot to another buyer.
+            <strong style="color: #a855f7;">Player Listings</strong> are fixed-price sales from other players.
+            Land varies by <strong style="color: #e5e7eb;">terrain type</strong> (which businesses can operate) and
+            <strong style="color: #e5e7eb;">proximity features</strong> (bonuses like coastal access or urban demand).
+        </div>'''
+
+        # Market stats summary
+        market_html += f'''
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+            <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: #38bdf8;">{total_available}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">PLOTS FOR SALE</div>
+            </div>
+            <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: #f59e0b;">{total_auctions}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">GOV AUCTIONS</div>
+            </div>
+            <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: #a855f7;">{total_listings}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">PLAYER LISTINGS</div>
+            </div>
+            <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: #22c55e;">${avg_auction_price:,.0f}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">AVG AUCTION PRICE</div>
+            </div>
+            <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: #10b981;">{len(bank_plots)}</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">IN LAND BANK</div>
+            </div>
+        </div>'''
+
+        # Tab navigation (Auctions / Player Listings)
+        def tab_style(t):
+            if tab == t:
+                return "padding: 10px 20px; font-size: 0.9rem; background: #1e293b; color: #e5e7eb; border: 1px solid #334155; border-bottom: 2px solid #38bdf8; text-decoration: none; font-weight: bold;"
+            return "padding: 10px 20px; font-size: 0.9rem; background: #0f172a; color: #64748b; border: 1px solid #1e293b; text-decoration: none;"
+
+        market_html += f'''
+        <div style="display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap;">
+            <a href="/land-market?tab=auctions&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("auctions")}">Government Auctions ({total_auctions})</a>
+            <a href="/land-market?tab=listings&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("listings")}">Player Listings ({total_listings})</a>
+            <a href="/land-market?tab=history&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("history")}">Recent Sales</a>
+        </div>'''
+
+        # Terrain filter tabs
+        if all_terrains:
+            market_html += '<div style="margin-bottom: 16px;"><span style="font-size: 0.8rem; color: #64748b; margin-right: 8px;">Filter terrain:</span>'
+            all_active = "background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8;" if terrain == "all" else "background: #0f172a; color: #94a3b8; border: 1px solid #1e293b;"
+            market_html += f'<a href="/land-market?tab={tab}&sort={sort}&order={order}&terrain=all" style="padding: 4px 10px; font-size: 0.8rem; {all_active} border-radius: 3px; text-decoration: none; display: inline-block; margin: 2px;">All</a>'
+            for t in sorted(all_terrains):
+                if t.startswith("district_"):
                     continue
-                
-                time_remaining = auction.end_time - datetime.utcnow()
-                hours_left = int(time_remaining.total_seconds() / 3600)
-                minutes_left = int((time_remaining.total_seconds() % 3600) / 60)
-                
-                price_drop_pct = ((auction.starting_price - auction.current_price) / auction.starting_price * 100) if auction.starting_price > 0 else 0
-                
-                market_html += f'''
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3>Plot #{plot.id} - {plot.terrain_type.title()} <span class="badge" style="background: #f59e0b; color: #020617;">AUCTION</span></h3>
-                            <p>Size: {plot.size} | Efficiency: {plot.efficiency:.2f}% | Monthly Tax: ${plot.monthly_tax:.2f}</p>
-                            <p style="color: #64748b;">Time Remaining: {hours_left}h {minutes_left}m</p>
-                            <div style="margin-top: 10px;">
-                                <span style="color: #ef4444;">Starting: ${auction.starting_price:,.2f}</span>
-                                <span style="margin: 0 10px;">→</span>
-                                <span style="color: #22c55e; font-size: 1.2rem; font-weight: bold;">Current: ${auction.current_price:,.2f}</span>
-                                <span style="margin: 0 10px;">→</span>
-                                <span style="color: #64748b;">Floor: ${auction.minimum_price:,.2f}</span>
-                            </div>
-                            <p style="font-size: 0.85rem; color: #64748b; margin-top: 5px;">Price dropped {price_drop_pct:.1f}% from start</p>
-                        </div>
-                        <form action="/api/land-market/buy-auction" method="post">
-                            <input type="hidden" name="auction_id" value="{auction.id}">
-                            <button type="submit" class="btn-blue" onclick="return confirm('Buy this plot for ${auction.current_price:,.2f}?')">
-                                Buy Now<br>${auction.current_price:,.2f}
-                            </button>
-                        </form>
-                    </div>
+                t_color = terrain_colors.get(t, "#64748b")
+                is_active = terrain == t
+                bg = f"{t_color}" if is_active else "#0f172a"
+                fg = "#020617" if is_active else t_color
+                border = f"1px solid {t_color}"
+                market_html += f'<a href="/land-market?tab={tab}&sort={sort}&order={order}&terrain={t}" style="padding: 4px 10px; font-size: 0.8rem; background: {bg}; color: {fg}; border: {border}; border-radius: 3px; text-decoration: none; display: inline-block; margin: 2px;">{t.replace("_", " ").title()}</a>'
+            market_html += '</div>'
+
+        # Sort controls
+        def sort_link(field, label):
+            new_order = "desc" if (sort == field and order == "asc") else "asc"
+            arrow = ""
+            if sort == field:
+                arrow = " ▲" if order == "asc" else " ▼"
+            active = sort == field
+            return f'<a href="/land-market?tab={tab}&sort={field}&order={new_order}&terrain={terrain}" style="padding: 6px 12px; font-size: 0.8rem; background: {"#1e293b" if active else "#0f172a"}; color: {"#38bdf8" if active else "#94a3b8"}; border: 1px solid #1e293b; border-radius: 3px; text-decoration: none; white-space: nowrap;">{label}{arrow}</a>'
+
+        if tab in ("auctions", "listings"):
+            market_html += f'''
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; color: #64748b;">Sort by:</span>
+                {sort_link("price", "Price")}
+                {sort_link("terrain", "Terrain")}
+                {sort_link("efficiency", "Efficiency")}
+                {sort_link("tax", "Tax")}
+                {sort_link("size", "Size")}
+                {sort_link("time", "Time") if tab == "auctions" else ""}
+            </div>'''
+
+        # ===== AUCTIONS TAB =====
+        if tab == "auctions":
+            if not auctions:
+                market_html += '''
+                <div class="card" style="text-align: center; padding: 30px;">
+                    <p style="color: #94a3b8;">No active government auctions at this time.</p>
+                    <p style="font-size: 0.8rem; color: #64748b;">New auctions appear as the economy grows. Check back soon.</p>
                 </div>'''
-        else:
-            market_html += '<p style="color: #64748b;">No active government auctions at this time.</p>'
-        
-        # Player Listings Section
-        market_html += '<h2 style="margin-top: 40px;">Player Listings</h2>'
-        if listings:
-            for listing in listings:
-                plot = get_land_plot(listing.land_plot_id)
-                if not plot:
-                    continue
-                
-                from auth import get_db as get_auth_db, Player
-                auth_db = get_auth_db()
-                seller = auth_db.query(Player).filter(Player.id == listing.seller_id).first()
-                auth_db.close()
-                seller_name = seller.business_name if seller else f"Player {listing.seller_id}"
-                
-                is_own_listing = (listing.seller_id == player.id)
-                
-                market_html += f'''
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3>Plot #{plot.id} - {plot.terrain_type.title()} {"<span class=\"badge\" style=\"background: #38bdf8; color: #020617;\">YOUR LISTING</span>" if is_own_listing else ""}</h3>
-                            <p>Size: {plot.size} | Efficiency: {plot.efficiency:.2f}% | Monthly Tax: ${plot.monthly_tax:.2f}</p>
-                            <p style="color: #64748b;">Seller: {seller_name}</p>
-                            <p style="color: #22c55e; font-size: 1.2rem; font-weight: bold; margin-top: 10px;">Price: ${listing.asking_price:,.2f}</p>
+            else:
+                # Build sortable auction data
+                auction_data = []
+                for auction in auctions:
+                    plot = auction_plots.get(auction.id)
+                    if not plot:
+                        continue
+                    if terrain != "all" and plot.terrain_type != terrain:
+                        continue
+                    auction_data.append((auction, plot))
+
+                # Sort
+                def auction_sort_key(item):
+                    a, p = item
+                    if sort == "price": return a.current_price
+                    if sort == "terrain": return p.terrain_type
+                    if sort == "efficiency": return p.efficiency
+                    if sort == "tax": return p.monthly_tax
+                    if sort == "size": return p.size
+                    if sort == "time": return a.end_time.timestamp() if a.end_time else 0
+                    return a.current_price
+                auction_data.sort(key=auction_sort_key, reverse=(order == "desc"))
+
+                if not auction_data:
+                    market_html += f'<p style="color: #64748b;">No auctions match the "{terrain}" terrain filter.</p>'
+
+                for auction, plot in auction_data:
+                    time_remaining = auction.end_time - datetime.utcnow()
+                    total_secs = max(0, time_remaining.total_seconds())
+                    hours_left = int(total_secs / 3600)
+                    minutes_left = int((total_secs % 3600) / 60)
+                    price_drop_pct = ((auction.starting_price - auction.current_price) / auction.starting_price * 100) if auction.starting_price > 0 else 0
+                    terrain_color = terrain_colors.get(plot.terrain_type, "#64748b")
+                    terrain_info = TERRAIN_TYPES.get(plot.terrain_type, {})
+
+                    # Parse proximity features
+                    features = plot.proximity_features.split(",") if plot.proximity_features else []
+                    features_html = ""
+                    for feat in features:
+                        feat = feat.strip()
+                        if not feat:
+                            continue
+                        feat_info = PROXIMITY_FEATURES.get(feat, {})
+                        feat_desc = feat_info.get("description", feat)
+                        features_html += f'<span style="font-size: 0.7rem; padding: 2px 6px; background: #1e293b; border: 1px solid #334155; border-radius: 3px; color: #94a3b8;" title="{feat_desc}">{feat.replace("_", " ").title()}</span> '
+
+                    # Urgency color for time
+                    if hours_left < 1:
+                        time_color = "#ef4444"
+                    elif hours_left < 6:
+                        time_color = "#f59e0b"
+                    else:
+                        time_color = "#64748b"
+
+                    # Price progress bar
+                    price_range = auction.starting_price - auction.minimum_price
+                    price_progress = ((auction.starting_price - auction.current_price) / price_range * 100) if price_range > 0 else 0
+
+                    market_html += f'''
+                    <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div style="flex: 1; min-width: 280px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h3 style="margin: 0;">Plot #{plot.id}</h3>
+                                    <span class="badge" style="background: #f59e0b; color: #020617;">AUCTION</span>
+                                    <span class="badge" style="background: {terrain_color}22; color: {terrain_color}; border: 1px solid {terrain_color}44;">{plot.terrain_type.replace("_", " ").title()}</span>
+                                </div>
+                                <p style="color: #64748b; font-size: 0.8rem; margin: 4px 0;">{terrain_info.get("description", "")}</p>
+
+                                <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 0.85rem;">
+                                    <div><span style="color: #64748b;">Size:</span> <span style="color: #e5e7eb;">{plot.size:.1f}</span></div>
+                                    <div><span style="color: #64748b;">Efficiency:</span> <span style="color: #22c55e;">{plot.efficiency:.2f}%</span></div>
+                                    <div><span style="color: #64748b;">Tax:</span> <span style="color: #f59e0b;">${plot.monthly_tax:,.2f}/mo</span></div>
+                                </div>'''
+
+                    if features_html:
+                        market_html += f'''
+                                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+                                    <span style="font-size: 0.75rem; color: #64748b;">Features:</span>
+                                    {features_html}
+                                </div>'''
+
+                    market_html += f'''
+                                <div style="margin-top: 12px; padding: 10px; background: #020617; border-radius: 4px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
+                                        <span style="color: #ef4444;">Start: ${auction.starting_price:,.0f}</span>
+                                        <span style="color: #22c55e; font-weight: bold;">Now: ${auction.current_price:,.0f}</span>
+                                        <span style="color: #64748b;">Floor: ${auction.minimum_price:,.0f}</span>
+                                    </div>
+                                    <div style="background: #1e293b; height: 6px; border-radius: 3px;">
+                                        <div style="background: linear-gradient(90deg, #ef4444, #22c55e); height: 6px; border-radius: 3px; width: {min(100, price_progress):.0f}%;"></div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 0.75rem;">
+                                        <span style="color: #64748b;">Dropped {price_drop_pct:.1f}%</span>
+                                        <span style="color: {time_color};">{hours_left}h {minutes_left}m remaining</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">${auction.current_price:,.0f}</div>
+                                    <div style="font-size: 0.7rem; color: #64748b;">current price</div>
+                                </div>
+                                <form action="/api/land-market/buy-auction" method="post">
+                                    <input type="hidden" name="auction_id" value="{auction.id}">
+                                    <button type="submit" class="btn-blue" style="padding: 10px 20px; font-size: 0.9rem;" onclick="return confirm('Buy Plot #{plot.id} for ${auction.current_price:,.2f}?')">
+                                        Buy Now
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">'''
-                
-                if is_own_listing:
+                    </div>'''
+
+        # ===== PLAYER LISTINGS TAB =====
+        elif tab == "listings":
+            if not listings:
+                market_html += '''
+                <div class="card" style="text-align: center; padding: 30px;">
+                    <p style="color: #94a3b8;">No player listings available.</p>
+                    <p style="font-size: 0.8rem; color: #64748b;">Players can list vacant land for sale from their Land Portfolio page.</p>
+                </div>'''
+            else:
+                from auth import get_db as get_auth_db, Player as AuthPlayer
+
+                # Build sortable listing data
+                listing_data = []
+                for listing in listings:
+                    plot = listing_plots.get(listing.id)
+                    if not plot:
+                        continue
+                    if terrain != "all" and plot.terrain_type != terrain:
+                        continue
+                    listing_data.append((listing, plot))
+
+                # Sort
+                def listing_sort_key(item):
+                    l, p = item
+                    if sort == "price": return l.asking_price
+                    if sort == "terrain": return p.terrain_type
+                    if sort == "efficiency": return p.efficiency
+                    if sort == "tax": return p.monthly_tax
+                    if sort == "size": return p.size
+                    if sort == "time": return l.listed_at.timestamp() if l.listed_at else 0
+                    return l.asking_price
+                listing_data.sort(key=listing_sort_key, reverse=(order == "desc"))
+
+                if not listing_data:
+                    market_html += f'<p style="color: #64748b;">No listings match the "{terrain}" terrain filter.</p>'
+
+                for listing, plot in listing_data:
+                    auth_db = get_auth_db()
+                    seller = auth_db.query(AuthPlayer).filter(AuthPlayer.id == listing.seller_id).first()
+                    auth_db.close()
+                    seller_name = seller.business_name if seller else f"Player {listing.seller_id}"
+                    is_own_listing = (listing.seller_id == player.id)
+
+                    terrain_color = terrain_colors.get(plot.terrain_type, "#64748b")
+                    terrain_info = TERRAIN_TYPES.get(plot.terrain_type, {})
+
+                    features = plot.proximity_features.split(",") if plot.proximity_features else []
+                    features_html = ""
+                    for feat in features:
+                        feat = feat.strip()
+                        if not feat:
+                            continue
+                        feat_info = PROXIMITY_FEATURES.get(feat, {})
+                        feat_desc = feat_info.get("description", feat)
+                        features_html += f'<span style="font-size: 0.7rem; padding: 2px 6px; background: #1e293b; border: 1px solid #334155; border-radius: 3px; color: #94a3b8;" title="{feat_desc}">{feat.replace("_", " ").title()}</span> '
+
+                    border_color = "#38bdf8" if is_own_listing else terrain_color
+                    own_badge = '<span class="badge" style="background: #38bdf8; color: #020617;">YOUR LISTING</span>' if is_own_listing else ""
+
                     market_html += f'''
-                            <form action="/api/land-market/cancel-listing" method="post">
-                                <input type="hidden" name="listing_id" value="{listing.id}">
-                                <button type="submit" class="btn-red">Cancel Listing</button>
-                            </form>'''
-                else:
+                    <div class="card" style="border-left: 4px solid {border_color}; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div style="flex: 1; min-width: 280px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h3 style="margin: 0;">Plot #{plot.id}</h3>
+                                    {own_badge}
+                                    <span class="badge" style="background: {terrain_color}22; color: {terrain_color}; border: 1px solid {terrain_color}44;">{plot.terrain_type.replace("_", " ").title()}</span>
+                                </div>
+                                <p style="color: #64748b; font-size: 0.8rem; margin: 4px 0;">{terrain_info.get("description", "")}</p>
+
+                                <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 0.85rem;">
+                                    <div><span style="color: #64748b;">Size:</span> <span style="color: #e5e7eb;">{plot.size:.1f}</span></div>
+                                    <div><span style="color: #64748b;">Efficiency:</span> <span style="color: #22c55e;">{plot.efficiency:.2f}%</span></div>
+                                    <div><span style="color: #64748b;">Tax:</span> <span style="color: #f59e0b;">${plot.monthly_tax:,.2f}/mo</span></div>
+                                    <div><span style="color: #64748b;">Seller:</span> <span style="color: #94a3b8;">{seller_name}</span></div>
+                                </div>'''
+
+                    if features_html:
+                        market_html += f'''
+                                <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+                                    <span style="font-size: 0.75rem; color: #64748b;">Features:</span>
+                                    {features_html}
+                                </div>'''
+
+                    market_html += '''
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">'''
+
                     market_html += f'''
-                            <form action="/api/land-market/buy-listing" method="post">
-                                <input type="hidden" name="listing_id" value="{listing.id}">
-                                <button type="submit" class="btn-blue" onclick="return confirm('Buy this plot for ${listing.asking_price:,.2f}?')">
-                                    Buy<br>${listing.asking_price:,.2f}
-                                </button>
-                            </form>'''
-                
-                market_html += '</div></div></div>'
-        else:
-            market_html += '<p style="color: #64748b;">No player listings available.</p>'
-        
-        # Land Bank Info (for debugging/transparency)
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">${listing.asking_price:,.0f}</div>
+                                    <div style="font-size: 0.7rem; color: #64748b;">asking price</div>
+                                </div>'''
+
+                    if is_own_listing:
+                        market_html += f'''
+                                <form action="/api/land-market/cancel-listing" method="post">
+                                    <input type="hidden" name="listing_id" value="{listing.id}">
+                                    <button type="submit" class="btn-red" style="padding: 10px 20px; font-size: 0.9rem;">Cancel</button>
+                                </form>'''
+                    else:
+                        market_html += f'''
+                                <form action="/api/land-market/buy-listing" method="post">
+                                    <input type="hidden" name="listing_id" value="{listing.id}">
+                                    <button type="submit" class="btn-blue" style="padding: 10px 20px; font-size: 0.9rem;" onclick="return confirm('Buy Plot #{plot.id} for ${listing.asking_price:,.2f}?')">Buy Now</button>
+                                </form>'''
+
+                    market_html += '</div></div></div>'
+
+        # ===== RECENT SALES TAB =====
+        elif tab == "history":
+            market_html += '''
+            <div style="padding: 10px 16px; background: #0f172a; border-left: 4px solid #64748b; margin-bottom: 16px; font-size: 0.85rem; color: #94a3b8;">
+                Recent land sales help you gauge fair market prices. Government auction sales and player-to-player trades are both shown.
+            </div>'''
+
+            if not recent_sales:
+                market_html += '''
+                <div class="card" style="text-align: center; padding: 30px;">
+                    <p style="color: #94a3b8;">No land sales recorded yet.</p>
+                </div>'''
+            else:
+                # Table header
+                market_html += '''
+                <div class="card" style="padding: 0; overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #1e293b; color: #64748b;">
+                                <th style="padding: 12px; text-align: left;">Plot</th>
+                                <th style="padding: 12px; text-align: left;">Terrain</th>
+                                <th style="padding: 12px; text-align: left;">Type</th>
+                                <th style="padding: 12px; text-align: right;">Price</th>
+                                <th style="padding: 12px; text-align: right;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>'''
+
+                from auth import get_db as get_auth_db, Player as AuthPlayer
+                for sale in recent_sales:
+                    plot = get_land_plot(sale.land_plot_id)
+                    terrain_name = plot.terrain_type.replace("_", " ").title() if plot else "Unknown"
+                    t_color = terrain_colors.get(plot.terrain_type, "#64748b") if plot else "#64748b"
+                    sale_type_badge = '<span style="color: #f59e0b;">Auction</span>' if sale.sale_type == "government" else '<span style="color: #a855f7;">Player</span>'
+                    sale_date = sale.sold_at.strftime("%b %d, %H:%M") if sale.sold_at else "N/A"
+
+                    market_html += f'''
+                            <tr style="border-bottom: 1px solid #0f172a;">
+                                <td style="padding: 10px 12px; color: #e5e7eb;">#{sale.land_plot_id}</td>
+                                <td style="padding: 10px 12px; color: {t_color};">{terrain_name}</td>
+                                <td style="padding: 10px 12px;">{sale_type_badge}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: #22c55e; font-weight: bold;">${sale.price:,.0f}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: #64748b;">{sale_date}</td>
+                            </tr>'''
+
+                market_html += '</tbody></table></div>'
+
+        # Land Bank status (always shown at bottom)
         if bank_plots:
             market_html += f'''
-            <div style="margin-top: 40px; padding: 15px; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px;">
-                <h3 style="color: #64748b; font-size: 0.9rem;">Land Bank Status</h3>
-                <p style="color: #64748b; font-size: 0.85rem;">{len(bank_plots)} unsold plot(s) awaiting re-auction</p>
+            <div style="margin-top: 24px; padding: 12px 16px; background: #0f172a; border: 1px solid #1e293b;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: bold;">Land Bank</div>
+                        <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">{len(bank_plots)} unsold plot(s) awaiting re-auction. These will automatically appear as new auctions soon.</div>
+                    </div>
+                </div>
             </div>'''
-        
+
         return shell("Land Market", market_html, player.cash_balance, player.id)
     except Exception as e:
         import traceback
