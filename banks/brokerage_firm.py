@@ -247,7 +247,7 @@ IPO_CONFIG = {
     },
     IPOType.DUAL_CLASS: {
         "name": "Dual-Class Structure",
-        "description": "Issue Class B shares to public while keeping Class A shares for yourself. Founder retains majority ownership.",
+        "description": "Sell shares to the public while keeping a separate founder stake. You must retain at least 51% ownership.",
         "share_class": ShareClass.CLASS_B,
         "founder_class": ShareClass.CLASS_A,
         "firm_underwritten": True,
@@ -1129,51 +1129,55 @@ def create_player_ipo(
     total_shares: int,
     share_class: str = None,
     dividend_config: list = None
-) -> Optional[CompanyShares]:
-    """Create an IPO for a player's holding company."""
+):
+    """Create an IPO for a player's holding company.
+
+    Returns (CompanyShares, None) on success, or (None, error_message) on failure.
+    """
     db = get_db()
     try:
         ticker_symbol = ticker_symbol.upper().strip()
         if len(ticker_symbol) < 2 or len(ticker_symbol) > 5:
-            return None
-        
+            return None, "Ticker symbol must be 2-5 characters."
+
         existing = db.query(CompanyShares).filter(
             CompanyShares.ticker_symbol == ticker_symbol
         ).first()
         if existing:
-            return None
-        
+            return None, f"Ticker symbol '{ticker_symbol}' is already taken."
+
         existing_company = db.query(CompanyShares).filter(
             CompanyShares.founder_id == founder_id,
             CompanyShares.is_delisted == False
         ).first()
         if existing_company:
-            return None
-        
+            return None, "You already have a public company. Delist it first to create a new one."
+
         valuation = calculate_player_company_valuation(founder_id)
         total_valuation = valuation["total_valuation"]
-        
+
         config = IPO_CONFIG.get(ipo_type)
         if not config:
-            return None
-        
-        if total_valuation < config.get("min_valuation", 25000):
-            return None
-        
+            return None, "Invalid IPO type selected."
+
+        min_val = config.get("min_valuation", 25000)
+        if total_valuation < min_val:
+            return None, f"Your company valuation (${total_valuation:,.0f}) is below the ${min_val:,.0f} minimum for {config['name']}."
+
         max_float = int(total_shares * config["max_float_pct"])
         if shares_to_offer > max_float:
-            return None
-        
+            return None, f"You can offer at most {max_float:,} shares ({config['max_float_pct']*100:.0f}% of total) for {config['name']}."
+
         if shares_to_offer < config["min_shares"]:
-            return None
-        
+            return None, f"{config['name']} requires offering at least {config['min_shares']:,} shares."
+
         firm = get_firm_entity()
         if config.get("firm_underwritten") and not firm.is_accepting_ipos:
-            return None
-        
+            return None, "The Firm is not currently accepting new underwritten IPOs. Its cash reserves are too low. Try again later or use a Direct Listing instead."
+
         share_price = total_valuation / total_shares
         actual_share_class = share_class or config["share_class"].value
-        
+
         if ipo_type == IPOType.DIRECT_LISTING:
             return _process_direct_listing_ipo(
                 db, founder_id, company_name, ticker_symbol, config,
@@ -1192,10 +1196,10 @@ def create_player_ipo(
                 shares_to_offer, total_shares, share_price, actual_share_class,
                 dividend_config, total_valuation
             )
-    
+
     except Exception as e:
         print(f"[{BANK_NAME}] IPO error: {e}")
-        return None
+        return None, f"An unexpected error occurred: {e}"
     finally:
         db.close()
 
