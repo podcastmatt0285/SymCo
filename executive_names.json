@@ -1,0 +1,54 @@
+{
+    "first_names": [
+        "James", "Maria", "Kenji", "Aisha", "Wei",
+        "Fatima", "Hiroshi", "Oluwaseun", "Priya", "Carlos",
+        "Yuki", "DeAndre", "Mei", "Amara", "Raj",
+        "Sakura", "Kwame", "Lena", "Takeshi", "Imani",
+        "Chen", "Aaliyah", "Sven", "Chidinma", "Ravi",
+        "Yuna", "Malcolm", "Ling", "Nneka", "Dmitri",
+        "Haruto", "Zuri", "Ananya", "Giovanni", "Jamal",
+        "Suki", "Olumide", "Isabella", "Kofi", "Hana",
+        "Darnell", "Xiao", "Thandiwe", "Akira", "Latasha",
+        "Jin", "Emeka", "Sofia", "Kenichi", "Adaeze",
+        "Pierre", "Rashida", "Bjorn", "Yoko", "Tyrone",
+        "Gabriela", "Obinna", "Mika", "Alejandro", "Naomi"
+    ],
+    "last_names": [
+        "Nakamura", "Washington", "Chen", "Okafor", "Patel",
+        "Tanaka", "Williams", "Zhang", "Adeyemi", "Gupta",
+        "Yamamoto", "Johnson", "Li", "Nwachukwu", "Sharma",
+        "Watanabe", "Robinson", "Wang", "Okonkwo", "Singh",
+        "Sato", "Thompson", "Liu", "Adesanya", "Mukherjee",
+        "Suzuki", "Jackson", "Kim", "Mensah", "Johansson",
+        "Takahashi", "Garcia", "Nguyen", "Abara", "Martinez",
+        "Kobayashi", "Anderson", "Park", "Diop", "Santos",
+        "Ito", "Brown", "Tran", "Owusu", "Mueller",
+        "Fujita", "Davis", "Huang", "Okoro", "Petrov",
+        "Morales", "Otieno", "Dubois", "Eriksson", "Costa",
+        "Hernandez", "Al-Rashid", "Osei", "Bergman", "Volkov"
+    ],
+    "special_titles": [
+        "The Visionary",
+        "The Maverick",
+        "The Prodigy",
+        "The Oracle",
+        "The Titan",
+        "The Shark",
+        "The Strategist",
+        "The Rainmaker",
+        "The Alchemist",
+        "The Phenom"
+    ],
+    "special_flavor": [
+        "Once turned a bankrupt startup into a Fortune 500 company overnight.",
+        "Holds seven patents and two PhDs before age 30.",
+        "Known for closing billion-dollar deals on a handshake.",
+        "Former child prodigy who coded their first OS at age 12.",
+        "Legendary for tripling profits at every company they've touched.",
+        "Their management style has been studied at Harvard Business School.",
+        "Quit a cushy CEO role to prove they could do it all over again.",
+        "Rumored to have predicted three market crashes before they happened.",
+        "Built an empire from a garage with $500 and sheer willpower.",
+        "The last executive who faced them in negotiations retired early."
+    ]
+}

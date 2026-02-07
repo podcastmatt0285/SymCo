@@ -488,6 +488,11 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <a href="/banks" class="btn-blue">Banking</a>
             </div>
             <div class="card">
+                <h3>Executives</h3>
+                <p>Hire and manage high-level employees</p>
+                <a href="/executives" class="btn-purple" style="display:inline-block;padding:10px 20px;background:#c084fc;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">Executives</a>
+            </div>
+            <div class="card">
                 <h3>Stats & Leaderboard</h3>
                 <p>Statistics, Leaderboard and Data</p>
                 <a href="/stats" class="btn-gold">📊 Stats 🪙</a>
