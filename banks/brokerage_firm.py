@@ -194,7 +194,7 @@ CREDIT_MODIFIERS = {
 IPO_CONFIG = {
     IPOType.DIRECT_LISTING: {
         "name": "Direct Listing",
-        "description": "List shares directly on exchange. Low cost, you sell at market price.",
+        "description": "List shares directly on exchange. Flat $5,000 fee, you sell at market price.",
         "share_class": ShareClass.COMMON,
         "firm_underwritten": False,
         "fee_type": "flat",
@@ -202,8 +202,6 @@ IPO_CONFIG = {
         "min_shares": 1000,
         "max_float_pct": 0.80,
         "min_valuation": 25000,
-        "voting_rights": "1 vote per share",
-        "dividend_priority": "Standard",
     },
     IPOType.FIRM_UNDERWRITTEN: {
         "name": "Firm Underwritten IPO",
@@ -214,54 +212,42 @@ IPO_CONFIG = {
         "min_shares": 10000,
         "max_float_pct": 0.60,
         "min_valuation": 50000,
-        "voting_rights": "1 vote per share",
-        "dividend_priority": "Standard",
     },
     IPOType.PREFERRED_OFFERING: {
         "name": "Preferred Stock Offering",
-        "description": "Issue preferred shares with guaranteed dividends and liquidation priority.",
+        "description": "Issue preferred shares with a guaranteed 8% annual dividend paid quarterly.",
         "share_class": ShareClass.PREFERRED,
         "firm_underwritten": True,
         "discount_rate": 0.05,
         "min_shares": 5000,
         "max_float_pct": 0.40,
         "min_valuation": 75000,
-        "voting_rights": "No voting rights",
-        "dividend_priority": "First priority - paid before common",
         "fixed_dividend_rate": 0.08,
-        "liquidation_preference": 1.0,
     },
     IPOType.SERIES_A_GROWTH: {
         "name": "Series A Growth Shares",
-        "description": "Convertible shares for growth investors. Convert to common at 1:1.5 ratio.",
+        "description": "Growth-stage shares sold at a steep 10% discount. Low float limit keeps founder ownership high.",
         "share_class": ShareClass.SERIES_A,
         "firm_underwritten": True,
         "discount_rate": 0.10,
         "min_shares": 10000,
         "max_float_pct": 0.30,
         "min_valuation": 100000,
-        "voting_rights": "1 vote per share (as-converted basis)",
-        "dividend_priority": "Same as common",
-        "conversion_ratio": 1.5,
-        "anti_dilution": True,
     },
     IPOType.SERIES_B_INCOME: {
         "name": "Series B Income Shares",
-        "description": "High fixed dividends for income seekers. 12% annual dividend.",
+        "description": "High fixed dividends for income seekers. 12% annual dividend paid quarterly.",
         "share_class": ShareClass.SERIES_B,
         "firm_underwritten": True,
         "discount_rate": 0.03,
         "min_shares": 5000,
         "max_float_pct": 0.25,
         "min_valuation": 100000,
-        "voting_rights": "No voting rights",
-        "dividend_priority": "Second priority - after preferred, before common",
         "fixed_dividend_rate": 0.12,
-        "callable": True,
     },
     IPOType.DUAL_CLASS: {
         "name": "Dual-Class Structure",
-        "description": "Issue Class B shares to public while keeping Class A (10x voting) for yourself.",
+        "description": "Issue Class B shares to public while keeping Class A shares for yourself. Founder retains majority ownership.",
         "share_class": ShareClass.CLASS_B,
         "founder_class": ShareClass.CLASS_A,
         "firm_underwritten": True,
@@ -269,8 +255,6 @@ IPO_CONFIG = {
         "min_shares": 20000,
         "max_float_pct": 0.70,
         "min_valuation": 150000,
-        "voting_rights": "Class A: 10 votes/share, Class B: 1 vote/share",
-        "dividend_priority": "Equal dividends per share",
         "founder_control_minimum": 0.51,
     },
 }
@@ -1329,10 +1313,7 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
         ipo_type=ipo_type.value,
         ipo_date=datetime.utcnow(),
         ipo_valuation=total_valuation,
-        fixed_dividend_rate=config.get("fixed_dividend_rate"),
-        conversion_ratio=config.get("conversion_ratio"),
-        liquidation_preference=config.get("liquidation_preference"),
-        is_callable=config.get("callable", False)
+        fixed_dividend_rate=config.get("fixed_dividend_rate")
     )
     
     db.add(company)
@@ -1404,14 +1385,11 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     
     class_b_shares = shares_to_offer
     class_a_shares = total_shares - shares_to_offer
-    
-    founder_votes = class_a_shares * 10
-    public_votes = class_b_shares * 1
-    total_votes = founder_votes + public_votes
-    founder_voting_pct = founder_votes / total_votes
-    
+
+    founder_ownership_pct = class_a_shares / total_shares
+
     min_control = config.get("founder_control_minimum", 0.51)
-    if founder_voting_pct < min_control:
+    if founder_ownership_pct < min_control:
         return None
     
     company = CompanyShares(
@@ -1488,7 +1466,7 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     
     modify_credit_score(founder_id, "ipo_completed")
     
-    print(f"[{BANK_NAME}] 🎉 DUAL-CLASS: {ticker_symbol} (founder {founder_voting_pct*100:.0f}% voting)")
+    print(f"[{BANK_NAME}] 🎉 DUAL-CLASS: {ticker_symbol} (founder {class_a_shares} Class A, public {class_b_shares} Class B)")
     
     return company
 
@@ -2512,9 +2490,9 @@ def initialize():
     print(f"[{BANK_NAME}]   • Direct Listing ($5k flat)")
     print(f"[{BANK_NAME}]   • Firm Underwritten (7% spread)")
     print(f"[{BANK_NAME}]   • Preferred Stock (8% fixed dividend)")
-    print(f"[{BANK_NAME}]   • Series A Growth (1.5x convertible)")
+    print(f"[{BANK_NAME}]   • Series A Growth (10% discount, low float)")
     print(f"[{BANK_NAME}]   • Series B Income (12% fixed dividend)")
-    print(f"[{BANK_NAME}]   • Dual-Class (10x voting control)")
+    print(f"[{BANK_NAME}]   • Dual-Class (founder retains Class A shares)")
     print(f"[{BANK_NAME}] SCCE Commodity Lending: ACTIVE")
     print(f"[{BANK_NAME}] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
