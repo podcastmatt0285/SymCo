@@ -492,6 +492,11 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <p>Hire and manage high-level employees</p>
                 <a href="/executives" class="btn-purple" style="display:inline-block;padding:10px 20px;background:#c084fc;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">Executives</a>
             </div>
+            <div class="card" style="border-color: #f59e0b;">
+                <h3 style="color: #f59e0b;">Peer to Peer</h3>
+                <p>Contracts, chatrooms, and direct messages</p>
+                <a href="/p2p" style="display:inline-block;padding:10px 20px;background:#f59e0b;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">P2P Network</a>
+            </div>
             <div class="card">
                 <h3>Stats & Leaderboard</h3>
                 <p>Statistics, Leaderboard and Data</p>
