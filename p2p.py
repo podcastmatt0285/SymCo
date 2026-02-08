@@ -60,8 +60,17 @@ BREACH_PENALTY_DAMAGED_PCT = 0.50  # 50% of total contract value to damaged part
 # Grace period before a missed delivery becomes a breach (in ticks)
 DELIVERY_GRACE_PERIOD = 360  # 30 minutes real time
 
-# Bidding duration for contract market listings (in ticks)
-DEFAULT_BID_DURATION = 4320  # 6 real hours
+# Bidding duration options (in ticks) - creator picks one when listing
+BID_DURATION_OPTIONS = {
+    "1h": {"ticks": 720, "label": "1 Hour"},
+    "6h": {"ticks": 4320, "label": "6 Hours"},
+    "12h": {"ticks": 8640, "label": "12 Hours"},
+    "24h": {"ticks": 17280, "label": "24 Hours"},
+    "48h": {"ticks": 34560, "label": "48 Hours"},
+}
+
+# Fee to relist a contract you hold (money sink)
+RELIST_FEE = 2500.0  # $2,500 paid to government
 
 
 # ==========================
@@ -91,7 +100,8 @@ class Contract(Base):
     __tablename__ = "p2p_contracts"
 
     id = Column(Integer, primary_key=True, index=True)
-    creator_id = Column(Integer, index=True, nullable=False)       # Player who created the contract
+    creator_id = Column(Integer, index=True, nullable=False)       # Player who originally created the contract
+    lister_id = Column(Integer, index=True, nullable=True)         # Player who listed it (creator initially, or relister)
     holder_id = Column(Integer, index=True, nullable=True)         # Player who holds/fulfills the contract (set when won)
     buyer_id = Column(Integer, index=True, nullable=True)          # Player who receives deliveries (the creator becomes buyer after selling)
 
@@ -140,7 +150,7 @@ class ContractBid(Base):
     id = Column(Integer, primary_key=True, index=True)
     contract_id = Column(Integer, index=True, nullable=False)
     bidder_id = Column(Integer, index=True, nullable=False)
-    bid_amount = Column(Float, nullable=False)                     # Not a cash bid - this is reputation/willingness
+    bid_amount = Column(Float, nullable=False)                     # Cash bid amount - highest wins, winner pays lister
     status = Column(String, default=BidStatus.ACTIVE)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -270,12 +280,17 @@ def create_contract(creator_id: int, items: list, delivery_interval: str,
     return contract_id
 
 
-def list_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0) -> bool:
+def list_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
+                   bid_duration: str = "6h") -> bool:
     """
     List a DRAFT contract on the trading market.
     The creator becomes the buyer (they want someone to fulfill deliveries to them).
+    Creator sets the minimum bid and bid closure time.
     """
     import app as app_mod
+
+    if bid_duration not in BID_DURATION_OPTIONS:
+        return False
 
     db = get_db()
     contract = db.query(Contract).filter(
@@ -288,19 +303,23 @@ def list_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0) ->
         db.close()
         return False
 
+    duration_ticks = BID_DURATION_OPTIONS[bid_duration]["ticks"]
+
     contract.status = ContractStatus.LISTED
+    contract.lister_id = player_id
     contract.buyer_id = player_id  # Creator becomes the buyer
     contract.listed_at = datetime.utcnow()
-    contract.bid_end_tick = app_mod.current_tick + DEFAULT_BID_DURATION
-    contract.minimum_bid = minimum_bid
+    contract.bid_end_tick = app_mod.current_tick + duration_ticks
+    contract.minimum_bid = max(0.0, minimum_bid)
     db.commit()
     db.close()
     return True
 
 
-def place_bid(contract_id: int, bidder_id: int) -> Optional[str]:
+def place_bid(contract_id: int, bidder_id: int, bid_amount: float) -> Optional[str]:
     """
-    Place a bid on a listed contract. Bids are free.
+    Place a bid on a listed contract. Bidding is free (no cash held/escrowed).
+    Highest bid wins when bidding closes. Winner pays their bid to the lister.
     Returns None on success, error message on failure.
     """
     db = get_db()
@@ -313,11 +332,15 @@ def place_bid(contract_id: int, bidder_id: int) -> Optional[str]:
         db.close()
         return "Contract not found or not listed."
 
-    if contract.creator_id == bidder_id:
+    if contract.lister_id == bidder_id:
         db.close()
-        return "Cannot bid on your own contract."
+        return "Cannot bid on your own listing."
 
-    # Check if already bid
+    if bid_amount < contract.minimum_bid:
+        db.close()
+        return f"Bid must be at least ${contract.minimum_bid:,.2f}."
+
+    # Check if already has an active bid - allow updating (increase only)
     existing = db.query(ContractBid).filter(
         ContractBid.contract_id == contract_id,
         ContractBid.bidder_id == bidder_id,
@@ -325,13 +348,18 @@ def place_bid(contract_id: int, bidder_id: int) -> Optional[str]:
     ).first()
 
     if existing:
+        if bid_amount <= existing.bid_amount:
+            db.close()
+            return f"New bid must be higher than your current bid of ${existing.bid_amount:,.2f}."
+        existing.bid_amount = bid_amount
+        db.commit()
         db.close()
-        return "You already have an active bid on this contract."
+        return None
 
     bid = ContractBid(
         contract_id=contract_id,
         bidder_id=bidder_id,
-        bid_amount=0.0,  # Free bidding
+        bid_amount=bid_amount,
     )
     db.add(bid)
     db.commit()
@@ -342,10 +370,11 @@ def place_bid(contract_id: int, bidder_id: int) -> Optional[str]:
 def resolve_listing(contract_id: int) -> bool:
     """
     Resolve a listing whose bid period has ended.
-    Picks a random winner from all active bids.
+    Highest bid wins. Winner pays their bid amount to the lister.
     Returns True if a winner was found.
     """
-    import random
+    from auth import get_db as get_auth_db, Player, transfer_cash
+    from stats_ux import log_transaction
 
     db = get_db()
     contract = db.query(Contract).filter(
@@ -360,19 +389,40 @@ def resolve_listing(contract_id: int) -> bool:
     bids = db.query(ContractBid).filter(
         ContractBid.contract_id == contract_id,
         ContractBid.status == BidStatus.ACTIVE
-    ).all()
+    ).order_by(ContractBid.bid_amount.desc()).all()
 
     if not bids:
         # No bids - return to draft
         contract.status = ContractStatus.DRAFT
         contract.listed_at = None
         contract.bid_end_tick = None
+        contract.lister_id = None
         db.commit()
         db.close()
         return False
 
-    # Pick random winner
-    winner_bid = random.choice(bids)
+    # Highest bid wins - try each in descending order in case top bidder can't pay
+    winner_bid = None
+    for bid in bids:
+        auth_db = get_auth_db()
+        bidder = auth_db.query(Player).filter(Player.id == bid.bidder_id).first()
+        if bidder and bidder.cash_balance >= bid.bid_amount:
+            winner_bid = bid
+            auth_db.close()
+            break
+        auth_db.close()
+
+    if not winner_bid:
+        # No bidder can afford their bid - return to draft
+        for bid in bids:
+            bid.status = BidStatus.LOST
+        contract.status = ContractStatus.DRAFT
+        contract.listed_at = None
+        contract.bid_end_tick = None
+        contract.lister_id = None
+        db.commit()
+        db.close()
+        return False
 
     # Mark all bids
     for bid in bids:
@@ -380,6 +430,26 @@ def resolve_listing(contract_id: int) -> bool:
             bid.status = BidStatus.WON
         else:
             bid.status = BidStatus.LOST
+
+    # Transfer bid payment: winner -> lister
+    lister_id = contract.lister_id
+    if winner_bid.bid_amount > 0:
+        transfer_cash(winner_bid.bidder_id, lister_id, winner_bid.bid_amount)
+
+        log_transaction(
+            player_id=winner_bid.bidder_id,
+            transaction_type="p2p_contract_bid_payment",
+            category="money",
+            amount=-winner_bid.bid_amount,
+            description=f"Won contract #{contract.id} - bid payment: ${winner_bid.bid_amount:,.0f}"
+        )
+        log_transaction(
+            player_id=lister_id,
+            transaction_type="p2p_contract_bid_received",
+            category="money",
+            amount=winner_bid.bid_amount,
+            description=f"Contract #{contract.id} sold - bid received: ${winner_bid.bid_amount:,.0f}"
+        )
 
     # Activate the contract
     import app as app_mod
@@ -393,6 +463,71 @@ def resolve_listing(contract_id: int) -> bool:
     db.commit()
     db.close()
     return True
+
+
+def relist_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
+                     bid_duration: str = "6h") -> Optional[str]:
+    """
+    Relist a contract you hold. Costs RELIST_FEE paid to government.
+    The holder becomes the lister, contract goes back to LISTED.
+    When someone wins it, they become the new holder.
+    Returns None on success, error string on failure.
+    """
+    import app as app_mod
+    from auth import get_db as get_auth_db, Player
+    from stats_ux import log_transaction
+
+    if bid_duration not in BID_DURATION_OPTIONS:
+        return "Invalid bid duration."
+
+    db = get_db()
+    contract = db.query(Contract).filter(
+        Contract.id == contract_id,
+        Contract.holder_id == player_id,
+        Contract.status == ContractStatus.ACTIVE
+    ).first()
+
+    if not contract:
+        db.close()
+        return "Contract not found, not yours, or not active."
+
+    # Charge relist fee
+    auth_db = get_auth_db()
+    player = auth_db.query(Player).filter(Player.id == player_id).first()
+    if not player or player.cash_balance < RELIST_FEE:
+        auth_db.close()
+        db.close()
+        return f"Insufficient funds. Relisting costs ${RELIST_FEE:,.0f}."
+
+    gov = auth_db.query(Player).filter(Player.id == 0).first()
+    player.cash_balance -= RELIST_FEE
+    if gov:
+        gov.cash_balance += RELIST_FEE
+    auth_db.commit()
+    auth_db.close()
+
+    log_transaction(
+        player_id=player_id,
+        transaction_type="p2p_relist_fee",
+        category="money",
+        amount=-RELIST_FEE,
+        description=f"Contract #{contract_id} relist fee: ${RELIST_FEE:,.0f}"
+    )
+
+    # Move contract to listed
+    duration_ticks = BID_DURATION_OPTIONS[bid_duration]["ticks"]
+
+    contract.status = ContractStatus.LISTED
+    contract.lister_id = player_id
+    contract.holder_id = None
+    contract.listed_at = datetime.utcnow()
+    contract.bid_end_tick = app_mod.current_tick + duration_ticks
+    contract.minimum_bid = max(0.0, minimum_bid)
+    contract.next_delivery_tick = None  # Pause deliveries while listed
+
+    db.commit()
+    db.close()
+    return None
 
 
 def process_delivery(contract_id: int, current_tick: int) -> Optional[str]:
