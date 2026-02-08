@@ -103,16 +103,25 @@ class Contract(Base):
     creator_id = Column(Integer, index=True, nullable=False)       # Player who originally created the contract
     lister_id = Column(Integer, index=True, nullable=True)         # Player who listed it (creator initially, or relister)
     holder_id = Column(Integer, index=True, nullable=True)         # Player who holds/fulfills the contract (set when won)
-    buyer_id = Column(Integer, index=True, nullable=True)          # Player who receives deliveries (the creator becomes buyer after selling)
+    buyer_id = Column(Integer, index=True, nullable=True)          # Player who receives deliveries (the creator becomes buyer)
 
     status = Column(String, default=ContractStatus.DRAFT, index=True)
+
+    # Contract mode: "price_bid" or "quantity_bid"
+    # price_bid:    Creator sets items+quantities, max price. Bidders bid lower prices. Lowest wins.
+    # quantity_bid: Creator sets single item, fixed price. Bidders bid higher quantities. Highest wins.
+    contract_mode = Column(String, default="price_bid", nullable=False)
 
     # Contract terms
     delivery_interval = Column(String, nullable=False)             # Key into DELIVERY_INTERVALS
     contract_length = Column(String, nullable=False)               # Key into CONTRACT_LENGTHS
     total_deliveries = Column(Integer, nullable=False)             # Total number of deliveries required
     deliveries_completed = Column(Integer, default=0)              # Deliveries successfully made
-    price_per_delivery = Column(Float, nullable=False)             # $ paid per delivery by buyer to holder
+    price_per_delivery = Column(Float, nullable=True)              # $ paid per delivery (set by creator in qty_bid, by winning bid in price_bid)
+    max_price_per_delivery = Column(Float, nullable=True)          # Ceiling for price_bid mode
+
+    # Listing type: "initial" (bids set contract terms) or "relist" (bids are cash to acquire)
+    listing_type = Column(String, nullable=True)
 
     # Timing
     next_delivery_tick = Column(Integer, nullable=True)            # Tick when next delivery is due
@@ -124,7 +133,7 @@ class Contract(Base):
     # Market listing
     listed_at = Column(DateTime, nullable=True)
     bid_end_tick = Column(Integer, nullable=True)                  # Tick when bidding ends
-    minimum_bid = Column(Float, default=0.0)                       # Minimum bid (can be $0)
+    minimum_bid = Column(Float, default=0.0)                       # Floor for bids (context depends on mode)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -150,7 +159,7 @@ class ContractBid(Base):
     id = Column(Integer, primary_key=True, index=True)
     contract_id = Column(Integer, index=True, nullable=False)
     bidder_id = Column(Integer, index=True, nullable=False)
-    bid_amount = Column(Float, nullable=False)                     # Cash bid amount - highest wins, winner pays lister
+    bid_amount = Column(Float, nullable=False)                     # Meaning depends on context: price, quantity, or cash
     status = Column(String, default=BidStatus.ACTIVE)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -235,12 +244,13 @@ def charge_p2p_access(player_id: int) -> bool:
     return True
 
 
-def create_contract(creator_id: int, items: list, delivery_interval: str,
-                    contract_length: str, price_per_delivery: float) -> Optional[int]:
+def create_contract_price_bid(creator_id: int, items: list, delivery_interval: str,
+                               contract_length: str, max_price: float) -> Optional[int]:
     """
-    Create a new contract in DRAFT status.
+    Create a Price Bid contract (DRAFT).
+    Creator defines items+quantities and a max price per delivery.
+    Bidders will compete by offering lower prices. Lowest wins.
     items: list of {"item_type": str, "quantity": float} (max 3)
-    Returns contract ID or None on failure.
     """
     if delivery_interval not in DELIVERY_INTERVALS:
         return None
@@ -248,7 +258,7 @@ def create_contract(creator_id: int, items: list, delivery_interval: str,
         return None
     if len(items) < 1 or len(items) > 3:
         return None
-    if price_per_delivery <= 0:
+    if max_price <= 0:
         return None
 
     total_deliveries = CONTRACT_LENGTHS[contract_length]["deliveries"]
@@ -257,10 +267,12 @@ def create_contract(creator_id: int, items: list, delivery_interval: str,
     contract = Contract(
         creator_id=creator_id,
         status=ContractStatus.DRAFT,
+        contract_mode="price_bid",
         delivery_interval=delivery_interval,
         contract_length=contract_length,
         total_deliveries=total_deliveries,
-        price_per_delivery=price_per_delivery,
+        max_price_per_delivery=max_price,
+        price_per_delivery=None,  # Set by winning bid
     )
     db.add(contract)
     db.commit()
@@ -280,12 +292,55 @@ def create_contract(creator_id: int, items: list, delivery_interval: str,
     return contract_id
 
 
+def create_contract_quantity_bid(creator_id: int, item_type: str, delivery_interval: str,
+                                  contract_length: str, price_per_delivery: float) -> Optional[int]:
+    """
+    Create a Quantity Bid contract (DRAFT).
+    Creator defines a single item type and a fixed price per delivery.
+    Bidders will compete by offering more quantity. Highest wins.
+    """
+    if delivery_interval not in DELIVERY_INTERVALS:
+        return None
+    if contract_length not in CONTRACT_LENGTHS:
+        return None
+    if price_per_delivery <= 0:
+        return None
+
+    total_deliveries = CONTRACT_LENGTHS[contract_length]["deliveries"]
+
+    db = get_db()
+    contract = Contract(
+        creator_id=creator_id,
+        status=ContractStatus.DRAFT,
+        contract_mode="quantity_bid",
+        delivery_interval=delivery_interval,
+        contract_length=contract_length,
+        total_deliveries=total_deliveries,
+        price_per_delivery=price_per_delivery,
+    )
+    db.add(contract)
+    db.commit()
+    db.refresh(contract)
+
+    # Single item placeholder - quantity set by winning bid
+    ci = ContractItem(
+        contract_id=contract.id,
+        item_type=item_type,
+        quantity_per_delivery=0.0,  # Set by winning bid
+    )
+    db.add(ci)
+    db.commit()
+    contract_id = contract.id
+    db.close()
+    return contract_id
+
+
 def list_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
                    bid_duration: str = "6h") -> bool:
     """
-    List a DRAFT contract on the trading market.
-    The creator becomes the buyer (they want someone to fulfill deliveries to them).
-    Creator sets the minimum bid and bid closure time.
+    List a DRAFT contract on the trading market (initial listing).
+    Bids determine contract terms (price or quantity depending on mode).
+    The creator becomes the buyer.
     """
     import app as app_mod
 
@@ -306,6 +361,7 @@ def list_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
     duration_ticks = BID_DURATION_OPTIONS[bid_duration]["ticks"]
 
     contract.status = ContractStatus.LISTED
+    contract.listing_type = "initial"
     contract.lister_id = player_id
     contract.buyer_id = player_id  # Creator becomes the buyer
     contract.listed_at = datetime.utcnow()
@@ -318,10 +374,16 @@ def list_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
 
 def place_bid(contract_id: int, bidder_id: int, bid_amount: float) -> Optional[str]:
     """
-    Place a bid on a listed contract. Bidding is free (no cash held/escrowed).
-    Highest bid wins when bidding closes. Winner pays their bid to the lister.
+    Place a bid on a listed contract. Bidding is free (no cash escrowed).
+    Bid meaning depends on context:
+      - price_bid initial: bid is a price per delivery (lower is better, must be <= max_price)
+      - quantity_bid initial: bid is quantity per delivery (higher is better)
+      - relist: bid is cash offer to acquire the contract (higher is better)
     Returns None on success, error message on failure.
     """
+    if bid_amount <= 0:
+        return "Bid must be greater than zero."
+
     db = get_db()
     contract = db.query(Contract).filter(
         Contract.id == contract_id,
@@ -336,11 +398,29 @@ def place_bid(contract_id: int, bidder_id: int, bid_amount: float) -> Optional[s
         db.close()
         return "Cannot bid on your own listing."
 
-    if bid_amount < contract.minimum_bid:
-        db.close()
-        return f"Bid must be at least ${contract.minimum_bid:,.2f}."
+    # Validate bid based on context
+    is_relist = contract.listing_type == "relist"
 
-    # Check if already has an active bid - allow updating (increase only)
+    if is_relist:
+        # Cash bid - must be >= minimum_bid
+        if bid_amount < contract.minimum_bid:
+            db.close()
+            return f"Bid must be at least ${contract.minimum_bid:,.2f}."
+    elif contract.contract_mode == "price_bid":
+        # Price bid - must be <= max price and >= minimum_bid (floor set by creator)
+        if contract.max_price_per_delivery and bid_amount > contract.max_price_per_delivery:
+            db.close()
+            return f"Bid cannot exceed the max price of ${contract.max_price_per_delivery:,.2f}/delivery."
+        if bid_amount < contract.minimum_bid:
+            db.close()
+            return f"Bid must be at least ${contract.minimum_bid:,.2f}/delivery."
+    elif contract.contract_mode == "quantity_bid":
+        # Quantity bid - must be >= minimum_bid (minimum quantity floor)
+        if bid_amount < contract.minimum_bid:
+            db.close()
+            return f"Must offer at least {contract.minimum_bid:,.1f} units per delivery."
+
+    # Check if already has an active bid - allow updating
     existing = db.query(ContractBid).filter(
         ContractBid.contract_id == contract_id,
         ContractBid.bidder_id == bidder_id,
@@ -348,9 +428,17 @@ def place_bid(contract_id: int, bidder_id: int, bid_amount: float) -> Optional[s
     ).first()
 
     if existing:
-        if bid_amount <= existing.bid_amount:
-            db.close()
-            return f"New bid must be higher than your current bid of ${existing.bid_amount:,.2f}."
+        if is_relist or contract.contract_mode == "quantity_bid":
+            # Higher is better - must increase
+            if bid_amount <= existing.bid_amount:
+                db.close()
+                label = "$" if is_relist else "units"
+                return f"New bid must be higher than your current bid of {existing.bid_amount:,.2f} {label}."
+        else:
+            # price_bid - lower is better - must decrease
+            if bid_amount >= existing.bid_amount:
+                db.close()
+                return f"New bid must be lower than your current bid of ${existing.bid_amount:,.2f}."
         existing.bid_amount = bid_amount
         db.commit()
         db.close()
@@ -370,7 +458,10 @@ def place_bid(contract_id: int, bidder_id: int, bid_amount: float) -> Optional[s
 def resolve_listing(contract_id: int) -> bool:
     """
     Resolve a listing whose bid period has ended.
-    Highest bid wins. Winner pays their bid amount to the lister.
+    For initial listings, the bid sets contract terms:
+      - price_bid: lowest bid wins, sets price_per_delivery
+      - quantity_bid: highest bid wins, sets quantity_per_delivery
+    For relists, highest cash bid wins, winner pays lister.
     Returns True if a winner was found.
     """
     from auth import get_db as get_auth_db, Player, transfer_cash
@@ -386,39 +477,53 @@ def resolve_listing(contract_id: int) -> bool:
         db.close()
         return False
 
-    bids = db.query(ContractBid).filter(
-        ContractBid.contract_id == contract_id,
-        ContractBid.status == BidStatus.ACTIVE
-    ).order_by(ContractBid.bid_amount.desc()).all()
+    is_relist = contract.listing_type == "relist"
+
+    # Sort bids: ascending for price_bid initial (lowest wins), descending otherwise
+    if not is_relist and contract.contract_mode == "price_bid":
+        bids = db.query(ContractBid).filter(
+            ContractBid.contract_id == contract_id,
+            ContractBid.status == BidStatus.ACTIVE
+        ).order_by(ContractBid.bid_amount.asc()).all()
+    else:
+        bids = db.query(ContractBid).filter(
+            ContractBid.contract_id == contract_id,
+            ContractBid.status == BidStatus.ACTIVE
+        ).order_by(ContractBid.bid_amount.desc()).all()
 
     if not bids:
         # No bids - return to draft
         contract.status = ContractStatus.DRAFT
         contract.listed_at = None
         contract.bid_end_tick = None
+        contract.listing_type = None
         contract.lister_id = None
         db.commit()
         db.close()
         return False
 
-    # Highest bid wins - try each in descending order in case top bidder can't pay
+    # For relists, verify winner can afford their cash bid
     winner_bid = None
-    for bid in bids:
-        auth_db = get_auth_db()
-        bidder = auth_db.query(Player).filter(Player.id == bid.bidder_id).first()
-        if bidder and bidder.cash_balance >= bid.bid_amount:
-            winner_bid = bid
+    if is_relist:
+        for bid in bids:
+            auth_db = get_auth_db()
+            bidder = auth_db.query(Player).filter(Player.id == bid.bidder_id).first()
+            if bidder and bidder.cash_balance >= bid.bid_amount:
+                winner_bid = bid
+                auth_db.close()
+                break
             auth_db.close()
-            break
-        auth_db.close()
+    else:
+        # Initial listings - first bid in sorted order wins (no cash check needed)
+        winner_bid = bids[0] if bids else None
 
     if not winner_bid:
-        # No bidder can afford their bid - return to draft
         for bid in bids:
             bid.status = BidStatus.LOST
         contract.status = ContractStatus.DRAFT
         contract.listed_at = None
         contract.bid_end_tick = None
+        contract.listing_type = None
         contract.lister_id = None
         db.commit()
         db.close()
@@ -426,30 +531,36 @@ def resolve_listing(contract_id: int) -> bool:
 
     # Mark all bids
     for bid in bids:
-        if bid.id == winner_bid.id:
-            bid.status = BidStatus.WON
-        else:
-            bid.status = BidStatus.LOST
+        bid.status = BidStatus.WON if bid.id == winner_bid.id else BidStatus.LOST
 
-    # Transfer bid payment: winner -> lister
-    lister_id = contract.lister_id
-    if winner_bid.bid_amount > 0:
-        transfer_cash(winner_bid.bidder_id, lister_id, winner_bid.bid_amount)
-
-        log_transaction(
-            player_id=winner_bid.bidder_id,
-            transaction_type="p2p_contract_bid_payment",
-            category="money",
-            amount=-winner_bid.bid_amount,
-            description=f"Won contract #{contract.id} - bid payment: ${winner_bid.bid_amount:,.0f}"
-        )
-        log_transaction(
-            player_id=lister_id,
-            transaction_type="p2p_contract_bid_received",
-            category="money",
-            amount=winner_bid.bid_amount,
-            description=f"Contract #{contract.id} sold - bid received: ${winner_bid.bid_amount:,.0f}"
-        )
+    # Apply the winning bid
+    if is_relist:
+        # Cash transfer: winner pays lister
+        lister_id = contract.lister_id
+        if winner_bid.bid_amount > 0:
+            transfer_cash(winner_bid.bidder_id, lister_id, winner_bid.bid_amount)
+            log_transaction(
+                player_id=winner_bid.bidder_id,
+                transaction_type="p2p_contract_acquired",
+                category="money",
+                amount=-winner_bid.bid_amount,
+                description=f"Acquired contract #{contract.id} for ${winner_bid.bid_amount:,.0f}"
+            )
+            log_transaction(
+                player_id=lister_id,
+                transaction_type="p2p_contract_sold",
+                category="money",
+                amount=winner_bid.bid_amount,
+                description=f"Sold contract #{contract.id} for ${winner_bid.bid_amount:,.0f}"
+            )
+    elif contract.contract_mode == "price_bid":
+        # Winning bid sets the price per delivery
+        contract.price_per_delivery = winner_bid.bid_amount
+    elif contract.contract_mode == "quantity_bid":
+        # Winning bid sets the quantity on the single contract item
+        item = db.query(ContractItem).filter(ContractItem.contract_id == contract.id).first()
+        if item:
+            item.quantity_per_delivery = winner_bid.bid_amount
 
     # Activate the contract
     import app as app_mod
@@ -514,10 +625,11 @@ def relist_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
         description=f"Contract #{contract_id} relist fee: ${RELIST_FEE:,.0f}"
     )
 
-    # Move contract to listed
+    # Move contract to listed as a relist (bids are cash to acquire)
     duration_ticks = BID_DURATION_OPTIONS[bid_duration]["ticks"]
 
     contract.status = ContractStatus.LISTED
+    contract.listing_type = "relist"
     contract.lister_id = player_id
     contract.holder_id = None
     contract.listed_at = datetime.utcnow()

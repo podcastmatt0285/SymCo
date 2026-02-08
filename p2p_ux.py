@@ -245,18 +245,30 @@ def _render_trading_market(player, current_tick):
         </div>
         """
 
-    html = '<h3>Contract Trading Market</h3><p style="color: #64748b; margin-bottom: 16px;">Browse and bid on available contracts. Highest bid wins when bidding closes. Winner pays their bid to the lister.</p>'
+    html = '<h3>Contract Trading Market</h3><p style="color: #64748b; margin-bottom: 16px;">Browse and bid on available contracts. For new listings, bids set the contract terms. For relisted contracts, bids are cash offers to acquire.</p>'
 
     auth_db = get_auth_db()
 
     for contract in listed:
         items = db.query(ContractItem).filter(ContractItem.contract_id == contract.id).all()
-        active_bids = db.query(ContractBid).filter(
-            ContractBid.contract_id == contract.id,
-            ContractBid.status == BidStatus.ACTIVE
-        ).order_by(ContractBid.bid_amount.desc()).all()
+        is_relist = contract.listing_type == "relist"
+        is_price_bid = contract.contract_mode == "price_bid"
+
+        # Sort bids appropriately: price_bid initial = ascending (lowest best), otherwise descending
+        if not is_relist and is_price_bid:
+            active_bids = db.query(ContractBid).filter(
+                ContractBid.contract_id == contract.id,
+                ContractBid.status == BidStatus.ACTIVE
+            ).order_by(ContractBid.bid_amount.asc()).all()
+            best_bid = active_bids[0].bid_amount if active_bids else None
+        else:
+            active_bids = db.query(ContractBid).filter(
+                ContractBid.contract_id == contract.id,
+                ContractBid.status == BidStatus.ACTIVE
+            ).order_by(ContractBid.bid_amount.desc()).all()
+            best_bid = active_bids[0].bid_amount if active_bids else None
+
         bid_count = len(active_bids)
-        highest_bid = active_bids[0].bid_amount if active_bids else 0.0
 
         lister = auth_db.query(Player).filter(Player.id == contract.lister_id).first()
         lister_name = lister.business_name if lister else "Unknown"
@@ -272,40 +284,79 @@ def _render_trading_market(player, current_tick):
 
         interval_info = DELIVERY_INTERVALS.get(contract.delivery_interval, {})
         length_info = CONTRACT_LENGTHS.get(contract.contract_length, {})
-        total_value = contract.price_per_delivery * contract.total_deliveries
 
+        # Build items display
         items_html = ""
         for item in items:
-            items_html += f'<span style="display: inline-block; background: #1e293b; padding: 2px 8px; border-radius: 3px; margin: 2px; font-size: 0.8rem;">{item.quantity_per_delivery:.1f}x {format_item_name(item.item_type)}</span>'
+            qty_display = f"{item.quantity_per_delivery:.1f}x " if item.quantity_per_delivery > 0 else "(qty set by bid) "
+            items_html += f'<span style="display: inline-block; background: #1e293b; padding: 2px 8px; border-radius: 3px; margin: 2px; font-size: 0.8rem;">{qty_display}{format_item_name(item.item_type)}</span>'
 
-        # Determine minimum for next bid
-        min_next_bid = max(contract.minimum_bid, highest_bid + 1) if highest_bid > 0 else contract.minimum_bid
+        # Mode badge and context-specific info
+        if is_relist:
+            mode_badge = '<span class="badge" style="background: #f59e0b; color: #020617;">RELIST</span>'
+            price_display = f'<span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span>' if contract.price_per_delivery else "TBD"
+            bid_label = "Highest Offer"
+            bid_value = f"${best_bid:,.0f}" if best_bid else "No bids"
+            bid_hint = "Cash offer ($)"
+        elif is_price_bid:
+            mode_badge = '<span class="badge" style="background: #c084fc; color: #020617;">PRICE BID</span>'
+            price_display = f'Max <span style="color: #f59e0b;">${contract.max_price_per_delivery:,.2f}</span>' if contract.max_price_per_delivery else "No cap"
+            bid_label = "Best Price"
+            bid_value = f"${best_bid:,.2f}/del" if best_bid else "No bids"
+            bid_hint = "Your price ($/delivery)"
+        else:
+            mode_badge = '<span class="badge" style="background: #38bdf8; color: #020617;">QTY BID</span>'
+            price_display = f'<span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span>'
+            bid_label = "Best Qty"
+            bid_value = f"{best_bid:,.1f} units" if best_bid else "No bids"
+            bid_hint = "Qty per delivery"
 
+        total_value_display = ""
+        if contract.price_per_delivery:
+            tv = contract.price_per_delivery * contract.total_deliveries
+            total_value_display = f'<div><span style="color: #64748b;">Total Value:</span> <span style="color: #22c55e;">${tv:,.2f}</span></div>'
+
+        # Build bid section
         bid_section = ""
         if contract.lister_id == player.id:
             bid_section = '<span style="color: #64748b; font-size: 0.85rem;">Your listing</span>'
         elif my_bid:
-            leading = my_bid.bid_amount >= highest_bid
+            if not is_relist and is_price_bid:
+                leading = my_bid.bid_amount <= best_bid if best_bid else True
+                my_display = f"${my_bid.bid_amount:,.2f}/del"
+                update_hint = "Lower your price"
+            elif is_relist:
+                leading = my_bid.bid_amount >= best_bid if best_bid else True
+                my_display = f"${my_bid.bid_amount:,.0f}"
+                update_hint = "Raise offer"
+            else:
+                leading = my_bid.bid_amount >= best_bid if best_bid else True
+                my_display = f"{my_bid.bid_amount:,.1f} units"
+                update_hint = "Raise quantity"
+
             status_color = "#22c55e" if leading else "#f59e0b"
             status_text = "Leading" if leading else "Outbid"
             bid_section = f'''
-            <div style="font-size: 0.85rem; color: {status_color}; margin-bottom: 8px;">Your bid: ${my_bid.bid_amount:,.2f} ({status_text})</div>
+            <div style="font-size: 0.85rem; color: {status_color}; margin-bottom: 8px;">Your bid: {my_display} ({status_text})</div>
             <form action="/p2p/contracts/bid" method="post">
                 <input type="hidden" name="contract_id" value="{contract.id}">
                 <div style="display: flex; gap: 4px; align-items: center;">
-                    <input type="number" name="bid_amount" min="{my_bid.bid_amount + 1:.0f}" step="1" placeholder="Raise bid" style="width: 100px; font-size: 0.8rem;">
-                    <button type="submit" class="btn-orange" style="font-size: 0.75rem;">Raise</button>
+                    <input type="number" name="bid_amount" step="any" placeholder="{update_hint}" required style="width: 120px; font-size: 0.8rem;">
+                    <button type="submit" class="btn-orange" style="font-size: 0.75rem;">Update</button>
                 </div>
             </form>
             '''
         else:
+            default_val = ""
+            if not is_relist and is_price_bid and contract.max_price_per_delivery:
+                default_val = f' value="{contract.max_price_per_delivery:.2f}"'
+            elif contract.minimum_bid > 0:
+                default_val = f' value="{contract.minimum_bid:.0f}"'
             bid_section = f'''
             <form action="/p2p/contracts/bid" method="post">
                 <input type="hidden" name="contract_id" value="{contract.id}">
-                <div style="display: flex; gap: 4px; align-items: center;">
-                    <span style="color: #64748b; font-size: 0.8rem;">$</span>
-                    <input type="number" name="bid_amount" min="{min_next_bid:.0f}" step="1" value="{min_next_bid:.0f}" required style="width: 100px; font-size: 0.8rem;">
-                </div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">{bid_hint}</div>
+                <input type="number" name="bid_amount" step="any" required{default_val} style="width: 120px; font-size: 0.8rem;">
                 <button type="submit" class="btn-blue" style="margin-top: 6px;">Place Bid</button>
             </form>
             '''
@@ -314,7 +365,7 @@ def _render_trading_market(player, current_tick):
         <div class="card" style="border-color: #1e293b;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
                 <div style="flex: 1; min-width: 200px;">
-                    <h4 style="margin: 0;">Contract #{contract.id} <span class="badge" style="background: #38bdf8; color: #020617;">LISTED</span></h4>
+                    <h4 style="margin: 0;">Contract #{contract.id} {mode_badge}</h4>
                     <p style="color: #64748b; font-size: 0.85rem; margin: 4px 0;">Listed by: {lister_name}</p>
                     <div style="margin: 8px 0;">
                         <span style="color: #64748b; font-size: 0.8rem;">Items per delivery:</span><br>
@@ -323,16 +374,13 @@ def _render_trading_market(player, current_tick):
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem; margin-top: 8px;">
                         <div><span style="color: #64748b;">Interval:</span> {interval_info.get("label", contract.delivery_interval)}</div>
                         <div><span style="color: #64748b;">Length:</span> {length_info.get("label", contract.contract_length)}</div>
-                        <div><span style="color: #64748b;">Per Delivery:</span> <span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span></div>
-                        <div><span style="color: #64748b;">Total Value:</span> <span style="color: #22c55e;">${total_value:,.2f}</span></div>
+                        <div><span style="color: #64748b;">Per Delivery:</span> {price_display}</div>
+                        {total_value_display}
                     </div>
                 </div>
                 <div style="text-align: right; min-width: 160px;">
                     <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">
-                        Min Bid: <span style="color: #e5e7eb;">${contract.minimum_bid:,.0f}</span>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">
-                        Highest Bid: <span style="color: #f59e0b; font-weight: bold;">${highest_bid:,.0f}</span> ({bid_count} bid{"s" if bid_count != 1 else ""})
+                        {bid_label}: <span style="color: #f59e0b; font-weight: bold;">{bid_value}</span> ({bid_count} bid{"s" if bid_count != 1 else ""})
                     </div>
                     <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;">
                         Closes in: <span style="color: #e5e7eb;">{minutes_left:.0f} min</span>
@@ -361,11 +409,8 @@ def _render_my_contracts(player, current_tick):
     db = get_db()
     auth_db = get_auth_db()
 
-    # Contracts I created (as buyer)
     as_buyer = db.query(Contract).filter(Contract.buyer_id == player.id).order_by(Contract.created_at.desc()).all()
-    # Contracts I hold (as fulfiller)
     as_holder = db.query(Contract).filter(Contract.holder_id == player.id).order_by(Contract.created_at.desc()).all()
-    # Drafts I created
     drafts = db.query(Contract).filter(
         Contract.creator_id == player.id,
         Contract.status == ContractStatus.DRAFT
@@ -373,28 +418,36 @@ def _render_my_contracts(player, current_tick):
 
     html = '<h3>My Contracts</h3>'
 
-    # Drafts section
+    # Drafts
     if drafts:
         html += '<h4 style="color: #f59e0b; margin-top: 20px;">Drafts (Not Yet Listed)</h4>'
         for contract in drafts:
             items = db.query(ContractItem).filter(ContractItem.contract_id == contract.id).all()
             interval_info = DELIVERY_INTERVALS.get(contract.delivery_interval, {})
             length_info = CONTRACT_LENGTHS.get(contract.contract_length, {})
-            total_value = contract.price_per_delivery * contract.total_deliveries
+            is_price_bid = contract.contract_mode == "price_bid"
 
-            items_html = ", ".join([f"{i.quantity_per_delivery:.1f}x {format_item_name(i.item_type)}" for i in items])
+            if is_price_bid:
+                mode_label = "Price Bid"
+                items_html = ", ".join([f"{i.quantity_per_delivery:.1f}x {format_item_name(i.item_type)}" for i in items])
+                terms_html = f'Max Price: <span style="color: #f59e0b;">${contract.max_price_per_delivery:,.2f}</span>/delivery' if contract.max_price_per_delivery else ""
+                min_bid_label = "Min Price ($/del)"
+            else:
+                mode_label = "Quantity Bid"
+                items_html = ", ".join([format_item_name(i.item_type) for i in items])
+                terms_html = f'Price: <span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span>/delivery'
+                min_bid_label = "Min Qty (units)"
 
             bid_dur_options = "".join([f'<option value="{k}">{v["label"]}</option>' for k, v in BID_DURATION_OPTIONS.items()])
 
             html += f'''
             <div class="card" style="border-color: #f59e0b;">
-                <h4>Contract #{contract.id} <span class="badge" style="background: #f59e0b; color: #020617;">DRAFT</span></h4>
+                <h4>Contract #{contract.id} <span class="badge" style="background: #f59e0b; color: #020617;">DRAFT</span> <span class="badge">{mode_label}</span></h4>
                 <p style="font-size: 0.85rem;"><span style="color: #64748b;">Items:</span> {items_html}</p>
                 <p style="font-size: 0.85rem;">
                     <span style="color: #64748b;">Interval:</span> {interval_info.get("label", "")} |
                     <span style="color: #64748b;">Length:</span> {length_info.get("label", "")} |
-                    <span style="color: #64748b;">Per Delivery:</span> <span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span> |
-                    <span style="color: #64748b;">Total:</span> <span style="color: #22c55e;">${total_value:,.2f}</span>
+                    {terms_html}
                 </p>
                 <form action="/p2p/contracts/list" method="post" style="margin-top: 8px;">
                     <input type="hidden" name="contract_id" value="{contract.id}">
@@ -404,8 +457,8 @@ def _render_my_contracts(player, current_tick):
                             <select name="bid_duration" style="font-size: 0.85rem;">{bid_dur_options}</select>
                         </div>
                         <div>
-                            <label style="font-size: 0.75rem; color: #64748b;">Min Bid ($)</label>
-                            <input type="number" name="minimum_bid" min="0" step="1" value="0" style="width: 100px; font-size: 0.85rem;">
+                            <label style="font-size: 0.75rem; color: #64748b;">{min_bid_label}</label>
+                            <input type="number" name="minimum_bid" min="0" step="any" value="0" style="width: 100px; font-size: 0.85rem;">
                         </div>
                         <button type="submit" class="btn-blue">List on Market</button>
                     </div>
@@ -413,7 +466,7 @@ def _render_my_contracts(player, current_tick):
             </div>
             '''
 
-    # My listings (where I am the lister)
+    # My listings
     my_listings = db.query(Contract).filter(
         Contract.lister_id == player.id,
         Contract.status == ContractStatus.LISTED
@@ -423,31 +476,27 @@ def _render_my_contracts(player, current_tick):
         html += '<h4 style="color: #38bdf8; margin-top: 20px;">My Active Listings</h4>'
         for contract in my_listings:
             items = db.query(ContractItem).filter(ContractItem.contract_id == contract.id).all()
-            active_bids = db.query(ContractBid).filter(
+            bid_count = db.query(ContractBid).filter(
                 ContractBid.contract_id == contract.id,
                 ContractBid.status == BidStatus.ACTIVE
-            ).order_by(ContractBid.bid_amount.desc()).all()
-            bid_count = len(active_bids)
-            highest_bid = active_bids[0].bid_amount if active_bids else 0.0
-
+            ).count()
             ticks_left = max(0, contract.bid_end_tick - current_tick) if contract.bid_end_tick else 0
             minutes_left = (ticks_left * 5) / 60
-
-            items_html = ", ".join([f"{i.quantity_per_delivery:.1f}x {format_item_name(i.item_type)}" for i in items])
+            items_html = ", ".join([f"{format_item_name(i.item_type)}" for i in items])
+            listing_type = "Relist" if contract.listing_type == "relist" else contract.contract_mode.replace("_", " ").title()
 
             html += f'''
             <div class="card" style="border-color: #38bdf8;">
-                <h4>Contract #{contract.id} <span class="badge" style="background: #38bdf8; color: #020617;">LISTED</span></h4>
+                <h4>Contract #{contract.id} <span class="badge" style="background: #38bdf8; color: #020617;">LISTED</span> <span class="badge">{listing_type}</span></h4>
                 <p style="font-size: 0.85rem;"><span style="color: #64748b;">Items:</span> {items_html}</p>
                 <p style="font-size: 0.85rem;">
-                    Min Bid: ${contract.minimum_bid:,.0f} |
-                    Highest Bid: <span style="color: #f59e0b; font-weight: bold;">${highest_bid:,.0f}</span> ({bid_count} bid{"s" if bid_count != 1 else ""}) |
+                    {bid_count} bid{"s" if bid_count != 1 else ""} |
                     Closes in: {minutes_left:.0f} min
                 </p>
             </div>
             '''
 
-    # Active contracts I'm buying (receiving deliveries)
+    # Active - Buyer
     active_buying = [c for c in as_buyer if c.status == ContractStatus.ACTIVE]
     if active_buying:
         html += '<h4 style="color: #22c55e; margin-top: 20px;">Active Contracts (Receiving Deliveries)</h4>'
@@ -455,13 +504,11 @@ def _render_my_contracts(player, current_tick):
             items = db.query(ContractItem).filter(ContractItem.contract_id == contract.id).all()
             holder = auth_db.query(Player).filter(Player.id == contract.holder_id).first()
             holder_name = holder.business_name if holder else "Unknown"
-            interval_info = DELIVERY_INTERVALS.get(contract.delivery_interval, {})
-
             ticks_until_next = max(0, contract.next_delivery_tick - current_tick) if contract.next_delivery_tick else 0
             mins_until_next = (ticks_until_next * 5) / 60
-
             progress_pct = (contract.deliveries_completed / contract.total_deliveries * 100) if contract.total_deliveries > 0 else 0
             items_html = ", ".join([f"{i.quantity_per_delivery:.1f}x {format_item_name(i.item_type)}" for i in items])
+            price = contract.price_per_delivery or 0
 
             html += f'''
             <div class="card" style="border-color: #22c55e;">
@@ -470,7 +517,7 @@ def _render_my_contracts(player, current_tick):
                 <p style="font-size: 0.85rem;">
                     Deliveries: {contract.deliveries_completed}/{contract.total_deliveries} |
                     Next in: {mins_until_next:.0f} min |
-                    Payment: <span style="color: #ef4444;">${contract.price_per_delivery:,.2f}/delivery</span>
+                    Payment: <span style="color: #ef4444;">${price:,.2f}/delivery</span>
                 </p>
                 <div class="progress" style="margin-top: 8px;">
                     <div class="progress-bar" style="width: {progress_pct:.0f}%; background: #22c55e;"></div>
@@ -478,7 +525,7 @@ def _render_my_contracts(player, current_tick):
             </div>
             '''
 
-    # Active contracts I'm holding (fulfilling deliveries)
+    # Active - Holder
     active_holding = [c for c in as_holder if c.status == ContractStatus.ACTIVE]
     if active_holding:
         html += '<h4 style="color: #c084fc; margin-top: 20px;">Active Contracts (Fulfilling Deliveries)</h4>'
@@ -486,13 +533,11 @@ def _render_my_contracts(player, current_tick):
             items = db.query(ContractItem).filter(ContractItem.contract_id == contract.id).all()
             buyer = auth_db.query(Player).filter(Player.id == contract.buyer_id).first()
             buyer_name = buyer.business_name if buyer else "Unknown"
-
             ticks_until_next = max(0, contract.next_delivery_tick - current_tick) if contract.next_delivery_tick else 0
             mins_until_next = (ticks_until_next * 5) / 60
-
             progress_pct = (contract.deliveries_completed / contract.total_deliveries * 100) if contract.total_deliveries > 0 else 0
             items_html = ", ".join([f"{i.quantity_per_delivery:.1f}x {format_item_name(i.item_type)}" for i in items])
-
+            price = contract.price_per_delivery or 0
             relist_dur_options = "".join([f'<option value="{k}">{v["label"]}</option>' for k, v in BID_DURATION_OPTIONS.items()])
 
             html += f'''
@@ -502,7 +547,7 @@ def _render_my_contracts(player, current_tick):
                 <p style="font-size: 0.85rem;">
                     Deliveries: {contract.deliveries_completed}/{contract.total_deliveries} |
                     Next due in: {mins_until_next:.0f} min |
-                    Payment: <span style="color: #22c55e;">${contract.price_per_delivery:,.2f}/delivery</span>
+                    Payment: <span style="color: #22c55e;">${price:,.2f}/delivery</span>
                 </p>
                 <div class="progress" style="margin-top: 8px;">
                     <div class="progress-bar" style="width: {progress_pct:.0f}%; background: #c084fc;"></div>
@@ -522,56 +567,46 @@ def _render_my_contracts(player, current_tick):
                             </div>
                             <button type="submit" class="btn-orange">Relist (${RELIST_FEE:,.0f})</button>
                         </div>
-                        <p style="font-size: 0.75rem; color: #64748b;">Relisting pauses deliveries and puts the contract back on the market. Fee paid to Government.</p>
+                        <p style="font-size: 0.75rem; color: #64748b;">Relisting pauses deliveries and puts the contract back on the market for cash bids. Fee paid to Government.</p>
                     </form>
                 </details>
             </div>
             '''
 
-    # Completed contracts
+    # Completed
     completed = db.query(Contract).filter(
         ((Contract.buyer_id == player.id) | (Contract.holder_id == player.id)),
         Contract.status == ContractStatus.COMPLETED
     ).order_by(Contract.completed_at.desc()).limit(10).all()
-
     if completed:
         html += '<h4 style="color: #64748b; margin-top: 20px;">Completed Contracts (Last 10)</h4>'
         for contract in completed:
             role = "Buyer" if contract.buyer_id == player.id else "Holder"
-            total_value = contract.price_per_delivery * contract.total_deliveries
+            tv = (contract.price_per_delivery or 0) * contract.total_deliveries
             html += f'''
             <div class="card" style="border-color: #475569; opacity: 0.8;">
                 <p style="font-size: 0.85rem;">
-                    Contract #{contract.id} | Role: {role} |
-                    {contract.deliveries_completed} deliveries |
-                    Total: ${total_value:,.2f}
+                    Contract #{contract.id} | Role: {role} | {contract.deliveries_completed} deliveries | Total: ${tv:,.2f}
                     <span class="badge" style="background: #22c55e; color: #020617;">COMPLETED</span>
                 </p>
             </div>
             '''
 
-    # Breached contracts
+    # Breached
     breached = db.query(Contract).filter(
         ((Contract.buyer_id == player.id) | (Contract.holder_id == player.id) | (Contract.creator_id == player.id)),
         Contract.status == ContractStatus.BREACHED
     ).order_by(Contract.breached_at.desc()).limit(10).all()
-
     if breached:
         html += '<h4 style="color: #ef4444; margin-top: 20px;">Breached Contracts</h4>'
         for contract in breached:
-            breacher_label = ""
-            if contract.breached_by == player.id:
-                breacher_label = '<span style="color: #ef4444;">(You breached)</span>'
-            else:
-                breacher_label = '<span style="color: #22c55e;">(Other party breached)</span>'
-            total_value = contract.price_per_delivery * contract.total_deliveries
-            penalty = total_value * (BREACH_PENALTY_GOV_PCT + BREACH_PENALTY_DAMAGED_PCT)
+            breacher_label = '<span style="color: #ef4444;">(You breached)</span>' if contract.breached_by == player.id else '<span style="color: #22c55e;">(Other party breached)</span>'
+            tv = (contract.price_per_delivery or 0) * contract.total_deliveries
+            penalty = tv * (BREACH_PENALTY_GOV_PCT + BREACH_PENALTY_DAMAGED_PCT)
             html += f'''
             <div class="card" style="border-color: #ef4444; opacity: 0.8;">
                 <p style="font-size: 0.85rem;">
-                    Contract #{contract.id} | {breacher_label} |
-                    Penalty: <span style="color: #ef4444;">${penalty:,.2f}</span> |
-                    Reason: {contract.breach_reason or "N/A"}
+                    Contract #{contract.id} | {breacher_label} | Penalty: <span style="color: #ef4444;">${penalty:,.2f}</span> | Reason: {contract.breach_reason or "N/A"}
                     <span class="badge" style="background: #ef4444;">BREACHED</span>
                 </p>
             </div>
@@ -586,11 +621,10 @@ def _render_my_contracts(player, current_tick):
 
 
 def _render_create_form(player):
-    """Render the contract creation form."""
+    """Render the contract creation form with two modes."""
     from p2p import DELIVERY_INTERVALS, CONTRACT_LENGTHS, BREACH_PENALTY_GOV_PCT, BREACH_PENALTY_DAMAGED_PCT
     import inventory as inv_mod
 
-    # Get available item types
     item_options = ""
     if inv_mod.ITEM_RECIPES:
         for key in sorted(inv_mod.ITEM_RECIPES.keys()):
@@ -611,24 +645,26 @@ def _render_create_form(player):
 
     return f'''
     <h3>Create New Contract</h3>
-    <div class="card" style="border-color: #38bdf8;">
-        <p style="color: #64748b; margin-bottom: 16px;">
-            Define a delivery contract. You will become the <strong>buyer</strong> - someone will bid to become the <strong>holder</strong>
-            responsible for delivering the specified items on schedule. You pay the holder for each delivery.
+
+    <div class="card" style="border-color: #ef4444; background: #1a0a0a; margin-bottom: 16px;">
+        <h4 style="color: #ef4444; margin: 0 0 8px 0;">Breach of Contract Warning</h4>
+        <p style="font-size: 0.85rem; color: #fca5a5;">
+            If either party breaches (holder fails to deliver or buyer fails to pay),
+            the breaching party owes <strong>{penalty_pct}% of the total contract value</strong>:
+            {int(BREACH_PENALTY_GOV_PCT * 100)}% to the Government, {int(BREACH_PENALTY_DAMAGED_PCT * 100)}% to the damaged party. Contract voided.
+        </p>
+    </div>
+
+    <!-- PRICE BID MODE -->
+    <div class="card" style="border-color: #c084fc; margin-bottom: 16px;">
+        <h4 style="color: #c084fc; margin-top: 0;">Price Bid Contract</h4>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 12px;">
+            You define <strong>what items and quantities</strong> you need delivered, and set a <strong>max price</strong> you'll pay per delivery.
+            Bidders compete by offering <strong>lower prices</strong>. Lowest bid wins.
         </p>
 
-        <div class="card" style="border-color: #ef4444; background: #1a0a0a; margin-bottom: 16px;">
-            <h4 style="color: #ef4444; margin: 0 0 8px 0;">Breach of Contract Warning</h4>
-            <p style="font-size: 0.85rem; color: #fca5a5;">
-                If either party breaches the contract (holder fails to deliver or buyer fails to pay),
-                the breaching party owes <strong>{penalty_pct}% of the total contract value</strong> in penalties:
-                {int(BREACH_PENALTY_GOV_PCT * 100)}% to the Government and {int(BREACH_PENALTY_DAMAGED_PCT * 100)}% to the damaged party.
-                The contract is voided upon breach.
-            </p>
-        </div>
-
-        <form action="/p2p/contracts/create" method="post">
-            <h4 style="margin-top: 0;">Delivery Items (1-3 items per delivery)</h4>
+        <form action="/p2p/contracts/create-price-bid" method="post">
+            <h4 style="font-size: 0.9rem;">Delivery Items (1-3 per delivery)</h4>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 12px;">
                 <div>
@@ -640,28 +676,20 @@ def _render_create_form(player):
                     <input type="number" name="qty_1" min="1" step="1" value="10" required style="width: 100%;">
                 </div>
             </div>
-
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 12px;">
                 <div>
                     <label style="font-size: 0.8rem; color: #64748b;">Item 2 (optional)</label>
-                    <select name="item_2" style="width: 100%;">
-                        <option value="">-- None --</option>
-                        {item_options}
-                    </select>
+                    <select name="item_2" style="width: 100%;"><option value="">-- None --</option>{item_options}</select>
                 </div>
                 <div>
                     <label style="font-size: 0.8rem; color: #64748b;">Quantity</label>
                     <input type="number" name="qty_2" min="1" step="1" style="width: 100%;">
                 </div>
             </div>
-
-            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 16px;">
                 <div>
                     <label style="font-size: 0.8rem; color: #64748b;">Item 3 (optional)</label>
-                    <select name="item_3" style="width: 100%;">
-                        <option value="">-- None --</option>
-                        {item_options}
-                    </select>
+                    <select name="item_3" style="width: 100%;"><option value="">-- None --</option>{item_options}</select>
                 </div>
                 <div>
                     <label style="font-size: 0.8rem; color: #64748b;">Quantity</label>
@@ -669,8 +697,7 @@ def _render_create_form(player):
                 </div>
             </div>
 
-            <h4>Contract Terms</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
                 <div>
                     <label style="font-size: 0.8rem; color: #64748b;">Delivery Interval</label>
                     <select name="delivery_interval" required style="width: 100%;">{interval_options}</select>
@@ -680,12 +707,45 @@ def _render_create_form(player):
                     <select name="contract_length" required style="width: 100%;">{length_options}</select>
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: #64748b;">Price per Delivery ($)</label>
-                    <input type="number" name="price_per_delivery" min="1" step="0.01" value="1000" required style="width: 100%;">
+                    <label style="font-size: 0.8rem; color: #c084fc;">Max Price per Delivery ($)</label>
+                    <input type="number" name="max_price" min="1" step="0.01" value="1000" required style="width: 100%;">
+                </div>
+            </div>
+            <button type="submit" class="btn-blue" style="padding: 10px 24px; font-size: 0.95rem;">Create Price Bid Draft</button>
+        </form>
+    </div>
+
+    <!-- QUANTITY BID MODE -->
+    <div class="card" style="border-color: #38bdf8;">
+        <h4 style="color: #38bdf8; margin-top: 0;">Quantity Bid Contract</h4>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 12px;">
+            You set a <strong>fixed price per delivery</strong> and choose an <strong>item type</strong>.
+            Bidders compete by offering <strong>more quantity</strong> per delivery. Highest quantity bid wins.
+        </p>
+
+        <form action="/p2p/contracts/create-quantity-bid" method="post">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <label style="font-size: 0.8rem; color: #64748b;">Item Type</label>
+                    <select name="item_type" required style="width: 100%;">{item_options}</select>
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #38bdf8;">Fixed Price per Delivery ($)</label>
+                    <input type="number" name="price_per_delivery" min="1" step="0.01" value="5000" required style="width: 100%;">
                 </div>
             </div>
 
-            <button type="submit" class="btn-blue" style="padding: 10px 24px; font-size: 0.95rem;">Create Contract Draft</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <label style="font-size: 0.8rem; color: #64748b;">Delivery Interval</label>
+                    <select name="delivery_interval" required style="width: 100%;">{interval_options}</select>
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #64748b;">Contract Length</label>
+                    <select name="contract_length" required style="width: 100%;">{length_options}</select>
+                </div>
+            </div>
+            <button type="submit" class="btn-blue" style="padding: 10px 24px; font-size: 0.95rem;">Create Quantity Bid Draft</button>
         </form>
     </div>
     '''
@@ -695,8 +755,8 @@ def _render_create_form(player):
 # CONTRACT ACTIONS
 # ==========================
 
-@router.post("/p2p/contracts/create", response_class=HTMLResponse)
-def create_contract_action(
+@router.post("/p2p/contracts/create-price-bid", response_class=HTMLResponse)
+def create_price_bid_action(
     session_token: Optional[str] = Cookie(None),
     item_1: str = Form(...),
     qty_1: float = Form(...),
@@ -706,25 +766,64 @@ def create_contract_action(
     qty_3: float = Form(0),
     delivery_interval: str = Form(...),
     contract_length: str = Form(...),
-    price_per_delivery: float = Form(...),
+    max_price: float = Form(...),
 ):
-    """Create a new contract draft."""
+    """Create a Price Bid contract draft."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
 
-    from p2p import create_contract
+    from p2p import create_contract_price_bid
 
-    # Build items list
     items = [{"item_type": item_1, "quantity": qty_1}]
     if item_2 and qty_2 > 0:
         items.append({"item_type": item_2, "quantity": qty_2})
     if item_3 and qty_3 > 0:
         items.append({"item_type": item_3, "quantity": qty_3})
 
-    contract_id = create_contract(
+    contract_id = create_contract_price_bid(
         creator_id=player.id,
         items=items,
+        delivery_interval=delivery_interval,
+        contract_length=contract_length,
+        max_price=max_price,
+    )
+
+    if not contract_id:
+        return shell(
+            "Contract Error",
+            """
+            <a href="/p2p/contracts?tab=create" style="color: #38bdf8;">&lt;- Back</a>
+            <div class="card" style="border-color: #ef4444;">
+                <h3 style="color: #ef4444;">Contract Creation Failed</h3>
+                <p>Invalid contract parameters. Check your items, interval, length, and price.</p>
+            </div>
+            """,
+            player.cash_balance,
+            player.id
+        )
+
+    return RedirectResponse(url="/p2p/contracts?tab=my_contracts", status_code=303)
+
+
+@router.post("/p2p/contracts/create-quantity-bid", response_class=HTMLResponse)
+def create_quantity_bid_action(
+    session_token: Optional[str] = Cookie(None),
+    item_type: str = Form(...),
+    price_per_delivery: float = Form(...),
+    delivery_interval: str = Form(...),
+    contract_length: str = Form(...),
+):
+    """Create a Quantity Bid contract draft."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from p2p import create_contract_quantity_bid
+
+    contract_id = create_contract_quantity_bid(
+        creator_id=player.id,
+        item_type=item_type,
         delivery_interval=delivery_interval,
         contract_length=contract_length,
         price_per_delivery=price_per_delivery,
@@ -737,7 +836,7 @@ def create_contract_action(
             <a href="/p2p/contracts?tab=create" style="color: #38bdf8;">&lt;- Back</a>
             <div class="card" style="border-color: #ef4444;">
                 <h3 style="color: #ef4444;">Contract Creation Failed</h3>
-                <p>Invalid contract parameters. Check your items, interval, length, and price.</p>
+                <p>Invalid contract parameters. Check your item, interval, length, and price.</p>
             </div>
             """,
             player.cash_balance,
