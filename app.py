@@ -26,7 +26,7 @@ def register_module(name: str, module):
 
 def load_modules():
     """Attempt to load all game modules."""
-    module_names = ['auth', 'inventory', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'stats_ux', 'executive', 'estate', 'p2p', 'chat']
+    module_names = ['auth', 'inventory', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'dm']
     for name in module_names:
         try:
             mod = __import__(name)
@@ -238,6 +238,13 @@ try:
     from chat_ux import router as chat_router
     app.include_router(chat_router)
     print("Chat routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from dm_ux import router as dm_router
+    app.include_router(dm_router)
+    print("DM routes registered")
 except ModuleNotFoundError:
     pass
 

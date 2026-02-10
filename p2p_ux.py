@@ -162,11 +162,11 @@ def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
                 <p style="color: #64748b; font-size: 0.85rem;">Chat with other players, get market intel, recruit for your city.</p>
                 <a href="/chat" class="btn-blue" style="display: inline-block; padding: 10px 20px; margin-top: 12px; background: #c084fc;">Open Chat</a>
             </div>
-            <div class="card" style="border-color: #475569; opacity: 0.5;">
-                <h3 style="color: #475569;">Direct Messages</h3>
-                <p style="color: #475569;">Private player-to-player messaging.</p>
-                <p style="color: #475569; font-size: 0.85rem;">Coming soon.</p>
-                <span style="display: inline-block; padding: 10px 20px; background: #1e293b; color: #475569; border-radius: 3px; margin-top: 12px;">Locked</span>
+            <div class="card" style="border-color: #f59e0b;">
+                <h3 style="color: #f59e0b;">Direct Messages</h3>
+                <p>Private player-to-player messaging. Send DMs to any player in the game.</p>
+                <p style="color: #64748b; font-size: 0.85rem;">Conversations expire 3 days after the last message. Max 50 messages per thread.</p>
+                <a href="/p2p/dms" class="btn-blue" style="display: inline-block; padding: 10px 20px; margin-top: 12px; background: #f59e0b;">Open DMs</a>
             </div>
         </div>
         """,
