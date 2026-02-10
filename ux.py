@@ -234,6 +234,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             <div class="header-right">
                 {lien_html}
                 <span class="balance">$ {balance:,.2f}</span>
+                <a href="/chat" style="color: #c084fc; font-size: 0.85rem;">💬 Chat</a>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
