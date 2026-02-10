@@ -19,6 +19,7 @@ from chat import (
     get_user_ban_words, initialize_default_ban_words, set_user_ban_words,
     add_ban_word, remove_ban_word,
     save_avatar, get_avatar, delete_avatar,
+    get_player_city,
 )
 
 router = APIRouter()
@@ -55,12 +56,40 @@ def validate_session_ws(session_token):
         return None
 
 
+def get_player_profile(player_id: int) -> Optional[dict]:
+    """Build a player profile dict for the bio modal."""
+    try:
+        import auth
+        db = auth.get_db()
+        player = db.query(auth.Player).filter(auth.Player.id == player_id).first()
+        if not player:
+            db.close()
+            return None
+        profile = {
+            "id": player.id,
+            "name": player.business_name,
+            "joined": player.created_at.strftime("%b %d, %Y") if player.created_at else "Unknown",
+            "last_seen": player.last_login.strftime("%b %d, %Y %H:%M UTC") if player.last_login else "Unknown",
+        }
+        db.close()
+
+        city = get_player_city(player_id)
+        profile["city"] = city["name"] if city else None
+
+        # Online status
+        profile["online"] = player_id in manager.connections
+
+        return profile
+    except Exception:
+        return None
+
+
 # ==========================
 # SHELL (chat-specific)
 # ==========================
 
 def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
-    """Full-page chat shell - wider layout, no ticker (covered by chat)."""
+    """Full-page chat shell - wider layout, no ticker."""
     from ux import get_player_lien_info
 
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
@@ -82,7 +111,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
     <html>
     <head>
         <title>{title} - SymCo</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <style>
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
             body {{
@@ -91,6 +120,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 font-family: 'JetBrains Mono', monospace;
                 font-size: 14px;
                 height: 100vh;
+                height: 100dvh;
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
@@ -100,7 +130,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
 
             .header {{
                 border-bottom: 1px solid #1e293b;
-                padding: 8px 16px;
+                padding: 8px 12px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -110,15 +140,31 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 z-index: 10;
             }}
             .brand {{ font-weight: bold; color: #38bdf8; font-size: 1rem; }}
+            .header-left {{
+                display: flex; align-items: center; gap: 10px;
+            }}
             .header-right {{
-                display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+                display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
             }}
             .balance {{ color: #22c55e; font-size: 0.75rem; white-space: nowrap; }}
+            .hamburger {{
+                display: none;
+                background: none;
+                border: 1px solid #334155;
+                color: #94a3b8;
+                font-size: 1.2rem;
+                padding: 4px 8px;
+                cursor: pointer;
+                border-radius: 4px;
+                line-height: 1;
+            }}
+            .hamburger:hover {{ background: #1e293b; color: #e5e7eb; }}
 
             .chat-layout {{
                 flex: 1;
                 display: flex;
                 overflow: hidden;
+                position: relative;
             }}
 
             /* SIDEBAR */
@@ -130,6 +176,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 display: flex;
                 flex-direction: column;
                 overflow-y: auto;
+                z-index: 50;
             }}
             .sidebar-section {{
                 padding: 12px;
@@ -161,7 +208,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
             }}
             .room-btn:hover {{ background: #1e293b; color: #e5e7eb; }}
             .room-btn.active {{ background: #1e293b; color: #38bdf8; font-weight: bold; }}
-            .room-btn .room-icon {{ font-size: 1rem; }}
+            .room-btn .room-icon {{ font-size: 1rem; flex-shrink: 0; }}
             .room-btn .room-name {{ flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
             .room-btn .unread-badge {{
                 background: #ef4444;
@@ -172,14 +219,9 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 min-width: 16px;
                 text-align: center;
                 display: none;
+                flex-shrink: 0;
             }}
             .room-btn .unread-badge.show {{ display: inline-block; }}
-            .room-btn .online-dot {{
-                width: 6px; height: 6px;
-                background: #22c55e;
-                border-radius: 50%;
-                margin-left: auto;
-            }}
 
             /* AVATAR SECTION */
             .avatar-section {{ text-align: center; }}
@@ -205,7 +247,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 font-weight: bold;
                 color: #38bdf8;
             }}
-            .avatar-upload-btn {{
+            .sidebar-btn {{
                 background: #1e293b;
                 color: #94a3b8;
                 border: 1px solid #334155;
@@ -214,8 +256,10 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 font-family: inherit;
                 cursor: pointer;
                 border-radius: 3px;
+                width: 100%;
+                margin-top: 4px;
             }}
-            .avatar-upload-btn:hover {{ background: #334155; color: #e5e7eb; }}
+            .sidebar-btn:hover {{ background: #334155; color: #e5e7eb; }}
 
             /* MAIN CHAT AREA */
             .chat-main {{
@@ -225,7 +269,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 min-width: 0;
             }}
             .chat-header {{
-                padding: 10px 16px;
+                padding: 8px 12px;
                 border-bottom: 1px solid #1e293b;
                 display: flex;
                 justify-content: space-between;
@@ -234,98 +278,92 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 flex-shrink: 0;
             }}
             .chat-header h3 {{
-                font-size: 0.95rem;
+                font-size: 0.9rem;
                 color: #e5e7eb;
                 margin: 0;
             }}
             .chat-header .online-count {{
-                font-size: 0.75rem;
+                font-size: 0.7rem;
                 color: #64748b;
             }}
             .chat-messages {{
                 flex: 1;
                 overflow-y: auto;
-                padding: 12px 16px;
+                padding: 8px 12px;
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 2px;
+                -webkit-overflow-scrolling: touch;
             }}
             .chat-msg {{
                 display: flex;
-                gap: 10px;
-                padding: 6px 0;
+                gap: 8px;
+                padding: 5px 0;
             }}
             .chat-msg .msg-avatar {{
-                width: 32px;
-                height: 32px;
+                width: 30px; height: 30px;
                 border-radius: 50%;
                 flex-shrink: 0;
                 object-fit: cover;
                 background: #1e293b;
+                cursor: pointer;
             }}
             .chat-msg .msg-avatar-letter {{
-                width: 32px;
-                height: 32px;
+                width: 30px; height: 30px;
                 border-radius: 50%;
                 flex-shrink: 0;
                 background: #1e293b;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 0.75rem;
+                font-size: 0.7rem;
                 font-weight: bold;
                 color: #64748b;
+                cursor: pointer;
             }}
-            .chat-msg .msg-body {{
-                flex: 1;
-                min-width: 0;
-            }}
+            .chat-msg .msg-body {{ flex: 1; min-width: 0; }}
             .chat-msg .msg-header {{
                 display: flex;
                 align-items: baseline;
-                gap: 8px;
-                margin-bottom: 2px;
+                gap: 6px;
+                margin-bottom: 1px;
             }}
             .chat-msg .msg-name {{
                 font-weight: bold;
-                font-size: 0.8rem;
+                font-size: 0.78rem;
                 color: #38bdf8;
+                cursor: pointer;
             }}
+            .chat-msg .msg-name:hover {{ text-decoration: underline; }}
             .chat-msg .msg-time {{
-                font-size: 0.65rem;
+                font-size: 0.6rem;
                 color: #475569;
             }}
             .chat-msg .msg-text {{
-                font-size: 0.82rem;
+                font-size: 0.8rem;
                 color: #cbd5e1;
                 word-break: break-word;
-                line-height: 1.4;
+                line-height: 1.35;
             }}
-            .chat-msg.system-msg {{
-                justify-content: center;
-                padding: 4px 0;
-            }}
+            .chat-msg.system-msg {{ justify-content: center; padding: 3px 0; }}
             .chat-msg.system-msg .msg-text {{
-                color: #64748b;
-                font-size: 0.75rem;
-                font-style: italic;
-                text-align: center;
+                color: #64748b; font-size: 0.72rem; font-style: italic; text-align: center;
             }}
 
             .typing-indicator {{
-                padding: 4px 16px 8px;
-                font-size: 0.72rem;
+                padding: 3px 12px 6px;
+                font-size: 0.68rem;
                 color: #64748b;
                 font-style: italic;
-                min-height: 24px;
+                min-height: 20px;
                 flex-shrink: 0;
             }}
 
             /* INPUT BAR */
             .chat-input-bar {{
                 display: flex;
-                gap: 8px;
-                padding: 10px 16px;
+                gap: 6px;
+                padding: 8px 12px;
                 border-top: 1px solid #1e293b;
                 background: #0a0f1e;
                 align-items: flex-end;
@@ -336,25 +374,25 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 background: #020617;
                 border: 1px solid #1e293b;
                 color: #e5e7eb;
-                padding: 8px 12px;
+                padding: 8px 10px;
                 font-family: inherit;
                 font-size: 0.85rem;
                 border-radius: 4px;
                 outline: none;
+                min-width: 0;
             }}
-            .chat-input-bar input[type="text"]:focus {{
-                border-color: #38bdf8;
-            }}
+            .chat-input-bar input[type="text"]:focus {{ border-color: #38bdf8; }}
             .chat-input-bar button {{
                 background: #38bdf8;
                 color: #020617;
                 border: none;
-                padding: 8px 16px;
+                padding: 8px 14px;
                 font-family: inherit;
-                font-size: 0.85rem;
+                font-size: 0.82rem;
                 cursor: pointer;
                 border-radius: 4px;
                 font-weight: bold;
+                flex-shrink: 0;
             }}
             .chat-input-bar button:hover {{ background: #7dd3fc; }}
             .emoji-toggle {{
@@ -370,13 +408,13 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 display: none;
                 position: absolute;
                 bottom: 56px;
-                right: 16px;
+                right: 12px;
                 background: #0f172a;
                 border: 1px solid #1e293b;
                 border-radius: 6px;
                 padding: 10px;
-                width: 280px;
-                max-height: 220px;
+                width: 260px;
+                max-height: 200px;
                 overflow-y: auto;
                 z-index: 100;
                 box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
@@ -386,12 +424,12 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 display: inline-block;
                 padding: 3px 4px;
                 cursor: pointer;
-                font-size: 1.2rem;
+                font-size: 1.15rem;
                 border-radius: 3px;
             }}
             .emoji-picker span:hover {{ background: #1e293b; }}
 
-            /* BAN WORD MODAL */
+            /* MODALS */
             .modal-overlay {{
                 display: none;
                 position: fixed;
@@ -425,10 +463,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 color: #94a3b8;
             }}
             .modal .ban-word-tag .remove-x {{
-                cursor: pointer;
-                color: #ef4444;
-                font-weight: bold;
-                margin-left: 2px;
+                cursor: pointer; color: #ef4444; font-weight: bold; margin-left: 2px;
             }}
             .modal .ban-word-tag .remove-x:hover {{ color: #f87171; }}
             .modal input {{
@@ -442,43 +477,80 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 width: 100%;
             }}
             .modal-btn {{
-                border: none;
-                padding: 6px 14px;
-                font-family: inherit;
-                font-size: 0.8rem;
-                cursor: pointer;
-                border-radius: 3px;
+                border: none; padding: 6px 14px; font-family: inherit; font-size: 0.8rem;
+                cursor: pointer; border-radius: 3px;
             }}
             .modal-btn-blue {{ background: #38bdf8; color: #020617; }}
             .modal-btn-red {{ background: #ef4444; color: #fff; }}
             .modal-btn-gray {{ background: #334155; color: #94a3b8; }}
 
+            /* PROFILE MODAL */
+            .profile-modal .profile-avatar {{
+                width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px;
+                display: block; object-fit: cover; background: #1e293b; border: 2px solid #1e293b;
+            }}
+            .profile-modal .profile-letter {{
+                width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px;
+                display: flex; align-items: center; justify-content: center;
+                background: #1e293b; font-size: 1.6rem; font-weight: bold; color: #38bdf8;
+                border: 2px solid #1e293b;
+            }}
+            .profile-modal .profile-name {{
+                text-align: center; font-size: 1.1rem; font-weight: bold; color: #e5e7eb; margin-bottom: 4px;
+            }}
+            .profile-modal .profile-stat {{
+                display: flex; justify-content: space-between; padding: 6px 0;
+                border-bottom: 1px solid #1e293b; font-size: 0.82rem;
+            }}
+            .profile-modal .profile-stat .label {{ color: #64748b; }}
+            .profile-modal .profile-stat .value {{ color: #e5e7eb; }}
+
             /* READ-ONLY BANNER */
             .readonly-banner {{
-                text-align: center;
-                padding: 12px;
-                color: #64748b;
-                font-size: 0.8rem;
-                border-top: 1px solid #1e293b;
-                background: #0a0f1e;
+                text-align: center; padding: 12px; color: #64748b; font-size: 0.8rem;
+                border-top: 1px solid #1e293b; background: #0a0f1e;
             }}
 
-            /* RESPONSIVE */
+            /* SIDEBAR OVERLAY BACKDROP */
+            .sidebar-backdrop {{
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 40;
+            }}
+            .sidebar-backdrop.show {{ display: block; }}
+
+            /* RESPONSIVE - MOBILE */
             @media (max-width: 640px) {{
-                .chat-sidebar {{ width: 60px; min-width: 60px; }}
-                .room-btn .room-name {{ display: none; }}
-                .room-btn .room-icon {{ font-size: 1.2rem; }}
-                .room-btn {{ justify-content: center; padding: 10px 4px; }}
-                .sidebar-section h4 {{ display: none; }}
-                .avatar-section {{ display: none; }}
-                .sidebar-btn-section {{ display: none; }}
+                .hamburger {{ display: block; }}
+                .header-right a {{ font-size: 0.72rem; }}
+                .balance {{ font-size: 0.68rem; }}
+
+                .chat-sidebar {{
+                    position: fixed;
+                    top: 0; left: 0; bottom: 0;
+                    width: 260px;
+                    transform: translateX(-100%);
+                    transition: transform 0.25s ease;
+                    z-index: 50;
+                }}
+                .chat-sidebar.open {{
+                    transform: translateX(0);
+                }}
+
+                .chat-messages {{ padding: 6px 8px; }}
+                .chat-input-bar {{ padding: 6px 8px; }}
+                .chat-input-bar input[type="text"] {{ font-size: 16px; padding: 8px; }}
+                .emoji-picker {{ width: 220px; right: 8px; bottom: 52px; }}
             }}
         </style>
     </head>
     <body>
         <div class="header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <a href="/dashboard" class="brand" style="text-decoration: none;">SymCo</a>
+            <div class="header-left">
+                <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">☰</button>
+                <span class="brand">SymCo</span>
                 <span style="color: #475569; font-size: 0.8rem;">Chat</span>
             </div>
             <div class="header-right">
@@ -519,16 +591,19 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     emojis = "😀😂🤣😊😎🤔😢😡🤮🥳🎉🔥💰📈📉🏭🛢️⚡🏗️🌾💎🤝👍👎❤️💀🚀💬⚠️🐛✅❌🏙️🏛️📊❓🎯🛡️⚔️🪙💸🏦📋"
 
     body = f"""
+    <!-- Sidebar backdrop for mobile -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
     <div class="chat-layout">
         <!-- SIDEBAR -->
-        <div class="chat-sidebar">
+        <div class="chat-sidebar" id="chat-sidebar">
             <div class="sidebar-section avatar-section">
                 <div id="avatar-display">
                     <div class="avatar-letter" id="avatar-letter">{player.business_name[0].upper()}</div>
                 </div>
                 <div style="font-size: 0.75rem; color: #e5e7eb; margin-bottom: 6px; word-break: break-all;">{player.business_name}</div>
                 <input type="file" id="avatar-input" accept="image/*" style="display:none;">
-                <button class="avatar-upload-btn" onclick="document.getElementById('avatar-input').click()">Upload Pic</button>
+                <button class="sidebar-btn" onclick="document.getElementById('avatar-input').click()">Upload Pic</button>
             </div>
 
             <div class="sidebar-section" style="flex: 1;">
@@ -536,10 +611,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 <div id="room-list"></div>
             </div>
 
-            <div class="sidebar-section sidebar-btn-section">
-                <button class="avatar-upload-btn" style="width: 100%; margin-bottom: 6px;" onclick="openBanModal()">
-                    Word Filter
-                </button>
+            <div class="sidebar-section">
+                <button class="sidebar-btn" onclick="openBanModal()">Word Filter Settings</button>
             </div>
         </div>
 
@@ -593,6 +666,18 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal profile-modal" style="max-width: 360px; text-align: center;">
+            <div style="display: flex; justify-content: flex-end;">
+                <span style="cursor: pointer; color: #64748b; font-size: 1.2rem;" onclick="closeProfileModal()">&times;</span>
+            </div>
+            <div id="profile-content">
+                <p style="color: #64748b;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
     // ===== STATE =====
     const PLAYER_ID = {player.id};
@@ -609,7 +694,17 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     let typingTimeout = null;
     let isTyping = false;
     let unreadCounts = {{}};
-    let avatarCache = {{}};  // player_id -> data URI
+    let avatarCache = {{}};
+
+    // ===== MOBILE SIDEBAR =====
+    function toggleSidebar() {{
+        document.getElementById('chat-sidebar').classList.toggle('open');
+        document.getElementById('sidebar-backdrop').classList.toggle('show');
+    }}
+    function closeSidebar() {{
+        document.getElementById('chat-sidebar').classList.remove('open');
+        document.getElementById('sidebar-backdrop').classList.remove('show');
+    }}
 
     // ===== WEBSOCKET =====
     function connect() {{
@@ -618,7 +713,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
 
         ws.onopen = () => {{
             reconnectDelay = 1000;
-            // Request current room history
             ws.send(JSON.stringify({{type: 'join', room: currentRoom}}));
         }};
 
@@ -660,6 +754,9 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 avatarCache[data.player_id] = data.avatar;
                 refreshAvatarsInView(data.player_id);
                 break;
+            case 'profile':
+                showProfileData(data.profile);
+                break;
             case 'error':
                 appendSystemMsg(data.message);
                 break;
@@ -673,7 +770,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         ROOMS.forEach(r => {{
             const btn = document.createElement('button');
             btn.className = 'room-btn' + (r.id === currentRoom ? ' active' : '');
-            btn.onclick = () => switchRoom(r.id);
+            btn.onclick = () => {{ switchRoom(r.id); closeSidebar(); }};
             btn.innerHTML = `
                 <span class="room-icon">${{r.icon}}</span>
                 <span class="room-name">${{r.name}}</span>
@@ -692,7 +789,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 badge.classList.toggle('show', count > 0);
             }}
         }});
-        // Update active state
         document.querySelectorAll('.room-btn').forEach((btn, i) => {{
             btn.classList.toggle('active', ROOMS[i].id === currentRoom);
         }});
@@ -708,7 +804,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         document.getElementById('messages').innerHTML = '';
         document.getElementById('typing-indicator').textContent = '';
 
-        // Show/hide input based on read_only
         const isReadOnly = room && room.read_only && !ADMIN_IDS.includes(PLAYER_ID);
         document.getElementById('input-section').style.display = isReadOnly ? 'none' : '';
         document.getElementById('readonly-section').style.display = isReadOnly ? '' : 'none';
@@ -724,7 +819,9 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const container = document.getElementById('messages');
         container.innerHTML = '';
         messages.forEach(m => appendMessage(m, false));
-        scrollToBottom();
+        // Force scroll to bottom on history load
+        const el = document.getElementById('messages');
+        requestAnimationFrame(() => {{ el.scrollTop = el.scrollHeight; }});
     }}
 
     function appendMessage(data, doScroll = true) {{
@@ -736,11 +833,11 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const avatar = avatarCache[data.sender_id];
         let avatarHtml;
         if (avatar) {{
-            avatarHtml = `<img class="msg-avatar" src="${{avatar}}" data-pid="${{data.sender_id}}">`;
+            avatarHtml = `<img class="msg-avatar" src="${{avatar}}" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">`;
         }} else {{
             const letter = (data.sender_name || '?')[0].toUpperCase();
             const hue = (data.sender_id * 137) % 360;
-            avatarHtml = `<div class="msg-avatar-letter" style="color: hsl(${{hue}},60%,65%);" data-pid="${{data.sender_id}}">${{letter}}</div>`;
+            avatarHtml = `<div class="msg-avatar-letter" style="color: hsl(${{hue}},60%,65%);" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">${{letter}}</div>`;
         }}
 
         const ts = new Date(data.timestamp);
@@ -753,7 +850,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             ${{avatarHtml}}
             <div class="msg-body">
                 <div class="msg-header">
-                    <span class="msg-name" style="color: ${{nameColor}}">${{escapeHtml(data.sender_name)}}</span>
+                    <span class="msg-name" style="color: ${{nameColor}}" onclick="openProfile(${{data.sender_id}})">${{escapeHtml(data.sender_name)}}</span>
                     <span class="msg-time">${{timeStr}}</span>
                 </div>
                 <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
@@ -775,7 +872,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
 
     function scrollToBottom() {{
         const el = document.getElementById('messages');
-        // Only auto-scroll if near bottom
         const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
         if (isNearBottom || el.children.length <= 5) {{
             requestAnimationFrame(() => {{ el.scrollTop = el.scrollHeight; }});
@@ -786,16 +882,67 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const avatar = avatarCache[playerId];
         document.querySelectorAll('[data-pid="' + playerId + '"]').forEach(el => {{
             if (avatar && el.tagName !== 'IMG') {{
-                // Replace letter div with img
                 const img = document.createElement('img');
                 img.className = 'msg-avatar';
                 img.src = avatar;
                 img.dataset.pid = playerId;
+                img.onclick = () => openProfile(playerId);
                 el.replaceWith(img);
             }} else if (avatar && el.tagName === 'IMG') {{
                 el.src = avatar;
             }}
         }});
+    }}
+
+    // ===== PROFILE MODAL =====
+    function openProfile(playerId) {{
+        document.getElementById('profile-content').innerHTML = '<p style="color: #64748b;">Loading...</p>';
+        document.getElementById('profile-modal').classList.add('show');
+        if (ws && ws.readyState === 1) {{
+            ws.send(JSON.stringify({{type: 'profile', player_id: playerId}}));
+        }}
+    }}
+
+    function closeProfileModal() {{
+        document.getElementById('profile-modal').classList.remove('show');
+    }}
+
+    function showProfileData(p) {{
+        if (!p) {{
+            document.getElementById('profile-content').innerHTML = '<p style="color: #ef4444;">Player not found.</p>';
+            return;
+        }}
+        const avatar = avatarCache[p.id];
+        let avatarHtml;
+        if (avatar) {{
+            avatarHtml = `<img class="profile-avatar" src="${{avatar}}">`;
+        }} else {{
+            const letter = (p.name || '?')[0].toUpperCase();
+            const hue = (p.id * 137) % 360;
+            avatarHtml = `<div class="profile-letter" style="color: hsl(${{hue}},60%,65%);">${{letter}}</div>`;
+        }}
+        const onlineDot = p.online
+            ? '<span style="color: #22c55e; font-size: 0.75rem;">● Online now</span>'
+            : '<span style="color: #64748b; font-size: 0.75rem;">○ Offline</span>';
+        const cityRow = p.city
+            ? `<div class="profile-stat"><span class="label">City</span><span class="value">${{escapeHtml(p.city)}}</span></div>`
+            : `<div class="profile-stat"><span class="label">City</span><span class="value" style="color: #64748b;">None</span></div>`;
+        const adminBadge = ADMIN_IDS.includes(p.id)
+            ? '<div style="margin: 4px 0 8px;"><span style="background: #f59e0b; color: #020617; padding: 2px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: bold;">ADMIN</span></div>'
+            : '';
+
+        document.getElementById('profile-content').innerHTML = `
+            ${{avatarHtml}}
+            <div class="profile-name">${{escapeHtml(p.name)}}</div>
+            ${{adminBadge}}
+            <div style="margin-bottom: 12px;">${{onlineDot}}</div>
+            <div style="text-align: left;">
+                <div class="profile-stat"><span class="label">Player ID</span><span class="value">#${{p.id}}</span></div>
+                ${{cityRow}}
+                <div class="profile-stat"><span class="label">Joined</span><span class="value">${{escapeHtml(p.joined)}}</span></div>
+                <div class="profile-stat"><span class="label">Last Active</span><span class="value">${{escapeHtml(p.last_seen)}}</span></div>
+            </div>
+        `;
     }}
 
     // ===== SENDING =====
@@ -817,9 +964,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             ws.send(JSON.stringify({{type: 'typing', room: currentRoom}}));
         }}
         clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {{
-            clearTypingState();
-        }}, 2500);
+        typingTimeout = setTimeout(() => {{ clearTypingState(); }}, 2500);
     }}
 
     function clearTypingState() {{
@@ -858,13 +1003,11 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
 
     // ===== BAN WORD MODAL =====
     function openBanModal() {{
+        closeSidebar();
         document.getElementById('ban-modal').classList.add('show');
         renderBanWords();
     }}
-
-    function closeBanModal() {{
-        document.getElementById('ban-modal').classList.remove('show');
-    }}
+    function closeBanModal() {{ document.getElementById('ban-modal').classList.remove('show'); }}
 
     function renderBanWords() {{
         const container = document.getElementById('ban-word-list');
@@ -938,11 +1081,9 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const reader = new FileReader();
         reader.onload = () => {{
             const dataUri = reader.result;
-            // Send via WebSocket
             if (ws && ws.readyState === 1) {{
                 ws.send(JSON.stringify({{type: 'avatar', data: dataUri}}));
             }}
-            // Update local display
             const display = document.getElementById('avatar-display');
             display.innerHTML = '<img class="avatar-preview" src="' + dataUri + '">';
             avatarCache[PLAYER_ID] = dataUri;
@@ -962,7 +1103,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     function init() {{
         buildRoomList();
 
-        // Set up existing avatar
         const existingAvatar = {avatar_json};
         if (existingAvatar) {{
             document.getElementById('avatar-display').innerHTML =
@@ -970,7 +1110,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             avatarCache[PLAYER_ID] = existingAvatar;
         }}
 
-        // Enter key sends message
         const input = document.getElementById('msg-input');
         input.addEventListener('keydown', (e) => {{
             if (e.key === 'Enter' && !e.shiftKey) {{
@@ -980,7 +1119,6 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         }});
         input.addEventListener('input', handleTypingInput);
 
-        // Close emoji picker on outside click
         document.addEventListener('click', (e) => {{
             const picker = document.getElementById('emoji-picker');
             if (picker.classList.contains('show') && !e.target.closest('.emoji-picker') && !e.target.closest('.emoji-toggle')) {{
@@ -988,12 +1126,10 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             }}
         }});
 
-        // Ban word input enter key
         document.getElementById('ban-word-input').addEventListener('keydown', (e) => {{
             if (e.key === 'Enter') {{ e.preventDefault(); addBanWordFromInput(); }}
         }});
 
-        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {{
             if (ws && ws.readyState === 1) {{
                 ws.send(JSON.stringify({{type: 'leave'}}));
@@ -1072,7 +1208,6 @@ async def chat_websocket(websocket: WebSocket):
 
             if msg_type == "join":
                 room_id = data.get("room", "global")
-                # Verify player has access to this room
                 room_ids = set(r["id"] for r in rooms)
                 if room_id not in room_ids:
                     await manager.send_to_user(player_id, {
@@ -1083,7 +1218,6 @@ async def chat_websocket(websocket: WebSocket):
 
                 # Send history
                 messages = get_room_messages(room_id)
-                # Attach avatars
                 for msg in messages:
                     sid = msg["sender_id"]
                     if sid not in manager.avatar_cache:
@@ -1121,7 +1255,6 @@ async def chat_websocket(websocket: WebSocket):
                 if not content or len(content) > MAX_MESSAGE_LENGTH:
                     continue
 
-                # Check room access
                 room_ids = set(r["id"] for r in rooms)
                 if room_id not in room_ids:
                     continue
@@ -1135,14 +1268,12 @@ async def chat_websocket(websocket: WebSocket):
                     })
                     continue
 
-                # Save and broadcast
                 saved = save_message(room_id, player_id, player_name, content)
                 if saved:
                     saved["type"] = "message"
                     saved["avatar"] = manager.avatar_cache.get(player_id)
                     await manager.broadcast_to_room(room_id, saved)
 
-                # Clear typing
                 manager.clear_typing(room_id, player_id)
                 typing_names = manager.get_typing_names(room_id)
                 await manager.broadcast_to_room(room_id, {
@@ -1155,7 +1286,6 @@ async def chat_websocket(websocket: WebSocket):
                 room_id = data.get("room", "global")
                 manager.set_typing(room_id, player_id)
                 typing_names = manager.get_typing_names(room_id, exclude_id=None)
-                # Send to everyone except the typer
                 for pid in list(manager.connections.keys()):
                     if pid != player_id and room_id in manager.player_rooms.get(pid, set()):
                         names_for_user = [n for n in typing_names if n != manager.player_names.get(pid)]
@@ -1182,7 +1312,6 @@ async def chat_websocket(websocket: WebSocket):
                 if avatar_data and len(avatar_data) <= MAX_AVATAR_BYTES:
                     save_avatar(player_id, avatar_data)
                     manager.avatar_cache[player_id] = avatar_data
-                    # Broadcast avatar update to all connected users
                     for pid in list(manager.connections.keys()):
                         await manager.send_to_user(pid, {
                             "type": "avatar_update",
@@ -1195,6 +1324,15 @@ async def chat_websocket(websocket: WebSocket):
                 if isinstance(words, list):
                     clean = [w.strip().lower() for w in words if isinstance(w, str) and w.strip()]
                     set_user_ban_words(player_id, clean)
+
+            elif msg_type == "profile":
+                target_id = data.get("player_id")
+                if target_id:
+                    profile = get_player_profile(int(target_id))
+                    await manager.send_to_user(player_id, {
+                        "type": "profile",
+                        "profile": profile,
+                    })
 
             elif msg_type == "leave":
                 break
