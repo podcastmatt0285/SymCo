@@ -276,6 +276,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     # 4. Determine if this is a bank IPO sale
     is_bank_ipo = False
     bank_id = None
+    petrodollar_handled = False
     
     # Land Bank IPO detection
     if sell_order.player_id == -2 and sell_order.item_type == "land_bank_shares":
@@ -351,6 +352,54 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             db.rollback()
             return
 
+    else:
+        # Normal player-to-player trade - handle cash transfer
+        try:
+            from auth import Player
+            buyer = db.query(Player).filter(Player.id == buy_order.player_id).first()
+            seller = db.query(Player).filter(Player.id == sell_order.player_id).first()
+
+            if not buyer or not seller:
+                print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} or seller {sell_order.player_id} not found!")
+                db.rollback()
+                return
+
+            # Check for petrodollar system (outsider trading with city member)
+            try:
+                from cities import handle_outsider_trade
+                petro_result, petro_msg = handle_outsider_trade(
+                    buy_order.player_id, sell_order.player_id,
+                    buy_order.item_type, quantity, price
+                )
+                if not petro_result:
+                    # Petrodollar system blocked the trade (e.g. insufficient reserve currency)
+                    print(f"[Market] Trade blocked by petrodollar system: {petro_msg}")
+                    db.rollback()
+                    return
+                if "handled" in petro_msg.lower():
+                    petrodollar_handled = True
+                    print(f"[Market] Petrodollar system handled cash: {petro_msg}")
+            except ImportError:
+                pass  # cities module not available, proceed with normal trade
+            except Exception as e:
+                print(f"[Market] Petrodollar check error (proceeding with normal trade): {e}")
+
+            if not petrodollar_handled:
+                # Standard cash transfer between players
+                if buyer.cash_balance < total_cost:
+                    print(f"[Market] ERROR: Buyer {buy_order.player_id} insufficient funds (need ${total_cost:.2f}, have ${buyer.cash_balance:.2f})")
+                    db.rollback()
+                    return
+                buyer.cash_balance -= total_cost
+                seller.cash_balance += total_cost
+
+        except Exception as e:
+            print(f"[Market] Cash Transfer Error: {e}")
+            import traceback
+            traceback.print_exc()
+            db.rollback()
+            return
+
     # 6. Transfer inventory
     try:
         import inventory
@@ -393,8 +442,8 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         buy_order.item_type
     )
     
-    # Log seller's cash receipt (only for non-bank sales)
-    if not is_bank_ipo:
+    # Log seller's cash receipt (only for non-bank, non-petrodollar sales)
+    if not is_bank_ipo and not petrodollar_handled:
         log_transaction(
             sell_order.player_id,
             "cash_in",
