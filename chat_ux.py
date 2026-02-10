@@ -14,7 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from chat import (
     manager, STATIC_ROOMS, ADMIN_PLAYER_IDS, DEFAULT_BAN_WORDS,
-    MAX_MESSAGE_LENGTH, MAX_AVATAR_BYTES,
+    MAX_MESSAGE_LENGTH, MAX_UPLOAD_BYTES,
     get_rooms_for_player, get_room_messages, save_message,
     get_user_ban_words, initialize_default_ban_words, set_user_ban_words,
     add_ban_word, remove_ban_word,
@@ -1074,8 +1074,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     document.getElementById('avatar-input').addEventListener('change', function() {{
         const file = this.files[0];
         if (!file) return;
-        if (file.size > {MAX_AVATAR_BYTES}) {{
-            alert('Image too large. Max 150KB.');
+        if (file.size > {MAX_UPLOAD_BYTES}) {{
+            alert('Image too large. Max 10MB.');
             return;
         }}
         const reader = new FileReader();
@@ -1161,14 +1161,17 @@ def upload_avatar_http(
         return JSONResponse({"error": "Not authenticated"}, status_code=401)
 
     data = avatar.file.read()
-    if len(data) > MAX_AVATAR_BYTES:
+    if len(data) > MAX_UPLOAD_BYTES:
         return JSONResponse({"error": "Image too large"}, status_code=400)
 
     b64 = base64.b64encode(data).decode()
     content_type = avatar.content_type or "image/png"
     data_uri = f"data:{content_type};base64,{b64}"
-    save_avatar(player.id, data_uri)
-    return JSONResponse({"ok": True, "avatar": data_uri})
+    success = save_avatar(player.id, data_uri)
+    if not success:
+        return JSONResponse({"error": "Failed to process image"}, status_code=400)
+    compressed = get_avatar(player.id)
+    return JSONResponse({"ok": True, "avatar": compressed})
 
 
 # ==========================
@@ -1309,15 +1312,19 @@ async def chat_websocket(websocket: WebSocket):
 
             elif msg_type == "avatar":
                 avatar_data = data.get("data", "")
-                if avatar_data and len(avatar_data) <= MAX_AVATAR_BYTES:
-                    save_avatar(player_id, avatar_data)
-                    manager.avatar_cache[player_id] = avatar_data
-                    for pid in list(manager.connections.keys()):
-                        await manager.send_to_user(pid, {
-                            "type": "avatar_update",
-                            "player_id": player_id,
-                            "avatar": avatar_data,
-                        })
+                if avatar_data and len(avatar_data) <= MAX_UPLOAD_BYTES * 2:  # base64 is ~1.37x raw
+                    success = save_avatar(player_id, avatar_data)
+                    if success:
+                        # Re-read the compressed version from DB
+                        compressed = get_avatar(player_id)
+                        if compressed:
+                            manager.avatar_cache[player_id] = compressed
+                            for pid in list(manager.connections.keys()):
+                                await manager.send_to_user(pid, {
+                                    "type": "avatar_update",
+                                    "player_id": player_id,
+                                    "avatar": compressed,
+                                })
 
             elif msg_type == "ban_words":
                 words = data.get("words", [])

@@ -41,7 +41,9 @@ STATIC_ROOMS = [
 
 MAX_MESSAGE_LENGTH = 500
 MAX_HISTORY = 100
-MAX_AVATAR_BYTES = 150 * 1024  # 150KB base64
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024   # 10MB raw upload limit
+AVATAR_SIZE = 128                       # Rendered avatar dimensions (128x128)
+AVATAR_QUALITY = 80                     # JPEG compression quality
 
 DEFAULT_BAN_WORDS = [
     # Racial slurs
@@ -224,16 +226,53 @@ def remove_ban_word(player_id: int, word: str) -> bool:
 # AVATAR FUNCTIONS
 # ==========================
 
+def compress_avatar(data_uri: str) -> Optional[str]:
+    """
+    Take a base64 data URI of any size, resize to 128x128, compress to JPEG,
+    and return a small base64 data URI. Returns None on failure.
+    """
+    import base64
+    import io
+    try:
+        from PIL import Image
+
+        # Parse data URI: "data:image/png;base64,iVBOR..."
+        header, b64data = data_uri.split(",", 1)
+        raw_bytes = base64.b64decode(b64data)
+
+        img = Image.open(io.BytesIO(raw_bytes))
+        img = img.convert("RGB")  # Drop alpha, normalize format
+
+        # Crop to square center then resize
+        w, h = img.size
+        side = min(w, h)
+        left = (w - side) // 2
+        top = (h - side) // 2
+        img = img.crop((left, top, left + side, top + side))
+        img = img.resize((AVATAR_SIZE, AVATAR_SIZE), Image.LANCZOS)
+
+        # Compress to JPEG
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=AVATAR_QUALITY, optimize=True)
+        compressed_b64 = base64.b64encode(buf.getvalue()).decode()
+        return f"data:image/jpeg;base64,{compressed_b64}"
+    except Exception as e:
+        print(f"[Chat] Avatar compression failed: {e}")
+        return None
+
+
 def save_avatar(player_id: int, image_data: str):
-    if len(image_data) > MAX_AVATAR_BYTES:
+    """Compress and save avatar. Accepts any size data URI."""
+    compressed = compress_avatar(image_data)
+    if not compressed:
         return False
     db = get_db()
     existing = db.query(ChatAvatar).filter(ChatAvatar.player_id == player_id).first()
     if existing:
-        existing.image_data = image_data
+        existing.image_data = compressed
         existing.updated_at = datetime.utcnow()
     else:
-        db.add(ChatAvatar(player_id=player_id, image_data=image_data, updated_at=datetime.utcnow()))
+        db.add(ChatAvatar(player_id=player_id, image_data=compressed, updated_at=datetime.utcnow()))
     db.commit()
     db.close()
     return True
