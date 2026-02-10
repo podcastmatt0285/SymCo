@@ -199,6 +199,24 @@ def get_db():
         raise
 
 
+P2P_ACCESS_DURATION = timedelta(hours=1)  # How long a single fee payment lasts
+
+
+def has_p2p_access(player_id: int) -> bool:
+    """
+    Check if a player has a valid (recent) P2P access payment.
+    Returns True if the player paid the entry fee within P2P_ACCESS_DURATION.
+    """
+    db = get_db()
+    cutoff = datetime.utcnow() - P2P_ACCESS_DURATION
+    access = db.query(P2PAccessLog).filter(
+        P2PAccessLog.player_id == player_id,
+        P2PAccessLog.accessed_at >= cutoff
+    ).first()
+    db.close()
+    return access is not None
+
+
 def charge_p2p_access(player_id: int) -> bool:
     """
     Charge the P2P dashboard entry fee.

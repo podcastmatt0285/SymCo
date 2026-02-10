@@ -38,6 +38,14 @@ def require_auth(session_token):
         return RedirectResponse(url="/login", status_code=303)
 
 
+def require_p2p_access(player):
+    """Check if player has paid the P2P access fee recently. Returns RedirectResponse to gate if not."""
+    from p2p import has_p2p_access
+    if not has_p2p_access(player.id):
+        return RedirectResponse(url="/p2p", status_code=303)
+    return None
+
+
 def shell(title, body, balance=0.0, player_id=None):
     """Re-use the main shell template."""
     from ux import shell as main_shell
@@ -136,11 +144,15 @@ def p2p_enter(session_token: Optional[str] = Cookie(None)):
 def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
     """
     The P2P Dashboard - hub for all P2P activities.
-    Only accessible after paying the entry fee (enforced by the gate).
+    Only accessible after paying the entry fee.
     """
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
 
     return shell(
         "P2P Dashboard",
@@ -185,6 +197,10 @@ def contracts_dashboard(session_token: Optional[str] = Cookie(None), tab: str = 
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
 
     from p2p import (
         get_db, Contract, ContractItem, ContractBid, ContractStatus,
@@ -773,6 +789,10 @@ def create_price_bid_action(
     if isinstance(player, RedirectResponse):
         return player
 
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
+
     from p2p import create_contract_price_bid
 
     items = [{"item_type": item_1, "quantity": qty_1}]
@@ -819,6 +839,10 @@ def create_quantity_bid_action(
     if isinstance(player, RedirectResponse):
         return player
 
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
+
     from p2p import create_contract_quantity_bid
 
     contract_id = create_contract_quantity_bid(
@@ -858,6 +882,10 @@ def list_contract_action(
     if isinstance(player, RedirectResponse):
         return player
 
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
+
     from p2p import list_contract
 
     success = list_contract(contract_id, player.id, minimum_bid=minimum_bid, bid_duration=bid_duration)
@@ -888,6 +916,10 @@ def bid_contract_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
 
     from p2p import place_bid
 
@@ -920,6 +952,10 @@ def relist_contract_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    access_redirect = require_p2p_access(player)
+    if access_redirect:
+        return access_redirect
 
     from p2p import relist_contract, RELIST_FEE
 
