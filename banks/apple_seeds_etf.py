@@ -31,9 +31,9 @@ BANK_PLAYER_ID = -3
 # ==========================
 
 # IPO Settings
-IPO_SHARES = 250000000000
-IPO_PRICE = None  # Calculated dynamically
-SEED_CAPITAL = 5000000000
+IPO_SHARES = 10_000_000       # 10M shares (realistic ETF scale)
+IPO_PRICE = None               # Calculated from NAV at init
+SEED_CAPITAL = 10_000_000      # $10M seed capital
 
 # Target commodity
 TARGET_COMMODITY = "apple_seeds"
@@ -56,10 +56,10 @@ DIVIDEND_PAYOUT_PERCENTAGE = 0.5
 MIN_RESERVE_FOR_DIVIDENDS = 10000
 
 # Stock split triggers
-SPLIT_PRICE_THRESHOLD = 10.0
-SPLIT_RATIO = 50
+SPLIT_PRICE_THRESHOLD = 50.0   # Split at $50/share
+SPLIT_RATIO = 5                # 5-for-1 split
 SPLIT_CHECK_INTERVAL = 60
-MAX_TOTAL_SHARES = 10000000000000000000
+MAX_TOTAL_SHARES = 10_000_000_000  # 10B max after splits
 
 # Buyback triggers
 BUYBACK_PRICE_THRESHOLD = None
@@ -174,59 +174,53 @@ def get_total_commodity_supply() -> float:
 
 def calculate_ipo_price() -> float:
     """
-    Calculate IPO share price based on economic fundamentals.
-    IPO Price = (Total Market Value of Apple Seeds) / (Total Money Supply)
+    Calculate IPO share price based on Net Asset Value (NAV).
+    IPO Price = (Seed Capital + Commodity Holdings Value) / Total Shares
+
+    At IPO the fund holds only seed capital (no commodities yet),
+    so price = SEED_CAPITAL / IPO_SHARES.
     """
     try:
         import market
-        
-        total_seeds = get_total_commodity_supply()
-        market_price = market.get_market_price(TARGET_COMMODITY)
-        
-        if not market_price:
-            order_book = market.get_order_book(TARGET_COMMODITY)
-            if order_book['asks']:
-                market_price = order_book['asks'][0][0]
-                print(f"[{BANK_NAME}] Using market ask price: ${market_price:.2f}")
-            elif order_book['bids']:
-                market_price = order_book['bids'][0][0]
-                print(f"[{BANK_NAME}] Using market bid price: ${market_price:.2f}")
-            else:
-                market_price = 1.0
-                print(f"[{BANK_NAME}] No market data - using fallback price: ${market_price:.2f}")
-        
-        total_market_value = total_seeds * market_price
-        total_money = get_total_money_supply()
-        
-        if total_money < 1.0:
-            total_money = 10000.0
-        
-        if total_market_value < 1.0:
-            total_market_value = 10.0
-        
-        ipo_price = total_market_value / total_money
-        
-        if ipo_price < 0.0001:
+
+        # Calculate value of any pre-existing commodity holdings
+        commodity_holdings = 0.0
+        try:
+            import inventory
+            held = inventory.get_item_quantity(BANK_PLAYER_ID, TARGET_COMMODITY)
+            if held > 0:
+                market_price = market.get_market_price(TARGET_COMMODITY)
+                if not market_price:
+                    market_price = 0.15  # Apple seeds base cost fallback
+                commodity_holdings = held * market_price
+        except:
+            pass
+
+        nav = SEED_CAPITAL + commodity_holdings
+        ipo_price = nav / IPO_SHARES
+
+        # Sanity bounds
+        if ipo_price < 0.01:
             print(f"[{BANK_NAME}] ⚠️ IPO price too low ({ipo_price:.8f}), using minimum $0.01")
             ipo_price = 0.01
-        elif ipo_price > 100.0:
-            print(f"[{BANK_NAME}] ⚠️ IPO price too high ({ipo_price:.2f}), capping at $10")
-            ipo_price = 10.0
-        
-        print(f"[{BANK_NAME}] IPO Price Calculation:")
-        print(f"  → Total Apple Seeds: {total_seeds:,.0f}")
-        print(f"  → Market Price: ${market_price:.2f}")
-        print(f"  → Total Market Value: ${total_market_value:,.2f}")
-        print(f"  → Total Money Supply: ${total_money:,.2f}")
-        print(f"  → IPO Price: ${ipo_price:.6f}")
-        
+        elif ipo_price > 1000.0:
+            print(f"[{BANK_NAME}] ⚠️ IPO price too high ({ipo_price:.2f}), capping at $1000")
+            ipo_price = 1000.0
+
+        print(f"[{BANK_NAME}] IPO Price Calculation (NAV-based):")
+        print(f"  → Seed Capital: ${SEED_CAPITAL:,.2f}")
+        print(f"  → Commodity Holdings Value: ${commodity_holdings:,.2f}")
+        print(f"  → NAV: ${nav:,.2f}")
+        print(f"  → Shares: {IPO_SHARES:,}")
+        print(f"  → IPO Price: ${ipo_price:.4f}")
+
         return ipo_price
-    
+
     except Exception as e:
         print(f"[{BANK_NAME}] IPO price calculation error: {e}")
         import traceback
         traceback.print_exc()
-        return 0.01
+        return SEED_CAPITAL / IPO_SHARES if IPO_SHARES > 0 else 1.0
 
 
 # ==========================
@@ -303,7 +297,7 @@ def initialize():
     
     if not ipo_share_price or ipo_share_price <= 0:
         print(f"[{BANK_NAME}] ✗ CRITICAL: Invalid IPO price calculated: {ipo_share_price}")
-        ipo_share_price = 0.01
+        ipo_share_price = SEED_CAPITAL / IPO_SHARES
     
     # Set QE trigger
     QE_TRIGGER_SHARE_PRICE = -ipo_share_price * 0.5
