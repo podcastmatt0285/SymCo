@@ -1826,7 +1826,29 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                         current_dividends += f"<li>{div.get('type', 'unknown').title()}: {div.get('amount', 0)} ({div.get('frequency', 'unknown')})</li>"
                 else:
                     current_dividends = "<li>No dividends configured</li>"
-                
+
+                # Pre-build conditional forms to avoid nested f-string issues
+                buyback_form_html = ""
+                if company.shares_in_float > 0:
+                    buyback_form_html = f'''
+                        <form action="/api/brokerage/buyback" method="post" style="display: inline;">
+                            <input type="hidden" name="company_id" value="{company.id}">
+                            <input type="number" name="shares" placeholder="Shares to buy" style="width: 100px; padding: 6px;" min="1" max="{company.shares_in_float}">
+                            <button type="submit" class="btn-orange">Buyback</button>
+                        </form>'''
+
+                go_private_form_html = ""
+                if item["can_delist"]:
+                    go_private_form_html = f'''
+                        <form action="/api/brokerage/go-private" method="post" style="display: inline;">
+                            <input type="hidden" name="company_id" value="{company.id}">
+                            <button type="submit" class="btn-red" onclick="return confirm('Take company private? This will delist the stock and you cannot re-IPO for 7200 ticks.')">
+                                Go Private
+                            </button>
+                        </form>'''
+                else:
+                    go_private_form_html = '<span style="color: #64748b; font-size: 0.85rem;">Buy back all shares to go private</span>'
+
                 companies_html += f'''
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -1871,21 +1893,8 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                     
                     <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
                         <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue">View Trading</a>
-                        {f'''
-                        <form action="/api/brokerage/buyback" method="post" style="display: inline;">
-                            <input type="hidden" name="company_id" value="{company.id}">
-                            <input type="number" name="shares" placeholder="Shares to buy" style="width: 100px; padding: 6px;" min="1" max="{company.shares_in_float}">
-                            <button type="submit" class="btn-orange">Buyback</button>
-                        </form>
-                        ''' if company.shares_in_float > 0 else ''}
-                        {f'''
-                        <form action="/api/brokerage/go-private" method="post" style="display: inline;">
-                            <input type="hidden" name="company_id" value="{company.id}">
-                            <button type="submit" class="btn-red" onclick="return confirm('Take company private? This will delist the stock and you cannot re-IPO for 7200 ticks.')">
-                                Go Private
-                            </button>
-                        </form>
-                        ''' if item["can_delist"] else '<span style="color: #64748b; font-size: 0.85rem;">Buy back all shares to go private</span>'}
+                        {buyback_form_html}
+                        {go_private_form_html}
                     </div>
                 </div>
                 '''
@@ -2804,302 +2813,367 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         # Trading halted check
         is_halted = selected_company.trading_halted_until and datetime.utcnow() < selected_company.trading_halted_until
         
-        # Build dividend info
-        dividend_html = ""
+        # ===== MODERN TRADING DASHBOARD =====
+
+        # Portfolio totals for summary bar
+        total_portfolio_value = 0
+        total_portfolio_cost = 0
+        total_margin_debt = 0
+        positions_data = []
+
+        for company in companies:
+            pos = player_positions.get(company.id)
+            shares = pos.shares_owned if pos else 0
+            cost_basis = pos.average_cost_basis if pos else 0
+            mkt_val = shares * company.current_price
+            cost_total = shares * cost_basis
+            pl = mkt_val - cost_total if shares > 0 else 0
+            margin_debt_val = 0
+            if pos and hasattr(pos, 'margin_debt') and pos.margin_debt:
+                margin_debt_val = pos.margin_debt
+
+            total_portfolio_value += mkt_val
+            total_portfolio_cost += cost_total
+            total_margin_debt += margin_debt_val
+
+            positions_data.append({
+                'company': company,
+                'shares': shares,
+                'cost_basis': cost_basis,
+                'mkt_val': mkt_val,
+                'pl': pl,
+                'is_selected': company.id == selected_company.id
+            })
+
+        total_pl = total_portfolio_value - total_portfolio_cost
+        total_pl_pct = (total_pl / total_portfolio_cost * 100) if total_portfolio_cost > 0 else 0
+        num_positions = sum(1 for p in positions_data if p['shares'] > 0)
+
+        # Price change from IPO
+        price_change = selected_company.current_price - selected_company.ipo_price
+        price_change_pct = (price_change / selected_company.ipo_price * 100) if selected_company.ipo_price > 0 else 0
+        change_color = "#22c55e" if price_change >= 0 else "#ef4444"
+        change_sign = "+" if price_change >= 0 else ""
+
+        # Player position metrics for selected stock
+        player_mkt_value = player_shares * selected_company.current_price
+        player_total_cost = player_shares * player_cost_basis
+        player_pl = player_mkt_value - player_total_cost if player_shares > 0 else 0
+        player_pl_pct = (player_pl / player_total_cost * 100) if player_total_cost > 0 else 0
+        pl_color = "#22c55e" if player_pl >= 0 else "#ef4444"
+
+        # Generate SVG sparkline from recent trades
+        sparkline_svg = '<div style="height:80px;display:flex;align-items:center;justify-content:center;color:#334155;font-size:0.75rem;">No trade history</div>'
+        if recent_trades:
+            spark_prices = [t['price'] for t in reversed(recent_trades)]
+            if len(spark_prices) >= 2:
+                min_p = min(spark_prices)
+                max_p = max(spark_prices)
+                pr = max_p - min_p if max_p != min_p else 1
+                pts = []
+                area = []
+                for i, p in enumerate(spark_prices):
+                    x = 2 + i / (len(spark_prices) - 1) * 496
+                    y = 2 + 76 - ((p - min_p) / pr * 76)
+                    pts.append(f"{x:.1f},{y:.1f}")
+                    area.append(f"{x:.1f},{y:.1f}")
+                area.append("498,80")
+                area.append("2,80")
+                lc = "#22c55e" if spark_prices[-1] >= spark_prices[0] else "#ef4444"
+                sparkline_svg = f'<svg viewBox="0 0 500 80" preserveAspectRatio="none" style="width:100%;height:80px;display:block;"><defs><linearGradient id="sfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="{lc}" stop-opacity="0.2"/><stop offset="100%" stop-color="{lc}" stop-opacity="0.01"/></linearGradient></defs><polygon points="{" ".join(area)}" fill="url(#sfill)"/><polyline points="{" ".join(pts)}" fill="none" stroke="{lc}" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+
+        # Dividend display
+        dividend_display = "None"
         if selected_company.dividend_config:
-            dividend_html = '<div style="margin-top: 15px;"><strong>Dividends:</strong><ul style="margin: 5px 0; padding-left: 20px;">'
+            div_parts = []
             for div in selected_company.dividend_config:
-                div_type = div.get("type", "unknown")
-                freq = div.get("frequency", "unknown")
-                if div_type == "cash":
-                    dividend_html += f'<li>Cash: {div.get("amount", 0)*100:.1f}% {div.get("basis", "fixed")} ({freq})</li>'
-                elif div_type == "commodity":
-                    dividend_html += f'<li>{div.get("item", "item")}: {div.get("amount", 0)} per {div.get("per_shares", 100)} shares ({freq})</li>'
-                elif div_type == "scrip":
-                    dividend_html += f'<li>Stock dividend: {div.get("rate", 0)*100:.1f}% ({freq})</li>'
-            dividend_html += '</ul></div>'
-        
-        body = f'''
-        <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
-        <h1>SCPE Trading Floor</h1>
-        
-        {company_tabs}
-        
-        {"<div class='card' style='border: 2px solid #f59e0b; background: #451a03;'><h3 style='color: #fbbf24;'>🛑 TRADING HALTED</h3><p style='color: #fbbf24;'>Circuit breaker active until " + selected_company.trading_halted_until.strftime("%H:%M UTC") + "</p></div>" if is_halted else ""}
-        
-        <!-- Company Info Card -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div>
-                    <h2 style="margin: 0;">{selected_company.company_name}</h2>
-                    <p style="color: #64748b; margin: 5px 0;">
-                        {selected_company.ticker_symbol} · Class {selected_company.share_class} · 
-                        {"🛡️ TBTF Protected" if selected_company.is_tbtf else "Standard"}
-                    </p>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 2rem; font-weight: bold; color: #38bdf8;">${selected_company.current_price:.4f}</div>
-                    <div style="font-size: 0.85rem; color: #64748b;">
-                        IPO: ${selected_company.ipo_price:.4f} | 
-                        52W: ${selected_company.low_52_week:.2f} - ${selected_company.high_52_week:.2f}
-                    </div>
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Market Cap</div>
-                    <div style="font-size: 1.2rem;">${selected_company.current_price * selected_company.shares_outstanding:,.0f}</div>
-                </div>
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Shares Outstanding</div>
-                    <div style="font-size: 1.2rem;">{selected_company.shares_outstanding:,}</div>
-                </div>
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Float (Tradeable)</div>
-                    <div style="font-size: 1.2rem;">{selected_company.shares_in_float:,}</div>
-                </div>
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Dividend Streak</div>
-                    <div style="font-size: 1.2rem;">{selected_company.consecutive_dividend_payouts}</div>
-                </div>
-            </div>
-            
-            {dividend_html}
-        </div>
-        
-        <!-- Your Position -->
-        <div class="card">
-            <h3>Your Position</h3>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Shares Owned</div>
-                    <div style="font-size: 1.5rem; color: #38bdf8;">{player_shares:,}</div>
-                </div>
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Market Value</div>
-                    <div style="font-size: 1.5rem;">${player_shares * selected_company.current_price:,.2f}</div>
-                </div>
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">Avg Cost Basis</div>
-                    <div style="font-size: 1.5rem;">${player_cost_basis:.4f}</div>
-                </div>
-                <div>
-                    <div style="color: #64748b; font-size: 0.8rem;">P/L</div>
-                    <div style="font-size: 1.5rem; color: {'#22c55e' if (selected_company.current_price - player_cost_basis) >= 0 else '#ef4444'};">
-                        ${(selected_company.current_price - player_cost_basis) * player_shares:,.2f}
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Trading Forms -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-            <!-- Buy Form -->
-            <div class="card" style="border-left: 4px solid #22c55e;">
-                <h3 style="color: #22c55e;">Buy Shares</h3>
-                <form action="/api/brokerage/buy" method="post">
-                    <input type="hidden" name="company_id" value="{selected_company.id}">
+                dt = div.get("type", "")
+                freq = div.get("frequency", "")
+                if dt == "cash":
+                    div_parts.append(f'Cash {div.get("amount",0)*100:.1f}% ({freq})')
+                elif dt == "commodity":
+                    div_parts.append(f'{div.get("item","item")}: {div.get("amount",0)}/{div.get("per_shares",100)}shs ({freq})')
+                elif dt == "scrip":
+                    div_parts.append(f'Stock {div.get("rate",0)*100:.1f}% ({freq})')
+            if div_parts:
+                dividend_display = " | ".join(div_parts)
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Quantity</label>
-                        <input type="number" name="quantity" min="1" required
-                               style="width: 100%; padding: 10px;" placeholder="Number of shares">
-                    </div>
+        # Build positions sidebar HTML
+        positions_html = ""
+        for pd_item in positions_data:
+            c = pd_item['company']
+            is_sel = pd_item['is_selected']
+            bg = "#1e293b" if is_sel else "transparent"
+            bl = "3px solid #38bdf8" if is_sel else "3px solid transparent"
+            shares_txt = f"{pd_item['shares']:,} shs" if pd_item['shares'] > 0 else ""
+            pl_txt = ""
+            plc = "#64748b"
+            if pd_item['shares'] > 0 and pd_item['cost_basis'] > 0:
+                plc = "#22c55e" if pd_item['pl'] >= 0 else "#ef4444"
+                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}${pd_item['pl']:,.2f}"
+            positions_html += f'<a href="/brokerage/trading?ticker={c.ticker_symbol}" style="display:block;padding:8px 10px;border-left:{bl};background:{bg};text-decoration:none;color:#e5e7eb;">'
+            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;">{c.ticker_symbol}</span><span style="font-size:0.8rem;color:#94a3b8;">${c.current_price:.2f}</span></div>'
+            if shares_txt or pl_txt:
+                positions_html += f'<div style="display:flex;justify-content:space-between;margin-top:2px;font-size:0.7rem;"><span style="color:#64748b;">{shares_txt}</span><span style="color:{plc};">{pl_txt}</span></div>'
+            positions_html += '</a>'
 
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Limit Price (optional)</label>
-                        <input type="number" name="limit_price" step="0.0001"
-                               style="width: 100%; padding: 10px;"
-                               placeholder="Leave blank for Market Order (${selected_company.current_price:.4f})">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: flex; align-items: center; gap: 8px; color: #94a3b8;">
-                            <input type="checkbox" name="use_margin" value="1">
-                            Use Margin (up to {max_margin:.1f}x leverage)
-                        </label>
-                        <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">
-                            Your credit: {player_credit.credit_score} ({player_credit.tier.upper()})
-                        </p>
-                    </div>
-
-                    <button type="submit" class="btn-blue" style="width: 100%; padding: 12px; background: #22c55e;"
-                            {"disabled" if is_halted else ""}>
-                        Place Buy Order
-                    </button>
-                </form>
-            </div>
-
-            <!-- Sell Form -->
-            <div class="card" style="border-left: 4px solid #ef4444;">
-                <h3 style="color: #ef4444;">Sell Shares</h3>
-                <form action="/api/brokerage/sell" method="post">
-                    <input type="hidden" name="company_id" value="{selected_company.id}">
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Quantity</label>
-                        <input type="number" name="quantity" min="1" max="{player_shares}" required
-                               style="width: 100%; padding: 10px;" placeholder="Max: {player_shares}">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Limit Price (optional)</label>
-                        <input type="number" name="limit_price" step="0.0001"
-                               style="width: 100%; padding: 10px;"
-                               placeholder="Leave blank for Market Order (${selected_company.current_price:.4f})">
-                        <p style="font-size: 0.75rem; color: #64748b; margin-top: 3px;">
-                        </p>
-                    </div>
-
-                    <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;">
-                        Available to sell: {player_shares:,} shares
-                    </p>
-
-                    <button type="submit" class="btn-red" style="width: 100%; padding: 12px;"
-                            {"disabled" if is_halted or player_shares == 0 else ""}>
-                        Place Sell Order
-                    </button>
-                </form>
-            </div>
-        </div>
-        '''
-
-        # Add Order Book & Recent Trades section
-        body += '''
-        <!-- Order Book & Recent Trades -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px;">
-            <!-- Order Book -->
-            <div class="card">
-                <h3>Order Book</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <!-- Bids -->
-                    <div>
-                        <h4 style="color: #22c55e; margin-bottom: 10px;">Bids (Buy Orders)</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
-                            <span>Price</span>
-                            <span>Qty</span>
-                            <span>Total</span>
-                        </div>'''
-
-        body += '''
-                    </div>
-
-                    <!-- Asks -->
-                    <div>
-                        <h4 style="color: #ef4444; margin-bottom: 10px;">Asks (Sell Orders)</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
-                            <span>Price</span>
-                            <span>Qty</span>
-                            <span>Total</span>
-                        </div>'''
-
+        # Build order book depth ladder
         spread = order_book['spread']
         spread_pct = order_book['spread_pct']
-        body += f'''
-                    </div>
-                </div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #1e293b; text-align: center; color: #94a3b8; font-size: 0.9rem;">
-                    Spread: ${spread:.4f} ({spread_pct:.2f}%)
-                </div>
-            </div>
+        all_bq = [q for _, q in order_book['bids']] + [q for _, q in order_book['asks']]
+        max_bq = max(all_bq) if all_bq else 1
 
-            <!-- Recent Trades -->
-            <div class="card">
-                <h3>Recent Trades</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
-                    <span>Price</span>
-                    <span>Qty</span>
-                </div>'''
+        ob_html = '<div style="font-size:0.7rem;color:#475569;display:grid;grid-template-columns:1fr 1fr;padding:2px 8px;margin-bottom:4px;"><span>PRICE</span><span style="text-align:right;">QTY</span></div>'
+        if order_book['asks']:
+            for price, qty in reversed(order_book['asks']):
+                bw = qty / max_bq * 100
+                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(239,68,68,0.1);"></div><span style="color:#ef4444;position:relative;">${price:.4f}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
+        else:
+            ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No asks</div>'
+        ob_html += f'<div style="padding:4px 8px;text-align:center;font-size:0.7rem;color:#64748b;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#0a0f1a;">Spread ${spread:.4f} ({spread_pct:.2f}%)</div>'
+        if order_book['bids']:
+            for price, qty in order_book['bids']:
+                bw = qty / max_bq * 100
+                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(34,197,94,0.1);"></div><span style="color:#22c55e;position:relative;">${price:.4f}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
+        else:
+            ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No bids</div>'
 
+        # Build recent trades (time & sales)
+        trades_html = ""
         if recent_trades:
+            prev_price = None
             for trade in recent_trades:
                 trade_time = trade.get('timestamp', '')
+                time_str = ""
                 if isinstance(trade_time, str):
-                    from datetime import datetime
                     try:
                         trade_dt = datetime.fromisoformat(trade_time.replace('Z', '+00:00'))
                         time_str = trade_dt.strftime("%H:%M")
                     except:
                         time_str = ""
-                else:
-                    time_str = trade_time.strftime("%H:%M") if trade_time else ""
-
-                body += f'''
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #94a3b8;">
-                    <span>${trade['price']:.4f}</span>
-                    <span>{trade['quantity']:,}</span>
-                </div>'''
+                elif trade_time:
+                    time_str = trade_time.strftime("%H:%M")
+                tc = "#94a3b8"
+                if prev_price is not None:
+                    tc = "#22c55e" if trade['price'] >= prev_price else "#ef4444"
+                prev_price = trade['price']
+                trades_html += f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.8rem;padding:2px 8px;"><span style="color:{tc};">${trade["price"]:.4f}</span><span style="text-align:right;color:#94a3b8;">{trade["quantity"]:,}</span><span style="text-align:right;color:#475569;">{time_str}</span></div>'
         else:
-            body += '<p style="color: #64748b; font-size: 0.9rem; padding: 8px 0;">No recent trades</p>'
+            trades_html = '<div style="padding:8px;color:#334155;font-size:0.75rem;text-align:center;">No trades yet</div>'
 
-        body += '''
-            </div>
+        # Build pending orders
+        pending_html = ""
+        if pending_orders:
+            pending_html = f'<div style="margin-top:12px;"><div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding:0 4px;">Open Orders ({len(pending_orders)})</div>'
+            for order in pending_orders:
+                sc = "#22c55e" if order.order_side == "BUY" else "#ef4444"
+                pd_str = f"${order.limit_price:.4f}" if order.limit_price else "MKT"
+                rem = order.quantity - order.filled_quantity
+                pending_html += f'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 4px;border-top:1px solid #0f172a;font-size:0.8rem;"><div><span style="color:{sc};font-weight:600;">{order.order_side}</span> <span style="color:#94a3b8;">{rem:,} @ {pd_str}</span></div><form action="/api/brokerage/cancel-order" method="post" style="display:inline;margin:0;"><input type="hidden" name="order_id" value="{order.id}"><button type="submit" style="background:none;border:1px solid #334155;color:#94a3b8;padding:1px 6px;font-size:0.7rem;cursor:pointer;">X</button></form></div>'
+            pending_html += '</div>'
+
+        # Halted banner
+        halted_html = ""
+        if is_halted:
+            halted_html = f'<div style="background:#451a03;border:1px solid #f59e0b;padding:8px 12px;font-size:0.8rem;color:#fbbf24;text-align:center;margin-bottom:12px;">TRADING HALTED - Circuit breaker until {selected_company.trading_halted_until.strftime("%H:%M UTC")}</div>'
+
+        # Margin debt HTML for summary bar
+        margin_debt_html = f"<div><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;'>${total_margin_debt:,.2f}</div></div>" if total_margin_debt > 0 else ""
+
+        # Dashboard CSS (built as regular string to avoid f-string brace conflicts)
+        td_css = '<style>'
+        td_css += '.container{max-width:1440px!important;}'
+        td_css += '.td-layout{display:grid;grid-template-columns:220px 1fr 280px;gap:12px;margin-top:12px;}'
+        td_css += '.td-sidebar{background:#0f172a;border:1px solid #1e293b;overflow-y:auto;max-height:calc(100vh - 200px);}'
+        td_css += '.td-main{min-width:0;}'
+        td_css += '.td-panel{background:#0f172a;border:1px solid #1e293b;padding:14px;}'
+        td_css += '.td-section{background:#0f172a;border:1px solid #1e293b;padding:12px;margin-bottom:12px;}'
+        td_css += '.td-label{color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;}'
+        td_css += '#td-tab-buy,#td-tab-sell{display:none;}'
+        td_css += '.td-buy-panel,.td-sell-panel{display:none;}'
+        td_css += '#td-tab-buy:checked~.td-buy-panel{display:block;}'
+        td_css += '#td-tab-sell:checked~.td-sell-panel{display:block;}'
+        td_css += '#td-tab-buy:checked~.td-tab-bar .td-tab-buy{background:#16a34a;color:#fff;}'
+        td_css += '#td-tab-sell:checked~.td-tab-bar .td-tab-sell{background:#dc2626;color:#fff;}'
+        td_css += '.td-input{width:100%;padding:8px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;font-size:0.85rem;font-family:inherit;}'
+        td_css += '.td-input:focus{border-color:#38bdf8;outline:none;}'
+        td_css += '@media(max-width:1024px){.td-layout{grid-template-columns:1fr!important;}.td-sidebar{max-height:none;overflow-x:auto;white-space:nowrap;display:flex;}.td-sidebar>a{min-width:140px;white-space:normal;}}'
+        td_css += '</style>'
+
+        # Assemble the full dashboard body
+        body = td_css + f'''
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:0.8rem;">&larr; Brokerage Firm</a>
+            <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">SCPE Trading Floor</span>
         </div>
 
-        <!-- Your Pending Orders -->'''
-
-        if pending_orders:
-            body += f'''
-        <div class="card" style="margin-top: 20px;">
-            <h3>Your Pending Orders ({len(pending_orders)})</h3>
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid #1e293b; color: #64748b;">
-                            <th style="text-align: left; padding: 8px;">Type</th>
-                            <th style="text-align: left; padding: 8px;">Side</th>
-                            <th style="text-align: right; padding: 8px;">Price</th>
-                            <th style="text-align: right; padding: 8px;">Quantity</th>
-                            <th style="text-align: right; padding: 8px;">Filled</th>
-                            <th style="text-align: right; padding: 8px;">Status</th>
-                            <th style="text-align: center; padding: 8px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>'''
-
-            for order in pending_orders:
-                side_color = "#22c55e" if order.order_side == "BUY" else "#ef4444"
-                order_type_display = order.order_type.replace("_", " ").title()
-                price_display = f"${order.limit_price:.4f}" if order.limit_price else "Market"
-
-                body += f'''
-                        <tr style="border-bottom: 1px solid #0f172a;">
-                            <td style="padding: 8px;">{order_type_display}</td>
-                            <td style="padding: 8px; color: {side_color}; font-weight: bold;">{order.order_side}</td>
-                            <td style="padding: 8px; text-align: right;">{price_display}</td>
-                            <td style="padding: 8px; text-align: right;">{order.quantity:,}</td>
-                            <td style="padding: 8px; text-align: right;">{order.filled_quantity:,}</td>
-                            <td style="padding: 8px; text-align: right; color: #f59e0b;">{order.status}</td>
-                            <td style="padding: 8px; text-align: center;">
-                                <form action="/api/brokerage/cancel-order" method="post" style="display: inline;">
-                                    <input type="hidden" name="order_id" value="{order.id}">
-                                    <button type="submit" class="btn-red" style="padding: 4px 8px; font-size: 0.75rem;">Cancel</button>
-                                </form>
-                            </td>
-                        </tr>'''
-
-            body += '''
-                    </tbody>
-                </table>
+        <!-- Portfolio Summary Bar -->
+        <div style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
+            <div>
+                <span class="td-label">Portfolio Value</span>
+                <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;">${total_portfolio_value:,.2f}</div>
             </div>
-        </div>'''
+            <div>
+                <span class="td-label">Total P/L</span>
+                <div style="color:{"#22c55e" if total_pl >= 0 else "#ef4444"};font-size:0.95rem;font-weight:600;">{"+" if total_pl >= 0 else ""}${total_pl:,.2f} <span style="font-size:0.75rem;">({total_pl_pct:+.1f}%)</span></div>
+            </div>
+            <div>
+                <span class="td-label">Buying Power</span>
+                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;">${player.cash_balance:,.2f}</div>
+            </div>
+            <div>
+                <span class="td-label">Positions</span>
+                <div style="color:#e5e7eb;font-size:0.95rem;">{num_positions} / {len(companies)}</div>
+            </div>
+            {margin_debt_html}
+        </div>
 
-        body += '''
-        <!-- Short Selling Link -->
-        <div class="card" style="margin-top: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h3>Short This Stock</h3>
-                    <p style="color: #64748b;">Borrow shares and sell them, betting the price will drop.</p>
+        {halted_html}
+
+        <!-- 3-Column Trading Layout -->
+        <div class="td-layout">
+            <!-- LEFT: Positions / Watchlist Sidebar -->
+            <div class="td-sidebar">
+                <div style="padding:8px 10px;border-bottom:1px solid #1e293b;font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
+                    Watchlist &middot; {len(companies)} Listed
                 </div>
-                <a href="/brokerage/shorts?ticker={selected_company.ticker_symbol}" class="btn-orange">
-                    Open Short Position
-                </a>
+                {positions_html}
+            </div>
+
+            <!-- CENTER: Stock Detail -->
+            <div class="td-main">
+                <!-- Price Header -->
+                <div class="td-section" style="margin-bottom:0;border-bottom:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                        <div>
+                            <div style="font-size:1.1rem;font-weight:700;color:#e5e7eb;">{selected_company.company_name}</div>
+                            <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">
+                                {selected_company.ticker_symbol} &middot; Class {selected_company.share_class}{" &middot; TBTF" if selected_company.is_tbtf else ""}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:1.6rem;font-weight:700;color:#38bdf8;">${selected_company.current_price:.4f}</div>
+                            <div style="font-size:0.8rem;color:{change_color};">
+                                {change_sign}${price_change:.4f} ({price_change_pct:+.2f}%) <span style="color:#475569;">from IPO</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sparkline Chart -->
+                <div class="td-section" style="margin-top:0;border-top:none;padding-top:0;">
+                    {sparkline_svg}
+                </div>
+
+                <!-- Key Stats Grid -->
+                <div class="td-section">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                        <div><div class="td-label">Market Cap</div><div style="font-size:0.9rem;">${selected_company.current_price * selected_company.shares_outstanding:,.0f}</div></div>
+                        <div><div class="td-label">Shares Out</div><div style="font-size:0.9rem;">{selected_company.shares_outstanding:,}</div></div>
+                        <div><div class="td-label">Float</div><div style="font-size:0.9rem;">{selected_company.shares_in_float:,}</div></div>
+                        <div><div class="td-label">52W Range</div><div style="font-size:0.9rem;">${selected_company.low_52_week:.2f} &mdash; ${selected_company.high_52_week:.2f}</div></div>
+                        <div><div class="td-label">Volume Today</div><div style="font-size:0.9rem;">{selected_company.volume_today:,}</div></div>
+                        <div><div class="td-label">Dividends</div><div style="font-size:0.85rem;">{dividend_display}</div></div>
+                    </div>
+                </div>
+
+                <!-- Depth of Market + Time & Sales -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="td-section" style="margin-bottom:0;">
+                        <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Depth of Market</div>
+                        {ob_html}
+                    </div>
+                    <div class="td-section" style="margin-bottom:0;">
+                        <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Time &amp; Sales</div>
+                        <div style="font-size:0.7rem;color:#475569;display:grid;grid-template-columns:1fr 1fr 1fr;padding:2px 8px;margin-bottom:4px;"><span>PRICE</span><span style="text-align:right;">QTY</span><span style="text-align:right;">TIME</span></div>
+                        {trades_html}
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Trade Panel -->
+            <div class="td-panel">
+                <!-- Position Summary -->
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Your Position &mdash; {selected_company.ticker_symbol}</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+                        <div><span style="color:#64748b;">Shares</span><div style="color:#38bdf8;font-size:1rem;font-weight:600;">{player_shares:,}</div></div>
+                        <div><span style="color:#64748b;">Value</span><div style="font-size:1rem;">${player_mkt_value:,.2f}</div></div>
+                        <div><span style="color:#64748b;">Avg Cost</span><div>${player_cost_basis:.4f}</div></div>
+                        <div><span style="color:#64748b;">P/L</span><div style="color:{pl_color};font-weight:600;">{"+" if player_pl >= 0 else ""}${player_pl:,.2f}</div></div>
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid #1e293b;padding-top:12px;">
+                    <!-- CSS-Only Buy/Sell Tab Toggle -->
+                    <input type="radio" id="td-tab-buy" name="td-trade-tab" checked>
+                    <input type="radio" id="td-tab-sell" name="td-trade-tab">
+                    <div class="td-tab-bar" style="display:grid;grid-template-columns:1fr 1fr;margin-bottom:12px;">
+                        <label for="td-tab-buy" class="td-tab-buy" style="padding:6px;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:600;background:#1e293b;color:#64748b;border:1px solid #1e293b;">Buy</label>
+                        <label for="td-tab-sell" class="td-tab-sell" style="padding:6px;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:600;background:#1e293b;color:#64748b;border:1px solid #1e293b;">Sell</label>
+                    </div>
+
+                    <!-- Buy Form -->
+                    <div class="td-buy-panel">
+                        <form action="/api/brokerage/buy" method="post">
+                            <input type="hidden" name="company_id" value="{selected_company.id}">
+                            <div style="margin-bottom:10px;">
+                                <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Quantity</label>
+                                <input type="number" name="quantity" min="1" required class="td-input" placeholder="Shares">
+                            </div>
+                            <div style="margin-bottom:10px;">
+                                <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price</label>
+                                <input type="number" name="limit_price" step="0.0001" class="td-input" placeholder="Market @ ${selected_company.current_price:.4f}">
+                            </div>
+                            <div style="margin-bottom:10px;">
+                                <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:0.8rem;">
+                                    <input type="checkbox" name="use_margin" value="1">
+                                    Margin ({max_margin:.1f}x)
+                                </label>
+                                <div style="font-size:0.7rem;color:#475569;margin-top:2px;">
+                                    Credit: {player_credit.credit_score} ({player_credit.tier.upper()})
+                                </div>
+                            </div>
+                            <button type="submit" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;" {"disabled" if is_halted else ""}>
+                                Buy {selected_company.ticker_symbol}
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Sell Form -->
+                    <div class="td-sell-panel">
+                        <form action="/api/brokerage/sell" method="post">
+                            <input type="hidden" name="company_id" value="{selected_company.id}">
+                            <div style="margin-bottom:10px;">
+                                <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Quantity</label>
+                                <input type="number" name="quantity" min="1" max="{player_shares}" required class="td-input" placeholder="Max: {player_shares:,}">
+                            </div>
+                            <div style="margin-bottom:10px;">
+                                <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price</label>
+                                <input type="number" name="limit_price" step="0.0001" class="td-input" placeholder="Market @ ${selected_company.current_price:.4f}">
+                            </div>
+                            <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
+                                Available: {player_shares:,} shares
+                            </div>
+                            <button type="submit" style="width:100%;padding:10px;background:#dc2626;color:#fff;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;" {"disabled" if is_halted or player_shares == 0 else ""}>
+                                Sell {selected_company.ticker_symbol}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {pending_html}
+
+                <!-- Short Selling -->
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1e293b;">
+                    <a href="/brokerage/shorts?ticker={selected_company.ticker_symbol}" style="display:block;text-align:center;padding:6px;border:1px solid #f59e0b;color:#f59e0b;font-size:0.8rem;text-decoration:none;">
+                        Short {selected_company.ticker_symbol}
+                    </a>
+                </div>
             </div>
         </div>
         '''
-        
+
         return shell(f"Trade {selected_company.ticker_symbol}", body, player.cash_balance, player.id)
         
     except Exception as e:
@@ -3891,7 +3965,20 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
             shorts_html += '</tbody></table>'
         else:
             shorts_html = '<p style="color: #64748b;">No active short positions.</p>'
-        
+
+        # Pre-build short info to avoid nested f-string syntax issues
+        short_info_html = ""
+        if selected_company:
+            short_info_html = f'''
+                <div style="margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 4px;">
+                    <p><strong>Selected:</strong> {selected_company.ticker_symbol} @ ${selected_company.current_price:.4f}</p>
+                    <p><strong>Available to borrow:</strong> {available_to_short:,} shares</p>
+                    <p><strong>Collateral requirement:</strong> {SHORT_COLLATERAL_REQUIREMENT*100:.0f}% (${selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT:.4f}/share)</p>
+                    <p style="color: #f59e0b; font-size: 0.9rem; margin-top: 10px;">
+                        Short selling is risky. If the price rises, your losses are theoretically unlimited.
+                    </p>
+                </div>'''
+
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>Short Selling</h1>
@@ -3925,16 +4012,7 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                     </button>
                 </div>
                 
-                {f'''
-                <div style="margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 4px;">
-                    <p><strong>Selected:</strong> {selected_company.ticker_symbol} @ ${selected_company.current_price:.4f}</p>
-                    <p><strong>Available to borrow:</strong> {available_to_short:,} shares</p>
-                    <p><strong>Collateral requirement:</strong> {SHORT_COLLATERAL_REQUIREMENT*100:.0f}% (${selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT:.4f}/share)</p>
-                    <p style="color: #f59e0b; font-size: 0.9rem; margin-top: 10px;">
-                        ⚠️ Short selling is risky. If the price rises, your losses are theoretically unlimited.
-                    </p>
-                </div>
-                ''' if selected_company else ""}
+                {short_info_html}
             </form>
         </div>
         
@@ -4035,7 +4113,17 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
             for listing in listings:
                 available = listing.quantity_available - listing.quantity_lent_out
                 is_own = listing.lender_player_id == player.id
-                
+
+                # Pre-build borrow form to avoid nested f-string issues
+                borrow_action_html = "-"
+                if not is_own:
+                    borrow_action_html = f'''
+                        <form action="/api/brokerage/borrow-commodity" method="post" style="display: flex; gap: 5px;">
+                            <input type="hidden" name="listing_id" value="{listing.id}">
+                            <input type="number" name="quantity" min="1" max="{available}" placeholder="Qty" style="width: 80px; padding: 4px;">
+                            <button type="submit" class="btn-blue" style="padding: 4px 8px; font-size: 0.8rem;">Borrow</button>
+                        </form>'''
+
                 listings_html += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 10px 8px;"><strong>{listing.item_type.replace("_", " ").title()}</strong></td>
@@ -4043,13 +4131,7 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
                     <td style="padding: 10px 8px;">{listing.weekly_rate*100:.1f}%</td>
                     <td style="padding: 10px 8px;">{"YOU" if is_own else f"Player {listing.lender_player_id}"}</td>
                     <td style="padding: 10px 8px;">
-                        {f'''
-                        <form action="/api/brokerage/borrow-commodity" method="post" style="display: flex; gap: 5px;">
-                            <input type="hidden" name="listing_id" value="{listing.id}">
-                            <input type="number" name="quantity" min="1" max="{available}" placeholder="Qty" style="width: 80px; padding: 4px;">
-                            <button type="submit" class="btn-blue" style="padding: 4px 8px; font-size: 0.8rem;">Borrow</button>
-                        </form>
-                        ''' if not is_own else "-"}
+                        {borrow_action_html}
                     </td>
                 </tr>'''
             
@@ -4257,8 +4339,20 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
             
             liens_html += '</tbody></table>'
         else:
-            liens_html = '<p style="color: #22c55e;">✓ No active liens. Your account is in good standing.</p>'
-        
+            liens_html = '<p style="color: #22c55e;">No active liens. Your account is in good standing.</p>'
+
+        # Pre-build lien debt info to avoid nested f-string syntax issues
+        lien_debt_info_html = ""
+        if total_lien_debt > 0:
+            lien_debt_info_html = f'''
+            <div style="margin-top: 15px; padding: 15px; background: #450a0a; border-radius: 4px; border: 1px solid #7f1d1d;">
+                <p style="color: #fca5a5;">
+                    <strong>Total Lien Debt: ${total_lien_debt:,.2f}</strong><br>
+                    The Firm automatically garnishes 50% of your cash every 60 seconds to pay down liens.
+                    Interest accrues at {interest_rate*100:.0f}% annually.
+                </p>
+            </div>'''
+
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>Credit Rating & Liens</h1>
@@ -4333,15 +4427,7 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
         <div class="card" style="margin-top: 20px;">
             <h3>Brokerage Liens</h3>
             {liens_html}
-            {f'''
-            <div style="margin-top: 15px; padding: 15px; background: #450a0a; border-radius: 4px; border: 1px solid #7f1d1d;">
-                <p style="color: #fca5a5;">
-                    <strong>Total Lien Debt: ${total_lien_debt:,.2f}</strong><br>
-                    The Firm automatically garnishes 50% of your cash every 60 seconds to pay down liens.
-                    Interest accrues at {interest_rate*100:.0f}% annually.
-                </p>
-            </div>
-            ''' if total_lien_debt > 0 else ""}
+            {lien_debt_info_html}
         </div>
         
         <!-- Credit Tiers Reference -->
@@ -4997,27 +5083,11 @@ def production_cost_detail_page(
                 used_by_html += f'<span style="padding: 8px 12px; color: #64748b;">+{len(used_by)-20} more...</span>'
             
             used_by_html += '</div></div>'
-        
-        body = f'''
-        <a href="/stats/production-costs" style="color: #38bdf8;">← Production Costs</a>
-        
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px;">
-            <div>
-                <h1 style="margin: 0;">{breakdown['name']}</h1>
-                <p style="color: #64748b; margin: 5px 0;">
-                    {item_key} · {breakdown.get('category', 'unknown').replace('_', ' ').title()}
-                </p>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 3rem; font-weight: bold; color: #38bdf8;">
-                    ${breakdown['cost']:,.4f}
-                </div>
-                <div style="color: #64748b;">per unit (vertical integration)</div>
-            </div>
-        </div>
-        
-        <!-- Production Info -->
-        {f'''
+
+        # Pre-build production method HTML to avoid nested f-string syntax issues
+        production_method_html = ""
+        if breakdown['has_recipe']:
+            production_method_html = f'''
         <div class="card" style="margin-top: 20px;">
             <h3>Production Method</h3>
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
@@ -5038,8 +5108,28 @@ def production_cost_detail_page(
                     <div style="font-size: 1.2rem; color: #22c55e;">${breakdown['wage']:,.2f}</div>
                 </div>
             </div>
+        </div>'''
+
+        body = f'''
+        <a href="/stats/production-costs" style="color: #38bdf8;">← Production Costs</a>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 20px;">
+            <div>
+                <h1 style="margin: 0;">{breakdown['name']}</h1>
+                <p style="color: #64748b; margin: 5px 0;">
+                    {item_key} · {breakdown.get('category', 'unknown').replace('_', ' ').title()}
+                </p>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 3rem; font-weight: bold; color: #38bdf8;">
+                    ${breakdown['cost']:,.4f}
+                </div>
+                <div style="color: #64748b;">per unit (vertical integration)</div>
+            </div>
         </div>
-        ''' if breakdown['has_recipe'] else ''}
+        
+        <!-- Production Info -->
+        {production_method_html}
         
         {inputs_html}
         
