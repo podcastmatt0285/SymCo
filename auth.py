@@ -275,11 +275,13 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         }
 
         .logo {
-            font-size: 48px;
-            font-weight: 700;
             text-align: center;
             margin-bottom: 12px;
-            letter-spacing: -0.03em;
+        }
+
+        .logo img {
+            width: 200px;
+            height: auto;
         }
 
         .tagline {
@@ -388,8 +390,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
 <body>
     <div class="splash">
-        <div class="logo">Wadsworth</div>
-        <div class="tagline">Real-Time Economic Simulation</div>
+        <div class="logo"><img src="/static/logo.png" alt="Wadsworth"></div>
 
         <div class="panel">
             <div class="tabs">

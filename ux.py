@@ -92,6 +92,14 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             .brand {{
                 font-weight: bold;
                 color: #38bdf8;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }}
+
+            .brand img {{
+                height: 28px;
+                width: auto;
             }}
 
             .header-right {{
@@ -230,7 +238,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
     </head>
     <body>
         <div class="header">
-            <div class="brand">Wadsworth</div>
+            <div class="brand"><img src="/static/logo.png" alt="Wadsworth"> Wadsworth</div>
             <div class="header-right">
                 {lien_html}
                 <span class="balance">$ {balance:,.2f}</span>

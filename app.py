@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Cookie
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 # ==========================
@@ -109,6 +110,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ==========================
 # SYSTEM ENDPOINTS (PATCHED)
