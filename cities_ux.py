@@ -370,6 +370,7 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
                 <h1>🏙️ Cities</h1>
                 <div>
                     <span style="color: #94a3b8;">{player.business_name}</span>
+                    <a href="/counties" class="nav-link">Counties</a>
                     <a href="/" class="nav-link">Dashboard</a>
                 </div>
             </div>
@@ -1047,6 +1048,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             <div class="header">
                 <h1>🏙️ {city.name}</h1>
                 <div>
+                    <a href="/counties" class="nav-link">Counties</a>
                     <a href="/cities" class="nav-link">All Cities</a>
                     <a href="/" class="nav-link">Dashboard</a>
                 </div>
