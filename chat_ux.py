@@ -1193,6 +1193,17 @@ async def chat_websocket(websocket: WebSocket):
         await websocket.close(code=4001, reason="Not authenticated")
         return
 
+    # Check for active ban/timeout
+    try:
+        from admins import get_active_ban
+        active_ban = get_active_ban(player.id)
+        if active_ban:
+            reason = "banned" if active_ban["type"] == "ban" else "timed out"
+            await websocket.close(code=4003, reason=f"Account {reason}")
+            return
+    except ImportError:
+        pass
+
     player_id = player.id
     player_name = player.business_name
     rooms = get_rooms_for_player(player_id)

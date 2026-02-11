@@ -450,19 +450,41 @@ async def login(
 ):
     """Handle login form submission."""
     db = get_db()
-    
+
     player = authenticate_player(db, business_name, password)
-    
+
     if not player:
         db.close()
         return RedirectResponse(
             url="/login?error=Invalid%20credentials",
             status_code=303
         )
-    
+
+    # Check for active ban/timeout
+    try:
+        from admins import get_active_ban
+        active_ban = get_active_ban(player.id)
+        if active_ban:
+            db.close()
+            if active_ban["type"] == "ban":
+                reason = active_ban.get("reason", "")
+                msg = "Your account has been banned."
+                if reason:
+                    msg += f" Reason: {reason}"
+            else:
+                expires = active_ban.get("expires_at", "")[:16].replace("T", " ")
+                msg = f"Your account is timed out until {expires} UTC."
+            import urllib.parse
+            return RedirectResponse(
+                url=f"/login?error={urllib.parse.quote(msg)}",
+                status_code=303
+            )
+    except ImportError:
+        pass
+
     session_token = create_session(db, player.id)
     db.close()
-    
+
     redirect = RedirectResponse(url="/", status_code=303)
     redirect.set_cookie(
         key="session_token",
@@ -470,7 +492,7 @@ async def login(
         max_age=60 * 60 * 24 * 7,
         httponly=True
     )
-    
+
     return redirect
 
 @router.post("/api/register")

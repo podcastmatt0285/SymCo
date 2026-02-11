@@ -26,7 +26,7 @@ Base = declarative_base()
 # CONSTANTS
 # ==========================
 
-# Player IDs allowed to post in Official News
+# Player IDs allowed to post in Updates channel
 ADMIN_PLAYER_IDS = {1}
 
 # Static room definitions
@@ -35,7 +35,7 @@ STATIC_ROOMS = [
     {"id": "trade", "name": "Trade Chat", "icon": "📊", "read_only": False},
     {"id": "qa", "name": "Community Q&A", "icon": "❓", "read_only": False},
     {"id": "recruiting", "name": "City Recruiting", "icon": "🏙️", "read_only": False},
-    {"id": "news", "name": "Official News", "icon": "📢", "read_only": True},
+    {"id": "updates", "name": "Updates", "icon": "📢", "read_only": True},
     {"id": "bugs", "name": "Bug Reports & Feedback", "icon": "🐛", "read_only": False},
 ]
 
