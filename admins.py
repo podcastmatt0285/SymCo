@@ -386,6 +386,288 @@ def post_update(admin_id: int, content: str) -> dict:
 
 
 # ==========================
+# INVENTORY MANAGEMENT
+# ==========================
+
+def get_player_inventory(player_id: int) -> list:
+    """Get a player's full inventory as a list of dicts."""
+    try:
+        import inventory
+        inv = inventory.get_player_inventory(player_id)
+        items = []
+        for item_type, qty in sorted(inv.items()):
+            info = inventory.get_item_info(item_type)
+            name = info.get("name", item_type.replace("_", " ").title()) if info else item_type.replace("_", " ").title()
+            items.append({"item_type": item_type, "name": name, "quantity": qty})
+        return items
+    except Exception:
+        return []
+
+
+def admin_add_item(admin_id: int, player_id: int, item_type: str, quantity: float) -> dict:
+    """Admin adds items to a player's inventory."""
+    if quantity <= 0:
+        return {"ok": False, "error": "Quantity must be positive"}
+    try:
+        import inventory
+        inventory.add_item(player_id, item_type, quantity)
+        log_action(admin_id, "add_item", player_id, f"+{quantity:.1f} {item_type}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_remove_item(admin_id: int, player_id: int, item_type: str, quantity: float) -> dict:
+    """Admin removes items from a player's inventory."""
+    if quantity <= 0:
+        return {"ok": False, "error": "Quantity must be positive"}
+    try:
+        import inventory
+        success = inventory.remove_item(player_id, item_type, quantity)
+        if not success:
+            return {"ok": False, "error": "Insufficient quantity"}
+        log_action(admin_id, "remove_item", player_id, f"-{quantity:.1f} {item_type}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def get_all_item_types() -> list:
+    """Get all known item types for the admin dropdown."""
+    try:
+        import inventory
+        return sorted(inventory.ITEM_RECIPES.keys())
+    except Exception:
+        return []
+
+
+# ==========================
+# LAND MANAGEMENT
+# ==========================
+
+def get_player_land(player_id: int) -> list:
+    """Get all land plots owned by a player."""
+    try:
+        from land import get_player_land as _get, LandPlot
+        plots = _get(player_id)
+        result = []
+        for p in plots:
+            result.append({
+                "id": p.id,
+                "terrain_type": p.terrain_type,
+                "proximity_features": p.proximity_features,
+                "efficiency": p.efficiency,
+                "size": p.size,
+                "monthly_tax": p.monthly_tax,
+                "occupied_by_business_id": p.occupied_by_business_id,
+                "is_starter_plot": p.is_starter_plot,
+                "is_government_owned": p.is_government_owned,
+            })
+        return result
+    except Exception:
+        return []
+
+
+def admin_delete_land_plot(admin_id: int, plot_id: int) -> dict:
+    """Admin deletes a land plot entirely."""
+    try:
+        from land import get_db as land_db, LandPlot
+        db = land_db()
+        plot = db.query(LandPlot).filter(LandPlot.id == plot_id).first()
+        if not plot:
+            db.close()
+            return {"ok": False, "error": "Plot not found"}
+        owner_id = plot.owner_id
+        if plot.occupied_by_business_id:
+            db.close()
+            return {"ok": False, "error": "Plot is occupied by a business. Remove business first."}
+        db.delete(plot)
+        db.commit()
+        db.close()
+        log_action(admin_id, "delete_land", owner_id, f"Deleted plot #{plot_id}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_create_land_plot(admin_id: int, owner_id: int, terrain_type: str, proximity: str = "") -> dict:
+    """Admin creates a new land plot for a player."""
+    try:
+        from land import create_land_plot
+        prox_list = [f.strip() for f in proximity.split(",") if f.strip()] if proximity else None
+        plot = create_land_plot(
+            owner_id=owner_id,
+            terrain_type=terrain_type,
+            proximity_features=prox_list,
+            size=1.0,
+            is_starter=False,
+            is_government=(owner_id == 0),
+        )
+        log_action(admin_id, "create_land", owner_id, f"Created plot #{plot.id} ({terrain_type})")
+        return {"ok": True, "plot_id": plot.id}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ==========================
+# DISTRICT MANAGEMENT
+# ==========================
+
+def get_player_districts(player_id: int) -> list:
+    """Get all districts owned by a player."""
+    try:
+        from districts import get_player_districts as _get
+        districts = _get(player_id)
+        result = []
+        for d in districts:
+            result.append({
+                "id": d.id,
+                "district_type": d.district_type,
+                "terrain_type": d.terrain_type,
+                "size": d.size,
+                "plots_merged": d.plots_merged,
+                "monthly_tax": d.monthly_tax,
+                "occupied_by_business_id": d.occupied_by_business_id,
+            })
+        return result
+    except Exception:
+        return []
+
+
+# ==========================
+# BUSINESS MANAGEMENT
+# ==========================
+
+def get_player_businesses(player_id: int) -> list:
+    """Get all businesses owned by a player."""
+    try:
+        from business import SessionLocal as BizSession, Business
+        db = BizSession()
+        businesses = db.query(Business).filter(Business.owner_id == player_id).all()
+        result = []
+        for b in businesses:
+            result.append({
+                "id": b.id,
+                "business_type": b.business_type,
+                "land_plot_id": b.land_plot_id,
+                "district_id": b.district_id,
+                "is_active": b.is_active,
+                "progress_ticks": b.progress_ticks,
+            })
+        db.close()
+        return result
+    except Exception:
+        return []
+
+
+# ==========================
+# LAND BANK MANAGEMENT
+# ==========================
+
+def get_land_bank_entries() -> list:
+    """Get all plots in the land bank."""
+    try:
+        from land_market import get_land_bank_plots, LandBank
+        from land import get_db as land_db, LandPlot
+        bank_plots = get_land_bank_plots()
+        ldb = land_db()
+        result = []
+        for entry in bank_plots:
+            plot = ldb.query(LandPlot).filter(LandPlot.id == entry.land_plot_id).first()
+            result.append({
+                "bank_id": entry.id,
+                "land_plot_id": entry.land_plot_id,
+                "terrain_type": plot.terrain_type if plot else "?",
+                "proximity_features": plot.proximity_features if plot else "",
+                "size": plot.size if plot else 0,
+                "times_auctioned": entry.times_auctioned,
+                "last_auction_price": entry.last_auction_price,
+                "added_at": entry.added_at.isoformat() if entry.added_at else None,
+            })
+        ldb.close()
+        return result
+    except Exception:
+        return []
+
+
+def admin_add_to_land_bank(admin_id: int, terrain_type: str, proximity: str = "") -> dict:
+    """Admin creates a new government plot and adds it to the land bank."""
+    try:
+        from land import create_land_plot
+        from land_market import add_to_land_bank, TERRAIN_BASE_PRICES
+        prox_list = [f.strip() for f in proximity.split(",") if f.strip()] if proximity else None
+        plot = create_land_plot(
+            owner_id=0,
+            terrain_type=terrain_type,
+            proximity_features=prox_list,
+            size=1.0,
+            is_starter=False,
+            is_government=True,
+        )
+        base_price = TERRAIN_BASE_PRICES.get(terrain_type, 15000)
+        add_to_land_bank(plot.id, auction_id=None, last_price=base_price)
+        log_action(admin_id, "add_land_bank", details=f"Plot #{plot.id} ({terrain_type})")
+        return {"ok": True, "plot_id": plot.id}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_remove_from_land_bank(admin_id: int, land_plot_id: int, delete_plot: bool = False) -> dict:
+    """Admin removes a plot from the land bank, optionally deleting it."""
+    try:
+        from land_market import remove_from_land_bank
+        removed = remove_from_land_bank(land_plot_id)
+        if not removed:
+            return {"ok": False, "error": "Plot not in land bank"}
+        if delete_plot:
+            from land import get_db as land_db, LandPlot
+            db = land_db()
+            plot = db.query(LandPlot).filter(LandPlot.id == land_plot_id).first()
+            if plot:
+                db.delete(plot)
+                db.commit()
+            db.close()
+        log_action(admin_id, "remove_land_bank", details=f"Plot #{land_plot_id} (deleted={delete_plot})")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ==========================
+# CHAT ROOM OVERVIEW
+# ==========================
+
+def get_chat_rooms_overview() -> list:
+    """Get all chat rooms with online counts."""
+    try:
+        from chat import STATIC_ROOMS, manager, get_room_messages
+        rooms = []
+        for r in STATIC_ROOMS:
+            count = manager.get_online_count(r["id"])
+            recent = get_room_messages(r["id"], limit=5)
+            rooms.append({
+                "id": r["id"],
+                "name": r["name"],
+                "icon": r["icon"],
+                "read_only": r["read_only"],
+                "online_count": count,
+                "recent_messages": recent,
+            })
+        return rooms
+    except Exception:
+        return []
+
+
+def get_chat_room_messages(room_id: str, limit: int = 50) -> list:
+    """Get messages for a specific room."""
+    try:
+        from chat import get_room_messages
+        return get_room_messages(room_id, limit=limit)
+    except Exception:
+        return []
+
+
+# ==========================
 # P2P OVERVIEW (read-only for admin)
 # ==========================
 
