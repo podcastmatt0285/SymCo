@@ -165,7 +165,7 @@ def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
             <div class="card" style="border-color: #f59e0b;">
                 <h3 style="color: #f59e0b;">Direct Messages</h3>
                 <p>Private player-to-player messaging. Send DMs to any player in the game.</p>
-                <p style="color: #64748b; font-size: 0.85rem;">Conversations expire 3 days after the last message. Max 50 messages per thread.</p>
+                <p style="color: #64748b; font-size: 0.85rem;">Search for players, start conversations, keep your deals private.</p>
                 <a href="/p2p/dms" class="btn-blue" style="display: inline-block; padding: 10px 20px; margin-top: 12px; background: #f59e0b;">Open DMs</a>
             </div>
         </div>
@@ -173,6 +173,215 @@ def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
         player.cash_balance,
         player.id
     )
+
+
+# ==========================
+# DIRECT MESSAGES
+# ==========================
+
+@router.get("/p2p/dms", response_class=HTMLResponse)
+def dm_inbox(session_token: Optional[str] = Cookie(None)):
+    """DM inbox - list of conversations."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from chat import get_dm_conversations
+
+    convos = get_dm_conversations(player.id)
+
+    rows = ""
+    for c in convos:
+        unread_badge = f'<span style="background:#ef4444;color:#fff;font-size:0.6rem;padding:1px 6px;border-radius:8px;margin-left:6px;">{c["unread"]}</span>' if c["unread"] > 0 else ""
+        preview = c["last_message"]
+        if len(preview) > 60:
+            preview = preview[:60] + "..."
+        who = "You: " if c["last_from_id"] == player.id else ""
+        ts = c["last_time"][:16].replace("T", " ")
+        rows += f'''
+        <a href="/p2p/dms/{c["other_id"]}" style="display:block;text-decoration:none;padding:10px 12px;border-bottom:1px solid #1e293b;color:#e5e7eb;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <span style="font-weight:bold;color:#38bdf8;">{c["other_name"]}</span>{unread_badge}
+                    <div style="color:#94a3b8;font-size:0.8rem;margin-top:2px;">{who}{preview}</div>
+                </div>
+                <span style="color:#475569;font-size:0.7rem;white-space:nowrap;margin-left:8px;">{ts}</span>
+            </div>
+        </a>
+        '''
+
+    if not rows:
+        rows = '<p style="color:#64748b;padding:16px;font-size:0.85rem;">No conversations yet. Start one by searching for a player below.</p>'
+
+    return shell(
+        "Direct Messages",
+        f"""
+        <a href="/p2p/dashboard" style="color: #38bdf8;">&lt;- P2P Dashboard</a>
+        <h1>Direct Messages</h1>
+
+        <div style="margin-bottom:16px;">
+            <form action="/p2p/dms/new" method="get" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="text" name="q" placeholder="Search player name..." style="flex:1;min-width:150px;padding:8px 10px;background:#0f172a;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
+                <button type="submit" class="btn-blue" style="padding:8px 16px;">Find Player</button>
+            </form>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;">
+            {rows}
+        </div>
+        """,
+        player.cash_balance,
+        player.id
+    )
+
+
+@router.get("/p2p/dms/new", response_class=HTMLResponse)
+def dm_new(session_token: Optional[str] = Cookie(None), q: str = ""):
+    """Search for a player to start a DM conversation."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    results_html = ""
+    if q.strip():
+        import auth
+        db = auth.get_db()
+        search = f"%{q.strip()}%"
+        players = db.query(auth.Player).filter(
+            auth.Player.business_name.ilike(search),
+            auth.Player.id != player.id,
+        ).limit(20).all()
+        db.close()
+
+        if players:
+            for p in players:
+                results_html += f'''
+                <a href="/p2p/dms/{p.id}" style="display:block;text-decoration:none;padding:10px 12px;border-bottom:1px solid #1e293b;color:#e5e7eb;">
+                    <span style="font-weight:bold;color:#38bdf8;">#{p.id}: {p.business_name}</span>
+                </a>
+                '''
+        else:
+            results_html = f'<p style="color:#64748b;padding:12px;font-size:0.85rem;">No players found matching "{q}".</p>'
+
+    return shell(
+        "New Message",
+        f"""
+        <a href="/p2p/dms" style="color: #38bdf8;">&lt;- Inbox</a>
+        <h1>New Conversation</h1>
+
+        <div class="card">
+            <form action="/p2p/dms/new" method="get" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="text" name="q" value="{q}" placeholder="Search player name..." style="flex:1;min-width:150px;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;" autofocus>
+                <button type="submit" class="btn-blue" style="padding:8px 16px;">Search</button>
+            </form>
+        </div>
+
+        {f'<div class="card" style="padding:0;overflow:hidden;">{results_html}</div>' if results_html else ""}
+        """,
+        player.cash_balance,
+        player.id
+    )
+
+
+@router.get("/p2p/dms/{other_id}", response_class=HTMLResponse)
+def dm_thread(other_id: int, session_token: Optional[str] = Cookie(None), msg: Optional[str] = Query(None)):
+    """View a DM conversation with another player."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from chat import get_dm_thread, mark_dms_read
+
+    # Look up the other player's name
+    import auth
+    db = auth.get_db()
+    other = db.query(auth.Player).filter(auth.Player.id == other_id).first()
+    db.close()
+    if not other:
+        return shell("DM Error", '<p style="color:#ef4444;">Player not found.</p>', player.cash_balance, player.id)
+
+    other_name = other.business_name
+
+    # Mark messages as read
+    mark_dms_read(player.id, other_id)
+
+    # Get messages
+    messages = get_dm_thread(player.id, other_id, limit=50)
+
+    msgs_html = ""
+    for m in messages:
+        is_mine = m["from_id"] == player.id
+        align = "flex-end" if is_mine else "flex-start"
+        bg = "#1e3a5f" if is_mine else "#1e293b"
+        name_color = "#22c55e" if is_mine else "#38bdf8"
+        name = "You" if is_mine else other_name
+        ts = m["created_at"][:16].replace("T", " ")
+        msgs_html += f'''
+        <div style="display:flex;justify-content:{align};margin-bottom:6px;">
+            <div style="background:{bg};padding:8px 12px;border-radius:8px;max-width:80%;min-width:100px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:2px;">
+                    <span style="font-size:0.72rem;font-weight:bold;color:{name_color};">{name}</span>
+                    <span style="font-size:0.6rem;color:#475569;">{ts}</span>
+                </div>
+                <div style="font-size:0.82rem;color:#cbd5e1;word-break:break-word;">{m["content"]}</div>
+            </div>
+        </div>
+        '''
+
+    if not msgs_html:
+        msgs_html = '<p style="color:#64748b;text-align:center;padding:20px;font-size:0.85rem;">No messages yet. Send the first one!</p>'
+
+    flash = ""
+    if msg:
+        flash = f'<div style="background:#14532d;color:#86efac;padding:6px 10px;border-radius:4px;font-size:0.75rem;margin-bottom:8px;">{msg}</div>'
+
+    return shell(
+        f"DM: {other_name}",
+        f"""
+        <a href="/p2p/dms" style="color: #38bdf8;">&lt;- Inbox</a>
+        <h1 style="font-size:1.1rem;">DM with {other_name}</h1>
+        {flash}
+
+        <div class="card" style="padding:12px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;" id="msg-container">
+            {msgs_html}
+        </div>
+
+        <div class="card" style="padding:10px;">
+            <form action="/p2p/dms/{other_id}/send" method="post" style="display:flex;gap:6px;align-items:flex-end;">
+                <input type="text" name="content" placeholder="Type a message..." maxlength="500" required autocomplete="off" style="flex:1;padding:8px 10px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;border-radius:4px;font-family:inherit;font-size:16px;">
+                <button type="submit" class="btn-blue" style="padding:8px 14px;flex-shrink:0;">Send</button>
+            </form>
+        </div>
+
+        <script>
+        // Scroll to bottom of messages
+        const mc = document.getElementById('msg-container');
+        if (mc) mc.scrollTop = mc.scrollHeight;
+        </script>
+        """,
+        player.cash_balance,
+        player.id
+    )
+
+
+@router.post("/p2p/dms/{other_id}/send")
+def dm_send(other_id: int, session_token: Optional[str] = Cookie(None), content: str = Form(...)):
+    """Send a DM to another player."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    from chat import send_dm
+
+    content = content.strip()
+    if not content:
+        return RedirectResponse(url=f"/p2p/dms/{other_id}", status_code=303)
+
+    result = send_dm(player.id, player.business_name, other_id, content)
+    if not result:
+        return RedirectResponse(url=f"/p2p/dms/{other_id}?msg=Failed+to+send", status_code=303)
+
+    return RedirectResponse(url=f"/p2p/dms/{other_id}", status_code=303)
 
 
 # ==========================

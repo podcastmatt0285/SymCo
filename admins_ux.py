@@ -30,6 +30,7 @@ from admins import (
     get_chat_rooms_overview, get_chat_room_messages,
     ban_player, timeout_player, kick_player, revoke_ban, get_active_ban,
     post_update, get_p2p_overview, get_admin_logs, log_action,
+    get_dm_threads_overview, get_dm_thread_messages,
 )
 
 router = APIRouter()
@@ -950,16 +951,63 @@ def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] 
     else:
         messages_html = '<p style="color:#64748b;font-size:0.75rem;">Select a room above to view messages.</p>'
 
+    # DM threads overview
+    dm_threads = get_dm_threads_overview(limit=20)
+    dm_rows = ""
+    for t in dm_threads:
+        ts = _ts(t["last_time"])
+        dm_rows += f'<tr><td><a href="/admin/chat/dm?a={t["player_a"]}&b={t["player_b"]}">{t["name_a"]}</a></td><td><a href="/admin/chat/dm?a={t["player_a"]}&b={t["player_b"]}">{t["name_b"]}</a></td><td style="color:#94a3b8;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{t["last_message"]}</td><td style="color:#64748b;">{ts}</td></tr>'
+
+    dm_html = f"""
+    <div class="card">
+        <h3>Direct Messages</h3>
+        {f'<div class="table-wrap"><table><tr><th>Player A</th><th>Player B</th><th>Last Message</th><th>Time</th></tr>{dm_rows}</table></div>' if dm_rows else '<p style="color:#64748b;font-size:0.75rem;">No DM conversations yet.</p>'}
+    </div>
+    """
+
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">Chat Rooms</h2>
     <div class="tabs">{room_links}</div>
     {messages_html}
-    <div class="card">
-        <h3>DMs</h3>
-        <p style="color:#64748b;font-size:0.75rem;">Direct message system is not yet implemented. When DMs are added, admin monitoring will be available here.</p>
-    </div>
+    {dm_html}
     """
     return HTMLResponse(admin_shell("Chat", body, player.business_name, "/admin/chat"))
+
+
+@router.get("/admin/chat/dm", response_class=HTMLResponse)
+def admin_chat_dm(session_token: Optional[str] = Cookie(None), a: int = Query(...), b: int = Query(...)):
+    """Admin view of a DM thread between two players."""
+    player, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    messages = get_dm_thread_messages(a, b, limit=100)
+
+    # Look up names
+    import auth
+    db = auth.get_db()
+    pa = db.query(auth.Player).filter(auth.Player.id == a).first()
+    pb = db.query(auth.Player).filter(auth.Player.id == b).first()
+    db.close()
+    name_a = pa.business_name if pa else f"#{a}"
+    name_b = pb.business_name if pb else f"#{b}"
+
+    msg_items = ""
+    for m in messages:
+        ts = _ts(m.get("created_at"))
+        msg_items += f'<div class="chat-msg-row"><span class="cm-name">{m["from_name"]}</span><span class="cm-time">{ts}</span><div class="cm-text">{m["content"]}</div></div>'
+
+    body = f"""
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <a href="/admin/chat" style="color:#64748b;font-size:0.75rem;">← Chat</a>
+        <span style="font-size:0.9rem;font-weight:bold;">DM: {name_a} ↔ {name_b}</span>
+    </div>
+    <div class="card">
+        <h3>Messages ({len(messages)})</h3>
+        {msg_items if msg_items else '<p style="color:#64748b;font-size:0.75rem;">No messages in this thread.</p>'}
+    </div>
+    """
+    return HTMLResponse(admin_shell("DM Thread", body, player.business_name, "/admin/chat"))
 
 
 # ==========================

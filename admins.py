@@ -707,6 +707,28 @@ def get_p2p_overview() -> dict:
 
 
 # ==========================
+# DM OVERVIEW (for admin monitoring)
+# ==========================
+
+def get_dm_threads_overview(limit: int = 30) -> list:
+    """Get recent DM conversation threads for admin viewing."""
+    try:
+        from chat import get_all_dm_threads_admin
+        return get_all_dm_threads_admin(limit=limit)
+    except Exception:
+        return []
+
+
+def get_dm_thread_messages(player_a: int, player_b: int, limit: int = 100) -> list:
+    """Get DM messages between two players for admin viewing."""
+    try:
+        from chat import get_dm_thread_admin
+        return get_dm_thread_admin(player_a, player_b, limit=limit)
+    except Exception:
+        return []
+
+
+# ==========================
 # TICK
 # ==========================
 

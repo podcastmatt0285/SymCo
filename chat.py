@@ -89,6 +89,18 @@ class UserBanWord(Base):
     word = Column(String, nullable=False)
 
 
+class DirectMessage(Base):
+    """Private player-to-player messages."""
+    __tablename__ = "direct_messages"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    from_id = Column(Integer, index=True, nullable=False)
+    to_id = Column(Integer, index=True, nullable=False)
+    from_name = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    is_read = Column(Integer, default=0)  # 0 = unread, 1 = read
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class ChatAvatar(Base):
     __tablename__ = "chat_avatars"
     player_id = Column(Integer, primary_key=True)
@@ -423,6 +435,213 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+# ==========================
+# DIRECT MESSAGE FUNCTIONS
+# ==========================
+
+def send_dm(from_id: int, from_name: str, to_id: int, content: str) -> Optional[dict]:
+    """Send a direct message. Returns the saved message dict or None."""
+    if not content or len(content) > MAX_MESSAGE_LENGTH:
+        return None
+    if from_id == to_id:
+        return None
+    db = get_db()
+    msg = DirectMessage(
+        from_id=from_id,
+        to_id=to_id,
+        from_name=from_name,
+        content=content,
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    result = {
+        "id": msg.id,
+        "from_id": msg.from_id,
+        "to_id": msg.to_id,
+        "from_name": msg.from_name,
+        "content": msg.content,
+        "is_read": msg.is_read,
+        "created_at": msg.created_at.isoformat(),
+    }
+    db.close()
+    return result
+
+
+def get_dm_conversations(player_id: int) -> list:
+    """Get a list of DM conversations for a player, with last message and unread count."""
+    db = get_db()
+    # Get all messages involving this player
+    from sqlalchemy import or_, func, case
+    msgs = db.query(DirectMessage).filter(
+        or_(DirectMessage.from_id == player_id, DirectMessage.to_id == player_id)
+    ).all()
+
+    # Build conversation map: other_player_id -> {last_msg, unread_count}
+    convos = {}
+    for m in msgs:
+        other_id = m.to_id if m.from_id == player_id else m.from_id
+        if other_id not in convos:
+            convos[other_id] = {"last_msg": m, "unread": 0, "other_name": ""}
+        if m.created_at > convos[other_id]["last_msg"].created_at:
+            convos[other_id]["last_msg"] = m
+        # Count unread messages sent TO this player
+        if m.to_id == player_id and m.is_read == 0:
+            convos[other_id]["unread"] += 1
+
+    # Look up player names
+    try:
+        import auth
+        auth_db = auth.get_db()
+        for other_id, data in convos.items():
+            p = auth_db.query(auth.Player).filter(auth.Player.id == other_id).first()
+            data["other_name"] = p.business_name if p else f"Player #{other_id}"
+        auth_db.close()
+    except Exception:
+        pass
+
+    result = []
+    for other_id, data in convos.items():
+        lm = data["last_msg"]
+        result.append({
+            "other_id": other_id,
+            "other_name": data["other_name"],
+            "last_message": lm.content[:80],
+            "last_time": lm.created_at.isoformat(),
+            "unread": data["unread"],
+            "last_from_id": lm.from_id,
+        })
+
+    # Sort by most recent message first
+    result.sort(key=lambda x: x["last_time"], reverse=True)
+    db.close()
+    return result
+
+
+def get_dm_thread(player_id: int, other_id: int, limit: int = 50) -> list:
+    """Get messages between two players."""
+    db = get_db()
+    from sqlalchemy import or_, and_
+    msgs = db.query(DirectMessage).filter(
+        or_(
+            and_(DirectMessage.from_id == player_id, DirectMessage.to_id == other_id),
+            and_(DirectMessage.from_id == other_id, DirectMessage.to_id == player_id),
+        )
+    ).order_by(DirectMessage.created_at.desc()).limit(limit).all()
+
+    result = []
+    for m in reversed(msgs):
+        result.append({
+            "id": m.id,
+            "from_id": m.from_id,
+            "to_id": m.to_id,
+            "from_name": m.from_name,
+            "content": m.content,
+            "is_read": m.is_read,
+            "created_at": m.created_at.isoformat(),
+        })
+    db.close()
+    return result
+
+
+def mark_dms_read(player_id: int, from_id: int):
+    """Mark all DMs from from_id to player_id as read."""
+    db = get_db()
+    db.query(DirectMessage).filter(
+        DirectMessage.from_id == from_id,
+        DirectMessage.to_id == player_id,
+        DirectMessage.is_read == 0,
+    ).update({"is_read": 1})
+    db.commit()
+    db.close()
+
+
+def get_unread_dm_count(player_id: int) -> int:
+    """Get total unread DM count for a player."""
+    db = get_db()
+    count = db.query(DirectMessage).filter(
+        DirectMessage.to_id == player_id,
+        DirectMessage.is_read == 0,
+    ).count()
+    db.close()
+    return count
+
+
+def get_all_dm_threads_admin(limit: int = 50) -> list:
+    """Admin: get recent DM threads overview."""
+    db = get_db()
+    from sqlalchemy import func
+    # Get the most recent DMs grouped by conversation pair
+    recent = db.query(DirectMessage).order_by(DirectMessage.created_at.desc()).limit(limit * 2).all()
+
+    # Build unique conversation pairs
+    seen_pairs = set()
+    threads = []
+    for m in recent:
+        pair = tuple(sorted([m.from_id, m.to_id]))
+        if pair in seen_pairs:
+            continue
+        seen_pairs.add(pair)
+        threads.append({
+            "player_a": pair[0],
+            "player_b": pair[1],
+            "last_message": m.content[:80],
+            "last_time": m.created_at.isoformat(),
+            "last_from": m.from_id,
+        })
+        if len(threads) >= limit:
+            break
+
+    # Look up names
+    try:
+        import auth
+        auth_db = auth.get_db()
+        player_ids = set()
+        for t in threads:
+            player_ids.add(t["player_a"])
+            player_ids.add(t["player_b"])
+        names = {}
+        for pid in player_ids:
+            p = auth_db.query(auth.Player).filter(auth.Player.id == pid).first()
+            names[pid] = p.business_name if p else f"#{pid}"
+        auth_db.close()
+        for t in threads:
+            t["name_a"] = names.get(t["player_a"], f"#{t['player_a']}")
+            t["name_b"] = names.get(t["player_b"], f"#{t['player_b']}")
+    except Exception:
+        for t in threads:
+            t["name_a"] = f"#{t['player_a']}"
+            t["name_b"] = f"#{t['player_b']}"
+
+    db.close()
+    return threads
+
+
+def get_dm_thread_admin(player_a: int, player_b: int, limit: int = 100) -> list:
+    """Admin: get full DM thread between two players."""
+    db = get_db()
+    from sqlalchemy import or_, and_
+    msgs = db.query(DirectMessage).filter(
+        or_(
+            and_(DirectMessage.from_id == player_a, DirectMessage.to_id == player_b),
+            and_(DirectMessage.from_id == player_b, DirectMessage.to_id == player_a),
+        )
+    ).order_by(DirectMessage.created_at.desc()).limit(limit).all()
+
+    result = []
+    for m in reversed(msgs):
+        result.append({
+            "id": m.id,
+            "from_id": m.from_id,
+            "to_id": m.to_id,
+            "from_name": m.from_name,
+            "content": m.content,
+            "created_at": m.created_at.isoformat(),
+        })
+    db.close()
+    return result
 
 
 # ==========================
