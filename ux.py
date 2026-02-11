@@ -680,9 +680,12 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
     try:
-        from land import get_player_land, TERRAIN_TYPES, PROXIMITY_FEATURES
+        from land import get_player_land, TERRAIN_TYPES, PROXIMITY_FEATURES, calculate_player_hoarding_tax, HOARDING_FREE_PLOTS
         from business import BUSINESS_TYPES
         plots = get_player_land(player.id)
+
+        # Calculate hoarding tax for this player
+        hoarding_info = calculate_player_hoarding_tax(len(plots))
 
         # Calculate player's business count for cost multiplier
         from business import Business
@@ -747,6 +750,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
             <strong style="color: #e5e7eb;">Vacant</strong> plots can host new businesses or be listed for sale on the land market.
             <strong style="color: #e5e7eb;">Efficiency</strong> degrades slowly over time and affects business output.
             <strong style="color: #e5e7eb;">Tax</strong> is charged monthly based on terrain type, size, and proximity features.
+            <strong style="color: #dc2626;">Hoarding fee:</strong> owning more than {HOARDING_FREE_PLOTS} plots incurs an escalating hourly fee using Fibonacci-scaled tiers.
         </div>'''
 
         if total_plots == 0:
@@ -779,6 +783,35 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                     <div style="font-size: 1.4rem; font-weight: bold; color: #a855f7;">{avg_efficiency:.2f}%</div>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">AVG EFFICIENCY</div>
                 </div>
+                <div style="background: #0f172a; border: 1px solid {'#dc2626' if hoarding_info['excess_plots'] > 0 else '#1e293b'}; padding: 14px; text-align: center;">
+                    <div style="font-size: 1.4rem; font-weight: bold; color: {'#dc2626' if hoarding_info['excess_plots'] > 0 else '#22c55e'};">${hoarding_info['monthly_total']:,.0f}</div>
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">HOARDING FEE/MO</div>
+                </div>
+            </div>'''
+
+            # Hoarding tax warning banner
+            if hoarding_info["excess_plots"] > 0:
+                breakdown_rows = ""
+                for item in hoarding_info["breakdown"]:
+                    breakdown_rows += f'<tr><td style="padding: 4px 8px; color: #e5e7eb;">Plot #{item["plot_number"]}</td><td style="padding: 4px 8px; color: #f59e0b; text-align: right;">{item["multiplier"]:.1f}x</td><td style="padding: 4px 8px; color: #dc2626; text-align: right;">${item["monthly_tax"]:,.0f}/mo</td></tr>'
+
+                land_html += f'''
+            <div style="padding: 14px 18px; background: linear-gradient(135deg, #1a0505, #0f172a); border: 1px solid #dc2626; border-radius: 4px; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 1.1rem; font-weight: bold; color: #dc2626;">Land Hoarding Fee Active</span>
+                </div>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin: 0 0 10px 0; line-height: 1.5;">
+                    You own <strong style="color: #e5e7eb;">{total_plots}</strong> plots — <strong style="color: #dc2626;">{hoarding_info["excess_plots"]}</strong> over the {HOARDING_FREE_PLOTS}-plot allowance.
+                    Excess plots incur a Fibonacci-scaled hoarding fee of <strong style="color: #dc2626;">${hoarding_info["monthly_total"]:,.0f}/mo</strong> (${hoarding_info["hourly_total"]:,.2f}/hr), paid each hour.
+                    Consider creating <a href="/districts" style="color: #6366f1;">districts</a> to consolidate land.
+                </p>
+                <details style="cursor: pointer;">
+                    <summary style="font-size: 0.8rem; color: #64748b;">Fee breakdown per excess plot</summary>
+                    <table style="width: 100%; margin-top: 8px; font-size: 0.8rem; border-collapse: collapse;">
+                        <thead><tr style="border-bottom: 1px solid #1e293b;"><th style="padding: 4px 8px; text-align: left; color: #64748b;">Plot</th><th style="padding: 4px 8px; text-align: right; color: #64748b;">Multiplier</th><th style="padding: 4px 8px; text-align: right; color: #64748b;">Fee</th></tr></thead>
+                        <tbody>{breakdown_rows}</tbody>
+                    </table>
+                </details>
             </div>'''
 
             # Sort controls

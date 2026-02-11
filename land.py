@@ -36,6 +36,12 @@ Base = declarative_base()
 EFFICIENCY_DECAY_PER_TICK = 0.00001 / 60  # 0.00001% per minute = per 60 ticks
 STARTING_EFFICIENCY = 100.0  # All land starts at 100% efficiency
 
+# Land hoarding tax - discourages accumulating excessive plots
+HOARDING_FREE_PLOTS = 5          # First 5 plots carry no hoarding tax
+HOARDING_BASE_TAX_MONTHLY = 5000.0  # $5000/month base rate per excess plot
+HOARDING_HOURS_PER_MONTH = 720   # 30 days × 24 hours
+GOVERNMENT_PLAYER_ID = 0
+
 # Terrain types - the base land type
 TERRAIN_TYPES = {
     "prairie": {"description": "Flat grassland, good for farming", "base_tax": 50.0},
@@ -505,6 +511,128 @@ def get_land_plot(plot_id: int) -> Optional[LandPlot]:
     return plot
 
 # ==========================
+# HOARDING TAX SYSTEM
+# ==========================
+
+def _hoarding_fib_multiplier(excess_index: int) -> float:
+    """
+    Calculate the hoarding tax multiplier for a given excess plot index.
+    Uses a Fibonacci-based sequence for tiered increases.
+
+    Multipliers: 1.0, 1.1, 1.2, 1.3, 1.5, 1.8, 2.3, 3.1, 4.4, ...
+    The offset from 1.0 (×10) follows: 0, 1, 2, 3, 5, 8, 13, 21, 34, ...
+    Seeds [0, 1, 2], then each value = sum of previous two.
+    """
+    if excess_index <= 0:
+        return 1.0
+    # Build the offset sequence up to the needed index
+    seq = [0, 1, 2]
+    while len(seq) <= excess_index:
+        seq.append(seq[-1] + seq[-2])
+    return 1.0 + seq[excess_index] / 10.0
+
+
+def calculate_player_hoarding_tax(plot_count: int) -> dict:
+    """
+    Calculate the hoarding tax breakdown for a player with a given number of plots.
+
+    Returns:
+        dict with monthly_total, hourly_total, excess_plots, and per-plot breakdown
+    """
+    if plot_count <= HOARDING_FREE_PLOTS:
+        return {
+            "excess_plots": 0,
+            "monthly_total": 0.0,
+            "hourly_total": 0.0,
+            "breakdown": []
+        }
+
+    excess = plot_count - HOARDING_FREE_PLOTS
+    breakdown = []
+    monthly_total = 0.0
+
+    for i in range(excess):
+        multiplier = _hoarding_fib_multiplier(i)
+        monthly = HOARDING_BASE_TAX_MONTHLY * multiplier
+        monthly_total += monthly
+        breakdown.append({
+            "plot_number": HOARDING_FREE_PLOTS + i + 1,
+            "multiplier": multiplier,
+            "monthly_tax": monthly
+        })
+
+    return {
+        "excess_plots": excess,
+        "monthly_total": monthly_total,
+        "hourly_total": monthly_total / HOARDING_HOURS_PER_MONTH,
+        "breakdown": breakdown
+    }
+
+
+def collect_hoarding_taxes():
+    """
+    Collect hourly hoarding tax from players with more than 5 plots.
+    Each excess plot carries a $5000/month base tax with Fibonacci-scaled multipliers.
+    Paid hourly as a cash sink to discourage land hoarding.
+    """
+    from auth import Player
+    from stats_ux import log_transaction
+
+    db = get_db()
+
+    # Find players with more than HOARDING_FREE_PLOTS plots (exclude government)
+    plot_counts = db.query(
+        LandPlot.owner_id,
+        func.count(LandPlot.id)
+    ).filter(
+        LandPlot.is_government_owned == False
+    ).group_by(LandPlot.owner_id).having(
+        func.count(LandPlot.id) > HOARDING_FREE_PLOTS
+    ).all()
+
+    total_collected = 0.0
+
+    for owner_id, plot_count in plot_counts:
+        if owner_id == GOVERNMENT_PLAYER_ID:
+            continue
+
+        tax_info = calculate_player_hoarding_tax(plot_count)
+        hourly_payment = tax_info["hourly_total"]
+
+        if hourly_payment <= 0:
+            continue
+
+        player = db.query(Player).filter(Player.id == owner_id).first()
+        if not player:
+            continue
+
+        actual_payment = min(hourly_payment, max(0, player.cash_balance))
+        if actual_payment > 0:
+            player.cash_balance -= actual_payment
+            total_collected += actual_payment
+
+            log_transaction(
+                player_id=owner_id,
+                transaction_type="tax",
+                category="money",
+                amount=-actual_payment,
+                description=f"Land hoarding fee: {tax_info['excess_plots']} excess plot(s) — ${tax_info['monthly_total']:,.0f}/mo"
+            )
+
+    # Pay to government
+    if total_collected > 0:
+        gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+        if gov:
+            gov.cash_balance += total_collected
+
+    db.commit()
+    db.close()
+
+    if total_collected > 0:
+        print(f"[Land] Hoarding tax collected: ${total_collected:,.2f} from {len(plot_counts)} player(s)")
+
+
+# ==========================
 # MODULE LIFECYCLE
 # ==========================
 def initialize():
@@ -540,6 +668,10 @@ async def tick(current_tick: int, now: datetime):
         collect_monthly_taxes(current_month)
         last_tax_month = current_month
     
+    # Collect hoarding taxes every hour (720 ticks = 3600 seconds)
+    if current_tick % 720 == 0:
+        collect_hoarding_taxes()
+
     # Log stats every hour (3600 ticks)
     if current_tick % 3600 == 0:
         stats = get_land_stats()
@@ -560,8 +692,11 @@ __all__ = [
     'occupy_land',
     'vacate_land',
     'get_land_stats',
+    'calculate_player_hoarding_tax',
     'TERRAIN_TYPES',
     'PROXIMITY_FEATURES',
     'BUSINESS_COMPATIBILITY',
+    'HOARDING_FREE_PLOTS',
+    'HOARDING_BASE_TAX_MONTHLY',
     'LandPlot'
 ]
