@@ -63,7 +63,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
     <!DOCTYPE html>
     <html>
     <head>
-        <title>{title} · SymCo</title>
+        <title>{title} · Wadsworth</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
             * {{ box-sizing: border-box; }}
@@ -230,7 +230,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
     </head>
     <body>
         <div class="header">
-            <div class="brand">SymCo</div>
+            <div class="brand">Wadsworth</div>
             <div class="header-right">
                 {lien_html}
                 <span class="balance">$ {balance:,.2f}</span>
@@ -298,7 +298,7 @@ def get_player_lien_info(player_id: int) -> dict:
         from sqlalchemy.orm import sessionmaker
         from datetime import datetime
         
-        DATABASE_URL = "sqlite:///./symco.db"
+        DATABASE_URL = "sqlite:///./wadsworth.db"
         engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         
@@ -1585,13 +1585,13 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         return shell("Market", f"Error loading market: {e}", player.cash_balance, player.id)
 
 # ==========================
-# SCPE COMPANY LISTINGS PAGE
+# WPE COMPANY LISTINGS PAGE
 # ==========================
 # Add this route to ux.py for viewing all public companies
 
 @router.get("/brokerage/companies", response_class=HTMLResponse)
 def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
-    """View all public companies listed on SCPE."""
+    """View all public companies listed on WPE."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -1743,18 +1743,18 @@ def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
         
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
-        <h1>SCPE Listed Companies</h1>
-        <p style="color: #64748b;">{len(company_data)} companies listed on the SymCo Player Exchange</p>
+        <h1>WPE Listed Companies</h1>
+        <p style="color: #64748b;">{len(company_data)} companies listed on the Wadsworth Player Exchange</p>
         
         {companies_html}
         '''
         
-        return shell("SCPE Companies", body, player.cash_balance, player.id)
+        return shell("WPE Companies", body, player.cash_balance, player.id)
         
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return shell("SCPE Companies", f"Error: {e}", player.cash_balance, player.id)
+        return shell("WPE Companies", f"Error: {e}", player.cash_balance, player.id)
 
 
 # ==========================
@@ -2108,7 +2108,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             <div class="card" style="border: 2px solid #38bdf8; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <div>
-                        <h3 style="margin: 0;">🏛️ SymCo Brokerage Firm</h3>
+                        <h3 style="margin: 0;">🏛️ Wadsworth Brokerage Firm</h3>
                         <p style="color: #64748b; margin-top: 5px;">Full-service: IPOs, Margin Trading, Short Selling, Commodity Lending</p>
                     </div>
                     <div style="text-align: right;">
@@ -2141,9 +2141,9 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 
                 <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                     <a href="/banks/brokerage-firm" class="btn-blue">Open Firm Dashboard</a>
-                    <a href="/brokerage/trading" class="btn-blue" style="background: #22c55e;">Trade SCPE</a>
+                    <a href="/brokerage/trading" class="btn-blue" style="background: #22c55e;">Trade WPE</a>
                     <a href="/brokerage/ipo" class="btn-orange">Launch IPO</a>
-                    <a href="/brokerage/commodities" class="btn-blue" style="background: #8b5cf6;">SCCE Commodities</a>
+                    <a href="/brokerage/commodities" class="btn-blue" style="background: #8b5cf6;">WCE Commodities</a>
                 </div>
             </div>
             '''
@@ -2153,7 +2153,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             traceback.print_exc()
             bank_html += '''
             <div class="card" style="border: 1px solid #ef4444;">
-                <h3>🏛️ SymCo Brokerage Firm</h3>
+                <h3>🏛️ Wadsworth Brokerage Firm</h3>
                 <p style="color: #ef4444;">Error loading brokerage firm data</p>
             </div>
             '''
@@ -2594,9 +2594,9 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             '''
         
         body = f'''
-        <!-- SCPE Company Ticker (slower scroll) -->
+        <!-- WPE Company Ticker (slower scroll) -->
         <div style="background: #0f172a; border: 1px solid #1e293b; padding: 8px 0; margin-bottom: 20px; overflow: hidden;">
-            <div style="font-size: 0.75rem; color: #64748b; padding: 0 12px; margin-bottom: 4px;">SCPE PLAYER EXCHANGE</div>
+            <div style="font-size: 0.75rem; color: #64748b; padding: 0 12px; margin-bottom: 4px;">WPE PLAYER EXCHANGE</div>
             <marquee scrollamount="8" style="font-size: 0.85rem; color: #e5e7eb;">
                 {company_ticker} &nbsp;&nbsp;&nbsp; {company_ticker}
             </marquee>
@@ -2655,7 +2655,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
         <!-- Navigation Cards -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px;">
             <div class="card">
-                <h3>📈 SCPE Trading</h3>
+                <h3>📈 WPE Trading</h3>
                 <p style="color: #64748b; font-size: 0.9rem;">Buy and sell player company shares</p>
                 <a href="/brokerage/trading" class="btn-blue" style="display: inline-block; margin-top: 10px;">Trade Equities</a>
             </div>
@@ -2677,7 +2677,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             <div class="card">
                 <h3>🌾 Commodity Lending</h3>
                 <p style="color: #64748b; font-size: 0.9rem;">Borrow or lend commodities</p>
-                <a href="/brokerage/commodities" class="btn-orange" style="display: inline-block; margin-top: 10px;">SCCE Market</a>
+                <a href="/brokerage/commodities" class="btn-orange" style="display: inline-block; margin-top: 10px;">WCE Market</a>
             </div>
             <div class="card">
                 <h3>💳 Credit & Liens</h3>
@@ -2717,7 +2717,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
 
 @router.get("/brokerage/trading", response_class=HTMLResponse)
 def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: str = None):
-    """SCPE equity trading page."""
+    """WPE equity trading page."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -2777,11 +2777,11 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         if not selected_company:
             body = f'''
             <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
-            <h1>SCPE Trading Floor</h1>
+            <h1>WPE Trading Floor</h1>
             <p style="color: #64748b;">No companies are currently listed on the exchange.</p>
             <a href="/brokerage/ipo" class="btn-blue">Launch the First IPO</a>
             '''
-            return shell("SCPE Trading", body, player.cash_balance, player.id)
+            return shell("WPE Trading", body, player.cash_balance, player.id)
 
         # Get order book data for selected company
         order_book = get_order_book_depth(selected_company.id, depth=10)
@@ -3003,7 +3003,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         body = td_css + f'''
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
             <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:0.8rem;">&larr; Brokerage Firm</a>
-            <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">SCPE Trading Floor</span>
+            <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">WPE Trading Floor</span>
         </div>
 
         <!-- Portfolio Summary Bar -->
@@ -3178,7 +3178,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return shell("SCPE Trading", f"Error: {e}", player.cash_balance, player.id)
+        return shell("WPE Trading", f"Error: {e}", player.cash_balance, player.id)
 
 
 # The helper functions need to be INSIDE the route handler
@@ -3272,7 +3272,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                 <h3 style="color: #86efac;">Your Company Is Public</h3>
                 <p style="color: #86efac;">
                     <strong>{existing_company.ticker_symbol}</strong> ({existing_company.company_name})
-                    is listed on SCPE at <strong>${existing_company.current_price:,.2f}</strong>/share.
+                    is listed on WPE at <strong>${existing_company.current_price:,.2f}</strong>/share.
                 </p>
                 <p style="color: #86efac; font-size: 0.9rem;">
                     Each player can only have one publicly traded company.
@@ -3338,7 +3338,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">&larr; Brokerage Firm</a>
         <h1>IPO Center</h1>
         {error_html}
-        <p style="color: #64748b;">Take <strong>{player.business_name}</strong>'s business empire public on SCPE</p>
+        <p style="color: #64748b;">Take <strong>{player.business_name}</strong>'s business empire public on WPE</p>
 
         <!-- Company Valuation -->
         <div class="card" style="border-left: 4px solid #38bdf8;">
@@ -3506,7 +3506,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                                 <input type="text" name="ticker_symbol" required maxlength="5" minlength="3"
                                        style="width: 100%; padding: 10px; text-transform: uppercase;"
                                        placeholder="e.g., {player.business_name[:4].upper()}">
-                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">This will appear on SCPE ticker</p>
+                                <p style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">This will appear on WPE ticker</p>
                             </div>
                         </div>
 
@@ -4048,7 +4048,7 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
 
 @router.get("/brokerage/commodities", response_class=HTMLResponse)
 def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
-    """SCCE Commodity lending page."""
+    """WCE Commodity lending page."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -4190,7 +4190,7 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
         
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
-        <h1>SCCE Commodity Exchange</h1>
+        <h1>WCE Commodity Exchange</h1>
         <p style="color: #64748b;">Borrow commodities from other players or lend your inventory for interest.</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -4247,12 +4247,12 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
         </div>
         '''
         
-        return shell("SCCE Commodities", body, player.cash_balance, player.id)
+        return shell("WCE Commodities", body, player.cash_balance, player.id)
         
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return shell("SCCE Commodities", f"Error: {e}", player.cash_balance, player.id)
+        return shell("WCE Commodities", f"Error: {e}", player.cash_balance, player.id)
 
 
 @router.get("/brokerage/credit", response_class=HTMLResponse)

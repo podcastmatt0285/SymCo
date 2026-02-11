@@ -24,7 +24,7 @@ from sqlalchemy.orm import sessionmaker, Session
 # ==========================
 # DATABASE SETUP
 # ==========================
-DATABASE_URL = "sqlite:///./symco.db"
+DATABASE_URL = "sqlite:///./wadsworth.db"
 
 engine = create_engine(
     DATABASE_URL,
@@ -250,7 +250,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login · SymCo</title>
+    <title>Login · Wadsworth</title>
     <style>
         * {
             margin: 0;
@@ -388,7 +388,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
 <body>
     <div class="splash">
-        <div class="logo">SymCo</div>
+        <div class="logo">Wadsworth</div>
         <div class="tagline">Real-Time Economic Simulation</div>
 
         <div class="panel">

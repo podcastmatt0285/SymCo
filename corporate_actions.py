@@ -1,5 +1,5 @@
 """
-corporate_actions.py - Automated Corporate Actions for SymCo Brokerage Firm
+corporate_actions.py - Automated Corporate Actions for Wadsworth Brokerage Firm
 
 Adds three automated corporate finance actions that founders configure at IPO:
 

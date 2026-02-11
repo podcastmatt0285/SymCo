@@ -46,7 +46,7 @@ def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{title} - SymCo Estate</title>
+    <title>{title} - Wadsworth Estate</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * {{ box-sizing: border-box; }}
@@ -327,7 +327,7 @@ def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
 </head>
 <body>
     <div class="header">
-        <div class="brand">SYMCO ESTATE REGISTRY</div>
+        <div class="brand">WADSWORTH ESTATE REGISTRY</div>
         <div class="header-right">
             <span style="color: #64748b;">{player_name}</span>
             <span class="balance">${balance:,.2f}</span>

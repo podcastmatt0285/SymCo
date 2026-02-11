@@ -23,7 +23,7 @@ from sqlalchemy.orm import sessionmaker
 # ==========================
 # DATABASE SETUP
 # ==========================
-DATABASE_URL = "sqlite:///./symco.db"
+DATABASE_URL = "sqlite:///./wadsworth.db"
 
 engine = create_engine(
     DATABASE_URL,

@@ -19,7 +19,7 @@ from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite:///./symco.db"
+DATABASE_URL = "sqlite:///./wadsworth.db"
 
 engine = create_engine(
     DATABASE_URL,
@@ -390,7 +390,7 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{title} · SymCo Analytics</title>
+    <title>{title} · Wadsworth Analytics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * {{ box-sizing: border-box; }}
@@ -653,7 +653,7 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
 </head>
 <body>
     <div class="header">
-        <div class="brand">SymCo Analytics</div>
+        <div class="brand">Wadsworth Analytics</div>
         <div class="header-right">
             <span style="color: #94a3b8;">{player_name}</span>
             <span class="balance">${balance:,.2f}</span>

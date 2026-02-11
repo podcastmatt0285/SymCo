@@ -4,7 +4,7 @@ import os
 import shutil
 
 source_dir = os.path.expanduser("~/SymCo")
-output_dir = os.path.expanduser("~/SymCotxt")
+output_dir = os.path.expanduser("~/Wadswtxt")
 
 os.makedirs(output_dir, exist_ok=True)
 

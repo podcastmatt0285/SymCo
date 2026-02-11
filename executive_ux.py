@@ -258,7 +258,7 @@ def exec_shell(title: str, body: str, player=None) -> str:
 <html><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SymCo - {title}</title>
+    <title>Wadsworth - {title}</title>
     {EXEC_STYLES}
 </head><body>
     <div class="container">

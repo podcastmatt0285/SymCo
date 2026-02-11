@@ -1,7 +1,7 @@
 {
   "bookbindery": {
     "name": "Book Bindery",
-    "description": "Binds books for SymCo.",
+    "description": "Binds books for Wadsworth.",
     "startup_cost": 28750,
     "cycles_to_complete": 3600,
     "base_wage_cost": 1500,
@@ -266,7 +266,7 @@
   },
 
   "paper_mill": {
-    "name": "SymCo Paper Mill",
+    "name": "Wadsworth Paper Mill",
     "description": "Foundation of the economy. High yield; no paper input required to prevent deadlock.",
     "startup_cost": 4500,
     "cycles_to_complete": 140,
@@ -394,7 +394,7 @@
   },
 
   "stationery_store": {
-    "name": "SymCo Stationery & Office",
+    "name": "Wadsworth Stationery & Office",
     "class": "retail",
     "description": "Retail outlet for surplus industrial paper.",
     "startup_cost": 2000,

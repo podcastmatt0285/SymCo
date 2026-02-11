@@ -21,7 +21,7 @@ from stats_ux import log_transaction
 # ==========================
 # DATABASE SETUP
 # ==========================
-DATABASE_URL = "sqlite:///./symco.db"
+DATABASE_URL = "sqlite:///./wadsworth.db"
 
 engine = create_engine(
     DATABASE_URL,

@@ -20,7 +20,7 @@ import random
 # BANK IDENTITY
 # ==========================
 BANK_ID = "energy_etf"
-BANK_NAME = "SymCo Energy ETF"
+BANK_NAME = "Wadsworth Energy ETF"
 BANK_DESCRIPTION = "ETF backed by energy reserves - stabilizing the industrial power grid"
 
 # Bank's player ID (used for inventory/market operations - NOT a real player)
@@ -108,7 +108,7 @@ from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite:///./symco.db"
+DATABASE_URL = "sqlite:///./wadsworth.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

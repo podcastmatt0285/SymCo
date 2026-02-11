@@ -104,7 +104,7 @@ async def lifespan(app: FastAPI):
 # ==========================
 
 app = FastAPI(
-    title="SymCo Economic Simulation",
+    title="Wadsworth Economic Simulation",
     description="Real-time multiplayer economic simulation",
     version="0.1.0",
     lifespan=lifespan
@@ -172,7 +172,7 @@ except ModuleNotFoundError:
     @app.get("/")
     async def root():
         return {
-            "message": "SymCo Economic Simulation",
+            "message": "Wadsworth Economic Simulation",
             "status": "UX module not loaded",
             "tick": current_tick,
             "api_status": "/api/status"

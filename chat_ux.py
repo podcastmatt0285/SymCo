@@ -110,7 +110,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
     <!DOCTYPE html>
     <html>
     <head>
-        <title>{title} - SymCo</title>
+        <title>{title} - Wadsworth</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <style>
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
@@ -550,7 +550,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
         <div class="header">
             <div class="header-left">
                 <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">☰</button>
-                <span class="brand">SymCo</span>
+                <span class="brand">Wadsworth</span>
                 <span style="color: #475569; font-size: 0.8rem;">Chat</span>
             </div>
             <div class="header-right">

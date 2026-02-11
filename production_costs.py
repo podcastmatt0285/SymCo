@@ -1,7 +1,7 @@
 """
 production_costs.py
 
-Production Cost Calculator for SymCo.
+Production Cost Calculator for Wadsworth.
 Calculates base production costs assuming full vertical integration.
 
 Handles circular dependencies (e.g., paper <-> water) via iterative convergence.
@@ -397,7 +397,7 @@ def reset_calculator():
 if __name__ == '__main__':
     import argparse
     
-    parser = argparse.ArgumentParser(description='Calculate SymCo production costs')
+    parser = argparse.ArgumentParser(description='Calculate Wadsworth production costs')
     parser.add_argument('--item', type=str, help='Get cost for specific item')
     parser.add_argument('--breakdown', type=str, help='Show cost breakdown for item')
     parser.add_argument('--category', type=str, help='Show items in category')
@@ -453,7 +453,7 @@ if __name__ == '__main__':
         items = calc.get_all_items_sorted()
         
         print("=" * 60)
-        print("SYMCO PRODUCTION COSTS (Vertical Integration)")
+        print("WADSWORTH PRODUCTION COSTS (Vertical Integration)")
         print("=" * 60)
         print(f"Total items: {summary['total_items']}")
         print(f"With recipes: {summary['items_with_recipes']}")

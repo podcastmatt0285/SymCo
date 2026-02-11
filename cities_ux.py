@@ -361,7 +361,7 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Cities · SymCo</title>
+        <title>Cities · Wadsworth</title>
         {CITY_STYLES}
     </head>
     <body>
@@ -541,7 +541,7 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Applicant: {applicant.business_name} · SymCo</title>
+        <title>Applicant: {applicant.business_name} · Wadsworth</title>
         {CITY_STYLES}
     </head>
     <body>
@@ -1039,7 +1039,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{city.name} · SymCo</title>
+        <title>{city.name} · Wadsworth</title>
         {CITY_STYLES}
     </head>
     <body>

@@ -1,16 +1,16 @@
 """
-banks/brokerage_firm.py - THE SYMCO BROKERAGE FIRM
+banks/brokerage_firm.py - THE WADSWORTH BROKERAGE FIRM
 
 A comprehensive financial intermediary providing:
 
-SCPE (SymCo Player Exchange):
+WPE (Wadsworth Player Exchange):
 - Player company IPOs with 6 different offering structures
 - Multiple share classes (Common, Preferred, Series A/B, Dual-Class)
 - Margin trading with credit-based leverage (2x-10x)
 - Short selling with borrow fees
 - Real-time order book with price discovery
 
-SCCE (SymCo Commodities Exchange):
+WCE (Wadsworth Commodities Exchange):
 - Commodity borrowing/lending between players
 - Dynamic due dates based on volatility and credit
 - 105% collateral requirements
@@ -46,7 +46,7 @@ from sqlalchemy.orm import sessionmaker
 # ==========================
 # DATABASE SETUP
 # ==========================
-DATABASE_URL = "sqlite:///./symco.db"
+DATABASE_URL = "sqlite:///./wadsworth.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -55,7 +55,7 @@ Base = declarative_base()
 # BANK IDENTITY
 # ==========================
 BANK_ID = "brokerage_firm"
-BANK_NAME = "SymCo Brokerage Firm"
+BANK_NAME = "Wadsworth Brokerage Firm"
 BANK_DESCRIPTION = "Full-service brokerage: IPOs, margin trading, short selling, commodity lending"
 BANK_PLAYER_ID = -5
 
@@ -2000,7 +2000,7 @@ def process_share_loan_interest():
 
 
 # ==========================
-# COMMODITY LENDING (SCCE)
+# COMMODITY LENDING (WCE)
 # ==========================
 
 def list_commodity_for_lending(lender_id: int, item_type: str, quantity: float, weekly_rate: float) -> Optional[CommodityListing]:
@@ -2615,14 +2615,14 @@ def initialize():
     firm = get_firm_entity()
     
     print(f"[{BANK_NAME}] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    print(f"[{BANK_NAME}] SYMCO BROKERAGE FIRM - INITIALIZED")
+    print(f"[{BANK_NAME}] WADSWORTH BROKERAGE FIRM - INITIALIZED")
     print(f"[{BANK_NAME}] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"[{BANK_NAME}] Cash Reserves: ${firm.cash_reserves:,.2f}")
     print(f"[{BANK_NAME}] IPO Types: {len(IPO_CONFIG)}")
     print(f"[{BANK_NAME}]   • Direct Listing ($5k flat fee, no underwriter)")
     print(f"[{BANK_NAME}]   • Underwritten IPO (7% discount, guaranteed capital)")
     print(f"[{BANK_NAME}]   • Income Shares IPO (3% discount, mandatory 10% dividend)")
-    print(f"[{BANK_NAME}] SCCE Commodity Lending: ACTIVE")
+    print(f"[{BANK_NAME}] WCE Commodity Lending: ACTIVE")
     print(f"[{BANK_NAME}] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 

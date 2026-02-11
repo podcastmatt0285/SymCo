@@ -43,7 +43,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         <!DOCTYPE html>
         <html>
         <head>
-            <title>{title} · SymCo Districts</title>
+            <title>{title} · Wadsworth Districts</title>
             <style>
                 body {{ background: #020617; color: #e5e7eb; font-family: monospace; padding: 20px; }}
                 .container {{ max-width: 1000px; margin: 0 auto; }}
