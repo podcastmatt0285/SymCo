@@ -718,6 +718,8 @@ async def view_county(
         '''
 
     circulating_supply = county.total_crypto_minted - county.total_crypto_burned
+    _max_supply = county.max_supply or 21_000_000.0
+    _treasury_cash = county.treasury_cash or 0.0
 
     return f"""
     <!DOCTYPE html>
@@ -787,11 +789,11 @@ async def view_county(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Max Supply</span>
-                        <span class="stat-value">{county.max_supply:,.0f}</span>
+                        <span class="stat-value">{_max_supply:,.0f}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Treasury Cash</span>
-                        <span class="stat-value" style="color: #4ade80;">${county.treasury_cash:,.4f}</span>
+                        <span class="stat-value" style="color: #4ade80;">${_treasury_cash:,.4f}</span>
                     </div>
                 </div>
             </div>
@@ -1010,6 +1012,9 @@ async def county_mining_node(
     crypto_balance = wallet.balance if wallet else 0.0
     total_mined = wallet.total_mined if wallet else 0.0
     crypto_price = calculate_crypto_price(county_id)
+    _max_supply = county.max_supply or 21_000_000.0
+    _treasury_cash = county.treasury_cash or 0.0
+    _halving_mult = get_halving_multiplier(county.total_crypto_minted, _max_supply)
 
     # Recent deposits by this player
     recent_deposits = db.query(MiningDeposit).filter(
@@ -1111,16 +1116,16 @@ async def county_mining_node(
                     <div>
                         <h3 style="color: #a78bfa;">Supply Minted</h3>
                         <div class="wallet-balance">{county.total_crypto_minted:,.2f}</div>
-                        <div class="wallet-value">of {county.max_supply:,.0f} max ({county.total_crypto_minted / county.max_supply * 100 if county.max_supply > 0 else 0:.1f}%)</div>
+                        <div class="wallet-value">of {_max_supply:,.0f} max ({county.total_crypto_minted / _max_supply * 100:.1f}%)</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Halving Multiplier</h3>
-                        <div class="wallet-balance">{get_halving_multiplier(county.total_crypto_minted, county.max_supply):.4f}x</div>
+                        <div class="wallet-balance">{_halving_mult:.4f}x</div>
                         <div class="wallet-value">Mining reward rate</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Treasury</h3>
-                        <div class="wallet-balance">${county.treasury_cash:,.4f}</div>
+                        <div class="wallet-balance">${_treasury_cash:,.4f}</div>
                         <div class="wallet-value">Cash backing the exchange</div>
                     </div>
                 </div>
@@ -1129,10 +1134,10 @@ async def county_mining_node(
                 <div style="margin-bottom:20px;">
                     <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
                         <span>Minted: {county.total_crypto_minted:,.2f}</span>
-                        <span>Max Supply: {county.max_supply:,.0f}</span>
+                        <span>Max Supply: {_max_supply:,.0f}</span>
                     </div>
                     <div style="height:10px; background:#1e293b; border-radius:5px; overflow:hidden;">
-                        <div style="height:100%; width:{min(100, county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0:.1f}%; background:linear-gradient(90deg, #7c3aed, #a78bfa); border-radius:5px;"></div>
+                        <div style="height:100%; width:{min(100, county.total_crypto_minted / _max_supply * 100):.1f}%; background:linear-gradient(90deg, #7c3aed, #a78bfa); border-radius:5px;"></div>
                     </div>
                 </div>
 
@@ -1161,7 +1166,7 @@ async def county_mining_node(
                         </p>
                         <h3 style="margin-top: 12px;">Halving & Supply Cap</h3>
                         <p style="color: #94a3b8; font-size: 13px;">
-                            Max supply is <strong>{county.max_supply:,.0f}</strong> tokens (like Bitcoin's 21M).
+                            Max supply is <strong>{_max_supply:,.0f}</strong> tokens (like Bitcoin's 21M).
                             Mining rewards diminish as more tokens are minted &mdash; the reward rate halves at each
                             epoch (Bitcoin-style halving). Once the supply cap is reached, no new tokens can be minted.
                             Governance votes can increase the supply cap.
@@ -1302,7 +1307,10 @@ async def crypto_exchange(
         else:
             chg_html = '<span style="color: #94a3b8;">● --</span>'
 
-        supply_pct = (c["total_minted"] / c["max_supply"] * 100) if c["max_supply"] > 0 else 0
+        _ms = c["max_supply"] or 21_000_000.0
+        _tc = c["treasury_cash"] or 0.0
+        _hm = c["halving_multiplier"] or 0.0
+        supply_pct = (c["total_minted"] / _ms * 100) if _ms > 0 else 0
         market_html += f'''
         <tr>
             <td>
@@ -1313,9 +1321,9 @@ async def crypto_exchange(
             <td>{c["name"]}</td>
             <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
             <td>{chg_html}</td>
-            <td><span title="{c["total_minted"]:,.2f} / {c["max_supply"]:,.0f}">{supply_pct:.1f}% of {c["max_supply"]:,.0f}</span></td>
-            <td style="color: #4ade80;">${c["treasury_cash"]:,.4f}</td>
-            <td>{c["halving_multiplier"]:.4f}x</td>
+            <td><span title="{c["total_minted"]:,.2f} / {_ms:,.0f}">{supply_pct:.1f}% of {_ms:,.0f}</span></td>
+            <td style="color: #4ade80;">${_tc:,.4f}</td>
+            <td>{_hm:.4f}x</td>
             <td><a href="/crypto/{c["crypto_symbol"]}" class="btn btn-secondary btn-sm">Info</a></td>
         </tr>
         '''
@@ -1489,6 +1497,12 @@ async def crypto_token_info(
     info = get_full_token_info(symbol.upper())
     if not info:
         return RedirectResponse(url="/exchange?error=Token+not+found", status_code=303)
+
+    # Ensure None-safe defaults for new fields
+    info["treasury_cash"] = info.get("treasury_cash") or 0.0
+    info["halving_multiplier"] = info.get("halving_multiplier") or 0.0
+    info["supply_pct"] = info.get("supply_pct") or 0.0
+    info["max_supply"] = info.get("max_supply") or 21_000_000.0
 
     # Get player's wallet for this token
     db = get_db()

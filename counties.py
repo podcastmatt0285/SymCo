@@ -407,7 +407,9 @@ def get_all_counties() -> List[dict]:
             city_count = db.query(CountyCity).filter(CountyCity.county_id == county.id).count()
             crypto_price = calculate_crypto_price(county.id)
             circulating = county.total_crypto_minted - county.total_crypto_burned
-            halving_mult = get_halving_multiplier(county.total_crypto_minted, county.max_supply)
+            max_sup = county.max_supply or INITIAL_MAX_SUPPLY
+            treasury = county.treasury_cash or 0.0
+            halving_mult = get_halving_multiplier(county.total_crypto_minted, max_sup)
             result.append({
                 "id": county.id,
                 "name": county.name,
@@ -417,10 +419,10 @@ def get_all_counties() -> List[dict]:
                 "max_cities": MAX_COUNTY_CITIES,
                 "crypto_price": crypto_price,
                 "total_minted": county.total_crypto_minted,
-                "max_supply": county.max_supply,
+                "max_supply": max_sup,
                 "circulating_supply": circulating,
                 "mining_energy": county.mining_energy_pool,
-                "treasury_cash": county.treasury_cash,
+                "treasury_cash": treasury,
                 "halving_multiplier": halving_mult,
             })
         return result
@@ -874,12 +876,14 @@ def get_full_token_info(symbol: str) -> Optional[dict]:
         price = calculate_crypto_price(county.id)
         circulating = county.total_crypto_minted - county.total_crypto_burned
         market_cap = price * max(circulating, 0)
-        fdv = (price * county.max_supply) if county.max_supply else None
+        max_sup = county.max_supply or INITIAL_MAX_SUPPLY
+        treasury = county.treasury_cash or 0.0
+        fdv = price * max_sup
         stats_24h = get_crypto_24h_stats(symbol)
         holders = get_crypto_holders(symbol)
         trust = get_token_trust_score(symbol)
         logo = ensure_county_logo(county.id)
-        halving_mult = get_halving_multiplier(county.total_crypto_minted, county.max_supply)
+        halving_mult = get_halving_multiplier(county.total_crypto_minted, max_sup)
 
         # Price change calculation
         price_change_24h = 0.0
@@ -908,11 +912,11 @@ def get_full_token_info(symbol: str) -> Optional[dict]:
             "circulating_supply": circulating,
             "total_minted": county.total_crypto_minted,
             "total_burned": county.total_crypto_burned,
-            "max_supply": county.max_supply,
-            "supply_pct": (county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0,
+            "max_supply": max_sup,
+            "supply_pct": (county.total_crypto_minted / max_sup * 100) if max_sup > 0 else 0,
             "halving_multiplier": halving_mult,
             # Treasury
-            "treasury_cash": county.treasury_cash,
+            "treasury_cash": treasury,
             # Holders
             "holders": holders,
             # Mining
