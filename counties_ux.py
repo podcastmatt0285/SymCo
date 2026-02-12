@@ -717,9 +717,12 @@ async def view_county(
         </div>
         '''
 
-    circulating_supply = county.total_crypto_minted - county.total_crypto_burned
+    _minted = county.total_crypto_minted or 0.0
+    _burned = county.total_crypto_burned or 0.0
+    circulating_supply = _minted - _burned
     _max_supply = county.max_supply or 21_000_000.0
     _treasury_cash = county.treasury_cash or 0.0
+    _energy = county.mining_energy_pool or 0.0
 
     return f"""
     <!DOCTYPE html>
@@ -777,15 +780,15 @@ async def view_county(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Total Minted</span>
-                        <span class="stat-value">{county.total_crypto_minted:,.6f}</span>
+                        <span class="stat-value">{_minted:,.6f}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Total Burned</span>
-                        <span class="stat-value">{county.total_crypto_burned:,.6f}</span>
+                        <span class="stat-value">{_burned:,.6f}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Mining Energy Pool</span>
-                        <span class="stat-value">${county.mining_energy_pool:,.4f}</span>
+                        <span class="stat-value">${_energy:,.4f}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Max Supply</span>
@@ -1014,7 +1017,9 @@ async def county_mining_node(
     crypto_price = calculate_crypto_price(county_id)
     _max_supply = county.max_supply or 21_000_000.0
     _treasury_cash = county.treasury_cash or 0.0
-    _halving_mult = get_halving_multiplier(county.total_crypto_minted, _max_supply)
+    _minted = county.total_crypto_minted or 0.0
+    _energy = county.mining_energy_pool or 0.0
+    _halving_mult = get_halving_multiplier(_minted, _max_supply)
 
     # Recent deposits by this player
     recent_deposits = db.query(MiningDeposit).filter(
@@ -1106,7 +1111,7 @@ async def county_mining_node(
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Node Energy Pool</h3>
-                        <div class="wallet-balance">${county.mining_energy_pool:,.4f}</div>
+                        <div class="wallet-balance">${_energy:,.4f}</div>
                         <div class="wallet-value">Total energy available</div>
                     </div>
                 </div>
@@ -1115,8 +1120,8 @@ async def county_mining_node(
                 <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
                     <div>
                         <h3 style="color: #a78bfa;">Supply Minted</h3>
-                        <div class="wallet-balance">{county.total_crypto_minted:,.2f}</div>
-                        <div class="wallet-value">of {_max_supply:,.0f} max ({county.total_crypto_minted / _max_supply * 100:.1f}%)</div>
+                        <div class="wallet-balance">{_minted:,.2f}</div>
+                        <div class="wallet-value">of {_max_supply:,.0f} max ({_minted / _max_supply * 100:.1f}%)</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Halving Multiplier</h3>
@@ -1133,11 +1138,11 @@ async def county_mining_node(
                 <!-- Supply Progress Bar -->
                 <div style="margin-bottom:20px;">
                     <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
-                        <span>Minted: {county.total_crypto_minted:,.2f}</span>
+                        <span>Minted: {_minted:,.2f}</span>
                         <span>Max Supply: {_max_supply:,.0f}</span>
                     </div>
                     <div style="height:10px; background:#1e293b; border-radius:5px; overflow:hidden;">
-                        <div style="height:100%; width:{min(100, county.total_crypto_minted / _max_supply * 100):.1f}%; background:linear-gradient(90deg, #7c3aed, #a78bfa); border-radius:5px;"></div>
+                        <div style="height:100%; width:{min(100, _minted / _max_supply * 100):.1f}%; background:linear-gradient(90deg, #7c3aed, #a78bfa); border-radius:5px;"></div>
                     </div>
                 </div>
 

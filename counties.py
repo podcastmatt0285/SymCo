@@ -406,10 +406,13 @@ def get_all_counties() -> List[dict]:
         for county in counties:
             city_count = db.query(CountyCity).filter(CountyCity.county_id == county.id).count()
             crypto_price = calculate_crypto_price(county.id)
-            circulating = county.total_crypto_minted - county.total_crypto_burned
+            minted = county.total_crypto_minted or 0.0
+            burned = county.total_crypto_burned or 0.0
+            circulating = minted - burned
             max_sup = county.max_supply or INITIAL_MAX_SUPPLY
             treasury = county.treasury_cash or 0.0
-            halving_mult = get_halving_multiplier(county.total_crypto_minted, max_sup)
+            energy = county.mining_energy_pool or 0.0
+            halving_mult = get_halving_multiplier(minted, max_sup)
             result.append({
                 "id": county.id,
                 "name": county.name,
@@ -418,10 +421,10 @@ def get_all_counties() -> List[dict]:
                 "city_count": city_count,
                 "max_cities": MAX_COUNTY_CITIES,
                 "crypto_price": crypto_price,
-                "total_minted": county.total_crypto_minted,
+                "total_minted": minted,
                 "max_supply": max_sup,
                 "circulating_supply": circulating,
-                "mining_energy": county.mining_energy_pool,
+                "mining_energy": energy,
                 "treasury_cash": treasury,
                 "halving_multiplier": halving_mult,
             })
@@ -654,7 +657,7 @@ def check_node_energy(crypto_symbol: str) -> Tuple[bool, str]:
         county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
         if not county:
             return False, f"No county found for crypto symbol {crypto_symbol}"
-        if county.mining_energy_pool <= 0:
+        if (county.mining_energy_pool or 0.0) <= 0:
             return False, (
                 f"The {county.name} mining node has no energy. "
                 f"City members must deposit currency into the mining node before "
@@ -677,7 +680,7 @@ def record_price_snapshots():
         counties = db.query(County).all()
         for county in counties:
             price = calculate_crypto_price(county.id)
-            circulating = county.total_crypto_minted - county.total_crypto_burned
+            circulating = (county.total_crypto_minted or 0.0) - (county.total_crypto_burned or 0.0)
             market_cap = price * max(circulating, 0)
             snapshot = CryptoPriceSnapshot(
                 crypto_symbol=county.crypto_symbol,
@@ -814,10 +817,11 @@ def get_token_trust_score(symbol: str) -> dict:
         holders = get_crypto_holders(symbol)
         stats_24h = get_crypto_24h_stats(symbol)
         price = calculate_crypto_price(county.id)
-        circulating = county.total_crypto_minted - county.total_crypto_burned
+        circulating = (county.total_crypto_minted or 0.0) - (county.total_crypto_burned or 0.0)
+        energy_pool = county.mining_energy_pool or 0.0
 
         # Factor 1: Liquidity (energy pool depth) - up to 25 points
-        energy_score = min(25, county.mining_energy_pool / 100 * 25) if county.mining_energy_pool > 0 else 0
+        energy_score = min(25, energy_pool / 100 * 25) if energy_pool > 0 else 0
 
         # Factor 2: Holder distribution - up to 25 points
         # More holders = better, less whale concentration = better
@@ -831,7 +835,7 @@ def get_token_trust_score(symbol: str) -> dict:
         # Factor 4: Market fundamentals - up to 25 points
         has_price = 10 if price > 0.01 else 5
         has_supply = 10 if circulating > 0 else 0
-        has_energy = 5 if county.mining_energy_pool > 0 else 0
+        has_energy = 5 if energy_pool > 0 else 0
         fundamental_score = has_price + has_supply + has_energy
 
         total_score = int(energy_score + holder_total + volume_score + fundamental_score)
@@ -874,16 +878,19 @@ def get_full_token_info(symbol: str) -> Optional[dict]:
             return None
 
         price = calculate_crypto_price(county.id)
-        circulating = county.total_crypto_minted - county.total_crypto_burned
+        minted = county.total_crypto_minted or 0.0
+        burned = county.total_crypto_burned or 0.0
+        circulating = minted - burned
         market_cap = price * max(circulating, 0)
         max_sup = county.max_supply or INITIAL_MAX_SUPPLY
         treasury = county.treasury_cash or 0.0
+        energy = county.mining_energy_pool or 0.0
         fdv = price * max_sup
         stats_24h = get_crypto_24h_stats(symbol)
         holders = get_crypto_holders(symbol)
         trust = get_token_trust_score(symbol)
         logo = ensure_county_logo(county.id)
-        halving_mult = get_halving_multiplier(county.total_crypto_minted, max_sup)
+        halving_mult = get_halving_multiplier(minted, max_sup)
 
         # Price change calculation
         price_change_24h = 0.0
@@ -910,17 +917,17 @@ def get_full_token_info(symbol: str) -> Optional[dict]:
             "volume_24h": stats_24h["volume_24h"],
             # Supply & economics
             "circulating_supply": circulating,
-            "total_minted": county.total_crypto_minted,
-            "total_burned": county.total_crypto_burned,
+            "total_minted": minted,
+            "total_burned": burned,
             "max_supply": max_sup,
-            "supply_pct": (county.total_crypto_minted / max_sup * 100) if max_sup > 0 else 0,
+            "supply_pct": (minted / max_sup * 100) if max_sup > 0 else 0,
             "halving_multiplier": halving_mult,
             # Treasury
             "treasury_cash": treasury,
             # Holders
             "holders": holders,
             # Mining
-            "mining_energy_pool": county.mining_energy_pool,
+            "mining_energy_pool": energy,
             # Trust & safety
             "trust_score": trust,
             "public_notes": county.public_notes,
@@ -1394,13 +1401,18 @@ def process_mining_payouts(current_tick: int):
         counties = db.query(County).filter(County.mining_energy_pool > 0).all()
 
         for county in counties:
+            # Safe-access nullable columns
+            _minted = county.total_crypto_minted or 0.0
+            _max_sup = county.max_supply or INITIAL_MAX_SUPPLY
+            _energy = county.mining_energy_pool or 0.0
+
             # Check if supply cap reached
-            remaining_supply = county.max_supply - county.total_crypto_minted
+            remaining_supply = _max_sup - _minted
             if remaining_supply <= 0:
-                print(f"[Counties] Mining: {county.crypto_symbol} max supply reached ({county.max_supply:,.4f}). No more mining possible.")
+                print(f"[Counties] Mining: {county.crypto_symbol} max supply reached ({_max_sup:,.4f}). No more mining possible.")
                 continue
 
-            energy_to_consume = county.mining_energy_pool * MINING_ENERGY_CONSUMPTION_RATE
+            energy_to_consume = _energy * MINING_ENERGY_CONSUMPTION_RATE
             if energy_to_consume <= 0:
                 continue
 
@@ -1410,7 +1422,7 @@ def process_mining_payouts(current_tick: int):
                 continue
 
             # Apply halving multiplier based on how much supply has been minted
-            halving_mult = get_halving_multiplier(county.total_crypto_minted, county.max_supply)
+            halving_mult = get_halving_multiplier(_minted, _max_sup)
             if halving_mult <= 0:
                 continue
 
@@ -1466,9 +1478,9 @@ def process_mining_payouts(current_tick: int):
             county.total_crypto_minted += crypto_to_mint
             county.mining_energy_pool -= energy_to_consume
 
-            minted_pct = (county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0
+            minted_pct = (county.total_crypto_minted / _max_sup * 100) if _max_sup > 0 else 0
             print(f"[Counties] Mining payout: County '{county.name}' minted {crypto_to_mint:.6f} {county.crypto_symbol} "
-                  f"(halving: {halving_mult:.4f}x, supply: {minted_pct:.2f}% of {county.max_supply:,.0f})")
+                  f"(halving: {halving_mult:.4f}x, supply: {minted_pct:.2f}% of {_max_sup:,.0f})")
 
         db.commit()
 
@@ -1556,10 +1568,11 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
         if not county:
             return False, "County not found"
-        if county.treasury_cash < net_value:
+        _treasury = county.treasury_cash or 0.0
+        if _treasury < net_value:
             return False, (
                 f"Insufficient liquidity in the {county.name} treasury "
-                f"(has ${county.treasury_cash:,.4f}, need ${net_value:,.4f}). "
+                f"(has ${_treasury:,.4f}, need ${net_value:,.4f}). "
                 f"More buyers are needed to add cash to the treasury."
             )
 
@@ -1606,7 +1619,7 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             reference_id=f"exchange_sell_{crypto_symbol}",
         )
 
-        print(f"[Counties] Crypto sale: Player {player_id} sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f} (treasury: ${county.treasury_cash:,.4f})")
+        print(f"[Counties] Crypto sale: Player {player_id} sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f} (treasury: ${county.treasury_cash or 0.0:,.4f})")
         return True, f"Sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f} (fee: ${fee:,.4f})"
 
     except Exception as e:
@@ -1652,10 +1665,12 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         crypto_amount = net_cash / price
 
         # Check supply cap - cannot mint beyond max_supply
-        remaining_supply = county.max_supply - county.total_crypto_minted
+        _max_sup = county.max_supply or INITIAL_MAX_SUPPLY
+        _minted = county.total_crypto_minted or 0.0
+        remaining_supply = _max_sup - _minted
         if remaining_supply <= 0:
             return False, (
-                f"The {crypto_symbol} supply cap of {county.max_supply:,.4f} has been reached. "
+                f"The {crypto_symbol} supply cap of {_max_sup:,.4f} has been reached. "
                 f"No more tokens can be created. A governance vote can increase the supply cap."
             )
         if crypto_amount > remaining_supply:
@@ -1720,9 +1735,9 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
             reference_id=f"exchange_buy_{crypto_symbol}",
         )
 
-        minted_pct = (county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0
+        minted_pct = ((county.total_crypto_minted or 0.0) / _max_sup * 100) if _max_sup > 0 else 0
         print(f"[Counties] Crypto buy: Player {player_id} bought {crypto_amount:.6f} {crypto_symbol} for ${cash_amount:,.4f} "
-              f"(treasury: ${county.treasury_cash:,.4f}, supply: {minted_pct:.2f}%)")
+              f"(treasury: ${county.treasury_cash or 0.0:,.4f}, supply: {minted_pct:.2f}%)")
         return True, f"Bought {crypto_amount:.6f} {crypto_symbol} for ${cash_amount:,.4f} (fee: ${fee:,.4f})"
 
     except Exception as e:
@@ -1777,14 +1792,17 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         buy_amount = net_cash / buy_price
 
         # Check sell county treasury has enough cash to facilitate the swap
-        if sell_county.treasury_cash < gross_cash:
+        _sell_treasury = sell_county.treasury_cash or 0.0
+        if _sell_treasury < gross_cash:
             return False, (
                 f"Insufficient liquidity in the {sell_county.name} treasury "
-                f"(has ${sell_county.treasury_cash:,.4f}, need ${gross_cash:,.4f})"
+                f"(has ${_sell_treasury:,.4f}, need ${gross_cash:,.4f})"
             )
 
         # Check buy county supply cap
-        buy_remaining = buy_county.max_supply - buy_county.total_crypto_minted
+        _buy_max = buy_county.max_supply or INITIAL_MAX_SUPPLY
+        _buy_minted = buy_county.total_crypto_minted or 0.0
+        buy_remaining = _buy_max - _buy_minted
         if buy_remaining <= 0:
             return False, f"{buy_symbol} has reached its max supply cap. No more tokens can be created."
         if buy_amount > buy_remaining:
