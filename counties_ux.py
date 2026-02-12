@@ -230,6 +230,124 @@ COUNTY_STYLES = """
         font-size: 14px;
         color: #94a3b8;
     }
+
+    /* Governance Voting Styles */
+    .governance-panel {
+        background: linear-gradient(135deg, #1a0a2e 0%, #020617 100%);
+        border: 1px solid #f59e0b;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+    .phase-indicator {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .phase-proposal { background: #854d0e; color: #fbbf24; }
+    .phase-voting { background: #166534; color: #4ade80; }
+    .phase-completed { background: #1e293b; color: #94a3b8; }
+
+    .proposal-card {
+        background: #0b1220;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 14px;
+    }
+    .proposal-card:hover { border-color: #f59e0b; }
+    .proposal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+    .proposal-type {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #1e293b;
+        color: #f59e0b;
+        text-transform: uppercase;
+    }
+    .vote-bar {
+        width: 100%;
+        height: 28px;
+        background: #1e293b;
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        margin: 10px 0;
+    }
+    .vote-bar-yes {
+        background: linear-gradient(90deg, #166534, #22c55e);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        min-width: 0;
+    }
+    .vote-bar-no {
+        background: linear-gradient(90deg, #991b1b, #ef4444);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        min-width: 0;
+    }
+    .burn-input-group {
+        display: flex;
+        gap: 8px;
+        align-items: end;
+    }
+    .burn-input-group input {
+        flex: 1;
+    }
+    .btn-governance { background: #f59e0b; color: #020617; }
+    .btn-governance:hover { background: #d97706; }
+    .btn-vote-yes { background: #166534; color: #4ade80; border: 1px solid #22c55e; }
+    .btn-vote-yes:hover { background: #15803d; }
+    .btn-vote-no { background: #991b1b; color: #fca5a5; border: 1px solid #ef4444; }
+    .btn-vote-no:hover { background: #b91c1c; }
+    .badge-governance { background: #78350f; color: #fbbf24; }
+
+    .cycle-info {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    @media (max-width: 768px) {
+        .cycle-info { grid-template-columns: 1fr; }
+    }
+    .cycle-stat {
+        text-align: center;
+        padding: 12px;
+        background: #0b1220;
+        border-radius: 8px;
+    }
+    .cycle-stat-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #f59e0b;
+    }
+    .cycle-stat-label {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
 </style>
 """
 
@@ -297,6 +415,7 @@ async def counties_dashboard(
             <div style="margin-top: 12px; display: flex; gap: 12px;">
                 <a href="/county/{player_county.id}" class="btn btn-primary">View County</a>
                 <a href="/county/{player_county.id}/mining" class="btn btn-crypto">Mining Node</a>
+                <a href="/county/{player_county.id}/governance" class="btn btn-governance">Governance</a>
                 <a href="/exchange" class="btn btn-secondary">Crypto Exchange</a>
             </div>
         </div>
@@ -593,6 +712,7 @@ async def view_county(
         member_nav = f'''
         <div style="display: flex; gap: 12px; margin-bottom: 16px;">
             <a href="/county/{county_id}/mining" class="btn btn-crypto">Mining Node</a>
+            <a href="/county/{county_id}/governance" class="btn btn-governance">Governance Voting</a>
             <a href="/exchange" class="btn btn-secondary">Crypto Exchange</a>
         </div>
         '''
@@ -1375,6 +1495,449 @@ async def api_exchange_swap(
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
     else:
         return RedirectResponse(url=f"/exchange?error={message.replace(' ', '+')}", status_code=303)
+
+
+# ==========================
+# GOVERNANCE VOTING PAGE
+# ==========================
+@router.get("/county/{county_id}/governance", response_class=HTMLResponse)
+async def county_governance(
+    county_id: int,
+    session_token: Optional[str] = Cookie(None),
+    msg: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+):
+    """Intercounty Governance Voting dashboard."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import (
+        get_county_by_id, is_player_in_county, calculate_crypto_price,
+        CryptoWallet, GovernanceCycle, GovernanceProposal, GovernanceVote,
+        GovernanceProposalType, GovernanceProposalStatus, GovernanceCycleStatus,
+        get_current_governance_cycle, get_governance_proposals,
+        get_governance_history,
+        GOVERNANCE_VOTE_CYCLE_TICKS, GOVERNANCE_PROPOSAL_WINDOW_TICKS,
+        GOVERNANCE_VOTING_WINDOW_TICKS,
+    )
+    from cities import get_db
+    import app as app_module
+
+    county = get_county_by_id(county_id)
+    if not county:
+        return RedirectResponse(url="/counties?error=County+not+found", status_code=303)
+
+    is_member = is_player_in_county(player.id, county_id)
+    crypto_price = calculate_crypto_price(county_id)
+    current_tick = app_module.current_tick
+
+    # Get player's crypto wallet
+    db = get_db()
+    wallet = db.query(CryptoWallet).filter(
+        CryptoWallet.player_id == player.id,
+        CryptoWallet.crypto_symbol == county.crypto_symbol,
+    ).first()
+    crypto_balance = wallet.balance if wallet else 0.0
+    db.close()
+
+    # Get current governance cycle
+    cycle = get_current_governance_cycle(county_id, current_tick)
+
+    alert_html = ""
+    if msg:
+        alert_html = f'<div class="alert alert-success">{msg}</div>'
+    if error:
+        alert_html = f'<div class="alert alert-error">{error}</div>'
+
+    # Cycle status display
+    cycle_html = ""
+    proposals_html = ""
+    submit_form_html = ""
+
+    if cycle:
+        # Phase indicator
+        if cycle["phase"] == "proposal_phase":
+            phase_badge = '<span class="phase-indicator phase-proposal">Proposal Phase</span>'
+            ticks_remaining = cycle["proposal_phase_ends_tick"] - current_tick
+            phase_desc = "Submit proposals for county governance decisions. Voting begins when this phase ends."
+        elif cycle["phase"] == "voting_phase":
+            phase_badge = '<span class="phase-indicator phase-voting">Voting Phase</span>'
+            ticks_remaining = cycle["voting_phase_ends_tick"] - current_tick
+            phase_desc = "Burn tokens to cast votes on active proposals. More tokens burned = more voting weight."
+        else:
+            phase_badge = '<span class="phase-indicator phase-completed">Completed</span>'
+            ticks_remaining = 0
+            phase_desc = "This cycle has completed. Results are final."
+
+        # Convert ticks to human-readable time
+        hours_remaining = (ticks_remaining * 5) / 3600
+        days_remaining = hours_remaining / 24
+
+        time_display = ""
+        if days_remaining >= 1:
+            time_display = f"{days_remaining:.1f} days"
+        else:
+            time_display = f"{hours_remaining:.1f} hours"
+
+        # Get proposals for this cycle
+        proposals = get_governance_proposals(county_id, cycle["id"])
+
+        cycle_html = f'''
+        <div class="governance-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="color: #f59e0b;">Governance Cycle #{cycle["cycle_number"]}</h2>
+                {phase_badge}
+            </div>
+            <p style="color: #94a3b8; margin-bottom: 16px;">{phase_desc}</p>
+
+            <div class="cycle-info">
+                <div class="cycle-stat">
+                    <div class="cycle-stat-value">{time_display}</div>
+                    <div class="cycle-stat-label">Time Remaining</div>
+                </div>
+                <div class="cycle-stat">
+                    <div class="cycle-stat-value">{len(proposals)}</div>
+                    <div class="cycle-stat-label">Proposals</div>
+                </div>
+                <div class="cycle-stat">
+                    <div class="cycle-stat-value">{crypto_balance:.6f}</div>
+                    <div class="cycle-stat-label">Your {county.crypto_symbol} Balance</div>
+                </div>
+            </div>
+        </div>
+        '''
+
+        # Proposal submission form (only during proposal phase and for members with tokens)
+        if cycle["phase"] == "proposal_phase" and is_member and crypto_balance > 0:
+            proposal_type_options = ""
+            for pt in GovernanceProposalType:
+                label = pt.value.replace("_", " ").title()
+                proposal_type_options += f'<option value="{pt.value}">{label}</option>'
+
+            submit_form_html = f'''
+            <div class="card">
+                <h2>Submit a Proposal</h2>
+                <p style="color: #94a3b8; margin-bottom: 16px;">
+                    As a holder of <span class="badge badge-crypto">{county.crypto_symbol}</span>,
+                    you can submit governance proposals for the county to vote on.
+                </p>
+                <form action="/api/county/governance/propose" method="post">
+                    <input type="hidden" name="county_id" value="{county_id}">
+                    <div class="form-group">
+                        <label>Proposal Type</label>
+                        <select name="proposal_type" required>
+                            <option value="">-- Select Type --</option>
+                            {proposal_type_options}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" name="title" required placeholder="Brief title for your proposal" maxlength="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" name="description" required placeholder="Detailed description of the proposal and its impact" maxlength="500">
+                    </div>
+                    <button type="submit" class="btn btn-governance">Submit Proposal</button>
+                </form>
+            </div>
+            '''
+        elif cycle["phase"] == "proposal_phase" and is_member and crypto_balance <= 0:
+            submit_form_html = f'''
+            <div class="card">
+                <h2>Submit a Proposal</h2>
+                <div class="alert alert-info">
+                    You need to hold <span class="badge badge-crypto">{county.crypto_symbol}</span> to submit proposals.
+                    Mine some through the <a href="/county/{county_id}/mining" class="nav-link">Mining Node</a>
+                    or buy on the <a href="/exchange" class="nav-link">Crypto Exchange</a>.
+                </div>
+            </div>
+            '''
+
+        # Proposals list
+        if proposals:
+            proposals_html = '<div class="card"><h2>Proposals</h2>'
+            for p in proposals:
+                # Status badge
+                if p["status"] == GovernanceProposalStatus.PENDING:
+                    status_badge = '<span class="badge badge-warning">Pending Vote</span>'
+                elif p["status"] == GovernanceProposalStatus.ACTIVE:
+                    status_badge = '<span class="badge badge-success">Voting Open</span>'
+                elif p["status"] == GovernanceProposalStatus.PASSED:
+                    status_badge = '<span class="badge badge-success">Passed</span>'
+                elif p["status"] == GovernanceProposalStatus.FAILED:
+                    status_badge = '<span class="badge" style="background:#991b1b;color:#fca5a5;">Failed</span>'
+                else:
+                    status_badge = f'<span class="badge badge-info">{p["status"]}</span>'
+
+                # Vote bar
+                vote_bar_html = ""
+                if p["total_votes"] > 0:
+                    vote_bar_html = f'''
+                    <div class="vote-bar">
+                        <div class="vote-bar-yes" style="width: {p["yes_percent"]:.1f}%;">
+                            {"YES " + f'{p["yes_percent"]:.1f}%' if p["yes_percent"] > 15 else ""}
+                        </div>
+                        <div class="vote-bar-no" style="width: {p["no_percent"]:.1f}%;">
+                            {"NO " + f'{p["no_percent"]:.1f}%' if p["no_percent"] > 15 else ""}
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8;">
+                        <span>YES: {p["yes_token_votes"]:.6f} {county.crypto_symbol}</span>
+                        <span>Total: {p["total_votes"]:.6f} burned</span>
+                        <span>NO: {p["no_token_votes"]:.6f} {county.crypto_symbol}</span>
+                    </div>
+                    '''
+                elif p["status"] in (GovernanceProposalStatus.ACTIVE, GovernanceProposalStatus.PENDING):
+                    vote_bar_html = '<p style="color: #64748b; font-size: 13px;">No votes cast yet.</p>'
+
+                # Voting form (only during voting phase, for members with tokens)
+                vote_form_html = ""
+                if (cycle["phase"] == "voting_phase" and
+                    p["status"] == GovernanceProposalStatus.ACTIVE and
+                    is_member and crypto_balance > 0):
+                    vote_form_html = f'''
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e293b;">
+                        <div style="display: flex; gap: 8px;">
+                            <form action="/api/county/governance/vote" method="post" style="flex: 1; display: flex; gap: 8px;">
+                                <input type="hidden" name="proposal_id" value="{p["id"]}">
+                                <input type="hidden" name="vote" value="yes">
+                                <input type="number" name="tokens_to_burn" min="0.000001" step="0.000001"
+                                       max="{crypto_balance}" placeholder="Tokens to burn"
+                                       style="flex:1; padding:8px; background:#0b1220; border:1px solid #1e293b; border-radius:6px; color:#e5e7eb; font-size:13px;" required>
+                                <button type="submit" class="btn btn-vote-yes btn-sm">Vote YES</button>
+                            </form>
+                            <form action="/api/county/governance/vote" method="post" style="display: flex; gap: 8px;">
+                                <input type="hidden" name="proposal_id" value="{p["id"]}">
+                                <input type="hidden" name="vote" value="no">
+                                <input type="number" name="tokens_to_burn" min="0.000001" step="0.000001"
+                                       max="{crypto_balance}" placeholder="Tokens to burn"
+                                       style="width:140px; padding:8px; background:#0b1220; border:1px solid #1e293b; border-radius:6px; color:#e5e7eb; font-size:13px;" required>
+                                <button type="submit" class="btn btn-vote-no btn-sm">Vote NO</button>
+                            </form>
+                        </div>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 6px;">
+                            Tokens are permanently burned when voting. You can vote multiple times to add more weight.
+                            Balance: {crypto_balance:.6f} {county.crypto_symbol}
+                        </p>
+                    </div>
+                    '''
+
+                proposals_html += f'''
+                <div class="proposal-card">
+                    <div class="proposal-header">
+                        <div>
+                            <span class="proposal-type">{p["proposal_type"].replace("_", " ")}</span>
+                            <h3 style="color: #e5e7eb; margin-top: 6px;">{p["title"]}</h3>
+                        </div>
+                        {status_badge}
+                    </div>
+                    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 8px;">{p["description"]}</p>
+                    <p style="color: #64748b; font-size: 12px;">Proposed by: {p["proposer_name"]}</p>
+                    {vote_bar_html}
+                    {vote_form_html}
+                </div>
+                '''
+            proposals_html += '</div>'
+        else:
+            proposals_html = '''
+            <div class="card">
+                <h2>Proposals</h2>
+                <p style="color: #64748b;">No proposals submitted for this cycle yet.</p>
+            </div>
+            '''
+    else:
+        cycle_html = '''
+        <div class="governance-panel">
+            <h2 style="color: #f59e0b;">No Active Governance Cycle</h2>
+            <p style="color: #94a3b8;">
+                A new governance cycle will begin automatically. Cycles run every 5 days:
+                3 days for proposals, 2 days for voting.
+            </p>
+        </div>
+        '''
+
+    # Governance history
+    history = get_governance_history(county_id)
+    history_html = ""
+    if history:
+        history_html = '''
+        <div class="card">
+            <h2>Past Cycles</h2>
+            <table class="table">
+                <thead><tr><th>Cycle</th><th>Proposals</th><th>Passed</th><th>Failed</th><th>Date</th></tr></thead>
+                <tbody>
+        '''
+        for h in history:
+            history_html += f'''
+            <tr>
+                <td>Cycle #{h["cycle_number"]}</td>
+                <td>{h["total_proposals"]}</td>
+                <td style="color: #4ade80;">{h["passed"]}</td>
+                <td style="color: #f87171;">{h["failed"]}</td>
+                <td>{h["created_at"].strftime("%Y-%m-%d") if h["created_at"] else "N/A"}</td>
+            </tr>
+            '''
+        history_html += '</tbody></table></div>'
+
+    # Non-member notice
+    non_member_html = ""
+    if not is_member:
+        non_member_html = '''
+        <div class="alert alert-info">
+            You are not a member of this county. Only county members who hold the county's
+            cryptocurrency can submit proposals and vote.
+        </div>
+        '''
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Governance · {county.name} · Wadsworth</title>
+        {COUNTY_STYLES}
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Governance Voting</h1>
+                <div>
+                    <span style="color: #94a3b8;">{county.name}</span>
+                    <a href="/county/{county_id}" class="nav-link">County</a>
+                    <a href="/county/{county_id}/mining" class="nav-link">Mining</a>
+                    <a href="/exchange" class="nav-link">Exchange</a>
+                    <a href="/" class="nav-link">Dashboard</a>
+                </div>
+            </div>
+
+            {alert_html}
+            {non_member_html}
+
+            <div class="card" style="margin-bottom: 16px;">
+                <h2>How Governance Works</h2>
+                <p style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">
+                    Every 5 days, an intercounty governance vote takes place for the
+                    <span class="badge badge-crypto">{county.crypto_symbol}</span> blockchain.
+                    County members who hold {county.crypto_symbol} can participate.
+                </p>
+                <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+                    <div>
+                        <h3 style="color: #f59e0b;">1. Proposal Phase (3 days)</h3>
+                        <p style="color: #94a3b8; font-size: 13px;">
+                            County members who hold {county.crypto_symbol} submit proposals for
+                            protocol upgrades, fee adjustments, mining parameters, county policies, and more.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="color: #f59e0b;">2. Voting Phase (2 days)</h3>
+                        <p style="color: #94a3b8; font-size: 13px;">
+                            Members burn {county.crypto_symbol} tokens to cast votes.
+                            More tokens burned = more voting weight.
+                            Tokens are permanently destroyed.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="color: #f59e0b;">3. Results</h3>
+                        <p style="color: #94a3b8; font-size: 13px;">
+                            Proposals pass if YES token votes exceed NO token votes.
+                            Only county members (members of cities in this county) can participate.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {cycle_html}
+            {submit_form_html}
+            {proposals_html}
+            {history_html}
+        </div>
+    </body>
+    </html>
+    """
+
+
+# ==========================
+# GOVERNANCE API ENDPOINTS
+# ==========================
+@router.post("/api/county/governance/propose")
+async def api_governance_propose(
+    county_id: int = Form(...),
+    proposal_type: str = Form(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Submit a governance proposal."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import submit_governance_proposal
+    import app as app_module
+
+    proposal, message = submit_governance_proposal(
+        player_id=player.id,
+        county_id=county_id,
+        proposal_type=proposal_type,
+        title=title,
+        description=description,
+        current_tick=app_module.current_tick,
+    )
+
+    if proposal:
+        return RedirectResponse(
+            url=f"/county/{county_id}/governance?msg={message.replace(' ', '+')}",
+            status_code=303,
+        )
+    else:
+        return RedirectResponse(
+            url=f"/county/{county_id}/governance?error={message.replace(' ', '+')}",
+            status_code=303,
+        )
+
+
+@router.post("/api/county/governance/vote")
+async def api_governance_vote(
+    proposal_id: int = Form(...),
+    vote: str = Form(...),
+    tokens_to_burn: float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Cast a governance vote by burning tokens."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import cast_governance_vote, GovernanceProposal, get_db
+    import app as app_module
+
+    success, message = cast_governance_vote(
+        player_id=player.id,
+        proposal_id=proposal_id,
+        vote=vote,
+        tokens_to_burn=tokens_to_burn,
+        current_tick=app_module.current_tick,
+    )
+
+    # Get county_id from proposal for redirect
+    db = get_db()
+    proposal = db.query(GovernanceProposal).filter(GovernanceProposal.id == proposal_id).first()
+    county_id = proposal.county_id if proposal else 0
+    db.close()
+
+    if success:
+        return RedirectResponse(
+            url=f"/county/{county_id}/governance?msg={message.replace(' ', '+')}",
+            status_code=303,
+        )
+    else:
+        return RedirectResponse(
+            url=f"/county/{county_id}/governance?error={message.replace(' ', '+')}",
+            status_code=303,
+        )
 
 
 # ==========================

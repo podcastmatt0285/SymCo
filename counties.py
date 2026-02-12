@@ -52,6 +52,12 @@ MINING_REWARD_MULTIPLIER = 1.0  # Crypto minted per unit of consumed energy valu
 EXCHANGE_FEE_PERCENT = 0.02  # 2% fee on all exchange transactions
 EXCHANGE_FEE_TO_GOV_PERCENT = 0.50  # 50% of fees go to government
 
+# Intercounty Governance Voting
+GOVERNANCE_VOTE_CYCLE_TICKS = 86400  # 5 days (5 * 17280 ticks/day)
+GOVERNANCE_PROPOSAL_WINDOW_TICKS = 51840  # First 3 days for proposals (3 * 17280)
+GOVERNANCE_VOTING_WINDOW_TICKS = 34560  # Last 2 days for voting (2 * 17280)
+MIN_GOVERNANCE_BURN = 0.000001  # Minimum tokens to burn per vote
+
 # ==========================
 # ENUMS
 # ==========================
@@ -81,6 +87,29 @@ class ExchangeOrderType(str, Enum):
     CRYPTO_TO_CASH = "crypto_to_cash"
     CASH_TO_CRYPTO = "cash_to_crypto"
     CRYPTO_TO_CRYPTO = "crypto_to_crypto"
+
+
+class GovernanceProposalType(str, Enum):
+    PROTOCOL_UPGRADE = "protocol_upgrade"       # Change to crypto mechanics (mining rate, peg, etc.)
+    FEE_ADJUSTMENT = "fee_adjustment"           # Adjust exchange fees
+    MINING_PARAMETER = "mining_parameter"       # Change mining energy/payout parameters
+    COUNTY_POLICY = "county_policy"             # General county policy proposal
+    TREASURY_SPEND = "treasury_spend"           # Spend from county burned tokens reserve
+    MEMBERSHIP_RULE = "membership_rule"         # Change membership rules
+
+
+class GovernanceProposalStatus(str, Enum):
+    ACTIVE = "active"             # Open for voting during voting window
+    PENDING = "pending"           # Submitted during proposal window, awaiting voting window
+    PASSED = "passed"
+    FAILED = "failed"
+    EXPIRED = "expired"           # Never entered voting (cycle ended)
+
+
+class GovernanceCycleStatus(str, Enum):
+    PROPOSAL_PHASE = "proposal_phase"   # First 3 days: submit proposals
+    VOTING_PHASE = "voting_phase"       # Last 2 days: burn tokens to vote
+    COMPLETED = "completed"
 
 # ==========================
 # DATABASE MODELS
@@ -242,6 +271,72 @@ class CryptoExchangeOrder(Base):
     filled_at = Column(DateTime, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class GovernanceCycle(Base):
+    """
+    A 5-day governance voting cycle for a county's blockchain.
+    Days 1-3: Proposal phase (members submit proposals)
+    Days 4-5: Voting phase (members burn tokens to vote YES/NO on proposals)
+    """
+    __tablename__ = "governance_cycles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    county_id = Column(Integer, index=True, nullable=False)
+    cycle_number = Column(Integer, nullable=False)  # Sequential cycle number per county
+
+    status = Column(String, default=GovernanceCycleStatus.PROPOSAL_PHASE)
+
+    # Timing (all in ticks)
+    started_at_tick = Column(Integer, nullable=False)
+    proposal_phase_ends_tick = Column(Integer, nullable=False)  # After 3 days
+    voting_phase_ends_tick = Column(Integer, nullable=False)    # After 5 days total
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class GovernanceProposal(Base):
+    """
+    A proposal submitted during the proposal phase of a governance cycle.
+    Any holder of the county's crypto can submit a proposal.
+    """
+    __tablename__ = "governance_proposals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cycle_id = Column(Integer, index=True, nullable=False)
+    county_id = Column(Integer, index=True, nullable=False)
+    proposer_id = Column(Integer, index=True, nullable=False)  # Player who submitted
+
+    proposal_type = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+
+    status = Column(String, default=GovernanceProposalStatus.PENDING)
+
+    # Vote tallies (total tokens burned)
+    yes_token_votes = Column(Float, default=0.0)
+    no_token_votes = Column(Float, default=0.0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class GovernanceVote(Base):
+    """
+    A vote on a governance proposal. Voters burn tokens to cast votes.
+    More tokens burned = more voting weight.
+    """
+    __tablename__ = "governance_votes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    proposal_id = Column(Integer, index=True, nullable=False)
+    voter_id = Column(Integer, index=True, nullable=False)
+    county_id = Column(Integer, index=True, nullable=False)
+
+    vote = Column(String, nullable=False)  # "yes" or "no"
+    tokens_burned = Column(Float, nullable=False)  # Amount of crypto burned for this vote
+    crypto_symbol = Column(String, nullable=False)  # Which crypto was burned
+
+    cast_at = Column(DateTime, default=datetime.utcnow)
 
 
 # ==========================
@@ -1187,6 +1282,457 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
 
 
 # ==========================
+# INTERCOUNTY GOVERNANCE VOTING
+# ==========================
+def get_current_governance_cycle(county_id: int, current_tick: int) -> Optional[dict]:
+    """Get the current active governance cycle for a county, or None if none is active."""
+    db = get_db()
+    try:
+        cycle = db.query(GovernanceCycle).filter(
+            GovernanceCycle.county_id == county_id,
+            GovernanceCycle.voting_phase_ends_tick > current_tick,
+        ).order_by(GovernanceCycle.cycle_number.desc()).first()
+
+        if not cycle:
+            return None
+
+        # Determine current phase
+        if current_tick < cycle.proposal_phase_ends_tick:
+            phase = "proposal_phase"
+        elif current_tick < cycle.voting_phase_ends_tick:
+            phase = "voting_phase"
+        else:
+            phase = "completed"
+
+        return {
+            "id": cycle.id,
+            "county_id": cycle.county_id,
+            "cycle_number": cycle.cycle_number,
+            "status": cycle.status,
+            "phase": phase,
+            "started_at_tick": cycle.started_at_tick,
+            "proposal_phase_ends_tick": cycle.proposal_phase_ends_tick,
+            "voting_phase_ends_tick": cycle.voting_phase_ends_tick,
+            "created_at": cycle.created_at,
+        }
+    except Exception as e:
+        print(f"[Counties] Error getting governance cycle: {e}")
+        return None
+    finally:
+        db.close()
+
+
+def start_governance_cycle(county_id: int, current_tick: int) -> Optional[GovernanceCycle]:
+    """Start a new 5-day governance cycle for a county."""
+    db = get_db()
+    try:
+        # Check county exists
+        county = db.query(County).filter(County.id == county_id).first()
+        if not county:
+            return None
+
+        # Get next cycle number
+        last_cycle = db.query(GovernanceCycle).filter(
+            GovernanceCycle.county_id == county_id,
+        ).order_by(GovernanceCycle.cycle_number.desc()).first()
+
+        cycle_number = (last_cycle.cycle_number + 1) if last_cycle else 1
+
+        cycle = GovernanceCycle(
+            county_id=county_id,
+            cycle_number=cycle_number,
+            started_at_tick=current_tick,
+            proposal_phase_ends_tick=current_tick + GOVERNANCE_PROPOSAL_WINDOW_TICKS,
+            voting_phase_ends_tick=current_tick + GOVERNANCE_VOTE_CYCLE_TICKS,
+            status=GovernanceCycleStatus.PROPOSAL_PHASE,
+        )
+        db.add(cycle)
+        db.commit()
+
+        print(f"[Counties] Governance cycle #{cycle_number} started for county '{county.name}' (ID: {county_id})")
+        return cycle
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error starting governance cycle: {e}")
+        return None
+    finally:
+        db.close()
+
+
+def submit_governance_proposal(
+    player_id: int,
+    county_id: int,
+    proposal_type: str,
+    title: str,
+    description: str,
+    current_tick: int,
+) -> tuple:
+    """
+    Submit a governance proposal during the proposal phase.
+    Any holder of the county's crypto can submit.
+    Returns (proposal, message).
+    """
+    db = get_db()
+    try:
+        # Validate county
+        county = db.query(County).filter(County.id == county_id).first()
+        if not county:
+            return None, "County not found"
+
+        # Verify player holds this county's crypto
+        wallet = db.query(CryptoWallet).filter(
+            CryptoWallet.player_id == player_id,
+            CryptoWallet.crypto_symbol == county.crypto_symbol,
+        ).first()
+        if not wallet or wallet.balance <= 0:
+            return None, f"You must hold {county.crypto_symbol} to submit proposals"
+
+        # Verify player is a county member (member of a city in this county)
+        if not is_player_in_county(player_id, county_id):
+            return None, "Only county members can submit governance proposals"
+
+        # Get current active cycle in proposal phase
+        cycle = db.query(GovernanceCycle).filter(
+            GovernanceCycle.county_id == county_id,
+            GovernanceCycle.proposal_phase_ends_tick > current_tick,
+            GovernanceCycle.started_at_tick <= current_tick,
+        ).first()
+
+        if not cycle:
+            return None, "No governance cycle is currently in the proposal phase"
+
+        if cycle.status != GovernanceCycleStatus.PROPOSAL_PHASE:
+            return None, "The current cycle is no longer accepting proposals"
+
+        # Validate proposal type
+        try:
+            GovernanceProposalType(proposal_type)
+        except ValueError:
+            return None, f"Invalid proposal type: {proposal_type}"
+
+        # Create proposal
+        proposal = GovernanceProposal(
+            cycle_id=cycle.id,
+            county_id=county_id,
+            proposer_id=player_id,
+            proposal_type=proposal_type,
+            title=title,
+            description=description,
+            status=GovernanceProposalStatus.PENDING,
+        )
+        db.add(proposal)
+        db.commit()
+
+        log_transaction(
+            player_id,
+            "governance_proposal",
+            "governance",
+            0,
+            f"Submitted governance proposal: {title}",
+            reference_id=f"gov_proposal_{county_id}_{proposal.id}",
+        )
+
+        print(f"[Counties] Governance proposal submitted: '{title}' by Player {player_id} for county {county_id}")
+        return proposal, "Proposal submitted successfully. It will enter voting when the voting phase begins."
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error submitting governance proposal: {e}")
+        return None, str(e)
+    finally:
+        db.close()
+
+
+def cast_governance_vote(
+    player_id: int,
+    proposal_id: int,
+    vote: str,
+    tokens_to_burn: float,
+    current_tick: int,
+) -> tuple:
+    """
+    Cast a governance vote by burning tokens.
+    Players burn their county crypto to weight their vote.
+    Multiple votes on the same proposal are allowed (each burns more tokens).
+    Returns (success, message).
+    """
+    db = get_db()
+    try:
+        # Get proposal
+        proposal = db.query(GovernanceProposal).filter(
+            GovernanceProposal.id == proposal_id
+        ).first()
+        if not proposal:
+            return False, "Proposal not found"
+
+        if proposal.status != GovernanceProposalStatus.ACTIVE:
+            return False, "This proposal is not currently open for voting"
+
+        # Verify cycle is in voting phase
+        cycle = db.query(GovernanceCycle).filter(
+            GovernanceCycle.id == proposal.cycle_id,
+        ).first()
+        if not cycle:
+            return False, "Governance cycle not found"
+
+        if current_tick < cycle.proposal_phase_ends_tick:
+            return False, "Voting has not started yet (still in proposal phase)"
+
+        if current_tick >= cycle.voting_phase_ends_tick:
+            return False, "Voting has ended for this cycle"
+
+        # Validate vote choice
+        if vote not in ("yes", "no"):
+            return False, "Vote must be 'yes' or 'no'"
+
+        if tokens_to_burn < MIN_GOVERNANCE_BURN:
+            return False, f"Minimum token burn is {MIN_GOVERNANCE_BURN}"
+
+        # Get county
+        county = db.query(County).filter(County.id == proposal.county_id).first()
+        if not county:
+            return False, "County not found"
+
+        # Verify player holds enough tokens
+        wallet = db.query(CryptoWallet).filter(
+            CryptoWallet.player_id == player_id,
+            CryptoWallet.crypto_symbol == county.crypto_symbol,
+        ).first()
+        if not wallet or wallet.balance < tokens_to_burn:
+            return False, f"Insufficient {county.crypto_symbol} balance (have {wallet.balance if wallet else 0:.6f}, need {tokens_to_burn:.6f})"
+
+        # Verify player is a county member
+        if not is_player_in_county(player_id, proposal.county_id):
+            return False, "Only county members can vote on governance proposals"
+
+        # Burn tokens from wallet
+        wallet.balance -= tokens_to_burn
+
+        # Update county burn stats
+        county.total_crypto_burned += tokens_to_burn
+
+        # Record vote
+        gov_vote = GovernanceVote(
+            proposal_id=proposal_id,
+            voter_id=player_id,
+            county_id=proposal.county_id,
+            vote=vote,
+            tokens_burned=tokens_to_burn,
+            crypto_symbol=county.crypto_symbol,
+        )
+        db.add(gov_vote)
+
+        # Update proposal tallies
+        if vote == "yes":
+            proposal.yes_token_votes += tokens_to_burn
+        else:
+            proposal.no_token_votes += tokens_to_burn
+
+        db.commit()
+
+        log_transaction(
+            player_id,
+            "governance_vote",
+            "governance",
+            -tokens_to_burn,
+            f"Burned {tokens_to_burn:.6f} {county.crypto_symbol} to vote {vote.upper()} on '{proposal.title}'",
+            reference_id=f"gov_vote_{proposal_id}",
+            item_type=county.crypto_symbol,
+            quantity=tokens_to_burn,
+        )
+
+        print(f"[Counties] Governance vote: Player {player_id} burned {tokens_to_burn:.6f} {county.crypto_symbol} to vote {vote.upper()} on proposal {proposal_id}")
+        return True, f"Vote recorded! Burned {tokens_to_burn:.6f} {county.crypto_symbol} for {vote.upper()}"
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error casting governance vote: {e}")
+        return False, str(e)
+    finally:
+        db.close()
+
+
+def get_governance_proposals(county_id: int, cycle_id: Optional[int] = None) -> list:
+    """Get all governance proposals for a county, optionally filtered by cycle."""
+    db = get_db()
+    try:
+        query = db.query(GovernanceProposal).filter(
+            GovernanceProposal.county_id == county_id,
+        )
+        if cycle_id:
+            query = query.filter(GovernanceProposal.cycle_id == cycle_id)
+
+        proposals = query.order_by(GovernanceProposal.created_at.desc()).all()
+
+        from auth import Player
+        result = []
+        for p in proposals:
+            proposer = db.query(Player).filter(Player.id == p.proposer_id).first()
+            total_votes = p.yes_token_votes + p.no_token_votes
+            result.append({
+                "id": p.id,
+                "cycle_id": p.cycle_id,
+                "county_id": p.county_id,
+                "proposer_id": p.proposer_id,
+                "proposer_name": proposer.business_name if proposer else f"Player {p.proposer_id}",
+                "proposal_type": p.proposal_type,
+                "title": p.title,
+                "description": p.description,
+                "status": p.status,
+                "yes_token_votes": p.yes_token_votes,
+                "no_token_votes": p.no_token_votes,
+                "total_votes": total_votes,
+                "yes_percent": (p.yes_token_votes / total_votes * 100) if total_votes > 0 else 0,
+                "no_percent": (p.no_token_votes / total_votes * 100) if total_votes > 0 else 0,
+                "created_at": p.created_at,
+            })
+        return result
+    except Exception as e:
+        print(f"[Counties] Error getting governance proposals: {e}")
+        return []
+    finally:
+        db.close()
+
+
+def get_player_governance_votes(player_id: int, proposal_id: int) -> list:
+    """Get all governance votes a player has cast on a specific proposal."""
+    db = get_db()
+    try:
+        votes = db.query(GovernanceVote).filter(
+            GovernanceVote.voter_id == player_id,
+            GovernanceVote.proposal_id == proposal_id,
+        ).order_by(GovernanceVote.cast_at.desc()).all()
+
+        return [{
+            "id": v.id,
+            "vote": v.vote,
+            "tokens_burned": v.tokens_burned,
+            "crypto_symbol": v.crypto_symbol,
+            "cast_at": v.cast_at,
+        } for v in votes]
+    except Exception as e:
+        print(f"[Counties] Error getting player governance votes: {e}")
+        return []
+    finally:
+        db.close()
+
+
+def get_governance_history(county_id: int, limit: int = 10) -> list:
+    """Get past governance cycles and their results."""
+    db = get_db()
+    try:
+        cycles = db.query(GovernanceCycle).filter(
+            GovernanceCycle.county_id == county_id,
+            GovernanceCycle.status == GovernanceCycleStatus.COMPLETED,
+        ).order_by(GovernanceCycle.cycle_number.desc()).limit(limit).all()
+
+        result = []
+        for cycle in cycles:
+            proposals = db.query(GovernanceProposal).filter(
+                GovernanceProposal.cycle_id == cycle.id,
+            ).all()
+
+            result.append({
+                "cycle_number": cycle.cycle_number,
+                "started_at_tick": cycle.started_at_tick,
+                "total_proposals": len(proposals),
+                "passed": sum(1 for p in proposals if p.status == GovernanceProposalStatus.PASSED),
+                "failed": sum(1 for p in proposals if p.status == GovernanceProposalStatus.FAILED),
+                "created_at": cycle.created_at,
+            })
+        return result
+    except Exception as e:
+        print(f"[Counties] Error getting governance history: {e}")
+        return []
+    finally:
+        db.close()
+
+
+def process_governance_cycles(current_tick: int):
+    """
+    Process governance cycle transitions:
+    1. Start new cycles for counties that don't have an active one
+    2. Transition proposal phase → voting phase
+    3. Close voting phase and tally results
+    """
+    db = get_db()
+    try:
+        counties = db.query(County).all()
+
+        for county in counties:
+            # Check for active cycle
+            active_cycle = db.query(GovernanceCycle).filter(
+                GovernanceCycle.county_id == county.id,
+                GovernanceCycle.voting_phase_ends_tick > current_tick,
+            ).first()
+
+            if not active_cycle:
+                # Check if enough time has passed since last cycle
+                last_cycle = db.query(GovernanceCycle).filter(
+                    GovernanceCycle.county_id == county.id,
+                ).order_by(GovernanceCycle.cycle_number.desc()).first()
+
+                should_start = True
+                if last_cycle and (current_tick - last_cycle.voting_phase_ends_tick) < 0:
+                    should_start = False
+
+                if should_start:
+                    db.close()
+                    start_governance_cycle(county.id, current_tick)
+                    db = get_db()
+                continue
+
+            # Transition from proposal phase to voting phase
+            if (active_cycle.status == GovernanceCycleStatus.PROPOSAL_PHASE and
+                    current_tick >= active_cycle.proposal_phase_ends_tick):
+                active_cycle.status = GovernanceCycleStatus.VOTING_PHASE
+
+                # Activate all pending proposals for voting
+                pending_proposals = db.query(GovernanceProposal).filter(
+                    GovernanceProposal.cycle_id == active_cycle.id,
+                    GovernanceProposal.status == GovernanceProposalStatus.PENDING,
+                ).all()
+
+                for proposal in pending_proposals:
+                    proposal.status = GovernanceProposalStatus.ACTIVE
+
+                db.commit()
+                print(f"[Counties] County '{county.name}' governance cycle #{active_cycle.cycle_number}: Voting phase started ({len(pending_proposals)} proposals)")
+
+            # Close voting phase
+            elif (active_cycle.status == GovernanceCycleStatus.VOTING_PHASE and
+                  current_tick >= active_cycle.voting_phase_ends_tick):
+                active_cycle.status = GovernanceCycleStatus.COMPLETED
+
+                # Tally all active proposals
+                active_proposals = db.query(GovernanceProposal).filter(
+                    GovernanceProposal.cycle_id == active_cycle.id,
+                    GovernanceProposal.status == GovernanceProposalStatus.ACTIVE,
+                ).all()
+
+                for proposal in active_proposals:
+                    total_votes = proposal.yes_token_votes + proposal.no_token_votes
+                    if total_votes > 0 and proposal.yes_token_votes > proposal.no_token_votes:
+                        proposal.status = GovernanceProposalStatus.PASSED
+                    else:
+                        proposal.status = GovernanceProposalStatus.FAILED
+
+                db.commit()
+
+                passed_count = sum(1 for p in active_proposals if p.status == GovernanceProposalStatus.PASSED)
+                failed_count = sum(1 for p in active_proposals if p.status == GovernanceProposalStatus.FAILED)
+                print(f"[Counties] County '{county.name}' governance cycle #{active_cycle.cycle_number} completed: {passed_count} passed, {failed_count} failed")
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error processing governance cycles: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        db.close()
+
+
+# ==========================
 # MODULE LIFECYCLE
 # ==========================
 def initialize():
@@ -1238,6 +1784,10 @@ async def tick(current_tick: int, now: datetime):
         if current_tick % MINING_PAYOUT_INTERVAL_TICKS == 0:
             process_mining_payouts(current_tick)
 
+        # Process governance cycles every 60 ticks (5 minutes)
+        if current_tick % 60 == 0:
+            process_governance_cycles(current_tick)
+
         # Log stats every 6 hours
         if current_tick % 4320 == 0:
             counties = get_all_counties()
@@ -1257,10 +1807,12 @@ __all__ = [
     # Models
     'County', 'CountyCity', 'CountyPetition', 'CountyPoll', 'CountyVote',
     'MiningDeposit', 'CryptoWallet', 'CryptoExchangeOrder',
+    'GovernanceCycle', 'GovernanceProposal', 'GovernanceVote',
 
     # Enums
     'CountyPetitionStatus', 'CountyPollType', 'CountyPollStatus',
     'VoteChoice', 'ExchangeOrderType',
+    'GovernanceProposalType', 'GovernanceProposalStatus', 'GovernanceCycleStatus',
 
     # County management
     'get_county_by_id', 'get_county_by_name', 'get_all_counties',
@@ -1281,6 +1833,14 @@ __all__ = [
     'get_player_wallets',
     'sell_crypto_for_cash', 'buy_crypto_with_cash', 'swap_crypto',
 
+    # Governance
+    'get_current_governance_cycle', 'start_governance_cycle',
+    'submit_governance_proposal', 'cast_governance_vote',
+    'get_governance_proposals', 'get_player_governance_votes',
+    'get_governance_history', 'process_governance_cycles',
+
     # Constants
     'MAX_COUNTY_CITIES', 'MAYOR_VOTE_WEIGHT',
+    'GOVERNANCE_VOTE_CYCLE_TICKS', 'GOVERNANCE_PROPOSAL_WINDOW_TICKS',
+    'GOVERNANCE_VOTING_WINDOW_TICKS', 'MIN_GOVERNANCE_BURN',
 ]
