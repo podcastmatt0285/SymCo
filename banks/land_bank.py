@@ -436,7 +436,12 @@ def check_and_trigger_qe(current_tick: int):
 def create_qe_auction():
     """Create a discounted land auction during QE mode."""
     from land import create_land_plot, get_land_plot, TERRAIN_TYPES, PROXIMITY_FEATURES
-    from land_market import TERRAIN_BASE_PRICES, GOVERNMENT_ID, generate_random_proximity_features
+    from land_market import TERRAIN_BASE_PRICES, GOVERNMENT_ID, generate_random_proximity_features, is_land_bank_full, LAND_BANK_MAX_SLOTS
+
+    # Check land bank capacity before creating emergency plots
+    if is_land_bank_full():
+        print(f"[{BANK_NAME}] QE auction skipped - land bank at capacity ({LAND_BANK_MAX_SLOTS}/{LAND_BANK_MAX_SLOTS})")
+        return
     
     # Pick random terrain
     terrain = random.choice(list(TERRAIN_TYPES.keys()))

@@ -594,7 +594,9 @@ def admin_add_to_land_bank(admin_id: int, terrain_type: str, proximity: str = ""
     """Admin creates a new government plot and adds it to the land bank."""
     try:
         from land import create_land_plot
-        from land_market import add_to_land_bank, TERRAIN_BASE_PRICES
+        from land_market import add_to_land_bank, TERRAIN_BASE_PRICES, is_land_bank_full, LAND_BANK_MAX_SLOTS
+        if is_land_bank_full():
+            return {"ok": False, "error": f"Land bank is full ({LAND_BANK_MAX_SLOTS}/{LAND_BANK_MAX_SLOTS} slots)"}
         prox_list = [f.strip() for f in proximity.split(",") if f.strip()] if proximity else None
         plot = create_land_plot(
             owner_id=0,

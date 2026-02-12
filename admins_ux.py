@@ -1083,7 +1083,7 @@ def admin_landbank(session_token: Optional[str] = Cookie(None), msg: Optional[st
         </tr>"""
 
     body = f"""
-    <h2 style="font-size:0.9rem;margin-bottom:10px;">Land Bank ({len(entries)} plots)</h2>
+    <h2 style="font-size:0.9rem;margin-bottom:10px;">Land Bank ({len(entries)}/100 slots)</h2>
     {_flash(msg=msg, err=err)}
     <div class="card">
         <h3>Add Plot to Land Bank</h3>

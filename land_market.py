@@ -112,6 +112,7 @@ PRICE_DROP_RATE = 0.15  # Price drops to 35% every hour
 ECONOMIC_THRESHOLD = 10000000  # $1M triggers 1 new plot
 LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
+LAND_BANK_MAX_SLOTS = 100  # Maximum plots the land bank can hold
 
 # Base prices by terrain
 TERRAIN_BASE_PRICES = {
@@ -420,7 +421,13 @@ def add_to_land_bank(land_plot_id: int, auction_id: Optional[int] = None, last_p
             db.commit()
             print(f"[LandMarket] Plot {land_plot_id} returned to land bank (attempt #{existing.times_auctioned})")
             return True
-        
+
+        # Check capacity before adding a new entry
+        current_count = db.query(LandBank).count()
+        if current_count >= LAND_BANK_MAX_SLOTS:
+            print(f"[LandMarket] Land bank full ({current_count}/{LAND_BANK_MAX_SLOTS}) - cannot add plot {land_plot_id}")
+            return False
+
         # Add new entry to land bank
         bank_entry = LandBank(
             land_plot_id=land_plot_id,
@@ -446,6 +453,20 @@ def get_land_bank_plots() -> List[LandBank]:
         return plots
     finally:
         db.close()
+
+
+def get_land_bank_count() -> int:
+    """Get the current number of plots in the land bank."""
+    db = get_db()
+    try:
+        return db.query(LandBank).count()
+    finally:
+        db.close()
+
+
+def is_land_bank_full() -> bool:
+    """Check if the land bank has reached its maximum capacity."""
+    return get_land_bank_count() >= LAND_BANK_MAX_SLOTS
 
 
 def remove_from_land_bank(land_plot_id: int) -> bool:
@@ -535,6 +556,12 @@ def create_government_auction(from_land_bank: bool = False, bank_entry: Optional
     """
     from land import create_land_plot, get_land_plot, TERRAIN_TYPES, PROXIMITY_FEATURES
     
+    # When creating new plots, check if land bank is at capacity
+    # (unsold auctions end up in the bank, so don't create if it's full)
+    if not from_land_bank and is_land_bank_full():
+        print(f"[LandMarket] Skipping new auction - land bank at capacity ({LAND_BANK_MAX_SLOTS}/{LAND_BANK_MAX_SLOTS})")
+        return None
+
     if from_land_bank and bank_entry:
         # Re-auctioning from land bank
         plot = get_land_plot(bank_entry.land_plot_id)
@@ -810,11 +837,10 @@ def initialize():
     db = get_db()
     try:
         bank_count = db.query(LandBank).count()
-        if bank_count > 0:
-            print(f"[LandMarket] Land bank contains {bank_count} unsold plot(s)")
+        print(f"[LandMarket] Land bank: {bank_count}/{LAND_BANK_MAX_SLOTS} slots used")
     finally:
         db.close()
-    
+
     print("[LandMarket] Module initialized")
 
 
@@ -830,7 +856,13 @@ async def tick(current_tick: int, now: datetime):
     
     if current_tick % 30 == 0:
         plots_needed = check_economic_triggers()
-        
+
+        if plots_needed > 0:
+            # Check land bank capacity before creating new plots
+            if is_land_bank_full():
+                print(f"[LandMarket] Economy expanded but land bank full ({LAND_BANK_MAX_SLOTS}/{LAND_BANK_MAX_SLOTS}) - deferring plot creation")
+                plots_needed = 0
+
         if plots_needed > 0:
             print(f"[LandMarket] Economy expanded! Creating {plots_needed} new auction(s)")
             
@@ -877,7 +909,7 @@ async def tick(current_tick: int, now: datetime):
             active_auctions = db.query(GovernmentAuction).filter(GovernmentAuction.is_active == True).count()
             bank_count = db.query(LandBank).count()
             
-            print(f"[LandMarket] Stats: {active_listings} player listings, {active_auctions} gov auctions, {bank_count} in land bank")
+            print(f"[LandMarket] Stats: {active_listings} player listings, {active_auctions} gov auctions, {bank_count}/{LAND_BANK_MAX_SLOTS} land bank slots")
         finally:
             db.close()
 
@@ -895,6 +927,9 @@ __all__ = [
     'get_active_auctions',
     'get_recent_sales',
     'get_land_bank_plots',
+    'get_land_bank_count',
+    'is_land_bank_full',
+    'LAND_BANK_MAX_SLOTS',
     'generate_random_proximity_features',
     'LandListing',
     'GovernmentAuction',
