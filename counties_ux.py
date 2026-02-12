@@ -395,7 +395,7 @@ async def counties_dashboard(
                     <div>
                         <span class="badge badge-crypto">{w["symbol"]}</span>
                         <span class="wallet-balance" style="margin-left: 12px;">{w["balance"]:.6f}</span>
-                        <span class="wallet-value">(${w["value"]:,.2f} @ ${w["price"]:,.2f}/unit)</span>
+                        <span class="wallet-value">(${w["value"]:,.4f} @ ${w["price"]:,.4f}/unit)</span>
                     </div>
                     <div>
                         <a href="/exchange?symbol={w["symbol"]}" class="btn btn-crypto btn-sm">Trade</a>
@@ -511,8 +511,8 @@ async def counties_dashboard(
                     <td><strong>{c["name"]}</strong></td>
                     <td>{c["city_count"]}/{c["max_cities"]}</td>
                     <td><span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}</td>
-                    <td class="stat-value crypto">${c["crypto_price"]:,.2f}</td>
-                    <td>${c["mining_energy"]:,.2f}</td>
+                    <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
+                    <td>${c["mining_energy"]:,.4f}</td>
                     <td><a href="/county/{c["id"]}" class="btn btn-secondary btn-sm">View</a></td>
                 </tr>
             '''
@@ -767,7 +767,7 @@ async def view_county(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Price</span>
-                        <span class="stat-value crypto">${crypto_price:,.2f}</span>
+                        <span class="stat-value crypto">${crypto_price:,.4f}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Circulating Supply</span>
@@ -783,7 +783,15 @@ async def view_county(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Mining Energy Pool</span>
-                        <span class="stat-value">${county.mining_energy_pool:,.2f}</span>
+                        <span class="stat-value">${county.mining_energy_pool:,.4f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Max Supply</span>
+                        <span class="stat-value">{county.max_supply:,.0f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Treasury Cash</span>
+                        <span class="stat-value" style="color: #4ade80;">${county.treasury_cash:,.4f}</span>
                     </div>
                 </div>
             </div>
@@ -967,7 +975,7 @@ async def county_mining_node(
 
     from counties import (
         get_county_by_id, is_player_in_county, calculate_crypto_price,
-        MiningDeposit, CryptoWallet,
+        MiningDeposit, CryptoWallet, get_halving_multiplier,
     )
     from cities import CityMember, City, get_db
     import inventory
@@ -1039,7 +1047,7 @@ async def county_mining_node(
         <form action="/api/county/mining/deposit" method="post">
             <input type="hidden" name="county_id" value="{county_id}">
             <div class="form-group">
-                <label>Deposit {currency_type} (You have: {currency_qty:,.2f} @ ${currency_price:,.2f} each)</label>
+                <label>Deposit {currency_type} (You have: {currency_qty:,.2f} @ ${currency_price:,.4f} each)</label>
                 <input type="number" name="quantity" min="1" max="{currency_qty}" step="0.01"
                        placeholder="Amount to deposit" required>
             </div>
@@ -1084,17 +1092,47 @@ async def county_mining_node(
                     <div>
                         <h3 style="color: #a78bfa;">Your {county.crypto_symbol} Balance</h3>
                         <div class="wallet-balance">{crypto_balance:,.6f}</div>
-                        <div class="wallet-value">${crypto_balance * crypto_price:,.2f}</div>
+                        <div class="wallet-value">${crypto_balance * crypto_price:,.4f}</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Total Mined</h3>
                         <div class="wallet-balance">{total_mined:,.6f}</div>
-                        <div class="wallet-value">${total_mined * crypto_price:,.2f}</div>
+                        <div class="wallet-value">${total_mined * crypto_price:,.4f}</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Node Energy Pool</h3>
-                        <div class="wallet-balance">${county.mining_energy_pool:,.2f}</div>
+                        <div class="wallet-balance">${county.mining_energy_pool:,.4f}</div>
                         <div class="wallet-value">Total energy available</div>
+                    </div>
+                </div>
+
+                <!-- Supply & Halving Info -->
+                <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
+                    <div>
+                        <h3 style="color: #a78bfa;">Supply Minted</h3>
+                        <div class="wallet-balance">{county.total_crypto_minted:,.2f}</div>
+                        <div class="wallet-value">of {county.max_supply:,.0f} max ({county.total_crypto_minted / county.max_supply * 100 if county.max_supply > 0 else 0:.1f}%)</div>
+                    </div>
+                    <div>
+                        <h3 style="color: #a78bfa;">Halving Multiplier</h3>
+                        <div class="wallet-balance">{get_halving_multiplier(county.total_crypto_minted, county.max_supply):.4f}x</div>
+                        <div class="wallet-value">Mining reward rate</div>
+                    </div>
+                    <div>
+                        <h3 style="color: #a78bfa;">Treasury</h3>
+                        <div class="wallet-balance">${county.treasury_cash:,.4f}</div>
+                        <div class="wallet-value">Cash backing the exchange</div>
+                    </div>
+                </div>
+
+                <!-- Supply Progress Bar -->
+                <div style="margin-bottom:20px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
+                        <span>Minted: {county.total_crypto_minted:,.2f}</span>
+                        <span>Max Supply: {county.max_supply:,.0f}</span>
+                    </div>
+                    <div style="height:10px; background:#1e293b; border-radius:5px; overflow:hidden;">
+                        <div style="height:100%; width:{min(100, county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0:.1f}%; background:linear-gradient(90deg, #7c3aed, #a78bfa); border-radius:5px;"></div>
                     </div>
                 </div>
 
@@ -1120,6 +1158,13 @@ async def county_mining_node(
                             <span class="badge badge-crypto">{county.crypto_symbol}</span> proportionally
                             to the value of their deposits. The crypto price is pegged to
                             total member wealth / 1,000,000,000.
+                        </p>
+                        <h3 style="margin-top: 12px;">Halving & Supply Cap</h3>
+                        <p style="color: #94a3b8; font-size: 13px;">
+                            Max supply is <strong>{county.max_supply:,.0f}</strong> tokens (like Bitcoin's 21M).
+                            Mining rewards diminish as more tokens are minted &mdash; the reward rate halves at each
+                            epoch (Bitcoin-style halving). Once the supply cap is reached, no new tokens can be minted.
+                            Governance votes can increase the supply cap.
                         </p>
                     </div>
                 </div>
@@ -1195,7 +1240,7 @@ async def crypto_exchange(
         ticker_items.append(
             f'<a href="/crypto/{c["crypto_symbol"]}" style="color: {change_color}; text-decoration: none; font-weight: bold;">'
             f'{c["crypto_symbol"]}</a>: '
-            f'<span style="color: #e5e7eb;">${c["crypto_price"]:,.2f}</span> '
+            f'<span style="color: #e5e7eb;">${c["crypto_price"]:,.4f}</span> '
             f'<span style="color: {change_color};">{arrow} {change_text}</span>'
         )
     ticker_content = " &nbsp;│&nbsp; ".join(ticker_items) if ticker_items else "NO LISTED CRYPTOCURRENCIES"
@@ -1214,7 +1259,7 @@ async def crypto_exchange(
                             <span class="badge badge-crypto">{w["symbol"]}</span>
                         </a>
                         <span class="wallet-balance" style="margin-left: 12px;">{w["balance"]:.6f}</span>
-                        <span class="wallet-value">(${w["value"]:,.2f} @ ${w["price"]:,.2f}/unit)</span>
+                        <span class="wallet-value">(${w["value"]:,.4f} @ ${w["price"]:,.4f}/unit)</span>
                     </div>
                     <div style="font-size: 12px; color: #94a3b8;">
                         Mined: {w["total_mined"]:.6f} | Bought: {w["total_bought"]:.6f} | Sold: {w["total_sold"]:.6f}
@@ -1230,7 +1275,7 @@ async def crypto_exchange(
     crypto_options = ""
     for c in counties:
         selected = 'selected' if symbol and symbol == c["crypto_symbol"] else ""
-        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} (${c["crypto_price"]:,.2f})</option>'
+        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} (${c["crypto_price"]:,.4f})</option>'
 
     # Wallet options for selling
     sell_options = ""
@@ -1242,7 +1287,7 @@ async def crypto_exchange(
     # Market overview table with clickable symbols
     market_html = '''
     <table class="table">
-        <thead><tr><th>Crypto</th><th>County</th><th>Price</th><th>24h Change</th><th>Supply (Minted)</th><th>Mining Energy</th><th></th></tr></thead>
+        <thead><tr><th>Crypto</th><th>County</th><th>Price</th><th>24h Change</th><th>Supply</th><th>Treasury</th><th>Halving</th><th></th></tr></thead>
         <tbody>
     '''
     for c in counties:
@@ -1257,6 +1302,7 @@ async def crypto_exchange(
         else:
             chg_html = '<span style="color: #94a3b8;">● --</span>'
 
+        supply_pct = (c["total_minted"] / c["max_supply"] * 100) if c["max_supply"] > 0 else 0
         market_html += f'''
         <tr>
             <td>
@@ -1265,10 +1311,11 @@ async def crypto_exchange(
                 </a>
             </td>
             <td>{c["name"]}</td>
-            <td class="stat-value crypto">${c["crypto_price"]:,.2f}</td>
+            <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
             <td>{chg_html}</td>
-            <td>{c["total_minted"]:,.6f}</td>
-            <td>${c["mining_energy"]:,.2f}</td>
+            <td><span title="{c["total_minted"]:,.2f} / {c["max_supply"]:,.0f}">{supply_pct:.1f}% of {c["max_supply"]:,.0f}</span></td>
+            <td style="color: #4ade80;">${c["treasury_cash"]:,.4f}</td>
+            <td>{c["halving_multiplier"]:.4f}x</td>
             <td><a href="/crypto/{c["crypto_symbol"]}" class="btn btn-secondary btn-sm">Info</a></td>
         </tr>
         '''
@@ -1304,7 +1351,7 @@ async def crypto_exchange(
             <div class="header">
                 <h1>Wadsworth Crypto Exchange</h1>
                 <div>
-                    <span style="color: #94a3b8;">Cash: ${player.cash_balance:,.2f}</span>
+                    <span style="color: #94a3b8;">Cash: ${player.cash_balance:,.4f}</span>
                     <a href="/counties" class="nav-link">Counties</a>
                     <a href="/" class="nav-link">Dashboard</a>
                 </div>
@@ -1322,7 +1369,7 @@ async def crypto_exchange(
 
             <div class="exchange-panel" style="margin-bottom: 16px;">
                 <h2 style="color: #38bdf8; margin-bottom: 4px;">Your Portfolio</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">Total crypto value: <strong style="color: #a78bfa;">${total_portfolio_value:,.2f}</strong></p>
+                <p style="color: #94a3b8; margin-bottom: 16px;">Total crypto value: <strong style="color: #a78bfa;">${total_portfolio_value:,.4f}</strong></p>
                 {wallets_html}
             </div>
 
@@ -1410,8 +1457,8 @@ async def crypto_exchange(
             <div class="card">
                 <h2>Market Overview</h2>
                 <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                    Crypto prices are pegged to the total cash value of all county members divided by 1,000,000,000 (rounded down to nearest penny).
-                    Click any symbol for full token details.
+                    Crypto prices are pegged to the total cash value of all county members divided by 1,000,000,000 (4 decimal precision).
+                    Click any symbol for full token details. Treasury holds real cash backing exchange trades.
                 </p>
                 {market_html if counties else '<p style="color: #64748b;">No cryptocurrencies exist yet.</p>'}
             </div>
@@ -1502,9 +1549,9 @@ async def crypto_token_info(
 
     # Price change display
     if info["price_change_pct"] > 0:
-        price_change_html = f'<span style="color: #22c55e; font-size: 16px;">▲ +${info["price_change_24h"]:,.2f} (+{info["price_change_pct"]:.2f}%)</span>'
+        price_change_html = f'<span style="color: #22c55e; font-size: 16px;">▲ +${info["price_change_24h"]:,.4f} (+{info["price_change_pct"]:.2f}%)</span>'
     elif info["price_change_pct"] < 0:
-        price_change_html = f'<span style="color: #ef4444; font-size: 16px;">▼ ${info["price_change_24h"]:,.2f} ({info["price_change_pct"]:.2f}%)</span>'
+        price_change_html = f'<span style="color: #ef4444; font-size: 16px;">▼ ${info["price_change_24h"]:,.4f} ({info["price_change_pct"]:.2f}%)</span>'
     else:
         price_change_html = '<span style="color: #94a3b8; font-size: 16px;">● No change</span>'
 
@@ -1516,7 +1563,7 @@ async def crypto_token_info(
         logo_html = f'<div style="display:inline-block; vertical-align:middle; margin-right:16px; border-radius:8px; overflow:hidden; border:2px solid #334155;">{logo_display}</div>'
 
     # FDV display
-    fdv_html = f"${info['fdv']:,.2f}" if info["fdv"] else "N/A (Unlimited supply)"
+    fdv_html = f"${info['fdv']:,.4f}" if info["fdv"] else "N/A (Unlimited supply)"
 
     # Max supply display
     max_supply_html = f"{info['max_supply']:,.6f}" if info["max_supply"] else "Unlimited"
@@ -1577,9 +1624,9 @@ async def crypto_token_info(
         range_html = f'''
         <div style="margin-top:12px;">
             <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
-                <span>Low: ${info["low_24h"]:,.2f}</span>
+                <span>Low: ${info["low_24h"]:,.4f}</span>
                 <span>24h Range</span>
-                <span>High: ${info["high_24h"]:,.2f}</span>
+                <span>High: ${info["high_24h"]:,.4f}</span>
             </div>
             <div style="height:8px; background:#1e293b; border-radius:4px; position:relative;">
                 <div style="position:absolute; left:{pos_pct:.1f}%; top:-2px; width:12px; height:12px; background:#a78bfa; border-radius:50%; transform:translateX(-50%);"></div>
@@ -1687,7 +1734,7 @@ async def crypto_token_info(
                     </div>
                 </div>
 
-                <div class="token-price">${info["price"]:,.2f}</div>
+                <div class="token-price">${info["price"]:,.4f}</div>
                 {price_change_html}
                 {range_html}
 
@@ -1704,7 +1751,7 @@ async def crypto_token_info(
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div class="wallet-balance">{player_balance:.6f} {info["symbol"]}</div>
-                        <div class="wallet-value">${player_value:,.2f}</div>
+                        <div class="wallet-value">${player_value:,.4f}</div>
                     </div>
                     <div>
                         <a href="/exchange?symbol={info["symbol"]}" class="btn btn-crypto">Trade</a>
@@ -1718,7 +1765,7 @@ async def crypto_token_info(
                 <div class="info-grid">
                     <div class="metric-card">
                         <div class="metric-label">Market Capitalization</div>
-                        <div class="metric-value">${info["market_cap"]:,.2f}</div>
+                        <div class="metric-value">${info["market_cap"]:,.4f}</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-label">Fully Diluted Valuation</div>
@@ -1726,19 +1773,19 @@ async def crypto_token_info(
                     </div>
                     <div class="metric-card">
                         <div class="metric-label">24h Trading Volume</div>
-                        <div class="metric-value">${info["volume_24h"]:,.2f}</div>
+                        <div class="metric-value">${info["volume_24h"]:,.4f}</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-label">24h High</div>
-                        <div class="metric-value" style="color: #22c55e;">${info["high_24h"]:,.2f}</div>
+                        <div class="metric-value" style="color: #22c55e;">${info["high_24h"]:,.4f}</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-label">24h Low</div>
-                        <div class="metric-value" style="color: #ef4444;">${info["low_24h"]:,.2f}</div>
+                        <div class="metric-value" style="color: #ef4444;">${info["low_24h"]:,.4f}</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-label">Mining Energy Pool</div>
-                        <div class="metric-value">${info["mining_energy_pool"]:,.2f}</div>
+                        <div class="metric-value">${info["mining_energy_pool"]:,.4f}</div>
                     </div>
                 </div>
             </div>
@@ -1762,6 +1809,26 @@ async def crypto_token_info(
                     <div class="metric-card">
                         <div class="metric-label">Total Burned</div>
                         <div class="metric-value" style="color: #f87171;">{info["total_burned"]:,.6f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">County Treasury</div>
+                        <div class="metric-value" style="color: #4ade80;">${info["treasury_cash"]:,.4f}</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:4px;">Cash backing exchange trades</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Halving Multiplier</div>
+                        <div class="metric-value" style="color: #fbbf24;">{info["halving_multiplier"]:.4f}x</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:4px;">Mining reward rate</div>
+                    </div>
+                </div>
+                <!-- Supply Progress Bar -->
+                <div style="margin-top:16px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
+                        <span>Minted: {info["supply_pct"]:.1f}%</span>
+                        <span>Max: {max_supply_html}</span>
+                    </div>
+                    <div style="height:10px; background:#1e293b; border-radius:5px; overflow:hidden;">
+                        <div style="height:100%; width:{min(100, info["supply_pct"]):.1f}%; background:linear-gradient(90deg, #7c3aed, #a78bfa); border-radius:5px;"></div>
                     </div>
                 </div>
             </div>
@@ -1833,11 +1900,15 @@ async def crypto_token_info(
                 </div>
                 <div class="stat">
                     <span class="stat-label">Mining Payout</span>
-                    <span class="stat-value">Every hour (10% energy consumed)</span>
+                    <span class="stat-value">Every hour (10% energy consumed, halving applies)</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Price Peg</span>
                     <span class="stat-value">Total member wealth / 1,000,000,000</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Supply Model</span>
+                    <span class="stat-value">Bitcoin-style halving, {info["max_supply"]:,.0f} max supply</span>
                 </div>
                 <div class="stat">
                     <span class="stat-label">Created</span>
