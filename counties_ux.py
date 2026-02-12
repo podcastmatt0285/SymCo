@@ -1150,7 +1150,10 @@ async def crypto_exchange(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
-    from counties import get_all_counties, get_player_wallets, County
+    from counties import (
+        get_all_counties, get_player_wallets, County,
+        get_crypto_24h_stats, ensure_county_logo,
+    )
     from cities import get_db
 
     wallets = get_player_wallets(player.id)
@@ -1162,6 +1165,41 @@ async def crypto_exchange(
     if error:
         alert_html = f'<div class="alert alert-error">{error}</div>'
 
+    # Build crypto ticker with movement indicators
+    ticker_items = []
+    for c in counties:
+        stats = get_crypto_24h_stats(c["crypto_symbol"])
+        logo_svg = ensure_county_logo(c["id"]) or ""
+        # Determine price movement
+        price_change = 0.0
+        if stats["price_24h_ago"] > 0:
+            price_change = c["crypto_price"] - stats["price_24h_ago"]
+
+        if price_change > 0:
+            arrow = "▲"
+            change_color = "#22c55e"
+            pct = (price_change / stats["price_24h_ago"]) * 100
+            change_text = f"+{pct:.1f}%"
+        elif price_change < 0:
+            arrow = "▼"
+            change_color = "#ef4444"
+            pct = (abs(price_change) / stats["price_24h_ago"]) * 100
+            change_text = f"-{pct:.1f}%"
+        else:
+            arrow = "●"
+            change_color = "#94a3b8"
+            change_text = "0.0%"
+
+        # Mini logo inline (16px)
+        mini_logo = logo_svg.replace('width="56"', 'width="16"').replace('height="56"', 'height="16"') if logo_svg else ""
+        ticker_items.append(
+            f'<a href="/crypto/{c["crypto_symbol"]}" style="color: {change_color}; text-decoration: none; font-weight: bold;">'
+            f'{c["crypto_symbol"]}</a>: '
+            f'<span style="color: #e5e7eb;">${c["crypto_price"]:,.2f}</span> '
+            f'<span style="color: {change_color};">{arrow} {change_text}</span>'
+        )
+    ticker_content = " &nbsp;│&nbsp; ".join(ticker_items) if ticker_items else "NO LISTED CRYPTOCURRENCIES"
+
     # Portfolio summary
     total_portfolio_value = sum(w["value"] for w in wallets)
     wallets_html = ""
@@ -1172,7 +1210,9 @@ async def crypto_exchange(
             <div class="wallet-card">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <span class="badge badge-crypto">{w["symbol"]}</span>
+                        <a href="/crypto/{w["symbol"]}" style="text-decoration: none;">
+                            <span class="badge badge-crypto">{w["symbol"]}</span>
+                        </a>
                         <span class="wallet-balance" style="margin-left: 12px;">{w["balance"]:.6f}</span>
                         <span class="wallet-value">(${w["value"]:,.2f} @ ${w["price"]:,.2f}/unit)</span>
                     </div>
@@ -1199,20 +1239,37 @@ async def crypto_exchange(
             selected = 'selected' if symbol and symbol == w["symbol"] else ""
             sell_options += f'<option value="{w["symbol"]}" {selected}>{w["symbol"]} (Balance: {w["balance"]:.6f})</option>'
 
-    # Market overview table
+    # Market overview table with clickable symbols
     market_html = '''
     <table class="table">
-        <thead><tr><th>Crypto</th><th>County</th><th>Price</th><th>Supply (Minted)</th><th>Mining Energy</th></tr></thead>
+        <thead><tr><th>Crypto</th><th>County</th><th>Price</th><th>24h Change</th><th>Supply (Minted)</th><th>Mining Energy</th><th></th></tr></thead>
         <tbody>
     '''
     for c in counties:
+        stats = get_crypto_24h_stats(c["crypto_symbol"])
+        if stats["price_24h_ago"] > 0:
+            chg = c["crypto_price"] - stats["price_24h_ago"]
+            chg_pct = (chg / stats["price_24h_ago"]) * 100
+            if chg >= 0:
+                chg_html = f'<span style="color: #22c55e;">▲ +{chg_pct:.1f}%</span>'
+            else:
+                chg_html = f'<span style="color: #ef4444;">▼ {chg_pct:.1f}%</span>'
+        else:
+            chg_html = '<span style="color: #94a3b8;">● --</span>'
+
         market_html += f'''
         <tr>
-            <td><span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}</td>
+            <td>
+                <a href="/crypto/{c["crypto_symbol"]}" style="text-decoration: none; color: inherit;">
+                    <span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}
+                </a>
+            </td>
             <td>{c["name"]}</td>
             <td class="stat-value crypto">${c["crypto_price"]:,.2f}</td>
+            <td>{chg_html}</td>
             <td>{c["total_minted"]:,.6f}</td>
             <td>${c["mining_energy"]:,.2f}</td>
+            <td><a href="/crypto/{c["crypto_symbol"]}" class="btn btn-secondary btn-sm">Info</a></td>
         </tr>
         '''
     market_html += '</tbody></table>'
@@ -1225,6 +1282,22 @@ async def crypto_exchange(
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Wadsworth Crypto Exchange</title>
         {COUNTY_STYLES}
+        <style>
+            .crypto-ticker {{
+                background: #0f172a;
+                border: 1px solid #1e293b;
+                padding: 8px 0;
+                margin-bottom: 20px;
+                overflow: hidden;
+                border-radius: 8px;
+            }}
+            .crypto-ticker-label {{
+                font-size: 0.75rem;
+                color: #64748b;
+                padding: 0 12px;
+                margin-bottom: 4px;
+            }}
+        </style>
     </head>
     <body>
         <div class="container">
@@ -1235,6 +1308,14 @@ async def crypto_exchange(
                     <a href="/counties" class="nav-link">Counties</a>
                     <a href="/" class="nav-link">Dashboard</a>
                 </div>
+            </div>
+
+            <!-- Crypto Ticker -->
+            <div class="crypto-ticker">
+                <div class="crypto-ticker-label">WADSWORTH CRYPTO EXCHANGE</div>
+                <marquee scrollamount="8" style="font-size: 0.85rem; color: #e5e7eb;">
+                    {ticker_content} &nbsp;&nbsp;&nbsp; {ticker_content}
+                </marquee>
             </div>
 
             {alert_html}
@@ -1251,6 +1332,7 @@ async def crypto_exchange(
                     <h2>Buy Crypto</h2>
                     <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                         Buy cryptocurrency with cash. 2% exchange fee.
+                        Node must have energy for the blockchain to process.
                     </p>
                     <form action="/api/exchange/buy" method="post">
                         <div class="form-group">
@@ -1274,6 +1356,7 @@ async def crypto_exchange(
                     <h2>Sell Crypto</h2>
                     <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                         Sell cryptocurrency for cash. 2% exchange fee.
+                        Node must have energy for the blockchain to process.
                     </p>
                     <form action="/api/exchange/sell" method="post">
                         <div class="form-group">
@@ -1297,6 +1380,7 @@ async def crypto_exchange(
                     <h2>Swap Crypto</h2>
                     <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                         Swap one crypto for another. 2% exchange fee.
+                        Both nodes must have energy.
                     </p>
                     <form action="/api/exchange/swap" method="post">
                         <div class="form-group">
@@ -1327,8 +1411,438 @@ async def crypto_exchange(
                 <h2>Market Overview</h2>
                 <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                     Crypto prices are pegged to the total cash value of all county members divided by 1,000,000,000 (rounded down to nearest penny).
+                    Click any symbol for full token details.
                 </p>
                 {market_html if counties else '<p style="color: #64748b;">No cryptocurrencies exist yet.</p>'}
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+
+# ==========================
+# TOKEN INFO SCREEN
+# ==========================
+@router.get("/crypto/{symbol}", response_class=HTMLResponse)
+async def crypto_token_info(
+    symbol: str,
+    session_token: Optional[str] = Cookie(None),
+):
+    """Comprehensive token information screen."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import (
+        get_full_token_info, get_crypto_price_history, CryptoWallet,
+    )
+    from cities import get_db
+
+    info = get_full_token_info(symbol.upper())
+    if not info:
+        return RedirectResponse(url="/exchange?error=Token+not+found", status_code=303)
+
+    # Get player's wallet for this token
+    db = get_db()
+    wallet = db.query(CryptoWallet).filter(
+        CryptoWallet.player_id == player.id,
+        CryptoWallet.crypto_symbol == symbol.upper(),
+    ).first()
+    player_balance = wallet.balance if wallet else 0.0
+    player_value = player_balance * info["price"]
+    db.close()
+
+    # Price history for chart
+    history = get_crypto_price_history(symbol.upper(), hours=168)  # 7 days
+
+    # Build sparkline SVG from price history
+    chart_svg = ""
+    if len(history) >= 2:
+        prices = [h["price"] for h in history]
+        min_p = min(prices)
+        max_p = max(prices)
+        p_range = max_p - min_p if max_p != min_p else 1.0
+
+        width = 600
+        height = 120
+        padding = 2
+        n = len(prices)
+
+        pts = []
+        area_pts = []
+        for i, p in enumerate(prices):
+            x = padding + (i / (n - 1)) * (width - 2 * padding)
+            y = height - padding - ((p - min_p) / p_range) * (height - 2 * padding)
+            pts.append(f"{x:.1f},{y:.1f}")
+            area_pts.append(f"{x:.1f},{y:.1f}")
+
+        # Close area polygon
+        area_pts.append(f"{width - padding:.1f},{height - padding:.1f}")
+        area_pts.append(f"{padding:.1f},{height - padding:.1f}")
+
+        line_color = "#22c55e" if prices[-1] >= prices[0] else "#ef4444"
+
+        chart_svg = f'''
+        <svg viewBox="0 0 {width} {height}" preserveAspectRatio="none"
+             style="width:100%; height:{height}px; display:block;">
+            <defs>
+                <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="{line_color}" stop-opacity="0.25"/>
+                    <stop offset="100%" stop-color="{line_color}" stop-opacity="0.02"/>
+                </linearGradient>
+            </defs>
+            <polygon points="{' '.join(area_pts)}" fill="url(#chartFill)"/>
+            <polyline points="{' '.join(pts)}" fill="none" stroke="{line_color}"
+                      stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        '''
+    else:
+        chart_svg = '<div style="height:120px; display:flex; align-items:center; justify-content:center; color:#64748b;">No price history available yet</div>'
+
+    # Price change display
+    if info["price_change_pct"] > 0:
+        price_change_html = f'<span style="color: #22c55e; font-size: 16px;">▲ +${info["price_change_24h"]:,.2f} (+{info["price_change_pct"]:.2f}%)</span>'
+    elif info["price_change_pct"] < 0:
+        price_change_html = f'<span style="color: #ef4444; font-size: 16px;">▼ ${info["price_change_24h"]:,.2f} ({info["price_change_pct"]:.2f}%)</span>'
+    else:
+        price_change_html = '<span style="color: #94a3b8; font-size: 16px;">● No change</span>'
+
+    # Logo SVG display
+    logo_html = ""
+    if info["logo_svg"]:
+        # Display at 56px
+        logo_display = info["logo_svg"].replace('width="56"', 'width="56"').replace('height="56"', 'height="56"')
+        logo_html = f'<div style="display:inline-block; vertical-align:middle; margin-right:16px; border-radius:8px; overflow:hidden; border:2px solid #334155;">{logo_display}</div>'
+
+    # FDV display
+    fdv_html = f"${info['fdv']:,.2f}" if info["fdv"] else "N/A (Unlimited supply)"
+
+    # Max supply display
+    max_supply_html = f"{info['max_supply']:,.6f}" if info["max_supply"] else "Unlimited"
+
+    # Trust score badge
+    trust = info["trust_score"]
+    trust_color = {
+        "A": "#22c55e", "B": "#4ade80", "C": "#fbbf24",
+        "D": "#f97316", "F": "#ef4444",
+    }.get(trust["grade"], "#94a3b8")
+
+    trust_bar_html = ""
+    if trust["factors"]:
+        trust_bar_html = '<div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:8px; margin-top:12px;">'
+        factor_labels = {
+            "liquidity": "Liquidity",
+            "distribution": "Distribution",
+            "activity": "Activity",
+            "fundamentals": "Fundamentals",
+        }
+        for key, label in factor_labels.items():
+            val = trust["factors"].get(key, 0)
+            bar_pct = min(100, val * 4)  # Each factor max ~25
+            trust_bar_html += f'''
+            <div>
+                <div style="font-size:11px; color:#94a3b8; margin-bottom:4px;">{label}</div>
+                <div style="height:6px; background:#1e293b; border-radius:3px; overflow:hidden;">
+                    <div style="height:100%; width:{bar_pct}%; background:{trust_color}; border-radius:3px;"></div>
+                </div>
+                <div style="font-size:10px; color:#64748b; margin-top:2px;">{val}/25</div>
+            </div>
+            '''
+        trust_bar_html += '</div>'
+
+    # Public notes
+    notes_html = ""
+    if info["public_notes"]:
+        notes_html = f'''
+        <div class="card" style="border-color: #f59e0b;">
+            <h2 style="color: #f59e0b;">Public Notes</h2>
+            <p style="color: #fbbf24;">{info["public_notes"]}</p>
+        </div>
+        '''
+
+    # Holder distribution bar
+    holders = info["holders"]
+    whale_bar_pct = holders["whale_percent"]
+    retail_bar_pct = holders["retail_percent"]
+
+    # 24h high/low range bar
+    range_html = ""
+    if info["high_24h"] > 0 and info["low_24h"] > 0:
+        price_range = info["high_24h"] - info["low_24h"]
+        if price_range > 0:
+            pos_pct = ((info["price"] - info["low_24h"]) / price_range) * 100
+        else:
+            pos_pct = 50
+        range_html = f'''
+        <div style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
+                <span>Low: ${info["low_24h"]:,.2f}</span>
+                <span>24h Range</span>
+                <span>High: ${info["high_24h"]:,.2f}</span>
+            </div>
+            <div style="height:8px; background:#1e293b; border-radius:4px; position:relative;">
+                <div style="position:absolute; left:{pos_pct:.1f}%; top:-2px; width:12px; height:12px; background:#a78bfa; border-radius:50%; transform:translateX(-50%);"></div>
+            </div>
+        </div>
+        '''
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{info["symbol"]} - {info["name"]} · Wadsworth</title>
+        {COUNTY_STYLES}
+        <style>
+            .token-header {{
+                display: flex;
+                align-items: center;
+                margin-bottom: 24px;
+            }}
+            .token-price {{
+                font-size: 36px;
+                font-weight: 700;
+                color: #a78bfa;
+            }}
+            .info-grid {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+            }}
+            @media (max-width: 768px) {{
+                .info-grid {{ grid-template-columns: 1fr; }}
+            }}
+            .metric-card {{
+                background: #0b1220;
+                border: 1px solid #1e293b;
+                border-radius: 10px;
+                padding: 16px;
+            }}
+            .metric-label {{
+                font-size: 12px;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
+            }}
+            .metric-value {{
+                font-size: 18px;
+                font-weight: 600;
+                color: #e5e7eb;
+            }}
+            .holder-bar {{
+                height: 24px;
+                background: #1e293b;
+                border-radius: 6px;
+                overflow: hidden;
+                display: flex;
+                margin: 8px 0;
+            }}
+            .holder-bar-whales {{
+                background: linear-gradient(90deg, #7c3aed, #a78bfa);
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 600;
+                color: white;
+            }}
+            .holder-bar-retail {{
+                background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 600;
+                color: white;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>{info["symbol"]}</h1>
+                <div>
+                    <a href="/exchange" class="nav-link">Exchange</a>
+                    <a href="/county/{info["county_id"]}" class="nav-link">County</a>
+                    <a href="/county/{info["county_id"]}/mining" class="nav-link">Mining</a>
+                    <a href="/" class="nav-link">Dashboard</a>
+                </div>
+            </div>
+
+            {notes_html}
+
+            <!-- Token Identity -->
+            <div class="card" style="margin-bottom: 16px;">
+                <div class="token-header">
+                    {logo_html}
+                    <div>
+                        <h2 style="color: #e5e7eb; margin-bottom: 4px;">{info["name"]}</h2>
+                        <span class="badge badge-crypto" style="font-size: 14px;">{info["symbol"]}</span>
+                        <span style="color: #64748b; margin-left: 8px;">· {info["county_name"]} County</span>
+                    </div>
+                </div>
+
+                <div class="token-price">${info["price"]:,.2f}</div>
+                {price_change_html}
+                {range_html}
+
+                <!-- Price Chart -->
+                <div style="margin-top: 20px; background: #0b1220; border-radius: 8px; padding: 12px; border: 1px solid #1e293b;">
+                    <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">7-Day Price Chart</div>
+                    {chart_svg}
+                </div>
+            </div>
+
+            <!-- Your Holdings -->
+            <div class="card" style="margin-bottom: 16px; border-color: #4c1d95;">
+                <h2>Your Holdings</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div class="wallet-balance">{player_balance:.6f} {info["symbol"]}</div>
+                        <div class="wallet-value">${player_value:,.2f}</div>
+                    </div>
+                    <div>
+                        <a href="/exchange?symbol={info["symbol"]}" class="btn btn-crypto">Trade</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Data & Performance -->
+            <div class="card" style="margin-bottom: 16px;">
+                <h2>Market Data & Performance</h2>
+                <div class="info-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Market Capitalization</div>
+                        <div class="metric-value">${info["market_cap"]:,.2f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Fully Diluted Valuation</div>
+                        <div class="metric-value">{fdv_html}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">24h Trading Volume</div>
+                        <div class="metric-value">${info["volume_24h"]:,.2f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">24h High</div>
+                        <div class="metric-value" style="color: #22c55e;">${info["high_24h"]:,.2f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">24h Low</div>
+                        <div class="metric-value" style="color: #ef4444;">${info["low_24h"]:,.2f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Mining Energy Pool</div>
+                        <div class="metric-value">${info["mining_energy_pool"]:,.2f}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supply & Tokenomics -->
+            <div class="card" style="margin-bottom: 16px;">
+                <h2>Supply & Tokenomics</h2>
+                <div class="info-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Circulating Supply</div>
+                        <div class="metric-value">{info["circulating_supply"]:,.6f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Max Supply</div>
+                        <div class="metric-value">{max_supply_html}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Minted</div>
+                        <div class="metric-value" style="color: #4ade80;">{info["total_minted"]:,.6f}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Total Burned</div>
+                        <div class="metric-value" style="color: #f87171;">{info["total_burned"]:,.6f}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Holders & Distribution -->
+            <div class="card" style="margin-bottom: 16px;">
+                <h2>Holders & Distribution</h2>
+                <div class="stat">
+                    <span class="stat-label">Total Holders</span>
+                    <span class="stat-value">{holders["total_holders"]}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Held</span>
+                    <span class="stat-value crypto">{holders["total_held"]:,.6f} {info["symbol"]}</span>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:#94a3b8; margin-bottom:4px;">
+                        <span>Whales (Top {holders["whale_count"]}): {holders["whale_percent"]:.1f}%</span>
+                        <span>Retail: {holders["retail_percent"]:.1f}%</span>
+                    </div>
+                    <div class="holder-bar">
+                        <div class="holder-bar-whales" style="width: {whale_bar_pct:.1f}%;">
+                            {"Whales" if whale_bar_pct > 15 else ""}
+                        </div>
+                        <div class="holder-bar-retail" style="width: {retail_bar_pct:.1f}%;">
+                            {"Retail" if retail_bar_pct > 15 else ""}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <span class="stat-label">Whale Holdings</span>
+                    <span class="stat-value">{holders["whale_held"]:,.6f} {info["symbol"]}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Retail Holdings</span>
+                    <span class="stat-value">{holders["retail_held"]:,.6f} {info["symbol"]}</span>
+                </div>
+            </div>
+
+            <!-- Reputation & Safety -->
+            <div class="card" style="margin-bottom: 16px;">
+                <h2>Reputation & Safety</h2>
+                <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px;">
+                    <div style="width:80px; height:80px; border-radius:50%; border:4px solid {trust_color}; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+                        <div style="font-size:28px; font-weight:800; color:{trust_color};">{trust["grade"]}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:20px; font-weight:700; color:#e5e7eb;">Trust Score: {trust["score"]}/100</div>
+                        <div style="font-size:13px; color:#94a3b8;">
+                            Based on liquidity, holder distribution, trading activity, and market fundamentals.
+                        </div>
+                    </div>
+                </div>
+                {trust_bar_html}
+            </div>
+
+            <!-- Token Metadata -->
+            <div class="card">
+                <h2>Token Details</h2>
+                <div class="stat">
+                    <span class="stat-label">County</span>
+                    <span class="stat-value"><a href="/county/{info["county_id"]}" class="nav-link">{info["county_name"]}</a></span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Exchange Fee</span>
+                    <span class="stat-value">2%</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Mining Payout</span>
+                    <span class="stat-value">Every hour (10% energy consumed)</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Price Peg</span>
+                    <span class="stat-value">Total member wealth / 1,000,000,000</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Created</span>
+                    <span class="stat-value">{info["created_at"].strftime("%Y-%m-%d %H:%M UTC") if info["created_at"] else "N/A"}</span>
+                </div>
             </div>
         </div>
     </body>
