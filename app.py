@@ -107,7 +107,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Wadsworth Economic Simulation",
     description="Real-time multiplayer economic simulation",
-    version="0.1.0",
+    version="1.1.2132026",
     lifespan=lifespan
 )
 
