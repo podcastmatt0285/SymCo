@@ -1812,7 +1812,7 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
 
     try:
         from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, get_db as get_firm_db, check_delisting
+            CompanyShares, ShareholderPosition, get_db as get_firm_db, delist_company
         )
         
         db = get_firm_db()
@@ -2041,7 +2041,7 @@ async def brokerage_go_private(
     
     try:
         from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, check_delisting, get_db as get_firm_db
+            CompanyShares, ShareholderPosition, delist_company, get_db as get_firm_db
         )
         
         db = get_firm_db()
@@ -2068,9 +2068,9 @@ async def brokerage_go_private(
             db.close()
         
         # Trigger delisting check
-        delisted = check_delisting(company_id)
+        success, error_msg = delist_company(player.id, company_id)
         
-        if delisted:
+        if success:
             return RedirectResponse(url="/brokerage/my-companies?success=went_private", status_code=303)
         return RedirectResponse(url="/brokerage/my-companies?error=delist_failed", status_code=303)
         
