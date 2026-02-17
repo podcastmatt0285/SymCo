@@ -442,15 +442,15 @@ def get_all_counties() -> List[dict]:
                 "city_count": city_count,
                 "max_cities": MAX_COUNTY_CITIES,
                 "crypto_price": crypto_price,
-                "total_minted": county.total_crypto_minted,
-                "total_burned": county.total_crypto_burned,
+                "total_minted": county.total_crypto_minted or 0.0,
+                "total_burned": county.total_crypto_burned or 0.0,
                 "circulating_supply": circ_supply,
-                "max_supply": county.max_supply,
+                "max_supply": county.max_supply or MAX_TOKEN_SUPPLY,
                 "remaining_supply": get_remaining_supply(county),
-                "mining_energy": county.mining_energy_pool,
+                "mining_energy": county.mining_energy_pool or 0.0,
                 "treasury_balance": county.treasury_balance or 0.0,
                 "market_cap": crypto_price * circ_supply,
-                "fdv": crypto_price * county.max_supply,
+                "fdv": crypto_price * (county.max_supply or MAX_TOKEN_SUPPLY),
                 "holder_count": holder_count,
                 "logo_svg": county.logo_svg or "",
                 "block_reward": calculate_block_reward(county.total_crypto_minted),
@@ -635,6 +635,7 @@ def calculate_block_reward(total_minted: float) -> float:
     Calculate the current mining block reward based on total tokens minted.
     Halvings occur every HALVING_INTERVAL tokens minted (like Bitcoin).
     """
+    total_minted = total_minted or 0.0
     halvings = int(total_minted / HALVING_INTERVAL)
     reward = INITIAL_BLOCK_REWARD / (2 ** halvings)
     return max(reward, MIN_BLOCK_REWARD)
@@ -642,12 +643,16 @@ def calculate_block_reward(total_minted: float) -> float:
 
 def get_circulating_supply(county: County) -> float:
     """Get the circulating supply (minted minus burned)."""
-    return max(county.total_crypto_minted - county.total_crypto_burned, 0.0)
+    minted = county.total_crypto_minted or 0.0
+    burned = county.total_crypto_burned or 0.0
+    return max(minted - burned, 0.0)
 
 
 def get_remaining_supply(county: County) -> float:
     """Get how many tokens can still be minted before hitting max supply."""
-    return max(county.max_supply - county.total_crypto_minted, 0.0)
+    max_sup = county.max_supply if county.max_supply is not None else MAX_TOKEN_SUPPLY
+    minted = county.total_crypto_minted or 0.0
+    return max(max_sup - minted, 0.0)
 
 
 # ==========================
@@ -1150,7 +1155,7 @@ def process_mining_payouts(current_tick: int):
             # Check supply cap - no mining if max supply reached
             remaining = get_remaining_supply(county)
             if remaining <= 0:
-                print(f"[Counties] Mining halted: {county.crypto_symbol} max supply ({county.max_supply:,.0f}) reached")
+                print(f"[Counties] Mining halted: {county.crypto_symbol} max supply ({(county.max_supply or MAX_TOKEN_SUPPLY):,.0f}) reached")
                 continue
 
             # Calculate block reward with halving
@@ -1204,8 +1209,8 @@ def process_mining_payouts(current_tick: int):
             county.mining_energy_pool -= energy_to_consume
             county.total_mining_payouts = (county.total_mining_payouts or 0) + 1
 
-            halvings = int(county.total_crypto_minted / HALVING_INTERVAL)
-            print(f"[Counties] Mining payout: County '{county.name}' minted {crypto_to_mint:.6f} {county.crypto_symbol} (reward: {block_reward:.4f}, halvings: {halvings}, supply: {county.total_crypto_minted:,.2f}/{county.max_supply:,.0f})")
+            halvings = int((county.total_crypto_minted or 0) / HALVING_INTERVAL)
+            print(f"[Counties] Mining payout: County '{county.name}' minted {crypto_to_mint:.6f} {county.crypto_symbol} (reward: {block_reward:.4f}, halvings: {halvings}, supply: {(county.total_crypto_minted or 0):,.2f}/{(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})")
 
         db.commit()
 
@@ -1410,7 +1415,7 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         # Buying on exchange mints tokens (increases supply, but capped)
         remaining = get_remaining_supply(county)
         if crypto_amount > remaining:
-            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {county.max_supply:,.0f})"
+            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})"
         county.total_crypto_minted += crypto_amount
 
         # Fee distribution
@@ -2151,14 +2156,14 @@ def get_token_info(crypto_symbol: str) -> Optional[dict]:
             "high_24h": high_24h,
             "low_24h": low_24h,
             "market_cap": price * circ_supply,
-            "fdv": price * county.max_supply,
+            "fdv": price * (county.max_supply or MAX_TOKEN_SUPPLY),
             "volume_24h": volume,
             "circulating_supply": circ_supply,
-            "total_minted": county.total_crypto_minted,
-            "total_burned": county.total_crypto_burned,
-            "max_supply": county.max_supply,
+            "total_minted": county.total_crypto_minted or 0.0,
+            "total_burned": county.total_crypto_burned or 0.0,
+            "max_supply": county.max_supply or MAX_TOKEN_SUPPLY,
             "remaining_supply": remaining,
-            "supply_pct_minted": (county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0,
+            "supply_pct_minted": ((county.total_crypto_minted or 0) / (county.max_supply or MAX_TOKEN_SUPPLY) * 100) if (county.max_supply or MAX_TOKEN_SUPPLY) > 0 else 0,
             "holder_count": holder_count,
             "treasury_balance": county.treasury_balance or 0.0,
             "mining_energy": county.mining_energy_pool or 0.0,

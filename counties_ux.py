@@ -1230,12 +1230,13 @@ async def county_mining_node(
     crypto_balance = wallet.balance if wallet else 0.0
     total_mined = wallet.total_mined if wallet else 0.0
     crypto_price = calculate_crypto_price(county_id)
-    block_reward = calculate_block_reward(county.total_crypto_minted)
+    block_reward = calculate_block_reward(county.total_crypto_minted or 0.0)
     circ_supply = get_circulating_supply(county)
     remaining_supply = get_remaining_supply(county)
     max_supply = county.max_supply or MAX_TOKEN_SUPPLY
-    supply_pct = (county.total_crypto_minted / max_supply * 100) if max_supply > 0 else 0
-    halvings = int(county.total_crypto_minted / HALVING_INTERVAL)
+    minted = county.total_crypto_minted or 0.0
+    supply_pct = (minted / max_supply * 100) if max_supply > 0 else 0
+    halvings = int(minted / HALVING_INTERVAL)
 
     # Recent deposits by this player
     recent_deposits = db.query(MiningDeposit).filter(
