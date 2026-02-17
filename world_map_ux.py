@@ -344,6 +344,11 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
             "counties": county_data,
         })
 
+    except Exception as exc:
+        import traceback
+        print("[world-map] API error:", traceback.format_exc())
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
     finally:
         db.close()
 
@@ -499,7 +504,14 @@ function loadMapData() {
     document.getElementById('map-status').textContent = 'Loading\u2026';
 
     fetch('/api/world-map/data')
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) {
+                return r.text().then(t => {
+                    throw new Error('HTTP ' + r.status + ' \u2014 ' + t.substring(0, 300));
+                });
+            }
+            return r.json();
+        })
         .then(data => {
             if (data.error) {
                 document.getElementById('map-loading').textContent = 'Error: ' + data.error;
@@ -508,8 +520,8 @@ function loadMapData() {
             renderMap(data);
         })
         .catch(err => {
-            document.getElementById('map-loading').textContent = 'Failed to load map data.';
-            console.error(err);
+            document.getElementById('map-loading').textContent = 'Failed to load map data: ' + err.message;
+            console.error('[world-map]', err);
         });
 }
 
