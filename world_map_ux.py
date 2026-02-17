@@ -476,30 +476,53 @@ function terrainColor(t) {
 // ============================================================
 // MAP INITIALISATION
 // ============================================================
-const map = L.map('map', {
-    crs: L.CRS.Simple,
-    minZoom: -5,
-    maxZoom: 6,
-    zoomSnap: 0.5,
-    attributionControl: false,
-});
 
-// Dark background tile (pure CSS via pane background)
-map.getContainer().style.background = '#020617';
-
-// Layer groups for toggling
-const layerPlots     = L.layerGroup().addTo(map);
-const layerDistricts = L.layerGroup().addTo(map);
-const layerCities    = L.layerGroup().addTo(map);
-const layerCounties  = L.layerGroup().addTo(map);
-
-// We store all bounds to call fitAll()
+// Declare layer variables at module scope so function declarations
+// that reference them never hit the temporal dead zone even if Leaflet
+// fails to load.
+let map = null;
+let layerPlots = null, layerDistricts = null,
+    layerCities = null, layerCounties = null;
 let allBoundsPoints = [];
+
+if (typeof L === 'undefined') {
+    // Leaflet CDN failed to load (no internet, SRI mismatch, etc.)
+    document.getElementById('map-loading').textContent =
+        'Map library failed to load. Check your internet connection and reload the page.';
+} else {
+    try {
+        map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: -5,
+            maxZoom: 6,
+            zoomSnap: 0.5,
+            attributionControl: false,
+        });
+
+        // Dark background tile (pure CSS via pane background)
+        map.getContainer().style.background = '#020617';
+
+        // Layer groups for toggling
+        layerPlots     = L.layerGroup().addTo(map);
+        layerDistricts = L.layerGroup().addTo(map);
+        layerCities    = L.layerGroup().addTo(map);
+        layerCounties  = L.layerGroup().addTo(map);
+    } catch(initErr) {
+        document.getElementById('map-loading').textContent =
+            'Map init error: ' + initErr.message;
+        console.error('[world-map] init', initErr);
+    }
+}
 
 // ============================================================
 // LOAD & RENDER
 // ============================================================
 function loadMapData() {
+    if (!map) {
+        document.getElementById('map-loading').textContent =
+            'Map not initialized. Reload the page.';
+        return;
+    }
     document.getElementById('map-loading').style.display = 'block';
     document.getElementById('map-status').textContent = 'Loading\u2026';
 
@@ -757,6 +780,7 @@ function fitAll() {
 // ZONE SEPARATORS (visual lines dividing plot / city / county zones)
 // ============================================================
 function drawZoneSeparators() {
+    if (!map) return;
     const lineStyle = { color: '#1e293b', weight: 1, dashArray: '4 6', interactive: false };
 
     // City zone separator
@@ -787,8 +811,10 @@ function drawZoneSeparators() {
 // ============================================================
 // BOOT
 // ============================================================
-drawZoneSeparators();
-loadMapData();
+if (map) {
+    drawZoneSeparators();
+    loadMapData();
+}
 </script>
 """
 
