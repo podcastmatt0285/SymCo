@@ -548,7 +548,7 @@ function renderMap(data) {
         // Popup content
         let bizLine = '';
         if (plot.business_type) {
-            const icon   = plot.business_active ? '\uD83C\uDFED' : '\u23F8\uFE0F';
+            const icon   = plot.business_active ? '&#127981;' : '&#9208;&#65039;';
             const status = plot.business_active ? 'Active' : 'Inactive';
             bizLine = `<br>${icon} <b>${plot.business_name || plot.business_type}</b> &mdash; ${status}`;
         }
@@ -591,7 +591,7 @@ function renderMap(data) {
 
         let bizLine = '';
         if (dist.business_type) {
-            const icon   = dist.business_active ? '\uD83C\uDFED' : '\u23F8\uFE0F';
+            const icon   = dist.business_active ? '&#127981;' : '&#9208;&#65039;';
             const status = dist.business_active ? 'Active' : 'Inactive';
             bizLine = `<br>${icon} <b>${dist.business_name || dist.business_type}</b> &mdash; ${status}`;
         }
@@ -610,7 +610,7 @@ function renderMap(data) {
 
         const popupHtml = `
             <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>\uD83C\uDFD7\uFE0F ${dist.district_name}</b>
+                <b>&#127959;&#65039; ${dist.district_name}</b>
                 <br><span style="color:${color}">${dist.district_type}</span> district
                 <br>${dist.plots_merged} plots merged &mdash; size ${dist.size}${bizLine}
                 <br>Tax: <span style="color:#94a3b8">$${dist.monthly_tax.toLocaleString()}/mo</span>
@@ -623,7 +623,7 @@ function renderMap(data) {
 
         // Add a centroid label marker (no circle, just a DivIcon)
         const labelIcon = L.divIcon({
-            html: `<span style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;background:rgba(2,6,23,0.7);padding:1px 3px;border-radius:2px;">\uD83C\uDFD7\uFE0F ${dist.district_name}</span>`,
+            html: `<span style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;background:rgba(2,6,23,0.7);padding:1px 3px;border-radius:2px;">&#127959; ${dist.district_name}</span>`,
             className: '',
             iconAnchor: [0, 0],
         });
@@ -639,7 +639,7 @@ function renderMap(data) {
         const cx = city.center_x, cy = city.center_y;
 
         const icon = L.divIcon({
-            html: `<div style="font-size:22px;line-height:1;filter:drop-shadow(0 0 4px #38bdf8);">\uD83C\uDFD9\uFE0F</div>`,
+            html: `<div style="font-size:22px;line-height:1;filter:drop-shadow(0 0 4px #38bdf8);">&#127961;&#65039;</div>`,
             className: '',
             iconAnchor: [11, 11],
         });
@@ -653,7 +653,7 @@ function renderMap(data) {
 
         const popupHtml = `
             <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>\uD83C\uDFD9\uFE0F ${city.name}</b>${mayorBadge}${currLine}
+                <b>&#127961;&#65039; ${city.name}</b>${mayorBadge}${currLine}
                 <br><a href="${city.url}" style="color:#38bdf8">&#8594; City Hub</a>
             </div>`;
 
@@ -671,14 +671,14 @@ function renderMap(data) {
         const cx = county.center_x, cy = county.center_y;
 
         const icon = L.divIcon({
-            html: `<div style="font-size:26px;line-height:1;filter:drop-shadow(0 0 6px #d4af37);">\uD83D\uDDFA\uFE0F</div>`,
+            html: `<div style="font-size:26px;line-height:1;filter:drop-shadow(0 0 6px #d4af37);">&#128506;&#65039;</div>`,
             className: '',
             iconAnchor: [13, 13],
         });
 
         const popupHtml = `
             <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>\uD83D\uDDFA\uFE0F ${county.name}</b>
+                <b>&#128506;&#65039; ${county.name}</b>
                 <br>Token: <span style="color:#d4af37">${county.crypto_symbol}</span>
                 <br><a href="${county.url}" style="color:#38bdf8">&#8594; County Hub</a>
             </div>`;
