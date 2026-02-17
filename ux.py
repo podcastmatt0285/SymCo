@@ -515,6 +515,11 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <p>Heirs, account deletion, and deceased registry</p>
                 <a href="/estate" style="display:inline-block;padding:10px 20px;background:#475569;color:#e5e7eb;text-decoration:none;border-radius:6px;font-weight:bold;">Estate</a>
             </div>
+            <div class="card" style="border-color: #22c55e;">
+                <h3 style="color: #22c55e;">World Map</h3>
+                <p>Visualize your economic empire on an interactive grid map</p>
+                <a href="/world-map" style="display:inline-block;padding:10px 20px;background:#22c55e;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">Open Map</a>
+            </div>
         </div>
         """,
         player.cash_balance,

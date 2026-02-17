@@ -258,6 +258,13 @@ try:
 except ModuleNotFoundError:
     pass
 
+try:
+    from world_map_ux import router as world_map_router
+    app.include_router(world_map_router)
+    print("World Map routes registered")
+except ModuleNotFoundError:
+    pass
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
