@@ -348,8 +348,216 @@ COUNTY_STYLES = """
         color: #94a3b8;
         margin-top: 4px;
     }
+
+    /* Crypto Ticker */
+    .crypto-ticker {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #020617;
+        border-top: 1px solid #7c3aed;
+        padding: 8px 0;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        z-index: 100;
+    }
+    .crypto-ticker-inner {
+        display: inline-block;
+        animation: crypto-scroll 60s linear infinite;
+    }
+    @keyframes crypto-scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .ticker-item {
+        display: inline-block;
+        padding: 0 20px;
+        cursor: pointer;
+        text-decoration: none;
+        color: #e5e7eb;
+        transition: color 0.2s;
+    }
+    .ticker-item:hover { color: #a78bfa; }
+    .ticker-symbol { font-weight: 700; color: #a78bfa; }
+    .ticker-price { margin-left: 6px; }
+    .ticker-change { margin-left: 6px; font-weight: 600; }
+    .ticker-up { color: #4ade80; }
+    .ticker-down { color: #f87171; }
+    .ticker-flat { color: #94a3b8; }
+    .ticker-sep { color: #334155; padding: 0 4px; }
+
+    /* Token Info Screen */
+    .token-hero {
+        background: linear-gradient(135deg, #1a0533 0%, #0c1a33 50%, #020617 100%);
+        border: 1px solid #7c3aed;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 20px;
+    }
+    .token-logo {
+        display: inline-block;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #4c1d95;
+        vertical-align: middle;
+        margin-right: 12px;
+    }
+    .token-price-big {
+        font-size: 36px;
+        font-weight: 800;
+        color: #e5e7eb;
+    }
+    .token-change-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-left: 12px;
+    }
+    .token-change-up { background: #166534; color: #4ade80; }
+    .token-change-down { background: #991b1b; color: #fca5a5; }
+    .token-change-flat { background: #1e293b; color: #94a3b8; }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    @media (max-width: 768px) {
+        .info-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .info-stat {
+        background: #0b1220;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 14px;
+        text-align: center;
+    }
+    .info-stat-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: #a78bfa;
+    }
+    .info-stat-label {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .supply-bar {
+        width: 100%;
+        height: 20px;
+        background: #1e293b;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    .supply-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #7c3aed, #a78bfa);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: white;
+        min-width: 30px;
+    }
+    .holder-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #1e293b;
+    }
+    .holder-row:last-child { border-bottom: none; }
+    .holder-rank {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #4c1d95;
+        color: #c4b5fd;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        margin-right: 8px;
+    }
+    .mini-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 40px;
+        margin: 8px 0;
+    }
+    .mini-chart-bar {
+        flex: 1;
+        background: #7c3aed;
+        border-radius: 2px 2px 0 0;
+        min-width: 3px;
+        opacity: 0.7;
+    }
+    .mini-chart-bar:last-child { opacity: 1; }
 </style>
 """
+
+
+# ==========================
+# CRYPTO TICKER HELPER
+# ==========================
+def get_crypto_ticker_html() -> str:
+    """Generate a scrolling crypto ticker bar with all tokens and price movement indicators."""
+    from counties import get_all_counties
+    counties = get_all_counties()
+    if not counties:
+        return ""
+
+    ticker_items = []
+    for c in counties:
+        symbol = c["crypto_symbol"]
+        price = c["crypto_price"]
+        change = c.get("price_change_24h", 0.0)
+        logo = c.get("logo_svg", "")
+
+        if change > 0:
+            arrow = "&#9650;"  # up triangle
+            change_class = "ticker-up"
+            change_str = f"+{change:.2f}%"
+        elif change < 0:
+            arrow = "&#9660;"  # down triangle
+            change_class = "ticker-down"
+            change_str = f"{change:.2f}%"
+        else:
+            arrow = "&#9679;"  # dot
+            change_class = "ticker-flat"
+            change_str = "0.00%"
+
+        logo_html = f'<span class="token-logo" style="display:inline-block;width:16px;height:16px;vertical-align:middle;margin-right:4px;border:none;">{logo}</span>' if logo else ""
+        ticker_items.append(
+            f'<a href="/token/{symbol}" class="ticker-item">'
+            f'{logo_html}'
+            f'<span class="ticker-symbol">{symbol}</span>'
+            f'<span class="ticker-price">${price:,.4f}</span>'
+            f'<span class="ticker-change {change_class}">{arrow} {change_str}</span>'
+            f'</a>'
+            f'<span class="ticker-sep">|</span>'
+        )
+
+    ticker_content = "".join(ticker_items)
+    # Duplicate for seamless scrolling
+    return f'''
+    <div class="crypto-ticker">
+        <div class="crypto-ticker-inner">
+            {ticker_content}{ticker_content}
+        </div>
+    </div>
+    '''
 
 
 # ==========================
@@ -495,10 +703,13 @@ async def counties_dashboard(
         <table class="table">
             <thead>
                 <tr>
+                    <th></th>
                     <th>County</th>
                     <th>Cities</th>
                     <th>Crypto</th>
                     <th>Price</th>
+                    <th>24h</th>
+                    <th>Market Cap</th>
                     <th>Mining Energy</th>
                     <th>Action</th>
                 </tr>
@@ -506,12 +717,24 @@ async def counties_dashboard(
             <tbody>
         '''
         for c in counties:
+            change = c.get("price_change_24h", 0.0)
+            if change > 0:
+                change_html = f'<span class="stat-value positive">+{change:.2f}%</span>'
+            elif change < 0:
+                change_html = f'<span class="stat-value negative">{change:.2f}%</span>'
+            else:
+                change_html = '<span style="color:#94a3b8;">0.00%</span>'
+            logo = c.get("logo_svg", "")
+            logo_html = f'<span style="display:inline-block;width:20px;height:20px;vertical-align:middle;">{logo}</span>' if logo else ""
             counties_table_html += f'''
                 <tr>
+                    <td>{logo_html}</td>
                     <td><strong>{c["name"]}</strong></td>
                     <td>{c["city_count"]}/{c["max_cities"]}</td>
-                    <td><span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}</td>
-                    <td class="stat-value crypto">${c["crypto_price"]:,.2f}</td>
+                    <td><a href="/token/{c["crypto_symbol"]}" class="nav-link" style="margin:0;"><span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}</a></td>
+                    <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
+                    <td>{change_html}</td>
+                    <td>${c.get("market_cap", 0):,.2f}</td>
                     <td>${c["mining_energy"]:,.2f}</td>
                     <td><a href="/county/{c["id"]}" class="btn btn-secondary btn-sm">View</a></td>
                 </tr>
@@ -520,6 +743,8 @@ async def counties_dashboard(
         counties_table_html += '</tbody></table>'
     else:
         counties_table_html = '<p style="color: #94a3b8;">No counties exist yet. Be the first to form one!</p>'
+
+    ticker_html = get_crypto_ticker_html()
 
     return f"""
     <!DOCTYPE html>
@@ -531,7 +756,7 @@ async def counties_dashboard(
         {COUNTY_STYLES}
     </head>
     <body>
-        <div class="container">
+        <div class="container" style="padding-bottom: 50px;">
             <div class="header">
                 <h1>Counties</h1>
                 <div>
@@ -551,6 +776,7 @@ async def counties_dashboard(
                 {counties_table_html}
             </div>
         </div>
+        {ticker_html}
     </body>
     </html>
     """
@@ -967,7 +1193,9 @@ async def county_mining_node(
 
     from counties import (
         get_county_by_id, is_player_in_county, calculate_crypto_price,
-        MiningDeposit, CryptoWallet,
+        MiningDeposit, CryptoWallet, calculate_block_reward,
+        get_circulating_supply, get_remaining_supply,
+        MAX_TOKEN_SUPPLY, HALVING_INTERVAL,
     )
     from cities import CityMember, City, get_db
     import inventory
@@ -1002,6 +1230,12 @@ async def county_mining_node(
     crypto_balance = wallet.balance if wallet else 0.0
     total_mined = wallet.total_mined if wallet else 0.0
     crypto_price = calculate_crypto_price(county_id)
+    block_reward = calculate_block_reward(county.total_crypto_minted)
+    circ_supply = get_circulating_supply(county)
+    remaining_supply = get_remaining_supply(county)
+    max_supply = county.max_supply or MAX_TOKEN_SUPPLY
+    supply_pct = (county.total_crypto_minted / max_supply * 100) if max_supply > 0 else 0
+    halvings = int(county.total_crypto_minted / HALVING_INTERVAL)
 
     # Recent deposits by this player
     recent_deposits = db.query(MiningDeposit).filter(
@@ -1084,17 +1318,37 @@ async def county_mining_node(
                     <div>
                         <h3 style="color: #a78bfa;">Your {county.crypto_symbol} Balance</h3>
                         <div class="wallet-balance">{crypto_balance:,.6f}</div>
-                        <div class="wallet-value">${crypto_balance * crypto_price:,.2f}</div>
+                        <div class="wallet-value">${crypto_balance * crypto_price:,.4f}</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Total Mined</h3>
                         <div class="wallet-balance">{total_mined:,.6f}</div>
-                        <div class="wallet-value">${total_mined * crypto_price:,.2f}</div>
+                        <div class="wallet-value">${total_mined * crypto_price:,.4f}</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Node Energy Pool</h3>
                         <div class="wallet-balance">${county.mining_energy_pool:,.2f}</div>
                         <div class="wallet-value">Total energy available</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-3" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
+                    <div style="background:#0b1220;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Block Reward</div>
+                        <div style="font-size:18px;font-weight:700;color:#a78bfa;">{block_reward:,.6f}</div>
+                        <div style="font-size:11px;color:#64748b;">{county.crypto_symbol}/payout (halving {halvings})</div>
+                    </div>
+                    <div style="background:#0b1220;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Supply Progress</div>
+                        <div class="supply-bar" style="margin:6px 0;">
+                            <div class="supply-bar-fill" style="width:{min(supply_pct, 100):.1f}%;">{supply_pct:.1f}%</div>
+                        </div>
+                        <div style="font-size:11px;color:#64748b;">{circ_supply:,.2f} / {max_supply:,.0f}</div>
+                    </div>
+                    <div style="background:#0b1220;border-radius:8px;padding:12px;text-align:center;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;">Remaining to Mine</div>
+                        <div style="font-size:18px;font-weight:700;color:#4ade80;">{remaining_supply:,.2f}</div>
+                        <div style="font-size:11px;color:#64748b;"><a href="/token/{county.crypto_symbol}" class="nav-link" style="margin:0;">View Token Info</a></div>
                     </div>
                 </div>
 
@@ -1109,17 +1363,18 @@ async def county_mining_node(
                         <p style="color: #94a3b8; font-size: 13px;">
                             City members deposit their respective city currency into the mining node.
                             The node consumes those deposits as <strong>mining energy</strong>.
-                            This energy powers transactions, crypto burning, and all movement
-                            involving the county's cryptocurrency.
+                            This energy powers the entire blockchain - without energy, no transactions
+                            (buys, sells, swaps) can occur on the exchange.
                         </p>
                     </div>
                     <div>
-                        <h3>Payout System</h3>
+                        <h3>Halving & Supply Cap</h3>
                         <p style="color: #94a3b8; font-size: 13px;">
-                            Every hour, 10% of the energy pool is consumed. Miners are paid in
-                            <span class="badge badge-crypto">{county.crypto_symbol}</span> proportionally
-                            to the value of their deposits. The crypto price is pegged to
-                            total member wealth / 1,000,000,000.
+                            Like Bitcoin, <span class="badge badge-crypto">{county.crypto_symbol}</span> has a
+                            <strong>max supply of {max_supply:,.0f}</strong> tokens. Mining rewards start at
+                            50 tokens/payout and halve every {HALVING_INTERVAL:,.0f} tokens minted.
+                            Current reward: <strong>{block_reward:,.6f}</strong>.
+                            Rewards decrease over time, making early mining more valuable.
                         </p>
                     </div>
                 </div>
@@ -1190,7 +1445,7 @@ async def crypto_exchange(
     crypto_options = ""
     for c in counties:
         selected = 'selected' if symbol and symbol == c["crypto_symbol"] else ""
-        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} (${c["crypto_price"]:,.2f})</option>'
+        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} (${c["crypto_price"]:,.4f})</option>'
 
     # Wallet options for selling
     sell_options = ""
@@ -1199,23 +1454,45 @@ async def crypto_exchange(
             selected = 'selected' if symbol and symbol == w["symbol"] else ""
             sell_options += f'<option value="{w["symbol"]}" {selected}>{w["symbol"]} (Balance: {w["balance"]:.6f})</option>'
 
-    # Market overview table
+    # Market overview table with full data
     market_html = '''
     <table class="table">
-        <thead><tr><th>Crypto</th><th>County</th><th>Price</th><th>Supply (Minted)</th><th>Mining Energy</th></tr></thead>
+        <thead><tr>
+            <th></th><th>Token</th><th>Price</th><th>24h</th>
+            <th>Market Cap</th><th>Circ. Supply</th><th>Max Supply</th>
+            <th>Treasury</th><th>Energy</th>
+        </tr></thead>
         <tbody>
     '''
     for c in counties:
+        change = c.get("price_change_24h", 0.0)
+        if change > 0:
+            change_html = f'<span class="stat-value positive">+{change:.2f}%</span>'
+        elif change < 0:
+            change_html = f'<span class="stat-value negative">{change:.2f}%</span>'
+        else:
+            change_html = '<span style="color:#94a3b8;">0.00%</span>'
+        logo = c.get("logo_svg", "")
+        logo_html = f'<span style="display:inline-block;width:18px;height:18px;vertical-align:middle;">{logo}</span>' if logo else ""
         market_html += f'''
         <tr>
-            <td><span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}</td>
-            <td>{c["name"]}</td>
-            <td class="stat-value crypto">${c["crypto_price"]:,.2f}</td>
-            <td>{c["total_minted"]:,.6f}</td>
+            <td>{logo_html}</td>
+            <td><a href="/token/{c["crypto_symbol"]}" style="text-decoration:none;color:#e5e7eb;">
+                <span class="badge badge-crypto">{c["crypto_symbol"]}</span>
+                <span style="margin-left:4px;">{c["crypto_name"]}</span>
+            </a></td>
+            <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
+            <td>{change_html}</td>
+            <td>${c.get("market_cap", 0):,.2f}</td>
+            <td>{c.get("circulating_supply", 0):,.2f}</td>
+            <td>{c.get("max_supply", 0):,.0f}</td>
+            <td>${c.get("treasury_balance", 0):,.2f}</td>
             <td>${c["mining_energy"]:,.2f}</td>
         </tr>
         '''
     market_html += '</tbody></table>'
+
+    ticker_html = get_crypto_ticker_html()
 
     return f"""
     <!DOCTYPE html>
@@ -1227,7 +1504,7 @@ async def crypto_exchange(
         {COUNTY_STYLES}
     </head>
     <body>
-        <div class="container">
+        <div class="container" style="padding-bottom: 50px;">
             <div class="header">
                 <h1>Wadsworth Crypto Exchange</h1>
                 <div>
@@ -1251,6 +1528,7 @@ async def crypto_exchange(
                     <h2>Buy Crypto</h2>
                     <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                         Buy cryptocurrency with cash. 2% exchange fee.
+                        <br><span style="color:#f59e0b;font-size:11px;">Requires blockchain energy. Cash goes to county treasury.</span>
                     </p>
                     <form action="/api/exchange/buy" method="post">
                         <div class="form-group">
@@ -1262,7 +1540,7 @@ async def crypto_exchange(
                         </div>
                         <div class="form-group">
                             <label>Cash Amount ($)</label>
-                            <input type="number" name="cash_amount" min="0.01" step="0.01"
+                            <input type="number" name="cash_amount" min="0.01" step="0.0001"
                                    max="{player.cash_balance}" placeholder="Amount in $" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Buy</button>
@@ -1274,6 +1552,7 @@ async def crypto_exchange(
                     <h2>Sell Crypto</h2>
                     <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                         Sell cryptocurrency for cash. 2% exchange fee.
+                        <br><span style="color:#f59e0b;font-size:11px;">Cash paid from county treasury. Tokens burned.</span>
                     </p>
                     <form action="/api/exchange/sell" method="post">
                         <div class="form-group">
@@ -1297,6 +1576,7 @@ async def crypto_exchange(
                     <h2>Swap Crypto</h2>
                     <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
                         Swap one crypto for another. 2% exchange fee.
+                        <br><span style="color:#f59e0b;font-size:11px;">Both blockchains must have energy.</span>
                     </p>
                     <form action="/api/exchange/swap" method="post">
                         <div class="form-group">
@@ -1326,11 +1606,322 @@ async def crypto_exchange(
             <div class="card">
                 <h2>Market Overview</h2>
                 <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">
-                    Crypto prices are pegged to the total cash value of all county members divided by 1,000,000,000 (rounded down to nearest penny).
+                    Click any token symbol to view full tokenomics. Prices are pegged to total member wealth / 1B.
+                    All tokens have a max supply of 21M with Bitcoin-like halving rewards.
                 </p>
                 {market_html if counties else '<p style="color: #64748b;">No cryptocurrencies exist yet.</p>'}
             </div>
         </div>
+        {ticker_html}
+    </body>
+    </html>
+    """
+
+
+# ==========================
+# TOKEN INFO PAGE
+# ==========================
+@router.get("/token/{crypto_symbol}", response_class=HTMLResponse)
+async def token_info_page(
+    crypto_symbol: str,
+    session_token: Optional[str] = Cookie(None),
+):
+    """Full token information screen with tokenomics, holders, charts."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import get_token_info, get_price_history, CryptoWallet, get_db as counties_get_db
+
+    info = get_token_info(crypto_symbol)
+    if not info:
+        return RedirectResponse(url="/exchange?error=Token+not+found", status_code=303)
+
+    # Price history for mini chart
+    history = get_price_history(crypto_symbol, hours=24)
+
+    # Player's wallet for this token
+    db = counties_get_db()
+    wallet = db.query(CryptoWallet).filter(
+        CryptoWallet.player_id == player.id,
+        CryptoWallet.crypto_symbol == crypto_symbol,
+    ).first()
+    player_balance = wallet.balance if wallet else 0.0
+    player_value = player_balance * info["price"]
+    db.close()
+
+    # Price change badge
+    change = info["price_change_24h"]
+    if change > 0:
+        change_badge = f'<span class="token-change-badge token-change-up">&#9650; +{change:.2f}%</span>'
+    elif change < 0:
+        change_badge = f'<span class="token-change-badge token-change-down">&#9660; {change:.2f}%</span>'
+    else:
+        change_badge = '<span class="token-change-badge token-change-flat">&#9679; 0.00%</span>'
+
+    # Mini price chart
+    chart_html = ""
+    if history and len(history) > 1:
+        prices = [h["price"] for h in history]
+        max_p = max(prices) if prices else 1
+        min_p = min(prices) if prices else 0
+        price_range = max_p - min_p if max_p != min_p else 1
+        chart_html = '<div class="mini-chart">'
+        for p in prices[-48:]:  # Last 48 data points
+            height_pct = max(5, ((p - min_p) / price_range) * 100)
+            chart_html += f'<div class="mini-chart-bar" style="height:{height_pct}%;"></div>'
+        chart_html += '</div>'
+        chart_html += f'<div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;"><span>24h ago</span><span>Now</span></div>'
+
+    # Supply progress bar
+    supply_pct = info["supply_pct_minted"]
+    supply_bar_html = f'''
+    <div class="supply-bar">
+        <div class="supply-bar-fill" style="width:{min(supply_pct, 100):.1f}%;">{supply_pct:.2f}%</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;">
+        <span>Minted: {info["total_minted"]:,.2f}</span>
+        <span>Burned: {info["total_burned"]:,.2f}</span>
+        <span>Max: {info["max_supply"]:,.0f}</span>
+    </div>
+    '''
+
+    # Top holders list
+    holders_html = ""
+    if info["top_holders"]:
+        for i, h in enumerate(info["top_holders"], 1):
+            holders_html += f'''
+            <div class="holder-row">
+                <div>
+                    <span class="holder-rank">{i}</span>
+                    <span style="color: #e5e7eb;">{h["name"]}</span>
+                </div>
+                <div style="text-align:right;">
+                    <div style="color: #a78bfa; font-weight: 600;">{h["balance"]:,.6f} {crypto_symbol}</div>
+                    <div style="font-size: 11px; color: #64748b;">{h["pct_of_supply"]:.2f}% of supply</div>
+                </div>
+            </div>
+            '''
+    else:
+        holders_html = '<p style="color: #64748b;">No holders yet.</p>'
+
+    # Halving info
+    next_halving = info["next_halving_at"]
+    halvings_done = info["halvings_completed"]
+    halving_progress = (info["total_minted"] % HALVING_INTERVAL) / HALVING_INTERVAL * 100 if HALVING_INTERVAL > 0 else 0
+
+    from counties import HALVING_INTERVAL
+
+    logo_html = f'<span class="token-logo">{info["logo_svg"]}</span>' if info["logo_svg"] else ""
+
+    ticker_html = get_crypto_ticker_html()
+
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{info["crypto_name"]} ({crypto_symbol}) · Token Info</title>
+        {COUNTY_STYLES}
+    </head>
+    <body>
+        <div class="container" style="padding-bottom: 50px;">
+            <div class="header">
+                <h1>Token Info</h1>
+                <div>
+                    <a href="/exchange?symbol={crypto_symbol}" class="nav-link">Trade</a>
+                    <a href="/exchange" class="nav-link">Exchange</a>
+                    <a href="/county/{info['county_id']}" class="nav-link">{info['county_name']}</a>
+                    <a href="/" class="nav-link">Dashboard</a>
+                </div>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="token-hero">
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                    <span class="token-logo" style="width:48px;height:48px;border-radius:12px;">{info["logo_svg"].replace('width="32" height="32"', 'width="48" height="48"') if info["logo_svg"] else ""}</span>
+                    <div>
+                        <div style="font-size:14px;color:#94a3b8;">{info["crypto_name"]}</div>
+                        <div style="display:flex;align-items:center;">
+                            <span class="badge badge-crypto" style="font-size:16px;padding:6px 14px;">{crypto_symbol}</span>
+                            <span style="margin-left:12px;color:#64748b;font-size:13px;">on {info["county_name"]} Blockchain</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:16px;">
+                    <span class="token-price-big">${info["price"]:,.4f}</span>
+                    {change_badge}
+                </div>
+
+                {chart_html}
+
+                <div style="display:flex;gap:24px;font-size:13px;color:#94a3b8;margin-top:12px;">
+                    <span>24h High: <strong style="color:#4ade80;">${info["high_24h"]:,.4f}</strong></span>
+                    <span>24h Low: <strong style="color:#f87171;">${info["low_24h"]:,.4f}</strong></span>
+                    <span>24h Volume: <strong style="color:#38bdf8;">${info["volume_24h"]:,.2f}</strong></span>
+                </div>
+            </div>
+
+            <!-- Your Holdings -->
+            <div class="card">
+                <h2>Your Holdings</h2>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div class="wallet-balance">{player_balance:,.6f} {crypto_symbol}</div>
+                        <div class="wallet-value">${player_value:,.4f}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <a href="/exchange?symbol={crypto_symbol}" class="btn btn-primary btn-sm">Buy</a>
+                        <a href="/exchange?symbol={crypto_symbol}" class="btn btn-crypto btn-sm">Sell</a>
+                        <a href="/county/{info['county_id']}/mining" class="btn btn-secondary btn-sm">Mine</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Stats Grid -->
+            <div class="info-grid">
+                <div class="info-stat">
+                    <div class="info-stat-value">${info["market_cap"]:,.2f}</div>
+                    <div class="info-stat-label">Market Cap</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">${info["fdv"]:,.2f}</div>
+                    <div class="info-stat-label">Fully Diluted Val.</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">${info["volume_24h"]:,.2f}</div>
+                    <div class="info-stat-label">24h Volume</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">{info["holder_count"]}</div>
+                    <div class="info-stat-label">Holders</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">{info["circulating_supply"]:,.2f}</div>
+                    <div class="info-stat-label">Circulating Supply</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">{info["max_supply"]:,.0f}</div>
+                    <div class="info-stat-label">Max Supply</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">${info["treasury_balance"]:,.2f}</div>
+                    <div class="info-stat-label">Treasury</div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-value">${info["mining_energy"]:,.2f}</div>
+                    <div class="info-stat-label">Mining Energy</div>
+                </div>
+            </div>
+
+            <!-- Supply & Mining -->
+            <div class="grid grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="card">
+                    <h2>Supply & Tokenomics</h2>
+                    {supply_bar_html}
+                    <div class="stat" style="margin-top:12px;">
+                        <span class="stat-label">Circulating Supply</span>
+                        <span class="stat-value crypto">{info["circulating_supply"]:,.6f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Total Minted</span>
+                        <span class="stat-value">{info["total_minted"]:,.6f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Total Burned</span>
+                        <span class="stat-value negative">{info["total_burned"]:,.6f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Remaining to Mine</span>
+                        <span class="stat-value positive">{info["remaining_supply"]:,.2f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Max Supply</span>
+                        <span class="stat-value">{info["max_supply"]:,.0f}</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Mining & Halving</h2>
+                    <div class="stat">
+                        <span class="stat-label">Current Block Reward</span>
+                        <span class="stat-value crypto">{info["block_reward"]:,.6f} {crypto_symbol}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Halvings Completed</span>
+                        <span class="stat-value">{halvings_done}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Next Halving At</span>
+                        <span class="stat-value">{next_halving:,.0f} minted</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Progress to Next Halving</span>
+                        <span class="stat-value">{halving_progress:.1f}%</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Total Mining Payouts</span>
+                        <span class="stat-value">{info["total_mining_payouts"]}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Mining Energy Pool</span>
+                        <span class="stat-value positive">${info["mining_energy"]:,.2f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">County Cities</span>
+                        <span class="stat-value">{info["city_count"]}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treasury & Safety -->
+            <div class="card">
+                <h2>Treasury & Trust</h2>
+                <div class="grid grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                    <div>
+                        <div class="stat">
+                            <span class="stat-label">Treasury Balance</span>
+                            <span class="stat-value positive">${info["treasury_balance"]:,.4f}</span>
+                        </div>
+                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                            Cash held by the county from token purchases.
+                            Pays out when tokens are sold.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="stat">
+                            <span class="stat-label">Blockchain Energy</span>
+                            <span class="stat-value {'positive' if info['mining_energy'] > 0 else 'negative'}">${info["mining_energy"]:,.2f}</span>
+                        </div>
+                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                            {'&#9679; Blockchain ACTIVE - transactions enabled' if info['mining_energy'] > 0 else '&#9679; Blockchain OFFLINE - no energy, no transactions'}
+                        </p>
+                    </div>
+                    <div>
+                        <div class="stat">
+                            <span class="stat-label">Created</span>
+                            <span class="stat-value">{info["created_at"].strftime("%Y-%m-%d") if info["created_at"] else "N/A"}</span>
+                        </div>
+                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                            Native county token. Used for governance voting (burn to vote)
+                            and as the base token on this county's blockchain.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Holders -->
+            <div class="card">
+                <h2>Top Holders (Whales)</h2>
+                <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">
+                    {info["holder_count"]} unique wallet{"s" if info["holder_count"] != 1 else ""} holding {crypto_symbol}
+                </p>
+                {holders_html}
+            </div>
+        </div>
+        {ticker_html}
     </body>
     </html>
     """

@@ -4,6 +4,15 @@ counties.py
 County management module for the economic simulation.
 Counties are democratically founded federations of Cities.
 
+Each county has a NATIVE CRYPTOCURRENCY (like a Layer 1 blockchain):
+- The county token is the native/base token on the county's blockchain
+- City members mine the native token by depositing city currency as energy
+- The native token is required for governance voting (burn-to-vote)
+- In the future, city members can mint their own tokens ("shitcoins")
+  on their county's blockchain using the native token as gas/base
+- Supply is capped at 21 million with Bitcoin-like halving rewards
+- The blockchain requires ENERGY (mining deposits) to function at all
+
 Handles:
 - County creation (Join/Form County petition system)
 - Government review period (1 day) for county petitions
@@ -11,7 +20,11 @@ Handles:
 - County Parliament (lower house: all city members, upper house: mayors with 3 votes)
 - County Mining Node (deposit city currency, mine county crypto)
 - County cryptocurrency with value pegged to total member cash / 1,000,000,000
+- Supply cap with halving rewards (50 -> 25 -> 12.5 -> ... per payout)
+- County treasury (holds cash from token purchases, pays out on sales)
 - Wadsworth Crypto Exchange (crypto-to-crypto, crypto-to-cash, cash-to-crypto)
+- Token info screens with full tokenomics data
+- Real-time price ticker with movement indicators
 """
 
 from datetime import datetime, timedelta
@@ -22,6 +35,8 @@ from sqlalchemy.orm import sessionmaker
 from enum import Enum
 from stats_ux import log_transaction
 import math
+import hashlib
+import random
 
 # ==========================
 # DATABASE SETUP
@@ -51,6 +66,15 @@ MINING_ENERGY_CONSUMPTION_RATE = 0.10  # 10% of deposits consumed per payout cyc
 MINING_REWARD_MULTIPLIER = 1.0  # Crypto minted per unit of consumed energy value
 EXCHANGE_FEE_PERCENT = 0.02  # 2% fee on all exchange transactions
 EXCHANGE_FEE_TO_GOV_PERCENT = 0.50  # 50% of fees go to government
+
+# Token Supply & Halving (Bitcoin-like)
+MAX_TOKEN_SUPPLY = 21_000_000.0  # 21 million max supply per token
+INITIAL_BLOCK_REWARD = 50.0  # Initial mining reward per payout cycle
+HALVING_INTERVAL = 210_000.0  # Halve reward after this many tokens minted (like BTC blocks)
+MIN_BLOCK_REWARD = 0.00000001  # Smallest possible reward (satoshi equivalent)
+
+# Price snapshot interval
+PRICE_SNAPSHOT_INTERVAL_TICKS = 720  # Snapshot price every hour (same as mining)
 
 # Intercounty Governance Voting
 GOVERNANCE_VOTE_CYCLE_TICKS = 86400  # 5 days (5 * 17280 ticks/day)
@@ -126,9 +150,19 @@ class County(Base):
     # Crypto supply tracking
     total_crypto_minted = Column(Float, default=0.0)
     total_crypto_burned = Column(Float, default=0.0)
+    max_supply = Column(Float, default=MAX_TOKEN_SUPPLY)  # 21M cap, governance can increase
 
     # Mining node energy pool
     mining_energy_pool = Column(Float, default=0.0)  # Deposited city currency value
+
+    # Treasury - holds cash from token purchases, pays out on token sales
+    treasury_balance = Column(Float, default=0.0)
+
+    # Permanent SVG pixel art logo (generated once, stored forever)
+    logo_svg = Column(Text, nullable=True)
+
+    # Mining payout counter (for halving calculation)
+    total_mining_payouts = Column(Integer, default=0)  # Number of payout cycles completed
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -273,6 +307,21 @@ class CryptoExchangeOrder(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class CryptoPriceHistory(Base):
+    """Hourly price snapshots for crypto tokens - enables charts and 24h tracking."""
+    __tablename__ = "crypto_price_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    crypto_symbol = Column(String, index=True, nullable=False)
+    price = Column(Float, nullable=False)
+    market_cap = Column(Float, default=0.0)  # price * circulating supply
+    circulating_supply = Column(Float, default=0.0)  # minted - burned
+    volume_24h = Column(Float, default=0.0)  # Trading volume in cash
+    treasury_balance = Column(Float, default=0.0)
+    mining_energy = Column(Float, default=0.0)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+
 class GovernanceCycle(Base):
     """
     A 5-day governance voting cycle for a county's blockchain.
@@ -378,6 +427,13 @@ def get_all_counties() -> List[dict]:
         for county in counties:
             city_count = db.query(CountyCity).filter(CountyCity.county_id == county.id).count()
             crypto_price = calculate_crypto_price(county.id)
+            circ_supply = get_circulating_supply(county)
+            holder_count = db.query(CryptoWallet).filter(
+                CryptoWallet.crypto_symbol == county.crypto_symbol,
+                CryptoWallet.balance > 0
+            ).count()
+            # Get 24h price change
+            price_change_24h = _get_price_change_24h(db, county.crypto_symbol, crypto_price)
             result.append({
                 "id": county.id,
                 "name": county.name,
@@ -387,12 +443,75 @@ def get_all_counties() -> List[dict]:
                 "max_cities": MAX_COUNTY_CITIES,
                 "crypto_price": crypto_price,
                 "total_minted": county.total_crypto_minted,
+                "total_burned": county.total_crypto_burned,
+                "circulating_supply": circ_supply,
+                "max_supply": county.max_supply,
+                "remaining_supply": get_remaining_supply(county),
                 "mining_energy": county.mining_energy_pool,
+                "treasury_balance": county.treasury_balance or 0.0,
+                "market_cap": crypto_price * circ_supply,
+                "fdv": crypto_price * county.max_supply,
+                "holder_count": holder_count,
+                "logo_svg": county.logo_svg or "",
+                "block_reward": calculate_block_reward(county.total_crypto_minted),
+                "price_change_24h": price_change_24h,
+                "total_mining_payouts": county.total_mining_payouts or 0,
             })
         return result
     except Exception as e:
         print(f"[Counties] Error getting counties: {e}")
         return []
+    finally:
+        db.close()
+
+
+def _get_price_change_24h(db, crypto_symbol: str, current_price: float) -> float:
+    """Get 24h price change percentage. Returns 0.0 if no history."""
+    yesterday = datetime.utcnow() - timedelta(hours=24)
+    old_snapshot = db.query(CryptoPriceHistory).filter(
+        CryptoPriceHistory.crypto_symbol == crypto_symbol,
+        CryptoPriceHistory.timestamp <= yesterday,
+    ).order_by(CryptoPriceHistory.timestamp.desc()).first()
+    if old_snapshot and old_snapshot.price > 0:
+        return ((current_price - old_snapshot.price) / old_snapshot.price) * 100.0
+    return 0.0
+
+
+def get_24h_volume(crypto_symbol: str) -> float:
+    """Get 24h trading volume for a crypto symbol."""
+    db = get_db()
+    try:
+        yesterday = datetime.utcnow() - timedelta(hours=24)
+        orders = db.query(CryptoExchangeOrder).filter(
+            CryptoExchangeOrder.status == "filled",
+            CryptoExchangeOrder.filled_at >= yesterday,
+        ).all()
+        volume = 0.0
+        for order in orders:
+            if order.sell_crypto_symbol == crypto_symbol or order.buy_crypto_symbol == crypto_symbol:
+                volume += order.cash_amount if order.cash_amount else (order.sell_amount * order.price_per_unit)
+        return volume
+    except Exception as e:
+        return 0.0
+    finally:
+        db.close()
+
+
+def get_24h_high_low(crypto_symbol: str) -> tuple:
+    """Get 24h high and low prices. Returns (high, low)."""
+    db = get_db()
+    try:
+        yesterday = datetime.utcnow() - timedelta(hours=24)
+        snapshots = db.query(CryptoPriceHistory).filter(
+            CryptoPriceHistory.crypto_symbol == crypto_symbol,
+            CryptoPriceHistory.timestamp >= yesterday,
+        ).all()
+        if not snapshots:
+            return (0.0, 0.0)
+        prices = [s.price for s in snapshots]
+        return (max(prices), min(prices))
+    except Exception as e:
+        return (0.0, 0.0)
     finally:
         db.close()
 
@@ -466,13 +585,79 @@ def is_player_in_county(player_id: int, county_id: int) -> bool:
 
 
 # ==========================
+# SVG PIXEL ART LOGO GENERATION
+# ==========================
+def generate_token_logo_svg(symbol: str) -> str:
+    """
+    Generate a permanent random SVG pixel art logo for a token.
+    Uses the symbol as a seed for deterministic but random-looking art.
+    Creates an 8x8 pixel grid with horizontal symmetry (like identicons).
+    """
+    seed = hashlib.sha256(symbol.encode()).hexdigest()
+    rng = random.Random(seed)
+
+    # Generate a random color palette (2-4 colors)
+    def rand_color():
+        h = rng.randint(0, 360)
+        s = rng.randint(50, 100)
+        l = rng.randint(35, 65)
+        return f"hsl({h}, {s}%, {l}%)"
+
+    bg_color = f"hsl({rng.randint(0, 360)}, {rng.randint(10, 30)}%, {rng.randint(10, 20)}%)"
+    colors = [rand_color() for _ in range(rng.randint(2, 4))]
+
+    pixels = []
+    grid_size = 8
+    # Generate left half, mirror to right for symmetry
+    for y in range(grid_size):
+        for x in range(grid_size // 2):
+            if rng.random() > 0.45:
+                color = rng.choice(colors)
+                # Left pixel
+                pixels.append((x, y, color))
+                # Mirror pixel
+                pixels.append((grid_size - 1 - x, y, color))
+
+    pixel_size = 4
+    svg_size = grid_size * pixel_size
+    rects = ""
+    for px, py, color in pixels:
+        rects += f'<rect x="{px * pixel_size}" y="{py * pixel_size}" width="{pixel_size}" height="{pixel_size}" fill="{color}"/>'
+
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_size} {svg_size}" width="32" height="32"><rect width="{svg_size}" height="{svg_size}" fill="{bg_color}"/>{rects}</svg>'
+
+
+# ==========================
+# HALVING CALCULATION
+# ==========================
+def calculate_block_reward(total_minted: float) -> float:
+    """
+    Calculate the current mining block reward based on total tokens minted.
+    Halvings occur every HALVING_INTERVAL tokens minted (like Bitcoin).
+    """
+    halvings = int(total_minted / HALVING_INTERVAL)
+    reward = INITIAL_BLOCK_REWARD / (2 ** halvings)
+    return max(reward, MIN_BLOCK_REWARD)
+
+
+def get_circulating_supply(county: County) -> float:
+    """Get the circulating supply (minted minus burned)."""
+    return max(county.total_crypto_minted - county.total_crypto_burned, 0.0)
+
+
+def get_remaining_supply(county: County) -> float:
+    """Get how many tokens can still be minted before hitting max supply."""
+    return max(county.max_supply - county.total_crypto_minted, 0.0)
+
+
+# ==========================
 # CRYPTO PRICE CALCULATION
 # ==========================
 def calculate_crypto_price(county_id: int) -> float:
     """
     Calculate the price of a county's cryptocurrency.
     Price = total cash value of every city member in the county / 1,000,000,000
-    Rounded down to the nearest penny.
+    Rounded down to 4 decimal places for precision.
     """
     from cities import CityMember, get_player_total_value
     db = get_db()
@@ -488,12 +673,12 @@ def calculate_crypto_price(county_id: int) -> float:
             total_cash_value += get_player_total_value(member.player_id)
 
         raw_price = total_cash_value / CRYPTO_PEG_DIVISOR
-        # Round down to nearest penny
-        price = math.floor(raw_price * 100) / 100.0
-        return max(price, 0.01)  # Minimum price of $0.01
+        # Round down to 4 decimal places for precision
+        price = math.floor(raw_price * 10000) / 10000.0
+        return max(price, 0.0001)  # Minimum price of $0.0001
     except Exception as e:
         print(f"[Counties] Error calculating crypto price: {e}")
-        return 0.01
+        return 0.0001
     finally:
         db.close()
 
@@ -610,10 +795,12 @@ def process_gov_review(petition_id: int) -> Tuple[bool, str]:
 
         if petition.target_county_id is None:
             # === FORMING NEW COUNTY ===
+            logo = generate_token_logo_svg(petition.proposed_crypto_symbol)
             county = County(
                 name=petition.proposed_county_name,
                 crypto_name=petition.proposed_crypto_name,
                 crypto_symbol=petition.proposed_crypto_symbol,
+                logo_svg=logo,
             )
             db.add(county)
             db.flush()
@@ -944,6 +1131,12 @@ def process_mining_payouts(current_tick: int):
     Process mining payouts for all counties.
     Consumes energy from the mining pool and mints crypto to depositors.
     Called every MINING_PAYOUT_INTERVAL_TICKS.
+
+    Mining rewards use Bitcoin-like halving:
+    - Initial block reward: 50 tokens per payout cycle
+    - Halves every 210,000 tokens minted
+    - Hard cap at max_supply (21M default)
+    - Energy is REQUIRED - no energy, no mining
     """
     db = get_db()
     try:
@@ -954,13 +1147,18 @@ def process_mining_payouts(current_tick: int):
             if energy_to_consume <= 0:
                 continue
 
-            # Get crypto price
-            crypto_price = calculate_crypto_price(county.id)
-            if crypto_price <= 0:
+            # Check supply cap - no mining if max supply reached
+            remaining = get_remaining_supply(county)
+            if remaining <= 0:
+                print(f"[Counties] Mining halted: {county.crypto_symbol} max supply ({county.max_supply:,.0f}) reached")
                 continue
 
-            # Calculate total crypto to mint
-            crypto_to_mint = (energy_to_consume * MINING_REWARD_MULTIPLIER) / crypto_price
+            # Calculate block reward with halving
+            block_reward = calculate_block_reward(county.total_crypto_minted)
+            crypto_to_mint = min(block_reward, remaining)  # Don't exceed max supply
+
+            if crypto_to_mint <= 0:
+                continue
 
             # Get all unconsumed deposits for this county, ordered by deposit time
             deposits = db.query(MiningDeposit).filter(
@@ -1004,8 +1202,10 @@ def process_mining_payouts(current_tick: int):
             # Update county totals
             county.total_crypto_minted += crypto_to_mint
             county.mining_energy_pool -= energy_to_consume
+            county.total_mining_payouts = (county.total_mining_payouts or 0) + 1
 
-            print(f"[Counties] Mining payout: County '{county.name}' minted {crypto_to_mint:.6f} {county.crypto_symbol}")
+            halvings = int(county.total_crypto_minted / HALVING_INTERVAL)
+            print(f"[Counties] Mining payout: County '{county.name}' minted {crypto_to_mint:.6f} {county.crypto_symbol} (reward: {block_reward:.4f}, halvings: {halvings}, supply: {county.total_crypto_minted:,.2f}/{county.max_supply:,.0f})")
 
         db.commit()
 
@@ -1061,11 +1261,22 @@ def get_player_wallets(player_id: int) -> List[dict]:
 def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> Tuple[bool, str]:
     """
     Sell crypto for cash at the pegged price. 2% exchange fee.
+    Cash is paid out from the county treasury. If treasury has insufficient
+    funds, the sale is limited to what the treasury can cover.
+    The sold tokens are burned (reducing circulating supply).
+    Requires the county's mining node to have energy (blockchain must be powered).
     """
     from auth import Player
 
     db = get_db()
     try:
+        # Verify the blockchain has energy to function
+        county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
+        if not county:
+            return False, "Token not found"
+        if (county.mining_energy_pool or 0) <= 0:
+            return False, f"The {county.name} blockchain has no energy. Mining nodes must be powered before any transactions can occur."
+
         wallet = db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == crypto_symbol,
@@ -1081,6 +1292,11 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         fee = gross_value * EXCHANGE_FEE_PERCENT
         net_value = gross_value - fee
 
+        # Check treasury can cover the payout
+        treasury = county.treasury_balance or 0.0
+        if treasury < net_value:
+            return False, f"County treasury has insufficient funds (${treasury:,.4f} available, ${net_value:,.4f} needed). More buyers needed to fund the treasury."
+
         player = db.query(Player).filter(Player.id == player_id).first()
         if not player:
             return False, "Player not found"
@@ -1090,16 +1306,30 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         wallet.total_sold += amount
         player.cash_balance += net_value
 
-        # Burn the sold crypto (reducing supply)
-        county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
-        if county:
-            county.total_crypto_burned += amount
+        # Cash comes FROM the county treasury
+        county.treasury_balance -= (net_value + fee)
+
+        # Burn the sold crypto (reducing circulating supply)
+        county.total_crypto_burned += amount
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if gov:
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
             gov.cash_balance += gov_fee
+
+        # Record the order
+        order = CryptoExchangeOrder(
+            player_id=player_id,
+            order_type=ExchangeOrderType.CRYPTO_TO_CASH,
+            sell_crypto_symbol=crypto_symbol,
+            sell_amount=amount,
+            cash_amount=net_value,
+            price_per_unit=price,
+            status="filled",
+            filled_at=datetime.utcnow(),
+        )
+        db.add(order)
 
         db.commit()
 
@@ -1108,12 +1338,12 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             "crypto_sell",
             "money",
             net_value,
-            f"Sold {amount:.6f} {crypto_symbol} @ ${price:,.2f}",
+            f"Sold {amount:.6f} {crypto_symbol} @ ${price:,.4f}",
             reference_id=f"exchange_sell_{crypto_symbol}",
         )
 
-        print(f"[Counties] Crypto sale: Player {player_id} sold {amount:.6f} {crypto_symbol} for ${net_value:,.2f}")
-        return True, f"Sold {amount:.6f} {crypto_symbol} for ${net_value:,.2f} (fee: ${fee:,.2f})"
+        print(f"[Counties] Crypto sale: Player {player_id} sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f}")
+        return True, f"Sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f} (fee: ${fee:,.4f})"
 
     except Exception as e:
         db.rollback()
@@ -1126,11 +1356,21 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
 def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float) -> Tuple[bool, str]:
     """
     Buy crypto with cash at the pegged price. 2% exchange fee.
+    Cash goes INTO the county treasury. Tokens are drawn from circulating supply
+    (not minted - buying doesn't create new tokens, only mining does).
+    Requires the county's mining node to have energy (blockchain must be powered).
     """
     from auth import Player
 
     db = get_db()
     try:
+        # Verify the blockchain has energy to function
+        county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
+        if not county:
+            return False, "Token not found"
+        if (county.mining_energy_pool or 0) <= 0:
+            return False, f"The {county.name} blockchain has no energy. Mining nodes must be powered before any transactions can occur."
+
         player = db.query(Player).filter(Player.id == player_id).first()
         if not player:
             return False, "Player not found"
@@ -1145,10 +1385,13 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         net_cash = cash_amount - fee
         crypto_amount = net_cash / price
 
-        # Deduct cash
+        # Deduct cash from player
         player.cash_balance -= cash_amount
 
-        # Credit crypto
+        # Cash goes INTO the county treasury
+        county.treasury_balance = (county.treasury_balance or 0.0) + net_cash
+
+        # Credit crypto to player wallet (tokens are exchanged, not newly minted)
         wallet = db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == crypto_symbol,
@@ -1164,16 +1407,30 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         wallet.balance += crypto_amount
         wallet.total_bought += crypto_amount
 
-        # Mint new crypto (increasing supply)
-        county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
-        if county:
-            county.total_crypto_minted += crypto_amount
+        # Buying on exchange mints tokens (increases supply, but capped)
+        remaining = get_remaining_supply(county)
+        if crypto_amount > remaining:
+            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {county.max_supply:,.0f})"
+        county.total_crypto_minted += crypto_amount
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if gov:
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
             gov.cash_balance += gov_fee
+
+        # Record the order
+        order = CryptoExchangeOrder(
+            player_id=player_id,
+            order_type=ExchangeOrderType.CASH_TO_CRYPTO,
+            buy_crypto_symbol=crypto_symbol,
+            buy_amount=crypto_amount,
+            cash_amount=cash_amount,
+            price_per_unit=price,
+            status="filled",
+            filled_at=datetime.utcnow(),
+        )
+        db.add(order)
 
         db.commit()
 
@@ -1182,12 +1439,12 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
             "crypto_buy",
             "money",
             -cash_amount,
-            f"Bought {crypto_amount:.6f} {crypto_symbol} @ ${price:,.2f}",
+            f"Bought {crypto_amount:.6f} {crypto_symbol} @ ${price:,.4f}",
             reference_id=f"exchange_buy_{crypto_symbol}",
         )
 
-        print(f"[Counties] Crypto buy: Player {player_id} bought {crypto_amount:.6f} {crypto_symbol} for ${cash_amount:,.2f}")
-        return True, f"Bought {crypto_amount:.6f} {crypto_symbol} for ${cash_amount:,.2f} (fee: ${fee:,.2f})"
+        print(f"[Counties] Crypto buy: Player {player_id} bought {crypto_amount:.6f} {crypto_symbol} for ${cash_amount:,.4f}")
+        return True, f"Bought {crypto_amount:.6f} {crypto_symbol} for ${cash_amount:,.4f} (fee: ${fee:,.4f})"
 
     except Exception as e:
         db.rollback()
@@ -1200,12 +1457,23 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
 def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: float) -> Tuple[bool, str]:
     """
     Swap one crypto for another through the exchange.
-    Converts sell crypto → cash → buy crypto. 2% fee on each leg.
+    Converts sell crypto → cash → buy crypto. 2% fee.
+    Both blockchains must have energy to function.
     """
     from auth import Player
 
     db = get_db()
     try:
+        # Verify both blockchains have energy
+        sell_county = db.query(County).filter(County.crypto_symbol == sell_symbol).first()
+        buy_county = db.query(County).filter(County.crypto_symbol == buy_symbol).first()
+        if not sell_county or not buy_county:
+            return False, "One or both tokens not found"
+        if (sell_county.mining_energy_pool or 0) <= 0:
+            return False, f"The {sell_county.name} blockchain has no energy. Mining nodes must be powered."
+        if (buy_county.mining_energy_pool or 0) <= 0:
+            return False, f"The {buy_county.name} blockchain has no energy. Mining nodes must be powered."
+
         # Validate sell side
         sell_wallet = db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
@@ -1225,15 +1493,19 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         net_cash = gross_cash - fee
         buy_amount = net_cash / buy_price
 
+        # Check buy side supply cap
+        remaining = get_remaining_supply(buy_county)
+        if buy_amount > remaining:
+            return False, f"Not enough {buy_symbol} supply remaining ({remaining:,.6f} left)"
+
         # Execute sell side
         sell_wallet.balance -= sell_amount
         sell_wallet.total_sold += sell_amount
+        sell_county.total_crypto_burned += sell_amount
+        # Sell side cash goes to sell county treasury
+        sell_county.treasury_balance = (sell_county.treasury_balance or 0.0) + net_cash
 
-        sell_county = db.query(County).filter(County.crypto_symbol == sell_symbol).first()
-        if sell_county:
-            sell_county.total_crypto_burned += sell_amount
-
-        # Execute buy side
+        # Execute buy side - cash comes from buy county treasury
         buy_wallet = db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == buy_symbol,
@@ -1248,16 +1520,28 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
 
         buy_wallet.balance += buy_amount
         buy_wallet.total_bought += buy_amount
-
-        buy_county = db.query(County).filter(County.crypto_symbol == buy_symbol).first()
-        if buy_county:
-            buy_county.total_crypto_minted += buy_amount
+        buy_county.total_crypto_minted += buy_amount
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if gov:
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
             gov.cash_balance += gov_fee
+
+        # Record the order
+        order = CryptoExchangeOrder(
+            player_id=player_id,
+            order_type=ExchangeOrderType.CRYPTO_TO_CRYPTO,
+            sell_crypto_symbol=sell_symbol,
+            sell_amount=sell_amount,
+            buy_crypto_symbol=buy_symbol,
+            buy_amount=buy_amount,
+            cash_amount=gross_cash,
+            price_per_unit=sell_price,
+            status="filled",
+            filled_at=datetime.utcnow(),
+        )
+        db.add(order)
 
         db.commit()
 
@@ -1271,7 +1555,7 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         )
 
         print(f"[Counties] Crypto swap: Player {player_id} swapped {sell_amount:.6f} {sell_symbol} → {buy_amount:.6f} {buy_symbol}")
-        return True, f"Swapped {sell_amount:.6f} {sell_symbol} for {buy_amount:.6f} {buy_symbol} (fee: ${fee:,.2f})"
+        return True, f"Swapped {sell_amount:.6f} {sell_symbol} for {buy_amount:.6f} {buy_symbol} (fee: ${fee:,.4f})"
 
     except Exception as e:
         db.rollback()
@@ -1733,6 +2017,169 @@ def process_governance_cycles(current_tick: int):
 
 
 # ==========================
+# PRICE SNAPSHOT
+# ==========================
+def take_price_snapshots():
+    """Take hourly price snapshots for all county cryptos. Enables 24h tracking and charts."""
+    db = get_db()
+    try:
+        counties = db.query(County).all()
+        for county in counties:
+            price = calculate_crypto_price(county.id)
+            circ_supply = get_circulating_supply(county)
+            volume = get_24h_volume(county.crypto_symbol)
+            snapshot = CryptoPriceHistory(
+                crypto_symbol=county.crypto_symbol,
+                price=price,
+                market_cap=price * circ_supply,
+                circulating_supply=circ_supply,
+                volume_24h=volume,
+                treasury_balance=county.treasury_balance or 0.0,
+                mining_energy=county.mining_energy_pool or 0.0,
+            )
+            db.add(snapshot)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error taking price snapshots: {e}")
+    finally:
+        db.close()
+
+
+def get_price_history(crypto_symbol: str, hours: int = 24) -> list:
+    """Get price history snapshots for charting."""
+    db = get_db()
+    try:
+        since = datetime.utcnow() - timedelta(hours=hours)
+        snapshots = db.query(CryptoPriceHistory).filter(
+            CryptoPriceHistory.crypto_symbol == crypto_symbol,
+            CryptoPriceHistory.timestamp >= since,
+        ).order_by(CryptoPriceHistory.timestamp.asc()).all()
+        return [{
+            "price": s.price,
+            "market_cap": s.market_cap,
+            "circulating_supply": s.circulating_supply,
+            "volume_24h": s.volume_24h,
+            "treasury_balance": s.treasury_balance,
+            "mining_energy": s.mining_energy,
+            "timestamp": s.timestamp.isoformat(),
+        } for s in snapshots]
+    except Exception as e:
+        print(f"[Counties] Error getting price history: {e}")
+        return []
+    finally:
+        db.close()
+
+
+def get_token_holders(crypto_symbol: str) -> list:
+    """Get all holders of a token sorted by balance descending."""
+    from auth import Player
+    db = get_db()
+    try:
+        wallets = db.query(CryptoWallet).filter(
+            CryptoWallet.crypto_symbol == crypto_symbol,
+            CryptoWallet.balance > 0
+        ).order_by(CryptoWallet.balance.desc()).all()
+        result = []
+        for w in wallets:
+            player = db.query(Player).filter(Player.id == w.player_id).first()
+            result.append({
+                "player_id": w.player_id,
+                "player_name": player.business_name if player else f"Player {w.player_id}",
+                "balance": w.balance,
+                "total_mined": w.total_mined,
+                "total_bought": w.total_bought,
+                "total_sold": w.total_sold,
+            })
+        return result
+    except Exception as e:
+        print(f"[Counties] Error getting token holders: {e}")
+        return []
+    finally:
+        db.close()
+
+
+def get_token_info(crypto_symbol: str) -> Optional[dict]:
+    """Get comprehensive token information for the info screen."""
+    db = get_db()
+    try:
+        county = db.query(County).filter(County.crypto_symbol == crypto_symbol).first()
+        if not county:
+            return None
+
+        price = calculate_crypto_price(county.id)
+        circ_supply = get_circulating_supply(county)
+        remaining = get_remaining_supply(county)
+        holder_count = db.query(CryptoWallet).filter(
+            CryptoWallet.crypto_symbol == crypto_symbol,
+            CryptoWallet.balance > 0
+        ).count()
+        volume = get_24h_volume(crypto_symbol)
+        high_24h, low_24h = get_24h_high_low(crypto_symbol)
+        price_change = _get_price_change_24h(db, crypto_symbol, price)
+        block_reward = calculate_block_reward(county.total_crypto_minted)
+        halvings = int(county.total_crypto_minted / HALVING_INTERVAL)
+        next_halving_at = (halvings + 1) * HALVING_INTERVAL
+        city_count = db.query(CountyCity).filter(CountyCity.county_id == county.id).count()
+
+        # Top holders (whales)
+        top_holders = db.query(CryptoWallet).filter(
+            CryptoWallet.crypto_symbol == crypto_symbol,
+            CryptoWallet.balance > 0
+        ).order_by(CryptoWallet.balance.desc()).limit(10).all()
+
+        from auth import Player
+        whale_list = []
+        for w in top_holders:
+            p = db.query(Player).filter(Player.id == w.player_id).first()
+            pct = (w.balance / circ_supply * 100) if circ_supply > 0 else 0
+            whale_list.append({
+                "player_id": w.player_id,
+                "name": p.business_name if p else f"Player {w.player_id}",
+                "balance": w.balance,
+                "pct_of_supply": pct,
+            })
+
+        return {
+            "crypto_symbol": county.crypto_symbol,
+            "crypto_name": county.crypto_name,
+            "county_name": county.name,
+            "county_id": county.id,
+            "logo_svg": county.logo_svg or "",
+            "price": price,
+            "price_change_24h": price_change,
+            "high_24h": high_24h,
+            "low_24h": low_24h,
+            "market_cap": price * circ_supply,
+            "fdv": price * county.max_supply,
+            "volume_24h": volume,
+            "circulating_supply": circ_supply,
+            "total_minted": county.total_crypto_minted,
+            "total_burned": county.total_crypto_burned,
+            "max_supply": county.max_supply,
+            "remaining_supply": remaining,
+            "supply_pct_minted": (county.total_crypto_minted / county.max_supply * 100) if county.max_supply > 0 else 0,
+            "holder_count": holder_count,
+            "treasury_balance": county.treasury_balance or 0.0,
+            "mining_energy": county.mining_energy_pool or 0.0,
+            "block_reward": block_reward,
+            "halvings_completed": halvings,
+            "next_halving_at": next_halving_at,
+            "total_mining_payouts": county.total_mining_payouts or 0,
+            "city_count": city_count,
+            "top_holders": whale_list,
+            "created_at": county.created_at,
+        }
+    except Exception as e:
+        print(f"[Counties] Error getting token info: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+    finally:
+        db.close()
+
+
+# ==========================
 # MODULE LIFECYCLE
 # ==========================
 def initialize():
@@ -1742,6 +2189,23 @@ def initialize():
 
     db = get_db()
     county_count = db.query(County).count()
+
+    # Generate logos for any counties that don't have one
+    counties = db.query(County).filter(County.logo_svg == None).all()
+    for county in counties:
+        county.logo_svg = generate_token_logo_svg(county.crypto_symbol)
+    if counties:
+        db.commit()
+        print(f"[Counties] Generated {len(counties)} missing token logos")
+
+    # Set max_supply for any counties that don't have it set
+    no_supply = db.query(County).filter(County.max_supply == None).all()
+    for county in no_supply:
+        county.max_supply = MAX_TOKEN_SUPPLY
+    if no_supply:
+        db.commit()
+        print(f"[Counties] Set max supply for {len(no_supply)} counties")
+
     db.close()
 
     print(f"[Counties] Current state: {county_count} counties")
@@ -1755,7 +2219,8 @@ async def tick(current_tick: int, now: datetime):
     Handles:
     - Government review of petitions (auto-approve after 1 day)
     - Poll closing for county admission votes
-    - Mining payouts
+    - Mining payouts (with halving)
+    - Price snapshots
     """
     db = get_db()
 
@@ -1784,6 +2249,10 @@ async def tick(current_tick: int, now: datetime):
         if current_tick % MINING_PAYOUT_INTERVAL_TICKS == 0:
             process_mining_payouts(current_tick)
 
+        # Price snapshots every hour (same interval as mining)
+        if current_tick % PRICE_SNAPSHOT_INTERVAL_TICKS == 0:
+            take_price_snapshots()
+
         # Process governance cycles every 60 ticks (5 minutes)
         if current_tick % 60 == 0:
             process_governance_cycles(current_tick)
@@ -1807,6 +2276,7 @@ __all__ = [
     # Models
     'County', 'CountyCity', 'CountyPetition', 'CountyPoll', 'CountyVote',
     'MiningDeposit', 'CryptoWallet', 'CryptoExchangeOrder',
+    'CryptoPriceHistory',
     'GovernanceCycle', 'GovernanceProposal', 'GovernanceVote',
 
     # Enums
@@ -1827,11 +2297,14 @@ __all__ = [
 
     # Mining
     'deposit_to_mining_node', 'process_mining_payouts',
+    'calculate_block_reward', 'get_circulating_supply', 'get_remaining_supply',
 
     # Crypto
     'calculate_crypto_price', 'get_crypto_price_by_symbol',
-    'get_player_wallets',
+    'get_player_wallets', 'get_token_info', 'get_token_holders',
     'sell_crypto_for_cash', 'buy_crypto_with_cash', 'swap_crypto',
+    'get_24h_volume', 'get_24h_high_low', 'get_price_history',
+    'generate_token_logo_svg',
 
     # Governance
     'get_current_governance_cycle', 'start_governance_cycle',
@@ -1840,7 +2313,8 @@ __all__ = [
     'get_governance_history', 'process_governance_cycles',
 
     # Constants
-    'MAX_COUNTY_CITIES', 'MAYOR_VOTE_WEIGHT',
+    'MAX_COUNTY_CITIES', 'MAYOR_VOTE_WEIGHT', 'MAX_TOKEN_SUPPLY',
+    'INITIAL_BLOCK_REWARD', 'HALVING_INTERVAL',
     'GOVERNANCE_VOTE_CYCLE_TICKS', 'GOVERNANCE_PROPOSAL_WINDOW_TICKS',
     'GOVERNANCE_VOTING_WINDOW_TICKS', 'MIN_GOVERNANCE_BURN',
 ]
