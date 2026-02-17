@@ -240,61 +240,46 @@ def process_business_tick(db):
 
         player_inv = get_player_inventory(player.id)
         lines_successfully_produced = 0
-        
-        # ===== RETAIL CLASS =====
-        if config.get("class") == "retail":
-            total_revenue = 0.0
+        total_revenue = 0.0
+        has_retail = bool(config.get("products"))
+        production_lines = config.get("production_lines", [])
+
+        # ===== RETAIL PROCESSING =====
+        if has_retail:
             for item, rule in config.get("products", {}).items():
                 qty = player_inv.get(item, 0)
-                if qty <= 0: continue
-                
+                if qty <= 0:
+                    continue
+
                 price_entry = db.query(RetailPrice).filter(
                     RetailPrice.player_id == player.id,
                     RetailPrice.item_type == item
                 ).first()
-                
+
                 mkt_p = market.get_market_price(item) or 10.0
                 current_p = price_entry.price if price_entry else mkt_p
-                
+
                 multiplier = SupplyDemandEngine.get_sales_multiplier(
                     current_p, mkt_p, rule.get("elasticity", 1.0)
                 )
                 chance = SupplyDemandEngine.calculate_chance_per_tick(
                     rule.get("base_sale_chance", 0.05), multiplier
                 )
-                
+
                 sold = sum(1 for _ in range(int(qty)) if random.random() < chance)
                 if sold > 0:
                     remove_item(player.id, item, sold)
                     total_revenue += sold * current_p
                     lines_successfully_produced += 1
-            
-            # Always pay wages and reset progress for retail, even if no sales
-            net_revenue = total_revenue - wage_cost  # ← DEFINE net_revenue here!
-            player.cash_balance += net_revenue
-            biz.progress_ticks = 0
-            db.commit()
-            # Log retail revenue (if any)
-            if net_revenue > 0:
-                log_transaction(
-                    biz.owner_id,
-                    "cash_in",
-                    "money",
-                    net_revenue,
-                    f"Retail revenue: {biz.business_type}",
-                    str(biz.id)
-                )
-            continue
 
-        # ===== PRODUCTION CLASS =====
-        production_lines = config.get("production_lines", [])
+        # ===== PRODUCTION PROCESSING =====
         for line in production_lines:
             line_can_run = True
             for req in line.get("inputs", []):
                 if player_inv.get(req["item"], 0) < req["quantity"]:
                     line_can_run = False
                     break
-            
+
             if line_can_run:
                 for req in line.get("inputs", []):
                     remove_item(player.id, req["item"], req["quantity"])
@@ -319,29 +304,44 @@ def process_business_tick(db):
                     str(biz.id)
                 )
                 lines_successfully_produced += 1
-                
-        # After all production lines processed - pay wages and subsidy
-        if lines_successfully_produced > 0:
-            # Pay city production subsidy (4.75% of input costs)
-            try:
-                from cities import pay_production_subsidy
-                production_cost = 0.0
-                for line in production_lines:
-                    for req in line.get("inputs", []):
-                        item_price = market.get_market_price(req["item"]) or 1.0
-                        production_cost += item_price * req["quantity"]
-                
-                subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
-                if subsidy > 0:
-                    print(f"[Business] City subsidy: ${subsidy:.2f} to player {player.id}")
-            except ImportError:
-                pass
-            except Exception as e:
-                print(f"[Business] Subsidy error: {e}")
-            
-            player.cash_balance -= wage_cost
+
+        # ===== FINALIZE: pay wages once, reset progress, commit =====
+        # Retail always finalizes (wages due even with no sales).
+        # Pure-production only finalizes when something was produced.
+        should_finalize = has_retail or lines_successfully_produced > 0
+        if should_finalize:
+            # Pay city production subsidy on any production that ran
+            if production_lines and lines_successfully_produced > 0:
+                try:
+                    from cities import pay_production_subsidy
+                    production_cost = 0.0
+                    for line in production_lines:
+                        for req in line.get("inputs", []):
+                            item_price = market.get_market_price(req["item"]) or 1.0
+                            production_cost += item_price * req["quantity"]
+
+                    subsidy = pay_production_subsidy(player.id, biz.id, production_cost)
+                    if subsidy > 0:
+                        print(f"[Business] City subsidy: ${subsidy:.2f} to player {player.id}")
+                        total_revenue += subsidy
+                except ImportError:
+                    pass
+                except Exception as e:
+                    print(f"[Business] Subsidy error: {e}")
+
+            net_revenue = total_revenue - wage_cost
+            player.cash_balance += net_revenue
             biz.progress_ticks = 0
             db.commit()
+            if net_revenue > 0:
+                log_transaction(
+                    biz.owner_id,
+                    "cash_in",
+                    "money",
+                    net_revenue,
+                    f"Revenue: {biz.business_type}",
+                    str(biz.id)
+                )
 
 def create_business(player_id: int, plot_id: int, business_type_key: str):
     """Create a business on a vacant land plot owned by the player."""
