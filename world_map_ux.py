@@ -421,16 +421,11 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
     Click any element to navigate &bull; Scroll to zoom &bull; Drag to pan
 </div>
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""/>
+<!-- Leaflet CSS (served locally) -->
+<link rel="stylesheet" href="/static/leaflet.css"/>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLcE="
-        crossorigin=""></script>
+<!-- Leaflet JS (served locally) -->
+<script src="/static/leaflet.js"></script>
 
 <script>
 // ============================================================
