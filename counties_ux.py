@@ -1709,9 +1709,9 @@ async def token_info_page(
     # Halving info
     next_halving = info["next_halving_at"]
     halvings_done = info["halvings_completed"]
-    halving_progress = (info["total_minted"] % HALVING_INTERVAL) / HALVING_INTERVAL * 100 if HALVING_INTERVAL > 0 else 0
 
     from counties import HALVING_INTERVAL
+    halving_progress = (info["total_minted"] % HALVING_INTERVAL) / HALVING_INTERVAL * 100 if HALVING_INTERVAL > 0 else 0
 
     logo_html = f'<span class="token-logo">{info["logo_svg"]}</span>' if info["logo_svg"] else ""
 
