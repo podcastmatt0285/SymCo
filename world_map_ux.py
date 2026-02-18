@@ -379,7 +379,8 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
     <h1 style="margin: 0; font-size: 1.4rem;">World Map</h1>
     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-        <button id="btn-fit" onclick="fitAll()" style="padding: 6px 12px; background: #38bdf8; color: #020617; border: none; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">Fit All</button>
+        <button id="btn-world" onclick="fitWorld()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">World View</button>
+        <button id="btn-fit" onclick="fitAll()" style="padding: 6px 12px; background: #38bdf8; color: #020617; border: none; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">My Assets</button>
         <button id="btn-refresh" onclick="loadMapData()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">Refresh</button>
     </div>
 </div>
@@ -428,6 +429,13 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 <script src="/static/leaflet.js"></script>
 
 <script>
+// ============================================================
+// WORLD GRID CONSTANTS  (mirror Python server values)
+// ============================================================
+const WORLD_W        = """ + str(int(GRID_WIDTH))        + """;  // GRID_WIDTH
+const WORLD_CITY_Y   = """ + str(int(CITY_ZONE_Y))       + """;  // CITY_ZONE_Y
+const WORLD_COUNTY_Y = """ + str(int(COUNTY_ZONE_Y))     + """;  // COUNTY_ZONE_Y
+
 // ============================================================
 // TERRAIN / DISTRICT COLOUR PALETTE  (mirrors Python dict)
 // ============================================================
@@ -563,8 +571,9 @@ function renderMap(data) {
         const x1 = plot.grid_x, y1 = plot.grid_y;
         const x2 = x1 + 1,     y2 = y1 + 1;
 
-        // Efficiency drives fill opacity (0.2 at 0%, 0.9 at 100%)
-        const fillOpacity = 0.2 + (plot.efficiency / 100) * 0.7;
+        // Efficiency drives fill opacity (0.6 at 0%, 0.95 at 100%)
+        // Minimum 0.6 so plots are always clearly visible against zone bg.
+        const fillOpacity = 0.6 + (plot.efficiency / 100) * 0.35;
 
         const color = terrainColor(plot.terrain_type);
 
@@ -675,10 +684,18 @@ function renderMap(data) {
     (data.cities || []).forEach(city => {
         const cx = city.center_x, cy = city.center_y;
 
+        const mayorStar = city.is_mayor ? ' &#9733;' : '';
         const icon = L.divIcon({
-            html: `<div style="font-size:22px;line-height:1;filter:drop-shadow(0 0 4px #38bdf8);">&#127961;&#65039;</div>`,
+            html: `<div style="display:inline-flex;align-items:center;gap:5px;` +
+                  `background:rgba(2,6,23,0.88);border:1.5px solid #38bdf8;` +
+                  `border-radius:5px;padding:4px 9px;font-family:monospace;` +
+                  `font-size:12px;color:#e2e8f0;white-space:nowrap;` +
+                  `filter:drop-shadow(0 0 8px #0ea5e9);transform:translate(-50%,-50%);` +
+                  `cursor:pointer;">` +
+                  `<span style="font-size:17px">&#127961;</span>` +
+                  ` <strong>${city.name}</strong>${mayorStar}</div>`,
             className: '',
-            iconAnchor: [11, 11],
+            iconAnchor: [0, 0],
         });
 
         const mayorBadge = city.is_mayor
@@ -708,9 +725,16 @@ function renderMap(data) {
         const cx = county.center_x, cy = county.center_y;
 
         const icon = L.divIcon({
-            html: `<div style="font-size:26px;line-height:1;filter:drop-shadow(0 0 6px #d4af37);">&#128506;&#65039;</div>`,
+            html: `<div style="display:inline-flex;align-items:center;gap:5px;` +
+                  `background:rgba(2,6,23,0.88);border:1.5px solid #d4af37;` +
+                  `border-radius:5px;padding:4px 9px;font-family:monospace;` +
+                  `font-size:13px;color:#fde68a;white-space:nowrap;` +
+                  `filter:drop-shadow(0 0 8px #d4af37);transform:translate(-50%,-50%);` +
+                  `cursor:pointer;">` +
+                  `<span style="font-size:19px">&#128506;</span>` +
+                  ` <strong>${county.name}</strong></div>`,
             className: '',
-            iconAnchor: [13, 13],
+            iconAnchor: [0, 0],
         });
 
         const popupHtml = `
@@ -729,11 +753,33 @@ function renderMap(data) {
         allBoundsPoints.push([cy + 10, cx + 10]);
     });
 
-    // ---- FIT VIEWPORT ----------------------------------------------
+    // ---- FIT VIEWPORT (context view: assets + margin) --------------
     if (allBoundsPoints.length > 0) {
-        map.fitBounds(allBoundsPoints, { padding: [30, 30] });
+        // Derive tight data bounds from the collected points
+        const lats = allBoundsPoints.map(p => p[0]);
+        const lngs = allBoundsPoints.map(p => p[1]);
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+
+        // Expand by 20 units so the player sees surrounding world context
+        const M = 20;
+        let sw = [Math.max(0, minLat - M), Math.max(-2, minLng - M)];
+        let ne = [maxLat + M, Math.min(WORLD_W + 2, maxLng + M)];
+
+        // Enforce a minimum 30×30 span so a single plot doesn't over-zoom
+        if (ne[0] - sw[0] < 30) {
+            const midLat = (minLat + maxLat) / 2;
+            sw[0] = Math.max(0, midLat - 15); ne[0] = sw[0] + 30;
+        }
+        if (ne[1] - sw[1] < 30) {
+            const midLng = (minLng + maxLng) / 2;
+            sw[1] = Math.max(-2, midLng - 15); ne[1] = sw[1] + 30;
+        }
+        map.fitBounds([sw, ne], { padding: [30, 30] });
     } else {
-        map.setView([0, 0], 1);
+        // No assets yet — show the top slice of the land zone so the
+        // zone backgrounds are visible and the world feels real.
+        map.fitBounds([[0, -2], [50, WORLD_W + 2]], { padding: [20, 20] });
     }
 
     document.getElementById('map-loading').style.display = 'none';
@@ -746,10 +792,21 @@ function renderMap(data) {
         `${plotCount} plots  \u2022  ${distCount} districts  \u2022  ${cityCount} cities  \u2022  ${countyCount} counties`;
 }
 
+// "My Assets" button — zoom tightly to the player's data
 function fitAll() {
+    if (!map) return;
     if (allBoundsPoints.length > 0) {
-        map.fitBounds(allBoundsPoints, { padding: [30, 30] });
+        map.fitBounds(allBoundsPoints, { padding: [40, 40] });
     }
+}
+
+// "World View" button — show the full land zone for big-picture context
+function fitWorld() {
+    if (!map) return;
+    // Show the whole land zone width and top 60 rows — landscape-friendly
+    // slice that reveals the grid, your plots as coloured dots, and the
+    // zone boundary.
+    map.fitBounds([[0, -2], [WORLD_CITY_Y, WORLD_W + 2]], { padding: [20, 20] });
 }
 
 // ============================================================
@@ -779,35 +836,65 @@ function fitAll() {
 })();
 
 // ============================================================
-// ZONE SEPARATORS (visual lines dividing plot / city / county zones)
+// ZONE BACKGROUNDS + GRID  (drawn once on boot, below all data layers)
 // ============================================================
 function drawZoneSeparators() {
     if (!map) return;
-    const lineStyle = { color: '#1e293b', weight: 1, dashArray: '4 6', interactive: false };
+    const W  = WORLD_W;
+    const CY = WORLD_CITY_Y;
+    const KY = WORLD_COUNTY_Y;
+    const noClick = { interactive: false };
 
-    // City zone separator
-    L.polyline([
-        [""" + str(int(CITY_ZONE_Y - 10)) + """, -20],
-        [""" + str(int(CITY_ZONE_Y - 10)) + """, 200]
-    ], lineStyle).addTo(map);
-    L.marker([""" + str(int(CITY_ZONE_Y - 5)) + """, -15], {
-        icon: L.divIcon({
-            html: '<span style="font-size:9px;color:#334155;font-family:monospace">&#8213; CITY ZONE &#8213;</span>',
-            className: '', iconAnchor: [0, 0]
-        }), interactive: false
+    // ── Zone background fills ───────────────────────────────────
+    // Land zone: deep forest green
+    L.rectangle([[0, 0], [CY, W]], {
+        ...noClick, color: '#14532d', weight: 1,
+        fillColor: '#052e16', fillOpacity: 1,
+    }).addTo(map);
+    // City zone: deep navy
+    L.rectangle([[CY, 0], [KY, W]], {
+        ...noClick, color: '#1e3a5f', weight: 1,
+        fillColor: '#0c1a2e', fillOpacity: 1,
+    }).addTo(map);
+    // County zone: deep amber
+    L.rectangle([[KY, 0], [KY + 200, W]], {
+        ...noClick, color: '#78350f', weight: 1,
+        fillColor: '#1c0d00', fillOpacity: 1,
     }).addTo(map);
 
-    // County zone separator
-    L.polyline([
-        [""" + str(int(COUNTY_ZONE_Y - 10)) + """, -20],
-        [""" + str(int(COUNTY_ZONE_Y - 10)) + """, 200]
-    ], lineStyle).addTo(map);
-    L.marker([""" + str(int(COUNTY_ZONE_Y - 5)) + """, -15], {
-        icon: L.divIcon({
-            html: '<span style="font-size:9px;color:#334155;font-family:monospace">&#8213; COUNTY ZONE &#8213;</span>',
-            className: '', iconAnchor: [0, 0]
-        }), interactive: false
+    // ── Land-zone grid (every 10 plots) ────────────────────────
+    const grid = { color: '#0a3d14', weight: 0.5, ...noClick };
+    for (let y = 10; y < CY; y += 10) {
+        L.polyline([[y, 0], [y, W]], grid).addTo(map);
+    }
+    for (let x = 10; x < W; x += 10) {
+        L.polyline([[0, x], [CY, x]], grid).addTo(map);
+    }
+
+    // ── Watermark zone labels (low-opacity, centered in each zone) ─
+    const lbl = (lat, lng, html) => L.marker([lat, lng], {
+        icon: L.divIcon({ html, className: '', iconAnchor: [0, 0] }),
+        ...noClick,
     }).addTo(map);
+    const wm = (text, color) =>
+        `<div style="font-size:11px;color:${color};opacity:0.25;font-family:monospace;` +
+        `letter-spacing:4px;white-space:nowrap;pointer-events:none;">${text}</div>`;
+    lbl(CY / 2,       4, wm('&#9651; LAND ZONE &#9651;',   '#22c55e'));
+    lbl((CY + KY) / 2, 4, wm('&#9651; CITY ZONE &#9651;',   '#38bdf8'));
+    lbl(KY + 80,       4, wm('&#9651; COUNTY ZONE &#9651;', '#f59e0b'));
+
+    // ── Zone separator lines ────────────────────────────────────
+    L.polyline([[CY, -2], [CY, W + 2]],
+        { color: '#22d3ee', weight: 1.5, dashArray: '8 5', ...noClick }).addTo(map);
+    L.polyline([[KY, -2], [KY, W + 2]],
+        { color: '#f59e0b', weight: 1.5, dashArray: '8 5', ...noClick }).addTo(map);
+
+    // ── Separator labels ────────────────────────────────────────
+    const sepLbl = (lat, text, color) => lbl(lat, 1,
+        `<div style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;` +
+        `background:rgba(2,6,23,.85);padding:2px 5px;border-radius:2px;">${text}</div>`);
+    sepLbl(CY + 0.5, '&#9651; CITY ZONE',   '#22d3ee');
+    sepLbl(KY + 0.5, '&#9651; COUNTY ZONE', '#f59e0b');
 }
 
 // ============================================================
