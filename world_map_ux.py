@@ -254,11 +254,18 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
             (cx, cy), bounds = _district_center_and_bounds(dist)
             biz = dist_biz_map.get(dist.occupied_by_business_id)
             biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
+            # Source-plot positions — used on the frontend to draw the exact
+            # polygon footprint rather than just the bounding box.
+            src_ids = [int(i.strip()) for i in dist.source_plot_ids.split(",")
+                       if i.strip()] if dist.source_plot_ids else []
+            src_positions = [list(_plot_pos(pid)) for pid in src_ids]
             district_data.append({
                 "id": dist.id,
                 "center_x": round(cx, 3),
                 "center_y": round(cy, 3),
                 "bounds": [round(v, 3) for v in bounds],
+                "source_positions": [[round(x, 3), round(y, 3)]
+                                     for x, y in src_positions],
                 "district_type": dist.district_type,
                 "district_name": DISTRICT_NAMES.get(dist.district_type, dist.district_type),
                 "terrain_type": dist.terrain_type,
@@ -281,6 +288,8 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
         if city_ids:
             for city in db.query(City).filter(City.id.in_(city_ids)).all():
                 cx, cy = _city_pos(city.id)
+                member_count = db.query(CityMember).filter(
+                    CityMember.city_id == city.id).count()
                 city_data.append({
                     "id": city.id,
                     "name": city.name,
@@ -288,6 +297,7 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
                     "center_y": cy,
                     "is_mayor": city.id in mayor_set,
                     "currency_type": city.currency_type,
+                    "member_count": member_count,
                     "url": f"/city/{city.id}",
                 })
 
@@ -302,12 +312,15 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
         if county_ids:
             for county in db.query(County).filter(County.id.in_(county_ids)).all():
                 cx, cy = _county_pos(county.id)
+                member_city_count = db.query(CountyCity).filter(
+                    CountyCity.county_id == county.id).count()
                 county_data.append({
                     "id": county.id,
                     "name": county.name,
                     "crypto_symbol": county.crypto_symbol,
                     "center_x": cx,
                     "center_y": cy,
+                    "member_city_count": member_city_count,
                     "url": f"/county/{county.id}",
                 })
 
@@ -625,6 +638,18 @@ function renderMap(data) {
 
         rect.addTo(layerPlots);
 
+        // Business marker — small icon centred on the plot cell
+        if (plot.occupied_by_business_id) {
+            const bIcon = L.divIcon({
+                html: `<div style="font-size:12px;line-height:1;filter:drop-shadow(0 0 3px #000);` +
+                      `transform:translate(-50%,-50%);">` +
+                      (plot.business_active ? '&#127981;' : '&#9208;&#65039;') + `</div>`,
+                className: '', iconAnchor: [0, 0],
+            });
+            L.marker([y1 + 0.5, x1 + 0.5], { icon: bIcon, interactive: false })
+             .addTo(layerPlots);
+        }
+
         allBoundsPoints.push([y1, x1]);
         allBoundsPoints.push([y2, x2]);
     });
@@ -632,7 +657,6 @@ function renderMap(data) {
     // ---- DISTRICTS -------------------------------------------------
     (data.districts || []).forEach(dist => {
         const [x1, y1, x2, y2] = dist.bounds;
-
         const color = terrainColor(dist.terrain_type);
 
         let bizLine = '';
@@ -641,18 +665,6 @@ function renderMap(data) {
             const status = dist.business_active ? 'Active' : 'Inactive';
             bizLine = `<br>${icon} <b>${dist.business_name || dist.business_type}</b> &mdash; ${status}`;
         }
-
-        // District rectangle — slightly transparent overlay with bold border
-        const rect = L.rectangle(
-            [[y1, x1], [y2, x2]],
-            {
-                color:       color,
-                weight:      2.5,
-                fillColor:   color,
-                fillOpacity: 0.25,
-                dashArray:   '6 3',
-            }
-        );
 
         const popupHtml = `
             <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
@@ -663,18 +675,58 @@ function renderMap(data) {
                 <br><a href="${dist.url}" style="color:#38bdf8">&#8594; Manage District</a>
             </div>`;
 
-        rect.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        rect.on('dblclick', () => { window.location.href = dist.url; });
-        rect.addTo(layerDistricts);
+        // Draw each source plot cell — gives the exact footprint of the district
+        // (e.g. an L-shape instead of a rectangle that includes unowned tiles).
+        const srcPositions = dist.source_positions || [];
+        if (srcPositions.length > 0) {
+            srcPositions.forEach(([px, py]) => {
+                const cell = L.rectangle(
+                    [[py, px], [py + 1, px + 1]],
+                    { color, weight: 1, fillColor: color, fillOpacity: 0.55 }
+                );
+                cell.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
+                cell.on('dblclick', () => { window.location.href = dist.url; });
+                cell.addTo(layerDistricts);
+            });
+            // Bounding-box outline ties the footprint together visually
+            const outline = L.rectangle(
+                [[y1, x1], [y2, x2]],
+                { color, weight: 2, fillOpacity: 0, dashArray: '7 4', interactive: false }
+            );
+            outline.addTo(layerDistricts);
+        } else {
+            // Fallback: single rectangle (no source_positions available)
+            const rect = L.rectangle(
+                [[y1, x1], [y2, x2]],
+                { color, weight: 2.5, fillColor: color, fillOpacity: 0.4, dashArray: '6 3' }
+            );
+            rect.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
+            rect.on('dblclick', () => { window.location.href = dist.url; });
+            rect.addTo(layerDistricts);
+        }
 
-        // Add a centroid label marker (no circle, just a DivIcon)
+        // Centroid label
         const labelIcon = L.divIcon({
-            html: `<span style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;background:rgba(2,6,23,0.7);padding:1px 3px;border-radius:2px;">&#127959; ${dist.district_name}</span>`,
+            html: `<span style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;` +
+                  `background:rgba(2,6,23,0.75);padding:1px 4px;border-radius:2px;">` +
+                  `&#127959; ${dist.district_name}</span>`,
             className: '',
             iconAnchor: [0, 0],
         });
         L.marker([dist.center_y, dist.center_x], { icon: labelIcon, interactive: false })
          .addTo(layerDistricts);
+
+        // Business marker
+        if (dist.occupied_by_business_id) {
+            const bIcon = L.divIcon({
+                html: `<div style="font-size:14px;line-height:1;filter:drop-shadow(0 0 3px #000);` +
+                      `transform:translate(-50%,-50%);">` +
+                      (dist.business_active ? '&#127981;' : '&#9208;&#65039;') + `</div>`,
+                className: '', iconAnchor: [0, 0],
+            });
+            L.marker([dist.center_y, dist.center_x], { icon: bIcon, interactive: false })
+             .addTo(layerDistricts);
+        }
 
         allBoundsPoints.push([y1, x1]);
         allBoundsPoints.push([y2, x2]);
@@ -711,13 +763,25 @@ function renderMap(data) {
                 <br><a href="${city.url}" style="color:#38bdf8">&#8594; City Hub</a>
             </div>`;
 
+        // City block — a coloured zone behind the label so cities look
+        // like areas in the city zone, not just floating text.
+        // Height scales with member count (1–20 players → 8–24 units).
+        const cityH = 8 + Math.min((city.member_count || 1) - 1, 12);
+        const cityBlock = L.rectangle(
+            [[cy - cityH / 2, cx - 5], [cy + cityH / 2, cx + 5]],
+            { color: '#0ea5e9', weight: 1.5, fillColor: '#0c2340', fillOpacity: 0.75 }
+        );
+        cityBlock.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
+        cityBlock.on('dblclick', () => { window.location.href = city.url; });
+        cityBlock.addTo(layerCities);
+
         const marker = L.marker([cy, cx], { icon });
         marker.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
         marker.on('dblclick', () => { window.location.href = city.url; });
         marker.addTo(layerCities);
 
-        allBoundsPoints.push([cy - 5, cx - 5]);
-        allBoundsPoints.push([cy + 5, cx + 5]);
+        allBoundsPoints.push([cy - cityH / 2, cx - 5]);
+        allBoundsPoints.push([cy + cityH / 2, cx + 5]);
     });
 
     // ---- COUNTIES --------------------------------------------------
@@ -744,13 +808,29 @@ function renderMap(data) {
                 <br><a href="${county.url}" style="color:#38bdf8">&#8594; County Hub</a>
             </div>`;
 
+        // County territory block — wider/taller than city blocks to convey
+        // that counties are higher-level territorial entities.
+        // Width scales with member city count (1–5 cities → 12–22 units).
+        const cntW = 12 + (county.member_city_count || 1) * 2;
+        const cntH = 40 + (county.member_city_count || 1) * 8;
+        const countyBlock = L.rectangle(
+            [[cy - cntH / 2, cx - cntW / 2], [cy + cntH / 2, cx + cntW / 2]],
+            {
+                color: '#d4af37', weight: 2, fillColor: '#1c0d00', fillOpacity: 0.75,
+                dashArray: '8 4',
+            }
+        );
+        countyBlock.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
+        countyBlock.on('dblclick', () => { window.location.href = county.url; });
+        countyBlock.addTo(layerCounties);
+
         const marker = L.marker([cy, cx], { icon });
         marker.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
         marker.on('dblclick', () => { window.location.href = county.url; });
         marker.addTo(layerCounties);
 
-        allBoundsPoints.push([cy - 10, cx - 10]);
-        allBoundsPoints.push([cy + 10, cx + 10]);
+        allBoundsPoints.push([cy - cntH / 2, cx - cntW / 2]);
+        allBoundsPoints.push([cy + cntH / 2, cx + cntW / 2]);
     });
 
     // ---- FIT VIEWPORT (context view: assets + margin) --------------
