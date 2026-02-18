@@ -1262,7 +1262,7 @@ async def api_launch_meme(
         return RedirectResponse(url="/login", status_code=303)
 
     from memecoins import launch_meme_coin
-    meme, message = launch_meme_coin(
+    meme_symbol, message = launch_meme_coin(
         player_id=player.id,
         name=name,
         symbol=symbol.upper(),
@@ -1270,9 +1270,9 @@ async def api_launch_meme(
         total_supply=total_supply,
         county_id=county_id,
     )
-    if meme:
+    if meme_symbol:
         return RedirectResponse(
-            url=f"/memecoins/{meme.symbol}?msg={message.replace(' ', '+')}",
+            url=f"/memecoins/{meme_symbol}?msg={message.replace(' ', '+')}",
             status_code=303,
         )
     else:

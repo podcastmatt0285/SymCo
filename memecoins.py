@@ -307,7 +307,11 @@ def launch_meme_coin(
     description: str,
     total_supply: float,
     county_id: int,
-) -> Tuple[Optional[MemeCoin], str]:
+) -> Tuple[Optional[str], str]:
+    """
+    Returns (symbol_str, message) on success or (None, error_message) on failure.
+    Returns the symbol string (not the ORM object) to avoid DetachedInstanceError.
+    """
     """
     Launch a new meme coin on a county's blockchain.
 
@@ -435,7 +439,9 @@ def launch_meme_coin(
 
         db.commit()
 
-        return meme, (
+        # Return the symbol string (not the ORM object) — accessing meme attributes
+        # after db.close() in the finally block would raise DetachedInstanceError.
+        return symbol, (
             f"'{name}' ({symbol}) launched! You received {founder_alloc:,.2f} founder tokens. "
             f"{MEME_CREATION_FEE_NATIVE:.2f} {native_symbol} burned as creation fee."
         )
