@@ -722,6 +722,8 @@ async def meme_coin_page(
     tab_trade = "active" if tab == "trade" else ""
     tab_mine  = "active" if tab == "mine" else ""
 
+    price_placeholder = f"{detail['last_price']:.6f}" if detail["last_price"] else "0.000001"
+
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -882,7 +884,7 @@ async def meme_coin_page(
                     <div class="form-group" id="buy-price-group">
                         <label>Price ({detail["native_symbol"]} per {symbol})</label>
                         <input type="number" name="price" min="0.000001" step="0.000001"
-                               placeholder="{detail["last_price"]:.6f if detail["last_price"] else "0.000001"}"
+                               placeholder="{price_placeholder}"
                                id="buy-price" oninput="calcBuyCost()">
                     </div>
                     <div class="form-group">
@@ -918,7 +920,7 @@ async def meme_coin_page(
                     <div class="form-group" id="sell-price-group">
                         <label>Price ({detail["native_symbol"]} per {symbol})</label>
                         <input type="number" name="price" min="0.000001" step="0.000001"
-                               placeholder="{detail["last_price"]:.6f if detail["last_price"] else "0.000001"}"
+                               placeholder="{price_placeholder}"
                                id="sell-price" oninput="calcSellRevenue()">
                     </div>
                     <div class="form-group">
