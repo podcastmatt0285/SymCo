@@ -494,6 +494,13 @@ if (typeof L === 'undefined') {
             attributionControl: false,
         });
 
+        // Set an initial view BEFORE adding any layers so the renderer
+        // fires its 'moveend' handler and sets _bounds. Without this,
+        // layers added to the map trigger _clipPoints() while
+        // renderer._bounds is still undefined, causing:
+        //   "Cannot read properties of undefined (reading 'min')"
+        map.setView([0, 0], 1);
+
         // Dark background tile (pure CSS via pane background)
         map.getContainer().style.background = '#020617';
 
