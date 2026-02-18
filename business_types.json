@@ -112,7 +112,7 @@
       },
       {
         "output_item": "cream",
-        "output_qty": 5,
+        "output_qty": 100,
         "inputs": [
           { "item": "milk", "quantity": 10 },
           { "item": "paper", "quantity": 1 },
@@ -1699,16 +1699,34 @@
         ]
       },
       {
-        "output_item": "eggs",
-        "output_qty": 200,
+        "output_item": "chicken",
+        "output_qty": 5,
         "inputs": [
           {
             "item": "water",
             "quantity": 30
           },
           {
-            "item": "corn",
-            "quantity": 50
+            "item": "silk_worm",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "eggs",
+        "output_qty": 8500,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "chicken",
+            "quantity": 2
           },
           {
             "item": "paper",

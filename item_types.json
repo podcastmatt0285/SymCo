@@ -944,6 +944,11 @@
     "description": "Waterfowl for meat and feathers", 
     "category": "livestock" 
   },
+  "chicken": { 
+    "name": "Chicken",
+    "description": "Beautiful yet dethroned bird for meat and feathers",
+    "category": "livestock"
+  },
   "pork": { 
     "name": "Pork", 
     "description": "Fresh pork cuts", 
