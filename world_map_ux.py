@@ -6,12 +6,11 @@ Provides a Leaflet.js-powered interactive visualization of the player's
 entire economic empire: land plots, districts, cities, and counties.
 
 Coordinate System:
-  - Uses Leaflet's L.CRS.Simple (flat, non-geographic game grid)
-  - Grid unit: 1 unit == 1 standard land plot
-  - Land plot position: x = (id - 1) % GRID_WIDTH, y = (id - 1) // GRID_WIDTH
-  - District position: centroid of source plot grid positions
-  - City position: placed in a dedicated zone above the land grid (y >= CITY_ZONE_Y)
-  - County position: placed above the city zone (y >= COUNTY_ZONE_Y)
+  - Uses real geographic coordinates (WGS-84 lat/lng) rendered on OpenStreetMap tiles
+  - Game plot grid is mapped to a ~15km × 33km area in central Maryland
+  - Cities are pinned to curated real Maryland city positions
+  - Counties are pinned to real Maryland county seat positions
+  - Zoom in from state level → county → city → individual 111m × 115m land plots
 
 Terrain colours match the game's established hex palette.
 """
@@ -27,8 +26,73 @@ router = APIRouter()
 # ==========================
 
 GRID_WIDTH = 100          # Plots wrap after this many columns
-CITY_ZONE_Y = 300.0       # Cities are placed starting at this Y
-COUNTY_ZONE_Y = 500.0     # Counties are placed starting at this Y
+
+# ==========================
+# MARYLAND GEOGRAPHIC MAPPING
+# ==========================
+
+# Northwest corner of the game's plot grid (plot ID #1 cell NW corner).
+# This anchors the 100-wide × N-row plot grid to central Maryland.
+PLOT_ORIGIN_LAT =  39.550   # degrees N
+PLOT_ORIGIN_LNG = -77.100   # degrees W
+
+# Size of each 1×1 plot cell in geographic degrees.
+# ~111 m N-S, ~115 m E-W at 39°N latitude.
+PLOT_DLAT = -0.001   # degrees per row (negative = southward)
+PLOT_DLNG =  0.0015  # degrees per column (positive = eastward)
+
+# Curated real Maryland city positions (lat, lng).
+# Game city IDs cycle through this list.
+MD_CITY_LATLON = [
+    (39.2904, -76.6122),  # Baltimore
+    (38.9784, -76.4922),  # Annapolis
+    (39.4143, -77.4105),  # Frederick
+    (39.0840, -77.1528),  # Rockville
+    (39.1434, -77.2014),  # Gaithersburg
+    (38.9426, -76.7313),  # Bowie
+    (39.6418, -77.7200),  # Hagerstown
+    (38.9807, -76.9369),  # College Park
+    (38.3607, -75.5994),  # Salisbury
+    (39.2037, -76.8610),  # Columbia
+    (39.3526, -76.6188),  # Towson
+    (39.0176, -76.9750),  # Greenbelt
+    (38.6773, -76.0766),  # Cambridge
+    (39.5293, -76.1641),  # Bel Air
+    (39.5754, -77.0050),  # Westminster
+    (39.4526, -77.9884),  # Cumberland
+    (38.5284, -76.9750),  # La Plata
+    (38.8073, -77.0469),  # Waldorf
+    (38.9162, -76.5973),  # Upper Marlboro
+    (38.8862, -76.9175),  # Laurel
+]
+
+# Curated Maryland county seat positions (lat, lng).
+# Game county IDs cycle through this list.
+MD_COUNTY_LATLON = [
+    (39.0840, -77.1528),  # Montgomery County (Rockville)
+    (38.8190, -76.7497),  # Prince George's County (Upper Marlboro)
+    (39.4015, -76.6019),  # Baltimore County (Towson)
+    (38.9784, -76.4922),  # Anne Arundel County (Annapolis)
+    (39.2673, -76.7986),  # Howard County (Ellicott City)
+    (39.4143, -77.4105),  # Frederick County (Frederick)
+    (38.5284, -76.9750),  # Charles County (La Plata)
+    (39.5351, -76.3488),  # Harford County (Bel Air)
+    (39.5754, -77.0050),  # Carroll County (Westminster)
+    (39.6418, -77.7200),  # Washington County (Hagerstown)
+    (38.2912, -76.6275),  # St. Mary's County (Leonardtown)
+    (38.3607, -75.5994),  # Wicomico County (Salisbury)
+    (38.1754, -75.3854),  # Worcester County (Snow Hill)
+    (38.5773, -76.0776),  # Dorchester County (Cambridge)
+    (38.9178, -76.0679),  # Queen Anne's County (Centreville)
+    (39.2072, -76.0677),  # Kent County (Chestertown)
+    (39.6065, -75.8330),  # Cecil County (Elkton)
+    (38.6029, -76.5924),  # Calvert County (Prince Frederick)
+    (38.7743, -76.0765),  # Talbot County (Easton)
+    (39.2904, -76.6122),  # Baltimore City
+    (39.6487, -78.7634),  # Allegany County (Cumberland)
+    (39.4076, -79.4069),  # Garrett County (Oakland)
+    (38.8868, -75.8270),  # Caroline County (Denton)
+]
 
 # ==========================
 # TERRAIN / DISTRICT COLOURS
@@ -107,52 +171,58 @@ DISTRICT_NAMES = {
 # ==========================
 
 def _plot_pos(plot_id: int):
-    """Return (x, y) grid coordinates for a land plot from its ID."""
+    """Return (lat, lng) of the NW corner of a land plot cell."""
     idx = plot_id - 1
-    return float(idx % GRID_WIDTH), float(idx // GRID_WIDTH)
+    col = idx % GRID_WIDTH
+    row = idx // GRID_WIDTH
+    lat = PLOT_ORIGIN_LAT + row * PLOT_DLAT
+    lng = PLOT_ORIGIN_LNG + col * PLOT_DLNG
+    return lat, lng
 
 
 def _district_center_and_bounds(district):
     """
-    Derive a district's grid centre and bounding box from its source_plot_ids.
+    Derive a district's geographic centre (lat, lng) and bounding box
+    [[sw_lat, sw_lng], [ne_lat, ne_lng]] from its source_plot_ids.
+
     The source plots are deleted at merge time, but their IDs are preserved
     in the district record, so we can recompute their original positions.
 
     Returns:
-        center (cx, cy), bounds [x1, y1, x2, y2]
+        center (lat, lng), bounds [[sw_lat, sw_lng], [ne_lat, ne_lng]]
     """
     if district.source_plot_ids:
         try:
             ids = [int(s.strip()) for s in district.source_plot_ids.split(",") if s.strip()]
             if ids:
                 positions = [_plot_pos(pid) for pid in ids]
-                xs = [p[0] for p in positions]
-                ys = [p[1] for p in positions]
-                cx = sum(xs) / len(xs)
-                cy = sum(ys) / len(ys)
-                # Bounds extend +1 in each direction to cover the full 1×1 plot cells
-                bounds = [min(xs), min(ys), max(xs) + 1.0, max(ys) + 1.0]
-                return (cx + 0.5, cy + 0.5), bounds
+                lats = [p[0] for p in positions]
+                lngs = [p[1] for p in positions]
+                clat = sum(lats) / len(lats)
+                clng = sum(lngs) / len(lngs)
+                # Bounds extend by one plot cell to cover the full cell footprints
+                sw = [min(lats) + PLOT_DLAT, min(lngs)]  # PLOT_DLAT<0 → more south
+                ne = [max(lats), max(lngs) + PLOT_DLNG]
+                return (clat, clng), [sw, ne]
         except Exception:
             pass
-    # Fallback: synthetic position based on district ID
-    col = (district.id - 1) % 20
-    row = (district.id - 1) // 20
-    cx = 110.0 + col * 6.0
-    cy = 10.0 + row * 6.0
-    return (cx, cy), [cx - 2.5, cy - 2.5, cx + 2.5, cy + 2.5]
+    # Fallback: place near the top of the plot grid
+    fallback_lat = PLOT_ORIGIN_LAT + ((district.id - 1) % 10) * PLOT_DLAT * 3
+    fallback_lng = PLOT_ORIGIN_LNG + ((district.id - 1) // 10) * PLOT_DLNG * 3
+    margin = abs(PLOT_DLAT * 3)
+    sw = [fallback_lat - margin, fallback_lng - margin * 1.5]
+    ne = [fallback_lat + margin, fallback_lng + margin * 1.5]
+    return (fallback_lat, fallback_lng), [sw, ne]
 
 
-def _city_pos(city_id: int):
-    """Return (x, y) for a city marker in the city zone."""
-    col = (city_id - 1) % 10
-    row = (city_id - 1) // 10
-    return 5.0 + col * 10.0, CITY_ZONE_Y + row * 30.0
+def _city_latlon(city_id: int):
+    """Return (lat, lng) for a game city, mapped to a real Maryland city."""
+    return MD_CITY_LATLON[(city_id - 1) % len(MD_CITY_LATLON)]
 
 
-def _county_pos(county_id: int):
-    """Return (x, y) for a county marker in the county zone."""
-    return 10.0 + (county_id - 1) * 25.0, COUNTY_ZONE_Y
+def _county_latlon(county_id: int):
+    """Return (lat, lng) for a game county, mapped to a real Maryland county seat."""
+    return MD_COUNTY_LATLON[(county_id - 1) % len(MD_COUNTY_LATLON)]
 
 
 # ==========================
@@ -217,7 +287,7 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
 
         plot_data = []
         for plot in plots:
-            gx, gy = _plot_pos(plot.id)
+            plat, plng = _plot_pos(plot.id)
             biz = biz_map.get(plot.occupied_by_business_id)
             biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
             proximity = (
@@ -226,8 +296,8 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
             )
             plot_data.append({
                 "id": plot.id,
-                "grid_x": gx,
-                "grid_y": gy,
+                "lat": round(plat, 6),   # NW corner latitude
+                "lng": round(plng, 6),   # NW corner longitude
                 "terrain_type": plot.terrain_type,
                 "proximity_features": proximity,
                 "efficiency": round(plot.efficiency, 2),
@@ -251,21 +321,22 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
 
         district_data = []
         for dist in districts:
-            (cx, cy), bounds = _district_center_and_bounds(dist)
+            (clat, clng), (sw, ne) = _district_center_and_bounds(dist)
             biz = dist_biz_map.get(dist.occupied_by_business_id)
             biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
-            # Source-plot positions — used on the frontend to draw the exact
-            # polygon footprint rather than just the bounding box.
+            # Source-plot NW-corner positions — used on the frontend to draw the
+            # exact cell-by-cell footprint rather than just the bounding box.
             src_ids = [int(i.strip()) for i in dist.source_plot_ids.split(",")
                        if i.strip()] if dist.source_plot_ids else []
             src_positions = [list(_plot_pos(pid)) for pid in src_ids]
             district_data.append({
                 "id": dist.id,
-                "center_x": round(cx, 3),
-                "center_y": round(cy, 3),
-                "bounds": [round(v, 3) for v in bounds],
-                "source_positions": [[round(x, 3), round(y, 3)]
-                                     for x, y in src_positions],
+                "lat": round(clat, 6),
+                "lng": round(clng, 6),
+                "bounds_sw": [round(sw[0], 6), round(sw[1], 6)],
+                "bounds_ne": [round(ne[0], 6), round(ne[1], 6)],
+                "source_positions": [[round(lat, 6), round(lng, 6)]
+                                     for lat, lng in src_positions],
                 "district_type": dist.district_type,
                 "district_name": DISTRICT_NAMES.get(dist.district_type, dist.district_type),
                 "terrain_type": dist.terrain_type,
@@ -287,14 +358,14 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
         city_data = []
         if city_ids:
             for city in db.query(City).filter(City.id.in_(city_ids)).all():
-                cx, cy = _city_pos(city.id)
+                clat, clng = _city_latlon(city.id)
                 member_count = db.query(CityMember).filter(
                     CityMember.city_id == city.id).count()
                 city_data.append({
                     "id": city.id,
                     "name": city.name,
-                    "center_x": cx,
-                    "center_y": cy,
+                    "lat": clat,
+                    "lng": clng,
                     "is_mayor": city.id in mayor_set,
                     "currency_type": city.currency_type,
                     "member_count": member_count,
@@ -311,46 +382,22 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
         county_data = []
         if county_ids:
             for county in db.query(County).filter(County.id.in_(county_ids)).all():
-                cx, cy = _county_pos(county.id)
+                clat, clng = _county_latlon(county.id)
                 member_city_count = db.query(CountyCity).filter(
                     CountyCity.county_id == county.id).count()
                 county_data.append({
                     "id": county.id,
                     "name": county.name,
                     "crypto_symbol": county.crypto_symbol,
-                    "center_x": cx,
-                    "center_y": cy,
+                    "lat": clat,
+                    "lng": clng,
                     "member_city_count": member_city_count,
                     "url": f"/county/{county.id}",
                 })
 
-        # ---- Viewport bounds (with padding) ------------------------------
-        all_x = (
-            [p["grid_x"] for p in plot_data]
-            + [d["center_x"] for d in district_data]
-            + [c["center_x"] for c in city_data]
-            + [c["center_x"] for c in county_data]
-        )
-        all_y = (
-            [p["grid_y"] for p in plot_data]
-            + [d["center_y"] for d in district_data]
-            + [c["center_y"] for c in city_data]
-            + [c["center_y"] for c in county_data]
-        )
-        if all_x:
-            viewport = {
-                "min_x": min(all_x) - 3,
-                "min_y": min(all_y) - 3,
-                "max_x": max(all_x) + 3,
-                "max_y": max(all_y) + 3,
-            }
-        else:
-            viewport = {"min_x": -5, "min_y": -5, "max_x": 10, "max_y": 10}
-
         return JSONResponse({
             "player_id": player.id,
             "player_name": player.business_name,
-            "viewport": viewport,
             "land_plots": plot_data,
             "districts": district_data,
             "cities": city_data,
@@ -412,17 +459,16 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
     <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#15803d;display:inline-block;border-radius:2px;"></span>Jungle</span>
     <span style="color:#64748b;">|</span>
     <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#334155;border:2px solid #64748b;display:inline-block;border-radius:2px;"></span>District</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;">&#127959; District Biz</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;">&#127981; Plot Biz</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;">&#127963; City</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;">&#127758; County</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;">&#127981; Business</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#0c2340;border:2px solid #38bdf8;display:inline-block;border-radius:50%;"></span>&#127963; City</span>
+    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#78350f;border:2px dashed #d4af37;display:inline-block;border-radius:50%;"></span>&#128506; County</span>
     <span style="color:#64748b;">|</span>
-    <span style="color:#94a3b8;">Opacity = Efficiency</span>
+    <span style="color:#94a3b8;">Zoom in to see land plots &bull; Opacity = Efficiency</span>
 </div>
 
 <!-- Map container -->
 <div id="map"
-     style="width: 100%; height: 70vh; min-height: 480px; background: #020617;
+     style="width: 100%; height: 70vh; min-height: 480px; background: #c8d8e4;
             border: 1px solid #1e293b; border-radius: 4px; position: relative;">
     <div id="map-loading"
          style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -432,7 +478,7 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 </div>
 
 <div id="map-status" style="margin-top: 8px; font-size: 0.75rem; color: #64748b; text-align: right;">
-    Click any element to navigate &bull; Scroll to zoom &bull; Drag to pan
+    Click any element to open info &bull; Double-click to navigate &bull; Scroll to zoom &bull; Zoom in (~zoom 15) to see land plots
 </div>
 
 <!-- Leaflet CSS (served locally) -->
@@ -443,11 +489,16 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 
 <script>
 // ============================================================
-// WORLD GRID CONSTANTS  (mirror Python server values)
+// MARYLAND GEO CONSTANTS  (mirror Python server values)
 // ============================================================
-const WORLD_W        = """ + str(int(GRID_WIDTH))        + """;  // GRID_WIDTH
-const WORLD_CITY_Y   = """ + str(int(CITY_ZONE_Y))       + """;  // CITY_ZONE_Y
-const WORLD_COUNTY_Y = """ + str(int(COUNTY_ZONE_Y))     + """;  // COUNTY_ZONE_Y
+const PLOT_ORIGIN_LAT = """ + str(PLOT_ORIGIN_LAT) + """;
+const PLOT_ORIGIN_LNG = """ + str(PLOT_ORIGIN_LNG) + """;
+const PLOT_DLAT       = """ + str(PLOT_DLAT)       + """;
+const PLOT_DLNG       = """ + str(PLOT_DLNG)       + """;
+const GRID_WIDTH      = """ + str(int(GRID_WIDTH)) + """;
+// Maryland bounding box for "World View" button
+const MD_SW = [37.88, -79.53];
+const MD_NE = [39.72, -74.95];
 
 // ============================================================
 // TERRAIN / DISTRICT COLOUR PALETTE  (mirrors Python dict)
@@ -502,28 +553,26 @@ let layerPlots = null, layerDistricts = null,
 let allBoundsPoints = [];
 
 if (typeof L === 'undefined') {
-    // Leaflet CDN failed to load (no internet, SRI mismatch, etc.)
+    // Leaflet failed to load (served locally so this means a file error)
     document.getElementById('map-loading').textContent =
-        'Map library failed to load. Check your internet connection and reload the page.';
+        'Map library failed to load. Check your connection and reload.';
 } else {
     try {
         map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: -5,
-            maxZoom: 6,
+            minZoom: 5,
+            maxZoom: 19,
             zoomSnap: 0.5,
             attributionControl: false,
         });
 
-        // Set an initial view BEFORE adding any layers so the renderer
-        // fires its 'moveend' handler and sets _bounds. Without this,
-        // layers added to the map trigger _clipPoints() while
-        // renderer._bounds is still undefined, causing:
-        //   "Cannot read properties of undefined (reading 'min')"
-        map.setView([0, 0], 1);
+        // Start centered on Maryland while data loads
+        map.setView([39.0, -76.8], 9);
 
-        // Dark background tile (pure CSS via pane background)
-        map.getContainer().style.background = '#020617';
+        // OpenStreetMap tile layer — gives the real-world map feel
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            subdomains: 'abc',
+        }).addTo(map);
 
         // Layer groups for toggling
         layerPlots     = L.layerGroup().addTo(map);
@@ -580,42 +629,36 @@ function renderMap(data) {
     allBoundsPoints = [];
 
     // ---- LAND PLOTS ------------------------------------------------
+    // Each plot is a ~111m × 115m rectangle on the real map.
+    // The API returns the NW corner (lat, lng); we derive SE from PLOT_D*.
     (data.land_plots || []).forEach(plot => {
-        const x1 = plot.grid_x, y1 = plot.grid_y;
-        const x2 = x1 + 1,     y2 = y1 + 1;
+        // NW corner lat/lng
+        const nwLat = plot.lat, nwLng = plot.lng;
+        // SW and NE corners (PLOT_DLAT is negative so nwLat + PLOT_DLAT < nwLat)
+        const sw = [nwLat + PLOT_DLAT, nwLng];
+        const ne = [nwLat, nwLng + PLOT_DLNG];
+        const center = [(sw[0] + ne[0]) / 2, (sw[1] + ne[1]) / 2];
 
-        // Efficiency drives fill opacity (0.6 at 0%, 0.95 at 100%)
-        // Minimum 0.6 so plots are always clearly visible against zone bg.
+        // Efficiency drives fill opacity (0.6–0.95)
         const fillOpacity = 0.6 + (plot.efficiency / 100) * 0.35;
-
         const color = terrainColor(plot.terrain_type);
+        const borderColor = plot.occupied_by_business_id ? '#f8fafc' : '#334155';
+        const weight      = plot.occupied_by_business_id ? 1.5 : 0.8;
 
-        // Border colour: brighter if business present
-        const borderColor = plot.occupied_by_business_id ? '#f8fafc' : '#1e293b';
-        const weight      = plot.occupied_by_business_id ? 1.5 : 0.5;
+        const rect = L.rectangle([sw, ne], {
+            color: borderColor, weight,
+            fillColor: color, fillOpacity,
+        });
 
-        const rect = L.rectangle(
-            [[y1, x1], [y2, x2]],
-            {
-                color:       borderColor,
-                weight:      weight,
-                fillColor:   color,
-                fillOpacity: fillOpacity,
-            }
-        );
-
-        // Popup content
         let bizLine = '';
         if (plot.business_type) {
             const icon   = plot.business_active ? '&#127981;' : '&#9208;&#65039;';
             const status = plot.business_active ? 'Active' : 'Inactive';
             bizLine = `<br>${icon} <b>${plot.business_name || plot.business_type}</b> &mdash; ${status}`;
         }
-
         const proxLine = plot.proximity_features.length
             ? `<br><span style="color:#94a3b8">+${plot.proximity_features.join(', ')}</span>`
             : '';
-
         const effColor = plot.efficiency >= 75 ? '#22c55e'
                        : plot.efficiency >= 40 ? '#f59e0b' : '#ef4444';
 
@@ -628,17 +671,11 @@ function renderMap(data) {
                 <br><a href="${plot.url}" style="color:#38bdf8">&#8594; Manage Land</a>
             </div>`;
 
-        rect.bindPopup(popupHtml, {
-            className: 'wad-popup',
-            maxWidth: 260,
-        });
-
-        // Single-click: open popup; double-click: navigate
+        rect.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
         rect.on('dblclick', () => { window.location.href = plot.url; });
-
         rect.addTo(layerPlots);
 
-        // Business marker — small icon centred on the plot cell
+        // Business icon centred on the plot cell (visible from zoom ~15)
         if (plot.occupied_by_business_id) {
             const bIcon = L.divIcon({
                 html: `<div style="font-size:12px;line-height:1;filter:drop-shadow(0 0 3px #000);` +
@@ -646,18 +683,17 @@ function renderMap(data) {
                       (plot.business_active ? '&#127981;' : '&#9208;&#65039;') + `</div>`,
                 className: '', iconAnchor: [0, 0],
             });
-            L.marker([y1 + 0.5, x1 + 0.5], { icon: bIcon, interactive: false })
-             .addTo(layerPlots);
+            L.marker(center, { icon: bIcon, interactive: false }).addTo(layerPlots);
         }
 
-        allBoundsPoints.push([y1, x1]);
-        allBoundsPoints.push([y2, x2]);
+        allBoundsPoints.push(sw);
+        allBoundsPoints.push(ne);
     });
 
     // ---- DISTRICTS -------------------------------------------------
     (data.districts || []).forEach(dist => {
-        const [x1, y1, x2, y2] = dist.bounds;
         const color = terrainColor(dist.terrain_type);
+        const bSW = dist.bounds_sw, bNE = dist.bounds_ne;
 
         let bizLine = '';
         if (dist.business_type) {
@@ -675,31 +711,25 @@ function renderMap(data) {
                 <br><a href="${dist.url}" style="color:#38bdf8">&#8594; Manage District</a>
             </div>`;
 
-        // Draw each source plot cell — gives the exact footprint of the district
-        // (e.g. an L-shape instead of a rectangle that includes unowned tiles).
+        // Each source_position is the NW corner [lat, lng] of a 1×1 plot cell
         const srcPositions = dist.source_positions || [];
         if (srcPositions.length > 0) {
-            srcPositions.forEach(([px, py]) => {
-                const cell = L.rectangle(
-                    [[py, px], [py + 1, px + 1]],
-                    { color, weight: 1, fillColor: color, fillOpacity: 0.55 }
-                );
+            srcPositions.forEach(([nwLat, nwLng]) => {
+                const csw = [nwLat + PLOT_DLAT, nwLng];
+                const cne = [nwLat, nwLng + PLOT_DLNG];
+                const cell = L.rectangle([csw, cne],
+                    { color, weight: 1, fillColor: color, fillOpacity: 0.55 });
                 cell.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
                 cell.on('dblclick', () => { window.location.href = dist.url; });
                 cell.addTo(layerDistricts);
             });
-            // Bounding-box outline ties the footprint together visually
-            const outline = L.rectangle(
-                [[y1, x1], [y2, x2]],
+            // Dashed bounding-box outline ties the footprint together
+            L.rectangle([bSW, bNE],
                 { color, weight: 2, fillOpacity: 0, dashArray: '7 4', interactive: false }
-            );
-            outline.addTo(layerDistricts);
+            ).addTo(layerDistricts);
         } else {
-            // Fallback: single rectangle (no source_positions available)
-            const rect = L.rectangle(
-                [[y1, x1], [y2, x2]],
-                { color, weight: 2.5, fillColor: color, fillOpacity: 0.4, dashArray: '6 3' }
-            );
+            const rect = L.rectangle([bSW, bNE],
+                { color, weight: 2.5, fillColor: color, fillOpacity: 0.4, dashArray: '6 3' });
             rect.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
             rect.on('dblclick', () => { window.location.href = dist.url; });
             rect.addTo(layerDistricts);
@@ -708,15 +738,12 @@ function renderMap(data) {
         // Centroid label
         const labelIcon = L.divIcon({
             html: `<span style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;` +
-                  `background:rgba(2,6,23,0.75);padding:1px 4px;border-radius:2px;">` +
+                  `background:rgba(2,6,23,0.82);padding:1px 4px;border-radius:2px;">` +
                   `&#127959; ${dist.district_name}</span>`,
-            className: '',
-            iconAnchor: [0, 0],
+            className: '', iconAnchor: [0, 0],
         });
-        L.marker([dist.center_y, dist.center_x], { icon: labelIcon, interactive: false })
-         .addTo(layerDistricts);
+        L.marker([dist.lat, dist.lng], { icon: labelIcon, interactive: false }).addTo(layerDistricts);
 
-        // Business marker
         if (dist.occupied_by_business_id) {
             const bIcon = L.divIcon({
                 html: `<div style="font-size:14px;line-height:1;filter:drop-shadow(0 0 3px #000);` +
@@ -724,17 +751,19 @@ function renderMap(data) {
                       (dist.business_active ? '&#127981;' : '&#9208;&#65039;') + `</div>`,
                 className: '', iconAnchor: [0, 0],
             });
-            L.marker([dist.center_y, dist.center_x], { icon: bIcon, interactive: false })
-             .addTo(layerDistricts);
+            L.marker([dist.lat, dist.lng], { icon: bIcon, interactive: false }).addTo(layerDistricts);
         }
 
-        allBoundsPoints.push([y1, x1]);
-        allBoundsPoints.push([y2, x2]);
+        allBoundsPoints.push(bSW);
+        allBoundsPoints.push(bNE);
     });
 
     // ---- CITIES ----------------------------------------------------
+    // Cities are pinned to real Maryland city positions.
+    // A semi-transparent circle shows approximate city territory;
+    // radius scales with member count so larger cities look bigger.
     (data.cities || []).forEach(city => {
-        const cx = city.center_x, cy = city.center_y;
+        const clat = city.lat, clng = city.lng;
 
         const mayorStar = city.is_mayor ? ' &#9733;' : '';
         const icon = L.divIcon({
@@ -752,7 +781,6 @@ function renderMap(data) {
 
         const mayorBadge = city.is_mayor
             ? '<br><span style="color:#d4af37">&#9733; Mayor</span>' : '';
-
         const currLine = city.currency_type
             ? `<br>Currency: <span style="color:#f59e0b">${city.currency_type.replace(/_/g,' ')}</span>`
             : '';
@@ -760,33 +788,38 @@ function renderMap(data) {
         const popupHtml = `
             <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
                 <b>&#127961;&#65039; ${city.name}</b>${mayorBadge}${currLine}
+                <br>Members: <span style="color:#38bdf8">${city.member_count || 1}</span>
                 <br><a href="${city.url}" style="color:#38bdf8">&#8594; City Hub</a>
             </div>`;
 
-        // City block — a coloured zone behind the label so cities look
-        // like areas in the city zone, not just floating text.
-        // Height scales with member count (1–20 players → 8–24 units).
-        const cityH = 8 + Math.min((city.member_count || 1) - 1, 12);
-        const cityBlock = L.rectangle(
-            [[cy - cityH / 2, cx - 5], [cy + cityH / 2, cx + 5]],
-            { color: '#0ea5e9', weight: 1.5, fillColor: '#0c2340', fillOpacity: 0.75 }
-        );
-        cityBlock.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        cityBlock.on('dblclick', () => { window.location.href = city.url; });
-        cityBlock.addTo(layerCities);
+        // Semi-transparent circle showing city territory.
+        // Radius grows with member count: 1.5 km base + 500 m per member.
+        const cityRadius = 1500 + Math.min((city.member_count || 1) - 1, 20) * 500;
+        const cityCircle = L.circle([clat, clng], {
+            radius: cityRadius,
+            color: '#0ea5e9', weight: 2,
+            fillColor: '#0c2340', fillOpacity: 0.18,
+        });
+        cityCircle.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
+        cityCircle.on('dblclick', () => { window.location.href = city.url; });
+        cityCircle.addTo(layerCities);
 
-        const marker = L.marker([cy, cx], { icon });
+        const marker = L.marker([clat, clng], { icon });
         marker.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
         marker.on('dblclick', () => { window.location.href = city.url; });
         marker.addTo(layerCities);
 
-        allBoundsPoints.push([cy - cityH / 2, cx - 5]);
-        allBoundsPoints.push([cy + cityH / 2, cx + 5]);
+        // Rough lat/lng extent of the city circle (1° lat ≈ 111 km)
+        const degR = cityRadius / 111000;
+        allBoundsPoints.push([clat - degR, clng - degR]);
+        allBoundsPoints.push([clat + degR, clng + degR]);
     });
 
     // ---- COUNTIES --------------------------------------------------
+    // Counties are pinned to real Maryland county seat positions.
+    // A dashed amber circle shows county territory extent.
     (data.counties || []).forEach(county => {
-        const cx = county.center_x, cy = county.center_y;
+        const clat = county.lat, clng = county.lng;
 
         const icon = L.divIcon({
             html: `<div style="display:inline-flex;align-items:center;gap:5px;` +
@@ -797,69 +830,47 @@ function renderMap(data) {
                   `cursor:pointer;">` +
                   `<span style="font-size:19px">&#128506;</span>` +
                   ` <strong>${county.name}</strong></div>`,
-            className: '',
-            iconAnchor: [0, 0],
+            className: '', iconAnchor: [0, 0],
         });
 
         const popupHtml = `
             <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
                 <b>&#128506;&#65039; ${county.name}</b>
                 <br>Token: <span style="color:#d4af37">${county.crypto_symbol}</span>
+                <br>Member cities: <span style="color:#d4af37">${county.member_city_count || 1}</span>
                 <br><a href="${county.url}" style="color:#38bdf8">&#8594; County Hub</a>
             </div>`;
 
-        // County territory block — wider/taller than city blocks to convey
-        // that counties are higher-level territorial entities.
-        // Width scales with member city count (1–5 cities → 12–22 units).
-        const cntW = 12 + (county.member_city_count || 1) * 2;
-        const cntH = 40 + (county.member_city_count || 1) * 8;
-        const countyBlock = L.rectangle(
-            [[cy - cntH / 2, cx - cntW / 2], [cy + cntH / 2, cx + cntW / 2]],
-            {
-                color: '#d4af37', weight: 2, fillColor: '#1c0d00', fillOpacity: 0.75,
-                dashArray: '8 4',
-            }
-        );
-        countyBlock.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        countyBlock.on('dblclick', () => { window.location.href = county.url; });
-        countyBlock.addTo(layerCounties);
+        // Dashed circle for county territory.
+        // Radius: 10 km base + 3 km per member city (up to 10 cities).
+        const countyRadius = 10000 + Math.min((county.member_city_count || 1) - 1, 10) * 3000;
+        const countyCircle = L.circle([clat, clng], {
+            radius: countyRadius,
+            color: '#d4af37', weight: 2,
+            fillColor: '#78350f', fillOpacity: 0.08,
+            dashArray: '8 6',
+        });
+        countyCircle.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
+        countyCircle.on('dblclick', () => { window.location.href = county.url; });
+        countyCircle.addTo(layerCounties);
 
-        const marker = L.marker([cy, cx], { icon });
+        const marker = L.marker([clat, clng], { icon });
         marker.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
         marker.on('dblclick', () => { window.location.href = county.url; });
         marker.addTo(layerCounties);
 
-        allBoundsPoints.push([cy - cntH / 2, cx - cntW / 2]);
-        allBoundsPoints.push([cy + cntH / 2, cx + cntW / 2]);
+        const degR = countyRadius / 111000;
+        allBoundsPoints.push([clat - degR, clng - degR]);
+        allBoundsPoints.push([clat + degR, clng + degR]);
     });
 
-    // ---- FIT VIEWPORT (context view: assets + margin) --------------
+    // ---- FIT VIEWPORT ----------------------------------------------
     if (allBoundsPoints.length > 0) {
-        // Derive tight data bounds from the collected points
-        const lats = allBoundsPoints.map(p => p[0]);
-        const lngs = allBoundsPoints.map(p => p[1]);
-        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-        const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-
-        // Expand by 20 units so the player sees surrounding world context
-        const M = 20;
-        let sw = [Math.max(0, minLat - M), Math.max(-2, minLng - M)];
-        let ne = [maxLat + M, Math.min(WORLD_W + 2, maxLng + M)];
-
-        // Enforce a minimum 30×30 span so a single plot doesn't over-zoom
-        if (ne[0] - sw[0] < 30) {
-            const midLat = (minLat + maxLat) / 2;
-            sw[0] = Math.max(0, midLat - 15); ne[0] = sw[0] + 30;
-        }
-        if (ne[1] - sw[1] < 30) {
-            const midLng = (minLng + maxLng) / 2;
-            sw[1] = Math.max(-2, midLng - 15); ne[1] = sw[1] + 30;
-        }
-        map.fitBounds([sw, ne], { padding: [30, 30] });
+        // Fit to the player's assets with comfortable padding
+        map.fitBounds(allBoundsPoints, { padding: [60, 60], maxZoom: 16 });
     } else {
-        // No assets yet — show the top slice of the land zone so the
-        // zone backgrounds are visible and the world feels real.
-        map.fitBounds([[0, -2], [50, WORLD_W + 2]], { padding: [20, 20] });
+        // No assets yet — show all of Maryland
+        map.fitBounds([MD_SW, MD_NE], { padding: [20, 20] });
     }
 
     document.getElementById('map-loading').style.display = 'none';
@@ -872,21 +883,20 @@ function renderMap(data) {
         `${plotCount} plots  \u2022  ${distCount} districts  \u2022  ${cityCount} cities  \u2022  ${countyCount} counties`;
 }
 
-// "My Assets" button — zoom tightly to the player's data
+// "My Assets" button — zoom tightly to the player's economic empire
 function fitAll() {
     if (!map) return;
     if (allBoundsPoints.length > 0) {
-        map.fitBounds(allBoundsPoints, { padding: [40, 40] });
+        map.fitBounds(allBoundsPoints, { padding: [60, 60], maxZoom: 16 });
+    } else {
+        fitWorld();
     }
 }
 
-// "World View" button — show the full land zone for big-picture context
+// "World View" button — zoom out to show all of Maryland
 function fitWorld() {
     if (!map) return;
-    // Show the whole land zone width and top 60 rows — landscape-friendly
-    // slice that reveals the grid, your plots as coloured dots, and the
-    // zone boundary.
-    map.fitBounds([[0, -2], [WORLD_CITY_Y, WORLD_W + 2]], { padding: [20, 20] });
+    map.fitBounds([MD_SW, MD_NE], { padding: [10, 10] });
 }
 
 // ============================================================
@@ -916,72 +926,9 @@ function fitWorld() {
 })();
 
 // ============================================================
-// ZONE BACKGROUNDS + GRID  (drawn once on boot, below all data layers)
-// ============================================================
-function drawZoneSeparators() {
-    if (!map) return;
-    const W  = WORLD_W;
-    const CY = WORLD_CITY_Y;
-    const KY = WORLD_COUNTY_Y;
-    const noClick = { interactive: false };
-
-    // ── Zone background fills ───────────────────────────────────
-    // Land zone: deep forest green
-    L.rectangle([[0, 0], [CY, W]], {
-        ...noClick, color: '#14532d', weight: 1,
-        fillColor: '#052e16', fillOpacity: 1,
-    }).addTo(map);
-    // City zone: deep navy
-    L.rectangle([[CY, 0], [KY, W]], {
-        ...noClick, color: '#1e3a5f', weight: 1,
-        fillColor: '#0c1a2e', fillOpacity: 1,
-    }).addTo(map);
-    // County zone: deep amber
-    L.rectangle([[KY, 0], [KY + 200, W]], {
-        ...noClick, color: '#78350f', weight: 1,
-        fillColor: '#1c0d00', fillOpacity: 1,
-    }).addTo(map);
-
-    // ── Land-zone grid (every 10 plots) ────────────────────────
-    const grid = { color: '#0a3d14', weight: 0.5, ...noClick };
-    for (let y = 10; y < CY; y += 10) {
-        L.polyline([[y, 0], [y, W]], grid).addTo(map);
-    }
-    for (let x = 10; x < W; x += 10) {
-        L.polyline([[0, x], [CY, x]], grid).addTo(map);
-    }
-
-    // ── Watermark zone labels (low-opacity, centered in each zone) ─
-    const lbl = (lat, lng, html) => L.marker([lat, lng], {
-        icon: L.divIcon({ html, className: '', iconAnchor: [0, 0] }),
-        ...noClick,
-    }).addTo(map);
-    const wm = (text, color) =>
-        `<div style="font-size:11px;color:${color};opacity:0.25;font-family:monospace;` +
-        `letter-spacing:4px;white-space:nowrap;pointer-events:none;">${text}</div>`;
-    lbl(CY / 2,       4, wm('&#9651; LAND ZONE &#9651;',   '#22c55e'));
-    lbl((CY + KY) / 2, 4, wm('&#9651; CITY ZONE &#9651;',   '#38bdf8'));
-    lbl(KY + 80,       4, wm('&#9651; COUNTY ZONE &#9651;', '#f59e0b'));
-
-    // ── Zone separator lines ────────────────────────────────────
-    L.polyline([[CY, -2], [CY, W + 2]],
-        { color: '#22d3ee', weight: 1.5, dashArray: '8 5', ...noClick }).addTo(map);
-    L.polyline([[KY, -2], [KY, W + 2]],
-        { color: '#f59e0b', weight: 1.5, dashArray: '8 5', ...noClick }).addTo(map);
-
-    // ── Separator labels ────────────────────────────────────────
-    const sepLbl = (lat, text, color) => lbl(lat, 1,
-        `<div style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;` +
-        `background:rgba(2,6,23,.85);padding:2px 5px;border-radius:2px;">${text}</div>`);
-    sepLbl(CY + 0.5, '&#9651; CITY ZONE',   '#22d3ee');
-    sepLbl(KY + 0.5, '&#9651; COUNTY ZONE', '#f59e0b');
-}
-
-// ============================================================
 // BOOT
 // ============================================================
 if (map) {
-    drawZoneSeparators();
     loadMapData();
 }
 </script>
