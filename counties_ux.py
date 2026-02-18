@@ -936,10 +936,11 @@ async def view_county(
     member_nav = ""
     if is_member:
         member_nav = f'''
-        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
             <a href="/county/{county_id}/mining" class="btn btn-crypto">Mining Node</a>
             <a href="/county/{county_id}/governance" class="btn btn-governance">Governance Voting</a>
             <a href="/exchange" class="btn btn-secondary">Crypto Exchange</a>
+            <a href="/county/{county_id}/memecoins" class="btn" style="background:#b45309;color:#fff;">🚀 Meme Coins</a>
         </div>
         '''
 
