@@ -1428,10 +1428,5 @@
     "name": "Logistics Support Contract",
     "description": "Supply chain management",
     "category": "retail_military"
-  },
-  "chicken": {
-    "name": "Chicken",
-    "description": "Fresh poultry meat for cooking",
-    "category": "meat"
   }
 }
