@@ -238,6 +238,20 @@ CITY_STYLES = """
 
 
 # ==========================
+# HELPERS
+# ==========================
+def _currency_select_options() -> str:
+    """Build a <select> dropdown of all tradeable item types for currency selection."""
+    try:
+        import inventory
+        items = sorted(inventory.ITEM_RECIPES.keys())
+    except Exception:
+        items = []
+    options = '\n'.join(f'<option value="{item}">{item.replace("_", " ").title()}</option>' for item in items)
+    return f'<select name="currency" required style="width:100%;padding:10px 12px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:14px;">\n<option value="">-- Select Currency --</option>\n{options}\n</select>'
+
+
+# ==========================
 # CITIES LIST
 # ==========================
 @router.get("/cities", response_class=HTMLResponse)
@@ -759,13 +773,11 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 </div>
                 """
             else:
-                total_value = get_player_total_value(player.id)
-                estimated_fee = total_value * (city.application_fee_percent / 100.0)
-                
+                flat_fee = city.application_fee or 50_000.0
+
                 apply_section = f"""
                 <p style="margin-bottom: 12px;">
-                    <strong>Application Fee:</strong> {city.application_fee_percent}% of your total value<br>
-                    <strong>Estimated Fee:</strong> ${estimated_fee:,.2f}
+                    <strong>Application Fee:</strong> ${flat_fee:,.2f} (flat fee)
                 </p>
                 <form action="/api/city/apply" method="post">
                     <input type="hidden" name="city_id" value="{city_id}">
@@ -776,15 +788,13 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     # Member actions
     member_actions = ""
     if is_member and not is_city_mayor:
-        from cities import get_player_total_value
-        total_value = get_player_total_value(player.id)
-        relocation_fee = total_value * (city.relocation_fee_percent / 100.0)
-        
+        flat_reloc_fee = city.relocation_fee or 10_000.0
+
         member_actions = f"""
         <div class="card">
             <h2>Member Actions</h2>
             <p style="color: #94a3b8; margin-bottom: 12px;">
-                Relocation fee to leave: ${relocation_fee:,.2f} ({city.relocation_fee_percent}% of your value)
+                Relocation fee to leave: ${flat_reloc_fee:,.2f} (flat fee)
             </p>
             <form action="/api/city/leave" method="post" onsubmit="return confirm('Are you sure you want to leave?');">
                 <button type="submit" class="btn btn-danger">Leave City</button>
@@ -985,14 +995,14 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <h3>Fee Settings</h3>
                     <form action="/api/city/set-fees" method="post">
                         <div class="form-group">
-                            <label>Application Fee (%)</label>
-                            <input type="number" name="app_fee" value="{city.application_fee_percent}" 
-                                   min="10" max="45" step="0.1">
+                            <label>Application Fee (flat $)</label>
+                            <input type="number" name="app_fee" value="{city.application_fee or 50000}"
+                                   min="0" max="1000000" step="100">
                         </div>
                         <div class="form-group">
-                            <label>Relocation Fee (%)</label>
-                            <input type="number" name="reloc_fee" value="{city.relocation_fee_percent}"
-                                   min="0" max="50" step="0.1">
+                            <label>Relocation Fee (flat $)</label>
+                            <input type="number" name="reloc_fee" value="{city.relocation_fee or 10000}"
+                                   min="0" max="500000" step="100">
                         </div>
                         <button type="submit" class="btn btn-secondary">Update Fees</button>
                     </form>
@@ -1002,8 +1012,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <h3>Currency Change</h3>
                     <form action="/api/city/currency-vote" method="post">
                         <div class="form-group">
-                            <label>New Currency (Item Type)</label>
-                            <input type="text" name="currency" placeholder="e.g., gold, silver, oil" required>
+                            <label>New Currency (Tradeable Item)</label>
+                            {_currency_select_options()}
                         </div>
                         <div class="form-group">
                             <label>Poll Tax (max ${bank.cash_reserves * 0.035:,.2f})</label>
@@ -1067,11 +1077,11 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     </div>
                     <div class="stat">
                         <span class="stat-label">Application Fee</span>
-                        <span class="stat-value">{stats['application_fee_percent']}%</span>
+                        <span class="stat-value">${stats['application_fee']:,.2f}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Relocation Fee</span>
-                        <span class="stat-value">{stats['relocation_fee_percent']}%</span>
+                        <span class="stat-value">${stats['relocation_fee']:,.2f}</span>
                     </div>
                 </div>
                 

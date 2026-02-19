@@ -2110,7 +2110,7 @@ async def county_governance(
         CryptoWallet, GovernanceCycle, GovernanceProposal, GovernanceVote,
         GovernanceProposalType, GovernanceProposalStatus, GovernanceCycleStatus,
         get_current_governance_cycle, get_governance_proposals,
-        get_governance_history,
+        get_governance_history, get_player_delegations,
         GOVERNANCE_VOTE_CYCLE_TICKS, GOVERNANCE_PROPOSAL_WINDOW_TICKS,
         GOVERNANCE_VOTING_WINDOW_TICKS,
     )
@@ -2219,10 +2219,29 @@ async def county_governance(
                     <input type="hidden" name="county_id" value="{county_id}">
                     <div class="form-group">
                         <label>Proposal Type</label>
-                        <select name="proposal_type" required>
+                        <select name="proposal_type" id="gov-proposal-type" required onchange="updateProposalHints(this.value)">
                             <option value="">-- Select Type --</option>
                             {proposal_type_options}
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Voting Mechanism</label>
+                        <select name="voting_mechanism" title="How votes are weighted">
+                            <option value="token_weighted">Token-Weighted — 1 token = 1 vote (default)</option>
+                            <option value="quadratic">Quadratic — √tokens = vote weight (limits whale power)</option>
+                            <option value="delegated">Delegated — votes include your delegators&apos; token balances</option>
+                        </select>
+                        <small style="color:#64748b;">Quadratic voting prevents large holders from dominating outcomes.</small>
+                    </div>
+                    <div class="form-group" id="proposal-value-group" style="display:none;">
+                        <label id="proposal-value-label">Proposal Value</label>
+                        <input type="number" name="proposal_value" id="proposal-value-input" step="any" placeholder="e.g. 0.03">
+                        <small id="proposal-value-hint" style="color:#64748b;"></small>
+                    </div>
+                    <div class="form-group" id="proposal-target-group" style="display:none;">
+                        <label id="proposal-target-label">Proposal Target</label>
+                        <input type="text" name="proposal_target" id="proposal-target-input" placeholder="">
+                        <small id="proposal-target-hint" style="color:#64748b;"></small>
                     </div>
                     <div class="form-group">
                         <label>Title</label>
@@ -2230,10 +2249,61 @@ async def county_governance(
                     </div>
                     <div class="form-group">
                         <label>Description</label>
-                        <input type="text" name="description" required placeholder="Detailed description of the proposal and its impact" maxlength="500">
+                        <textarea name="description" required placeholder="Detailed description of the proposal and its impact" maxlength="500"
+                            style="width:100%;padding:10px 12px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:14px;min-height:80px;resize:vertical;"></textarea>
                     </div>
                     <button type="submit" class="btn btn-governance">Submit Proposal</button>
                 </form>
+                <script>
+                const PROPOSAL_HINTS = {{
+                    "fee_adjustment": {{
+                        showValue: true, showTarget: false,
+                        valueLabel: "New Exchange Fee (0.0 – 0.10)",
+                        valueHint: "e.g. 0.03 = 3%. Current: {county.transaction_fee_percent or 0.02:.2%}",
+                        valuePlaceholder: "e.g. 0.03"
+                    }},
+                    "mining_parameter": {{
+                        showValue: true, showTarget: false,
+                        valueLabel: "Mining Reward Multiplier (0.1 – 5.0)",
+                        valueHint: "e.g. 1.5 = 50% more mining rewards. Current: {county.mining_reward_multiplier or 1.0:.2f}x",
+                        valuePlaceholder: "e.g. 1.5"
+                    }},
+                    "treasury_spend": {{
+                        showValue: true, showTarget: true,
+                        valueLabel: "Amount to Spend ($)",
+                        valueHint: "Cash to transfer from county treasury (balance: ${county.treasury_balance or 0:,.2f})",
+                        valuePlaceholder: "e.g. 10000",
+                        targetLabel: "Recipient Player ID",
+                        targetHint: "Player ID to receive the funds",
+                        targetPlaceholder: "e.g. 42"
+                    }},
+                    "protocol_upgrade": {{
+                        showValue: true, showTarget: false,
+                        valueLabel: "New Max Token Supply (optional)",
+                        valueHint: "Leave blank for non-supply upgrades. Current max: {county.max_supply or 21000000:,.0f}",
+                        valuePlaceholder: "e.g. 42000000"
+                    }},
+                    "county_policy": {{ showValue: false, showTarget: false }},
+                    "membership_rule": {{ showValue: false, showTarget: false }},
+                }};
+                function updateProposalHints(type) {{
+                    const h = PROPOSAL_HINTS[type] || {{}};
+                    const vg = document.getElementById("proposal-value-group");
+                    const tg = document.getElementById("proposal-target-group");
+                    if (h.showValue) {{
+                        vg.style.display = "";
+                        document.getElementById("proposal-value-label").textContent = h.valueLabel || "Value";
+                        document.getElementById("proposal-value-hint").textContent = h.valueHint || "";
+                        document.getElementById("proposal-value-input").placeholder = h.valuePlaceholder || "";
+                    }} else {{ vg.style.display = "none"; }}
+                    if (h.showTarget) {{
+                        tg.style.display = "";
+                        document.getElementById("proposal-target-label").textContent = h.targetLabel || "Target";
+                        document.getElementById("proposal-target-hint").textContent = h.targetHint || "";
+                        document.getElementById("proposal-target-input").placeholder = h.targetPlaceholder || "";
+                    }} else {{ tg.style.display = "none"; }}
+                }}
+                </script>
             </div>
             '''
         elif cycle["phase"] == "proposal_phase" and is_member and crypto_balance <= 0:
@@ -2317,12 +2387,33 @@ async def county_governance(
                     </div>
                     '''
 
+                # Mechanism badge
+                mech = p.get("voting_mechanism", "token_weighted")
+                mech_labels = {"token_weighted": "Token-Weighted", "quadratic": "Quadratic √", "delegated": "Delegated"}
+                mech_badge = f'<span class="badge" style="background:#1e3a5f;color:#93c5fd;font-size:11px;margin-left:6px;">{mech_labels.get(mech, mech)}</span>'
+
+                # Proposal value/target display
+                value_html = ""
+                if p.get("proposal_value") is not None:
+                    ptype_v = p["proposal_type"]
+                    val = p["proposal_value"]
+                    if ptype_v == "fee_adjustment":
+                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set exchange fee to {val * 100:.2f}%</div>'
+                    elif ptype_v == "mining_parameter":
+                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set mining multiplier to {val:.2f}x</div>'
+                    elif ptype_v == "treasury_spend":
+                        tgt_str = f" to Player {p.get('proposal_target','?')}" if p.get("proposal_target") else ""
+                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Spend ${val:,.2f} from treasury{tgt_str}</div>'
+                    elif ptype_v == "protocol_upgrade" and val:
+                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set max supply to {val:,.0f} tokens</div>'
+
                 proposals_html += f'''
                 <div class="proposal-card">
                     <div class="proposal-header">
                         <div>
-                            <span class="proposal-type">{p["proposal_type"].replace("_", " ")}</span>
+                            <span class="proposal-type">{p["proposal_type"].replace("_", " ")}</span>{mech_badge}
                             <h3 style="color: #e5e7eb; margin-top: 6px;">{p["title"]}</h3>
+                            {value_html}
                         </div>
                         {status_badge}
                     </div>
@@ -2348,6 +2439,70 @@ async def county_governance(
                 A new governance cycle will begin automatically. Cycles run every 5 days:
                 3 days for proposals, 2 days for voting.
             </p>
+        </div>
+        '''
+
+    # Delegation management section (for county members)
+    delegation_html = ""
+    if is_member:
+        delegations = get_player_delegations(player.id, county_id)
+        delegating_to = delegations.get("delegating_to")
+        delegators = delegations.get("delegators", [])
+        total_power = delegations.get("total_delegated_power", 0.0)
+
+        delegating_to_html = ""
+        if delegating_to:
+            delegating_to_html = f'''
+            <div style="background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:12px;margin-bottom:12px;">
+                <strong>Delegating to:</strong> {delegating_to["name"]}
+                <form action="/api/county/governance/revoke-delegation" method="post" style="display:inline;margin-left:12px;">
+                    <input type="hidden" name="county_id" value="{county_id}">
+                    <button type="submit" class="btn btn-danger btn-sm">Revoke</button>
+                </form>
+            </div>
+            '''
+        else:
+            delegating_to_html = f'''
+            <div style="color:#64748b;font-size:13px;margin-bottom:12px;">
+                You are not currently delegating your vote to anyone.
+            </div>
+            <form action="/api/county/governance/delegate" method="post" style="display:flex;gap:8px;margin-bottom:12px;">
+                <input type="hidden" name="county_id" value="{county_id}">
+                <input type="number" name="delegate_id" placeholder="Player ID to delegate to" min="1" step="1"
+                    style="flex:1;padding:8px 12px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:14px;">
+                <button type="submit" class="btn btn-secondary">Delegate Vote</button>
+            </form>
+            '''
+
+        delegators_html = ""
+        if delegators:
+            rows = "".join(
+                f'<tr><td>{d["name"]}</td><td class="stat-value crypto">{d["token_balance"]:.6f} {county.crypto_symbol}</td></tr>'
+                for d in delegators
+            )
+            delegators_html = f'''
+            <h3 style="margin-top:16px;">Players delegating to you</h3>
+            <table class="table">
+                <thead><tr><th>Player</th><th>Token Power</th></tr></thead>
+                <tbody>{rows}</tbody>
+            </table>
+            <div style="color:#94a3b8;font-size:13px;margin-top:8px;">
+                Total delegated power: <strong class="stat-value crypto">{total_power:.6f} {county.crypto_symbol}</strong>
+            </div>
+            '''
+        else:
+            delegators_html = '<p style="color:#64748b;font-size:13px;margin-top:16px;">Nobody has delegated their vote to you.</p>'
+
+        delegation_html = f'''
+        <div class="card">
+            <h2>🗳 Vote Delegation</h2>
+            <p style="color:#94a3b8;font-size:13px;margin-bottom:16px;">
+                Delegate your governance vote weight to another county member.
+                On proposals using <strong>Delegated</strong> voting, your delegate&apos;s effective
+                weight includes your token balance.
+            </p>
+            {delegating_to_html}
+            {delegators_html}
         </div>
         '''
 
@@ -2427,16 +2582,19 @@ async def county_governance(
                     <div>
                         <h3 style="color: #f59e0b;">2. Voting Phase (2 days)</h3>
                         <p style="color: #94a3b8; font-size: 13px;">
-                            Members burn {county.crypto_symbol} tokens to cast votes.
-                            More tokens burned = more voting weight.
-                            Tokens are permanently destroyed.
+                            Burn {county.crypto_symbol} to vote YES or NO. Three mechanisms available:
+                            <strong>Token-Weighted</strong> (1 token = 1 vote),
+                            <strong>Quadratic</strong> (√tokens = weight, limits whale power),
+                            <strong>Delegated</strong> (includes your delegators' balances).
+                            Burned tokens are permanently destroyed.
                         </p>
                     </div>
                     <div>
-                        <h3 style="color: #f59e0b;">3. Results</h3>
+                        <h3 style="color: #f59e0b;">3. Execution</h3>
                         <p style="color: #94a3b8; font-size: 13px;">
-                            Proposals pass if YES token votes exceed NO token votes.
-                            Only county members (members of cities in this county) can participate.
+                            Passed proposals are <strong>automatically executed</strong> on-chain:
+                            fee adjustments change the exchange rate, mining parameter changes adjust rewards,
+                            treasury spends transfer funds, and protocol upgrades modify token supply.
                         </p>
                     </div>
                 </div>
@@ -2445,6 +2603,7 @@ async def county_governance(
             {cycle_html}
             {submit_form_html}
             {proposals_html}
+            {delegation_html}
             {history_html}
         </div>
     </body>
@@ -2461,6 +2620,9 @@ async def api_governance_propose(
     proposal_type: str = Form(...),
     title: str = Form(...),
     description: str = Form(...),
+    voting_mechanism: str = Form("token_weighted"),
+    proposal_value: Optional[float] = Form(None),
+    proposal_target: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     """Submit a governance proposal."""
@@ -2478,6 +2640,9 @@ async def api_governance_propose(
         title=title,
         description=description,
         current_tick=app_module.current_tick,
+        voting_mechanism=voting_mechanism,
+        proposal_value=proposal_value,
+        proposal_target=proposal_target,
     )
 
     if proposal:
@@ -2531,6 +2696,43 @@ async def api_governance_vote(
             url=f"/county/{county_id}/governance?error={message.replace(' ', '+')}",
             status_code=303,
         )
+
+
+@router.post("/api/county/governance/delegate")
+async def api_governance_delegate(
+    county_id: int = Form(...),
+    delegate_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Delegate governance vote to another county member."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import delegate_vote
+    success, message = delegate_vote(player.id, delegate_id, county_id)
+
+    url = f"/county/{county_id}/governance"
+    param = f"msg={message.replace(' ', '+')}" if success else f"error={message.replace(' ', '+')}"
+    return RedirectResponse(url=f"{url}?{param}", status_code=303)
+
+
+@router.post("/api/county/governance/revoke-delegation")
+async def api_governance_revoke_delegation(
+    county_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Revoke current vote delegation."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from counties import revoke_delegation
+    success, message = revoke_delegation(player.id, county_id)
+
+    url = f"/county/{county_id}/governance"
+    param = f"msg={message.replace(' ', '+')}" if success else f"error={message.replace(' ', '+')}"
+    return RedirectResponse(url=f"{url}?{param}", status_code=303)
 
 
 # ==========================

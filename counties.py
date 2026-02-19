@@ -164,6 +164,10 @@ class County(Base):
     # Mining payout counter (for halving calculation)
     total_mining_payouts = Column(Integer, default=0)  # Number of payout cycles completed
 
+    # Governance-controlled parameters (can be changed via passed proposals)
+    transaction_fee_percent = Column(Float, default=EXCHANGE_FEE_PERCENT)  # Exchange fee (0-0.10)
+    mining_reward_multiplier = Column(Float, default=1.0)  # Multiplier on base mining reward (0.1-5.0)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -362,9 +366,35 @@ class GovernanceProposal(Base):
 
     status = Column(String, default=GovernanceProposalStatus.PENDING)
 
-    # Vote tallies (total tokens burned)
+    # Voting mechanism for this proposal
+    # token_weighted: 1 token = 1 vote (default)
+    # quadratic:      sqrt(tokens) = vote weight (prevents whales)
+    # delegated:      votes accrue delegated token weight from delegators
+    voting_mechanism = Column(String, default="token_weighted")
+
+    # Parameterized proposal value (e.g. new fee %, new multiplier, spend amount)
+    proposal_value = Column(Float, nullable=True)     # Numeric target value
+    proposal_target = Column(String, nullable=True)   # Target identifier (player ID, parameter name, etc.)
+
+    # Effective vote tallies (accounting for mechanism — may differ from raw tokens burned)
     yes_token_votes = Column(Float, default=0.0)
     no_token_votes = Column(Float, default=0.0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class VoteDelegation(Base):
+    """
+    A player delegates their governance vote weight to another player.
+    When the delegate votes, the delegator's token balance amplifies the vote.
+    Delegation is per-county and can be revoked at any time.
+    """
+    __tablename__ = "vote_delegations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    county_id = Column(Integer, index=True, nullable=False)
+    delegator_id = Column(Integer, index=True, nullable=False)  # Who delegates
+    delegate_id = Column(Integer, index=True, nullable=False)   # Who receives power
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -1655,6 +1685,9 @@ def submit_governance_proposal(
     title: str,
     description: str,
     current_tick: int,
+    voting_mechanism: str = "token_weighted",
+    proposal_value: Optional[float] = None,
+    proposal_target: Optional[str] = None,
 ) -> tuple:
     """
     Submit a governance proposal during the proposal phase.
@@ -1699,6 +1732,11 @@ def submit_governance_proposal(
         except ValueError:
             return None, f"Invalid proposal type: {proposal_type}"
 
+        # Validate voting mechanism
+        valid_mechanisms = ("token_weighted", "quadratic", "delegated")
+        if voting_mechanism not in valid_mechanisms:
+            voting_mechanism = "token_weighted"
+
         # Create proposal
         proposal = GovernanceProposal(
             cycle_id=cycle.id,
@@ -1708,6 +1746,9 @@ def submit_governance_proposal(
             title=title,
             description=description,
             status=GovernanceProposalStatus.PENDING,
+            voting_mechanism=voting_mechanism,
+            proposal_value=proposal_value,
+            proposal_target=proposal_target,
         )
         db.add(proposal)
         db.commit()
@@ -1794,7 +1835,34 @@ def cast_governance_vote(
         if not is_player_in_county(player_id, proposal.county_id):
             return False, "Only county members can vote on governance proposals"
 
-        # Burn tokens from wallet
+        # --- Calculate effective vote weight based on mechanism ---
+        mechanism = proposal.voting_mechanism or "token_weighted"
+
+        if mechanism == "quadratic":
+            # Quadratic voting: weight = sqrt(tokens_burned)
+            # Prevents whales from having disproportionate power
+            effective_weight = math.sqrt(tokens_to_burn)
+        elif mechanism == "delegated":
+            # Delegated voting: voter's own tokens + all delegated token balances
+            # Delegators must also hold county crypto
+            delegations = db.query(VoteDelegation).filter(
+                VoteDelegation.county_id == proposal.county_id,
+                VoteDelegation.delegate_id == player_id,
+            ).all()
+            delegated_tokens = 0.0
+            for delegation in delegations:
+                d_wallet = db.query(CryptoWallet).filter(
+                    CryptoWallet.player_id == delegation.delegator_id,
+                    CryptoWallet.crypto_symbol == county.crypto_symbol,
+                ).first()
+                if d_wallet:
+                    delegated_tokens += d_wallet.balance
+            effective_weight = tokens_to_burn + delegated_tokens
+        else:
+            # token_weighted (default): 1 token = 1 vote
+            effective_weight = tokens_to_burn
+
+        # Burn tokens from wallet (only the voter's own tokens are burned)
         wallet.balance -= tokens_to_burn
 
         # Update county burn stats
@@ -1811,11 +1879,11 @@ def cast_governance_vote(
         )
         db.add(gov_vote)
 
-        # Update proposal tallies
+        # Update proposal tallies using effective weight (not raw tokens)
         if vote == "yes":
-            proposal.yes_token_votes += tokens_to_burn
+            proposal.yes_token_votes += effective_weight
         else:
-            proposal.no_token_votes += tokens_to_burn
+            proposal.no_token_votes += effective_weight
 
         db.commit()
 
@@ -1830,13 +1898,150 @@ def cast_governance_vote(
             quantity=tokens_to_burn,
         )
 
-        print(f"[Counties] Governance vote: Player {player_id} burned {tokens_to_burn:.6f} {county.crypto_symbol} to vote {vote.upper()} on proposal {proposal_id}")
-        return True, f"Vote recorded! Burned {tokens_to_burn:.6f} {county.crypto_symbol} for {vote.upper()}"
+        print(f"[Counties] Governance vote: Player {player_id} burned {tokens_to_burn:.6f} {county.crypto_symbol} to vote {vote.upper()} on proposal {proposal_id} (mechanism: {mechanism}, effective weight: {effective_weight:.6f})")
+        return True, f"Vote recorded! Burned {tokens_to_burn:.6f} {county.crypto_symbol} for {vote.upper()} (effective weight: {effective_weight:.4f} via {mechanism.replace('_', ' ')} voting)"
 
     except Exception as e:
         db.rollback()
         print(f"[Counties] Error casting governance vote: {e}")
         return False, str(e)
+    finally:
+        db.close()
+
+
+def delegate_vote(delegator_id: int, delegate_id: int, county_id: int) -> tuple:
+    """
+    Delegate governance vote weight to another county member.
+    The delegate's vote will include the delegator's token balance as additional weight.
+    A player can only delegate to one person per county at a time.
+    """
+    db = get_db()
+    try:
+        if delegator_id == delegate_id:
+            return False, "Cannot delegate to yourself"
+
+        # Verify both players are county members
+        if not is_player_in_county(delegator_id, county_id):
+            return False, "You are not a member of this county"
+        if not is_player_in_county(delegate_id, county_id):
+            return False, "Target player is not a member of this county"
+
+        # Check for circular delegation (delegate must not already delegate back to delegator)
+        circular = db.query(VoteDelegation).filter(
+            VoteDelegation.county_id == county_id,
+            VoteDelegation.delegator_id == delegate_id,
+            VoteDelegation.delegate_id == delegator_id,
+        ).first()
+        if circular:
+            return False, "Circular delegation not allowed"
+
+        # Remove any existing delegation from this player in this county
+        existing = db.query(VoteDelegation).filter(
+            VoteDelegation.county_id == county_id,
+            VoteDelegation.delegator_id == delegator_id,
+        ).first()
+        if existing:
+            db.delete(existing)
+
+        delegation = VoteDelegation(
+            county_id=county_id,
+            delegator_id=delegator_id,
+            delegate_id=delegate_id,
+        )
+        db.add(delegation)
+        db.commit()
+
+        from auth import Player
+        delegate_player = db.query(Player).filter(Player.id == delegate_id).first()
+        delegate_name = delegate_player.business_name if delegate_player else f"Player {delegate_id}"
+        db.close()
+
+        print(f"[Counties] Vote delegation: Player {delegator_id} delegated to Player {delegate_id} in county {county_id}")
+        return True, f"Vote delegated to {delegate_name}"
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error delegating vote: {e}")
+        return False, str(e)
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
+
+
+def revoke_delegation(delegator_id: int, county_id: int) -> tuple:
+    """Revoke vote delegation in a county."""
+    db = get_db()
+    try:
+        existing = db.query(VoteDelegation).filter(
+            VoteDelegation.county_id == county_id,
+            VoteDelegation.delegator_id == delegator_id,
+        ).first()
+        if not existing:
+            return False, "No delegation to revoke"
+
+        db.delete(existing)
+        db.commit()
+
+        print(f"[Counties] Vote delegation revoked: Player {delegator_id} in county {county_id}")
+        return True, "Delegation revoked"
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Error revoking delegation: {e}")
+        return False, str(e)
+    finally:
+        db.close()
+
+
+def get_player_delegations(player_id: int, county_id: int) -> dict:
+    """Get a player's delegation status (who they delegate to, who delegates to them)."""
+    db = get_db()
+    try:
+        from auth import Player
+
+        # Who this player delegates to
+        outgoing = db.query(VoteDelegation).filter(
+            VoteDelegation.county_id == county_id,
+            VoteDelegation.delegator_id == player_id,
+        ).first()
+
+        # Who delegates to this player
+        incoming = db.query(VoteDelegation).filter(
+            VoteDelegation.county_id == county_id,
+            VoteDelegation.delegate_id == player_id,
+        ).all()
+
+        delegating_to = None
+        if outgoing:
+            p = db.query(Player).filter(Player.id == outgoing.delegate_id).first()
+            delegating_to = {
+                "player_id": outgoing.delegate_id,
+                "name": p.business_name if p else f"Player {outgoing.delegate_id}",
+            }
+
+        delegators = []
+        for inc in incoming:
+            p = db.query(Player).filter(Player.id == inc.delegator_id).first()
+            w = db.query(CryptoWallet).filter(
+                CryptoWallet.player_id == inc.delegator_id,
+            ).first()
+            delegators.append({
+                "player_id": inc.delegator_id,
+                "name": p.business_name if p else f"Player {inc.delegator_id}",
+                "token_balance": w.balance if w else 0.0,
+            })
+
+        return {
+            "delegating_to": delegating_to,
+            "delegators": delegators,
+            "total_delegated_power": sum(d["token_balance"] for d in delegators),
+        }
+
+    except Exception as e:
+        print(f"[Counties] Error getting delegations: {e}")
+        return {"delegating_to": None, "delegators": [], "total_delegated_power": 0.0}
     finally:
         db.close()
 
@@ -1874,6 +2079,9 @@ def get_governance_proposals(county_id: int, cycle_id: Optional[int] = None) -> 
                 "yes_percent": (p.yes_token_votes / total_votes * 100) if total_votes > 0 else 0,
                 "no_percent": (p.no_token_votes / total_votes * 100) if total_votes > 0 else 0,
                 "created_at": p.created_at,
+                "voting_mechanism": p.voting_mechanism or "token_weighted",
+                "proposal_value": p.proposal_value,
+                "proposal_target": p.proposal_target,
             })
         return result
     except Exception as e:
@@ -1935,6 +2143,68 @@ def get_governance_history(county_id: int, limit: int = 10) -> list:
         return []
     finally:
         db.close()
+
+
+def _execute_passed_proposal(db, county: "County", proposal: "GovernanceProposal"):
+    """
+    Execute the on-chain effect of a passed governance proposal.
+    Each proposal type has specific executable effects.
+    """
+    ptype = proposal.proposal_type
+    value = proposal.proposal_value
+    target = proposal.proposal_target
+
+    if ptype == GovernanceProposalType.FEE_ADJUSTMENT:
+        # Change exchange fee percent (clamped to 0–10%)
+        if value is not None:
+            new_fee = max(0.0, min(0.10, float(value)))
+            county.transaction_fee_percent = new_fee
+            print(f"[Counties] [{county.name}] FEE_ADJUSTMENT executed: exchange fee → {new_fee * 100:.2f}%")
+
+    elif ptype == GovernanceProposalType.MINING_PARAMETER:
+        # Change mining reward multiplier (clamped to 0.1–5.0)
+        if value is not None:
+            new_mult = max(0.1, min(5.0, float(value)))
+            county.mining_reward_multiplier = new_mult
+            print(f"[Counties] [{county.name}] MINING_PARAMETER executed: reward multiplier → {new_mult:.2f}x")
+
+    elif ptype == GovernanceProposalType.TREASURY_SPEND:
+        # Transfer value from treasury to a target player
+        if value is not None and value > 0 and target:
+            try:
+                target_player_id = int(target)
+                from auth import Player
+                player = db.query(Player).filter(Player.id == target_player_id).first()
+                if player and county.treasury_balance >= value:
+                    county.treasury_balance -= value
+                    player.cash_balance += value
+                    log_transaction(
+                        target_player_id, "treasury_grant", "money", value,
+                        f"County treasury grant from {county.name}",
+                        reference_id=f"gov_proposal_{proposal.id}"
+                    )
+                    print(f"[Counties] [{county.name}] TREASURY_SPEND executed: ${value:,.2f} → Player {target_player_id}")
+                else:
+                    print(f"[Counties] [{county.name}] TREASURY_SPEND skipped: insufficient treasury or invalid player")
+            except (ValueError, TypeError):
+                print(f"[Counties] [{county.name}] TREASURY_SPEND skipped: invalid target '{target}'")
+
+    elif ptype == GovernanceProposalType.PROTOCOL_UPGRADE:
+        # Protocol upgrades modify max token supply (if value provided)
+        if value is not None and value > county.max_supply:
+            county.max_supply = float(value)
+            print(f"[Counties] [{county.name}] PROTOCOL_UPGRADE executed: max supply → {value:,.0f}")
+        else:
+            # Non-numeric protocol changes are just logged (require dev action)
+            print(f"[Counties] [{county.name}] PROTOCOL_UPGRADE recorded: '{proposal.title}' — requires manual review")
+
+    elif ptype == GovernanceProposalType.COUNTY_POLICY:
+        # General policy — no automatic action, just recorded as passed
+        print(f"[Counties] [{county.name}] COUNTY_POLICY enacted: '{proposal.title}'")
+
+    elif ptype == GovernanceProposalType.MEMBERSHIP_RULE:
+        # Membership rule changes — logged and recorded
+        print(f"[Counties] [{county.name}] MEMBERSHIP_RULE enacted: '{proposal.title}'")
 
 
 def process_governance_cycles(current_tick: int):
@@ -2011,6 +2281,16 @@ def process_governance_cycles(current_tick: int):
                 passed_count = sum(1 for p in active_proposals if p.status == GovernanceProposalStatus.PASSED)
                 failed_count = sum(1 for p in active_proposals if p.status == GovernanceProposalStatus.FAILED)
                 print(f"[Counties] County '{county.name}' governance cycle #{active_cycle.cycle_number} completed: {passed_count} passed, {failed_count} failed")
+
+                # === EXECUTE PASSED PROPOSALS ===
+                for proposal in active_proposals:
+                    if proposal.status != GovernanceProposalStatus.PASSED:
+                        continue
+                    try:
+                        _execute_passed_proposal(db, county, proposal)
+                    except Exception as exec_err:
+                        print(f"[Counties] Error executing proposal {proposal.id}: {exec_err}")
+                db.commit()
 
     except Exception as e:
         db.rollback()
@@ -2192,6 +2472,35 @@ def initialize():
     print("[Counties] Creating database tables...")
     Base.metadata.create_all(bind=engine)
 
+    # Safe migrations for new columns
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        # Counties table migrations
+        county_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(counties)")).fetchall()]
+        if "transaction_fee_percent" not in county_cols:
+            conn.execute(text(f"ALTER TABLE counties ADD COLUMN transaction_fee_percent REAL DEFAULT {EXCHANGE_FEE_PERCENT}"))
+            conn.commit()
+            print("[Counties] Migration: added transaction_fee_percent")
+        if "mining_reward_multiplier" not in county_cols:
+            conn.execute(text("ALTER TABLE counties ADD COLUMN mining_reward_multiplier REAL DEFAULT 1.0"))
+            conn.commit()
+            print("[Counties] Migration: added mining_reward_multiplier")
+
+        # GovernanceProposal table migrations
+        prop_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(governance_proposals)")).fetchall()]
+        if "voting_mechanism" not in prop_cols:
+            conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN voting_mechanism TEXT DEFAULT 'token_weighted'"))
+            conn.commit()
+            print("[Counties] Migration: added voting_mechanism to governance_proposals")
+        if "proposal_value" not in prop_cols:
+            conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN proposal_value REAL"))
+            conn.commit()
+            print("[Counties] Migration: added proposal_value to governance_proposals")
+        if "proposal_target" not in prop_cols:
+            conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN proposal_target TEXT"))
+            conn.commit()
+            print("[Counties] Migration: added proposal_target to governance_proposals")
+
     db = get_db()
     county_count = db.query(County).count()
 
@@ -2282,7 +2591,7 @@ __all__ = [
     'County', 'CountyCity', 'CountyPetition', 'CountyPoll', 'CountyVote',
     'MiningDeposit', 'CryptoWallet', 'CryptoExchangeOrder',
     'CryptoPriceHistory',
-    'GovernanceCycle', 'GovernanceProposal', 'GovernanceVote',
+    'GovernanceCycle', 'GovernanceProposal', 'GovernanceVote', 'VoteDelegation',
 
     # Enums
     'CountyPetitionStatus', 'CountyPollType', 'CountyPollStatus',
@@ -2316,6 +2625,8 @@ __all__ = [
     'submit_governance_proposal', 'cast_governance_vote',
     'get_governance_proposals', 'get_player_governance_votes',
     'get_governance_history', 'process_governance_cycles',
+    # Delegation
+    'delegate_vote', 'revoke_delegation', 'get_player_delegations',
 
     # Constants
     'MAX_COUNTY_CITIES', 'MAYOR_VOTE_WEIGHT', 'MAX_TOKEN_SUPPLY',

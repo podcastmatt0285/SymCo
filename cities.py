@@ -43,8 +43,10 @@ Base = declarative_base()
 CITY_CREATION_COST = 10_000_000.0  # $10M
 DISTRICTS_REQUIRED = 10
 MAX_CITY_MEMBERS = 25
-MIN_APPLICATION_FEE_PERCENT = 10.0
-MAX_APPLICATION_FEE_PERCENT = 45.0
+MIN_APPLICATION_FEE = 0.0
+MAX_APPLICATION_FEE = 1_000_000.0  # Mayor can charge up to $1M flat
+MIN_RELOCATION_FEE = 0.0
+MAX_RELOCATION_FEE = 500_000.0  # Max $500K to leave
 PRODUCTION_SUBSIDY_RATE = 0.0475  # 4.75%
 CURRENCY_SELL_DISCOUNT = 0.03  # Bank sells at 3% below market
 RESERVE_REQUIREMENT_PERCENT = 0.10  # 10% of total value
@@ -97,9 +99,12 @@ class City(Base):
     # Currency (commodity type used as petrodollar)
     currency_type = Column(String, nullable=True)  # Item type from inventory
     
-    # Fee settings (Mayor controlled)
-    application_fee_percent = Column(Float, default=25.0)  # 10-45%
-    relocation_fee_percent = Column(Float, default=10.0)  # Fee to leave voluntarily
+    # Fee settings (Mayor controlled) - flat dollar amounts
+    application_fee = Column(Float, default=50_000.0)   # Flat $ to join
+    relocation_fee = Column(Float, default=10_000.0)    # Flat $ to leave voluntarily
+    # Legacy percent columns kept for schema compatibility (no longer used)
+    application_fee_percent = Column(Float, default=25.0)
+    relocation_fee_percent = Column(Float, default=10.0)
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -430,7 +435,9 @@ def create_city(founder_id: int, city_name: str, district_ids: List[int]) -> Tup
         city = City(
             name=city_name,
             mayor_id=founder_id,
-            application_fee_percent=25.0,  # Default middle ground
+            application_fee=50_000.0,    # Default $50K flat fee
+            relocation_fee=10_000.0,     # Default $10K flat fee
+            application_fee_percent=25.0,  # Legacy (kept for schema compat)
             relocation_fee_percent=10.0
         )
         db.add(city)
@@ -519,10 +526,9 @@ def apply_to_city(player_id: int, city_id: int) -> Tuple[Optional[CityApplicatio
         if existing_app:
             return None, "You already have a pending application"
         
-        # Calculate application fee
-        total_value = get_player_total_value(player_id)
-        fee = total_value * (city.application_fee_percent / 100.0)
-        
+        # Flat application fee (set by Mayor)
+        fee = city.application_fee or 50_000.0
+
         # Check player can afford the fee
         if player.cash_balance < fee:
             return None, f"Insufficient funds for application fee (${fee:,.2f})"
@@ -664,10 +670,9 @@ def leave_city(player_id: int) -> Tuple[bool, str]:
         if not player:
             return False, "Player not found"
         
-        # Calculate and collect relocation fee
-        total_value = get_player_total_value(player_id)
-        relocation_fee = total_value * (city.relocation_fee_percent / 100.0)
-        
+        # Flat relocation fee (set by Mayor)
+        relocation_fee = city.relocation_fee or 10_000.0
+
         if player.cash_balance < relocation_fee:
             return False, f"Insufficient funds for relocation fee (${relocation_fee:,.2f})"
         
@@ -787,19 +792,30 @@ def process_banishment(city_id: int, player_id: int) -> Tuple[bool, str]:
         if not player or not mayor:
             return False, "Player or Mayor not found"
         
-        # Mayor reimburses the original entry fee
-        reimbursement = membership.application_fee_paid
-        
-        if mayor.cash_balance < reimbursement:
-            return False, f"Mayor cannot afford reimbursement (${reimbursement:,.2f})"
-        
-        mayor.cash_balance -= reimbursement
-        player.cash_balance += reimbursement
-        
-        # Remove membership
+        # Reimburse original entry fee — try mayor first, fall back to city bank
+        reimbursement = membership.application_fee_paid or 0.0
+
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+
+        if reimbursement > 0:
+            if mayor.cash_balance >= reimbursement:
+                # Mayor pays
+                mayor.cash_balance -= reimbursement
+                player.cash_balance += reimbursement
+                print(f"[Cities] Mayor paid ${reimbursement:,.2f} reimbursement for banished Player {player_id}")
+            elif bank and bank.cash_reserves >= reimbursement:
+                # City bank covers it
+                bank.cash_reserves -= reimbursement
+                player.cash_balance += reimbursement
+                print(f"[Cities] City bank paid ${reimbursement:,.2f} reimbursement for banished Player {player_id}")
+            else:
+                # Insufficient funds in both — proceed without reimbursement
+                print(f"[Cities] Banishment proceeding without reimbursement (mayor: ${mayor.cash_balance:,.2f}, bank: ${bank.cash_reserves if bank else 0:,.2f}, needed: ${reimbursement:,.2f})")
+
+        # Remove membership (banishment always proceeds regardless of reimbursement)
         db.delete(membership)
         db.commit()
-        
+
         print(f"[Cities] Player {player_id} banished from City {city_id}, reimbursed ${reimbursement:,.2f}")
         
         return True, "Player has been banished"
@@ -902,47 +918,57 @@ def close_poll(poll_id: int) -> Tuple[bool, str]:
         
         poll.yes_votes = yes_votes
         poll.no_votes = no_votes
-        
+
         # Determine outcome (simple majority)
         passed = yes_votes > no_votes
         poll.status = PollStatus.PASSED if passed else PollStatus.FAILED
-        
+
+        # Capture all poll fields BEFORE commit/close to avoid detached-instance errors
+        poll_type = poll.poll_type
+        poll_city_id = poll.city_id
+        poll_target_player_id = poll.target_player_id
+        poll_proposed_currency = poll.proposed_currency
+        poll_status_str = poll.status
+
         db.commit()
         db.close()
-        
+
         # Process based on poll type
         if passed:
-            if poll.poll_type == PollType.APPLICATION:
+            if poll_type == PollType.APPLICATION:
                 # Find and approve application
-                app = get_db().query(CityApplication).filter(
-                    CityApplication.city_id == poll.city_id,
-                    CityApplication.applicant_id == poll.target_player_id,
-                    CityApplication.status == "pending"
-                ).first()
-                if app:
-                    process_application_approval(app.id)
-            
-            elif poll.poll_type == PollType.BANISHMENT:
-                process_banishment(poll.city_id, poll.target_player_id)
-            
-            elif poll.poll_type == PollType.CURRENCY_CHANGE:
-                set_city_currency(poll.city_id, poll.proposed_currency)
-        
-        else:
-            # Reject application if it failed
-            if poll.poll_type == PollType.APPLICATION:
                 db2 = get_db()
                 app = db2.query(CityApplication).filter(
-                    CityApplication.city_id == poll.city_id,
-                    CityApplication.applicant_id == poll.target_player_id,
+                    CityApplication.city_id == poll_city_id,
+                    CityApplication.applicant_id == poll_target_player_id,
+                    CityApplication.status == "pending"
+                ).first()
+                app_id = app.id if app else None
+                db2.close()
+                if app_id:
+                    process_application_approval(app_id)
+
+            elif poll_type == PollType.BANISHMENT:
+                process_banishment(poll_city_id, poll_target_player_id)
+
+            elif poll_type == PollType.CURRENCY_CHANGE:
+                set_city_currency(poll_city_id, poll_proposed_currency)
+
+        else:
+            # Reject application if it failed
+            if poll_type == PollType.APPLICATION:
+                db2 = get_db()
+                app = db2.query(CityApplication).filter(
+                    CityApplication.city_id == poll_city_id,
+                    CityApplication.applicant_id == poll_target_player_id,
                     CityApplication.status == "pending"
                 ).first()
                 if app:
                     app.status = "rejected"
                     db2.commit()
                 db2.close()
-        
-        print(f"[Cities] Poll {poll_id} closed: {poll.status} (YES: {yes_votes}, NO: {no_votes})")
+
+        print(f"[Cities] Poll {poll_id} closed: {poll_status_str} (YES: {yes_votes}, NO: {no_votes})")
         
         return True, f"Poll closed: {poll.status}"
         
@@ -1603,28 +1629,28 @@ def assume_bank_debt(player_id: int, loan_id: int) -> Tuple[bool, str]:
 # ==========================
 # MAYOR CONTROLS
 # ==========================
-def set_application_fee(mayor_id: int, city_id: int, fee_percent: float) -> Tuple[bool, str]:
-    """Mayor sets the application fee percentage."""
+def set_application_fee(mayor_id: int, city_id: int, fee_amount: float) -> Tuple[bool, str]:
+    """Mayor sets the flat application fee (dollar amount)."""
     db = get_db()
-    
+
     try:
         city = db.query(City).filter(City.id == city_id).first()
         if not city:
             return False, "City not found"
-        
+
         if city.mayor_id != mayor_id:
             return False, "Only the Mayor can change fees"
-        
-        if fee_percent < MIN_APPLICATION_FEE_PERCENT or fee_percent > MAX_APPLICATION_FEE_PERCENT:
-            return False, f"Fee must be between {MIN_APPLICATION_FEE_PERCENT}% and {MAX_APPLICATION_FEE_PERCENT}%"
-        
-        city.application_fee_percent = fee_percent
+
+        if fee_amount < MIN_APPLICATION_FEE or fee_amount > MAX_APPLICATION_FEE:
+            return False, f"Fee must be between ${MIN_APPLICATION_FEE:,.0f} and ${MAX_APPLICATION_FEE:,.0f}"
+
+        city.application_fee = fee_amount
         db.commit()
-        
-        print(f"[Cities] City {city_id} application fee set to {fee_percent}%")
-        
-        return True, f"Application fee set to {fee_percent}%"
-        
+
+        print(f"[Cities] City {city_id} application fee set to ${fee_amount:,.2f}")
+
+        return True, f"Application fee set to ${fee_amount:,.2f}"
+
     except Exception as e:
         db.rollback()
         print(f"[Cities] Error setting fee: {e}")
@@ -1633,28 +1659,28 @@ def set_application_fee(mayor_id: int, city_id: int, fee_percent: float) -> Tupl
         db.close()
 
 
-def set_relocation_fee(mayor_id: int, city_id: int, fee_percent: float) -> Tuple[bool, str]:
-    """Mayor sets the relocation fee percentage."""
+def set_relocation_fee(mayor_id: int, city_id: int, fee_amount: float) -> Tuple[bool, str]:
+    """Mayor sets the flat relocation fee (dollar amount)."""
     db = get_db()
-    
+
     try:
         city = db.query(City).filter(City.id == city_id).first()
         if not city:
             return False, "City not found"
-        
+
         if city.mayor_id != mayor_id:
             return False, "Only the Mayor can change fees"
-        
-        if fee_percent < 0 or fee_percent > 50:
-            return False, "Fee must be between 0% and 50%"
-        
-        city.relocation_fee_percent = fee_percent
+
+        if fee_amount < MIN_RELOCATION_FEE or fee_amount > MAX_RELOCATION_FEE:
+            return False, f"Fee must be between ${MIN_RELOCATION_FEE:,.0f} and ${MAX_RELOCATION_FEE:,.0f}"
+
+        city.relocation_fee = fee_amount
         db.commit()
-        
-        print(f"[Cities] City {city_id} relocation fee set to {fee_percent}%")
-        
-        return True, f"Relocation fee set to {fee_percent}%"
-        
+
+        print(f"[Cities] City {city_id} relocation fee set to ${fee_amount:,.2f}")
+
+        return True, f"Relocation fee set to ${fee_amount:,.2f}"
+
     except Exception as e:
         db.rollback()
         print(f"[Cities] Error setting fee: {e}")
@@ -1966,8 +1992,8 @@ def get_city_stats(city_id: int) -> dict:
             "member_count": len(members),
             "max_members": MAX_CITY_MEMBERS,
             "currency_type": city.currency_type,
-            "application_fee_percent": city.application_fee_percent,
-            "relocation_fee_percent": city.relocation_fee_percent,
+            "application_fee": city.application_fee or 50_000.0,
+            "relocation_fee": city.relocation_fee or 10_000.0,
             "bank_reserves": bank.cash_reserves if bank else 0,
             "bank_currency_qty": bank.currency_quantity if bank else 0,
             "active_polls": active_polls,
@@ -2020,11 +2046,24 @@ def initialize():
     """Initialize cities module."""
     print("[Cities] Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    
+
+    # Safe migrations for new columns
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        existing = [row[1] for row in conn.execute(text("PRAGMA table_info(cities)")).fetchall()]
+        if "application_fee" not in existing:
+            conn.execute(text("ALTER TABLE cities ADD COLUMN application_fee REAL DEFAULT 50000.0"))
+            conn.commit()
+            print("[Cities] Migration: added application_fee column")
+        if "relocation_fee" not in existing:
+            conn.execute(text("ALTER TABLE cities ADD COLUMN relocation_fee REAL DEFAULT 10000.0"))
+            conn.commit()
+            print("[Cities] Migration: added relocation_fee column")
+
     db = get_db()
     city_count = db.query(City).count()
     db.close()
-    
+
     print(f"[Cities] Current state: {city_count} cities")
     print("[Cities] Module initialized")
 
@@ -2144,6 +2183,8 @@ __all__ = [
     
     # Constants
     'MAX_CITY_MEMBERS',
-    'MIN_APPLICATION_FEE_PERCENT',
-    'MAX_APPLICATION_FEE_PERCENT',
+    'MIN_APPLICATION_FEE',
+    'MAX_APPLICATION_FEE',
+    'MIN_RELOCATION_FEE',
+    'MAX_RELOCATION_FEE',
 ]
