@@ -410,15 +410,20 @@ def create_district(
     base_tax = DISTRICT_TYPES[district_type]["base_tax"]
     monthly_tax = base_tax * total_size * DISTRICT_TAX_MULTIPLIER
     
-    # Remove businesses from all plots
-    from business import Business
+    # Remove businesses from all plots (and their orphaned dismantling records)
+    from business import Business, BusinessSale
     for plot in plots:
         if plot.occupied_by_business_id:
-            # Delete the business
             business = db.query(Business).filter(
                 Business.id == plot.occupied_by_business_id
             ).first()
             if business:
+                # Also remove any in-progress dismantling record to avoid ghost sale ticks
+                sale = db.query(BusinessSale).filter(
+                    BusinessSale.business_id == business.id
+                ).first()
+                if sale:
+                    db.delete(sale)
                 db.delete(business)
                 print(f"[Districts] Removed business {business.id} from plot {plot.id}")
     

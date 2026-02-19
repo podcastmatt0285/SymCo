@@ -1571,17 +1571,30 @@ def delist_company(founder_id: int, company_id: int):
         finally:
             auth_db.close()
 
-        # Cancel all open orders for this stock
+        # Cancel all open orders for this stock and refund reserved cash to buy-order holders
         try:
-            from banks.brokerage_order_book import OrderBook, OrderStatus, get_db as get_ob_db
+            from banks.brokerage_order_book import OrderBook, OrderStatus, OrderSide, get_db as get_ob_db
+            from auth import Player, get_db as get_auth_db
             ob_db = get_ob_db()
             try:
                 open_orders = ob_db.query(OrderBook).filter(
                     OrderBook.company_shares_id == company.id,
                     OrderBook.status.in_([OrderStatus.PENDING.value, OrderStatus.PARTIAL.value])
                 ).all()
-                for order in open_orders:
-                    order.status = OrderStatus.CANCELLED.value
+                auth_db_refund = get_auth_db()
+                try:
+                    for order in open_orders:
+                        order.status = OrderStatus.CANCELLED.value
+                        # Refund the unfilled reserved cash for buy orders
+                        if order.order_side == OrderSide.BUY.value and order.reserved_cash > 0:
+                            unfilled_qty = order.quantity - order.filled_quantity
+                            cash_to_release = (order.reserved_cash / order.quantity) * unfilled_qty
+                            holder = auth_db_refund.query(Player).filter(Player.id == order.player_id).first()
+                            if holder:
+                                holder.cash_balance += cash_to_release
+                    auth_db_refund.commit()
+                finally:
+                    auth_db_refund.close()
                 ob_db.commit()
             finally:
                 ob_db.close()

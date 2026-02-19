@@ -36,9 +36,12 @@ class SupplyDemandEngine:
         """
         if market_price <= 0:
             return 9999.0  # Prevent division by zero
-        
+
+        if current_price <= 0:
+            return 9999.0  # Negative/zero retail price means no sales
+
         ratio = current_price / market_price
-        
+
         # Exponential delay: as price rises above market, wait time explodes
         # As price drops below market, sales accelerate
         multiplier = math.pow(ratio, elasticity)

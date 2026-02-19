@@ -541,7 +541,7 @@ async def register(
             status_code=303
         )
     
-    player = create_player(db, business_name, password)
+    player = create_player(db, business_name.strip(), password)
     
     if not player:
         db.close()

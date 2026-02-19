@@ -1009,7 +1009,7 @@ async def api_delete_account(
         return player
 
     # Verify confirmation matches business name
-    if confirm_name.strip() != player.business_name:
+    if confirm_name.strip() != player.business_name.strip():
         return RedirectResponse(
             url="/estate/delete-account?error=Business+name+does+not+match",
             status_code=303

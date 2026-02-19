@@ -781,12 +781,22 @@ def _handle_breach(db, contract, breacher_id: int, reason: str):
 
     if breacher:
         total_penalty = gov_penalty + damaged_penalty
+        # Only distribute what the breacher actually has — prevents creating money from nothing.
+        # The breacher's balance is still allowed to go negative as a debt deterrent.
+        collectable = max(0.0, breacher.cash_balance)
         breacher.cash_balance -= total_penalty  # Can go negative (debt)
 
+        if collectable > 0 and total_penalty > 0:
+            gov_collected = collectable * (gov_penalty / total_penalty)
+            damaged_collected = collectable * (damaged_penalty / total_penalty)
+        else:
+            gov_collected = 0.0
+            damaged_collected = 0.0
+
         if gov:
-            gov.cash_balance += gov_penalty
+            gov.cash_balance += gov_collected
         if damaged:
-            damaged.cash_balance += damaged_penalty
+            damaged.cash_balance += damaged_collected
 
         auth_db.commit()
 

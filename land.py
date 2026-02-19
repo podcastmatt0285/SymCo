@@ -586,12 +586,13 @@ def collect_hoarding_taxes():
 
     db = get_db()
 
-    # Find players with more than HOARDING_FREE_PLOTS plots (exclude government)
+    # Find players with more than HOARDING_FREE_PLOTS plots (exclude government and tutorial reward plots)
     plot_counts = db.query(
         LandPlot.owner_id,
         func.count(LandPlot.id)
     ).filter(
-        LandPlot.is_government_owned == False
+        LandPlot.is_government_owned == False,
+        LandPlot.is_tutorial_reward == False
     ).group_by(LandPlot.owner_id).having(
         func.count(LandPlot.id) > HOARDING_FREE_PLOTS
     ).all()

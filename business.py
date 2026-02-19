@@ -259,12 +259,16 @@ def process_business_tick(db):
                 mkt_p = market.get_market_price(item) or 10.0
                 current_p = price_entry.price if price_entry else mkt_p
 
-                multiplier = SupplyDemandEngine.get_sales_multiplier(
-                    current_p, mkt_p, rule.get("elasticity", 1.0)
-                )
-                chance = SupplyDemandEngine.calculate_chance_per_tick(
-                    rule.get("base_sale_chance", 0.05), multiplier
-                )
+                try:
+                    multiplier = SupplyDemandEngine.get_sales_multiplier(
+                        current_p, mkt_p, rule.get("elasticity", 1.0)
+                    )
+                    chance = SupplyDemandEngine.calculate_chance_per_tick(
+                        rule.get("base_sale_chance", 0.05), multiplier
+                    )
+                except (ValueError, ZeroDivisionError) as e:
+                    print(f"[Business] Skipping retail item {item} for biz {biz.id}: {e}")
+                    continue
 
                 sold = sum(1 for _ in range(int(qty)) if random.random() < chance)
                 if sold > 0:
@@ -441,6 +445,9 @@ def toggle_business(player_id: int, business_id: int) -> bool:
 
 def set_retail_price(player_id: int, item_type: str, price: float) -> bool:
     """Set or update the retail price for a specific item for a player."""
+    if price <= 0:
+        print(f"[Business] Rejected invalid retail price {price} for player {player_id} ({item_type})")
+        return False
     db = SessionLocal()
     try:
         price_entry = db.query(RetailPrice).filter(
