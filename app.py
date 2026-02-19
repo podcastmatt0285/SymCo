@@ -27,7 +27,7 @@ def register_module(name: str, module):
 
 def load_modules():
     """Attempt to load all game modules."""
-    module_names = ['auth', 'inventory', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'counties', 'memecoins', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm']
+    module_names = ['auth', 'inventory', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'counties', 'memecoins', 'wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm']
     for name in module_names:
         try:
             mod = __import__(name)
@@ -262,6 +262,12 @@ try:
     from memecoins_ux import router as memecoins_router
     app.include_router(memecoins_router)
     print("Meme Coins routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    import wallet  # ensures WSC tables are created and tick handler is registered
+    print("Wallet module loaded")
 except ModuleNotFoundError:
     pass
 

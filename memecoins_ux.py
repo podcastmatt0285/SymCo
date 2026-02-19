@@ -774,7 +774,8 @@ async def meme_coin_page(
             </div>
         </div>
         <div>
-            <a href="/county/{detail["county_id"]}/memecoins" class="nav-link">← All Meme Coins</a>
+            <a href="/county/{detail["county_id"]}/memecoins" class="nav-link">&#8592; All Meme Coins</a>
+            <a href="/wallet" class="nav-link" style="background:#1e1b4b;border:1px solid #4f46e5;border-radius:6px;padding:4px 10px;color:#a5b4fc;font-weight:600;">&#128274; Wadsworth Wallet</a>
             <a href="/exchange" class="nav-link">Exchange</a>
             <a href="/" class="nav-link">Dashboard</a>
         </div>
@@ -1423,8 +1424,35 @@ async def api_cancel_order(
 
 
 # ==========================
-# WALLET DASHBOARD
+# WALLET DASHBOARD (FULL)
 # ==========================
+_WALLET_STYLES = """
+<style>
+.wallet-ticker{display:flex;gap:10px;overflow-x:auto;padding:8px 0;margin-bottom:14px;
+  border-bottom:1px solid #1e293b;scrollbar-width:thin;}
+.ticker-chip{flex-shrink:0;background:#0f172a;border:1px solid #1e293b;border-radius:20px;
+  padding:4px 12px;font-size:12px;white-space:nowrap;cursor:pointer;text-decoration:none;
+  color:inherit;transition:border-color .15s;}
+.ticker-chip:hover{border-color:#f59e0b;}
+.ticker-up{border-color:#16a34a55;}
+.ticker-down{border-color:#dc262655;}
+.privacy-banner{background:linear-gradient(135deg,#0f172a,#1e1b4b);border:1px solid #312e81;
+  border-radius:8px;padding:12px 16px;font-size:12px;color:#a5b4fc;margin-bottom:14px;
+  display:flex;align-items:center;gap:10px;}
+.wsc-card{background:linear-gradient(135deg,#0c0a1f,#1e1b4b);border:1px solid #4f46e5;
+  border-radius:10px;padding:18px;margin-bottom:14px;}
+.wsc-balance{font-size:36px;font-weight:700;color:#a5b4fc;letter-spacing:1px;}
+.reward-pool{background:#0a0f1a;border:1px solid #1e293b;border-radius:8px;padding:12px;
+  text-align:center;font-size:12px;}
+.reward-pool .pool-val{font-size:20px;font-weight:700;color:#f59e0b;display:block;margin:4px 0;}
+.swap-box{background:#0f172a;border:1px solid #4f46e5;border-radius:10px;padding:18px;}
+.alert-price-up{background:#14532d;border:1px solid #16a34a;border-radius:6px;padding:8px 14px;
+  margin-bottom:6px;font-size:13px;}
+.alert-price-down{background:#7f1d1d;border:1px solid #dc2626;border-radius:6px;padding:8px 14px;
+  margin-bottom:6px;font-size:13px;}
+</style>
+"""
+
 @router.get("/wallet", response_class=HTMLResponse)
 async def wallet_dashboard(
     session_token: Optional[str] = Cookie(None),
@@ -1436,12 +1464,25 @@ async def wallet_dashboard(
         return RedirectResponse(url="/login", status_code=303)
 
     from memecoins import get_wallet_portfolio
-    portfolio = get_wallet_portfolio(player.id)
+    from wallet import (
+        get_wsc_wallet_info, get_treasury_info,
+        get_player_yield_deposits, get_faucet_status, get_recent_swaps,
+        FAUCET_COOLDOWN_HOURS, FAUCET_AMOUNT_MIN, FAUCET_AMOUNT_MAX,
+        WSC_SYMBOL, WSC_NAME, SWAP_FEE_SELL, SWAP_FEE_BUY, WSC_MINT_RATE,
+    )
+    from memecoins import get_db as meme_get_db, MemeCoin
 
+    portfolio       = get_wallet_portfolio(player.id)
     native_holdings = portfolio["native_holdings"]
     meme_holdings   = portfolio["meme_holdings"]
     stakes          = portfolio["stakes"]
     open_orders     = portfolio["open_orders"]
+
+    wsc_info    = get_wsc_wallet_info(player.id)
+    treasury    = get_treasury_info()
+    yield_deps  = get_player_yield_deposits(player.id)
+    faucet_st   = get_faucet_status(player.id)
+    swap_hist   = get_recent_swaps(player.id, limit=8)
 
     alert_html = ""
     if msg:
@@ -1449,7 +1490,23 @@ async def wallet_dashboard(
     if error:
         alert_html = f'<div class="alert alert-error">{error}</div>'
 
-    # Build native holdings HTML
+    # ---- All active memes for swap dropdowns ----
+    _db = meme_get_db()
+    try:
+        all_memes = _db.query(MemeCoin).filter(MemeCoin.is_active == True).all()
+        swap_opts_all = "".join(
+            f'<option value="{m.symbol}">{m.symbol} — {m.name}</option>'
+            for m in all_memes
+        )
+    finally:
+        _db.close()
+
+    swap_opts_from = "".join(
+        f'<option value="{m["symbol"]}">{m["symbol"]} — {m["balance"]:,.4f} held</option>'
+        for m in meme_holdings
+    ) or '<option value="">No holdings yet</option>'
+
+    # ---- Native holdings ----
     native_rows = ""
     for n in native_holdings:
         native_rows += f'''
@@ -1461,52 +1518,47 @@ async def wallet_dashboard(
     if not native_rows:
         native_rows = '<tr><td colspan="3" style="color:#475569;text-align:center;padding:16px;">No native token holdings. Mine or buy county tokens first.</td></tr>'
 
-    # Build meme holdings HTML + price alert banners
+    # ---- Meme holdings + price alerts ----
     price_alerts = []
     meme_rows = ""
     for m in meme_holdings:
-        chg = m["change_24h"]
-        chg_cls = "positive" if chg > 0 else ("negative" if chg < 0 else "neutral")
+        chg      = m["change_24h"]
+        chg_cls  = "positive" if chg > 0 else ("negative" if chg < 0 else "neutral")
         chg_sign = "+" if chg > 0 else ""
-        logo_html = f'<span style="display:inline-block;width:20px;height:20px;vertical-align:middle;">{m["logo_svg"]}</span> ' if m["logo_svg"] else ""
-        # Price alert detection
+        logo_html = (f'<span style="display:inline-block;width:20px;height:20px;vertical-align:middle;">'
+                     f'{m["logo_svg"]}</span> ') if m["logo_svg"] else ""
         if abs(chg) >= 10:
-            alert_icon = "🚀" if chg > 0 else "⚠️"
-            alert_color = "#14532d" if chg > 0 else "#7f1d1d"
-            alert_border = "#16a34a" if chg > 0 else "#dc2626"
+            a_col = "#14532d" if chg > 0 else "#7f1d1d"
+            a_bdr = "#16a34a" if chg > 0 else "#dc2626"
+            icon  = "&#128640;" if chg > 0 else "&#9888;"
             price_alerts.append(
-                f'<div style="background:{alert_color};border:1px solid {alert_border};border-radius:6px;'
-                f'padding:8px 14px;margin-bottom:6px;font-size:13px;">'
-                f'{alert_icon} <strong>{m["symbol"]}</strong> moved <strong>{chg_sign}{chg:.1f}%</strong> in the last 24h'
-                f' — current price: <span class="meme-color">{m["last_price"]:.6f} {m["native_symbol"]}</span></div>'
+                f'<div class="alert-price-{"up" if chg>0 else "down"}" style="background:{a_col};border:1px solid {a_bdr};">'
+                f'{icon} <strong>{m["symbol"]}</strong> moved <strong>{chg_sign}{chg:.1f}%</strong> in 24 h'
+                f' &mdash; price: <span class="meme-color">{m["last_price"]:.6f} {m["native_symbol"]}</span></div>'
             )
         meme_rows += f'''
         <tr>
-            <td>
-                {logo_html}<a href="/memecoins/{m["symbol"]}" class="nav-link" style="font-weight:600;">{m["symbol"]}</a>
-                <span style="color:#475569;font-size:11px;margin-left:4px;">{m["name"]}</span>
-            </td>
+            <td>{logo_html}<a href="/memecoins/{m["symbol"]}" class="nav-link" style="font-weight:600;">{m["symbol"]}</a>
+                <span style="color:#475569;font-size:11px;margin-left:4px;">{m["name"]}</span></td>
             <td class="meme-color" style="text-align:right;">{m["balance"]:,.4f}</td>
             <td style="text-align:right;">{m["last_price"]:.6f} <span style="color:#475569;font-size:11px;">{m["native_symbol"]}</span></td>
             <td class="{chg_cls}" style="text-align:right;">{chg_sign}{chg:.2f}%</td>
             <td class="native-color" style="text-align:right;">{m["value_native"]:.4f} {m["native_symbol"]}</td>
         </tr>'''
     if not meme_rows:
-        meme_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No meme coin holdings. Trade or mine to get started.</td></tr>'
+        meme_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No meme coin holdings yet.</td></tr>'
+    alerts_html = "".join(price_alerts)
 
-    alerts_html = "".join(price_alerts) if price_alerts else ""
-
-    # Build stakes HTML
+    # ---- Mining stakes (order-book staking via meme mine) ----
     stake_rows = ""
     for s in stakes:
-        ts = s["deposited_at"][:10]
         stake_rows += f'''
         <tr>
             <td><a href="/memecoins/{s["meme_symbol"]}" class="nav-link">{s["meme_symbol"]}</a>
                 <span style="color:#475569;font-size:11px;"> {s["meme_name"]}</span></td>
             <td class="native-color" style="text-align:right;">{s["staked_native"]:,.6f} {s["native_symbol"]}</td>
             <td class="positive" style="text-align:right;">{s["total_earned"]:,.4f} {s["meme_symbol"]}</td>
-            <td style="text-align:right;color:#64748b;">{ts}</td>
+            <td style="text-align:right;color:#64748b;">{s["deposited_at"][:10]}</td>
             <td style="text-align:right;">
                 <form action="/api/memecoins/unstake" method="post" style="display:inline;">
                     <input type="hidden" name="deposit_id" value="{s["id"]}">
@@ -1515,22 +1567,47 @@ async def wallet_dashboard(
             </td>
         </tr>'''
     if not stake_rows:
-        stake_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No active stakes.</td></tr>'
+        stake_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No active mining stakes.</td></tr>'
 
-    # Build open orders HTML
+    # ---- Yield farming deposits ----
+    yield_rows = ""
+    for yd in yield_deps:
+        yield_rows += f'''
+        <tr>
+            <td><a href="/memecoins/{yd["meme_symbol"]}" class="nav-link">{yd["meme_symbol"]}</a>
+                <span style="color:#475569;font-size:11px;"> {yd["meme_name"]}</span></td>
+            <td class="meme-color" style="text-align:right;">{yd["quantity"]:,.4f}</td>
+            <td style="text-align:right;">{yd["last_price"]:.6f}</td>
+            <td class="positive" style="text-align:right;">{yd["total_earned_wsc"]:.4f} WSC</td>
+            <td style="text-align:right;color:#64748b;">{yd["deposited_at"][:10]}</td>
+            <td style="text-align:right;">
+                <form action="/api/wallet/yield-unstake" method="post" style="display:inline;">
+                    <input type="hidden" name="deposit_id" value="{yd["id"]}">
+                    <button type="submit" class="btn btn-cancel btn-sm">Unstake</button>
+                </form>
+            </td>
+        </tr>'''
+    if not yield_rows:
+        yield_rows = '<tr><td colspan="6" style="color:#475569;text-align:center;padding:16px;">No yield positions. Stake meme coins below to earn WSC.</td></tr>'
+
+    yield_stake_opts = "".join(
+        f'<option value="{m["symbol"]}">{m["symbol"]} — {m["balance"]:,.4f} held</option>'
+        for m in meme_holdings
+    ) or '<option value="">No meme coin holdings</option>'
+
+    # ---- Open orders ----
     order_rows = ""
     for o in open_orders:
-        badge_cls = "badge-buy" if o["order_type"] == "buy" else "badge-sell"
-        status_cls = f"badge-{o['status']}"
-        filled_pct = (o["quantity_filled"] / o["quantity"] * 100) if o["quantity"] > 0 else 0
-        price_str = f'{o["price"]:.6f}' if o["price"] else "MARKET"
+        bc  = "badge-buy" if o["order_type"] == "buy" else "badge-sell"
+        sc  = f"badge-{o['status']}"
+        fp  = (o["quantity_filled"] / o["quantity"] * 100) if o["quantity"] > 0 else 0
+        ps  = f'{o["price"]:.6f}' if o["price"] else "MARKET"
         order_rows += f'''
         <tr>
             <td><a href="/memecoins/{o["meme_symbol"]}" class="nav-link">{o["meme_symbol"]}</a></td>
-            <td><span class="badge {badge_cls}">{o["order_type"].upper()}</span></td>
-            <td>{price_str}</td>
-            <td>{o["quantity"]:,.4f}</td>
-            <td><span class="badge {status_cls}">{o["status"]} ({filled_pct:.0f}%)</span></td>
+            <td><span class="badge {bc}">{o["order_type"].upper()}</span></td>
+            <td>{ps}</td><td>{o["quantity"]:,.4f}</td>
+            <td><span class="badge {sc}">{o["status"]} ({fp:.0f}%)</span></td>
             <td>
                 <form action="/api/memecoins/cancel-order" method="post" style="display:inline;">
                     <input type="hidden" name="order_id" value="{o["id"]}">
@@ -1542,96 +1619,73 @@ async def wallet_dashboard(
     if not order_rows:
         order_rows = '<tr><td colspan="6" style="color:#475569;text-align:center;padding:16px;">No open orders.</td></tr>'
 
-    # Swap options: meme coins you own + any active ones on the exchange
-    swap_options_from = "".join(
-        f'<option value="{m["symbol"]}">{m["symbol"]} — {m["balance"]:,.4f} held</option>'
-        for m in meme_holdings
-    )
-    # For "to": all meme coins (need a broader list)
-    from memecoins import get_db as meme_get_db, MemeCoin
-    _db = meme_get_db()
-    try:
-        all_active_memes = _db.query(MemeCoin).filter(MemeCoin.is_active == True).all()
-        swap_options_to = "".join(
-            f'<option value="{m.symbol}">{m.symbol} — {m.name}</option>'
-            for m in all_active_memes
-        )
-    finally:
-        _db.close()
+    # ---- Swap history ----
+    swap_hist_rows = ""
+    for sh in swap_hist:
+        cc = "&#127759;" if sh["is_cross_chain"] else "&#9741;"
+        swap_hist_rows += f'''
+        <tr>
+            <td>{cc} <strong>{sh["from_symbol"]}</strong> &#8594; <strong>{sh["to_symbol"]}</strong></td>
+            <td class="negative" style="text-align:right;">{sh["amount_in"]:,.4f}</td>
+            <td class="positive" style="text-align:right;">{sh["amount_out"]:,.4f}</td>
+            <td style="text-align:right;color:#f59e0b;">{sh["wsc_minted"]:.4f} WSC</td>
+            <td style="text-align:right;color:#64748b;">{sh["executed_at"]}</td>
+        </tr>'''
+    if not swap_hist_rows:
+        swap_hist_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:12px;">No swap history yet.</td></tr>'
 
-    # Summary stats
-    total_meme_value_by_native: dict = {}
+    # ---- Faucet ----
+    faucet_can   = faucet_st["can_claim"]
+    faucet_secs  = faucet_st["remaining_seconds"]
+    faucet_hrs   = faucet_secs // 3600
+    faucet_mins  = (faucet_secs % 3600) // 60
+    faucet_btn   = (
+        '<button type="submit" class="btn btn-primary" style="background:#0369a1;">&#128241; Claim Faucet</button>'
+        if faucet_can else
+        f'<button disabled class="btn btn-cancel">Cooldown: {faucet_hrs}h {faucet_mins}m</button>'
+    )
+
+    # ---- Portfolio totals ----
+    total_meme_val: dict = {}
     for m in meme_holdings:
         ns = m["native_symbol"]
-        total_meme_value_by_native[ns] = total_meme_value_by_native.get(ns, 0.0) + m["value_native"]
+        total_meme_val[ns] = total_meme_val.get(ns, 0.0) + m["value_native"]
     total_staked = sum(s["staked_native"] for s in stakes)
-    total_earned = sum(s["total_earned"] for s in stakes)
+    total_yield_earned = sum(yd["total_earned_wsc"] for yd in yield_deps)
 
-    portfolio_summary = ""
-    for ns, val in total_meme_value_by_native.items():
-        portfolio_summary += f'<span style="margin-right:18px;">Meme Value: <strong class="native-color">{val:.4f} {ns}</strong></span>'
-    if not portfolio_summary:
-        portfolio_summary = '<span style="color:#475569;">No meme holdings valued yet.</span>'
+    portfolio_summary = "".join(
+        f'<span style="margin-right:18px;">Meme Value: <strong class="native-color">{v:.4f} {ns}</strong></span>'
+        for ns, v in total_meme_val.items()
+    ) or '<span style="color:#475569;">No meme holdings valued yet.</span>'
+
+    # ---- Live ticker chips ----
+    ticker_chips = "".join(
+        f'<a href="/memecoins/{m["symbol"]}" class="ticker-chip ticker-{"up" if m["change_24h"]>=0 else "down"}">'
+        f'<strong>{m["symbol"]}</strong> '
+        f'<span style="color:#f59e0b;">{m["last_price"]:.6f}</span> '
+        f'<span style="font-size:10px;color:{"#4ade80" if m["change_24h"]>=0 else "#f87171"};">'
+        f'{"+" if m["change_24h"]>=0 else ""}{m["change_24h"]:.1f}%</span></a>'
+        for m in meme_holdings
+    ) or '<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>'
+
+    fee_pct = int((SWAP_FEE_SELL + SWAP_FEE_BUY) * 100)
 
     return f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Crypto Wallet — SymCo</title>
+    <title>Wadsworth Crypto Wallet</title>
     {MEME_STYLES}
-    <style>
-    .wallet-ticker {{
-        display: flex;
-        gap: 10px;
-        overflow-x: auto;
-        padding: 8px 0;
-        margin-bottom: 14px;
-        border-bottom: 1px solid #1e293b;
-        scrollbar-width: thin;
-    }}
-    .ticker-chip {{
-        flex-shrink: 0;
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 12px;
-        white-space: nowrap;
-        cursor: pointer;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.15s;
-    }}
-    .ticker-chip:hover {{ border-color: #f59e0b; }}
-    .ticker-up   {{ border-color: #16a34a33; }}
-    .ticker-down {{ border-color: #dc262633; }}
-    .privacy-banner {{
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-        border: 1px solid #312e81;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 12px;
-        color: #a5b4fc;
-        margin-bottom: 14px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }}
-    .swap-box {{
-        background: #0f172a;
-        border: 1px solid #334155;
-        border-radius: 10px;
-        padding: 18px;
-    }}
-    </style>
+    {_WALLET_STYLES}
+
 </head>
 <body>
 <div class="container">
 
     <!-- HEADER -->
     <div class="header">
-        <h1>&#9679; CRYPTO WALLET</h1>
+        <h1>&#128274; WADSWORTH CRYPTO WALLET</h1>
         <div>
             <a href="/" class="nav-link">&#8592; Home</a>
         </div>
@@ -1641,81 +1695,151 @@ async def wallet_dashboard(
 
     <!-- PRIVACY BANNER -->
     <div class="privacy-banner">
-        <span style="font-size:20px;">&#128274;</span>
+        <span style="font-size:22px;">&#128274;</span>
         <span>
             <strong style="color:#c7d2fe;">Decentralized &amp; Private</strong> —
-            Your holdings exist on county blockchains, peer-to-peer.
-            No banks. No governments. No middlemen.
-            All transactions are on-chain and censorship-resistant.
+            Your assets exist on county blockchains: peer-to-peer, censorship-resistant.
+            Never seen by banks or governments. No middlemen. No custodians. Your keys, your coins.
         </span>
     </div>
 
-    <!-- LIVE TICKER -->
+    <!-- LIVE TICKER (auto-refreshes every 15 s) -->
     <div class="wallet-ticker" id="live-ticker">
-        <span style="color:#475569;font-size:12px;align-self:center;flex-shrink:0;">LIVE</span>
-        {''.join(
-            f'<a href="/memecoins/{m["symbol"]}" class="ticker-chip ticker-{"up" if m["change_24h"] >= 0 else "down"}">'
-            f'<strong>{m["symbol"]}</strong> '
-            f'<span class="{"positive" if m["change_24h"] >= 0 else "negative"}">{m["last_price"]:.6f}</span> '
-            f'<span style="font-size:10px;{"color:#4ade80" if m["change_24h"] >= 0 else "color:#f87171"};">'
-            f'{"+" if m["change_24h"] >= 0 else ""}{m["change_24h"]:.1f}%</span></a>'
-            for m in meme_holdings
-        ) or '<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>'}
+        <span style="color:#475569;font-size:11px;align-self:center;flex-shrink:0;padding-right:6px;">&#9632; LIVE</span>
+        {ticker_chips}
     </div>
 
     <!-- PRICE ALERTS -->
     {alerts_html}
 
-    <!-- PORTFOLIO SUMMARY BAR -->
-    <div style="background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:12px 18px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;">
+    <!-- WSC BALANCE CARD -->
+    <div class="wsc-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:12px;color:#a5b4fc;margin-bottom:4px;letter-spacing:1px;">WADSWORTH STABLE COIN (WSC)</div>
+                <div class="wsc-balance">{wsc_info["balance"]:.4f} <span style="font-size:16px;color:#6366f1;">WSC</span></div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">= ${wsc_info["balance"]:.2f} redeemable &nbsp;&#8226;&nbsp; 1 WSC &#61; $1</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:11px;color:#6366f1;margin-bottom:8px;">Total earned</div>
+                <div style="font-size:12px;margin-bottom:3px;">Yield: <strong style="color:#4ade80;">{wsc_info["total_earned_yield"]:.4f}</strong></div>
+                <div style="font-size:12px;margin-bottom:3px;">Faucet: <strong style="color:#38bdf8;">{wsc_info["total_earned_faucet"]:.4f}</strong></div>
+                <div style="font-size:12px;margin-bottom:3px;">Airdrop: <strong style="color:#f59e0b;">{wsc_info["total_earned_airdrop"]:.4f}</strong></div>
+                <div style="font-size:12px;color:#475569;">Redeemed: {wsc_info["total_redeemed"]:.4f}</div>
+            </div>
+        </div>
+
+        <!-- Redeem form -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #312e81;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <form action="/api/wallet/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div class="form-group" style="margin:0;">
+                    <label style="color:#a5b4fc;">Redeem WSC &#8594; In-Game Cash ($)</label>
+                    <input type="number" name="amount" step="any" min="0.01"
+                           max="{wsc_info['balance']:.4f}"
+                           placeholder="Amount (max {wsc_info['balance']:.4f})"
+                           style="width:200px;border-color:#4f46e5;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="background:#4f46e5;margin-top:18px;">
+                    &#9654; Redeem for Cash
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- WSC TREASURY POOLS -->
+    <div class="card">
+        <h2 style="color:#6366f1;">&#128176; WSC Treasury &amp; Reward Pools</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+            Every instant swap burns {fee_pct}% in fees &rarr; 90% is re-minted as WSC and split below.
+            Pool balances fund all wallet rewards.
+        </p>
+        <div class="grid grid-3">
+            <div class="reward-pool">
+                <span style="color:#64748b;font-size:11px;">&#9881; Yield Farming Pool</span>
+                <span class="pool-val">{treasury["yield_farming_pool"]:.4f} WSC</span>
+                <span style="color:#475569;font-size:10px;">Distributed hourly to yield stakers</span>
+            </div>
+            <div class="reward-pool">
+                <span style="color:#64748b;font-size:11px;">&#128241; Faucet Pool</span>
+                <span class="pool-val" style="color:#38bdf8;">{treasury["faucet_pool"]:.4f} WSC</span>
+                <span style="color:#475569;font-size:10px;">Claim every {FAUCET_COOLDOWN_HOURS}h &bull; {FAUCET_AMOUNT_MIN:.2f}&ndash;{FAUCET_AMOUNT_MAX:.2f} WSC</span>
+            </div>
+            <div class="reward-pool">
+                <span style="color:#64748b;font-size:11px;">&#127881; Airdrop Pool</span>
+                <span class="pool-val" style="color:#f59e0b;">{treasury["airdrop_pool"]:.4f} WSC</span>
+                <span style="color:#475569;font-size:10px;">Periodic drops to commodity holders</span>
+            </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#475569;text-align:right;">
+            Total ever minted: <strong style="color:#6366f1;">{treasury["total_minted"]:.4f} WSC</strong>
+            &nbsp;&bull;&nbsp; Total native value burned: <strong>{treasury["total_native_burned"]:.4f}</strong>
+        </div>
+    </div>
+
+    <!-- CRYPTO FAUCET -->
+    <div class="card" style="border-color:#0369a133;">
+        <h2 style="color:#38bdf8;">&#128241; Crypto Faucet</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+            Free WSC dispensed from the faucet pool every {FAUCET_COOLDOWN_HOURS} hours.
+            You also earn faucet credits automatically when you buy or sell commodities in-game.
+        </p>
+        <form action="/api/wallet/faucet" method="post" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            {faucet_btn}
+            <span style="color:#64748b;font-size:12px;">
+                Pool: <strong style="color:#38bdf8;">{treasury["faucet_pool"]:.4f} WSC</strong>
+                &nbsp;&bull;&nbsp; Last claim: <strong style="color:#4ade80;">{faucet_st["last_amount"]:.4f} WSC</strong>
+            </span>
+        </form>
+    </div>
+
+    <!-- PORTFOLIO SUMMARY -->
+    <div style="background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:12px 18px;
+                margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:13px;">
         <span style="color:#94a3b8;">Portfolio:</span>
         {portfolio_summary}
-        <span style="margin-left:auto;color:#94a3b8;">Staked: <strong class="native-color">{total_staked:.4f}</strong>
-            &nbsp;|&nbsp; Earned: <strong class="positive">{total_earned:.4f} meme coins</strong></span>
+        <span style="margin-left:auto;color:#94a3b8;">
+            Mining staked: <strong class="native-color">{total_staked:.4f}</strong>
+            &nbsp;|&nbsp; Yield staked value: <strong class="meme-color">{sum(yd["value_native"] for yd in yield_deps):.4f}</strong>
+            &nbsp;|&nbsp; Yield earned: <strong class="positive">{total_yield_earned:.4f} WSC</strong>
+        </span>
     </div>
 
     <!-- NATIVE TOKEN HOLDINGS -->
     <div class="card">
-        <h2>&#128279; Native Token Holdings (Layer-1 Chains)</h2>
+        <h2>&#128279; Native Token Holdings <span style="font-size:12px;color:#64748b;font-weight:400;">(Layer-1 Chains)</span></h2>
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Token</th>
-                    <th style="text-align:right;">Balance</th>
-                    <th style="text-align:right;">Mining Stats</th>
-                </tr>
-            </thead>
-            <tbody>
-                {native_rows}
-            </tbody>
+            <thead><tr>
+                <th>Token</th>
+                <th style="text-align:right;">Balance</th>
+                <th style="text-align:right;">Mined Total</th>
+            </tr></thead>
+            <tbody>{native_rows}</tbody>
         </table>
     </div>
 
     <!-- MEME COIN HOLDINGS -->
     <div class="card">
-        <h2>&#128640; Meme Coin Holdings (Layer-2)</h2>
+        <h2>&#128640; Meme Coin Holdings <span style="font-size:12px;color:#64748b;font-weight:400;">(Layer-2)</span></h2>
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Coin</th>
-                    <th style="text-align:right;">Balance</th>
-                    <th style="text-align:right;">Price</th>
-                    <th style="text-align:right;">24h Change</th>
-                    <th style="text-align:right;">Est. Value</th>
-                </tr>
-            </thead>
-            <tbody id="meme-holdings-body">
-                {meme_rows}
-            </tbody>
+            <thead><tr>
+                <th>Coin</th>
+                <th style="text-align:right;">Balance</th>
+                <th style="text-align:right;">Price</th>
+                <th style="text-align:right;">24h</th>
+                <th style="text-align:right;">Est. Value</th>
+            </tr></thead>
+            <tbody id="meme-holdings-body">{meme_rows}</tbody>
         </table>
     </div>
 
     <!-- INSTANT SWAP -->
-    <div class="card">
-        <h2>&#9889; Instant Swap</h2>
+    <div class="card" style="border-color:#4f46e533;">
+        <h2 style="color:#a5b4fc;">&#9889; Instant Swap <span style="font-size:12px;font-weight:400;color:#64748b;">— Cross-chain supported at true value</span></h2>
         <p style="color:#64748b;font-size:12px;margin-bottom:14px;">
-            Swap meme coins instantly using market orders routed through the native token layer.
-            Same-chain swaps execute in two steps: sell A &#8594; native &#8594; buy B.
+            Direct wallet-to-wallet swap at last traded price &times; native token USD rate.
+            Works across all county blockchains. Fee: <strong style="color:#f59e0b;">{fee_pct}%</strong>
+            ({int(SWAP_FEE_SELL*100)}% sell + {int(SWAP_FEE_BUY*100)}% buy) &rarr;
+            burned &rarr; {int(WSC_MINT_RATE*100)}% re-minted as WSC for reward pools.
         </p>
         <div class="swap-box">
             <form action="/api/wallet/swap" method="post">
@@ -1724,7 +1848,7 @@ async def wallet_dashboard(
                         <label>From Coin (you sell)</label>
                         <select name="from_symbol" required>
                             <option value="">Select coin you hold...</option>
-                            {swap_options_from}
+                            {swap_opts_from}
                         </select>
                     </div>
                     <div class="form-group">
@@ -1734,92 +1858,114 @@ async def wallet_dashboard(
                     <div class="form-group">
                         <label>To Coin (you receive)</label>
                         <select name="to_symbol" required>
-                            <option value="">Select target coin...</option>
-                            {swap_options_to}
+                            <option value="">Select any active coin...</option>
+                            {swap_opts_all}
                         </select>
                     </div>
                 </div>
-                <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:#64748b;">
-                    &#9432; Swaps use market orders — execution price depends on order book depth.
-                    Both legs execute immediately. Cross-chain swaps require both coins to share the same county native token.
-                </div>
-                <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);">
-                    &#9889; Execute Swap
+                <button type="submit" class="btn btn-primary"
+                        style="background:linear-gradient(135deg,#7c3aed,#4f46e5);width:100%;margin-top:4px;">
+                    &#9889; Execute Swap (cross-chain OK)
                 </button>
             </form>
         </div>
+
+        <!-- Swap history -->
+        <h3 style="margin-top:16px;font-size:13px;color:#64748b;">Recent Swaps</h3>
+        <table class="table" style="margin-top:6px;">
+            <thead><tr>
+                <th>Pair</th><th style="text-align:right;">Sold</th>
+                <th style="text-align:right;">Received</th>
+                <th style="text-align:right;">WSC Minted</th>
+                <th style="text-align:right;">Time</th>
+            </tr></thead>
+            <tbody>{swap_hist_rows}</tbody>
+        </table>
     </div>
 
-    <!-- STAKING POSITIONS -->
-    <div class="card">
-        <h2>&#9881; Active Staking Positions</h2>
+    <!-- YIELD FARMING -->
+    <div class="card" style="border-color:#15803d33;">
+        <h2 style="color:#4ade80;">&#9881; Yield Farming <span style="font-size:12px;font-weight:400;color:#64748b;">— stake meme coins, earn WSC hourly</span></h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+            Deposit any meme coin. Rewards are proportional to your staked value vs. total pool.
+            Payouts come from the Yield Pool every hour. Unstake anytime to retrieve your coins.
+        </p>
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Coin</th>
-                    <th style="text-align:right;">Staked (Native)</th>
-                    <th style="text-align:right;">Total Earned</th>
-                    <th style="text-align:right;">Since</th>
-                    <th style="text-align:right;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {stake_rows}
-            </tbody>
+            <thead><tr>
+                <th>Coin</th><th style="text-align:right;">Staked</th>
+                <th style="text-align:right;">Price</th>
+                <th style="text-align:right;">Earned (WSC)</th>
+                <th style="text-align:right;">Since</th>
+                <th style="text-align:right;">Action</th>
+            </tr></thead>
+            <tbody>{yield_rows}</tbody>
+        </table>
+        <form action="/api/wallet/yield-stake" method="post" style="margin-top:14px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            <div class="form-group" style="margin:0;">
+                <label>Coin to Stake</label>
+                <select name="meme_symbol" required style="width:160px;">{yield_stake_opts}</select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Amount</label>
+                <input type="number" name="quantity" step="any" min="0.000001" placeholder="quantity" required style="width:130px;">
+            </div>
+            <button type="submit" class="btn btn-buy" style="margin-bottom:1px;">&#43; Stake for Yield</button>
+        </form>
+    </div>
+
+    <!-- MINING STAKES (order-book mining) -->
+    <div class="card">
+        <h2>&#9935; Mining Stakes <span style="font-size:12px;font-weight:400;color:#64748b;">(native tokens locked for meme coin mining)</span></h2>
+        <table class="table">
+            <thead><tr>
+                <th>Coin</th><th style="text-align:right;">Staked (Native)</th>
+                <th style="text-align:right;">Total Earned</th>
+                <th style="text-align:right;">Since</th>
+                <th style="text-align:right;">Action</th>
+            </tr></thead>
+            <tbody>{stake_rows}</tbody>
         </table>
     </div>
 
     <!-- OPEN ORDERS -->
     <div class="card">
-        <h2>&#128196; Open Orders (All Coins)</h2>
+        <h2>&#128196; Open Orders <span style="font-size:12px;font-weight:400;color:#64748b;">(all coins)</span></h2>
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Coin</th>
-                    <th>Side</th>
-                    <th>Price</th>
-                    <th>Qty</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {order_rows}
-            </tbody>
+            <thead><tr>
+                <th>Coin</th><th>Side</th><th>Price</th>
+                <th>Qty</th><th>Status</th><th>Action</th>
+            </tr></thead>
+            <tbody>{order_rows}</tbody>
         </table>
     </div>
 
 </div>
 
-<!-- AUTO-REFRESH TICKER every 15s -->
 <script>
-(function() {{
-    async function refreshTicker() {{
-        try {{
-            const resp = await fetch('/api/wallet/portfolio');
-            if (!resp.ok) return;
-            const data = await resp.json();
-            const ticker = document.getElementById('live-ticker');
-            if (!ticker) return;
-            // Rebuild chips
-            let chips = '<span style="color:#475569;font-size:12px;align-self:center;flex-shrink:0;">LIVE</span>';
-            (data.meme_holdings || []).forEach(m => {{
-                const chg = m.change_24h || 0;
-                const dir = chg >= 0 ? 'up' : 'down';
-                const chgColor = chg >= 0 ? '#4ade80' : '#f87171';
-                const sign = chg >= 0 ? '+' : '';
-                chips += `<a href="/memecoins/${{m.symbol}}" class="ticker-chip ticker-${{dir}}">`
-                       + `<strong>${{m.symbol}}</strong> `
-                       + `<span style="color:${{m.last_price > 0 ? '#f59e0b' : '#94a3b8'}}">${{m.last_price.toFixed(6)}}</span> `
-                       + `<span style="font-size:10px;color:${{chgColor}};">${{sign}}${{chg.toFixed(1)}}%</span></a>`;
+(function(){{
+    // Live ticker auto-refresh every 15 s
+    async function refreshTicker(){{
+        try{{
+            const r = await fetch('/api/wallet/portfolio');
+            if(!r.ok) return;
+            const d = await r.json();
+            const t = document.getElementById('live-ticker');
+            if(!t) return;
+            let h = '<span style="color:#475569;font-size:11px;align-self:center;flex-shrink:0;padding-right:6px;">&#9632; LIVE</span>';
+            (d.meme_holdings||[]).forEach(m=>{{
+                const chg=m.change_24h||0, up=chg>=0;
+                h+=`<a href="/memecoins/${{m.symbol}}" class="ticker-chip ticker-${{up?'up':'down'}}">`
+                  +`<strong>${{m.symbol}}</strong> `
+                  +`<span style="color:#f59e0b;">${{(m.last_price||0).toFixed(6)}}</span> `
+                  +`<span style="font-size:10px;color:${{up?'#4ade80':'#f87171'}};">`
+                  +`${{up?'+':''}}${{chg.toFixed(1)}}%</span></a>`;
             }});
-            if (!data.meme_holdings || data.meme_holdings.length === 0) {{
-                chips += '<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>';
-            }}
-            ticker.innerHTML = chips;
-        }} catch(e) {{}}
+            if(!(d.meme_holdings&&d.meme_holdings.length))
+                h+='<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>';
+            t.innerHTML=h;
+        }}catch(e){{}}
     }}
-    setInterval(refreshTicker, 15000);
+    setInterval(refreshTicker,15000);
 }})();
 </script>
 </body>
@@ -1835,118 +1981,107 @@ async def api_wallet_portfolio(session_token: Optional[str] = Cookie(None)):
     if not player:
         return JSONResponse({"error": "not authenticated"}, status_code=401)
     from memecoins import get_wallet_portfolio
-    portfolio = get_wallet_portfolio(player.id)
-    return JSONResponse(portfolio)
+    return JSONResponse(get_wallet_portfolio(player.id))
 
 
 # ==========================
-# API: INSTANT SWAP
+# API: INSTANT SWAP (cross-chain, true value)
 # ==========================
 @router.post("/api/wallet/swap")
 async def api_wallet_swap(
-    from_symbol: str = Form(...),
-    to_symbol: str = Form(...),
+    from_symbol: str   = Form(...),
+    to_symbol:   str   = Form(...),
+    amount:      float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from wallet import execute_wallet_swap
+    ok, msg, _ = execute_wallet_swap(
+        player_id=player.id,
+        from_symbol=from_symbol.upper().strip(),
+        amount=amount,
+        to_symbol=to_symbol.upper().strip(),
+    )
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+# ==========================
+# API: YIELD FARMING STAKE
+# ==========================
+@router.post("/api/wallet/yield-stake")
+async def api_yield_stake(
+    meme_symbol: str   = Form(...),
+    quantity:    float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from wallet import add_yield_farming
+    ok, msg = add_yield_farming(player.id, meme_symbol.upper().strip(), quantity)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+# ==========================
+# API: YIELD FARMING UNSTAKE
+# ==========================
+@router.post("/api/wallet/yield-unstake")
+async def api_yield_unstake(
+    deposit_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from wallet import remove_yield_farming
+    ok, msg = remove_yield_farming(player.id, deposit_id)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+# ==========================
+# API: FAUCET CLAIM
+# ==========================
+@router.post("/api/wallet/faucet")
+async def api_wallet_faucet(session_token: Optional[str] = Cookie(None)):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from wallet import claim_faucet
+    ok, msg, _ = claim_faucet(player.id, claim_type="manual")
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+# ==========================
+# API: WSC REDEMPTION
+# ==========================
+@router.post("/api/wallet/redeem")
+async def api_wallet_redeem(
     amount: float = Form(...),
     session_token: Optional[str] = Cookie(None),
 ):
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-
-    from_sym = from_symbol.upper().strip()
-    to_sym = to_symbol.upper().strip()
-
-    if from_sym == to_sym:
-        return RedirectResponse(url="/wallet?error=Cannot+swap+a+coin+to+itself", status_code=303)
-    if amount <= 0:
-        return RedirectResponse(url="/wallet?error=Amount+must+be+positive", status_code=303)
-
-    from memecoins import place_order, get_db as meme_get_db, MemeCoin
-    from counties import get_db as county_get_db, CryptoWallet, County
-
-    # Verify both coins exist and share a native token (same county chain)
-    _db = meme_get_db()
-    _cdb = county_get_db()
-    try:
-        meme_from = _db.query(MemeCoin).filter(MemeCoin.symbol == from_sym, MemeCoin.is_active == True).first()
-        meme_to   = _db.query(MemeCoin).filter(MemeCoin.symbol == to_sym,   MemeCoin.is_active == True).first()
-        if not meme_from or not meme_to:
-            return RedirectResponse(url="/wallet?error=One+or+both+coins+not+found", status_code=303)
-        county_from = _cdb.query(County).filter(County.id == meme_from.county_id).first()
-        county_to   = _cdb.query(County).filter(County.id == meme_to.county_id).first()
-        native_from = county_from.crypto_symbol if county_from else None
-        native_to   = county_to.crypto_symbol if county_to else None
-    finally:
-        _db.close()
-        _cdb.close()
-
-    if not native_from or not native_to:
-        return RedirectResponse(url="/wallet?error=Could+not+resolve+native+tokens", status_code=303)
-    if native_from != native_to:
-        return RedirectResponse(
-            url=f"/wallet?error=Cross-chain+swap+not+supported+yet.+{from_sym}+uses+{native_from}+and+{to_sym}+uses+{native_to}",
-            status_code=303,
-        )
-
-    # Step 1: Market sell from_sym
-    sell_order, sell_msg = place_order(
-        player_id=player.id,
-        meme_symbol=from_sym,
-        order_type="sell",
-        order_mode="market",
-        quantity=amount,
-    )
-    if not sell_order or sell_order.quantity_filled <= 0:
-        return RedirectResponse(
-            url=f"/wallet?error=Sell+step+failed:+{sell_msg.replace(' ', '+')}",
-            status_code=303,
-        )
-
-    # Step 2: Market buy to_sym with available native balance
-    _cdb2 = county_get_db()
-    try:
-        native_wallet = _cdb2.query(CryptoWallet).filter(
-            CryptoWallet.player_id == player.id,
-            CryptoWallet.crypto_symbol == native_from,
-        ).first()
-        native_avail = native_wallet.balance if native_wallet else 0.0
-    finally:
-        _cdb2.close()
-
-    # Figure out how many to_sym coins we can buy at the current ask
-    _db2 = meme_get_db()
-    try:
-        meme_to_obj = _db2.query(MemeCoin).filter(MemeCoin.symbol == to_sym).first()
-        ask_price = meme_to_obj.last_price if meme_to_obj and meme_to_obj.last_price else None
-    finally:
-        _db2.close()
-
-    if not ask_price or ask_price <= 0 or native_avail <= 0:
-        return RedirectResponse(
-            url=f"/wallet?error=Sold+{sell_order.quantity_filled:.4f}+{from_sym}+but+could+not+buy+{to_sym}:+no+price+or+balance",
-            status_code=303,
-        )
-
-    buy_qty = native_avail / ask_price * 0.98  # leave 2% buffer for fees
-    buy_order, buy_msg = place_order(
-        player_id=player.id,
-        meme_symbol=to_sym,
-        order_type="buy",
-        order_mode="market",
-        quantity=buy_qty,
-    )
-
-    if buy_order and buy_order.quantity_filled > 0:
-        success_msg = (
-            f"Swapped+{sell_order.quantity_filled:.4f}+{from_sym}"
-            f"+→+{buy_order.quantity_filled:.4f}+{to_sym}"
-        )
-        return RedirectResponse(url=f"/wallet?msg={success_msg}", status_code=303)
-    else:
-        return RedirectResponse(
-            url=f"/wallet?error=Sold+{from_sym}+but+buy+of+{to_sym}+failed:+{buy_msg.replace(' ', '+')}",
-            status_code=303,
-        )
+    from wallet import redeem_wsc_for_cash
+    ok, msg = redeem_wsc_for_cash(player.id, amount)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
 
 
 # ==========================
