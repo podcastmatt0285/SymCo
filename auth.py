@@ -40,13 +40,14 @@ Base = declarative_base()
 class Player(Base):
     """Player account model."""
     __tablename__ = "players"
-    
+
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     business_name = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     cash_balance = Column(Float, default=50000.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
+    tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
 
 
 class Session(Base):
@@ -84,6 +85,27 @@ def get_db():
         print(f"[Auth] Database error: {e}")
         db.close()
         raise
+
+
+def migrate_tutorial_column():
+    """Add tutorial_step column to players table if it doesn't exist."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(
+                __import__("sqlalchemy").text("PRAGMA table_info(players)")
+            )
+            columns = [row[1] for row in result]
+            if "tutorial_step" not in columns:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        "ALTER TABLE players ADD COLUMN tutorial_step INTEGER DEFAULT 0"
+                    )
+                )
+                conn.commit()
+                print("[Auth] Migration: added tutorial_step column to players table")
+    except Exception as e:
+        print(f"[Auth] Migration warning: {e}")
+
 
 # ==========================
 # CASH TRANSFER
@@ -568,6 +590,7 @@ def initialize():
     """Initialize auth module."""
     print("[Auth] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    migrate_tutorial_column()
     print("[Auth] Module initialized")
 
 async def tick(current_tick: int, now):

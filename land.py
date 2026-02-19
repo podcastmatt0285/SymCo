@@ -222,6 +222,9 @@ class LandPlot(Base):
     # Government/Bank flag
     is_government_owned = Column(Boolean, index=True, default=False)  # True if owned by AI gov/bank
 
+    # Tutorial reward flag - permanently tax-free, can be sold at market
+    is_tutorial_reward = Column(Boolean, default=False)
+
     # Composite index for efficiency degradation queries (efficiency > 0)
     __table_args__ = (
         Index('ix_land_plots_efficiency', 'efficiency'),
@@ -460,17 +463,20 @@ def collect_monthly_taxes(current_month: int):
     Collect monthly taxes from all land plots.
     Called when month changes.
     Uses bulk SQL operations instead of loading all rows.
+    Skips tutorial reward plots (permanently tax-free).
     """
     db = get_db()
 
-    # Calculate total tax using SQL SUM (exclude government plots)
+    # Calculate total tax using SQL SUM (exclude government and tutorial reward plots)
     total_tax_collected = db.query(func.sum(LandPlot.monthly_tax)).filter(
-        LandPlot.is_government_owned == False
+        LandPlot.is_government_owned == False,
+        LandPlot.is_tutorial_reward == False
     ).scalar() or 0.0
 
-    # Bulk update last_tax_payment for all non-government plots
+    # Bulk update last_tax_payment for all non-government, non-tutorial-reward plots
     db.query(LandPlot).filter(
-        LandPlot.is_government_owned == False
+        LandPlot.is_government_owned == False,
+        LandPlot.is_tutorial_reward == False
     ).update(
         {LandPlot.last_tax_payment: datetime.utcnow()},
         synchronize_session=False
@@ -635,6 +641,25 @@ def collect_hoarding_taxes():
 # ==========================
 # MODULE LIFECYCLE
 # ==========================
+def _migrate_tutorial_reward_column():
+    """Add is_tutorial_reward column to land_plots table if missing."""
+    try:
+        import sqlalchemy
+        with engine.connect() as conn:
+            result = conn.execute(sqlalchemy.text("PRAGMA table_info(land_plots)"))
+            columns = [row[1] for row in result]
+            if "is_tutorial_reward" not in columns:
+                conn.execute(
+                    sqlalchemy.text(
+                        "ALTER TABLE land_plots ADD COLUMN is_tutorial_reward BOOLEAN DEFAULT 0"
+                    )
+                )
+                conn.commit()
+                print("[Land] Migration: added is_tutorial_reward column to land_plots table")
+    except Exception as e:
+        print(f"[Land] Migration warning: {e}")
+
+
 def initialize():
     """
     Initialize land module.
@@ -642,7 +667,8 @@ def initialize():
     """
     print("[Land] Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    
+    _migrate_tutorial_reward_column()
+
     stats = get_land_stats()
     print(f"[Land] Current state: {stats['total_plots']} plots, {stats['average_efficiency']:.2f}% avg efficiency")
     print("[Land] Module initialized")

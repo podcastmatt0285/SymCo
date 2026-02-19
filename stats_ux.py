@@ -1496,6 +1496,15 @@ async def stats_business_detail(
     <a href="/stats/businesses" style="display: inline-block; margin-top: 16px;">← Back to Businesses</a>
     """
     
+    # Inject tutorial overlay for stats_business step (step 8: free_range_pasture)
+    try:
+        from tutorial_ux import get_tutorial_overlay_html
+        tut_overlay = get_tutorial_overlay_html(player, "stats_business")
+        if tut_overlay:
+            body = tut_overlay + body
+    except Exception:
+        pass
+
     return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name))
 
 
