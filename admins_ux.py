@@ -21,7 +21,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from admins import (
     ADMIN_PLAYER_IDS,
-    is_admin, require_admin,
+    is_admin, require_admin, is_moderator, require_moderator,
     get_all_players, get_player_detail, edit_player_balance,
     get_player_inventory, admin_add_item, admin_remove_item, get_all_item_types,
     get_player_land, admin_delete_land_plot, admin_create_land_plot,
@@ -39,6 +39,8 @@ from admins import (
     # County admin
     get_all_counties_admin, get_player_county_info,
     admin_add_city_to_county, admin_remove_city_from_county,
+    # Moderator management
+    add_moderator, remove_moderator, get_all_moderators,
 )
 
 router = APIRouter()
@@ -54,6 +56,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin", "Home"),
         ("/admin/players", "Players"),
         ("/admin/cities", "Cities"),
+        ("/admin/moderators", "Moderators"),
         ("/admin/updates", "Updates"),
         ("/admin/chat", "Chat"),
         ("/admin/p2p", "P2P"),
@@ -377,10 +380,19 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
 # ==========================
 
 def _guard(session_token):
+    """Full admin required."""
     player = require_admin(session_token)
     if not player:
         return None, RedirectResponse(url="/login", status_code=303)
     return player, None
+
+
+def _mod_guard(session_token):
+    """Admin OR moderator. Returns (player, is_full_admin, redirect)."""
+    player, is_full = require_moderator(session_token)
+    if not player:
+        return None, False, RedirectResponse(url="/login", status_code=303)
+    return player, is_full, None
 
 
 def _flash(msg=None, err=None):
@@ -504,9 +516,13 @@ def admin_player_detail(
     msg: Optional[str] = Query(None),
     err: Optional[str] = Query(None),
 ):
-    admin, redirect = _guard(session_token)
+    admin, is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
+
+    # Moderators can only access the moderation tab
+    if not is_full:
+        tab = "moderation"
 
     detail = get_player_detail(pid)
     if not detail:
@@ -531,28 +547,32 @@ def admin_player_detail(
         else:
             ban_html = f'<div class="flash" style="background:#78350f;color:#fcd34d;border:1px solid #92400e;">TIMED OUT until {_ts(ab["expires_at"])} UTC — {ab["reason"] or "No reason"} <form method="post" action="/admin/player/{pid}/revoke" style="display:inline;margin-left:8px;"><input type="hidden" name="ban_id" value="{ab["id"]}"><button type="submit" class="btn btn-green" style="font-size:0.65rem;padding:3px 6px;">Remove</button></form></div>'
 
-    # Tab navigation
+    # Tab navigation — moderators only see the Moderation tab
+    if is_full:
+        tab_list = [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("moderation", "Moderation")]
+    else:
+        tab_list = [("moderation", "Moderation")]
     tabs_html = ""
-    for t_id, t_label in [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("moderation", "Moderation")]:
+    for t_id, t_label in tab_list:
         active = ' class="active"' if tab == t_id else ""
         tabs_html += f'<a href="/admin/player/{pid}?tab={t_id}"{active}>{t_label}</a>'
 
     # Tab content
     tab_body = ""
-    if tab == "info":
+    if tab == "info" and is_full:
         tab_body = _player_info_tab(pid, detail)
-    elif tab == "inventory":
+    elif tab == "inventory" and is_full:
         tab_body = _player_inventory_tab(pid)
-    elif tab == "land":
+    elif tab == "land" and is_full:
         tab_body = _player_land_tab(pid)
-    elif tab == "districts":
+    elif tab == "districts" and is_full:
         tab_body = _player_districts_tab(pid)
-    elif tab == "cities":
+    elif tab == "cities" and is_full:
         tab_body = _player_cities_tab(pid)
-    elif tab == "businesses":
+    elif tab == "businesses" and is_full:
         tab_body = _player_businesses_tab(pid)
     elif tab == "moderation":
-        tab_body = _player_moderation_tab(pid, detail)
+        tab_body = _player_moderation_tab(pid, detail, is_full_admin=is_full)
 
     body = f"""
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
@@ -806,12 +826,27 @@ def _player_businesses_tab(pid):
     """
 
 
-def _player_moderation_tab(pid, detail):
+def _player_moderation_tab(pid, detail, is_full_admin: bool = True):
     ban_rows = ""
     for b in detail.get("bans", []):
         exp = _ts(b["expires_at"]) if b["expires_at"] else "Never"
-        status = '<span style="color:#64748b;">Revoked</span>' if b["revoked"] else '<span style="color:#ef4444;">Active</span>'
-        ban_rows += f'<tr><td>#{b["id"]}</td><td>{b["ban_type"].upper()}</td><td style="color:#94a3b8;">{b["reason"] or "-"}</td><td style="color:#64748b;">{_ts(b["created_at"])}</td><td style="color:#64748b;">{exp}</td><td>{status}</td></tr>'
+        if b["revoked"]:
+            status = '<span style="color:#64748b;">Revoked</span>'
+            revoke_btn = ""
+        else:
+            status = '<span style="color:#ef4444;">Active</span>'
+            revoke_btn = f'<form method="post" action="/admin/player/{pid}/revoke" style="display:inline;margin-left:6px;"><input type="hidden" name="ban_id" value="{b["id"]}"><button type="submit" class="btn btn-green" style="font-size:0.65rem;padding:2px 6px;">Revoke</button></form>'
+        ban_rows += f'<tr><td>#{b["id"]}</td><td>{b["ban_type"].upper()}</td><td style="color:#94a3b8;">{b["reason"] or "-"}</td><td style="color:#64748b;">{_ts(b["created_at"])}</td><td style="color:#64748b;">{exp}</td><td>{status}{revoke_btn}</td></tr>'
+
+    ban_form = ""
+    if is_full_admin:
+        ban_form = f"""
+    <div class="card">
+        <h3>Ban (permanent) <span style="font-size:0.7rem;color:#ef4444;">Admin Only</span></h3>
+        <form method="post" action="/admin/player/{pid}/ban">
+            <div class="form-row"><div style="flex:1;"><input type="text" name="reason" placeholder="Reason (optional)"></div><button type="submit" class="btn btn-red">Ban</button></div>
+        </form>
+    </div>"""
 
     return f"""
     <div class="card">
@@ -830,12 +865,7 @@ def _player_moderation_tab(pid, detail):
             </div>
         </form>
     </div>
-    <div class="card">
-        <h3>Ban (permanent)</h3>
-        <form method="post" action="/admin/player/{pid}/ban">
-            <div class="form-row"><div style="flex:1;"><input type="text" name="reason" placeholder="Reason (optional)"></div><button type="submit" class="btn btn-red">Ban</button></div>
-        </form>
-    </div>
+    {ban_form}
     <div class="card">
         <h3>History</h3>
         {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Reason</th><th>Date</th><th>Expires</th><th>Status</th></tr>{ban_rows}</table></div>' if ban_rows else '<p style="color:#64748b;font-size:0.75rem;">No moderation history.</p>'}
@@ -1058,7 +1088,7 @@ def post_county_remove_city(session_token: Optional[str] = Cookie(None), city_id
 
 @router.post("/admin/player/{pid}/kick")
 def post_kick(pid: int, session_token: Optional[str] = Cookie(None), reason: str = Form("")):
-    admin, redirect = _guard(session_token)
+    admin, _is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
     kick_player(admin.id, pid, reason)
@@ -1069,7 +1099,7 @@ def post_kick(pid: int, session_token: Optional[str] = Cookie(None), reason: str
 
 @router.post("/admin/player/{pid}/timeout")
 def post_timeout(pid: int, session_token: Optional[str] = Cookie(None), minutes: int = Form(...), reason: str = Form("")):
-    admin, redirect = _guard(session_token)
+    admin, _is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
     result = timeout_player(admin.id, pid, minutes, reason)
@@ -1082,6 +1112,7 @@ def post_timeout(pid: int, session_token: Optional[str] = Cookie(None), minutes:
 
 @router.post("/admin/player/{pid}/ban")
 def post_ban(pid: int, session_token: Optional[str] = Cookie(None), reason: str = Form("")):
+    # Ban requires full admin (not just moderator)
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
@@ -1093,7 +1124,7 @@ def post_ban(pid: int, session_token: Optional[str] = Cookie(None), reason: str 
 
 @router.post("/admin/player/{pid}/revoke")
 def post_revoke(pid: int, session_token: Optional[str] = Cookie(None), ban_id: int = Form(...)):
-    admin, redirect = _guard(session_token)
+    admin, _is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
     result = revoke_ban(admin.id, ban_id)
@@ -1425,3 +1456,98 @@ def admin_logs(session_token: Optional[str] = Cookie(None)):
     </div></div>
     """
     return HTMLResponse(admin_shell("Logs", body, player.business_name, "/admin/logs"))
+
+
+# ==========================
+# MODERATOR MANAGEMENT
+# ==========================
+
+@router.get("/admin/moderators", response_class=HTMLResponse)
+def admin_moderators_page(session_token: Optional[str] = Cookie(None), msg: Optional[str] = Query(None), err: Optional[str] = Query(None)):
+    """Moderator management page — full admins only."""
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    from auth import Player
+    import auth as _auth
+    mods = get_all_moderators()
+    all_players = get_all_players()
+
+    # Build moderator table
+    mod_ids = {m["player_id"] for m in mods}
+    mod_rows = ""
+    for m in mods:
+        mod_rows += f'''<tr>
+            <td>#{m["player_id"]}</td>
+            <td><a href="/admin/player/{m["player_id"]}">{m["player_name"]}</a></td>
+            <td style="color:#64748b;">{m["note"] or "-"}</td>
+            <td style="color:#64748b;">{m["grantor_name"]}</td>
+            <td style="color:#64748b;">{_ts(m["created_at"])}</td>
+            <td>
+                <form method="post" action="/admin/moderators/remove" style="display:inline;">
+                    <input type="hidden" name="player_id" value="{m["player_id"]}">
+                    <button type="submit" class="btn btn-red" style="font-size:0.65rem;padding:3px 6px;" onclick="return confirm(\'Revoke moderator?\')">Revoke</button>
+                </form>
+            </td>
+        </tr>'''
+
+    # Player options for grant form (exclude full admins and existing mods)
+    player_opts = ""
+    for p in all_players:
+        if p["id"] not in ADMIN_PLAYER_IDS and p["id"] not in mod_ids:
+            player_opts += f'<option value="{p["id"]}">#{p["id"]} {p["business_name"]}</option>'
+
+    body = f"""
+    <h2 style="font-size:0.9rem;margin-bottom:10px;">Moderator Management</h2>
+    {_flash(msg=msg, err=err)}
+    <div class="card">
+        <h3>Current Moderators ({len(mods)})</h3>
+        <p style="color:#64748b;font-size:0.75rem;margin-bottom:10px;">
+            Moderators can kick, timeout, and revoke bans. They cannot ban permanently, edit balances, or access financial tools.
+        </p>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Player</th><th>Note</th><th>Granted By</th><th>Date</th><th>Action</th></tr>{mod_rows}</table></div>' if mod_rows else '<p style="color:#64748b;font-size:0.75rem;">No moderators yet.</p>'}
+    </div>
+    <div class="card">
+        <h3>Grant Moderator Status</h3>
+        <form method="post" action="/admin/moderators/add">
+            <div class="form-row">
+                <div style="flex:2;">
+                    <div class="form-label">Player</div>
+                    <select name="player_id" required style="width:100%;">
+                        <option value="">-- Select Player --</option>
+                        {player_opts}
+                    </select>
+                </div>
+                <div style="flex:2;">
+                    <div class="form-label">Note (optional)</div>
+                    <input type="text" name="note" placeholder="e.g. Chat moderator">
+                </div>
+                <button type="submit" class="btn btn-green">Grant</button>
+            </div>
+        </form>
+    </div>
+    """
+    return HTMLResponse(admin_shell("Moderators", body, admin.business_name, "/admin/moderators"))
+
+
+@router.post("/admin/moderators/add")
+def post_add_moderator(session_token: Optional[str] = Cookie(None), player_id: int = Form(...), note: str = Form("")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = add_moderator(admin.id, player_id, note)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/moderators?msg=Moderator+granted+to+Player+%23{player_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/moderators?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/moderators/remove")
+def post_remove_moderator(session_token: Optional[str] = Cookie(None), player_id: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = remove_moderator(admin.id, player_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/moderators?msg=Moderator+revoked+from+Player+%23{player_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/moderators?err={result['error']}", status_code=303)

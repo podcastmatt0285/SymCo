@@ -687,7 +687,13 @@ def businesses(session_token: Optional[str] = Cookie(None)):
             biz_html += '</div>'
 
         land_db.close()
-        return shell("Businesses", biz_html, player.cash_balance, player.id)
+        tut_overlay = ""
+        try:
+            from tutorial_ux import get_tutorial_overlay_html
+            tut_overlay = get_tutorial_overlay_html(player, "businesses")
+        except Exception:
+            pass
+        return shell("Businesses", tut_overlay + biz_html, player.cash_balance, player.id)
     except Exception as e:
         import traceback
         traceback.print_exc()

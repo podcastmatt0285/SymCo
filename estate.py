@@ -39,7 +39,7 @@ Base = declarative_base()
 # CONSTANTS
 # ==========================
 IDLE_DAYS_BEFORE_DEATH = 30  # Days without login before auto-deletion
-IDLE_CHECK_INTERVAL = 3600  # Check every hour (3600 ticks = 5s * 720 = 1 hour)
+IDLE_CHECK_INTERVAL = 720  # Check every hour (720 ticks × 5s = 3600s = 1 hour)
 DEBT_PAYMENT_PERCENTAGE = 0.60  # Gov pays 60% of outstanding debts from estate
 DEATH_TAX_RATE = 0.15  # 15% inheritance tax
 INSTALLMENT_COUNT = 7  # Pay death tax over 7 days
@@ -651,13 +651,18 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 death_tax = per_heir * DEATH_TAX_RATE
                 inheritance_after_tax = per_heir - death_tax
 
-                # Pay inheritance immediately
-                heir_player.cash_balance += inheritance_after_tax
+                # Government holds the full gross amount as escrow;
+                # heir receives the net inheritance in INSTALLMENT_COUNT daily payments.
+                # The death tax (15%) stays with the government naturally.
+                gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+                if gov:
+                    gov.cash_balance += per_heir
+
                 total_inherited += inheritance_after_tax
                 total_death_tax += death_tax
 
-                # Create death tax installments (heir pays tax over 7 days)
-                installment_amount = death_tax / INSTALLMENT_COUNT
+                # Create installment record — heir receives net amount spread over 7 days
+                installment_amount = inheritance_after_tax / INSTALLMENT_COUNT
                 installment = InheritanceInstallment(
                     heir_player_id=heir.heir_player_id,
                     deceased_player_id=player_id,
@@ -670,16 +675,8 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 )
                 db.add(installment)
 
-                log_transaction(
-                    player_id=heir.heir_player_id,
-                    transaction_type="inheritance",
-                    category="money",
-                    amount=inheritance_after_tax,
-                    description=f"Inherited from {player.business_name} (before tax: ${per_heir:,.2f})"
-                )
-
-                print(f"[Estate] Heir {heir.heir_player_id} receives ${inheritance_after_tax:,.2f} "
-                      f"(tax: ${death_tax:,.2f} in {INSTALLMENT_COUNT} installments)")
+                print(f"[Estate] Heir {heir.heir_player_id} will receive ${inheritance_after_tax:,.2f} "
+                      f"net over {INSTALLMENT_COUNT} installments (tax: ${death_tax:,.2f} kept by gov)")
         else:
             # No heirs - government takes everything
             gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
@@ -814,43 +811,39 @@ def process_installments(current_tick: int):
         for inst in pending:
             heir = db.query(Player).filter(Player.id == inst.heir_player_id).first()
             if not heir:
-                # Heir no longer exists, mark completed
+                # Heir no longer exists — mark completed, gov keeps remaining escrow
                 inst.completed = True
                 continue
 
             payment = inst.installment_amount
-            # Take what we can from the heir
-            actual_payment = min(payment, heir.cash_balance)
 
-            if actual_payment > 0:
-                heir.cash_balance -= actual_payment
-                inst.total_tax_paid += actual_payment
+            # Draw from government escrow and pay heir
+            gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+            if gov and gov.cash_balance >= payment:
+                gov.cash_balance -= payment
+                heir.cash_balance += payment
+                inst.total_tax_paid += payment
                 inst.installments_remaining -= 1
                 inst.next_installment_tick = current_tick + INSTALLMENT_INTERVAL
 
-                # Pay to government
-                gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-                if gov:
-                    gov.cash_balance += actual_payment
-
                 log_transaction(
                     player_id=inst.heir_player_id,
-                    transaction_type="death_tax",
+                    transaction_type="inheritance",
                     category="money",
-                    amount=-actual_payment,
-                    description=f"Death tax installment ({inst.installments_remaining} remaining)"
+                    amount=payment,
+                    description=f"Inheritance installment from estate (#{inst.installments_remaining} remaining)"
                 )
 
-                print(f"[Estate] Heir {inst.heir_player_id} paid ${actual_payment:,.2f} "
-                      f"death tax ({inst.installments_remaining} installments remaining)")
+                print(f"[Estate] Heir {inst.heir_player_id} received ${payment:,.2f} "
+                      f"inheritance ({inst.installments_remaining} installments remaining)")
             else:
-                # Can't pay - push to next cycle
+                # Gov escrow insufficient (shouldn't happen) — push to next cycle
                 inst.next_installment_tick = current_tick + INSTALLMENT_INTERVAL
-                print(f"[Estate] Heir {inst.heir_player_id} insufficient funds for death tax installment")
+                print(f"[Estate] Government escrow insufficient for heir {inst.heir_player_id} installment")
 
-            if inst.installments_remaining <= 0 or inst.total_tax_paid >= inst.total_tax_owed:
+            if inst.installments_remaining <= 0 or inst.total_tax_paid >= (inst.total_inherited - inst.total_tax_owed):
                 inst.completed = True
-                print(f"[Estate] Death tax installments complete for heir {inst.heir_player_id}")
+                print(f"[Estate] Inheritance installments complete for heir {inst.heir_player_id}")
 
         db.commit()
     except Exception as e:

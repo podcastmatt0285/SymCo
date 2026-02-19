@@ -64,12 +64,44 @@ class AdminLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Moderator(Base):
+    """
+    Partial-admin players (moderators).
+    Moderators can view all players and kick/timeout, but cannot ban,
+    edit balances/inventory, or access financial admin tools.
+    """
+    __tablename__ = "moderators"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    player_id = Column(Integer, unique=True, index=True, nullable=False)
+    granted_by = Column(Integer, nullable=False)  # Admin who granted moderator status
+    note = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# In-memory cache — refreshed on each relevant operation
+MODERATOR_PLAYER_IDS: set = set()
+
+
+def _refresh_moderator_cache():
+    """Reload the moderator ID set from DB into the in-memory cache."""
+    global MODERATOR_PLAYER_IDS
+    db = get_db()
+    try:
+        mods = db.query(Moderator).all()
+        MODERATOR_PLAYER_IDS = {m.player_id for m in mods}
+    except Exception:
+        MODERATOR_PLAYER_IDS = set()
+    finally:
+        db.close()
+
+
 def get_db():
     return SessionLocal()
 
 
 def initialize():
     Base.metadata.create_all(bind=engine)
+    _refresh_moderator_cache()
     print("[Admins] Module initialized")
 
 
@@ -81,8 +113,13 @@ def is_admin(player_id: int) -> bool:
     return player_id in ADMIN_PLAYER_IDS
 
 
+def is_moderator(player_id: int) -> bool:
+    """Returns True for both full admins AND partial moderators."""
+    return player_id in ADMIN_PLAYER_IDS or player_id in MODERATOR_PLAYER_IDS
+
+
 def require_admin(session_token: str):
-    """Return player if admin, None otherwise."""
+    """Return player if FULL admin, None otherwise."""
     try:
         import auth
         db = auth.get_db()
@@ -93,6 +130,22 @@ def require_admin(session_token: str):
         return None
     except Exception:
         return None
+
+
+def require_moderator(session_token: str):
+    """Return (player, is_full_admin) if player is admin or moderator, else (None, False)."""
+    try:
+        import auth
+        db = auth.get_db()
+        player = auth.get_player_from_session(db, session_token)
+        db.close()
+        if player and is_admin(player.id):
+            return player, True
+        if player and is_moderator(player.id):
+            return player, False
+        return None, False
+    except Exception:
+        return None, False
 
 
 # ==========================
@@ -956,6 +1009,82 @@ def admin_remove_city_from_county(admin_id: int, city_id: int) -> dict:
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# ==========================
+# MODERATOR MANAGEMENT
+# ==========================
+
+def add_moderator(admin_id: int, player_id: int, note: str = "") -> dict:
+    """Grant moderator status to a player."""
+    if player_id in ADMIN_PLAYER_IDS:
+        return {"ok": False, "error": "Full admins cannot be assigned as moderators"}
+    db = get_db()
+    try:
+        existing = db.query(Moderator).filter(Moderator.player_id == player_id).first()
+        if existing:
+            db.close()
+            return {"ok": False, "error": "Player is already a moderator"}
+        mod = Moderator(player_id=player_id, granted_by=admin_id, note=note)
+        db.add(mod)
+        db.commit()
+        _refresh_moderator_cache()
+        log_action(admin_id, "add_moderator", player_id, note or "Moderator granted")
+        print(f"[Admins] Player {player_id} granted moderator by admin {admin_id}")
+        return {"ok": True}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def remove_moderator(admin_id: int, player_id: int) -> dict:
+    """Revoke moderator status from a player."""
+    db = get_db()
+    try:
+        mod = db.query(Moderator).filter(Moderator.player_id == player_id).first()
+        if not mod:
+            db.close()
+            return {"ok": False, "error": "Player is not a moderator"}
+        db.delete(mod)
+        db.commit()
+        _refresh_moderator_cache()
+        log_action(admin_id, "remove_moderator", player_id, "Moderator revoked")
+        print(f"[Admins] Player {player_id} moderator revoked by admin {admin_id}")
+        return {"ok": True}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def get_all_moderators() -> list:
+    """Get all current moderators with player names."""
+    db = get_db()
+    try:
+        from auth import Player
+        mods = db.query(Moderator).order_by(Moderator.created_at.desc()).all()
+        result = []
+        for m in mods:
+            p = db.query(Player).filter(Player.id == m.player_id).first()
+            grantor = db.query(Player).filter(Player.id == m.granted_by).first()
+            result.append({
+                "id": m.id,
+                "player_id": m.player_id,
+                "player_name": p.business_name if p else f"Player {m.player_id}",
+                "granted_by": m.granted_by,
+                "grantor_name": grantor.business_name if grantor else f"Admin {m.granted_by}",
+                "note": m.note or "",
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            })
+        return result
+    except Exception as e:
+        print(f"[Admins] Error fetching moderators: {e}")
+        return []
+    finally:
+        db.close()
 
 
 # ==========================

@@ -229,12 +229,13 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
     if step == 0 or step >= 11:
         return ""
 
-    # Only show overlay on the expected page for each step
+    # Only show overlay on the expected page(s) for each step.
+    # Values may be a string or a list of strings.
     STEP_PAGE = {
         1: "dashboard",
         2: "land",
         3: "inventory",
-        4: "land",
+        4: ["land", "businesses"],  # step 4 shows on land OR businesses
         5: "inventory",
         6: "production_costs",
         7: "market",
@@ -243,8 +244,10 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         10: "land_market",
     }
     expected_page = STEP_PAGE.get(step, "")
-    if expected_page and current_page != expected_page:
-        return ""
+    if expected_page:
+        allowed = expected_page if isinstance(expected_page, list) else [expected_page]
+        if current_page not in allowed:
+            return ""
 
     # ── Step content ──────────────────────────────────────────────
 
@@ -332,6 +335,20 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         else:
             status_lines.append("<span style='color:#fbbf24;'>◻ Build a Local Grocery Store</span>")
         status_html = "<br>".join(status_lines)
+
+        if current_page == "businesses":
+            # Player navigated to /businesses — guide them back to /land to build
+            build_hint = """
+            <div style="background:#0a1628;border:1px solid #38bdf8;padding:10px 14px;border-radius:4px;color:#93c5fd;margin-bottom:16px;">
+                📍 You're on the <strong>Businesses</strong> dashboard (existing businesses).
+                To <em>build</em> new businesses you need to go to your
+                <a href="/land" style="color:#38bdf8;font-weight:bold;">Land Portfolio (/land)</a>
+                and use the build form on each vacant plot.
+            </div>
+            """
+        else:
+            build_hint = "<div style='background:#0f172a;border:1px solid #1e293b;padding:10px 14px;border-radius:4px;color:#64748b;margin-bottom:16px;font-size:0.82rem;'>Use the dropdowns below each vacant plot to select a business type, then click Build.</div>"
+
         content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             A <strong style="color:#38bdf8;">Mixed Fruit &amp; Vegetable Plantation</strong> (Production) converts water,
@@ -343,8 +360,9 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             and control the retail price. More complex chains can span dozens of businesses and item types.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            <strong style="color:#d4af37;">Your task:</strong> Build both businesses on vacant plots. Use the dropdowns below.
+            <strong style="color:#d4af37;">Your task:</strong> Build both businesses on vacant plots.
         </p>
+        {build_hint}
         <div style="background:#0f172a;border:1px solid #1e293b;padding:10px 14px;border-radius:4px;margin-bottom:16px;line-height:1.9;">
             {status_html}
         </div>
