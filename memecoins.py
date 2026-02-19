@@ -800,7 +800,6 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
             MemeCoinOrder.meme_symbol == symbol,
             MemeCoinOrder.order_type == "sell",
             MemeCoinOrder.status.in_(["active", "partial"]),
-            MemeCoinOrder.player_id != incoming_order.player_id,
         )
         if incoming_order.order_mode == "limit":
             query = query.filter(MemeCoinOrder.price <= incoming_order.price)
@@ -812,7 +811,6 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
             MemeCoinOrder.meme_symbol == symbol,
             MemeCoinOrder.order_type == "buy",
             MemeCoinOrder.status.in_(["active", "partial"]),
-            MemeCoinOrder.player_id != incoming_order.player_id,
         )
         if incoming_order.order_mode == "limit":
             query = query.filter(MemeCoinOrder.price >= incoming_order.price)
