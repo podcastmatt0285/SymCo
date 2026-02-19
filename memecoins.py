@@ -764,7 +764,13 @@ def place_order(
         if order.status == "filled":
             return order, f"Order fully filled! Traded {order.quantity_filled:.6f} {meme_symbol}."
         elif order.status == "partial":
-            return order, f"Order partially filled. {order.quantity_filled:.6f} filled, {remaining:.6f} remaining."
+            return order, f"Order partially filled. {order.quantity_filled:.6f} filled, {remaining:.6f} remaining on the book."
+        elif order.status == "cancelled":
+            side = "sell" if order_type == "buy" else "buy"
+            return order, (
+                f"Market order cancelled — no {side} orders exist on the book yet. "
+                f"Use a Limit order to post the first listing."
+            )
         else:
             return order, f"Order placed. Waiting for matching orders."
 

@@ -894,6 +894,42 @@ async def meme_coin_page(
 
     <!-- TAB: TRADE -->
     <div id="tab-trade" class="tab-content {tab_trade}" style="padding-top:14px;">
+
+        <!-- Liquidity / onboarding banner -->
+        {"" if bids or asks else f"""
+        <div style="background:#1c1400;border:1px solid #b45309;border-radius:8px;
+                    padding:14px 18px;margin-bottom:14px;font-size:13px;">
+            <div style="font-size:15px;font-weight:700;color:#fbbf24;margin-bottom:6px;">
+                &#9888; Empty order book — no liquidity yet
+            </div>
+            <p style="color:#d97706;margin-bottom:8px;">
+                Market orders need existing counterparty orders to fill against.
+                Since no one has listed {symbol} yet, all market orders will immediately cancel.
+            </p>
+            <p style="color:#fbbf24;font-weight:600;">
+                &#128221; To create the first listing, use a <strong>Limit order</strong>:<br>
+                &nbsp;&nbsp;• Sellers: pick a price &rarr; your coins are posted to the book for buyers to fill.<br>
+                &nbsp;&nbsp;• Buyers: set a bid price &rarr; your offer waits for a seller to accept.
+            </p>
+        </div>
+        """}
+
+        {"" if asks else f"""
+        <div style="background:#0c1a0c;border:1px solid #16a34a;border-radius:6px;
+                    padding:10px 14px;margin-bottom:10px;font-size:12px;color:#4ade80;">
+            &#128640; No sell orders yet &mdash; be the first to list {symbol}!
+            Switch <strong>Order Mode &rarr; Limit</strong> in the Sell form, set your price, and post a listing.
+        </div>
+        """}
+
+        {"" if bids else f"""
+        <div style="background:#0c0c1a;border:1px solid #4f46e5;border-radius:6px;
+                    padding:10px 14px;margin-bottom:10px;font-size:12px;color:#a5b4fc;">
+            &#128176; No buy orders yet &mdash; be the first to bid on {symbol}!
+            Switch <strong>Order Mode &rarr; Limit</strong> in the Buy form and set your bid price.
+        </div>
+        """}
+
         <div class="grid grid-2">
             <!-- BUY -->
             <div class="card">
@@ -907,9 +943,12 @@ async def meme_coin_page(
                     <div class="form-group">
                         <label>Order Mode</label>
                         <select name="order_mode" id="buy-mode" onchange="toggleBuyPrice()">
-                            <option value="limit">Limit (set your price)</option>
-                            <option value="market">Market (fill immediately)</option>
+                            <option value="limit">Limit — post a bid at your price (creates order book entry)</option>
+                            <option value="market">Market — fill instantly against existing sell orders</option>
                         </select>
+                        <div id="buy-mode-hint" style="font-size:11px;color:#64748b;margin-top:4px;">
+                            Limit orders stay on the book until filled or cancelled.
+                        </div>
                     </div>
                     <div class="form-group" id="buy-price-group">
                         <label>Price ({detail["native_symbol"]} per {symbol})</label>
@@ -943,9 +982,12 @@ async def meme_coin_page(
                     <div class="form-group">
                         <label>Order Mode</label>
                         <select name="order_mode" id="sell-mode" onchange="toggleSellPrice()">
-                            <option value="limit">Limit (set your price)</option>
-                            <option value="market">Market (fill immediately)</option>
+                            <option value="limit">Limit — list at your price (creates order book entry)</option>
+                            <option value="market">Market — sell instantly against existing buy orders</option>
                         </select>
+                        <div id="sell-mode-hint" style="font-size:11px;color:#64748b;margin-top:4px;">
+                            Limit orders stay on the book until filled or cancelled.
+                        </div>
                     </div>
                     <div class="form-group" id="sell-price-group">
                         <label>Price ({detail["native_symbol"]} per {symbol})</label>
@@ -1228,10 +1270,30 @@ if (document.getElementById('tab-info') && document.getElementById('tab-info').c
 function toggleBuyPrice() {{
     const mode = document.getElementById('buy-mode').value;
     document.getElementById('buy-price-group').style.display = mode === 'limit' ? '' : 'none';
+    const hint = document.getElementById('buy-mode-hint');
+    if (hint) {{
+        if (mode === 'market') {{
+            hint.style.color = '#fbbf24';
+            hint.textContent = '\u26a0 Market orders fill instantly against existing sell orders — if no sell orders exist, the order is cancelled immediately.';
+        }} else {{
+            hint.style.color = '#9ca3af';
+            hint.textContent = 'Limit orders stay on the book until filled or cancelled.';
+        }}
+    }}
 }}
 function toggleSellPrice() {{
     const mode = document.getElementById('sell-mode').value;
     document.getElementById('sell-price-group').style.display = mode === 'limit' ? '' : 'none';
+    const hint = document.getElementById('sell-mode-hint');
+    if (hint) {{
+        if (mode === 'market') {{
+            hint.style.color = '#fbbf24';
+            hint.textContent = '\u26a0 Market orders fill instantly against existing buy orders — if no buy orders exist, the order is cancelled immediately.';
+        }} else {{
+            hint.style.color = '#9ca3af';
+            hint.textContent = 'Limit orders stay on the book until filled or cancelled.';
+        }}
+    }}
 }}
 
 function calcBuyCost() {{
@@ -1395,7 +1457,7 @@ async def api_meme_order(
         quantity=quantity,
         price=price if order_mode == "limit" else None,
     )
-    if order:
+    if order and order.status != "cancelled":
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&msg={message.replace(' ', '+')}", status_code=303)
     else:
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&error={message.replace(' ', '+')}", status_code=303)
