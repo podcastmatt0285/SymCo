@@ -433,12 +433,21 @@ def admin_remove_item(admin_id: int, player_id: int, item_type: str, quantity: f
 
 
 def get_all_item_types() -> list:
-    """Get all known item types for the admin dropdown."""
+    """Get all known item types for the admin dropdown (regular + district items)."""
+    items = set()
     try:
         import inventory
-        return sorted(inventory.ITEM_RECIPES.keys())
+        items.update(inventory.ITEM_RECIPES.keys())
     except Exception:
-        return []
+        pass
+    try:
+        import json as _json
+        with open("district_items.json") as f:
+            di = _json.load(f)
+        items.update(di.keys())
+    except Exception:
+        pass
+    return sorted(items)
 
 
 # ==========================

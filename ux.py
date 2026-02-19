@@ -632,30 +632,53 @@ def businesses(session_token: Optional[str] = Cookie(None)):
                     </div>
                 </div>'''
 
+            import json as _json
+            paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
+            paused_product_keys = set(_json.loads(biz.paused_products or "[]"))
+
             if biz_class == "production":
                 biz_html += '<div style="margin-top: 10px; border-top: 1px solid #1e293b; padding-top: 10px;"><strong>Production Lines:</strong>'
-                for line in config.get("production_lines", []):
+                for li, line in enumerate(config.get("production_lines", [])):
                     inputs = " + ".join([f"{req['quantity']} {req['item'].replace('_', ' ').title()}" for req in line.get("inputs", [])])
                     output = f"{line['output_qty']} {line['output_item'].replace('_', ' ').title()}"
-                    biz_html += f'<p style="font-size: 0.9rem; color: #64748b;">→ {inputs or "No inputs"} = {output}</p>'
+                    line_paused = li in paused_line_idxs
+                    pause_label = "Resume" if line_paused else "Pause"
+                    pause_color = "#22c55e" if line_paused else "#f59e0b"
+                    line_style = "opacity:0.45;" if line_paused else ""
+                    biz_html += f'''
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:5px;background:#020617;border-radius:4px;{line_style}">
+                        <span style="font-size:0.85rem;color:#64748b;">→ {inputs or "No inputs"} = {output}</span>
+                        <form action="/api/business/toggle-line" method="post" style="margin-left:8px;flex-shrink:0;">
+                            <input type="hidden" name="business_id" value="{biz.id}">
+                            <input type="hidden" name="line_index" value="{li}">
+                            <button type="submit" style="padding:3px 8px;font-size:0.75rem;background:{pause_color};color:#020617;border:none;border-radius:3px;cursor:pointer;font-weight:bold;">{pause_label}</button>
+                        </form>
+                    </div>'''
                 biz_html += '</div>'
-            
+
             elif biz_class == "retail":
                 biz_html += '<div style="margin-top: 10px; border-top: 1px solid #1e293b; padding-top: 10px;"><strong>Retail Sales & Pricing:</strong>'
                 for item, stats in config.get("products", {}).items():
-                    # Retail Price Patch: Lookup current price for this player/item
                     price_entry = land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id, RetailPrice.item_type == item).first()
                     current_p = f"${price_entry.price:.2f}" if price_entry else "MKT Default"
-                    
+                    item_paused = item in paused_product_keys
+                    pause_label = "Resume" if item_paused else "Pause"
+                    pause_color = "#22c55e" if item_paused else "#f59e0b"
+                    row_style = "opacity:0.45;" if item_paused else ""
                     biz_html += f'''
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 5px; background: #020617; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 5px; background: #020617; border-radius: 4px;{row_style}">
                         <span style="font-size: 0.9rem;">{item.replace("_", " ").title()} (E: {stats["elasticity"]})</span>
-                        <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="color: #38bdf8; font-weight: bold;">{current_p}</span>
                             <form action="/api/retail/set-price" method="post" style="display: flex; gap: 4px;">
                                 <input type="hidden" name="item_type" value="{item}">
                                 <input type="number" name="price" step="0.01" placeholder="Set Price" style="padding: 4px; width: 80px;" required>
                                 <button type="submit" class="btn-blue" style="padding: 4px 8px; font-size: 0.8rem;">Update</button>
+                            </form>
+                            <form action="/api/business/toggle-retail" method="post">
+                                <input type="hidden" name="business_id" value="{biz.id}">
+                                <input type="hidden" name="item_type" value="{item}">
+                                <button type="submit" style="padding:4px 8px;font-size:0.8rem;background:{pause_color};color:#020617;border:none;border-radius:3px;cursor:pointer;font-weight:bold;">{pause_label}</button>
                             </form>
                         </div>
                     </div>'''
@@ -5350,6 +5373,22 @@ async def toggle_business_endpoint(business_id: int = Form(...), session_token: 
     if isinstance(player, RedirectResponse): return player
     from business import toggle_business
     toggle_business(player.id, business_id)
+    return RedirectResponse(url="/businesses", status_code=303)
+
+@router.post("/api/business/toggle-line")
+async def toggle_line_endpoint(business_id: int = Form(...), line_index: int = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return player
+    from business import toggle_production_line
+    toggle_production_line(player.id, business_id, line_index)
+    return RedirectResponse(url="/businesses", status_code=303)
+
+@router.post("/api/business/toggle-retail")
+async def toggle_retail_endpoint(business_id: int = Form(...), item_type: str = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return player
+    from business import toggle_retail_item
+    toggle_retail_item(player.id, business_id, item_type)
     return RedirectResponse(url="/businesses", status_code=303)
 
 @router.post("/api/business/dismantle")

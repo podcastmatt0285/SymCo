@@ -28,6 +28,9 @@ class Business(Base):
     progress_ticks = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow)
     district_id = Column(Integer, nullable=True)  # District ID if business is on a district
+    # Per-line pause: JSON arrays of paused line indices / product keys
+    paused_lines = Column(String, default="[]")      # e.g. "[0, 2]"
+    paused_products = Column(String, default="[]")   # e.g. '["bread", "milk"]'
 
 class RetailPrice(Base):
     __tablename__ = "retail_prices"
@@ -65,6 +68,20 @@ def load_business_config():
 
 def initialize():
     Base.metadata.create_all(bind=engine)
+    # Safe migration: add per-line pause columns if they don't exist yet
+    try:
+        import sqlite3
+        con = sqlite3.connect("./wadsworth.db")
+        cur = con.cursor()
+        cols = {row[1] for row in cur.execute("PRAGMA table_info(businesses)")}
+        if "paused_lines" not in cols:
+            cur.execute("ALTER TABLE businesses ADD COLUMN paused_lines TEXT DEFAULT '[]'")
+        if "paused_products" not in cols:
+            cur.execute("ALTER TABLE businesses ADD COLUMN paused_products TEXT DEFAULT '[]'")
+        con.commit()
+        con.close()
+    except Exception as _mig_err:
+        print(f"[Business] Migration warning: {_mig_err}")
     load_business_config()
     print("[Business] Module initialized with production patches and dismantling system")
 
@@ -244,9 +261,15 @@ def process_business_tick(db):
         has_retail = bool(config.get("products"))
         production_lines = config.get("production_lines", [])
 
+        # Load per-line pause sets
+        paused_line_idxs = set(json.loads(biz.paused_lines or "[]"))
+        paused_product_keys = set(json.loads(biz.paused_products or "[]"))
+
         # ===== RETAIL PROCESSING =====
         if has_retail:
             for item, rule in config.get("products", {}).items():
+                if item in paused_product_keys:
+                    continue
                 qty = player_inv.get(item, 0)
                 if qty <= 0:
                     continue
@@ -277,7 +300,9 @@ def process_business_tick(db):
                     lines_successfully_produced += 1
 
         # ===== PRODUCTION PROCESSING =====
-        for line in production_lines:
+        for line_idx, line in enumerate(production_lines):
+            if line_idx in paused_line_idxs:
+                continue
             line_can_run = True
             for req in line.get("inputs", []):
                 if player_inv.get(req["item"], 0) < req["quantity"]:
@@ -438,6 +463,53 @@ def toggle_business(player_id: int, business_id: int) -> bool:
         print(f"[Business] Error toggling business: {e}")
         db.close()
         return False
+
+
+def toggle_production_line(player_id: int, business_id: int, line_index: int) -> dict:
+    """Toggle pause/resume on a single production line by index."""
+    db = SessionLocal()
+    try:
+        biz = db.query(Business).filter(Business.id == business_id, Business.owner_id == player_id).first()
+        if not biz:
+            return {"ok": False, "error": "Business not found"}
+        paused = json.loads(biz.paused_lines or "[]")
+        if line_index in paused:
+            paused.remove(line_index)
+            now_paused = False
+        else:
+            paused.append(line_index)
+            now_paused = True
+        biz.paused_lines = json.dumps(paused)
+        db.commit()
+        return {"ok": True, "paused": now_paused}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def toggle_retail_item(player_id: int, business_id: int, item_type: str) -> dict:
+    """Toggle pause/resume on a single retail product."""
+    db = SessionLocal()
+    try:
+        biz = db.query(Business).filter(Business.id == business_id, Business.owner_id == player_id).first()
+        if not biz:
+            return {"ok": False, "error": "Business not found"}
+        paused = json.loads(biz.paused_products or "[]")
+        if item_type in paused:
+            paused.remove(item_type)
+            now_paused = False
+        else:
+            paused.append(item_type)
+            now_paused = True
+        biz.paused_products = json.dumps(paused)
+        db.commit()
+        return {"ok": True, "paused": now_paused}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
 
 # ==========================
 # RETAIL PRICING PATCH
