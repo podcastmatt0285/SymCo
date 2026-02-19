@@ -731,6 +731,224 @@ def get_dm_thread_messages(player_a: int, player_b: int, limit: int = 100) -> li
 
 
 # ==========================
+# DISTRICT ADMIN
+# ==========================
+
+def admin_create_district(admin_id: int, player_id: int, district_type: str, size: float = 5.0) -> dict:
+    """Admin grants a district directly to a player (no plot sacrifice required)."""
+    try:
+        from districts import District, DISTRICT_TYPES, get_db as get_dist_db, DISTRICT_TAX_MULTIPLIER
+        if district_type not in DISTRICT_TYPES:
+            return {"ok": False, "error": f"Unknown district type: {district_type}"}
+        cfg = DISTRICT_TYPES[district_type]
+        terrain_type = cfg["district_terrain"]
+        monthly_tax = cfg["base_tax"] * size * DISTRICT_TAX_MULTIPLIER
+        db = get_dist_db()
+        district = District(
+            owner_id=player_id,
+            district_type=district_type,
+            terrain_type=terrain_type,
+            size=size,
+            plots_merged=0,
+            monthly_tax=monthly_tax,
+            source_plot_ids="admin_grant",
+        )
+        db.add(district)
+        db.commit()
+        db.refresh(district)
+        db.close()
+        log_action(admin_id, "create_district", player_id, f"{district_type} size={size} → district #{district.id}")
+        return {"ok": True, "district_id": district.id}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_delete_district(admin_id: int, district_id: int) -> dict:
+    """Admin deletes a district. Clears any occupying business link."""
+    try:
+        from districts import District, get_db as get_dist_db
+        db = get_dist_db()
+        district = db.query(District).filter(District.id == district_id).first()
+        if not district:
+            db.close()
+            return {"ok": False, "error": "District not found"}
+        owner_id = district.owner_id
+        db.delete(district)
+        db.commit()
+        db.close()
+        log_action(admin_id, "delete_district", owner_id, f"Deleted district #{district_id}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_edit_district_tax(admin_id: int, district_id: int, new_tax: float) -> dict:
+    """Admin overrides the monthly tax on a district."""
+    try:
+        from districts import District, get_db as get_dist_db
+        db = get_dist_db()
+        district = db.query(District).filter(District.id == district_id).first()
+        if not district:
+            db.close()
+            return {"ok": False, "error": "District not found"}
+        old_tax = district.monthly_tax
+        district.monthly_tax = new_tax
+        db.commit()
+        db.close()
+        log_action(admin_id, "edit_district_tax", district.owner_id, f"District #{district_id} tax ${old_tax:,.0f} → ${new_tax:,.0f}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ==========================
+# CITY ADMIN
+# ==========================
+
+def get_all_cities_admin() -> list:
+    """Return all cities with member counts for admin overview."""
+    try:
+        from cities import get_all_cities
+        return get_all_cities()
+    except Exception:
+        return []
+
+
+def get_player_city_info(player_id: int) -> Optional[dict]:
+    """Return the city a player belongs to, if any."""
+    try:
+        from cities import get_player_city
+        city = get_player_city(player_id)
+        if not city:
+            return None
+        return {"id": city.id, "name": city.name, "is_mayor": city.mayor_id == player_id}
+    except Exception:
+        return None
+
+
+def admin_add_player_to_city(admin_id: int, player_id: int, city_id: int) -> dict:
+    """Admin force-adds a player to a city, bypassing the application/fee system."""
+    try:
+        from cities import City, CityMember, is_city_member, get_db as get_city_db, get_player_city
+        # Ensure not already in a city
+        current = get_player_city(player_id)
+        if current:
+            return {"ok": False, "error": f"Player is already a member of {current.name}"}
+        db = get_city_db()
+        city = db.query(City).filter(City.id == city_id).first()
+        if not city:
+            db.close()
+            return {"ok": False, "error": "City not found"}
+        from cities import MAX_CITY_MEMBERS
+        member_count = db.query(CityMember).filter(CityMember.city_id == city_id).count()
+        if member_count >= MAX_CITY_MEMBERS:
+            db.close()
+            return {"ok": False, "error": f"City is at max capacity ({MAX_CITY_MEMBERS})"}
+        member = CityMember(player_id=player_id, city_id=city_id, application_fee_paid=0.0)
+        db.add(member)
+        db.commit()
+        db.close()
+        log_action(admin_id, "city_add_member", player_id, f"Force-added to city #{city_id} ({city.name})")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_remove_player_from_city(admin_id: int, player_id: int) -> dict:
+    """Admin force-removes a player from their current city."""
+    try:
+        from cities import CityMember, City, get_db as get_city_db
+        db = get_city_db()
+        member = db.query(CityMember).filter(CityMember.player_id == player_id).first()
+        if not member:
+            db.close()
+            return {"ok": False, "error": "Player is not a city member"}
+        city = db.query(City).filter(City.id == member.city_id).first()
+        city_name = city.name if city else f"#{member.city_id}"
+        if city and city.mayor_id == player_id:
+            db.close()
+            return {"ok": False, "error": "Cannot remove the mayor — reassign mayor first"}
+        db.delete(member)
+        db.commit()
+        db.close()
+        log_action(admin_id, "city_remove_member", player_id, f"Force-removed from city {city_name}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ==========================
+# COUNTY ADMIN
+# ==========================
+
+def get_all_counties_admin() -> list:
+    """Return all counties for admin overview."""
+    try:
+        from counties import get_all_counties
+        return get_all_counties()
+    except Exception:
+        return []
+
+
+def get_player_county_info(player_id: int) -> Optional[dict]:
+    """Return county info for the player's city."""
+    try:
+        from counties import get_player_county
+        county = get_player_county(player_id)
+        if not county:
+            return None
+        return {"id": county.id, "name": county.name, "crypto_symbol": county.crypto_symbol}
+    except Exception:
+        return None
+
+
+def admin_add_city_to_county(admin_id: int, city_id: int, county_id: int) -> dict:
+    """Admin force-adds a city to a county, bypassing the petition system."""
+    try:
+        from counties import County, CountyCity, get_db as get_county_db, MAX_COUNTY_CITIES, get_county_cities
+        db = get_county_db()
+        county = db.query(County).filter(County.id == county_id).first()
+        if not county:
+            db.close()
+            return {"ok": False, "error": "County not found"}
+        existing = db.query(CountyCity).filter(CountyCity.city_id == city_id).first()
+        if existing:
+            db.close()
+            return {"ok": False, "error": "City is already in a county"}
+        city_count = db.query(CountyCity).filter(CountyCity.county_id == county_id).count()
+        if city_count >= MAX_COUNTY_CITIES:
+            db.close()
+            return {"ok": False, "error": f"County is at max capacity ({MAX_COUNTY_CITIES} cities)"}
+        link = CountyCity(county_id=county_id, city_id=city_id)
+        db.add(link)
+        db.commit()
+        db.close()
+        log_action(admin_id, "county_add_city", None, f"Force-added city #{city_id} to county #{county_id} ({county.name})")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_remove_city_from_county(admin_id: int, city_id: int) -> dict:
+    """Admin force-removes a city from its county."""
+    try:
+        from counties import CountyCity, get_db as get_county_db
+        db = get_county_db()
+        link = db.query(CountyCity).filter(CountyCity.city_id == city_id).first()
+        if not link:
+            db.close()
+            return {"ok": False, "error": "City is not in any county"}
+        county_id = link.county_id
+        db.delete(link)
+        db.commit()
+        db.close()
+        log_action(admin_id, "county_remove_city", None, f"Force-removed city #{city_id} from county #{county_id}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ==========================
 # TICK
 # ==========================
 

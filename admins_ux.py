@@ -31,6 +31,14 @@ from admins import (
     ban_player, timeout_player, kick_player, revoke_ban, get_active_ban,
     post_update, get_p2p_overview, get_admin_logs, log_action,
     get_dm_threads_overview, get_dm_thread_messages,
+    # District admin
+    admin_create_district, admin_delete_district, admin_edit_district_tax,
+    # City admin
+    get_all_cities_admin, get_player_city_info,
+    admin_add_player_to_city, admin_remove_player_from_city,
+    # County admin
+    get_all_counties_admin, get_player_county_info,
+    admin_add_city_to_county, admin_remove_city_from_county,
 )
 
 router = APIRouter()
@@ -45,6 +53,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
     nav_items = [
         ("/admin", "Home"),
         ("/admin/players", "Players"),
+        ("/admin/cities", "Cities"),
         ("/admin/updates", "Updates"),
         ("/admin/chat", "Chat"),
         ("/admin/p2p", "P2P"),
@@ -428,6 +437,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     <div class="link-grid" style="margin-bottom: 12px;">
         <a href="/admin/updates" class="link-card"><div class="lc-icon">📢</div><div class="lc-title">Post Update</div><div class="lc-desc">Updates channel</div></a>
         <a href="/admin/players" class="link-card"><div class="lc-icon">👥</div><div class="lc-title">Players</div><div class="lc-desc">View &amp; edit all</div></a>
+        <a href="/admin/cities" class="link-card"><div class="lc-icon">🏙️</div><div class="lc-title">Cities &amp; Counties</div><div class="lc-desc">Manage memberships</div></a>
         <a href="/admin/chat" class="link-card"><div class="lc-icon">💬</div><div class="lc-title">Chat Rooms</div><div class="lc-desc">Monitor chat</div></a>
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
         <a href="/admin/landbank" class="link-card"><div class="lc-icon">🏦</div><div class="lc-title">Land Bank</div><div class="lc-desc">Manage plots</div></a>
@@ -523,7 +533,7 @@ def admin_player_detail(
 
     # Tab navigation
     tabs_html = ""
-    for t_id, t_label in [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("businesses", "Businesses"), ("moderation", "Moderation")]:
+    for t_id, t_label in [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("moderation", "Moderation")]:
         active = ' class="active"' if tab == t_id else ""
         tabs_html += f'<a href="/admin/player/{pid}?tab={t_id}"{active}>{t_label}</a>'
 
@@ -537,6 +547,8 @@ def admin_player_detail(
         tab_body = _player_land_tab(pid)
     elif tab == "districts":
         tab_body = _player_districts_tab(pid)
+    elif tab == "cities":
+        tab_body = _player_cities_tab(pid)
     elif tab == "businesses":
         tab_body = _player_businesses_tab(pid)
     elif tab == "moderation":
@@ -660,15 +672,120 @@ def _player_land_tab(pid):
 
 def _player_districts_tab(pid):
     districts = get_player_districts(pid)
+
+    try:
+        from districts import DISTRICT_TYPES
+        dist_type_opts = "".join(
+            f'<option value="{k}">{v["name"]} — ${v["base_tax"]:,}/mo base</option>'
+            for k, v in sorted(DISTRICT_TYPES.items(), key=lambda x: x[1]["name"])
+        )
+    except Exception:
+        dist_type_opts = '<option value="industrial">industrial</option>'
+
     rows = ""
     for d in districts:
+        did = d["id"]
         occupied = f"Biz #{d['occupied_by_business_id']}" if d["occupied_by_business_id"] else '<span style="color:#22c55e;">Vacant</span>'
-        rows += f'<tr><td>#{d["id"]}</td><td>{d["district_type"]}</td><td>{d["terrain_type"]}</td><td>{d["size"]:.1f}</td><td>{d["plots_merged"]}</td><td>${d["monthly_tax"]:,.0f}</td><td>{occupied}</td></tr>'
+        rows += f"""<tr>
+            <td>#{did}</td>
+            <td>{d["district_type"]}</td>
+            <td style="color:#94a3b8;">{d["terrain_type"]}</td>
+            <td>{d["size"]:.1f}</td>
+            <td>${d["monthly_tax"]:,.0f}</td>
+            <td>{occupied}</td>
+            <td>
+                <form method="post" action="/admin/player/{pid}/edit-district-tax" style="display:inline;margin-right:4px;">
+                    <input type="hidden" name="district_id" value="{did}">
+                    <input type="hidden" name="tab" value="districts">
+                    <div style="display:flex;gap:3px;align-items:center;">
+                        <input type="number" name="new_tax" step="1000" min="0" value="{d['monthly_tax']:.0f}" style="width:90px;font-size:0.7rem;">
+                        <button type="submit" class="btn btn-blue" style="font-size:0.6rem;padding:3px 5px;">Tax</button>
+                    </div>
+                </form>
+                <form method="post" action="/admin/player/{pid}/delete-district" style="display:inline;">
+                    <input type="hidden" name="district_id" value="{did}">
+                    <input type="hidden" name="tab" value="districts">
+                    <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 5px;" onclick="return confirm('Delete district #{did}?')">Del</button>
+                </form>
+            </td>
+        </tr>"""
 
     return f"""
     <div class="card">
+        <h3>Grant District</h3>
+        <form method="post" action="/admin/player/{pid}/create-district">
+            <input type="hidden" name="tab" value="districts">
+            <div class="form-row">
+                <div style="flex:2;"><div class="form-label">Type</div><select name="district_type">{dist_type_opts}</select></div>
+                <div style="flex:0 0 80px;"><div class="form-label">Size</div><input type="number" name="size" min="1" step="1" value="5"></div>
+                <button type="submit" class="btn btn-green">Grant</button>
+            </div>
+        </form>
+    </div>
+    <div class="card">
         <h3>Districts ({len(districts)})</h3>
-        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Terrain</th><th>Size</th><th>Plots</th><th>Tax</th><th>Status</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No districts.</p>'}
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Terrain</th><th>Size</th><th>Tax/mo</th><th>Status</th><th>Actions</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No districts.</p>'}
+    </div>
+    """
+
+
+def _player_cities_tab(pid):
+    city_info = get_player_city_info(pid)
+    county_info = get_player_county_info(pid)
+    all_cities = get_all_cities_admin()
+
+    city_opts = "".join(
+        '<option value="' + str(c["id"]) + '">#' + str(c["id"]) + " — " + c["name"] + " (" + str(c.get("member_count", 0)) + " members)</option>"
+        for c in all_cities
+    ) if all_cities else '<option value="">No cities exist</option>'
+
+    if city_info:
+        role = "Mayor" if city_info.get("is_mayor") else "Member"
+        city_id_str = str(city_info["id"])
+        city_name_str = city_info["name"]
+        if city_info.get("is_mayor"):
+            remove_action = '<div class="flash flash-error" style="margin-top:6px;">Cannot remove the mayor — reassign mayor in-game first.</div>'
+        else:
+            remove_action = (
+                '<form method="post" action="/admin/player/' + str(pid) + '/remove-from-city" style="margin-top:8px;">'
+                '<input type="hidden" name="tab" value="cities">'
+                '<button type="submit" class="btn btn-red" onclick="return confirm(\'Force-remove from city?\')">Force Remove from City</button>'
+                '</form>'
+            )
+        city_html = (
+            '<div class="detail-row"><span class="label">City</span><span class="value">#' + city_id_str + " — " + city_name_str + "</span></div>"
+            '<div class="detail-row"><span class="label">Role</span><span class="value">' + role + "</span></div>"
+            + remove_action
+        )
+    else:
+        city_html = (
+            '<p style="color:#64748b;font-size:0.75rem;margin-bottom:10px;">Player is not in any city.</p>'
+            '<form method="post" action="/admin/player/' + str(pid) + '/add-to-city">'
+            '<input type="hidden" name="tab" value="cities">'
+            '<div class="form-row">'
+            '<div style="flex:1;"><div class="form-label">City</div><select name="city_id">' + city_opts + "</select></div>"
+            '<button type="submit" class="btn btn-green">Force Add</button>'
+            "</div></form>"
+        )
+
+    if county_info:
+        county_html = (
+            '<div class="detail-row"><span class="label">County</span><span class="value">#'
+            + str(county_info["id"]) + " — " + county_info["name"] + "</span></div>"
+            '<div class="detail-row"><span class="label">Token</span><span class="value">'
+            + county_info.get("crypto_symbol", "-") + "</span></div>"
+        )
+    else:
+        county_html = "<p style=\"color:#64748b;font-size:0.75rem;\">Player's city is not in a county (or player has no city).</p>"
+
+    return f"""
+    <div class="card">
+        <h3>City Membership</h3>
+        {city_html}
+    </div>
+    <div class="card">
+        <h3>County</h3>
+        {county_html}
     </div>
     """
 
@@ -783,6 +900,160 @@ def post_delete_land(pid: int, session_token: Optional[str] = Cookie(None), plot
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Deleted+plot+%23{plot_id}", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/create-district")
+def post_create_district(pid: int, session_token: Optional[str] = Cookie(None), district_type: str = Form(...), size: float = Form(5.0), tab: str = Form("districts")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_create_district(admin.id, pid, district_type, size)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Created+{district_type}+district+%23{result['district_id']}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/delete-district")
+def post_delete_district(pid: int, session_token: Optional[str] = Cookie(None), district_id: int = Form(...), tab: str = Form("districts")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_delete_district(admin.id, district_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Deleted+district+%23{district_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/edit-district-tax")
+def post_edit_district_tax(pid: int, session_token: Optional[str] = Cookie(None), district_id: int = Form(...), new_tax: float = Form(...), tab: str = Form("districts")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_edit_district_tax(admin.id, district_id, new_tax)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Tax+updated+for+district+%23{district_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/add-to-city")
+def post_add_to_city(pid: int, session_token: Optional[str] = Cookie(None), city_id: int = Form(...), tab: str = Form("cities")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_add_player_to_city(admin.id, pid, city_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Added+to+city+%23{city_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/remove-from-city")
+def post_remove_from_city(pid: int, session_token: Optional[str] = Cookie(None), tab: str = Form("cities")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_remove_player_from_city(admin.id, pid)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Removed+from+city", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+# ==========================
+# CITIES OVERVIEW
+# ==========================
+
+@router.get("/admin/cities", response_class=HTMLResponse)
+def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str] = Query(None), err: Optional[str] = Query(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    cities = get_all_cities_admin()
+    counties = get_all_counties_admin()
+
+    city_opts_county = "".join(f'<option value="{c["id"]}">#{c["id"]} — {c["name"]}</option>' for c in cities)
+    county_opts = "".join(f'<option value="{cn["id"]}">#{cn["id"]} — {cn["name"]} ({cn.get("city_count",0)} cities)</option>' for cn in counties)
+
+    city_rows = ""
+    for c in cities:
+        county_link = ""
+        for cn in counties:
+            if any(cc == c["id"] for cc in cn.get("city_ids", [])):
+                county_link = f'<a href="/admin/counties">#{cn["id"]} {cn["name"]}</a>'
+                break
+        city_rows += f"""<tr>
+            <td>#{c["id"]}</td>
+            <td><a href="/admin/cities/{c['id']}">{c["name"]}</a></td>
+            <td>{c.get("mayor_name", "-")}</td>
+            <td>{c.get("member_count", 0)}</td>
+            <td>{county_link or '<span style="color:#64748b;">—</span>'}</td>
+            <td style="color:#22c55e;">${c.get("bank_reserves", 0):,.0f}</td>
+        </tr>"""
+
+    county_rows = ""
+    for cn in counties:
+        county_rows += f"""<tr>
+            <td>#{cn["id"]}</td>
+            <td>{cn["name"]}</td>
+            <td style="font-weight:bold;color:#f59e0b;">{cn.get("crypto_symbol","?")}</td>
+            <td>{cn.get("city_count", 0)}</td>
+            <td style="color:#94a3b8;">{cn.get("total_supply", 0):,.0f}</td>
+            <td>
+                <form method="post" action="/admin/counties/remove-city" style="display:inline;">
+                    <input type="number" name="city_id" placeholder="City ID" style="width:70px;font-size:0.7rem;display:inline;">
+                    <input type="hidden" name="county_id" value="{cn['id']}">
+                    <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 5px;">Remove City</button>
+                </form>
+            </td>
+        </tr>"""
+
+    body = f"""
+    <h2 style="font-size:0.9rem;margin-bottom:10px;">Cities & Counties</h2>
+    {_flash(msg=msg, err=err)}
+
+    <div class="card">
+        <h3>Add City to County</h3>
+        <form method="post" action="/admin/counties/add-city">
+            <div class="form-row">
+                <div style="flex:1;"><div class="form-label">City</div><select name="city_id">{city_opts_county}</select></div>
+                <div style="flex:1;"><div class="form-label">County</div><select name="county_id">{county_opts}</select></div>
+                <button type="submit" class="btn btn-green">Add</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>All Cities ({len(cities)})</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Name</th><th>Mayor</th><th>Members</th><th>County</th><th>Bank</th></tr>{city_rows}</table></div>' if city_rows else '<p style="color:#64748b;font-size:0.75rem;">No cities yet.</p>'}
+    </div>
+
+    <div class="card">
+        <h3>All Counties ({len(counties)})</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Name</th><th>Token</th><th>Cities</th><th>Supply</th><th>Action</th></tr>{county_rows}</table></div>' if county_rows else '<p style="color:#64748b;font-size:0.75rem;">No counties yet.</p>'}
+    </div>
+    """
+    return HTMLResponse(admin_shell("Cities & Counties", body, admin.business_name, "/admin/cities"))
+
+
+@router.post("/admin/counties/add-city")
+def post_county_add_city(session_token: Optional[str] = Cookie(None), city_id: int = Form(...), county_id: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_add_city_to_county(admin.id, city_id, county_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/cities?msg=City+%23{city_id}+added+to+county+%23{county_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/cities?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/counties/remove-city")
+def post_county_remove_city(session_token: Optional[str] = Cookie(None), city_id: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_remove_city_from_county(admin.id, city_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/cities?msg=City+%23{city_id}+removed+from+county", status_code=303)
+    return RedirectResponse(url=f"/admin/cities?err={result['error']}", status_code=303)
 
 
 @router.post("/admin/player/{pid}/kick")

@@ -667,7 +667,9 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
         <a href="/stats/personal">My Business</a>
         <a href="/stats/leaderboard">Leaderboard</a>
         <a href="/stats/businesses">Businesses</a>
+        <a href="/stats/districts">Districts</a>
         <a href="/stats/items">Items</a>
+        <a href="/stats/production-costs">Costs</a>
     </div>
     
     <div class="container">
@@ -970,6 +972,24 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
             </div>
             <div class="card-value">Market Data</div>
             <div class="card-subtitle">All items, price charts, categories</div>
+        </a>
+
+        <a href="/stats/production-costs" class="card" style="text-decoration: none;">
+            <div class="card-header">
+                <span class="card-title">Production Costs</span>
+                <span class="card-icon">💰</span>
+            </div>
+            <div class="card-value">Cost Guide</div>
+            <div class="card-subtitle">Cheapest recipes for every item including district items</div>
+        </a>
+
+        <a href="/stats/districts" class="card" style="text-decoration: none;">
+            <div class="card-header">
+                <span class="card-title">Districts</span>
+                <span class="card-icon">🏙️</span>
+            </div>
+            <div class="card-value">Encyclopedia</div>
+            <div class="card-subtitle">All district types, terrain rules, taxes, businesses</div>
         </a>
     </div>
     
@@ -1758,6 +1778,308 @@ async def stats_item_detail(
     """
     
     return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name))
+
+
+# ==========================
+# DISTRICTS ENCYCLOPEDIA
+# ==========================
+
+@router.get("/stats/districts", response_class=HTMLResponse)
+async def stats_districts(session_token: Optional[str] = Cookie(None)):
+    """District types encyclopedia — terrain rules, taxes, and which businesses they support."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    try:
+        from districts import DISTRICT_TYPES, DISTRICT_TAX_MULTIPLIER
+    except Exception:
+        DISTRICT_TYPES = {}
+        DISTRICT_TAX_MULTIPLIER = 15
+
+    try:
+        import json as _json
+        with open("district_businesses.json") as f:
+            dist_biz = _json.load(f)
+    except Exception:
+        dist_biz = {}
+
+    # Build a map: district_terrain → list of business names
+    terrain_to_biz: Dict[str, list] = {}
+    for biz_key, biz_cfg in dist_biz.items():
+        for terrain in biz_cfg.get("allowed_terrain", []):
+            terrain_to_biz.setdefault(terrain, []).append(biz_cfg.get("name", biz_key))
+
+    cards = ""
+    for dtype, cfg in sorted(DISTRICT_TYPES.items(), key=lambda x: x[1]["name"]):
+        terrain_key = cfg.get("district_terrain", f"district_{dtype}")
+        base_tax = cfg["base_tax"]
+        monthly_ex = base_tax * 1.0 * DISTRICT_TAX_MULTIPLIER  # size=1 example
+        allowed = ", ".join(t.title() for t in cfg.get("allowed_terrain", []))
+        businesses_here = terrain_to_biz.get(terrain_key, [])
+        biz_list = "".join(f'<li style="color:#94a3b8;">{b}</li>' for b in sorted(businesses_here)) if businesses_here else '<li style="color:#475569;">No special businesses</li>'
+
+        cards += f"""
+        <div class="card" style="cursor:default;">
+            <div class="card-header">
+                <span class="card-title">{cfg["name"]}</span>
+                <span class="card-icon" style="font-size:0.7rem;color:#f59e0b;">${monthly_ex:,.0f}/mo*</span>
+            </div>
+            <div class="stat-row"><span class="stat-label">Base Tax</span><span class="stat-value">${base_tax:,}/mo × 15</span></div>
+            <div class="stat-row"><span class="stat-label">Terrain</span><span class="stat-value" style="font-size:0.75rem;">{allowed}</span></div>
+            <div class="stat-row" style="align-items:flex-start;">
+                <span class="stat-label">Businesses</span>
+                <ul style="list-style:none;text-align:right;margin:0;padding:0;font-size:0.7rem;">{biz_list}</ul>
+            </div>
+        </div>"""
+
+    body = f"""
+    <h1 class="page-title">🏙️ Districts Encyclopedia</h1>
+    <p style="color:#64748b;font-size:0.8rem;margin-bottom:16px;">
+        Districts are formed by merging {5} land plots (Fibonacci sequence). Tax = Base × Size × 15.
+        *Example shows size=1.
+    </p>
+    <div class="grid">{cards}</div>
+    <a href="/stats" style="display:inline-block;margin-top:16px;">← Back to Analytics</a>
+    """
+    return HTMLResponse(stats_shell("Districts", body, player.cash_balance, player.business_name))
+
+
+# ==========================
+# PRODUCTION COSTS
+# ==========================
+
+@router.get("/stats/production-costs", response_class=HTMLResponse)
+async def stats_production_costs(
+    session_token: Optional[str] = Cookie(None),
+    search: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    sort: Optional[str] = Query("cost_asc"),
+):
+    """Full production cost guide for all items (regular + district) with cheapest recipe."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    import json as _json
+
+    # ── Load regular items from item_costs.json ──────────────────────────────
+    try:
+        with open("item_costs.json") as f:
+            cost_data = _json.load(f)
+        regular_items = cost_data.get("items", [])
+    except Exception:
+        regular_items = []
+
+    # ── Load district items from district_businesses.json ────────────────────
+    try:
+        with open("district_businesses.json") as f:
+            dist_biz = _json.load(f)
+    except Exception:
+        dist_biz = {}
+
+    try:
+        with open("district_items.json") as f:
+            dist_item_types = _json.load(f)
+    except Exception:
+        dist_item_types = {}
+
+    # Build district-produced items: item_key → cheapest cost entry
+    dist_produced: Dict[str, dict] = {}
+    for biz_key, biz_cfg in dist_biz.items():
+        for line in biz_cfg.get("production_lines", []):
+            out_item = line.get("output_item")
+            out_qty = line.get("output_qty", 1) or 1
+            inputs = line.get("inputs", [])
+            # Wage cost per cycle converted to per-output
+            cycles = biz_cfg.get("cycles_to_complete", 1) or 1
+            wage_per_cycle = biz_cfg.get("base_wage_cost", 0.0)
+            # We can't resolve market input costs here perfectly, so we note the recipe inputs
+            if out_item and out_qty > 0:
+                entry = {
+                    "item_key": out_item,
+                    "name": dist_item_types.get(out_item, {}).get("name") or out_item.replace("_", " ").title(),
+                    "category": dist_item_types.get(out_item, {}).get("category", "district"),
+                    "best_recipe": biz_key,
+                    "output_qty": out_qty,
+                    "inputs": inputs,
+                    "wage_per_cycle": wage_per_cycle,
+                    "is_district": True,
+                }
+                # Keep the recipe with highest output quantity (cheapest per unit)
+                existing = dist_produced.get(out_item)
+                if not existing or out_qty > existing["output_qty"]:
+                    dist_produced[out_item] = entry
+
+    # Merge: regular items take priority; add district-only items after
+    regular_keys = {item["item_key"] for item in regular_items}
+    all_items = list(regular_items)
+    for item_key, entry in dist_produced.items():
+        if item_key not in regular_keys:
+            # District-exclusive item
+            all_items.append({
+                "item_key": entry["item_key"],
+                "name": entry["name"],
+                "category": entry["category"],
+                "base_cost": None,  # Can't compute without market prices
+                "has_recipe": True,
+                "best_recipe": entry["best_recipe"],
+                "output_qty": entry["output_qty"],
+                "is_district": True,
+                "inputs": entry["inputs"],
+            })
+        else:
+            # Regular item also producible in district — annotate it
+            for r in all_items:
+                if r["item_key"] == item_key:
+                    r.setdefault("also_district_recipe", entry["best_recipe"])
+
+    # ── Filtering ─────────────────────────────────────────────────────────────
+    categories = sorted({item.get("category", "other") for item in all_items if item.get("category")})
+
+    if search:
+        q = search.lower()
+        all_items = [i for i in all_items if q in i["item_key"].lower() or q in i.get("name", "").lower()]
+    if category and category != "all":
+        all_items = [i for i in all_items if i.get("category") == category]
+
+    # ── Sorting ───────────────────────────────────────────────────────────────
+    def sort_key(item):
+        cost = item.get("base_cost")
+        return (cost is None, cost or 0)
+
+    if sort == "cost_asc":
+        all_items.sort(key=sort_key)
+    elif sort == "cost_desc":
+        all_items.sort(key=sort_key, reverse=True)
+    elif sort == "name":
+        all_items.sort(key=lambda i: i.get("name", i["item_key"]))
+    elif sort == "output_desc":
+        all_items.sort(key=lambda i: i.get("output_qty") or 0, reverse=True)
+
+    # ── Category filter tabs ──────────────────────────────────────────────────
+    cat_active = category or "all"
+    cat_tabs = f'<a href="/stats/production-costs?sort={sort}" class="{"active" if cat_active=="all" else ""}">All ({len(cost_data.get("items",[]) if not search else all_items)})</a>'
+    for cat in categories:
+        cnt = sum(1 for i in (cost_data.get("items", []) + list(dist_produced.values())) if i.get("category") == cat)
+        active_cls = "active" if cat_active == cat else ""
+        cat_tabs += f'<a href="/stats/production-costs?category={cat}&sort={sort}" class="{active_cls}">{cat.replace("_"," ").title()} ({cnt})</a>'
+
+    # ── Sort links ────────────────────────────────────────────────────────────
+    def sort_link(label, s):
+        base = f"/stats/production-costs?sort={s}"
+        if category:
+            base += f"&category={category}"
+        if search:
+            base += f"&search={search}"
+        active = "color:#38bdf8;font-weight:bold;" if sort == s else "color:#64748b;"
+        return f'<a href="{base}" style="font-size:0.75rem;{active}">{label}</a>'
+
+    sort_links = " | ".join([
+        sort_link("Cost ↑", "cost_asc"),
+        sort_link("Cost ↓", "cost_desc"),
+        sort_link("Name", "name"),
+        sort_link("Output ↓", "output_desc"),
+    ])
+
+    # ── Table rows ────────────────────────────────────────────────────────────
+    rows = ""
+    for item in all_items:
+        name = item.get("name") or item["item_key"].replace("_", " ").title()
+        cat_badge = f'<span style="font-size:0.6rem;color:#64748b;">{item.get("category","?")}</span>'
+        recipe = item.get("best_recipe") or "—"
+        recipe_nice = recipe.replace("_", " ").title()
+
+        dist_tag = ""
+        if item.get("is_district"):
+            dist_tag = ' <span style="font-size:0.55rem;padding:1px 4px;background:#1e3a5f;color:#93c5fd;border-radius:2px;">DISTRICT</span>'
+        elif item.get("also_district_recipe"):
+            dist_tag = f' <span style="font-size:0.55rem;padding:1px 4px;background:#1c2d1c;color:#86efac;border-radius:2px;" title="Also: {item["also_district_recipe"]}">+DIST</span>'
+
+        cost = item.get("base_cost")
+        if cost is None:
+            cost_str = '<span style="color:#475569;">market</span>'
+            cost_per = '<span style="color:#475569;">—</span>'
+        elif cost == 0:
+            cost_str = '<span style="color:#22c55e;">$0.00</span>'
+            cost_per = '<span style="color:#22c55e;">$0.00</span>'
+        else:
+            cost_str = f'<span style="color:#e5e7eb;">${cost:,.4f}</span>' if cost < 1 else f'<span style="color:#e5e7eb;">${cost:,.2f}</span>'
+            out_qty = item.get("output_qty") or 1
+            per = cost / out_qty
+            cost_per = f'${per:,.4f}' if per < 1 else f'${per:,.2f}'
+
+        out_qty = item.get("output_qty")
+        out_str = f'{out_qty:,}' if out_qty else '—'
+
+        # Show district inputs inline
+        inputs_html = ""
+        if item.get("is_district") and item.get("inputs"):
+            parts = ", ".join(f'{inp["quantity"]:,}× {inp["item"].replace("_"," ")}' for inp in item["inputs"][:4])
+            if len(item["inputs"]) > 4:
+                parts += f" +{len(item['inputs'])-4} more"
+            inputs_html = f'<div style="font-size:0.6rem;color:#475569;margin-top:2px;">{parts}</div>'
+
+        rows += f"""<tr>
+            <td>
+                <a href="/stats/item/{item['item_key']}" style="font-weight:bold;">{name}</a>{dist_tag}
+                {cat_badge}
+                {inputs_html}
+            </td>
+            <td style="color:#94a3b8;">{recipe_nice}</td>
+            <td style="text-align:right;">{out_str}</td>
+            <td style="text-align:right;">{cost_str}</td>
+            <td style="text-align:right;">{cost_per}</td>
+        </tr>"""
+
+    search_val = search or ""
+    body = f"""
+    <h1 class="page-title">💰 Production Cost Guide</h1>
+    <p style="color:#64748b;font-size:0.78rem;margin-bottom:12px;">
+        Covers {len(all_items):,} items including district-exclusive products.
+        Cost = total input cost for one production cycle via the cheapest known recipe.
+        District items marked <span style="font-size:0.65rem;padding:1px 4px;background:#1e3a5f;color:#93c5fd;border-radius:2px;">DISTRICT</span> require a district business.
+    </p>
+
+    <form method="get" action="/stats/production-costs" style="margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;">
+        <input type="text" name="search" value="{search_val}" placeholder="Search items..." style="flex:1;min-width:150px;max-width:260px;">
+        {'<input type="hidden" name="category" value="' + category + '">' if category else ''}
+        <input type="hidden" name="sort" value="{sort}">
+        <button type="submit" style="background:#334155;border:none;color:#e5e7eb;padding:6px 10px;cursor:pointer;border-radius:3px;font-size:0.78rem;">Search</button>
+        {f'<a href="/stats/production-costs" style="font-size:0.75rem;padding:6px 8px;background:#1e293b;border-radius:3px;color:#94a3b8;">Clear</a>' if search else ''}
+    </form>
+
+    <div style="display:flex;gap:8px;margin-bottom:10px;font-size:0.72rem;">{sort_links}</div>
+
+    <div class="tabs" style="margin-bottom:10px;">{cat_tabs}</div>
+
+    <div class="card" style="padding:0;">
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>Item</th>
+                    <th>Best Recipe</th>
+                    <th style="text-align:right;">Output Qty</th>
+                    <th style="text-align:right;">Cycle Cost</th>
+                    <th style="text-align:right;">Cost/Unit</th>
+                </tr>
+                {rows if rows else '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:16px;">No items found.</td></tr>'}
+            </table>
+        </div>
+    </div>
+
+    <p style="font-size:0.65rem;color:#475569;margin-top:8px;">
+        Costs calculated from item_costs.json (452 items). District items use recipe metadata; actual cost depends on current market prices of input materials.
+    </p>
+    <a href="/stats" style="display:inline-block;margin-top:8px;">← Back to Analytics</a>
+    """
+    return HTMLResponse(stats_shell("Production Costs", body, player.cash_balance, player.business_name))
 
 
 # ==========================
