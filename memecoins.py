@@ -1369,6 +1369,201 @@ def get_player_open_orders(player_id: int, meme_symbol: str) -> List[dict]:
         db.close()
 
 
+def get_player_order_history(player_id: int, meme_symbol: str, limit: int = 20) -> List[dict]:
+    """Get recent order history (all statuses) for a player on a specific meme coin."""
+    db = get_db()
+    try:
+        orders = db.query(MemeCoinOrder).filter(
+            MemeCoinOrder.player_id == player_id,
+            MemeCoinOrder.meme_symbol == meme_symbol,
+        ).order_by(MemeCoinOrder.created_at.desc()).limit(limit).all()
+        return [
+            {
+                "id": o.id,
+                "order_type": o.order_type,
+                "order_mode": o.order_mode,
+                "price": o.price,
+                "quantity": o.quantity,
+                "quantity_filled": o.quantity_filled,
+                "status": o.status,
+                "created_at": o.created_at.isoformat(),
+                "filled_at": o.filled_at.isoformat() if o.filled_at else None,
+            }
+            for o in orders
+        ]
+    except Exception:
+        return []
+    finally:
+        db.close()
+
+
+def get_all_player_mining_deposits(player_id: int) -> List[dict]:
+    """Get all active mining/staking deposits across all meme coins for a player."""
+    db = get_db()
+    try:
+        deposits = db.query(MemeCoinMiningDeposit).filter(
+            MemeCoinMiningDeposit.player_id == player_id,
+            MemeCoinMiningDeposit.is_active == True,
+        ).all()
+        result = []
+        for d in deposits:
+            meme = db.query(MemeCoin).filter(MemeCoin.symbol == d.meme_symbol).first()
+            result.append({
+                "id": d.id,
+                "meme_symbol": d.meme_symbol,
+                "meme_name": meme.name if meme else d.meme_symbol,
+                "native_symbol": d.native_symbol,
+                "quantity": d.quantity,
+                "total_earned": d.total_earned or 0.0,
+                "deposited_at": d.deposited_at.isoformat(),
+            })
+        return result
+    except Exception:
+        return []
+    finally:
+        db.close()
+
+
+def get_all_player_open_orders(player_id: int) -> List[dict]:
+    """Get all open orders across all meme coins for a player."""
+    db = get_db()
+    try:
+        orders = db.query(MemeCoinOrder).filter(
+            MemeCoinOrder.player_id == player_id,
+            MemeCoinOrder.status.in_(["active", "partial"]),
+        ).order_by(MemeCoinOrder.created_at.desc()).all()
+        return [
+            {
+                "id": o.id,
+                "meme_symbol": o.meme_symbol,
+                "order_type": o.order_type,
+                "order_mode": o.order_mode,
+                "price": o.price,
+                "quantity": o.quantity,
+                "quantity_filled": o.quantity_filled,
+                "status": o.status,
+                "created_at": o.created_at.isoformat(),
+            }
+            for o in orders
+        ]
+    except Exception:
+        return []
+    finally:
+        db.close()
+
+
+def get_wallet_portfolio(player_id: int) -> dict:
+    """
+    Full cross-chain wallet portfolio for a player.
+    Returns native holdings, meme holdings with prices/24h change, staking, open orders.
+    """
+    from counties import CryptoWallet, get_db as county_get_db
+
+    db = get_db()
+    county_db = county_get_db()
+    try:
+        # --- Native token holdings ---
+        native_wallets = county_db.query(CryptoWallet).filter(
+            CryptoWallet.player_id == player_id,
+            CryptoWallet.balance > 0,
+        ).all()
+        native_holdings = [
+            {
+                "symbol": w.crypto_symbol,
+                "balance": w.balance,
+                "total_mined": w.total_mined or 0.0,
+            }
+            for w in native_wallets
+        ]
+
+        # --- Meme coin holdings with price data ---
+        meme_wallets = db.query(MemeCoinWallet).filter(
+            MemeCoinWallet.player_id == player_id,
+            MemeCoinWallet.balance > 0,
+        ).all()
+        meme_holdings = []
+        for w in meme_wallets:
+            meme = db.query(MemeCoin).filter(MemeCoin.symbol == w.meme_symbol).first()
+            if not meme:
+                continue
+            price = meme.last_price or 0.0
+            change_24h = _get_meme_price_change_24h(db, w.meme_symbol, price) if price > 0 else 0.0
+            value_native = w.balance * price
+            meme_holdings.append({
+                "symbol": w.meme_symbol,
+                "name": meme.name,
+                "balance": w.balance,
+                "last_price": price,
+                "change_24h": change_24h,
+                "value_native": value_native,
+                "native_symbol": meme.county_id,  # resolved below
+                "county_id": meme.county_id,
+                "logo_svg": meme.logo_svg or "",
+                "total_mined": w.total_mined or 0.0,
+                "total_bought": w.total_bought or 0.0,
+                "total_sold": w.total_sold or 0.0,
+            })
+
+        # Resolve native symbols for each meme holding
+        from counties import County
+        county_cache = {}
+        for h in meme_holdings:
+            cid = h["county_id"]
+            if cid not in county_cache:
+                c = county_db.query(County).filter(County.id == cid).first()
+                county_cache[cid] = c.crypto_symbol if c else "?"
+            h["native_symbol"] = county_cache[cid]
+
+        # --- All active stakes ---
+        deposits = db.query(MemeCoinMiningDeposit).filter(
+            MemeCoinMiningDeposit.player_id == player_id,
+            MemeCoinMiningDeposit.is_active == True,
+        ).all()
+        stakes = []
+        for d in deposits:
+            meme = db.query(MemeCoin).filter(MemeCoin.symbol == d.meme_symbol).first()
+            stakes.append({
+                "id": d.id,
+                "meme_symbol": d.meme_symbol,
+                "meme_name": meme.name if meme else d.meme_symbol,
+                "native_symbol": d.native_symbol,
+                "staked_native": d.quantity,
+                "total_earned": d.total_earned or 0.0,
+                "deposited_at": d.deposited_at.isoformat(),
+            })
+
+        # --- All open orders ---
+        open_orders = db.query(MemeCoinOrder).filter(
+            MemeCoinOrder.player_id == player_id,
+            MemeCoinOrder.status.in_(["active", "partial"]),
+        ).order_by(MemeCoinOrder.created_at.desc()).all()
+        orders_out = [
+            {
+                "id": o.id,
+                "meme_symbol": o.meme_symbol,
+                "order_type": o.order_type,
+                "order_mode": o.order_mode,
+                "price": o.price,
+                "quantity": o.quantity,
+                "quantity_filled": o.quantity_filled,
+                "status": o.status,
+            }
+            for o in open_orders
+        ]
+
+        return {
+            "native_holdings": native_holdings,
+            "meme_holdings": meme_holdings,
+            "stakes": stakes,
+            "open_orders": orders_out,
+        }
+    except Exception:
+        return {"native_holdings": [], "meme_holdings": [], "stakes": [], "open_orders": []}
+    finally:
+        db.close()
+        county_db.close()
+
+
 def _get_meme_price_change_24h(db, symbol: str, current_price: float) -> float:
     yesterday = datetime.utcnow() - timedelta(hours=24)
     old = db.query(MemeCoinCandlestick).filter(
