@@ -1666,6 +1666,48 @@ def set_relocation_fee(mayor_id: int, city_id: int, fee_percent: float) -> Tuple
 # ==========================
 # PETRODOLLAR TRADE HANDLING
 # ==========================
+
+def _place_bank_currency_buy_order(db, bank: "CityBank", city: "City", needed_qty: float, currency_price: float) -> None:
+    """
+    Place a limit BUY order on behalf of the city bank to acquire city currency from the open market.
+    Skips if an active buy order already exists to avoid order flooding.
+    The bank pays slightly above market price (1%) to attract sellers.
+    """
+    from market import MarketOrder, OrderType, OrderStatus, OrderMode
+
+    bank_player_id = -(1000 + city.id)
+
+    # Don't flood the market — one active buy order per bank is enough
+    existing = db.query(MarketOrder).filter(
+        MarketOrder.player_id == bank_player_id,
+        MarketOrder.order_type == OrderType.BUY,
+        MarketOrder.item_type == city.currency_type,
+        MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+    ).first()
+
+    if existing:
+        # Top up the quantity if the existing order is for less than needed
+        existing_remaining = existing.quantity - existing.quantity_filled
+        if existing_remaining < needed_qty:
+            extra = needed_qty - existing_remaining
+            existing.quantity += extra
+            print(f"[Cities] Bank {city.id} topped up buy order by {extra:.2f} {city.currency_type}")
+        return
+
+    buy_price = round(currency_price * 1.01, 6)  # 1% above market to attract sellers
+    order = MarketOrder(
+        player_id=bank_player_id,
+        order_type=OrderType.BUY,
+        order_mode=OrderMode.LIMIT,
+        item_type=city.currency_type,
+        quantity=needed_qty,
+        price=buy_price,
+        status=OrderStatus.ACTIVE
+    )
+    db.add(order)
+    print(f"[Cities] Bank {city.id} placed currency buy order: {needed_qty:.2f} {city.currency_type} @ ${buy_price:.4f}")
+
+
 def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantity: float, price: float) -> Tuple[bool, str]:
     """
     Handle a trade where an outsider is trading with a city member.
@@ -1774,8 +1816,14 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             # Not enough currency on market - check bank reserves
             total_available = available_currency + bank.currency_quantity
             if total_available < currency_needed:
-                print(f"[Cities] Insufficient {city.currency_type} on market ({available_currency:.2f}) and bank reserves ({bank.currency_quantity:.2f}) for trade needing {currency_needed:.2f}")
-                return False, f"Insufficient {city.currency_type} available for conversion"
+                # Queue a bank buy order so currency supply increases; trade stays pending
+                # on the open market and will automatically retry when the buy order fills.
+                _place_bank_currency_buy_order(db, bank, city, currency_needed, currency_price)
+                db.commit()
+                print(f"[Cities] Trade pending: insufficient {city.currency_type} "
+                      f"(market={available_currency:.2f}, reserves={bank.currency_quantity:.2f}, "
+                      f"needed={currency_needed:.2f}). Bank buy order queued.")
+                return False, f"Trade pending: bank acquiring {city.currency_type} — retry when filled"
         
         # ---- STEP 3: Outsider pays cash to bank ----
         outsider.cash_balance -= trade_value
@@ -1875,10 +1923,10 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
         
     except Exception as e:
         db.rollback()
-        print(f"[Cities] Error handling outsider trade: {e}")
+        print(f"[Cities] Error in petrodollar conversion: {e}")
         import traceback
         traceback.print_exc()
-        return True, str(e)  # Allow trade to proceed on error
+        return False, f"Trade blocked: petrodollar conversion failed ({e})"
     finally:
         db.close()
 

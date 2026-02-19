@@ -218,11 +218,26 @@ def match_order(db, order: MarketOrder) -> bool:
 
     for match in potential_matches:
         if remaining_qty <= 0: break
-        
+
         # Price Check
         if order.order_mode == OrderMode.LIMIT:
             if order.order_type == OrderType.BUY and (match.price is None or match.price > order.price): continue
             if order.order_type == OrderType.SELL and (match.price is None or match.price < order.price): continue
+
+        # Anti-arbitrage: city members cannot buy from their own city's bank market listing
+        if order.order_type == OrderType.BUY and match.player_id <= -1001:
+            city_id_for_check = -match.player_id - 1000
+            try:
+                from cities import CityMember
+                member_check = db.query(CityMember).filter(
+                    CityMember.player_id == order.player_id,
+                    CityMember.city_id == city_id_for_check
+                ).first()
+                if member_check:
+                    print(f"[Market] Blocked: Player {order.player_id} cannot buy from own city {city_id_for_check} bank listing")
+                    continue
+            except Exception:
+                pass  # Cities module unavailable, proceed normally
 
         trade_qty = min(remaining_qty, match.quantity - match.quantity_filled)
         trade_price = match.price if match.price else order.price
@@ -272,31 +287,38 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     db.add(trade)
     
     total_cost = quantity * price
-    
-    # 4. Determine if this is a bank IPO sale
+
+    # 4. Determine if this is a bank IPO sale (sell-side bank) or bank buy (buy-side bank)
     is_bank_ipo = False
     bank_id = None
-    
+    is_bank_buyer = False
+    bank_buyer_city_id = None
+
     # Land Bank IPO detection
     if sell_order.player_id == -2 and sell_order.item_type == "land_bank_shares":
         is_bank_ipo = True
         bank_id = "land_bank"
-    
+
     # ETF Bank IPO detection
     elif sell_order.player_id == -3 and sell_order.item_type == "apple_seeds_etf_shares":
         is_bank_ipo = True
         bank_id = "apple_seeds_etf"
-    
+
     # Energy ETF Bank IPO detection
     elif sell_order.player_id == -4 and sell_order.item_type == "energy_etf_shares":
         is_bank_ipo = True
         bank_id = "energy_etf"
 
-    # City Bank sale detection (IDs are -(1000 + city_id), so <= -1001)
+    # City Bank sell detection (IDs are -(1000 + city_id), so <= -1001)
     elif sell_order.player_id <= -1001:
         is_bank_ipo = True  # Reuse the IPO logic (money goes to bank reserves)
         bank_id = f"city_bank_{-sell_order.player_id - 1000}"  # Extract city_id
-    
+
+    # City Bank buy detection (bank acquiring currency from market)
+    elif buy_order.player_id <= -1001:
+        is_bank_buyer = True
+        bank_buyer_city_id = -buy_order.player_id - 1000
+
     # 5. Handle cash transfer
     if is_bank_ipo:
         # Special bank IPO handling: buyer pays, money goes to BANK RESERVES (not player account)
@@ -351,7 +373,77 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             db.rollback()
             return
 
-    # 6. Transfer inventory
+    elif is_bank_buyer:
+        # City bank is buying currency from market: pay seller from bank reserves
+        try:
+            from cities import CityBank
+            from auth import Player
+            city_bank = db.query(CityBank).filter(CityBank.city_id == bank_buyer_city_id).first()
+            seller_player = db.query(Player).filter(Player.id == sell_order.player_id).first()
+            if not city_bank or not seller_player:
+                print(f"[Market] City bank buy error: bank or seller not found")
+                db.rollback()
+                return
+            if city_bank.cash_reserves < total_cost:
+                print(f"[Market] City bank {bank_buyer_city_id} has insufficient reserves (need ${total_cost:.2f}, have ${city_bank.cash_reserves:.2f})")
+                db.rollback()
+                return
+            city_bank.cash_reserves -= total_cost
+            seller_player.cash_balance += total_cost
+            print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
+        except Exception as e:
+            print(f"[Market] City bank buy error: {e}")
+            import traceback
+            traceback.print_exc()
+            db.rollback()
+            return
+
+    else:
+        # Regular player-to-player trade: invoke petrodollar hook, then transfer cash
+        petrodollar_handled = False
+        try:
+            from cities import handle_outsider_trade
+            petro_ok, petro_msg = handle_outsider_trade(
+                buy_order.player_id, sell_order.player_id,
+                buy_order.item_type, quantity, price
+            )
+            if not petro_ok:
+                db.rollback()
+                print(f"[Market] Trade blocked by petrodollar system: {petro_msg}")
+                return
+            if "handled" in petro_msg:
+                petrodollar_handled = True
+        except ImportError:
+            pass  # Cities module not loaded, proceed with normal cash transfer
+        except Exception as e:
+            print(f"[Market] Petrodollar hook error (non-fatal): {e}")
+
+        if not petrodollar_handled:
+            # Standard cash transfer: buyer pays seller
+            try:
+                from auth import Player
+                buyer = db.query(Player).filter(Player.id == buy_order.player_id).first()
+                seller = db.query(Player).filter(Player.id == sell_order.player_id).first()
+                if not buyer or not seller:
+                    print(f"[Market] Cash transfer error: player not found (buyer={buy_order.player_id}, seller={sell_order.player_id})")
+                    db.rollback()
+                    return
+                if buyer.cash_balance < total_cost:
+                    print(f"[Market] Cash transfer error: Player {buy_order.player_id} has insufficient funds (need ${total_cost:.2f}, have ${buyer.cash_balance:.2f})")
+                    db.rollback()
+                    return
+                buyer.cash_balance -= total_cost
+                seller.cash_balance += total_cost
+            except Exception as e:
+                print(f"[Market] Cash transfer error: {e}")
+                import traceback
+                traceback.print_exc()
+                db.rollback()
+                return
+
+    # 6. Transfer inventory (goods from seller to buyer)
+    # For bank-buyer trades, the inventory represents currency going into bank reserves —
+    # handled separately below; still run transfer so seller loses the item.
     try:
         import inventory
         success = inventory.transfer_item(
@@ -368,6 +460,20 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         print(f"[Market] Inventory Transfer Error: {e}")
         db.rollback()
         return
+
+    # 6b. For city bank buy orders: move acquired currency into bank.currency_quantity
+    # and clear the virtual inventory entry so bank_list_currency_at_discount stays consistent.
+    if is_bank_buyer:
+        try:
+            from cities import CityBank
+            city_bank = db.query(CityBank).filter(CityBank.city_id == bank_buyer_city_id).first()
+            if city_bank:
+                city_bank.currency_quantity += quantity
+                import inventory as _inv
+                _inv.remove_item(buy_order.player_id, buy_order.item_type, quantity)
+                print(f"[Market] City bank {bank_buyer_city_id} reserves updated: +{quantity:.2f} {buy_order.item_type}")
+        except Exception as e:
+            print(f"[Market] Error updating city bank currency reserves: {e}")
 
     # 7. Commit everything
     db.commit()
