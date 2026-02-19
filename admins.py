@@ -800,11 +800,12 @@ def admin_edit_district_tax(admin_id: int, district_id: int, new_tax: float) -> 
         if not district:
             db.close()
             return {"ok": False, "error": "District not found"}
+        owner_id = district.owner_id   # capture before session closes
         old_tax = district.monthly_tax
         district.monthly_tax = new_tax
         db.commit()
         db.close()
-        log_action(admin_id, "edit_district_tax", district.owner_id, f"District #{district_id} tax ${old_tax:,.0f} → ${new_tax:,.0f}")
+        log_action(admin_id, "edit_district_tax", owner_id, f"District #{district_id} tax ${old_tax:,.0f} → ${new_tax:,.0f}")
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
