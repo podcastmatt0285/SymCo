@@ -682,7 +682,7 @@ async def meme_coin_page(
                         <span class="badge {badge_cls}">{o["order_type"].upper()}</span>
                         <span class="badge {status_cls}" style="margin-left:4px;">{o["status"]}</span>
                         <span style="margin-left:8px;font-size:13px;">
-                            {o["quantity"]:,.4f} @ {o["price"]:.6f if o["price"] else "MARKET"}
+                            {o["quantity"]:,.4f} @ {f'{o["price"]:.6f}' if o["price"] else "MARKET"}
                         </span>
                         <span style="color:#64748b;font-size:11px;"> ({filled_pct:.0f}% filled)</span>
                     </div>
@@ -723,6 +723,7 @@ async def meme_coin_page(
     tab_mine  = "active" if tab == "mine" else ""
 
     price_placeholder = f"{detail['last_price']:.6f}" if detail["last_price"] else "0.000001"
+    atl_display = f"{detail['all_time_low']:.6f}" if detail["all_time_low"] else "—"
 
     return f"""<!DOCTYPE html>
 <html>
@@ -1012,7 +1013,7 @@ async def meme_coin_page(
                 <div class="stat"><span class="stat-label">Minted Supply</span><span class="stat-value">{detail["minted_supply"]:,.2f}</span></div>
                 <div class="stat"><span class="stat-label">Creation Fee Burned</span><span class="stat-value negative">{detail["creation_fee_burned"]:.2f} {detail["native_symbol"]}</span></div>
                 <div class="stat"><span class="stat-label">All-Time High</span><span class="stat-value positive">{detail["all_time_high"]:.6f}</span></div>
-                <div class="stat"><span class="stat-label">All-Time Low</span><span class="stat-value negative">{detail["all_time_low"]:.6f if detail["all_time_low"] else "—"}</span></div>
+                <div class="stat"><span class="stat-label">All-Time Low</span><span class="stat-value negative">{atl_display}</span></div>
                 <div class="stat"><span class="stat-label">Total Trades</span><span class="stat-value">{detail["total_trades"]}</span></div>
                 <div class="stat"><span class="stat-label">Total Volume</span><span class="stat-value native-color">{detail["total_volume_native"]:,.4f} {detail["native_symbol"]}</span></div>
                 <div class="stat"><span class="stat-label">Launched</span><span class="stat-value">{str(detail["created_at"])[:10]}</span></div>
