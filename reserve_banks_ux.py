@@ -3,11 +3,14 @@ reserve_banks_ux.py — HTML dashboards and API routes for State Reserve Banks.
 
 Routes
 ------
-GET  /reserve-banks/bonds           Bond Market dashboard
-GET  /reserve-banks/forex           Forex live dashboard
-POST /api/reserve-banks/bonds/buy   Purchase a bond (form submit)
-POST /api/reserve-banks/bonds/sell/{bond_id}  Sell a bond early
-POST /api/reserve-banks/forex/swap  Manual forex conversion
+GET  /reserve-banks/bonds                    Bond Market dashboard
+GET  /reserve-banks/forex                    Forex informational dashboard (read-only)
+POST /api/reserve-banks/bonds/buy            Purchase a bond
+POST /api/reserve-banks/bonds/sell/{bond_id} Sell a bond early
+POST /api/corporate-actions/legal-tender/set Set player's legal tender
+
+NOTE: There is NO manual forex swap route. All currency conversion is automatic
+      and handled by the reserve bank inter-bank settlement system.
 """
 
 from fastapi import APIRouter, Cookie, Form
@@ -19,7 +22,8 @@ from reserve_banks import (
     get_all_banks, get_player_bonds, get_player_currency_balances,
     get_recent_forex_trades, get_yield_history,
     get_player_legal_tender,
-    purchase_bond, sell_bond, forex_swap,
+    get_all_bank_reserves, get_interbank_trades,
+    purchase_bond, sell_bond,
     BOND_MATURITIES, FOREX_FEE_RATE,
 )
 
@@ -287,8 +291,9 @@ def forex_dashboard(
 
     banks       = get_all_banks()
     my_balances = get_player_currency_balances(player.id)
-    recent      = get_recent_forex_trades(limit=40)
     my_tender   = get_player_legal_tender(player.id)
+    bank_rsvs   = get_all_bank_reserves()
+    ib_trades   = get_interbank_trades(limit=40)
 
     flash = ""
     if msg:
@@ -297,23 +302,20 @@ def forex_dashboard(
         flash = f'<div class="alert-err">✗ {err}</div>'
 
     # ── Live FX rates table ──
-    currency_opts_from = '<option value="USD">🇺🇸 USD — Wadsworth Dollar</option>'
-    currency_opts_to   = '<option value="USD">🇺🇸 USD — Wadsworth Dollar</option>'
     fx_rows = ""
     for bank in banks:
         usd_rate = bank["usd_per_unit"]
+        inv_rate = 1.0 / usd_rate if usd_rate > 0 else 0.0
         yc = "#22c55e" if bank["yield_pct"] >= 0 else "#ef4444"
         fx_rows += f"""
         <div class="fx-row">
             <span>{bank['flag']} <strong style="color:#38bdf8;">{bank['code']}</strong></span>
             <span>${usd_rate:.6f}</span>
-            <span>{1/usd_rate:.2f} {bank['code']} per $1</span>
+            <span>{inv_rate:.2f} {bank['code']}</span>
             <span style="color:{yc};">{bank['yield_pct']:+.4f}%</span>
             <span class="mini">{FOREX_FEE_RATE*100:.1f}% fee</span>
             <span class="mini">{bank['name']}</span>
         </div>"""
-        currency_opts_from += f'<option value="{bank["code"]}">{bank["flag"]} {bank["code"]} — {bank["name"]}</option>'
-        currency_opts_to   += f'<option value="{bank["code"]}">{bank["flag"]} {bank["code"]} — {bank["name"]}</option>'
 
     # ── Balance line ──
     bal_line = '<span style="margin-right:12px;">USD <strong style="color:#38bdf8;">${:.2f}</strong></span>'.format(
@@ -322,40 +324,78 @@ def forex_dashboard(
         bal_line += (f'<span style="margin-right:12px;">{b["flag"]} {b["currency_code"]} '
                      f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong></span>')
 
-    # ── Recent trades feed ──
-    if recent:
-        feed_rows = ""
-        for t in recent:
-            pid_s = f'Player #{t["player_id"]}' if t["player_id"] else "System"
-            feed_rows += f"""
-            <div class="fx-row">
-                <span style="color:#94a3b8;">{t['from_currency']}</span>
-                <span style="color:#94a3b8;">{t['amount_from']:.4f}</span>
-                <span style="color:#22c55e;">{t['to_currency']} {t['amount_to']:.4f}</span>
-                <span style="color:#64748b;">{t['rate']:.6f}</span>
-                <span style="color:#475569;">{t['fee_usd']:.4f} fee</span>
-                <span style="color:#334155;font-size:0.72rem;">{t['executed_at']} · {pid_s}</span>
-            </div>"""
-        trades_html = f"""
+    # ── Bank reserve matrix ──
+    reserve_rows = ""
+    for br in bank_rsvs:
+        if not br["reserves"]:
+            continue
+        res_items = " ".join(
+            f'<span style="margin-right:10px;"><strong style="color:#38bdf8;">{r["currency_code"]}</strong> '
+            f'{r["balance"]:,.2f}</span>'
+            for r in br["reserves"]
+        )
+        debt_s = ""
+        if br["total_debt_usd"] > 0:
+            debt_s = f'<span style="color:#ef4444;font-size:0.75rem;">Debt: ${br["total_debt_usd"]:,.2f}</span>'
+        reserve_rows += f"""
+        <div style="padding:8px 0;border-bottom:1px solid #0f172a;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="min-width:60px;">{br['flag']} <strong style="color:#38bdf8;">{br['bank_code']}</strong></span>
+            <span style="color:#64748b;font-size:0.75rem;">holds:</span>
+            <span>{res_items}</span>
+            {debt_s}
+        </div>"""
+
+    if reserve_rows:
+        reserves_html = f"""
         <div class="card">
-            <h3>📡 Live Forex Feed (last {len(recent)} trades)</h3>
-            <div class="fx-row fx-row-header">
-                <span>FROM</span><span>AMOUNT</span><span>TO</span>
-                <span>RATE</span><span>FEE</span><span>TIME · PLAYER</span>
-            </div>
-            {feed_rows}
+            <h3>🏦 Bank Reserve Holdings</h3>
+            <p class="mini" style="margin:0 0 8px 0;">
+                Reserves accumulated through income-conversion fees and inter-bank bond swaps.
+                Low reserves trigger automatic bond swaps (pushing that bank's yield up).
+            </p>
+            {reserve_rows}
         </div>"""
     else:
-        trades_html = '<div class="card"><p style="color:#64748b;">No forex trades yet.</p></div>'
+        reserves_html = ""
+
+    # ── Inter-bank trade feed ──
+    if ib_trades:
+        ib_rows = ""
+        for t in ib_trades:
+            ib_rows += f"""
+            <div class="fx-row">
+                <span style="color:#a78bfa;">{t['buyer_bank']}</span>
+                <span style="color:#64748b;">buys</span>
+                <span style="color:#38bdf8;">{t['bond_currency']} bonds</span>
+                <span style="color:#94a3b8;">${t['face_value_usd']:,.2f}</span>
+                <span style="color:#22c55e;">{t['consideration_curr']} {t['consideration_amount']:,.4f}</span>
+                <span style="color:#334155;font-size:0.72rem;">{t['executed_at']} · {t['trigger']}</span>
+            </div>"""
+        ib_html = f"""
+        <div class="card">
+            <h3>🔗 Inter-Bank Settlement Feed (last {len(ib_trades)})</h3>
+            <p class="mini" style="margin:0 0 8px 0;">
+                Banks automatically swap bonds to maintain reserves.
+                High settlement activity from a bank raises its yield (more bond demand needed).
+            </p>
+            <div class="fx-row fx-row-header">
+                <span>BUYER BANK</span><span></span><span>BONDS PURCHASED</span>
+                <span>USD EQUIV</span><span>CONSIDERATION</span><span>TIME · TRIGGER</span>
+            </div>
+            {ib_rows}
+        </div>"""
+    else:
+        ib_html = '<div class="card"><p style="color:#64748b;">No inter-bank settlements yet. Settlements occur automatically when bank reserves fall below minimum thresholds.</p></div>'
 
     body = f"""
     <a href="/" class="nav">← Dashboard</a>
-    <h1>💱 Forex Market</h1>
+    <h1>💱 Forex Market — Informational</h1>
     <p style="color:#64748b;margin:0 0 4px 0;">
-        Live exchange rates powered by State Reserve Bank bond demand.
-        Automatic conversions charge {FOREX_FEE_RATE*100:.1f}%.
+        Exchange rates are set by inter-bank bond demand — no manual player swaps.
+        Income is auto-converted to your legal tender ({FOREX_FEE_RATE*100:.1f}% fee via your reserve bank).
         Legal tender: <strong style="color:#38bdf8;">{my_tender}</strong> &bull;
-        <a href="/reserve-banks/bonds" class="nav">Bond Market →</a>
+        <a href="/reserve-banks/bonds" class="nav">Bond Market →</a> &bull;
+        <a href="/corporate-actions/dashboard" class="nav">Change Legal Tender →</a>
     </p>
     {flash}
 
@@ -364,43 +404,22 @@ def forex_dashboard(
         <div style="flex-wrap:wrap;display:flex;gap:4px;">{bal_line}</div>
     </div>
 
-    <!-- Live FX rates -->
     <div class="card">
         <h3>🌐 Live Exchange Rates (USD base)</h3>
+        <p class="mini" style="margin:0 0 8px 0;">
+            Rates shift each hour based on net bond demand.
+            Buying bonds in a currency = demand for that currency = rate appreciates.
+            High outstanding debt in a bank pushes its yield up (risk premium).
+        </p>
         <div class="fx-row fx-row-header" style="color:#475569;">
             <span>CURRENCY</span><span>USD VALUE</span><span>INVERSE</span>
-            <span>YIELD</span><span>FX FEE</span><span>BANK</span>
+            <span>YIELD</span><span>AUTO FEE</span><span>BANK</span>
         </div>
         {fx_rows}
     </div>
 
-    <!-- Manual swap form -->
-    <div class="card" style="border-left:3px solid #f59e0b;">
-        <h3>🔄 Manual Forex Swap</h3>
-        <p class="mini" style="margin:0 0 12px 0;">
-            Swaps are instant at the current interbank rate minus {FOREX_FEE_RATE*100:.1f}% fee.
-            Large swaps may move rates slightly for subsequent trades.
-        </p>
-        <form action="/api/reserve-banks/forex/swap" method="post"
-              style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-            <div>
-                <label>From</label>
-                <select name="from_currency" style="width:200px;">{currency_opts_from}</select>
-            </div>
-            <div>
-                <label>Amount</label>
-                <input type="number" name="amount" min="0.0001" step="0.0001"
-                       placeholder="e.g. 100" style="width:130px;" required>
-            </div>
-            <div>
-                <label>To</label>
-                <select name="to_currency" style="width:200px;">{currency_opts_to}</select>
-            </div>
-            <button type="submit" class="btn btn-blue">Convert →</button>
-        </form>
-    </div>
-
-    {trades_html}
+    {reserves_html}
+    {ib_html}
     """
     return _page("Forex Market", body)
 
@@ -446,7 +465,7 @@ def api_sell_bond(
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# API: FOREX SWAP
+# API: LEGAL TENDER
 # ──────────────────────────────────────────────────────────────────────────────
 
 @router.post("/api/corporate-actions/legal-tender/set")
@@ -465,18 +484,3 @@ def api_set_legal_tender(
     return RedirectResponse(f"/corporate-actions/dashboard?{param}={quote(msg)}", status_code=303)
 
 
-@router.post("/api/reserve-banks/forex/swap")
-def api_forex_swap(
-    from_currency: str = Form(...),
-    amount: float      = Form(...),
-    to_currency: str   = Form(...),
-    session_token: Optional[str] = Cookie(None),
-):
-    player = _auth(session_token)
-    if not player:
-        return RedirectResponse("/login", status_code=303)
-
-    ok, msg, _ = forex_swap(player.id, from_currency.upper(), amount, to_currency.upper())
-    param      = "msg" if ok else "err"
-    from urllib.parse import quote
-    return RedirectResponse(f"/reserve-banks/forex?{param}={quote(msg)}", status_code=303)

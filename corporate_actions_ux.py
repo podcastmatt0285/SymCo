@@ -9,6 +9,7 @@ FastAPI endpoints for managing automated corporate actions:
 """
 
 from fastapi import APIRouter, HTTPException, Cookie
+from fastapi.responses import RedirectResponse
 from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
@@ -962,11 +963,17 @@ async def api_declare_bankruptcy(session_token: Optional[str] = Cookie(None)):
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
     import time
+    from urllib.parse import quote
     current_tick = int(time.time() / 5)
     result = declare_bankruptcy(player.id, current_tick)
     if not result["ok"]:
-        raise HTTPException(status_code=400, detail=result["error"])
-    return result
+        err = quote(result.get("error", "Bankruptcy failed."))
+        return RedirectResponse(f"/corporate-actions/dashboard?err={err}", status_code=303)
+    msg = quote(
+        f"Bankruptcy declared. Account restarted with ${result.get('restart_cash', 20000):,.0f}. "
+        "Red-Q period active — visible in stock market for 30 days."
+    )
+    return RedirectResponse(f"/?msg={msg}", status_code=303)
 
 
 @router.get("/bankruptcy/status")

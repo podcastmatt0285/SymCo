@@ -1251,18 +1251,18 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
             </div>
             <div class="filter-tabs" style="margin-bottom: 12px; flex-wrap: wrap;">
                 <button class="filter-tab active" onclick="filterTx('all',this)">All</button>
-                <button class="filter-tab" onclick="filterTx('market_buy',this)">Market Buy</button>
-                <button class="filter-tab" onclick="filterTx('market_sell',this)">Market Sell</button>
-                <button class="filter-tab" onclick="filterTx('production',this)">Production</button>
-                <button class="filter-tab" onclick="filterTx('retail',this)">Retail</button>
-                <button class="filter-tab" onclick="filterTx('banking',this)">Banking</button>
+                <button class="filter-tab" onclick="filterTx('share',this)">Shares</button>
+                <button class="filter-tab" onclick="filterTx('cash',this)">Cash</button>
+                <button class="filter-tab" onclick="filterTx('resource',this)">Resources</button>
+                <button class="filter-tab" onclick="filterTx('district',this)">District</button>
+                <button class="filter-tab" onclick="filterTx('county',this)">Mining</button>
                 <button class="filter-tab" onclick="filterTx('dividend',this)">Dividend</button>
                 <button class="filter-tab" onclick="filterTx('tax',this)">Tax</button>
                 <button class="filter-tab" onclick="filterTx('land',this)">Land</button>
                 <button class="filter-tab" onclick="filterTx('crypto',this)">Crypto</button>
-                <button class="filter-tab" onclick="filterTx('lien',this)">Lien</button>
+                <button class="filter-tab" onclick="filterTx('governance',this)">Governance</button>
                 <button class="filter-tab" onclick="filterTx('corporate',this)">Corporate</button>
-                <button class="filter-tab" onclick="filterTx('inheritance',this)">Inheritance</button>
+                <button class="filter-tab" onclick="filterTx('treasury',this)">Treasury</button>
                 <button class="filter-tab" onclick="filterTx('city',this)">City/County</button>
             </div>
             <div id="transactions">

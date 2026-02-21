@@ -200,6 +200,76 @@ class BondYieldHistory(Base):
     recorded_at   = Column(DateTime, default=datetime.utcnow)
 
 
+class BankReserveBalance(Base):
+    """
+    Foreign-currency reserves held by a reserve bank.
+    One row per (bank, foreign_currency) pair.
+
+    Banks accumulate reserves when:
+      - They receive USD/foreign currency as the settlement leg of a player
+        income conversion (e.g. USD income → JPY: JPY bank gains USD reserves).
+      - They collect forex fees (in their own currency).
+      - They receive interest on bonds they hold from other banks.
+      - They complete an inter-bank bond swap (receive another currency).
+
+    Banks consume reserves when:
+      - A player with their legal tender pays someone in a different currency.
+      - They redeem bonds they hold from other banks.
+    """
+    __tablename__ = "bank_reserve_balances"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    bank_id       = Column(Integer, index=True, nullable=False)   # the holding bank
+    currency_code = Column(String(8), index=True, nullable=False) # currency being held
+    balance       = Column(Float, default=0.0)
+    total_received= Column(Float, default=0.0)
+    total_paid    = Column(Float, default=0.0)
+    updated_at    = Column(DateTime, default=datetime.utcnow)
+
+
+class BankDebt(Base):
+    """
+    Inter-bank debt created when a bank settled a trade it didn't have reserves for.
+    The debtor bank must repay by selling its own bonds to the creditor bank.
+
+    Unpaid debt raises the debtor bank's yield_rate (making bonds more attractive
+    so investors will fund the shortfall).  This is the same mechanism central
+    banks use: high rates attract capital inflows which cover balance-of-payments gaps.
+    """
+    __tablename__ = "bank_debts"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    debtor_bank_id      = Column(Integer, index=True, nullable=False)
+    creditor_currency   = Column(String(8), nullable=False)  # currency owed to creditor
+    amount_owed         = Column(Float, nullable=False)
+    created_at          = Column(DateTime, default=datetime.utcnow)
+    last_settled_at     = Column(DateTime, nullable=True)
+    is_settled          = Column(Boolean, default=False)
+
+
+class InterbankTrade(Base):
+    """
+    Record of every bank-to-bank bond swap / currency settlement.
+    Shown in the forex dashboard trade feed instead of manual player swaps.
+    """
+    __tablename__ = "interbank_trades"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    buyer_bank_code     = Column(String(8), nullable=False)   # who buys bonds
+    seller_bank_code    = Column(String(8), nullable=False)   # who sells bonds
+    bond_currency       = Column(String(8), nullable=False)   # which bank's bonds
+    face_value_usd      = Column(Float, nullable=False)       # USD equiv of bonds swapped
+    consideration_curr  = Column(String(8), nullable=False)   # currency paid in return
+    consideration_amount= Column(Float, nullable=False)
+    trigger             = Column(String, default="auto")      # "auto" | "debt_repay"
+    executed_at         = Column(DateTime, default=datetime.utcnow)
+
+
+# ── Constants for inter-bank management ──────────────────────────────────────
+BANK_MIN_RESERVE_RATIO  = 0.05   # trigger interbank swap when reserves < 5% of outstanding
+DEBT_YIELD_PENALTY      = 0.001  # per $1 000 of net debt, yield rises by 0.1 %
+DEBT_PENALTY_NORMALI    = 1000.0
+
 Base.metadata.create_all(engine)
 
 
@@ -261,6 +331,8 @@ async def tick(app_tick: int, now: datetime):
             _adjust_yield_and_fx(db, bank)
             _mature_bonds(db, bank, now)
             _snapshot_history(db, bank, now)
+        # Inter-bank settlement runs after all yield/FX adjustments are done
+        _tick_interbank_settlement(db)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -376,6 +448,313 @@ def _adjust_currency_balance(db, player_id: int, currency_code: str, amount: flo
         bal.total_earned += amount
     else:
         bal.total_spent  += abs(amount)
+
+
+# ==========================
+# INTER-BANK RESERVE HELPERS
+# ==========================
+
+def _get_or_create_bank_reserve(db, bank_id: int, currency_code: str) -> BankReserveBalance:
+    r = db.query(BankReserveBalance).filter(
+        BankReserveBalance.bank_id       == bank_id,
+        BankReserveBalance.currency_code == currency_code,
+    ).first()
+    if not r:
+        r = BankReserveBalance(bank_id=bank_id, currency_code=currency_code)
+        db.add(r)
+        db.flush()
+    return r
+
+
+def _add_bank_reserve(db, bank_id: int, currency_code: str, amount: float):
+    r = _get_or_create_bank_reserve(db, bank_id, currency_code)
+    r.balance       += amount
+    r.total_received += max(amount, 0.0)
+    r.total_paid     += max(-amount, 0.0)
+    r.updated_at     = datetime.utcnow()
+
+
+def _debit_bank_reserve(db, bank_id: int, currency_code: str, amount: float) -> bool:
+    """Debit `amount` from a bank's reserves. Returns True if sufficient, False if not."""
+    r = _get_or_create_bank_reserve(db, bank_id, currency_code)
+    if r.balance >= amount:
+        r.balance   -= amount
+        r.total_paid += amount
+        r.updated_at  = datetime.utcnow()
+        return True
+    return False
+
+
+def _record_bank_debt(db, debtor_bank_id: int, creditor_currency: str, amount: float):
+    """Record that the debtor bank owes `amount` of creditor's currency."""
+    debt = db.query(BankDebt).filter(
+        BankDebt.debtor_bank_id    == debtor_bank_id,
+        BankDebt.creditor_currency == creditor_currency,
+        BankDebt.is_settled        == False,
+    ).first()
+    if debt:
+        debt.amount_owed += amount
+    else:
+        debt = BankDebt(
+            debtor_bank_id    = debtor_bank_id,
+            creditor_currency = creditor_currency,
+            amount_owed       = amount,
+        )
+        db.add(debt)
+    db.flush()
+
+
+# ==========================
+# INTER-BANK BOND SWAP (automatic)
+# ==========================
+
+def _interbank_bond_swap(db, buyer_bank: StateReserveBank, seller_bank: StateReserveBank, usd_equiv: float):
+    """
+    Buyer bank acquires `usd_equiv` worth of seller bank's currency reserves
+    by sending its own bonds to the seller bank (the seller bank earns interest
+    on those bonds, denominated in the buyer bank's currency).
+
+    Example: JPY bank (buyer) swaps with USD bank (seller):
+      - JPY bank issues bonds worth `usd_equiv` in JPY face value to USD bank.
+      - USD bank credits JPY bank with `usd_equiv` in USD.
+      - USD bank earns JPY interest on those bonds → appreciates JPY (positive demand).
+      - JPY bank's yield falls slightly (more demand for JPY bonds from USD bank).
+    """
+    usd_per_buyer = buyer_bank.usd_per_unit   # e.g. 0.0067 for JPY
+    if usd_per_buyer <= 0:
+        return
+
+    # How many of buyer's currency does usd_equiv buy?
+    buyer_amount = usd_equiv / usd_per_buyer
+
+    # Seller bank gets buyer bank's bonds → earns buyer-currency interest → holds buyer-currency reserves
+    seller_interest = buyer_amount * buyer_bank.yield_rate
+    _add_bank_reserve(db, seller_bank.id, buyer_bank.currency_code, seller_interest)
+
+    # Buyer bank gets USD (seller's currency) reserves
+    usd_per_seller = seller_bank.usd_per_unit
+    seller_amount   = usd_equiv / usd_per_seller if usd_per_seller > 0 else usd_equiv
+    _add_bank_reserve(db, buyer_bank.id, seller_bank.currency_code, seller_amount)
+
+    # Demand effects: USD bank just bought JPY bonds → positive demand for JPY bonds
+    buyer_bank.net_demand_wsc  += usd_equiv   # JPY bond demand up → yield falls
+    seller_bank.net_demand_wsc -= usd_equiv * 0.1  # small negative on USD (capital outflow)
+
+    # Record inter-bank trade
+    trade = InterbankTrade(
+        buyer_bank_code      = seller_bank.currency_code,   # seller bank bought buyer's bonds
+        seller_bank_code     = buyer_bank.currency_code,    # buyer bank sold its own bonds
+        bond_currency        = buyer_bank.currency_code,
+        face_value_usd       = usd_equiv,
+        consideration_curr   = seller_bank.currency_code,
+        consideration_amount = seller_amount,
+        trigger              = "auto",
+    )
+    db.add(trade)
+
+
+def _tick_interbank_settlement(db):
+    """
+    Called each hourly tick. For every bank whose foreign reserves have fallen
+    below BANK_MIN_RESERVE_RATIO of outstanding bond liabilities, trigger a
+    swap with the relevant foreign bank.
+
+    Also applies a yield penalty for outstanding debt
+    (high debt → higher yield to attract more bond buyers).
+    """
+    banks = db.query(StateReserveBank).all()
+    bank_map = {b.currency_code: b for b in banks}
+
+    for bank in banks:
+        # Debt penalty: outstanding debt pushes yield up
+        total_debt_usd = 0.0
+        debts = db.query(BankDebt).filter(
+            BankDebt.debtor_bank_id == bank.id,
+            BankDebt.is_settled     == False,
+        ).all()
+        for d in debts:
+            cred_bank = bank_map.get(d.creditor_currency)
+            usd_per_cred = cred_bank.usd_per_unit if cred_bank else 1.0
+            total_debt_usd += d.amount_owed * usd_per_cred
+
+        if total_debt_usd > 0:
+            penalty = (total_debt_usd / DEBT_PENALTY_NORMALI) * DEBT_YIELD_PENALTY
+            bank.yield_rate = min(bank.max_yield, bank.yield_rate + penalty)
+
+        # Check if reserves are below the minimum ratio for any foreign currency
+        outstanding_usd = bank.total_face_value_wsc  # proxy for liabilities
+        if outstanding_usd <= 0:
+            continue
+
+        foreign_reserves = db.query(BankReserveBalance).filter(
+            BankReserveBalance.bank_id == bank.id,
+        ).all()
+        for reserve in foreign_reserves:
+            if reserve.currency_code == bank.currency_code:
+                continue  # own-currency reserves are unlimited
+            usd_val = reserve.balance * _get_usd_rate(db, reserve.currency_code)
+            if usd_val < outstanding_usd * BANK_MIN_RESERVE_RATIO:
+                # Trigger swap: acquire more of this currency from the issuing bank
+                shortfall_usd = outstanding_usd * BANK_MIN_RESERVE_RATIO - usd_val
+                target_bank   = bank_map.get(reserve.currency_code)
+                if target_bank:
+                    _interbank_bond_swap(db, bank, target_bank, min(shortfall_usd, outstanding_usd * 0.05))
+
+
+# ==========================
+# PLAYER INCOME CONVERSION  (replaces player-facing forex_swap)
+# ==========================
+
+def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float, str]:
+    """
+    Convert USD income to the player's legal tender via the reserve bank system.
+
+    This is called automatically when any USD-denominated income reaches a player.
+    The conversion is never initiated by the player directly — the reserve bank does it.
+
+    Flow (example: player's legal tender = JPY, income = $100 USD):
+      1. JPY bank receives $100 USD → adds to its USD reserves.
+      2. JPY bank creates ¥X = 100 / usd_per_unit at current rate (no reserve needed —
+         the bank is the issuer of its own currency).
+      3. 0.2% fee kept by JPY bank as own-currency reserves.
+      4. Player receives net ¥X in their PlayerCurrencyBalance row.
+      5. ForexTrade record created for the dashboard feed.
+      6. Bank's net_demand_wsc adjusted (USD inflow → positive demand for JPY bonds).
+
+    Returns (converted_amount, currency_code).
+    """
+    code = get_player_legal_tender(player_id)
+    if code == "USD" or usd_amount <= 0:
+        return usd_amount, "USD"
+
+    db = get_db()
+    try:
+        bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == code
+        ).first()
+        if not bank:
+            return usd_amount, "USD"
+
+        # Gross foreign amount at current rate
+        gross_foreign = usd_amount / bank.usd_per_unit
+        fee_foreign   = gross_foreign * FOREX_FEE_RATE
+        net_foreign   = gross_foreign - fee_foreign
+
+        # JPY bank gains USD reserves (it just sold JPY to the player)
+        _add_bank_reserve(db, bank.id, "USD", usd_amount)
+        # JPY bank earns fee in own currency
+        _add_bank_reserve(db, bank.id, code, fee_foreign)
+
+        # Credit player's foreign currency balance
+        _adjust_currency_balance(db, player_id, code, net_foreign)
+
+        # Demand signal: USD inflow = capital coming IN to this bank's currency = positive demand
+        bank.net_demand_wsc += usd_amount
+
+        # Audit
+        db.add(ForexTrade(
+            player_id     = player_id,
+            from_currency = "USD",
+            to_currency   = code,
+            amount_from   = usd_amount,
+            amount_to     = net_foreign,
+            exchange_rate = 1.0 / bank.usd_per_unit,
+            fee_usd       = fee_foreign * bank.usd_per_unit,
+        ))
+        db.commit()
+        return net_foreign, code
+
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] Income conversion error: {e}")
+        return usd_amount, "USD"
+    finally:
+        db.close()
+
+
+def process_cross_currency_payment(
+    payer_id: int,
+    recipient_currency: str,
+    amount_in_payer_currency: float,
+) -> Tuple[bool, float, str]:
+    """
+    Settle a payment where the payer's legal tender differs from the recipient's.
+    Called when a player with JPY legal tender pays someone who uses GBP.
+
+    Flow:
+      1. Debit payer's JPY balance.
+      2. JPY bank needs to provide GBP to the recipient.
+      3. If JPY bank has sufficient GBP reserves: pays from reserves.
+      4. If not: records a GBP debt (yield penalty applies next tick) and still pays.
+         The deficit is covered by the next interbank bond swap in _tick_interbank_settlement.
+
+    Returns (success, amount_in_recipient_currency, recipient_currency).
+    """
+    db = get_db()
+    try:
+        payer_code = get_player_legal_tender(payer_id)
+        if payer_code == recipient_currency:
+            return True, amount_in_payer_currency, recipient_currency
+
+        payer_bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == payer_code
+        ).first() if payer_code != "USD" else None
+
+        # Convert payer amount → USD → recipient amount
+        payer_usd_rate = _get_usd_rate(db, payer_code)
+        recip_usd_rate = _get_usd_rate(db, recipient_currency)
+        if payer_usd_rate <= 0 or recip_usd_rate <= 0:
+            return False, 0.0, recipient_currency
+
+        usd_value     = amount_in_payer_currency * payer_usd_rate
+        fee_usd       = usd_value * FOREX_FEE_RATE
+        net_usd       = usd_value - fee_usd
+        recip_amount  = net_usd / recip_usd_rate
+
+        # Debit payer
+        bal = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == payer_id,
+            PlayerCurrencyBalance.currency_code == payer_code,
+        ).first()
+        payer_bal = bal.balance if bal else 0.0
+        if payer_bal < amount_in_payer_currency:
+            return False, 0.0, recipient_currency
+
+        _adjust_currency_balance(db, payer_id, payer_code, -amount_in_payer_currency)
+
+        # Payer's bank needs to provide recipient currency
+        if payer_bank:
+            has_reserves = _debit_bank_reserve(db, payer_bank.id, recipient_currency, recip_amount)
+            if not has_reserves:
+                # Bank creates debt; will be settled next tick via bond swap
+                _record_bank_debt(db, payer_bank.id, recipient_currency, recip_amount)
+                # Still provide the funds (central banks can run temporary overdrafts)
+
+            # Payer bank keeps USD in reserves (receives value from the payment)
+            _add_bank_reserve(db, payer_bank.id, "USD", usd_value)
+            # Fee kept as own currency reserves
+            _add_bank_reserve(db, payer_bank.id, payer_code, fee_usd / payer_usd_rate)
+
+            payer_bank.net_demand_wsc -= usd_value  # capital outflow → negative demand
+
+        db.add(ForexTrade(
+            player_id     = payer_id,
+            from_currency = payer_code,
+            to_currency   = recipient_currency,
+            amount_from   = amount_in_payer_currency,
+            amount_to     = recip_amount,
+            exchange_rate = payer_usd_rate / recip_usd_rate,
+            fee_usd       = fee_usd,
+        ))
+        db.commit()
+        return True, recip_amount, recipient_currency
+
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] Cross-currency payment error: {e}")
+        return False, 0.0, recipient_currency
+    finally:
+        db.close()
 
 
 # ==========================
@@ -552,85 +931,19 @@ def _get_usd_rate(db, currency_code: str) -> float:
     return bank.usd_per_unit if bank else 1.0
 
 
-def forex_swap(
-    player_id: int,
-    from_currency: str,
-    amount: float,
-    to_currency: str,
-) -> Tuple[bool, str, dict]:
+def forex_swap(player_id: int, from_currency: str, amount: float, to_currency: str) -> Tuple[bool, str, dict]:
     """
-    Exchange `amount` of `from_currency` into `to_currency` at the live rate.
-    Debits from_currency balance; credits to_currency balance.
-    For USD: debits/credits player.cash_balance directly.
-    Charges FOREX_FEE_RATE (0.2 %) in USD, deducted from the to_currency proceeds.
+    Removed — players do not manually swap currencies.
+    All forex is handled automatically by the reserve bank system:
+      - Income in USD is auto-converted to the player's legal tender via process_income_conversion().
+      - Cross-currency payments are settled via process_cross_currency_payment().
+    Change your legal tender on the Corporate Actions dashboard.
     """
-    if amount <= 0:
-        return False, "Amount must be positive.", {}
-    if from_currency == to_currency:
-        return False, "Source and target currency are the same.", {}
-
-    from auth import get_db as auth_get_db, Player
-
-    db       = get_db()
-    auth_db  = auth_get_db()
-    try:
-        rate = _get_exchange_rate_internal(db, from_currency, to_currency)
-        if rate <= 0:
-            return False, f"Cannot determine exchange rate for {from_currency} → {to_currency}.", {}
-
-        gross_out = amount * rate
-        fee_in_to = gross_out * FOREX_FEE_RATE
-        net_out   = gross_out - fee_in_to
-
-        # Debit source
-        ok, err = _debit_currency(db, auth_db, player_id, from_currency, amount)
-        if not ok:
-            return False, err, {}
-        db.commit()
-        auth_db.commit()
-
-        # Credit destination
-        _credit_currency(db, auth_db, player_id, to_currency, net_out)
-        db.commit()
-        auth_db.commit()
-
-        # Record forex trade
-        trade = ForexTrade(
-            player_id     = player_id,
-            from_currency = from_currency,
-            to_currency   = to_currency,
-            amount_from   = amount,
-            amount_to     = net_out,
-            exchange_rate = rate,
-            fee_usd       = fee_in_to * _get_usd_rate(db, to_currency),
-        )
-        db.add(trade)
-        # Update bank forex volume stats
-        for code in (from_currency, to_currency):
-            if code != "USD":
-                bank = db.query(StateReserveBank).filter(
-                    StateReserveBank.currency_code == code
-                ).first()
-                if bank:
-                    bank.total_forex_volume += amount * _get_usd_rate(db, from_currency)
-        db.commit()
-
-        return True, (
-            f"Converted {amount:.4f} {from_currency} → {net_out:.4f} {to_currency} "
-            f"(rate: {rate:.6f}, fee: {fee_in_to:.4f} {to_currency})."
-        ), {
-            "from_currency": from_currency, "to_currency": to_currency,
-            "amount_from": amount, "amount_to": net_out,
-            "rate": rate, "fee": fee_in_to,
-        }
-
-    except Exception as e:
-        db.rollback()
-        auth_db.rollback()
-        return False, f"Forex error: {e}", {}
-    finally:
-        db.close()
-        auth_db.close()
+    return False, (
+        "Manual forex swaps are not available. "
+        "Currency conversion happens automatically when you receive income or make payments. "
+        "Use the Corporate Actions dashboard to change your legal tender."
+    ), {}
 
 
 def _get_exchange_rate_internal(db, from_currency: str, to_currency: str) -> float:
@@ -743,18 +1056,11 @@ def _available_codes(db) -> List[str]:
 
 def convert_to_legal_tender(player_id: int, usd_amount: float) -> Tuple[float, str]:
     """
-    Helper called by income functions: converts a USD amount to the player's
-    legal tender at the live exchange rate.  Returns (converted_amount, currency_code).
-    If the player uses USD (or conversion fails), returns the original amount.
+    Helper called by income functions: convert USD income to the player's legal tender.
+    Delegates to process_income_conversion() which runs the full inter-bank settlement flow.
+    Returns (converted_amount, currency_code).
     """
-    code = get_player_legal_tender(player_id)
-    if code == "USD":
-        return usd_amount, "USD"
-    rate = get_exchange_rate("USD", code)
-    if rate <= 0:
-        return usd_amount, "USD"
-    converted = usd_amount * rate * (1.0 - FOREX_FEE_RATE)
-    return converted, code
+    return process_income_conversion(player_id, usd_amount)
 
 
 # ==========================
@@ -886,15 +1192,101 @@ def get_yield_history(bank_id: int, limit: int = 168) -> List[dict]:
         db.close()
 
 
+def get_bank_reserves(bank_id: int) -> List[dict]:
+    """Return the foreign-currency reserves held by a specific bank."""
+    db = get_db()
+    try:
+        rows = db.query(BankReserveBalance).filter(
+            BankReserveBalance.bank_id == bank_id,
+            BankReserveBalance.balance != 0.0,
+        ).all()
+        return [
+            {
+                "currency_code": r.currency_code,
+                "balance": round(r.balance, 4),
+                "total_received": round(r.total_received, 4),
+                "total_paid": round(r.total_paid, 4),
+            }
+            for r in rows
+        ]
+    finally:
+        db.close()
+
+
+def get_all_bank_reserves() -> List[dict]:
+    """Return reserves for all banks (for the forex dashboard overview)."""
+    db = get_db()
+    try:
+        banks = db.query(StateReserveBank).all()
+        result = []
+        for bank in banks:
+            reserves = db.query(BankReserveBalance).filter(
+                BankReserveBalance.bank_id == bank.id,
+                BankReserveBalance.balance >  0.0,
+            ).all()
+            debts = db.query(BankDebt).filter(
+                BankDebt.debtor_bank_id == bank.id,
+                BankDebt.is_settled     == False,
+            ).all()
+            total_debt_usd = sum(
+                d.amount_owed * _get_usd_rate(db, d.creditor_currency) for d in debts
+            )
+            result.append({
+                "bank_code": bank.currency_code,
+                "bank_name": bank.currency_name,
+                "flag": bank.flag_emoji,
+                "yield_pct": round(bank.yield_rate * 100, 4),
+                "usd_per_unit": bank.usd_per_unit,
+                "reserves": [
+                    {
+                        "currency_code": r.currency_code,
+                        "balance": round(r.balance, 4),
+                    }
+                    for r in reserves
+                ],
+                "total_debt_usd": round(total_debt_usd, 2),
+            })
+        return result
+    finally:
+        db.close()
+
+
+def get_interbank_trades(limit: int = 50) -> List[dict]:
+    """Return recent inter-bank settlement trades for the forex dashboard feed."""
+    db = get_db()
+    try:
+        rows = db.query(InterbankTrade).order_by(
+            InterbankTrade.executed_at.desc()
+        ).limit(limit).all()
+        return [
+            {
+                "buyer_bank":          r.buyer_bank_code,
+                "seller_bank":         r.seller_bank_code,
+                "bond_currency":       r.bond_currency,
+                "face_value_usd":      round(r.face_value_usd, 2),
+                "consideration_curr":  r.consideration_curr,
+                "consideration_amount":round(r.consideration_amount, 4),
+                "trigger":             r.trigger,
+                "executed_at":         r.executed_at.strftime("%Y-%m-%d %H:%M"),
+            }
+            for r in rows
+        ]
+    finally:
+        db.close()
+
+
 __all__ = [
     "initialize", "tick",
     "purchase_bond", "sell_bond",
-    "forex_swap", "get_exchange_rate",
+    "forex_swap",                                         # stub — always returns error
+    "process_income_conversion", "process_cross_currency_payment",
+    "get_exchange_rate",
     "get_player_legal_tender", "set_player_legal_tender", "convert_to_legal_tender",
     "get_all_banks", "get_player_bonds", "get_player_currency_balances",
     "get_recent_forex_trades", "get_yield_history",
-    "get_wsc_quote", "get_native_quote",
+    "get_bank_reserves", "get_all_bank_reserves", "get_interbank_trades",
     "StateReserveBank", "ReserveBankBond", "PlayerLegalTender",
     "PlayerCurrencyBalance", "ForexTrade", "BondYieldHistory",
+    "BankReserveBalance", "BankDebt", "InterbankTrade",
     "get_db",
 ]

@@ -2003,10 +2003,11 @@ async def wallet_dashboard(
     <div class="card" style="border-color:#4f46e533;">
         <h2 style="color:#a5b4fc;">&#9889; Instant Swap <span style="font-size:12px;font-weight:400;color:#64748b;">— Cross-chain supported at true value</span></h2>
         <p style="color:#64748b;font-size:12px;margin-bottom:14px;">
-            Direct wallet-to-wallet swap at last traded price &times; native token USD rate.
+            Direct wallet-to-wallet swap at <strong style="color:#f59e0b;">24-hour VWAP</strong> &times; native token USD rate.
+            Uses volume-weighted average price (not last trade) to prevent price manipulation.
             Works across all county blockchains. Fee: <strong style="color:#f59e0b;">{fee_pct}%</strong>
-            ({int(SWAP_FEE_SELL*100)}% sell + {int(SWAP_FEE_BUY*100)}% buy) &rarr;
-            burned &rarr; {int(WSC_MINT_RATE*100)}% re-minted as WSC for reward pools.
+            ({int(SWAP_FEE_SELL*100)}% sell + {int(SWAP_FEE_BUY*100)}% buy) &rarr; permanently burned.
+            <span style="color:#38bdf8;">WSC is earned via the native-token AMM pool, not from swap fees.</span>
         </p>
         <div class="swap-box">
             <form action="/api/wallet/swap" method="post">
