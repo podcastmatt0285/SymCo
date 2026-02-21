@@ -3,18 +3,21 @@ database.py
 
 Central database configuration for SymCo.
 
-Set the following environment variables to configure database connections:
-  DATABASE_URL          - Main game database (wadsworth)
-  RESERVE_DATABASE_URL  - Federal reserve banks database
-
-Example (PostgreSQL):
-  DATABASE_URL=postgresql://postgres:password@localhost:5432/wadsworth
-  RESERVE_DATABASE_URL=postgresql://postgres:password@localhost:5432/reserve_banks
+Connection settings are read from a .env file in the project root (or from
+real environment variables if you prefer).  Copy .env.example to .env and
+fill in your values.
 """
 
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+# Load .env file if python-dotenv is installed (optional but recommended).
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # ---------------------------------------------------------------------------
 # Main game database  (wadsworth)
