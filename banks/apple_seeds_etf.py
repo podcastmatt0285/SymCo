@@ -102,13 +102,11 @@ SHARE_ITEM_TYPE = "apple_seeds_etf_shares"
 # DATABASE SETUP
 # ==========================
 
-from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite:///./wadsworth.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from database import engine, SessionLocal
 Base = declarative_base()
 
 class BankLien(Base):

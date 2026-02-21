@@ -2,16 +2,14 @@
 import json
 import random
 from datetime import datetime
-from sqlalchemy import create_engine, Column, String, Integer, Boolean, DateTime, Float
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Float
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from stats_ux import log_transaction
 # Integrated Algebraic Engine
 from supplydemand import SupplyDemandEngine
 
-DATABASE_URL = "sqlite:///./wadsworth.db"
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from database import engine, SessionLocal
 Base = declarative_base()
 
 # ==========================

@@ -57,7 +57,7 @@ Forex
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 
-from sqlalchemy import create_engine, Column, Integer, Float, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -65,9 +65,7 @@ from sqlalchemy.orm import sessionmaker
 # DATABASE
 # ==========================
 
-DATABASE_URL = "sqlite:///./reserve_banks.db"
-engine       = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from database import reserve_engine as engine, ReserveSessionLocal as SessionLocal
 Base         = declarative_base()
 
 # ==========================

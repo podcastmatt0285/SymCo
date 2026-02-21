@@ -15,21 +15,14 @@ Handles:
 
 from datetime import datetime
 from typing import Optional, List
-from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean, Text
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from stats_ux import log_transaction
 # ==========================
 # DATABASE SETUP
 # ==========================
-DATABASE_URL = "sqlite:///./wadsworth.db"
-
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from database import engine, SessionLocal
 Base = declarative_base()
 
 # ==========================

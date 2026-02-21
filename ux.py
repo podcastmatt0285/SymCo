@@ -302,13 +302,8 @@ def get_player_lien_info(player_id: int) -> dict:
         - sources: list of source names
     """
     try:
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker
         from datetime import datetime
-        
-        DATABASE_URL = "sqlite:///./wadsworth.db"
-        engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        from database import engine, SessionLocal
         
         all_liens = []
         total_principal = 0.0
