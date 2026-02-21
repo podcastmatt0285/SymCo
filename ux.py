@@ -497,7 +497,73 @@ def home(session_token: Optional[str] = Cookie(None)):
         tutorial_banner = ""
         tutorial_overlay = ""
 
+    # Acquisition / diffuse notification banners
+    acq_banners = ""
+    try:
+        from corporate_actions import get_acquisition_notifications, mark_acquisition_notifications_seen
+        notifs = get_acquisition_notifications(player.id)
+        banner_parts = []
+        for offer in notifs.get("incoming_offers", []):
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #38bdf8;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+                    <span style="background:#38bdf8;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">ACQUISITION OFFER</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0 0 12px 0;font-size:0.9rem;">
+                    A player has offered to acquire <strong style="color:#38bdf8;">{offer.get('stake_pct',0)*100:.1f}%</strong> of your business income in exchange for <strong style="color:#38bdf8;">{offer.get('shares_offered',0):,}</strong> shares of their company. Offer expires in 7 days.
+                </p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <form action="/api/corporate-actions/acquisition/accept/{offer['id']}" method="post" style="display:inline;">
+                        <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Accept Offer</button>
+                    </form>
+                    <form action="/api/corporate-actions/acquisition/reject/{offer['id']}" method="post" style="display:inline;">
+                        <button type="submit" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;">Reject</button>
+                    </form>
+                    <a href="/corporate-actions/dashboard" style="color:#475569;font-size:0.8rem;line-height:2.2;">View Details</a>
+                </div>
+            </div>""")
+        for update in notifs.get("outgoing_updates", []):
+            status = update.get("status", "unknown")
+            color = "#22c55e" if status == "accepted" else "#ef4444"
+            label = "ACCEPTED" if status == "accepted" else "REJECTED"
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid {color};border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="background:{color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">ACQUISITION {label}</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">Your acquisition offer has been <strong style="color:{color};">{status}</strong>. <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View your active stakes →</a></p>
+            </div>""")
+        for notice in notifs.get("diffuse_notices", []):
+            deadline = notice.get("deadline_at", "")
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #f59e0b;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="background:#f59e0b;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">DIFFUSE NOTICE</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0 0 12px 0;font-size:0.9rem;">
+                    The acquiring party has initiated a diffuse. You must return <strong style="color:#f59e0b;">{notice.get('shares_to_return',0):,} shares</strong> by <strong style="color:#f59e0b;">{deadline}</strong> or a lien will be placed on your account.
+                </p>
+                <form action="/api/corporate-actions/diffuse/return/{notice['id']}" method="post" style="display:inline;">
+                    <button type="submit" style="background:#f59e0b;color:#020617;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Return Shares Now</button>
+                </form>
+            </div>""")
+        for resolved in notifs.get("diffuse_resolved", []):
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #22c55e;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="background:#22c55e;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">DIFFUSE COMPLETE</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">Your diffuse notice has been resolved. The stake has been fully returned. <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View dashboard →</a></p>
+            </div>""")
+        if banner_parts:
+            mark_acquisition_notifications_seen(player.id)
+        acq_banners = "".join(banner_parts)
+    except Exception:
+        acq_banners = ""
+
     dashboard_top = tutorial_overlay or tutorial_banner
+    if acq_banners:
+        dashboard_top = dashboard_top + acq_banners
 
     return shell(
         "Dashboard",
@@ -567,7 +633,7 @@ def home(session_token: Optional[str] = Cookie(None)):
     )
 
 @router.get("/businesses", response_class=HTMLResponse)
-def businesses(session_token: Optional[str] = Cookie(None)):
+def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", biz_filter: str = "all"):
     """Business operations view with live progress and retail pricing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -581,7 +647,8 @@ def businesses(session_token: Optional[str] = Cookie(None)):
             land_db.close()
             return shell("Businesses", "<h3>No businesses found.</h3><a href='/land' class='btn-blue'>Go to Land</a>", player.cash_balance, player.id)
 
-        biz_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1><a href="/stats/production-costs" class="btn-blue">📊 Production Costs</a>'
+        # Build list of (biz, config, biz_name, biz_class, progress_pct) tuples for sorting/filtering
+        biz_tuples = []
         for biz in player_businesses:
             config = BUSINESS_TYPES.get(biz.business_type)
             if not config:
@@ -591,22 +658,67 @@ def businesses(session_token: Optional[str] = Cookie(None)):
             biz_name = config.get("name", biz.business_type)
             biz_class = config.get("class", "production")
             cycles_total = config.get("cycles_to_complete", 1)
+            progress_pct = (biz.progress_ticks / cycles_total * 100) if cycles_total > 0 else 0
+            dismantle_status = get_dismantling_status(biz.id)
+            biz_tuples.append((biz, config, biz_name, biz_class, progress_pct, dismantle_status))
+
+        # Apply biz_filter
+        if biz_filter == "active":
+            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if b.is_active and not d]
+        elif biz_filter == "paused":
+            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if not b.is_active and not d]
+        elif biz_filter == "production":
+            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if cl == "production"]
+        elif biz_filter == "retail":
+            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if cl == "retail"]
+        elif biz_filter == "dismantling":
+            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if d]
+
+        # Apply sort
+        if sort == "status":
+            biz_tuples.sort(key=lambda x: (0 if x[0].is_active else 1, x[2]))
+        elif sort == "type":
+            biz_tuples.sort(key=lambda x: (x[3], x[2]))
+        elif sort == "progress":
+            biz_tuples.sort(key=lambda x: x[4], reverse=True)
+        else:
+            # name sort
+            biz_tuples.sort(key=lambda x: x[2])
+
+        # Filter/sort bar
+        def _f_link(f_val, label):
+            color = "#38bdf8" if biz_filter == f_val else "#64748b"
+            border = "1px solid #38bdf8" if biz_filter == f_val else "1px solid #1e293b"
+            return f'<a href="/businesses?sort={sort}&biz_filter={f_val}" style="color:{color};border:{border};padding:4px 10px;border-radius:4px;text-decoration:none;font-size:0.82rem;">{label}</a>'
+
+        def _s_link(s_val, label):
+            color = "#38bdf8" if sort == s_val else "#64748b"
+            return f'<a href="/businesses?sort={s_val}&biz_filter={biz_filter}" style="color:{color};text-decoration:none;font-size:0.82rem;">{label}</a>'
+
+        filter_sort_bar = f'''
+        <div style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <span style="color:#64748b;font-size:0.82rem;">Filter:</span>
+            {_f_link("all","All")} {_f_link("active","Active")} {_f_link("paused","Paused")} {_f_link("production","Production")} {_f_link("retail","Retail")} {_f_link("dismantling","Dismantling")}
+            <span style="color:#1e293b;margin:0 4px;">|</span>
+            <span style="color:#64748b;font-size:0.82rem;">Sort:</span>
+            {_s_link("name","Name")} {_s_link("status","Status")} {_s_link("type","Type")} {_s_link("progress","Progress")}
+        </div>'''
+
+        biz_html = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1><a href="/stats/production-costs" class="btn-blue">📊 Production Costs</a>{filter_sort_bar}'
+        for biz, config, biz_name, biz_class, progress_pct, dismantle_status in biz_tuples:
+            cycles_total = config.get("cycles_to_complete", 1)
             plot = land_db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
             plot_info = f"Plot #{plot.id} ({plot.terrain_type.title()})" if plot else "Unknown Location"
 
-            dismantle_status = get_dismantling_status(biz.id)
             if dismantle_status:
-                progress_pct = dismantle_status['progress_pct']
                 biz_html += f'''
                 <div class="card" style="border-color: #ef4444;">
                     <h3>{biz_name} <span class="badge" style="background: #ef4444;">DISMANTLING</span></h3>
                     <p>{plot_info} | ID: #{biz.id}</p>
-                    <p>Ticks Remaining: {dismantle_status['ticks_remaining']}/{DISMANTLING_TICKS} ({progress_pct:.0f}%)</p>
+                    <p>Ticks Remaining: {dismantle_status['ticks_remaining']}/{DISMANTLING_TICKS} ({dismantle_status['progress_pct']:.0f}%)</p>
                     <p>Total Refund: ${dismantle_status['total_refund']:.2f} (Paid: ${dismantle_status['paid_so_far']:.2f})</p>
                 </div>'''
                 continue
-
-            progress_pct = (biz.progress_ticks / cycles_total * 100) if cycles_total > 0 else 0
             status_badge = f'<span class="badge badge-{"active" if biz.is_active else "paused"}">{"ACTIVE" if biz.is_active else "PAUSED"}</span>'
             class_badge = f'<span class="badge" style="background: #38bdf8; color: #020617; margin-left: 5px;">{biz_class.upper()}</span>'
 
@@ -700,7 +812,7 @@ def businesses(session_token: Optional[str] = Cookie(None)):
         return shell("Businesses", f"Error loading terminal: {e}", player.cash_balance, player.id)
 
 @router.get("/inventory", response_class=HTMLResponse)
-def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all"):
+def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc"):
     """Inventory management view."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -708,29 +820,93 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         import inventory as inv_mod
         inv = inv_mod.get_player_inventory(player.id)
 
-        categories = {"all": "All", "seeds": "Seeds", "fruits": "Fruits", "liquids": "Liquids", "energy": "Energy"}
-        filter_tabs = '<div style="margin-bottom: 20px;">'
+        categories = {"all": "All", "seeds": "Seeds", "fruits": "Fruits", "vegetables": "Vegetables", "liquids": "Liquids", "energy": "Energy", "animals": "Animals", "materials": "Materials", "luxury": "Luxury", "financial": "Financial"}
+        filter_tabs = '<div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px;">'
         for k, v in categories.items():
             color = "#38bdf8" if k == filter else "#64748b"
-            filter_tabs += f'<a href="/inventory?filter={k}" style="color: {color}; margin-right: 15px; text-decoration: none;">{v}</a>'
+            border = "1px solid #38bdf8" if k == filter else "1px solid #1e293b"
+            filter_tabs += f'<a href="/inventory?filter={k}&sort={sort}&dir={dir}" style="color: {color}; border: {border}; padding: 4px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem;">{v}</a>'
         filter_tabs += '</div>'
 
-        items_html = ""
-        for item, qty in inv.items():
-            # Filtering logic
-            if filter != "all":
-                if filter == "seeds" and not item.endswith("_seeds"): continue
-                if filter == "fruits" and item not in ["apples", "oranges"]: continue
-                if filter == "liquids" and not ("water" in item or "_juice" in item): continue
-                if filter == "energy" and item != "energy": continue
+        # Sort controls
+        sort_controls = '<div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;"><span style="color: #64748b; font-size: 0.85rem;">Sort:</span>'
+        sort_options = [("name", "Name"), ("qty", "Quantity"), ("value", "Value")]
+        for s_key, s_label in sort_options:
+            if s_key == sort:
+                new_dir = "desc" if dir == "asc" else "asc"
+                arrow = " ↑" if dir == "asc" else " ↓"
+                color = "#38bdf8"
+            else:
+                new_dir = "asc"
+                arrow = ""
+                color = "#64748b"
+            sort_controls += f'<a href="/inventory?filter={filter}&sort={s_key}&dir={new_dir}" style="color: {color}; text-decoration: none; font-size: 0.85rem;">{s_label}{arrow}</a>'
+        sort_controls += '</div>'
 
+        # Categorisation helpers
+        fruits_list = ["apples", "oranges", "bananas", "grapes", "strawberries", "blueberries", "peaches", "pears", "mangoes", "pineapples"]
+        vegetables_list = ["potatoes", "carrots", "tomatoes", "onions", "lettuce", "broccoli", "spinach", "peppers", "cucumbers", "corn"]
+        animals_list = ["horses", "cows", "chickens", "pigs", "sheep", "goats", "ducks", "rabbits", "fish", "cattle"]
+        materials_list = ["lumber", "steel", "brick", "glass", "coal", "iron", "copper", "stone", "cement", "wood", "ore", "clay", "sand", "gravel"]
+        luxury_list = ["diamonds", "gold", "wine", "perfume", "silk", "ivory", "platinum", "jewelry", "fur", "truffles"]
+        financial_list = ["shares", "bonds", "certificates", "notes", "tokens", "deeds"]
+
+        def _item_category(item):
+            if item.endswith("_seeds"):
+                return "seeds"
+            if item in fruits_list:
+                return "fruits"
+            if item in vegetables_list:
+                return "vegetables"
+            if "water" in item or item.endswith("_juice") or item.endswith("_milk"):
+                return "liquids"
+            if item == "energy":
+                return "energy"
+            if item in animals_list:
+                return "animals"
+            if item in materials_list:
+                return "materials"
+            if item in luxury_list:
+                return "luxury"
+            if any(item.startswith(f) or item.endswith(f) for f in financial_list):
+                return "financial"
+            return "other"
+
+        # Filter items
+        filtered = []
+        for item, qty in inv.items():
+            if filter != "all":
+                cat = _item_category(item)
+                if cat != filter:
+                    continue
             item_info = inv_mod.get_item_info(item) or {}
+            unit_price = item_info.get("base_price") or item_info.get("value") or 0
+            filtered.append((item, qty, item_info, unit_price))
+
+        # Sort items
+        if sort == "qty":
+            filtered.sort(key=lambda x: x[1], reverse=True)
+        elif sort == "value":
+            filtered.sort(key=lambda x: x[1] * x[3], reverse=True)
+        else:
+            # name sort
+            if dir == "desc":
+                filtered.sort(key=lambda x: x[0], reverse=True)
+            else:
+                filtered.sort(key=lambda x: x[0])
+
+        items_html = ""
+        for item, qty, item_info, unit_price in filtered:
+            est_value_line = ""
+            if unit_price:
+                est_val = qty * unit_price
+                est_value_line = f'<br><small style="color: #22c55e;">Est. Value: ${est_val:,.2f} (${unit_price:.2f}/unit)</small>'
             items_html += f'''
             <div class="card">
                 <div style="display: flex; justify-content: space-between;">
                     <div>
                         <strong>{item.replace("_", " ").title()}</strong><br>
-                        <small style="color: #64748b;">{item_info.get("description", "No description")}</small>
+                        <small style="color: #64748b;">{item_info.get("description", "No description")}</small>{est_value_line}
                     </div>
                     <div style="text-align: right;">
                         <span style="font-size: 1.2rem; color: #38bdf8;">{qty:.0f} units</span>
@@ -744,7 +920,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                 </div>
             </div>'''
 
-        inv_body = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Your Inventory</h1>{filter_tabs}{items_html}'
+        inv_body = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Your Inventory</h1>{filter_tabs}{sort_controls}{items_html}'
 
         # Inject tutorial overlay for inventory-relevant steps
         try:

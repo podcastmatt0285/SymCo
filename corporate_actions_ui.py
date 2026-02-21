@@ -12,9 +12,12 @@ from typing import Optional
 from corporate_actions import (
     BuybackProgram, StockSplitRule, SecondaryOffering, CorporateActionHistory,
     BuybackTrigger, SplitTrigger, OfferingTrigger, ActionStatus,
-    get_db
+    get_db,
+    VALID_REVERSE_SPLIT_RATIOS, TAX_VOUCHER_RATE,
+    AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord,
+    get_tax_voucher_balance, is_player_bankrupt,
 )
-from banks.brokerage_firm import CompanyShares
+from banks.brokerage_firm import CompanyShares, ShareholderPosition
 from auth import get_player_from_session, get_db as get_auth_db
 
 router = APIRouter(prefix="/corporate-actions", tags=["corporate-actions-ui"])
@@ -358,7 +361,195 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                     </div>
                 </div>
             """
-        
+
+            # --- Reverse Stock Split ---
+            ratio_options = "".join(f'<option value="{r}">{r}:1</option>' for r in VALID_REVERSE_SPLIT_RATIOS)
+            html += f"""
+                <div class="card" style="border-left:4px solid #f59e0b;">
+                    <div class="action-header">🔀 Reverse Stock Split — {company.ticker_symbol}</div>
+                    <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
+                        Consolidates all shares (yours and all shareholders') at the selected ratio. Current price: <strong>${company.current_price:.2f}</strong> &bull; Outstanding: <strong>{company.shares_outstanding:,}</strong>
+                    </p>
+                    <form action="/api/corporate-actions/reverse-split/execute" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <input type="hidden" name="company_shares_id" value="{company.id}">
+                        <div>
+                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Consolidation Ratio</label>
+                            <select name="ratio" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;">
+                                {ratio_options}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning" onclick="return confirm('This affects ALL shareholders. Proceed?')">Execute Reverse Split</button>
+                    </form>
+                </div>
+            """
+
+            # --- Special Dividend ---
+            html += f"""
+                <div class="card" style="border-left:4px solid #22c55e;">
+                    <div class="action-header">💸 Special One-Time Dividend — {company.ticker_symbol}</div>
+                    <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
+                        Distribute a special dividend to all float shareholders proportionally. For every $1 paid, the government awards <strong style="color:#22c55e;">${TAX_VOUCHER_RATE:.4f}</strong> in redeemable tax vouchers to you.
+                    </p>
+                    <form action="/api/corporate-actions/special-dividend/pay" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <input type="hidden" name="company_shares_id" value="{company.id}">
+                        <div>
+                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Total Dividend Amount ($)</label>
+                            <input type="number" name="total_amount" min="1" step="0.01" placeholder="e.g. 50000" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" required>
+                        </div>
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Pay this special dividend to all shareholders?')">Pay Dividend</button>
+                    </form>
+                </div>
+            """
+
+            # --- Acquisition Offer (send to another player) ---
+            html += f"""
+                <div class="card" style="border-left:4px solid #38bdf8;">
+                    <div class="action-header">🤝 New Acquisition Offer — using {company.ticker_symbol} shares</div>
+                    <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
+                        Offer shares of <strong>{company.ticker_symbol}</strong> in exchange for an income stake (up to 50%) in another player's business. The target player must accept within 7 days.
+                    </p>
+                    <form action="/api/corporate-actions/acquisition/offer" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <input type="hidden" name="offeror_company_id" value="{company.id}">
+                        <div>
+                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Target Player ID</label>
+                            <input type="number" name="target_player_id" min="1" placeholder="Player ID" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:120px;" required>
+                        </div>
+                        <div>
+                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Shares Offered</label>
+                            <input type="number" name="shares_offered" min="1" placeholder="e.g. 1000" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:130px;" required>
+                        </div>
+                        <div>
+                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Income Stake % (0–50)</label>
+                            <input type="number" name="stake_pct" min="0.1" max="50" step="0.1" placeholder="e.g. 25" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:100px;" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Offer →</button>
+                    </form>
+                </div>
+            """
+
+        # ---- Global sections (outside per-company loop) ----
+
+        # Active Acquisition Stakes
+        stakes_as_acquirer = db.query(AcquisitionStake).filter(
+            AcquisitionStake.acquirer_id == player.id,
+            AcquisitionStake.is_active == True
+        ).all()
+        stakes_as_target = db.query(AcquisitionStake).filter(
+            AcquisitionStake.target_player_id == player.id,
+            AcquisitionStake.is_active == True
+        ).all()
+        pending_offers_received = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.target_player_id == player.id,
+            AcquisitionOffer.status == "pending"
+        ).all()
+        diffuse_notices = db.query(DiffuseNotice).filter(
+            DiffuseNotice.target_player_id == player.id,
+            DiffuseNotice.status == "pending"
+        ).all()
+
+        html += """
+            <div class="card" style="border-top:3px solid #38bdf8;margin-top:20px;">
+                <h2 style="color:#38bdf8;margin:0 0 16px 0;font-size:1.1rem;">🤝 Acquisition Activity</h2>
+        """
+
+        if pending_offers_received:
+            html += '<h3 style="color:#94a3b8;font-size:0.9rem;margin:0 0 10px 0;">Incoming Offers</h3>'
+            for offer in pending_offers_received:
+                html += f"""
+                    <div class="program-item" style="border-left-color:#38bdf8;">
+                        <strong style="color:#38bdf8;">{offer.stake_pct*100:.1f}%</strong> income stake requested &bull; {offer.shares_offered:,} shares offered
+                        <div style="margin-top:8px;display:flex;gap:8px;">
+                            <form action="/api/corporate-actions/acquisition/accept/{offer.id}" method="post" style="display:inline;">
+                                <button class="btn btn-success" type="submit">Accept</button>
+                            </form>
+                            <form action="/api/corporate-actions/acquisition/reject/{offer.id}" method="post" style="display:inline;">
+                                <button class="btn btn-danger" type="submit">Reject</button>
+                            </form>
+                        </div>
+                    </div>"""
+
+        if stakes_as_acquirer:
+            html += '<h3 style="color:#94a3b8;font-size:0.9rem;margin:12px 0 10px 0;">Stakes You Hold</h3>'
+            for stake in stakes_as_acquirer:
+                html += f"""
+                    <div class="program-item" style="border-left-color:#22c55e;">
+                        <span style="color:#22c55e;">{stake.stake_pct*100:.1f}%</span> income stake &bull; Target player #{stake.target_player_id} &bull; Paid {stake.shares_paid:,} shares
+                        <div style="margin-top:6px;">
+                            <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;" onsubmit="return confirm('Initiate diffuse? You will demand share return within 30 days.')">
+                                <button class="btn btn-warning" type="submit">⚡ Initiate Diffuse</button>
+                            </form>
+                        </div>
+                    </div>"""
+
+        if stakes_as_target:
+            html += '<h3 style="color:#94a3b8;font-size:0.9rem;margin:12px 0 10px 0;">Stakes Held Against You</h3>'
+            for stake in stakes_as_target:
+                html += f"""
+                    <div class="program-item" style="border-left-color:#f59e0b;">
+                        Player #{stake.acquirer_id} holds <span style="color:#f59e0b;">{stake.stake_pct*100:.1f}%</span> income stake &bull; Paid you {stake.shares_paid:,} shares
+                    </div>"""
+
+        if diffuse_notices:
+            html += '<h3 style="color:#f59e0b;font-size:0.9rem;margin:12px 0 10px 0;">⚠️ Pending Diffuse Notices</h3>'
+            for notice in diffuse_notices:
+                html += f"""
+                    <div class="program-item" style="border-left-color:#ef4444;">
+                        Must return <strong style="color:#ef4444;">{notice.shares_to_return:,} shares</strong> by {notice.deadline_at.strftime('%Y-%m-%d')} — value ${notice.share_value_at_notice:,.2f}
+                        <div style="margin-top:6px;">
+                            <form action="/api/corporate-actions/diffuse/return/{notice.id}" method="post" style="display:inline;">
+                                <button class="btn btn-danger" type="submit">Return Shares Now</button>
+                            </form>
+                        </div>
+                    </div>"""
+
+        if not (pending_offers_received or stakes_as_acquirer or stakes_as_target or diffuse_notices):
+            html += '<div class="no-actions">No active acquisitions or pending offers.</div>'
+
+        html += '</div>'
+
+        # Tax Vouchers
+        voucher_balance = get_tax_voucher_balance(player.id)
+        html += f"""
+            <div class="card" style="border-top:3px solid #22c55e;margin-top:8px;">
+                <h2 style="color:#22c55e;margin:0 0 12px 0;font-size:1.1rem;">🎟️ Tax Vouchers</h2>
+                <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
+                    Earned from special dividends at <strong>${TAX_VOUCHER_RATE:.4f}</strong> per $1 paid. Redeem for cash from the government at any time.
+                    Current balance: <strong style="color:#22c55e;">${voucher_balance:,.4f}</strong>
+                </p>
+                <form action="/api/corporate-actions/vouchers/redeem" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                    <div>
+                        <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Amount to Redeem ($)</label>
+                        <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
+                    </div>
+                    <button type="submit" class="btn btn-success" {"disabled" if voucher_balance <= 0 else ""}>Redeem Vouchers</button>
+                </form>
+            </div>
+        """
+
+        # Bankruptcy
+        bankrupt = is_player_bankrupt(player.id)
+        if bankrupt:
+            html += """
+            <div class="card" style="border:2px solid #ef4444;margin-top:8px;">
+                <h2 style="color:#ef4444;margin:0 0 8px 0;font-size:1.1rem;">🔴 Bankruptcy — Active</h2>
+                <p style="color:#94a3b8;font-size:0.85rem;margin:0;">You are currently in a bankruptcy period. The red Q marker will be shown on the stock market next to your name for the duration.</p>
+            </div>
+            """
+        else:
+            html += """
+            <div class="card" style="border:2px solid #ef4444;margin-top:8px;">
+                <h2 style="color:#ef4444;margin:0 0 8px 0;font-size:1.1rem;">⚠️ Declare Bankruptcy</h2>
+                <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
+                    <strong style="color:#ef4444;">This is irreversible.</strong> All assets will be liquidated: businesses, land, districts, inventory, stocks, crypto, executives, and ETF positions.
+                    All debts cleared. You will be restarted with <strong>$20,000 and one prairie land plot</strong>. A red Q will appear next to your name in the stock market for 30 days.
+                    If you are a city mayor, you will be removed and a member vote will determine your replacement.
+                </p>
+                <form action="/api/corporate-actions/bankruptcy/declare" method="post" onsubmit="return confirm('FINAL WARNING: This permanently liquidates ALL your assets and restarts your account with $20,000. This CANNOT be undone. Type OK to confirm.') && prompt('Type BANKRUPT to confirm') === 'BANKRUPT'">
+                    <button type="submit" class="btn btn-danger" style="font-size:1rem;padding:10px 24px;">💀 Declare Bankruptcy</button>
+                </form>
+            </div>
+            """
+
         html += """
             </div>
         </body>

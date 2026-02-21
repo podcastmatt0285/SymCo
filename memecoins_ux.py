@@ -749,6 +749,14 @@ async def meme_coin_page(
     price_placeholder = f"{detail['last_price']:.6f}" if detail["last_price"] else "0.000001"
     atl_display = f"{detail['all_time_low']:.6f}" if detail["all_time_low"] else "—"
 
+    # Burn-to-mint bonding curve info
+    total_burned_native = detail["creation_fee_burned"] + detail.get("total_directly_burned", 0.0)
+    current_minted_supply = max(detail["minted_supply"], 1.0)
+    backing_price = total_burned_native / current_minted_supply
+    if backing_price <= 0:
+        backing_price = 1.0
+    remaining_mintable = detail["total_supply"] - detail["minted_supply"]
+
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -896,11 +904,11 @@ async def meme_coin_page(
     <div id="tab-trade" class="tab-content {tab_trade}" style="padding-top:14px;">
 
         <!-- Liquidity / onboarding banner -->
-        {"" if bids or asks else f"""
+        {"" if bids or asks else f'''
         <div style="background:#1c1400;border:1px solid #b45309;border-radius:8px;
                     padding:14px 18px;margin-bottom:14px;font-size:13px;">
             <div style="font-size:15px;font-weight:700;color:#fbbf24;margin-bottom:6px;">
-                &#9888; Empty order book — no liquidity yet
+                &#9888; Empty order book &mdash; no liquidity yet
             </div>
             <p style="color:#d97706;margin-bottom:8px;">
                 Market orders need existing counterparty orders to fill against.
@@ -908,27 +916,27 @@ async def meme_coin_page(
             </p>
             <p style="color:#fbbf24;font-weight:600;">
                 &#128221; To create the first listing, use a <strong>Limit order</strong>:<br>
-                &nbsp;&nbsp;• Sellers: pick a price &rarr; your coins are posted to the book for buyers to fill.<br>
-                &nbsp;&nbsp;• Buyers: set a bid price &rarr; your offer waits for a seller to accept.
+                &nbsp;&nbsp;&bull; Sellers: pick a price &rarr; your coins are posted to the book for buyers to fill.<br>
+                &nbsp;&nbsp;&bull; Buyers: set a bid price &rarr; your offer waits for a seller to accept.
             </p>
         </div>
-        """}
+        '''}
 
-        {"" if asks else f"""
+        {"" if asks else f'''
         <div style="background:#0c1a0c;border:1px solid #16a34a;border-radius:6px;
                     padding:10px 14px;margin-bottom:10px;font-size:12px;color:#4ade80;">
             &#128640; No sell orders yet &mdash; be the first to list {symbol}!
             Switch <strong>Order Mode &rarr; Limit</strong> in the Sell form, set your price, and post a listing.
         </div>
-        """}
+        '''}
 
-        {"" if bids else f"""
+        {"" if bids else f'''
         <div style="background:#0c0c1a;border:1px solid #4f46e5;border-radius:6px;
                     padding:10px 14px;margin-bottom:10px;font-size:12px;color:#a5b4fc;">
             &#128176; No buy orders yet &mdash; be the first to bid on {symbol}!
             Switch <strong>Order Mode &rarr; Limit</strong> in the Buy form and set your bid price.
         </div>
-        """}
+        '''}
 
         <div class="grid grid-2">
             <!-- BUY -->
@@ -1007,6 +1015,56 @@ async def meme_coin_page(
                     </div>
                     <button type="submit" class="btn btn-sell">Sell {symbol}</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- BURN TO MINT -->
+        <div class="card" style="border-color:#78350f;">
+            <h2 style="color:#fbbf24;">&#128293; Burn to Mint</h2>
+            <p style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+                Burn <span class="native-color">{detail["native_symbol"]}</span> to mint new
+                <span class="meme-color">{symbol}</span> at the bonding curve price.
+                Every token burned backs the coin's value — price rises as more is burned.
+            </p>
+            <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;">
+                <div style="background:#0f172a;border:1px solid #78350f;border-radius:6px;padding:10px 16px;text-align:center;">
+                    <div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">Current Backing Price</div>
+                    <div style="font-size:18px;font-weight:700;color:#fbbf24;">{backing_price:.6f}</div>
+                    <div style="font-size:11px;color:#a78bfa;">{detail["native_symbol"]} per {symbol}</div>
+                </div>
+                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px 16px;text-align:center;">
+                    <div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">Total Native Burned</div>
+                    <div style="font-size:18px;font-weight:700;color:#f87171;">{total_burned_native:.4f}</div>
+                    <div style="font-size:11px;color:#a78bfa;">{detail["native_symbol"]}</div>
+                </div>
+                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:10px 16px;text-align:center;">
+                    <div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">Remaining Mintable</div>
+                    <div style="font-size:18px;font-weight:700;color:#4ade80;">{remaining_mintable:,.0f}</div>
+                    <div style="font-size:11px;color:#94a3b8;">{symbol}</div>
+                </div>
+            </div>
+            <form action="/memecoins/{detail["id"]}/burn-mint" method="post"
+                  style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0;">
+                    <label>Burn ({detail["native_symbol"]})</label>
+                    <input type="number" name="native_amount" min="0.000001" step="0.000001"
+                           max="{native_balance}" placeholder="e.g., 1.0"
+                           id="burn-amount" oninput="calcBurnMint()">
+                </div>
+                <div style="font-size:12px;color:#94a3b8;padding-bottom:10px;">
+                    &rarr; mint &asymp; <strong id="burn-mint-preview" style="color:#fbbf24;">—</strong>
+                    <span style="color:#f59e0b;"> {symbol}</span>
+                </div>
+                <div style="padding-bottom:8px;">
+                    <button type="submit" class="btn btn-meme" style="background:#92400e;">
+                        &#128293; Burn &amp; Mint
+                    </button>
+                </div>
+            </form>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;">
+                Available: <span class="native-color">{native_balance:.4f} {detail["native_symbol"]}</span>
+                &nbsp;|&nbsp; Formula: coins = burned / backing_price
+                &nbsp;|&nbsp; Backing price = total_burned / minted_supply
             </div>
         </div>
 
@@ -1321,6 +1379,21 @@ function calcSellRevenue() {{
            = Net: <strong style="color:#4ade80">${{net.toFixed(6)}}</strong>`
         : '';
 }}
+
+// ==========================
+// BURN TO MINT CALCULATOR
+// ==========================
+function calcBurnMint() {{
+    const burnAmt = parseFloat(document.getElementById('burn-amount').value) || 0;
+    const backingPrice = {backing_price};
+    const preview = document.getElementById('burn-mint-preview');
+    if (burnAmt > 0 && backingPrice > 0) {{
+        const minted = burnAmt / backingPrice;
+        preview.textContent = minted.toFixed(4);
+    }} else {{
+        preview.textContent = '—';
+    }}
+}}
 </script>
 </body>
 </html>"""
@@ -1483,6 +1556,38 @@ async def api_cancel_order(
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&msg={message.replace(' ', '+')}", status_code=303)
     else:
         return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&error={message.replace(' ', '+')}", status_code=303)
+
+
+# ==========================
+# API: BURN-TO-MINT
+# ==========================
+@router.post("/memecoins/{meme_id}/burn-mint")
+async def burn_to_mint(
+    meme_id: int,
+    session_token: Optional[str] = Cookie(None),
+    native_amount: float = Form(...),
+):
+    """Burn native county tokens to mint new meme coins at current bonding curve price."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from memecoins import mint_by_burning, MemeCoin, get_db as meme_get_db
+    db = meme_get_db()
+    meme = db.query(MemeCoin).filter(MemeCoin.id == meme_id).first()
+    sym = meme.symbol if meme else "unknown"
+    db.close()
+
+    coins_minted, new_price, error = mint_by_burning(meme_id, player.id, native_amount)
+
+    if error:
+        return RedirectResponse(url=f"/memecoins/{sym}?tab=trade&err={error[:80]}", status_code=303)
+
+    msg = f"Minted+{coins_minted:.4f}+coins+at+backing+price+{new_price:.6f}"
+    return RedirectResponse(
+        url=f"/memecoins/{sym}?tab=trade&msg={msg}",
+        status_code=303
+    )
 
 
 # ==========================

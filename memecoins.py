@@ -110,6 +110,9 @@ class MemeCoin(Base):
     # Creation fee burned
     creation_fee_burned = Column(Float, default=MEME_CREATION_FEE_NATIVE)
 
+    # Total native tokens burned directly via burn-to-mint mechanism
+    total_directly_burned = Column(Float, default=0.0)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
 
@@ -294,6 +297,108 @@ def calculate_meme_block_reward(meme_coin: MemeCoin) -> float:
     halvings = int(meme_coin.mining_minted / MEME_HALVING_INTERVAL)
     reward = meme_coin.mining_reward_base / (2 ** halvings)
     return max(reward, MEME_MIN_BLOCK_REWARD)
+
+
+# ==========================
+# BURN-TO-MINT
+# ==========================
+
+def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple:
+    """
+    Burn native county tokens to mint new meme coins (bonding curve mechanism).
+
+    Mint price = (total_creation_fee_burned + total_directly_burned) / max(minted_supply, 1)
+    This ensures value is always proportional to total native tokens ever burned.
+
+    Returns (coins_minted, new_mint_price, error_message)
+    """
+    if native_amount <= 0:
+        return 0.0, 0.0, "Burn amount must be positive"
+
+    db = get_db()
+    try:
+        meme = db.query(MemeCoin).filter(MemeCoin.id == meme_id, MemeCoin.is_active == True).first()
+        if not meme:
+            return 0.0, 0.0, "Meme coin not found or inactive"
+
+        # Find the county for this meme coin
+        from counties import County, get_db as get_county_db, CryptoWallet
+        county_db = get_county_db()
+        county = county_db.query(County).filter(County.id == meme.county_id).first()
+        if not county:
+            county_db.close()
+            return 0.0, 0.0, "County not found"
+
+        # Check player has enough native tokens in their wallet
+        native_wallet = county_db.query(CryptoWallet).filter(
+            CryptoWallet.player_id == player_id,
+            CryptoWallet.crypto_symbol == county.crypto_symbol,
+        ).first()
+        balance = native_wallet.balance if native_wallet else 0.0
+        if balance < native_amount:
+            county_db.close()
+            return 0.0, 0.0, f"Insufficient {county.crypto_symbol} balance (have {balance:.4f}, need {native_amount:.4f})"
+
+        # Calculate current backing price (native tokens per meme coin)
+        total_burned = (meme.creation_fee_burned or MEME_CREATION_FEE_NATIVE) + (meme.total_directly_burned or 0.0)
+        current_minted = max(meme.minted_supply or 1.0, 1.0)
+        backing_price = total_burned / current_minted  # native tokens per meme coin
+
+        if backing_price <= 0:
+            backing_price = 1.0  # floor at 1:1
+
+        # Coins minted = burned / current backing price
+        coins_minted = native_amount / backing_price
+
+        # Check we don't exceed total_supply
+        remaining_supply = meme.total_supply - (meme.minted_supply or 0.0)
+        if coins_minted > remaining_supply:
+            if remaining_supply <= 0:
+                county_db.close()
+                return 0.0, 0.0, "Max supply already reached"
+            coins_minted = remaining_supply
+            native_amount = coins_minted * backing_price  # adjust burn to match
+
+        # Deduct native tokens from player wallet
+        if not native_wallet or native_wallet.balance < native_amount:
+            county_db.close()
+            return 0.0, 0.0, "Failed to deduct native tokens"
+        native_wallet.balance -= native_amount
+
+        # Burn: reduce county circulating supply
+        county.total_crypto_burned = (county.total_crypto_burned or 0.0) + native_amount
+        county_db.commit()
+        county_db.close()
+
+        # Add meme coins to player wallet
+        meme_wallet = get_or_create_meme_wallet(db, player_id, meme.symbol)
+        meme_wallet.balance += coins_minted
+        meme_wallet.total_bought = (meme_wallet.total_bought or 0.0) + coins_minted
+
+        # Update meme coin state
+        meme.minted_supply = (meme.minted_supply or 0.0) + coins_minted
+        meme.total_directly_burned = (meme.total_directly_burned or 0.0) + native_amount
+
+        # Update last_price to reflect new backing price
+        new_total_burned = total_burned + native_amount
+        new_minted = meme.minted_supply
+        new_backing_price = new_total_burned / max(new_minted, 1.0)
+        meme.last_price = new_backing_price
+
+        db.commit()
+
+        print(f"[Memecoins] Burn-to-mint: player {player_id} burned {native_amount:.4f} {county.crypto_symbol} "
+              f"-> minted {coins_minted:.4f} {meme.symbol} @ {backing_price:.6f} backing price")
+
+        return coins_minted, new_backing_price, None
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Memecoins] mint_by_burning error: {e}")
+        import traceback; traceback.print_exc()
+        return 0.0, 0.0, str(e)
+    finally:
+        db.close()
 
 
 # ==========================
@@ -1191,6 +1296,7 @@ def get_meme_coin_detail(symbol: str) -> Optional[dict]:
             "market_cap_native": (meme.last_price or 0.0) * (meme.minted_supply or 0.0),
             "holder_count": holder_count,
             "creation_fee_burned": meme.creation_fee_burned or MEME_CREATION_FEE_NATIVE,
+            "total_directly_burned": meme.total_directly_burned or 0.0,
             "created_at": meme.created_at,
             "is_active": meme.is_active,
             "bids": [
@@ -1634,7 +1740,7 @@ __all__ = [
     'MemeCoin', 'MemeCoinWallet', 'MemeCoinMiningDeposit',
     'MemeCoinCandlestick', 'MemeCoinOrder', 'MemeCoinTrade',
     'launch_meme_coin', 'stake_native_for_mining', 'unstake_native',
-    'place_order', 'cancel_order',
+    'place_order', 'cancel_order', 'mint_by_burning',
     'get_all_meme_coins', 'get_meme_coin_detail', 'get_meme_candles',
     'get_meme_holders', 'get_player_meme_wallets',
     'get_player_mining_deposits', 'get_player_open_orders',

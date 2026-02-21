@@ -14,13 +14,22 @@ from pydantic import BaseModel
 from datetime import datetime
 
 # Import from corporate actions module
+from fastapi import Form
 from corporate_actions import (
     create_buyback_program, create_stock_split_rule, create_secondary_offering,
     BuybackProgram, StockSplitRule, SecondaryOffering, CorporateActionHistory,
     BuybackTrigger, SplitTrigger, OfferingTrigger, ActionStatus,
+    execute_reverse_split, pay_special_dividend, get_tax_voucher_balance, redeem_tax_vouchers,
+    create_acquisition_offer, accept_acquisition_offer, reject_acquisition_offer,
+    get_acquisition_notifications, mark_acquisition_notifications_seen,
+    initiate_diffuse, complete_diffuse_return,
+    declare_bankruptcy, is_player_bankrupt,
+    AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord,
+    TaxVoucher, VALID_REVERSE_SPLIT_RATIOS, TAX_VOUCHER_RATE,
+    ACQUISITION_OFFER_DAYS, DIFFUSE_RETURN_DAYS, BANKRUPTCY_RESTART_CASH,
     get_db
 )
-from banks.brokerage_firm import CompanyShares, BANK_NAME
+from banks.brokerage_firm import CompanyShares, ShareholderPosition, BANK_NAME
 from auth import get_player_from_session, get_db as get_auth_db
 
 router = APIRouter(prefix="/api/corporate-actions", tags=["corporate-actions"])
@@ -725,6 +734,261 @@ async def api_get_templates():
             }
         ]
     }
+
+
+# ==========================
+# REVERSE STOCK SPLIT
+# ==========================
+
+@router.post("/reverse-split/execute")
+async def api_execute_reverse_split(
+    session_token: Optional[str] = Cookie(None),
+    company_shares_id: int = Form(...),
+    ratio: int = Form(...)
+):
+    """Execute a manual reverse stock split (N:1 — N shares become 1, price × N)."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = execute_reverse_split(company_shares_id, player.id, ratio)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+# ==========================
+# SPECIAL DIVIDENDS + TAX VOUCHERS
+# ==========================
+
+@router.post("/special-dividend/pay")
+async def api_pay_special_dividend(
+    session_token: Optional[str] = Cookie(None),
+    company_shares_id: int = Form(...),
+    total_amount: float = Form(...)
+):
+    """Pay a one-time special dividend to all shareholders and earn tax vouchers."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = pay_special_dividend(company_shares_id, player.id, total_amount)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.get("/vouchers/balance")
+async def api_voucher_balance(session_token: Optional[str] = Cookie(None)):
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return {"player_id": player.id, "voucher_balance": get_tax_voucher_balance(player.id),
+            "voucher_rate": TAX_VOUCHER_RATE}
+
+
+@router.post("/vouchers/redeem")
+async def api_redeem_vouchers(
+    session_token: Optional[str] = Cookie(None),
+    amount: float = Form(...)
+):
+    """Redeem tax vouchers for cash from the government."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = redeem_tax_vouchers(player.id, amount)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+# ==========================
+# ACQUISITION ENDPOINTS
+# ==========================
+
+@router.post("/acquisition/offer")
+async def api_create_acquisition_offer(
+    session_token: Optional[str] = Cookie(None),
+    target_player_id: int = Form(...),
+    offeror_company_id: int = Form(...),
+    shares_offered: int = Form(...),
+    stake_pct: float = Form(...)
+):
+    """
+    Offer shares in your company for a % stake (≤50%) in another player's business income.
+    Both parties see a dashboard notification.
+    """
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = create_acquisition_offer(player.id, target_player_id, offeror_company_id,
+                                      shares_offered, stake_pct / 100.0)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.post("/acquisition/accept/{offer_id}")
+async def api_accept_acquisition(
+    offer_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = accept_acquisition_offer(offer_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    mark_acquisition_notifications_seen(player.id)
+    return result
+
+
+@router.post("/acquisition/reject/{offer_id}")
+async def api_reject_acquisition(
+    offer_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = reject_acquisition_offer(offer_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    mark_acquisition_notifications_seen(player.id)
+    return result
+
+
+@router.get("/acquisition/notifications")
+async def api_acquisition_notifications(session_token: Optional[str] = Cookie(None)):
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return get_acquisition_notifications(player.id)
+
+
+@router.get("/acquisition/stakes")
+async def api_my_stakes(session_token: Optional[str] = Cookie(None)):
+    """Get all active acquisition stakes where player is acquirer or target."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    db = get_db()
+    try:
+        as_acquirer = db.query(AcquisitionStake).filter(
+            AcquisitionStake.acquirer_id == player.id
+        ).all()
+        as_target = db.query(AcquisitionStake).filter(
+            AcquisitionStake.target_player_id == player.id
+        ).all()
+        def _stake_dict(s):
+            return {"id": s.id, "acquirer_id": s.acquirer_id, "target_player_id": s.target_player_id,
+                    "stake_pct": s.stake_pct * 100, "shares_paid": s.shares_paid,
+                    "is_active": s.is_active, "created_at": s.created_at.isoformat(),
+                    "diffuse_initiated": s.diffuse_initiated_at is not None}
+        return {"as_acquirer": [_stake_dict(s) for s in as_acquirer],
+                "as_target": [_stake_dict(s) for s in as_target]}
+    finally:
+        db.close()
+
+
+# ==========================
+# DIFFUSE ENDPOINTS
+# ==========================
+
+@router.post("/diffuse/initiate/{stake_id}")
+async def api_initiate_diffuse(
+    stake_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Acquirer gives back the stake and demands return of shares within 30 days."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = initiate_diffuse(stake_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.post("/diffuse/return/{notice_id}")
+async def api_complete_diffuse_return(
+    notice_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Target returns the shares, resolving the diffuse notice."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = complete_diffuse_return(notice_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    mark_acquisition_notifications_seen(player.id)
+    return result
+
+
+# ==========================
+# BANKRUPTCY ENDPOINT
+# ==========================
+
+@router.post("/bankruptcy/declare")
+async def api_declare_bankruptcy(session_token: Optional[str] = Cookie(None)):
+    """
+    Declare bankruptcy: all assets liquidated, shares bought back at $0,
+    restarted with $20,000 and one prairie plot. Red-Q shown for 30 days.
+    """
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    import time
+    current_tick = int(time.time() / 5)
+    result = declare_bankruptcy(player.id, current_tick)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
+
+@router.get("/bankruptcy/status")
+async def api_bankruptcy_status(session_token: Optional[str] = Cookie(None)):
+    """Check if player is currently in a bankruptcy red-Q period."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    db = get_db()
+    try:
+        rec = db.query(BankruptcyRecord).filter(
+            BankruptcyRecord.player_id == player.id,
+            BankruptcyRecord.is_active == True
+        ).first()
+        if rec:
+            return {"bankrupt": True, "red_q_expires": rec.red_q_expires_at.isoformat(),
+                    "restart_cash": rec.restart_cash}
+        return {"bankrupt": False}
+    finally:
+        db.close()
 
 
 # Export router

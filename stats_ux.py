@@ -1141,18 +1141,60 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     db.close()
     
     # Build transactions HTML
+    TYPE_ICONS = {
+        "market_buy": "🛒", "market_sell": "💰", "production": "🏭", "retail_sale": "🏪",
+        "banking": "🏦", "dividend": "💸", "tax": "📋", "land": "🏗️", "crypto": "₿",
+        "lien": "⚠️", "corporate": "📊", "inheritance": "📜", "city": "🏙️",
+        "cash_in": "💵", "cash_out": "💸",
+    }
+    TYPE_BADGE_COLORS = {
+        "market_buy": "#3b82f6", "market_sell": "#3b82f6",
+        "production": "#8b5cf6", "retail_sale": "#8b5cf6",
+        "banking": "#06b6d4", "dividend": "#22c55e",
+        "tax": "#f97316", "land": "#84cc16",
+        "crypto": "#f59e0b", "lien": "#ef4444",
+        "corporate": "#64748b", "inheritance": "#a78bfa",
+        "city": "#38bdf8",
+    }
+
+    total_income = sum(tx.amount for tx in txs if tx.amount > 0)
+    total_expenses = sum(tx.amount for tx in txs if tx.amount < 0)
+    net = total_income + total_expenses
+
     tx_html = ""
     for tx in txs:
         amount_class = "positive" if tx.amount > 0 else "negative"
         amount_str = f"+${tx.amount:,.2f}" if tx.amount > 0 else f"-${abs(tx.amount):,.2f}"
+        border_color = "#22c55e" if tx.amount > 0 else "#ef4444"
+        tx_type = tx.transaction_type or ""
+        icon = next((v for k, v in TYPE_ICONS.items() if k in tx_type), "📝")
+        badge_color = next((v for k, v in TYPE_BADGE_COLORS.items() if k in tx_type), "#475569")
+        desc_full = tx.description or tx_type
+        desc_short = (desc_full[:60] + "…") if len(desc_full) > 60 else desc_full
+        item_line = ""
+        if getattr(tx, "item_type", None):
+            qty = getattr(tx, "quantity", None)
+            unit_price = getattr(tx, "unit_price", None)
+            parts = [tx.item_type]
+            if qty is not None:
+                parts.append(f"× {qty:,.2f}")
+            if unit_price is not None:
+                parts.append(f"@ ${unit_price:,.4f}")
+            item_line = f'<div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">{" ".join(parts)}</div>'
         tx_html += f"""
-        <div class="transaction-item">
-            <div>
-                <div class="transaction-desc">{tx.description or tx.transaction_type}</div>
-                <div class="transaction-time">{tx.timestamp.strftime('%Y-%m-%d %H:%M')}</div>
+        <div class="transaction-item" data-type="{tx_type}" data-desc="{desc_full.lower()}" style="border-left:3px solid {border_color};padding-left:10px;">
+            <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;">
+                <span style="font-size:1.1rem;">{icon}</span>
+                <div style="flex:1;min-width:0;">
+                    <div class="transaction-desc">{desc_short}</div>
+                    {item_line}
+                    <div class="transaction-time">{tx.timestamp.strftime('%Y-%m-%d %H:%M')}</div>
+                </div>
             </div>
-            <span class="badge badge-gray">{tx.transaction_type}</span>
-            <span class="transaction-amount {amount_class}">{amount_str}</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span class="badge" style="background:{badge_color};color:#fff;">{tx_type}</span>
+                <span class="transaction-amount {amount_class}">{amount_str}</span>
+            </div>
         </div>
         """
     
@@ -1199,21 +1241,56 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
                 <span class="card-title">Recent Transactions</span>
                 <span class="card-icon">📝</span>
             </div>
-            <div class="filter-tabs" style="margin-top: 12px; flex-wrap: wrap;">
-                <button class="filter-tab active" onclick="filterTx('all')">All</button>
-                <button class="filter-tab" onclick="filterTx('market')">Market</button>
-                <button class="filter-tab" onclick="filterTx('production')">Production</button>
-                <button class="filter-tab" onclick="filterTx('retail')">Retail</button>
-                <button class="filter-tab" onclick="filterTx('banking')">Banking</button>
-                <button class="filter-tab" onclick="filterTx('district')">District</button>
-                <button class="filter-tab" onclick="filterTx('city')">City</button>
-                <button class="filter-tab" onclick="filterTx('tax')">Tax</button>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;padding:10px;background:#0f172a;border-radius:6px;">
+                <div><span style="color:#64748b;font-size:0.8rem;">Income</span><br><span style="color:#22c55e;font-weight:bold;">+${total_income:,.2f}</span></div>
+                <div><span style="color:#64748b;font-size:0.8rem;">Expenses</span><br><span style="color:#ef4444;font-weight:bold;">${total_expenses:,.2f}</span></div>
+                <div><span style="color:#64748b;font-size:0.8rem;">Net</span><br><span style="color:{"#22c55e" if net >= 0 else "#ef4444"};font-weight:bold;">${net:+,.2f}</span></div>
+            </div>
+            <div style="margin-bottom:10px;">
+                <input type="text" id="tx-search" placeholder="Search transactions…" oninput="searchTx(this.value)" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid #1e293b;color:#f1f5f9;border-radius:4px;font-size:0.85rem;box-sizing:border-box;">
+            </div>
+            <div class="filter-tabs" style="margin-bottom: 12px; flex-wrap: wrap;">
+                <button class="filter-tab active" onclick="filterTx('all',this)">All</button>
+                <button class="filter-tab" onclick="filterTx('market_buy',this)">Market Buy</button>
+                <button class="filter-tab" onclick="filterTx('market_sell',this)">Market Sell</button>
+                <button class="filter-tab" onclick="filterTx('production',this)">Production</button>
+                <button class="filter-tab" onclick="filterTx('retail',this)">Retail</button>
+                <button class="filter-tab" onclick="filterTx('banking',this)">Banking</button>
+                <button class="filter-tab" onclick="filterTx('dividend',this)">Dividend</button>
+                <button class="filter-tab" onclick="filterTx('tax',this)">Tax</button>
+                <button class="filter-tab" onclick="filterTx('land',this)">Land</button>
+                <button class="filter-tab" onclick="filterTx('crypto',this)">Crypto</button>
+                <button class="filter-tab" onclick="filterTx('lien',this)">Lien</button>
+                <button class="filter-tab" onclick="filterTx('corporate',this)">Corporate</button>
+                <button class="filter-tab" onclick="filterTx('inheritance',this)">Inheritance</button>
+                <button class="filter-tab" onclick="filterTx('city',this)">City/County</button>
             </div>
             <div id="transactions">
                 {tx_html if tx_html else '<div style="padding: 20px; text-align: center; color: #64748b;">No transactions yet</div>'}
             </div>
         </div>
     </div>
+    <script>
+    var _txFilter = 'all';
+    var _txSearch = '';
+    function filterTx(type, btn) {{
+        _txFilter = type;
+        document.querySelectorAll('.filter-tab').forEach(function(b){{ b.classList.remove('active'); }});
+        if(btn) btn.classList.add('active');
+        _applyTxFilters();
+    }}
+    function searchTx(val) {{
+        _txSearch = val.toLowerCase();
+        _applyTxFilters();
+    }}
+    function _applyTxFilters() {{
+        document.querySelectorAll('.transaction-item').forEach(function(el){{
+            var typeMatch = _txFilter === 'all' || (el.dataset.type || '').indexOf(_txFilter) !== -1;
+            var searchMatch = !_txSearch || (el.dataset.desc || '').indexOf(_txSearch) !== -1;
+            el.style.display = (typeMatch && searchMatch) ? '' : 'none';
+        }});
+    }}
+    </script>
     """
     
     return HTMLResponse(stats_shell("My Business", body, player.cash_balance, player.business_name))

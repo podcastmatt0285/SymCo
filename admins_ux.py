@@ -607,6 +607,12 @@ def _player_info_tab(pid, detail):
                 <button type="submit" class="btn btn-blue">Set</button>
             </div>
         </form>
+        <div style="margin-top:24px;border-top:1px solid #7f1d1d;padding-top:16px;">
+          <p style="color:#ef4444;font-size:0.85rem;margin:0 0 10px 0;">⚠️ Delete permanently triggers the estate/death liquidation for this player.</p>
+          <form method="post" action="/admin/player/{pid}/delete" onsubmit="return confirm('Permanently trigger death/estate for player {pid}? This cannot be undone.')">
+            <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;padding:8px 18px;border-radius:4px;cursor:pointer;font-weight:bold;">💀 Delete Player (Trigger Death)</button>
+          </form>
+        </div>
     </div>
     """
 
@@ -1131,6 +1137,25 @@ def post_revoke(pid: int, session_token: Optional[str] = Cookie(None), ban_id: i
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Ban+revoked", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/delete")
+def post_delete_player(pid: int, session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    try:
+        from estate import liquidate_estate
+        import time
+        current_tick = int(time.time() / 5)  # approximate tick from uptime
+        result = liquidate_estate(pid, "admin_delete", current_tick)
+        if result:
+            log_action(admin.id, "delete_player", pid, f"Admin-triggered death/estate liquidation")
+            return RedirectResponse(url=f"/admin/players?msg=Player+{pid}+death+triggered", status_code=303)
+        else:
+            return RedirectResponse(url=f"/admin/player/{pid}?err=Death+function+failed+or+player+already+deceased", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/admin/player/{pid}?err={str(e)[:80]}", status_code=303)
 
 
 def _force_disconnect(pid):
