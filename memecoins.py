@@ -62,6 +62,19 @@ MEME_TRADE_FEE_TOTAL = 0.02             # 2% fee on trades
 MEME_FEE_TO_CREATOR = 0.50             # 50% of fee to creator
 MEME_FEE_TO_TREASURY = 0.25            # 25% of fee to county treasury
 MEME_FEE_BURNED = 0.25                 # 25% of fee burned
+
+# ---- Anti-manipulation guards ----
+# Minimum age (seconds) a resting order must have before it can be filled.
+# Prevents instant self-trade round-trips.
+MAKER_MIN_AGE_SECONDS: int = 5
+
+# Maximum price deviation factor from the 24-hour VWAP.
+# A trade that would execute above VWAP * factor or below VWAP / factor is skipped.
+# 20× allows genuine discovery on new/thin coins while blocking astronomical manipulation.
+PRICE_DEVIATION_MAX_FACTOR: float = 20.0
+
+# Look-back window used when computing the reference VWAP.
+PRICE_DEVIATION_LOOKBACK_HOURS: int = 24
 MIN_MEME_SUPPLY = 1_000_000.0          # Minimum total supply: 1 million
 MAX_MEME_SUPPLY = 1_000_000_000_000.0  # Maximum total supply: 1 trillion
 MEME_SYMBOL_MIN_LEN = 3
@@ -233,6 +246,32 @@ def get_or_create_meme_wallet(db, player_id: int, meme_symbol: str) -> MemeCoinW
         db.add(wallet)
         db.flush()
     return wallet
+
+
+def _compute_24h_vwap(db, meme_symbol: str) -> Optional[float]:
+    """
+    Return the 24-hour volume-weighted average price for a meme coin.
+
+    Uses MemeCoinTrade records from the last PRICE_DEVIATION_LOOKBACK_HOURS hours.
+    Returns None when there are no trades in the window (new / illiquid coin),
+    allowing the caller to skip the VWAP guard for the first trade on a coin.
+    """
+    cutoff = datetime.utcnow() - timedelta(hours=PRICE_DEVIATION_LOOKBACK_HOURS)
+    trades = (
+        db.query(MemeCoinTrade)
+        .filter(
+            MemeCoinTrade.meme_symbol == meme_symbol,
+            MemeCoinTrade.executed_at >= cutoff,
+        )
+        .all()
+    )
+    if not trades:
+        return None
+    total_volume = sum(t.native_volume for t in trades)
+    if total_volume <= 0:
+        return None
+    # VWAP = Σ(price × volume) / Σ(volume) — price already embedded in native_volume
+    return sum(t.price * t.native_volume for t in trades) / total_volume
 
 
 def get_meme_wallet_balance(player_id: int, meme_symbol: str) -> float:
@@ -804,6 +843,17 @@ def place_order(
         if not meme:
             return None, "Meme coin not found or inactive."
 
+        # --- VWAP deviation guard (limit orders only) ---
+        if order_mode == "limit" and price is not None:
+            vwap_ref = _compute_24h_vwap(db, meme_symbol)
+            if vwap_ref is not None and vwap_ref > 0:
+                ratio = price / vwap_ref
+                if ratio > PRICE_DEVIATION_MAX_FACTOR or ratio < (1.0 / PRICE_DEVIATION_MAX_FACTOR):
+                    return None, (
+                        f"Order price {price:.6f} deviates more than {PRICE_DEVIATION_MAX_FACTOR:.0f}× "
+                        f"from the 24-hour VWAP ({vwap_ref:.6f}). Adjust your price."
+                    )
+
         county = county_db.query(County).filter(County.id == meme.county_id).first()
         native_symbol = county.crypto_symbol
 
@@ -924,9 +974,27 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
 
     incoming_remaining = incoming_order.quantity - incoming_order.quantity_filled
 
+    # Pre-compute reference values used by the per-fill guards below.
+    now = datetime.utcnow()
+    vwap_ref = _compute_24h_vwap(db, symbol)   # None on a brand-new coin
+
     for counter in counterpart_orders:
         if incoming_remaining <= 0:
             break
+
+        # ── Guard 1: Self-trade prevention ──────────────────────────────────
+        # Reject any fill where the same player sits on both sides of the book.
+        if counter.player_id == incoming_order.player_id:
+            continue
+
+        # ── Guard 2: Maker-taker delay ───────────────────────────────────────
+        # The resting (maker) order must be at least MAKER_MIN_AGE_SECONDS old.
+        # This breaks instant round-trip bots that place and immediately fill
+        # their own orders (self-trade prevention alone isn't enough for
+        # two-account schemes where the accounts were set up in advance).
+        maker_age = (now - counter.created_at).total_seconds()
+        if maker_age < MAKER_MIN_AGE_SECONDS:
+            continue
 
         counter_remaining = counter.quantity - counter.quantity_filled
         fill_qty = min(incoming_remaining, counter_remaining)
@@ -937,6 +1005,16 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
         trade_price = counter.price if counter.price else meme.last_price
         if trade_price is None or trade_price <= 0:
             continue
+
+        # ── Guard 3: VWAP price-deviation cap ────────────────────────────────
+        # When 24-hour trade history exists, refuse fills that are more than
+        # PRICE_DEVIATION_MAX_FACTOR× away from the VWAP.  On a brand-new coin
+        # with no history vwap_ref is None and this guard is intentionally skipped
+        # so the first real trade can establish a price.
+        if vwap_ref is not None and vwap_ref > 0:
+            ratio = trade_price / vwap_ref
+            if ratio > PRICE_DEVIATION_MAX_FACTOR or ratio < (1.0 / PRICE_DEVIATION_MAX_FACTOR):
+                continue   # skip this resting order; its price is too far from VWAP
 
         native_volume = fill_qty * trade_price
         total_fee = native_volume * MEME_TRADE_FEE_TOTAL

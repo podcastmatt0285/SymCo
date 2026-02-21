@@ -24,7 +24,7 @@ Swap Fees (Instant Swap):
 
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
-from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean, func as sqlfunc
+from sqlalchemy import create_engine, Column, String, Float, DateTime, Integer, Boolean, func as sqlfunc, update as sa_update
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -538,41 +538,93 @@ def redeem_wsc_for_cash(player_id: int, amount: float) -> Tuple[bool, str]:
     """
     Redeem WSC for in-game dollars at the 1:1 peg.
     Deducts from WSC wallet; credits player.cash_balance.
+
+    TOCTOU fix: the deduction is performed as a single atomic
+        UPDATE ... WHERE balance >= amount
+    so concurrent requests cannot double-spend the same WSC balance.
+    If the UPDATE matches 0 rows the balance was insufficient.
+    On any downstream failure the deduction is compensated via a
+    second atomic UPDATE that adds the amount back.
     """
     if amount <= 0:
         return False, "Amount must be positive."
 
+    # ── Step 1: ensure the WSC wallet row exists ─────────────────────────────
     wallet_db = get_db()
     try:
-        wsc_w = wallet_db.query(WSCWallet).filter(WSCWallet.player_id == player_id).first()
-        bal   = wsc_w.balance if wsc_w else 0.0
-        if bal < amount:
-            return False, f"Insufficient WSC: have {bal:.4f}, need {amount:.4f}."
-
-        wsc_w = _get_or_create_wsc_wallet(wallet_db, player_id)
-        wsc_w.balance        -= amount
-        wsc_w.total_redeemed += amount
+        _get_or_create_wsc_wallet(wallet_db, player_id)
         wallet_db.commit()
+    except Exception as e:
+        wallet_db.rollback()
+        wallet_db.close()
+        return False, f"Wallet init error: {e}"
+    finally:
+        wallet_db.close()
 
-        from auth import get_db as auth_get_db, Player
-        auth_db = auth_get_db()
-        try:
-            p = auth_db.query(Player).filter(Player.id == player_id).first()
-            if not p:
-                # Roll back the deduction
-                wsc_w.balance        += amount
-                wsc_w.total_redeemed -= amount
-                wallet_db.commit()
-                return False, "Player not found."
-            p.cash_balance = (p.cash_balance or 0.0) + amount
-            auth_db.commit()
-        finally:
-            auth_db.close()
-
-        return True, f"Redeemed {amount:.4f} WSC → ${amount:.2f} in-game cash credited."
+    # ── Step 2: atomic deduction — races are eliminated at the DB level ──────
+    wallet_db = get_db()
+    try:
+        result = wallet_db.execute(
+            sa_update(WSCWallet)
+            .where(WSCWallet.player_id == player_id)
+            .where(WSCWallet.balance >= amount)
+            .values(
+                balance=WSCWallet.balance - amount,
+                total_redeemed=WSCWallet.total_redeemed + amount,
+            )
+        )
+        wallet_db.commit()
+        if result.rowcount == 0:
+            # Either balance was truly insufficient or a concurrent request
+            # already claimed the funds.
+            current = wallet_db.query(WSCWallet.balance).filter(
+                WSCWallet.player_id == player_id
+            ).scalar() or 0.0
+            return False, f"Insufficient WSC: have {current:.4f}, need {amount:.4f}."
     except Exception as e:
         wallet_db.rollback()
         return False, str(e)
+    finally:
+        wallet_db.close()
+
+    # ── Step 3: credit player cash ───────────────────────────────────────────
+    from auth import get_db as auth_get_db, Player
+    auth_db = auth_get_db()
+    try:
+        p = auth_db.query(Player).filter(Player.id == player_id).first()
+        if not p:
+            # Compensate: atomically refund the WSC we just deducted.
+            _atomic_wsc_refund(player_id, amount)
+            return False, "Player not found; WSC refunded."
+        p.cash_balance = (p.cash_balance or 0.0) + amount
+        auth_db.commit()
+    except Exception as e:
+        auth_db.rollback()
+        _atomic_wsc_refund(player_id, amount)
+        return False, f"Cash credit failed; WSC refunded. ({e})"
+    finally:
+        auth_db.close()
+
+    return True, f"Redeemed {amount:.4f} WSC → ${amount:.2f} in-game cash credited."
+
+
+def _atomic_wsc_refund(player_id: int, amount: float) -> None:
+    """Unconditionally add `amount` back to a player's WSC balance.
+    Used as a compensation action when the downstream cash-credit fails."""
+    wallet_db = get_db()
+    try:
+        wallet_db.execute(
+            sa_update(WSCWallet)
+            .where(WSCWallet.player_id == player_id)
+            .values(
+                balance=WSCWallet.balance + amount,
+                total_redeemed=WSCWallet.total_redeemed - amount,
+            )
+        )
+        wallet_db.commit()
+    except Exception as e:
+        wallet_db.rollback()
+        print(f"[Wallet] CRITICAL: WSC refund failed for player {player_id}, amount {amount}: {e}")
     finally:
         wallet_db.close()
 
