@@ -550,12 +550,56 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
             </div>
             """
 
+        # ── Legal Tender Selection ───────────────────────────────────────────────
+        try:
+            from reserve_banks import get_all_banks, get_player_legal_tender
+            all_banks    = get_all_banks()
+            current_code = get_player_legal_tender(player.id)
+            currency_rows = '<option value="USD"' + (' selected' if current_code == "USD" else '') + \
+                            '>🇺🇸 USD — Wadsworth Dollar (default)</option>'
+            for bk in all_banks:
+                sel = ' selected' if current_code == bk["code"] else ''
+                currency_rows += (
+                    f'<option value="{bk["code"]}"{sel}>'
+                    f'{bk["flag"]} {bk["code"]} — {bk["name"]} '
+                    f'(yield {bk["yield_pct"]:+.4f}%, 1 {bk["code"]} = ${bk["usd_per_unit"]:.6f})'
+                    f'</option>'
+                )
+            html += f"""
+            <div class="card" style="border-top:3px solid #a78bfa;margin-top:8px;">
+                <h2 style="color:#a78bfa;margin:0 0 12px 0;font-size:1.1rem;">🌍 Legal Tender</h2>
+                <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
+                    Your legal tender is the currency your income is automatically converted into.
+                    Currently: <strong style="color:#a78bfa;">{current_code}</strong>.
+                    Changing currency requires holding a balance in the new currency (earned via
+                    <a href="/reserve-banks/bonds" style="color:#38bdf8;">bond interest</a>).
+                    USD remains available as a universal fallback.
+                </p>
+                <form action="/api/corporate-actions/legal-tender/set" method="post"
+                      style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                    <div>
+                        <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Choose Currency</label>
+                        <select name="currency_code" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;min-width:320px;">
+                            {currency_rows}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning" style="background:#a78bfa;color:#020617;">Set Legal Tender</button>
+                </form>
+                <p style="color:#475569;font-size:0.75rem;margin:10px 0 0 0;">
+                    → <a href="/reserve-banks/bonds" style="color:#38bdf8;">Bond Market</a> &nbsp;·&nbsp;
+                    <a href="/reserve-banks/forex" style="color:#38bdf8;">Forex Dashboard</a>
+                </p>
+            </div>
+            """
+        except Exception:
+            pass   # reserve_banks module not yet loaded
+
         html += """
             </div>
         </body>
         </html>
         """
-        
+
         return HTMLResponse(content=html)
     
     finally:

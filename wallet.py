@@ -59,6 +59,13 @@ AIRDROP_INTERVAL_TICKS   = 2880   # every ~4 hours
 AIRDROP_POOL_PCT_PER_RUN = 0.10   # 10 % of airdrop pool per run
 AIRDROP_MAX_PER_PLAYER   = 1.0    # cap: 1 WSC per player per airdrop
 
+# ── Native-token ↔ WSC AMM pool ──────────────────────────────────────────────
+WSC_AMM_FEE             = 0.003   # 0.3 % swap fee (added to pool as protocol revenue)
+WSC_AMM_SEED_WSC        = 10_000.0   # WSC the system seeds into each new pool
+WSC_AMM_SEED_NATIVE     = 10_000.0   # native tokens seeded alongside (price = 1:1)
+# The seed is minted by the system (not taken from any player).
+# k = WSC_AMM_SEED_WSC * WSC_AMM_SEED_NATIVE = 1e8 (initial invariant)
+
 
 # ==========================
 # MODELS
@@ -125,6 +132,28 @@ class WalletSwapRecord(Base):
     executed_at      = Column(DateTime, default=datetime.utcnow)
 
 
+class WSCPool(Base):
+    """
+    Constant-product AMM pool: county native token ↔ WSC.
+
+    One pool per county native token.  The invariant k = native_reserve * wsc_reserve
+    determines the exchange rate at any moment.  No external price oracle is
+    consulted — price is set purely by supply and demand against the pool.
+
+    The system seeds each pool on first use.  Players can also add liquidity
+    via the reserve-bank UI (future feature).
+    """
+    __tablename__ = "wsc_pools"
+    id             = Column(Integer, primary_key=True, index=True)
+    native_symbol  = Column(String, unique=True, index=True, nullable=False)
+    native_reserve = Column(Float, default=0.0)
+    wsc_reserve    = Column(Float, default=0.0)
+    total_swaps    = Column(Integer, default=0)
+    total_fees_wsc = Column(Float, default=0.0)   # accumulated 0.3 % AMM fees
+    created_at     = Column(DateTime, default=datetime.utcnow)
+    updated_at     = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(engine)
 
 
@@ -181,6 +210,236 @@ def _native_usd_price(county_db, county_id: int) -> float:
 
 
 # ==========================
+# NATIVE-TOKEN ↔ WSC AMM POOL
+# ==========================
+
+def _get_or_create_wsc_pool(db, native_symbol: str) -> WSCPool:
+    """Return the AMM pool for `native_symbol`, seeding it with system liquidity on first use."""
+    pool = db.query(WSCPool).filter(WSCPool.native_symbol == native_symbol).first()
+    if not pool:
+        pool = WSCPool(
+            native_symbol  = native_symbol,
+            native_reserve = WSC_AMM_SEED_NATIVE,
+            wsc_reserve    = WSC_AMM_SEED_WSC,
+        )
+        db.add(pool)
+        # Record seed as minted WSC so the treasury ledger stays consistent.
+        t = _get_or_create_treasury(db)
+        t.total_minted += WSC_AMM_SEED_WSC
+        t.last_updated  = datetime.utcnow()
+        db.flush()
+    return pool
+
+
+def get_wsc_quote(native_symbol: str, native_amount: float) -> Tuple[float, float]:
+    """
+    Quote how much WSC `native_amount` native tokens would buy from the AMM pool.
+    Returns (wsc_out, effective_price_native_per_wsc).
+    Accounts for the 0.3 % AMM fee.  Pure read — no DB writes.
+    """
+    db = get_db()
+    try:
+        pool = _get_or_create_wsc_pool(db, native_symbol)
+        db.commit()  # flush potential pool creation
+        if pool.native_reserve <= 0 or pool.wsc_reserve <= 0:
+            return 0.0, 0.0
+        amount_with_fee = native_amount * (1.0 - WSC_AMM_FEE)
+        k               = pool.native_reserve * pool.wsc_reserve
+        new_native      = pool.native_reserve + amount_with_fee
+        new_wsc         = k / new_native
+        wsc_out         = pool.wsc_reserve - new_wsc
+        price           = native_amount / wsc_out if wsc_out > 0 else 0.0
+        return max(wsc_out, 0.0), price
+    finally:
+        db.close()
+
+
+def get_native_quote(native_symbol: str, wsc_amount: float) -> Tuple[float, float]:
+    """
+    Quote how much native token `wsc_amount` WSC would buy from the AMM pool.
+    Returns (native_out, effective_price_wsc_per_native).
+    """
+    db = get_db()
+    try:
+        pool = _get_or_create_wsc_pool(db, native_symbol)
+        db.commit()
+        if pool.native_reserve <= 0 or pool.wsc_reserve <= 0:
+            return 0.0, 0.0
+        amount_with_fee = wsc_amount * (1.0 - WSC_AMM_FEE)
+        k               = pool.native_reserve * pool.wsc_reserve
+        new_wsc         = pool.wsc_reserve + amount_with_fee
+        new_native      = k / new_wsc
+        native_out      = pool.native_reserve - new_native
+        price           = wsc_amount / native_out if native_out > 0 else 0.0
+        return max(native_out, 0.0), price
+    finally:
+        db.close()
+
+
+def swap_native_for_wsc(player_id: int, native_symbol: str, native_amount: float) -> Tuple[bool, str, dict]:
+    """
+    Swap `native_amount` of a county's native token for WSC via the AMM pool.
+    This is the ONLY way to obtain WSC (besides yield farming payouts).
+
+    The AMM constant-product formula prevents price manipulation:
+    dumping a large amount in shifts the pool ratio and gives you
+    progressively worse rates — there is no profitable way to inflate the
+    exchange rate without depositing genuine value into the pool.
+    """
+    from counties import CryptoWallet, get_db as county_get_db
+
+    if native_amount <= 0:
+        return False, "Amount must be positive.", {}
+
+    county_db  = county_get_db()
+    wallet_db  = get_db()
+    try:
+        native_wallet = county_db.query(CryptoWallet).filter(
+            CryptoWallet.player_id   == player_id,
+            CryptoWallet.crypto_symbol == native_symbol,
+        ).first()
+        native_bal = native_wallet.balance if native_wallet else 0.0
+        if native_bal < native_amount:
+            return False, (
+                f"Insufficient {native_symbol}: have {native_bal:.6f}, need {native_amount:.6f}."
+            ), {}
+
+        pool = _get_or_create_wsc_pool(wallet_db, native_symbol)
+        if pool.wsc_reserve <= 0:
+            return False, "Pool has no WSC liquidity yet.", {}
+
+        amount_with_fee = native_amount * (1.0 - WSC_AMM_FEE)
+        fee_native      = native_amount * WSC_AMM_FEE
+        k               = pool.native_reserve * pool.wsc_reserve
+        new_native      = pool.native_reserve + amount_with_fee
+        new_wsc         = k / new_native
+        wsc_out         = pool.wsc_reserve - new_wsc
+        if wsc_out <= 0:
+            return False, "Swap would drain the pool. Try a smaller amount.", {}
+
+        # Deduct native tokens
+        native_wallet.balance -= native_amount
+        county_db.commit()
+
+        # Update pool
+        pool.native_reserve = new_native + fee_native   # fee stays in pool as revenue
+        pool.wsc_reserve    = new_wsc
+        pool.total_swaps   += 1
+        pool.total_fees_wsc+= fee_native * (new_wsc / (new_native + fee_native))  # approx fee value in WSC
+        pool.updated_at     = datetime.utcnow()
+
+        # Credit WSC to player
+        wsc_wallet = _get_or_create_wsc_wallet(wallet_db, player_id)
+        wsc_wallet.balance         += wsc_out
+        wsc_wallet.total_earned_yield += wsc_out   # reuse field as "earned via AMM"
+
+        wallet_db.commit()
+
+        effective_price = native_amount / wsc_out
+        return True, (
+            f"Swapped {native_amount:.6f} {native_symbol} → {wsc_out:.4f} WSC "
+            f"(rate: {effective_price:.4f} {native_symbol}/WSC, fee: {fee_native:.6f} {native_symbol})."
+        ), {
+            "native_symbol": native_symbol,
+            "native_in": native_amount,
+            "wsc_out": wsc_out,
+            "fee_native": fee_native,
+            "effective_price": effective_price,
+            "pool_native_reserve": pool.native_reserve,
+            "pool_wsc_reserve": pool.wsc_reserve,
+        }
+
+    except Exception as e:
+        county_db.rollback()
+        wallet_db.rollback()
+        import traceback; traceback.print_exc()
+        return False, f"AMM swap error: {e}", {}
+    finally:
+        county_db.close()
+        wallet_db.close()
+
+
+def swap_wsc_for_native(player_id: int, native_symbol: str, wsc_amount: float) -> Tuple[bool, str, dict]:
+    """Swap `wsc_amount` WSC back into the county's native token via the AMM pool."""
+    from counties import CryptoWallet, get_db as county_get_db
+
+    if wsc_amount <= 0:
+        return False, "Amount must be positive.", {}
+
+    county_db = county_get_db()
+    wallet_db = get_db()
+    try:
+        # Atomic deduction of WSC
+        result = wallet_db.execute(
+            sa_update(WSCWallet)
+            .where(WSCWallet.player_id == player_id)
+            .where(WSCWallet.balance   >= wsc_amount)
+            .values(balance=WSCWallet.balance - wsc_amount)
+        )
+        wallet_db.flush()
+        if result.rowcount == 0:
+            wallet_db.rollback()
+            current = wallet_db.query(WSCWallet.balance).filter(
+                WSCWallet.player_id == player_id
+            ).scalar() or 0.0
+            return False, f"Insufficient WSC: have {current:.4f}, need {wsc_amount:.4f}.", {}
+
+        pool = _get_or_create_wsc_pool(wallet_db, native_symbol)
+        if pool.native_reserve <= 0:
+            wallet_db.rollback()
+            return False, "Pool has no native-token liquidity.", {}
+
+        amount_with_fee = wsc_amount * (1.0 - WSC_AMM_FEE)
+        fee_wsc         = wsc_amount * WSC_AMM_FEE
+        k               = pool.native_reserve * pool.wsc_reserve
+        new_wsc         = pool.wsc_reserve + amount_with_fee
+        new_native      = k / new_wsc
+        native_out      = pool.native_reserve - new_native
+        if native_out <= 0:
+            wallet_db.rollback()
+            return False, "Swap would drain the native-token reserve. Try a smaller amount.", {}
+
+        pool.wsc_reserve    = new_wsc + fee_wsc   # fee stays in pool
+        pool.native_reserve = new_native
+        pool.total_swaps   += 1
+        pool.updated_at     = datetime.utcnow()
+        wallet_db.commit()
+
+        # Credit native tokens to player
+        native_wallet = county_db.query(CryptoWallet).filter(
+            CryptoWallet.player_id    == player_id,
+            CryptoWallet.crypto_symbol == native_symbol,
+        ).first()
+        if not native_wallet:
+            from counties import CryptoWallet as CW
+            native_wallet = CW(player_id=player_id, crypto_symbol=native_symbol, balance=0.0)
+            county_db.add(native_wallet)
+        native_wallet.balance += native_out
+        county_db.commit()
+
+        effective_price = wsc_amount / native_out
+        return True, (
+            f"Swapped {wsc_amount:.4f} WSC → {native_out:.6f} {native_symbol} "
+            f"(rate: {effective_price:.4f} WSC/{native_symbol}, fee: {fee_wsc:.4f} WSC)."
+        ), {
+            "native_symbol": native_symbol,
+            "wsc_in": wsc_amount,
+            "native_out": native_out,
+            "fee_wsc": fee_wsc,
+            "effective_price": effective_price,
+        }
+
+    except Exception as e:
+        county_db.rollback()
+        wallet_db.rollback()
+        import traceback; traceback.print_exc()
+        return False, f"AMM swap error: {e}", {}
+    finally:
+        county_db.close()
+        wallet_db.close()
+
+
+# ==========================
 # INSTANT SWAP (DIRECT, TRUE VALUE)
 # ==========================
 def execute_wallet_swap(
@@ -192,14 +451,21 @@ def execute_wallet_swap(
     """
     Instant swap: meme coin A → meme coin B at true market value.
 
-    Exchange rate uses last_price × native-token USD price for both coins,
-    enabling fair cross-chain swaps without needing a shared native token.
+    Exchange rate is derived from each coin's 24-hour VWAP (not last_price).
+    Using last_price was a manipulation vector — a player could self-trade to
+    inflate last_price then extract value via this swap.  The VWAP is far
+    harder to manipulate because it is volume-weighted over 24 hours.
 
-    Fees: 3 % on sell leg + 3 % on buy leg → all burned → 90 % minted as WSC.
+    Fees: 3 % sell leg + 3 % buy leg — both are permanently burned.
+    No WSC is minted here; WSC is obtained exclusively through the
+    native-token AMM pool (swap_native_for_wsc).
 
     Returns (success, message, detail_dict).
     """
-    from memecoins import MemeCoin, MemeCoinWallet, get_or_create_meme_wallet, get_db as meme_get_db
+    from memecoins import (
+        MemeCoin, MemeCoinWallet, get_or_create_meme_wallet,
+        get_db as meme_get_db, _compute_24h_vwap,
+    )
     from counties import get_db as county_get_db
 
     if amount <= 0:
@@ -222,12 +488,19 @@ def execute_wallet_swap(
         if not meme_to:
             return False, f"{to_symbol} not found or inactive.", {}
 
-        price_from = meme_from.last_price or 0.0
-        price_to   = meme_to.last_price   or 0.0
-        if price_from <= 0:
-            return False, f"{from_symbol} has no price yet (no trades have occurred).", {}
-        if price_to <= 0:
-            return False, f"{to_symbol} has no price yet (no trades have occurred).", {}
+        # Use 24h VWAP — NOT last_price — to prevent price manipulation.
+        price_from = _compute_24h_vwap(meme_db, from_symbol)
+        price_to   = _compute_24h_vwap(meme_db, to_symbol)
+        if price_from is None or price_from <= 0:
+            return False, (
+                f"{from_symbol} has no 24-hour trade history yet. "
+                "Swaps require an established VWAP price."
+            ), {}
+        if price_to is None or price_to <= 0:
+            return False, (
+                f"{to_symbol} has no 24-hour trade history yet. "
+                "Swaps require an established VWAP price."
+            ), {}
 
         # Check balance
         from_wallet = meme_db.query(MemeCoinWallet).filter(
@@ -238,40 +511,34 @@ def execute_wallet_swap(
         if from_bal < amount:
             return False, f"Insufficient {from_symbol}: have {from_bal:.4f}, need {amount:.4f}.", {}
 
-        # True-value exchange using native USD prices
+        # True-value exchange using native-token USD prices
         usd_from = _native_usd_price(county_db, meme_from.county_id)
         usd_to   = _native_usd_price(county_db, meme_to.county_id)
 
-        # USD value being sold
-        sell_usd_value = amount * price_from * usd_from
-
-        # Apply 3 % sell fee
-        sell_fee_usd   = sell_usd_value * SWAP_FEE_SELL
-        net_usd        = sell_usd_value - sell_fee_usd
-
-        # Apply 3 % buy fee
-        buy_fee_usd    = net_usd * SWAP_FEE_BUY
+        sell_usd_value  = amount * price_from * usd_from
+        sell_fee_usd    = sell_usd_value * SWAP_FEE_SELL
+        net_usd         = sell_usd_value - sell_fee_usd
+        buy_fee_usd     = net_usd * SWAP_FEE_BUY
         net_usd_for_buy = net_usd - buy_fee_usd
-
-        # How many to_symbol coins the player receives
-        amount_out = net_usd_for_buy / (price_to * usd_to)
-
-        total_fee_usd = sell_fee_usd + buy_fee_usd
-        is_cross_chain = (meme_from.county_id != meme_to.county_id)
+        amount_out      = net_usd_for_buy / (price_to * usd_to)
+        total_fee_usd   = sell_fee_usd + buy_fee_usd
+        is_cross_chain  = (meme_from.county_id != meme_to.county_id)
 
         # — Execute wallet transfers —
         from_w = get_or_create_meme_wallet(meme_db, player_id, from_symbol)
-        from_w.balance   -= amount
+        from_w.balance    -= amount
         from_w.total_sold += amount
 
         to_w = get_or_create_meme_wallet(meme_db, player_id, to_symbol)
-        to_w.balance     += amount_out
+        to_w.balance      += amount_out
         to_w.total_bought += amount_out
 
         meme_db.commit()
 
-        # — Burn fee → mint WSC —
-        wsc_minted = _burn_and_mint_wsc(wallet_db, total_fee_usd)
+        # — Fees burned, no WSC minted (WSC comes from native-token AMM only) —
+        t = _get_or_create_treasury(wallet_db)
+        t.total_native_burned += total_fee_usd   # track burned value for accounting
+        t.last_updated         = datetime.utcnow()
         wallet_db.commit()
 
         # — Audit record —
@@ -282,7 +549,7 @@ def execute_wallet_swap(
             amount_in=amount,
             amount_out=amount_out,
             fee_burned_value=total_fee_usd,
-            wsc_minted=wsc_minted,
+            wsc_minted=0.0,          # no longer minted from swap fees
             is_cross_chain=is_cross_chain,
         )
         wallet_db.add(rec)
@@ -291,13 +558,15 @@ def execute_wallet_swap(
         chain_note = "(cross-chain)" if is_cross_chain else "(same chain)"
         msg = (
             f"Swapped {amount:.4f} {from_symbol} → {amount_out:.4f} {to_symbol} {chain_note}. "
-            f"Fee: ${total_fee_usd:.4f} burned → {wsc_minted:.4f} WSC minted for rewards pool."
+            f"Fee: ${total_fee_usd:.4f} burned. "
+            f"(WSC is earned via the native-token AMM pool, not swap fees.)"
         )
         return True, msg, {
             "from_symbol": from_symbol, "to_symbol": to_symbol,
             "amount_in": amount, "amount_out": amount_out,
+            "price_from_vwap": price_from, "price_to_vwap": price_to,
             "sell_fee_usd": sell_fee_usd, "buy_fee_usd": buy_fee_usd,
-            "total_fee_usd": total_fee_usd, "wsc_minted": wsc_minted,
+            "total_fee_usd": total_fee_usd, "wsc_minted": 0.0,
             "is_cross_chain": is_cross_chain,
         }
 

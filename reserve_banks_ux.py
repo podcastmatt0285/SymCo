@@ -1,0 +1,482 @@
+"""
+reserve_banks_ux.py — HTML dashboards and API routes for State Reserve Banks.
+
+Routes
+------
+GET  /reserve-banks/bonds           Bond Market dashboard
+GET  /reserve-banks/forex           Forex live dashboard
+POST /api/reserve-banks/bonds/buy   Purchase a bond (form submit)
+POST /api/reserve-banks/bonds/sell/{bond_id}  Sell a bond early
+POST /api/reserve-banks/forex/swap  Manual forex conversion
+"""
+
+from fastapi import APIRouter, Cookie, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
+from typing import Optional
+
+from auth import get_player_from_session, get_db as get_auth_db
+from reserve_banks import (
+    get_all_banks, get_player_bonds, get_player_currency_balances,
+    get_recent_forex_trades, get_yield_history,
+    get_player_legal_tender,
+    purchase_bond, sell_bond, forex_swap,
+    BOND_MATURITIES, FOREX_FEE_RATE,
+)
+
+router = APIRouter(tags=["reserve-banks"])
+
+# ──────────────────────────────────────────────────────────────────────────────
+# SHARED CSS
+# ──────────────────────────────────────────────────────────────────────────────
+
+_CSS = """
+* { box-sizing: border-box; }
+body {
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0; padding: 20px 16px;
+    background: #020617; color: #e5e7eb; font-size: 14px;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+.card {
+    background: #0f172a; border: 1px solid #1e293b;
+    padding: 20px; margin-bottom: 16px; border-radius: 4px;
+}
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+h1 { color: #e5e7eb; margin: 8px 0 4px 0; font-size: 1.4rem; }
+h2 { color: #94a3b8; font-size: 1rem; margin: 0 0 16px 0; }
+h3 { color: #cbd5e1; font-size: 0.95rem; margin: 0 0 10px 0; }
+.nav { color: #38bdf8; text-decoration: none; font-size: 0.85rem; }
+.nav:hover { text-decoration: underline; }
+.badge {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-size: 0.7rem; font-weight: bold; margin-left: 6px; vertical-align: middle;
+}
+.badge-pos  { background: #22c55e; color: #020617; }
+.badge-neg  { background: #ef4444; color: #fff; }
+.badge-zero { background: #64748b; color: #e5e7eb; }
+.bank-card {
+    background: #0a1628; border: 1px solid #1e293b; border-radius: 4px;
+    padding: 16px; margin-bottom: 12px;
+}
+.bank-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;
+}
+.code   { font-size: 1.2rem; font-weight: bold; color: #38bdf8; }
+.yield  { font-size: 1rem; color: #22c55e; font-weight: bold; }
+.yield-neg { color: #ef4444; }
+.rate   { font-size: 0.85rem; color: #94a3b8; }
+label   { color: #94a3b8; font-size: 0.8rem; display: block; margin-bottom: 4px; }
+input, select {
+    background: #020617; color: #e5e7eb;
+    border: 1px solid #334155; padding: 6px 10px;
+    border-radius: 3px; font-size: 0.85rem;
+}
+.btn {
+    padding: 7px 16px; border: none; cursor: pointer;
+    border-radius: 3px; font-size: 0.85rem; font-weight: bold;
+    display: inline-block; text-decoration: none; margin: 4px 4px 4px 0;
+}
+.btn-blue   { background: #38bdf8; color: #020617; }
+.btn-green  { background: #22c55e; color: #020617; }
+.btn-red    { background: #ef4444; color: #fff; }
+.btn-gray   { background: #334155; color: #94a3b8; }
+.bond-row {
+    background: #0f172a; border-left: 4px solid #38bdf8;
+    padding: 12px; margin: 8px 0; border-radius: 2px;
+}
+.fx-row {
+    display: grid; grid-template-columns: 80px 100px 100px 100px 80px 1fr;
+    gap: 8px; align-items: center; padding: 6px 0;
+    border-bottom: 1px solid #0f172a; font-size: 0.85rem; color: #94a3b8;
+}
+.fx-row-header { font-size: 0.75rem; color: #475569; font-weight: bold; }
+.mini { font-size: 0.75rem; color: #64748b; }
+.alert-ok  { background: #052e16; border: 1px solid #166534; color: #4ade80; padding: 10px 14px; border-radius: 3px; margin-bottom: 12px; }
+.alert-err { background: #2d1a1a; border: 1px solid #7f1d1d; color: #fca5a5; padding: 10px 14px; border-radius: 3px; margin-bottom: 12px; }
+@media (max-width: 700px) {
+    .grid2, .grid3 { grid-template-columns: 1fr; }
+    .fx-row { grid-template-columns: 1fr 1fr; }
+}
+"""
+
+
+def _auth(session_token):
+    db = get_auth_db()
+    p  = get_player_from_session(db, session_token)
+    db.close()
+    return p
+
+
+def _page(title: str, body: str) -> str:
+    return f"""<!DOCTYPE html>
+<html><head>
+<title>{title} — Reserve Banks</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>{_CSS}</style>
+</head><body><div class="container">{body}</div></body></html>"""
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# BOND MARKET DASHBOARD
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.get("/reserve-banks/bonds", response_class=HTMLResponse)
+def bond_market(
+    msg: Optional[str]   = None,
+    err: Optional[str]   = None,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login")
+
+    banks        = get_all_banks()
+    my_bonds     = get_player_bonds(player.id)
+    my_balances  = get_player_currency_balances(player.id)
+    my_tender    = get_player_legal_tender(player.id)
+
+    # ── Flash messages ──
+    flash = ""
+    if msg:
+        flash = f'<div class="alert-ok">✓ {msg}</div>'
+    if err:
+        flash = f'<div class="alert-err">✗ {err}</div>'
+
+    # ── My currency balances ──
+    if my_balances:
+        bal_items = "".join(
+            f'<span style="margin-right:16px;">{b["flag"]} {b["currency_code"]} '
+            f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong> '
+            f'<span class="mini">(≈ ${b["usd_value"]:,.2f})</span></span>'
+            for b in my_balances
+        )
+        balances_html = f'<div class="card" style="border-left:3px solid #22c55e;">' \
+                        f'<h3>💰 Your Foreign Currency Balances</h3><div>{bal_items}</div></div>'
+    else:
+        balances_html = ""
+
+    # ── My active bonds ──
+    if my_bonds:
+        bond_rows = ""
+        for b in my_bonds:
+            yc      = "#22c55e" if b["current_yield_pct"] >= 0 else "#ef4444"
+            delta   = b["current_yield_pct"] - b["purchase_yield_pct"]
+            delta_s = f'+{delta:.4f}%' if delta >= 0 else f'{delta:.4f}%'
+            sell_confirm = f"Sell bond early for {b['sell_value_wsc']:.4f} WSC?"
+            bond_rows += f"""
+            <div class="bond-row">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <span style="font-size:1.1rem;">{b['flag']}</span>
+                        <strong style="color:#38bdf8;">{b['currency_code']}</strong>
+                        {b['maturity_days']}-day bond &bull;
+                        matures <strong>{b['matures_at']}</strong>
+                        ({b['remaining_days']} days left)
+                    </div>
+                    <div style="text-align:right;">
+                        <div>Face: <strong>{b['face_value_wsc']:.4f} WSC</strong></div>
+                        <div class="mini">Sell now: <strong style="color:#f59e0b;">{b['sell_value_wsc']:.4f} WSC</strong> (×{b['price_factor']:.4f})</div>
+                    </div>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:20px;flex-wrap:wrap;">
+                    <span>Yield at purchase: <strong>{b['purchase_yield_pct']:.4f}%</strong></span>
+                    <span>Current yield: <strong style="color:{yc};">{b['current_yield_pct']:.4f}%</strong>
+                        <span class="mini">({delta_s})</span></span>
+                    <span>Interest accrued: <strong style="color:#22c55e;">{b['currency_symbol']}{b['interest_accrued']:.6f} {b['currency_code']}</strong></span>
+                </div>
+                <div style="margin-top:8px;">
+                    <form action="/api/reserve-banks/bonds/sell/{b['id']}" method="post" style="display:inline;"
+                          onsubmit="return confirm('{sell_confirm}')">
+                        <button type="submit" class="btn btn-red">Sell Early</button>
+                    </form>
+                </div>
+            </div>"""
+        bonds_section = f'<div class="card"><h3>📋 Your Active Bonds</h3>{bond_rows}</div>'
+    else:
+        bonds_section = '<div class="card"><p style="color:#64748b;">No active bonds. Buy one below.</p></div>'
+
+    # ── Bank cards with buy form ──
+    bank_cards = ""
+    maturity_opts = "".join(f'<option value="{d}">{d} days</option>' for d in BOND_MATURITIES)
+    for bank in banks:
+        yc    = "yield" if bank["yield_pct"] >= 0 else "yield yield-neg"
+        badge = ("badge-pos" if bank["yield_pct"] > 0 else
+                 "badge-neg" if bank["yield_pct"] < 0 else "badge-zero")
+        ystr  = f'{bank["yield_pct"]:+.4f}%'
+        hist  = get_yield_history(bank["id"], limit=24)
+        sparkline = ""
+        if hist:
+            rates = [h["yield_pct"] for h in hist]
+            mn, mx = min(rates), max(rates)
+            span   = mx - mn or 0.001
+            pts    = " ".join(
+                f'{i*4},{40 - int((r - mn) / span * 38)}'
+                for i, r in enumerate(rates)
+            )
+            sparkline = (
+                f'<svg viewBox="0 0 {len(rates)*4} 40" width="100%" height="40" preserveAspectRatio="none" style="margin-top:6px;">'
+                f'<polyline points="{pts}" fill="none" stroke="#38bdf8" stroke-width="1.5"/>'
+                f'</svg>'
+            )
+        bank_cards += f"""
+        <div class="bank-card">
+            <div class="bank-header">
+                <span style="font-size:1.5rem;">{bank['flag']}</span>
+                <div>
+                    <span class="code">{bank['code']}</span>
+                    <span class="mini" style="margin-left:6px;">{bank['name']}</span>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                    <div class="{yc}">{ystr} <span class="badge {badge}">p.a.</span></div>
+                    <div class="rate">1 {bank['code']} = ${bank['usd_per_unit']:.6f} USD</div>
+                </div>
+            </div>
+            <div style="font-size:0.75rem;color:#475569;margin-bottom:6px;">
+                {bank['total_bonds']:,} bonds outstanding &bull; {bank['total_face_wsc']:,.2f} WSC face value &bull;
+                floor {bank['min_yield_pct']:+.4f}% &bull; ceiling {bank['max_yield_pct']:+.4f}%
+            </div>
+            {sparkline}
+            <form action="/api/reserve-banks/bonds/buy" method="post"
+                  style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;">
+                <input type="hidden" name="currency_code" value="{bank['code']}">
+                <div>
+                    <label>WSC Amount</label>
+                    <input type="number" name="wsc_amount" min="0.01" step="0.01"
+                           placeholder="e.g. 500" style="width:130px;" required>
+                </div>
+                <div>
+                    <label>Maturity</label>
+                    <select name="maturity_days" style="width:110px;">{maturity_opts}</select>
+                </div>
+                <button type="submit" class="btn btn-blue">Buy Bond →</button>
+            </form>
+        </div>"""
+
+    body = f"""
+    <a href="/" class="nav">← Dashboard</a>
+    <h1>🏦 State Reserve Banks — Bond Market</h1>
+    <p style="color:#64748b;margin:0 0 20px 0;">
+        Buy bonds with WSC to earn interest in foreign currencies.
+        Legal tender: <strong style="color:#38bdf8;">{my_tender}</strong> &bull;
+        <a href="/reserve-banks/forex" class="nav">Forex Dashboard →</a>
+    </p>
+    {flash}
+    {balances_html}
+    {bonds_section}
+    <h2>Available Reserve Banks</h2>
+    {bank_cards}
+    """
+    return _page("Bond Market", body)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# FOREX DASHBOARD
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.get("/reserve-banks/forex", response_class=HTMLResponse)
+def forex_dashboard(
+    msg: Optional[str]   = None,
+    err: Optional[str]   = None,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login")
+
+    banks       = get_all_banks()
+    my_balances = get_player_currency_balances(player.id)
+    recent      = get_recent_forex_trades(limit=40)
+    my_tender   = get_player_legal_tender(player.id)
+
+    flash = ""
+    if msg:
+        flash = f'<div class="alert-ok">✓ {msg}</div>'
+    if err:
+        flash = f'<div class="alert-err">✗ {err}</div>'
+
+    # ── Live FX rates table ──
+    currency_opts_from = '<option value="USD">🇺🇸 USD — Wadsworth Dollar</option>'
+    currency_opts_to   = '<option value="USD">🇺🇸 USD — Wadsworth Dollar</option>'
+    fx_rows = ""
+    for bank in banks:
+        usd_rate = bank["usd_per_unit"]
+        yc = "#22c55e" if bank["yield_pct"] >= 0 else "#ef4444"
+        fx_rows += f"""
+        <div class="fx-row">
+            <span>{bank['flag']} <strong style="color:#38bdf8;">{bank['code']}</strong></span>
+            <span>${usd_rate:.6f}</span>
+            <span>{1/usd_rate:.2f} {bank['code']} per $1</span>
+            <span style="color:{yc};">{bank['yield_pct']:+.4f}%</span>
+            <span class="mini">{FOREX_FEE_RATE*100:.1f}% fee</span>
+            <span class="mini">{bank['name']}</span>
+        </div>"""
+        currency_opts_from += f'<option value="{bank["code"]}">{bank["flag"]} {bank["code"]} — {bank["name"]}</option>'
+        currency_opts_to   += f'<option value="{bank["code"]}">{bank["flag"]} {bank["code"]} — {bank["name"]}</option>'
+
+    # ── Balance line ──
+    bal_line = '<span style="margin-right:12px;">USD <strong style="color:#38bdf8;">${:.2f}</strong></span>'.format(
+        player.cash_balance or 0.0)
+    for b in my_balances:
+        bal_line += (f'<span style="margin-right:12px;">{b["flag"]} {b["currency_code"]} '
+                     f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong></span>')
+
+    # ── Recent trades feed ──
+    if recent:
+        feed_rows = ""
+        for t in recent:
+            pid_s = f'Player #{t["player_id"]}' if t["player_id"] else "System"
+            feed_rows += f"""
+            <div class="fx-row">
+                <span style="color:#94a3b8;">{t['from_currency']}</span>
+                <span style="color:#94a3b8;">{t['amount_from']:.4f}</span>
+                <span style="color:#22c55e;">{t['to_currency']} {t['amount_to']:.4f}</span>
+                <span style="color:#64748b;">{t['rate']:.6f}</span>
+                <span style="color:#475569;">{t['fee_usd']:.4f} fee</span>
+                <span style="color:#334155;font-size:0.72rem;">{t['executed_at']} · {pid_s}</span>
+            </div>"""
+        trades_html = f"""
+        <div class="card">
+            <h3>📡 Live Forex Feed (last {len(recent)} trades)</h3>
+            <div class="fx-row fx-row-header">
+                <span>FROM</span><span>AMOUNT</span><span>TO</span>
+                <span>RATE</span><span>FEE</span><span>TIME · PLAYER</span>
+            </div>
+            {feed_rows}
+        </div>"""
+    else:
+        trades_html = '<div class="card"><p style="color:#64748b;">No forex trades yet.</p></div>'
+
+    body = f"""
+    <a href="/" class="nav">← Dashboard</a>
+    <h1>💱 Forex Market</h1>
+    <p style="color:#64748b;margin:0 0 4px 0;">
+        Live exchange rates powered by State Reserve Bank bond demand.
+        Automatic conversions charge {FOREX_FEE_RATE*100:.1f}%.
+        Legal tender: <strong style="color:#38bdf8;">{my_tender}</strong> &bull;
+        <a href="/reserve-banks/bonds" class="nav">Bond Market →</a>
+    </p>
+    {flash}
+
+    <div class="card" style="border-left:3px solid #38bdf8;margin-bottom:16px;">
+        <h3>Your Balances</h3>
+        <div style="flex-wrap:wrap;display:flex;gap:4px;">{bal_line}</div>
+    </div>
+
+    <!-- Live FX rates -->
+    <div class="card">
+        <h3>🌐 Live Exchange Rates (USD base)</h3>
+        <div class="fx-row fx-row-header" style="color:#475569;">
+            <span>CURRENCY</span><span>USD VALUE</span><span>INVERSE</span>
+            <span>YIELD</span><span>FX FEE</span><span>BANK</span>
+        </div>
+        {fx_rows}
+    </div>
+
+    <!-- Manual swap form -->
+    <div class="card" style="border-left:3px solid #f59e0b;">
+        <h3>🔄 Manual Forex Swap</h3>
+        <p class="mini" style="margin:0 0 12px 0;">
+            Swaps are instant at the current interbank rate minus {FOREX_FEE_RATE*100:.1f}% fee.
+            Large swaps may move rates slightly for subsequent trades.
+        </p>
+        <form action="/api/reserve-banks/forex/swap" method="post"
+              style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <div>
+                <label>From</label>
+                <select name="from_currency" style="width:200px;">{currency_opts_from}</select>
+            </div>
+            <div>
+                <label>Amount</label>
+                <input type="number" name="amount" min="0.0001" step="0.0001"
+                       placeholder="e.g. 100" style="width:130px;" required>
+            </div>
+            <div>
+                <label>To</label>
+                <select name="to_currency" style="width:200px;">{currency_opts_to}</select>
+            </div>
+            <button type="submit" class="btn btn-blue">Convert →</button>
+        </form>
+    </div>
+
+    {trades_html}
+    """
+    return _page("Forex Market", body)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# API: BUY BOND
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.post("/api/reserve-banks/bonds/buy")
+def api_buy_bond(
+    currency_code: str  = Form(...),
+    wsc_amount: float   = Form(...),
+    maturity_days: int  = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login", status_code=303)
+
+    ok, msg = purchase_bond(player.id, currency_code, wsc_amount, maturity_days)
+    param   = "msg" if ok else "err"
+    from urllib.parse import quote
+    return RedirectResponse(f"/reserve-banks/bonds?{param}={quote(msg)}", status_code=303)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# API: SELL BOND EARLY
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.post("/api/reserve-banks/bonds/sell/{bond_id}")
+def api_sell_bond(
+    bond_id: int,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login", status_code=303)
+
+    ok, msg = sell_bond(player.id, bond_id)
+    param   = "msg" if ok else "err"
+    from urllib.parse import quote
+    return RedirectResponse(f"/reserve-banks/bonds?{param}={quote(msg)}", status_code=303)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# API: FOREX SWAP
+# ──────────────────────────────────────────────────────────────────────────────
+
+@router.post("/api/corporate-actions/legal-tender/set")
+def api_set_legal_tender(
+    currency_code: str = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    from reserve_banks import set_player_legal_tender
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login", status_code=303)
+
+    ok, msg = set_player_legal_tender(player.id, currency_code.upper())
+    param   = "msg" if ok else "err"
+    from urllib.parse import quote
+    return RedirectResponse(f"/corporate-actions/dashboard?{param}={quote(msg)}", status_code=303)
+
+
+@router.post("/api/reserve-banks/forex/swap")
+def api_forex_swap(
+    from_currency: str = Form(...),
+    amount: float      = Form(...),
+    to_currency: str   = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = _auth(session_token)
+    if not player:
+        return RedirectResponse("/login", status_code=303)
+
+    ok, msg, _ = forex_swap(player.id, from_currency.upper(), amount, to_currency.upper())
+    param      = "msg" if ok else "err"
+    from urllib.parse import quote
+    return RedirectResponse(f"/reserve-banks/forex?{param}={quote(msg)}", status_code=303)
