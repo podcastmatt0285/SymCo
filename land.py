@@ -441,7 +441,7 @@ def degrade_efficiency(current_tick: int):
     # Single bulk UPDATE: subtract decay from all plots with efficiency > 0
     # max(0, efficiency - decay) is handled by the CASE expression
     db.query(LandPlot).filter(LandPlot.efficiency > 0).update(
-        {LandPlot.efficiency: func.max(0, LandPlot.efficiency - EFFICIENCY_DECAY_PER_TICK)},
+        {LandPlot.efficiency: func.greatest(0, LandPlot.efficiency - EFFICIENCY_DECAY_PER_TICK)},
         synchronize_session=False
     )
 
