@@ -96,7 +96,7 @@ def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None)
     <!DOCTYPE html>
     <html>
     <head>
-        <title>{title} - SymCo</title>
+        <title>{title} - Wadsworth</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <style>
             * {{ box-sizing: border-box; margin: 0; padding: 0; }}
