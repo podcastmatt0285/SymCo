@@ -2043,15 +2043,9 @@ def initialize():
     # Safe migrations for new columns
     from sqlalchemy import text
     with engine.connect() as conn:
-        existing = [row[1] for row in conn.execute(text("PRAGMA table_info(cities)")).fetchall()]
-        if "application_fee" not in existing:
-            conn.execute(text("ALTER TABLE cities ADD COLUMN application_fee REAL DEFAULT 50000.0"))
-            conn.commit()
-            print("[Cities] Migration: added application_fee column")
-        if "relocation_fee" not in existing:
-            conn.execute(text("ALTER TABLE cities ADD COLUMN relocation_fee REAL DEFAULT 10000.0"))
-            conn.commit()
-            print("[Cities] Migration: added relocation_fee column")
+        conn.execute(text("ALTER TABLE cities ADD COLUMN IF NOT EXISTS application_fee REAL DEFAULT 50000.0"))
+        conn.execute(text("ALTER TABLE cities ADD COLUMN IF NOT EXISTS relocation_fee REAL DEFAULT 10000.0"))
+        conn.commit()
 
     db = get_db()
     city_count = db.query(City).count()

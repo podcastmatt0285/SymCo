@@ -2469,30 +2469,14 @@ def initialize():
     from sqlalchemy import text
     with engine.connect() as conn:
         # Counties table migrations
-        county_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(counties)")).fetchall()]
-        if "transaction_fee_percent" not in county_cols:
-            conn.execute(text(f"ALTER TABLE counties ADD COLUMN transaction_fee_percent REAL DEFAULT {EXCHANGE_FEE_PERCENT}"))
-            conn.commit()
-            print("[Counties] Migration: added transaction_fee_percent")
-        if "mining_reward_multiplier" not in county_cols:
-            conn.execute(text("ALTER TABLE counties ADD COLUMN mining_reward_multiplier REAL DEFAULT 1.0"))
-            conn.commit()
-            print("[Counties] Migration: added mining_reward_multiplier")
+        conn.execute(text(f"ALTER TABLE counties ADD COLUMN IF NOT EXISTS transaction_fee_percent REAL DEFAULT {EXCHANGE_FEE_PERCENT}"))
+        conn.execute(text("ALTER TABLE counties ADD COLUMN IF NOT EXISTS mining_reward_multiplier REAL DEFAULT 1.0"))
 
         # GovernanceProposal table migrations
-        prop_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(governance_proposals)")).fetchall()]
-        if "voting_mechanism" not in prop_cols:
-            conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN voting_mechanism TEXT DEFAULT 'token_weighted'"))
-            conn.commit()
-            print("[Counties] Migration: added voting_mechanism to governance_proposals")
-        if "proposal_value" not in prop_cols:
-            conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN proposal_value REAL"))
-            conn.commit()
-            print("[Counties] Migration: added proposal_value to governance_proposals")
-        if "proposal_target" not in prop_cols:
-            conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN proposal_target TEXT"))
-            conn.commit()
-            print("[Counties] Migration: added proposal_target to governance_proposals")
+        conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS voting_mechanism TEXT DEFAULT 'token_weighted'"))
+        conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_value REAL"))
+        conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_target TEXT"))
+        conn.commit()
 
     db = get_db()
     county_count = db.query(County).count()

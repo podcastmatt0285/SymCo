@@ -640,16 +640,12 @@ def _migrate_tutorial_reward_column():
     try:
         import sqlalchemy
         with engine.connect() as conn:
-            result = conn.execute(sqlalchemy.text("PRAGMA table_info(land_plots)"))
-            columns = [row[1] for row in result]
-            if "is_tutorial_reward" not in columns:
-                conn.execute(
-                    sqlalchemy.text(
-                        "ALTER TABLE land_plots ADD COLUMN is_tutorial_reward BOOLEAN DEFAULT 0"
-                    )
+            conn.execute(
+                sqlalchemy.text(
+                    "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE"
                 )
-                conn.commit()
-                print("[Land] Migration: added is_tutorial_reward column to land_plots table")
+            )
+            conn.commit()
     except Exception as e:
         print(f"[Land] Migration warning: {e}")
 

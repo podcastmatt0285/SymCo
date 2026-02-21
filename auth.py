@@ -84,18 +84,12 @@ def migrate_tutorial_column():
     """Add tutorial_step column to players table if it doesn't exist."""
     try:
         with engine.connect() as conn:
-            result = conn.execute(
-                __import__("sqlalchemy").text("PRAGMA table_info(players)")
-            )
-            columns = [row[1] for row in result]
-            if "tutorial_step" not in columns:
-                conn.execute(
-                    __import__("sqlalchemy").text(
-                        "ALTER TABLE players ADD COLUMN tutorial_step INTEGER DEFAULT 0"
-                    )
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0"
                 )
-                conn.commit()
-                print("[Auth] Migration: added tutorial_step column to players table")
+            )
+            conn.commit()
     except Exception as e:
         print(f"[Auth] Migration warning: {e}")
 

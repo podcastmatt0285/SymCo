@@ -68,16 +68,11 @@ def initialize():
     Base.metadata.create_all(bind=engine)
     # Safe migration: add per-line pause columns if they don't exist yet
     try:
-        import sqlite3
-        con = sqlite3.connect("./wadsworth.db")
-        cur = con.cursor()
-        cols = {row[1] for row in cur.execute("PRAGMA table_info(businesses)")}
-        if "paused_lines" not in cols:
-            cur.execute("ALTER TABLE businesses ADD COLUMN paused_lines TEXT DEFAULT '[]'")
-        if "paused_products" not in cols:
-            cur.execute("ALTER TABLE businesses ADD COLUMN paused_products TEXT DEFAULT '[]'")
-        con.commit()
-        con.close()
+        from sqlalchemy import text as _text
+        with engine.connect() as _conn:
+            _conn.execute(_text("ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_lines TEXT DEFAULT '[]'"))
+            _conn.execute(_text("ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_products TEXT DEFAULT '[]'"))
+            _conn.commit()
     except Exception as _mig_err:
         print(f"[Business] Migration warning: {_mig_err}")
     load_business_config()
