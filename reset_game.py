@@ -282,6 +282,13 @@ def main():
     truncate_tables(admin_engine, to_wipe, "wadsworth")
 
     # ------------------------------------------------------------------
+    # 1b. Re-grant app-user privileges immediately so all subsequent
+    #     steps (starter kits, bank init) can write via SessionLocal
+    # ------------------------------------------------------------------
+    banner("Step 1b: Re-granting app-user privileges on wadsworth")
+    regrant_app_user(admin_engine, _main_url, "wadsworth")
+
+    # ------------------------------------------------------------------
     # 2. Reset player accounts (cash + tutorial) and kill all sessions
     # ------------------------------------------------------------------
     banner("Step 2: Resetting player accounts")
@@ -302,16 +309,9 @@ def main():
     reinit_main_banks()
 
     # ------------------------------------------------------------------
-    # 5. Re-grant app-user privileges on wadsworth (in case any tables
-    #    were owned by the admin user and symco was never granted access)
+    # 5. Wipe + re-seed reserve banks (separate DB)
     # ------------------------------------------------------------------
-    banner("Step 5: Re-granting app-user privileges on wadsworth")
-    regrant_app_user(admin_engine, _main_url, "wadsworth")
-
-    # ------------------------------------------------------------------
-    # 6. Wipe + re-seed reserve banks (separate DB)
-    # ------------------------------------------------------------------
-    banner("Step 6: Clearing + re-seeding reserve_banks DB")
+    banner("Step 5: Clearing + re-seeding reserve_banks DB")
     all_reserve = get_table_names(reserve_engine)
     truncate_tables(admin_reserve_engine, all_reserve, "reserve_banks")
     reinit_reserve_banks()
