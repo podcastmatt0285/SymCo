@@ -46,8 +46,72 @@ except ImportError:
                     k, v = line.split("=", 1)
                     os.environ.setdefault(k.strip(), v.strip())
 
-from sqlalchemy import text
+import re
+from sqlalchemy import create_engine, text
 from database import engine, SessionLocal, reserve_engine, ReserveSessionLocal
+
+# ---------------------------------------------------------------------------
+# Admin engine for the wipe step.
+#
+# The app user (symco) may not own the tables and therefore can't DELETE them.
+# We detect the actual table owner from pg_tables and connect as that user
+# instead (using local trust-auth — no password required on a standard
+# Termux / dev PostgreSQL install).
+#
+# Override by setting in .env:
+#   ADMIN_DATABASE_URL=postgresql://someuser:pass@localhost:5432/wadsworth
+# ---------------------------------------------------------------------------
+
+def _detect_table_owner(eng) -> str | None:
+    """Return the most common non-app-user table owner in the public schema."""
+    app_user = re.search(r"//([^:@]+)", os.environ.get("DATABASE_URL", "")).group(1) if re.search(r"//([^:@]+)", os.environ.get("DATABASE_URL", "")) else "symco"
+    try:
+        with eng.connect() as conn:
+            rows = conn.execute(text(
+                "SELECT tableowner, count(*) AS n FROM pg_tables "
+                "WHERE schemaname = 'public' GROUP BY tableowner ORDER BY n DESC"
+            )).fetchall()
+        for owner, _ in rows:
+            if owner != app_user:
+                return owner
+    except Exception:
+        pass
+    return None
+
+
+def _make_admin_engine(app_url: str, fallback_engine):
+    """
+    Build a superuser engine by:
+    1. Checking ADMIN_DATABASE_URL env var.
+    2. Auto-detecting the table owner and connecting as them (trust auth).
+    3. Falling back to the app engine with a warning.
+    """
+    explicit = os.environ.get("ADMIN_DATABASE_URL")
+    if explicit:
+        candidates = [explicit]
+    else:
+        # Derive host/port/db from the app URL, try detected owner then postgres
+        host_db = re.sub(r"//[^@]+@", "//OWNER@", app_url)
+        owner = _detect_table_owner(fallback_engine)
+        candidates = []
+        if owner:
+            candidates.append(host_db.replace("OWNER", owner))
+        candidates.append(host_db.replace("OWNER", "postgres"))
+
+    for url in candidates:
+        try:
+            eng = create_engine(url, echo=False)
+            with eng.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            step(f"Admin connection: {url.split('@')[-1]} (as {url.split('//')[-1].split('@')[0]})")
+            return eng
+        except Exception:
+            pass
+
+    print("  [WARN] Could not open an admin connection — wipe will use the app user.")
+    print("         Set ADMIN_DATABASE_URL in .env if tables are owned by a different user.")
+    return fallback_engine
+
 
 # ---------------------------------------------------------------------------
 # Tables in the main (wadsworth) DB that must NOT be wiped
@@ -84,41 +148,19 @@ def get_table_names(eng, schema: str = "public") -> list[str]:
 
 
 def truncate_tables(eng, tables: list[str], label: str):
-    """
-    Clear all rows from the given tables using DELETE FROM (not TRUNCATE).
-    DELETE only requires the DELETE privilege — no table ownership needed.
-    Tables with FK dependencies are retried until all are empty.
-    """
     if not tables:
-        print(f"  (no tables to clear in {label})")
+        print(f"  (no tables to truncate in {label})")
         return
-    step(f"Clearing {len(tables)} tables in {label} (DELETE FROM each)")
+    quoted = ", ".join(f'"{t}"' for t in sorted(tables))
+    sql = f"TRUNCATE TABLE {quoted} RESTART IDENTITY CASCADE"
+    step(f"TRUNCATE {len(tables)} tables in {label}")
     if DRY_RUN:
-        print(f"    [dry-run] would DELETE FROM {len(tables)} tables in {label}")
+        print(f"    [dry-run] would execute: {sql[:120]}...")
         return
-
-    remaining = list(tables)
-    passes = 0
-    while remaining and passes < 10:
-        passes += 1
-        failed = []
-        with eng.connect() as conn:
-            for table in remaining:
-                try:
-                    conn.execute(text(f'DELETE FROM "{table}"'))
-                    conn.commit()
-                except Exception as e:
-                    conn.rollback()
-                    failed.append(table)
-                    if "permission denied" in str(e).lower():
-                        print(f"    [SKIP] {table}: permission denied (table not owned by this user)")
-                    # FK violations are retried on next pass silently
-        remaining = failed
-
-    if remaining:
-        step(f"WARNING: could not clear {len(remaining)} table(s) (FK or permission): {remaining}")
-    else:
-        step(f"Done — {label} tables cleared.")
+    with eng.connect() as conn:
+        conn.execute(text(sql))
+        conn.commit()
+    step(f"Done — {label} tables cleared.")
 
 
 def reset_player_accounts() -> list[tuple[int, str]]:
@@ -220,13 +262,21 @@ def main():
             sys.exit(0)
 
     # ------------------------------------------------------------------
+    # 0. Build admin engines (table-owner / superuser) for the wipe step
+    # ------------------------------------------------------------------
+    _main_url    = os.environ.get("DATABASE_URL",         "postgresql://symco:symco@localhost:5432/wadsworth")
+    _reserve_url = os.environ.get("RESERVE_DATABASE_URL", "postgresql://symco:symco@localhost:5432/reserve_banks")
+    admin_engine         = _make_admin_engine(_main_url,    engine)
+    admin_reserve_engine = _make_admin_engine(_reserve_url, reserve_engine)
+
+    # ------------------------------------------------------------------
     # 1. Find tables to truncate in wadsworth
     # ------------------------------------------------------------------
     banner("Step 1: Clearing wadsworth game tables")
     all_wads = get_table_names(engine)
     to_wipe  = [t for t in all_wads if t not in PRESERVE_WADSWORTH]
     step(f"Found {len(all_wads)} total tables; preserving {len(PRESERVE_WADSWORTH)}, wiping {len(to_wipe)}")
-    truncate_tables(engine, to_wipe, "wadsworth")
+    truncate_tables(admin_engine, to_wipe, "wadsworth")
 
     # ------------------------------------------------------------------
     # 2. Reset player accounts (cash + tutorial) and kill all sessions
@@ -253,7 +303,7 @@ def main():
     # ------------------------------------------------------------------
     banner("Step 5: Clearing + re-seeding reserve_banks DB")
     all_reserve = get_table_names(reserve_engine)
-    truncate_tables(reserve_engine, all_reserve, "reserve_banks")
+    truncate_tables(admin_reserve_engine, all_reserve, "reserve_banks")
     reinit_reserve_banks()
 
     # ------------------------------------------------------------------
