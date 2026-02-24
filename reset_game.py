@@ -84,19 +84,41 @@ def get_table_names(eng, schema: str = "public") -> list[str]:
 
 
 def truncate_tables(eng, tables: list[str], label: str):
+    """
+    Clear all rows from the given tables using DELETE FROM (not TRUNCATE).
+    DELETE only requires the DELETE privilege — no table ownership needed.
+    Tables with FK dependencies are retried until all are empty.
+    """
     if not tables:
-        print(f"  (no tables to truncate in {label})")
+        print(f"  (no tables to clear in {label})")
         return
-    quoted = ", ".join(f'"{t}"' for t in sorted(tables))
-    sql = f"TRUNCATE TABLE {quoted} RESTART IDENTITY CASCADE"
-    step(f"TRUNCATE {len(tables)} tables in {label}")
+    step(f"Clearing {len(tables)} tables in {label} (DELETE FROM each)")
     if DRY_RUN:
-        print(f"    [dry-run] would execute: {sql[:120]}...")
+        print(f"    [dry-run] would DELETE FROM {len(tables)} tables in {label}")
         return
-    with eng.connect() as conn:
-        conn.execute(text(sql))
-        conn.commit()
-    step(f"Done — {label} tables cleared.")
+
+    remaining = list(tables)
+    passes = 0
+    while remaining and passes < 10:
+        passes += 1
+        failed = []
+        with eng.connect() as conn:
+            for table in remaining:
+                try:
+                    conn.execute(text(f'DELETE FROM "{table}"'))
+                    conn.commit()
+                except Exception as e:
+                    conn.rollback()
+                    failed.append(table)
+                    if "permission denied" in str(e).lower():
+                        print(f"    [SKIP] {table}: permission denied (table not owned by this user)")
+                    # FK violations are retried on next pass silently
+        remaining = failed
+
+    if remaining:
+        step(f"WARNING: could not clear {len(remaining)} table(s) (FK or permission): {remaining}")
+    else:
+        step(f"Done — {label} tables cleared.")
 
 
 def reset_player_accounts() -> list[tuple[int, str]]:
