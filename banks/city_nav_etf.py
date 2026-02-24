@@ -466,3 +466,28 @@ def get_etf_info() -> dict:
         "pays_dividends": False,
         "seed_capital": SEED_CAPITAL,
     }
+
+
+def get_player_shareholding(player_id: int) -> dict:
+    """Return shareholding info for a player."""
+    try:
+        import inventory
+        import banks
+
+        shares = inventory.get_item_quantity(player_id, SHARE_ITEM_TYPE)
+        bank_entity = banks.get_bank_entity(BANK_ID)
+
+        if not bank_entity:
+            return {"shares_owned": 0, "current_value": 0.0, "ownership_percentage": 0.0}
+
+        current_value = shares * bank_entity.share_price
+        ownership_pct = (shares / bank_entity.total_shares_issued * 100) if bank_entity.total_shares_issued > 0 else 0.0
+
+        return {
+            "shares_owned": shares,
+            "current_value": current_value,
+            "ownership_percentage": ownership_pct,
+            "share_price": bank_entity.share_price,
+        }
+    except Exception:
+        return {"shares_owned": 0, "current_value": 0.0, "ownership_percentage": 0.0}

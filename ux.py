@@ -2489,7 +2489,11 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 from banks.energy_etf import get_player_shareholding
                 market_item = "energy_etf_shares"
                 detail_url = "/banks/energy-etf"
-            else: # Default to land_bank logic
+            elif bank.bank_id == "city_nav_etf":
+                from banks.city_nav_etf import get_player_shareholding
+                market_item = "city_nav_etf_shares"
+                detail_url = "/banks/city-nav-etf"
+            else:
                 from banks.land_bank import get_player_shareholding
                 market_item = "land_bank_shares"
                 detail_url = "/banks/land-bank"
@@ -2531,7 +2535,11 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
 
     try:
         import banks
-        from banks.land_bank import get_player_shareholding, BANK_ID, BANK_NAME, BANK_DESCRIPTION
+        from banks.land_bank import (
+            get_player_shareholding, BANK_ID, BANK_NAME, BANK_DESCRIPTION,
+            MIN_RESERVE_FOR_DIVIDENDS, DIVIDEND_PAYOUT_PERCENTAGE,
+            DIVIDEND_INTERVAL_TICKS, SPLIT_PRICE_THRESHOLD,
+        )
 
         bank_entity = banks.get_bank_entity(BANK_ID)
         player_shares = get_player_shareholding(player.id)
@@ -2582,6 +2590,25 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
             <h3>Bank Statistics</h3>
             <p><strong>Total Dividends Paid:</strong> ${bank_entity.total_dividends_paid:,.2f}</p>
             <p><strong>Last Dividend:</strong> {bank_entity.last_dividend_date.strftime("%Y-%m-%d %H:%M") if bank_entity.last_dividend_date else "Never"}</p>
+        </div>
+
+        <div style="background: #1e293b; padding: 15px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #f59e0b;">
+            <h3 style="margin-top: 0; color: #64748b;">How the Land Bank Works</h3>
+            <ul style="color: #94a3b8; line-height: 1.8; margin: 0; padding-left: 20px;">
+                <li><strong style="color: #e2e8f0;">Purpose:</strong> The government land auction house and real estate investment fund. It holds land plots in reserve and releases them via public auction at market-discovered prices.</li>
+                <li><strong style="color: #e2e8f0;">Backing asset:</strong> Government-owned land. NAV = cash reserves + value of all land held in the land bank.</li>
+                <li><strong style="color: #e2e8f0;">Revenue:</strong> Earns revenue every time a land auction closes at a winning bid. Revenue flows into cash reserves.</li>
+                <li><strong style="color: #e2e8f0;">Dividends:</strong> Paid out to shareholders when reserves exceed ${MIN_RESERVE_FOR_DIVIDENDS:,.0f} — {int(DIVIDEND_PAYOUT_PERCENTAGE*100)}% of reserves distributed every {DIVIDEND_INTERVAL_TICKS} ticks.</li>
+                <li><strong style="color: #e2e8f0;">Insolvency / solvency levies:</strong> If reserves go negative, shareholders are billed proportionally (reverse dividend). Unpaid levies become liens accruing interest.</li>
+                <li><strong style="color: #e2e8f0;">Quantitative easing:</strong> If the share price falls below a crisis threshold, the bank creates emergency discounted land auctions to restore asset value.</li>
+                <li><strong style="color: #e2e8f0;">Stock splits:</strong> Shares split when the price exceeds ${SPLIT_PRICE_THRESHOLD:.0f}, keeping the price accessible.</li>
+                <li><strong style="color: #e2e8f0;">Buybacks:</strong> When reserves are high, the bank repurchases and retires shares to increase per-share value.</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <a href="/market?item=land_bank_shares" class="btn-orange">Trade Shares</a>
+            <a href="/land-market" class="btn-blue">View Land Market</a>
         </div>
         """
 
@@ -2793,6 +2820,84 @@ def energy_etf_dashboard(session_token: Optional[str] = Cookie(None)):
 # ==========================
 # BROKERAGE FIRM UX ROUTES
 # ==========================
+
+@router.get("/banks/city-nav-etf", response_class=HTMLResponse)
+def city_nav_etf_dashboard(session_token: Optional[str] = Cookie(None)):
+    """City NAV ETF dashboard."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    try:
+        import banks
+        from banks import city_nav_etf as etf
+
+        bank_entity = banks.get_bank_entity(etf.BANK_ID)
+        player_shares = etf.get_player_shareholding(player.id)
+        etf_info = etf.get_etf_info()
+
+        nav = etf_info["nav"]
+        share_price = etf_info["share_price"]
+        land_value = etf_info["land_portfolio_value"]
+        land_count = etf_info["land_plots_owned"]
+        cash = etf_info["cash_reserves"]
+
+        body = f"""
+        <a href="/banks" style="color: #64748b; text-decoration: none;">← Banks</a>
+        <h1 style="color: #38bdf8; margin: 10px 0;">{etf.BANK_NAME}</h1>
+        <p style="color: #94a3b8; font-style: italic;">{etf.BANK_DESCRIPTION}</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+            <div style="background: #1e293b; padding: 15px; border-radius: 4px; border-left: 4px solid #38bdf8;">
+                <h3 style="margin-top: 0; color: #64748b;">ETF Overview</h3>
+                <p>Share Price: <span style="color: #38bdf8; font-family: monospace;">${share_price:.10f}</span></p>
+                <p>Total Shares: {etf.IPO_SHARES:,}</p>
+                <p>Market Cap: ${share_price * etf.IPO_SHARES:,.2f}</p>
+                <p>Net Asset Value: ${nav:,.2f}</p>
+                <p>Cash Reserves: ${cash:,.2f}</p>
+                <p>Land Portfolio Value: ${land_value:,.2f}</p>
+                <p>Land Plots Owned: {land_count:,}</p>
+            </div>
+
+            <div style="background: #1e293b; padding: 15px; border-radius: 4px; border-left: 4px solid #22c55e;">
+                <h3 style="margin-top: 0; color: #64748b;">Your Position</h3>
+                <p>Shares Owned: {player_shares["shares_owned"]:,}</p>
+                <p>Market Value: ${player_shares["current_value"]:,.2f}</p>
+                <p>Ownership: {player_shares["ownership_percentage"]:.8f}%</p>
+                <p style="color: #64748b; font-size: 0.85em; margin-top: 10px;">
+                    No dividends are paid by this ETF. Returns come entirely from share price appreciation as the City NAV it tracks grows.
+                </p>
+            </div>
+        </div>
+
+        <div style="background: #1e293b; padding: 15px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #f59e0b;">
+            <h3 style="margin-top: 0; color: #64748b;">How This ETF Works</h3>
+            <ul style="color: #94a3b8; line-height: 1.8; margin: 0; padding-left: 20px;">
+                <li><strong style="color: #e2e8f0;">Purpose:</strong> Tracks the total Net Asset Value of every City on the map. As cities accumulate wealth, develop infrastructure, and grow populations, this ETF rises with them.</li>
+                <li><strong style="color: #e2e8f0;">Backing asset:</strong> Land plots — this ETF buys and sells land from the open land market, not commodities. Its NAV = cash on hand + market value of all land it holds.</li>
+                <li><strong style="color: #e2e8f0;">Peg mechanism:</strong> Share price is always <em>NAV ÷ total shares</em>. No dividends are ever paid — all gains are reflected in the share price.</li>
+                <li><strong style="color: #e2e8f0;">Supply:</strong> Fixed forever at {etf.IPO_SHARES:,} shares (420 billion). No splits, no buybacks, no new issuance.</li>
+                <li><strong style="color: #e2e8f0;">Seed capital:</strong> ${etf.SEED_CAPITAL:,.0f} — this ETF starts lean and grows only as it acquires land.</li>
+                <li><strong style="color: #e2e8f0;">Land buying rule:</strong> Buys the cheapest available listings when cash exceeds {etf.CASH_RESERVE_RATIO*100:.0f}% of NAV (up to {etf.BUY_MAX_LISTINGS} plots per cycle).</li>
+                <li><strong style="color: #e2e8f0;">Land selling rule:</strong> Lists plots for sale at {int(etf.LAND_SELL_MARKUP*100)}% of estimated value when land exceeds 90% of total NAV.</li>
+                <li><strong style="color: #e2e8f0;">Land valuation:</strong> Each plot is valued at <em>monthly_tax × 120</em> (10-year capitalisation), or its most recent sale price — whichever is higher.</li>
+                <li><strong style="color: #e2e8f0;">No dividends:</strong> This ETF never pays dividends. Returns are purely from price appreciation.</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <a href="/market?item=city_nav_etf_shares" class="btn-orange">Trade Shares</a>
+            <a href="/land-market" class="btn-blue">View Land Market</a>
+        </div>
+        """
+
+        return shell(etf.BANK_NAME, body, player.cash_balance, player.id)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return shell("ETF Error", f"Error loading City NAV ETF: {e}", player.cash_balance, player.id)
+
 
 @router.get("/banks/brokerage-firm", response_class=HTMLResponse)
 def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
