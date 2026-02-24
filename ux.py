@@ -2159,8 +2159,8 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                 founder_shares = founder_position.shares_owned if founder_position else 0
                 ownership_pct = (founder_shares / company.shares_outstanding * 100) if company.shares_outstanding > 0 else 0
                 
-                # Can delist if founder owns 100%
-                can_delist = founder_shares >= company.shares_outstanding
+                # Founder can always attempt to go private — delist_company handles the buyback cost
+                can_delist = True
                 
                 company_data.append({
                     "company": company,
@@ -2207,7 +2207,7 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                     go_private_form_html = f'''
                         <form action="/api/brokerage/go-private" method="post" style="display: inline;">
                             <input type="hidden" name="company_id" value="{company.id}">
-                            <button type="submit" class="btn-red" onclick="return confirm('Take company private? This will delist the stock and you cannot re-IPO for 7200 ticks.')">
+                            <button type="submit" class="btn-red" onclick="return confirm('Take company private? This will buy back all public shares at a 10% premium and delist the stock. You cannot re-IPO for 30 days.')">
                                 Go Private
                             </button>
                         </form>'''
@@ -2354,55 +2354,7 @@ async def brokerage_buyback_shares(
         return RedirectResponse(url="/brokerage/my-companies?error=exception", status_code=303)
 
 
-@router.post("/api/brokerage/go-private")
-async def brokerage_go_private(
-    company_id: int = Form(...),
-    session_token: Optional[str] = Cookie(None)
-):
-    """Take a company private (delist)."""
-    player = require_auth(session_token)
-    if isinstance(player, RedirectResponse):
-        return player
-    
-    try:
-        from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, delist_company, get_db as get_firm_db
-        )
-        
-        db = get_firm_db()
-        try:
-            # Verify founder owns 100%
-            company = db.query(CompanyShares).filter(
-                CompanyShares.id == company_id,
-                CompanyShares.founder_id == player.id
-            ).first()
-            
-            if not company:
-                return RedirectResponse(url="/brokerage/my-companies?error=not_founder", status_code=303)
-            
-            founder_position = db.query(ShareholderPosition).filter(
-                ShareholderPosition.player_id == player.id,
-                ShareholderPosition.company_shares_id == company_id
-            ).first()
-            
-            founder_shares = founder_position.shares_owned if founder_position else 0
-            
-            if founder_shares < company.shares_outstanding:
-                return RedirectResponse(url="/brokerage/my-companies?error=not_100_percent", status_code=303)
-        finally:
-            db.close()
-        
-        # Trigger delisting check
-        success, error_msg = delist_company(player.id, company_id)
-        
-        if success:
-            return RedirectResponse(url="/brokerage/my-companies?success=went_private", status_code=303)
-        return RedirectResponse(url="/brokerage/my-companies?error=delist_failed", status_code=303)
-        
-    except Exception as e:
-        print(f"[UX] Go private error: {e}")
-        return RedirectResponse(url="/brokerage/my-companies?error=exception", status_code=303)
-
+# go-private route is defined later at /api/brokerage/go-private (line ~4028)
 
 # ==========================
 # UPDATED BANKS PAGE WITH BROKERAGE FIRM

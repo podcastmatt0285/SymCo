@@ -274,6 +274,10 @@ def match_order(db, order: DistrictMarketOrder) -> bool:
             if order.order_type == OrderType.SELL and (match.price is None or match.price < order.price):
                 continue
         
+        # Prevent self-trading
+        if order.player_id == match.player_id:
+            continue
+
         # Calculate fill quantity
         match_remaining = match.quantity - match.quantity_filled
         fill_qty = min(remaining_qty, match_remaining)

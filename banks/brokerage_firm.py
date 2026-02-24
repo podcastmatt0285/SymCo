@@ -39,7 +39,7 @@ from typing import Optional, List, Dict, Any
 from enum import Enum
 import math
 
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, JSON, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -2620,7 +2620,20 @@ def _process_scrip_dividend(company, config, db):
 def initialize():
     print(f"[{BANK_NAME}] Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    
+
+    # Add new columns to existing tables if they don't exist yet (safe for existing DBs)
+    try:
+        with engine.connect() as conn:
+            conn.execute(text(
+                "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS can_relist_after TIMESTAMP"
+            ))
+            conn.execute(text(
+                "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS delisted_at TIMESTAMP"
+            ))
+            conn.commit()
+    except Exception as e:
+        print(f"[{BANK_NAME}] Column migration warning: {e}")
+
     try:
         from banks import brokerage_order_book
         brokerage_order_book.initialize()

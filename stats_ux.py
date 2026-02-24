@@ -1918,11 +1918,11 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
     return HTMLResponse(stats_shell("Districts", body, player.cash_balance, player.business_name))
 
 
-# ==========================
-# PRODUCTION COSTS
-# ==========================
+# /stats/production-costs is served by ux.py (production_costs.py calculator)
+# The old implementation below was removed — it depended on item_costs.json which no longer exists.
+# Redirecting to the canonical implementation for safety.
 
-@router.get("/stats/production-costs", response_class=HTMLResponse)
+@router.get("/stats/production-costs-legacy", response_class=HTMLResponse)
 async def stats_production_costs(
     session_token: Optional[str] = Cookie(None),
     search: Optional[str] = Query(None),

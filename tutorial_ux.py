@@ -233,7 +233,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
     # Values may be a string or a list of strings.
     STEP_PAGE = {
         1: "dashboard",
-        2: "land",
+        2: ["land", "businesses"],  # step 2 shows on land OR businesses
         3: "inventory",
         4: ["land", "businesses"],  # step 4 shows on land OR businesses
         5: "inventory",
@@ -279,23 +279,36 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
     elif step == 2:
         has_wf = player_has_business_type(player.id, "water_facility")
         title = "Your Land Portfolio"
-        content = f"""
-        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            Every business in Wadsworth needs a <strong style="color:#e5e7eb;">land plot</strong> to operate on.
-            You start with <strong style="color:#38bdf8;">3 free Prairie plots</strong> — each one is ready for development.
-        </p>
-        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            Different terrain types support different businesses. Prairie land is versatile and supports
-            farming, facilities, retail, and more. Each plot also earns a monthly tax bill based on size and proximity.
-        </p>
-        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
-            <strong style="color:#d4af37;">Your task:</strong> Build a
-            <strong style="color:#38bdf8;">Water Treatment Facility</strong> on one of your vacant plots below.
-            Water is a fundamental resource consumed by nearly every production chain.
-        </p>
-        {"<div style='background:#052e16;border:1px solid #16a34a;padding:10px 14px;border-radius:4px;color:#4ade80;margin-bottom:16px;'>✓ Water Treatment Facility built! Click OK to continue.</div>" if has_wf else "<div style='background:#1a0d00;border:1px solid #f59e0b;padding:10px 14px;border-radius:4px;color:#fbbf24;margin-bottom:16px;'>Scroll down → select <strong>Water Treatment Facility</strong> from the dropdown → click Build.</div>"}
-        {"<form action='/api/tutorial/advance' method='post'><button type='submit' style='background:#d4af37;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;'>OK — Check Inventory →</button></form>" if has_wf else "<span style='color:#64748b;font-size:0.85rem;'>Complete the task above to continue.</span>"}
-        """
+
+        if current_page == "businesses":
+            # Player navigated to /businesses — guide them back to /land to build
+            content = f"""
+            <div style="background:#0a1628;border:1px solid #38bdf8;padding:10px 14px;border-radius:4px;color:#93c5fd;margin-bottom:16px;">
+                📍 You're on the <strong>Businesses</strong> dashboard (your active businesses).
+                To <em>build</em> new businesses you need to go to your
+                <a href="/land" style="color:#38bdf8;font-weight:bold;">Land Portfolio (/land)</a>
+                and use the build form on a vacant plot.
+            </div>
+            {"<div style='background:#052e16;border:1px solid #16a34a;padding:10px 14px;border-radius:4px;color:#4ade80;margin-bottom:16px;'>✓ Water Treatment Facility built! Head back to <a href=\"/land\" style=\"color:#4ade80;font-weight:bold;\">/land</a> and click OK to continue.</div>" if has_wf else "<p style='color:#94a3b8;'>Your task: build a <strong style=\"color:#38bdf8;\">Water Treatment Facility</strong> on one of your vacant plots at <a href=\"/land\" style=\"color:#38bdf8;font-weight:bold;\">/land</a>.</p>"}
+            """
+        else:
+            content = f"""
+            <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+                Every business in Wadsworth needs a <strong style="color:#e5e7eb;">land plot</strong> to operate on.
+                You start with <strong style="color:#38bdf8;">3 free Prairie plots</strong> — each one is ready for development.
+            </p>
+            <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+                Different terrain types support different businesses. Prairie land is versatile and supports
+                farming, facilities, retail, and more. Each plot also earns a monthly tax bill based on size and proximity.
+            </p>
+            <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+                <strong style="color:#d4af37;">Your task:</strong> Build a
+                <strong style="color:#38bdf8;">Water Treatment Facility</strong> on one of your vacant plots below.
+                Water is a fundamental resource consumed by nearly every production chain.
+            </p>
+            {"<div style='background:#052e16;border:1px solid #16a34a;padding:10px 14px;border-radius:4px;color:#4ade80;margin-bottom:16px;'>✓ Water Treatment Facility built! Click OK to continue.</div>" if has_wf else "<div style='background:#1a0d00;border:1px solid #f59e0b;padding:10px 14px;border-radius:4px;color:#fbbf24;margin-bottom:16px;'>Scroll down → select <strong>Water Treatment Facility</strong> from the dropdown → click Build.</div>"}
+            {"<form action='/api/tutorial/advance' method='post'><button type='submit' style='background:#d4af37;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;'>OK — Check Inventory →</button></form>" if has_wf else "<span style='color:#64748b;font-size:0.85rem;'>Complete the task above to continue.</span>"}
+            """
 
     elif step == 3:
         title = "Your Inventory"
