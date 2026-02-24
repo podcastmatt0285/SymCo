@@ -217,6 +217,24 @@ def reinit_main_banks():
         import traceback; traceback.print_exc()
 
 
+def regrant_app_user(admin_eng, app_url: str, label: str):
+    """GRANT ALL ON ALL TABLES/SEQUENCES to the app user (symco) via the admin connection."""
+    m = re.search(r"//([^:@]+)", app_url)
+    if not m:
+        print(f"  [WARN] Could not parse app user from URL — skipping GRANT for {label}")
+        return
+    app_user = m.group(1)
+    if DRY_RUN:
+        print(f"    [dry-run] would GRANT ALL ON ALL TABLES/SEQUENCES IN SCHEMA public TO {app_user}")
+        return
+    step(f"Granting privileges on {label} to app user '{app_user}' …")
+    with admin_eng.connect() as conn:
+        conn.execute(text(f'GRANT ALL ON ALL TABLES IN SCHEMA public TO "{app_user}"'))
+        conn.execute(text(f'GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "{app_user}"'))
+        conn.commit()
+    step(f"Done — {app_user} has full access to {label}.")
+
+
 def reinit_reserve_banks():
     """Re-seed the DEFAULT_BANKS into the now-empty reserve_banks DB."""
     step("Re-seeding reserve banks …")
@@ -284,12 +302,20 @@ def main():
     reinit_main_banks()
 
     # ------------------------------------------------------------------
-    # 5. Wipe + re-seed reserve banks (separate DB)
+    # 5. Re-grant app-user privileges on wadsworth (in case any tables
+    #    were owned by the admin user and symco was never granted access)
     # ------------------------------------------------------------------
-    banner("Step 5: Clearing + re-seeding reserve_banks DB")
+    banner("Step 5: Re-granting app-user privileges on wadsworth")
+    regrant_app_user(admin_engine, _main_url, "wadsworth")
+
+    # ------------------------------------------------------------------
+    # 6. Wipe + re-seed reserve banks (separate DB)
+    # ------------------------------------------------------------------
+    banner("Step 6: Clearing + re-seeding reserve_banks DB")
     all_reserve = get_table_names(reserve_engine)
     truncate_tables(admin_reserve_engine, all_reserve, "reserve_banks")
     reinit_reserve_banks()
+    regrant_app_user(admin_reserve_engine, _reserve_url, "reserve_banks")
 
     # ------------------------------------------------------------------
     # Done
