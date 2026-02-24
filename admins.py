@@ -1009,6 +1009,234 @@ def admin_remove_city_from_county(admin_id: int, city_id: int) -> dict:
         return {"ok": False, "error": str(e)}
 
 
+def admin_get_city_polls(city_id: int) -> list:
+    """Return all polls for a city (active and recent)."""
+    try:
+        from cities import CityPoll, CityVote, get_db as get_city_db
+        from auth import Player, get_db as auth_get_db
+        db = get_city_db()
+        try:
+            polls = db.query(CityPoll).filter(
+                CityPoll.city_id == city_id
+            ).order_by(CityPoll.created_at.desc()).limit(20).all()
+            result = []
+            for p in polls:
+                vote_count = db.query(CityVote).filter(CityVote.poll_id == p.id).count()
+                target_name = None
+                if p.target_player_id:
+                    auth_db = auth_get_db()
+                    try:
+                        player = auth_db.query(Player).filter(Player.id == p.target_player_id).first()
+                        target_name = player.business_name if player else f"#{p.target_player_id}"
+                    finally:
+                        auth_db.close()
+                result.append({
+                    "id": p.id,
+                    "poll_type": p.poll_type,
+                    "target_player_id": p.target_player_id,
+                    "target_name": target_name,
+                    "proposed_currency": p.proposed_currency,
+                    "status": p.status,
+                    "yes_votes": p.yes_votes,
+                    "no_votes": p.no_votes,
+                    "vote_count": vote_count,
+                    "created_at": p.created_at.isoformat() if p.created_at else None,
+                    "closes_at": p.closes_at.isoformat() if p.closes_at else None,
+                })
+            return result
+        finally:
+            db.close()
+    except Exception as e:
+        return []
+
+
+def admin_resolve_city_poll(admin_id: int, poll_id: int, force_result: str) -> dict:
+    """
+    Force-resolve a city poll. force_result must be 'pass', 'fail', or 'cancel'.
+    For pass/fail, applies the poll's action (approve application, process banishment, etc.)
+    """
+    try:
+        from cities import (CityPoll, CityApplication, PollStatus, PollType,
+                            get_db as get_city_db, process_application_approval,
+                            process_banishment, set_city_currency)
+        if force_result not in ("pass", "fail", "cancel"):
+            return {"ok": False, "error": "force_result must be pass, fail, or cancel"}
+
+        db = get_city_db()
+        try:
+            poll = db.query(CityPoll).filter(CityPoll.id == poll_id).first()
+            if not poll:
+                db.close()
+                return {"ok": False, "error": "Poll not found"}
+            if poll.status != PollStatus.ACTIVE:
+                db.close()
+                return {"ok": False, "error": f"Poll is already {poll.status}"}
+
+            poll_type = poll.poll_type
+            city_id = poll.city_id
+            target_player_id = poll.target_player_id
+            proposed_currency = poll.proposed_currency
+
+            if force_result == "cancel":
+                poll.status = PollStatus.CANCELLED
+                db.commit()
+                db.close()
+                log_action(admin_id, "city_poll_cancel", None,
+                           f"Force-cancelled city poll #{poll_id} (type={poll_type})")
+                return {"ok": True}
+
+            elif force_result == "pass":
+                poll.status = PollStatus.PASSED
+                db.commit()
+                db.close()
+                # Apply the action
+                if poll_type == PollType.APPLICATION:
+                    db2 = get_city_db()
+                    try:
+                        app = db2.query(CityApplication).filter(
+                            CityApplication.city_id == city_id,
+                            CityApplication.applicant_id == target_player_id,
+                            CityApplication.status == "pending"
+                        ).first()
+                        app_id = app.id if app else None
+                    finally:
+                        db2.close()
+                    if app_id:
+                        process_application_approval(app_id)
+                elif poll_type == PollType.BANISHMENT:
+                    process_banishment(city_id, target_player_id)
+                elif poll_type == PollType.CURRENCY_CHANGE:
+                    set_city_currency(city_id, proposed_currency)
+                log_action(admin_id, "city_poll_force_pass", None,
+                           f"Force-passed city poll #{poll_id} (type={poll_type})")
+                return {"ok": True}
+
+            else:  # fail
+                poll.status = PollStatus.FAILED
+                db.commit()
+                # Reject pending application if applicable
+                if poll_type == PollType.APPLICATION and target_player_id:
+                    app = db.query(CityApplication).filter(
+                        CityApplication.city_id == city_id,
+                        CityApplication.applicant_id == target_player_id,
+                        CityApplication.status == "pending"
+                    ).first()
+                    if app:
+                        app.status = "rejected"
+                        db.commit()
+                db.close()
+                log_action(admin_id, "city_poll_force_fail", None,
+                           f"Force-failed city poll #{poll_id} (type={poll_type})")
+                return {"ok": True}
+
+        except Exception as e:
+            try:
+                db.close()
+            except Exception:
+                pass
+            raise e
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_get_county_polls(county_id: int) -> list:
+    """Return all polls for a county (active and recent)."""
+    try:
+        from counties import CountyPoll, CountyVote, get_db as get_county_db
+        from cities import City, get_db as get_city_db
+        db = get_county_db()
+        try:
+            polls = db.query(CountyPoll).filter(
+                CountyPoll.county_id == county_id
+            ).order_by(CountyPoll.created_at.desc()).limit(20).all()
+            result = []
+            for p in polls:
+                vote_count = db.query(CountyVote).filter(CountyVote.poll_id == p.id).count()
+                target_city_name = None
+                if p.target_city_id:
+                    city_db = get_city_db()
+                    try:
+                        city = city_db.query(City).filter(City.id == p.target_city_id).first()
+                        target_city_name = city.name if city else f"#{p.target_city_id}"
+                    finally:
+                        city_db.close()
+                result.append({
+                    "id": p.id,
+                    "poll_type": p.poll_type,
+                    "target_city_id": p.target_city_id,
+                    "target_city_name": target_city_name,
+                    "status": p.status,
+                    "yes_votes": p.yes_votes,
+                    "no_votes": p.no_votes,
+                    "vote_count": vote_count,
+                    "created_at": p.created_at.isoformat() if p.created_at else None,
+                    "closes_at": p.closes_at.isoformat() if p.closes_at else None,
+                })
+            return result
+        finally:
+            db.close()
+    except Exception as e:
+        return []
+
+
+def admin_resolve_county_poll(admin_id: int, poll_id: int, force_result: str) -> dict:
+    """Force-resolve a county poll. force_result must be 'pass', 'fail', or 'cancel'."""
+    try:
+        from counties import (CountyPoll, CountyPollStatus, CountyPollType,
+                              get_db as get_county_db, _add_city_to_county)
+        if force_result not in ("pass", "fail", "cancel"):
+            return {"ok": False, "error": "force_result must be pass, fail, or cancel"}
+
+        db = get_county_db()
+        try:
+            poll = db.query(CountyPoll).filter(CountyPoll.id == poll_id).first()
+            if not poll:
+                db.close()
+                return {"ok": False, "error": "Poll not found"}
+            if poll.status != CountyPollStatus.ACTIVE:
+                db.close()
+                return {"ok": False, "error": f"Poll is already {poll.status}"}
+
+            poll_type = poll.poll_type
+            county_id = poll.county_id
+            target_city_id = poll.target_city_id
+
+            if force_result == "cancel":
+                poll.status = CountyPollStatus.CANCELLED
+                db.commit()
+                db.close()
+                log_action(admin_id, "county_poll_cancel", None,
+                           f"Force-cancelled county poll #{poll_id} (type={poll_type})")
+                return {"ok": True}
+
+            elif force_result == "pass":
+                poll.status = CountyPollStatus.PASSED
+                db.commit()
+                db.close()
+                if poll_type == CountyPollType.ADD_CITY and target_city_id:
+                    _add_city_to_county(county_id, target_city_id, poll_id)
+                log_action(admin_id, "county_poll_force_pass", None,
+                           f"Force-passed county poll #{poll_id} (type={poll_type})")
+                return {"ok": True}
+
+            else:  # fail
+                poll.status = CountyPollStatus.FAILED
+                db.commit()
+                db.close()
+                log_action(admin_id, "county_poll_force_fail", None,
+                           f"Force-failed county poll #{poll_id} (type={poll_type})")
+                return {"ok": True}
+
+        except Exception as e:
+            try:
+                db.close()
+            except Exception:
+                pass
+            raise e
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ==========================
 # MODERATOR MANAGEMENT
 # ==========================

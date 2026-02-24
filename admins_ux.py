@@ -36,9 +36,11 @@ from admins import (
     # City admin
     get_all_cities_admin, get_player_city_info,
     admin_add_player_to_city, admin_remove_player_from_city,
+    admin_get_city_polls, admin_resolve_city_poll,
     # County admin
     get_all_counties_admin, get_player_county_info,
     admin_add_city_to_county, admin_remove_city_from_county,
+    admin_get_county_polls, admin_resolve_county_poll,
     # Moderator management
     add_moderator, remove_moderator, get_all_moderators,
 )
@@ -1029,7 +1031,7 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
     for cn in counties:
         county_rows += f"""<tr>
             <td>#{cn["id"]}</td>
-            <td>{cn["name"]}</td>
+            <td><a href="/admin/counties/{cn['id']}">{cn["name"]}</a></td>
             <td style="font-weight:bold;color:#f59e0b;">{cn.get("crypto_symbol","?")}</td>
             <td>{cn.get("city_count", 0)}</td>
             <td style="color:#94a3b8;">{cn.get("total_supply", 0):,.0f}</td>
@@ -1090,6 +1092,240 @@ def post_county_remove_city(session_token: Optional[str] = Cookie(None), city_id
     if result["ok"]:
         return RedirectResponse(url=f"/admin/cities?msg=City+%23{city_id}+removed+from+county", status_code=303)
     return RedirectResponse(url=f"/admin/cities?err={result['error']}", status_code=303)
+
+
+# ──────────────────────────────────────────────────────────────
+# CITY DETAIL PAGE (polls + members)
+# ──────────────────────────────────────────────────────────────
+
+@router.get("/admin/cities/{city_id}", response_class=HTMLResponse)
+def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
+                      msg: Optional[str] = Query(None), err: Optional[str] = Query(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    # Load city info
+    city_info = None
+    try:
+        from cities import City, CityMember, get_db as get_city_db
+        from auth import Player, get_db as auth_get_db
+        city_db = get_city_db()
+        try:
+            city = city_db.query(City).filter(City.id == city_id).first()
+            if not city:
+                return HTMLResponse(admin_shell("Not Found",
+                    '<p style="color:#ef4444;">City not found.</p>', admin.business_name, "/admin/cities"))
+            members = city_db.query(CityMember).filter(CityMember.city_id == city_id).all()
+            member_ids = [m.player_id for m in members]
+        finally:
+            city_db.close()
+
+        auth_db = auth_get_db()
+        try:
+            players = {p.id: p.business_name for p in
+                       auth_db.query(Player).filter(Player.id.in_(member_ids)).all()}
+            mayor_name = players.get(city.mayor_id, f"#{city.mayor_id}")
+        finally:
+            auth_db.close()
+
+        city_info = {"id": city.id, "name": city.name, "mayor_id": city.mayor_id,
+                     "mayor_name": mayor_name, "currency_type": city.currency_type}
+        member_count = len(members)
+        member_rows = "".join(
+            f'<tr><td>#{m.player_id}</td><td>{players.get(m.player_id, "?")}</td>'
+            f'<td>{"👑 Mayor" if m.player_id == city.mayor_id else "Member"}</td>'
+            f'<td style="color:#64748b;font-size:0.7rem;">{m.joined_at.strftime("%Y-%m-%d") if m.joined_at else "—"}</td>'
+            f'<td><a href="/admin/player/{m.player_id}" style="font-size:0.7rem;">View</a></td></tr>'
+            for m in members
+        )
+    except Exception as e:
+        return HTMLResponse(admin_shell("Error",
+            f'<p style="color:#ef4444;">Error loading city: {e}</p>', admin.business_name, "/admin/cities"))
+
+    # Load city polls
+    polls = admin_get_city_polls(city_id)
+    active_polls = [p for p in polls if p["status"] == "active"]
+    past_polls   = [p for p in polls if p["status"] != "active"]
+
+    def _poll_type_label(pt):
+        return {"application": "🗳️ Application", "banishment": "⚖️ Banishment",
+                "currency_change": "💱 Currency Change"}.get(pt, pt)
+
+    def _status_color(st):
+        return {"active": "#22c55e", "passed": "#60a5fa", "failed": "#ef4444",
+                "cancelled": "#94a3b8"}.get(st, "#94a3b8")
+
+    active_poll_rows = ""
+    for p in active_polls:
+        target_label = ""
+        if p.get("target_name"):
+            target_label = f'<br><span style="color:#94a3b8;font-size:0.7rem;">Target: {p["target_name"]}</span>'
+        if p.get("proposed_currency"):
+            target_label = f'<br><span style="color:#94a3b8;font-size:0.7rem;">Currency: {p["proposed_currency"]}</span>'
+        active_poll_rows += f"""<tr>
+            <td>#{p['id']}</td>
+            <td>{_poll_type_label(p['poll_type'])}{target_label}</td>
+            <td style="color:#22c55e;">{p['yes_votes']} ✓ / {p['no_votes']} ✗ ({p['vote_count']} voters)</td>
+            <td style="color:#94a3b8;font-size:0.7rem;">{p.get('closes_at','')[:16]}</td>
+            <td>
+                <form method="post" action="/admin/cities/{city_id}/resolve-poll" style="display:inline;">
+                    <input type="hidden" name="poll_id" value="{p['id']}">
+                    <button name="force_result" value="pass" class="btn btn-green" style="font-size:0.65rem;padding:3px 6px;">Force Pass</button>
+                    <button name="force_result" value="fail" class="btn btn-red" style="font-size:0.65rem;padding:3px 6px;margin-left:3px;">Force Fail</button>
+                    <button name="force_result" value="cancel" style="background:#475569;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.65rem;padding:3px 6px;margin-left:3px;">Cancel</button>
+                </form>
+            </td>
+        </tr>"""
+
+    past_poll_rows = ""
+    for p in past_polls[:10]:
+        target_label = p.get("target_name") or p.get("proposed_currency") or "—"
+        past_poll_rows += f"""<tr>
+            <td>#{p['id']}</td>
+            <td>{_poll_type_label(p['poll_type'])}</td>
+            <td>{target_label}</td>
+            <td style="color:{_status_color(p['status'])};font-weight:bold;">{p['status'].upper()}</td>
+            <td style="color:#64748b;">{p['yes_votes']} / {p['no_votes']}</td>
+        </tr>"""
+
+    body = f"""
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <a href="/admin/cities" style="color:#64748b;font-size:0.75rem;">← Cities</a>
+        <span style="font-size:0.9rem;font-weight:bold;">🏙️ {city_info['name']} (#{city_id})</span>
+        <span style="color:#94a3b8;font-size:0.75rem;">Mayor: {city_info['mayor_name']}</span>
+        {f'<span style="color:#f59e0b;font-size:0.75rem;">Currency: {city_info["currency_type"]}</span>' if city_info.get("currency_type") else ""}
+    </div>
+    {_flash(msg=msg, err=err)}
+
+    <div class="card">
+        <h3>Active Polls ({len(active_polls)})</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Votes</th><th>Closes</th><th>Actions</th></tr>{active_poll_rows}</table></div>'
+          if active_polls else '<p style="color:#64748b;font-size:0.75rem;">No active polls.</p>'}
+    </div>
+
+    <div class="card">
+        <h3>Members ({member_count})</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Name</th><th>Role</th><th>Joined</th><th></th></tr>{member_rows}</table></div>'
+          if member_rows else '<p style="color:#64748b;font-size:0.75rem;">No members.</p>'}
+    </div>
+
+    {f'''<div class="card">
+        <h3>Recent Polls (last {len(past_polls[:10])})</h3>
+        <div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Target</th><th>Result</th><th>Y/N</th></tr>{past_poll_rows}</table></div>
+    </div>''' if past_polls else ""}
+    """
+    return HTMLResponse(admin_shell(f"City: {city_info['name']}", body, admin.business_name, "/admin/cities"))
+
+
+@router.post("/admin/cities/{city_id}/resolve-poll")
+def post_resolve_city_poll(city_id: int, session_token: Optional[str] = Cookie(None),
+                           poll_id: int = Form(...), force_result: str = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_resolve_city_poll(admin.id, poll_id, force_result)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/cities/{city_id}?msg=Poll+%23{poll_id}+{force_result}ed", status_code=303)
+    return RedirectResponse(url=f"/admin/cities/{city_id}?err={result['error']}", status_code=303)
+
+
+# ──────────────────────────────────────────────────────────────
+# COUNTY DETAIL PAGE (polls)
+# ──────────────────────────────────────────────────────────────
+
+@router.get("/admin/counties/{county_id}", response_class=HTMLResponse)
+def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(None),
+                        msg: Optional[str] = Query(None), err: Optional[str] = Query(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    county_info = None
+    try:
+        from counties import County, get_db as get_county_db
+        county_db = get_county_db()
+        try:
+            county = county_db.query(County).filter(County.id == county_id).first()
+            if not county:
+                return HTMLResponse(admin_shell("Not Found",
+                    '<p style="color:#ef4444;">County not found.</p>', admin.business_name, "/admin/cities"))
+            county_info = {"id": county.id, "name": county.name,
+                           "crypto_symbol": county.crypto_symbol, "crypto_name": county.crypto_name}
+        finally:
+            county_db.close()
+    except Exception as e:
+        return HTMLResponse(admin_shell("Error",
+            f'<p style="color:#ef4444;">Error loading county: {e}</p>', admin.business_name, "/admin/cities"))
+
+    polls = admin_get_county_polls(county_id)
+    active_polls = [p for p in polls if p["status"] == "active"]
+    past_polls   = [p for p in polls if p["status"] != "active"]
+
+    def _status_color(st):
+        return {"active": "#22c55e", "passed": "#60a5fa", "failed": "#ef4444",
+                "cancelled": "#94a3b8"}.get(st, "#94a3b8")
+
+    active_poll_rows = ""
+    for p in active_polls:
+        target_label = p.get("target_city_name") or f"City #{p.get('target_city_id','?')}"
+        active_poll_rows += f"""<tr>
+            <td>#{p['id']}</td>
+            <td>🏙️ Add City</td>
+            <td>{target_label}</td>
+            <td style="color:#22c55e;">{p['yes_votes']} ✓ / {p['no_votes']} ✗ ({p['vote_count']} voters)</td>
+            <td style="color:#94a3b8;font-size:0.7rem;">{p.get('closes_at','')[:16]}</td>
+            <td>
+                <form method="post" action="/admin/counties/{county_id}/resolve-poll" style="display:inline;">
+                    <input type="hidden" name="poll_id" value="{p['id']}">
+                    <button name="force_result" value="pass" class="btn btn-green" style="font-size:0.65rem;padding:3px 6px;">Force Pass</button>
+                    <button name="force_result" value="fail" class="btn btn-red" style="font-size:0.65rem;padding:3px 6px;margin-left:3px;">Force Fail</button>
+                    <button name="force_result" value="cancel" style="background:#475569;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.65rem;padding:3px 6px;margin-left:3px;">Cancel</button>
+                </form>
+            </td>
+        </tr>"""
+
+    past_poll_rows = ""
+    for p in past_polls[:10]:
+        past_poll_rows += f"""<tr>
+            <td>#{p['id']}</td>
+            <td>{p.get('target_city_name') or f"City #{p.get('target_city_id','?')}"}</td>
+            <td style="color:{_status_color(p['status'])};font-weight:bold;">{p['status'].upper()}</td>
+            <td style="color:#64748b;">{p['yes_votes']} / {p['no_votes']}</td>
+        </tr>"""
+
+    body = f"""
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <a href="/admin/cities" style="color:#64748b;font-size:0.75rem;">← Cities</a>
+        <span style="font-size:0.9rem;font-weight:bold;">🏛️ {county_info['name']} (#{county_id})</span>
+        <span style="color:#f59e0b;font-size:0.75rem;">{county_info['crypto_symbol']} — {county_info['crypto_name']}</span>
+    </div>
+    {_flash(msg=msg, err=err)}
+
+    <div class="card">
+        <h3>Active Polls ({len(active_polls)})</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Target City</th><th>Votes</th><th>Closes</th><th>Actions</th></tr>{active_poll_rows}</table></div>'
+          if active_polls else '<p style="color:#64748b;font-size:0.75rem;">No active polls.</p>'}
+    </div>
+
+    {f'''<div class="card">
+        <h3>Recent Polls (last {len(past_polls[:10])})</h3>
+        <div class="table-wrap"><table><tr><th>ID</th><th>Target City</th><th>Result</th><th>Y/N</th></tr>{past_poll_rows}</table></div>
+    </div>''' if past_polls else ""}
+    """
+    return HTMLResponse(admin_shell(f"County: {county_info['name']}", body, admin.business_name, "/admin/cities"))
+
+
+@router.post("/admin/counties/{county_id}/resolve-poll")
+def post_resolve_county_poll(county_id: int, session_token: Optional[str] = Cookie(None),
+                             poll_id: int = Form(...), force_result: str = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_resolve_county_poll(admin.id, poll_id, force_result)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/counties/{county_id}?msg=Poll+%23{poll_id}+{force_result}ed", status_code=303)
+    return RedirectResponse(url=f"/admin/counties/{county_id}?err={result['error']}", status_code=303)
 
 
 @router.post("/admin/player/{pid}/kick")
