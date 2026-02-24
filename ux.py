@@ -556,9 +556,50 @@ def home(session_token: Optional[str] = Cookie(None)):
     except Exception:
         acq_banners = ""
 
+    # Crypto inheritance notification banners
+    crypto_inherit_banners = ""
+    try:
+        from estate import get_crypto_inheritance_notifications, mark_crypto_notifications_seen
+        crypto_notifs = get_crypto_inheritance_notifications(player.id)
+        crypto_banner_parts = []
+        for notif in crypto_notifs:
+            if notif.crypto_type == "staked_cash":
+                crypto_banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #a78bfa;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+                    <span style="background:#a78bfa;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">CRYPTO INHERITANCE</span>
+                    <span style="color:#64748b;font-size:0.75rem;">Hidden from government — no tax applied</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">
+                    You inherited staked <strong style="color:#a78bfa;">{notif.crypto_symbol}</strong> from <strong style="color:#e2e8f0;">{notif.deceased_name}</strong>'s estate.
+                    The staked crypto has been liquidated and <strong style="color:#a78bfa;">${notif.cash_equivalent:,.2f}</strong> has been added to your cash balance.
+                </p>
+            </div>""")
+            else:
+                type_label = {"county": "County Token", "wsc": "WSC Stablecoin", "meme": "Meme Coin"}.get(notif.crypto_type, "Crypto")
+                crypto_banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #a78bfa;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+                    <span style="background:#a78bfa;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">CRYPTO INHERITANCE</span>
+                    <span style="color:#64748b;font-size:0.75rem;">Hidden from government — no tax applied</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">
+                    You inherited <strong style="color:#a78bfa;">{notif.amount:,.4f} {notif.crypto_symbol}</strong> ({type_label}) from <strong style="color:#e2e8f0;">{notif.deceased_name}</strong>'s estate
+                    (≈ <strong style="color:#a78bfa;">${notif.cash_equivalent:,.2f}</strong> at time of transfer).
+                    Check your crypto wallet for the new balance.
+                </p>
+            </div>""")
+        if crypto_banner_parts:
+            mark_crypto_notifications_seen(player.id)
+        crypto_inherit_banners = "".join(crypto_banner_parts)
+    except Exception:
+        crypto_inherit_banners = ""
+
     dashboard_top = tutorial_overlay or tutorial_banner
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
+    if crypto_inherit_banners:
+        dashboard_top = dashboard_top + crypto_inherit_banners
 
     return shell(
         "Dashboard",
@@ -5541,7 +5582,7 @@ async def create_business_endpoint(land_plot_id: int = Form(...), business_type:
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
     from business import create_business
-    if create_business(player.id, land_plot_id, business_type): return RedirectResponse(url="/businesses", status_code=303)
+    if create_business(player.id, land_plot_id, business_type): return RedirectResponse(url="/land?built=1", status_code=303)
     return RedirectResponse(url="/land?error=failed", status_code=303)
 
 @router.post("/api/business/toggle")

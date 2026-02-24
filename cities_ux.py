@@ -653,17 +653,18 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     from cities import (
         get_city_by_id, get_city_stats, get_city_members, get_city_bank,
         is_city_member, is_mayor, get_player_total_value, CityPoll, CityApplication,
-        PollStatus
+        PollStatus, calculate_city_nav
     )
     from auth import Player, get_db
-    
+
     city = get_city_by_id(city_id)
     if not city:
         return RedirectResponse(url="/cities?msg=City+not+found", status_code=303)
-    
+
     stats = get_city_stats(city_id)
     members = get_city_members(city_id)
     bank = get_city_bank(city_id)
+    nav = calculate_city_nav(city_id)
     
     is_member = is_city_member(player.id, city_id)
     is_city_mayor = is_mayor(player.id, city_id)
@@ -1103,6 +1104,39 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                         <span class="stat-label">Total Debt</span>
                         <span class="stat-value {'negative' if stats['total_debt'] > 0 else ''}">${stats['total_debt']:,.2f}</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 City NAV</h2>
+                <p style="color:#94a3b8;font-size:0.85rem;margin-bottom:12px;">
+                    Net Asset Value — total economic weight of this city and its members.
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
+                        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">A · Cash Reserves</div>
+                        <div style="color:#38bdf8;font-size:1.1rem;font-weight:bold;">${nav['nav_cash_reserves']:,.2f}</div>
+                        <div style="color:#64748b;font-size:0.75rem;">Liquid bank balance</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
+                        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">B · Currency Inventory</div>
+                        <div style="color:#34d399;font-size:1.1rem;font-weight:bold;">${nav['nav_currency_value']:,.2f}</div>
+                        <div style="color:#64748b;font-size:0.75rem;">{nav['currency_quantity']:,.2f} {nav['currency_type'] or '—'} @ market</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
+                        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">C · Member Net Worth</div>
+                        <div style="color:#f59e0b;font-size:1.1rem;font-weight:bold;">${nav['nav_member_value']:,.2f}</div>
+                        <div style="color:#64748b;font-size:0.75rem;">{nav['member_count']} member(s) combined</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
+                        <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">D · City Projects</div>
+                        <div style="color:#a78bfa;font-size:1.1rem;font-weight:bold;">${nav['nav_projects_value']:,.2f}</div>
+                        <div style="color:#64748b;font-size:0.75rem;">Municipal mega-projects</div>
+                    </div>
+                </div>
+                <div style="background:#1e293b;border:2px solid #38bdf8;border-radius:6px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="color:#94a3b8;font-size:0.9rem;font-weight:600;">TOTAL CITY NAV</span>
+                    <span style="color:#38bdf8;font-size:1.4rem;font-weight:bold;">${nav['total_nav']:,.2f}</span>
                 </div>
             </div>
             

@@ -123,6 +123,24 @@ class GovernmentEstateListing(Base):
     sold = Column(Boolean, default=False)
 
 
+class CryptoInheritanceNotification(Base):
+    """Notification shown to heirs when they receive hidden crypto inheritance.
+    Crypto is hidden from the government so it bypasses the estate liquidation,
+    carries no death tax, and is transferred directly to heirs proportionally.
+    """
+    __tablename__ = "crypto_inheritance_notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    heir_player_id = Column(Integer, index=True, nullable=False)
+    deceased_name = Column(String, nullable=False)
+    crypto_symbol = Column(String, nullable=False)   # e.g. "WDC", "WSC", or meme symbol
+    amount = Column(Float, default=0.0)
+    cash_equivalent = Column(Float, default=0.0)     # USD value at time of transfer
+    crypto_type = Column(String, default="county")   # "county", "wsc", "meme", "staked_cash"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_seen = Column(Boolean, default=False)
+
+
 # ==========================
 # HELPER FUNCTIONS
 # ==========================
@@ -173,6 +191,34 @@ def is_player_deceased(player_id: int) -> bool:
         return db.query(DeceasedPlayer).filter(
             DeceasedPlayer.player_id == player_id
         ).first() is not None
+    finally:
+        db.close()
+
+
+def get_crypto_inheritance_notifications(player_id: int) -> List["CryptoInheritanceNotification"]:
+    """Return unseen crypto inheritance notifications for a player."""
+    db = get_db()
+    try:
+        return db.query(CryptoInheritanceNotification).filter(
+            CryptoInheritanceNotification.heir_player_id == player_id,
+            CryptoInheritanceNotification.is_seen == False
+        ).order_by(CryptoInheritanceNotification.created_at.asc()).all()
+    finally:
+        db.close()
+
+
+def mark_crypto_notifications_seen(player_id: int):
+    """Mark all crypto inheritance notifications as seen for a player."""
+    db = get_db()
+    try:
+        db.query(CryptoInheritanceNotification).filter(
+            CryptoInheritanceNotification.heir_player_id == player_id,
+            CryptoInheritanceNotification.is_seen == False
+        ).update({"is_seen": True})
+        db.commit()
+    except Exception as e:
+        print(f"[Estate] Error marking crypto notifications seen: {e}")
+        db.rollback()
     finally:
         db.close()
 
@@ -678,6 +724,215 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 print(f"[Estate] No heirs - government receives ${remainder:,.2f}")
             government_took_all = True
 
+        # 5b. Handle crypto assets — hidden from government, no death tax, no fees.
+        # Crypto is transferred directly and proportionally to living heirs.
+        # Crypto NOT in the wallet (staked/deposited) is converted to its cash
+        # equivalent and credited to heirs' balances.
+        deceased_name_for_notif = player.business_name
+        heir_count = len(living_heirs)
+        if heir_count > 0:
+            # --- County native crypto wallets ---
+            try:
+                from counties import CryptoWallet, get_db as county_get_db
+                county_db = county_get_db()
+                try:
+                    crypto_wallets = county_db.query(CryptoWallet).filter(
+                        CryptoWallet.player_id == player_id,
+                        CryptoWallet.balance > 0
+                    ).all()
+                    for cw in crypto_wallets:
+                        per_heir_amount = cw.balance / heir_count
+                        for heir in living_heirs:
+                            # Get or create heir's wallet for this symbol
+                            heir_wallet = county_db.query(CryptoWallet).filter(
+                                CryptoWallet.player_id == heir.heir_player_id,
+                                CryptoWallet.crypto_symbol == cw.crypto_symbol
+                            ).first()
+                            if not heir_wallet:
+                                heir_wallet = CryptoWallet(
+                                    player_id=heir.heir_player_id,
+                                    crypto_symbol=cw.crypto_symbol,
+                                    balance=0.0
+                                )
+                                county_db.add(heir_wallet)
+                                county_db.flush()
+                            heir_wallet.balance += per_heir_amount
+                            # Create notification
+                            notif = CryptoInheritanceNotification(
+                                heir_player_id=heir.heir_player_id,
+                                deceased_name=deceased_name_for_notif,
+                                crypto_symbol=cw.crypto_symbol,
+                                amount=per_heir_amount,
+                                cash_equivalent=0.0,
+                                crypto_type="county"
+                            )
+                            db.add(notif)
+                        # Clear deceased's wallet
+                        cw.balance = 0.0
+                        print(f"[Estate] Crypto {cw.crypto_symbol}: distributed {cw.balance:.6f} among {heir_count} heirs (NO tax, hidden from gov)")
+                    county_db.commit()
+                finally:
+                    county_db.close()
+            except Exception as e:
+                print(f"[Estate] County crypto wallet inheritance error: {e}")
+
+            # --- County mining deposits (city currency staked — not in wallet) ---
+            # Convert to cash value and add to heirs' balances (no tax).
+            try:
+                from counties import MiningDeposit, get_db as county_get_db
+                county_db = county_get_db()
+                try:
+                    staked = county_db.query(MiningDeposit).filter(
+                        MiningDeposit.player_id == player_id,
+                        MiningDeposit.consumed == False
+                    ).all()
+                    total_staked_value = sum(s.cash_value_at_deposit for s in staked)
+                    if total_staked_value > 0:
+                        per_heir_cash = total_staked_value / heir_count
+                        auth_db2 = get_db()
+                        try:
+                            for heir in living_heirs:
+                                heir_player2 = auth_db2.query(Player).filter(Player.id == heir.heir_player_id).first()
+                                if heir_player2:
+                                    heir_player2.cash_balance += per_heir_cash
+                                notif = CryptoInheritanceNotification(
+                                    heir_player_id=heir.heir_player_id,
+                                    deceased_name=deceased_name_for_notif,
+                                    crypto_symbol="STAKED_CITY_CURRENCY",
+                                    amount=per_heir_cash,
+                                    cash_equivalent=per_heir_cash,
+                                    crypto_type="staked_cash"
+                                )
+                                db.add(notif)
+                            auth_db2.commit()
+                        finally:
+                            auth_db2.close()
+                    # Remove deceased's staked deposits
+                    for s in staked:
+                        county_db.delete(s)
+                    county_db.commit()
+                finally:
+                    county_db.close()
+            except Exception as e:
+                print(f"[Estate] Mining deposit inheritance error: {e}")
+
+            # --- WSC wallets ---
+            try:
+                from wallet import WSCWallet, get_db as wallet_get_db
+                wallet_db = wallet_get_db()
+                try:
+                    wsc_wallet = wallet_db.query(WSCWallet).filter(
+                        WSCWallet.player_id == player_id,
+                        WSCWallet.balance > 0
+                    ).first()
+                    if wsc_wallet:
+                        per_heir_wsc = wsc_wallet.balance / heir_count
+                        for heir in living_heirs:
+                            heir_wsc = wallet_db.query(WSCWallet).filter(
+                                WSCWallet.player_id == heir.heir_player_id
+                            ).first()
+                            if not heir_wsc:
+                                heir_wsc = WSCWallet(player_id=heir.heir_player_id, balance=0.0)
+                                wallet_db.add(heir_wsc)
+                                wallet_db.flush()
+                            heir_wsc.balance += per_heir_wsc
+                            notif = CryptoInheritanceNotification(
+                                heir_player_id=heir.heir_player_id,
+                                deceased_name=deceased_name_for_notif,
+                                crypto_symbol="WSC",
+                                amount=per_heir_wsc,
+                                cash_equivalent=per_heir_wsc,  # WSC is 1:1 with USD
+                                crypto_type="wsc"
+                            )
+                            db.add(notif)
+                        wsc_wallet.balance = 0.0
+                        print(f"[Estate] WSC: distributed {per_heir_wsc * heir_count:.4f} WSC among {heir_count} heirs (NO tax)")
+                    wallet_db.commit()
+                finally:
+                    wallet_db.close()
+            except Exception as e:
+                print(f"[Estate] WSC wallet inheritance error: {e}")
+
+            # --- Meme coin wallets ---
+            try:
+                from memecoins import MemeCoinWallet, get_db as meme_get_db
+                meme_db = meme_get_db()
+                try:
+                    meme_wallets = meme_db.query(MemeCoinWallet).filter(
+                        MemeCoinWallet.player_id == player_id,
+                        MemeCoinWallet.balance > 0
+                    ).all()
+                    for mw in meme_wallets:
+                        per_heir_meme = mw.balance / heir_count
+                        for heir in living_heirs:
+                            heir_meme = meme_db.query(MemeCoinWallet).filter(
+                                MemeCoinWallet.player_id == heir.heir_player_id,
+                                MemeCoinWallet.meme_symbol == mw.meme_symbol
+                            ).first()
+                            if not heir_meme:
+                                heir_meme = MemeCoinWallet(
+                                    player_id=heir.heir_player_id,
+                                    meme_symbol=mw.meme_symbol,
+                                    balance=0.0
+                                )
+                                meme_db.add(heir_meme)
+                                meme_db.flush()
+                            heir_meme.balance += per_heir_meme
+                            notif = CryptoInheritanceNotification(
+                                heir_player_id=heir.heir_player_id,
+                                deceased_name=deceased_name_for_notif,
+                                crypto_symbol=mw.meme_symbol,
+                                amount=per_heir_meme,
+                                cash_equivalent=0.0,
+                                crypto_type="meme"
+                            )
+                            db.add(notif)
+                        mw.balance = 0.0
+                    meme_db.commit()
+                finally:
+                    meme_db.close()
+            except Exception as e:
+                print(f"[Estate] Meme coin wallet inheritance error: {e}")
+
+            # --- Meme coin mining deposits (native tokens staked — not in wallet) ---
+            try:
+                from memecoins import MemeCoinMiningDeposit, get_db as meme_get_db
+                from counties import CryptoWallet, get_db as county_get_db
+                meme_db = meme_get_db()
+                county_db2 = county_get_db()
+                try:
+                    meme_stakes = meme_db.query(MemeCoinMiningDeposit).filter(
+                        MemeCoinMiningDeposit.player_id == player_id
+                    ).all()
+                    for ms in meme_stakes:
+                        if not hasattr(ms, 'quantity_staked'):
+                            continue
+                        per_heir_native = getattr(ms, 'quantity_staked', 0) / heir_count
+                        if per_heir_native <= 0:
+                            continue
+                        for heir in living_heirs:
+                            heir_native = county_db2.query(CryptoWallet).filter(
+                                CryptoWallet.player_id == heir.heir_player_id,
+                                CryptoWallet.crypto_symbol == ms.native_symbol
+                            ).first()
+                            if not heir_native:
+                                heir_native = CryptoWallet(
+                                    player_id=heir.heir_player_id,
+                                    crypto_symbol=ms.native_symbol,
+                                    balance=0.0
+                                )
+                                county_db2.add(heir_native)
+                                county_db2.flush()
+                            heir_native.balance += per_heir_native
+                        meme_db.delete(ms)
+                    meme_db.commit()
+                    county_db2.commit()
+                finally:
+                    meme_db.close()
+                    county_db2.close()
+            except Exception as e:
+                print(f"[Estate] Meme mining deposit inheritance error: {e}")
+
         # 6. Create deceased player record (death certificate)
         deceased = DeceasedPlayer(
             player_id=player_id,
@@ -909,6 +1164,7 @@ __all__ = [
     'HeirDesignation',
     'InheritanceInstallment',
     'GovernmentEstateListing',
+    'CryptoInheritanceNotification',
     'get_player_heirs',
     'get_heir_installments',
     'get_all_deceased',
@@ -918,6 +1174,8 @@ __all__ = [
     'liquidate_estate',
     'calculate_estate_value',
     'calculate_total_debts',
+    'get_crypto_inheritance_notifications',
+    'mark_crypto_notifications_seen',
     'initialize',
     'tick'
 ]

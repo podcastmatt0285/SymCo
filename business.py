@@ -244,9 +244,24 @@ def process_business_tick(db):
         
         base_wage = config.get("base_wage_cost", 0.0)
         wage_cost = base_wage / eff_multiplier
-        
+
+        # Apply city project production buffs (if player is a city member)
+        _city_output_mult = 1.0
+        _city_wage_mult = 1.0
+        _city_input_mult = 1.0
+        try:
+            from city_projects import get_city_production_buffs
+            _city_buffs = get_city_production_buffs(biz.owner_id)
+            _city_output_mult = _city_buffs.get("output_multiplier", 1.0)
+            _city_wage_mult   = _city_buffs.get("wage_multiplier",   1.0)
+            _city_input_mult  = _city_buffs.get("input_multiplier",  1.0)
+        except Exception:
+            pass
+
+        wage_cost *= _city_wage_mult
+
         if player.cash_balance < wage_cost:
-            continue 
+            continue
 
         player_inv = get_player_inventory(player.id)
         lines_successfully_produced = 0
@@ -297,13 +312,18 @@ def process_business_tick(db):
             if line_idx in paused_line_idxs:
                 continue
             line_can_run = True
-            for req in line.get("inputs", []):
+            # Apply city project input multiplier (reduces qty needed)
+            effective_inputs = [
+                {**req, "quantity": max(1, int(req["quantity"] * _city_input_mult))}
+                for req in line.get("inputs", [])
+            ]
+            for req in effective_inputs:
                 if player_inv.get(req["item"], 0) < req["quantity"]:
                     line_can_run = False
                     break
 
             if line_can_run:
-                for req in line.get("inputs", []):
+                for req in effective_inputs:
                     remove_item(player.id, req["item"], req["quantity"])
                     # Log resource consumption
                     log_transaction(
@@ -315,14 +335,16 @@ def process_business_tick(db):
                         str(biz.id)
                     )
                     player_inv[req["item"]] -= req["quantity"]
-                add_item(player.id, line["output_item"], line["output_qty"])
+                # Apply city project output multiplier
+                effective_output_qty = max(1, int(line["output_qty"] * _city_output_mult))
+                add_item(player.id, line["output_item"], effective_output_qty)
                 # Log resource production
                 log_transaction(
                     biz.owner_id,
                     "resource_gain",
                     "resource",
-                    line["output_qty"],
-                    f"Produced {line['output_qty']} {line['output_item']}",
+                    effective_output_qty,
+                    f"Produced {effective_output_qty} {line['output_item']}",
                     str(biz.id)
                 )
                 lines_successfully_produced += 1

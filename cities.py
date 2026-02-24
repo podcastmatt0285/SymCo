@@ -2032,6 +2032,186 @@ def get_all_cities() -> List[dict]:
         db.close()
 
 
+def calculate_city_nav(city_id: int) -> dict:
+    """
+    Calculate City Net Asset Value (NAV).
+
+    NAV = A) Bank Cash Reserves
+        + B) Currency Inventory Value  (bank's currency holdings × market price)
+        + C) Combined Member Net Worth (cash + inventory + land + businesses + districts + shares)
+        + D) Value of City Projects    (stubbed at 0 until city_projects module is active)
+
+    Returns a dict with per-component breakdown and grand total.
+    """
+    import market as _market
+
+    db = get_db()
+    try:
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+        members = db.query(CityMember).filter(CityMember.city_id == city_id).all()
+
+        # ------------------------------------------------------------------
+        # A) Bank cash reserves
+        # ------------------------------------------------------------------
+        nav_cash_reserves = bank.cash_reserves if bank else 0.0
+
+        # ------------------------------------------------------------------
+        # B) Currency inventory value
+        # ------------------------------------------------------------------
+        nav_currency_value = 0.0
+        if bank and bank.currency_quantity and bank.currency_type:
+            currency_price = _market.get_market_price(bank.currency_type) or 0.0
+            nav_currency_value = bank.currency_quantity * currency_price
+
+        # ------------------------------------------------------------------
+        # C) Combined member net worth
+        # ------------------------------------------------------------------
+        nav_member_value = 0.0
+        member_details = []
+
+        from auth import Player
+        import inventory as _inventory
+        from business import Business, BUSINESS_TYPES
+
+        try:
+            from land import LandPlot
+            from land_market import LandListing
+            has_land = True
+        except Exception:
+            has_land = False
+
+        try:
+            from districts import District
+            has_districts = True
+        except Exception:
+            has_districts = False
+
+        try:
+            from banks.brokerage_firm import CompanyShares, ShareholderPosition
+            has_shares = True
+        except Exception:
+            has_shares = False
+
+        for m in members:
+            p = db.query(Player).filter(Player.id == m.player_id).first()
+            if not p:
+                continue
+
+            player_total = 0.0
+
+            # Cash
+            player_total += p.cash_balance
+
+            # Inventory at market prices
+            inv = _inventory.get_player_inventory(m.player_id)
+            for item_type, qty in inv.items():
+                price = _market.get_market_price(item_type) or 1.0
+                player_total += qty * price
+
+            # Businesses (startup cost proxy)
+            bizzes = db.query(Business).filter(Business.owner_id == m.player_id).all()
+            for biz in bizzes:
+                config = BUSINESS_TYPES.get(biz.business_type, {})
+                player_total += config.get("startup_cost", 2500.0)
+
+            # Land parcels — use active listing price if listed, else monthly_tax × 120
+            if has_land:
+                try:
+                    plots = db.query(LandPlot).filter(
+                        LandPlot.owner_id == m.player_id,
+                        LandPlot.is_government_owned == False
+                    ).all()
+                    listing_prices = {}
+                    active_listings = db.query(LandListing).filter(
+                        LandListing.seller_id == m.player_id,
+                        LandListing.is_active == True
+                    ).all()
+                    for listing in active_listings:
+                        listing_prices[listing.land_plot_id] = listing.asking_price
+                    for plot in plots:
+                        if plot.id in listing_prices:
+                            player_total += listing_prices[plot.id]
+                        else:
+                            player_total += plot.monthly_tax * 120
+                except Exception:
+                    pass
+
+            # Districts — monthly_tax × 120 capitalization
+            if has_districts:
+                try:
+                    dists = db.query(District).filter(District.owner_id == m.player_id).all()
+                    for d in dists:
+                        player_total += d.monthly_tax * 120
+                except Exception:
+                    pass
+
+            # Share holdings — shares × current_price
+            if has_shares:
+                try:
+                    positions = db.query(ShareholderPosition).filter(
+                        ShareholderPosition.player_id == m.player_id,
+                        ShareholderPosition.shares_owned > 0
+                    ).all()
+                    for pos in positions:
+                        company = db.query(CompanyShares).filter(
+                            CompanyShares.id == pos.company_id,
+                            CompanyShares.is_delisted == False
+                        ).first()
+                        if company:
+                            player_total += pos.shares_owned * company.current_price
+                except Exception:
+                    pass
+
+            nav_member_value += player_total
+            member_details.append({
+                "player_id": m.player_id,
+                "name": p.business_name,
+                "value": player_total
+            })
+
+        # ------------------------------------------------------------------
+        # D) City projects value (stub — updated once city_projects is live)
+        # ------------------------------------------------------------------
+        nav_projects_value = 0.0
+        try:
+            from city_projects import get_city_project_value
+            nav_projects_value = get_city_project_value(city_id)
+        except Exception:
+            pass
+
+        total_nav = nav_cash_reserves + nav_currency_value + nav_member_value + nav_projects_value
+
+        return {
+            "city_id": city_id,
+            "total_nav": total_nav,
+            "nav_cash_reserves": nav_cash_reserves,
+            "nav_currency_value": nav_currency_value,
+            "nav_member_value": nav_member_value,
+            "nav_projects_value": nav_projects_value,
+            "member_count": len(members),
+            "member_details": member_details,
+            "currency_type": bank.currency_type if bank else None,
+            "currency_quantity": bank.currency_quantity if bank else 0.0,
+        }
+
+    except Exception as e:
+        print(f"[Cities] Error calculating NAV for city {city_id}: {e}")
+        return {
+            "city_id": city_id,
+            "total_nav": 0.0,
+            "nav_cash_reserves": 0.0,
+            "nav_currency_value": 0.0,
+            "nav_member_value": 0.0,
+            "nav_projects_value": 0.0,
+            "member_count": 0,
+            "member_details": [],
+            "currency_type": None,
+            "currency_quantity": 0.0,
+        }
+    finally:
+        db.close()
+
+
 # ==========================
 # MODULE LIFECYCLE
 # ==========================
@@ -2167,7 +2347,11 @@ __all__ = [
     
     # Trade handling
     'handle_outsider_trade',
-    
+
+    # NAV
+    'calculate_city_nav',
+    'get_player_total_value',
+
     # Constants
     'MAX_CITY_MEMBERS',
     'MIN_APPLICATION_FEE',

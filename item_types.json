@@ -904,6 +904,11 @@
     "description": "Tradeable ETF shares backed by energy reserves",
     "category": "financial"
   },
+  "city_nav_etf_shares": {
+    "name": "City NAV ETF Shares",
+    "description": "Tradeable ETF shares that trace worldwide City Net Asset Value, backed by land holdings",
+    "category": "financial"
+  },
   "cotton_seeds": {
     "name": "Cotton Seeds",
     "description": "Seeds collected from cotton harvesting for replanting.",
