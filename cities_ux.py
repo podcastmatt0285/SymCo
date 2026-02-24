@@ -117,6 +117,12 @@ CITY_STYLES = """
     }
     .btn-danger:hover { background: #b91c1c; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .proj-tab {
+        padding: 6px 14px; border-radius: 6px; border: 1px solid #334155;
+        background: #0f172a; color: #94a3b8; cursor: pointer; font-size: 13px;
+    }
+    .proj-tab.active { background: #1e3a5f; color: #38bdf8; border-color: #38bdf8; }
+    .btn:disabled, button:disabled { opacity: 0.4; cursor: not-allowed; }
     
     .form-group { margin-bottom: 16px; }
     .form-group label {
@@ -1042,9 +1048,262 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             {apps_html}
         </div>
         """
-    
+
+    # ------------------------------------------------------------------
+    # City Projects section (members only)
+    # ------------------------------------------------------------------
+    projects_section = ""
+    if is_member:
+        from city_projects import (
+            get_city_vault, get_city_projects,
+            CITY_PROJECT_TYPES, get_construction_requirements,
+            STATUS_CONSTRUCTING, STATUS_UPGRADING, STATUS_ACTIVE,
+            STATUS_PAUSED, MAX_PROJECTS_PER_CITY, MAX_PROJECT_LEVEL
+        )
+        vault = get_city_vault(city_id)          # {item_type: qty}
+        active_projs = get_city_projects(city_id)  # list of dicts
+
+        # ── Vault card ──────────────────────────────────────────────
+        vault_rows = ""
+        if vault:
+            for item, qty in sorted(vault.items()):
+                vault_rows += f"""
+                <div style="display:flex;justify-content:space-between;align-items:center;
+                            padding:6px 0;border-bottom:1px solid #1e293b;">
+                    <span style="color:#e2e8f0;">{item.replace('_',' ').title()}</span>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <span style="color:#38bdf8;font-weight:600;">{qty:,.1f}</span>
+                        <form action="/api/city/vault/withdraw" method="post" style="display:flex;gap:4px;">
+                            <input type="hidden" name="city_id" value="{city_id}">
+                            <input type="hidden" name="item_type" value="{item}">
+                            <input type="number" name="quantity" min="1" max="{int(qty)}" value="1"
+                                   style="width:70px;padding:2px 6px;background:#0b1220;border:1px solid #334155;
+                                          border-radius:4px;color:#e2e8f0;font-size:12px;">
+                            <button type="submit" style="padding:2px 8px;background:#334155;border:none;
+                                                         border-radius:4px;color:#94a3b8;cursor:pointer;font-size:12px;">
+                                Withdraw</button>
+                        </form>
+                    </div>
+                </div>"""
+        else:
+            vault_rows = '<p style="color:#64748b;">Vault is empty. Deposit materials from your inventory to start building.</p>'
+
+        # Deposit form
+        deposit_form = f"""
+        <form action="/api/city/vault/deposit" method="post"
+              style="display:flex;gap:8px;align-items:flex-end;margin-top:16px;flex-wrap:wrap;">
+            <input type="hidden" name="city_id" value="{city_id}">
+            <div>
+                <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Item</label>
+                <input type="text" name="item_type" placeholder="e.g. iron" required
+                       style="padding:6px 10px;background:#0b1220;border:1px solid #334155;
+                              border-radius:6px;color:#e2e8f0;width:160px;">
+            </div>
+            <div>
+                <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Qty</label>
+                <input type="number" name="quantity" min="1" required value="100"
+                       style="padding:6px 10px;background:#0b1220;border:1px solid #334155;
+                              border-radius:6px;color:#e2e8f0;width:100px;">
+            </div>
+            <button type="submit" class="btn btn-secondary" style="padding:6px 16px;">Deposit →</button>
+        </form>"""
+
+        vault_card = f"""
+        <div class="card">
+            <h2>🏦 City Vault</h2>
+            <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
+                Materials stored here are consumed when starting or upgrading projects.
+                Any member can deposit or withdraw.
+            </p>
+            {vault_rows}
+            {deposit_form}
+        </div>"""
+
+        # ── Active / in-progress projects ───────────────────────────
+        proj_cards = ""
+        in_construction_count = sum(1 for p in active_projs if p["status"] == STATUS_CONSTRUCTING)
+        in_upgrade_count      = sum(1 for p in active_projs if p["status"] == STATUS_UPGRADING)
+
+        status_colours = {
+            STATUS_ACTIVE:        ("#4ade80", "Active"),
+            STATUS_CONSTRUCTING:  ("#fbbf24", "Building"),
+            STATUS_UPGRADING:     ("#60a5fa", "Upgrading"),
+            STATUS_PAUSED:        ("#94a3b8", "Paused"),
+        }
+
+        for p in active_projs:
+            colour, label = status_colours.get(p["status"], ("#94a3b8", p["status"].title()))
+            progress_html = ""
+            if p["status"] in (STATUS_CONSTRUCTING, STATUS_UPGRADING) and p.get("ticks_required", 0) > 0:
+                pct = min(100, int(p.get("ticks_done", 0) / p["ticks_required"] * 100))
+                progress_html = f"""
+                <div style="margin:8px 0;background:#1e293b;border-radius:4px;height:6px;">
+                    <div style="width:{pct}%;height:100%;background:#60a5fa;border-radius:4px;"></div>
+                </div>
+                <div style="font-size:11px;color:#64748b;">{pct}% — {p.get('ticks_required',0)-p.get('ticks_done',0)} ticks remaining</div>"""
+
+            level_str = f"Lv {p['level']}" if p["status"] == STATUS_ACTIVE else f"Lv {p['level']} → {p.get('target_level', p['level']+1)}"
+
+            # Action buttons
+            upgrade_btn = ""
+            if p["status"] in (STATUS_ACTIVE, STATUS_PAUSED) and p["level"] < MAX_PROJECT_LEVEL:
+                next_lv = p["level"] + 1
+                reqs = get_construction_requirements(p["project_type"], next_lv)
+                can_upgrade = all(vault.get(item, 0) >= qty for item, qty in reqs.items())
+                short_note = "" if can_upgrade else ' title="Insufficient vault materials"'
+                disabled = "" if (can_upgrade and in_upgrade_count < 2) else "disabled"
+                if in_upgrade_count >= 2 and not disabled:
+                    disabled = "disabled"
+                upgrade_btn = f'<form action="/api/city/project/upgrade" method="post" style="display:inline;"><input type="hidden" name="instance_id" value="{p["id"]}"><input type="hidden" name="city_id" value="{city_id}"><button type="submit" class="btn btn-secondary btn-sm" {disabled}{short_note}>⬆ Upgrade to Lv {next_lv}</button></form>'
+
+            mayor_btns = ""
+            if is_city_mayor:
+                if p["status"] == STATUS_ACTIVE:
+                    mayor_btns += f'<form action="/api/city/project/pause" method="post" style="display:inline;"><input type="hidden" name="instance_id" value="{p["id"]}"><input type="hidden" name="city_id" value="{city_id}"><button type="submit" class="btn btn-secondary btn-sm">⏸ Pause</button></form> '
+                if p["status"] == STATUS_PAUSED:
+                    mayor_btns += f'<form action="/api/city/project/resume" method="post" style="display:inline;"><input type="hidden" name="instance_id" value="{p["id"]}"><input type="hidden" name="city_id" value="{city_id}"><button type="submit" class="btn btn-secondary btn-sm">▶ Resume</button></form> '
+                if p["status"] in (STATUS_ACTIVE, STATUS_PAUSED):
+                    _pname = p["name"].replace("'", "")
+                    mayor_btns += f'<form action="/api/city/project/deconstruct" method="post" style="display:inline;" onsubmit="return confirm(\'Deconstruct {_pname}? Materials are NOT refunded.\')"><input type="hidden" name="instance_id" value="{p["id"]}"><input type="hidden" name="city_id" value="{city_id}"><button type="submit" class="btn btn-danger btn-sm">🗑 Deconstruct</button></form>'
+
+            # Buff summary
+            defn = CITY_PROJECT_TYPES.get(p["project_type"], {})
+            buff_lines = []
+            for buff_key, val_per_lv in defn.get("buffs", {}).items():
+                total = val_per_lv * p["level"] * 100
+                buff_lines.append(f"+{total:.1f}% {buff_key.replace('_',' ')}")
+            for dbuff_key, val_per_lv in defn.get("debuffs", {}).items():
+                total = val_per_lv * p["level"] * 100
+                buff_lines.append(f"-{total:.1f}% {dbuff_key.replace('_',' ')}")
+            buffs_str = " · ".join(buff_lines) if buff_lines else ""
+
+            proj_cards += f"""
+            <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+                    <div>
+                        <span style="font-weight:600;color:#e2e8f0;">{p['name']}</span>
+                        <span style="margin-left:8px;font-size:12px;color:#94a3b8;">{level_str}</span>
+                        {"<span style='margin-left:6px;font-size:11px;background:#7c3aed;color:#e9d5ff;padding:2px 6px;border-radius:3px;'>★ SPECIAL</span>" if defn.get('is_special') else ""}
+                    </div>
+                    <span style="font-size:12px;color:{colour};font-weight:600;">{label}</span>
+                </div>
+                {progress_html}
+                {f'<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">{buffs_str}</div>' if buffs_str and p["status"] == STATUS_ACTIVE else ""}
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+                    {upgrade_btn}
+                    {mayor_btns}
+                </div>
+            </div>"""
+
+        if not active_projs:
+            proj_cards = '<p style="color:#64748b;">No projects yet. Start one below.</p>'
+
+        slot_info = f"{len(active_projs)}/{MAX_PROJECTS_PER_CITY} slots used"
+        build_info = ""
+        if in_construction_count:
+            build_info += " · 1 new project under construction"
+        if in_upgrade_count:
+            build_info += f" · {in_upgrade_count}/2 upgrades in progress"
+
+        projects_card = f"""
+        <div class="card">
+            <h2>🏗️ City Projects</h2>
+            <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
+                {slot_info}{build_info}
+            </p>
+            {proj_cards}
+        </div>"""
+
+        # ── Catalog: start new project ───────────────────────────────
+        existing_types = {p["project_type"] for p in active_projs}
+        can_start_new  = in_construction_count == 0 and len(active_projs) < MAX_PROJECTS_PER_CITY
+
+        categories = {}
+        for ptype, defn in CITY_PROJECT_TYPES.items():
+            cat = defn.get("category", "other")
+            categories.setdefault(cat, []).append((ptype, defn))
+
+        cat_tabs = ""
+        cat_panels = ""
+        cat_order = ["energy","transportation","industry","agriculture","finance","education","healthcare","civic"]
+        cat_icons = {"energy":"⚡","transportation":"🚂","industry":"🏭","agriculture":"🌾",
+                     "finance":"💹","education":"🎓","healthcare":"⚕️","civic":"🏛️"}
+
+        for i, cat in enumerate(cat_order):
+            items = categories.get(cat, [])
+            if not items:
+                continue
+            active_cls = "active" if i == 0 else ""
+            label = f"{cat_icons.get(cat,'')} {cat.title()}"
+            cat_tabs += f'<button class="proj-tab {active_cls}" onclick="showCat(\'{cat}\')">{label}</button>'
+
+            panel_items = ""
+            for ptype, defn in items:
+                already_built = ptype in existing_types
+                reqs = get_construction_requirements(ptype, 1)
+                req_rows = ""
+                affordable = True
+                for item, qty in reqs.items():
+                    have = vault.get(item, 0)
+                    ok   = have >= qty
+                    if not ok:
+                        affordable = False
+                    colour_r = "#4ade80" if ok else "#f87171"
+                    req_rows += f'<span style="color:{colour_r};font-size:11px;">{item.replace("_"," ")}: {have:,.0f}/{qty:,.0f}</span>  '
+
+                if already_built:
+                    action_html = '<span style="font-size:12px;color:#64748b;">Already built</span>'
+                elif not can_start_new:
+                    reason = "Slots full" if len(active_projs) >= MAX_PROJECTS_PER_CITY else "Construction in progress"
+                    action_html = f'<span style="font-size:12px;color:#64748b;">{reason}</span>'
+                else:
+                    disabled = "" if affordable else "disabled"
+                    title_attr = "" if affordable else ' title="Insufficient vault materials"'
+                    action_html = f"""<form action="/api/city/project/start" method="post">
+                        <input type="hidden" name="city_id" value="{city_id}">
+                        <input type="hidden" name="project_type" value="{ptype}">
+                        <button type="submit" class="btn btn-primary btn-sm" {disabled}{title_attr}>
+                            🏗 Start Construction</button>
+                    </form>"""
+
+                special_badge = '<span style="font-size:10px;background:#7c3aed;color:#e9d5ff;padding:1px 5px;border-radius:3px;margin-left:6px;">★ SPECIAL</span>' if defn.get("is_special") else ""
+                panel_items += f"""
+                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;margin-bottom:8px;">
+                    <div style="font-weight:600;margin-bottom:4px;">{defn['name']}{special_badge}</div>
+                    <div style="font-size:12px;color:#64748b;margin-bottom:8px;">{defn['description']}</div>
+                    <div style="margin-bottom:8px;line-height:1.8;">{req_rows}</div>
+                    {action_html}
+                </div>"""
+
+            panel_items = panel_items or '<p style="color:#64748b;font-size:13px;">No projects in this category.</p>'
+            display = "block" if i == 0 else "none"
+            cat_panels += f'<div id="cat-{cat}" style="display:{display};">{panel_items}</div>'
+
+        catalog_card = f"""
+        <div class="card">
+            <h2>📋 Start New Project</h2>
+            <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
+                Any city member can start or upgrade projects. Costs are drawn from the vault.
+                {"<span style='color:#fbbf24;'>⚠ Construction already in progress — wait for it to finish before starting another.</span>" if not can_start_new and in_construction_count > 0 else ""}
+            </p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+                {cat_tabs}
+            </div>
+            {cat_panels}
+        </div>
+        <script>
+        function showCat(cat) {{
+            document.querySelectorAll('[id^="cat-"]').forEach(el => el.style.display = 'none');
+            document.getElementById('cat-' + cat).style.display = 'block';
+            document.querySelectorAll('.proj-tab').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }}
+        </script>"""
+
+        projects_section = vault_card + projects_card + catalog_card
+
     db.close()
-    
+
     return f"""
     <!DOCTYPE html>
     <html>
@@ -1160,6 +1419,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             '''}
             
             {banking_section}
+            {projects_section}
             {member_actions}
             {mayor_controls}
         </div>
@@ -1358,6 +1618,111 @@ async def api_assume_debt(
     success, message = assume_bank_debt(player.id, loan_id)
     
     return RedirectResponse(url=f"/city/{city.id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+
+# ==========================
+# CITY PROJECT API ENDPOINTS
+# ==========================
+
+@router.post("/api/city/vault/deposit")
+async def api_vault_deposit(
+    city_id: int = Form(...),
+    item_type: str = Form(...),
+    quantity: float = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import deposit_to_vault
+    success, message = deposit_to_vault(player.id, city_id, item_type.strip().lower(), quantity)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/vault/withdraw")
+async def api_vault_withdraw(
+    city_id: int = Form(...),
+    item_type: str = Form(...),
+    quantity: float = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import withdraw_from_vault
+    success, message = withdraw_from_vault(player.id, city_id, item_type.strip().lower(), quantity)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/project/start")
+async def api_project_start(
+    city_id: int = Form(...),
+    project_type: str = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import start_project
+    result, message = start_project(player.id, city_id, project_type)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/project/upgrade")
+async def api_project_upgrade(
+    city_id: int = Form(...),
+    instance_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import start_upgrade
+    success, message = start_upgrade(player.id, city_id, instance_id)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/project/pause")
+async def api_project_pause(
+    city_id: int = Form(...),
+    instance_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import pause_project
+    success, message = pause_project(player.id, city_id, instance_id)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/project/resume")
+async def api_project_resume(
+    city_id: int = Form(...),
+    instance_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import resume_project
+    success, message = resume_project(player.id, city_id, instance_id)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/project/deconstruct")
+async def api_project_deconstruct(
+    city_id: int = Form(...),
+    instance_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_projects import deconstruct_project
+    success, message = deconstruct_project(player.id, city_id, instance_id)
+    return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
 
 
 # ==========================

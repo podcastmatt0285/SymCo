@@ -16,16 +16,35 @@ Usage (from /home/user/SymCo, with PostgreSQL running):
 import os
 import sys
 
-# ---------------------------------------------------------------------------
-# Set DB URLs before any SymCo module is imported so database.py picks them up.
-# Edit these if your credentials differ.
-# ---------------------------------------------------------------------------
-os.environ.setdefault("DATABASE_URL",         "postgresql://symco:symco@localhost:5432/wadsworth")
-os.environ.setdefault("RESERVE_DATABASE_URL", "postgresql://symco:symco@localhost:5432/reserve_banks")
-
 # Add SymCo root to path so all modules resolve
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+os.chdir(SCRIPT_DIR)
+
+# ---------------------------------------------------------------------------
+# Load .env before importing database.py so it picks up the right credentials.
+# If .env doesn't exist, copy .env.example → .env automatically.
+# ---------------------------------------------------------------------------
+env_path  = os.path.join(SCRIPT_DIR, ".env")
+env_example = os.path.join(SCRIPT_DIR, ".env.example")
+
+if not os.path.exists(env_path) and os.path.exists(env_example):
+    import shutil
+    shutil.copy(env_example, env_path)
+    print(f"[setup] Created .env from .env.example — edit it if your credentials differ.")
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(env_path, override=False)
+except ImportError:
+    # Manual .env parse as fallback
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip())
 
 from sqlalchemy import text
 from database import engine, SessionLocal, reserve_engine, ReserveSessionLocal
@@ -101,6 +120,15 @@ def reset_player_accounts() -> list[tuple[int, str]]:
             text("SELECT id, business_name FROM players WHERE id > 0 ORDER BY id")
         ).fetchall()
         return [(r[0], r[1]) for r in rows]
+    except Exception as e:
+        if "permission denied" in str(e).lower():
+            print("\n  ERROR: Permission denied reading 'players' table.")
+            print(f"  DB URL in use: {os.environ.get('DATABASE_URL', '(not set)')}")
+            print("  Fix: make sure your .env DATABASE_URL uses the same user that owns the tables.")
+            print("  You can check table ownership with:")
+            print("    psql -U <owner> -d wadsworth -c '\\dt'")
+            sys.exit(1)
+        raise
     finally:
         db.close()
 
