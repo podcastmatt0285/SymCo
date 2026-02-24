@@ -163,38 +163,23 @@ def truncate_tables(eng, tables: list[str], label: str):
     step(f"Done — {label} tables cleared.")
 
 
-def reset_player_accounts() -> list[tuple[int, str]]:
+def reset_player_accounts(eng) -> list[tuple[int, str]]:
     """Reset cash/tutorial on all real players (id > 0), delete all sessions."""
     step("Resetting player cash and tutorial_step …")
     if not DRY_RUN:
-        db = SessionLocal()
-        try:
-            db.execute(
+        with eng.connect() as conn:
+            conn.execute(
                 text("UPDATE players SET cash_balance = :c, tutorial_step = :t WHERE id > 0"),
                 {"c": STARTING_CASH, "t": STARTING_TUTORIAL},
             )
-            db.execute(text("DELETE FROM sessions"))
-            db.commit()
-        finally:
-            db.close()
+            conn.execute(text("DELETE FROM sessions"))
+            conn.commit()
 
-    db = SessionLocal()
-    try:
-        rows = db.execute(
+    with eng.connect() as conn:
+        rows = conn.execute(
             text("SELECT id, business_name FROM players WHERE id > 0 ORDER BY id")
         ).fetchall()
-        return [(r[0], r[1]) for r in rows]
-    except Exception as e:
-        if "permission denied" in str(e).lower():
-            print("\n  ERROR: Permission denied reading 'players' table.")
-            print(f"  DB URL in use: {os.environ.get('DATABASE_URL', '(not set)')}")
-            print("  Fix: make sure your .env DATABASE_URL uses the same user that owns the tables.")
-            print("  You can check table ownership with:")
-            print("    psql -U <owner> -d wadsworth -c '\\dt'")
-            sys.exit(1)
-        raise
-    finally:
-        db.close()
+    return [(r[0], r[1]) for r in rows]
 
 
 def give_starter_resources(player_id: int, business_name: str):
@@ -282,7 +267,7 @@ def main():
     # 2. Reset player accounts (cash + tutorial) and kill all sessions
     # ------------------------------------------------------------------
     banner("Step 2: Resetting player accounts")
-    players = reset_player_accounts()
+    players = reset_player_accounts(admin_engine)
     step(f"Found {len(players)} player(s) to reset to starting state")
 
     # ------------------------------------------------------------------
