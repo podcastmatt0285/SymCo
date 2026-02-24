@@ -1120,6 +1120,16 @@ def create_player_ipo(
         if existing_company:
             return None, "You already have a public company. Delist it first to create a new one."
 
+        # Enforce re-list cooldown (30 days after going private)
+        recently_delisted = db.query(CompanyShares).filter(
+            CompanyShares.founder_id == founder_id,
+            CompanyShares.is_delisted == True,
+            CompanyShares.can_relist_after != None
+        ).order_by(CompanyShares.delisted_at.desc()).first()
+        if recently_delisted and recently_delisted.can_relist_after and recently_delisted.can_relist_after > datetime.utcnow():
+            days_left = (recently_delisted.can_relist_after - datetime.utcnow()).days + 1
+            return None, f"You must wait {days_left} more day(s) before re-listing. Your previous company went private {RELIST_COOLDOWN_DAYS}-day cooldown is still active."
+
         valuation = calculate_player_company_valuation(founder_id)
         total_valuation = valuation["total_valuation"]
 

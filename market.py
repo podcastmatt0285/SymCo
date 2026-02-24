@@ -232,6 +232,10 @@ def match_order(db, order: MarketOrder) -> bool:
             except Exception:
                 pass  # Cities module unavailable, proceed normally
 
+        # Prevent self-trading (player buying their own sell order or vice versa)
+        if order.player_id == match.player_id:
+            continue
+
         trade_qty = min(remaining_qty, match.quantity - match.quantity_filled)
         trade_price = match.price if match.price else order.price
         

@@ -50,10 +50,10 @@ SELL_PERCENTAGE = 1.0  # Sell 100% of inventory
 # Fee System
 HOLDER_FEE_PER_TICK = 0.00011918
 
-# Dividend system
-DIVIDEND_INTERVAL_TICKS = 1200  # 7 days (weekly)
-DIVIDEND_PAYOUT_PERCENTAGE = 0.25
-MIN_RESERVE_FOR_DIVIDENDS = 10000
+# Dividend system — weekly payout (120960 ticks ≈ 7 days at 5 s/tick)
+DIVIDEND_INTERVAL_TICKS = 120960
+DIVIDEND_PAYOUT_PERCENTAGE = 0.03  # 3% of reserves per week
+MIN_RESERVE_FOR_DIVIDENDS = 500_000
 
 # Stock split triggers
 SPLIT_PRICE_THRESHOLD = 50.0   # Split at $50/share

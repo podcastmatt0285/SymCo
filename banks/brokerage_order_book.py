@@ -507,6 +507,10 @@ def match_orders(company_shares_id: int):
                     sell_order.filled_at = datetime.utcnow()
                     continue
                 
+                # Prevent self-trading (founder or any player cannot match their own orders)
+                if buy_order.player_id == sell_order.player_id:
+                    continue
+
                 # Check if prices cross
                 if buy_order.limit_price < sell_order.limit_price:
                     break  # No more matches possible
