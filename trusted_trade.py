@@ -23,9 +23,12 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
-from database import Base, SessionLocal
+from database import engine, SessionLocal
+
+Base = declarative_base()
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -540,7 +543,6 @@ def get_swap_detail(swap_id: int):
 # ─── Module lifecycle ─────────────────────────────────────────────────────────
 
 def initialize():
-    from database import Base, engine
     Base.metadata.create_all(bind=engine)
     print("[TrustedTrade] Tables ensured.")
 
