@@ -1651,6 +1651,26 @@ async def wallet_dashboard(
     faucet_st   = get_faucet_status(player.id)
     swap_hist   = get_recent_swaps(player.id, limit=8)
 
+    # ---- AMM pool state for each native token the player holds ----
+    from wallet import WSCPool, WSC_AMM_FEE, get_db as wallet_get_db
+    amm_pool_data = {}
+    if native_holdings:
+        _wdb = wallet_get_db()
+        try:
+            for n in native_holdings:
+                sym = n["symbol"]
+                pool = _wdb.query(WSCPool).filter(WSCPool.native_symbol == sym).first()
+                if pool and pool.native_reserve > 0 and pool.wsc_reserve > 0:
+                    amm_pool_data[sym] = {
+                        "native_reserve": pool.native_reserve,
+                        "wsc_reserve":    pool.wsc_reserve,
+                        "total_swaps":    pool.total_swaps,
+                        "wsc_per_native": pool.wsc_reserve / pool.native_reserve,
+                        "native_per_wsc": pool.native_reserve / pool.wsc_reserve,
+                    }
+        finally:
+            _wdb.close()
+
     alert_html = ""
     if msg:
         alert_html = f'<div class="alert alert-success">{msg}</div>'
@@ -1836,6 +1856,63 @@ async def wallet_dashboard(
     ) or '<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>'
 
     fee_pct = int((SWAP_FEE_SELL + SWAP_FEE_BUY) * 100)
+
+    # ---- AMM pool HTML ----
+    if not native_holdings:
+        amm_pools_html = '<p style="color:#64748b;font-size:12px;">Mine or buy county native tokens first to access the WSC AMM pool.</p>'
+    else:
+        amm_sections = []
+        for n in native_holdings:
+            sym = n["symbol"]
+            bal = n["balance"]
+            pool = amm_pool_data.get(sym)
+            if pool:
+                reserves_html = f"""
+                <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin-bottom:12px;
+                            background:#0a0f1a;padding:10px 14px;border-radius:6px;border:1px solid #1e293b;">
+                    <span>Reserve: <strong style="color:#f59e0b;">{pool['native_reserve']:,.4f} {sym}</strong></span>
+                    <span>Reserve: <strong style="color:#a5b4fc;">{pool['wsc_reserve']:,.4f} WSC</strong></span>
+                    <span>Rate: <strong style="color:#4ade80;">{pool['wsc_per_native']:.6f} WSC / {sym}</strong></span>
+                    <span style="color:#64748b;">Swaps: {pool['total_swaps']}</span>
+                </div>"""
+            else:
+                reserves_html = f'<div style="font-size:12px;color:#94a3b8;margin-bottom:12px;background:#0a0f1a;padding:8px 12px;border-radius:6px;">Pool auto-seeds on first swap: 10,000 WSC &times; 10,000 {sym} (1:1 initial rate).</div>'
+            amm_sections.append(f"""
+            <div style="background:#0f0a1e;border:1px solid #4c1d9555;border-radius:8px;padding:14px;margin-bottom:8px;">
+                <div style="font-weight:bold;color:#c084fc;margin-bottom:8px;">{sym} / WSC Pool</div>
+                {reserves_html}
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:190px;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:5px;">{sym} &rarr; WSC &nbsp;(mint WSC)</div>
+                        <form action="/api/wallet/amm/native-to-wsc" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
+                            <input type="hidden" name="native_symbol" value="{sym}">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:11px;color:#94a3b8;">Amount (have {bal:,.4f} {sym})</label>
+                                <input type="number" name="native_amount" step="any" min="0.000001"
+                                       max="{bal}" placeholder="amount" required style="width:140px;font-size:12px;">
+                            </div>
+                            <button type="submit" class="btn" style="background:#4c1d95;color:#e9d5ff;font-size:12px;padding:6px 12px;">
+                                &#9654; Mint WSC
+                            </button>
+                        </form>
+                    </div>
+                    <div style="flex:1;min-width:190px;">
+                        <div style="font-size:11px;color:#64748b;text-transform:uppercase;margin-bottom:5px;">WSC &rarr; {sym} &nbsp;(sell WSC)</div>
+                        <form action="/api/wallet/amm/wsc-to-native" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
+                            <input type="hidden" name="native_symbol" value="{sym}">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:11px;color:#94a3b8;">WSC (have {wsc_info['balance']:,.4f})</label>
+                                <input type="number" name="wsc_amount" step="any" min="0.0001"
+                                       max="{wsc_info['balance']}" placeholder="WSC amount" required style="width:140px;font-size:12px;">
+                            </div>
+                            <button type="submit" class="btn" style="background:#1e1b4b;color:#a5b4fc;font-size:12px;padding:6px 12px;">
+                                &#9654; Get {sym}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>""")
+        amm_pools_html = "".join(amm_sections)
 
     return f"""<!DOCTYPE html>
 <html>
@@ -2051,6 +2128,17 @@ async def wallet_dashboard(
         </table>
     </div>
 
+    <!-- WSC AMM POOL -->
+    <div class="card" style="border-color:#7c3aed55;">
+        <h2 style="color:#c084fc;">&#128984; Native &#8596; WSC AMM Pool <span style="font-size:12px;font-weight:400;color:#64748b;">— mint or sell WSC</span></h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:14px;">
+            Constant-product AMM (k=x&times;y). Swap county native tokens for WSC to
+            <strong style="color:#c084fc;">mint WSC</strong>, or swap WSC back to native tokens.
+            Fee: <strong style="color:#f59e0b;">{int(WSC_AMM_FEE*100*10)/10:.1f}%</strong> stays in the pool.
+        </p>
+        {amm_pools_html}
+    </div>
+
     <!-- YIELD FARMING -->
     <div class="card" style="border-color:#15803d33;">
         <h2 style="color:#4ade80;">&#9881; Yield Farming <span style="font-size:12px;font-weight:400;color:#64748b;">— stake meme coins, earn WSC hourly</span></h2>
@@ -2254,5 +2342,45 @@ async def api_wallet_redeem(
 
 # ==========================
 # PUBLIC API
+# ==========================
+# API: AMM POOL — NATIVE → WSC
+# ==========================
+@router.post("/api/wallet/amm/native-to-wsc")
+async def api_amm_native_to_wsc(
+    native_symbol: str   = Form(...),
+    native_amount: float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from wallet import swap_native_for_wsc
+    ok, msg, _ = swap_native_for_wsc(player.id, native_symbol.upper().strip(), native_amount)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+# ==========================
+# API: AMM POOL — WSC → NATIVE
+# ==========================
+@router.post("/api/wallet/amm/wsc-to-native")
+async def api_amm_wsc_to_native(
+    native_symbol: str   = Form(...),
+    wsc_amount:    float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from wallet import swap_wsc_for_native
+    ok, msg, _ = swap_wsc_for_native(player.id, native_symbol.upper().strip(), wsc_amount)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
 # ==========================
 __all__ = ['router']
