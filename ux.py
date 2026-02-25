@@ -1704,6 +1704,18 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         items = list(inv_mod.ITEM_RECIPES.keys())
         stats = market_mod.get_market_stats()
         order_book = market_mod.get_order_book(item)
+
+        # Fetch player's own open orders for this item
+        from market import MarketOrder, OrderStatus, get_db as get_market_db
+        mkt_db = get_market_db()
+        try:
+            my_orders = mkt_db.query(MarketOrder).filter(
+                MarketOrder.player_id == player.id,
+                MarketOrder.item_type == item,
+                MarketOrder.status == OrderStatus.ACTIVE
+            ).order_by(MarketOrder.created_at.desc()).all()
+        finally:
+            mkt_db.close()
         
         # Group items by category
         categories = {}
@@ -1917,11 +1929,60 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         else:
             market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
         
+        # Build My Open Orders section
+        my_orders_html = ""
+        if my_orders:
+            my_orders_rows = ""
+            for o in my_orders:
+                side_color = "#22c55e" if o.order_type == "buy" else "#ef4444"
+                remaining = o.quantity - o.quantity_filled
+                my_orders_rows += f'''
+                <tr style="border-bottom: 1px solid #1e293b;">
+                    <td style="padding: 8px 6px; color: {side_color}; font-weight: bold;">{o.order_type.upper()}</td>
+                    <td style="padding: 8px 6px;">${o.price:.2f}</td>
+                    <td style="padding: 8px 6px;">{o.quantity:,.2f}</td>
+                    <td style="padding: 8px 6px; color: #94a3b8;">{o.quantity_filled:,.2f}</td>
+                    <td style="padding: 8px 6px; color: #f59e0b;">{remaining:,.2f}</td>
+                    <td style="padding: 8px 6px;">
+                        <form action="/api/market/cancel-order" method="post" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{o.id}">
+                            <input type="hidden" name="item_type" value="{item}">
+                            <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;padding:3px 10px;border-radius:3px;cursor:pointer;font-size:0.8rem;">
+                                Cancel
+                            </button>
+                        </form>
+                    </td>
+                </tr>'''
+            my_orders_html = f'''
+            <div class="card" style="margin-top: 20px;">
+                <h3>My Open Orders</h3>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:1px solid #1e293b;font-size:0.85rem;color:#64748b;text-align:left;">
+                            <th style="padding:8px 6px;">Side</th>
+                            <th style="padding:8px 6px;">Price</th>
+                            <th style="padding:8px 6px;">Qty</th>
+                            <th style="padding:8px 6px;">Filled</th>
+                            <th style="padding:8px 6px;">Remaining</th>
+                            <th style="padding:8px 6px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>{my_orders_rows}</tbody>
+                </table>
+            </div>'''
+        else:
+            my_orders_html = '''
+            <div class="card" style="margin-top: 20px;">
+                <h3>My Open Orders</h3>
+                <p style="color:#64748b;font-size:0.85rem;">No open orders for this item.</p>
+            </div>'''
+
         market_html += f'''
                     </div>
                 </div>
+                {my_orders_html}
             </div>
-            
+
             <!-- Sidebar -->
             <div style="flex: 1; min-width: 0; max-width: 280px;">
                 <div class="card">
@@ -3000,9 +3061,20 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             total_required = sum(mc.amount_required for mc in margin_calls)
             margin_call_html = f'''
             <div class="card" style="border: 2px solid #ef4444; background: #450a0a;">
-                <h3 style="color: #fca5a5;">📞 MARGIN CALL ACTIVE</h3>
+                <h3 style="color: #fca5a5;">&#128222; MARGIN CALL ACTIVE</h3>
                 <p style="color: #fca5a5;">You must deposit ${total_required:,.2f} or your positions will be liquidated.</p>
                 <p style="color: #f87171; font-size: 0.9rem;">Deadline: {margin_calls[0].deadline.strftime("%Y-%m-%d %H:%M UTC")}</p>
+                <form action="/api/brokerage/deposit-margin" method="post" style="margin-top: 12px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                    <div>
+                        <label style="font-size: 0.85rem; color: #fca5a5; display: block; margin-bottom: 4px;">Deposit Amount ($)</label>
+                        <input type="number" name="amount" min="0.01" step="0.01"
+                               value="{total_required:.2f}"
+                               style="background: #1a0505; border: 1px solid #ef4444; color: #fca5a5; padding: 8px 12px; border-radius: 4px; width: 180px;">
+                    </div>
+                    <button type="submit" style="background: #dc2626; color: #fff; border: none; padding: 9px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        Deposit &amp; Cover Margin Call
+                    </button>
+                </form>
             </div>
             '''
         
@@ -4174,6 +4246,9 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
         total_pnl_pct = (total_pnl / total_cost * 100) if total_cost > 0 else 0
         
         # Build portfolio table
+        LEND_OPT_OUT_BASE_FEE = 50_000.0   # flat fee per position to opt out of lending
+        LEND_OPT_OUT_PCT      = 0.01        # plus 1 % of position market value
+
         portfolio_html = ""
         if portfolio_data:
             portfolio_html = '''
@@ -4187,17 +4262,62 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                         <th style="padding: 12px 8px;">Cost Basis</th>
                         <th style="padding: 12px 8px;">P/L</th>
                         <th style="padding: 12px 8px;">Margin</th>
+                        <th style="padding: 12px 8px;">Lending</th>
                         <th style="padding: 12px 8px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>'''
-            
+
             for item in portfolio_data:
                 company = item["company"]
                 pos = item["position"]
                 pnl_color = "#22c55e" if item["pnl"] >= 0 else "#ef4444"
                 margin_badge = f'<span class="badge" style="background: #f59e0b;">MARGIN</span>' if pos.is_margin_position else ""
-                
+
+                # Share-lending status cell
+                available_to_lend = pos.shares_available_to_lend or 0
+                lent_out          = pos.shares_lent_out or 0
+                opt_out_fee       = LEND_OPT_OUT_BASE_FEE + item["market_value"] * LEND_OPT_OUT_PCT
+                if available_to_lend > 0 or lent_out > 0:
+                    lending_cell = f'''
+                        <span style="color:#22c55e;font-size:0.8rem;">&#10003; Lending</span><br>
+                        <span style="font-size:0.75rem;color:#94a3b8;">
+                            {available_to_lend:,} offered &middot; {lent_out:,} out
+                        </span><br>
+                        <form action="/api/brokerage/enable-share-lending" method="post" style="display:inline;">
+                            <input type="hidden" name="position_id" value="{pos.id}">
+                            <input type="number" name="quantity" min="0" max="{pos.shares_owned}" value="{available_to_lend}"
+                                   style="width:70px;font-size:0.75rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:2px 4px;border-radius:3px;">
+                            <button type="submit" style="font-size:0.75rem;background:#15803d;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
+                                Update
+                            </button>
+                        </form><br>
+                        <form action="/api/brokerage/disable-share-lending" method="post" style="display:inline;"
+                              onsubmit="return confirm('Opt out of lending for {company.ticker_symbol}? This costs ${opt_out_fee:,.0f} (base fee + 1% of position value).');">
+                            <input type="hidden" name="position_id" value="{pos.id}">
+                            <button type="submit" style="font-size:0.75rem;background:#7f1d1d;color:#fca5a5;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
+                                Opt-Out (${opt_out_fee:,.0f})
+                            </button>
+                        </form>'''
+                else:
+                    lending_cell = f'''
+                        <span style="color:#ef4444;font-size:0.8rem;">&#10007; Not Lending</span><br>
+                        <form action="/api/brokerage/enable-share-lending" method="post" style="display:inline;">
+                            <input type="hidden" name="position_id" value="{pos.id}">
+                            <input type="hidden" name="quantity" value="{pos.shares_owned}">
+                            <button type="submit" style="font-size:0.75rem;background:#15803d;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
+                                Opt-In (All Shares)
+                            </button>
+                        </form><br>
+                        <form action="/api/brokerage/enable-share-lending" method="post" style="display:inline;">
+                            <input type="hidden" name="position_id" value="{pos.id}">
+                            <input type="number" name="quantity" min="1" max="{pos.shares_owned}" placeholder="qty"
+                                   style="width:60px;font-size:0.75rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:2px 4px;border-radius:3px;">
+                            <button type="submit" style="font-size:0.75rem;background:#1d4ed8;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
+                                Opt-In Custom
+                            </button>
+                        </form>'''
+
                 portfolio_html += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 12px 8px;">
@@ -4215,19 +4335,22 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                     <td style="padding: 12px 8px;">
                         {"${:,.2f}".format(pos.margin_debt) if pos.margin_debt > 0 else "-"}
                     </td>
+                    <td style="padding: 12px 8px; vertical-align: top;">
+                        {lending_cell}
+                    </td>
                     <td style="padding: 12px 8px;">
                         <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue" style="font-size: 0.8rem; padding: 4px 8px;">Trade</a>
                     </td>
                 </tr>'''
-            
+
             portfolio_html += '</tbody></table>'
         else:
             portfolio_html = '<p style="color: #64748b;">You have no equity positions. <a href="/brokerage/trading">Start trading!</a></p>'
-        
+
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>My Portfolio</h1>
-        
+
         <!-- Portfolio Summary -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
             <div class="card" style="text-align: center;">
@@ -4254,10 +4377,15 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                 </div>
             </div>
         </div>
-        
+
         <!-- Holdings Table -->
         <div class="card">
-            <h3>Holdings</h3>
+            <h3>Holdings &amp; Share Lending</h3>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:12px;">
+                Share lending is <strong style="color:#22c55e;">enabled by default</strong> for all positions.
+                Borrowers who request shares receive them proportionally from all opted-in lenders.
+                Opting out costs a <strong style="color:#ef4444;">$50,000 base fee plus 1% of position value</strong> per stock.
+            </p>
             {portfolio_html}
         </div>
         '''
@@ -5701,13 +5829,22 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
     if isinstance(player, RedirectResponse): return player
     import market
     market.create_order(
-        player.id, 
-        market.OrderType.BUY if order_type == "buy" else market.OrderType.SELL, 
-        market.OrderMode.LIMIT, 
-        item_type, 
-        quantity, 
+        player.id,
+        market.OrderType.BUY if order_type == "buy" else market.OrderType.SELL,
+        market.OrderMode.LIMIT,
+        item_type,
+        quantity,
         price
     )
+    return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
+
+@router.post("/api/market/cancel-order")
+async def cancel_market_order(order_id: int = Form(...), item_type: str = Form(...), session_token: Optional[str] = Cookie(None)):
+    """Cancel a player's own open commodity market order."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return player
+    import market
+    market.cancel_order(order_id, player.id)
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
 
 @router.post("/api/land-market/buy-auction")
@@ -6143,6 +6280,84 @@ async def brokerage_enable_share_lending(
         
     except Exception as e:
         print(f"[UX] Enable lending error: {e}")
+        import traceback
+        traceback.print_exc()
+        return RedirectResponse(url="/brokerage/portfolio?error=exception", status_code=303)
+
+
+@router.post("/api/brokerage/disable-share-lending")
+async def brokerage_disable_share_lending(
+    position_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """
+    Opt a position out of share lending entirely.
+    This is intentionally very expensive: a $50,000 flat fee plus 1% of the
+    current market value of the position, paid to the government.
+    """
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    DISABLE_LEND_BASE_FEE = 50_000.0
+    DISABLE_LEND_PCT      = 0.01
+
+    try:
+        from banks.brokerage_firm import ShareholderPosition, CompanyShares, get_db as get_firm_db
+        from auth import Player, get_db as get_auth_db
+
+        db = get_firm_db()
+        try:
+            position = db.query(ShareholderPosition).filter(
+                ShareholderPosition.id == position_id,
+                ShareholderPosition.player_id == player.id
+            ).first()
+            if not position:
+                return RedirectResponse(url="/brokerage/portfolio?error=position_not_found", status_code=303)
+
+            company = db.query(CompanyShares).filter(
+                CompanyShares.id == position.company_shares_id
+            ).first()
+            market_value = (position.shares_owned * company.current_price) if company else 0.0
+        finally:
+            db.close()
+
+        opt_out_fee = DISABLE_LEND_BASE_FEE + market_value * DISABLE_LEND_PCT
+
+        auth_db = get_auth_db()
+        try:
+            player_record = auth_db.query(Player).filter(Player.id == player.id).first()
+            if not player_record or player_record.cash_balance < opt_out_fee:
+                return RedirectResponse(
+                    url=f"/brokerage/portfolio?error=insufficient_funds_for_opt_out_fee_{opt_out_fee:.0f}",
+                    status_code=303
+                )
+            player_record.cash_balance -= opt_out_fee
+            # Fee goes to government
+            government = auth_db.query(Player).filter(Player.id == 0).first()
+            if government:
+                government.cash_balance += opt_out_fee
+            auth_db.commit()
+        finally:
+            auth_db.close()
+
+        # Zero out lending for this position
+        db2 = get_firm_db()
+        try:
+            pos2 = db2.query(ShareholderPosition).filter(
+                ShareholderPosition.id == position_id,
+                ShareholderPosition.player_id == player.id
+            ).first()
+            if pos2:
+                pos2.shares_available_to_lend = 0
+            db2.commit()
+        finally:
+            db2.close()
+
+        return RedirectResponse(url="/brokerage/portfolio?success=lending_disabled", status_code=303)
+
+    except Exception as e:
+        print(f"[UX] Disable lending error: {e}")
         import traceback
         traceback.print_exc()
         return RedirectResponse(url="/brokerage/portfolio?error=exception", status_code=303)

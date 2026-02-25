@@ -1522,15 +1522,26 @@ def process_loan_repayments(current_tick: int):
                 government.cash_balance += payment
                 loan.amount_paid += payment
                 loan.installments_remaining -= 1
-                
+
                 print(f"[Cities] Loan payment: Bank {bank.id} paid ${payment:,.2f} to government")
             else:
-                # Bank is insolvent - needs another loan
+                # Bank is insolvent — make partial payment with whatever cash is available,
+                # then request an emergency loan to cover the shortfall.
                 shortfall = payment - bank.cash_reserves
-                print(f"[Cities] Bank {bank.id} is insolvent, needs ${shortfall:,.2f}")
-                
-                # Auto-request emergency loan
+                partial_payment = bank.cash_reserves
+                if partial_payment > 0:
+                    bank.cash_reserves = 0.0
+                    government.cash_balance += partial_payment
+                    loan.amount_paid += partial_payment
+                # This installment cycle is counted regardless of whether it was fully paid.
+                loan.installments_remaining -= 1
+                print(f"[Cities] Bank {bank.id} insolvent: partial payment ${partial_payment:,.2f}, shortfall ${shortfall:,.2f}")
+
+                # Request emergency loan (1.5× shortfall) to help the bank cover future payments.
+                # The emergency loan creates a new CityBankLoan in its own DB session.
                 request_government_loan(bank.city_id, shortfall * 1.5, current_tick)
+                # Reload bank after the emergency loan session updated its reserves.
+                db.refresh(bank)
             
             # Check if loan is fully paid
             if loan.amount_paid >= loan.total_owed:

@@ -718,6 +718,18 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         
         stats = dm.get_market_stats()
         order_book = dm.get_order_book(item)
+
+        # Fetch player's own open orders for this item
+        from district_market import DistrictMarketOrder, OrderStatus, get_db as get_dm_db
+        dm_db = get_dm_db()
+        try:
+            my_orders = dm_db.query(DistrictMarketOrder).filter(
+                DistrictMarketOrder.player_id == player.id,
+                DistrictMarketOrder.item_type == item,
+                DistrictMarketOrder.status == OrderStatus.ACTIVE
+            ).order_by(DistrictMarketOrder.created_at.desc()).all()
+        finally:
+            dm_db.close()
         
         # Group items by category
         categories = {}
@@ -908,11 +920,59 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         else:
             market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
         
+        # Build My Open Orders section
+        if my_orders:
+            my_orders_rows = ""
+            for o in my_orders:
+                side_color = "#22c55e" if o.order_type == "buy" else "#ef4444"
+                remaining = o.quantity - o.quantity_filled
+                my_orders_rows += f'''
+                <tr style="border-bottom: 1px solid #1e293b;">
+                    <td style="padding: 8px 6px; color: {side_color}; font-weight: bold;">{o.order_type.upper()}</td>
+                    <td style="padding: 8px 6px;">${o.price:.2f}</td>
+                    <td style="padding: 8px 6px;">{o.quantity:,.2f}</td>
+                    <td style="padding: 8px 6px; color: #94a3b8;">{o.quantity_filled:,.2f}</td>
+                    <td style="padding: 8px 6px; color: #f59e0b;">{remaining:,.2f}</td>
+                    <td style="padding: 8px 6px;">
+                        <form action="/api/district-market/cancel" method="post" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{o.id}">
+                            <input type="hidden" name="item_type" value="{item}">
+                            <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;padding:3px 10px;border-radius:3px;cursor:pointer;font-size:0.8rem;">
+                                Cancel
+                            </button>
+                        </form>
+                    </td>
+                </tr>'''
+            my_orders_section = f'''
+            <div class="card" style="margin-top: 20px;">
+                <h3>My Open Orders</h3>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:1px solid #1e293b;font-size:0.85rem;color:#64748b;text-align:left;">
+                            <th style="padding:8px 6px;">Side</th>
+                            <th style="padding:8px 6px;">Price</th>
+                            <th style="padding:8px 6px;">Qty</th>
+                            <th style="padding:8px 6px;">Filled</th>
+                            <th style="padding:8px 6px;">Remaining</th>
+                            <th style="padding:8px 6px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>{my_orders_rows}</tbody>
+                </table>
+            </div>'''
+        else:
+            my_orders_section = '''
+            <div class="card" style="margin-top: 20px;">
+                <h3>My Open Orders</h3>
+                <p style="color:#64748b;font-size:0.85rem;">No open orders for this item.</p>
+            </div>'''
+
         market_html += f'''
                     </div>
                 </div>
+                {my_orders_section}
             </div>
-            
+
             <!-- Sidebar -->
             <div style="flex: 1; min-width: 0; max-width: 280px;">
                 <div class="card">
@@ -923,7 +983,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                 </div>
             </div>
         </div>
-        
+
         {dm.get_district_ticker_html()}
         '''
         

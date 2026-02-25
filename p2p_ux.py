@@ -136,17 +136,56 @@ def p2p_enter(session_token: Optional[str] = Cookie(None)):
 def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
     """
     The P2P Dashboard - hub for all P2P activities.
-    Only accessible after paying the entry fee (enforced by the gate).
+    Only accessible after paying the entry fee via /p2p/enter.
+    Direct URL access is blocked by verifying a recent access log entry.
     """
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    # Verify the player paid the entry fee recently (within the last 5 minutes).
+    # This prevents bypassing the toll booth by navigating directly to this URL.
+    from p2p import P2PAccessLog, get_db as get_p2p_db
+    from datetime import timedelta
+    p2p_db = get_p2p_db()
+    try:
+        cutoff = datetime.utcnow() - timedelta(minutes=5)
+        recent_access = p2p_db.query(P2PAccessLog).filter(
+            P2PAccessLog.player_id == player.id,
+            P2PAccessLog.accessed_at >= cutoff
+        ).first()
+    finally:
+        p2p_db.close()
+
+    if not recent_access:
+        return RedirectResponse(url="/p2p", status_code=303)
+
+    # Check for executive P2P notification ability
+    exec_notif_html = ""
+    try:
+        from executive import player_has_ability, get_db as get_exec_db
+        exec_db = get_exec_db()
+        try:
+            has_notif = player_has_ability(exec_db, player.id, "p2p_notification")
+            has_3way = player_has_ability(exec_db, player.id, "dm_threeway")
+        finally:
+            exec_db.close()
+        if has_notif or has_3way:
+            feat_labels = []
+            if has_notif:
+                feat_labels.append("&#128140; DM notifications &nbsp;&#128196; Contract notifications")
+            if has_3way:
+                feat_labels.append("3-party DM invites enabled")
+            exec_notif_html = f'<div style="background:#1e1b4b;border:1px solid #6d28d9;border-radius:6px;padding:10px 16px;margin-bottom:18px;font-size:0.85rem;color:#c4b5fd;">P2P Executive Features Active: {" &nbsp;|&nbsp; ".join(feat_labels)}</div>'
+    except Exception:
+        pass
 
     return shell(
         "P2P Dashboard",
         f"""
         <a href="/" style="color: #38bdf8;">&lt;- Dashboard</a>
         <h1>P2P Network Dashboard</h1>
+        {exec_notif_html}
         <p style="color: #64748b; margin-bottom: 24px;">Welcome to the Peer-to-Peer Network. Select a service below.</p>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">

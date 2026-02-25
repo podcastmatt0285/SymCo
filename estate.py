@@ -611,6 +611,7 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         # Pay bank liens
         try:
             from banks.land_bank import BankLien
+            from banks import BankEntity, add_bank_revenue
             liens = db.query(BankLien).filter(BankLien.player_id == player_id).all()
             remaining_payment = debt_payment
             for lien in liens:
@@ -619,7 +620,13 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                     payment = min(owed, remaining_payment)
                     lien.total_paid += payment
                     remaining_payment -= payment
-                    print(f"[Estate] Paid ${payment:,.2f} on bank lien #{lien.id}")
+                    # Credit the bank's cash reserves with the recovered payment
+                    bank_entity = db.query(BankEntity).filter(BankEntity.bank_id == lien.bank_id).first()
+                    if bank_entity:
+                        bank_entity.cash_reserves += payment
+                        bank_entity.accumulated_profits += payment
+                        bank_entity.lifetime_revenue += payment
+                    print(f"[Estate] Paid ${payment:,.2f} on bank lien #{lien.id} to bank {lien.bank_id}")
                 # Mark lien as settled regardless
                 db.delete(lien)
         except Exception as e:
@@ -627,7 +634,7 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
 
         # Pay brokerage liens
         try:
-            from banks.brokerage_firm import BrokerageLien
+            from banks.brokerage_firm import BrokerageLien, FirmEntity, get_db as get_firm_db
             b_liens = db.query(BrokerageLien).filter(
                 BrokerageLien.player_id == player_id
             ).all()
@@ -637,6 +644,15 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                     payment = min(owed, remaining_payment)
                     lien.total_paid += payment
                     remaining_payment -= payment
+                    # Credit the brokerage firm's cash reserves with the recovered payment
+                    firm_db = get_firm_db()
+                    try:
+                        firm = firm_db.query(FirmEntity).first()
+                        if firm:
+                            firm.cash_reserves += payment
+                        firm_db.commit()
+                    finally:
+                        firm_db.close()
                     print(f"[Estate] Paid ${payment:,.2f} on brokerage lien #{lien.id}")
                 db.delete(lien)
         except Exception as e:

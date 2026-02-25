@@ -265,11 +265,14 @@ def _compute_24h_vwap(db, meme_symbol: str) -> Optional[float]:
     )
     if not trades:
         return None
-    total_volume = sum(t.native_volume for t in trades)
-    if total_volume <= 0:
+    # VWAP = Σ(price × quantity) / Σ(quantity) = Σ(native_volume) / Σ(quantity)
+    # native_volume = price * quantity, so dividing by total quantity gives true VWAP.
+    # Dividing native_volume by native_volume (old code) re-multiplied by price,
+    # squaring price in the numerator and inflating the result.
+    total_quantity = sum(t.quantity for t in trades)
+    if total_quantity <= 0:
         return None
-    # VWAP = Σ(price × volume) / Σ(volume) — price already embedded in native_volume
-    return sum(t.price * t.native_volume for t in trades) / total_volume
+    return sum(t.native_volume for t in trades) / total_quantity
 
 
 def get_meme_wallet_balance(player_id: int, meme_symbol: str) -> float:
