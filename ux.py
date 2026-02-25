@@ -1947,7 +1947,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 my_orders_rows += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 8px 6px; color: {side_color}; font-weight: bold;">{o.order_type.upper()}</td>
-                    <td style="padding: 8px 6px;">${o.price:.2f}</td>
+                    <td style="padding: 8px 6px;">{'MKT' if o.price is None else f'${o.price:.2f}'}</td>
                     <td style="padding: 8px 6px;">{o.quantity:,.2f}</td>
                     <td style="padding: 8px 6px; color: #94a3b8;">{o.quantity_filled:,.2f}</td>
                     <td style="padding: 8px 6px; color: #f59e0b;">{remaining:,.2f}</td>

@@ -599,7 +599,7 @@ def get_market_stats() -> dict:
     from datetime import timedelta
     yesterday = datetime.utcnow() - timedelta(days=1)
     recent_trades = db.query(Trade).filter(Trade.executed_at >= yesterday).all() 
-    volume = sum(t.quantity * t.price for t in recent_trades)
+    volume = sum(t.quantity * (t.price or 0) for t in recent_trades)
     stats = {
         "total_orders": db.query(MarketOrder).count(),
         "active_orders": db.query(MarketOrder).filter(MarketOrder.status == OrderStatus.ACTIVE).count(),
