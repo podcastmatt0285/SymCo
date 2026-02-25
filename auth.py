@@ -41,7 +41,21 @@ class Player(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
     tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
-    registration_ip = Column(String, nullable=True, index=True)  # multi-account detection
+
+
+class PlayerRegistrationIP(Base):
+    """
+    Tracks every IP address a player account was ever registered from.
+    Kept in a separate table so we never need to ALTER the players table
+    (which requires ownership in PostgreSQL).  One row is written at
+    account creation; the multi-account detector queries this table.
+    """
+    __tablename__ = "player_registration_ips"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    player_id = Column(Integer, index=True, nullable=False)
+    ip_address = Column(String, nullable=False, index=True)
+    registered_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Session(Base):
@@ -94,23 +108,6 @@ def migrate_tutorial_column():
         print(f"[Auth] Migration warning (tutorial_step): {e}")
 
 
-def migrate_registration_ip_column():
-    """Add registration_ip column to players table if it doesn't exist."""
-    try:
-        # engine.begin() opens a connection, executes, then automatically
-        # commits on block exit (or rolls back on exception).  This is the
-        # correct SQLAlchemy 2.x pattern for DDL migrations.
-        with engine.begin() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE players ADD COLUMN IF NOT EXISTS registration_ip TEXT"
-                )
-            )
-        print("[Auth] registration_ip column ready")
-    except Exception as e:
-        print(f"[Auth] Migration error (registration_ip): {e}")
-
-
 # ==========================
 # CASH TRANSFER
 # ==========================
@@ -161,12 +158,15 @@ def create_player(db: Session, business_name: str, password: str, ip_address: Op
         business_name=business_name,
         password_hash=hash_password(password),
         cash_balance=50000.0,
-        registration_ip=ip_address,
     )
-    
+
     db.add(player)
     db.commit()
     db.refresh(player)
+
+    if ip_address:
+        db.add(PlayerRegistrationIP(player_id=player.id, ip_address=ip_address))
+        db.commit()
     
     player_id = player.id
     print(f"[Auth] Created player {player_id}: {business_name}")
@@ -565,11 +565,18 @@ async def register(
     # Ban the new account immediately and penalise the original account.
     MULTI_ACCOUNT_FINE = 10_000.0
     if ip_address:
-        prior = (
-            db.query(Player)
-            .filter(Player.registration_ip == ip_address, Player.id != player.id)
-            .order_by(Player.created_at.asc())
+        prior_ip_row = (
+            db.query(PlayerRegistrationIP)
+            .filter(
+                PlayerRegistrationIP.ip_address == ip_address,
+                PlayerRegistrationIP.player_id != player.id,
+            )
+            .order_by(PlayerRegistrationIP.registered_at.asc())
             .first()
+        )
+        prior = (
+            db.query(Player).filter(Player.id == prior_ip_row.player_id).first()
+            if prior_ip_row else None
         )
         if prior:
             print(
@@ -655,7 +662,6 @@ def initialize():
     print("[Auth] Creating database tables...")
     Base.metadata.create_all(bind=engine)
     migrate_tutorial_column()
-    migrate_registration_ip_column()
     print("[Auth] Module initialized")
 
 async def tick(current_tick: int, now):
