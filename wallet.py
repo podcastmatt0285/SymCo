@@ -455,8 +455,8 @@ def execute_wallet_swap(
     harder to manipulate because it is volume-weighted over 24 hours.
 
     Fees: 3 % sell leg + 3 % buy leg — both are permanently burned.
-    No WSC is minted here; WSC is obtained exclusively through the
-    native-token AMM pool (swap_native_for_wsc).
+    90 % of the burned fee value is re-minted as WSC and distributed to
+    the yield farming, faucet, and airdrop treasury pools.
 
     Returns (success, message, detail_dict).
     """
@@ -533,10 +533,8 @@ def execute_wallet_swap(
 
         meme_db.commit()
 
-        # — Fees burned, no WSC minted (WSC comes from native-token AMM only) —
-        t = _get_or_create_treasury(wallet_db)
-        t.total_native_burned += total_fee_usd   # track burned value for accounting
-        t.last_updated         = datetime.utcnow()
+        # — Burn fees and mint WSC into treasury pools —
+        minted_wsc = _burn_and_mint_wsc(wallet_db, total_fee_usd)
         wallet_db.commit()
 
         # — Audit record —
@@ -547,7 +545,7 @@ def execute_wallet_swap(
             amount_in=amount,
             amount_out=amount_out,
             fee_burned_value=total_fee_usd,
-            wsc_minted=0.0,          # no longer minted from swap fees
+            wsc_minted=minted_wsc,
             is_cross_chain=is_cross_chain,
         )
         wallet_db.add(rec)
@@ -556,15 +554,14 @@ def execute_wallet_swap(
         chain_note = "(cross-chain)" if is_cross_chain else "(same chain)"
         msg = (
             f"Swapped {amount:.4f} {from_symbol} → {amount_out:.4f} {to_symbol} {chain_note}. "
-            f"Fee: ${total_fee_usd:.4f} burned. "
-            f"(WSC is earned via the native-token AMM pool, not swap fees.)"
+            f"Fee: ${total_fee_usd:.4f} burned → {minted_wsc:.4f} WSC minted to treasury."
         )
         return True, msg, {
             "from_symbol": from_symbol, "to_symbol": to_symbol,
             "amount_in": amount, "amount_out": amount_out,
             "price_from_vwap": price_from, "price_to_vwap": price_to,
             "sell_fee_usd": sell_fee_usd, "buy_fee_usd": buy_fee_usd,
-            "total_fee_usd": total_fee_usd, "wsc_minted": 0.0,
+            "total_fee_usd": total_fee_usd, "wsc_minted": minted_wsc,
             "is_cross_chain": is_cross_chain,
         }
 
