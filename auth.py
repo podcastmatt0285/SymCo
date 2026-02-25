@@ -84,7 +84,7 @@ def get_db():
 def migrate_tutorial_column():
     """Add tutorial_step column to players table if it doesn't exist."""
     try:
-        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        with engine.begin() as conn:
             conn.execute(
                 __import__("sqlalchemy").text(
                     "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0"
@@ -97,9 +97,10 @@ def migrate_tutorial_column():
 def migrate_registration_ip_column():
     """Add registration_ip column to players table if it doesn't exist."""
     try:
-        # DDL must run outside a transaction (AUTOCOMMIT) so it cannot be
-        # silently rolled back when the connection is returned to the pool.
-        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+        # engine.begin() opens a connection, executes, then automatically
+        # commits on block exit (or rolls back on exception).  This is the
+        # correct SQLAlchemy 2.x pattern for DDL migrations.
+        with engine.begin() as conn:
             conn.execute(
                 __import__("sqlalchemy").text(
                     "ALTER TABLE players ADD COLUMN IF NOT EXISTS registration_ip TEXT"
