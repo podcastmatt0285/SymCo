@@ -235,19 +235,17 @@ def execute_ipo():
             print(f"[{BANK_NAME}] ✗ IPO aborted - price not calculated")
             return
         
-        db = market.get_db()
+        inv_db = inventory.get_db()
         try:
-            existing = db.query(market.MarketOrder).filter(
-                market.MarketOrder.player_id == BANK_PLAYER_ID,
-                market.MarketOrder.item_type == SHARE_ITEM_TYPE,
-                market.MarketOrder.status == market.OrderStatus.ACTIVE
+            any_holder = inv_db.query(inventory.InventoryItem).filter(
+                inventory.InventoryItem.item_type == SHARE_ITEM_TYPE,
+                inventory.InventoryItem.quantity > 0
             ).first()
-            
-            if existing:
-                print(f"[{BANK_NAME}] IPO already exists (Order #{existing.id})")
+            if any_holder:
+                print(f"[{BANK_NAME}] IPO already executed — shares in circulation. Skipping.")
                 return
         finally:
-            db.close()
+            inv_db.close()
         
         # Register share as tradeable item
         if SHARE_ITEM_TYPE not in inventory.ITEM_RECIPES:
@@ -321,10 +319,10 @@ def initialize():
                 print(f"[{BANK_NAME}] Initial share structure set: {IPO_SHARES:,} shares at ${ipo_share_price:.4f}")
         finally:
             bank_db.close()
-    
-    # Execute IPO
-    execute_ipo()
-    
+
+        # Execute IPO (only on first creation)
+        execute_ipo()
+
     print(f"[{BANK_NAME}] Module initialized")
     print(f"  → Target Commodity: {TARGET_COMMODITY}")
     print(f"  → IPO: {IPO_SHARES:,} shares at ${ipo_share_price:.6f}")

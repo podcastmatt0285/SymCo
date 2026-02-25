@@ -154,11 +154,18 @@ def execute_ipo():
     import market
     import banks
 
-    # Check if IPO was already done
-    existing_shares = inventory.get_item_quantity(BANK_PLAYER_ID, SHARE_ITEM_TYPE)
-    if existing_shares > 0:
-        print(f"[{BANK_NAME}] IPO already executed — skipping.")
-        return
+    # Check if IPO was already done (check across ALL holders, not just the bank)
+    inv_db = inventory.get_db()
+    try:
+        any_holder = inv_db.query(inventory.InventoryItem).filter(
+            inventory.InventoryItem.item_type == SHARE_ITEM_TYPE,
+            inventory.InventoryItem.quantity > 0
+        ).first()
+        if any_holder:
+            print(f"[{BANK_NAME}] IPO already executed — shares in circulation. Skipping.")
+            return
+    finally:
+        inv_db.close()
 
     nav = calculate_nav()
     ipo_share_price = nav / IPO_SHARES
@@ -232,7 +239,8 @@ def initialize():
         finally:
             bank_db.close()
 
-    execute_ipo()
+        # Execute IPO (only on first creation)
+        execute_ipo()
 
     ipo_share_price = calculate_share_price()
     print(f"[{BANK_NAME}] Initialized — {IPO_SHARES:,} shares, "

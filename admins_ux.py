@@ -63,6 +63,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/chat", "Chat"),
         ("/admin/p2p", "P2P"),
         ("/admin/landbank", "Land Bank"),
+        ("/admin/etf", "ETF Banks"),
         ("/admin/logs", "Logs"),
     ]
     nav_html = ""
@@ -455,6 +456,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         <a href="/admin/chat" class="link-card"><div class="lc-icon">💬</div><div class="lc-title">Chat Rooms</div><div class="lc-desc">Monitor chat</div></a>
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
         <a href="/admin/landbank" class="link-card"><div class="lc-icon">🏦</div><div class="lc-title">Land Bank</div><div class="lc-desc">Manage plots</div></a>
+        <a href="/admin/etf" class="link-card"><div class="lc-icon">📈</div><div class="lc-title">ETF Banks</div><div class="lc-desc">Share audit &amp; repair</div></a>
         <a href="/admin/logs" class="link-card"><div class="lc-icon">📜</div><div class="lc-title">Audit Log</div><div class="lc-desc">Admin actions</div></a>
     </div>
 
@@ -1812,3 +1814,266 @@ def post_remove_moderator(session_token: Optional[str] = Cookie(None), player_id
     if result["ok"]:
         return RedirectResponse(url=f"/admin/moderators?msg=Moderator+revoked+from+Player+%23{player_id}", status_code=303)
     return RedirectResponse(url=f"/admin/moderators?err={result['error']}", status_code=303)
+
+
+# ==========================
+# ETF BANK MANAGEMENT
+# ==========================
+
+_ETF_CONFIGS = [
+    {
+        "bank_id": "apple_seeds_etf",
+        "name": "Apple Seeds ETF",
+        "share_item_type": "apple_seeds_etf_shares",
+        "bank_player_id": -3,
+        "ipo_shares": 10_000_000,
+    },
+    {
+        "bank_id": "energy_etf",
+        "name": "Wadsworth Energy ETF",
+        "share_item_type": "energy_etf_shares",
+        "bank_player_id": -4,
+        "ipo_shares": 10_000_000,
+    },
+    {
+        "bank_id": "city_nav_etf",
+        "name": "City NAV ETF",
+        "share_item_type": "city_nav_etf_shares",
+        "bank_player_id": -6,
+        "ipo_shares": 420_000_000_000,
+    },
+    {
+        "bank_id": "land_bank",
+        "name": "Land Bank",
+        "share_item_type": "land_bank_shares",
+        "bank_player_id": -2,
+        "ipo_shares": 1_000_000_000_000,
+    },
+]
+
+
+def _audit_etf(cfg: dict) -> dict:
+    """Gather share audit data for one ETF."""
+    import inventory
+    import market
+    import banks
+
+    share_item_type = cfg["share_item_type"]
+    bank_player_id = cfg["bank_player_id"]
+
+    # All holders
+    inv_db = inventory.get_db()
+    try:
+        holdings = inv_db.query(inventory.InventoryItem).filter(
+            inventory.InventoryItem.item_type == share_item_type,
+            inventory.InventoryItem.quantity > 0
+        ).all()
+        holders = [(h.player_id, int(h.quantity)) for h in holdings]
+        total_in_inventory = sum(q for _, q in holders)
+        bank_inventory = next((q for pid, q in holders if pid == bank_player_id), 0)
+        player_inventory = total_in_inventory - bank_inventory
+    finally:
+        inv_db.close()
+
+    # Active market orders from bank
+    mkt_db = market.get_db()
+    try:
+        active_orders = mkt_db.query(market.MarketOrder).filter(
+            market.MarketOrder.player_id == bank_player_id,
+            market.MarketOrder.item_type == share_item_type,
+            market.MarketOrder.status == market.OrderStatus.ACTIVE
+        ).all()
+        orders_data = [(o.id, int(o.quantity - o.quantity_filled), float(o.price)) for o in active_orders]
+        shares_in_orders = sum(q for _, q, _ in orders_data)
+    finally:
+        mkt_db.close()
+
+    # Bank entity info
+    bank_entity = banks.get_bank_entity(cfg["bank_id"])
+    total_issued = int(bank_entity.total_shares_issued) if bank_entity else 0
+    share_price = bank_entity.share_price if bank_entity else 0.0
+
+    return {
+        "bank_id": cfg["bank_id"],
+        "name": cfg["name"],
+        "share_item_type": share_item_type,
+        "bank_player_id": bank_player_id,
+        "ipo_shares": cfg["ipo_shares"],
+        "total_issued": total_issued,
+        "total_in_inventory": total_in_inventory,
+        "bank_inventory": bank_inventory,
+        "player_inventory": player_inventory,
+        "shares_in_orders": shares_in_orders,
+        "share_price": share_price,
+        "holders": holders,
+        "active_orders": orders_data,
+    }
+
+
+@router.get("/admin/etf", response_class=HTMLResponse)
+def admin_etf(session_token: Optional[str] = Cookie(None),
+              msg: Optional[str] = Query(None),
+              err: Optional[str] = Query(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    alert = ""
+    if msg:
+        alert = f'<div style="background:#14532d;color:#86efac;padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:0.8rem;">{msg}</div>'
+    if err:
+        alert = f'<div style="background:#7f1d1d;color:#fca5a5;padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:0.8rem;">{err}</div>'
+
+    cards_html = ""
+    for cfg in _ETF_CONFIGS:
+        try:
+            a = _audit_etf(cfg)
+        except Exception as ex:
+            cards_html += f'<div class="card"><h3>{cfg["name"]}</h3><p style="color:#ef4444;">Audit error: {ex}</p></div>'
+            continue
+
+        expected = a["ipo_shares"]
+        total_inv = a["total_in_inventory"]
+        orphan_flag = ""
+        if total_inv > expected:
+            surplus = total_inv - expected
+            orphan_flag = f'<span class="badge badge-red" style="margin-left:6px;">+{surplus:,} ORPHAN SHARES</span>'
+        elif total_inv < expected * 0.01 and total_inv == 0:
+            orphan_flag = f'<span class="badge badge-yellow" style="margin-left:6px;">NO SHARES IN CIRCULATION</span>'
+
+        holder_rows = ""
+        for pid, qty in sorted(a["holders"], key=lambda x: -x[1]):
+            label = f"BANK ({pid})" if pid == a["bank_player_id"] else f"Player #{pid}"
+            pct = qty / expected * 100 if expected > 0 else 0
+            holder_rows += f"<tr><td>{label}</td><td>{qty:,}</td><td>{pct:.4f}%</td></tr>"
+
+        order_rows = ""
+        for oid, qty, price in a["active_orders"]:
+            order_rows += f"<tr><td>#{oid}</td><td>{qty:,}</td><td>${price:.8f}</td></tr>"
+
+        cards_html += f"""
+        <div class="card">
+            <h3>{a["name"]} <span style="color:#64748b;font-weight:normal;font-size:0.7rem;">({a["share_item_type"]})</span>{orphan_flag}</h3>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;font-size:0.75rem;">
+                <span>IPO: <b>{expected:,}</b></span>
+                <span>Issued: <b>{a["total_issued"]:,}</b></span>
+                <span>In Inventory: <b>{total_inv:,}</b></span>
+                <span style="color:#38bdf8;">Bank holds: <b>{a["bank_inventory"]:,}</b></span>
+                <span style="color:#22c55e;">Players hold: <b>{a["player_inventory"]:,}</b></span>
+                <span style="color:#a78bfa;">In orders: <b>{a["shares_in_orders"]:,}</b></span>
+                <span>Price: <b>${a["share_price"]:.8f}</b></span>
+            </div>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                <form method="post" action="/admin/etf/cancel-orders">
+                    <input type="hidden" name="bank_id" value="{a["bank_id"]}">
+                    <input type="hidden" name="share_item_type" value="{a["share_item_type"]}">
+                    <input type="hidden" name="bank_player_id" value="{a["bank_player_id"]}">
+                    <button class="btn btn-yellow" type="submit"
+                        onclick="return confirm('Cancel all active market orders for {a["name"]}?')">
+                        Cancel All Bank Orders ({len(a["active_orders"])})
+                    </button>
+                </form>
+                <form method="post" action="/admin/etf/zero-bank-inventory">
+                    <input type="hidden" name="bank_id" value="{a["bank_id"]}">
+                    <input type="hidden" name="share_item_type" value="{a["share_item_type"]}">
+                    <input type="hidden" name="bank_player_id" value="{a["bank_player_id"]}">
+                    <button class="btn btn-red" type="submit"
+                        onclick="return confirm('Zero out bank inventory for {a["name"]}? This removes shares from the bank entity only.')">
+                        Zero Bank Inventory ({a["bank_inventory"]:,})
+                    </button>
+                </form>
+            </div>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:200px;">
+                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">All Holders</div>
+                    <div class="table-wrap"><table>
+                        <tr><th>Holder</th><th>Shares</th><th>%</th></tr>
+                        {holder_rows if holder_rows else '<tr><td colspan="3" style="color:#64748b;">No holders</td></tr>'}
+                    </table></div>
+                </div>
+                <div style="flex:1;min-width:200px;">
+                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Active Bank Orders</div>
+                    <div class="table-wrap"><table>
+                        <tr><th>Order</th><th>Qty Remaining</th><th>Price</th></tr>
+                        {order_rows if order_rows else '<tr><td colspan="3" style="color:#64748b;">No active orders</td></tr>'}
+                    </table></div>
+                </div>
+            </div>
+        </div>
+        """
+
+    body = f"""
+    <h2 style="font-size:0.9rem;margin-bottom:10px;">ETF Bank Management</h2>
+    {alert}
+    {cards_html}
+    """
+    return HTMLResponse(admin_shell("ETF Banks", body, admin.business_name, "/admin/etf"))
+
+
+@router.post("/admin/etf/cancel-orders")
+def admin_etf_cancel_orders(
+    session_token: Optional[str] = Cookie(None),
+    bank_id: str = Form(...),
+    share_item_type: str = Form(...),
+    bank_player_id: int = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    try:
+        import market
+
+        mkt_db = market.get_db()
+        try:
+            orders = mkt_db.query(market.MarketOrder).filter(
+                market.MarketOrder.player_id == bank_player_id,
+                market.MarketOrder.item_type == share_item_type,
+                market.MarketOrder.status == market.OrderStatus.ACTIVE
+            ).all()
+            count = len(orders)
+            for o in orders:
+                o.status = market.OrderStatus.CANCELLED
+            mkt_db.commit()
+        finally:
+            mkt_db.close()
+
+        log_action(admin.id, "etf_cancel_orders", None, f"Cancelled {count} orders for {bank_id}")
+        return RedirectResponse(url=f"/admin/etf?msg=Cancelled+{count}+orders+for+{bank_id}", status_code=303)
+    except Exception as ex:
+        return RedirectResponse(url=f"/admin/etf?err={str(ex)[:80]}", status_code=303)
+
+
+@router.post("/admin/etf/zero-bank-inventory")
+def admin_etf_zero_inventory(
+    session_token: Optional[str] = Cookie(None),
+    bank_id: str = Form(...),
+    share_item_type: str = Form(...),
+    bank_player_id: int = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    try:
+        import inventory
+
+        inv_db = inventory.get_db()
+        try:
+            item = inv_db.query(inventory.InventoryItem).filter(
+                inventory.InventoryItem.player_id == bank_player_id,
+                inventory.InventoryItem.item_type == share_item_type
+            ).first()
+            removed = int(item.quantity) if item else 0
+            if item:
+                item.quantity = 0
+                inv_db.commit()
+        finally:
+            inv_db.close()
+
+        log_action(admin.id, "etf_zero_inventory", None, f"Zeroed {removed} bank shares for {bank_id}")
+        return RedirectResponse(url=f"/admin/etf?msg=Zeroed+{removed}+bank+shares+for+{bank_id}", status_code=303)
+    except Exception as ex:
+        return RedirectResponse(url=f"/admin/etf?err={str(ex)[:80]}", status_code=303)
