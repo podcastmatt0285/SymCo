@@ -1332,7 +1332,13 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         # Execute sale
         wallet.balance -= amount
         wallet.total_sold += amount
-        player.cash_balance += net_value
+        try:
+            from reserve_banks import convert_to_legal_tender
+            _amt, _code = convert_to_legal_tender(player.id, net_value)
+            if _code == "USD":
+                player.cash_balance += _amt
+        except Exception:
+            player.cash_balance += net_value
 
         # Cash comes FROM the county treasury
         county.treasury_balance -= (net_value + fee)
@@ -2170,7 +2176,13 @@ def _execute_passed_proposal(db, county: "County", proposal: "GovernanceProposal
                 player = db.query(Player).filter(Player.id == target_player_id).first()
                 if player and county.treasury_balance >= value:
                     county.treasury_balance -= value
-                    player.cash_balance += value
+                    try:
+                        from reserve_banks import convert_to_legal_tender
+                        _amt, _code = convert_to_legal_tender(player.id, value)
+                        if _code == "USD":
+                            player.cash_balance += _amt
+                    except Exception:
+                        player.cash_balance += value
                     log_transaction(
                         target_player_id, "treasury_grant", "money", value,
                         f"County treasury grant from {county.name}",

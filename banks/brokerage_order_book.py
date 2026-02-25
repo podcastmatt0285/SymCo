@@ -742,7 +742,13 @@ def execute_trade(
         try:
             seller = auth_db.query(Player).filter(Player.id == seller_id).first()
             if seller:
-                seller.cash_balance += proceeds
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(seller.id, proceeds)
+                    if _code == "USD":
+                        seller.cash_balance += _amt
+                except Exception:
+                    seller.cash_balance += proceeds
                 auth_db.commit()
                 
                 # Log share sale and payment

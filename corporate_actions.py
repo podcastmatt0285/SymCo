@@ -786,11 +786,17 @@ def check_and_execute_offering(offering_id: int) -> bool:
         try:
             founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
             if founder:
-                founder.cash_balance += net_to_founder
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(founder.id, net_to_founder)
+                    if _code == "USD":
+                        founder.cash_balance += _amt
+                except Exception:
+                    founder.cash_balance += net_to_founder
                 auth_db.commit()
         finally:
             auth_db.close()
-        
+
         # Firm keeps fee
         firm_add_cash(firm_fee, "secondary_offering_fee", 
                      f"Secondary offering fee for {company.ticker_symbol}", company.founder_id)
@@ -1096,7 +1102,13 @@ def pay_special_dividend(company_shares_id: int, founder_id: int, total_amount: 
                     continue
                 holder = auth_db2.query(Player).filter(Player.id == pos.player_id).first()
                 if holder:
-                    holder.cash_balance += payout
+                    try:
+                        from reserve_banks import convert_to_legal_tender
+                        _amt, _code = convert_to_legal_tender(holder.id, payout)
+                        if _code == "USD":
+                            holder.cash_balance += _amt
+                    except Exception:
+                        holder.cash_balance += payout
                     distributed += payout
                     log_transaction(pos.player_id, "dividend", "money", payout,
                                     f"Special dividend: {company.ticker_symbol} (${per_share:.4f}/share × {pos.shares_owned:,})")
@@ -1173,7 +1185,13 @@ def redeem_tax_vouchers(player_id: int, amount: float) -> dict:
         try:
             p = auth_db.query(Player).filter(Player.id == player_id).first()
             if p:
-                p.cash_balance += redeemed_total
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(p.id, redeemed_total)
+                    if _code == "USD":
+                        p.cash_balance += _amt
+                except Exception:
+                    p.cash_balance += redeemed_total
                 auth_db.commit()
         finally:
             auth_db.close()
@@ -1431,7 +1449,13 @@ def process_acquisition_income(current_tick: int):
                         acquirer = auth_db.query(Player).filter(Player.id == stake.acquirer_id).first()
                         if target and acquirer:
                             target.cash_balance -= net
-                            acquirer.cash_balance += net
+                            try:
+                                from reserve_banks import convert_to_legal_tender
+                                _amt, _code = convert_to_legal_tender(acquirer.id, net)
+                                if _code == "USD":
+                                    acquirer.cash_balance += _amt
+                            except Exception:
+                                acquirer.cash_balance += net
                             auth_db.commit()
                             log_transaction(stake.acquirer_id, "corporate", "money", net,
                                             f"Acquisition income ({stake.stake_pct*100:.1f}% of player {stake.target_player_id})")

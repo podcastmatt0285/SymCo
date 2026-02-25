@@ -609,7 +609,13 @@ def pay_dividends():
             try:
                 player = auth_db.query(Player).filter(Player.id == player_id).first()
                 if player:
-                    player.cash_balance += dividend_amount
+                    try:
+                        from reserve_banks import convert_to_legal_tender
+                        _amt, _code = convert_to_legal_tender(player.id, dividend_amount)
+                        if _code == "USD":
+                            player.cash_balance += _amt
+                    except Exception:
+                        player.cash_balance += dividend_amount
                     auth_db.commit()
             finally:
                 auth_db.close()

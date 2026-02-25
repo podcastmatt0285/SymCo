@@ -1577,7 +1577,13 @@ def delist_company(founder_id: int, company_id: int):
                 payout = position.shares_owned * buyback_price
                 holder = auth_db.query(Player).filter(Player.id == position.player_id).first()
                 if holder:
-                    holder.cash_balance += payout
+                    try:
+                        from reserve_banks import convert_to_legal_tender
+                        _amt, _code = convert_to_legal_tender(holder.id, payout)
+                        if _code == "USD":
+                            holder.cash_balance += _amt
+                    except Exception:
+                        holder.cash_balance += payout
 
                 # Transfer shares to founder
                 position.shares_owned = 0
@@ -2019,11 +2025,17 @@ def process_share_loan_interest():
                 try:
                     lender = auth_db.query(Player).filter(Player.id == loan.lender_player_id).first()
                     if lender:
-                        lender.cash_balance += fee_to_lender
+                        try:
+                            from reserve_banks import convert_to_legal_tender
+                            _amt, _code = convert_to_legal_tender(lender.id, fee_to_lender)
+                            if _code == "USD":
+                                lender.cash_balance += _amt
+                        except Exception:
+                            lender.cash_balance += fee_to_lender
                         auth_db.commit()
                 finally:
                     auth_db.close()
-                
+
                 firm_add_cash(fee_to_firm, "short_borrow_fee", f"Borrow fee", loan.borrower_player_id)
         
         db.commit()
@@ -2144,11 +2156,17 @@ def borrow_commodity(borrower_id: int, listing_id: int, quantity: float) -> Opti
         try:
             lender = auth_db.query(Player).filter(Player.id == listing.lender_player_id).first()
             if lender:
-                lender.cash_balance += fee_to_lender
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(lender.id, fee_to_lender)
+                    if _code == "USD":
+                        lender.cash_balance += _amt
+                except Exception:
+                    lender.cash_balance += fee_to_lender
                 auth_db.commit()
         finally:
             auth_db.close()
-        
+
         firm_add_cash(fee_to_firm, "lending_fee", f"Commodity: {listing.item_type}", borrower_id)
         
         listing.quantity_lent_out += quantity
@@ -2279,11 +2297,17 @@ def extend_commodity_loan(loan_id: int) -> bool:
         try:
             lender = auth_db.query(Player).filter(Player.id == loan.lender_player_id).first()
             if lender:
-                lender.cash_balance += fee_to_lender
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(lender.id, fee_to_lender)
+                    if _code == "USD":
+                        lender.cash_balance += _amt
+                except Exception:
+                    lender.cash_balance += fee_to_lender
                 auth_db.commit()
         finally:
             auth_db.close()
-        
+
         firm_add_cash(fee_to_firm, "extension_fee", f"Extension: {loan.item_type}", loan.borrower_player_id)
         
         new_due = calculate_commodity_due_date(loan.item_type, loan.borrower_player_id)
@@ -2350,11 +2374,17 @@ def check_commodity_loan_due_dates():
                 try:
                     lender = auth_db.query(Player).filter(Player.id == loan.lender_player_id).first()
                     if lender:
-                        lender.cash_balance += fee_to_lender
+                        try:
+                            from reserve_banks import convert_to_legal_tender
+                            _amt, _code = convert_to_legal_tender(lender.id, fee_to_lender)
+                            if _code == "USD":
+                                lender.cash_balance += _amt
+                        except Exception:
+                            lender.cash_balance += fee_to_lender
                         auth_db.commit()
                 finally:
                     auth_db.close()
-                
+
                 firm_add_cash(fee_to_firm, "late_fee", f"Late: {loan.item_type}", loan.borrower_player_id)
             
             if loan.days_late >= MAX_LATE_DAYS_BEFORE_FORCE_CLOSE:
@@ -2552,11 +2582,17 @@ def _process_cash_dividend(company, config, db):
         try:
             player = auth_db.query(Player).filter(Player.id == position.player_id).first()
             if player:
-                player.cash_balance += dividend_amount
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(player.id, dividend_amount)
+                    if _code == "USD":
+                        player.cash_balance += _amt
+                except Exception:
+                    player.cash_balance += dividend_amount
                 auth_db.commit()
         finally:
             auth_db.close()
-    
+
     company.consecutive_dividend_payouts += 1
     company.last_dividend_date = datetime.utcnow()
     company.dividend_warning_active = False

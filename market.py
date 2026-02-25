@@ -386,7 +386,13 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 db.rollback()
                 return
             city_bank.cash_reserves -= total_cost
-            seller_player.cash_balance += total_cost
+            try:
+                from reserve_banks import convert_to_legal_tender
+                _amt, _code = convert_to_legal_tender(seller_player.id, total_cost)
+                if _code == "USD":
+                    seller_player.cash_balance += _amt
+            except Exception:
+                seller_player.cash_balance += total_cost
             print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
         except Exception as e:
             print(f"[Market] City bank buy error: {e}")
@@ -430,7 +436,13 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     db.rollback()
                     return
                 buyer.cash_balance -= total_cost
-                seller.cash_balance += total_cost
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(seller.id, total_cost)
+                    if _code == "USD":
+                        seller.cash_balance += _amt
+                except Exception:
+                    seller.cash_balance += total_cost
             except Exception as e:
                 print(f"[Market] Cash transfer error: {e}")
                 import traceback

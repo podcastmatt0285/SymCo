@@ -810,7 +810,13 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                             for heir in living_heirs:
                                 heir_player2 = auth_db2.query(Player).filter(Player.id == heir.heir_player_id).first()
                                 if heir_player2:
-                                    heir_player2.cash_balance += per_heir_cash
+                                    try:
+                                        from reserve_banks import convert_to_legal_tender
+                                        _amt, _code = convert_to_legal_tender(heir_player2.id, per_heir_cash)
+                                        if _code == "USD":
+                                            heir_player2.cash_balance += _amt
+                                    except Exception:
+                                        heir_player2.cash_balance += per_heir_cash
                                 notif = CryptoInheritanceNotification(
                                     heir_player_id=heir.heir_player_id,
                                     deceased_name=deceased_name_for_notif,
@@ -1107,7 +1113,13 @@ def process_installments(current_tick: int):
             gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
             if gov and gov.cash_balance >= payment:
                 gov.cash_balance -= payment
-                heir.cash_balance += payment
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(heir.id, payment)
+                    if _code == "USD":
+                        heir.cash_balance += _amt
+                except Exception:
+                    heir.cash_balance += payment
                 inst.total_tax_paid += payment
                 inst.installments_remaining -= 1
                 inst.next_installment_tick = current_tick + INSTALLMENT_INTERVAL

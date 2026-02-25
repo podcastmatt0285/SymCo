@@ -595,7 +595,13 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
             return False, "Applicant can no longer afford the fee"
         
         player.cash_balance -= application.calculated_fee
-        mayor.cash_balance += application.calculated_fee
+        try:
+            from reserve_banks import convert_to_legal_tender
+            _amt, _code = convert_to_legal_tender(mayor.id, application.calculated_fee)
+            if _code == "USD":
+                mayor.cash_balance += _amt
+        except Exception:
+            mayor.cash_balance += application.calculated_fee
         # Log application fee transactions
         log_transaction(
             application.applicant_id,
@@ -1116,7 +1122,13 @@ def pay_production_subsidy(player_id: int, business_id: int, production_cost: fl
         
         # Pay subsidy
         bank.cash_reserves -= subsidy
-        player.cash_balance += subsidy
+        try:
+            from reserve_banks import convert_to_legal_tender
+            _amt, _code = convert_to_legal_tender(player.id, subsidy)
+            if _code == "USD":
+                player.cash_balance += _amt
+        except Exception:
+            player.cash_balance += subsidy
         # Log the subsidy transaction
         log_transaction(
             player_id,
@@ -1188,7 +1200,13 @@ def exchange_currency_for_member(player_id: int, quantity: float) -> Tuple[bool,
         
         # Execute exchange
         inventory.remove_item(player_id, bank.currency_type, quantity)
-        player.cash_balance += total_value
+        try:
+            from reserve_banks import convert_to_legal_tender
+            _amt, _code = convert_to_legal_tender(player.id, total_value)
+            if _code == "USD":
+                player.cash_balance += _amt
+        except Exception:
+            player.cash_balance += total_value
         bank.cash_reserves -= total_value
         bank.currency_quantity += quantity
         
@@ -1907,7 +1925,13 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             order_seller = db.query(Player).filter(Player.id == sell_order.player_id).first()
             if order_seller:
                 bank.cash_reserves -= cost
-                order_seller.cash_balance += cost
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(order_seller.id, cost)
+                    if _code == "USD":
+                        order_seller.cash_balance += _amt
+                except Exception:
+                    order_seller.cash_balance += cost
             
             # 2. Transfer inventory from seller to bank's holding
             inventory.remove_item(sell_order.player_id, city.currency_type, buy_qty)

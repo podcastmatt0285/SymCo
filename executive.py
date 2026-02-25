@@ -1222,7 +1222,13 @@ def _process_market_maker(db, current_tick: int):
     for ex in market_makers:
         player = db.query(Player).filter(Player.id == ex.player_id).first()
         if player:
-            player.cash_balance += 500.0
+            try:
+                from reserve_banks import convert_to_legal_tender
+                _amt, _code = convert_to_legal_tender(player.id, 500.0)
+                if _code == "USD":
+                    player.cash_balance += _amt
+            except Exception:
+                player.cash_balance += 500.0
 
 
 def _process_rainmaker(db, current_tick: int):
@@ -1244,7 +1250,13 @@ def _process_rainmaker(db, current_tick: int):
             bonus = random.uniform(2000, 10000)
             player = db.query(Player).filter(Player.id == ex.player_id).first()
             if player:
-                player.cash_balance += bonus
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    _amt, _code = convert_to_legal_tender(player.id, bonus)
+                    if _code == "USD":
+                        player.cash_balance += _amt
+                except Exception:
+                    player.cash_balance += bonus
                 print(f"[Rainmaker] {ex.first_name} {ex.last_name} brought in ${bonus:,.2f}!")
 
 
