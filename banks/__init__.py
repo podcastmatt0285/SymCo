@@ -273,10 +273,16 @@ def add_bank_expense(bank_id: str, amount: float, description: str) -> bool:
     Deduct expense from a bank (for operations, purchases, etc.).
     Returns False if insufficient reserves.
     """
+    # Guard against negative amounts: subtracting a negative number would
+    # silently *add* cash to reserves and reduce lifetime_expenses, which can
+    # be exploited to print money.
+    if amount <= 0:
+        return False
+
     db = get_db()
     try:
         bank = db.query(BankEntity).filter(BankEntity.bank_id == bank_id).first()
-        
+
         if not bank or bank.cash_reserves < amount:
             return False
         

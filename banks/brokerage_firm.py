@@ -911,9 +911,14 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
         
         # 4. BUSINESS VALUE
         try:
-            from business import Business, BUSINESS_TYPES
+            from business import Business, BUSINESS_TYPES, get_district_business_types
             from land import LandPlot, get_db as get_land_db
-            
+
+            # Merge standard and district business configs so that high-tier
+            # district facilities (e.g. $50M Aircraft Assembly Plant) are valued
+            # correctly instead of falling back to the $5,000 default.
+            all_business_types = {**BUSINESS_TYPES, **get_district_business_types()}
+
             # Use the business module's database directly via SQLAlchemy
             # This is more resilient than importing get_db which may not exist
             try:
@@ -923,7 +928,7 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
                 # Fallback: create session from business module's engine
                 from business import SessionLocal as BusinessSessionLocal
                 biz_db = BusinessSessionLocal()
-            
+
             try:
                 businesses = biz_db.query(Business).filter(
                     Business.owner_id == player_id,
@@ -932,11 +937,11 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
                 print(f"[{BANK_NAME}] Found {len(businesses)} businesses for player {player_id}")
             finally:
                 biz_db.close()
-            
+
             land_db = get_land_db()
             try:
                 for biz in businesses:
-                    config = BUSINESS_TYPES.get(biz.business_type, {})
+                    config = all_business_types.get(biz.business_type, {})
                     startup_cost = config.get("startup_cost", 5000)
                     
                     plot = land_db.query(LandPlot).filter(
@@ -1043,16 +1048,18 @@ def calculate_player_company_valuation(player_id: int) -> dict:
 def calculate_business_valuation(business_id: int) -> dict:
     """Legacy function - calculates single business value."""
     try:
-        from business import Business, BUSINESS_TYPES
+        from business import Business, BUSINESS_TYPES, get_district_business_types
         from land import LandPlot, get_db as get_land_db
-        
+
+        all_business_types = {**BUSINESS_TYPES, **get_district_business_types()}
+
         db = get_db()
         try:
             business = db.query(Business).filter(Business.id == business_id).first()
             if not business:
                 return None
-            
-            config = BUSINESS_TYPES.get(business.business_type, {})
+
+            config = all_business_types.get(business.business_type, {})
             startup_cost = config.get("startup_cost", 5000)
             
             land_db = get_land_db()
@@ -1904,32 +1911,35 @@ def close_short_position(loan_id: int) -> bool:
         from auth import Player, get_db as get_auth_db
         
         if not has_shares:
+            # Refund collateral in-memory first; only commit after the market
+            # order succeeds to prevent a TOCTOU exploit where a crash between
+            # the commit and the order placement leaves the player with free money.
             auth_db = get_auth_db()
             try:
                 borrower = auth_db.query(Player).filter(Player.id == loan.borrower_player_id).first()
                 if borrower:
                     borrower.cash_balance += loan.collateral_locked
-                    auth_db.commit()
+                # Deliberately NOT committing here — wait for market order result.
+
+                success = place_market_order(
+                    player_id=loan.borrower_player_id,
+                    company_shares_id=loan.company_shares_id,
+                    side=OrderSide.BUY,
+                    quantity=loan.shares_borrowed
+                )
+
+                if not success:
+                    # Discard the in-memory balance change without persisting it.
+                    auth_db.rollback()
+                    return False
+
+                # Market order succeeded — now it is safe to persist the refund.
+                auth_db.commit()
+            except Exception:
+                auth_db.rollback()
+                raise
             finally:
                 auth_db.close()
-            
-            success = place_market_order(
-                player_id=loan.borrower_player_id,
-                company_shares_id=loan.company_shares_id,
-                side=OrderSide.BUY,
-                quantity=loan.shares_borrowed
-            )
-            
-            if not success:
-                auth_db = get_auth_db()
-                try:
-                    borrower = auth_db.query(Player).filter(Player.id == loan.borrower_player_id).first()
-                    if borrower:
-                        borrower.cash_balance -= loan.collateral_locked
-                        auth_db.commit()
-                finally:
-                    auth_db.close()
-                return False
         else:
             borrower_position.shares_owned -= loan.shares_borrowed
             

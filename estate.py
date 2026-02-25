@@ -895,19 +895,23 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 print(f"[Estate] Meme coin wallet inheritance error: {e}")
 
             # --- Meme coin mining deposits (native tokens staked — not in wallet) ---
+            # Native county tokens are locked in the meme coin mining pool when
+            # staked.  They must be returned to heirs' CryptoWallets directly
+            # (no death tax — crypto is hidden from the government).
+            # Bug fixed: the field is `quantity`, not `quantity_staked`.
             try:
-                from memecoins import MemeCoinMiningDeposit, get_db as meme_get_db
+                from memecoins import MemeCoin, MemeCoinMiningDeposit, get_db as meme_get_db
                 from counties import CryptoWallet, get_db as county_get_db
                 meme_db = meme_get_db()
                 county_db2 = county_get_db()
                 try:
                     meme_stakes = meme_db.query(MemeCoinMiningDeposit).filter(
-                        MemeCoinMiningDeposit.player_id == player_id
+                        MemeCoinMiningDeposit.player_id == player_id,
+                        MemeCoinMiningDeposit.is_active == True
                     ).all()
                     for ms in meme_stakes:
-                        if not hasattr(ms, 'quantity_staked'):
-                            continue
-                        per_heir_native = getattr(ms, 'quantity_staked', 0) / heir_count
+                        # Use the correct field name: `quantity` (not `quantity_staked`).
+                        per_heir_native = ms.quantity / heir_count
                         if per_heir_native <= 0:
                             continue
                         for heir in living_heirs:
@@ -924,7 +928,25 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                                 county_db2.add(heir_native)
                                 county_db2.flush()
                             heir_native.balance += per_heir_native
+                            notif = CryptoInheritanceNotification(
+                                heir_player_id=heir.heir_player_id,
+                                deceased_name=deceased_name_for_notif,
+                                crypto_symbol=ms.native_symbol,
+                                amount=per_heir_native,
+                                cash_equivalent=0.0,
+                                crypto_type="county"
+                            )
+                            db.add(notif)
+                        # Remove the staked amount from the meme coin's mining pool
+                        # so the pool accounting stays accurate.
+                        meme_coin = meme_db.query(MemeCoin).filter(
+                            MemeCoin.symbol == ms.meme_symbol
+                        ).first()
+                        if meme_coin and meme_coin.mining_pool_native:
+                            meme_coin.mining_pool_native = max(0.0, meme_coin.mining_pool_native - ms.quantity)
+                        ms.is_active = False
                         meme_db.delete(ms)
+                        print(f"[Estate] Meme stake {ms.meme_symbol}: distributed {ms.quantity:.6f} {ms.native_symbol} among {heir_count} heirs (NO tax)")
                     meme_db.commit()
                     county_db2.commit()
                 finally:

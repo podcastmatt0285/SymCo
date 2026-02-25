@@ -125,14 +125,18 @@ async def get_status(session_token: Optional[str] = Cookie(None)):
     db = get_db()
     player = get_player_from_session(db, session_token)
     
-    # Fetch active business progress for this player
+    # Fetch active business progress for this player.
+    # district_businesses.json must be merged with the standard BUSINESS_TYPES
+    # dict so that high-tier district businesses report the correct
+    # cycles_to_complete instead of falling back to 1 (which makes their
+    # progress bars appear instantly complete/broken).
     biz_list = []
     if player:
         user_biz = db.query(Business).filter(Business.owner_id == player.id).all()
-        # Fetch cycles_to_complete from your BUSINESS_TYPES config
-        from business import BUSINESS_TYPES
+        from business import BUSINESS_TYPES, get_district_business_types
+        all_business_types = {**BUSINESS_TYPES, **get_district_business_types()}
         for b in user_biz:
-            config = BUSINESS_TYPES.get(b.business_type, {})
+            config = all_business_types.get(b.business_type, {})
             biz_list.append({
                 "id": b.id,
                 "progress_ticks": b.progress_ticks,

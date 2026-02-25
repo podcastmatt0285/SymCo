@@ -387,53 +387,84 @@ def check_and_execute_buyback(program_id: int) -> bool:
         finally:
             auth_db.close()
         
-        # Execute buyback via market order
-        # We'll use the Firm's account as intermediary
-        temp_cash = cost
-        firm_add_cash(temp_cash, "buyback_funding", f"Temp funding for {company.ticker_symbol} buyback", company.founder_id)
-        
+        # Execute buyback via market order placed under the firm's system account.
+        # Record BANK_PLAYER_ID's share position BEFORE the order so we can
+        # calculate the actual fill quantity afterwards.  Any unspent cost from
+        # a partial fill is refunded directly to the founder — preventing the
+        # "refund black hole" where the matching engine returns cash to the firm
+        # instead of the founder.
+        old_bank_position = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == BANK_PLAYER_ID,
+            ShareholderPosition.company_shares_id == company.id
+        ).first()
+        old_bank_shares = old_bank_position.shares_owned if old_bank_position else 0
+
         success = place_market_order(
             player_id=BANK_PLAYER_ID,
             company_shares_id=company.id,
             side=OrderSide.BUY,
             quantity=shares_to_buy
         )
-        
+
         if success:
-            # Update program
-            program.shares_bought += shares_to_buy
-            program.total_spent += cost
-            program.average_buy_price = program.total_spent / program.shares_bought if program.shares_bought > 0 else 0
-            program.treasury_shares += shares_to_buy
-            program.last_execution = datetime.utcnow()
-            
-            # Firm keeps the fee
-            firm_add_cash(fee, "buyback_fee", f"Buyback fee for {company.ticker_symbol}", company.founder_id)
-            
-            # Update company
-            company.shares_in_float -= shares_to_buy
-            company.shares_held_by_firm += shares_to_buy
-            
-            # Log action
-            log_corporate_action(
-                company_shares_id=company.id,
-                action_type="buyback",
-                shares_affected=shares_to_buy,
-                price_per_share=company.current_price,
-                total_value=cost,
-                description=f"Buyback executed: {program.trigger_type}"
-            )
-            
-            db.commit()
-            
-            print(f"[{BANK_NAME}] 📦 BUYBACK EXECUTED: {shares_to_buy} {company.ticker_symbol} @ ${company.current_price:.2f}")
-            print(f"  → Total cost: ${total_cost:,.2f} (Fee: ${fee:.2f})")
-            print(f"  → Progress: {program.shares_bought}/{program.max_shares_to_buy}")
-            
+            # Determine how many shares were actually acquired (may be < shares_to_buy
+            # when the order book is thin and the order is only partially filled).
+            db.expire_all()
+            new_bank_position = db.query(ShareholderPosition).filter(
+                ShareholderPosition.player_id == BANK_PLAYER_ID,
+                ShareholderPosition.company_shares_id == company.id
+            ).first()
+            actual_bought = max(0, (new_bank_position.shares_owned if new_bank_position else 0) - old_bank_shares)
+
+            actual_cost = actual_bought * company.current_price
+            unspent_cost = cost - actual_cost
+
+            # Return any unspent cost to the founder so they only pay for what
+            # was actually purchased.
+            if unspent_cost > 0:
+                auth_db = get_auth_db()
+                try:
+                    founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
+                    if founder:
+                        founder.cash_balance += unspent_cost
+                        auth_db.commit()
+                finally:
+                    auth_db.close()
+
+            if actual_bought > 0:
+                # Update program with ACTUAL quantities, not the intended amount.
+                program.shares_bought += actual_bought
+                program.total_spent += actual_cost
+                program.average_buy_price = program.total_spent / program.shares_bought if program.shares_bought > 0 else 0
+                program.treasury_shares += actual_bought
+                program.last_execution = datetime.utcnow()
+
+                # Firm keeps the fee (charged on intended cost regardless of fill).
+                firm_add_cash(fee, "buyback_fee", f"Buyback fee for {company.ticker_symbol}", company.founder_id)
+
+                # Update company float.
+                company.shares_in_float -= actual_bought
+                company.shares_held_by_firm += actual_bought
+
+                # Log action
+                log_corporate_action(
+                    company_shares_id=company.id,
+                    action_type="buyback",
+                    shares_affected=actual_bought,
+                    price_per_share=company.current_price,
+                    total_value=actual_cost,
+                    description=f"Buyback executed: {program.trigger_type}"
+                )
+
+                db.commit()
+
+                print(f"[{BANK_NAME}] BUYBACK EXECUTED: {actual_bought}/{shares_to_buy} {company.ticker_symbol} @ ${company.current_price:.2f}")
+                print(f"  → Actual cost: ${actual_cost:,.2f} (Fee: ${fee:.2f}, Unspent refunded: ${unspent_cost:,.2f})")
+                print(f"  → Progress: {program.shares_bought}/{program.max_shares_to_buy}")
+
             return True
         else:
-            # Refund if market order failed
-            firm_deduct_cash(temp_cash, "buyback_refund", "Failed buyback refund")
+            # Full failure — refund the complete total_cost to the founder.
             auth_db = get_auth_db()
             try:
                 founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
@@ -442,7 +473,7 @@ def check_and_execute_buyback(program_id: int) -> bool:
                     auth_db.commit()
             finally:
                 auth_db.close()
-            
+
             print(f"[{BANK_NAME}] BUYBACK FAILED: Market order unsuccessful")
             return False
     
