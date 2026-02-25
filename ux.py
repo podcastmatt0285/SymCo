@@ -956,7 +956,15 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                 </div>
             </div>'''
 
-        inv_body = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Your Inventory</h1>{filter_tabs}{sort_controls}{items_html}'
+        inv_body = (
+            f'<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+            f'<h1>Your Inventory</h1>'
+            f'<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">'
+            f'<a href="/inventory/trusted-list" style="background:#1e1b4b;border:1px solid #6d28d9;color:#a78bfa;padding:6px 14px;border-radius:4px;text-decoration:none;font-size:0.85rem;">&#128274; Trusted Trader List</a>'
+            f'<a href="/inventory/swaps" style="background:#1e1b4b;border:1px solid #7c3aed;color:#c4b5fd;padding:6px 14px;border-radius:4px;text-decoration:none;font-size:0.85rem;">&#8646; Item Swaps</a>'
+            f'</div>'
+            f'{filter_tabs}{sort_controls}{items_html}'
+        )
 
         # Inject tutorial overlay for inventory-relevant steps
         try:
