@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 import secrets
 import hashlib
-from fastapi import APIRouter, Form, Cookie, Response
+from fastapi import APIRouter, Form, Cookie, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import Column, String, Float, DateTime, Integer
 from sqlalchemy.ext.declarative import declarative_base
@@ -41,6 +41,7 @@ class Player(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
     tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
+    registration_ip = Column(String, nullable=True, index=True)  # multi-account detection
 
 
 class Session(Base):
@@ -94,6 +95,20 @@ def migrate_tutorial_column():
         print(f"[Auth] Migration warning: {e}")
 
 
+def migrate_registration_ip_column():
+    """Add registration_ip column to players table if it doesn't exist."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                __import__("sqlalchemy").text(
+                    "ALTER TABLE players ADD COLUMN IF NOT EXISTS registration_ip TEXT"
+                )
+            )
+            conn.commit()
+    except Exception as e:
+        print(f"[Auth] Migration warning (registration_ip): {e}")
+
+
 # ==========================
 # CASH TRANSFER
 # ==========================
@@ -134,16 +149,17 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
 # ==========================
 # AUTHENTICATION LOGIC
 # ==========================
-def create_player(db: Session, business_name: str, password: str) -> Optional[Player]:
+def create_player(db: Session, business_name: str, password: str, ip_address: Optional[str] = None) -> Optional[Player]:
     """Create a new player account."""
     existing = db.query(Player).filter(Player.business_name == business_name).first()
     if existing:
         return None
-    
+
     player = Player(
         business_name=business_name,
         password_hash=hash_password(password),
-        cash_balance=50000.0
+        cash_balance=50000.0,
+        registration_ip=ip_address,
     )
     
     db.add(player)
@@ -506,6 +522,7 @@ async def login(
 
 @router.post("/api/register")
 async def register(
+    request: Request,
     response: Response,
     business_name: str = Form(...),
     password: str = Form(...),
@@ -513,33 +530,91 @@ async def register(
 ):
     """Handle registration form submission."""
     db = get_db()
-    
+
     if password != password_confirm:
         db.close()
         return RedirectResponse(
             url="/login?error=Passwords%20do%20not%20match",
             status_code=303
         )
-    
+
     if len(password) < 8:
         db.close()
         return RedirectResponse(
             url="/login?error=Password%20must%20be%20at%20least%208%20characters",
             status_code=303
         )
-    
-    player = create_player(db, business_name.strip(), password)
-    
+
+    # Resolve the client IP, honouring a reverse-proxy X-Forwarded-For header.
+    forwarded_for = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+    ip_address = forwarded_for or (request.client.host if request.client else None)
+
+    player = create_player(db, business_name.strip(), password, ip_address=ip_address)
+
     if not player:
         db.close()
         return RedirectResponse(
             url="/login?error=Business%20name%20already%20exists",
             status_code=303
         )
-    
+
+    # --- Multi-account detection ---
+    # If another account was already registered from this IP, this is an alt.
+    # Ban the new account immediately and penalise the original account.
+    MULTI_ACCOUNT_FINE = 10_000.0
+    if ip_address:
+        prior = (
+            db.query(Player)
+            .filter(Player.registration_ip == ip_address, Player.id != player.id)
+            .order_by(Player.created_at.asc())
+            .first()
+        )
+        if prior:
+            print(
+                f"[Auth] Multi-account detected: new #{player.id} ({business_name}) "
+                f"shares IP {ip_address} with existing #{prior.id} ({prior.business_name})"
+            )
+            # Auto-ban the alt account.
+            try:
+                from admins import ban_player
+                ban_player(
+                    admin_id=0,
+                    player_id=player.id,
+                    reason=(
+                        f"Alternate account. Primary account: "
+                        f"{prior.business_name} (#{prior.id})"
+                    ),
+                )
+            except Exception as e:
+                print(f"[Auth] Failed to auto-ban alt account: {e}")
+
+            # Credit-score penalty on the original account.
+            try:
+                from banks.brokerage_firm import modify_credit_score
+                modify_credit_score(prior.id, "multi_account_detected")
+            except Exception as e:
+                print(f"[Auth] Failed to apply credit penalty: {e}")
+
+            # Cash fine on the original account.
+            prior.cash_balance = max(0.0, prior.cash_balance - MULTI_ACCOUNT_FINE)
+            db.commit()
+
+            db.close()
+            import urllib.parse
+            msg = (
+                f"Account banned: an account already exists from this connection. "
+                f"Your primary account ({prior.business_name}) has been fined "
+                f"${MULTI_ACCOUNT_FINE:,.0f} and received a credit score penalty."
+            )
+            return RedirectResponse(
+                url=f"/login?error={urllib.parse.quote(msg)}",
+                status_code=303,
+            )
+    # --- end multi-account detection ---
+
     session_token = create_session(db, player.id)
     db.close()
-    
+
     redirect = RedirectResponse(url="/", status_code=303)
     redirect.set_cookie(
         key="session_token",
@@ -547,7 +622,7 @@ async def register(
         max_age=60 * 60 * 24 * 7,
         httponly=True
     )
-    
+
     return redirect
 
 @router.get("/api/logout")
@@ -578,6 +653,7 @@ def initialize():
     print("[Auth] Creating database tables...")
     Base.metadata.create_all(bind=engine)
     migrate_tutorial_column()
+    migrate_registration_ip_column()
     print("[Auth] Module initialized")
 
 async def tick(current_tick: int, now):

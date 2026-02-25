@@ -189,6 +189,7 @@ CREDIT_MODIFIERS = {
     "short_position_loss": -1,
     "margin_trade_profitable": +2,
     "margin_trade_loss": -1,
+    "multi_account_detected": -30,
 }
 
 IPO_CONFIG = {
