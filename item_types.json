@@ -707,7 +707,7 @@
   "milk": {
     "name": "Milk",
     "description": "Cows Milk",
-    "category": "food"
+    "category": "beverage"
   },
   "cream": {
     "name": "Cream",
@@ -1157,7 +1157,7 @@
   "soda": {
     "name": "Soda",
     "description": "Carbonated beverage",
-    "category": "beverages"
+    "category": "beverage"
   },
   "toothpaste": {
     "name": "Toothpaste",
