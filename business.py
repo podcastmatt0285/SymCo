@@ -99,10 +99,17 @@ def process_dismantling_tick(db):
         if sale.ticks_remaining <= 0:
             continue
         
-        # Pay the owner this tick's refund
+        # Pay the owner this tick's refund, auto-converting to their legal tender.
         player = db.query(Player).filter(Player.id == sale.owner_id).first()
         if player:
-            player.cash_balance += sale.refund_per_tick
+            try:
+                from reserve_banks import convert_to_legal_tender
+                amount, code = convert_to_legal_tender(player.id, sale.refund_per_tick)
+                if code == "USD":
+                    player.cash_balance += amount
+                # Non-USD: convert_to_legal_tender already credited the foreign balance.
+            except Exception:
+                player.cash_balance += sale.refund_per_tick
             sale.ticks_remaining -= 1
         
         # If dismantling is complete
@@ -378,7 +385,18 @@ def process_business_tick(db):
                     print(f"[Business] Subsidy error: {e}")
 
             net_revenue = total_revenue - wage_cost
-            player.cash_balance += net_revenue
+            # Route income through the reserve bank so JPY (and other legal-
+            # tender) players receive their earnings in their chosen currency.
+            # For USD players, convert_to_legal_tender is a no-op that returns
+            # the same amount so cash_balance is credited as before.
+            try:
+                from reserve_banks import convert_to_legal_tender
+                amount, code = convert_to_legal_tender(player.id, net_revenue)
+                if code == "USD":
+                    player.cash_balance += amount
+                # Non-USD: already credited to PlayerCurrencyBalance.
+            except Exception:
+                player.cash_balance += net_revenue
             biz.progress_ticks = 0
             db.commit()
             if net_revenue > 0:

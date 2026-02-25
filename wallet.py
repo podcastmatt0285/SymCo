@@ -667,12 +667,16 @@ def _tick_yield_farming(wallet_db, current_tick: int):
         if not deposits:
             return
 
-        # Weight each deposit by quantity × last_price
+        # Weight each deposit by quantity × last_price.
+        # Fall back to price=1.0 when a coin has no trade history yet so that
+        # new-game vaults always pay out (quantity-weighted rather than silently
+        # returning with total_w=0 because every last_price is still 0).
         weighted = {}
         total_w  = 0.0
         for d in deposits:
-            meme = meme_db.query(MemeCoin).filter(MemeCoin.symbol == d.meme_symbol).first()
-            price = (meme.last_price or 0.0) if meme else 0.0
+            meme  = meme_db.query(MemeCoin).filter(MemeCoin.symbol == d.meme_symbol).first()
+            price = (meme.last_price if meme and meme.last_price and meme.last_price > 0
+                     else 1.0)
             w = d.quantity * price
             weighted[d.id] = w
             total_w += w

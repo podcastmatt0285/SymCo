@@ -1097,6 +1097,8 @@ def get_player_bonds(player_id: int) -> List[dict]:
         result = []
         for bond in bonds:
             bank = db.query(StateReserveBank).filter(StateReserveBank.id == bond.bank_id).first()
+            if not bank:
+                continue  # reserve bank was removed; skip orphaned bond
             now  = datetime.utcnow()
             remaining_days = max((bond.matures_at - now).days, 0)
             remaining_years = max((bond.matures_at - now).total_seconds() / (365 * 86400), 0.0)

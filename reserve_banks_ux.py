@@ -26,6 +26,7 @@ from reserve_banks import (
     purchase_bond, sell_bond,
     BOND_MATURITIES, FOREX_FEE_RATE,
 )
+from wallet import get_wsc_wallet_info, get_treasury_info, get_player_yield_deposits
 
 router = APIRouter(tags=["reserve-banks"])
 
@@ -140,6 +141,9 @@ def bond_market(
     my_bonds     = get_player_bonds(player.id)
     my_balances  = get_player_currency_balances(player.id)
     my_tender    = get_player_legal_tender(player.id)
+    wsc_info     = get_wsc_wallet_info(player.id)
+    treasury     = get_treasury_info()
+    my_deposits  = get_player_yield_deposits(player.id)
 
     # ── Flash messages ──
     flash = ""
@@ -148,18 +152,74 @@ def bond_market(
     if err:
         flash = f'<div class="alert-err">✗ {err}</div>'
 
-    # ── My currency balances ──
+    # ── Holdings summary card ──
+    # Currency balances row
     if my_balances:
-        bal_items = "".join(
-            f'<span style="margin-right:16px;">{b["flag"]} {b["currency_code"]} '
+        bal_chips = "".join(
+            f'<span style="margin-right:14px;">{b["flag"]} <strong>{b["currency_code"]}</strong> '
             f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong> '
-            f'<span class="mini">(≈ ${b["usd_value"]:,.2f})</span></span>'
+            f'<span class="mini">≈ ${b["usd_value"]:,.2f}</span></span>'
             for b in my_balances
         )
-        balances_html = f'<div class="card" style="border-left:3px solid #22c55e;">' \
-                        f'<h3>💰 Your Foreign Currency Balances</h3><div>{bal_items}</div></div>'
     else:
-        balances_html = ""
+        bal_chips = '<span style="color:#475569;">None yet — earn income with your legal tender set to a foreign currency.</span>'
+
+    # Yield farming deposits row
+    if my_deposits:
+        dep_chips = "".join(
+            f'<span style="margin-right:14px;"><strong style="color:#a78bfa;">{d["meme_symbol"]}</strong> '
+            f'{d["quantity"]:.4f} staked &bull; earned {d["total_earned_wsc"]:.4f} WSC</span>'
+            for d in my_deposits
+        )
+    else:
+        dep_chips = '<span style="color:#475569;">No meme coins staked yet.</span>'
+
+    holdings_html = f"""
+    <div class="card" style="border-left:3px solid #38bdf8;">
+      <h3 style="margin-top:0;">📊 Your Holdings Summary</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:14px;">
+        <div>
+          <div class="mini">Legal tender</div>
+          <strong style="color:#38bdf8;font-size:1.1rem;">{my_tender}</strong>
+        </div>
+        <div>
+          <div class="mini">WSC balance</div>
+          <strong style="color:#f59e0b;font-size:1.1rem;">{wsc_info['balance']:.4f} WSC</strong>
+        </div>
+        <div>
+          <div class="mini">WSC earned — yield farming</div>
+          <span style="color:#22c55e;">{wsc_info['total_earned_yield']:.4f}</span>
+        </div>
+        <div>
+          <div class="mini">WSC earned — faucet</div>
+          <span style="color:#22c55e;">{wsc_info['total_earned_faucet']:.4f}</span>
+        </div>
+        <div>
+          <div class="mini">WSC earned — airdrops</div>
+          <span style="color:#22c55e;">{wsc_info['total_earned_airdrop']:.4f}</span>
+        </div>
+        <div>
+          <div class="mini">Active bonds</div>
+          <strong>{len(my_bonds)}</strong>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="mini" style="margin-bottom:4px;">Foreign currency balances</div>
+        <div>{bal_chips}</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="mini" style="margin-bottom:4px;">Yield farming deposits</div>
+        <div>{dep_chips}</div>
+      </div>
+      <div>
+        <div class="mini" style="margin-bottom:4px;">Treasury pools (global)</div>
+        <span style="margin-right:14px;">⚡ Yield farming: <strong style="color:#a78bfa;">{treasury['yield_farming_pool']:.4f} WSC</strong></span>
+        <span style="margin-right:14px;">🚰 Faucet: <strong style="color:#38bdf8;">{treasury['faucet_pool']:.4f} WSC</strong></span>
+        <span>✈️ Airdrop: <strong style="color:#22c55e;">{treasury['airdrop_pool']:.4f} WSC</strong></span>
+      </div>
+    </div>"""
+
+    balances_html = ""  # folded into holdings_html above
 
     # ── My active bonds ──
     if my_bonds:
@@ -263,11 +323,11 @@ def bond_market(
     <h1>🏦 State Reserve Banks — Bond Market</h1>
     <p style="color:#64748b;margin:0 0 20px 0;">
         Buy bonds with WSC to earn interest in foreign currencies.
-        Legal tender: <strong style="color:#38bdf8;">{my_tender}</strong> &bull;
+        Auto-conversion routes all business income into your legal tender.
         <a href="/reserve-banks/forex" class="nav">Forex Dashboard →</a>
     </p>
     {flash}
-    {balances_html}
+    {holdings_html}
     {bonds_section}
     <h2>Available Reserve Banks</h2>
     {bank_cards}
