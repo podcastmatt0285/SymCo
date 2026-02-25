@@ -295,7 +295,7 @@ EXEC_ABILITIES = {
     "supply_chain_opt":    {"name": "Supply Chain Optimization","desc": "Business input costs −8%",                            "effect": "production", "value": 0.08},
     "automation_drive":    {"name": "Automation Drive",        "desc": "Production output +12%",                               "effect": "production", "value": 0.12},
     "quality_control":     {"name": "Quality Control",         "desc": "Business waste / output loss −10%",                    "effect": "production", "value": 0.10},
-    "capacity_expand":     {"name": "Capacity Expansion",      "desc": "Business slot cap +1 for this player",                 "effect": "production", "value": 1.0},
+    "capacity_expand":     {"name": "Capacity Expansion",      "desc": "Business production output +10% (scales with level and school)",                 "effect": "production", "value": 0.10},
     "process_reeng":       {"name": "Process Reengineering",   "desc": "Executive school duration −15%",                       "effect": "school",     "value": 0.15},
     "ops_excellence":      {"name": "Operational Excellence",  "desc": "Land efficiency decay slowed −10%",                    "effect": "land",       "value": 0.10},
     "throughput_boost":    {"name": "Throughput Boost",        "desc": "Production output +10%, speed +5%",                    "effect": "production", "value": 0.10},
@@ -415,9 +415,9 @@ LEGENDARY_BONUS_ABILITIES = {
     "eternal_youth":     {"name": "Eternal Youth",            "desc": "Ages 50% slower than any other executive"},
     "mentor":            {"name": "Mentor",                   "desc": "All other executives gain +1 effective level while employed"},
     "market_maker":      {"name": "Market Maker",             "desc": "Generates $500 passive income per tick"},
-    "crisis_manager":    {"name": "Crisis Manager",           "desc": "Blocks all negative random events for the player"},
+    "crisis_manager":    {"name": "Crisis Manager",           "desc": "Grants all co-workers a one-cycle grace period when wages can't be paid — no exec quits on the first missed payment while this exec is employed"},
     "rainmaker":         {"name": "Rainmaker",                "desc": "Randomly triggers bonus income events worth $2,000–$10,000"},
-    "polymath":          {"name": "Polymath",                 "desc": "Contributes bonuses across two additional job categories"},
+    "polymath":          {"name": "Polymath",                 "desc": "Applies all ability bonuses to every job category, not just this executive's primary specialisation"},
     "iron_will":         {"name": "Iron Will",                "desc": "Never quits due to late payment — issues a formal warning instead"},
 }
 
@@ -622,12 +622,15 @@ def get_player_job_bonus(db, player_id: int, effect: str) -> float:
         school_mult  = get_school_performance_multiplier(ex)
         level_mult   = 1.0 + 0.02 * (ex.level + mentor_count)
 
+        # Polymath: contributes bonuses across ALL categories, not just their own
+        is_polymath = ex.is_special and ex.special_ability == "polymath"
+
         exec_bonus = 0.0
         for key in ability_keys:
             adef = EXEC_ABILITIES.get(key)
             if not adef:
                 continue
-            if adef["effect"] != effect:
+            if adef["effect"] != effect and not is_polymath:
                 continue
             v = adef["value"]
             if isinstance(v, float) and v <= 1.0:
@@ -1095,6 +1098,12 @@ def _process_wages(db, current_tick: int):
         Executive.is_retired == False,
     ).all()
 
+    # Build set of player IDs protected by a crisis_manager legendary exec
+    crisis_managed_players = {
+        e.player_id for e in employed
+        if e.is_special and e.special_ability == "crisis_manager"
+    }
+
     for ex in employed:
         ex.pay_tick_accumulator += 1
         cycle_ticks = PAY_CYCLES.get(ex.pay_cycle, 720)
@@ -1125,6 +1134,11 @@ def _process_wages(db, current_tick: int):
                 ex.missed_payments += 1
                 print(f"[Executive] {ex.first_name} {ex.last_name} (Iron Will) issues formal "
                       f"warning #{ex.missed_payments} — payment missed but will not quit.")
+            elif ex.player_id in crisis_managed_players and ex.missed_payments == 0:
+                # Crisis Manager grants all co-workers a one-cycle grace on first miss
+                ex.missed_payments += 1
+                print(f"[Executive] Crisis Manager shields {ex.first_name} {ex.last_name} "
+                      f"from immediate quit — one pay cycle grace period granted.")
             else:
                 _quit_for_nonpayment(db, ex, player)
         else:

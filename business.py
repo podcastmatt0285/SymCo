@@ -312,9 +312,13 @@ def process_business_tick(db):
             if line_idx in paused_line_idxs:
                 continue
             line_can_run = True
-            # Apply city project input multiplier (reduces qty needed)
+            # Apply city project input multiplier (reduces qty needed).
+            # round() is used instead of int() so that savings apply correctly
+            # to larger quantities (e.g. 4.9 → 5 not 4).  Quantities of exactly
+            # 1 are unaffected by savings below 50% — a known integer-rounding
+            # limitation of discrete inventory items.
             effective_inputs = [
-                {**req, "quantity": max(1, int(req["quantity"] * _city_input_mult))}
+                {**req, "quantity": max(1, round(req["quantity"] * _city_input_mult))}
                 for req in line.get("inputs", [])
             ]
             for req in effective_inputs:
@@ -336,7 +340,7 @@ def process_business_tick(db):
                     )
                     player_inv[req["item"]] -= req["quantity"]
                 # Apply city project output multiplier
-                effective_output_qty = max(1, int(line["output_qty"] * _city_output_mult))
+                effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult))
                 add_item(player.id, line["output_item"], effective_output_qty)
                 # Log resource production
                 log_transaction(

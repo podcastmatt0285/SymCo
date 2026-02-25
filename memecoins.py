@@ -543,11 +543,14 @@ def launch_meme_coin(
         founder_alloc = total_supply * MEME_FOUNDER_ALLOCATION_PCT
         mining_alloc = total_supply * MEME_MINING_ALLOCATION_PCT
 
-        # Base reward: mine 1% of mining allocation per halving interval worth of activity
-        # i.e., reward_base = (mining_alloc / MEME_HALVING_INTERVAL) * some scale
-        # We want mining_alloc to be distributed over ~4 halvings (so reward_base chosen accordingly)
-        # Simple: reward_base = 1.0 meme per native token per payout (adjusted by halving)
-        mining_reward_base = 1.0  # 1 meme coin per native token staked per hourly payout cycle
+        # Base reward scales with mining_alloc so that any supply size mines at a
+        # comparable pace.  A flat 1.0 was a placeholder that caused "heat death"
+        # for large-supply coins: the reward decays to MEME_MIN_BLOCK_REWARD after
+        # only ~60 halvings regardless of supply, leaving trillions of coins unmined
+        # forever.  Scaling by mining_alloc / MEME_HALVING_INTERVAL means the first
+        # halving always occurs after the same fraction of the mining pool is minted,
+        # regardless of total supply size.
+        mining_reward_base = mining_alloc / MEME_HALVING_INTERVAL
 
         meme = MemeCoin(
             county_id=county_id,
