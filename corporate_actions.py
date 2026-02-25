@@ -362,91 +362,71 @@ def check_and_execute_buyback(program_id: int) -> bool:
         fee = cost * BUYBACK_FIRM_FEE
         total_cost = cost + fee
         
-        # Check founder has funds
+        # Check founder has sufficient funds (trade cost + firm fee).
         from auth import Player, get_db as get_auth_db
         auth_db = get_auth_db()
         try:
             founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
-            
             if not founder or founder.cash_balance < total_cost:
                 print(f"[{BANK_NAME}] BUYBACK SKIPPED: Insufficient founder funds")
                 return False
-            
-            # Deduct from founder
-            founder.cash_balance -= total_cost
-            auth_db.commit()
-            # Log buyback cost for founder
-            log_transaction(
-                company.founder_id,
-                "cash_out",
-                "money",
-                -total_cost,
-                f"Buyback: {shares_to_buy} {company.ticker_symbol}",
-                company.ticker_symbol
-            )
         finally:
             auth_db.close()
-        
-        # Execute buyback via market order placed under the firm's system account.
-        # Record BANK_PLAYER_ID's share position BEFORE the order so we can
-        # calculate the actual fill quantity afterwards.  Any unspent cost from
-        # a partial fill is refunded directly to the founder — preventing the
-        # "refund black hole" where the matching engine returns cash to the firm
-        # instead of the founder.
-        old_bank_position = db.query(ShareholderPosition).filter(
-            ShareholderPosition.player_id == BANK_PLAYER_ID,
+
+        # Record founder's share position before the order so we can measure
+        # the actual fill.  Place the order under the founder's ID so the
+        # trading engine handles all cash deductions and partial-fill refunds
+        # naturally — no black hole where the firm's system account pockets
+        # the unspent reserved cash.
+        old_founder_position = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == company.founder_id,
             ShareholderPosition.company_shares_id == company.id
         ).first()
-        old_bank_shares = old_bank_position.shares_owned if old_bank_position else 0
+        old_founder_shares = old_founder_position.shares_owned if old_founder_position else 0
 
         success = place_market_order(
-            player_id=BANK_PLAYER_ID,
+            player_id=company.founder_id,
             company_shares_id=company.id,
             side=OrderSide.BUY,
             quantity=shares_to_buy
         )
 
         if success:
-            # Determine how many shares were actually acquired (may be < shares_to_buy
-            # when the order book is thin and the order is only partially filled).
+            # Determine how many shares the founder actually acquired.
             db.expire_all()
-            new_bank_position = db.query(ShareholderPosition).filter(
-                ShareholderPosition.player_id == BANK_PLAYER_ID,
+            new_founder_position = db.query(ShareholderPosition).filter(
+                ShareholderPosition.player_id == company.founder_id,
                 ShareholderPosition.company_shares_id == company.id
             ).first()
-            actual_bought = max(0, (new_bank_position.shares_owned if new_bank_position else 0) - old_bank_shares)
+            actual_bought = max(0, (new_founder_position.shares_owned if new_founder_position else 0) - old_founder_shares)
 
-            actual_cost = actual_bought * company.current_price
-            unspent_cost = cost - actual_cost
+            if actual_bought > 0:
+                # Transfer shares from founder into treasury.
+                new_founder_position.shares_owned -= actual_bought
 
-            # Return any unspent cost to the founder so they only pay for what
-            # was actually purchased.
-            if unspent_cost > 0:
+                actual_cost = actual_bought * company.current_price
+
+                # Charge the firm fee directly from the founder.
                 auth_db = get_auth_db()
                 try:
                     founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
                     if founder:
-                        founder.cash_balance += unspent_cost
+                        founder.cash_balance -= fee
                         auth_db.commit()
                 finally:
                     auth_db.close()
 
-            if actual_bought > 0:
-                # Update program with ACTUAL quantities, not the intended amount.
                 program.shares_bought += actual_bought
                 program.total_spent += actual_cost
                 program.average_buy_price = program.total_spent / program.shares_bought if program.shares_bought > 0 else 0
                 program.treasury_shares += actual_bought
                 program.last_execution = datetime.utcnow()
 
-                # Firm keeps the fee (charged on intended cost regardless of fill).
                 firm_add_cash(fee, "buyback_fee", f"Buyback fee for {company.ticker_symbol}", company.founder_id)
 
-                # Update company float.
                 company.shares_in_float -= actual_bought
                 company.shares_held_by_firm += actual_bought
 
-                # Log action
                 log_corporate_action(
                     company_shares_id=company.id,
                     action_type="buyback",
@@ -459,21 +439,11 @@ def check_and_execute_buyback(program_id: int) -> bool:
                 db.commit()
 
                 print(f"[{BANK_NAME}] BUYBACK EXECUTED: {actual_bought}/{shares_to_buy} {company.ticker_symbol} @ ${company.current_price:.2f}")
-                print(f"  → Actual cost: ${actual_cost:,.2f} (Fee: ${fee:.2f}, Unspent refunded: ${unspent_cost:,.2f})")
+                print(f"  → Actual cost: ${actual_cost:,.2f} (Fee: ${fee:.2f})")
                 print(f"  → Progress: {program.shares_bought}/{program.max_shares_to_buy}")
 
             return True
         else:
-            # Full failure — refund the complete total_cost to the founder.
-            auth_db = get_auth_db()
-            try:
-                founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
-                if founder:
-                    founder.cash_balance += total_cost
-                    auth_db.commit()
-            finally:
-                auth_db.close()
-
             print(f"[{BANK_NAME}] BUYBACK FAILED: Market order unsuccessful")
             return False
     

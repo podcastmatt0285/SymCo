@@ -1021,34 +1021,39 @@ async def tick(current_tick: int, now: datetime):
             CityProjectInstance.status == STATUS_ACTIVE
         ).all()
 
-        # Aggregate consumption per city
-        city_needs: Dict[int, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
+        # Evaluate operational consumption per project, not per city.
+        # A single resource-starved project pauses only itself — it cannot
+        # blackout every other project sharing the same city vault.
         for inst in active:
             defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
-            for item, qty_per_level in defn.get("operational_consumption", {}).items():
-                city_needs[inst.city_id][item] += qty_per_level * inst.level
+            consumption = defn.get("operational_consumption", {})
+            if not consumption:
+                continue
 
-        paused_cities: set = set()
-        for city_id, consumption in city_needs.items():
-            for item_type, total_qty in consumption.items():
+            # Check all required resources before deducting any.
+            can_run = True
+            for item_type, qty_per_level in consumption.items():
+                total_qty = qty_per_level * inst.level
                 if total_qty <= 0:
                     continue
-                row = _get_vault_row(db, city_id, item_type)
-                if row.quantity >= total_qty:
-                    row.quantity -= total_qty
-                    row.last_updated = now
-                else:
-                    # Insufficient — pause all active projects for this city
-                    paused_cities.add(city_id)
-                    print(f"[CityProjects] City {city_id}: insufficient {item_type} "
-                          f"(need {total_qty:.1f}, have {row.quantity:.1f}) — pausing all projects")
+                row = _get_vault_row(db, inst.city_id, item_type)
+                if row.quantity < total_qty:
+                    can_run = False
+                    print(f"[CityProjects] Project {inst.id} (city {inst.city_id}): "
+                          f"insufficient {item_type} "
+                          f"(need {total_qty:.1f}, have {row.quantity:.1f}) — pausing project")
                     break
 
-        for city_id in paused_cities:
-            db.query(CityProjectInstance).filter(
-                CityProjectInstance.city_id == city_id,
-                CityProjectInstance.status == STATUS_ACTIVE
-            ).update({"status": STATUS_PAUSED})
+            if can_run:
+                for item_type, qty_per_level in consumption.items():
+                    total_qty = qty_per_level * inst.level
+                    if total_qty <= 0:
+                        continue
+                    row = _get_vault_row(db, inst.city_id, item_type)
+                    row.quantity -= total_qty
+                    row.last_updated = now
+            else:
+                inst.status = STATUS_PAUSED
 
         db.commit()
 
