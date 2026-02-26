@@ -511,9 +511,12 @@ COUNTY_STYLES = """
 # ==========================
 # CRYPTO TICKER HELPER
 # ==========================
-def get_crypto_ticker_html() -> str:
+def get_crypto_ticker_html(disp=None) -> str:
     """Generate a scrolling crypto ticker bar with all tokens and price movement indicators."""
     from counties import get_all_counties
+    from reserve_banks import fmt_usd as _fmt_usd
+    if disp is None:
+        disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
     counties = get_all_counties()
     if not counties:
         return ""
@@ -543,7 +546,7 @@ def get_crypto_ticker_html() -> str:
             f'<a href="/token/{symbol}" class="ticker-item">'
             f'{logo_html}'
             f'<span class="ticker-symbol">{symbol}</span>'
-            f'<span class="ticker-price">${price:,.4f}</span>'
+            f'<span class="ticker-price">{_fmt_usd(price, disp, precision=4)}</span>'
             f'<span class="ticker-change {change_class}">{arrow} {change_str}</span>'
             f'</a>'
             f'<span class="ticker-sep">|</span>'
@@ -580,6 +583,9 @@ async def counties_dashboard(
     )
     from cities import get_player_city, City, get_db
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     player_city = get_player_city(player.id)
     player_county = get_player_county(player.id)
     counties = get_all_counties()
@@ -603,7 +609,7 @@ async def counties_dashboard(
                     <div>
                         <span class="badge badge-crypto">{w["symbol"]}</span>
                         <span class="wallet-balance" style="margin-left: 12px;">{w["balance"]:.6f}</span>
-                        <span class="wallet-value">(${w["value"]:,.2f} @ ${w["price"]:,.2f}/unit)</span>
+                        <span class="wallet-value">({fmt_usd(w["value"], disp)} @ {fmt_usd(w["price"], disp)}/unit)</span>
                     </div>
                     <div>
                         <a href="/exchange?symbol={w["symbol"]}" class="btn btn-crypto btn-sm">Trade</a>
@@ -732,10 +738,10 @@ async def counties_dashboard(
                     <td><strong>{c["name"]}</strong></td>
                     <td>{c["city_count"]}/{c["max_cities"]}</td>
                     <td><a href="/token/{c["crypto_symbol"]}" class="nav-link" style="margin:0;"><span class="badge badge-crypto">{c["crypto_symbol"]}</span> {c["crypto_name"]}</a></td>
-                    <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
+                    <td class="stat-value crypto">{fmt_usd(c["crypto_price"], disp, precision=4)}</td>
                     <td>{change_html}</td>
-                    <td>${c.get("market_cap", 0):,.2f}</td>
-                    <td>${c["mining_energy"]:,.2f}</td>
+                    <td>{fmt_usd(c.get("market_cap", 0), disp)}</td>
+                    <td>{fmt_usd(c["mining_energy"], disp)}</td>
                     <td><a href="/county/{c["id"]}" class="btn btn-secondary btn-sm">View</a></td>
                 </tr>
             '''
@@ -744,7 +750,7 @@ async def counties_dashboard(
     else:
         counties_table_html = '<p style="color: #94a3b8;">No counties exist yet. Be the first to form one!</p>'
 
-    ticker_html = get_crypto_ticker_html()
+    ticker_html = get_crypto_ticker_html(disp)
 
     return f"""
     <!DOCTYPE html>
@@ -807,6 +813,9 @@ async def view_county(
     county = get_county_by_id(county_id)
     if not county:
         return RedirectResponse(url="/counties?error=County+not+found", status_code=303)
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     db = get_db()
     is_member = is_player_in_county(player.id, county_id)
@@ -994,7 +1003,7 @@ async def view_county(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Price</span>
-                        <span class="stat-value crypto">${crypto_price:,.2f}</span>
+                        <span class="stat-value crypto">{fmt_usd(crypto_price, disp)}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Circulating Supply</span>
@@ -1010,7 +1019,7 @@ async def view_county(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Mining Energy Pool</span>
-                        <span class="stat-value">${county.mining_energy_pool:,.2f}</span>
+                        <span class="stat-value">{fmt_usd(county.mining_energy_pool, disp)}</span>
                     </div>
                 </div>
             </div>
@@ -1209,6 +1218,9 @@ async def county_mining_node(
     if not is_player_in_county(player.id, county_id):
         return RedirectResponse(url=f"/county/{county_id}?msg=Members+only", status_code=303)
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     db = get_db()
 
     # Get player's city and currency info
@@ -1259,7 +1271,7 @@ async def county_mining_node(
                 <td>{dep.deposited_at.strftime("%m/%d %H:%M") if dep.deposited_at else "N/A"}</td>
                 <td>{dep.currency_type}</td>
                 <td>{dep.quantity_deposited:,.2f}</td>
-                <td>${dep.cash_value_at_deposit:,.2f}</td>
+                <td>{fmt_usd(dep.cash_value_at_deposit, disp)}</td>
                 <td>{status}</td>
             </tr>
             '''
@@ -1275,7 +1287,7 @@ async def county_mining_node(
         <form action="/api/county/mining/deposit" method="post">
             <input type="hidden" name="county_id" value="{county_id}">
             <div class="form-group">
-                <label>Deposit {currency_type} (You have: {currency_qty:,.2f} @ ${currency_price:,.2f} each)</label>
+                <label>Deposit {currency_type} (You have: {currency_qty:,.2f} @ {fmt_usd(currency_price, disp)} each)</label>
                 <input type="number" name="quantity" min="1" max="{currency_qty}" step="0.01"
                        placeholder="Amount to deposit" required>
             </div>
@@ -1320,16 +1332,16 @@ async def county_mining_node(
                     <div>
                         <h3 style="color: #a78bfa;">Your {county.crypto_symbol} Balance</h3>
                         <div class="wallet-balance">{crypto_balance:,.6f}</div>
-                        <div class="wallet-value">${crypto_balance * crypto_price:,.4f}</div>
+                        <div class="wallet-value">{fmt_usd(crypto_balance * crypto_price, disp, precision=4)}</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Total Mined</h3>
                         <div class="wallet-balance">{total_mined:,.6f}</div>
-                        <div class="wallet-value">${total_mined * crypto_price:,.4f}</div>
+                        <div class="wallet-value">{fmt_usd(total_mined * crypto_price, disp, precision=4)}</div>
                     </div>
                     <div>
                         <h3 style="color: #a78bfa;">Node Energy Pool</h3>
-                        <div class="wallet-balance">${county.mining_energy_pool:,.2f}</div>
+                        <div class="wallet-balance">{fmt_usd(county.mining_energy_pool, disp)}</div>
                         <div class="wallet-value">Total energy available</div>
                     </div>
                 </div>
@@ -1407,6 +1419,9 @@ async def crypto_exchange(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from counties import get_all_counties, get_player_wallets, County
     from cities import get_db
 
@@ -1431,7 +1446,7 @@ async def crypto_exchange(
                     <div>
                         <span class="badge badge-crypto">{w["symbol"]}</span>
                         <span class="wallet-balance" style="margin-left: 12px;">{w["balance"]:.6f}</span>
-                        <span class="wallet-value">(${w["value"]:,.2f} @ ${w["price"]:,.2f}/unit)</span>
+                        <span class="wallet-value">({fmt_usd(w["value"], disp)} @ {fmt_usd(w["price"], disp)}/unit)</span>
                     </div>
                     <div style="font-size: 12px; color: #94a3b8;">
                         Mined: {w["total_mined"]:.6f} | Bought: {w["total_bought"]:.6f} | Sold: {w["total_sold"]:.6f}
@@ -1447,7 +1462,7 @@ async def crypto_exchange(
     crypto_options = ""
     for c in counties:
         selected = 'selected' if symbol and symbol == c["crypto_symbol"] else ""
-        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} (${c["crypto_price"]:,.4f})</option>'
+        crypto_options += f'<option value="{c["crypto_symbol"]}" {selected}>{c["crypto_symbol"]} - {c["crypto_name"]} ({fmt_usd(c["crypto_price"], disp, precision=4)})</option>'
 
     # Wallet options for selling
     sell_options = ""
@@ -1483,18 +1498,18 @@ async def crypto_exchange(
                 <span class="badge badge-crypto">{c["crypto_symbol"]}</span>
                 <span style="margin-left:4px;">{c["crypto_name"]}</span>
             </a></td>
-            <td class="stat-value crypto">${c["crypto_price"]:,.4f}</td>
+            <td class="stat-value crypto">{fmt_usd(c["crypto_price"], disp, precision=4)}</td>
             <td>{change_html}</td>
-            <td>${c.get("market_cap", 0):,.2f}</td>
+            <td>{fmt_usd(c.get("market_cap", 0), disp)}</td>
             <td>{c.get("circulating_supply", 0):,.2f}</td>
             <td>{c.get("max_supply", 0):,.0f}</td>
-            <td>${c.get("treasury_balance", 0):,.2f}</td>
-            <td>${c["mining_energy"]:,.2f}</td>
+            <td>{fmt_usd(c.get("treasury_balance", 0), disp)}</td>
+            <td>{fmt_usd(c["mining_energy"], disp)}</td>
         </tr>
         '''
     market_html += '</tbody></table>'
 
-    ticker_html = get_crypto_ticker_html()
+    ticker_html = get_crypto_ticker_html(disp)
 
     return f"""
     <!DOCTYPE html>
@@ -1510,7 +1525,7 @@ async def crypto_exchange(
             <div class="header">
                 <h1>Wadsworth Crypto Exchange</h1>
                 <div>
-                    <span style="color: #94a3b8;">Cash: ${player.cash_balance:,.2f}</span>
+                    <span style="color: #94a3b8;">Cash: {fmt_usd(player.cash_balance, disp)}</span>
                     <a href="/counties" class="nav-link">Counties</a>
                     <a href="/" class="nav-link">Dashboard</a>
                 </div>
@@ -1520,7 +1535,7 @@ async def crypto_exchange(
 
             <div class="exchange-panel" style="margin-bottom: 16px;">
                 <h2 style="color: #38bdf8; margin-bottom: 4px;">Your Portfolio</h2>
-                <p style="color: #94a3b8; margin-bottom: 16px;">Total crypto value: <strong style="color: #a78bfa;">${total_portfolio_value:,.2f}</strong></p>
+                <p style="color: #94a3b8; margin-bottom: 16px;">Total crypto value: <strong style="color: #a78bfa;">{fmt_usd(total_portfolio_value, disp)}</strong></p>
                 {wallets_html}
             </div>
 
@@ -1638,6 +1653,9 @@ async def token_info_page(
     info = get_token_info(crypto_symbol)
     if not info:
         return RedirectResponse(url="/exchange?error=Token+not+found", status_code=303)
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     # Price history for mini chart
     history = get_price_history(crypto_symbol, hours=24)

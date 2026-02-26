@@ -437,9 +437,12 @@ def _school_perf_bar(exec_obj) -> str:
     </div>"""
 
 
-def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False) -> str:
+def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False, disp=None) -> str:
     from executive import (EXECUTIVE_JOBS, EXECUTIVE_CATEGORIES, PAY_CYCLE_LABELS,
                            PAY_CYCLES, LEGENDARY_BONUS_ABILITIES)
+    from reserve_banks import fmt_usd as _fmt_usd
+    if disp is None:
+        disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
 
     job_info = EXECUTIVE_JOBS.get(ex.job, {"title": ex.job, "abbr": "?",
                                             "category": "business", "description": ""})
@@ -511,7 +514,7 @@ def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False) -
     wage_html = f"""
     <div class="stat-row">
         <span class="stat-label">Wage</span>
-        <span class="stat-value green">${ex.wage:,.2f} {cycle_label}</span>
+        <span class="stat-value green">{_fmt_usd(ex.wage, disp)} {cycle_label}</span>
     </div>"""
 
     # Hiring fee (marketplace)
@@ -522,7 +525,7 @@ def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False) -
         hiring_fee_html = f"""
         <div class="stat-row">
             <span class="stat-label">Hiring Fee (1 day wages)</span>
-            <span class="stat-value gold">${hiring_fee:,.2f}</span>
+            <span class="stat-value gold">{_fmt_usd(hiring_fee, disp)}</span>
         </div>"""
 
     # Missed payments warning
@@ -567,7 +570,7 @@ def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False) -
         pension_html = f"""
         <div class="stat-row">
             <span class="stat-label">Pension Paid Out</span>
-            <span class="stat-value orange">${ex.pension_owed:,.2f} over {ex.pension_ticks_remaining} ticks</span>
+            <span class="stat-value orange">{_fmt_usd(ex.pension_owed, disp)} over {ex.pension_ticks_remaining} ticks</span>
         </div>"""
 
     # Severance (informational)
@@ -576,7 +579,7 @@ def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False) -
         severance_html = f"""
         <div class="stat-row">
             <span class="stat-label">Severance Paid</span>
-            <span class="stat-value red">${ex.severance_owed:,.2f}</span>
+            <span class="stat-value red">{_fmt_usd(ex.severance_owed, disp)}</span>
         </div>"""
 
     # Marketplace badge
@@ -665,6 +668,9 @@ def executives_dashboard(session_token: Optional[str] = Cookie(None),
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from executive import (get_player_executives, MAX_EXECUTIVES_PER_PLAYER,
                            get_db, PAY_CYCLES, EXECUTIVE_JOBS, EXECUTIVE_CATEGORIES,
                            player_has_ability)
@@ -733,7 +739,7 @@ def executives_dashboard(session_token: Optional[str] = Cookie(None),
             </div>
             <div class="summary-card">
                 <div class="label">Wages/Hour</div>
-                <div class="value" style="color:#ef4444;">${total_wages_per_hour:,.2f}</div>
+                <div class="value" style="color:#ef4444;">{fmt_usd(total_wages_per_hour, disp)}</div>
             </div>
         </div>"""
 
@@ -748,7 +754,7 @@ def executives_dashboard(session_token: Optional[str] = Cookie(None),
         if execs:
             cards_html = '<div class="exec-grid">'
             for ex in sorted(execs, key=lambda x: (not x.is_special, -x.level)):
-                cards_html += render_exec_card(ex, show_actions=True, is_owner=True)
+                cards_html += render_exec_card(ex, show_actions=True, is_owner=True, disp=disp)
             cards_html += '</div>'
         else:
             cards_html = """
@@ -771,6 +777,9 @@ def executives_marketplace(session_token: Optional[str] = Cookie(None),
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
+
+    from reserve_banks import get_player_display_currency
+    disp = get_player_display_currency(player.id)
 
     from executive import (get_marketplace_executives, get_db,
                            EXECUTIVE_CATEGORIES, EXECUTIVE_JOBS)
@@ -812,14 +821,14 @@ def executives_marketplace(session_token: Optional[str] = Cookie(None),
                 cards_html += '<div class="cat-section"><h3 style="color:#d4af37;margin-bottom:12px;">★ Legendary Executives</h3>'
                 cards_html += '<div class="exec-grid">'
                 for ex in specials:
-                    cards_html += render_exec_card(ex, show_actions=True, marketplace=True)
+                    cards_html += render_exec_card(ex, show_actions=True, marketplace=True, disp=disp)
                 cards_html += '</div></div><br>'
 
             if regulars:
                 cards_html += '<div class="cat-section"><h3 style="color:#94a3b8;margin-bottom:12px;">Available Executives</h3>'
                 cards_html += '<div class="exec-grid">'
                 for ex in regulars:
-                    cards_html += render_exec_card(ex, show_actions=True, marketplace=True)
+                    cards_html += render_exec_card(ex, show_actions=True, marketplace=True, disp=disp)
                 cards_html += '</div></div>'
         else:
             cards_html = """
@@ -890,24 +899,8 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
         job_info   = EXECUTIVE_JOBS.get(ex.job, {"title": ex.job})
 
         # Resolve legal tender for balance display
-        sc_disp_sym      = "$"
-        sc_disp_balance  = player.cash_balance
-        sc_disp_usd_note = ""
-        try:
-            from reserve_banks import get_player_legal_tender, get_player_currency_balances
-            sc_tender = get_player_legal_tender(player.id)
-            if sc_tender != "USD":
-                for b in get_player_currency_balances(player.id):
-                    if b["currency_code"] == sc_tender:
-                        sc_disp_sym      = b["currency_symbol"]
-                        sc_disp_balance  = b["balance"]
-                        sc_disp_usd_note = (
-                            f' <span style="font-size:0.65em;color:#64748b;">'
-                            f'/ ${player.cash_balance:,.0f} USD</span>'
-                        )
-                        break
-        except Exception:
-            pass
+        from reserve_banks import get_player_display_currency, fmt_usd
+        sc_disp = get_player_display_currency(player.id)
 
         # Show what abilities will be boosted
         ability_keys = [a for a in (ex.abilities or "").split(",") if a]
@@ -941,7 +934,7 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
             <br>
             <div class="stat-row">
                 <span class="stat-label">Tuition</span>
-                <span class="stat-value {'green' if can_afford else 'red'}">${cost:,.2f}</span>
+                <span class="stat-value {'green' if can_afford else 'red'}">{fmt_usd(cost, sc_disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Duration</span>
@@ -949,7 +942,7 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
             </div>
             <div class="stat-row">
                 <span class="stat-label">Your Balance</span>
-                <span class="stat-value green">{sc_disp_sym}{sc_disp_balance:,.2f}{sc_disp_usd_note}</span>
+                <span class="stat-value green">{fmt_usd(player.cash_balance, sc_disp)}</span>
             </div>
             {disc_html}
             <br>
