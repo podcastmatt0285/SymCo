@@ -686,6 +686,9 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
     if isinstance(player, RedirectResponse):
         return player
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from estate import DeceasedPlayer
     from auth import get_db
 
@@ -737,7 +740,7 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
         if d.government_took_all:
             heir_info = '<span style="color: #64748b;">Government claimed all</span>'
         elif d.total_inherited > 0:
-            heir_info = f'<span style="color: #22c55e;">${d.total_inherited:,.2f} distributed</span>'
+            heir_info = f'<span style="color: #22c55e;">{fmt_usd(d.total_inherited, disp)} distributed</span>'
 
         cards_html += f"""
         <div class="cert-card">
@@ -765,11 +768,11 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
 
             <div class="stat-row">
                 <span class="stat-label">Final Net Worth</span>
-                <span class="stat-value">${d.final_net_worth:,.2f}</span>
+                <span class="stat-value">{fmt_usd(d.final_net_worth, disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Final Cash</span>
-                <span class="stat-value">${d.final_cash:,.2f}</span>
+                <span class="stat-value">{fmt_usd(d.final_cash, disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Highest Rank</span>
@@ -795,11 +798,11 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
 
             <div class="stat-row">
                 <span class="stat-label">Assets Liquidated</span>
-                <span class="stat-value">${d.total_assets_liquidated:,.2f}</span>
+                <span class="stat-value">{fmt_usd(d.total_assets_liquidated, disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Debts Settled</span>
-                <span class="stat-value negative">${d.total_debts_settled:,.2f}</span>
+                <span class="stat-value negative">{fmt_usd(d.total_debts_settled, disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Inheritance</span>
@@ -807,7 +810,7 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
             </div>
             <div class="stat-row">
                 <span class="stat-label">Death Tax Collected</span>
-                <span class="stat-value">${d.total_death_tax:,.2f}</span>
+                <span class="stat-value">{fmt_usd(d.total_death_tax, disp)}</span>
             </div>
         </div>
         """
@@ -916,19 +919,19 @@ async def delete_account_page(session_token: Optional[str] = Cookie(None)):
 
             <div class="stat-row">
                 <span class="stat-label">Total Estate Value</span>
-                <span class="stat-value">${estate['total']:,.2f}</span>
+                <span class="stat-value">{fmt_usd(estate['total'], disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Liquidation Value (85%)</span>
-                <span class="stat-value">${projected_liquidation:,.2f}</span>
+                <span class="stat-value">{fmt_usd(projected_liquidation, disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Debt Settlement ({int(DEBT_PAYMENT_PERCENTAGE*100)}%)</span>
-                <span class="stat-value negative">-${projected_debt_payment:,.2f}</span>
+                <span class="stat-value negative">-{fmt_usd(projected_debt_payment, disp)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label" style="font-weight: 600;">Net Proceeds</span>
-                <span class="stat-value" style="font-weight: 600;">${projected_remainder:,.2f}</span>
+                <span class="stat-value" style="font-weight: 600;">{fmt_usd(projected_remainder, disp)}</span>
             </div>
 
             <div class="divider">HEIR DISTRIBUTION</div>
