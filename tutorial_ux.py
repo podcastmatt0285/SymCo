@@ -282,6 +282,21 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
 
         if current_page == "businesses":
             # Player navigated to /businesses — guide them back to /land to build
+            if has_wf:
+                _step_hint = (
+                    "<div style='background:#052e16;border:1px solid #16a34a;padding:10px 14px;"
+                    "border-radius:4px;color:#4ade80;margin-bottom:16px;'>"
+                    "✓ Water Treatment Facility built! Head back to "
+                    "<a href='/land' style='color:#4ade80;font-weight:bold;'>/land</a>"
+                    " and click OK to continue.</div>"
+                )
+            else:
+                _step_hint = (
+                    "<p style='color:#94a3b8;'>Your task: build a "
+                    "<strong style='color:#38bdf8;'>Water Treatment Facility</strong>"
+                    " on one of your vacant plots at "
+                    "<a href='/land' style='color:#38bdf8;font-weight:bold;'>/land</a>.</p>"
+                )
             content = f"""
             <div style="background:#0a1628;border:1px solid #38bdf8;padding:10px 14px;border-radius:4px;color:#93c5fd;margin-bottom:16px;">
                 📍 You're on the <strong>Businesses</strong> dashboard (your active businesses).
@@ -289,7 +304,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 <a href="/land" style="color:#38bdf8;font-weight:bold;">Land Portfolio (/land)</a>
                 and use the build form on a vacant plot.
             </div>
-            {"<div style='background:#052e16;border:1px solid #16a34a;padding:10px 14px;border-radius:4px;color:#4ade80;margin-bottom:16px;'>✓ Water Treatment Facility built! Head back to <a href=\"/land\" style=\"color:#4ade80;font-weight:bold;\">/land</a> and click OK to continue.</div>" if has_wf else "<p style='color:#94a3b8;'>Your task: build a <strong style=\"color:#38bdf8;\">Water Treatment Facility</strong> on one of your vacant plots at <a href=\"/land\" style=\"color:#38bdf8;font-weight:bold;\">/land</a>.</p>"}
+            {_step_hint}
             """
         else:
             content = f"""
