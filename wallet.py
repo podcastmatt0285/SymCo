@@ -64,6 +64,10 @@ WSC_AMM_SEED_NATIVE     = 10_000.0   # native tokens seeded alongside (price = 1
 # The seed is minted by the system (not taken from any player).
 # k = WSC_AMM_SEED_WSC * WSC_AMM_SEED_NATIVE = 1e8 (initial invariant)
 
+INITIAL_TREASURY_SEED   = 1_000.0   # WSC pre-loaded into treasury pools on first creation
+# Without this, pools are empty until meme-coin swaps generate fees,
+# leaving yield farming, faucet, and airdrops non-functional from day one.
+
 
 # ==========================
 # MODELS
@@ -174,7 +178,14 @@ def _get_or_create_wsc_wallet(db, player_id: int) -> WSCWallet:
 def _get_or_create_treasury(db) -> WSCTreasury:
     t = db.query(WSCTreasury).filter(WSCTreasury.id == 1).first()
     if not t:
-        t = WSCTreasury(id=1)
+        seed = INITIAL_TREASURY_SEED
+        t = WSCTreasury(
+            id=1,
+            total_minted        = seed,
+            yield_farming_pool  = seed * POOL_YIELD,    # 400 WSC
+            faucet_pool         = seed * POOL_FAUCET,   # 300 WSC
+            airdrop_pool        = seed * POOL_AIRDROP,  # 300 WSC
+        )
         db.add(t)
         db.flush()
     return t

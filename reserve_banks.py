@@ -382,8 +382,6 @@ def _adjust_yield_and_fx(db, bank: StateReserveBank):
 
 def _mature_bonds(db, bank: StateReserveBank, now: datetime):
     """Return WSC face value to players whose bonds have matured."""
-    from auth import get_db as auth_get_db, Player
-
     matured = db.query(ReserveBankBond).filter(
         ReserveBankBond.bank_id   == bank.id,
         ReserveBankBond.status    == "active",
@@ -393,25 +391,23 @@ def _mature_bonds(db, bank: StateReserveBank, now: datetime):
     if not matured:
         return
 
-    auth_db = auth_get_db()
-    try:
-        for bond in matured:
-            bond.status = "matured"
-            # Return face value in WSC
-            from wallet import get_db as wallet_get_db, WSCWallet, _get_or_create_wsc_wallet
-            wdb = wallet_get_db()
-            try:
-                wsc_w = _get_or_create_wsc_wallet(wdb, bond.holder_player_id)
-                wsc_w.balance += bond.face_value_wsc
-                wdb.commit()
-            finally:
-                wdb.close()
-    finally:
-        auth_db.close()
+    from wallet import get_db as wallet_get_db, _get_or_create_wsc_wallet
+    for bond in matured:
+        bond.status = "matured"
+        # Reduce outstanding liabilities so reserve-ratio checks stay accurate
+        bank.total_face_value_wsc = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
+        # Return face value in WSC
+        wdb = wallet_get_db()
+        try:
+            wsc_w = _get_or_create_wsc_wallet(wdb, bond.holder_player_id)
+            wsc_w.balance += bond.face_value_wsc
+            wdb.commit()
+        finally:
+            wdb.close()
 
 
 def _snapshot_history(db, bank: StateReserveBank, now: datetime):
-    """Record hourly yield/FX snapshot for the dashboard chart."""
+    """Record hourly yield/FX snapshot for the dashboard chart. Prunes records older than 7 days."""
     snap = BondYieldHistory(
         bank_id      = bank.id,
         yield_rate   = bank.yield_rate,
@@ -419,6 +415,12 @@ def _snapshot_history(db, bank: StateReserveBank, now: datetime):
         recorded_at  = now,
     )
     db.add(snap)
+    # Keep only the last 7 days of history (168 hourly snapshots per bank)
+    cutoff = now - timedelta(days=7)
+    db.query(BondYieldHistory).filter(
+        BondYieldHistory.bank_id     == bank.id,
+        BondYieldHistory.recorded_at <  cutoff,
+    ).delete(synchronize_session=False)
 
 
 # ==========================
@@ -525,9 +527,10 @@ def _interbank_bond_swap(db, buyer_bank: StateReserveBank, seller_bank: StateRes
     # How many of buyer's currency does usd_equiv buy?
     buyer_amount = usd_equiv / usd_per_buyer
 
-    # Seller bank gets buyer bank's bonds → earns buyer-currency interest → holds buyer-currency reserves
-    seller_interest = buyer_amount * buyer_bank.yield_rate
-    _add_bank_reserve(db, seller_bank.id, buyer_bank.currency_code, seller_interest)
+    # Seller bank acquires buyer bank's bonds at face value (full principal in buyer's currency).
+    # The seller bank holds these as reserves — the bond face value, not just one period's interest,
+    # represents the actual collateral backing the cross-currency settlement.
+    _add_bank_reserve(db, seller_bank.id, buyer_bank.currency_code, buyer_amount)
 
     # Buyer bank gets USD (seller's currency) reserves
     usd_per_seller = seller_bank.usd_per_unit
@@ -799,23 +802,34 @@ def purchase_bond(
             ).scalar() or 0.0
             return False, f"Insufficient WSC: have {current:.4f}, need {wsc_amount:.4f}."
 
-        # Create bond
-        bond = ReserveBankBond(
-            bank_id          = bank.id,
-            holder_player_id = player_id,
-            face_value_wsc   = wsc_amount,
-            purchase_yield   = bank.yield_rate,
-            maturity_days    = maturity_days,
-            matures_at       = datetime.utcnow() + timedelta(days=maturity_days),
-        )
-        db.add(bond)
+        # Create bond — if this fails, refund the WSC that was already committed above
+        try:
+            bond = ReserveBankBond(
+                bank_id          = bank.id,
+                holder_player_id = player_id,
+                face_value_wsc   = wsc_amount,
+                purchase_yield   = bank.yield_rate,
+                maturity_days    = maturity_days,
+                matures_at       = datetime.utcnow() + timedelta(days=maturity_days),
+            )
+            db.add(bond)
 
-        # Update bank stats and demand tracker (positive = bought)
-        bank.total_bonds_issued   += 1
-        bank.total_face_value_wsc += wsc_amount
-        bank.net_demand_wsc       += wsc_amount
+            # Update bank stats and demand tracker (positive = bought)
+            bank.total_bonds_issued   += 1
+            bank.total_face_value_wsc += wsc_amount
+            bank.net_demand_wsc       += wsc_amount
 
-        db.commit()
+            db.commit()
+        except Exception as bond_err:
+            db.rollback()
+            # WSC was already deducted and committed; compensate the player
+            wallet_db.execute(
+                sa_update(WSCWallet)
+                .where(WSCWallet.player_id == player_id)
+                .values(balance=WSCWallet.balance + wsc_amount)
+            )
+            wallet_db.commit()
+            return False, f"Bond creation failed (WSC refunded): {bond_err}"
 
         annual_pct  = bank.yield_rate * 100
         daily_int   = wsc_amount * bank.yield_rate / 365
