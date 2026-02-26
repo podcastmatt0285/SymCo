@@ -111,33 +111,49 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
     """
     Safely transfer cash between two players.
     Used by Market module for trades.
-    
+
+    Respects each player's legal tender: the sender pays in their currency
+    (via spend_player_funds) and the receiver is credited in theirs
+    (via process_income_conversion).
+
     Returns:
         True if successful, False if insufficient funds
     """
     if amount <= 0:
         return False
-    
+
+    from reserve_banks import can_afford_usd, spend_player_funds, process_income_conversion, get_player_legal_tender
+
     db = get_db()
-    
-    sender = db.query(Player).filter(Player.id == from_player_id).first()
+
+    sender   = db.query(Player).filter(Player.id == from_player_id).first()
     receiver = db.query(Player).filter(Player.id == to_player_id).first()
-    
+
     if not sender or not receiver:
         db.close()
         return False
-    
-    if sender.cash_balance < amount:
+
+    if not can_afford_usd(from_player_id, sender.cash_balance, amount):
         print(f"[Auth] Transfer failed: Player {from_player_id} has insufficient funds")
         db.close()
         return False
-    
-    sender.cash_balance -= amount
-    receiver.cash_balance += amount
-    
+
+    ok, _err = spend_player_funds(db, sender, amount)
+    if not ok:
+        print(f"[Auth] Transfer failed: {_err}")
+        db.close()
+        return False
+
+    # Credit receiver in their legal tender
+    recv_tender = get_player_legal_tender(to_player_id)
+    if recv_tender == "USD":
+        receiver.cash_balance += amount
+    else:
+        process_income_conversion(to_player_id, amount)
+
     db.commit()
     db.close()
-    
+
     print(f"[Auth] Transferred ${amount:.2f} from Player {from_player_id} to Player {to_player_id}")
     return True
 

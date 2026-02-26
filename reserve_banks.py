@@ -85,6 +85,16 @@ FX_YIELD_LINK      = 0.005         # usd_per_unit fractional change per 1 % yiel
 FOREX_FEE_RATE     = 0.002         # 0.2 % fee on each forex conversion
 BOND_MATURITIES    = [30, 90, 180, 365]   # calendar days
 
+# Early redemption: 1.5 % flat fee if a bond is sold within the first 7 days.
+BOND_EARLY_REDEMPTION_DAYS = 7
+BOND_EARLY_REDEMPTION_FEE  = 0.015   # fraction of face value (in foreign currency)
+
+# Bank call provision: if the current yield falls to ≤ BOND_CALL_YIELD_THRESHOLD
+# fraction of the purchase yield, the bank may call (force-redeem) the bond at a
+# small premium (BOND_CALL_PREMIUM) to compensate the holder.
+BOND_CALL_YIELD_THRESHOLD = 0.40   # called when rate ≤ 40 % of purchase yield
+BOND_CALL_PREMIUM         = 0.03   # 3 % bonus on face value (in foreign currency)
+
 # Daily WSC liquidity swap: reserve banks convert accumulated WSC holdings to
 # currency reserves once per day.  Banks with urgent reserve shortfalls earn a
 # small premium to attract liquidity from WSC-rich banks.
@@ -94,8 +104,9 @@ DAILY_SWAP_URGENCY_PREMIUM = 1.005  # 0.5 % premium paid by a bank urgently need
 # Default reserve banks seeded on initialize()
 DEFAULT_BANKS = [
     # code, name, symbol, flag, initial_yield, usd_per_unit, min_yield, max_yield
+    ("USD", "Federal Reserve of Wadsworth",      "$",  "🇺🇸", 0.053,  1.000,  -0.005, 0.25),
     ("JPY", "Bank of Wadsworth Japan",           "¥",  "🇯🇵", 0.001,  0.0067, -0.005, 0.15),
-    ("MXP", "Banco de Reserva Wadsworth",        "$",  "🇲🇽", 0.080,  0.058,   0.020, 0.50),
+    ("MXP", "Banco de Reserva Wadsworth",        "M$", "🇲🇽", 0.080,  0.058,   0.020, 0.50),
     ("GBP", "Wadsworth Bank of England",         "£",  "🇬🇧", 0.045,  1.270,  -0.010, 0.20),
     ("CHF", "Wadsworth National Bank",           "Fr", "🇨🇭", 0.015,  1.120,  -0.020, 0.10),
     ("CNY", "People's Reserve Bank of Wadsworth","¥",  "🇨🇳", 0.025,  0.138,   0.005, 0.25),
@@ -103,6 +114,14 @@ DEFAULT_BANKS = [
     ("INR", "Reserve Bank of Wadsworth India",   "₹",  "🇮🇳", 0.065,  0.012,   0.030, 0.35),
     ("RUB", "Wadsworth Central Reserve Bank",    "₽",  "🇷🇺", 0.160,  0.011,   0.050, 0.99),
 ]
+
+# How long a player must wait between legal-tender switches (days).
+TENDER_SWITCH_COOLDOWN_DAYS = 7
+
+# One-time conversion cost charged on the player's EXISTING foreign-currency
+# balance whenever they switch away from a non-USD tender.  The fee is taken
+# by the reserve bank as a "repatriation" cost.
+TENDER_SWITCH_FEE_RATE = 0.02   # 2 % of current foreign balance
 
 # ==========================
 # MODELS
@@ -344,6 +363,7 @@ async def tick(app_tick: int, now: datetime):
         for bank in banks:
             _accrue_interest(db, bank, now)
             _adjust_yield_and_fx(db, bank)
+            _call_bonds_if_needed(db, bank)
             _mature_bonds(db, bank, now)
             _snapshot_history(db, bank, now)
         # Inter-bank settlement runs after all yield/FX adjustments are done
@@ -382,6 +402,43 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         bank.total_interest_paid += abs(hourly)
 
 
+def _call_bonds_if_needed(db, bank: StateReserveBank):
+    """
+    Bank call provision: if the current yield has fallen to ≤ BOND_CALL_YIELD_THRESHOLD
+    of a bond's purchase yield, the bank exercises its call option and force-redeems
+    that bond at face value plus BOND_CALL_PREMIUM in the bank's currency.
+
+    This prevents players from holding old high-yield bonds indefinitely after the bank
+    has significantly cut its rate (just like callable bonds in real markets).
+    """
+    callable_bonds = db.query(ReserveBankBond).filter(
+        ReserveBankBond.bank_id == bank.id,
+        ReserveBankBond.status  == "active",
+    ).all()
+
+    for bond in callable_bonds:
+        if bond.purchase_yield <= 0:
+            continue
+        # Only call when current yield is well below purchase yield
+        if bank.yield_rate > bond.purchase_yield * BOND_CALL_YIELD_THRESHOLD:
+            continue
+
+        call_value     = bond.face_value_wsc * (1.0 + BOND_CALL_PREMIUM) / bank.usd_per_unit
+        bond.status    = "called"
+        bank.total_face_value_wsc = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
+        bank.wsc_holdings         = max(0.0, bank.wsc_holdings         - bond.face_value_wsc)
+        # Negative demand: bank is effectively buying back the bond
+        bank.net_demand_wsc -= bond.face_value_wsc
+
+        # Credit player: face value + call premium + accumulated interest
+        _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code,
+                                 call_value + bond.interest_accrued)
+        print(f"[ReserveBanks] Bank {bank.currency_code} called bond #{bond.id} "
+              f"(purchase yield {bond.purchase_yield:.4f}, current {bank.yield_rate:.4f}). "
+              f"Player {bond.holder_player_id} received {call_value + bond.interest_accrued:.4f} "
+              f"{bank.currency_code} (face + {BOND_CALL_PREMIUM*100:.0f}% premium + interest).")
+
+
 def _adjust_yield_and_fx(db, bank: StateReserveBank):
     """
     Shift yield based on net WSC demand this period.
@@ -400,9 +457,13 @@ def _adjust_yield_and_fx(db, bank: StateReserveBank):
     bank.net_demand_wsc = 0.0   # reset for next period
 
     # FX: lower yield (more demand) → currency appreciates
-    yield_change_pct = (new_yield - old_yield)   # e.g. -0.001 means yield fell 0.1 %
-    fx_change = -yield_change_pct * FX_YIELD_LINK * bank.usd_per_unit
-    bank.usd_per_unit = max(0.000001, bank.usd_per_unit + fx_change)
+    # USD is always pegged at 1.0 — its exchange rate never moves.
+    if bank.currency_code != "USD":
+        yield_change_pct = (new_yield - old_yield)   # e.g. -0.001 means yield fell 0.1 %
+        fx_change = -yield_change_pct * FX_YIELD_LINK * bank.usd_per_unit
+        bank.usd_per_unit = max(0.000001, bank.usd_per_unit + fx_change)
+    else:
+        bank.usd_per_unit = 1.0   # enforce peg
 
 
 def _mature_bonds(db, bank: StateReserveBank, now: datetime):
@@ -1027,6 +1088,13 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         currency_sym   = bank.currency_symbol
         currency_code  = bank.currency_code
 
+        # Early-redemption penalty: charged if sold within BOND_EARLY_REDEMPTION_DAYS.
+        early_penalty = 0.0
+        days_held     = (now - bond.purchased_at).total_seconds() / 86400
+        if days_held < BOND_EARLY_REDEMPTION_DAYS:
+            early_penalty  = bond.face_value_wsc * BOND_EARLY_REDEMPTION_FEE / bank.usd_per_unit
+            foreign_return = max(0.0, foreign_return - early_penalty)
+
         bond.status                = "sold"
         bank.net_demand_wsc       -= bond.face_value_wsc   # selling = negative demand
         bank.total_face_value_wsc  = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
@@ -1039,9 +1107,13 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         face_foreign  = bond.face_value_wsc / bank.usd_per_unit
         gain_foreign  = foreign_return - face_foreign
         sign          = "+" if gain_foreign >= 0 else ""
+        penalty_note  = (
+            f" Early redemption penalty: {currency_sym}{early_penalty:.4f} {currency_code}."
+            if early_penalty > 0 else ""
+        )
         return True, (
             f"Bond sold: received {currency_sym}{foreign_return:.4f} {currency_code} "
-            f"({sign}{gain_foreign:.4f} vs face value, price factor {price_factor:.4f}). "
+            f"({sign}{gain_foreign:.4f} vs face value, price factor {price_factor:.4f}).{penalty_note} "
             f"Accumulated interest ({bond.interest_accrued:.4f} {currency_code}) also remains in your balance."
         )
 
@@ -1076,13 +1148,15 @@ def get_exchange_rate(from_currency: str, to_currency: str) -> float:
 
 
 def _get_usd_rate(db, currency_code: str) -> float:
-    """USD value of one unit of currency_code.  USD itself = 1.0."""
+    """USD value of one unit of currency_code.  USD itself = 1.0 (always fixed)."""
     if currency_code == "USD":
         return 1.0
     bank = db.query(StateReserveBank).filter(
         StateReserveBank.currency_code == currency_code.upper()
     ).first()
-    return bank.usd_per_unit if bank else 1.0
+    rate = bank.usd_per_unit if bank else 1.0
+    # USD bank row exists for bond purposes but its exchange rate is always 1.0
+    return 1.0 if currency_code.upper() == "USD" else rate
 
 
 def forex_swap(player_id: int, from_currency: str, amount: float, to_currency: str) -> Tuple[bool, str, dict]:
@@ -1155,47 +1229,86 @@ def get_player_legal_tender(player_id: int) -> str:
 
 
 def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, str]:
-    """Change a player's legal tender. The currency must have an active reserve bank (or be USD)."""
+    """
+    Change a player's legal tender.
+
+    Restrictions
+    ============
+    1. Cooldown: players must wait TENDER_SWITCH_COOLDOWN_DAYS days between switches.
+    2. Repatriation fee: switching away from a non-USD tender costs
+       TENDER_SWITCH_FEE_RATE of the current foreign-currency balance (taken by
+       the reserve bank as a conversion/exit cost).
+    3. The new currency must have an active reserve bank (or be USD).
+    """
     code = currency_code.upper()
-    if code == "USD":
-        db = get_db()
-        try:
-            row = db.query(PlayerLegalTender).filter(
-                PlayerLegalTender.player_id == player_id
-            ).first()
-            if row:
-                row.currency_code = "USD"
-                row.changed_at    = datetime.utcnow()
-            else:
-                db.add(PlayerLegalTender(player_id=player_id, currency_code="USD"))
-            db.commit()
-            return True, "Legal tender set to USD (default game currency)."
-        except Exception as e:
-            db.rollback()
-            return False, str(e)
-        finally:
-            db.close()
 
     db = get_db()
     try:
-        bank = db.query(StateReserveBank).filter(
-            StateReserveBank.currency_code == code
-        ).first()
-        if not bank:
-            return False, f"No reserve bank found for '{code}'. Available: {_available_codes(db)}"
+        # ── Validate new currency ─────────────────────────────────────────────
+        new_bank = None
+        if code != "USD":
+            new_bank = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == code
+            ).first()
+            if not new_bank:
+                return False, f"No reserve bank found for '{code}'. Available: {_available_codes(db)}"
 
+        # ── Load existing legal-tender row ────────────────────────────────────
         row = db.query(PlayerLegalTender).filter(
             PlayerLegalTender.player_id == player_id
         ).first()
+        current_code = row.currency_code if row else "USD"
+
+        if current_code == code:
+            return False, f"Your legal tender is already {code}."
+
+        # ── Cooldown check ────────────────────────────────────────────────────
+        if row and row.changed_at:
+            days_since = (datetime.utcnow() - row.changed_at).total_seconds() / 86400
+            if days_since < TENDER_SWITCH_COOLDOWN_DAYS:
+                days_left = TENDER_SWITCH_COOLDOWN_DAYS - days_since
+                return False, (
+                    f"Currency switch on cooldown. "
+                    f"You can switch again in {days_left:.1f} days."
+                )
+
+        # ── Repatriation fee on the outgoing foreign balance ──────────────────
+        fee_msg = ""
+        if current_code != "USD":
+            bal = db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id     == player_id,
+                PlayerCurrencyBalance.currency_code == current_code,
+            ).first()
+            if bal and bal.balance > 0:
+                fee = bal.balance * TENDER_SWITCH_FEE_RATE
+                old_bank = db.query(StateReserveBank).filter(
+                    StateReserveBank.currency_code == current_code
+                ).first()
+                # Deduct fee from player's balance (taken by the reserve bank)
+                _adjust_currency_balance(db, player_id, current_code, -fee)
+                if old_bank:
+                    _add_bank_reserve(db, old_bank.id, current_code, fee)
+                sym = old_bank.currency_symbol if old_bank else current_code
+                fee_msg = (
+                    f" A {TENDER_SWITCH_FEE_RATE*100:.0f}% repatriation fee of "
+                    f"{sym}{fee:,.2f} {current_code} was charged."
+                )
+
+        # ── Persist the change ────────────────────────────────────────────────
         if row:
             row.currency_code = code
             row.changed_at    = datetime.utcnow()
         else:
             db.add(PlayerLegalTender(player_id=player_id, currency_code=code))
+
         db.commit()
+
+        if code == "USD":
+            return True, f"Legal tender set back to USD (default game currency).{fee_msg}"
+
         return True, (
-            f"Legal tender changed to {bank.flag_emoji} {bank.currency_name} ({code}). "
-            f"Future income will be auto-converted at the live forex rate."
+            f"Legal tender changed to {new_bank.flag_emoji} {new_bank.currency_name} ({code}). "
+            f"Future income will be auto-converted at the live forex rate.{fee_msg}"
         )
     except Exception as e:
         db.rollback()

@@ -264,7 +264,8 @@ def process_business_tick(db):
 
         wage_cost *= _city_wage_mult
 
-        if player.cash_balance < wage_cost:
+        from reserve_banks import can_afford_usd
+        if not can_afford_usd(player.id, player.cash_balance, wage_cost):
             continue
 
         player_inv = get_player_inventory(player.id)

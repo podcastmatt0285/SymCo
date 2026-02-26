@@ -815,10 +815,13 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
         return {"success": False, "error": f"Maximum {MAX_EXECUTIVES_PER_PLAYER} executives allowed"}
 
     hiring_fee = exec_obj.wage * (PAY_CYCLES["day"] / PAY_CYCLES[exec_obj.pay_cycle])
-    if player.cash_balance < hiring_fee:
+    from reserve_banks import can_afford_usd, spend_player_funds
+    if not can_afford_usd(player_id, player.cash_balance, hiring_fee):
         return {"success": False, "error": f"Insufficient funds. Hiring fee: ${hiring_fee:,.2f}"}
 
-    player.cash_balance     -= hiring_fee
+    ok, err = spend_player_funds(db, player, hiring_fee)
+    if not ok:
+        return {"success": False, "error": err}
     exec_obj.player_id       = player_id
     exec_obj.on_marketplace  = False
     exec_obj.hired_at        = datetime.utcnow()
@@ -1128,7 +1131,8 @@ def _process_wages(db, current_tick: int):
         if not player:
             continue
 
-        if player.cash_balance < wage:
+        from reserve_banks import can_afford_usd, spend_player_funds
+        if not can_afford_usd(player.id, player.cash_balance, wage):
             # ── Can't pay ─────────────────────────────────────────────────────
             if ex.is_special and ex.special_ability == "iron_will":
                 # Issues a formal warning instead of quitting
@@ -1144,8 +1148,11 @@ def _process_wages(db, current_tick: int):
                 _quit_for_nonpayment(db, ex, player)
         else:
             # ── Normal payment ────────────────────────────────────────────────
-            player.cash_balance -= wage
-            ex.missed_payments   = 0  # reset on successful pay
+            ok, _err = spend_player_funds(db, player, wage)
+            if ok:
+                ex.missed_payments = 0  # reset on successful pay
+            else:
+                _quit_for_nonpayment(db, ex, player)
 
 
 def _process_pensions(db, current_tick: int):

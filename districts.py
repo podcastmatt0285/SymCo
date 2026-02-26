@@ -375,12 +375,15 @@ def create_district(
     player = db.query(Player).filter(Player.id == player_id).first()
     merge_cost = get_next_merge_cost(player_id)
     
-    if player.cash_balance < merge_cost:
+    from reserve_banks import can_afford_usd, spend_player_funds
+    if not can_afford_usd(player.id, player.cash_balance, merge_cost):
         db.close()
         return None, f"Insufficient funds. District merge costs ${merge_cost:,.2f}"
-    
-    # Deduct cost and pay government
-    player.cash_balance -= merge_cost
+
+    ok, err = spend_player_funds(db, player, merge_cost)
+    if not ok:
+        db.close()
+        return None, err
     
     # Pay government (player ID 0)
     government = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
