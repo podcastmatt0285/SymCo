@@ -209,14 +209,20 @@ def _burn_and_mint_wsc(db, fee_value: float) -> float:
 
 def _native_usd_price(county_db, county_id: int) -> float:
     """
-    Dollar price of 1 native token = county treasury_balance / total_crypto_minted.
-    Falls back to 1.0 (1 native = $1) when data is missing.
+    Dollar price of 1 native token using the canonical market-price calculation:
+      price = total_cash_value_of_all_city_members / CRYPTO_PEG_DIVISOR (1B)
+
+    The old formula (treasury_balance / total_crypto_minted) only counts USD that
+    physically sits in the county treasury from direct token purchases — a tiny
+    fraction of the real market-cap-based price — and produced rates like $0.007
+    for a token actually worth $892.
     """
-    from counties import County
-    c = county_db.query(County).filter(County.id == county_id).first()
-    if c and c.total_crypto_minted and c.total_crypto_minted > 0 and c.treasury_balance and c.treasury_balance > 0:
-        return c.treasury_balance / c.total_crypto_minted
-    return 1.0
+    try:
+        from counties import calculate_crypto_price
+        p = calculate_crypto_price(county_id)
+        return p if p and p > 0 else 1.0
+    except Exception:
+        return 1.0
 
 
 # ==========================
