@@ -1408,8 +1408,9 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         player = db.query(Player).filter(Player.id == player_id).first()
         if not player:
             return False, "Player not found"
-        if player.cash_balance < cash_amount:
-            return False, "Insufficient cash"
+        from reserve_banks import can_afford_usd, spend_player_funds
+        if not can_afford_usd(player_id, player.cash_balance, cash_amount):
+            return False, "Insufficient funds"
 
         price = get_crypto_price_by_symbol(crypto_symbol)
         if price <= 0:
@@ -1419,8 +1420,10 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         net_cash = cash_amount - fee
         crypto_amount = net_cash / price
 
-        # Deduct cash from player
-        player.cash_balance -= cash_amount
+        # Deduct cash from player (supports foreign legal tender)
+        ok, err = spend_player_funds(db, player, cash_amount)
+        if not ok:
+            return False, f"Payment failed: {err}"
 
         # Cash goes INTO the county treasury
         county.treasury_balance = (county.treasury_balance or 0.0) + net_cash

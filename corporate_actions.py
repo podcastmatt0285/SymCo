@@ -318,9 +318,10 @@ def check_and_execute_buyback(program_id: int) -> bool:
             auth_db = get_auth_db()
             try:
                 founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
-                if founder and founder.cash_balance >= surplus_threshold:
+                from reserve_banks import can_afford_usd
+                if founder and can_afford_usd(founder.id, founder.cash_balance, surplus_threshold):
                     should_buy = True
-                    print(f"[{BANK_NAME}] 💰 BUYBACK TRIGGER: Founder has ${founder.cash_balance:,.2f}")
+                    print(f"[{BANK_NAME}] 💰 BUYBACK TRIGGER: Founder has sufficient funds for surplus_threshold ${surplus_threshold:,.2f}")
             finally:
                 auth_db.close()
         
@@ -367,7 +368,8 @@ def check_and_execute_buyback(program_id: int) -> bool:
         auth_db = get_auth_db()
         try:
             founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
-            if not founder or founder.cash_balance < total_cost:
+            from reserve_banks import can_afford_usd
+            if not founder or not can_afford_usd(founder.id, founder.cash_balance, total_cost):
                 print(f"[{BANK_NAME}] BUYBACK SKIPPED: Insufficient founder funds")
                 return False
         finally:
@@ -411,8 +413,10 @@ def check_and_execute_buyback(program_id: int) -> bool:
                 try:
                     founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
                     if founder:
-                        founder.cash_balance -= fee
-                        auth_db.commit()
+                        from reserve_banks import spend_player_funds
+                        ok, _ = spend_player_funds(auth_db, founder, fee)
+                        if ok:
+                            auth_db.commit()
                 finally:
                     auth_db.close()
 
@@ -730,10 +734,10 @@ def check_and_execute_offering(offering_id: int) -> bool:
             auth_db = get_auth_db()
             try:
                 founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
-                if founder and founder.cash_balance < threshold:
+                from reserve_banks import can_afford_usd
+                if founder and not can_afford_usd(founder.id, founder.cash_balance, threshold):
                     should_offer = True
-                    print(f"[{BANK_NAME}] 💵 OFFERING TRIGGER: Founder cash ${founder.cash_balance:,.2f} " +
-                          f"below ${threshold:,.2f}")
+                    print(f"[{BANK_NAME}] 💵 OFFERING TRIGGER: Founder below ${threshold:,.2f} threshold")
             finally:
                 auth_db.close()
         
@@ -1081,9 +1085,12 @@ def pay_special_dividend(company_shares_id: int, founder_id: int, total_amount: 
         auth_db = get_auth_db()
         try:
             founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-            if not founder or founder.cash_balance < total_amount:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not founder or not can_afford_usd(founder_id, founder.cash_balance, total_amount):
                 return {"ok": False, "error": f"Insufficient funds (need ${total_amount:,.2f})"}
-            founder.cash_balance -= total_amount
+            ok, err = spend_player_funds(auth_db, founder, total_amount)
+            if not ok:
+                return {"ok": False, "error": f"Payment failed: {err}"}
             auth_db.commit()
         finally:
             auth_db.close()
@@ -1448,14 +1455,15 @@ def process_acquisition_income(current_tick: int):
                         target = auth_db.query(Player).filter(Player.id == stake.target_player_id).first()
                         acquirer = auth_db.query(Player).filter(Player.id == stake.acquirer_id).first()
                         if target and acquirer:
-                            target.cash_balance -= net
-                            try:
-                                from reserve_banks import convert_to_legal_tender
-                                _amt, _code = convert_to_legal_tender(acquirer.id, net)
-                                if _code == "USD":
-                                    acquirer.cash_balance += _amt
-                            except Exception:
-                                acquirer.cash_balance += net
+                            from reserve_banks import spend_player_funds, convert_to_legal_tender
+                            ok, _ = spend_player_funds(auth_db, target, net)
+                            if ok:
+                                try:
+                                    _amt, _code = convert_to_legal_tender(acquirer.id, net)
+                                    if _code == "USD":
+                                        acquirer.cash_balance += _amt
+                                except Exception:
+                                    acquirer.cash_balance += net
                             auth_db.commit()
                             log_transaction(stake.acquirer_id, "corporate", "money", net,
                                             f"Acquisition income ({stake.stake_pct*100:.1f}% of player {stake.target_player_id})")
