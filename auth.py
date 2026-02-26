@@ -97,15 +97,11 @@ def get_db():
 
 def migrate_tutorial_column():
     """Add tutorial_step column to players table if it doesn't exist."""
-    try:
-        with engine.begin() as conn:
-            conn.execute(
-                __import__("sqlalchemy").text(
-                    "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0"
-                )
-            )
-    except Exception as e:
-        print(f"[Auth] Migration warning (tutorial_step): {e}")
+    from database import run_ddl_migration
+    run_ddl_migration(
+        engine,
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0",
+    )
 
 
 # ==========================

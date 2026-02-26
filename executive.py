@@ -1271,21 +1271,15 @@ def initialize():
     load_names()
 
     # ── Column migrations for existing databases ──────────────────────────────
-    migrations = [
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
         "ALTER TABLE executives ADD COLUMN abilities TEXT DEFAULT ''",
         "ALTER TABLE executives ADD COLUMN school_total_ticks INTEGER DEFAULT 0",
         "ALTER TABLE executives ADD COLUMN missed_payments INTEGER DEFAULT 0",
         "ALTER TABLE executives ADD COLUMN pension_owed_by INTEGER",
         "ALTER TABLE executives ADD COLUMN severance_owed REAL DEFAULT 0.0",
         "ALTER TABLE executives ADD COLUMN severance_owed_by INTEGER",
-    ]
-    with engine.connect() as conn:
-        for stmt in migrations:
-            try:
-                conn.execute(text(stmt))
-                conn.commit()
-            except Exception:
-                pass  # column already exists
+    ])
 
     db = get_db()
     try:

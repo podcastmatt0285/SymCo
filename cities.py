@@ -2268,11 +2268,11 @@ def initialize():
     Base.metadata.create_all(bind=engine)
 
     # Safe migrations for new columns
-    from sqlalchemy import text
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE cities ADD COLUMN IF NOT EXISTS application_fee REAL DEFAULT 50000.0"))
-        conn.execute(text("ALTER TABLE cities ADD COLUMN IF NOT EXISTS relocation_fee REAL DEFAULT 10000.0"))
-        conn.commit()
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        "ALTER TABLE cities ADD COLUMN IF NOT EXISTS application_fee REAL DEFAULT 50000.0",
+        "ALTER TABLE cities ADD COLUMN IF NOT EXISTS relocation_fee REAL DEFAULT 10000.0",
+    ])
 
     db = get_db()
     city_count = db.query(City).count()

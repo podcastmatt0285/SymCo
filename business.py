@@ -67,14 +67,11 @@ def load_business_config():
 def initialize():
     Base.metadata.create_all(bind=engine)
     # Safe migration: add per-line pause columns if they don't exist yet
-    try:
-        from sqlalchemy import text as _text
-        with engine.connect() as _conn:
-            _conn.execute(_text("ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_lines TEXT DEFAULT '[]'"))
-            _conn.execute(_text("ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_products TEXT DEFAULT '[]'"))
-            _conn.commit()
-    except Exception as _mig_err:
-        print(f"[Business] Migration warning: {_mig_err}")
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_lines TEXT DEFAULT '[]'",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_products TEXT DEFAULT '[]'",
+    ])
     load_business_config()
     print("[Business] Module initialized with production patches and dismantling system")
 

@@ -2478,17 +2478,14 @@ def initialize():
     Base.metadata.create_all(bind=engine)
 
     # Safe migrations for new columns
-    from sqlalchemy import text
-    with engine.connect() as conn:
-        # Counties table migrations
-        conn.execute(text(f"ALTER TABLE counties ADD COLUMN IF NOT EXISTS transaction_fee_percent REAL DEFAULT {EXCHANGE_FEE_PERCENT}"))
-        conn.execute(text("ALTER TABLE counties ADD COLUMN IF NOT EXISTS mining_reward_multiplier REAL DEFAULT 1.0"))
-
-        # GovernanceProposal table migrations
-        conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS voting_mechanism TEXT DEFAULT 'token_weighted'"))
-        conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_value REAL"))
-        conn.execute(text("ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_target TEXT"))
-        conn.commit()
+    from database import run_ddl_migration
+    run_ddl_migration(engine, [
+        f"ALTER TABLE counties ADD COLUMN IF NOT EXISTS transaction_fee_percent REAL DEFAULT {EXCHANGE_FEE_PERCENT}",
+        "ALTER TABLE counties ADD COLUMN IF NOT EXISTS mining_reward_multiplier REAL DEFAULT 1.0",
+        "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS voting_mechanism TEXT DEFAULT 'token_weighted'",
+        "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_value REAL",
+        "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_target TEXT",
+    ])
 
     db = get_db()
     county_count = db.query(County).count()

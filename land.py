@@ -637,17 +637,11 @@ def collect_hoarding_taxes():
 # ==========================
 def _migrate_tutorial_reward_column():
     """Add is_tutorial_reward column to land_plots table if missing."""
-    try:
-        import sqlalchemy
-        with engine.connect() as conn:
-            conn.execute(
-                sqlalchemy.text(
-                    "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE"
-                )
-            )
-            conn.commit()
-    except Exception as e:
-        print(f"[Land] Migration warning: {e}")
+    from database import run_ddl_migration
+    run_ddl_migration(
+        engine,
+        "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE",
+    )
 
 
 def initialize():
