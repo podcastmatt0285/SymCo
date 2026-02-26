@@ -40,8 +40,27 @@ def require_auth(session_token: Optional[str] = Cookie(None)):
 # HTML SHELL - DEATH CERTIFICATE AESTHETIC
 # ==========================
 
-def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = "") -> str:
+def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = "", player_id: int = None) -> str:
     """Dark, solemn shell with death certificate aesthetic."""
+    disp_sym      = "$"
+    disp_balance  = balance
+    disp_usd_note = ""
+    if player_id:
+        try:
+            from reserve_banks import get_player_legal_tender, get_player_currency_balances
+            tender = get_player_legal_tender(player_id)
+            if tender != "USD":
+                for b in get_player_currency_balances(player_id):
+                    if b["currency_code"] == tender:
+                        disp_sym      = b["currency_symbol"]
+                        disp_balance  = b["balance"]
+                        disp_usd_note = (
+                            f' <span style="font-size:0.65em;color:#64748b;">'
+                            f'/ ${balance:,.0f} USD</span>'
+                        )
+                        break
+        except Exception:
+            pass
     return f"""
 <!DOCTYPE html>
 <html>
@@ -330,7 +349,7 @@ def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
         <div class="brand">WADSWORTH ESTATE REGISTRY</div>
         <div class="header-right">
             <span style="color: #64748b;">{player_name}</span>
-            <span class="balance">${balance:,.2f}</span>
+            <span class="balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
             <a href="/" style="color: #64748b;">Dashboard</a>
         </div>
     </div>
@@ -496,7 +515,7 @@ async def estate_overview(session_token: Optional[str] = Cookie(None)):
     </div>
     """
 
-    return HTMLResponse(death_shell("Estate", body, player.cash_balance, player.business_name))
+    return HTMLResponse(death_shell("Estate", body, player.cash_balance, player.business_name, player.id))
 
 
 # ==========================
@@ -647,7 +666,7 @@ async def heir_management(
     </div>
     """
 
-    return HTMLResponse(death_shell("Heirs", body, player.cash_balance, player.business_name))
+    return HTMLResponse(death_shell("Heirs", body, player.cash_balance, player.business_name, player.id))
 
 
 # ==========================
@@ -684,7 +703,7 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
             <a href="/estate" class="btn btn-secondary">Back to Estate</a>
         </div>
         """
-        return HTMLResponse(death_shell("Deceased", body, player.cash_balance, player.business_name))
+        return HTMLResponse(death_shell("Deceased", body, player.cash_balance, player.business_name, player.id))
 
     # Build death certificate cards
     cards_html = ""
@@ -804,7 +823,7 @@ async def deceased_registry(session_token: Optional[str] = Cookie(None)):
     </div>
     """
 
-    return HTMLResponse(death_shell("Deceased", body, player.cash_balance, player.business_name))
+    return HTMLResponse(death_shell("Deceased", body, player.cash_balance, player.business_name, player.id))
 
 
 # ==========================
@@ -955,7 +974,7 @@ async def delete_account_page(session_token: Optional[str] = Cookie(None)):
     </div>
     """
 
-    return HTMLResponse(death_shell("Delete Account", body, player.cash_balance, player.business_name))
+    return HTMLResponse(death_shell("Delete Account", body, player.cash_balance, player.business_name, player.id))
 
 
 # ==========================

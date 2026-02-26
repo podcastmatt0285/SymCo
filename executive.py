@@ -919,10 +919,11 @@ def send_to_school(db, player_id: int, executive_id: int) -> dict:
     if exec_obj.is_special and exec_obj.special_ability == "fast_learner":
         ticks = ticks // 2
 
-    if player.cash_balance < cost:
-        return {"success": False, "error": f"Insufficient funds. School costs ${cost:,.2f}"}
+    from reserve_banks import spend_player_funds
+    ok, err = spend_player_funds(db, player, cost)
+    if not ok:
+        return {"success": False, "error": err}
 
-    player.cash_balance             -= cost
     exec_obj.is_in_school            = True
     exec_obj.school_ticks_remaining  = ticks
     exec_obj.school_total_ticks      = ticks

@@ -341,7 +341,25 @@ function filterCategory(cat) {
 def exec_shell(title: str, body: str, player=None) -> str:
     balance_html = ""
     if player:
-        balance_html = f'<span style="color:#22c55e;">${player.cash_balance:,.2f}</span>'
+        disp_sym      = "$"
+        disp_balance  = player.cash_balance
+        disp_usd_note = ""
+        try:
+            from reserve_banks import get_player_legal_tender, get_player_currency_balances
+            tender = get_player_legal_tender(player.id)
+            if tender != "USD":
+                for b in get_player_currency_balances(player.id):
+                    if b["currency_code"] == tender:
+                        disp_sym      = b["currency_symbol"]
+                        disp_balance  = b["balance"]
+                        disp_usd_note = (
+                            f' <span style="font-size:0.65em;color:#64748b;">'
+                            f'/ ${player.cash_balance:,.0f} USD</span>'
+                        )
+                        break
+        except Exception:
+            pass
+        balance_html = f'<span style="color:#22c55e;">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>'
     return f"""<!DOCTYPE html>
 <html><head>
     <meta charset="utf-8">
@@ -856,8 +874,40 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
         else:
             time_str = f"{real_s // 3600}h {(real_s % 3600) // 60}m"
 
-        can_afford = player.cash_balance >= cost
+        # can_afford: check both foreign legal tender balance AND USD cash fallback
+        try:
+            from reserve_banks import get_player_legal_tender, get_player_currency_balances, get_exchange_rate
+            _tender = get_player_legal_tender(player.id)
+            if _tender == "USD":
+                can_afford = player.cash_balance >= cost
+            else:
+                _rate = get_exchange_rate("USD", _tender)  # units of _tender per 1 USD
+                _foreign_cost = cost * _rate if _rate else 0
+                _balances = {b["currency_code"]: b["balance"] for b in get_player_currency_balances(player.id)}
+                can_afford = _balances.get(_tender, 0) >= _foreign_cost or player.cash_balance >= cost
+        except Exception:
+            can_afford = player.cash_balance >= cost
         job_info   = EXECUTIVE_JOBS.get(ex.job, {"title": ex.job})
+
+        # Resolve legal tender for balance display
+        sc_disp_sym      = "$"
+        sc_disp_balance  = player.cash_balance
+        sc_disp_usd_note = ""
+        try:
+            from reserve_banks import get_player_legal_tender, get_player_currency_balances
+            sc_tender = get_player_legal_tender(player.id)
+            if sc_tender != "USD":
+                for b in get_player_currency_balances(player.id):
+                    if b["currency_code"] == sc_tender:
+                        sc_disp_sym      = b["currency_symbol"]
+                        sc_disp_balance  = b["balance"]
+                        sc_disp_usd_note = (
+                            f' <span style="font-size:0.65em;color:#64748b;">'
+                            f'/ ${player.cash_balance:,.0f} USD</span>'
+                        )
+                        break
+        except Exception:
+            pass
 
         # Show what abilities will be boosted
         ability_keys = [a for a in (ex.abilities or "").split(",") if a]
@@ -899,7 +949,7 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
             </div>
             <div class="stat-row">
                 <span class="stat-label">Your Balance</span>
-                <span class="stat-value green">${player.cash_balance:,.2f}</span>
+                <span class="stat-value green">{sc_disp_sym}{sc_disp_balance:,.2f}{sc_disp_usd_note}</span>
             </div>
             {disc_html}
             <br>

@@ -490,7 +490,7 @@ async def launch_meme_form(
 
             <div class="form-group">
                 <label>Total Supply</label>
-                <select name="total_supply" required>
+                <select name="total_supply" id="total_supply" required onchange="updateBacking()">
                     <option value="1000000">1,000,000 (1 Million)</option>
                     <option value="10000000">10,000,000 (10 Million)</option>
                     <option value="100000000">100,000,000 (100 Million)</option>
@@ -503,6 +503,24 @@ async def launch_meme_form(
                 </div>
             </div>
 
+            <div class="form-group">
+                <label>Creation Burn Amount ({county.crypto_symbol})</label>
+                <input type="number" name="creation_burn_native" id="creation_burn"
+                       min="{MEME_CREATION_FEE_NATIVE}" step="any"
+                       value="{MEME_CREATION_FEE_NATIVE:.0f}"
+                       placeholder="Min {MEME_CREATION_FEE_NATIVE:.0f}"
+                       max="{native_balance:.4f}"
+                       onchange="updateBacking()" oninput="updateBacking()" required>
+                <div style="font-size:11px;color:#64748b;margin-top:4px;">
+                    Minimum {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol}.
+                    Burning more sets a higher opening backing price (floor value per coin).
+                </div>
+                <div style="margin-top:8px;background:#0a0f1a;padding:8px 12px;border-radius:6px;font-size:12px;">
+                    Opening backing price: <strong class="native-color" id="backing_price">—</strong>
+                    {county.crypto_symbol} per coin (founder allocation basis)
+                </div>
+            </div>
+
             <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;">
                 <div style="color:#94a3b8;margin-bottom:6px;">Your {county.crypto_symbol} balance:
                     <strong class="{("native-color" if native_balance >= MEME_CREATION_FEE_NATIVE else "negative")}">{native_balance:.4f}</strong>
@@ -512,7 +530,7 @@ async def launch_meme_form(
 
             <button type="submit" class="btn btn-meme"
                     {"" if native_balance >= MEME_CREATION_FEE_NATIVE else "disabled style='opacity:0.5;cursor:not-allowed;'"}>
-                🚀 Launch Meme Coin (Burns {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol})
+                🚀 Launch Meme Coin
             </button>
         </form>
     </div>
@@ -523,8 +541,19 @@ async def launch_meme_form(
         2. You immediately receive <strong>{int(MEME_FOUNDER_ALLOCATION_PCT*100)}%</strong> of total supply as founder allocation.<br>
         3. The remaining <strong>{int(MEME_MINING_ALLOCATION_PCT*100)}%</strong> is distributed to miners who stake {county.crypto_symbol}.<br>
         4. Anyone can trade your coin on the order book. <strong>2% trading fee</strong>: 1% to you, 0.5% to county treasury, 0.5% burned.<br>
-        5. You earn passive income every time someone trades your coin!
+        5. You earn passive income every time someone trades your coin!<br>
+        6. Burn more {county.crypto_symbol} at creation to set a higher initial backing price — making your coin harder to dump below that floor.
     </div>
+<script>
+function updateBacking() {{
+    var supply = parseFloat(document.getElementById('total_supply').value) || 1e9;
+    var burn   = parseFloat(document.getElementById('creation_burn').value)  || {MEME_CREATION_FEE_NATIVE};
+    var founder = supply * {MEME_FOUNDER_ALLOCATION_PCT};
+    var price   = burn / Math.max(founder, 1);
+    document.getElementById('backing_price').textContent = price.toExponential(4);
+}}
+window.addEventListener('load', updateBacking);
+</script>
 </div>
 </body>
 </html>"""
@@ -1426,6 +1455,7 @@ async def api_launch_meme(
     symbol: str = Form(...),
     description: str = Form(""),
     total_supply: float = Form(...),
+    creation_burn_native: float = Form(None),
     session_token: Optional[str] = Cookie(None),
 ):
     player = get_current_player(session_token)
@@ -1440,6 +1470,7 @@ async def api_launch_meme(
         description=description,
         total_supply=total_supply,
         county_id=county_id,
+        creation_burn_native=creation_burn_native,
     )
     if meme_symbol:
         return RedirectResponse(

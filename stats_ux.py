@@ -377,8 +377,27 @@ def get_price_history(item_type: str, days: int = 7) -> List[dict]:
 # HTML SHELL
 # ==========================
 
-def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = "") -> str:
+def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = "", player_id: int = None) -> str:
     """Render the stats dashboard shell."""
+    disp_sym      = "$"
+    disp_balance  = balance
+    disp_usd_note = ""
+    if player_id:
+        try:
+            from reserve_banks import get_player_legal_tender, get_player_currency_balances
+            tender = get_player_legal_tender(player_id)
+            if tender != "USD":
+                for b in get_player_currency_balances(player_id):
+                    if b["currency_code"] == tender:
+                        disp_sym      = b["currency_symbol"]
+                        disp_balance  = b["balance"]
+                        disp_usd_note = (
+                            f' <span style="font-size:0.65em;color:#64748b;">'
+                            f'/ ${balance:,.0f} USD</span>'
+                        )
+                        break
+        except Exception:
+            pass
     return f"""
 <!DOCTYPE html>
 <html>
@@ -649,7 +668,7 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
         <div class="brand">Wadsworth Analytics</div>
         <div class="header-right">
             <span style="color: #94a3b8;">{player_name}</span>
-            <span class="balance">${balance:,.2f}</span>
+            <span class="balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
             <a href="/" style="color: #94a3b8;">← Dashboard</a>
         </div>
     </div>
@@ -1003,7 +1022,7 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
     </div>
     """
     
-    return HTMLResponse(stats_shell("Dashboard", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Dashboard", body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/economy", response_class=HTMLResponse)
@@ -1105,7 +1124,7 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
     </div>
     """
     
-    return HTMLResponse(stats_shell("Economy", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Economy", body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/personal", response_class=HTMLResponse)
@@ -1286,7 +1305,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     </script>
     """
     
-    return HTMLResponse(stats_shell("My Business", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("My Business", body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/leaderboard", response_class=HTMLResponse)
@@ -1379,7 +1398,7 @@ async def stats_leaderboard(
     </div>
     """
     
-    return HTMLResponse(stats_shell("Leaderboard", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Leaderboard", body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/businesses", response_class=HTMLResponse)
@@ -1472,7 +1491,7 @@ async def stats_businesses(
     </script>
     """
     
-    return HTMLResponse(stats_shell("Businesses", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Businesses", body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/business/{business_key}", response_class=HTMLResponse)
@@ -1508,7 +1527,7 @@ async def stats_business_detail(
         except: pass
     
     if not biz:
-        return HTMLResponse(stats_shell("Not Found", "<h1>Business not found</h1>", player.cash_balance, player.business_name))
+        return HTMLResponse(stats_shell("Not Found", "<h1>Business not found</h1>", player.cash_balance, player.business_name, player.id))
     
     name = biz.get("name", business_key.replace("_", " ").title())
     desc = biz.get("description", "")
@@ -1595,7 +1614,7 @@ async def stats_business_detail(
     except Exception:
         pass
 
-    return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/items", response_class=HTMLResponse)
@@ -1699,7 +1718,7 @@ async def stats_items(
     </script>
     """
     
-    return HTMLResponse(stats_shell("Items", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Items", body, player.cash_balance, player.business_name, player.id))
 
 
 @router.get("/stats/item/{item_key}", response_class=HTMLResponse)
@@ -1732,7 +1751,7 @@ async def stats_item_detail(
     
     if not item:
         db.close()
-        return HTMLResponse(stats_shell("Not Found", "<h1>Item not found</h1>", player.cash_balance, player.business_name))
+        return HTMLResponse(stats_shell("Not Found", "<h1>Item not found</h1>", player.cash_balance, player.business_name, player.id))
     
     name = item.get("name", item_key.replace("_", " ").title())
     desc = item.get("description", "")
@@ -1846,8 +1865,8 @@ async def stats_item_detail(
     
     <a href="/stats/items" style="display: inline-block; margin-top: 16px;">← Back to Items</a>
     """
-    
-    return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name))
+
+    return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name, player.id))
 
 
 # ==========================
@@ -1915,7 +1934,7 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
     <div class="grid">{cards}</div>
     <a href="/stats" style="display:inline-block;margin-top:16px;">← Back to Analytics</a>
     """
-    return HTMLResponse(stats_shell("Districts", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Districts", body, player.cash_balance, player.business_name, player.id))
 
 
 # /stats/production-costs is served by ux.py (production_costs.py calculator)
@@ -2149,7 +2168,7 @@ async def stats_production_costs(
     </p>
     <a href="/stats" style="display:inline-block;margin-top:8px;">← Back to Analytics</a>
     """
-    return HTMLResponse(stats_shell("Production Costs", body, player.cash_balance, player.business_name))
+    return HTMLResponse(stats_shell("Production Costs", body, player.cash_balance, player.business_name, player.id))
 
 
 # ==========================

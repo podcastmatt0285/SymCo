@@ -26,6 +26,28 @@ router = APIRouter()
 
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
+
+    # Resolve display balance using player's legal tender so the header always
+    # shows the currency the player actually works in (not hardcoded USD).
+    disp_sym      = "$"
+    disp_balance  = balance
+    disp_usd_note = ""
+    if player_id:
+        try:
+            from reserve_banks import get_player_legal_tender, get_player_currency_balances
+            tender = get_player_legal_tender(player_id)
+            if tender != "USD":
+                for b in get_player_currency_balances(player_id):
+                    if b["currency_code"] == tender:
+                        disp_sym      = b["currency_symbol"]
+                        disp_balance  = b["balance"]
+                        disp_usd_note = (
+                            f' <span style="font-size:0.65em;color:#64748b;">'
+                            f'/ ${balance:,.0f} USD</span>'
+                        )
+                        break
+        except Exception:
+            pass  # fall back to cash_balance / $ on any error
     
     lien_html = ""
     if lien_info["has_lien"]:
@@ -241,7 +263,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             <div class="brand"><img src="/static/logo.png" alt="Wadsworth"> Wadsworth</div>
             <div class="header-right">
                 {lien_html}
-                <span class="balance">$ {balance:,.2f}</span>
+                <span class="balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>

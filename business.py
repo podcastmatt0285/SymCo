@@ -450,12 +450,12 @@ def create_business(player_id: int, plot_id: int, business_type_key: str):
         
         print(f"[Business] Startup cost for {business_type_key}: ${base_cost:.2f} × {multiplier:.2f} = ${startup_cost:,.2f}")
         
-        if player.cash_balance < startup_cost:
-            print(f"[Business] Player {player_id} has insufficient funds (need ${startup_cost:,.2f}, have ${player.cash_balance:,.2f})")
+        from reserve_banks import spend_player_funds
+        ok, _err = spend_player_funds(db, player, startup_cost)
+        if not ok:
+            print(f"[Business] Player {player_id} insufficient funds for startup: {_err}")
             db.close()
             return None
-            
-        player.cash_balance -= startup_cost
         business = Business(
             owner_id=player_id,
             land_plot_id=plot.id,
@@ -657,12 +657,11 @@ def create_district_business(owner_id: int, district_id: int, business_type: str
         if not player:
             return None, "Player not found"
         
-        if player.cash_balance < total_cost:
-            return None, f"Insufficient funds. Need ${total_cost:,.2f}"
-        
-        # Deduct cost
-        player.cash_balance -= total_cost
-        
+        from reserve_banks import spend_player_funds
+        ok, err = spend_player_funds(db, player, total_cost)
+        if not ok:
+            return None, err
+
         # Create business
         business = Business(
             owner_id=owner_id,

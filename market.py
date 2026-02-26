@@ -329,14 +329,13 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 db.rollback()
                 return
             
-            # Verify buyer has enough money
-            if buyer.cash_balance < total_cost:
-                print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} has insufficient funds (need ${total_cost:.2f}, have ${buyer.cash_balance:.2f})")
+            # Deduct from buyer's account (respects legal tender preference)
+            from reserve_banks import spend_player_funds
+            ok, _err = spend_player_funds(db, buyer, total_cost)
+            if not ok:
+                print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} insufficient funds: {_err}")
                 db.rollback()
                 return
-            
-            # Deduct from buyer's account
-            buyer.cash_balance -= total_cost
             
             # Route to appropriate bank
             if bank_id.startswith("city_bank_"):
@@ -431,13 +430,13 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     print(f"[Market] Cash transfer error: player not found (buyer={buy_order.player_id}, seller={sell_order.player_id})")
                     db.rollback()
                     return
-                if buyer.cash_balance < total_cost:
-                    print(f"[Market] Cash transfer error: Player {buy_order.player_id} has insufficient funds (need ${total_cost:.2f}, have ${buyer.cash_balance:.2f})")
+                from reserve_banks import spend_player_funds, convert_to_legal_tender
+                ok, _err = spend_player_funds(db, buyer, total_cost)
+                if not ok:
+                    print(f"[Market] Cash transfer error: Player {buy_order.player_id} insufficient funds: {_err}")
                     db.rollback()
                     return
-                buyer.cash_balance -= total_cost
                 try:
-                    from reserve_banks import convert_to_legal_tender
                     _amt, _code = convert_to_legal_tender(seller.id, total_cost)
                     if _code == "USD":
                         seller.cash_balance += _amt

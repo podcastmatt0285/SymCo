@@ -452,6 +452,7 @@ def launch_meme_coin(
     description: str,
     total_supply: float,
     county_id: int,
+    creation_burn_native: float = None,
 ) -> Tuple[Optional[str], str]:
     """
     Returns (symbol_str, message) on success or (None, error_message) on failure.
@@ -511,15 +512,26 @@ def launch_meme_coin(
             return None, "County not found."
         native_symbol = county.crypto_symbol
 
-        # Check player has enough native tokens for creation fee
+        # Resolve burn amount — must be at least the minimum creation fee
+        if creation_burn_native is None:
+            creation_burn_native = MEME_CREATION_FEE_NATIVE
+        creation_burn_native = float(creation_burn_native)
+        if creation_burn_native < MEME_CREATION_FEE_NATIVE:
+            return None, (
+                f"Burn amount must be at least {MEME_CREATION_FEE_NATIVE:.2f} {native_symbol} "
+                f"(the minimum creation fee)."
+            )
+
+        # Check player has enough native tokens for the chosen burn amount
         native_wallet = county_db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == native_symbol,
         ).first()
-        if not native_wallet or native_wallet.balance < MEME_CREATION_FEE_NATIVE:
+        if not native_wallet or native_wallet.balance < creation_burn_native:
+            have = native_wallet.balance if native_wallet else 0.0
             return None, (
-                f"Insufficient native tokens. You need {MEME_CREATION_FEE_NATIVE:.2f} "
-                f"{native_symbol} to launch a meme coin (creation fee, burned forever)."
+                f"Insufficient native tokens. You have {have:.4f} {native_symbol} "
+                f"but chose to burn {creation_burn_native:.2f} (min: {MEME_CREATION_FEE_NATIVE:.2f})."
             )
 
         # Get creator's city_id
@@ -534,12 +546,12 @@ def launch_meme_coin(
         creator_city_id = membership.city_id if membership else 0
 
         # --- Deduct creation fee (burn native tokens) ---
-        native_wallet.balance -= MEME_CREATION_FEE_NATIVE
-        native_wallet.total_sold = (native_wallet.total_sold or 0.0) + MEME_CREATION_FEE_NATIVE
+        native_wallet.balance -= creation_burn_native
+        native_wallet.total_sold = (native_wallet.total_sold or 0.0) + creation_burn_native
         county_db.commit()
 
         # Also reduce county's circulating supply (tokens burned)
-        county.total_crypto_burned = (county.total_crypto_burned or 0.0) + MEME_CREATION_FEE_NATIVE
+        county.total_crypto_burned = (county.total_crypto_burned or 0.0) + creation_burn_native
         county_db.commit()
 
         # --- Create meme coin ---
@@ -575,7 +587,7 @@ def launch_meme_coin(
             all_time_low=None,
             total_volume_native=0.0,
             total_trades=0,
-            creation_fee_burned=MEME_CREATION_FEE_NATIVE,
+            creation_fee_burned=creation_burn_native,
         )
         db.add(meme)
         db.flush()
@@ -589,9 +601,11 @@ def launch_meme_coin(
 
         # Return the symbol string (not the ORM object) — accessing meme attributes
         # after db.close() in the finally block would raise DetachedInstanceError.
+        initial_backing = creation_burn_native / max(founder_alloc, 1.0)
         return symbol, (
             f"'{name}' ({symbol}) launched! You received {founder_alloc:,.2f} founder tokens. "
-            f"{MEME_CREATION_FEE_NATIVE:.2f} {native_symbol} burned as creation fee."
+            f"{creation_burn_native:.2f} {native_symbol} burned → opening backing price "
+            f"{initial_backing:.6f} {native_symbol}/{symbol}."
         )
 
     except Exception as e:

@@ -1075,6 +1075,70 @@ def convert_to_legal_tender(player_id: int, usd_amount: float) -> Tuple[float, s
     return process_income_conversion(player_id, usd_amount)
 
 
+def spend_player_funds(main_db, player, usd_cost: float) -> Tuple[bool, str]:
+    """
+    Deduct a USD-denominated cost from the player using their preferred legal tender.
+
+    For USD players: deducts directly from player.cash_balance (caller must commit main_db).
+    For foreign-tender players: deducts from PlayerCurrencyBalance in the reserve DB
+      (auto-committed here); player.cash_balance is NOT changed.
+    Falls back to player.cash_balance when the foreign balance is insufficient.
+
+    Returns (True, "") on success or (False, error_message) on failure.
+    """
+    if usd_cost <= 0:
+        return True, ""
+
+    tender = get_player_legal_tender(player.id)
+
+    if tender == "USD":
+        if player.cash_balance < usd_cost:
+            return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${player.cash_balance:,.2f}."
+        player.cash_balance -= usd_cost
+        return True, ""
+
+    # Foreign legal tender — try to pay from PlayerCurrencyBalance
+    db = get_db()
+    try:
+        bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == tender
+        ).first()
+        if not bank:
+            # No bank for this currency; fall back to USD
+            if player.cash_balance < usd_cost:
+                return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${player.cash_balance:,.2f}."
+            player.cash_balance -= usd_cost
+            return True, ""
+
+        foreign_cost = usd_cost / bank.usd_per_unit
+        bal = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id == player.id,
+            PlayerCurrencyBalance.currency_code == tender,
+        ).first()
+        foreign_balance = bal.balance if bal else 0.0
+
+        if foreign_balance >= foreign_cost:
+            _adjust_currency_balance(db, player.id, tender, -foreign_cost)
+            db.commit()
+            return True, ""
+
+        # Not enough foreign currency — try USD fallback
+        if player.cash_balance >= usd_cost:
+            player.cash_balance -= usd_cost
+            return True, ""
+
+        symbol = bank.currency_symbol or tender
+        return False, (
+            f"Insufficient funds. Need {symbol}{foreign_cost:,.2f} {tender} "
+            f"(≈ ${usd_cost:,.2f}), have {symbol}{foreign_balance:,.2f} {tender}."
+        )
+    except Exception as e:
+        db.rollback()
+        return False, f"Payment processing error: {e}"
+    finally:
+        db.close()
+
+
 # ==========================
 # READ HELPERS (used by UX)
 # ==========================
@@ -1296,6 +1360,7 @@ __all__ = [
     "process_income_conversion", "process_cross_currency_payment",
     "get_exchange_rate",
     "get_player_legal_tender", "set_player_legal_tender", "convert_to_legal_tender",
+    "spend_player_funds",
     "get_all_banks", "get_player_bonds", "get_player_currency_balances",
     "get_recent_forex_trades", "get_yield_history",
     "get_bank_reserves", "get_all_bank_reserves", "get_interbank_trades",
