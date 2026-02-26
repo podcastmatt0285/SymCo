@@ -361,6 +361,7 @@ def forex_dashboard(
     my_tender   = get_player_legal_tender(player.id)
     bank_rsvs   = get_all_bank_reserves()
     ib_trades   = get_interbank_trades(limit=40)
+    fx_trades   = get_recent_forex_trades(limit=50)
 
     flash = ""
     if msg:
@@ -454,6 +455,39 @@ def forex_dashboard(
     else:
         ib_html = '<div class="card"><p style="color:#64748b;">No inter-bank settlements yet. Settlements occur automatically when bank reserves fall below minimum thresholds.</p></div>'
 
+    # ── Recent player forex transactions ──
+    if fx_trades:
+        fx_t_rows = ""
+        for t in fx_trades:
+            pid_label = f"Player&nbsp;{t['player_id']}" if t["player_id"] else "<em>system</em>"
+            fx_t_rows += f"""
+            <div class="fx-row">
+                <span style="color:#a78bfa;">{pid_label}</span>
+                <span style="color:#38bdf8;">{t['from_currency']}</span>
+                <span style="color:#64748b;">→</span>
+                <span style="color:#22c55e;">{t['to_currency']}</span>
+                <span style="color:#94a3b8;">{t['amount_from']:,.4f} → {t['amount_to']:,.4f}</span>
+                <span style="color:#475569;font-size:0.75rem;">
+                    rate&nbsp;{t['rate']:.6f} &bull; fee&nbsp;${t['fee_usd']:.4f}
+                </span>
+                <span style="color:#334155;font-size:0.72rem;">{t['executed_at']}</span>
+            </div>"""
+        fx_trades_html = f"""
+        <div class="card">
+            <h3>📋 Recent Forex Conversions (last {len(fx_trades)})</h3>
+            <p class="mini" style="margin:0 0 8px 0;">
+                Every automatic income conversion and cross-currency payment is logged here.
+                Fee = {FOREX_FEE_RATE*100:.1f}% per conversion, taken by the issuing reserve bank.
+            </p>
+            <div class="fx-row fx-row-header" style="color:#475569;">
+                <span>PLAYER</span><span>FROM</span><span></span><span>TO</span>
+                <span>AMOUNTS</span><span>RATE / FEE</span><span>TIME</span>
+            </div>
+            {fx_t_rows}
+        </div>"""
+    else:
+        fx_trades_html = ""
+
     body = f"""
     <a href="/" class="nav">← Dashboard</a>
     <h1>💱 Forex Market — Informational</h1>
@@ -487,6 +521,7 @@ def forex_dashboard(
 
     {reserves_html}
     {ib_html}
+    {fx_trades_html}
     """
     return _page("Forex Market", body)
 

@@ -157,10 +157,13 @@ def add_trusted_player(owner_id: int, target_id: int) -> Tuple[bool, str]:
             target = auth_db.query(Player).filter(Player.id == target_id).first()
             if not target or target_id == 0:
                 return False, "Player not found."
-            if not owner or owner.cash_balance < fee:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not owner or not can_afford_usd(owner_id, owner.cash_balance, fee):
                 return False, f"Insufficient funds. Slot {slot} costs ${fee:,.0f}."
+            ok, err = spend_player_funds(auth_db, owner, fee)
+            if not ok:
+                return False, f"Payment failed: {err}"
             gov = auth_db.query(Player).filter(Player.id == 0).first()
-            owner.cash_balance -= fee
             if gov:
                 gov.cash_balance += fee
             auth_db.commit()
@@ -213,13 +216,16 @@ def remove_trusted_player(owner_id: int, entry_id: int) -> Tuple[bool, str]:
         auth_db = get_auth_db()
         try:
             owner = auth_db.query(Player).filter(Player.id == owner_id).first()
-            if not owner or owner.cash_balance < removal_fee:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not owner or not can_afford_usd(owner_id, owner.cash_balance, removal_fee):
                 return False, (
                     f"Insufficient funds. Removing this slot costs "
                     f"${removal_fee:,.0f} (2× the ${entry.cost_paid:,.0f} add fee)."
                 )
+            ok, err = spend_player_funds(auth_db, owner, removal_fee)
+            if not ok:
+                return False, f"Payment failed: {err}"
             gov = auth_db.query(Player).filter(Player.id == 0).first()
-            owner.cash_balance -= removal_fee
             if gov:
                 gov.cash_balance += removal_fee
             auth_db.commit()

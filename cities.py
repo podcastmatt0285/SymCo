@@ -54,6 +54,12 @@ GOV_LOAN_INSTALLMENT_INTERVAL_TICKS = 8640  # 12 hours
 MAX_CITY_BANK_LOANS = 5
 DEBT_ASSUMPTION_FRACTION = 1 / 25  # Members can assume 1/25th of debt
 
+# Government bond auto-investing
+GOV_BOND_INVEST_INTERVAL_TICKS = 8640  # every 12 hours
+GOV_BOND_INVEST_THRESHOLD      = 100_000.0   # only invest if cash > this
+GOV_BOND_INVEST_PCT            = 0.25        # invest 25 % of excess cash
+GOV_BOND_MATURITY_DAYS         = 90          # 90-day bonds for liquidity
+
 # Poll durations in ticks (5 sec each)
 APPLICATION_POLL_DURATION_TICKS = 17280  # 24 hours
 BANISHMENT_POLL_DURATION_TICKS = 17280  # 24 hours
@@ -335,6 +341,24 @@ def get_city_members(city_id: int) -> List[CityMember]:
     members = db.query(CityMember).filter(CityMember.city_id == city_id).all()
     db.close()
     return members
+
+
+def get_city_legal_tender(city_id: int) -> str:
+    """
+    Return the reserve-bank currency code that the city operates in.
+    A city adopts its mayor's legal tender so all city transactions
+    (fees, taxes, grants) are denominated in the mayor's chosen currency.
+    Falls back to "USD" if the city or mayor cannot be found.
+    """
+    db = get_db()
+    try:
+        city = db.query(City).filter(City.id == city_id).first()
+        if not city:
+            return "USD"
+        from reserve_banks import get_player_legal_tender
+        return get_player_legal_tender(city.mayor_id)
+    finally:
+        db.close()
 
 
 def is_city_member(player_id: int, city_id: int) -> bool:
@@ -809,15 +833,21 @@ def process_banishment(city_id: int, player_id: int) -> Tuple[bool, str]:
         bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
 
         if reimbursement > 0:
-            if mayor.cash_balance >= reimbursement:
-                # Mayor pays
-                mayor.cash_balance -= reimbursement
-                player.cash_balance += reimbursement
-                print(f"[Cities] Mayor paid ${reimbursement:,.2f} reimbursement for banished Player {player_id}")
+            from reserve_banks import can_afford_usd, spend_player_funds, convert_to_legal_tender as _clt
+            if can_afford_usd(city.mayor_id, mayor.cash_balance, reimbursement):
+                # Mayor pays in their own tender; player receives in theirs
+                ok, _err = spend_player_funds(db, mayor, reimbursement)
+                if ok:
+                    _amt, _code = _clt(player_id, reimbursement)
+                    if _code == "USD":
+                        player.cash_balance += _amt
+                    print(f"[Cities] Mayor paid {reimbursement:,.2f} reimbursement for banished Player {player_id}")
             elif bank and bank.cash_reserves >= reimbursement:
                 # City bank covers it
                 bank.cash_reserves -= reimbursement
-                player.cash_balance += reimbursement
+                _amt, _code = _clt(player_id, reimbursement)
+                if _code == "USD":
+                    player.cash_balance += _amt
                 print(f"[Cities] City bank paid ${reimbursement:,.2f} reimbursement for banished Player {player_id}")
             else:
                 # Insufficient funds in both — proceed without reimbursement
@@ -1033,10 +1063,13 @@ def initiate_currency_change(mayor_id: int, city_id: int, new_currency: str, pol
         if not mayor:
             return None, "Mayor not found"
         
-        if mayor.cash_balance < poll_tax_amount:
+        from reserve_banks import can_afford_usd, spend_player_funds as _spf
+        if not can_afford_usd(mayor_id, mayor.cash_balance, poll_tax_amount):
             return None, f"Insufficient funds for poll tax (${poll_tax_amount:,.2f})"
-        
-        mayor.cash_balance -= poll_tax_amount
+
+        ok, err = _spf(db, mayor, poll_tax_amount)
+        if not ok:
+            return None, f"Poll tax payment failed: {err}"
         bank.cash_reserves += poll_tax_amount
         
         # Create poll
@@ -1365,13 +1398,14 @@ def enforce_reserve_requirement(player_id: int) -> Tuple[bool, str]:
         # Calculate fee (125% of shortfall)
         fee = shortfall * RESERVE_SHORTFALL_FEE_MULTIPLIER
         
-        if player.cash_balance < fee:
-            # Player can't afford - log warning but don't fail
+        from reserve_banks import can_afford_usd, spend_player_funds as _spf
+        if not can_afford_usd(player_id, player.cash_balance, fee):
             print(f"[Cities] WARNING: Player {player_id} cannot afford reserve fee ${fee:,.2f}")
             return False, "Insufficient funds for reserve fee"
-        
-        # Deduct fee
-        player.cash_balance -= fee
+
+        ok, err = _spf(db, player, fee)
+        if not ok:
+            return False, f"Reserve fee payment failed: {err}"
         
         # Calculate how much currency to buy
         currency_price = market.get_market_price(city.currency_type) or 1.0
@@ -1627,11 +1661,13 @@ def assume_bank_debt(player_id: int, loan_id: int) -> Tuple[bool, str]:
         if not player:
             return False, "Player not found"
         
-        if player.cash_balance < debt_amount:
+        from reserve_banks import can_afford_usd, spend_player_funds as _spf
+        if not can_afford_usd(player_id, player.cash_balance, debt_amount):
             return False, f"Insufficient funds (need ${debt_amount:,.2f})"
-        
-        # Assume the debt
-        player.cash_balance -= debt_amount
+
+        ok, err = _spf(db, player, debt_amount)
+        if not ok:
+            return False, f"Debt assumption payment failed: {err}"
         loan.amount_paid += debt_amount
         
         # Record assumption
@@ -1847,7 +1883,8 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
         if not outsider:
             return False, "Outsider not found"
         
-        if outsider.cash_balance < trade_value:
+        from reserve_banks import can_afford_usd, spend_player_funds as _spf
+        if not can_afford_usd(outsider_id, outsider.cash_balance, trade_value):
             return False, "Outsider has insufficient funds"
         
         # Validate seller exists
@@ -1885,8 +1922,10 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
                       f"needed={currency_needed:.2f}). Bank buy order queued.")
                 return False, f"Trade pending: bank acquiring {city.currency_type} — retry when filled"
         
-        # ---- STEP 3: Outsider pays cash to bank ----
-        outsider.cash_balance -= trade_value
+        # ---- STEP 3: Outsider pays in their legal tender; bank receives USD equivalent ----
+        ok, _err = _spf(db, outsider, trade_value)
+        if not ok:
+            return False, f"Payment failed: {_err}"
         bank.cash_reserves += trade_value
         db.commit()  # Commit the cash transfer first
         
@@ -2282,16 +2321,103 @@ def initialize():
     print("[Cities] Module initialized")
 
 
+def tick_government_bond_investing(current_tick: int):
+    """
+    Automatically invest surplus government cash into reserve bank bonds every
+    GOV_BOND_INVEST_INTERVAL_TICKS ticks.  Also sweeps matured bond interest
+    from PlayerCurrencyBalance("USD") for player 0 back into cash_balance.
+    """
+    if current_tick % GOV_BOND_INVEST_INTERVAL_TICKS != 0:
+        return
+
+    from auth import Player, get_db as get_auth_db
+    from reserve_banks import (
+        get_db as get_rb_db,
+        StateReserveBank, ReserveBankBond, PlayerCurrencyBalance,
+    )
+    from datetime import timedelta
+
+    auth_db = get_auth_db()
+    rb_db   = get_rb_db()
+    try:
+        government = auth_db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+        if not government:
+            return
+
+        # ── Step 1: Sweep matured bond payouts from reserve USD balance → cash ──
+        usd_bal = rb_db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == GOVERNMENT_PLAYER_ID,
+            PlayerCurrencyBalance.currency_code == "USD",
+        ).first()
+        if usd_bal and usd_bal.balance > 0:
+            swept = usd_bal.balance
+            government.cash_balance += swept
+            usd_bal.balance = 0.0
+            auth_db.commit()
+            rb_db.commit()
+            print(f"[Cities] Gov bond harvest: ${swept:,.2f} swept back to cash_balance")
+
+        # ── Step 2: Invest surplus cash into best-yield USD bond ──
+        excess = government.cash_balance - GOV_BOND_INVEST_THRESHOLD
+        if excess <= 0:
+            return
+        invest_amount = excess * GOV_BOND_INVEST_PCT
+        if invest_amount < 1.0:
+            return
+
+        best_bank = (
+            rb_db.query(StateReserveBank)
+            .filter(StateReserveBank.currency_code == "USD")
+            .order_by(StateReserveBank.yield_rate.desc())
+            .first()
+        )
+        if not best_bank:
+            return
+
+        # Deduct from government cash (USD bonds are priced 1:1 with USD)
+        government.cash_balance -= invest_amount
+        auth_db.commit()
+
+        now_dt = datetime.utcnow()
+        bond = ReserveBankBond(
+            bank_id          = best_bank.id,
+            holder_player_id = GOVERNMENT_PLAYER_ID,
+            face_value_wsc   = invest_amount,
+            purchase_yield   = best_bank.yield_rate,
+            maturity_days    = GOV_BOND_MATURITY_DAYS,
+            matures_at       = now_dt + timedelta(days=GOV_BOND_MATURITY_DAYS),
+        )
+        rb_db.add(bond)
+        best_bank.total_bonds_issued   += 1
+        best_bank.total_face_value_wsc += invest_amount
+        best_bank.net_demand_wsc       += invest_amount
+        best_bank.wsc_holdings         += invest_amount
+        rb_db.commit()
+
+        print(
+            f"[Cities] Gov bond invest: ${invest_amount:,.2f} → USD "
+            f"{GOV_BOND_MATURITY_DAYS}d bond @ {best_bank.yield_rate * 100:.3f}% p.a."
+        )
+    except Exception as e:
+        auth_db.rollback()
+        rb_db.rollback()
+        print(f"[Cities] Gov bond invest error: {e}")
+    finally:
+        auth_db.close()
+        rb_db.close()
+
+
 async def tick(current_tick: int, now: datetime):
     """
     Cities module tick handler.
-    
+
     Handles:
     - Poll closing
     - Government grants (every 12 hours)
     - Loan repayments
     - Reserve requirement checks
     - Bank currency listing
+    - Government bond auto-investing
     """
     db = get_db()
     
@@ -2334,12 +2460,15 @@ async def tick(current_tick: int, now: datetime):
             for bank in banks:
                 bank_list_currency_at_discount(bank.city_id)
         
+        # Government bond auto-investing every 12 hours
+        tick_government_bond_investing(current_tick)
+
         # Log stats every 6 hours
         if current_tick % 4320 == 0:
             cities = get_all_cities()
             if cities:
                 print(f"[Cities] Stats: {len(cities)} cities active")
-        
+
     except Exception as e:
         print(f"[Cities] Tick error: {e}")
         import traceback

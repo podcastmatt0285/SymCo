@@ -541,9 +541,12 @@ def collect_district_taxes(current_month: int):
 
     total_tax_collected = 0.0
 
+    from reserve_banks import can_afford_usd, spend_player_funds
     for district, owner in district_owner_pairs:
-        if owner.cash_balance >= district.monthly_tax:
-            owner.cash_balance -= district.monthly_tax
+        if can_afford_usd(owner.id, owner.cash_balance, district.monthly_tax):
+            ok, _err = spend_player_funds(db, owner, district.monthly_tax)
+            if not ok:
+                continue
             if government:
                 government.cash_balance += district.monthly_tax
             total_tax_collected += district.monthly_tax
