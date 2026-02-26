@@ -294,19 +294,22 @@ def get_db():
 
 def initialize():
     """Seed default reserve banks if they don't exist yet."""
-    # Schema migration via a raw engine connection so the DDL gets its own
-    # independent transaction and cannot be silently rolled back by the ORM
-    # session that follows.  This MUST complete before any ORM query, because
-    # SQLAlchemy includes wsc_holdings in every SELECT against StateReserveBank.
+    # Schema migration: add wsc_holdings if it is absent from the live table.
+    # Use AUTOCOMMIT isolation so the DDL is applied immediately without any
+    # surrounding transaction that could be rolled back by SQLAlchemy.
     try:
-        with engine.connect() as _conn:
+        with engine.connect().execution_options(
+            isolation_level="AUTOCOMMIT"
+        ) as _conn:
             _conn.execute(text(
                 "ALTER TABLE state_reserve_banks"
                 " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
             ))
-            _conn.commit()
-    except Exception:
-        pass  # column already exists — safe to ignore
+        print("[ReserveBanks] Schema migration: wsc_holdings column ensured.")
+    except Exception as _e:
+        # Log so we know whether IF NOT EXISTS is protecting us or something
+        # unexpected is happening (column already exists → fine to continue).
+        print(f"[ReserveBanks] Schema migration note: {_e}")
 
     db = get_db()
     try:
