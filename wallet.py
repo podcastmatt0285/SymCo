@@ -209,14 +209,20 @@ def _burn_and_mint_wsc(db, fee_value: float) -> float:
 
 def _native_usd_price(county_db, county_id: int) -> float:
     """
-    Dollar price of 1 native token = county treasury_balance / total_crypto_minted.
-    Falls back to 1.0 (1 native = $1) when data is missing.
+    Dollar price of 1 native token, using the same formula as the rest of the game:
+    total cash value of all city members in the county / CRYPTO_PEG_DIVISOR.
+
+    This is intentionally consistent with calculate_crypto_price() in counties.py.
+    The old formula (treasury_balance / total_crypto_minted) returned values orders of
+    magnitude below the real market price, causing the AMM oracle sync to pin the pool
+    at the wrong rate and making every DC202→WSC swap return ~0.007 WSC instead of ~892 WSC.
     """
-    from counties import County
-    c = county_db.query(County).filter(County.id == county_id).first()
-    if c and c.total_crypto_minted and c.total_crypto_minted > 0 and c.treasury_balance and c.treasury_balance > 0:
-        return c.treasury_balance / c.total_crypto_minted
-    return 1.0
+    from counties import calculate_crypto_price
+    try:
+        price = calculate_crypto_price(county_id)
+        return price if price and price > 0 else 1.0
+    except Exception:
+        return 1.0
 
 
 # ==========================
