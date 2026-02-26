@@ -1192,10 +1192,12 @@ def _process_direct_listing_ipo(db, founder_id, company_name, ticker_symbol, con
     auth_db = get_auth_db()
     try:
         founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-        if not founder or founder.cash_balance < listing_fee:
-            return None, f"You need ${listing_fee:,.0f} cash for the listing fee but don't have enough."
-        
-        founder.cash_balance -= listing_fee
+        from reserve_banks import can_afford_usd, spend_player_funds
+        if not founder or not can_afford_usd(founder_id, founder.cash_balance, listing_fee):
+            return None, f"You need ${listing_fee:,.0f} for the listing fee but have insufficient funds."
+        ok, err = spend_player_funds(auth_db, founder, listing_fee)
+        if not ok:
+            return None, f"Listing fee payment failed: {err}"
         auth_db.commit()
     finally:
         auth_db.close()
@@ -1550,12 +1552,13 @@ def delist_company(founder_id: int, company_id: int):
         auth_db = get_auth_db()
         try:
             founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-            if not founder or founder.cash_balance < total_cost:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not founder or not can_afford_usd(founder_id, founder.cash_balance, total_cost):
                 needed = total_cost - (founder.cash_balance if founder else 0)
-                return False, f"You need ${total_cost:,.0f} to go private but you're ${needed:,.0f} short. This includes buying back {cost_info['public_shares']:,} public shares at ${buyback_price:,.2f} each (10% premium) plus a ${cost_info['delisting_fee']:,.0f} delisting fee."
-
-            # Deduct the total cost from founder
-            founder.cash_balance -= total_cost
+                return False, f"You need ${total_cost:,.0f} to go private but you're ${needed:,.0f} short."
+            ok, err = spend_player_funds(auth_db, founder, total_cost)
+            if not ok:
+                return False, f"Go-private payment failed: {err}"
             auth_db.commit()
         finally:
             auth_db.close()
@@ -2555,14 +2558,19 @@ def _process_cash_dividend(company, config, db):
     try:
         founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
         
-        if not founder or founder.cash_balance < total_dividend:
+        from reserve_banks import can_afford_usd, spend_player_funds
+        if not founder or not can_afford_usd(company.founder_id, founder.cash_balance, total_dividend):
             company.consecutive_dividend_payouts = 0
             company.dividend_warning_active = True
             company.last_dividend_warning = datetime.utcnow()
             modify_credit_score(company.founder_id, "dividend_missed")
             return
-        
-        founder.cash_balance -= total_dividend
+        ok, _ = spend_player_funds(auth_db, founder, total_dividend)
+        if not ok:
+            company.consecutive_dividend_payouts = 0
+            company.dividend_warning_active = True
+            modify_credit_score(company.founder_id, "dividend_missed")
+            return
         auth_db.commit()
     finally:
         auth_db.close()

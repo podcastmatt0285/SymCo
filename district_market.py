@@ -336,6 +336,18 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
     print(f"[DistrictMarket] Trade: {quantity} {buy_order.item_type} @ ${price:.2f} "
           f"(Player {sell_order.player_id} -> Player {buy_order.player_id})")
     
+    # Pre-flight: verify seller has the items before taking payment
+    import inventory
+    current_qty = inventory.get_item_quantity(sell_order.player_id, buy_order.item_type)
+    if current_qty < quantity:
+        print(
+            f"[DistrictMarket] Stale sell order {sell_order.id}: seller {sell_order.player_id} has "
+            f"{current_qty:.4f} {buy_order.item_type}, need {quantity:.4f} — cancelling order"
+        )
+        sell_order.status = "cancelled"
+        db.commit()
+        return
+
     # Transfer cash
     try:
         from auth import transfer_cash
@@ -348,18 +360,27 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
         print("[DistrictMarket] ERROR: Auth module not available")
         db.rollback()
         return
-    
+
     # Transfer inventory
     try:
-        import inventory
-        success = inventory.transfer_item(
+        inv_success = inventory.transfer_item(
             sell_order.player_id,
             buy_order.player_id,
             buy_order.item_type,
             quantity
         )
-        if not success:
-            print(f"[DistrictMarket] Inventory transfer failed!")
+        if not inv_success:
+            actual_qty = inventory.get_item_quantity(sell_order.player_id, buy_order.item_type)
+            print(
+                f"[DistrictMarket] Inventory transfer failed! Seller {sell_order.player_id} has "
+                f"{actual_qty:.4f} {buy_order.item_type}, needed {quantity:.4f} — reversing payment"
+            )
+            # Reverse the payment (refund buyer, debit seller back)
+            try:
+                transfer_cash(sell_order.player_id, buy_order.player_id, total_cost)
+            except Exception as _rev_e:
+                print(f"[DistrictMarket] Payment reversal error (manual reconciliation needed): {_rev_e}")
+            sell_order.status = "cancelled"
             db.rollback()
             return
     except Exception as e:
