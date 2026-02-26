@@ -616,8 +616,12 @@ async def register(
             except Exception as e:
                 print(f"[Auth] Failed to apply credit penalty: {e}")
 
-            # Cash fine on the original account.
-            prior.cash_balance = max(0.0, prior.cash_balance - MULTI_ACCOUNT_FINE)
+            # Cash fine on the original account (respects foreign legal tender).
+            try:
+                from reserve_banks import spend_player_funds
+                spend_player_funds(db, prior, min(MULTI_ACCOUNT_FINE, prior.cash_balance or MULTI_ACCOUNT_FINE))
+            except Exception:
+                prior.cash_balance = max(0.0, (prior.cash_balance or 0.0) - MULTI_ACCOUNT_FINE)
             db.commit()
 
             db.close()

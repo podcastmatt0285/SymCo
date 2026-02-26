@@ -6464,12 +6464,15 @@ async def brokerage_disable_share_lending(
         auth_db = get_auth_db()
         try:
             player_record = auth_db.query(Player).filter(Player.id == player.id).first()
-            if not player_record or player_record.cash_balance < opt_out_fee:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not player_record or not can_afford_usd(player.id, player_record.cash_balance, opt_out_fee):
                 return RedirectResponse(
                     url=f"/brokerage/portfolio?error=insufficient_funds_for_opt_out_fee_{opt_out_fee:.0f}",
                     status_code=303
                 )
-            player_record.cash_balance -= opt_out_fee
+            ok, _err = spend_player_funds(auth_db, player_record, opt_out_fee)
+            if not ok:
+                return RedirectResponse(url="/brokerage/portfolio?error=payment_failed", status_code=303)
             # Fee goes to government
             government = auth_db.query(Player).filter(Player.id == 0).first()
             if government:
@@ -6516,14 +6519,16 @@ async def brokerage_deposit_margin(
         from banks.brokerage_firm import MarginCall, ShareholderPosition, get_db as get_firm_db
         from auth import Player, get_db as get_auth_db
         
-        # Check player has funds
+        # Check player has funds (supports foreign legal tender)
         auth_db = get_auth_db()
         try:
             player_record = auth_db.query(Player).filter(Player.id == player.id).first()
-            if not player_record or player_record.cash_balance < amount:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not player_record or not can_afford_usd(player.id, player_record.cash_balance, amount):
                 return RedirectResponse(url="/banks/brokerage-firm?error=insufficient_funds", status_code=303)
-            
-            player_record.cash_balance -= amount
+            ok, _err = spend_player_funds(auth_db, player_record, amount)
+            if not ok:
+                return RedirectResponse(url="/banks/brokerage-firm?error=payment_failed", status_code=303)
             auth_db.commit()
         finally:
             auth_db.close()

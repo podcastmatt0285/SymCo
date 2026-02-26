@@ -710,31 +710,42 @@ def buy_auction_land(buyer_id: int, auction_id: int) -> bool:
         if not auction:
             return False
         
-        # Check if buyer has funds
+        # Check if buyer has funds (supports foreign legal tender)
         auth_db = get_auth_db()
         try:
             buyer = auth_db.query(Player).filter(Player.id == buyer_id).first()
-            
-            if not buyer or buyer.cash_balance < auction.current_price:
+            from reserve_banks import can_afford_usd, spend_player_funds
+            if not buyer or not can_afford_usd(buyer_id, buyer.cash_balance, auction.current_price):
                 return False
-            
-            # Deduct cash (government doesn't receive it - economic sink)
-            buyer.cash_balance -= auction.current_price
+
+            # Deduct (economic sink — government does not receive it)
+            ok, err = spend_player_funds(auth_db, buyer, auction.current_price)
+            if not ok:
+                print(f"[LandMarket] Auction payment failed for player {buyer_id}: {err}")
+                return False
             auth_db.commit()
         finally:
             auth_db.close()
-        
+
         # Transfer land to buyer
         if not transfer_land(auction.land_plot_id, buyer_id):
-            # Refund if transfer fails
-            auth_db = get_auth_db()
+            # Refund if transfer fails (convert back to buyer's legal tender)
             try:
-                buyer = auth_db.query(Player).filter(Player.id == buyer_id).first()
-                if buyer:
-                    buyer.cash_balance += auction.current_price
-                    auth_db.commit()
-            finally:
-                auth_db.close()
+                from reserve_banks import convert_to_legal_tender, get_player_legal_tender
+                auth_db2 = get_auth_db()
+                try:
+                    buyer2 = auth_db2.query(Player).filter(Player.id == buyer_id).first()
+                    if buyer2:
+                        tender = get_player_legal_tender(buyer_id)
+                        if tender == "USD":
+                            buyer2.cash_balance += auction.current_price
+                        else:
+                            convert_to_legal_tender(buyer_id, auction.current_price)
+                        auth_db2.commit()
+                finally:
+                    auth_db2.close()
+            except Exception as _ref_e:
+                print(f"[LandMarket] Refund error after failed land transfer: {_ref_e}")
             return False
         
         # Record sale

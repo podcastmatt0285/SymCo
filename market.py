@@ -317,6 +317,21 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         is_bank_buyer = True
         bank_buyer_city_id = -buy_order.player_id - 1000
 
+    # 4b. Pre-flight: verify seller has the items before taking payment.
+    # This catches stale sell orders (items consumed/transferred after the order was placed).
+    # Prevents deducting buyer's foreign-currency payment when the transfer would fail.
+    if sell_order.player_id > 0:  # skip for bank virtual sellers (id <= -1)
+        import inventory as _inv
+        current_qty = _inv.get_item_quantity(sell_order.player_id, buy_order.item_type)
+        if current_qty < quantity:
+            print(
+                f"[Market] Stale sell order {sell_order.id}: seller {sell_order.player_id} has "
+                f"{current_qty:.4f} {buy_order.item_type}, need {quantity:.4f} — cancelling order"
+            )
+            sell_order.status = "cancelled"
+            db.commit()
+            return
+
     # 5. Handle cash transfer
     if is_bank_ipo:
         # Special bank IPO handling: buyer pays, money goes to BANK RESERVES (not player account)
@@ -462,7 +477,36 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             quantity
         )
         if not success:
-            print(f"[Market] Inventory transfer failed!")
+            actual_qty = inventory.get_item_quantity(sell_order.player_id, buy_order.item_type)
+            print(
+                f"[Market] Inventory transfer failed! Seller {sell_order.player_id} has "
+                f"{actual_qty:.4f} {buy_order.item_type}, needed {quantity:.4f}"
+            )
+            # Refund foreign-currency buyers whose payment was already committed
+            if not is_bank_ipo and not is_bank_buyer:
+                try:
+                    from reserve_banks import (
+                        get_player_legal_tender, get_db as _rb_get_db,
+                        StateReserveBank, _adjust_currency_balance,
+                    )
+                    _tender = get_player_legal_tender(buy_order.player_id)
+                    if _tender != "USD":
+                        _rb = _rb_get_db()
+                        try:
+                            _bank = _rb.query(StateReserveBank).filter(
+                                StateReserveBank.currency_code == _tender
+                            ).first()
+                            if _bank:
+                                _adjust_currency_balance(_rb, buy_order.player_id, _tender,
+                                                         total_cost / _bank.usd_per_unit)
+                                _rb.commit()
+                                print(f"[Market] Refunded {total_cost / _bank.usd_per_unit:.4f} "
+                                      f"{_tender} to player {buy_order.player_id}")
+                        finally:
+                            _rb.close()
+                except Exception as _ref_e:
+                    print(f"[Market] Refund error (manual reconciliation needed): {_ref_e}")
+            sell_order.status = "cancelled"
             db.rollback()
             return
     except Exception as e:
