@@ -1876,7 +1876,7 @@ async def wallet_dashboard(
                     <span style="color:#64748b;">Swaps: {pool['total_swaps']}</span>
                 </div>"""
             else:
-                reserves_html = f'<div style="font-size:12px;color:#94a3b8;margin-bottom:12px;background:#0a0f1a;padding:8px 12px;border-radius:6px;">Pool auto-seeds on first swap: 10,000 WSC &times; 10,000 {sym} (1:1 initial rate).</div>'
+                reserves_html = f'<div style="font-size:12px;color:#94a3b8;margin-bottom:12px;background:#0a0f1a;padding:8px 12px;border-radius:6px;">Pool auto-seeds on first swap at the {sym} market price (1 {sym} &asymp; its USD value in WSC).</div>'
             amm_sections.append(f"""
             <div style="background:#0f0a1e;border:1px solid #4c1d9555;border-radius:8px;padding:14px;margin-bottom:8px;">
                 <div style="font-weight:bold;color:#c084fc;margin-bottom:8px;">{sym} / WSC Pool</div>

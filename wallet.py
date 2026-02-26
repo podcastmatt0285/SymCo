@@ -49,9 +49,9 @@ POOL_AIRDROP      = 0.30   # 30 % → airdrop pool
 YIELD_PAYOUT_INTERVAL_TICKS = 720  # every ~1 hour (tick = 5 s)
 YIELD_APY_PER_CYCLE = 0.001        # 0.1 % of pool distributed per payout
 
-FAUCET_COOLDOWN_HOURS = 4
-FAUCET_AMOUNT_MIN     = 0.10
-FAUCET_AMOUNT_MAX     = 1.00
+FAUCET_COOLDOWN_HOURS = 1      # was 4 — shorter cooldown keeps all players engaged
+FAUCET_AMOUNT_MIN     = 0.50   # was 0.10 — meaningful floor so claims feel worthwhile
+FAUCET_AMOUNT_MAX     = 5.00   # was 1.00 — higher ceiling to encourage trading
 
 AIRDROP_INTERVAL_TICKS   = 2880   # every ~4 hours
 AIRDROP_POOL_PCT_PER_RUN = 0.10   # 10 % of airdrop pool per run
@@ -64,9 +64,10 @@ WSC_AMM_SEED_NATIVE     = 10_000.0   # native tokens seeded alongside (price = 1
 # The seed is minted by the system (not taken from any player).
 # k = WSC_AMM_SEED_WSC * WSC_AMM_SEED_NATIVE = 1e8 (initial invariant)
 
-INITIAL_TREASURY_SEED   = 1_000.0   # WSC pre-loaded into treasury pools on first creation
-# Without this, pools are empty until meme-coin swaps generate fees,
-# leaving yield farming, faucet, and airdrops non-functional from day one.
+INITIAL_TREASURY_SEED   = 5_000.0   # WSC pre-loaded into treasury pools on first creation
+# Splits as: 2 000 yield / 1 500 faucet / 1 500 airdrop.
+# Without this, pools are empty until swap fees accumulate, leaving all
+# reward programmes non-functional from day one.
 
 
 # ==========================
@@ -222,19 +223,26 @@ def _native_usd_price(county_db, county_id: int) -> float:
 # NATIVE-TOKEN ↔ WSC AMM POOL
 # ==========================
 
-def _get_or_create_wsc_pool(db, native_symbol: str) -> WSCPool:
-    """Return the AMM pool for `native_symbol`, seeding it with system liquidity on first use."""
+def _get_or_create_wsc_pool(db, native_symbol: str, native_usd_price: float = 1.0) -> WSCPool:
+    """Return the AMM pool for `native_symbol`, seeding it with system liquidity on first use.
+
+    `native_usd_price` (USD value of one native token) is only used when creating the pool
+    for the first time.  The WSC reserve is seeded as SEED_NATIVE × native_usd_price so that
+    the opening rate is 1 native ≈ native_usd_price WSC (matching the real-world peg where
+    1 WSC = $1).  A 1:1 seed when a token is worth $5 would make every swap a 5× loss.
+    """
     pool = db.query(WSCPool).filter(WSCPool.native_symbol == native_symbol).first()
     if not pool:
+        seed_wsc = WSC_AMM_SEED_NATIVE * max(native_usd_price, 0.001)
         pool = WSCPool(
             native_symbol  = native_symbol,
             native_reserve = WSC_AMM_SEED_NATIVE,
-            wsc_reserve    = WSC_AMM_SEED_WSC,
+            wsc_reserve    = seed_wsc,
         )
         db.add(pool)
         # Record seed as minted WSC so the treasury ledger stays consistent.
         t = _get_or_create_treasury(db)
-        t.total_minted += WSC_AMM_SEED_WSC
+        t.total_minted += seed_wsc
         t.last_updated  = datetime.utcnow()
         db.flush()
     return pool
@@ -295,7 +303,7 @@ def swap_native_for_wsc(player_id: int, native_symbol: str, native_amount: float
     progressively worse rates — there is no profitable way to inflate the
     exchange rate without depositing genuine value into the pool.
     """
-    from counties import CryptoWallet, get_db as county_get_db
+    from counties import County, CryptoWallet, get_db as county_get_db
 
     if native_amount <= 0:
         return False, "Amount must be positive.", {}
@@ -313,7 +321,11 @@ def swap_native_for_wsc(player_id: int, native_symbol: str, native_amount: float
                 f"Insufficient {native_symbol}: have {native_bal:.6f}, need {native_amount:.6f}."
             ), {}
 
-        pool = _get_or_create_wsc_pool(wallet_db, native_symbol)
+        # Resolve native token's real USD value for price-correct pool seeding.
+        county = county_db.query(County).filter(County.crypto_symbol == native_symbol).first()
+        native_usd_price = _native_usd_price(county_db, county.id) if county else 1.0
+
+        pool = _get_or_create_wsc_pool(wallet_db, native_symbol, native_usd_price=native_usd_price)
         if pool.wsc_reserve <= 0:
             return False, "Pool has no WSC liquidity yet.", {}
 
@@ -341,6 +353,12 @@ def swap_native_for_wsc(player_id: int, native_symbol: str, native_amount: float
         wsc_wallet = _get_or_create_wsc_wallet(wallet_db, player_id)
         wsc_wallet.balance         += wsc_out
         wsc_wallet.total_earned_yield += wsc_out   # reuse field as "earned via AMM"
+
+        # Route the AMM fee (valued in USD) into the shared treasury pools.
+        # This mirrors the meme-coin swap model and ensures the faucet / yield /
+        # airdrop pools refill from AMM activity, not just meme-coin swaps.
+        fee_usd_value = fee_native * native_usd_price
+        _burn_and_mint_wsc(wallet_db, fee_usd_value)
 
         wallet_db.commit()
 
