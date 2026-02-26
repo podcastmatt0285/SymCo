@@ -248,16 +248,46 @@ def _get_or_create_wsc_pool(db, native_symbol: str, native_usd_price: float = 1.
     return pool
 
 
+def _oracle_sync_pool(db, pool: "WSCPool", native_usd_price: float) -> None:
+    """Re-peg pool WSC reserve to match the oracle price if the implied rate is >10% off.
+
+    This corrects pools that were seeded before price-indexed liquidity was deployed
+    (they had a 1:1 ratio even for tokens worth hundreds of dollars).
+
+    wsc_reserve is set to native_reserve * oracle_price so that swapping 1 native token
+    yields approximately native_usd_price WSC (since 1 WSC = $1).  The WSC delta is
+    recorded in the treasury total_minted to keep the ledger consistent.
+    """
+    if pool.native_reserve <= 0 or native_usd_price <= 0:
+        return
+    implied_price = pool.wsc_reserve / pool.native_reserve   # WSC per 1 native token
+    deviation     = abs(implied_price - native_usd_price) / native_usd_price
+    if deviation < 0.10:
+        return  # within 10% — no adjustment needed
+    new_wsc  = pool.native_reserve * native_usd_price
+    delta    = new_wsc - pool.wsc_reserve
+    pool.wsc_reserve = new_wsc
+    pool.updated_at  = datetime.utcnow()
+    t = _get_or_create_treasury(db)
+    t.total_minted = max(0.0, t.total_minted + delta)
+    t.last_updated = datetime.utcnow()
+
+
 def get_wsc_quote(native_symbol: str, native_amount: float) -> Tuple[float, float]:
     """
     Quote how much WSC `native_amount` native tokens would buy from the AMM pool.
     Returns (wsc_out, effective_price_native_per_wsc).
     Accounts for the 0.3 % AMM fee.  Pure read — no DB writes.
     """
+    from counties import County, get_db as county_get_db
     db = get_db()
+    county_db = county_get_db()
     try:
-        pool = _get_or_create_wsc_pool(db, native_symbol)
-        db.commit()  # flush potential pool creation
+        county = county_db.query(County).filter(County.crypto_symbol == native_symbol).first()
+        native_usd_price = _native_usd_price(county_db, county.id) if county else 1.0
+        pool = _get_or_create_wsc_pool(db, native_symbol, native_usd_price=native_usd_price)
+        _oracle_sync_pool(db, pool, native_usd_price)
+        db.commit()
         if pool.native_reserve <= 0 or pool.wsc_reserve <= 0:
             return 0.0, 0.0
         amount_with_fee = native_amount * (1.0 - WSC_AMM_FEE)
@@ -268,6 +298,7 @@ def get_wsc_quote(native_symbol: str, native_amount: float) -> Tuple[float, floa
         price           = native_amount / wsc_out if wsc_out > 0 else 0.0
         return max(wsc_out, 0.0), price
     finally:
+        county_db.close()
         db.close()
 
 
@@ -276,9 +307,14 @@ def get_native_quote(native_symbol: str, wsc_amount: float) -> Tuple[float, floa
     Quote how much native token `wsc_amount` WSC would buy from the AMM pool.
     Returns (native_out, effective_price_wsc_per_native).
     """
+    from counties import County, get_db as county_get_db
     db = get_db()
+    county_db = county_get_db()
     try:
-        pool = _get_or_create_wsc_pool(db, native_symbol)
+        county = county_db.query(County).filter(County.crypto_symbol == native_symbol).first()
+        native_usd_price = _native_usd_price(county_db, county.id) if county else 1.0
+        pool = _get_or_create_wsc_pool(db, native_symbol, native_usd_price=native_usd_price)
+        _oracle_sync_pool(db, pool, native_usd_price)
         db.commit()
         if pool.native_reserve <= 0 or pool.wsc_reserve <= 0:
             return 0.0, 0.0
@@ -290,6 +326,7 @@ def get_native_quote(native_symbol: str, wsc_amount: float) -> Tuple[float, floa
         price           = wsc_amount / native_out if native_out > 0 else 0.0
         return max(native_out, 0.0), price
     finally:
+        county_db.close()
         db.close()
 
 
@@ -326,6 +363,9 @@ def swap_native_for_wsc(player_id: int, native_symbol: str, native_amount: float
         native_usd_price = _native_usd_price(county_db, county.id) if county else 1.0
 
         pool = _get_or_create_wsc_pool(wallet_db, native_symbol, native_usd_price=native_usd_price)
+        # Re-peg pool if its implied price is >10% off from the oracle price.
+        # This corrects pools that were seeded before price-indexed liquidity was deployed.
+        _oracle_sync_pool(wallet_db, pool, native_usd_price)
         if pool.wsc_reserve <= 0:
             return False, "Pool has no WSC liquidity yet.", {}
 
