@@ -57,6 +57,9 @@ Forex
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 
+import os
+import re
+
 from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -292,24 +295,74 @@ def get_db():
 # INITIALIZATION
 # ==========================
 
+_WSC_HOLDINGS_DDL = (
+    "ALTER TABLE state_reserve_banks"
+    " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
+)
+
+
+def _apply_wsc_holdings_migration():
+    """
+    Add the wsc_holdings column to state_reserve_banks if it doesn't exist.
+
+    Attempt 1 — app-user connection (engine): works when the app user owns
+    the table or has been granted ALTER privileges.
+
+    Attempt 2 — admin connection: the table was created by a different
+    (superuser) account.  We try RESERVE_DATABASE_ADMIN_URL first; if that
+    env var is absent we substitute postgres:postgres into the regular URL.
+    Setting RESERVE_DATABASE_ADMIN_URL to the superuser DSN is the preferred
+    way to give the app DDL rights without granting them to the app user.
+
+    If both attempts fail we print the SQL so an operator can run it manually.
+    """
+    from sqlalchemy import create_engine as _make_engine
+
+    ddl = text(_WSC_HOLDINGS_DDL)
+
+    # --- attempt 1: configured app user ---
+    try:
+        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as _c:
+            _c.execute(ddl)
+        print("[ReserveBanks] Schema migration: wsc_holdings column ensured.")
+        return
+    except Exception as _e1:
+        _is_priv = (
+            "InsufficientPrivilege" in type(_e1).__name__
+            or "must be owner" in str(_e1)
+        )
+        if not _is_priv:
+            print(f"[ReserveBanks] Schema migration (app user): {_e1}")
+            return  # unexpected error — don't retry as admin
+
+    # --- attempt 2: admin / superuser connection ---
+    from database import RESERVE_DATABASE_URL as _base_url
+    admin_url = os.environ.get("RESERVE_DATABASE_ADMIN_URL") or re.sub(
+        r"(\w+://)[^:@]+:[^@]*@", r"\1postgres:postgres@", _base_url
+    )
+    _admin_eng = None
+    try:
+        _admin_eng = _make_engine(admin_url)
+        with _admin_eng.connect().execution_options(isolation_level="AUTOCOMMIT") as _c:
+            _c.execute(ddl)
+        print("[ReserveBanks] Schema migration: wsc_holdings ensured (admin connection).")
+    except Exception as _e2:
+        print(
+            "[ReserveBanks] MANUAL MIGRATION REQUIRED — app user lacks ALTER TABLE "
+            "privilege and admin fallback also failed.\n"
+            "  Run the following SQL as the table owner (or set "
+            "RESERVE_DATABASE_ADMIN_URL to a superuser DSN):\n"
+            f"    {_WSC_HOLDINGS_DDL};\n"
+            f"  Admin error: {_e2}"
+        )
+    finally:
+        if _admin_eng:
+            _admin_eng.dispose()
+
+
 def initialize():
     """Seed default reserve banks if they don't exist yet."""
-    # Schema migration: add wsc_holdings if it is absent from the live table.
-    # Use AUTOCOMMIT isolation so the DDL is applied immediately without any
-    # surrounding transaction that could be rolled back by SQLAlchemy.
-    try:
-        with engine.connect().execution_options(
-            isolation_level="AUTOCOMMIT"
-        ) as _conn:
-            _conn.execute(text(
-                "ALTER TABLE state_reserve_banks"
-                " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
-            ))
-        print("[ReserveBanks] Schema migration: wsc_holdings column ensured.")
-    except Exception as _e:
-        # Log so we know whether IF NOT EXISTS is protecting us or something
-        # unexpected is happening (column already exists → fine to continue).
-        print(f"[ReserveBanks] Schema migration note: {_e}")
+    _apply_wsc_holdings_migration()
 
     db = get_db()
     try:
