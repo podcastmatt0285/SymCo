@@ -137,6 +137,9 @@ def bond_market(
     if not player:
         return RedirectResponse("/login")
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     banks        = get_all_banks()
     my_bonds     = get_player_bonds(player.id)
     my_balances  = get_player_currency_balances(player.id)
@@ -158,7 +161,7 @@ def bond_market(
         bal_chips = "".join(
             f'<span style="margin-right:14px;">{b["flag"]} <strong>{b["currency_code"]}</strong> '
             f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong> '
-            f'<span class="mini">≈ ${b["usd_value"]:,.2f}</span></span>'
+            f'<span class="mini">≈ {fmt_usd(b["usd_value"], disp)}</span></span>'
             for b in my_balances
         )
     else:
@@ -350,6 +353,9 @@ def forex_dashboard(
     if not player:
         return RedirectResponse("/login")
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     banks       = get_all_banks()
     my_balances = get_player_currency_balances(player.id)
     my_tender   = get_player_legal_tender(player.id)
@@ -397,7 +403,7 @@ def forex_dashboard(
         )
         debt_s = ""
         if br["total_debt_usd"] > 0:
-            debt_s = f'<span style="color:#ef4444;font-size:0.75rem;">Debt: ${br["total_debt_usd"]:,.2f}</span>'
+            debt_s = f'<span style="color:#ef4444;font-size:0.75rem;">Debt: {fmt_usd(br["total_debt_usd"], disp)}</span>'
         reserve_rows += f"""
         <div style="padding:8px 0;border-bottom:1px solid #0f172a;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <span style="min-width:60px;">{br['flag']} <strong style="color:#38bdf8;">{br['bank_code']}</strong></span>
@@ -428,7 +434,7 @@ def forex_dashboard(
                 <span style="color:#a78bfa;">{t['buyer_bank']}</span>
                 <span style="color:#64748b;">buys</span>
                 <span style="color:#38bdf8;">{t['bond_currency']} bonds</span>
-                <span style="color:#94a3b8;">${t['face_value_usd']:,.2f}</span>
+                <span style="color:#94a3b8;">{fmt_usd(t['face_value_usd'], disp)}</span>
                 <span style="color:#22c55e;">{t['consideration_curr']} {t['consideration_amount']:,.4f}</span>
                 <span style="color:#334155;font-size:0.72rem;">{t['executed_at']} · {t['trigger']}</span>
             </div>"""

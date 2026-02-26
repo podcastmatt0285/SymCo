@@ -422,6 +422,8 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     players = get_all_players()
     total_players = len(players)
@@ -445,7 +447,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     <div class="stat-grid">
         <div class="stat-box"><div class="stat-value">{total_players}</div><div class="stat-label">Players</div></div>
         <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{online_count}</div><div class="stat-label">Online</div></div>
-        <div class="stat-box"><div class="stat-value" style="color:#22c55e;">${total_cash:,.0f}</div><div class="stat-label">Total Cash</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{fmt_usd(total_cash, disp, precision=0)}</div><div class="stat-label">Total Cash</div></div>
         <div class="stat-box"><div class="stat-value" style="color:#ef4444;">{banned_count}</div><div class="stat-label">Banned</div></div>
     </div>
 
@@ -477,6 +479,8 @@ def admin_players(session_token: Optional[str] = Cookie(None), msg: Optional[str
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     players = get_all_players()
     rows = ""
@@ -496,7 +500,7 @@ def admin_players(session_token: Optional[str] = Cookie(None), msg: Optional[str
             online = False
         dot = '<span style="color:#22c55e;">●</span>' if online else '<span style="color:#475569;">○</span>'
 
-        rows += f'<tr><td>{dot} #{p["id"]}</td><td><a href="/admin/player/{p["id"]}">{p["business_name"]}</a> {badges}</td><td style="color:#22c55e;">${p["cash_balance"]:,.0f}</td><td style="color:#64748b;">{_ts(p["last_login"])}</td></tr>'
+        rows += f'<tr><td>{dot} #{p["id"]}</td><td><a href="/admin/player/{p["id"]}">{p["business_name"]}</a> {badges}</td><td style="color:#22c55e;">{fmt_usd(p["cash_balance"], disp, precision=0)}</td><td style="color:#64748b;">{_ts(p["last_login"])}</td></tr>'
 
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">All Players ({len(players)})</h2>
@@ -523,6 +527,8 @@ def admin_player_detail(
     admin, is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     # Moderators can only access the moderation tab
     if not is_full:
@@ -564,7 +570,7 @@ def admin_player_detail(
     # Tab content
     tab_body = ""
     if tab == "info" and is_full:
-        tab_body = _player_info_tab(pid, detail)
+        tab_body = _player_info_tab(pid, detail, disp)
     elif tab == "inventory" and is_full:
         tab_body = _player_inventory_tab(pid)
     elif tab == "land" and is_full:
@@ -592,13 +598,16 @@ def admin_player_detail(
     return HTMLResponse(admin_shell(f"Player #{pid}", body, admin.business_name, "/admin/players"))
 
 
-def _player_info_tab(pid, detail):
+def _player_info_tab(pid, detail, disp=None):
+    if disp is None:
+        from reserve_banks import get_player_display_currency
+        disp = get_player_display_currency(pid)
     return f"""
     <div class="card">
         <h3>Player Info</h3>
         <div class="detail-row"><span class="label">ID</span><span class="value">#{detail["id"]}</span></div>
         <div class="detail-row"><span class="label">Name</span><span class="value">{detail["business_name"]}</span></div>
-        <div class="detail-row"><span class="label">Cash</span><span class="value" style="color:#22c55e;">${detail["cash_balance"]:,.2f}</span></div>
+        <div class="detail-row"><span class="label">Cash</span><span class="value" style="color:#22c55e;">{fmt_usd(detail["cash_balance"], disp)}</span></div>
         <div class="detail-row"><span class="label">City</span><span class="value">{detail["city"] or "None"}</span></div>
         <div class="detail-row"><span class="label">Registered</span><span class="value">{_ts(detail["created_at"])}</span></div>
         <div class="detail-row"><span class="label">Last Login</span><span class="value">{_ts(detail["last_login"])}</span></div>
@@ -702,11 +711,12 @@ def _player_land_tab(pid):
 
 def _player_districts_tab(pid):
     districts = get_player_districts(pid)
+    _usd_disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
 
     try:
         from districts import DISTRICT_TYPES
         dist_type_opts = "".join(
-            f'<option value="{k}">{v["name"]} — ${v["base_tax"]:,}/mo base</option>'
+            f'<option value="{k}">{v["name"]} — {fmt_usd(v["base_tax"], _usd_disp, precision=0)}/mo base</option>'
             for k, v in sorted(DISTRICT_TYPES.items(), key=lambda x: x[1]["name"])
         )
     except Exception:
@@ -721,7 +731,7 @@ def _player_districts_tab(pid):
             <td>{d["district_type"]}</td>
             <td style="color:#94a3b8;">{d["terrain_type"]}</td>
             <td>{d["size"]:.1f}</td>
-            <td>${d["monthly_tax"]:,.0f}</td>
+            <td>{fmt_usd(d["monthly_tax"], _usd_disp, precision=0)}</td>
             <td>{occupied}</td>
             <td>
                 <form method="post" action="/admin/player/{pid}/edit-district-tax" style="display:inline;margin-right:4px;">
@@ -892,9 +902,11 @@ def post_balance(pid: int, session_token: Optional[str] = Cookie(None), new_bala
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = edit_player_balance(admin.id, pid, new_balance)
     if result["ok"]:
-        return RedirectResponse(url=f"/admin/player/{pid}?tab=info&msg=Balance+set+to+${new_balance:,.2f}", status_code=303)
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=info&msg=Balance+set+to+{fmt_usd(new_balance, disp)}", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab=info&err={result['error']}", status_code=303)
 
 
@@ -903,6 +915,8 @@ def post_add_item(pid: int, session_token: Optional[str] = Cookie(None), item_ty
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_add_item(admin.id, pid, item_type, quantity)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Added+{quantity:.0f}+{item_type}", status_code=303)
@@ -914,6 +928,8 @@ def post_remove_item(pid: int, session_token: Optional[str] = Cookie(None), item
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_remove_item(admin.id, pid, item_type, quantity)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Removed+{quantity:.0f}+{item_type}", status_code=303)
@@ -925,6 +941,8 @@ def post_create_land(pid: int, session_token: Optional[str] = Cookie(None), terr
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_create_land_plot(admin.id, pid, terrain_type, proximity)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Created+plot+%23{result['plot_id']}", status_code=303)
@@ -936,6 +954,8 @@ def post_delete_land(pid: int, session_token: Optional[str] = Cookie(None), plot
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_delete_land_plot(admin.id, plot_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Deleted+plot+%23{plot_id}", status_code=303)
@@ -947,6 +967,8 @@ def post_create_district(pid: int, session_token: Optional[str] = Cookie(None), 
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_create_district(admin.id, pid, district_type, size)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Created+{district_type}+district+%23{result['district_id']}", status_code=303)
@@ -958,6 +980,8 @@ def post_delete_district(pid: int, session_token: Optional[str] = Cookie(None), 
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_delete_district(admin.id, district_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Deleted+district+%23{district_id}", status_code=303)
@@ -969,6 +993,8 @@ def post_edit_district_tax(pid: int, session_token: Optional[str] = Cookie(None)
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_edit_district_tax(admin.id, district_id, new_tax)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Tax+updated+for+district+%23{district_id}", status_code=303)
@@ -980,6 +1006,8 @@ def post_add_to_city(pid: int, session_token: Optional[str] = Cookie(None), city
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_add_player_to_city(admin.id, pid, city_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Added+to+city+%23{city_id}", status_code=303)
@@ -991,6 +1019,8 @@ def post_remove_from_city(pid: int, session_token: Optional[str] = Cookie(None),
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_remove_player_from_city(admin.id, pid)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Removed+from+city", status_code=303)
@@ -1006,6 +1036,8 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     cities = get_all_cities_admin()
     counties = get_all_counties_admin()
@@ -1026,7 +1058,7 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
             <td>{c.get("mayor_name", "-")}</td>
             <td>{c.get("member_count", 0)}</td>
             <td>{county_link or '<span style="color:#64748b;">—</span>'}</td>
-            <td style="color:#22c55e;">${c.get("bank_reserves", 0):,.0f}</td>
+            <td style="color:#22c55e;">{fmt_usd(c.get("bank_reserves", 0), disp, precision=0)}</td>
         </tr>"""
 
     county_rows = ""
@@ -1079,6 +1111,8 @@ def post_county_add_city(session_token: Optional[str] = Cookie(None), city_id: i
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_add_city_to_county(admin.id, city_id, county_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/cities?msg=City+%23{city_id}+added+to+county+%23{county_id}", status_code=303)
@@ -1090,6 +1124,8 @@ def post_county_remove_city(session_token: Optional[str] = Cookie(None), city_id
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_remove_city_from_county(admin.id, city_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/cities?msg=City+%23{city_id}+removed+from+county", status_code=303)
@@ -1106,6 +1142,8 @@ def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     # Load city info
     city_info = None
@@ -1226,6 +1264,8 @@ def post_resolve_city_poll(city_id: int, session_token: Optional[str] = Cookie(N
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_resolve_city_poll(admin.id, poll_id, force_result)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/cities/{city_id}?msg=Poll+%23{poll_id}+{force_result}ed", status_code=303)
@@ -1242,6 +1282,8 @@ def admin_county_detail(county_id: int, session_token: Optional[str] = Cookie(No
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     county_info = None
     try:
@@ -1324,6 +1366,8 @@ def post_resolve_county_poll(county_id: int, session_token: Optional[str] = Cook
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_resolve_county_poll(admin.id, poll_id, force_result)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/counties/{county_id}?msg=Poll+%23{poll_id}+{force_result}ed", status_code=303)
@@ -1335,6 +1379,8 @@ def post_kick(pid: int, session_token: Optional[str] = Cookie(None), reason: str
     admin, _is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     kick_player(admin.id, pid, reason)
     _force_disconnect(pid)
     _invalidate_sessions(pid)
@@ -1346,6 +1392,8 @@ def post_timeout(pid: int, session_token: Optional[str] = Cookie(None), minutes:
     admin, _is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = timeout_player(admin.id, pid, minutes, reason)
     if not result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err={result['error']}", status_code=303)
@@ -1360,6 +1408,8 @@ def post_ban(pid: int, session_token: Optional[str] = Cookie(None), reason: str 
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     ban_player(admin.id, pid, reason)
     _force_disconnect(pid)
     _invalidate_sessions(pid)
@@ -1371,6 +1421,8 @@ def post_revoke(pid: int, session_token: Optional[str] = Cookie(None), ban_id: i
     admin, _is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = revoke_ban(admin.id, ban_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Ban+revoked", status_code=303)
@@ -1382,6 +1434,8 @@ def post_delete_player(pid: int, session_token: Optional[str] = Cookie(None)):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     try:
         from estate import liquidate_estate
         import time
@@ -1431,6 +1485,8 @@ def admin_updates(session_token: Optional[str] = Cookie(None), msg: Optional[str
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from chat import get_room_messages
     messages = get_room_messages("updates", limit=30)
@@ -1462,6 +1518,8 @@ def post_update_msg(session_token: Optional[str] = Cookie(None), content: str = 
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     result = post_update(player.id, content.strip())
     if result["ok"]:
         try:
@@ -1486,6 +1544,8 @@ def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] 
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     rooms = get_chat_rooms_overview()
 
@@ -1545,6 +1605,8 @@ def admin_chat_dm(session_token: Optional[str] = Cookie(None), a: int = Query(..
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     messages = get_dm_thread_messages(a, b, limit=100)
 
@@ -1584,6 +1646,8 @@ def admin_p2p(session_token: Optional[str] = Cookie(None)):
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     overview = get_p2p_overview()
     if "error" in overview:
@@ -1622,6 +1686,8 @@ def admin_landbank(session_token: Optional[str] = Cookie(None), msg: Optional[st
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     entries = get_land_bank_entries()
 
@@ -1630,7 +1696,7 @@ def admin_landbank(session_token: Optional[str] = Cookie(None), msg: Optional[st
 
     rows = ""
     for e in entries:
-        price = f'${e["last_auction_price"]:,.0f}' if e["last_auction_price"] else "-"
+        price = f'{fmt_usd(e["last_auction_price"], disp, precision=0)}' if e["last_auction_price"] else "-"
         rows += f"""<tr>
             <td>#{e["land_plot_id"]}</td>
             <td>{e["terrain_type"]}</td>
@@ -1675,6 +1741,8 @@ def post_landbank_add(session_token: Optional[str] = Cookie(None), terrain_type:
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = admin_add_to_land_bank(admin.id, terrain_type, proximity)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/landbank?msg=Plot+%23{result['plot_id']}+added", status_code=303)
@@ -1686,6 +1754,8 @@ def post_landbank_remove(session_token: Optional[str] = Cookie(None), land_plot_
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     do_delete = delete_plot == "true"
     result = admin_remove_from_land_bank(admin.id, land_plot_id, delete_plot=do_delete)
     if result["ok"]:
@@ -1703,6 +1773,8 @@ def admin_logs(session_token: Optional[str] = Cookie(None)):
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     logs = get_admin_logs(limit=100)
     rows = ""
@@ -1731,6 +1803,8 @@ def admin_moderators_page(session_token: Optional[str] = Cookie(None), msg: Opti
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     from auth import Player
     import auth as _auth
@@ -1799,6 +1873,8 @@ def post_add_moderator(session_token: Optional[str] = Cookie(None), player_id: i
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = add_moderator(admin.id, player_id, note)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/moderators?msg=Moderator+granted+to+Player+%23{player_id}", status_code=303)
@@ -1810,6 +1886,8 @@ def post_remove_moderator(session_token: Optional[str] = Cookie(None), player_id
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
     result = remove_moderator(admin.id, player_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/moderators?msg=Moderator+revoked+from+Player+%23{player_id}", status_code=303)
@@ -1917,6 +1995,8 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     alert = ""
     if msg:
@@ -1949,7 +2029,7 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
 
         order_rows = ""
         for oid, qty, price in a["active_orders"]:
-            order_rows += f"<tr><td>#{oid}</td><td>{qty:,}</td><td>${price:.8f}</td></tr>"
+            order_rows += f"<tr><td>#{oid}</td><td>{qty:,}</td><td>{fmt_usd(price, disp, precision=8)}</td></tr>"
 
         cards_html += f"""
         <div class="card">
@@ -1961,7 +2041,7 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                 <span style="color:#38bdf8;">Bank holds: <b>{a["bank_inventory"]:,}</b></span>
                 <span style="color:#22c55e;">Players hold: <b>{a["player_inventory"]:,}</b></span>
                 <span style="color:#a78bfa;">In orders: <b>{a["shares_in_orders"]:,}</b></span>
-                <span>Price: <b>${a["share_price"]:.8f}</b></span>
+                <span>Price: <b>{fmt_usd(a["share_price"], disp, precision=8)}</b></span>
             </div>
 
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
@@ -2022,6 +2102,8 @@ def admin_etf_cancel_orders(
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     try:
         import market
@@ -2056,6 +2138,8 @@ def admin_etf_zero_inventory(
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(admin.id)
 
     try:
         import inventory

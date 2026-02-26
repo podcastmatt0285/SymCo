@@ -310,7 +310,7 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
                     <td>{mayor_name}</td>
                     <td>{city['member_count']}/25</td>
                     <td>{city['currency_type'] or 'Not set'}</td>
-                    <td>${city['bank_reserves']:,.2f}</td>
+                    <td>{fmt_usd(city['bank_reserves'], disp)}</td>
                     <td>{action}</td>
                 </tr>
             """
@@ -347,15 +347,15 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
 
         # Display current balance in player's currency
         if disp["code"] == "USD":
-            balance_disp = f"${player.cash_balance:,.2f}"
+            balance_disp = f"{fmt_usd(player.cash_balance, disp)}"
         else:
             from reserve_banks import get_player_currency_balances
             foreign_bals = {b["currency_code"]: b for b in get_player_currency_balances(player.id)}
             fb = foreign_bals.get(disp["code"])
             if fb:
-                balance_disp = f"{fb['currency_symbol']}{fb['balance']:,.2f} {fb['currency_code']} (≈ ${player.cash_balance:,.2f})"
+                balance_disp = f"{fb['currency_symbol']}{fb['balance']:,.2f} {fb['currency_code']} (≈ {fmt_usd(player.cash_balance, disp)})"
             else:
-                balance_disp = f"${player.cash_balance:,.2f}"
+                balance_disp = f"{fmt_usd(player.cash_balance, disp)}"
 
         create_section = f"""
         <div class="card">
@@ -454,7 +454,10 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from cities import is_city_member, get_city_by_id, get_player_total_value, CityApplication
     from auth import Player, get_db
     from business import Business, BUSINESS_TYPES
@@ -547,7 +550,7 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
     if inv_items:
         inventory_html = "<table class='table'><thead><tr><th>Item</th><th>Quantity</th><th>Market Price</th><th>Value</th></tr></thead><tbody>"
         for item_type, qty, price, value in inv_items[:15]:
-            inventory_html += f"<tr><td>{item_type}</td><td>{qty:,.2f}</td><td>${price:,.2f}</td><td>${value:,.2f}</td></tr>"
+            inventory_html += f"<tr><td>{item_type}</td><td>{qty:,.2f}</td><td>{fmt_usd(price, disp)}</td><td>{fmt_usd(value, disp)}</td></tr>"
         if len(inv_items) > 15:
             inventory_html += f"<tr><td colspan='4' style='color:#64748b;'>...and {len(inv_items) - 15} more items</td></tr>"
         inventory_html += "</tbody></table>"
@@ -566,7 +569,7 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
             trade_type = "BUY" if trade.buyer_id == applicant_id else "SELL"
             type_color = "#4ade80" if trade_type == "SELL" else "#f87171"
             date_str = trade.executed_at.strftime("%m/%d %H:%M") if trade.executed_at else "?"
-            trades_html += f"<tr><td>{date_str}</td><td style='color:{type_color};'>{trade_type}</td><td>{trade.item_type}</td><td>{trade.quantity:,.2f}</td><td>${trade.price:,.2f}</td></tr>"
+            trades_html += f"<tr><td>{date_str}</td><td style='color:{type_color};'>{trade_type}</td><td>{trade.item_type}</td><td>{trade.quantity:,.2f}</td><td>{fmt_usd(trade.price, disp)}</td></tr>"
         trades_html += "</tbody></table>"
     else:
         trades_html = "<p style='color: #64748b;'>No recent trades</p>"
@@ -601,17 +604,17 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
                         </div>
                         <div class="stat">
                             <span class="stat-label">Cash Balance</span>
-                            <span class="stat-value positive">${applicant.cash_balance:,.2f}</span>
+                            <span class="stat-value positive">{fmt_usd(applicant.cash_balance, disp)}</span>
                         </div>
                         <div class="stat">
                             <span class="stat-label">Total Value</span>
-                            <span class="stat-value">${total_value:,.2f}</span>
+                            <span class="stat-value">{fmt_usd(total_value, disp)}</span>
                         </div>
                     </div>
                     <div>
                         <div class="stat">
                             <span class="stat-label">Application Fee</span>
-                            <span class="stat-value">${application.calculated_fee:,.2f}</span>
+                            <span class="stat-value">{fmt_usd(application.calculated_fee, disp)}</span>
                         </div>
                         <div class="stat">
                             <span class="stat-label">Businesses</span>
@@ -672,7 +675,10 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from cities import (
         get_city_by_id, get_city_stats, get_city_members, get_city_bank,
         is_city_member, is_mayor, get_player_total_value, CityPoll, CityApplication,
@@ -790,13 +796,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 CityApplication.status == "pending"
             ).first()
             
-            from reserve_banks import get_player_display_currency
-            _disp = get_player_display_currency(player.id)
             def _fmt_fee(usd_amt):
-                if _disp["code"] == "USD":
-                    return f"${usd_amt:,.2f}"
-                converted = usd_amt / _disp["usd_per_unit"]
-                return f"{_disp['symbol']}{converted:,.2f} {_disp['code']} (≈ ${usd_amt:,.2f})"
+                return fmt_usd(usd_amt, disp)
 
             if pending_app:
                 apply_section = f"""
@@ -821,13 +822,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     member_actions = ""
     if is_member and not is_city_mayor:
         flat_reloc_fee = city.relocation_fee or 10_000.0
-        from reserve_banks import get_player_display_currency
-        _disp2 = get_player_display_currency(player.id)
         def _fmt_fee2(usd_amt):
-            if _disp2["code"] == "USD":
-                return f"${usd_amt:,.2f}"
-            converted = usd_amt / _disp2["usd_per_unit"]
-            return f"{_disp2['symbol']}{converted:,.2f} {_disp2['code']} (≈ ${usd_amt:,.2f})"
+            return fmt_usd(usd_amt, disp)
 
         member_actions = f"""
         <div class="card">
@@ -865,7 +861,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             currency_price = market.get_market_price(city.currency_type) or 1.0
             currency_value = currency_qty * currency_price
         
-        reserve_status = "✅ Met" if meets_reserve else f"❌ Short ${shortfall:,.2f}"
+        reserve_status = "✅ Met" if meets_reserve else f"❌ Short {fmt_usd(shortfall, disp)}"
         reserve_color = "#4ade80" if meets_reserve else "#f87171"
         
         # Get active loans
@@ -893,7 +889,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                         assume_btn = f'''
                         <form action="/api/city/assume-debt" method="post" style="display:inline;">
                             <input type="hidden" name="loan_id" value="{loan.id}">
-                            <button type="submit" class="btn btn-secondary btn-sm">Assume ${assumable:,.2f} (1/25th)</button>
+                            <button type="submit" class="btn btn-secondary btn-sm">Assume {fmt_usd(assumable, disp)} (1/25th)</button>
                         </form>
                         '''
                     else:
@@ -905,8 +901,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                             <div>
                                 <strong>Loan #{loan.id}</strong><br>
                                 <span style="color: #94a3b8; font-size: 13px;">
-                                    Principal: ${loan.principal:,.2f} | 
-                                    Remaining: ${remaining:,.2f} | 
+                                    Principal: {fmt_usd(loan.principal, disp)} | 
+                                    Remaining: {fmt_usd(remaining, disp)} | 
                                     Installments left: {loan.installments_remaining}
                                 </span>
                             </div>
@@ -921,7 +917,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         exchange_form = ""
         if city.currency_type:
             currency_price = market.get_market_price(city.currency_type) or 0
-            price_display = f"${currency_price:,.2f}" if currency_price else "No market price"
+            price_display = f"{fmt_usd(currency_price, disp)}" if currency_price else "No market price"
             
             sell_form = ""
             if currency_qty > 0:
@@ -974,11 +970,11 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     </div>
                     <div class="stat">
                         <span class="stat-label">Your Holdings</span>
-                        <span class="stat-value">{currency_qty:,.2f} (${currency_value:,.2f})</span>
+                        <span class="stat-value">{currency_qty:,.2f} ({fmt_usd(currency_value, disp)})</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Required (10% of value)</span>
-                        <span class="stat-value">${required_value:,.2f}</span>
+                        <span class="stat-value">{fmt_usd(required_value, disp)}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Status</span>
@@ -1021,7 +1017,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 app_name = applicant.business_name if applicant else f"Player {app.applicant_id}"
                 apps_html += f"""
                 <div style="padding: 8px 0; border-bottom: 1px solid #1e293b;">
-                    <strong>{app_name}</strong> - Fee: ${app.calculated_fee:,.2f}
+                    <strong>{app_name}</strong> - Fee: {fmt_usd(app.calculated_fee, disp)}
                 </div>
                 """
         
@@ -1055,7 +1051,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                             {_currency_select_options()}
                         </div>
                         <div class="form-group">
-                            <label>Poll Tax (max ${bank.cash_reserves * 0.035:,.2f})</label>
+                            <label>Poll Tax (max {fmt_usd(bank.cash_reserves * 0.035, disp)})</label>
                             <input type="number" name="poll_tax" value="0" min="0" 
                                    max="{bank.cash_reserves * 0.035:.2f}" step="0.01">
                         </div>
@@ -1369,11 +1365,11 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     </div>
                     <div class="stat">
                         <span class="stat-label">Application Fee</span>
-                        <span class="stat-value">${stats['application_fee']:,.2f}</span>
+                        <span class="stat-value">{fmt_usd(stats['application_fee'], disp)}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Relocation Fee</span>
-                        <span class="stat-value">${stats['relocation_fee']:,.2f}</span>
+                        <span class="stat-value">{fmt_usd(stats['relocation_fee'], disp)}</span>
                     </div>
                 </div>
                 
@@ -1381,7 +1377,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <h2>🏦 City Bank</h2>
                     <div class="stat">
                         <span class="stat-label">Cash Reserves</span>
-                        <span class="stat-value positive">${stats['bank_reserves']:,.2f}</span>
+                        <span class="stat-value positive">{fmt_usd(stats['bank_reserves'], disp)}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Currency Holdings</span>
@@ -1393,7 +1389,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     </div>
                     <div class="stat">
                         <span class="stat-label">Total Debt</span>
-                        <span class="stat-value {'negative' if stats['total_debt'] > 0 else ''}">${stats['total_debt']:,.2f}</span>
+                        <span class="stat-value {'negative' if stats['total_debt'] > 0 else ''}">{fmt_usd(stats['total_debt'], disp)}</span>
                     </div>
                 </div>
             </div>
@@ -1406,28 +1402,28 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
                         <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">A · Cash Reserves</div>
-                        <div style="color:#38bdf8;font-size:1.1rem;font-weight:bold;">${nav['nav_cash_reserves']:,.2f}</div>
+                        <div style="color:#38bdf8;font-size:1.1rem;font-weight:bold;">{fmt_usd(nav['nav_cash_reserves'], disp)}</div>
                         <div style="color:#64748b;font-size:0.75rem;">Liquid bank balance</div>
                     </div>
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
                         <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">B · Currency Inventory</div>
-                        <div style="color:#34d399;font-size:1.1rem;font-weight:bold;">${nav['nav_currency_value']:,.2f}</div>
+                        <div style="color:#34d399;font-size:1.1rem;font-weight:bold;">{fmt_usd(nav['nav_currency_value'], disp)}</div>
                         <div style="color:#64748b;font-size:0.75rem;">{nav['currency_quantity']:,.2f} {nav['currency_type'] or '—'} @ market</div>
                     </div>
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
                         <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">C · Member Net Worth</div>
-                        <div style="color:#f59e0b;font-size:1.1rem;font-weight:bold;">${nav['nav_member_value']:,.2f}</div>
+                        <div style="color:#f59e0b;font-size:1.1rem;font-weight:bold;">{fmt_usd(nav['nav_member_value'], disp)}</div>
                         <div style="color:#64748b;font-size:0.75rem;">{nav['member_count']} member(s) combined</div>
                     </div>
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:14px;">
                         <div style="color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">D · City Projects</div>
-                        <div style="color:#a78bfa;font-size:1.1rem;font-weight:bold;">${nav['nav_projects_value']:,.2f}</div>
+                        <div style="color:#a78bfa;font-size:1.1rem;font-weight:bold;">{fmt_usd(nav['nav_projects_value'], disp)}</div>
                         <div style="color:#64748b;font-size:0.75rem;">Municipal mega-projects</div>
                     </div>
                 </div>
                 <div style="background:#1e293b;border:2px solid #38bdf8;border-radius:6px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
                     <span style="color:#94a3b8;font-size:0.9rem;font-weight:600;">TOTAL CITY NAV</span>
-                    <span style="color:#38bdf8;font-size:1.4rem;font-weight:bold;">${nav['total_nav']:,.2f}</span>
+                    <span style="color:#38bdf8;font-size:1.4rem;font-weight:bold;">{fmt_usd(nav['total_nav'], disp)}</span>
                 </div>
             </div>
             

@@ -91,6 +91,8 @@ def get_player_profile(player_id: int) -> Optional[dict]:
 def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     """Full-page chat shell - wider layout, no ticker."""
     from ux import get_player_lien_info
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player_id) if player_id else {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
 
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
     lien_html = ""
@@ -102,7 +104,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
         lien_html = f'''
         <a href="/liens" style="color: {lien_color}; margin-right: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem;">
             <span>{lien_icon}</span>
-            <span style="font-weight: 500;">LIEN: ${lien_info["total_owed"]:,.0f}</span>
+            <span style="font-weight: 500;">LIEN: {fmt_usd(lien_info["total_owed"], disp, precision=0)}</span>
         </a>
         '''
 
@@ -575,6 +577,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     # Initialize default ban words on first visit
     initialize_default_ban_words(player.id)

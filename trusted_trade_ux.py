@@ -75,6 +75,8 @@ def trusted_list_page(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import (
         get_trusted_list, MAX_TRUSTED_SLOTS, SLOT_ADD_PRICES,
@@ -93,11 +95,11 @@ def trusted_list_page(
         if days_left == 0:
             remove_btn = f'''
             <form action="/api/trusted-trade/remove" method="post" style="display:inline;"
-                  onsubmit="return confirm('Remove {tname} from your trusted list? This costs ${removal_fee:,.0f}.');">
+                  onsubmit="return confirm('Remove {tname} from your trusted list? This costs {fmt_usd(removal_fee, disp, precision=0)}.');">
                 <input type="hidden" name="entry_id" value="{e.id}">
                 <button type="submit"
                         style="background:#7f1d1d;color:#fca5a5;border:none;padding:3px 10px;border-radius:3px;cursor:pointer;font-size:0.8rem;">
-                    Remove (${removal_fee:,.0f})
+                    Remove ({fmt_usd(removal_fee, disp, precision=0)})
                 </button>
             </form>'''
         else:
@@ -112,8 +114,8 @@ def trusted_list_page(
             <td style="padding:10px 8px;font-weight:bold;">{tname}</td>
             <td style="padding:10px 8px;color:#94a3b8;">{e.added_at.strftime("%Y-%m-%d")}</td>
             <td style="padding:10px 8px;color:#94a3b8;">{days_on}d</td>
-            <td style="padding:10px 8px;color:#f59e0b;">${e.cost_paid:,.0f}</td>
-            <td style="padding:10px 8px;color:#ef4444;">${removal_fee:,.0f}</td>
+            <td style="padding:10px 8px;color:#f59e0b;">{fmt_usd(e.cost_paid, disp, precision=0)}</td>
+            <td style="padding:10px 8px;color:#ef4444;">{fmt_usd(removal_fee, disp, precision=0)}</td>
             <td style="padding:10px 8px;">{remove_btn}</td>
         </tr>'''
 
@@ -140,8 +142,8 @@ def trusted_list_page(
         pricing_rows += f'''
         <tr style="border-bottom:1px solid #1e293b;">
             <td style="padding:8px;">Slot {i}</td>
-            <td style="padding:8px;color:#38bdf8;">${price:,.0f}</td>
-            <td style="padding:8px;color:#ef4444;">${price*2:,.0f}</td>
+            <td style="padding:8px;color:#38bdf8;">{fmt_usd(price, disp, precision=0)}</td>
+            <td style="padding:8px;color:#ef4444;">{fmt_usd(price*2, disp, precision=0)}</td>
             <td style="padding:8px;">{status_cell}</td>
         </tr>'''
 
@@ -170,7 +172,7 @@ def trusted_list_page(
                     status = '<span style="color:#64748b;font-size:0.8rem;">List full</span>'
                     btn    = ""
                 else:
-                    status = f'<span style="color:#22c55e;font-size:0.8rem;">Slot {next_slot} — ${next_fee:,.0f}</span>'
+                    status = f'<span style="color:#22c55e;font-size:0.8rem;">Slot {next_slot} — {fmt_usd(next_fee, disp, precision=0)}</span>'
                     btn    = f'''
                     <form action="/api/trusted-trade/add" method="post" style="display:inline;">
                         <input type="hidden" name="target_id" value="{p.id}">
@@ -248,7 +250,7 @@ def trusted_list_page(
     <!-- Add a player -->
     <div class="card" style="margin-top:18px;">
         <h3>Add a Player</h3>
-        {'<p style="color:#ef4444;">Your list is full. Remove someone to add a new player.</p>' if free_slots == 0 else f'<p style="color:#64748b;font-size:0.85rem;margin-bottom:12px;">Next slot (slot {next_slot}) costs <strong style="color:#38bdf8;">${next_fee:,.0f}</strong>.</p>'}
+        {'<p style="color:#ef4444;">Your list is full. Remove someone to add a new player.</p>' if free_slots == 0 else f'<p style="color:#64748b;font-size:0.85rem;margin-bottom:12px;">Next slot (slot {next_slot}) costs <strong style="color:#38bdf8;">{fmt_usd(next_fee, disp, precision=0)}</strong>.</p>'}
         <form action="/inventory/trusted-list" method="get" style="display:flex;gap:8px;margin-bottom:12px;">
             <input type="text" name="search" value="{search}"
                    placeholder="Search player name..."
@@ -280,6 +282,8 @@ def swaps_page(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import (
         get_trusted_list, get_swaps_for_player, get_swap_detail,
@@ -518,6 +522,8 @@ def swap_detail_page(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import get_swap_detail
 
@@ -672,6 +678,8 @@ async def api_add_trusted(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import add_trusted_player
     ok, msg = add_trusted_player(player.id, target_id)
@@ -692,6 +700,8 @@ async def api_remove_trusted(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import remove_trusted_player
     ok, msg = remove_trusted_player(player.id, entry_id)
@@ -718,6 +728,8 @@ async def api_create_swap(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     # Build leg list, skipping blank rows
     legs = []
@@ -770,6 +782,8 @@ async def api_accept_swap(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import respond_to_swap
     ok, msg = respond_to_swap(swap_id, player.id, accept=True)
@@ -788,6 +802,8 @@ async def api_reject_swap(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import respond_to_swap
     ok, msg = respond_to_swap(swap_id, player.id, accept=False)
@@ -806,6 +822,8 @@ async def api_cancel_swap(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from trusted_trade import cancel_swap
     ok, msg = cancel_swap(swap_id, player.id)

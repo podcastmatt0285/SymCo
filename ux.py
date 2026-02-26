@@ -48,6 +48,9 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                         break
         except Exception:
             pass  # fall back to cash_balance / $ on any error
+    # disp dict for fmt_usd in lien/ticker
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player_id) if player_id else {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "\U0001f1fa\U0001f1f8"}
     
     lien_html = ""
     if lien_info["has_lien"]:
@@ -59,7 +62,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         lien_html = f'''
         <a href="/liens" style="color: {lien_color}; margin-right: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem;">
             <span>{lien_icon}</span>
-            <span style="font-weight: 500;">LIEN: ${lien_info["total_owed"]:,.0f}</span>
+            <span style="font-weight: 500;">LIEN: {fmt_usd(lien_info["total_owed"], disp, precision=0)}</span>
         </a>
         '''
     
@@ -74,7 +77,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         for item in all_items:
             price = market_mod.get_market_price(item)
             if price:
-                ticker_items.append(f"{item.replace('_', ' ').upper()}: ${price:,.2f}")
+                ticker_items.append(f"{item.replace('_', ' ').upper()}: {fmt_usd(price, disp)}")
             else:
                 ticker_items.append(f"{item.replace('_', ' ').upper()}: N/A")
         ticker_html = " | ".join(ticker_items) if ticker_items else "MARKET OPENING..."
@@ -477,6 +480,8 @@ def home(session_token: Optional[str] = Cookie(None)):
     """Main dashboard."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     # Tutorial banner/overlay
     try:
@@ -594,7 +599,7 @@ def home(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">
                     You inherited staked <strong style="color:#a78bfa;">{notif.crypto_symbol}</strong> from <strong style="color:#e2e8f0;">{notif.deceased_name}</strong>'s estate.
-                    The staked crypto has been liquidated and <strong style="color:#a78bfa;">${notif.cash_equivalent:,.2f}</strong> has been added to your cash balance.
+                    The staked crypto has been liquidated and <strong style="color:#a78bfa;">{fmt_usd(notif.cash_equivalent, disp)}</strong> has been added to your cash balance.
                 </p>
             </div>""")
             else:
@@ -607,7 +612,7 @@ def home(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">
                     You inherited <strong style="color:#a78bfa;">{notif.amount:,.4f} {notif.crypto_symbol}</strong> ({type_label}) from <strong style="color:#e2e8f0;">{notif.deceased_name}</strong>'s estate
-                    (≈ <strong style="color:#a78bfa;">${notif.cash_equivalent:,.2f}</strong> at time of transfer).
+                    (≈ <strong style="color:#a78bfa;">{fmt_usd(notif.cash_equivalent, disp)}</strong> at time of transfer).
                     Check your crypto wallet for the new balance.
                 </p>
             </div>""")
@@ -695,6 +700,8 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
     """Business operations view with live progress and retail pricing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     try:
         from business import Business, BUSINESS_TYPES, get_dismantling_status, DISMANTLING_TICKS, RetailPrice
         from land import LandPlot, get_db as get_land_db
@@ -774,7 +781,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     <h3>{biz_name} <span class="badge" style="background: #ef4444;">DISMANTLING</span></h3>
                     <p>{plot_info} | ID: #{biz.id}</p>
                     <p>Ticks Remaining: {dismantle_status['ticks_remaining']}/{DISMANTLING_TICKS} ({dismantle_status['progress_pct']:.0f}%)</p>
-                    <p>Total Refund: ${dismantle_status['total_refund']:.2f} (Paid: ${dismantle_status['paid_so_far']:.2f})</p>
+                    <p>Total Refund: {fmt_usd(dismantle_status['total_refund'], disp)} (Paid: {fmt_usd(dismantle_status['paid_so_far'], disp)})</p>
                 </div>'''
                 continue
             status_badge = f'<span class="badge badge-{"active" if biz.is_active else "paused"}">{"ACTIVE" if biz.is_active else "PAUSED"}</span>'
@@ -830,7 +837,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                 biz_html += '<div style="margin-top: 10px; border-top: 1px solid #1e293b; padding-top: 10px;"><strong>Retail Sales & Pricing:</strong>'
                 for item, stats in config.get("products", {}).items():
                     price_entry = land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id, RetailPrice.item_type == item).first()
-                    current_p = f"${price_entry.price:.2f}" if price_entry else "MKT Default"
+                    current_p = f"{fmt_usd(price_entry.price, disp)}" if price_entry else "MKT Default"
                     item_paused = item in paused_product_keys
                     pause_label = "Resume" if item_paused else "Pause"
                     pause_color = "#22c55e" if item_paused else "#f59e0b"
@@ -874,6 +881,8 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
     """Inventory management view."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     try:
         import inventory as inv_mod
         inv = inv_mod.get_player_inventory(player.id)
@@ -958,7 +967,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
             est_value_line = ""
             if unit_price:
                 est_val = qty * unit_price
-                est_value_line = f'<br><small style="color: #22c55e;">Est. Value: ${est_val:,.2f} (${unit_price:.2f}/unit)</small>'
+                est_value_line = f'<br><small style="color: #22c55e;">Est. Value: {fmt_usd(est_val, disp)} ({fmt_usd(unit_price, disp)}/unit)</small>'
             items_html += f'''
             <div class="card">
                 <div style="display: flex; justify-content: space-between;">
@@ -1006,6 +1015,8 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
     """Land management view with organized layout, sorting, and explanatory info."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     try:
         from land import get_player_land, TERRAIN_TYPES, PROXIMITY_FEATURES, calculate_player_hoarding_tax, HOARDING_FREE_PLOTS
         from business import BUSINESS_TYPES
@@ -1103,7 +1114,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">VACANT</div>
                 </div>
                 <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
-                    <div style="font-size: 1.4rem; font-weight: bold; color: #f59e0b;">${total_monthly_tax:,.0f}</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: #f59e0b;">{fmt_usd(total_monthly_tax, disp, precision=0)}</div>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">MONTHLY TAX</div>
                 </div>
                 <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
@@ -1111,7 +1122,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">AVG EFFICIENCY</div>
                 </div>
                 <div style="background: #0f172a; border: 1px solid {'#dc2626' if hoarding_info['excess_plots'] > 0 else '#1e293b'}; padding: 14px; text-align: center;">
-                    <div style="font-size: 1.4rem; font-weight: bold; color: {'#dc2626' if hoarding_info['excess_plots'] > 0 else '#22c55e'};">${hoarding_info['monthly_total']:,.0f}</div>
+                    <div style="font-size: 1.4rem; font-weight: bold; color: {'#dc2626' if hoarding_info['excess_plots'] > 0 else '#22c55e'};">{fmt_usd(hoarding_info['monthly_total'], disp, precision=0)}</div>
                     <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">HOARDING FEE/MO</div>
                 </div>
             </div>'''
@@ -1120,7 +1131,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
             if hoarding_info["excess_plots"] > 0:
                 breakdown_rows = ""
                 for item in hoarding_info["breakdown"]:
-                    breakdown_rows += f'<tr><td style="padding: 4px 8px; color: #e5e7eb;">Plot #{item["plot_number"]}</td><td style="padding: 4px 8px; color: #f59e0b; text-align: right;">{item["multiplier"]:.1f}x</td><td style="padding: 4px 8px; color: #dc2626; text-align: right;">${item["monthly_tax"]:,.0f}/mo</td></tr>'
+                    breakdown_rows += f'<tr><td style="padding: 4px 8px; color: #e5e7eb;">Plot #{item["plot_number"]}</td><td style="padding: 4px 8px; color: #f59e0b; text-align: right;">{item["multiplier"]:.1f}x</td><td style="padding: 4px 8px; color: #dc2626; text-align: right;">{fmt_usd(item["monthly_tax"], disp, precision=0)}/mo</td></tr>'
 
                 land_html += f'''
             <div style="padding: 14px 18px; background: linear-gradient(135deg, #1a0505, #0f172a); border: 1px solid #dc2626; border-radius: 4px; margin-bottom: 20px;">
@@ -1129,7 +1140,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                 </div>
                 <p style="font-size: 0.85rem; color: #94a3b8; margin: 0 0 10px 0; line-height: 1.5;">
                     You own <strong style="color: #e5e7eb;">{total_plots}</strong> plots — <strong style="color: #dc2626;">{hoarding_info["excess_plots"]}</strong> over the {HOARDING_FREE_PLOTS}-plot allowance.
-                    Excess plots incur a Fibonacci-scaled hoarding fee of <strong style="color: #dc2626;">${hoarding_info["monthly_total"]:,.0f}/mo</strong> (${hoarding_info["hourly_total"]:,.2f}/hr), paid each hour.
+                    Excess plots incur a Fibonacci-scaled hoarding fee of <strong style="color: #dc2626;">{fmt_usd(hoarding_info["monthly_total"], disp, precision=0)}/mo</strong> ({fmt_usd(hoarding_info["hourly_total"], disp)}/hr), paid each hour.
                     Consider creating <a href="/districts" style="color: #6366f1;">districts</a> to consolidate land.
                 </p>
                 <details style="cursor: pointer;">
@@ -1199,7 +1210,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                                 </div>
                                 <div>
                                     <span style="color: #64748b;">Tax:</span>
-                                    <span style="color: #f59e0b;">${plot.monthly_tax:,.2f}/mo</span>
+                                    <span style="color: #f59e0b;">{fmt_usd(plot.monthly_tax, disp)}/mo</span>
                                 </div>
                             </div>
 
@@ -1238,7 +1249,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                             multiplier = max(1.25, owned_businesses_count)
                             actual_cost = base_cost * multiplier
                             business_name = config.get("name", btype)
-                            land_html += f'<option value="{btype}">{business_name} (${actual_cost:,.0f})</option>'
+                            land_html += f'<option value="{btype}">{business_name} ({fmt_usd(actual_cost, disp, precision=0)})</option>'
 
                     land_html += '''</select><button type="submit" class="btn-blue">Build</button>
                             </form>
@@ -1282,6 +1293,8 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
     """Land market view - government auctions and player listings with search, sort, and filter."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from land_market import get_active_auctions, get_active_listings, get_land_bank_plots, get_recent_sales
@@ -1357,7 +1370,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                 <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">PLAYER LISTINGS</div>
             </div>
             <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
-                <div style="font-size: 1.4rem; font-weight: bold; color: #22c55e;">${avg_auction_price:,.0f}</div>
+                <div style="font-size: 1.4rem; font-weight: bold; color: #22c55e;">{fmt_usd(avg_auction_price, disp, precision=0)}</div>
                 <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">AVG AUCTION PRICE</div>
             </div>
             <div style="background: #0f172a; border: 1px solid #1e293b; padding: 14px; text-align: center;">
@@ -1496,7 +1509,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                                 <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 0.85rem;">
                                     <div><span style="color: #64748b;">Size:</span> <span style="color: #e5e7eb;">{plot.size:.1f}</span></div>
                                     <div><span style="color: #64748b;">Efficiency:</span> <span style="color: #22c55e;">{plot.efficiency:.2f}%</span></div>
-                                    <div><span style="color: #64748b;">Tax:</span> <span style="color: #f59e0b;">${plot.monthly_tax:,.2f}/mo</span></div>
+                                    <div><span style="color: #64748b;">Tax:</span> <span style="color: #f59e0b;">{fmt_usd(plot.monthly_tax, disp)}/mo</span></div>
                                 </div>'''
 
                     if features_html:
@@ -1509,9 +1522,9 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                     market_html += f'''
                                 <div style="margin-top: 12px; padding: 10px; background: #020617; border-radius: 4px;">
                                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
-                                        <span style="color: #ef4444;">Start: ${auction.starting_price:,.0f}</span>
-                                        <span style="color: #22c55e; font-weight: bold;">Now: ${auction.current_price:,.0f}</span>
-                                        <span style="color: #64748b;">Floor: ${auction.minimum_price:,.0f}</span>
+                                        <span style="color: #ef4444;">Start: {fmt_usd(auction.starting_price, disp, precision=0)}</span>
+                                        <span style="color: #22c55e; font-weight: bold;">Now: {fmt_usd(auction.current_price, disp, precision=0)}</span>
+                                        <span style="color: #64748b;">Floor: {fmt_usd(auction.minimum_price, disp, precision=0)}</span>
                                     </div>
                                     <div style="background: #1e293b; height: 6px; border-radius: 3px;">
                                         <div style="background: linear-gradient(90deg, #ef4444, #22c55e); height: 6px; border-radius: 3px; width: {min(100, price_progress):.0f}%;"></div>
@@ -1524,12 +1537,12 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                             </div>
                             <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
                                 <div style="text-align: center;">
-                                    <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">${auction.current_price:,.0f}</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">{fmt_usd(auction.current_price, disp, precision=0)}</div>
                                     <div style="font-size: 0.7rem; color: #64748b;">current price</div>
                                 </div>
                                 <form action="/api/land-market/buy-auction" method="post">
                                     <input type="hidden" name="auction_id" value="{auction.id}">
-                                    <button type="submit" class="btn-blue" style="padding: 10px 20px; font-size: 0.9rem;" onclick="return confirm('Buy Plot #{plot.id} for ${auction.current_price:,.2f}?')">
+                                    <button type="submit" class="btn-blue" style="padding: 10px 20px; font-size: 0.9rem;" onclick="return confirm('Buy Plot #{plot.id} for {fmt_usd(auction.current_price, disp)}?')">
                                         Buy Now
                                     </button>
                                 </form>
@@ -1610,7 +1623,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                                 <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 0.85rem;">
                                     <div><span style="color: #64748b;">Size:</span> <span style="color: #e5e7eb;">{plot.size:.1f}</span></div>
                                     <div><span style="color: #64748b;">Efficiency:</span> <span style="color: #22c55e;">{plot.efficiency:.2f}%</span></div>
-                                    <div><span style="color: #64748b;">Tax:</span> <span style="color: #f59e0b;">${plot.monthly_tax:,.2f}/mo</span></div>
+                                    <div><span style="color: #64748b;">Tax:</span> <span style="color: #f59e0b;">{fmt_usd(plot.monthly_tax, disp)}/mo</span></div>
                                     <div><span style="color: #64748b;">Seller:</span> <span style="color: #94a3b8;">{seller_name}</span></div>
                                 </div>'''
 
@@ -1627,7 +1640,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
 
                     market_html += f'''
                                 <div style="text-align: center;">
-                                    <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">${listing.asking_price:,.0f}</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">{fmt_usd(listing.asking_price, disp, precision=0)}</div>
                                     <div style="font-size: 0.7rem; color: #64748b;">asking price</div>
                                 </div>'''
 
@@ -1641,7 +1654,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                         market_html += f'''
                                 <form action="/api/land-market/buy-listing" method="post">
                                     <input type="hidden" name="listing_id" value="{listing.id}">
-                                    <button type="submit" class="btn-blue" style="padding: 10px 20px; font-size: 0.9rem;" onclick="return confirm('Buy Plot #{plot.id} for ${listing.asking_price:,.2f}?')">Buy Now</button>
+                                    <button type="submit" class="btn-blue" style="padding: 10px 20px; font-size: 0.9rem;" onclick="return confirm('Buy Plot #{plot.id} for {fmt_usd(listing.asking_price, disp)}?')">Buy Now</button>
                                 </form>'''
 
                     market_html += '</div></div></div>'
@@ -1687,7 +1700,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                                 <td style="padding: 10px 12px; color: #e5e7eb;">#{sale.land_plot_id}</td>
                                 <td style="padding: 10px 12px; color: {t_color};">{terrain_name}</td>
                                 <td style="padding: 10px 12px;">{sale_type_badge}</td>
-                                <td style="padding: 10px 12px; text-align: right; color: #22c55e; font-weight: bold;">${sale.price:,.0f}</td>
+                                <td style="padding: 10px 12px; text-align: right; color: #22c55e; font-weight: bold;">{fmt_usd(sale.price, disp, precision=0)}</td>
                                 <td style="padding: 10px 12px; text-align: right; color: #64748b;">{sale_date}</td>
                             </tr>'''
 
@@ -1724,9 +1737,11 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
 def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
     """Market view with full order book including player names."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): 
+    if isinstance(player, RedirectResponse):
         return player
-    
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     try:
         import market as market_mod
         import inventory as inv_mod
@@ -1929,7 +1944,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
             for price, qty, order_id, player_name, player_id in order_book['bids'][:10]:
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
-                            <span>${price:.2f}</span>
+                            <span>{fmt_usd(price, disp)}</span>
                             <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
                         </div>'''
@@ -1952,7 +1967,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
             for price, qty, order_id, player_name, player_id in order_book['asks'][:10]:
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
-                            <span>${price:.2f}</span>
+                            <span>{fmt_usd(price, disp)}</span>
                             <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
                         </div>'''
@@ -1969,7 +1984,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 my_orders_rows += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 8px 6px; color: {side_color}; font-weight: bold;">{o.order_type.upper()}</td>
-                    <td style="padding: 8px 6px;">{'MKT' if o.price is None else f'${o.price:.2f}'}</td>
+                    <td style="padding: 8px 6px;">{'MKT' if o.price is None else f'{fmt_usd(o.price, disp)}'}</td>
                     <td style="padding: 8px 6px;">{o.quantity:,.2f}</td>
                     <td style="padding: 8px 6px; color: #94a3b8;">{o.quantity_filled:,.2f}</td>
                     <td style="padding: 8px 6px; color: #f59e0b;">{remaining:,.2f}</td>
@@ -2017,7 +2032,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
             <div style="flex: 1; min-width: 0; max-width: 280px;">
                 <div class="card">
                     <h3>Market Stats</h3>
-                    <p><strong>24h Volume:</strong><br>${stats["volume_24h"]:,.2f}</p>
+                    <p><strong>24h Volume:</strong><br>{fmt_usd(stats["volume_24h"], disp)}</p>
                     <p style="margin-top: 12px;"><strong>Total Trades:</strong><br>{stats["total_trades"]:,}</p>
                     <p style="margin-top: 12px;"><strong>Active Orders:</strong><br>{stats["active_orders"]:,}</p>
                 </div>
@@ -2052,6 +2067,8 @@ def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -2153,7 +2170,7 @@ def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
                             </p>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">${company.current_price:.4f}</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">{fmt_usd(company.current_price, disp, precision=4)}</div>
                             <div style="color: {change_color};">
                                 {change_arrow} {abs(item["price_change"]):.1f}% from IPO
                             </div>
@@ -2163,7 +2180,7 @@ def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
                     <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 15px;">
                         <div>
                             <div style="color: #64748b; font-size: 0.8rem;">Market Cap</div>
-                            <div style="font-size: 1.1rem;">${item["market_cap"]:,.0f}</div>
+                            <div style="font-size: 1.1rem;">{fmt_usd(item["market_cap"], disp, precision=0)}</div>
                         </div>
                         <div>
                             <div style="color: #64748b; font-size: 0.8rem;">Float</div>
@@ -2225,6 +2242,8 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -2313,7 +2332,7 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                             <p style="color: #64748b;">You founded this company</p>
                         </div>
                         <div style="text-align: right;">
-                            <div style="font-size: 1.5rem; font-weight: bold; color: #38bdf8;">${company.current_price:.4f}</div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #38bdf8;">{fmt_usd(company.current_price, disp, precision=4)}</div>
                         </div>
                     </div>
                     
@@ -2409,6 +2428,8 @@ async def brokerage_buyback_shares(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import (
@@ -2457,6 +2478,8 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
     """Banking and investment view with Brokerage Firm."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         import banks
@@ -2536,11 +2559,11 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     </div>
                     <div>
                         <div style="color: #64748b; font-size: 0.8rem;">Your Equity</div>
-                        <div style="font-size: 1.5rem; font-weight: bold; color: #38bdf8;">${total_equity_value:,.0f}</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #38bdf8;">{fmt_usd(total_equity_value, disp, precision=0)}</div>
                     </div>
                     <div>
                         <div style="color: #64748b; font-size: 0.8rem;">Firm Reserves</div>
-                        <div style="font-size: 1.5rem; font-weight: bold;">${firm.cash_reserves:,.0f}</div>
+                        <div style="font-size: 1.5rem; font-weight: bold;">{fmt_usd(firm.cash_reserves, disp, precision=0)}</div>
                     </div>
                     <div>
                         <div style="color: #64748b; font-size: 0.8rem;">Listed Companies</div>
@@ -2597,12 +2620,12 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 <h3>{bank.bank_id.replace("_", " ").title()}</h3>
                 <p style="color: #64748b;">{bank.description}</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                    <div><b>Share Price:</b> ${bank.share_price:.4f}</div>
-                    <div><b>Market Cap:</b> ${bank.share_price * bank.total_shares_issued:,.2f}</div>
+                    <div><b>Share Price:</b> {fmt_usd(bank.share_price, disp, precision=4)}</div>
+                    <div><b>Market Cap:</b> {fmt_usd(bank.share_price * bank.total_shares_issued, disp)}</div>
                     <div><b>Your Shares:</b> {holding["shares_owned"]:,}</div>
-                    <div><b>Your Value:</b> ${holding["current_value"]:,.2f}</div>
+                    <div><b>Your Value:</b> {fmt_usd(holding["current_value"], disp)}</div>
                     <div><b>Ownership:</b> {holding["ownership_percentage"]:.4f}%</div>
-                    <div><b>NAV:</b> ${(bank.cash_reserves + bank.asset_value):,.2f}</div>
+                    <div><b>NAV:</b> {fmt_usd((bank.cash_reserves + bank.asset_value), disp)}</div>
                 </div>
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                     <a href="{detail_url}" class="btn-blue">View Details</a>
@@ -2623,6 +2646,8 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         import banks
@@ -2651,14 +2676,14 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
             <h3>Bank Overview</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                    <p><strong>Share Price:</strong> ${bank_entity.share_price:.2f}</p>
+                    <p><strong>Share Price:</strong> {fmt_usd(bank_entity.share_price, disp)}</p>
                     <p><strong>Total Shares:</strong> {bank_entity.total_shares_issued:,}</p>
-                    <p><strong>Market Cap:</strong> ${bank_entity.share_price * bank_entity.total_shares_issued:,.2f}</p>
+                    <p><strong>Market Cap:</strong> {fmt_usd(bank_entity.share_price * bank_entity.total_shares_issued, disp)}</p>
                 </div>
                 <div>
-                    <p><strong>Net Asset Value:</strong> ${nav:,.2f}</p>
-                    <p><strong>Cash Reserves:</strong> <span style="color: {'#ef4444' if bank_entity.cash_reserves < 0 else '#22c55e'};">${bank_entity.cash_reserves:,.2f}</span></p>
-                    <p><strong>Land Assets:</strong> ${bank_entity.asset_value:,.2f}</p>
+                    <p><strong>Net Asset Value:</strong> {fmt_usd(nav, disp)}</p>
+                    <p><strong>Cash Reserves:</strong> <span style="color: {'#ef4444' if bank_entity.cash_reserves < 0 else '#22c55e'};">{fmt_usd(bank_entity.cash_reserves, disp)}</span></p>
+                    <p><strong>Land Assets:</strong> {fmt_usd(bank_entity.asset_value, disp)}</p>
                 </div>
             </div>
         </div>
@@ -2668,18 +2693,18 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
                     <p><strong>Shares Owned:</strong> {player_shares["shares_owned"]:,}</p>
-                    <p><strong>Market Value:</strong> ${player_shares["current_value"]:,.2f}</p>
+                    <p><strong>Market Value:</strong> {fmt_usd(player_shares["current_value"], disp)}</p>
                 </div>
                 <div>
                     <p><strong>Ownership:</strong> {player_shares["ownership_percentage"]:.4f}%</p>
-                    <p><strong>Lien Balance:</strong> <span style="color: {'#ef4444' if player_shares.get('lien_balance', 0) > 0 else '#22c55e'};">${player_shares.get("lien_balance", 0):,.2f}</span></p>
+                    <p><strong>Lien Balance:</strong> <span style="color: {'#ef4444' if player_shares.get('lien_balance', 0) > 0 else '#22c55e'};">{fmt_usd(player_shares.get("lien_balance", 0), disp)}</span></p>
                 </div>
             </div>
         </div>
         
         <div class="card">
             <h3>Bank Statistics</h3>
-            <p><strong>Total Dividends Paid:</strong> ${bank_entity.total_dividends_paid:,.2f}</p>
+            <p><strong>Total Dividends Paid:</strong> {fmt_usd(bank_entity.total_dividends_paid, disp)}</p>
             <p><strong>Last Dividend:</strong> {bank_entity.last_dividend_date.strftime("%Y-%m-%d %H:%M") if bank_entity.last_dividend_date else "Never"}</p>
         </div>
 
@@ -2689,10 +2714,10 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
                 <li><strong style="color: #e2e8f0;">Purpose:</strong> The government land auction house and real estate investment fund. It holds land plots in reserve and releases them via public auction at market-discovered prices.</li>
                 <li><strong style="color: #e2e8f0;">Backing asset:</strong> Government-owned land. NAV = cash reserves + value of all land held in the land bank.</li>
                 <li><strong style="color: #e2e8f0;">Revenue:</strong> Earns revenue every time a land auction closes at a winning bid. Revenue flows into cash reserves.</li>
-                <li><strong style="color: #e2e8f0;">Dividends:</strong> Paid out to shareholders when reserves exceed ${MIN_RESERVE_FOR_DIVIDENDS:,.0f} — {int(DIVIDEND_PAYOUT_PERCENTAGE*100)}% of reserves distributed every {DIVIDEND_INTERVAL_TICKS} ticks.</li>
+                <li><strong style="color: #e2e8f0;">Dividends:</strong> Paid out to shareholders when reserves exceed {fmt_usd(MIN_RESERVE_FOR_DIVIDENDS, disp, precision=0)} — {int(DIVIDEND_PAYOUT_PERCENTAGE*100)}% of reserves distributed every {DIVIDEND_INTERVAL_TICKS} ticks.</li>
                 <li><strong style="color: #e2e8f0;">Insolvency / solvency levies:</strong> If reserves go negative, shareholders are billed proportionally (reverse dividend). Unpaid levies become liens accruing interest.</li>
                 <li><strong style="color: #e2e8f0;">Quantitative easing:</strong> If the share price falls below a crisis threshold, the bank creates emergency discounted land auctions to restore asset value.</li>
-                <li><strong style="color: #e2e8f0;">Stock splits:</strong> Shares split when the price exceeds ${SPLIT_PRICE_THRESHOLD:.0f}, keeping the price accessible.</li>
+                <li><strong style="color: #e2e8f0;">Stock splits:</strong> Shares split when the price exceeds {fmt_usd(SPLIT_PRICE_THRESHOLD, disp, precision=0)}, keeping the price accessible.</li>
                 <li><strong style="color: #e2e8f0;">Buybacks:</strong> When reserves are high, the bank repurchases and retires shares to increase per-share value.</li>
             </ul>
         </div>
@@ -2721,6 +2746,8 @@ def apple_seeds_etf_dashboard(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         import banks
@@ -2754,14 +2781,14 @@ def apple_seeds_etf_dashboard(session_token: Optional[str] = Cookie(None)):
             <h3>ETF Overview</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
-                    <p><strong>Share Price:</strong> ${bank_entity.share_price:.6f}</p>
+                    <p><strong>Share Price:</strong> {fmt_usd(bank_entity.share_price, disp, precision=6)}</p>
                     <p><strong>Total Shares:</strong> {bank_entity.total_shares_issued:,}</p>
-                    <p><strong>Market Cap:</strong> ${bank_entity.share_price * bank_entity.total_shares_issued:,.2f}</p>
+                    <p><strong>Market Cap:</strong> {fmt_usd(bank_entity.share_price * bank_entity.total_shares_issued, disp)}</p>
                 </div>
                 <div>
-                    <p><strong>Net Asset Value:</strong> ${nav:,.2f}</p>
-                    <p><strong>Cash Reserves:</strong> <span style="color: {'#ef4444' if bank_entity.cash_reserves < 0 else '#22c55e'};">${bank_entity.cash_reserves:,.2f}</span></p>
-                    <p><strong>Commodity Backing:</strong> ${bank_entity.asset_value:,.2f}</p>
+                    <p><strong>Net Asset Value:</strong> {fmt_usd(nav, disp)}</p>
+                    <p><strong>Cash Reserves:</strong> <span style="color: {'#ef4444' if bank_entity.cash_reserves < 0 else '#22c55e'};">{fmt_usd(bank_entity.cash_reserves, disp)}</span></p>
+                    <p><strong>Commodity Backing:</strong> {fmt_usd(bank_entity.asset_value, disp)}</p>
                 </div>
             </div>
         </div>
@@ -2774,8 +2801,8 @@ def apple_seeds_etf_dashboard(session_token: Optional[str] = Cookie(None)):
                     <p><strong>Holdings:</strong> {seeds_held:,.0f} units</p>
                 </div>
                 <div>
-                    <p><strong>Market Price:</strong> ${market_price:.2f}</p>
-                    <p><strong>Total Value:</strong> ${seeds_held * market_price:,.2f}</p>
+                    <p><strong>Market Price:</strong> {fmt_usd(market_price, disp)}</p>
+                    <p><strong>Total Value:</strong> {fmt_usd(seeds_held * market_price, disp)}</p>
                 </div>
             </div>
         </div>
@@ -2785,11 +2812,11 @@ def apple_seeds_etf_dashboard(session_token: Optional[str] = Cookie(None)):
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
                     <p><strong>Shares Owned:</strong> {player_shares["shares_owned"]:,}</p>
-                    <p><strong>Market Value:</strong> ${player_shares["current_value"]:,.2f}</p>
+                    <p><strong>Market Value:</strong> {fmt_usd(player_shares["current_value"], disp)}</p>
                 </div>
                 <div>
                     <p><strong>Ownership:</strong> {player_shares["ownership_percentage"]:.4f}%</p>
-                    <p><strong>Lien Balance:</strong> <span style="color: {'#ef4444' if player_shares.get('lien_balance', 0) > 0 else '#22c55e'};">${player_shares.get("lien_balance", 0):,.2f}</span></p>
+                    <p><strong>Lien Balance:</strong> <span style="color: {'#ef4444' if player_shares.get('lien_balance', 0) > 0 else '#22c55e'};">{fmt_usd(player_shares.get("lien_balance", 0), disp)}</span></p>
                 </div>
             </div>
         </div>
@@ -2800,7 +2827,7 @@ def apple_seeds_etf_dashboard(session_token: Optional[str] = Cookie(None)):
                 <li>Buys {etf.TARGET_COMMODITY} when price drops below {etf.BUY_PRICE_THRESHOLD*100:.0f}% of moving average</li>
                 <li>Sells when inventory reaches {etf.SELL_INVENTORY_THRESHOLD*100:.0f}% of total market supply</li>
                 <li>Annual holder fee: {etf.HOLDER_FEE_PER_TICK*31536000:.2f}%</li>
-                <li>Stock splits at ${etf.SPLIT_PRICE_THRESHOLD:.2f} share price</li>
+                <li>Stock splits at {fmt_usd(etf.SPLIT_PRICE_THRESHOLD, disp)} share price</li>
                 <li>Buybacks trigger at 50% of IPO price</li>
             </ul>
         </div>
@@ -2824,6 +2851,8 @@ def energy_etf_dashboard(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         import banks
@@ -2867,27 +2896,27 @@ def energy_etf_dashboard(session_token: Optional[str] = Cookie(None)):
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
             <div style="background: #1e293b; padding: 15px; border-radius: 4px; border-left: 4px solid #38bdf8;">
                 <h3 style="margin-top: 0; color: #64748b;">ETF Overview</h3>
-                <p>Share Price: <span style="color: #38bdf8; font-family: monospace;">${bank_entity.share_price:.6f}</span></p>
+                <p>Share Price: <span style="color: #38bdf8; font-family: monospace;">{fmt_usd(bank_entity.share_price, disp, precision=6)}</span></p>
                 <p>Total Shares: {bank_entity.total_shares_issued:,}</p>
-                <p>Market Cap: ${bank_entity.share_price * bank_entity.total_shares_issued:,.2f}</p>
-                <p>Net Asset Value: ${nav:,.2f}</p>
-                <p>Cash Reserves: ${bank_entity.cash_reserves:,.2f}</p>
-                <p>Commodity Backing: ${bank_entity.asset_value:,.2f}</p>
+                <p>Market Cap: {fmt_usd(bank_entity.share_price * bank_entity.total_shares_issued, disp)}</p>
+                <p>Net Asset Value: {fmt_usd(nav, disp)}</p>
+                <p>Cash Reserves: {fmt_usd(bank_entity.cash_reserves, disp)}</p>
+                <p>Commodity Backing: {fmt_usd(bank_entity.asset_value, disp)}</p>
             </div>
 
             <div style="background: #1e293b; padding: 15px; border-radius: 4px; border-left: 4px solid #f59e0b;">
                 <h3 style="margin-top: 0; color: #64748b;">Energy Grid Status</h3>
                 <p>Target Commodity: {etf.TARGET_COMMODITY.title()}</p>
                 <p>Holdings: {energy_held:,.0f} units</p>
-                <p>Market Price: ${market_price:.2f}</p>
-                <p>Total Value: ${energy_held * market_price:,.2f}</p>
+                <p>Market Price: {fmt_usd(market_price, disp)}</p>
+                <p>Total Value: {fmt_usd(energy_held * market_price, disp)}</p>
             </div>
         </div>
 
         <div style="background: #1e293b; padding: 15px; border-radius: 4px; margin-top: 20px; border-left: 4px solid #10b981;">
             <h3 style="margin-top: 0; color: #64748b;">Your Position</h3>
             <p>Shares Owned: {player_shares["shares_owned"]:,}</p>
-            <p>Market Value: ${player_shares["current_value"]:,.2f}</p>
+            <p>Market Value: {fmt_usd(player_shares["current_value"], disp)}</p>
             <p>Ownership: {player_shares["ownership_percentage"]:.4f}%</p>
         </div>
 
@@ -2897,7 +2926,7 @@ def energy_etf_dashboard(session_token: Optional[str] = Cookie(None)):
                 <li>Buys {etf.TARGET_COMMODITY} when price drops below {etf.BUY_PRICE_THRESHOLD*100:.0f}% of moving average</li>
                 <li>Sells when inventory reaches {etf.SELL_INVENTORY_THRESHOLD*100:.0f}% of total market supply</li>
                 <li>Annual holder fee: {etf.HOLDER_FEE_PER_TICK*31536000:.2f}%</li>
-                <li>Stock splits at ${etf.SPLIT_PRICE_THRESHOLD:.2f} share price</li>
+                <li>Stock splits at {fmt_usd(etf.SPLIT_PRICE_THRESHOLD, disp)} share price</li>
             </ul>
         </div>
         """
@@ -2918,6 +2947,8 @@ def city_nav_etf_dashboard(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         import banks
@@ -2941,19 +2972,19 @@ def city_nav_etf_dashboard(session_token: Optional[str] = Cookie(None)):
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
             <div style="background: #1e293b; padding: 15px; border-radius: 4px; border-left: 4px solid #38bdf8;">
                 <h3 style="margin-top: 0; color: #64748b;">ETF Overview</h3>
-                <p>Share Price: <span style="color: #38bdf8; font-family: monospace;">${share_price:.10f}</span></p>
+                <p>Share Price: <span style="color: #38bdf8; font-family: monospace;">{fmt_usd(share_price, disp, precision=10)}</span></p>
                 <p>Total Shares: {etf.IPO_SHARES:,}</p>
-                <p>Market Cap: ${share_price * etf.IPO_SHARES:,.2f}</p>
-                <p>Net Asset Value: ${nav:,.2f}</p>
-                <p>Cash Reserves: ${cash:,.2f}</p>
-                <p>Land Portfolio Value: ${land_value:,.2f}</p>
+                <p>Market Cap: {fmt_usd(share_price * etf.IPO_SHARES, disp)}</p>
+                <p>Net Asset Value: {fmt_usd(nav, disp)}</p>
+                <p>Cash Reserves: {fmt_usd(cash, disp)}</p>
+                <p>Land Portfolio Value: {fmt_usd(land_value, disp)}</p>
                 <p>Land Plots Owned: {land_count:,}</p>
             </div>
 
             <div style="background: #1e293b; padding: 15px; border-radius: 4px; border-left: 4px solid #22c55e;">
                 <h3 style="margin-top: 0; color: #64748b;">Your Position</h3>
                 <p>Shares Owned: {player_shares["shares_owned"]:,}</p>
-                <p>Market Value: ${player_shares["current_value"]:,.2f}</p>
+                <p>Market Value: {fmt_usd(player_shares["current_value"], disp)}</p>
                 <p>Ownership: {player_shares["ownership_percentage"]:.8f}%</p>
                 <p style="color: #64748b; font-size: 0.85em; margin-top: 10px;">
                     No dividends are paid by this ETF. Returns come entirely from share price appreciation as the City NAV it tracks grows.
@@ -2968,7 +2999,7 @@ def city_nav_etf_dashboard(session_token: Optional[str] = Cookie(None)):
                 <li><strong style="color: #e2e8f0;">Backing asset:</strong> Land plots — this ETF buys and sells land from the open land market, not commodities. Its NAV = cash on hand + market value of all land it holds.</li>
                 <li><strong style="color: #e2e8f0;">Peg mechanism:</strong> Share price is always <em>NAV ÷ total shares</em>. No dividends are ever paid — all gains are reflected in the share price.</li>
                 <li><strong style="color: #e2e8f0;">Supply:</strong> Fixed forever at {etf.IPO_SHARES:,} shares (420 billion). No splits, no buybacks, no new issuance.</li>
-                <li><strong style="color: #e2e8f0;">Seed capital:</strong> ${etf.SEED_CAPITAL:,.0f} — this ETF starts lean and grows only as it acquires land.</li>
+                <li><strong style="color: #e2e8f0;">Seed capital:</strong> {fmt_usd(etf.SEED_CAPITAL, disp, precision=0)} — this ETF starts lean and grows only as it acquires land.</li>
                 <li><strong style="color: #e2e8f0;">Land buying rule:</strong> Buys the cheapest available listings when cash exceeds {etf.CASH_RESERVE_RATIO*100:.0f}% of NAV (up to {etf.BUY_MAX_LISTINGS} plots per cycle).</li>
                 <li><strong style="color: #e2e8f0;">Land selling rule:</strong> Lists plots for sale at {int(etf.LAND_SELL_MARKUP*100)}% of estimated value when land exceeds 90% of total NAV.</li>
                 <li><strong style="color: #e2e8f0;">Land valuation:</strong> Each plot is valued at <em>monthly_tax × 120</em> (10-year capitalisation), or its most recent sale price — whichever is higher.</li>
@@ -2996,6 +3027,8 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -3071,7 +3104,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             change_color = "#22c55e" if company.current_price >= company.ipo_price else "#ef4444"
             # Make ticker clickable
             ticker_items.append(
-                f'<a href="/brokerage/trading?ticker={company.ticker_symbol}" style="color: {change_color}; text-decoration: none; font-weight: bold;">{company.ticker_symbol}</a>: ${company.current_price:.2f} {change_indicator}'
+                f'<a href="/brokerage/trading?ticker={company.ticker_symbol}" style="color: {change_color}; text-decoration: none; font-weight: bold;">{company.ticker_symbol}</a>: {fmt_usd(company.current_price, disp)} {change_indicator}'
             )
         company_ticker = " &nbsp;│&nbsp; ".join(ticker_items) if ticker_items else "NO LISTED COMPANIES"
         
@@ -3092,7 +3125,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             margin_call_html = f'''
             <div class="card" style="border: 2px solid #ef4444; background: #450a0a;">
                 <h3 style="color: #fca5a5;">&#128222; MARGIN CALL ACTIVE</h3>
-                <p style="color: #fca5a5;">You must deposit ${total_required:,.2f} or your positions will be liquidated.</p>
+                <p style="color: #fca5a5;">You must deposit {fmt_usd(total_required, disp)} or your positions will be liquidated.</p>
                 <p style="color: #f87171; font-size: 0.9rem;">Deadline: {margin_calls[0].deadline.strftime("%Y-%m-%d %H:%M UTC")}</p>
                 <form action="/api/brokerage/deposit-margin" method="post" style="margin-top: 12px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                     <div>
@@ -3143,17 +3176,17 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             </div>
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">PORTFOLIO VALUE</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">${total_equity_value:,.0f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">{fmt_usd(total_equity_value, disp, precision=0)}</div>
                 <div style="font-size: 0.75rem; color: #64748b;">{len(equity_positions)} position(s)</div>
             </div>
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">MARGIN DEBT</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: {'#ef4444' if total_margin_debt > 0 else '#22c55e'};">${total_margin_debt:,.0f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: {'#ef4444' if total_margin_debt > 0 else '#22c55e'};">{fmt_usd(total_margin_debt, disp, precision=0)}</div>
                 <div style="font-size: 0.75rem; color: #64748b;">{len(margin_positions)} margin position(s)</div>
             </div>
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">LIEN BALANCE</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: {'#ef4444' if total_lien_debt > 0 else '#22c55e'};">${total_lien_debt:,.0f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: {'#ef4444' if total_lien_debt > 0 else '#22c55e'};">{fmt_usd(total_lien_debt, disp, precision=0)}</div>
                 <div style="font-size: 0.75rem; color: #64748b;">{len(liens)} active lien(s)</div>
             </div>
         </div>
@@ -3163,7 +3196,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             <h3>Firm Status</h3>
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
                 <div>
-                    <p><strong>Cash Reserves:</strong> ${firm.cash_reserves:,.2f}</p>
+                    <p><strong>Cash Reserves:</strong> {fmt_usd(firm.cash_reserves, disp)}</p>
                     <p><strong>Status:</strong> <span style="color: {'#22c55e' if is_solvent else '#ef4444'};">{'SOLVENT' if is_solvent else 'INSOLVENT'}</span></p>
                 </div>
                 <div>
@@ -3222,7 +3255,7 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                     <h4 style="color: #38bdf8; margin-bottom: 10px;">Short Positions ({len(short_positions)})</h4>
-                    {generate_short_positions_summary(short_positions) if short_positions else '<p style="color: #64748b;">No active short positions</p>'}
+                    {generate_short_positions_summary(short_positions, disp) if short_positions else '<p style="color: #64748b;">No active short positions</p>'}
                 </div>
                 <div>
                     <h4 style="color: #f59e0b; margin-bottom: 10px;">Commodity Loans ({len(commodity_loans)})</h4>
@@ -3246,6 +3279,8 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -3434,9 +3469,9 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             plc = "#64748b"
             if pd_item['shares'] > 0 and pd_item['cost_basis'] > 0:
                 plc = "#22c55e" if pd_item['pl'] >= 0 else "#ef4444"
-                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}${pd_item['pl']:,.2f}"
+                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}{fmt_usd(pd_item['pl'], disp)}"
             positions_html += f'<a href="/brokerage/trading?ticker={c.ticker_symbol}" style="display:block;padding:8px 10px;border-left:{bl};background:{bg};text-decoration:none;color:#e5e7eb;">'
-            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;">{c.ticker_symbol}</span><span style="font-size:0.8rem;color:#94a3b8;">${c.current_price:.2f}</span></div>'
+            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;">{c.ticker_symbol}</span><span style="font-size:0.8rem;color:#94a3b8;">{fmt_usd(c.current_price, disp)}</span></div>'
             if shares_txt or pl_txt:
                 positions_html += f'<div style="display:flex;justify-content:space-between;margin-top:2px;font-size:0.7rem;"><span style="color:#64748b;">{shares_txt}</span><span style="color:{plc};">{pl_txt}</span></div>'
             positions_html += '</a>'
@@ -3451,14 +3486,14 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         if order_book['asks']:
             for price, qty in reversed(order_book['asks']):
                 bw = qty / max_bq * 100
-                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(239,68,68,0.1);"></div><span style="color:#ef4444;position:relative;">${price:.4f}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
+                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(239,68,68,0.1);"></div><span style="color:#ef4444;position:relative;">{fmt_usd(price, disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
         else:
             ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No asks</div>'
-        ob_html += f'<div style="padding:4px 8px;text-align:center;font-size:0.7rem;color:#64748b;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#0a0f1a;">Spread ${spread:.4f} ({spread_pct:.2f}%)</div>'
+        ob_html += f'<div style="padding:4px 8px;text-align:center;font-size:0.7rem;color:#64748b;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#0a0f1a;">Spread {fmt_usd(spread, disp, precision=4)} ({spread_pct:.2f}%)</div>'
         if order_book['bids']:
             for price, qty in order_book['bids']:
                 bw = qty / max_bq * 100
-                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(34,197,94,0.1);"></div><span style="color:#22c55e;position:relative;">${price:.4f}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
+                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(34,197,94,0.1);"></div><span style="color:#22c55e;position:relative;">{fmt_usd(price, disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
         else:
             ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No bids</div>'
 
@@ -3481,7 +3516,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 if prev_price is not None:
                     tc = "#22c55e" if trade['price'] >= prev_price else "#ef4444"
                 prev_price = trade['price']
-                trades_html += f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.8rem;padding:2px 8px;"><span style="color:{tc};">${trade["price"]:.4f}</span><span style="text-align:right;color:#94a3b8;">{trade["quantity"]:,}</span><span style="text-align:right;color:#475569;">{time_str}</span></div>'
+                trades_html += f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.8rem;padding:2px 8px;"><span style="color:{tc};">{fmt_usd(trade["price"], disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;">{trade["quantity"]:,}</span><span style="text-align:right;color:#475569;">{time_str}</span></div>'
         else:
             trades_html = '<div style="padding:8px;color:#334155;font-size:0.75rem;text-align:center;">No trades yet</div>'
 
@@ -3491,7 +3526,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             pending_html = f'<div style="margin-top:12px;"><div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding:0 4px;">Open Orders ({len(pending_orders)})</div>'
             for order in pending_orders:
                 sc = "#22c55e" if order.order_side == "BUY" else "#ef4444"
-                pd_str = f"${order.limit_price:.4f}" if order.limit_price else "MKT"
+                pd_str = f"{fmt_usd(order.limit_price, disp, precision=4)}" if order.limit_price else "MKT"
                 rem = order.quantity - order.filled_quantity
                 pending_html += f'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 4px;border-top:1px solid #0f172a;font-size:0.8rem;"><div><span style="color:{sc};font-weight:600;">{order.order_side}</span> <span style="color:#94a3b8;">{rem:,} @ {pd_str}</span></div><form action="/api/brokerage/cancel-order" method="post" style="display:inline;margin:0;"><input type="hidden" name="order_id" value="{order.id}"><button type="submit" style="background:none;border:1px solid #334155;color:#94a3b8;padding:1px 6px;font-size:0.7rem;cursor:pointer;">X</button></form></div>'
             pending_html += '</div>'
@@ -3502,7 +3537,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             halted_html = f'<div style="background:#451a03;border:1px solid #f59e0b;padding:8px 12px;font-size:0.8rem;color:#fbbf24;text-align:center;margin-bottom:12px;">TRADING HALTED - Circuit breaker until {selected_company.trading_halted_until.strftime("%H:%M UTC")}</div>'
 
         # Margin debt HTML for summary bar
-        margin_debt_html = f"<div><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;'>${total_margin_debt:,.2f}</div></div>" if total_margin_debt > 0 else ""
+        margin_debt_html = f"<div><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;'>{fmt_usd(total_margin_debt, disp)}</div></div>" if total_margin_debt > 0 else ""
 
         # Dashboard CSS (built as regular string to avoid f-string brace conflicts)
         td_css = '<style>'
@@ -3535,15 +3570,15 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         <div style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
             <div>
                 <span class="td-label">Portfolio Value</span>
-                <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;">${total_portfolio_value:,.2f}</div>
+                <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;">{fmt_usd(total_portfolio_value, disp)}</div>
             </div>
             <div>
                 <span class="td-label">Total P/L</span>
-                <div style="color:{"#22c55e" if total_pl >= 0 else "#ef4444"};font-size:0.95rem;font-weight:600;">{"+" if total_pl >= 0 else ""}${total_pl:,.2f} <span style="font-size:0.75rem;">({total_pl_pct:+.1f}%)</span></div>
+                <div style="color:{"#22c55e" if total_pl >= 0 else "#ef4444"};font-size:0.95rem;font-weight:600;">{"+" if total_pl >= 0 else ""}{fmt_usd(total_pl, disp)} <span style="font-size:0.75rem;">({total_pl_pct:+.1f}%)</span></div>
             </div>
             <div>
                 <span class="td-label">Buying Power</span>
-                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;">${player.cash_balance:,.2f}</div>
+                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;">{fmt_usd(player.cash_balance, disp)}</div>
             </div>
             <div>
                 <span class="td-label">Positions</span>
@@ -3576,9 +3611,9 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             </div>
                         </div>
                         <div style="text-align:right;">
-                            <div style="font-size:1.6rem;font-weight:700;color:#38bdf8;">${selected_company.current_price:.4f}</div>
+                            <div style="font-size:1.6rem;font-weight:700;color:#38bdf8;">{fmt_usd(selected_company.current_price, disp, precision=4)}</div>
                             <div style="font-size:0.8rem;color:{change_color};">
-                                {change_sign}${price_change:.4f} ({price_change_pct:+.2f}%) <span style="color:#475569;">from IPO</span>
+                                {change_sign}{fmt_usd(price_change, disp, precision=4)} ({price_change_pct:+.2f}%) <span style="color:#475569;">from IPO</span>
                             </div>
                         </div>
                     </div>
@@ -3592,10 +3627,10 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 <!-- Key Stats Grid -->
                 <div class="td-section">
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-                        <div><div class="td-label">Market Cap</div><div style="font-size:0.9rem;">${selected_company.current_price * selected_company.shares_outstanding:,.0f}</div></div>
+                        <div><div class="td-label">Market Cap</div><div style="font-size:0.9rem;">{fmt_usd(selected_company.current_price * selected_company.shares_outstanding, disp, precision=0)}</div></div>
                         <div><div class="td-label">Shares Out</div><div style="font-size:0.9rem;">{selected_company.shares_outstanding:,}</div></div>
                         <div><div class="td-label">Float</div><div style="font-size:0.9rem;">{selected_company.shares_in_float:,}</div></div>
-                        <div><div class="td-label">52W Range</div><div style="font-size:0.9rem;">${selected_company.low_52_week:.2f} &mdash; ${selected_company.high_52_week:.2f}</div></div>
+                        <div><div class="td-label">52W Range</div><div style="font-size:0.9rem;">{fmt_usd(selected_company.low_52_week, disp)} &mdash; {fmt_usd(selected_company.high_52_week, disp)}</div></div>
                         <div><div class="td-label">Volume Today</div><div style="font-size:0.9rem;">{selected_company.volume_today:,}</div></div>
                         <div><div class="td-label">Dividends</div><div style="font-size:0.85rem;">{dividend_display}</div></div>
                     </div>
@@ -3622,9 +3657,9 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                     <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Your Position &mdash; {selected_company.ticker_symbol}</div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
                         <div><span style="color:#64748b;">Shares</span><div style="color:#38bdf8;font-size:1rem;font-weight:600;">{player_shares:,}</div></div>
-                        <div><span style="color:#64748b;">Value</span><div style="font-size:1rem;">${player_mkt_value:,.2f}</div></div>
-                        <div><span style="color:#64748b;">Avg Cost</span><div>${player_cost_basis:.4f}</div></div>
-                        <div><span style="color:#64748b;">P/L</span><div style="color:{pl_color};font-weight:600;">{"+" if player_pl >= 0 else ""}${player_pl:,.2f}</div></div>
+                        <div><span style="color:#64748b;">Value</span><div style="font-size:1rem;">{fmt_usd(player_mkt_value, disp)}</div></div>
+                        <div><span style="color:#64748b;">Avg Cost</span><div>{fmt_usd(player_cost_basis, disp, precision=4)}</div></div>
+                        <div><span style="color:#64748b;">P/L</span><div style="color:{pl_color};font-weight:600;">{"+" if player_pl >= 0 else ""}{fmt_usd(player_pl, disp)}</div></div>
                     </div>
                 </div>
 
@@ -3647,7 +3682,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             </div>
                             <div style="margin-bottom:10px;">
                                 <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price</label>
-                                <input type="number" name="limit_price" step="0.0001" class="td-input" placeholder="Market @ ${selected_company.current_price:.4f}">
+                                <input type="number" name="limit_price" step="0.0001" class="td-input" placeholder="Market @ {fmt_usd(selected_company.current_price, disp, precision=4)}">
                             </div>
                             <div style="margin-bottom:10px;">
                                 <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:0.8rem;">
@@ -3674,7 +3709,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             </div>
                             <div style="margin-bottom:10px;">
                                 <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price</label>
-                                <input type="number" name="limit_price" step="0.0001" class="td-input" placeholder="Market @ ${selected_company.current_price:.4f}">
+                                <input type="number" name="limit_price" step="0.0001" class="td-input" placeholder="Market @ {fmt_usd(selected_company.current_price, disp, precision=4)}">
                             </div>
                             <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
                                 Available: {player_shares:,} shares
@@ -3714,6 +3749,8 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -3753,25 +3790,25 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                         </div>
                         <div>
                             <div style="font-size: 0.8rem; color: #64748b;">BUYBACK PRICE (10% PREMIUM)</div>
-                            <div style="font-size: 1.3rem; font-weight: bold;">${cost_info["buyback_price_per_share"]:,.2f}/share</div>
+                            <div style="font-size: 1.3rem; font-weight: bold;">{fmt_usd(cost_info["buyback_price_per_share"], disp)}/share</div>
                         </div>
                         <div>
                             <div style="font-size: 0.8rem; color: #64748b;">SHARE BUYBACK COST</div>
-                            <div style="font-size: 1.3rem; font-weight: bold;">${cost_info["buyback_cost"]:,.0f}</div>
+                            <div style="font-size: 1.3rem; font-weight: bold;">{fmt_usd(cost_info["buyback_cost"], disp, precision=0)}</div>
                         </div>
                         <div>
                             <div style="font-size: 0.8rem; color: #64748b;">DELISTING FEE (2% OF MARKET CAP)</div>
-                            <div style="font-size: 1.3rem; font-weight: bold;">${cost_info["delisting_fee"]:,.0f}</div>
+                            <div style="font-size: 1.3rem; font-weight: bold;">{fmt_usd(cost_info["delisting_fee"], disp, precision=0)}</div>
                         </div>
                     </div>
                     <div style="background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
                         <div style="display: flex; justify-content: space-between;">
                             <span style="color: #94a3b8; font-weight: bold;">TOTAL COST TO GO PRIVATE</span>
-                            <span style="color: #ef4444; font-weight: bold; font-size: 1.2rem;">${cost_info["total_cost"]:,.0f}</span>
+                            <span style="color: #ef4444; font-weight: bold; font-size: 1.2rem;">{fmt_usd(cost_info["total_cost"], disp, precision=0)}</span>
                         </div>
                     </div>
                     <form action="/api/brokerage/go-private" method="post"
-                          onsubmit="return confirm('Are you sure? This will cost ${cost_info["total_cost"]:,.0f} and delist {existing_company.ticker_symbol} from the exchange.');">
+                          onsubmit="return confirm('Are you sure? This will cost {fmt_usd(cost_info["total_cost"], disp, precision=0)} and delist {existing_company.ticker_symbol} from the exchange.');">
                         <input type="hidden" name="company_id" value="{existing_company.id}">
                         <button type="submit" class="btn-blue" style="width: 100%; background: #991b1b; border-color: #ef4444;">
                             Go Private - Delist {existing_company.ticker_symbol}
@@ -3797,7 +3834,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                 <h3 style="color: #86efac;">Your Company Is Public</h3>
                 <p style="color: #86efac;">
                     <strong>{existing_company.ticker_symbol}</strong> ({existing_company.company_name})
-                    is listed on WPE at <strong>${existing_company.current_price:,.2f}</strong>/share.
+                    is listed on WPE at <strong>{fmt_usd(existing_company.current_price, disp)}</strong>/share.
                 </p>
                 <p style="color: #86efac; font-size: 0.9rem;">
                     Each player can only have one publicly traded company.
@@ -3832,7 +3869,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
             biz_list_html += f'''
             <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b;">
                 <span style="color: #94a3b8;">{biz["business_name"]}</span>
-                <span style="color: #38bdf8;">${biz["total_value"]:,.0f}</span>
+                <span style="color: #38bdf8;">{fmt_usd(biz["total_value"], disp, precision=0)}</span>
             </div>'''
 
         # Check if firm is accepting underwritten IPOs
@@ -3875,11 +3912,11 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                 </div>
                 <div>
                     <div style="font-size: 0.8rem; color: #64748b;">TOTAL VALUATION</div>
-                    <div style="font-size: 2rem; font-weight: bold; color: #22c55e;">${valuation["total_valuation"]:,.0f}</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: #22c55e;">{fmt_usd(valuation["total_valuation"], disp, precision=0)}</div>
                 </div>
                 <div>
                     <div style="font-size: 0.8rem; color: #64748b;">SUGGESTED PRICE</div>
-                    <div style="font-size: 2rem; font-weight: bold;">${valuation["suggested_share_price"]:.2f}/share</div>
+                    <div style="font-size: 2rem; font-weight: bold;">{fmt_usd(valuation["suggested_share_price"], disp)}/share</div>
                 </div>
             </div>
             <details style="margin-top: 15px;">
@@ -4111,6 +4148,8 @@ async def create_player_ipo_endpoint(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import (
@@ -4193,6 +4232,8 @@ async def go_private_endpoint(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import delist_company
@@ -4226,6 +4267,8 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -4323,10 +4366,10 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                             </button>
                         </form><br>
                         <form action="/api/brokerage/disable-share-lending" method="post" style="display:inline;"
-                              onsubmit="return confirm('Opt out of lending for {company.ticker_symbol}? This costs ${opt_out_fee:,.0f} (base fee + 1% of position value).');">
+                              onsubmit="return confirm('Opt out of lending for {company.ticker_symbol}? This costs {fmt_usd(opt_out_fee, disp, precision=0)} (base fee + 1% of position value).');">
                             <input type="hidden" name="position_id" value="{pos.id}">
                             <button type="submit" style="font-size:0.75rem;background:#7f1d1d;color:#fca5a5;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
-                                Opt-Out (${opt_out_fee:,.0f})
+                                Opt-Out ({fmt_usd(opt_out_fee, disp, precision=0)})
                             </button>
                         </form>'''
                 else:
@@ -4355,15 +4398,15 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                         <span style="color: #64748b; font-size: 0.85rem;">{company.company_name[:20]}</span>
                     </td>
                     <td style="padding: 12px 8px;">{pos.shares_owned:,}</td>
-                    <td style="padding: 12px 8px;">${company.current_price:.4f}</td>
-                    <td style="padding: 12px 8px;">${item["market_value"]:,.2f}</td>
-                    <td style="padding: 12px 8px;">${pos.average_cost_basis:.4f}</td>
+                    <td style="padding: 12px 8px;">{fmt_usd(company.current_price, disp, precision=4)}</td>
+                    <td style="padding: 12px 8px;">{fmt_usd(item["market_value"], disp)}</td>
+                    <td style="padding: 12px 8px;">{fmt_usd(pos.average_cost_basis, disp, precision=4)}</td>
                     <td style="padding: 12px 8px; color: {pnl_color};">
-                        ${item["pnl"]:,.2f}<br>
+                        {fmt_usd(item["pnl"], disp)}<br>
                         <span style="font-size: 0.85rem;">({item["pnl_pct"]:+.1f}%)</span>
                     </td>
                     <td style="padding: 12px 8px;">
-                        {"${:,.2f}".format(pos.margin_debt) if pos.margin_debt > 0 else "-"}
+                        {fmt_usd(pos.margin_debt, disp) if pos.margin_debt > 0 else "-"}
                     </td>
                     <td style="padding: 12px 8px; vertical-align: top;">
                         {lending_cell}
@@ -4385,16 +4428,16 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">TOTAL VALUE</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">${total_value:,.2f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">{fmt_usd(total_value, disp)}</div>
             </div>
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">TOTAL COST</div>
-                <div style="font-size: 1.8rem; font-weight: bold;">${total_cost:,.2f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold;">{fmt_usd(total_cost, disp)}</div>
             </div>
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">TOTAL P/L</div>
                 <div style="font-size: 1.8rem; font-weight: bold; color: {'#22c55e' if total_pnl >= 0 else '#ef4444'};">
-                    ${total_pnl:,.2f}
+                    {fmt_usd(total_pnl, disp)}
                 </div>
                 <div style="font-size: 0.85rem; color: {'#22c55e' if total_pnl >= 0 else '#ef4444'};">
                     ({total_pnl_pct:+.1f}%)
@@ -4403,7 +4446,7 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
             <div class="card" style="text-align: center;">
                 <div style="font-size: 0.8rem; color: #64748b;">MARGIN DEBT</div>
                 <div style="font-size: 1.8rem; font-weight: bold; color: {'#ef4444' if total_margin_debt > 0 else '#22c55e'};">
-                    ${total_margin_debt:,.2f}
+                    {fmt_usd(total_margin_debt, disp)}
                 </div>
             </div>
         </div>
@@ -4434,6 +4477,8 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -4529,10 +4574,10 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 10px 8px;"><strong>{company.ticker_symbol}</strong></td>
                     <td style="padding: 10px 8px;">{loan.shares_borrowed:,}</td>
-                    <td style="padding: 10px 8px;">${loan.borrow_price:.4f}</td>
-                    <td style="padding: 10px 8px;">${company.current_price:.4f}</td>
-                    <td style="padding: 10px 8px; color: {pnl_color};">${item["pnl"]:,.2f}</td>
-                    <td style="padding: 10px 8px;">${loan.collateral_locked:,.2f}</td>
+                    <td style="padding: 10px 8px;">{fmt_usd(loan.borrow_price, disp, precision=4)}</td>
+                    <td style="padding: 10px 8px;">{fmt_usd(company.current_price, disp, precision=4)}</td>
+                    <td style="padding: 10px 8px; color: {pnl_color};">{fmt_usd(item["pnl"], disp)}</td>
+                    <td style="padding: 10px 8px;">{fmt_usd(loan.collateral_locked, disp)}</td>
                     <td style="padding: 10px 8px;">{loan.due_date.strftime("%m/%d %H:%M")}</td>
                     <td style="padding: 10px 8px;">
                         <form action="/api/brokerage/close-short" method="post" style="display: inline;">
@@ -4551,9 +4596,9 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
         if selected_company:
             short_info_html = f'''
                 <div style="margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 4px;">
-                    <p><strong>Selected:</strong> {selected_company.ticker_symbol} @ ${selected_company.current_price:.4f}</p>
+                    <p><strong>Selected:</strong> {selected_company.ticker_symbol} @ {fmt_usd(selected_company.current_price, disp, precision=4)}</p>
                     <p><strong>Available to borrow:</strong> {available_to_short:,} shares</p>
-                    <p><strong>Collateral requirement:</strong> {SHORT_COLLATERAL_REQUIREMENT*100:.0f}% (${selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT:.4f}/share)</p>
+                    <p><strong>Collateral requirement:</strong> {SHORT_COLLATERAL_REQUIREMENT*100:.0f}% ({fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp, precision=4)}/share)</p>
                     <p style="color: #f59e0b; font-size: 0.9rem; margin-top: 10px;">
                         Short selling is risky. If the price rises, your losses are theoretically unlimited.
                     </p>
@@ -4584,7 +4629,7 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                     <div>
                         <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Collateral Required</label>
                         <div style="padding: 10px; background: #020617; border: 1px solid #1e293b; border-radius: 4px;">
-                            {f"${selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT:,.2f}/share" if selected_company else "N/A"}
+                            {f"{fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp)}/share" if selected_company else "N/A"}
                         </div>
                     </div>
                     <button type="submit" class="btn-red" style="padding: 10px 20px;" {"disabled" if not selected_company or available_to_short == 0 else ""}>
@@ -4633,6 +4678,8 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -4743,7 +4790,7 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 10px 8px;"><strong>{loan.item_type.replace("_", " ").title()}</strong></td>
                     <td style="padding: 10px 8px;">{loan.quantity_borrowed:,.0f}</td>
-                    <td style="padding: 10px 8px;">${loan.collateral_locked:,.2f}</td>
+                    <td style="padding: 10px 8px;">{fmt_usd(loan.collateral_locked, disp)}</td>
                     <td style="padding: 10px 8px;">{loan.due_date.strftime("%m/%d %H:%M")}</td>
                     <td style="padding: 10px 8px; color: {status_color};">{loan.status.upper()}</td>
                     <td style="padding: 10px 8px;">
@@ -4824,7 +4871,7 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
         <!-- Lent Out -->
         <div class="card" style="margin-top: 20px;">
             <h3>Your Commodities Lent Out</h3>
-            {generate_lent_out_html(lent_out) if lent_out else '<p style="color: #64748b;">None of your commodities are currently lent out.</p>'}
+            {generate_lent_out_html(lent_out, disp) if lent_out else '<p style="color: #64748b;">None of your commodities are currently lent out.</p>'}
         </div>
         '''
         
@@ -4842,6 +4889,8 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     try:
         from banks.brokerage_firm import (
@@ -4910,10 +4959,10 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
                 liens_html += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 10px 8px;">{lien.source.upper()}</td>
-                    <td style="padding: 10px 8px;">${lien.principal:,.2f}</td>
-                    <td style="padding: 10px 8px; color: #ef4444;">${lien.interest_accrued:,.2f}</td>
-                    <td style="padding: 10px 8px; color: #22c55e;">${lien.total_paid:,.2f}</td>
-                    <td style="padding: 10px 8px; font-weight: bold; color: #ef4444;">${balance:,.2f}</td>
+                    <td style="padding: 10px 8px;">{fmt_usd(lien.principal, disp)}</td>
+                    <td style="padding: 10px 8px; color: #ef4444;">{fmt_usd(lien.interest_accrued, disp)}</td>
+                    <td style="padding: 10px 8px; color: #22c55e;">{fmt_usd(lien.total_paid, disp)}</td>
+                    <td style="padding: 10px 8px; font-weight: bold; color: #ef4444;">{fmt_usd(balance, disp)}</td>
                     <td style="padding: 10px 8px; color: #64748b;">{lien.created_at.strftime("%Y-%m-%d")}</td>
                 </tr>'''
             
@@ -4927,7 +4976,7 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
             lien_debt_info_html = f'''
             <div style="margin-top: 15px; padding: 15px; background: #450a0a; border-radius: 4px; border: 1px solid #7f1d1d;">
                 <p style="color: #fca5a5;">
-                    <strong>Total Lien Debt: ${total_lien_debt:,.2f}</strong><br>
+                    <strong>Total Lien Debt: {fmt_usd(total_lien_debt, disp)}</strong><br>
                     The Firm automatically garnishes 50% of your cash every 60 seconds to pay down liens.
                     Interest accrues at {interest_rate*100:.0f}% annually.
                 </p>
@@ -4975,7 +5024,7 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="text-align: center; padding: 20px; background: #0f172a; border-radius: 8px;">
                     <div style="font-size: 0.9rem; color: #64748b;">Lien Balance</div>
-                    <div style="font-size: 2rem; font-weight: bold; color: {'#ef4444' if total_lien_debt > 0 else '#22c55e'};">${total_lien_debt:,.0f}</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: {'#ef4444' if total_lien_debt > 0 else '#22c55e'};">{fmt_usd(total_lien_debt, disp, precision=0)}</div>
                 </div>
             </div>
         </div>
@@ -5061,7 +5110,10 @@ def brokerage_credit_page(session_token: Optional[str] = Cookie(None)):
 # HELPER FUNCTIONS FOR BROKERAGE UX
 # ==========================
 
-def generate_short_positions_summary(short_positions) -> str:
+def generate_short_positions_summary(short_positions, disp=None) -> str:
+    from reserve_banks import fmt_usd
+    if disp is None:
+        disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "\U0001f1fa\U0001f1f8"}
     """Generate HTML summary of short positions for dashboard."""
     from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
     
@@ -5081,7 +5133,7 @@ def generate_short_positions_summary(short_positions) -> str:
                 html += f'''
                 <li style="padding: 8px 0; border-bottom: 1px solid #1e293b;">
                     <strong>{company.ticker_symbol}</strong>: {short.shares_borrowed} shares
-                    <span style="float: right; color: {pnl_color};">${pnl:,.0f}</span>
+                    <span style="float: right; color: {pnl_color};">{fmt_usd(pnl, disp, precision=0)}</span>
                 </li>'''
     finally:
         db.close()
@@ -5141,7 +5193,10 @@ def generate_player_listings_html(listings) -> str:
     return html
 
 
-def generate_lent_out_html(loans) -> str:
+def generate_lent_out_html(loans, disp=None) -> str:
+    from reserve_banks import fmt_usd
+    if disp is None:
+        disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "\U0001f1fa\U0001f1f8"}
     """Generate HTML for commodities lent out by player."""
     if not loans:
         return '<p style="color: #64748b;">None lent out.</p>'
@@ -5166,7 +5221,7 @@ def generate_lent_out_html(loans) -> str:
             <td style="padding: 8px;">{loan.quantity_borrowed:,.0f}</td>
             <td style="padding: 8px;">Player {loan.borrower_player_id}</td>
             <td style="padding: 8px;">{loan.due_date.strftime("%m/%d %H:%M")}</td>
-            <td style="padding: 8px; color: #22c55e;">${loan.fees_to_lender:,.2f}</td>
+            <td style="padding: 8px; color: #22c55e;">{fmt_usd(loan.fees_to_lender, disp)}</td>
         </tr>'''
     
     html += '</tbody></table>'
@@ -5177,6 +5232,8 @@ def liens_page(session_token: Optional[str] = Cookie(None)):
     """Detailed lien dashboard page."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     lien_info = get_player_lien_info(player.id)
     
@@ -5248,13 +5305,13 @@ def liens_page(session_token: Optional[str] = Cookie(None)):
             <div>
                 <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">TOTAL OWED</div>
                 <div style="font-size: 2rem; font-weight: bold; color: {status_info['color']};">
-                    ${lien_info['total_owed']:,.2f}
+                    {fmt_usd(lien_info['total_owed'], disp)}
                 </div>
             </div>
             <div>
                 <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">DAILY INTEREST</div>
                 <div style="font-size: 2rem; font-weight: bold; color: #ef4444;">
-                    +${daily_interest:,.2f}
+                    +{fmt_usd(daily_interest, disp)}
                 </div>
             </div>
         </div>
@@ -5265,11 +5322,11 @@ def liens_page(session_token: Optional[str] = Cookie(None)):
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 16px;">
             <div>
                 <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Principal</div>
-                <div style="font-size: 1.5rem; color: #e5e7eb;">${lien_info['principal']:,.2f}</div>
+                <div style="font-size: 1.5rem; color: #e5e7eb;">{fmt_usd(lien_info['principal'], disp)}</div>
             </div>
             <div>
                 <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Accrued Interest</div>
-                <div style="font-size: 1.5rem; color: #ef4444;">${lien_info['interest']:,.2f}</div>
+                <div style="font-size: 1.5rem; color: #ef4444;">{fmt_usd(lien_info['interest'], disp)}</div>
             </div>
             <div>
                 <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 8px;">Active Liens</div>
@@ -5344,6 +5401,8 @@ def production_costs_page(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from production_costs import get_calculator
@@ -5447,7 +5506,7 @@ def production_costs_page(
                         </span>
                     </td>
                     <td style="padding: 12px 8px; text-align: right; font-family: monospace; color: {cost_color};">
-                        ${item['cost']:,.4f}
+                        {fmt_usd(item['cost'], disp, precision=4)}
                     </td>
                     <td style="padding: 12px 8px; color: #64748b; font-size: 0.85rem;">
                         {item.get('business', '-') or '<span style="color: #ef4444;">No recipe</span>'}
@@ -5475,15 +5534,15 @@ def production_costs_page(
             </div>
             <div class="card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 0.8rem; color: #64748b;">CHEAPEST</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #22c55e;">${summary['min_cost']:.4f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #22c55e;">{fmt_usd(summary['min_cost'], disp, precision=4)}</div>
             </div>
             <div class="card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 0.8rem; color: #64748b;">MEDIAN</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;">${summary['median_cost']:.2f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;">{fmt_usd(summary['median_cost'], disp)}</div>
             </div>
             <div class="card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 0.8rem; color: #64748b;">MOST EXPENSIVE</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #ef4444;">${summary['max_cost']:,.0f}</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: #ef4444;">{fmt_usd(summary['max_cost'], disp, precision=0)}</div>
             </div>
             <div class="card" style="text-align: center; padding: 15px;">
                 <div style="font-size: 0.8rem; color: #64748b;">MISSING RECIPES</div>
@@ -5549,6 +5608,8 @@ def production_cost_detail_page(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from production_costs import get_calculator
@@ -5589,8 +5650,8 @@ def production_cost_detail_page(
                         </a>
                     </td>
                     <td style="padding: 10px 8px; text-align: right; font-family: monospace;">{inp['quantity']:,.2f}</td>
-                    <td style="padding: 10px 8px; text-align: right; font-family: monospace;">${inp['unit_cost']:,.4f}</td>
-                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color: #f59e0b;">${inp['total_cost']:,.4f}</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace;">{fmt_usd(inp['unit_cost'], disp, precision=4)}</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color: #f59e0b;">{fmt_usd(inp['total_cost'], disp, precision=4)}</td>
                     <td style="padding: 10px 8px; text-align: right;">
                         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
                             <div style="width: 80px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
@@ -5608,7 +5669,7 @@ def production_cost_detail_page(
                     <td style="padding: 10px 8px;"><strong>Labor (Wages)</strong></td>
                     <td style="padding: 10px 8px; text-align: right;">-</td>
                     <td style="padding: 10px 8px; text-align: right;">-</td>
-                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color: #22c55e;">${breakdown['wage']:,.2f}</td>
+                    <td style="padding: 10px 8px; text-align: right; font-family: monospace; color: #22c55e;">{fmt_usd(breakdown['wage'], disp)}</td>
                     <td style="padding: 10px 8px; text-align: right;">
                         <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
                             <div style="width: 80px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden;">
@@ -5621,10 +5682,10 @@ def production_cost_detail_page(
                 <tr style="background: #1e293b;">
                     <td style="padding: 10px 8px;" colspan="3"><strong>BATCH TOTAL</strong></td>
                     <td style="padding: 10px 8px; text-align: right; font-family: monospace; font-size: 1.1rem; color: #38bdf8;">
-                        ${breakdown['batch_cost']:,.4f}
+                        {fmt_usd(breakdown['batch_cost'], disp, precision=4)}
                     </td>
                     <td style="padding: 10px 8px; text-align: right; color: #64748b;">
-                        ÷ {breakdown['output_qty']} = ${breakdown['cost']:,.4f}/unit
+                        ÷ {breakdown['output_qty']} = {fmt_usd(breakdown['cost'], disp, precision=4)}/unit
                     </td>
                 </tr>
             </tbody></table>
@@ -5690,11 +5751,11 @@ def production_cost_detail_page(
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: #64748b;">Batch Cost</div>
-                    <div style="font-size: 1.2rem; color: #f59e0b;">${breakdown['batch_cost']:,.4f}</div>
+                    <div style="font-size: 1.2rem; color: #f59e0b;">{fmt_usd(breakdown['batch_cost'], disp, precision=4)}</div>
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: #64748b;">Wages</div>
-                    <div style="font-size: 1.2rem; color: #22c55e;">${breakdown['wage']:,.2f}</div>
+                    <div style="font-size: 1.2rem; color: #22c55e;">{fmt_usd(breakdown['wage'], disp)}</div>
                 </div>
             </div>
         </div>'''
@@ -5711,7 +5772,7 @@ def production_cost_detail_page(
             </div>
             <div style="text-align: right;">
                 <div style="font-size: 3rem; font-weight: bold; color: #38bdf8;">
-                    ${breakdown['cost']:,.4f}
+                    {fmt_usd(breakdown['cost'], disp, precision=4)}
                 </div>
                 <div style="color: #64748b;">per unit (vertical integration)</div>
             </div>
@@ -5796,6 +5857,8 @@ async def api_production_cost_detail(
 async def create_business_endpoint(land_plot_id: int = Form(...), business_type: str = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     from business import create_business
     if create_business(player.id, land_plot_id, business_type): return RedirectResponse(url="/land?built=1", status_code=303)
     return RedirectResponse(url="/land?error=failed", status_code=303)
@@ -5804,6 +5867,8 @@ async def create_business_endpoint(land_plot_id: int = Form(...), business_type:
 async def toggle_business_endpoint(business_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     from business import toggle_business
     toggle_business(player.id, business_id)
     return RedirectResponse(url="/businesses", status_code=303)
@@ -5812,6 +5877,8 @@ async def toggle_business_endpoint(business_id: int = Form(...), session_token: 
 async def toggle_line_endpoint(business_id: int = Form(...), line_index: int = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     from business import toggle_production_line
     toggle_production_line(player.id, business_id, line_index)
     return RedirectResponse(url="/businesses", status_code=303)
@@ -5820,6 +5887,8 @@ async def toggle_line_endpoint(business_id: int = Form(...), line_index: int = F
 async def toggle_retail_endpoint(business_id: int = Form(...), item_type: str = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     from business import toggle_retail_item
     toggle_retail_item(player.id, business_id, item_type)
     return RedirectResponse(url="/businesses", status_code=303)
@@ -5828,6 +5897,8 @@ async def toggle_retail_endpoint(business_id: int = Form(...), item_type: str = 
 async def dismantle_business_endpoint(business_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     from business import start_business_dismantling
     start_business_dismantling(player.id, business_id)
     return RedirectResponse(url="/businesses", status_code=303)
@@ -5837,6 +5908,8 @@ async def set_retail_price_endpoint(item_type: str = Form(...), price: float = F
     """Retail Pricing Patch Endpoint."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     try:
         from business import set_retail_price
         set_retail_price(player.id, item_type, price)
@@ -5849,6 +5922,8 @@ async def set_retail_price_endpoint(item_type: str = Form(...), price: float = F
 async def list_to_market(item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     import market
     market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price)
     return RedirectResponse(url="/inventory", status_code=303)
@@ -5857,6 +5932,8 @@ async def list_to_market(item_type: str = Form(...), quantity: float = Form(...)
 async def place_order(item_type: str = Form(...), order_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     import market
     market.create_order(
         player.id,
@@ -5873,6 +5950,8 @@ async def cancel_market_order(order_id: int = Form(...), item_type: str = Form(.
     """Cancel a player's own open commodity market order."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     import market
     market.cancel_order(order_id, player.id)
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
@@ -5882,6 +5961,8 @@ async def buy_auction_endpoint(auction_id: int = Form(...), session_token: Optio
     """Buy a plot from government auction."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     from land_market import buy_auction_land
     if buy_auction_land(player.id, auction_id):
@@ -5893,6 +5974,8 @@ async def buy_listing_endpoint(listing_id: int = Form(...), session_token: Optio
     """Buy a plot from player listing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     from land_market import buy_listed_land
     if buy_listed_land(player.id, listing_id):
@@ -5904,6 +5987,8 @@ async def cancel_listing_endpoint(listing_id: int = Form(...), session_token: Op
     """Cancel your own land listing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     from land_market import cancel_listing
     if cancel_listing(player.id, listing_id):
@@ -5915,6 +6000,8 @@ async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float 
     """List your land for sale."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     from land_market import list_land_for_sale
     if list_land_for_sale(player.id, land_plot_id, asking_price):
@@ -5940,6 +6027,8 @@ async def brokerage_create_ipo(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import create_ipo, IPOType
@@ -6010,6 +6099,8 @@ async def brokerage_short_sell(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import short_sell_shares, CompanyShares, get_db as get_firm_db
@@ -6054,6 +6145,8 @@ async def brokerage_close_short(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import close_short_position, ShareLoan, get_db as get_firm_db
@@ -6095,6 +6188,8 @@ async def brokerage_list_commodity(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import list_commodity_for_lending
@@ -6129,6 +6224,8 @@ async def brokerage_cancel_listing(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import CommodityListing, get_db as get_firm_db
@@ -6173,6 +6270,8 @@ async def brokerage_borrow_commodity(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import borrow_commodity
@@ -6203,6 +6302,8 @@ async def brokerage_return_commodity(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import return_commodity, CommodityLoan, get_db as get_firm_db
@@ -6242,6 +6343,8 @@ async def brokerage_extend_loan(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import extend_commodity_loan, CommodityLoan, get_db as get_firm_db
@@ -6282,6 +6385,8 @@ async def brokerage_enable_share_lending(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import ShareholderPosition, get_db as get_firm_db
@@ -6328,6 +6433,8 @@ async def brokerage_disable_share_lending(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     DISABLE_LEND_BASE_FEE = 50_000.0
     DISABLE_LEND_PCT      = 0.01
@@ -6402,6 +6509,8 @@ async def brokerage_deposit_margin(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import MarginCall, ShareholderPosition, get_db as get_firm_db
@@ -6482,6 +6591,8 @@ async def brokerage_buy_shares(
     """Place a buy order (Market or Limit)."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
@@ -6524,6 +6635,8 @@ async def brokerage_sell_shares(
     """Place a sell order (Market or Limit)."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
@@ -6561,6 +6674,8 @@ async def brokerage_cancel_order(
     """Cancel a pending order."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from banks.brokerage_order_book import cancel_order

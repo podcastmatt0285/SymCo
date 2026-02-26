@@ -935,8 +935,10 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
 </head><body><div><h1>Login Required</h1><a href="/login">Go to Login</a></div></body></html>
 """)
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     stats = calculate_player_stats(player.id)
-    
+
     body = f"""
     <h1 class="page-title">Analytics Dashboard</h1>
     
@@ -955,7 +957,7 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
                 <span class="card-title">Your Business</span>
                 <span class="card-icon">💼</span>
             </div>
-            <div class="card-value">${stats['total_net_worth']:,.0f}</div>
+            <div class="card-value">{fmt_usd(stats['total_net_worth'], disp, precision=0)}</div>
             <div class="card-subtitle">Net worth, transactions, cost averages</div>
         </a>
         
@@ -1009,14 +1011,14 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
         <h2 style="font-size: 1rem; color: #94a3b8; margin-bottom: 16px;">Quick Stats</h2>
         <div class="grid">
             <div class="card" style="cursor: default;">
-                <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">${stats['cash_balance']:,.2f}</span></div>
-                <div class="stat-row"><span class="stat-label">Land Value</span><span class="stat-value">${stats['land_value']:,.2f}</span></div>
-                <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">${stats['inventory_value']:,.2f}</span></div>
+                <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">{fmt_usd(stats['cash_balance'], disp)}</span></div>
+                <div class="stat-row"><span class="stat-label">Land Value</span><span class="stat-value">{fmt_usd(stats['land_value'], disp)}</span></div>
+                <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">{fmt_usd(stats['inventory_value'], disp)}</span></div>
             </div>
             <div class="card" style="cursor: default;">
-                <div class="stat-row"><span class="stat-label">Business Value</span><span class="stat-value">${stats['business_value']:,.2f}</span></div>
-                <div class="stat-row"><span class="stat-label">Share Value</span><span class="stat-value">${stats['share_value']:,.2f}</span></div>
-                <div class="stat-row"><span class="stat-label">District Value</span><span class="stat-value">${stats['district_value']:,.2f}</span></div>
+                <div class="stat-row"><span class="stat-label">Business Value</span><span class="stat-value">{fmt_usd(stats['business_value'], disp)}</span></div>
+                <div class="stat-row"><span class="stat-label">Share Value</span><span class="stat-value">{fmt_usd(stats['share_value'], disp)}</span></div>
+                <div class="stat-row"><span class="stat-label">District Value</span><span class="stat-value">{fmt_usd(stats['district_value'], disp)}</span></div>
             </div>
         </div>
     </div>
@@ -1035,6 +1037,8 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     from auth import Player
     
     # Gather economy stats
@@ -1088,8 +1092,8 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
                 <span class="card-icon">👥</span>
             </div>
             <div class="stat-row"><span class="stat-label">Total Players</span><span class="stat-value">{total_players:,}</span></div>
-            <div class="stat-row"><span class="stat-label">Total Money Supply</span><span class="stat-value">${total_cash:,.0f}</span></div>
-            <div class="stat-row"><span class="stat-label">Avg per Player</span><span class="stat-value">${total_cash/max(total_players,1):,.0f}</span></div>
+            <div class="stat-row"><span class="stat-label">Total Money Supply</span><span class="stat-value">{fmt_usd(total_cash, disp, precision=0)}</span></div>
+            <div class="stat-row"><span class="stat-label">Avg per Player</span><span class="stat-value">{fmt_usd(total_cash/max(total_players,1), disp, precision=0)}</span></div>
         </div>
         
         <div class="card" style="cursor: default;">
@@ -1118,7 +1122,7 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
                 <span class="card-icon">📈</span>
             </div>
             <div class="stat-row"><span class="stat-label">Active Orders</span><span class="stat-value">{active_orders:,}</span></div>
-            <div class="stat-row"><span class="stat-label">24h Volume</span><span class="stat-value">${market_volume:,.0f}</span></div>
+            <div class="stat-row"><span class="stat-label">24h Volume</span><span class="stat-value">{fmt_usd(market_volume, disp, precision=0)}</span></div>
             <div class="stat-row"><span class="stat-label">Listed Companies</span><span class="stat-value">{total_companies:,}</span></div>
         </div>
     </div>
@@ -1137,6 +1141,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     stats = calculate_player_stats(player.id)
     
     # Get recent transactions
@@ -1176,7 +1182,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     tx_html = ""
     for tx in txs:
         amount_class = "positive" if tx.amount > 0 else "negative"
-        amount_str = f"+${tx.amount:,.2f}" if tx.amount > 0 else f"-${abs(tx.amount):,.2f}"
+        amount_str = f"+{fmt_usd(tx.amount, disp)}" if tx.amount > 0 else f"-{fmt_usd(abs(tx.amount), disp)}"
         border_color = "#22c55e" if tx.amount > 0 else "#ef4444"
         tx_type = tx.transaction_type or ""
         icon = next((v for k, v in TYPE_ICONS.items() if k in tx_type), "📝")
@@ -1191,7 +1197,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
             if qty is not None:
                 parts.append(f"× {qty:,.2f}")
             if unit_price is not None:
-                parts.append(f"@ ${unit_price:,.4f}")
+                parts.append(f"@ {fmt_usd(unit_price, disp, precision=4)}")
             item_line = f'<div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">{" ".join(parts)}</div>'
         tx_html += f"""
         <div class="transaction-item" data-type="{tx_type}" data-desc="{desc_full.lower()}" style="border-left:3px solid {border_color};padding-left:10px;">
@@ -1216,7 +1222,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         avg_html += f"""
         <div class="stat-row">
             <span class="stat-label">{avg.item_type.replace('_', ' ').title()}</span>
-            <span class="stat-value">${avg.average_cost:.2f}/unit ({avg.total_quantity:,.0f} total)</span>
+            <span class="stat-value">{fmt_usd(avg.average_cost, disp)}/unit ({avg.total_quantity:,.0f} total)</span>
         </div>
         """
     
@@ -1229,13 +1235,13 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
                 <span class="card-title">Net Worth Breakdown</span>
                 <span class="card-icon">💰</span>
             </div>
-            <div class="card-value">${stats['total_net_worth']:,.2f}</div>
-            <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">${stats['cash_balance']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">${stats['inventory_value']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Land ({stats['lands_owned']})</span><span class="stat-value">${stats['land_value']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Businesses ({stats['businesses_owned']})</span><span class="stat-value">${stats['business_value']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Shares</span><span class="stat-value">${stats['share_value']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Districts ({stats['districts_owned']})</span><span class="stat-value">${stats['district_value']:,.2f}</span></div>
+            <div class="card-value">{fmt_usd(stats['total_net_worth'], disp)}</div>
+            <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">{fmt_usd(stats['cash_balance'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">{fmt_usd(stats['inventory_value'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Land ({stats['lands_owned']})</span><span class="stat-value">{fmt_usd(stats['land_value'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Businesses ({stats['businesses_owned']})</span><span class="stat-value">{fmt_usd(stats['business_value'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Shares</span><span class="stat-value">{fmt_usd(stats['share_value'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Districts ({stats['districts_owned']})</span><span class="stat-value">{fmt_usd(stats['district_value'], disp)}</span></div>
         </div>
         
         <div class="card" style="cursor: default;">
@@ -1254,9 +1260,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
                 <span class="card-icon">📝</span>
             </div>
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;padding:10px;background:#0f172a;border-radius:6px;">
-                <div><span style="color:#64748b;font-size:0.8rem;">Income</span><br><span style="color:#22c55e;font-weight:bold;">+${total_income:,.2f}</span></div>
-                <div><span style="color:#64748b;font-size:0.8rem;">Expenses</span><br><span style="color:#ef4444;font-weight:bold;">${total_expenses:,.2f}</span></div>
-                <div><span style="color:#64748b;font-size:0.8rem;">Net</span><br><span style="color:{"#22c55e" if net >= 0 else "#ef4444"};font-weight:bold;">${net:+,.2f}</span></div>
+                <div><span style="color:#64748b;font-size:0.8rem;">Income</span><br><span style="color:#22c55e;font-weight:bold;">+{fmt_usd(total_income, disp)}</span></div>
+                <div><span style="color:#64748b;font-size:0.8rem;">Expenses</span><br><span style="color:#ef4444;font-weight:bold;">{fmt_usd(total_expenses, disp)}</span></div>
+                <div><span style="color:#64748b;font-size:0.8rem;">Net</span><br><span style="color:{"#22c55e" if net >= 0 else "#ef4444"};font-weight:bold;">{"+" if net >= 0 else ""}{fmt_usd(net, disp)}</span></div>
             </div>
             <div style="margin-bottom:10px;">
                 <input type="text" id="tx-search" placeholder="Search transactions…" oninput="searchTx(this.value)" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid #1e293b;color:#f1f5f9;border-radius:4px;font-size:0.85rem;box-sizing:border-box;">
@@ -1321,6 +1327,8 @@ async def stats_leaderboard(
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     update_all_rankings()
     
     valid_sorts = ["total_net_worth", "cash_balance", "land_value", "inventory_value", "share_value", "business_value"]
@@ -1350,11 +1358,11 @@ async def stats_leaderboard(
         <tr {highlight}>
             <td>{badge or rank}</td>
             <td>{p.business_name}</td>
-            <td>${s.total_net_worth:,.0f}</td>
-            <td>${s.cash_balance:,.0f}</td>
-            <td>${s.land_value:,.0f}</td>
-            <td>${s.inventory_value:,.0f}</td>
-            <td>${s.share_value:,.0f}</td>
+            <td>{fmt_usd(s.total_net_worth, disp, precision=0)}</td>
+            <td>{fmt_usd(s.cash_balance, disp, precision=0)}</td>
+            <td>{fmt_usd(s.land_value, disp, precision=0)}</td>
+            <td>{fmt_usd(s.inventory_value, disp, precision=0)}</td>
+            <td>{fmt_usd(s.share_value, disp, precision=0)}</td>
             <td>{s.businesses_owned}</td>
         </tr>
         """
@@ -1415,6 +1423,8 @@ async def stats_businesses(
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     db.close()
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     # Load business types
     business_types = {}
     try:
@@ -1454,7 +1464,7 @@ async def stats_businesses(
             <div class="card-subtitle">{desc}</div>
             <div class="stat-row" style="margin-top: 8px;">
                 <span class="stat-label">Startup</span>
-                <span class="stat-value">${cost:,.0f}</span>
+                <span class="stat-value">{fmt_usd(cost, disp, precision=0)}</span>
             </div>
             <div class="stat-row">
                 <span class="stat-label">Cycle Time</span>
@@ -1508,6 +1518,8 @@ async def stats_business_detail(
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     db.close()
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     # Load business data
     biz = None
     is_district = False
@@ -1584,9 +1596,9 @@ async def stats_business_detail(
                 <span class="card-title">Statistics</span>
                 <span class="badge {'badge-green' if biz_class == 'production' else 'badge-blue'}">{biz_class}</span>
             </div>
-            <div class="stat-row"><span class="stat-label">Startup Cost</span><span class="stat-value">${cost:,.0f}</span></div>
+            <div class="stat-row"><span class="stat-label">Startup Cost</span><span class="stat-value">{fmt_usd(cost, disp, precision=0)}</span></div>
             <div class="stat-row"><span class="stat-label">Cycle Time</span><span class="stat-value">{cycles} ticks</span></div>
-            <div class="stat-row"><span class="stat-label">Wage Cost</span><span class="stat-value">${wage:,.2f}/cycle</span></div>
+            <div class="stat-row"><span class="stat-label">Wage Cost</span><span class="stat-value">{fmt_usd(wage, disp)}/cycle</span></div>
         </div>
         
         <div class="card" style="cursor: default;">
@@ -1631,6 +1643,8 @@ async def stats_items(
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     db.close()
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     # Load item types
     items = {}
     try:
@@ -1669,7 +1683,7 @@ async def stats_items(
         
         try:
             price = get_market_price(key)
-            price_str = f"${price:,.2f}" if price else "No market"
+            price_str = f"{fmt_usd(price, disp)}" if price else "No market"
         except:
             price_str = "No market"
         
@@ -1734,6 +1748,8 @@ async def stats_item_detail(
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     # Load item data
     item = None
     try:
@@ -1761,7 +1777,7 @@ async def stats_item_detail(
     try:
         from market import get_market_price, Trade
         price = get_market_price(item_key)
-        price_str = f"${price:,.2f}" if price else "No market data"
+        price_str = f"{fmt_usd(price, disp)}" if price else "No market data"
         
         # Get trade history for chart
         week_ago = datetime.utcnow() - timedelta(days=7)
@@ -1785,15 +1801,15 @@ async def stats_item_detail(
         bars = []
         for t in trades[-30:]:  # Last 30 trades
             height = ((t.price - min_price) / price_range) * 50 + 10
-            bars.append(f'<div class="mini-chart-bar" style="height: {height}px;" title="${t.price:.2f}"></div>')
+            bars.append(f'<div class="mini-chart-bar" style="height: {height}px;" title="{fmt_usd(t.price, disp)}"></div>')
         
         chart_html = f"""
         <div class="chart-container">
             <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 8px;">7-Day Price History</div>
             <div class="mini-chart">{''.join(bars)}</div>
             <div style="display: flex; justify-content: space-between; color: #64748b; font-size: 0.7rem; margin-top: 4px;">
-                <span>Low: ${min_price:.2f}</span>
-                <span>High: ${max_price:.2f}</span>
+                <span>Low: {fmt_usd(min_price, disp)}</span>
+                <span>High: {fmt_usd(max_price, disp)}</span>
             </div>
         </div>
         """
@@ -1833,9 +1849,9 @@ async def stats_item_detail(
     avg_html = ""
     if avg and avg.total_quantity > 0:
         avg_html = f"""
-        <div class="stat-row"><span class="stat-label">Your Avg Cost</span><span class="stat-value">${avg.average_cost:.2f}/unit</span></div>
+        <div class="stat-row"><span class="stat-label">Your Avg Cost</span><span class="stat-value">{fmt_usd(avg.average_cost, disp)}/unit</span></div>
         <div class="stat-row"><span class="stat-label">Total Acquired</span><span class="stat-value">{avg.total_quantity:,.0f} units</span></div>
-        <div class="stat-row"><span class="stat-label">Total Spent</span><span class="stat-value">${avg.total_spent:,.2f}</span></div>
+        <div class="stat-row"><span class="stat-label">Total Spent</span><span class="stat-value">{fmt_usd(avg.total_spent, disp)}</span></div>
         """
     
     db.close()
@@ -1883,6 +1899,8 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
     if not player:
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
 
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     try:
         from districts import DISTRICT_TYPES, DISTRICT_TAX_MULTIPLIER
     except Exception:
@@ -1915,9 +1933,9 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
         <div class="card" style="cursor:default;">
             <div class="card-header">
                 <span class="card-title">{cfg["name"]}</span>
-                <span class="card-icon" style="font-size:0.7rem;color:#f59e0b;">${monthly_ex:,.0f}/mo*</span>
+                <span class="card-icon" style="font-size:0.7rem;color:#f59e0b;">{fmt_usd(monthly_ex, disp, precision=0)}/mo*</span>
             </div>
-            <div class="stat-row"><span class="stat-label">Base Tax</span><span class="stat-value">${base_tax:,}/mo × 15</span></div>
+            <div class="stat-row"><span class="stat-label">Base Tax</span><span class="stat-value">{fmt_usd(base_tax, disp, precision=0)}/mo × 15</span></div>
             <div class="stat-row"><span class="stat-label">Terrain</span><span class="stat-value" style="font-size:0.75rem;">{allowed}</span></div>
             <div class="stat-row" style="align-items:flex-start;">
                 <span class="stat-label">Businesses</span>
@@ -1956,6 +1974,8 @@ async def stats_production_costs(
     if not player:
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
 
+        from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     import json as _json
 
     # ── Load regular items from item_costs.json ──────────────────────────────
@@ -2099,10 +2119,10 @@ async def stats_production_costs(
             cost_str = '<span style="color:#22c55e;">$0.00</span>'
             cost_per = '<span style="color:#22c55e;">$0.00</span>'
         else:
-            cost_str = f'<span style="color:#e5e7eb;">${cost:,.4f}</span>' if cost < 1 else f'<span style="color:#e5e7eb;">${cost:,.2f}</span>'
+            cost_str = f'<span style="color:#e5e7eb;">{fmt_usd(cost, disp, precision=4)}</span>' if cost < 1 else f'<span style="color:#e5e7eb;">{fmt_usd(cost, disp)}</span>'
             out_qty = item.get("output_qty") or 1
             per = cost / out_qty
-            cost_per = f'${per:,.4f}' if per < 1 else f'${per:,.2f}'
+            cost_per = f'{fmt_usd(per, disp, precision=4)}' if per < 1 else f'{fmt_usd(per, disp)}'
 
         out_qty = item.get("output_qty")
         out_str = f'{out_qty:,}' if out_qty else '—'

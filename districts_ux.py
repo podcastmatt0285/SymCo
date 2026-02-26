@@ -65,8 +65,10 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 def districts_dashboard(session_token: Optional[str] = Cookie(None)):
     """Main districts management dashboard."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): 
+    if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from districts import (
@@ -130,7 +132,7 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div>
                     <div style="color: #64748b; font-size: 0.8rem; margin-bottom: 4px;">MERGE COST (ESCALATING)</div>
-                    <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;">${next_cost:,.0f}</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;">{fmt_usd(next_cost, disp, precision=0)}</div>
                     <div style="color: #64748b; font-size: 0.75rem; margin-top: 4px;">Cost × 1.25 per merge completed</div>
                 </div>
                 <div>
@@ -190,7 +192,7 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None)):
                                 </div>
                                 <div>
                                     <div style="color: #64748b; font-size: 0.7rem;">MONTHLY TAX</div>
-                                    <div style="color: #ef4444; font-size: 0.85rem; font-weight: bold;">${monthly_tax:,.0f}</div>
+                                    <div style="color: #ef4444; font-size: 0.85rem; font-weight: bold;">{fmt_usd(monthly_tax, disp, precision=0)}</div>
                                 </div>
                             </div>
                         </div>
@@ -230,8 +232,10 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None)):
 def create_district_page(session_token: Optional[str] = Cookie(None)):
     """District creation wizard with plot selection."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): 
+    if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from districts import (
@@ -266,11 +270,11 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div>
                     <div style="color: #64748b; font-size: 0.8rem;">MERGE COST</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">${next_cost:,.0f}</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #f59e0b;">{fmt_usd(next_cost, disp, precision=0)}</div>
                 </div>
                 <div>
                     <div style="color: #64748b; font-size: 0.8rem;">YOUR BALANCE</div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: {"#22c55e" if player.cash_balance >= next_cost else "#ef4444"};">${player.cash_balance:,.0f}</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: {"#22c55e" if player.cash_balance >= next_cost else "#ef4444"};">{fmt_usd(player.cash_balance, disp, precision=0)}</div>
                 </div>
             </div>
             <div style="margin-top: 16px; padding: 12px; background: #020617; border-left: 3px solid #64748b;">
@@ -301,7 +305,7 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                 <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">{desc}</div>
                 <div style="font-size: 0.75rem; color: #64748b;">
                     <strong>Terrain:</strong> {terrains}<br>
-                    <strong>Base Tax:</strong> ${tax:,.0f}/mo × 15 (district multiplier)
+                    <strong>Base Tax:</strong> {fmt_usd(tax, disp, precision=0)}/mo × 15 (district multiplier)
                 </div>
             </div>
             '''
@@ -359,7 +363,7 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                             <input type="checkbox" name="plot_ids" value="{plot.id}" style="cursor: pointer;">
                             <div>
                                 <div style="font-size: 0.85rem;">Plot #{plot.id}</div>
-                                <div style="font-size: 0.7rem; color: #64748b;">Size: {plot.size:.1f} | Tax: ${plot.monthly_tax:.0f}/mo</div>
+                                <div style="font-size: 0.7rem; color: #64748b;">Size: {plot.size:.1f} | Tax: {fmt_usd(plot.monthly_tax, disp, precision=0)}/mo</div>
                             </div>
                         </label>
                         '''
@@ -414,8 +418,10 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
 def district_details(district_id: int, session_token: Optional[str] = Cookie(None)):
     """Individual district management page."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): 
+    if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from districts import get_district, DISTRICT_TYPES
@@ -469,7 +475,7 @@ def district_details(district_id: int, session_token: Optional[str] = Cookie(Non
                 </div>
                 <div>
                     <div style="color: #64748b; font-size: 0.75rem;">MONTHLY TAX</div>
-                    <div style="color: #ef4444; font-size: 1.1rem; font-weight: bold;">${district.monthly_tax:,.0f}</div>
+                    <div style="color: #ef4444; font-size: 1.1rem; font-weight: bold;">{fmt_usd(district.monthly_tax, disp, precision=0)}</div>
                 </div>
                 <div>
                     <div style="color: #64748b; font-size: 0.75rem;">CREATED</div>
@@ -562,7 +568,7 @@ def district_details(district_id: int, session_token: Optional[str] = Cookie(Non
                         actual_cost = base_cost * multiplier
                         
                         business_name = config.get("name", btype)
-                        html += f'<option value="{btype}">{business_name} (${actual_cost:,.0f})</option>'
+                        html += f'<option value="{btype}">{business_name} ({fmt_usd(actual_cost, disp, precision=0)})</option>'
                         available_businesses.append(btype)
                 
                 html += '</select>'
@@ -592,7 +598,7 @@ def district_details(district_id: int, session_token: Optional[str] = Cookie(Non
                             <div style="font-weight: bold; color: #38bdf8;">{name}</div>
                             <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">{desc}</div>
                             <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
-                                Class: {biz_class.upper()} | Cost: ${actual_cost:,.0f}
+                                Class: {biz_class.upper()} | Cost: {fmt_usd(actual_cost, disp, precision=0)}
                             </div>
                         </div>
                         '''
@@ -645,8 +651,10 @@ async def api_create_district_business(
 ):
     """API endpoint to create a business on a district."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): 
+    if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from business import create_district_business
@@ -676,8 +684,10 @@ async def api_create_district(
     ):
     """API endpoint to create a district."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): 
+    if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         from districts import create_district
@@ -707,6 +717,8 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         import district_market as dm
@@ -890,7 +902,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
             for price, qty, order_id, player_name, player_id in order_book['bids'][:10]:
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
-                            <span>${price:.2f}</span>
+                            <span>{fmt_usd(price, disp)}</span>
                             <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
                         </div>'''
@@ -913,7 +925,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
             for price, qty, order_id, player_name, player_id in order_book['asks'][:10]:
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
-                            <span>${price:.2f}</span>
+                            <span>{fmt_usd(price, disp)}</span>
                             <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
                         </div>'''
@@ -929,7 +941,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                 my_orders_rows += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 8px 6px; color: {side_color}; font-weight: bold;">{o.order_type.upper()}</td>
-                    <td style="padding: 8px 6px;">${o.price:.2f}</td>
+                    <td style="padding: 8px 6px;">{fmt_usd(o.price, disp)}</td>
                     <td style="padding: 8px 6px;">{o.quantity:,.2f}</td>
                     <td style="padding: 8px 6px; color: #94a3b8;">{o.quantity_filled:,.2f}</td>
                     <td style="padding: 8px 6px; color: #f59e0b;">{remaining:,.2f}</td>
@@ -977,7 +989,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
             <div style="flex: 1; min-width: 0; max-width: 280px;">
                 <div class="card">
                     <h3>District Market Stats</h3>
-                    <p><strong>24h Volume:</strong><br>${stats["volume_24h"]:,.2f}</p>
+                    <p><strong>24h Volume:</strong><br>{fmt_usd(stats["volume_24h"], disp)}</p>
                     <p style="margin-top: 12px;"><strong>Total Trades:</strong><br>{stats["total_trades"]:,}</p>
                     <p style="margin-top: 12px;"><strong>Active Orders:</strong><br>{stats["active_orders"]:,}</p>
                 </div>
@@ -1007,6 +1019,8 @@ async def api_district_market_order(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         import district_market as dm
@@ -1042,6 +1056,8 @@ async def api_district_market_cancel(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     
     try:
         import district_market as dm

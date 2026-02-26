@@ -1661,6 +1661,9 @@ async def wallet_dashboard(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from memecoins import get_wallet_portfolio
     from wallet import (
         get_wsc_wallet_info, get_treasury_info,
@@ -1993,7 +1996,7 @@ async def wallet_dashboard(
             <div>
                 <div style="font-size:12px;color:#a5b4fc;margin-bottom:4px;letter-spacing:1px;">WADSWORTH STABLE COIN (WSC)</div>
                 <div class="wsc-balance">{wsc_info["balance"]:.4f} <span style="font-size:16px;color:#6366f1;">WSC</span></div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">= ${wsc_info["balance"]:.2f} redeemable &nbsp;&#8226;&nbsp; 1 WSC &#61; $1</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">= {fmt_usd(wsc_info["balance"], disp)} redeemable &nbsp;&#8226;&nbsp; 1 WSC &#61; $1</div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:11px;color:#6366f1;margin-bottom:8px;">Total earned</div>

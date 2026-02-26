@@ -68,6 +68,8 @@ def p2p_gate(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import P2P_DASHBOARD_FEE
 
@@ -80,18 +82,18 @@ def p2p_gate(session_token: Optional[str] = Cookie(None)):
         <div class="card" style="border-color: #f59e0b; text-align: center;">
             <h2 style="color: #f59e0b;">ACCESS FEE REQUIRED</h2>
             <p style="font-size: 1.2rem; margin: 20px 0;">
-                Entering the P2P Network costs <span style="color: #ef4444; font-weight: bold;">${P2P_DASHBOARD_FEE:,.0f}</span> per visit.
+                Entering the P2P Network costs <span style="color: #ef4444; font-weight: bold;">{fmt_usd(P2P_DASHBOARD_FEE, disp, precision=0)}</span> per visit.
             </p>
             <p style="color: #64748b; margin-bottom: 20px;">
                 This fee is paid to the Government and is non-refundable.<br>
                 You will gain access to Contracts, and future P2P services.
             </p>
             <p style="color: #64748b; margin-bottom: 20px;">
-                Your balance: <span style="color: #22c55e;">${player.cash_balance:,.2f}</span>
+                Your balance: <span style="color: #22c55e;">{fmt_usd(player.cash_balance, disp)}</span>
             </p>
             <form action="/p2p/enter" method="post" style="display: inline;">
                 <button type="submit" class="btn-gold" style="padding: 12px 32px; font-size: 1rem;">
-                    Pay ${P2P_DASHBOARD_FEE:,.0f} &amp; Enter
+                    Pay {fmt_usd(P2P_DASHBOARD_FEE, disp, precision=0)} &amp; Enter
                 </button>
             </form>
             <div style="margin-top: 12px;">
@@ -110,6 +112,8 @@ def p2p_enter(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import charge_p2p_access
 
@@ -142,6 +146,8 @@ def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     # Verify the player paid the entry fee recently (within the last 5 minutes).
     # This prevents bypassing the toll booth by navigating directly to this URL.
@@ -224,6 +230,8 @@ def dm_inbox(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from chat import get_dm_conversations
 
@@ -280,6 +288,8 @@ def dm_new(session_token: Optional[str] = Cookie(None), q: str = ""):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     results_html = ""
     if q.strip():
@@ -328,6 +338,8 @@ def dm_thread(other_id: int, session_token: Optional[str] = Cookie(None), msg: O
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from chat import get_dm_thread, mark_dms_read
 
@@ -409,6 +421,8 @@ def dm_send(other_id: int, session_token: Optional[str] = Cookie(None), content:
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from chat import send_dm
 
@@ -433,6 +447,8 @@ def contracts_dashboard(session_token: Optional[str] = Cookie(None), tab: str = 
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import (
         get_db, Contract, ContractItem, ContractBid, ContractStatus,
@@ -457,9 +473,9 @@ def contracts_dashboard(session_token: Optional[str] = Cookie(None), tab: str = 
     content = ""
 
     if tab == "market":
-        content = _render_trading_market(player, current_tick)
+        content = _render_trading_market(player, current_tick, disp)
     elif tab == "my_contracts":
-        content = _render_my_contracts(player, current_tick)
+        content = _render_my_contracts(player, current_tick, disp)
     elif tab == "create":
         content = _render_create_form(player)
 
@@ -476,8 +492,11 @@ def contracts_dashboard(session_token: Optional[str] = Cookie(None), tab: str = 
     )
 
 
-def _render_trading_market(player, current_tick):
+def _render_trading_market(player, current_tick, disp=None):
     """Render the contract trading market - listed contracts available for bidding."""
+    from reserve_banks import get_player_display_currency, fmt_usd
+    if disp is None:
+        disp = get_player_display_currency(player.id)
     from p2p import get_db, Contract, ContractItem, ContractBid, ContractStatus, BidStatus, DELIVERY_INTERVALS, CONTRACT_LENGTHS
     from auth import get_db as get_auth_db, Player
 
@@ -542,19 +561,19 @@ def _render_trading_market(player, current_tick):
         # Mode badge and context-specific info
         if is_relist:
             mode_badge = '<span class="badge" style="background: #f59e0b; color: #020617;">RELIST</span>'
-            price_display = f'<span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span>' if contract.price_per_delivery else "TBD"
+            price_display = f'<span style="color: #22c55e;">{fmt_usd(contract.price_per_delivery, disp)}</span>' if contract.price_per_delivery else "TBD"
             bid_label = "Highest Offer"
-            bid_value = f"${best_bid:,.0f}" if best_bid else "No bids"
+            bid_value = f"{fmt_usd(best_bid, disp, precision=0)}" if best_bid else "No bids"
             bid_hint = "Cash offer ($)"
         elif is_price_bid:
             mode_badge = '<span class="badge" style="background: #c084fc; color: #020617;">PRICE BID</span>'
-            price_display = f'Max <span style="color: #f59e0b;">${contract.max_price_per_delivery:,.2f}</span>' if contract.max_price_per_delivery else "No cap"
+            price_display = f'Max <span style="color: #f59e0b;">{fmt_usd(contract.max_price_per_delivery, disp)}</span>' if contract.max_price_per_delivery else "No cap"
             bid_label = "Best Price"
-            bid_value = f"${best_bid:,.2f}/del" if best_bid else "No bids"
+            bid_value = f"{fmt_usd(best_bid, disp)}/del" if best_bid else "No bids"
             bid_hint = "Your price ($/delivery)"
         else:
             mode_badge = '<span class="badge" style="background: #38bdf8; color: #020617;">QTY BID</span>'
-            price_display = f'<span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span>'
+            price_display = f'<span style="color: #22c55e;">{fmt_usd(contract.price_per_delivery, disp)}</span>'
             bid_label = "Best Qty"
             bid_value = f"{best_bid:,.1f} units" if best_bid else "No bids"
             bid_hint = "Qty per delivery"
@@ -562,7 +581,7 @@ def _render_trading_market(player, current_tick):
         total_value_display = ""
         if contract.price_per_delivery:
             tv = contract.price_per_delivery * contract.total_deliveries
-            total_value_display = f'<div><span style="color: #64748b;">Total Value:</span> <span style="color: #22c55e;">${tv:,.2f}</span></div>'
+            total_value_display = f'<div><span style="color: #64748b;">Total Value:</span> <span style="color: #22c55e;">{fmt_usd(tv, disp)}</span></div>'
 
         # Build bid section
         bid_section = ""
@@ -571,11 +590,11 @@ def _render_trading_market(player, current_tick):
         elif my_bid:
             if not is_relist and is_price_bid:
                 leading = my_bid.bid_amount <= best_bid if best_bid else True
-                my_display = f"${my_bid.bid_amount:,.2f}/del"
+                my_display = f"{fmt_usd(my_bid.bid_amount, disp)}/del"
                 update_hint = "Lower your price"
             elif is_relist:
                 leading = my_bid.bid_amount >= best_bid if best_bid else True
-                my_display = f"${my_bid.bid_amount:,.0f}"
+                my_display = f"{fmt_usd(my_bid.bid_amount, disp, precision=0)}"
                 update_hint = "Raise offer"
             else:
                 leading = my_bid.bid_amount >= best_bid if best_bid else True
@@ -644,8 +663,11 @@ def _render_trading_market(player, current_tick):
     return html
 
 
-def _render_my_contracts(player, current_tick):
+def _render_my_contracts(player, current_tick, disp=None):
     """Render the player's contracts (created, holding, buying)."""
+    from reserve_banks import get_player_display_currency, fmt_usd
+    if disp is None:
+        disp = get_player_display_currency(player.id)
     from p2p import (
         get_db, Contract, ContractItem, ContractBid, ContractStatus, BidStatus,
         DELIVERY_INTERVALS, CONTRACT_LENGTHS, DELIVERY_GRACE_PERIOD,
@@ -678,12 +700,12 @@ def _render_my_contracts(player, current_tick):
             if is_price_bid:
                 mode_label = "Price Bid"
                 items_html = ", ".join([f"{i.quantity_per_delivery:.1f}x {format_item_name(i.item_type)}" for i in items])
-                terms_html = f'Max Price: <span style="color: #f59e0b;">${contract.max_price_per_delivery:,.2f}</span>/delivery' if contract.max_price_per_delivery else ""
+                terms_html = f'Max Price: <span style="color: #f59e0b;">{fmt_usd(contract.max_price_per_delivery, disp)}</span>/delivery' if contract.max_price_per_delivery else ""
                 min_bid_label = "Min Price ($/del)"
             else:
                 mode_label = "Quantity Bid"
                 items_html = ", ".join([format_item_name(i.item_type) for i in items])
-                terms_html = f'Price: <span style="color: #22c55e;">${contract.price_per_delivery:,.2f}</span>/delivery'
+                terms_html = f'Price: <span style="color: #22c55e;">{fmt_usd(contract.price_per_delivery, disp)}</span>/delivery'
                 min_bid_label = "Min Qty (units)"
 
             bid_dur_options = "".join([f'<option value="{k}">{v["label"]}</option>' for k, v in BID_DURATION_OPTIONS.items()])
@@ -765,7 +787,7 @@ def _render_my_contracts(player, current_tick):
                 <p style="font-size: 0.85rem;">
                     Deliveries: {contract.deliveries_completed}/{contract.total_deliveries} |
                     Next in: {mins_until_next:.0f} min |
-                    Payment: <span style="color: #ef4444;">${price:,.2f}/delivery</span>
+                    Payment: <span style="color: #ef4444;">{fmt_usd(price, disp)}/delivery</span>
                 </p>
                 <div class="progress" style="margin-top: 8px;">
                     <div class="progress-bar" style="width: {progress_pct:.0f}%; background: #22c55e;"></div>
@@ -795,13 +817,13 @@ def _render_my_contracts(player, current_tick):
                 <p style="font-size: 0.85rem;">
                     Deliveries: {contract.deliveries_completed}/{contract.total_deliveries} |
                     Next due in: {mins_until_next:.0f} min |
-                    Payment: <span style="color: #22c55e;">${price:,.2f}/delivery</span>
+                    Payment: <span style="color: #22c55e;">{fmt_usd(price, disp)}/delivery</span>
                 </p>
                 <div class="progress" style="margin-top: 8px;">
                     <div class="progress-bar" style="width: {progress_pct:.0f}%; background: #c084fc;"></div>
                 </div>
                 <details style="margin-top: 12px;">
-                    <summary style="color: #f59e0b; cursor: pointer; font-size: 0.85rem;">Relist Contract (${RELIST_FEE:,.0f} fee)</summary>
+                    <summary style="color: #f59e0b; cursor: pointer; font-size: 0.85rem;">Relist Contract ({fmt_usd(RELIST_FEE, disp, precision=0)} fee)</summary>
                     <form action="/p2p/contracts/relist" method="post" style="margin-top: 8px;">
                         <input type="hidden" name="contract_id" value="{contract.id}">
                         <div style="display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin-bottom: 8px;">
@@ -813,7 +835,7 @@ def _render_my_contracts(player, current_tick):
                                 <label style="font-size: 0.75rem; color: #64748b;">Min Bid ($)</label>
                                 <input type="number" name="minimum_bid" min="0" step="1" value="0" style="width: 100px; font-size: 0.85rem;">
                             </div>
-                            <button type="submit" class="btn-orange">Relist (${RELIST_FEE:,.0f})</button>
+                            <button type="submit" class="btn-orange">Relist ({fmt_usd(RELIST_FEE, disp, precision=0)})</button>
                         </div>
                         <p style="font-size: 0.75rem; color: #64748b;">Relisting pauses deliveries and puts the contract back on the market for cash bids. Fee paid to Government.</p>
                     </form>
@@ -834,7 +856,7 @@ def _render_my_contracts(player, current_tick):
             html += f'''
             <div class="card" style="border-color: #475569; opacity: 0.8;">
                 <p style="font-size: 0.85rem;">
-                    Contract #{contract.id} | Role: {role} | {contract.deliveries_completed} deliveries | Total: ${tv:,.2f}
+                    Contract #{contract.id} | Role: {role} | {contract.deliveries_completed} deliveries | Total: {fmt_usd(tv, disp)}
                     <span class="badge" style="background: #22c55e; color: #020617;">COMPLETED</span>
                 </p>
             </div>
@@ -854,7 +876,7 @@ def _render_my_contracts(player, current_tick):
             html += f'''
             <div class="card" style="border-color: #ef4444; opacity: 0.8;">
                 <p style="font-size: 0.85rem;">
-                    Contract #{contract.id} | {breacher_label} | Penalty: <span style="color: #ef4444;">${penalty:,.2f}</span> | Reason: {contract.breach_reason or "N/A"}
+                    Contract #{contract.id} | {breacher_label} | Penalty: <span style="color: #ef4444;">{fmt_usd(penalty, disp)}</span> | Reason: {contract.breach_reason or "N/A"}
                     <span class="badge" style="background: #ef4444;">BREACHED</span>
                 </p>
             </div>
@@ -1020,6 +1042,8 @@ def create_price_bid_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import create_contract_price_bid
 
@@ -1066,6 +1090,8 @@ def create_quantity_bid_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import create_contract_quantity_bid
 
@@ -1105,6 +1131,8 @@ def list_contract_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import list_contract
 
@@ -1136,6 +1164,8 @@ def bid_contract_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import place_bid
 
@@ -1168,6 +1198,8 @@ def relist_contract_action(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from p2p import relist_contract, RELIST_FEE
 
