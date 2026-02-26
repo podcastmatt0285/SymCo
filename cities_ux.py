@@ -338,17 +338,34 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
         )
         
         can_create = len([d for d in player_districts if d.occupied_by_business_id is None]) >= 10
-        create_disabled = "" if can_create and player.cash_balance >= 10000000 else "disabled"
-        
+        from reserve_banks import get_player_display_currency, can_afford_usd
+        disp = get_player_display_currency(player.id)
+        creation_cost_disp = f"{disp['symbol']}{10_000_000 / disp['usd_per_unit']:,.2f} {disp['code']}"
+        creation_cost_usd  = "$10,000,000" if disp["code"] == "USD" else f"$10,000,000 (≈ {creation_cost_disp})"
+        has_funds = can_afford_usd(player.id, player.cash_balance, 10_000_000)
+        create_disabled = "" if can_create and has_funds else "disabled"
+
+        # Display current balance in player's currency
+        if disp["code"] == "USD":
+            balance_disp = f"${player.cash_balance:,.2f}"
+        else:
+            from reserve_banks import get_player_currency_balances
+            foreign_bals = {b["currency_code"]: b for b in get_player_currency_balances(player.id)}
+            fb = foreign_bals.get(disp["code"])
+            if fb:
+                balance_disp = f"{fb['currency_symbol']}{fb['balance']:,.2f} {fb['currency_code']} (≈ ${player.cash_balance:,.2f})"
+            else:
+                balance_disp = f"${player.cash_balance:,.2f}"
+
         create_section = f"""
         <div class="card">
             <h2>🏙️ Create a City</h2>
             <p style="color: #94a3b8; margin-bottom: 16px;">
-                Sacrifice 10 districts and $10,000,000 to create your own city and become its Mayor.
+                Sacrifice 10 districts and {creation_cost_usd} to create your own city and become its Mayor.
             </p>
             <p style="margin-bottom: 16px;">
                 <strong>Your vacant districts:</strong> {len([d for d in player_districts if d.occupied_by_business_id is None])}/10 required<br>
-                <strong>Your cash:</strong> ${player.cash_balance:,.2f} ($10,000,000 required)
+                <strong>Your balance:</strong> {balance_disp} ({creation_cost_disp} required)
             </p>
             <form action="/api/city/create" method="post">
                 <div class="form-group">
@@ -773,10 +790,18 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 CityApplication.status == "pending"
             ).first()
             
+            from reserve_banks import get_player_display_currency
+            _disp = get_player_display_currency(player.id)
+            def _fmt_fee(usd_amt):
+                if _disp["code"] == "USD":
+                    return f"${usd_amt:,.2f}"
+                converted = usd_amt / _disp["usd_per_unit"]
+                return f"{_disp['symbol']}{converted:,.2f} {_disp['code']} (≈ ${usd_amt:,.2f})"
+
             if pending_app:
                 apply_section = f"""
                 <div class="alert alert-info">
-                    Your application is pending review. Fee if approved: ${pending_app.calculated_fee:,.2f}
+                    Your application is pending review. Fee if approved: {_fmt_fee(pending_app.calculated_fee)}
                 </div>
                 """
             else:
@@ -784,24 +809,31 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
 
                 apply_section = f"""
                 <p style="margin-bottom: 12px;">
-                    <strong>Application Fee:</strong> ${flat_fee:,.2f} (flat fee)
+                    <strong>Application Fee:</strong> {_fmt_fee(flat_fee)} (flat fee)
                 </p>
                 <form action="/api/city/apply" method="post">
                     <input type="hidden" name="city_id" value="{city_id}">
                     <button type="submit" class="btn btn-primary">Apply to Join</button>
                 </form>
                 """
-    
+
     # Member actions
     member_actions = ""
     if is_member and not is_city_mayor:
         flat_reloc_fee = city.relocation_fee or 10_000.0
+        from reserve_banks import get_player_display_currency
+        _disp2 = get_player_display_currency(player.id)
+        def _fmt_fee2(usd_amt):
+            if _disp2["code"] == "USD":
+                return f"${usd_amt:,.2f}"
+            converted = usd_amt / _disp2["usd_per_unit"]
+            return f"{_disp2['symbol']}{converted:,.2f} {_disp2['code']} (≈ ${usd_amt:,.2f})"
 
         member_actions = f"""
         <div class="card">
             <h2>Member Actions</h2>
             <p style="color: #94a3b8; margin-bottom: 12px;">
-                Relocation fee to leave: ${flat_reloc_fee:,.2f} (flat fee)
+                Relocation fee to leave: {_fmt_fee2(flat_reloc_fee)} (flat fee)
             </p>
             <form action="/api/city/leave" method="post" onsubmit="return confirm('Are you sure you want to leave?');">
                 <button type="submit" class="btn btn-danger">Leave City</button>

@@ -408,12 +408,15 @@ def create_city(founder_id: int, city_name: str, district_ids: List[int]) -> Tup
                 return None, f"District {district_id} has a business on it - remove it first"
             districts.append(district)
         
-        # Check founder has enough cash
-        if player.cash_balance < CITY_CREATION_COST:
+        # Check founder has enough funds (respects foreign legal tender)
+        from reserve_banks import spend_player_funds, can_afford_usd
+        if not can_afford_usd(founder_id, player.cash_balance, CITY_CREATION_COST):
             return None, f"Insufficient funds. Need ${CITY_CREATION_COST:,.2f}"
-        
-        # Deduct creation cost
-        player.cash_balance -= CITY_CREATION_COST
+
+        # Deduct creation cost from player's legal tender
+        ok, _err = spend_player_funds(db, player, CITY_CREATION_COST)
+        if not ok:
+            return None, _err
         # Log city creation cost
         log_transaction(
             founder_id,
@@ -522,8 +525,9 @@ def apply_to_city(player_id: int, city_id: int) -> Tuple[Optional[CityApplicatio
         # Flat application fee (set by Mayor)
         fee = city.application_fee or 50_000.0
 
-        # Check player can afford the fee
-        if player.cash_balance < fee:
+        # Check player can afford the fee (respects foreign legal tender)
+        from reserve_banks import can_afford_usd
+        if not can_afford_usd(player_id, player.cash_balance, fee):
             return None, f"Insufficient funds for application fee (${fee:,.2f})"
         
         # Create application
@@ -589,14 +593,19 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
         if not mayor:
             return False, "Mayor not found"
         
-        if player.cash_balance < application.calculated_fee:
+        from reserve_banks import spend_player_funds, can_afford_usd, convert_to_legal_tender
+        if not can_afford_usd(application.applicant_id, player.cash_balance, application.calculated_fee):
             application.status = "rejected"
             db.commit()
             return False, "Applicant can no longer afford the fee"
-        
-        player.cash_balance -= application.calculated_fee
+
+        ok, _err = spend_player_funds(db, player, application.calculated_fee)
+        if not ok:
+            application.status = "rejected"
+            db.commit()
+            return False, f"Fee payment failed: {_err}"
+
         try:
-            from reserve_banks import convert_to_legal_tender
             _amt, _code = convert_to_legal_tender(mayor.id, application.calculated_fee)
             if _code == "USD":
                 mayor.cash_balance += _amt
@@ -672,13 +681,16 @@ def leave_city(player_id: int) -> Tuple[bool, str]:
         # Flat relocation fee (set by Mayor)
         relocation_fee = city.relocation_fee or 10_000.0
 
-        if player.cash_balance < relocation_fee:
+        from reserve_banks import spend_player_funds, can_afford_usd
+        if not can_afford_usd(player_id, player.cash_balance, relocation_fee):
             return False, f"Insufficient funds for relocation fee (${relocation_fee:,.2f})"
-        
+
         # Pay relocation fee to city bank
         bank = db.query(CityBank).filter(CityBank.city_id == city.id).first()
         if bank:
-            player.cash_balance -= relocation_fee
+            ok, _err = spend_player_funds(db, player, relocation_fee)
+            if not ok:
+                return False, _err
             bank.cash_reserves += relocation_fee
             # Log relocation fee
             log_transaction(

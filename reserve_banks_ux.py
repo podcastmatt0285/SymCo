@@ -228,7 +228,7 @@ def bond_market(
             yc      = "#22c55e" if b["current_yield_pct"] >= 0 else "#ef4444"
             delta   = b["current_yield_pct"] - b["purchase_yield_pct"]
             delta_s = f'+{delta:.4f}%' if delta >= 0 else f'{delta:.4f}%'
-            sell_confirm = f"Sell bond early for {b['sell_value_wsc']:.4f} WSC?"
+            sell_confirm = f"Sell bond early? You will receive approx {b['currency_symbol']}{b['sell_value_foreign']:.4f} {b['currency_code']} (face value converted at current FX)."
             bond_rows += f"""
             <div class="bond-row">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -240,8 +240,9 @@ def bond_market(
                         ({b['remaining_days']} days left)
                     </div>
                     <div style="text-align:right;">
-                        <div>Face: <strong>{b['face_value_wsc']:.4f} WSC</strong></div>
-                        <div class="mini">Sell now: <strong style="color:#f59e0b;">{b['sell_value_wsc']:.4f} WSC</strong> (×{b['price_factor']:.4f})</div>
+                        <div>Face value at maturity: <strong>{b['currency_symbol']}{b['maturity_value_foreign']:.4f} {b['currency_code']}</strong>
+                            <span class="mini"> ({b['face_value_wsc']:.4f} WSC equiv)</span></div>
+                        <div class="mini">Sell now: <strong style="color:#f59e0b;">{b['currency_symbol']}{b['sell_value_foreign']:.4f} {b['currency_code']}</strong> (×{b['price_factor']:.4f})</div>
                     </div>
                 </div>
                 <div style="margin-top:8px;display:flex;gap:20px;flex-wrap:wrap;">
