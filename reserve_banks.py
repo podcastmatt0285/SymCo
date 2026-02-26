@@ -296,6 +296,18 @@ def initialize():
     """Seed default reserve banks if they don't exist yet."""
     db = get_db()
     try:
+        # Schema migration MUST run before any ORM query, because SQLAlchemy will
+        # try to SELECT wsc_holdings (it's in the model) and fail if the column
+        # doesn't exist yet in the live database.
+        try:
+            db.execute(text(
+                "ALTER TABLE state_reserve_banks"
+                " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
+            ))
+            db.commit()
+        except Exception:
+            db.rollback()   # column already exists — safe to ignore
+
         for (code, name, sym, flag, yield_r, usd_rate, min_y, max_y) in DEFAULT_BANKS:
             exists = db.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == code
@@ -313,14 +325,6 @@ def initialize():
                 )
                 db.add(bank)
         db.commit()
-        # Schema migration: add wsc_holdings column if the table predates this feature
-        try:
-            db.execute(text(
-                "ALTER TABLE state_reserve_banks ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
-            ))
-            db.commit()
-        except Exception:
-            db.rollback()   # column already exists or DB doesn't support IF NOT EXISTS — safe to ignore
         print(f"[ReserveBanks] {len(DEFAULT_BANKS)} banks seeded/verified.")
     except Exception as e:
         db.rollback()
