@@ -1037,7 +1037,7 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     from auth import Player
     
@@ -1141,7 +1141,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     stats = calculate_player_stats(player.id)
     
@@ -1327,7 +1327,7 @@ async def stats_leaderboard(
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     update_all_rankings()
     
@@ -1423,7 +1423,7 @@ async def stats_businesses(
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     db.close()
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     # Load business types
     business_types = {}
@@ -1518,7 +1518,7 @@ async def stats_business_detail(
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     db.close()
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     # Load business data
     biz = None
@@ -1643,7 +1643,7 @@ async def stats_items(
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     db.close()
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     # Load item types
     items = {}
@@ -1748,7 +1748,7 @@ async def stats_item_detail(
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
     
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     # Load item data
     item = None
@@ -1899,7 +1899,7 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
     if not player:
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
 
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     try:
         from districts import DISTRICT_TYPES, DISTRICT_TAX_MULTIPLIER
@@ -1974,7 +1974,7 @@ async def stats_production_costs(
     if not player:
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
 
-        from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     import json as _json
 

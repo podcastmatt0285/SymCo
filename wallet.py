@@ -791,6 +791,15 @@ def claim_faucet(player_id: int, claim_type: str = "manual") -> Tuple[bool, str,
 
     wallet_db = get_db()
     try:
+        # Lock the treasury row first so concurrent manual claims are serialized
+        # at the DB level, eliminating the TOCTOU cooldown-bypass race on
+        # multi-threaded / multi-worker servers.
+        treasury = wallet_db.query(WSCTreasury).filter(
+            WSCTreasury.id == 1
+        ).with_for_update().first()
+        if not treasury:
+            treasury = _get_or_create_treasury(wallet_db)
+
         if claim_type == "manual":
             cooldown_cutoff = datetime.utcnow() - timedelta(hours=FAUCET_COOLDOWN_HOURS)
             last = wallet_db.query(FaucetClaim).filter(
@@ -804,7 +813,6 @@ def claim_faucet(player_id: int, claim_type: str = "manual") -> Tuple[bool, str,
                 mins = int((remaining.total_seconds() % 3600) // 60)
                 return False, f"Faucet cooldown: {hrs}h {mins}m remaining.", 0.0
 
-        treasury = _get_or_create_treasury(wallet_db)
         if treasury.faucet_pool <= 0:
             return False, "Faucet pool is empty — more swaps are needed to refill it.", 0.0
 

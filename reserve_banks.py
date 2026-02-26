@@ -57,7 +57,7 @@ Forex
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 
-from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, text
+from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, text, update as sa_update
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -372,7 +372,12 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         bond.interest_accrued += hourly
 
         # Credit (or debit) the player's currency balance.
-        _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, hourly)
+        # Negative interest is clamped at zero so yields can never push a
+        # player's balance below zero, preventing effective negative balances.
+        _adjust_currency_balance(
+            db, bond.holder_player_id, bank.currency_code, hourly,
+            floor=0.0 if hourly < 0 else None,
+        )
 
         bank.total_interest_paid += abs(hourly)
 
@@ -460,15 +465,48 @@ def _get_or_create_currency_balance(db, player_id: int, currency_code: str) -> P
     return bal
 
 
-def _adjust_currency_balance(db, player_id: int, currency_code: str, amount: float):
-    """Add (or subtract if negative) `amount` to a player's currency balance."""
+def _adjust_currency_balance(
+    db, player_id: int, currency_code: str, amount: float, floor: float = None
+):
+    """Add (or subtract if negative) `amount` to a player's currency balance.
+
+    If `floor` is provided the resulting balance is clamped to that value.
+    Use floor=0.0 for negative-interest accrual so balances never go below zero.
+    """
     bal = _get_or_create_currency_balance(db, player_id, currency_code)
-    bal.balance     += amount
+    new_bal = bal.balance + amount
+    if floor is not None:
+        new_bal = max(floor, new_bal)
+    effective_delta  = new_bal - bal.balance
+    bal.balance      = new_bal
     bal.updated_at   = datetime.utcnow()
-    if amount > 0:
-        bal.total_earned += amount
-    else:
-        bal.total_spent  += abs(amount)
+    if effective_delta > 0:
+        bal.total_earned += effective_delta
+    elif effective_delta < 0:
+        bal.total_spent  += abs(effective_delta)
+
+
+def _debit_currency_balance_atomic(
+    db, player_id: int, currency_code: str, amount: float
+) -> bool:
+    """Atomically debit `amount` from a player's foreign-currency balance.
+
+    Uses a SQL-level UPDATE … WHERE balance >= amount so concurrent requests
+    cannot both pass a Python-level balance check and double-spend the same funds.
+    Returns True on success, False if the balance was insufficient.
+    """
+    result = db.execute(
+        sa_update(PlayerCurrencyBalance)
+        .where(PlayerCurrencyBalance.player_id     == player_id)
+        .where(PlayerCurrencyBalance.currency_code == currency_code)
+        .where(PlayerCurrencyBalance.balance       >= amount)
+        .values(
+            balance     = PlayerCurrencyBalance.balance     - amount,
+            total_spent = PlayerCurrencyBalance.total_spent + amount,
+            updated_at  = datetime.utcnow(),
+        )
+    )
+    return result.rowcount > 0
 
 
 # ==========================
@@ -818,16 +856,9 @@ def process_cross_currency_payment(
         net_usd       = usd_value - fee_usd
         recip_amount  = net_usd / recip_usd_rate
 
-        # Debit payer
-        bal = db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id     == payer_id,
-            PlayerCurrencyBalance.currency_code == payer_code,
-        ).first()
-        payer_bal = bal.balance if bal else 0.0
-        if payer_bal < amount_in_payer_currency:
+        # Atomically debit payer — SQL-level WHERE prevents TOCTOU double-spend.
+        if not _debit_currency_balance_atomic(db, payer_id, payer_code, amount_in_payer_currency):
             return False, 0.0, recipient_currency
-
-        _adjust_currency_balance(db, payer_id, payer_code, -amount_in_payer_currency)
 
         # Payer's bank needs to provide recipient currency
         if payer_bank:
@@ -1297,22 +1328,23 @@ def spend_player_funds(main_db, player, usd_cost: float) -> Tuple[bool, str]:
             return True, ""
 
         foreign_cost = usd_cost / bank.usd_per_unit
-        bal = db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id == player.id,
-            PlayerCurrencyBalance.currency_code == tender,
-        ).first()
-        foreign_balance = bal.balance if bal else 0.0
 
-        if foreign_balance >= foreign_cost:
-            _adjust_currency_balance(db, player.id, tender, -foreign_cost)
+        # Attempt atomic foreign-currency debit (eliminates TOCTOU race).
+        if _debit_currency_balance_atomic(db, player.id, tender, foreign_cost):
             db.commit()
             return True, ""
 
-        # Not enough foreign currency — try USD fallback
+        # Insufficient foreign balance (or no balance row) — try USD fallback.
         if player.cash_balance >= usd_cost:
             player.cash_balance -= usd_cost
             return True, ""
 
+        # Report current foreign balance in the error message.
+        bal = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player.id,
+            PlayerCurrencyBalance.currency_code == tender,
+        ).first()
+        foreign_balance = bal.balance if bal else 0.0
         symbol = bank.currency_symbol or tender
         return False, (
             f"Insufficient funds. Need {symbol}{foreign_cost:,.2f} {tender} "
