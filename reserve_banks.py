@@ -294,20 +294,22 @@ def get_db():
 
 def initialize():
     """Seed default reserve banks if they don't exist yet."""
-    db = get_db()
+    # Schema migration via a raw engine connection so the DDL gets its own
+    # independent transaction and cannot be silently rolled back by the ORM
+    # session that follows.  This MUST complete before any ORM query, because
+    # SQLAlchemy includes wsc_holdings in every SELECT against StateReserveBank.
     try:
-        # Schema migration MUST run before any ORM query, because SQLAlchemy will
-        # try to SELECT wsc_holdings (it's in the model) and fail if the column
-        # doesn't exist yet in the live database.
-        try:
-            db.execute(text(
+        with engine.connect() as _conn:
+            _conn.execute(text(
                 "ALTER TABLE state_reserve_banks"
                 " ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
             ))
-            db.commit()
-        except Exception:
-            db.rollback()   # column already exists — safe to ignore
+            _conn.commit()
+    except Exception:
+        pass  # column already exists — safe to ignore
 
+    db = get_db()
+    try:
         for (code, name, sym, flag, yield_r, usd_rate, min_y, max_y) in DEFAULT_BANKS:
             exists = db.query(StateReserveBank).filter(
                 StateReserveBank.currency_code == code
