@@ -57,7 +57,7 @@ Forex
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 
-from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -84,6 +84,12 @@ FX_YIELD_LINK      = 0.005         # usd_per_unit fractional change per 1 % yiel
 
 FOREX_FEE_RATE     = 0.002         # 0.2 % fee on each forex conversion
 BOND_MATURITIES    = [30, 90, 180, 365]   # calendar days
+
+# Daily WSC liquidity swap: reserve banks convert accumulated WSC holdings to
+# currency reserves once per day.  Banks with urgent reserve shortfalls earn a
+# small premium to attract liquidity from WSC-rich banks.
+WSC_DAILY_SWAP_TICKS      = 17280   # 24 h × 720 ticks/h
+DAILY_SWAP_URGENCY_PREMIUM = 1.005  # 0.5 % premium paid by a bank urgently needing reserves
 
 # Default reserve banks seeded on initialize()
 DEFAULT_BANKS = [
@@ -126,6 +132,9 @@ class StateReserveBank(Base):
     total_face_value_wsc  = Column(Float,   default=0.0)
     total_interest_paid   = Column(Float,   default=0.0)
     total_forex_volume    = Column(Float,   default=0.0)
+
+    # WSC accumulated from bond sales, pending daily liquidity conversion
+    wsc_holdings          = Column(Float,   default=0.0)
 
     founded_at       = Column(DateTime, default=datetime.utcnow)
 
@@ -304,6 +313,14 @@ def initialize():
                 )
                 db.add(bank)
         db.commit()
+        # Schema migration: add wsc_holdings column if the table predates this feature
+        try:
+            db.execute(text(
+                "ALTER TABLE state_reserve_banks ADD COLUMN IF NOT EXISTS wsc_holdings FLOAT DEFAULT 0.0"
+            ))
+            db.commit()
+        except Exception:
+            db.rollback()   # column already exists or DB doesn't support IF NOT EXISTS — safe to ignore
         print(f"[ReserveBanks] {len(DEFAULT_BANKS)} banks seeded/verified.")
     except Exception as e:
         db.rollback()
@@ -331,6 +348,9 @@ async def tick(app_tick: int, now: datetime):
             _snapshot_history(db, bank, now)
         # Inter-bank settlement runs after all yield/FX adjustments are done
         _tick_interbank_settlement(db)
+        # Daily WSC → currency liquidity swap (once per 24 h)
+        if app_tick % WSC_DAILY_SWAP_TICKS == 0:
+            _daily_wsc_liquidity_swap(db)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -381,29 +401,30 @@ def _adjust_yield_and_fx(db, bank: StateReserveBank):
 
 
 def _mature_bonds(db, bank: StateReserveBank, now: datetime):
-    """Return WSC face value to players whose bonds have matured."""
+    """Return face value in bank's own currency to players whose bonds have matured.
+
+    Since 1 WSC = $1 (peg), the face value converts to bank currency at the current
+    FX rate: foreign_return = face_value_wsc / bank.usd_per_unit.
+    The bank is the issuer of its own currency so it can always satisfy this obligation.
+    """
     matured = db.query(ReserveBankBond).filter(
-        ReserveBankBond.bank_id   == bank.id,
-        ReserveBankBond.status    == "active",
+        ReserveBankBond.bank_id    == bank.id,
+        ReserveBankBond.status     == "active",
         ReserveBankBond.matures_at <= now,
     ).all()
 
     if not matured:
         return
 
-    from wallet import get_db as wallet_get_db, _get_or_create_wsc_wallet
     for bond in matured:
         bond.status = "matured"
         # Reduce outstanding liabilities so reserve-ratio checks stay accurate
         bank.total_face_value_wsc = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
-        # Return face value in WSC
-        wdb = wallet_get_db()
-        try:
-            wsc_w = _get_or_create_wsc_wallet(wdb, bond.holder_player_id)
-            wsc_w.balance += bond.face_value_wsc
-            wdb.commit()
-        finally:
-            wdb.close()
+        # Reduce WSC holdings — this WSC is now being redeemed as bank currency
+        bank.wsc_holdings = max(0.0, bank.wsc_holdings - bond.face_value_wsc)
+        # Return face value in the bank's own currency (1 WSC = $1 → convert at current FX)
+        foreign_return = bond.face_value_wsc / bank.usd_per_unit
+        _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, foreign_return)
 
 
 def _snapshot_history(db, bank: StateReserveBank, now: datetime):
@@ -600,6 +621,91 @@ def _tick_interbank_settlement(db):
                 target_bank   = bank_map.get(reserve.currency_code)
                 if target_bank:
                     _interbank_bond_swap(db, bank, target_bank, min(shortfall_usd, outstanding_usd * 0.05))
+
+
+# ==========================
+# DAILY WSC LIQUIDITY SWAP
+# ==========================
+
+def _daily_wsc_liquidity_swap(db):
+    """
+    Once per day each reserve bank converts its accumulated WSC holdings into
+    currency reserves.  Since 1 WSC = $1 (peg), the conversion is:
+
+        bank_currency_received = wsc_amount / bank.usd_per_unit
+
+    Two paths, whichever offers more value to the selling bank:
+      (A) Direct own-currency issuance: bank creates its own currency from WSC.
+      (B) Inter-bank sale: sell WSC to the reserve bank that has the most
+          urgent shortfall in the selling bank's currency.  That bank pays a
+          DAILY_SWAP_URGENCY_PREMIUM (0.5 %) in its own currency to attract
+          the liquidity.  The buying bank converts the WSC to its own currency
+          and the selling bank keeps the buying bank's currency as reserves.
+
+    Every swap is recorded as a ForexTrade (player_id=None = system operation).
+    """
+    banks     = db.query(StateReserveBank).all()
+    bank_map  = {b.currency_code: b for b in banks}
+
+    for bank in banks:
+        if bank.wsc_holdings < 0.01:
+            continue
+
+        wsc = bank.wsc_holdings
+        bank.wsc_holdings = 0.0
+
+        # -- Find best inter-bank buyer -------------------------------------------
+        best_buyer      = None
+        best_gap_usd    = 0.0
+
+        for other in banks:
+            if other.id == bank.id or other.total_face_value_wsc <= 0:
+                continue
+            their_reserve = db.query(BankReserveBalance).filter(
+                BankReserveBalance.bank_id       == other.id,
+                BankReserveBalance.currency_code == bank.currency_code,
+            ).first()
+            reserve_usd = (their_reserve.balance * bank.usd_per_unit) if their_reserve else 0.0
+            gap = max(0.0, other.total_face_value_wsc * BANK_MIN_RESERVE_RATIO - reserve_usd)
+            if gap > best_gap_usd:
+                best_gap_usd = gap
+                best_buyer   = other
+
+        if best_buyer and best_gap_usd > 0:
+            # Path B: inter-bank sale — buyer pays a small premium in its own currency
+            buyer_currency_per_wsc = (1.0 / best_buyer.usd_per_unit) * DAILY_SWAP_URGENCY_PREMIUM
+            buyer_currency_received = wsc * buyer_currency_per_wsc
+
+            # Selling bank gains buyer's currency as reserves
+            _add_bank_reserve(db, bank.id, best_buyer.currency_code, buyer_currency_received)
+
+            # Buying bank receives WSC and converts to its own currency (it is the issuer)
+            buyer_own_gain = wsc / best_buyer.usd_per_unit
+            _add_bank_reserve(db, best_buyer.id, best_buyer.currency_code, buyer_own_gain)
+
+            db.add(ForexTrade(
+                player_id     = None,
+                from_currency = "WSC",
+                to_currency   = best_buyer.currency_code,
+                amount_from   = wsc,
+                amount_to     = buyer_currency_received,
+                exchange_rate = buyer_currency_per_wsc,
+                fee_usd       = 0.0,
+            ))
+        else:
+            # Path A: direct own-currency issuance (bank is the issuer, no limit)
+            own_gain = wsc / bank.usd_per_unit
+            _add_bank_reserve(db, bank.id, bank.currency_code, own_gain)
+
+            db.add(ForexTrade(
+                player_id     = None,
+                from_currency = "WSC",
+                to_currency   = bank.currency_code,
+                amount_from   = wsc,
+                amount_to     = own_gain,
+                exchange_rate = 1.0 / bank.usd_per_unit,
+                fee_usd       = 0.0,
+            ))
 
 
 # ==========================
@@ -818,6 +924,7 @@ def purchase_bond(
             bank.total_bonds_issued   += 1
             bank.total_face_value_wsc += wsc_amount
             bank.net_demand_wsc       += wsc_amount
+            bank.wsc_holdings         += wsc_amount   # WSC held pending daily liquidity swap
 
             db.commit()
         except Exception as bond_err:
@@ -852,17 +959,18 @@ def purchase_bond(
 
 def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
     """
-    Sell a bond before maturity for WSC at a price reflecting current yield vs purchase yield.
+    Sell a bond before maturity. Returns value in the bank's own currency
+    (not WSC) at a price reflecting current yield vs purchase yield.
 
     Price formula (simplified duration model):
       price_factor = 1 + (purchase_yield - current_yield) × remaining_years
     If current_yield > purchase_yield: bond is worth less (rising rates hurt bonds).
     If current_yield < purchase_yield: bond is worth more (falling rates help bonds).
-    """
-    from wallet import get_db as wallet_get_db, WSCWallet, _get_or_create_wsc_wallet
 
-    db        = get_db()
-    wallet_db = wallet_get_db()
+    Since 1 WSC = $1 (peg), the WSC price converts to bank currency at current FX:
+      foreign_return = wsc_return / bank.usd_per_unit
+    """
+    db = get_db()
     try:
         bond = db.query(ReserveBankBond).filter(
             ReserveBankBond.id               == bond_id,
@@ -881,33 +989,36 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         # Modified-duration price model
         price_factor = 1.0 + (bond.purchase_yield - bank.yield_rate) * remaining_years
         price_factor = max(0.50, min(2.0, price_factor))   # cap to ±50 % of face value
-        wsc_return   = bond.face_value_wsc * price_factor
+        wsc_equiv    = bond.face_value_wsc * price_factor
+
+        # Convert WSC equivalent to bank's own currency (1 WSC = $1)
+        foreign_return = wsc_equiv / bank.usd_per_unit
+        currency_sym   = bank.currency_symbol
+        currency_code  = bank.currency_code
 
         bond.status                = "sold"
         bank.net_demand_wsc       -= bond.face_value_wsc   # selling = negative demand
         bank.total_face_value_wsc  = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
+        bank.wsc_holdings          = max(0.0, bank.wsc_holdings - bond.face_value_wsc)
+
+        # Credit foreign currency to player
+        _adjust_currency_balance(db, player_id, currency_code, foreign_return)
         db.commit()
 
-        # Return WSC to player
-        wsc_w = _get_or_create_wsc_wallet(wallet_db, player_id)
-        wsc_w.balance += wsc_return
-        wallet_db.commit()
-
-        gain_loss = wsc_return - bond.face_value_wsc
-        sign      = "+" if gain_loss >= 0 else ""
+        face_foreign  = bond.face_value_wsc / bank.usd_per_unit
+        gain_foreign  = foreign_return - face_foreign
+        sign          = "+" if gain_foreign >= 0 else ""
         return True, (
-            f"Bond sold: received {wsc_return:.4f} WSC "
-            f"({sign}{gain_loss:.4f} vs face value, price factor {price_factor:.4f}). "
-            f"Accumulated interest ({bond.interest_accrued:.4f} {bank.currency_code}) remains in your balance."
+            f"Bond sold: received {currency_sym}{foreign_return:.4f} {currency_code} "
+            f"({sign}{gain_foreign:.4f} vs face value, price factor {price_factor:.4f}). "
+            f"Accumulated interest ({bond.interest_accrued:.4f} {currency_code}) also remains in your balance."
         )
 
     except Exception as e:
         db.rollback()
-        wallet_db.rollback()
         return False, f"Bond sale error: {e}"
     finally:
         db.close()
-        wallet_db.close()
 
 
 # ==========================
@@ -1066,6 +1177,62 @@ def _available_codes(db) -> List[str]:
     return ["USD"] + [b.currency_code for b in db.query(StateReserveBank).all()]
 
 
+def get_player_display_currency(player_id: int) -> dict:
+    """
+    Returns display formatting info for a player's legal tender.
+    Used by UX routes to show prices in the player's preferred currency.
+
+    Returns a dict with keys: code, symbol, usd_per_unit, flag.
+    Falls back to USD defaults if no foreign tender is set.
+    """
+    code = get_player_legal_tender(player_id)
+    if code == "USD":
+        return {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
+    db = get_db()
+    try:
+        bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == code
+        ).first()
+        if not bank:
+            return {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
+        return {
+            "code":         code,
+            "symbol":       bank.currency_symbol,
+            "usd_per_unit": bank.usd_per_unit,
+            "flag":         bank.flag_emoji,
+        }
+    finally:
+        db.close()
+
+
+def can_afford_usd(player_id: int, cash_balance: float, usd_cost: float) -> bool:
+    """
+    Returns True if the player can afford usd_cost using their legal tender.
+    Checks foreign currency balance for non-USD players, with USD fallback.
+    """
+    if usd_cost <= 0:
+        return True
+    tender = get_player_legal_tender(player_id)
+    if tender == "USD":
+        return cash_balance >= usd_cost
+    db = get_db()
+    try:
+        bank = db.query(StateReserveBank).filter(
+            StateReserveBank.currency_code == tender
+        ).first()
+        if not bank:
+            return cash_balance >= usd_cost
+        foreign_cost = usd_cost / bank.usd_per_unit
+        bal = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == tender,
+        ).first()
+        foreign_balance = bal.balance if bal else 0.0
+        return foreign_balance >= foreign_cost or cash_balance >= usd_cost
+    finally:
+        db.close()
+
+
 def convert_to_legal_tender(player_id: int, usd_amount: float) -> Tuple[float, str]:
     """
     Helper called by income functions: convert USD income to the player's legal tender.
@@ -1182,6 +1349,7 @@ def get_player_bonds(player_id: int) -> List[dict]:
             remaining_years = max((bond.matures_at - now).total_seconds() / (365 * 86400), 0.0)
             price_factor = 1.0 + (bond.purchase_yield - bank.yield_rate) * remaining_years
             price_factor = max(0.50, min(2.0, price_factor))
+            wsc_sell_equiv = bond.face_value_wsc * price_factor
             result.append({
                 "id": bond.id,
                 "currency_code": bank.currency_code,
@@ -1194,7 +1362,12 @@ def get_player_bonds(player_id: int) -> List[dict]:
                 "maturity_days": bond.maturity_days,
                 "matures_at": bond.matures_at.strftime("%Y-%m-%d"),
                 "remaining_days": remaining_days,
-                "sell_value_wsc": round(bond.face_value_wsc * price_factor, 4),
+                # sell_value_wsc: WSC-equivalent (= USD value, since 1 WSC = $1)
+                "sell_value_wsc": round(wsc_sell_equiv, 4),
+                # sell_value_foreign: amount actually returned in the bank's currency
+                "sell_value_foreign": round(wsc_sell_equiv / bank.usd_per_unit, 4),
+                # maturity_value_foreign: face value in bank's currency at current FX
+                "maturity_value_foreign": round(bond.face_value_wsc / bank.usd_per_unit, 4),
                 "price_factor": round(price_factor, 4),
             })
         return result
@@ -1360,7 +1533,7 @@ __all__ = [
     "process_income_conversion", "process_cross_currency_payment",
     "get_exchange_rate",
     "get_player_legal_tender", "set_player_legal_tender", "convert_to_legal_tender",
-    "spend_player_funds",
+    "spend_player_funds", "can_afford_usd", "get_player_display_currency",
     "get_all_banks", "get_player_bonds", "get_player_currency_balances",
     "get_recent_forex_trades", "get_yield_history",
     "get_bank_reserves", "get_all_bank_reserves", "get_interbank_trades",
