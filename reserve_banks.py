@@ -1205,6 +1205,25 @@ def get_player_display_currency(player_id: int) -> dict:
         db.close()
 
 
+def fmt_usd(usd_amount: float, disp: dict, *, precision: int = 2) -> str:
+    """
+    Format a USD-denominated amount in the player's display currency.
+
+    `disp` is the dict returned by get_player_display_currency().
+
+    For USD players  →  "$1,234.56"
+    For JPY players  →  "¥1,234,567 JPY"
+
+    All prices stored as USD in the DB pass through here before being
+    rendered in any UX route so players always see their own currency.
+    """
+    amount = (usd_amount or 0.0) / disp["usd_per_unit"]
+    formatted = f"{amount:,.{precision}f}"
+    sym  = disp["symbol"]
+    code = disp["code"]
+    return f"{sym}{formatted}" if code == "USD" else f"{sym}{formatted}\u00a0{code}"
+
+
 def can_afford_usd(player_id: int, cash_balance: float, usd_cost: float) -> bool:
     """
     Returns True if the player can afford usd_cost using their legal tender.

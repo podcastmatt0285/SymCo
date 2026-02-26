@@ -380,6 +380,9 @@ async def estate_overview(session_token: Optional[str] = Cookie(None)):
     if isinstance(player, RedirectResponse):
         return player
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from estate import (
         get_player_heirs, get_heir_installments, calculate_estate_value,
         calculate_total_debts, get_all_deceased, DEATH_TAX_RATE,
@@ -429,11 +432,11 @@ async def estate_overview(session_token: Optional[str] = Cookie(None)):
                     <div>
                         <div style="color: #818cf8; font-weight: 600;">Death Tax Installment Due</div>
                         <div style="color: #64748b; font-size: 0.8rem; margin-top: 4px;">
-                            ${inst.installment_amount:,.2f} per installment | {inst.installments_remaining} remaining
+                            {fmt_usd(inst.installment_amount, disp)} per installment | {inst.installments_remaining} remaining
                         </div>
                     </div>
                     <div style="text-align: right;">
-                        <div style="color: #e5e7eb;">${inst.total_tax_paid:,.2f} / ${inst.total_tax_owed:,.2f}</div>
+                        <div style="color: #e5e7eb;">{fmt_usd(inst.total_tax_paid, disp)} / {fmt_usd(inst.total_tax_owed, disp)}</div>
                         <div style="color: #64748b; font-size: 0.75rem;">paid</div>
                     </div>
                 </div>
@@ -465,16 +468,16 @@ async def estate_overview(session_token: Optional[str] = Cookie(None)):
                 <span class="cert-title">Your Estate Value</span>
             </div>
             <div style="font-size: 1.75rem; font-weight: 700; color: #e5e7eb; margin-bottom: 16px;">
-                ${estate['total']:,.2f}
+                {fmt_usd(estate['total'], disp)}
             </div>
-            <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">${estate['cash']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">${estate['inventory']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Land ({estate['land_count']})</span><span class="stat-value">${estate['land']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Businesses ({estate['business_count']})</span><span class="stat-value">${estate['businesses']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Shares</span><span class="stat-value">${estate['shares']:,.2f}</span></div>
-            <div class="stat-row"><span class="stat-label">Districts ({estate['district_count']})</span><span class="stat-value">${estate['districts']:,.2f}</span></div>
+            <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">{fmt_usd(estate['cash'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">{fmt_usd(estate['inventory'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Land ({estate['land_count']})</span><span class="stat-value">{fmt_usd(estate['land'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Businesses ({estate['business_count']})</span><span class="stat-value">{fmt_usd(estate['businesses'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Shares</span><span class="stat-value">{fmt_usd(estate['shares'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Districts ({estate['district_count']})</span><span class="stat-value">{fmt_usd(estate['districts'], disp)}</span></div>
             <div class="divider">- - -</div>
-            <div class="stat-row"><span class="stat-label">Outstanding Debts</span><span class="stat-value negative">${debts:,.2f}</span></div>
+            <div class="stat-row"><span class="stat-label">Outstanding Debts</span><span class="stat-value negative">{fmt_usd(debts, disp)}</span></div>
         </div>
 
         <div>
@@ -531,6 +534,9 @@ async def heir_management(
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
 
     from auth import get_db, Player
     from estate import HeirDesignation
@@ -617,7 +623,7 @@ async def heir_management(
         <div class="player-list-item">
             <div>
                 <span class="player-name">{p.business_name}</span>
-                <span class="player-worth"> - ${net_worth:,.0f} net worth</span>
+                <span class="player-worth"> - {fmt_usd(net_worth, disp, precision=0)} net worth</span>
             </div>
             <div style="display: flex; gap: 6px;">
                 {assign_buttons}
@@ -837,6 +843,9 @@ async def delete_account_page(session_token: Optional[str] = Cookie(None)):
     if isinstance(player, RedirectResponse):
         return player
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     from estate import (
         calculate_estate_value, calculate_total_debts, get_player_heirs,
         DEATH_TAX_RATE, DEBT_PAYMENT_PERCENTAGE, IDLE_DAYS_BEFORE_DEATH,
@@ -881,7 +890,7 @@ async def delete_account_page(session_token: Optional[str] = Cookie(None)):
             heir_projection_html += f"""
             <div class="stat-row">
                 <span class="stat-label">{name}</span>
-                <span class="stat-value positive">${per_heir_net:,.2f} <span style="color: #64748b; font-size: 0.75rem;">(tax: ${per_heir_tax:,.2f})</span></span>
+                <span class="stat-value positive">{fmt_usd(per_heir_net, disp)} <span style="color: #64748b; font-size: 0.75rem;">(tax: {fmt_usd(per_heir_tax, disp)})</span></span>
             </div>
             """
     else:
