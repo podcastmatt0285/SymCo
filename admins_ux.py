@@ -599,8 +599,8 @@ def admin_player_detail(
 
 
 def _player_info_tab(pid, detail, disp=None):
+    from reserve_banks import get_player_display_currency, fmt_usd
     if disp is None:
-        from reserve_banks import get_player_display_currency
         disp = get_player_display_currency(pid)
     return f"""
     <div class="card">
@@ -710,6 +710,7 @@ def _player_land_tab(pid):
 
 
 def _player_districts_tab(pid):
+    from reserve_banks import fmt_usd
     districts = get_player_districts(pid)
     _usd_disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
 

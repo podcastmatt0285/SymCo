@@ -272,7 +272,10 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
     
     cities = get_all_cities()
     player_city = get_player_city(player.id)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd, can_afford_usd
+    disp = get_player_display_currency(player.id)
+
     # Build cities table
     cities_html = ""
     if cities:
@@ -338,8 +341,6 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
         )
         
         can_create = len([d for d in player_districts if d.occupied_by_business_id is None]) >= 10
-        from reserve_banks import get_player_display_currency, can_afford_usd
-        disp = get_player_display_currency(player.id)
         creation_cost_disp = f"{disp['symbol']}{10_000_000 / disp['usd_per_unit']:,.2f} {disp['code']}"
         creation_cost_usd  = "$10,000,000" if disp["code"] == "USD" else f"$10,000,000 (≈ {creation_cost_disp})"
         has_funds = can_afford_usd(player.id, player.cash_balance, 10_000_000)
