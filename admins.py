@@ -900,11 +900,16 @@ def admin_add_player_to_city(admin_id: int, player_id: int, city_id: int) -> dic
         if not city:
             db.close()
             return {"ok": False, "error": "City not found"}
-        from cities import MAX_CITY_MEMBERS
         member_count = db.query(CityMember).filter(CityMember.city_id == city_id).count()
-        if member_count >= MAX_CITY_MEMBERS:
+        try:
+            from city_projects import get_effective_max_members
+            _effective_max = get_effective_max_members(city_id)
+        except Exception:
+            from cities import MAX_CITY_MEMBERS
+            _effective_max = MAX_CITY_MEMBERS
+        if member_count >= _effective_max:
             db.close()
-            return {"ok": False, "error": f"City is at max capacity ({MAX_CITY_MEMBERS})"}
+            return {"ok": False, "error": f"City is at max capacity ({_effective_max})"}
         member = CityMember(player_id=player_id, city_id=city_id, application_fee_paid=0.0)
         db.add(member)
         db.commit()
