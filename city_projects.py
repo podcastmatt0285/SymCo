@@ -1567,16 +1567,27 @@ def initialize():
     print("[CityProjects] Creating database tables...")
     Base.metadata.create_all(bind=engine)
 
-    # Add city_licenses column to city_banks if it doesn't exist
+    # Ensure any columns added to existing tables are present
+    migrations = [
+        ("city_banks",            "city_licenses",          "FLOAT DEFAULT 0.0"),
+        ("city_project_instances","total_ticks_active",     "INTEGER DEFAULT 0"),
+        ("city_project_instances","target_level",           "INTEGER DEFAULT 1"),
+        ("city_project_instances","construction_started_at","TIMESTAMP"),
+        ("city_project_instances","started_by",             "INTEGER"),
+    ]
     try:
         with engine.connect() as conn:
-            conn.execute(text(
-                "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS city_licenses FLOAT DEFAULT 0.0"
-            ))
+            for table, col, col_def in migrations:
+                try:
+                    conn.execute(text(
+                        f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {col_def}"
+                    ))
+                except Exception as _me:
+                    print(f"[CityProjects] Migration note ({table}.{col}): {_me}")
             conn.commit()
-        print("[CityProjects] city_banks.city_licenses ensured.")
+        print("[CityProjects] Schema migrations complete.")
     except Exception as e:
-        print(f"[CityProjects] Note (city_licenses col): {e}")
+        print(f"[CityProjects] Migration error: {e}")
 
     count = len(CITY_PROJECT_TYPES)
     print(f"[CityProjects] {count} project types available ({len(SPECIAL_KEYS)} special).")
