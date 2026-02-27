@@ -969,8 +969,10 @@ async def api_declare_bankruptcy(session_token: Optional[str] = Cookie(None)):
     if not result["ok"]:
         err = quote(result.get("error", "Bankruptcy failed."))
         return RedirectResponse(f"/corporate-actions/dashboard?err={err}", status_code=303)
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
     msg = quote(
-        f"Bankruptcy declared. Account restarted with ${result.get('restart_cash', 20000):,.0f}. "
+        f"Bankruptcy declared. Account restarted with {fmt_usd(result.get('restart_cash', 20000), disp)}. "
         "Red-Q period active — visible in stock market for 30 days."
     )
     return RedirectResponse(f"/?msg={msg}", status_code=303)

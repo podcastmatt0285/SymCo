@@ -1771,16 +1771,16 @@ async def token_info_page(
                 </div>
 
                 <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:16px;">
-                    <span class="token-price-big">${info["price"]:,.4f}</span>
+                    <span class="token-price-big">{fmt_usd(info["price"], disp, precision=4)}</span>
                     {change_badge}
                 </div>
 
                 {chart_html}
 
                 <div style="display:flex;gap:24px;font-size:13px;color:#94a3b8;margin-top:12px;">
-                    <span>24h High: <strong style="color:#4ade80;">${info["high_24h"]:,.4f}</strong></span>
-                    <span>24h Low: <strong style="color:#f87171;">${info["low_24h"]:,.4f}</strong></span>
-                    <span>24h Volume: <strong style="color:#38bdf8;">${info["volume_24h"]:,.2f}</strong></span>
+                    <span>24h High: <strong style="color:#4ade80;">{fmt_usd(info["high_24h"], disp, precision=4)}</strong></span>
+                    <span>24h Low: <strong style="color:#f87171;">{fmt_usd(info["low_24h"], disp, precision=4)}</strong></span>
+                    <span>24h Volume: <strong style="color:#38bdf8;">{fmt_usd(info["volume_24h"], disp)}</strong></span>
                 </div>
             </div>
 
@@ -1790,7 +1790,7 @@ async def token_info_page(
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <div>
                         <div class="wallet-balance">{player_balance:,.6f} {crypto_symbol}</div>
-                        <div class="wallet-value">${player_value:,.4f}</div>
+                        <div class="wallet-value">{fmt_usd(player_value, disp, precision=4)}</div>
                     </div>
                     <div style="display:flex;gap:8px;">
                         <a href="/exchange?symbol={crypto_symbol}" class="btn btn-primary btn-sm">Buy</a>
@@ -1803,15 +1803,15 @@ async def token_info_page(
             <!-- Key Stats Grid -->
             <div class="info-grid">
                 <div class="info-stat">
-                    <div class="info-stat-value">${info["market_cap"]:,.2f}</div>
+                    <div class="info-stat-value">{fmt_usd(info["market_cap"], disp)}</div>
                     <div class="info-stat-label">Market Cap</div>
                 </div>
                 <div class="info-stat">
-                    <div class="info-stat-value">${info["fdv"]:,.2f}</div>
+                    <div class="info-stat-value">{fmt_usd(info["fdv"], disp)}</div>
                     <div class="info-stat-label">Fully Diluted Val.</div>
                 </div>
                 <div class="info-stat">
-                    <div class="info-stat-value">${info["volume_24h"]:,.2f}</div>
+                    <div class="info-stat-value">{fmt_usd(info["volume_24h"], disp)}</div>
                     <div class="info-stat-label">24h Volume</div>
                 </div>
                 <div class="info-stat">
@@ -1827,11 +1827,11 @@ async def token_info_page(
                     <div class="info-stat-label">Max Supply</div>
                 </div>
                 <div class="info-stat">
-                    <div class="info-stat-value">${info["treasury_balance"]:,.2f}</div>
+                    <div class="info-stat-value">{fmt_usd(info["treasury_balance"], disp)}</div>
                     <div class="info-stat-label">Treasury</div>
                 </div>
                 <div class="info-stat">
-                    <div class="info-stat-value">${info["mining_energy"]:,.2f}</div>
+                    <div class="info-stat-value">{fmt_usd(info["mining_energy"], disp)}</div>
                     <div class="info-stat-label">Mining Energy</div>
                 </div>
             </div>
@@ -1887,7 +1887,7 @@ async def token_info_page(
                     </div>
                     <div class="stat">
                         <span class="stat-label">Mining Energy Pool</span>
-                        <span class="stat-value positive">${info["mining_energy"]:,.2f}</span>
+                        <span class="stat-value positive">{fmt_usd(info["mining_energy"], disp)}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">County Cities</span>
@@ -1903,7 +1903,7 @@ async def token_info_page(
                     <div>
                         <div class="stat">
                             <span class="stat-label">Treasury Balance</span>
-                            <span class="stat-value positive">${info["treasury_balance"]:,.4f}</span>
+                            <span class="stat-value positive">{fmt_usd(info["treasury_balance"], disp, precision=4)}</span>
                         </div>
                         <p style="color:#64748b;font-size:11px;margin-top:4px;">
                             Cash held by the county from token purchases.
@@ -2134,11 +2134,13 @@ async def county_governance(
     )
     from cities import get_db
     import app as app_module
+    from reserve_banks import get_player_display_currency, fmt_usd
 
     county = get_county_by_id(county_id)
     if not county:
         return RedirectResponse(url="/counties?error=County+not+found", status_code=303)
 
+    disp = get_player_display_currency(player.id)
     is_member = is_player_in_county(player.id, county_id)
     crypto_price = calculate_crypto_price(county_id)
     current_tick = app_module.current_tick
@@ -2289,7 +2291,7 @@ async def county_governance(
                     "treasury_spend": {{
                         showValue: true, showTarget: true,
                         valueLabel: "Amount to Spend ($)",
-                        valueHint: "Cash to transfer from county treasury (balance: ${county.treasury_balance or 0:,.2f})",
+                        valueHint: "Cash to transfer from county treasury (balance: {fmt_usd(county.treasury_balance or 0, disp)})",
                         valuePlaceholder: "e.g. 10000",
                         targetLabel: "Recipient Player ID",
                         targetHint: "Player ID to receive the funds",
@@ -2421,7 +2423,7 @@ async def county_governance(
                         value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set mining multiplier to {val:.2f}x</div>'
                     elif ptype_v == "treasury_spend":
                         tgt_str = f" to Player {p.get('proposal_target','?')}" if p.get("proposal_target") else ""
-                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Spend ${val:,.2f} from treasury{tgt_str}</div>'
+                        value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Spend {fmt_usd(val, disp)} from treasury{tgt_str}</div>'
                     elif ptype_v == "protocol_upgrade" and val:
                         value_html = f'<div style="color:#fbbf24;font-size:12px;margin-top:4px;">→ Set max supply to {val:,.0f} tokens</div>'
 

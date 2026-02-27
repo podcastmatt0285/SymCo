@@ -2116,8 +2116,9 @@ async def stats_production_costs(
             cost_str = '<span style="color:#475569;">market</span>'
             cost_per = '<span style="color:#475569;">—</span>'
         elif cost == 0:
-            cost_str = '<span style="color:#22c55e;">$0.00</span>'
-            cost_per = '<span style="color:#22c55e;">$0.00</span>'
+            _zero = fmt_usd(0, disp)
+            cost_str = f'<span style="color:#22c55e;">{_zero}</span>'
+            cost_per = f'<span style="color:#22c55e;">{_zero}</span>'
         else:
             cost_str = f'<span style="color:#e5e7eb;">{fmt_usd(cost, disp, precision=4)}</span>' if cost < 1 else f'<span style="color:#e5e7eb;">{fmt_usd(cost, disp)}</span>'
             out_qty = item.get("output_qty") or 1
