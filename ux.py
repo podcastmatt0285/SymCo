@@ -769,7 +769,55 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
             {_s_link("name","Name")} {_s_link("status","Status")} {_s_link("type","Type")} {_s_link("progress","Progress")}
         </div>'''
 
-        biz_html = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1><a href="/stats/production-costs" class="btn-blue">📊 Production Costs</a>{filter_sort_bar}'
+        # City production bonuses panel
+        city_buffs_html = ""
+        try:
+            from city_projects import get_city_production_buffs
+            _cb = get_city_production_buffs(player.id)
+            _buff_rows = []
+            if abs(_cb.get("output_multiplier", 1.0) - 1.0) > 0.001:
+                pct = (_cb["output_multiplier"] - 1.0) * 100
+                sign = "+" if pct >= 0 else ""
+                _buff_rows.append(f'<span style="color:#4ade80;">Output {sign}{pct:.1f}%</span>')
+            if abs(_cb.get("wage_multiplier", 1.0) - 1.0) > 0.001:
+                pct = (_cb["wage_multiplier"] - 1.0) * 100
+                sign = "+" if pct >= 0 else ""
+                col = "#f87171" if pct > 0 else "#4ade80"
+                _buff_rows.append(f'<span style="color:{col};">Wages {sign}{pct:.1f}%</span>')
+            if abs(_cb.get("input_multiplier", 1.0) - 1.0) > 0.001:
+                pct = (_cb["input_multiplier"] - 1.0) * 100
+                sign = "+" if pct >= 0 else ""
+                col = "#f87171" if pct > 0 else "#4ade80"
+                _buff_rows.append(f'<span style="color:{col};">Inputs {sign}{pct:.1f}%</span>')
+            if abs(_cb.get("cycle_speed_multiplier", 1.0) - 1.0) > 0.001:
+                pct = (_cb["cycle_speed_multiplier"] - 1.0) * 100
+                sign = "+" if pct >= 0 else ""
+                col = "#f87171" if pct > 0 else "#4ade80"
+                _buff_rows.append(f'<span style="color:{col};">Cycle Speed {sign}{pct:.1f}%</span>')
+            if abs(_cb.get("market_fee_multiplier", 1.0) - 1.0) > 0.001:
+                pct = (_cb["market_fee_multiplier"] - 1.0) * 100
+                sign = "+" if pct >= 0 else ""
+                col = "#f87171" if pct > 0 else "#4ade80"
+                _buff_rows.append(f'<span style="color:{col};">Market Fees {sign}{pct:.1f}%</span>')
+            if abs(_cb.get("loan_interest_multiplier", 1.0) - 1.0) > 0.001:
+                pct = (_cb["loan_interest_multiplier"] - 1.0) * 100
+                sign = "+" if pct >= 0 else ""
+                col = "#f87171" if pct > 0 else "#4ade80"
+                _buff_rows.append(f'<span style="color:{col};">Loan Interest {sign}{pct:.1f}%</span>')
+            if _cb.get("sales_tax_rate", 0.0) > 0:
+                _buff_rows.append(f'<span style="color:#f87171;">Sales Tax {_cb["sales_tax_rate"]*100:.2f}%</span>')
+            if _buff_rows:
+                city_buffs_html = f'''
+                <div class="card" style="margin-bottom:16px;border-color:#334155;padding:10px 16px;">
+                    <div style="font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">City Production Modifiers</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">
+                        {"&nbsp;·&nbsp;".join(_buff_rows)}
+                    </div>
+                </div>'''
+        except Exception:
+            pass
+
+        biz_html = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1><a href="/stats/production-costs" class="btn-blue">📊 Production Costs</a>{filter_sort_bar}{city_buffs_html}'
         for biz, config, biz_name, biz_class, progress_pct, dismantle_status in biz_tuples:
             cycles_total = config.get("cycles_to_complete", 1)
             plot = land_db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()

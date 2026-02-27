@@ -1226,6 +1226,12 @@ def start_project(player_id: int, city_id: int, project_type: str) -> Tuple[Opti
             return None, "License deduction failed."
 
         ticks = _construction_ticks(1)
+        # Apply construction speed buff from active city projects
+        try:
+            cs_mult = get_city_production_buffs(player_id).get("construction_speed_mult", 1.0)
+            ticks = max(60, int(ticks * cs_mult))
+        except Exception:
+            pass
         inst = CityProjectInstance(
             city_id=city_id, project_type=project_type,
             level=0, target_level=1, status=STATUS_CONSTRUCTING,
@@ -1297,6 +1303,12 @@ def start_upgrade(player_id: int, city_id: int, instance_id: int) -> Tuple[bool,
             return False, "License deduction failed."
 
         ticks = _construction_ticks(target)
+        # Apply construction speed buff from active city projects
+        try:
+            cs_mult = get_city_production_buffs(player_id).get("construction_speed_mult", 1.0)
+            ticks = max(60, int(ticks * cs_mult))
+        except Exception:
+            pass
         inst.status = STATUS_UPGRADING
         inst.target_level = target
         inst.construction_ticks_required = ticks
