@@ -1084,74 +1084,31 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     projects_section = ""
     if is_member:
         from city_projects import (
-            get_city_vault, get_city_projects,
+            get_city_projects, get_project_vault_status,
             CITY_PROJECT_TYPES, get_construction_requirements,
             STATUS_CONSTRUCTING, STATUS_UPGRADING, STATUS_ACTIVE,
-            STATUS_PAUSED, MAX_PROJECTS_PER_CITY, MAX_PROJECT_LEVEL
+            STATUS_PAUSED, MAX_PROJECTS_PER_CITY, MAX_PROJECT_LEVEL,
+            POST_OFFICE_KEY, SPECIAL_KEYS, get_city_sales_tax_rate,
         )
-        vault = get_city_vault(city_id)          # {item_type: qty}
-        active_projs = get_city_projects(city_id)  # list of dicts
+        active_projs = get_city_projects(city_id)
 
-        # ── Vault card ──────────────────────────────────────────────
-        vault_rows = ""
-        if vault:
-            for item, qty in sorted(vault.items()):
-                vault_rows += f"""
-                <div style="display:flex;justify-content:space-between;align-items:center;
-                            padding:6px 0;border-bottom:1px solid #1e293b;">
-                    <span style="color:#e2e8f0;">{item.replace('_',' ').title()}</span>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <span style="color:#38bdf8;font-weight:600;">{qty:,.1f}</span>
-                        <form action="/api/city/vault/withdraw" method="post" style="display:flex;gap:4px;">
-                            <input type="hidden" name="city_id" value="{city_id}">
-                            <input type="hidden" name="item_type" value="{item}">
-                            <input type="number" name="quantity" min="1" max="{int(qty)}" value="1"
-                                   style="width:70px;padding:2px 6px;background:#0b1220;border:1px solid #334155;
-                                          border-radius:4px;color:#e2e8f0;font-size:12px;">
-                            <button type="submit" style="padding:2px 8px;background:#334155;border:none;
-                                                         border-radius:4px;color:#94a3b8;cursor:pointer;font-size:12px;">
-                                Withdraw</button>
-                        </form>
-                    </div>
-                </div>"""
-        else:
-            vault_rows = '<p style="color:#64748b;">Vault is empty. Deposit materials from your inventory to start building.</p>'
-
-        # Deposit form
-        deposit_form = f"""
-        <form action="/api/city/vault/deposit" method="post"
-              style="display:flex;gap:8px;align-items:flex-end;margin-top:16px;flex-wrap:wrap;">
-            <input type="hidden" name="city_id" value="{city_id}">
-            <div>
-                <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Item</label>
-                <input type="text" name="item_type" placeholder="e.g. iron" required
-                       style="padding:6px 10px;background:#0b1220;border:1px solid #334155;
-                              border-radius:6px;color:#e2e8f0;width:160px;">
-            </div>
-            <div>
-                <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Qty</label>
-                <input type="number" name="quantity" min="1" required value="100"
-                       style="padding:6px 10px;background:#0b1220;border:1px solid #334155;
-                              border-radius:6px;color:#e2e8f0;width:100px;">
-            </div>
-            <button type="submit" class="btn btn-secondary" style="padding:6px 16px;">Deposit →</button>
-        </form>"""
-
-        vault_card = f"""
-        <div class="card">
-            <h2>🏦 City Vault</h2>
-            <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
-                Materials stored here are consumed when starting or upgrading projects.
-                Any member can deposit or withdraw.
-            </p>
-            {vault_rows}
-            {deposit_form}
-        </div>"""
+        # ── Sales tax banner ────────────────────────────────────────
+        sales_tax_rate = get_city_sales_tax_rate(city_id)
+        sales_tax_html = ""
+        if sales_tax_rate > 0:
+            sales_tax_html = f"""
+            <div class="card" style="border-color:#f59e0b;">
+                <span style="font-size:0.85rem;color:#f59e0b;">⚠️ City Sales Tax: <strong>{sales_tax_rate*100:.2f}%</strong>
+                of all market proceeds from city members is automatically routed to the City Bank.
+                This tax is the sum of all active project debuffs.</span>
+            </div>"""
 
         # ── Active / in-progress projects ───────────────────────────
         proj_cards = ""
         in_construction_count = sum(1 for p in active_projs if p["status"] == STATUS_CONSTRUCTING)
         in_upgrade_count      = sum(1 for p in active_projs if p["status"] == STATUS_UPGRADING)
+        existing_types        = {p["project_type"] for p in active_projs}
+        has_post_office       = POST_OFFICE_KEY in existing_types
 
         status_colours = {
             STATUS_ACTIVE:        ("#4ade80", "Active"),
@@ -1171,19 +1128,78 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="font-size:11px;color:#64748b;">{pct}% — {p.get('ticks_required',0)-p.get('ticks_done',0)} ticks remaining</div>"""
 
-            level_str = f"Lv {p['level']}" if p["status"] == STATUS_ACTIVE else f"Lv {p['level']} → {p.get('target_level', p['level']+1)}"
+            level_str = (f"Lv {p['level']}" if p["status"] == STATUS_ACTIVE
+                         else f"Lv {p['level']} → {p.get('target_level', p['level']+1)}")
 
-            # Action buttons
+            # Per-project vault: show fill status for upgrade
+            upgrade_vault_html = ""
             upgrade_btn = ""
             if p["status"] in (STATUS_ACTIVE, STATUS_PAUSED) and p["level"] < MAX_PROJECT_LEVEL:
                 next_lv = p["level"] + 1
-                reqs = get_construction_requirements(p["project_type"], next_lv)
-                can_upgrade = all(vault.get(item, 0) >= qty for item, qty in reqs.items())
-                short_note = "" if can_upgrade else ' title="Insufficient vault materials"'
-                disabled = "" if (can_upgrade and in_upgrade_count < 2) else "disabled"
-                if in_upgrade_count >= 2 and not disabled:
-                    disabled = "disabled"
-                upgrade_btn = f'<form action="/api/city/project/upgrade" method="post" style="display:inline;"><input type="hidden" name="instance_id" value="{p["id"]}"><input type="hidden" name="city_id" value="{city_id}"><button type="submit" class="btn btn-secondary btn-sm" {disabled}{short_note}>⬆ Upgrade to Lv {next_lv}</button></form>'
+                vs = get_project_vault_status(city_id, p["project_type"])
+                if not vs.get("under_construction") and not vs.get("at_max"):
+                    fill_bars = ""
+                    for item, info in vs.get("items", {}).items():
+                        bar_col = "#4ade80" if info["full"] else "#38bdf8"
+                        fill_bars += f"""
+                        <div style="font-size:11px;margin-bottom:4px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+                                <span style="color:#94a3b8;">{item.replace('_',' ')}</span>
+                                <span style="color:{bar_col};">{info['held']:,.0f} / {info['needed']:,.0f}</span>
+                            </div>
+                            <div style="background:#1e293b;border-radius:2px;height:4px;">
+                                <div style="width:{info['pct']}%;height:100%;background:{bar_col};border-radius:2px;"></div>
+                            </div>
+                        </div>"""
+                    lic_note = ""
+                    if vs.get("licenses_needed", 0) > 0:
+                        lic_col = "#4ade80" if vs["licenses_ok"] else "#f87171"
+                        lic_note = f'<div style="font-size:11px;margin-top:4px;color:{lic_col};">🪪 Licenses: {vs["licenses_held"]:,.0f} / {vs["licenses_needed"]:,.0f}</div>'
+                    # Deposit form for upgrade vault
+                    mat_opts = "".join(
+                        f'<option value="{it}">{it.replace("_"," ").title()} ({info["held"]:,.0f}/{info["needed"]:,.0f})</option>'
+                        for it, info in vs.get("items", {}).items() if not info["full"]
+                    )
+                    deposit_f = ""
+                    if mat_opts:
+                        deposit_f = f"""
+                        <form action="/api/city/vault/deposit" method="post"
+                              style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:flex-end;">
+                            <input type="hidden" name="city_id" value="{city_id}">
+                            <input type="hidden" name="project_type" value="{p['project_type']}">
+                            <select name="item_type" style="padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">
+                                {mat_opts}
+                            </select>
+                            <input type="number" name="quantity" min="1" value="1000" required
+                                   style="width:90px;padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">
+                            <button type="submit" style="padding:4px 10px;background:#1e40af;border:none;border-radius:4px;color:#bfdbfe;cursor:pointer;font-size:12px;">Deposit →</button>
+                        </form>"""
+                        if is_city_mayor:
+                            withdraw_opts = "".join(
+                                f'<option value="{it}">{it.replace("_"," ").title()} ({info["held"]:,.0f})</option>'
+                                for it, info in vs.get("items", {}).items() if info["held"] > 0
+                            )
+                            if withdraw_opts:
+                                deposit_f += f"""
+                                <form action="/api/city/vault/withdraw" method="post"
+                                      style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:flex-end;">
+                                    <input type="hidden" name="city_id" value="{city_id}">
+                                    <input type="hidden" name="project_type" value="{p['project_type']}">
+                                    <select name="item_type" style="padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">{withdraw_opts}</select>
+                                    <input type="number" name="quantity" min="1" value="100" required style="width:80px;padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">
+                                    <button type="submit" style="padding:4px 10px;background:#334155;border:none;border-radius:4px;color:#94a3b8;cursor:pointer;font-size:12px;">Withdraw</button>
+                                </form>"""
+                    upgrade_vault_html = f"""
+                    <div style="margin:8px 0;padding:8px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;">
+                        <div style="font-size:11px;color:#64748b;margin-bottom:6px;">
+                            📦 Upgrade Vault — Level {next_lv} materials:
+                        </div>
+                        {fill_bars}{lic_note}{deposit_f}
+                    </div>"""
+                    ready = vs.get("ready", False)
+                    disabled = "" if (ready and in_upgrade_count < 2) else "disabled"
+                    tip = "" if ready else ' title="Load the vault fully and ensure enough licenses"'
+                    upgrade_btn = f'<form action="/api/city/project/upgrade" method="post" style="display:inline;"><input type="hidden" name="instance_id" value="{p["id"]}"><input type="hidden" name="city_id" value="{city_id}"><button type="submit" class="btn btn-secondary btn-sm" {disabled}{tip}>⬆ Upgrade to Lv {next_lv}</button></form>'
 
             mayor_btns = ""
             if is_city_mayor:
@@ -1197,14 +1213,33 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
 
             # Buff summary
             defn = CITY_PROJECT_TYPES.get(p["project_type"], {})
-            buff_lines = []
-            for buff_key, val_per_lv in defn.get("buffs", {}).items():
-                total = val_per_lv * p["level"] * 100
-                buff_lines.append(f"+{total:.1f}% {buff_key.replace('_',' ')}")
-            for dbuff_key, val_per_lv in defn.get("debuffs", {}).items():
-                total = val_per_lv * p["level"] * 100
-                buff_lines.append(f"-{total:.1f}% {dbuff_key.replace('_',' ')}")
-            buffs_str = " · ".join(buff_lines) if buff_lines else ""
+            buff_lines, debuff_lines = [], []
+            for bk, bv in defn.get("buffs", {}).items():
+                total = bv * p["level"]
+                if bk == "license_production":
+                    buff_lines.append(f"+{total:.1f} licenses/tick")
+                else:
+                    buff_lines.append(f"+{total*100:.1f}% {bk.replace('_',' ')}")
+            for dk, dv in defn.get("debuffs", {}).items():
+                total = dv * p["level"]
+                debuff_lines.append(f'<span style="color:#f87171;">−{total*100:.2f}% {dk.replace("_"," ")}</span>')
+            buff_html = ""
+            if buff_lines and p["status"] == STATUS_ACTIVE:
+                buff_html = f'<div style="font-size:11px;color:#4ade80;margin-bottom:4px;">{" · ".join(buff_lines)}</div>'
+            if debuff_lines and p["status"] == STATUS_ACTIVE:
+                buff_html += f'<div style="font-size:11px;margin-bottom:4px;">{" · ".join(debuff_lines)}</div>'
+
+            is_special = p["project_type"] in SPECIAL_KEYS
+            special_note = ""
+            if is_special and p["status"] == STATUS_ACTIVE:
+                if p["project_type"] == POST_OFFICE_KEY:
+                    special_note = f'<div style="font-size:11px;color:#a78bfa;">🪪 Generating {5 * p["level"]:,.0f} licenses/tick (+ bonuses from library/city hall etc.)</div>'
+                elif p["project_type"] == "city_extractor":
+                    special_note = f'<div style="font-size:11px;color:#a78bfa;">⛏ Mining {3 * p["level"]:,.1f} city currency/tick → bank reserves</div>'
+                elif p["project_type"] == "municipal_center":
+                    special_note = f'<div style="font-size:11px;color:#a78bfa;">👥 City capacity: {25 + 3*p["level"]} members ({25} base + {3*p["level"]} bonus)</div>'
+                elif p["project_type"] == "comptroller_office":
+                    special_note = f'<div style="font-size:11px;color:#a78bfa;">📈 Investing {0.05 * p["level"]:.2f}% of bank reserves / tick into bonds</div>'
 
             proj_cards += f"""
             <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:10px;">
@@ -1212,12 +1247,13 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <div>
                         <span style="font-weight:600;color:#e2e8f0;">{p['name']}</span>
                         <span style="margin-left:8px;font-size:12px;color:#94a3b8;">{level_str}</span>
-                        {"<span style='margin-left:6px;font-size:11px;background:#7c3aed;color:#e9d5ff;padding:2px 6px;border-radius:3px;'>★ SPECIAL</span>" if defn.get('is_special') else ""}
                     </div>
                     <span style="font-size:12px;color:{colour};font-weight:600;">{label}</span>
                 </div>
                 {progress_html}
-                {f'<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">{buffs_str}</div>' if buffs_str and p["status"] == STATUS_ACTIVE else ""}
+                {buff_html}
+                {special_note}
+                {upgrade_vault_html}
                 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
                     {upgrade_btn}
                     {mayor_btns}
@@ -1225,7 +1261,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             </div>"""
 
         if not active_projs:
-            proj_cards = '<p style="color:#64748b;">No projects yet. Start one below.</p>'
+            proj_cards = '<p style="color:#64748b;">No projects yet. Build the City Post Office to begin.</p>'
 
         slot_info = f"{len(active_projs)}/{MAX_PROJECTS_PER_CITY} slots used"
         build_info = ""
@@ -1244,8 +1280,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         </div>"""
 
         # ── Catalog: start new project ───────────────────────────────
-        existing_types = {p["project_type"] for p in active_projs}
-        can_start_new  = in_construction_count == 0 and len(active_projs) < MAX_PROJECTS_PER_CITY
+        can_start_new = in_construction_count == 0 and len(active_projs) < MAX_PROJECTS_PER_CITY
+        city_licenses_held = stats.get("city_licenses", 0.0)
 
         categories = {}
         for ptype, defn in CITY_PROJECT_TYPES.items():
@@ -1254,66 +1290,175 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
 
         cat_tabs = ""
         cat_panels = ""
-        cat_order = ["energy","transportation","industry","agriculture","finance","education","healthcare","civic"]
-        cat_icons = {"energy":"⚡","transportation":"🚂","industry":"🏭","agriculture":"🌾",
-                     "finance":"💹","education":"🎓","healthcare":"⚕️","civic":"🏛️"}
+        cat_order = ["foundation", "public_safety", "utilities", "transportation",
+                     "commerce", "education", "culture", "industry"]
+        cat_icons = {
+            "foundation":   "🏛️",
+            "public_safety":"🚨",
+            "utilities":    "⚡",
+            "transportation":"🚂",
+            "commerce":     "💹",
+            "education":    "🎓",
+            "culture":      "🎭",
+            "industry":     "🏭",
+        }
 
         for i, cat in enumerate(cat_order):
             items = categories.get(cat, [])
             if not items:
                 continue
             active_cls = "active" if i == 0 else ""
-            label = f"{cat_icons.get(cat,'')} {cat.title()}"
+            label = f"{cat_icons.get(cat,'')} {cat.replace('_',' ').title()}"
             cat_tabs += f'<button class="proj-tab {active_cls}" onclick="showCat(\'{cat}\')">{label}</button>'
 
             panel_items = ""
             for ptype, defn in items:
                 already_built = ptype in existing_types
                 reqs = get_construction_requirements(ptype, 1)
-                req_rows = ""
-                affordable = True
-                for item, qty in reqs.items():
-                    have = vault.get(item, 0)
-                    ok   = have >= qty
-                    if not ok:
-                        affordable = False
-                    colour_r = "#4ade80" if ok else "#f87171"
-                    req_rows += f'<span style="color:{colour_r};font-size:11px;">{item.replace("_"," ")}: {have:,.0f}/{qty:,.0f}</span>  '
+                licenses_needed = defn.get("licenses_per_level", 0)
+                is_special = ptype in SPECIAL_KEYS
+
+                # Per-project vault status
+                vs = get_project_vault_status(city_id, ptype)
+                fill_bars = ""
+                all_mats_full = True
+                under_constr = vs.get("under_construction", False)
+                for item, info in vs.get("items", {}).items():
+                    bar_col = "#4ade80" if info["full"] else "#38bdf8"
+                    fill_bars += f"""
+                    <div style="font-size:11px;margin-bottom:4px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:2px;">
+                            <span style="color:#94a3b8;">{item.replace('_',' ')}</span>
+                            <span style="color:{bar_col};">{info['held']:,.0f} / {info['needed']:,.0f}</span>
+                        </div>
+                        <div style="background:#1e293b;border-radius:2px;height:4px;">
+                            <div style="width:{info['pct']}%;height:100%;background:{bar_col};border-radius:2px;"></div>
+                        </div>
+                    </div>"""
+                    if not info["full"]:
+                        all_mats_full = False
+
+                lic_col = "#4ade80" if city_licenses_held >= licenses_needed else "#f87171"
+                lic_ok = city_licenses_held >= licenses_needed
+                lic_row = ""
+                if licenses_needed > 0:
+                    lic_row = f'<div style="font-size:11px;margin-top:4px;color:{lic_col};">🪪 Licenses required: {licenses_needed:,.0f} (city has {city_licenses_held:,.0f})</div>'
+                elif ptype == POST_OFFICE_KEY:
+                    lic_row = '<div style="font-size:11px;color:#4ade80;margin-top:4px;">🪪 No licenses required — this IS the license source!</div>'
+
+                # Post office prerequisite note
+                prereq_html = ""
+                if ptype != POST_OFFICE_KEY and not has_post_office:
+                    prereq_html = '<div style="font-size:11px;color:#f59e0b;margin-top:4px;">⚠️ Build the City Post Office first.</div>'
+
+                # Deposit form (only items not yet full)
+                deposit_html = ""
+                if not already_built and not under_constr:
+                    partial_items = {it: info for it, info in vs.get("items", {}).items() if not info["full"]}
+                    if partial_items:
+                        mat_opts = "".join(
+                            f'<option value="{it}">{it.replace("_"," ").title()} ({info["held"]:,.0f}/{info["needed"]:,.0f})</option>'
+                            for it, info in partial_items.items()
+                        )
+                        deposit_html = f"""
+                        <form action="/api/city/vault/deposit" method="post"
+                              style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:flex-end;">
+                            <input type="hidden" name="city_id" value="{city_id}">
+                            <input type="hidden" name="project_type" value="{ptype}">
+                            <select name="item_type" style="padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">
+                                {mat_opts}
+                            </select>
+                            <input type="number" name="quantity" min="1" value="1000" required
+                                   style="width:90px;padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">
+                            <button type="submit" style="padding:4px 10px;background:#1e40af;border:none;border-radius:4px;color:#bfdbfe;cursor:pointer;font-size:12px;">Deposit →</button>
+                        </form>"""
+                        if is_city_mayor:
+                            all_vault_items = {it: info for it, info in vs.get("items", {}).items() if info["held"] > 0}
+                            if all_vault_items:
+                                w_opts = "".join(
+                                    f'<option value="{it}">{it.replace("_"," ").title()} ({info["held"]:,.0f})</option>'
+                                    for it, info in all_vault_items.items()
+                                )
+                                deposit_html += f"""
+                                <form action="/api/city/vault/withdraw" method="post"
+                                      style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:flex-end;">
+                                    <input type="hidden" name="city_id" value="{city_id}">
+                                    <input type="hidden" name="project_type" value="{ptype}">
+                                    <select name="item_type" style="padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">{w_opts}</select>
+                                    <input type="number" name="quantity" min="1" value="100" required style="width:80px;padding:4px 8px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;font-size:12px;">
+                                    <button type="submit" style="padding:4px 10px;background:#334155;border:none;border-radius:4px;color:#94a3b8;cursor:pointer;font-size:12px;">Withdraw</button>
+                                </form>"""
 
                 if already_built:
-                    action_html = '<span style="font-size:12px;color:#64748b;">Already built</span>'
+                    action_html = '<span style="font-size:12px;color:#4ade80;">✓ Already built</span>'
+                elif under_constr:
+                    action_html = '<span style="font-size:12px;color:#fbbf24;">⚙ Currently under construction</span>'
                 elif not can_start_new:
                     reason = "Slots full" if len(active_projs) >= MAX_PROJECTS_PER_CITY else "Construction in progress"
                     action_html = f'<span style="font-size:12px;color:#64748b;">{reason}</span>'
+                elif prereq_html:
+                    action_html = prereq_html
                 else:
-                    disabled = "" if affordable else "disabled"
-                    title_attr = "" if affordable else ' title="Insufficient vault materials"'
+                    vault_ready = vs.get("ready", False)
+                    disabled = "" if vault_ready else "disabled"
+                    tip = "" if vault_ready else ' title="Fill the vault with all required materials and ensure enough licenses"'
                     action_html = f"""<form action="/api/city/project/start" method="post">
                         <input type="hidden" name="city_id" value="{city_id}">
                         <input type="hidden" name="project_type" value="{ptype}">
-                        <button type="submit" class="btn btn-primary btn-sm" {disabled}{title_attr}>
+                        <button type="submit" class="btn btn-primary btn-sm" {disabled}{tip}>
                             🏗 Start Construction</button>
                     </form>"""
 
-                special_badge = '<span style="font-size:10px;background:#7c3aed;color:#e9d5ff;padding:1px 5px;border-radius:3px;margin-left:6px;">★ SPECIAL</span>' if defn.get("is_special") else ""
+                # Buff/debuff summary for catalog
+                b_summary, d_summary = [], []
+                for bk, bv in defn.get("buffs", {}).items():
+                    if bk == "license_production":
+                        b_summary.append(f"+{bv:.1f}/tick/lv licenses")
+                    else:
+                        b_summary.append(f"+{bv*100:.1f}%/lv {bk.replace('_',' ')}")
+                for dk, dv in defn.get("debuffs", {}).items():
+                    d_summary.append(f"−{dv*100:.2f}%/lv {dk.replace('_',' ')}")
+                buff_summary_html = ""
+                if b_summary:
+                    buff_summary_html += f'<div style="font-size:11px;color:#4ade80;margin-top:4px;">Buffs: {" · ".join(b_summary)}</div>'
+                if d_summary:
+                    buff_summary_html += f'<div style="font-size:11px;color:#f87171;margin-top:2px;">Debuffs: {" · ".join(d_summary)}</div>'
+
                 panel_items += f"""
                 <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;margin-bottom:8px;">
-                    <div style="font-weight:600;margin-bottom:4px;">{defn['name']}{special_badge}</div>
+                    <div style="font-weight:600;margin-bottom:4px;">{defn['name']}</div>
                     <div style="font-size:12px;color:#64748b;margin-bottom:8px;">{defn['description']}</div>
-                    <div style="margin-bottom:8px;line-height:1.8;">{req_rows}</div>
-                    {action_html}
+                    {buff_summary_html}
+                    {lic_row}
+                    {prereq_html}
+                    <div style="margin:8px 0;">{fill_bars}</div>
+                    {deposit_html}
+                    <div style="margin-top:8px;">{action_html}</div>
                 </div>"""
 
             panel_items = panel_items or '<p style="color:#64748b;font-size:13px;">No projects in this category.</p>'
             display = "block" if i == 0 else "none"
             cat_panels += f'<div id="cat-{cat}" style="display:{display};">{panel_items}</div>'
 
+        po_warning = ""
+        if not has_post_office:
+            po_warning = """
+            <div style="background:#1e1a0f;border:1px solid #f59e0b;border-radius:6px;padding:12px;margin-bottom:12px;">
+                <strong style="color:#f59e0b;">🏤 Build the City Post Office first!</strong><br>
+                <span style="font-size:0.85rem;color:#94a3b8;">
+                The Post Office is the only project that requires no licenses. Once built it generates
+                construction licenses every tick, unlocking all other city projects.
+                </span>
+            </div>"""
+
         catalog_card = f"""
         <div class="card">
-            <h2>📋 Start New Project</h2>
+            <h2>📋 Build / Upgrade Projects</h2>
+            {po_warning}
             <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
-                Any city member can start or upgrade projects. Costs are drawn from the vault.
-                {"<span style='color:#fbbf24;'>⚠ Construction already in progress — wait for it to finish before starting another.</span>" if not can_start_new and in_construction_count > 0 else ""}
+                Any member can deposit materials to a project's vault. Construction begins once
+                the vault is fully loaded and the city has sufficient licenses.
+                {"<span style='color:#fbbf24;'>⚠ Construction in progress — wait for it to finish before starting another.</span>" if not can_start_new and in_construction_count > 0 else ""}
             </p>
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
                 {cat_tabs}
@@ -1329,7 +1474,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         }}
         </script>"""
 
-        projects_section = vault_card + projects_card + catalog_card
+        projects_section = sales_tax_html + projects_card + catalog_card
 
     db.close()
 
@@ -1383,6 +1528,10 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <div class="stat">
                         <span class="stat-label">Currency Holdings</span>
                         <span class="stat-value">{stats['bank_currency_qty']:,.2f}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Construction Licenses</span>
+                        <span class="stat-value" style="color:#a78bfa;">{stats.get('city_licenses', 0):,.0f} 🪪</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Active Loans</span>
@@ -1657,6 +1806,7 @@ async def api_assume_debt(
 @router.post("/api/city/vault/deposit")
 async def api_vault_deposit(
     city_id: int = Form(...),
+    project_type: str = Form(...),
     item_type: str = Form(...),
     quantity: float = Form(...),
     session_token: Optional[str] = Cookie(None)
@@ -1664,14 +1814,15 @@ async def api_vault_deposit(
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    from city_projects import deposit_to_vault
-    success, message = deposit_to_vault(player.id, city_id, item_type.strip().lower(), quantity)
+    from city_projects import deposit_to_project_vault
+    success, message = deposit_to_project_vault(player.id, city_id, project_type.strip().lower(), item_type.strip().lower(), quantity)
     return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
 
 
 @router.post("/api/city/vault/withdraw")
 async def api_vault_withdraw(
     city_id: int = Form(...),
+    project_type: str = Form(...),
     item_type: str = Form(...),
     quantity: float = Form(...),
     session_token: Optional[str] = Cookie(None)
@@ -1679,8 +1830,8 @@ async def api_vault_withdraw(
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    from city_projects import withdraw_from_vault
-    success, message = withdraw_from_vault(player.id, city_id, item_type.strip().lower(), quantity)
+    from city_projects import withdraw_from_project_vault
+    success, message = withdraw_from_project_vault(player.id, city_id, project_type.strip().lower(), item_type.strip().lower(), quantity)
     return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
 
 

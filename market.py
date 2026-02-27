@@ -455,9 +455,35 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 try:
                     _amt, _code = convert_to_legal_tender(seller.id, total_cost)
                     if _code == "USD":
-                        seller.cash_balance += _amt
+                        seller_gross = _amt
+                    else:
+                        seller_gross = total_cost
                 except Exception:
-                    seller.cash_balance += total_cost
+                    seller_gross = total_cost
+
+                # City sales tax: deduct from seller's proceeds, route to city bank
+                _tax_deducted = 0.0
+                try:
+                    from city_projects import get_city_sales_tax_rate, _get_player_city_id
+                    from cities import CityBank, get_db as _city_get_db
+                    _seller_city_id = _get_player_city_id(sell_order.player_id)
+                    if _seller_city_id:
+                        _tax_rate = get_city_sales_tax_rate(_seller_city_id)
+                        if _tax_rate > 0:
+                            _tax_deducted = seller_gross * _tax_rate
+                            _city_db = _city_get_db()
+                            try:
+                                _city_bank = _city_db.query(CityBank).filter(
+                                    CityBank.city_id == _seller_city_id).first()
+                                if _city_bank:
+                                    _city_bank.cash_reserves = (_city_bank.cash_reserves or 0.0) + _tax_deducted
+                                _city_db.commit()
+                            finally:
+                                _city_db.close()
+                except Exception as _te:
+                    _tax_deducted = 0.0
+
+                seller.cash_balance += (seller_gross - _tax_deducted)
             except Exception as e:
                 print(f"[Market] Cash transfer error: {e}")
                 import traceback

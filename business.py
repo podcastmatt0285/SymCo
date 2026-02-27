@@ -225,9 +225,16 @@ def process_business_tick(db):
             config = BUSINESS_TYPES.get(biz.business_type, {})
         
         cycles = config.get("cycles_to_complete", 1)
+        # Apply city cycle-speed buff (reduces effective cycles_to_complete)
+        try:
+            from city_projects import get_city_production_buffs as _gcpb
+            _cs_mult = _gcpb(biz.owner_id).get("cycle_speed_multiplier", 1.0)
+            cycles = max(1, int(cycles * _cs_mult))
+        except Exception:
+            pass
         if biz.progress_ticks < cycles:
             biz.progress_ticks += 1
-            
+
         if biz.progress_ticks < cycles:
             continue
             

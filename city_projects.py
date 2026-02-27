@@ -1,26 +1,55 @@
 """
-city_projects.py — Municipal Mega Projects for Wadsworth city governments.
+city_projects.py — Municipal Mega-Projects for Wadsworth city governments.
 
-48 project types, max 12 levels each (levels 8-12 exponentially expensive).
-Projects consume commodities from the city vault and provide production buffs.
-One special project (city_mint) produces city currency deposited in the city bank.
+30 city-aesthetic project types across 8 categories. No operational consumption.
+Projects are permanent once built — the mayor controls pause/unpause/deconstruct.
 
-Construction rules:
-  - Max 1 new project under construction at a time
-  - Max 2 upgrades simultaneously (even while a new one is building)
-  - Any city member can start construction or an upgrade
-  - Only the mayor can pause/resume/deconstruct/downgrade
-  - Deconstruction yields nothing
-  - Max 12 active projects per city
+KEY MECHANICS
+─────────────
+City Post Office (MUST be built first, no prerequisites, no licenses required)
+  • Generates LICENSES per tick (5 × level). Licenses are stored in CityBank.city_licenses.
+  • All other projects consume licenses when construction begins.
+
+Per-project vault
+  • Each project type has its own vault keyed by (city_id, project_type, item_type).
+  • Players deposit construction materials to the vault (capped at the cost for the target level).
+  • Once the vault holds all required materials AND the city has enough licenses, any member
+    can trigger "Start Construction" / "Start Upgrade".  Materials + licenses are consumed
+    at that moment; vault is cleared when construction completes.
+  • Vault cannot be overfilled — deposit is rejected if it would exceed the cap.
+
+Sales tax
+  • Active projects with debuffs carry a `sales_tax` debuff (rate per level).
+  • `get_city_sales_tax_rate(city_id)` sums all active project debuffs.
+  • Deducted in market.py on every player-to-player sell; routed to the city bank.
+
+Special projects (no buff/debuff)
+  city_post_office   Generates licenses (5 × level / tick)
+  city_extractor     Mines city currency into bank reserves (3 × level / tick)
+  municipal_center   Adds 3 member slots per level (default 25 + 3 × level)
+  comptroller_office Invests 0.05 % of bank reserves per tick (compound bond returns)
+                     [Stable-coin at level 12 is a future dashboard feature]
+
+Construction rules
+  • Max 1 new project under construction at a time
+  • Max 2 simultaneous upgrades
+  • Only the mayor may plan a new project (creates the vault row when materials are needed)
+  • Any city member may deposit materials to a project vault
+  • Any city member may trigger start construction / upgrade (when vault full + licenses ok)
+  • Only the mayor may pause / resume / deconstruct
+  • Deconstruction yields nothing; vault is cleared
+  • Max 30 non-deconstructed projects per city
 """
 
-import json
-from collections import defaultdict
-from datetime import datetime
-from typing import Optional, List, Dict, Any, Tuple
+from __future__ import annotations
 
-from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, Text, UniqueConstraint
+import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+from sqlalchemy import Column, Integer, Float, String, Boolean, DateTime, UniqueConstraint, text
 from sqlalchemy.ext.declarative import declarative_base
+
 from database import engine, SessionLocal
 
 Base = declarative_base()
@@ -29,491 +58,586 @@ Base = declarative_base()
 def get_db():
     return SessionLocal()
 
+
 # ──────────────────────────────────────────────────────────────
 # CONSTANTS
 # ──────────────────────────────────────────────────────────────
-MAX_PROJECTS_PER_CITY = 12
-MAX_PROJECT_LEVEL = 12
-HIGH_LEVEL_THRESHOLD = 7   # levels 8-12 use extra cost multiplier
+MAX_PROJECTS_PER_CITY   = 30
+MAX_PROJECT_LEVEL       = 12
+HIGH_LEVEL_THRESHOLD    = 7       # levels 8-12 use extra cost multiplier
+DEFAULT_MEMBER_SLOTS    = 25      # base slots before Municipal Center
+LICENSES_PER_TICK_BASE  = 5.0     # city_post_office: per level per tick
+EXTRACTOR_CURRENCY_BASE = 3.0     # city_extractor: units city-currency / level / tick
+COMPTROLLER_INVEST_RATE = 0.0005  # 0.05 % of cash_reserves per tick
 
-STATUS_CONSTRUCTING  = "constructing"
-STATUS_UPGRADING     = "upgrading"
-STATUS_ACTIVE        = "active"
-STATUS_PAUSED        = "paused"
-STATUS_DECONSTRUCTED = "deconstructed"
+STATUS_CONSTRUCTING   = "constructing"
+STATUS_UPGRADING      = "upgrading"
+STATUS_ACTIVE         = "active"
+STATUS_PAUSED         = "paused"
+STATUS_DECONSTRUCTED  = "deconstructed"
+
+POST_OFFICE_KEY      = "city_post_office"
+EXTRACTOR_KEY        = "city_extractor"
+MUNICIPAL_CENTER_KEY = "municipal_center"
+COMPTROLLER_KEY      = "comptroller_office"
+SPECIAL_KEYS         = {POST_OFFICE_KEY, EXTRACTOR_KEY, MUNICIPAL_CENTER_KEY, COMPTROLLER_KEY}
 
 
 # ──────────────────────────────────────────────────────────────
-# 48 PROJECT DEFINITIONS
+# 30 PROJECT DEFINITIONS
+#
+# buffs / debuffs scale linearly with level. Keys:
+#   output               — adds to output multiplier (0.01 = +1 % / lv)
+#   wage_savings         — reduces wage fraction per level
+#   input_savings        — reduces input qty fraction per level
+#   cycle_speed          — speeds up business cycle (reduces cycles_to_complete fraction)
+#   market_fee_reduction — reduces market listing/commission fraction
+#   license_production   — bonus licenses / tick / level (float, additive)
+#   construction_speed   — reduces construction ticks fraction per level
+#   loan_interest_reduction — reduces bank loan interest fraction per level
+#
+#   sales_tax            — ALWAYS present for non-special projects; rate / level
+#   wage_penalty         — increases wage fraction per level (debuff)
+#   input_penalty        — increases input qty fraction per level (debuff)
+#
+# licenses_per_level  — licenses consumed from city bank when construction of each level begins
+# base_project_value  — USD contribution to City NAV per level
 # ──────────────────────────────────────────────────────────────
-# buffs/debuffs scale linearly with level. Keys:
-#   output        — adds to output multiplier per level (0.01 = +1%/lv)
-#   wage_savings  — reduces wage fraction per level
-#   input_savings — reduces input qty fraction per level
-#   wage_penalty  — increases wage fraction per level (debuff)
-#   input_penalty — increases input qty fraction per level (debuff)
-# currency_per_tick: City Mint only — units of city currency produced per level per tick
-# base_project_value: USD contribution to City NAV per level
-
 CITY_PROJECT_TYPES: Dict[str, Dict[str, Any]] = {
 
-    # ── ENERGY (6) ──────────────────────────────────────────
-    "municipal_power_grid": {
-        "name": "Municipal Power Grid", "category": "energy", "is_special": False,
-        "description": "City-wide electrical infrastructure boosting output and cutting industrial wage overhead.",
-        "construction_materials": {"iron": 800, "copper": 400, "coal": 300, "energy": 2000},
-        "operational_consumption": {"water": 8, "copper": 1},
-        "buffs":   {"output": 0.012, "wage_savings": 0.004},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 250_000,
-    },
-    "water_treatment_campus": {
-        "name": "Water Treatment Campus", "category": "energy", "is_special": False,
-        "description": "Industrial-scale water purification reducing input costs for all production.",
-        "construction_materials": {"iron": 600, "copper": 200, "sand": 400, "lumber": 500},
-        "operational_consumption": {"energy": 5, "iron": 1},
-        "buffs":   {"output": 0.015, "input_savings": 0.003},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 200_000,
-    },
-    "natural_gas_pipeline": {
-        "name": "Natural Gas Pipeline", "category": "energy", "is_special": False,
-        "description": "Regional gas distribution network providing cheap industrial fuel.",
-        "construction_materials": {"iron": 1200, "copper": 300, "rubber": 200, "coal": 100},
-        "operational_consumption": {"energy": 3, "iron": 1},
-        "buffs":   {"wage_savings": 0.006, "input_savings": 0.004},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 300_000,
-    },
-    "renewable_energy_park": {
-        "name": "Renewable Energy Park", "category": "energy", "is_special": False,
-        "description": "Vast solar and wind installation eliminating energy overhead for member businesses.",
-        "construction_materials": {"glass": 600, "copper": 500, "iron": 400, "rubber": 300},
-        "operational_consumption": {"copper": 1},
-        "buffs":   {"wage_savings": 0.008, "output": 0.008},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 350_000,
-    },
-    "nuclear_power_plant": {
-        "name": "Nuclear Power Plant", "category": "energy", "is_special": False,
-        "description": "Massive baseload power generation providing near-unlimited cheap energy.",
-        "construction_materials": {"iron": 2000, "copper": 800, "lead": 600, "glass": 400, "coal": 500},
-        "operational_consumption": {"water": 20, "lead": 2},
-        "buffs":   {"wage_savings": 0.012, "output": 0.018},
-        "debuffs": {"input_penalty": 0.003, "wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 800_000,
-    },
-    "district_heating_network": {
-        "name": "District Heating Network", "category": "energy", "is_special": False,
-        "description": "Citywide thermal distribution reducing heating costs for all member operations.",
-        "construction_materials": {"iron": 700, "copper": 300, "lumber": 400},
-        "operational_consumption": {"energy": 4, "water": 5},
-        "buffs":   {"wage_savings": 0.005, "input_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 180_000,
-    },
+    # ── FOUNDATION ─────────────────────────────────────────────
 
-    # ── TRANSPORTATION (6) ───────────────────────────────────
-    "international_airport": {
-        "name": "International Airport", "category": "transportation", "is_special": False,
-        "description": "Full-service cargo hub connecting the city to global trade routes.",
-        "construction_materials": {"iron": 1500, "glass": 800, "lumber": 600, "copper": 400, "rubber": 300},
-        "operational_consumption": {"energy": 15, "rubber": 2},
-        "buffs":   {"output": 0.018, "wage_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 600_000,
-    },
-    "deep_water_port": {
-        "name": "Deep-Water Port", "category": "transportation", "is_special": False,
-        "description": "Industrial marine terminal enabling bulk commodity imports at reduced cost.",
-        "construction_materials": {"iron": 1800, "lumber": 1000, "copper": 300, "rubber": 400},
-        "operational_consumption": {"energy": 10, "iron": 2},
-        "buffs":   {"input_savings": 0.010, "output": 0.008},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 500_000,
-    },
-    "rail_network_hub": {
-        "name": "Rail Network Hub", "category": "transportation", "is_special": False,
-        "description": "Heavy freight rail terminus routing commodities efficiently across the region.",
-        "construction_materials": {"iron": 2000, "lumber": 800, "copper": 500, "coal": 200},
-        "operational_consumption": {"energy": 8, "iron": 1},
-        "buffs":   {"input_savings": 0.008, "wage_savings": 0.004},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 450_000,
-    },
-    "highway_interchange": {
-        "name": "Highway Interchange", "category": "transportation", "is_special": False,
-        "description": "Major overland logistics hub accelerating goods movement and production throughput.",
-        "construction_materials": {"iron": 1000, "lumber": 700, "rubber": 300, "coal": 150},
-        "operational_consumption": {"energy": 5},
-        "buffs":   {"output": 0.010, "input_savings": 0.005},
-        "debuffs": {"wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 300_000,
-    },
-    "urban_metro_system": {
-        "name": "Urban Metro System", "category": "transportation", "is_special": False,
-        "description": "Underground transit network reducing worker commute times and cutting labour costs.",
-        "construction_materials": {"iron": 2500, "copper": 700, "glass": 400, "rubber": 500, "lumber": 600},
-        "operational_consumption": {"energy": 12, "copper": 2},
-        "buffs":   {"wage_savings": 0.010, "output": 0.006},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 700_000,
-    },
-    "cargo_dispatch_center": {
-        "name": "Cargo Dispatch Center", "category": "transportation", "is_special": False,
-        "description": "Automated logistics command centre coordinating city-wide supply chains.",
-        "construction_materials": {"iron": 800, "copper": 400, "glass": 300, "lumber": 400},
-        "operational_consumption": {"energy": 6, "copper": 1},
-        "buffs":   {"output": 0.012, "input_savings": 0.004},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 250_000,
-    },
-
-    # ── INDUSTRY (6) ─────────────────────────────────────────
-    "heavy_industrial_zone": {
-        "name": "Heavy Industrial Zone", "category": "industry", "is_special": False,
-        "description": "Concentrated manufacturing district with shared infrastructure for all member production.",
-        "construction_materials": {"iron": 1500, "lumber": 800, "coal": 400, "rubber": 200},
-        "operational_consumption": {"energy": 10, "water": 8, "coal": 2},
-        "buffs":   {"output": 0.015, "wage_savings": 0.003},
-        "debuffs": {"input_penalty": 0.003, "wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 400_000,
-    },
-    "steel_foundry_complex": {
-        "name": "Steel Foundry Complex", "category": "industry", "is_special": False,
-        "description": "Mega-scale iron smelting and processing campus cutting metal input costs citywide.",
-        "construction_materials": {"iron": 3000, "coal": 1000, "copper": 400, "lumber": 500},
-        "operational_consumption": {"energy": 15, "water": 10, "coal": 4, "iron_ore": 5},
-        "buffs":   {"input_savings": 0.012, "output": 0.010},
-        "debuffs": {"wage_penalty": 0.002, "input_penalty": 0.004},
-        "currency_per_tick": 0.0, "base_project_value": 600_000,
-    },
-    "chemical_processing_plant": {
-        "name": "Chemical Processing Plant", "category": "industry", "is_special": False,
-        "description": "Industrial chemistry facility producing feedstocks that lower input costs across sectors.",
-        "construction_materials": {"iron": 1000, "copper": 600, "rubber": 400, "lead": 300},
-        "operational_consumption": {"energy": 8, "water": 12, "oil": 3},
-        "buffs":   {"input_savings": 0.010, "output": 0.008},
-        "debuffs": {"input_penalty": 0.002, "wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 400_000,
-    },
-    "oil_refinery": {
-        "name": "Oil Refinery", "category": "industry", "is_special": False,
-        "description": "Petroleum processing complex producing fuel and feedstocks at scale.",
-        "construction_materials": {"iron": 2000, "copper": 500, "rubber": 600, "lead": 200},
-        "operational_consumption": {"oil": 8, "water": 6, "energy": 10},
-        "buffs":   {"input_savings": 0.008, "wage_savings": 0.006},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 550_000,
-    },
-    "lumber_processing_complex": {
-        "name": "Lumber Processing Complex", "category": "industry", "is_special": False,
-        "description": "Industrial timber processing campus keeping wood input costs low for all member businesses.",
-        "construction_materials": {"iron": 800, "timber": 1500, "copper": 300, "rubber": 200},
-        "operational_consumption": {"energy": 6, "timber": 5, "water": 4},
-        "buffs":   {"input_savings": 0.008, "output": 0.010},
-        "debuffs": {"wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 220_000,
-    },
-    "copper_smelting_plant": {
-        "name": "Copper Smelting Plant", "category": "industry", "is_special": False,
-        "description": "High-capacity copper extraction hub reducing metal and wire input costs.",
-        "construction_materials": {"iron": 1200, "copper_ore": 800, "coal": 500, "rubber": 200},
-        "operational_consumption": {"energy": 10, "copper_ore": 6, "water": 5},
-        "buffs":   {"input_savings": 0.009, "output": 0.009},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 380_000,
-    },
-
-    # ── AGRICULTURE (6) ──────────────────────────────────────
-    "agricultural_research_institute": {
-        "name": "Agricultural Research Institute", "category": "agriculture", "is_special": False,
-        "description": "State-of-the-art crop science campus improving yields across all agricultural operations.",
-        "construction_materials": {"iron": 500, "glass": 400, "lumber": 800, "copper": 200},
-        "operational_consumption": {"energy": 4, "water": 10, "paper": 3},
-        "buffs":   {"output": 0.014, "input_savings": 0.004},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 200_000,
-    },
-    "food_processing_megafacility": {
-        "name": "Food Processing Megafacility", "category": "agriculture", "is_special": False,
-        "description": "Industrial food production campus streamlining the entire agricultural supply chain.",
-        "construction_materials": {"iron": 1000, "glass": 600, "copper": 400, "rubber": 300},
-        "operational_consumption": {"energy": 8, "water": 15},
-        "buffs":   {"output": 0.016, "input_savings": 0.006},
-        "debuffs": {"input_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 350_000,
-    },
-    "vertical_farm_complex": {
-        "name": "Vertical Farm Complex", "category": "agriculture", "is_special": False,
-        "description": "Multi-storey controlled-environment agriculture producing crops year-round.",
-        "construction_materials": {"iron": 800, "glass": 1000, "copper": 500, "rubber": 200},
-        "operational_consumption": {"energy": 15, "water": 20},
-        "buffs":   {"output": 0.020, "input_savings": 0.003},
-        "debuffs": {"input_penalty": 0.008},
-        "currency_per_tick": 0.0, "base_project_value": 400_000,
-    },
-    "grain_storage_network": {
-        "name": "Grain Storage Network", "category": "agriculture", "is_special": False,
-        "description": "City-wide climate-controlled silos eliminating food spoilage and stabilising supply.",
-        "construction_materials": {"iron": 700, "lumber": 1200, "copper": 200, "rubber": 150},
-        "operational_consumption": {"energy": 4},
-        "buffs":   {"input_savings": 0.012, "wage_savings": 0.002},
-        "debuffs": {"wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 200_000,
-    },
-    "livestock_integration_hub": {
-        "name": "Livestock Integration Hub", "category": "agriculture", "is_special": False,
-        "description": "Centralised animal husbandry facility boosting all animal product operations.",
-        "construction_materials": {"iron": 600, "lumber": 1000, "copper": 200, "rubber": 150},
-        "operational_consumption": {"water": 12, "energy": 4},
-        "buffs":   {"output": 0.014, "input_savings": 0.003},
-        "debuffs": {"input_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 220_000,
-    },
-    "fishery_aquaculture_district": {
-        "name": "Fishery and Aquaculture District", "category": "agriculture", "is_special": False,
-        "description": "Marine research and industrial fish-farming complex supplying seafood inputs at scale.",
-        "construction_materials": {"iron": 700, "copper": 300, "lumber": 600, "rubber": 400},
-        "operational_consumption": {"water": 20, "energy": 5},
-        "buffs":   {"output": 0.016, "input_savings": 0.004},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 240_000,
-    },
-
-    # ── FINANCE (6) ──────────────────────────────────────────
-    "stock_exchange_tower": {
-        "name": "Stock Exchange Tower", "category": "finance", "is_special": False,
-        "description": "Prestigious financial landmark boosting price confidence for all city-produced goods.",
-        "construction_materials": {"iron": 1200, "glass": 900, "copper": 500, "lumber": 400},
-        "operational_consumption": {"energy": 8, "paper": 4},
-        "buffs":   {"output": 0.008, "wage_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 500_000,
-    },
-    "trade_finance_district": {
-        "name": "Trade Finance District", "category": "finance", "is_special": False,
-        "description": "Financial services hub providing cheap credit that reduces effective input costs.",
-        "construction_materials": {"iron": 800, "glass": 600, "lumber": 400},
-        "operational_consumption": {"energy": 6, "paper": 3},
-        "buffs":   {"input_savings": 0.009, "wage_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 350_000,
-    },
-    "free_trade_zone": {
-        "name": "Free Trade Zone", "category": "finance", "is_special": False,
-        "description": "Deregulated trading enclave eliminating friction for member commodity transactions.",
-        "construction_materials": {"iron": 600, "glass": 500, "lumber": 500, "copper": 200},
-        "operational_consumption": {"energy": 5, "paper": 2},
-        "buffs":   {"output": 0.010, "input_savings": 0.006},
-        "debuffs": {"input_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 300_000,
-    },
-    "commodity_futures_exchange": {
-        "name": "Commodity Futures Exchange", "category": "finance", "is_special": False,
-        "description": "Derivatives trading floor allowing city members to hedge input costs.",
-        "construction_materials": {"iron": 700, "glass": 600, "copper": 300, "lumber": 300},
-        "operational_consumption": {"energy": 7, "paper": 4},
-        "buffs":   {"input_savings": 0.007, "output": 0.006},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 320_000,
-    },
-    "investment_banking_complex": {
-        "name": "Investment Banking Complex", "category": "finance", "is_special": False,
-        "description": "Capital markets hub raising the prestige and prices of city-produced goods.",
-        "construction_materials": {"iron": 1000, "glass": 800, "lumber": 400},
-        "operational_consumption": {"energy": 8, "paper": 5},
-        "buffs":   {"output": 0.012, "wage_savings": 0.002},
-        "debuffs": {"wage_penalty": 0.004},
-        "currency_per_tick": 0.0, "base_project_value": 450_000,
-    },
-    "insurance_risk_hub": {
-        "name": "Insurance & Risk Hub", "category": "finance", "is_special": False,
-        "description": "Citywide risk-pooling institution reducing effective labour cost overhead.",
-        "construction_materials": {"iron": 600, "glass": 500, "lumber": 400},
-        "operational_consumption": {"energy": 5, "paper": 3},
-        "buffs":   {"wage_savings": 0.006, "input_savings": 0.003},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 250_000,
-    },
-
-    # ── EDUCATION (6) ────────────────────────────────────────
-    "university_campus": {
-        "name": "University Campus", "category": "education", "is_special": False,
-        "description": "Full research university supplying a highly-educated workforce and cutting wage costs.",
-        "construction_materials": {"iron": 700, "glass": 600, "lumber": 1000, "copper": 300},
-        "operational_consumption": {"energy": 6, "water": 4, "paper": 8},
-        "buffs":   {"wage_savings": 0.010, "output": 0.006},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 350_000,
-    },
-    "research_development_institute": {
-        "name": "Research & Development Institute", "category": "education", "is_special": False,
-        "description": "Applied science campus driving continuous process improvements in all member production.",
-        "construction_materials": {"iron": 600, "glass": 500, "copper": 400, "lumber": 400},
-        "operational_consumption": {"energy": 8, "paper": 6, "water": 3},
-        "buffs":   {"output": 0.012, "input_savings": 0.005},
-        "debuffs": {"wage_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 300_000,
-    },
-    "technology_incubator": {
-        "name": "Technology Incubator", "category": "education", "is_special": False,
-        "description": "High-tech startup hub fostering innovation that boosts precision output.",
-        "construction_materials": {"iron": 500, "glass": 600, "copper": 500, "lumber": 300},
-        "operational_consumption": {"energy": 7, "paper": 4},
-        "buffs":   {"output": 0.014, "input_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 280_000,
-    },
-    "patent_office": {
-        "name": "Patent Office & IP Registry", "category": "education", "is_special": False,
-        "description": "Intellectual property protection giving city-produced specialised goods a market premium.",
-        "construction_materials": {"iron": 400, "glass": 400, "lumber": 500, "copper": 150},
-        "operational_consumption": {"energy": 4, "paper": 5},
-        "buffs":   {"output": 0.008, "wage_savings": 0.002},
-        "debuffs": {"wage_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 180_000,
-    },
-    "national_library": {
-        "name": "National Library & Archive", "category": "education", "is_special": False,
-        "description": "Vast public knowledge repository providing free training resources that reduce wage costs.",
-        "construction_materials": {"iron": 400, "glass": 400, "lumber": 800, "copper": 100},
-        "operational_consumption": {"energy": 3, "paper": 6},
-        "buffs":   {"wage_savings": 0.005, "output": 0.004},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 150_000,
-    },
-    "vocational_training_center": {
-        "name": "Vocational Training Centre", "category": "education", "is_special": False,
-        "description": "Trade school producing skilled labour that reduces wages and improves production efficiency.",
-        "construction_materials": {"iron": 500, "glass": 400, "lumber": 700, "copper": 200},
-        "operational_consumption": {"energy": 4, "paper": 4, "water": 2},
-        "buffs":   {"wage_savings": 0.008, "output": 0.005},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 180_000,
-    },
-
-    # ── HEALTHCARE (6) ───────────────────────────────────────
-    "regional_medical_center": {
-        "name": "Regional Medical Center", "category": "healthcare", "is_special": False,
-        "description": "Full-service hospital keeping the workforce healthy and reducing wage overhead.",
-        "construction_materials": {"iron": 900, "glass": 700, "copper": 400, "lumber": 500},
-        "operational_consumption": {"energy": 8, "water": 10},
-        "buffs":   {"wage_savings": 0.007, "output": 0.005},
-        "debuffs": {"input_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 320_000,
-    },
-    "biotech_research_hospital": {
-        "name": "Biotech Research Hospital", "category": "healthcare", "is_special": False,
-        "description": "Cutting-edge medical research complex advancing pharmaceutical capabilities citywide.",
-        "construction_materials": {"iron": 1000, "glass": 800, "copper": 500, "rubber": 300},
-        "operational_consumption": {"energy": 10, "water": 8, "oil": 2},
-        "buffs":   {"output": 0.018, "input_savings": 0.004},
-        "debuffs": {"wage_penalty": 0.004},
-        "currency_per_tick": 0.0, "base_project_value": 450_000,
-    },
-    "pharmaceutical_research_hub": {
-        "name": "Pharmaceutical Research Hub", "category": "healthcare", "is_special": False,
-        "description": "Drug development campus producing breakthroughs that lower medicine production costs.",
-        "construction_materials": {"iron": 800, "glass": 700, "copper": 500, "rubber": 400},
-        "operational_consumption": {"energy": 9, "water": 6, "oil": 3},
-        "buffs":   {"output": 0.020, "input_savings": 0.008},
-        "debuffs": {"wage_penalty": 0.005, "input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 400_000,
-    },
-    "emergency_services_network": {
-        "name": "Emergency Services Network", "category": "healthcare", "is_special": False,
-        "description": "Integrated response grid ensuring uninterrupted production operations city-wide.",
-        "construction_materials": {"iron": 600, "copper": 400, "glass": 300, "lumber": 400},
-        "operational_consumption": {"energy": 6, "water": 5},
-        "buffs":   {"output": 0.006, "wage_savings": 0.004},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 220_000,
-    },
-    "public_health_department": {
-        "name": "Public Health Department", "category": "healthcare", "is_special": False,
-        "description": "City-run sanitation and preventive health bureau cutting sick-day production disruptions.",
-        "construction_materials": {"iron": 500, "glass": 400, "lumber": 400, "copper": 150},
-        "operational_consumption": {"energy": 4, "water": 8},
-        "buffs":   {"wage_savings": 0.006, "output": 0.003},
-        "debuffs": {"input_penalty": 0.001},
-        "currency_per_tick": 0.0, "base_project_value": 180_000,
-    },
-    "rehabilitation_recovery_campus": {
-        "name": "Rehabilitation & Recovery Campus", "category": "healthcare", "is_special": False,
-        "description": "Worker recovery facility improving long-term output consistency and reducing turnover.",
-        "construction_materials": {"iron": 500, "glass": 400, "lumber": 600, "copper": 200},
-        "operational_consumption": {"energy": 5, "water": 6},
-        "buffs":   {"wage_savings": 0.004, "output": 0.005},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 180_000,
-    },
-
-    # ── CIVIC & SPECIAL (6) ──────────────────────────────────
-    "city_mint": {
-        "name": "City Mint", "category": "civic", "is_special": True,
+    POST_OFFICE_KEY: {
+        "name": "City Post Office", "category": "foundation",
         "description": (
-            "★ SPECIAL — Official city currency press producing city currency every tick "
-            "and depositing it directly into the city bank. "
-            "Also grants a market confidence premium to all city-produced goods."
+            "The first building that must be constructed before any other city project. "
+            "Issues construction licenses continuously, fuelling all future municipal growth. "
+            "No buffs or debuffs — it is simply the cornerstone of city governance."
         ),
-        "construction_materials": {"iron": 1500, "copper": 800, "lead": 500, "glass": 400},
-        "operational_consumption": {"energy": 10, "lead": 2, "paper": 5},
-        "buffs":   {"output": 0.005, "wage_savings": 0.002},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 2.0,   # units of city currency per level per tick
+        "construction_materials": {
+            "lumber": 3_000, "iron": 2_000, "glass": 1_500,
+            "paper": 5_000, "copper": 1_000,
+        },
+        "licenses_per_level": 0,
+        "buffs": {}, "debuffs": {},
+        "base_project_value": 500_000,
+    },
+
+    "city_hall": {
+        "name": "City Hall", "category": "foundation",
+        "description": (
+            "The seat of city government. A grand civic building that accelerates license "
+            "production, speeds up all municipal construction, and boosts resident output. "
+            "Its bureaucratic overhead adds a small wage burden and sales levy."
+        ),
+        "construction_materials": {
+            "concrete": 8_000, "steel": 6_000, "copper_wire": 3_000,
+            "glass": 4_000, "iron": 5_000,
+        },
+        "licenses_per_level": 50_000,
+        "buffs":   {"license_production": 0.5, "construction_speed": 0.008, "output": 0.010},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.002},
+        "base_project_value": 1_000_000,
+    },
+
+    MUNICIPAL_CENTER_KEY: {
+        "name": "Municipal Center", "category": "foundation",
+        "description": (
+            "A large administrative and civic complex that expands the city's residential "
+            "capacity by 3 member slots per level. No production buffs or debuffs — its "
+            "value is purely in allowing the city to grow its population."
+        ),
+        "construction_materials": {
+            "concrete": 12_000, "steel": 10_000, "glass": 6_000,
+            "copper_wire": 3_000, "aluminum": 4_000,
+        },
+        "licenses_per_level": 75_000,
+        "buffs": {}, "debuffs": {},
         "base_project_value": 750_000,
     },
-    "cultural_arts_district": {
-        "name": "Cultural Arts District", "category": "civic", "is_special": False,
-        "description": "City prestige booster raising sale prices through civic pride and cultural tourism.",
-        "construction_materials": {"iron": 600, "glass": 600, "lumber": 800, "copper": 300},
-        "operational_consumption": {"energy": 6, "water": 4, "paper": 3},
-        "buffs":   {"output": 0.010, "wage_savings": 0.004},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 280_000,
+
+    EXTRACTOR_KEY: {
+        "name": "City Extractor", "category": "foundation",
+        "description": (
+            "A network of automated mining, drilling, and harvesting facilities that "
+            "continuously extract value from the city's territory and deposit city "
+            "currency directly into the bank's reserves (3 × level units / tick). "
+            "No buffs or debuffs — pure passive income for the city."
+        ),
+        "construction_materials": {
+            "iron": 15_000, "steel": 12_000, "aluminum": 6_000,
+            "copper": 8_000, "coal": 8_000,
+        },
+        "licenses_per_level": 100_000,
+        "buffs": {}, "debuffs": {},
+        "base_project_value": 2_000_000,
     },
-    "tourism_convention_center": {
-        "name": "Tourism & Convention Center", "category": "civic", "is_special": False,
-        "description": "World-class events venue drawing external trade and driving up member retail prices.",
-        "construction_materials": {"iron": 800, "glass": 700, "lumber": 900, "copper": 300},
-        "operational_consumption": {"energy": 8, "water": 6},
-        "buffs":   {"output": 0.014, "wage_savings": 0.002},
-        "debuffs": {"wage_penalty": 0.003},
-        "currency_per_tick": 0.0, "base_project_value": 320_000,
+
+    COMPTROLLER_KEY: {
+        "name": "Office of the Comptroller", "category": "foundation",
+        "description": (
+            "The city's sovereign wealth engine. Each tick it invests 0.05 % of the city "
+            "bank's cash reserves in municipal bonds, compounding returns directly back into "
+            "reserves. At level 12 it may issue a new stable coin pegged 1:1 to the mayor's "
+            "selected currency (future feature). No member buffs or debuffs."
+        ),
+        "construction_materials": {
+            "concrete": 10_000, "steel": 8_000, "circuit_board": 4_000,
+            "glass": 6_000, "paper": 15_000,
+        },
+        "licenses_per_level": 150_000,
+        "buffs": {}, "debuffs": {},
+        "base_project_value": 5_000_000,
     },
-    "media_broadcasting_complex": {
-        "name": "Media Broadcasting Complex", "category": "civic", "is_special": False,
-        "description": "Regional media hub whose advertising reach boosts market prices for all city goods.",
-        "construction_materials": {"iron": 700, "glass": 600, "copper": 500, "lumber": 300},
-        "operational_consumption": {"energy": 10, "copper": 1, "paper": 3},
-        "buffs":   {"output": 0.010, "input_savings": 0.003},
-        "debuffs": {"input_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 300_000,
+
+    # ── PUBLIC SAFETY ──────────────────────────────────────────
+
+    "police_department": {
+        "name": "Police Department", "category": "public_safety",
+        "description": (
+            "City law-enforcement infrastructure that reduces fraud and theft risk, "
+            "lowers overhead wage costs for member businesses, and generates modest "
+            "output gains. Funded through a small municipal sales levy."
+        ),
+        "construction_materials": {
+            "concrete": 10_000, "steel": 6_000, "aluminum": 4_000,
+            "circuit_board": 2_000, "rubber": 3_000,
+        },
+        "licenses_per_level": 50_000,
+        "buffs":   {"wage_savings": 0.008, "market_fee_reduction": 0.010, "output": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 800_000,
     },
-    "defense_security_hq": {
-        "name": "Defense & Security HQ", "category": "civic", "is_special": False,
-        "description": "Fortified operations command protecting member businesses and boosting secure output.",
-        "construction_materials": {"iron": 1200, "copper": 500, "glass": 400, "rubber": 300},
-        "operational_consumption": {"energy": 8, "iron": 2},
-        "buffs":   {"output": 0.007, "wage_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.005},
-        "currency_per_tick": 0.0, "base_project_value": 350_000,
+
+    "fire_station": {
+        "name": "Fire Station & Emergency Services", "category": "public_safety",
+        "description": (
+            "A network of fire halls and emergency response centres that protect member "
+            "businesses from loss and speed up all city construction timelines. "
+            "Staffing costs introduce a small wage drag and municipal sales tax."
+        ),
+        "construction_materials": {
+            "concrete": 8_000, "steel": 5_000, "aluminum": 3_000,
+            "copper": 1_500, "rubber": 2_500,
+        },
+        "licenses_per_level": 50_000,
+        "buffs":   {"construction_speed": 0.010, "wage_savings": 0.008, "cycle_speed": 0.006},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 600_000,
     },
-    "environmental_protection_agency": {
-        "name": "Environmental Protection Agency", "category": "civic", "is_special": False,
-        "description": "City environmental authority whose efficiency mandates cut water and energy consumption.",
-        "construction_materials": {"iron": 500, "glass": 400, "lumber": 500, "copper": 200},
-        "operational_consumption": {"energy": 4, "water": 5},
-        "buffs":   {"input_savings": 0.008, "wage_savings": 0.003},
-        "debuffs": {"wage_penalty": 0.002},
-        "currency_per_tick": 0.0, "base_project_value": 220_000,
+
+    "city_hospital": {
+        "name": "City Hospital", "category": "public_safety",
+        "description": (
+            "A full-service municipal hospital that keeps workers healthy, dramatically "
+            "accelerating business cycle throughput and cutting wage overhead. "
+            "High construction and operating complexity adds a significant sales levy."
+        ),
+        "construction_materials": {
+            "concrete": 18_000, "steel": 12_000, "glass": 8_000,
+            "copper": 4_000, "circuit_board": 5_000,
+        },
+        "licenses_per_level": 100_000,
+        "buffs":   {"cycle_speed": 0.012, "wage_savings": 0.010, "output": 0.010},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 2_000_000,
+    },
+
+    # ── UTILITIES ──────────────────────────────────────────────
+
+    "power_grid": {
+        "name": "Municipal Power Grid", "category": "utilities",
+        "description": (
+            "City-owned electrical infrastructure providing cheap energy to all "
+            "member businesses, boosting output, cutting input material needs, "
+            "and shortening production cycles. High capital intensity raises the "
+            "input overhead and sales levy for residents."
+        ),
+        "construction_materials": {
+            "iron": 18_000, "copper": 12_000, "steel": 8_000,
+            "aluminum": 6_000, "glass": 4_000,
+        },
+        "licenses_per_level": 80_000,
+        "buffs":   {"output": 0.015, "input_savings": 0.010, "cycle_speed": 0.008},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.004, "input_penalty": 0.004},
+        "base_project_value": 1_500_000,
+    },
+
+    "water_treatment": {
+        "name": "Water Treatment Facility", "category": "utilities",
+        "description": (
+            "Industrial-scale water purification delivering clean water to every "
+            "production facility, reducing input material waste and lowering wage "
+            "overhead. Maintenance costs add a modest municipal levy."
+        ),
+        "construction_materials": {
+            "concrete": 12_000, "steel": 8_000, "copper": 6_000,
+            "iron": 10_000, "cement": 5_000,
+        },
+        "licenses_per_level": 60_000,
+        "buffs":   {"input_savings": 0.012, "wage_savings": 0.008, "output": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_000_000,
+    },
+
+    "waste_management": {
+        "name": "Waste Management", "category": "utilities",
+        "description": (
+            "A city-wide waste collection, sorting, and recycling system that turns "
+            "industrial byproducts back into usable inputs, speeds up cycles, and "
+            "reduces raw material demand. The associated levy is light."
+        ),
+        "construction_materials": {
+            "concrete": 8_000, "steel": 6_000, "iron": 5_000,
+            "rubber": 3_000, "cement": 4_000,
+        },
+        "licenses_per_level": 50_000,
+        "buffs":   {"input_savings": 0.010, "cycle_speed": 0.008, "wage_savings": 0.006},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.003, "input_penalty": 0.003},
+        "base_project_value": 600_000,
+    },
+
+    # ── TRANSPORTATION ─────────────────────────────────────────
+
+    "public_transit": {
+        "name": "City Transit Authority", "category": "transportation",
+        "description": (
+            "A network of buses, trams, and rail lines that reduces worker commute "
+            "times, shortening every production cycle. Cheaper freight movement also "
+            "compresses market listing fees. Staffing costs add a modest levy."
+        ),
+        "construction_materials": {
+            "steel": 10_000, "concrete": 12_000, "copper_wire": 6_000,
+            "rubber": 5_000, "aluminum": 4_000,
+        },
+        "licenses_per_level": 70_000,
+        "buffs":   {"cycle_speed": 0.012, "market_fee_reduction": 0.010, "input_savings": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_000_000,
+    },
+
+    "port_authority": {
+        "name": "Port Authority", "category": "transportation",
+        "description": (
+            "Deepwater docking, warehousing, and customs facilities that dramatically "
+            "expand export capacity, cutting market fees and boosting production output. "
+            "Enormous infrastructure demands and a significant sales levy."
+        ),
+        "construction_materials": {
+            "concrete": 20_000, "steel": 16_000, "iron": 12_000,
+            "aluminum": 6_000, "lumber": 8_000,
+        },
+        "licenses_per_level": 150_000,
+        "buffs":   {"output": 0.018, "market_fee_reduction": 0.015, "input_savings": 0.010},
+        "debuffs": {"sales_tax": 0.004, "wage_penalty": 0.006, "input_penalty": 0.005},
+        "base_project_value": 3_000_000,
+    },
+
+    "city_airport": {
+        "name": "Municipal Airport", "category": "transportation",
+        "description": (
+            "A full international airport connecting the city to global markets. "
+            "The largest single infrastructure project available — it provides the "
+            "highest output boost and market fee reduction in the game, but requires "
+            "massive construction resources, high licenses, and a heavy sales levy."
+        ),
+        "construction_materials": {
+            "concrete": 25_000, "steel": 20_000, "aluminum": 12_000,
+            "glass": 8_000, "copper_wire": 6_000, "rebar": 10_000,
+        },
+        "licenses_per_level": 200_000,
+        "buffs":   {"output": 0.020, "market_fee_reduction": 0.018, "cycle_speed": 0.010},
+        "debuffs": {"sales_tax": 0.005, "wage_penalty": 0.006, "input_penalty": 0.005},
+        "base_project_value": 5_000_000,
+    },
+
+    "rail_terminal": {
+        "name": "Rail Terminal", "category": "transportation",
+        "description": (
+            "An intermodal rail hub connecting city districts and reducing freight "
+            "transit times. Speeds production cycles, cuts input material needs, "
+            "and raises overall output. Labor-intensive operations add a sales levy."
+        ),
+        "construction_materials": {
+            "steel": 16_000, "concrete": 14_000, "iron": 10_000,
+            "copper_wire": 5_000, "lumber": 6_000,
+        },
+        "licenses_per_level": 100_000,
+        "buffs":   {"cycle_speed": 0.015, "input_savings": 0.012, "output": 0.010},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.005, "input_penalty": 0.004},
+        "base_project_value": 2_000_000,
+    },
+
+    # ── COMMERCE & FINANCE ─────────────────────────────────────
+
+    "city_market": {
+        "name": "City Market Hall", "category": "commerce",
+        "description": (
+            "A permanent, city-operated market hall that dramatically reduces listing "
+            "and commission fees for all member traders, while boosting output and "
+            "speeding up business cycles. Light levy and modest debuffs."
+        ),
+        "construction_materials": {
+            "lumber": 12_000, "sand": 8_000, "steel": 6_000,
+            "glass": 5_000, "copper": 3_000,
+        },
+        "licenses_per_level": 80_000,
+        "buffs":   {"market_fee_reduction": 0.015, "output": 0.010, "cycle_speed": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_200_000,
+    },
+
+    "trade_district": {
+        "name": "Commercial Trade District", "category": "commerce",
+        "description": (
+            "A dedicated commercial zone with standardised contracts and bulk-trading "
+            "infrastructure. Slashes market fees, boosts production output, and "
+            "reduces raw material consumption. Significant levy due to high land cost."
+        ),
+        "construction_materials": {
+            "concrete": 16_000, "steel": 12_000, "glass": 10_000,
+            "lumber": 6_000, "copper_wire": 5_000,
+        },
+        "licenses_per_level": 100_000,
+        "buffs":   {"market_fee_reduction": 0.018, "output": 0.012, "input_savings": 0.008},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.004, "input_penalty": 0.004},
+        "base_project_value": 2_000_000,
+    },
+
+    "stock_exchange": {
+        "name": "City Stock Exchange", "category": "commerce",
+        "description": (
+            "A state-of-the-art electronic trading floor providing the highest market "
+            "fee reduction in the game alongside significant loan interest savings. "
+            "Its enormous financial leverage comes at the cost of the highest sales tax "
+            "of any city project — it attracts revenue but also takes a large cut."
+        ),
+        "construction_materials": {
+            "concrete": 15_000, "steel": 12_000, "glass": 10_000,
+            "circuit_board": 6_000, "copper_wire": 5_000,
+        },
+        "licenses_per_level": 150_000,
+        "buffs":   {"market_fee_reduction": 0.020, "loan_interest_reduction": 0.015, "output": 0.012},
+        "debuffs": {"sales_tax": 0.006, "wage_penalty": 0.005, "input_penalty": 0.004},
+        "base_project_value": 3_000_000,
+    },
+
+    "city_treasury": {
+        "name": "City Treasury", "category": "commerce",
+        "description": (
+            "The municipal vault and fiscal management authority. Cuts bank loan interest "
+            "for all member businesses, reduces wage overhead, and trims market costs. "
+            "Its regulatory burden adds a modest sales levy."
+        ),
+        "construction_materials": {
+            "concrete": 12_000, "steel": 10_000, "copper_wire": 6_000,
+            "circuit_board": 6_000, "paper": 12_000,
+        },
+        "licenses_per_level": 120_000,
+        "buffs":   {"loan_interest_reduction": 0.015, "wage_savings": 0.012, "market_fee_reduction": 0.010},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 2_500_000,
+    },
+
+    "customs_authority": {
+        "name": "Customs & Trade Authority", "category": "commerce",
+        "description": (
+            "Streamlined customs clearance and trade facilitation that cuts market fees, "
+            "boosts production output, and reduces input material waste. Staffed by "
+            "inspectors whose wages are offset by a light municipal levy."
+        ),
+        "construction_materials": {
+            "concrete": 10_000, "steel": 8_000, "circuit_board": 5_000,
+            "copper_wire": 3_000, "aluminum": 3_000,
+        },
+        "licenses_per_level": 80_000,
+        "buffs":   {"market_fee_reduction": 0.012, "output": 0.015, "input_savings": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_500_000,
+    },
+
+    # ── EDUCATION ──────────────────────────────────────────────
+
+    "public_schools": {
+        "name": "Public School System", "category": "education",
+        "description": (
+            "A network of schools, vocational colleges, and training centres that "
+            "produces a more skilled workforce. Speeds up every business cycle, "
+            "accelerates city construction, and generates a small license bonus. "
+            "Teacher salaries add a modest levy and wage drag."
+        ),
+        "construction_materials": {
+            "concrete": 10_000, "lumber": 6_000, "glass": 5_000,
+            "paper": 15_000, "copper_wire": 2_500,
+        },
+        "licenses_per_level": 60_000,
+        "buffs":   {"cycle_speed": 0.010, "construction_speed": 0.010, "license_production": 0.30},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.005, "input_penalty": 0.003},
+        "base_project_value": 800_000,
+    },
+
+    "city_library": {
+        "name": "City Library", "category": "education",
+        "description": (
+            "A grand public library and archival complex that is the city's primary "
+            "secondary license producer. Also speeds up all construction projects and "
+            "reduces workforce wages. Light levy and modest debuffs."
+        ),
+        "construction_materials": {
+            "iron": 10_000, "lumber": 8_000, "glass": 6_000,
+            "concrete": 8_000, "paper": 20_000,
+        },
+        "licenses_per_level": 70_000,
+        "buffs":   {"license_production": 0.50, "construction_speed": 0.012, "wage_savings": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 800_000,
+    },
+
+    "research_institute": {
+        "name": "City Research Institute", "category": "education",
+        "description": (
+            "A world-class R&D campus that translates cutting-edge science into higher "
+            "production output, faster business cycles, and accelerated city construction. "
+            "Expensive to equip, with notable input and sales-tax costs."
+        ),
+        "construction_materials": {
+            "steel": 12_000, "glass": 10_000, "circuit_board": 8_000,
+            "fiberglass": 6_000, "copper": 5_000,
+        },
+        "licenses_per_level": 100_000,
+        "buffs":   {"output": 0.015, "cycle_speed": 0.012, "construction_speed": 0.015},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.005, "input_penalty": 0.004},
+        "base_project_value": 2_000_000,
+    },
+
+    # ── CULTURE & TOURISM ──────────────────────────────────────
+
+    "city_park": {
+        "name": "City Park & Recreation", "category": "culture",
+        "description": (
+            "Expansive parks, sports facilities, and green spaces that improve resident "
+            "wellbeing, reducing worker absenteeism (wage savings) and boosting "
+            "motivation (cycle speed and output). A light levy funds maintenance."
+        ),
+        "construction_materials": {
+            "iron": 8_000, "lumber": 10_000, "sand": 8_000,
+            "glass": 3_000, "copper": 2_500,
+        },
+        "licenses_per_level": 50_000,
+        "buffs":   {"wage_savings": 0.010, "cycle_speed": 0.008, "output": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.003, "input_penalty": 0.002},
+        "base_project_value": 600_000,
+    },
+
+    "convention_center": {
+        "name": "Convention Center", "category": "culture",
+        "description": (
+            "A massive events and trade-show venue that draws outside buyers to the city, "
+            "cutting market fees and boosting production output. Cycle times shrink as "
+            "local commerce accelerates. Construction and upkeep add a notable levy."
+        ),
+        "construction_materials": {
+            "concrete": 16_000, "steel": 12_000, "glass": 10_000,
+            "copper_wire": 5_000, "circuit_board": 4_000,
+        },
+        "licenses_per_level": 100_000,
+        "buffs":   {"market_fee_reduction": 0.015, "output": 0.012, "cycle_speed": 0.010},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_500_000,
+    },
+
+    "cultural_arts_center": {
+        "name": "Cultural Arts Center", "category": "culture",
+        "description": (
+            "A museum, theatre, and arts complex that elevates civic pride. Generates "
+            "a modest license bonus, cuts wage costs through community investment, and "
+            "gently speeds up production. Light levy and minor debuffs."
+        ),
+        "construction_materials": {
+            "iron": 10_000, "concrete": 8_000, "lumber": 6_000,
+            "glass": 5_000, "copper": 3_500,
+        },
+        "licenses_per_level": 70_000,
+        "buffs":   {"license_production": 0.40, "wage_savings": 0.010, "cycle_speed": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.003, "input_penalty": 0.002},
+        "base_project_value": 800_000,
+    },
+
+    "media_tower": {
+        "name": "City Media Tower", "category": "culture",
+        "description": (
+            "A broadcast tower, streaming hub, and civic communications centre that "
+            "amplifies market visibility, boosts output, and tightens business cycles. "
+            "High tech infrastructure raises input and wage pressure with a sales levy."
+        ),
+        "construction_materials": {
+            "steel": 12_000, "aluminum": 10_000, "circuit_board": 8_000,
+            "glass": 6_000, "copper_wire": 4_000,
+        },
+        "licenses_per_level": 90_000,
+        "buffs":   {"market_fee_reduction": 0.012, "output": 0.015, "cycle_speed": 0.010},
+        "debuffs": {"sales_tax": 0.003, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_500_000,
+    },
+
+    # ── INDUSTRY & ENVIRONMENT ─────────────────────────────────
+
+    "industrial_zone": {
+        "name": "Industrial Zone Authority", "category": "industry",
+        "description": (
+            "A managed heavy-industrial district with shared infrastructure that provides "
+            "the highest production output and input savings of any single project. "
+            "The trade-off: significant input penalty and sales levy reflect the city's "
+            "dependence on raw industrial throughput."
+        ),
+        "construction_materials": {
+            "concrete": 20_000, "steel": 16_000, "iron": 12_000,
+            "aluminum": 6_000, "rebar": 8_000,
+        },
+        "licenses_per_level": 120_000,
+        "buffs":   {"output": 0.020, "input_savings": 0.015, "cycle_speed": 0.010},
+        "debuffs": {"sales_tax": 0.004, "wage_penalty": 0.005, "input_penalty": 0.005},
+        "base_project_value": 3_000_000,
+    },
+
+    "environmental_agency": {
+        "name": "Environmental Protection Agency", "category": "industry",
+        "description": (
+            "A regulatory and remediation authority that enforces cleaner production "
+            "standards, reducing raw material waste and cutting workforce costs. "
+            "Compliance costs impose a mild input overhead and modest sales levy."
+        ),
+        "construction_materials": {
+            "steel": 10_000, "concrete": 8_000, "circuit_board": 5_000,
+            "glass": 4_000, "paper": 12_000,
+        },
+        "licenses_per_level": 80_000,
+        "buffs":   {"input_savings": 0.012, "wage_savings": 0.010, "output": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.003},
+        "base_project_value": 1_000_000,
+    },
+
+    "zoning_office": {
+        "name": "Zoning & Planning Office", "category": "industry",
+        "description": (
+            "The city's land-use planning authority. Pre-approved construction permits "
+            "slash build times for all projects, and a dedicated licensing division "
+            "boosts license production. Bureaucratic complexity adds a light levy."
+        ),
+        "construction_materials": {
+            "concrete": 8_000, "steel": 6_000, "glass": 4_000,
+            "circuit_board": 3_000, "paper": 10_000,
+        },
+        "licenses_per_level": 70_000,
+        "buffs":   {"construction_speed": 0.015, "license_production": 0.40, "wage_savings": 0.008},
+        "debuffs": {"sales_tax": 0.002, "wage_penalty": 0.004, "input_penalty": 0.002},
+        "base_project_value": 1_000_000,
     },
 }
 
 
 # ──────────────────────────────────────────────────────────────
-# MODELS
+# DATABASE MODELS
 # ──────────────────────────────────────────────────────────────
 
 class CityProjectInstance(Base):
@@ -526,7 +650,7 @@ class CityProjectInstance(Base):
     level = Column(Integer, default=0)
     target_level = Column(Integer, default=1)
     status = Column(String, default=STATUS_CONSTRUCTING)
-    construction_ticks_required = Column(Integer, default=720)
+    construction_ticks_required = Column(Integer, default=2160)
     construction_ticks_completed = Column(Integer, default=0)
     construction_started_at = Column(DateTime, nullable=True)
     started_by = Column(Integer, nullable=True)
@@ -534,8 +658,26 @@ class CityProjectInstance(Base):
     total_ticks_active = Column(Integer, default=0)
 
 
+class CityProjectVault(Base):
+    """
+    Per-project staging vault for construction materials.
+    Keyed by (city_id, project_type, item_type).
+    Vault capacity = construction cost for the next target level.
+    Vault is cleared when construction completes or the project is deconstructed.
+    """
+    __tablename__ = "city_project_vaults"
+    __table_args__ = (UniqueConstraint("city_id", "project_type", "item_type"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    city_id = Column(Integer, index=True, nullable=False)
+    project_type = Column(String, nullable=False)
+    item_type = Column(String, nullable=False)
+    quantity = Column(Float, default=0.0)
+    last_updated = Column(DateTime, default=datetime.utcnow)
+
+
+# Legacy table — kept for schema compatibility; no longer used operationally.
 class CityResourceVault(Base):
-    """City-level commodity stockpile shared by all projects."""
     __tablename__ = "city_resource_vaults"
     __table_args__ = (UniqueConstraint("city_id", "item_type"),)
 
@@ -551,29 +693,21 @@ class CityResourceVault(Base):
 # ──────────────────────────────────────────────────────────────
 
 def _construction_qty(base_qty: float, level: int) -> float:
+    """Scale construction material cost by level."""
     if level <= HIGH_LEVEL_THRESHOLD:
         return base_qty * level
     return base_qty * level * (level - HIGH_LEVEL_THRESHOLD)
 
 
 def _construction_ticks(level: int) -> int:
-    if level <= 4:
-        return 720
-    if level <= 7:
-        return 2160
-    return 4320 * (level - 7)
-
-
-def _get_vault_row(db, city_id: int, item_type: str) -> CityResourceVault:
-    row = db.query(CityResourceVault).filter(
-        CityResourceVault.city_id == city_id,
-        CityResourceVault.item_type == item_type
-    ).first()
-    if not row:
-        row = CityResourceVault(city_id=city_id, item_type=item_type, quantity=0.0)
-        db.add(row)
-        db.flush()
-    return row
+    """Ticks required to construct or upgrade to the given level."""
+    if level <= 3:
+        return 2_160    # 3 h
+    if level <= 6:
+        return 4_320    # 6 h
+    if level <= 9:
+        return 8_640    # 12 h
+    return 17_280 * (level - 9)   # 24 h / 48 h / 72 h for levels 10/11/12
 
 
 def _is_city_mayor(player_id: int, city_id: int) -> bool:
@@ -601,12 +735,61 @@ def _get_player_city_id(player_id: int) -> Optional[int]:
         return None
 
 
-def _deduct_from_vault(db, city_id: int, materials: Dict[str, float]) -> bool:
-    rows = {}
+def _get_city_licenses(db, city_id: int) -> float:
+    """Return current city license balance from CityBank."""
+    try:
+        from cities import CityBank, get_db as city_get_db
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+        if bank:
+            return getattr(bank, "city_licenses", 0.0) or 0.0
+        return 0.0
+    except Exception:
+        return 0.0
+
+
+def _deduct_city_licenses(db, city_id: int, amount: float) -> bool:
+    """Deduct licenses from city bank. Returns False if insufficient."""
+    if amount <= 0:
+        return True
+    try:
+        from cities import CityBank
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+        if not bank:
+            return False
+        current = getattr(bank, "city_licenses", 0.0) or 0.0
+        if current < amount:
+            return False
+        bank.city_licenses = current - amount
+        return True
+    except Exception:
+        return False
+
+
+def _get_vault_row(db, city_id: int, project_type: str, item_type: str) -> CityProjectVault:
+    """Fetch or create a vault row for the given (city, project, item)."""
+    row = db.query(CityProjectVault).filter(
+        CityProjectVault.city_id == city_id,
+        CityProjectVault.project_type == project_type,
+        CityProjectVault.item_type == item_type,
+    ).first()
+    if not row:
+        row = CityProjectVault(
+            city_id=city_id, project_type=project_type,
+            item_type=item_type, quantity=0.0,
+        )
+        db.add(row)
+        db.flush()
+    return row
+
+
+def _deduct_from_project_vault(db, city_id: int, project_type: str,
+                                materials: Dict[str, float]) -> bool:
+    """All-or-nothing deduction from a project's vault. Returns False if any item insufficient."""
+    rows: Dict[str, tuple] = {}
     for item_type, qty in materials.items():
         if qty <= 0:
             continue
-        row = _get_vault_row(db, city_id, item_type)
+        row = _get_vault_row(db, city_id, project_type, item_type)
         if row.quantity < qty:
             return False
         rows[item_type] = (row, qty)
@@ -616,127 +799,140 @@ def _deduct_from_vault(db, city_id: int, materials: Dict[str, float]) -> bool:
     return True
 
 
-# ──────────────────────────────────────────────────────────────
-# QUERY API
-# ──────────────────────────────────────────────────────────────
+def _clear_project_vault(db, city_id: int, project_type: str) -> None:
+    """Delete all vault rows for a given (city, project)."""
+    db.query(CityProjectVault).filter(
+        CityProjectVault.city_id == city_id,
+        CityProjectVault.project_type == project_type,
+    ).delete()
 
-def get_city_vault(city_id: int) -> Dict[str, float]:
+
+def _has_post_office(city_id: int) -> bool:
+    """Return True if city has an active/paused/upgrading post office."""
     db = get_db()
     try:
-        rows = db.query(CityResourceVault).filter(
-            CityResourceVault.city_id == city_id,
-            CityResourceVault.quantity > 0
-        ).all()
-        return {r.item_type: r.quantity for r in rows}
+        inst = db.query(CityProjectInstance).filter(
+            CityProjectInstance.city_id == city_id,
+            CityProjectInstance.project_type == POST_OFFICE_KEY,
+            CityProjectInstance.status.in_([STATUS_ACTIVE, STATUS_PAUSED, STATUS_UPGRADING]),
+        ).first()
+        return inst is not None
     finally:
         db.close()
 
+
+# ──────────────────────────────────────────────────────────────
+# CONSTRUCTION REQUIREMENTS
+# ──────────────────────────────────────────────────────────────
+
+def get_construction_requirements(project_type: str, target_level: int) -> Dict[str, float]:
+    """Return {item_type: quantity} for constructing/upgrading to target_level."""
+    defn = CITY_PROJECT_TYPES.get(project_type)
+    if not defn:
+        return {}
+    return {
+        item: _construction_qty(qty, target_level)
+        for item, qty in defn.get("construction_materials", {}).items()
+    }
+
+
+# ──────────────────────────────────────────────────────────────
+# QUERY API
+# ──────────────────────────────────────────────────────────────
 
 def get_city_projects(city_id: int) -> List[dict]:
     db = get_db()
     try:
         instances = db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status != STATUS_DECONSTRUCTED
+            CityProjectInstance.status != STATUS_DECONSTRUCTED,
         ).all()
         result = []
         for inst in instances:
             defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
             ticks_req = inst.construction_ticks_required or 1
             result.append({
-                "id": inst.id,
-                "project_type": inst.project_type,
-                "name": defn.get("name", inst.project_type),
-                "description": defn.get("description", ""),
-                "category": defn.get("category", ""),
-                "is_special": defn.get("is_special", False),
-                "level": inst.level,
-                "target_level": inst.target_level,
-                "status": inst.status,
-                "ticks_required": ticks_req,
-                "ticks_done": inst.construction_ticks_completed,
-                "progress_pct": round(100 * min(inst.construction_ticks_completed, ticks_req) / ticks_req, 1),
-                "buffs": defn.get("buffs", {}),
-                "debuffs": defn.get("debuffs", {}),
-                "currency_per_tick": defn.get("currency_per_tick", 0.0),
-                "is_special": defn.get("is_special", False),
+                "id":              inst.id,
+                "project_type":    inst.project_type,
+                "name":            defn.get("name", inst.project_type),
+                "description":     defn.get("description", ""),
+                "category":        defn.get("category", ""),
+                "is_special":      inst.project_type in SPECIAL_KEYS,
+                "level":           inst.level,
+                "target_level":    inst.target_level,
+                "status":          inst.status,
+                "ticks_required":  ticks_req,
+                "ticks_done":      inst.construction_ticks_completed,
+                "progress_pct":    round(100 * min(inst.construction_ticks_completed, ticks_req) / ticks_req, 1),
+                "buffs":           defn.get("buffs", {}),
+                "debuffs":         defn.get("debuffs", {}),
+                "licenses_per_level": defn.get("licenses_per_level", 0),
             })
         return result
     finally:
         db.close()
 
 
-def get_construction_requirements(project_type: str, target_level: int) -> Dict[str, float]:
-    defn = CITY_PROJECT_TYPES.get(project_type)
-    if not defn:
-        return {}
-    return {item: _construction_qty(qty, target_level)
-            for item, qty in defn.get("construction_materials", {}).items()}
-
-
-def get_city_production_buffs(player_id: int) -> Dict[str, float]:
+def get_project_vault_status(city_id: int, project_type: str) -> Dict[str, Any]:
     """
-    Return combined production multipliers for a player based on their city's
-    active projects.
-
-    Returns dict with:
-      output_multiplier  (>= 1.0)  — multiply all production output quantities
-      wage_multiplier    (>= 0.1)  — multiply all wage costs
-      input_multiplier   (>= 0.1)  — multiply all input quantities
+    Return vault contents and fill percentages for a project's next build level.
+    Also returns whether construction can start (vault full + enough licenses).
     """
-    city_id = _get_player_city_id(player_id)
-    if not city_id:
-        return {"output_multiplier": 1.0, "wage_multiplier": 1.0, "input_multiplier": 1.0}
-
     db = get_db()
     try:
-        instances = db.query(CityProjectInstance).filter(
+        # Determine the next target level
+        inst = db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status == STATUS_ACTIVE,
-            CityProjectInstance.level > 0
+            CityProjectInstance.project_type == project_type,
+            CityProjectInstance.status != STATUS_DECONSTRUCTED,
+        ).first()
+
+        if inst and inst.status in (STATUS_CONSTRUCTING, STATUS_UPGRADING):
+            # Currently building — no deposits allowed
+            return {"under_construction": True, "items": {}, "ready": False}
+
+        current_level = inst.level if inst else 0
+        target_level = current_level + 1
+        if target_level > MAX_PROJECT_LEVEL:
+            return {"at_max": True, "items": {}, "ready": False}
+
+        required = get_construction_requirements(project_type, target_level)
+        vault_rows = db.query(CityProjectVault).filter(
+            CityProjectVault.city_id == city_id,
+            CityProjectVault.project_type == project_type,
         ).all()
+        vault = {r.item_type: r.quantity for r in vault_rows}
 
-        total_output = 0.0
-        total_wage_save = 0.0
-        total_input_save = 0.0
-        total_wage_pen = 0.0
-        total_input_pen = 0.0
+        defn = CITY_PROJECT_TYPES.get(project_type, {})
+        licenses_needed = defn.get("licenses_per_level", 0)
+        licenses_held = _get_city_licenses(db, city_id)
 
-        for inst in instances:
-            defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
-            b = defn.get("buffs", {})
-            d = defn.get("debuffs", {})
-            lv = inst.level
-            total_output     += b.get("output",       0.0) * lv
-            total_wage_save  += b.get("wage_savings",  0.0) * lv
-            total_input_save += b.get("input_savings", 0.0) * lv
-            total_wage_pen   += d.get("wage_penalty",  0.0) * lv
-            total_input_pen  += d.get("input_penalty", 0.0) * lv
+        items = {}
+        all_materials_ready = True
+        for item_type, qty_needed in required.items():
+            held = vault.get(item_type, 0.0)
+            pct = min(100.0, round(100 * held / qty_needed, 1)) if qty_needed else 100.0
+            items[item_type] = {
+                "needed": qty_needed,
+                "held": held,
+                "pct": pct,
+                "full": held >= qty_needed,
+            }
+            if held < qty_needed:
+                all_materials_ready = False
 
+        licenses_ok = licenses_held >= licenses_needed
         return {
-            "output_multiplier": max(0.5, 1.0 + total_output),
-            "wage_multiplier":   max(0.1, 1.0 - (total_wage_save - total_wage_pen)),
-            "input_multiplier":  max(0.1, 1.0 - (total_input_save - total_input_pen)),
+            "under_construction": False,
+            "at_max": False,
+            "target_level": target_level,
+            "items": items,
+            "licenses_needed": licenses_needed,
+            "licenses_held": licenses_held,
+            "licenses_ok": licenses_ok,
+            "materials_ready": all_materials_ready,
+            "ready": all_materials_ready and licenses_ok,
         }
-    finally:
-        db.close()
-
-
-def get_city_currency_production(city_id: int) -> float:
-    db = get_db()
-    try:
-        instances = db.query(CityProjectInstance).filter(
-            CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status == STATUS_ACTIVE,
-            CityProjectInstance.level > 0
-        ).all()
-        total = 0.0
-        for inst in instances:
-            defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
-            cpt = defn.get("currency_per_tick", 0.0)
-            if cpt > 0:
-                total += cpt * inst.level
-        return total
     finally:
         db.close()
 
@@ -746,7 +942,7 @@ def get_city_project_value(city_id: int) -> float:
     try:
         instances = db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status.in_([STATUS_ACTIVE, STATUS_PAUSED, STATUS_UPGRADING])
+            CityProjectInstance.status.in_([STATUS_ACTIVE, STATUS_PAUSED, STATUS_UPGRADING]),
         ).all()
         total = 0.0
         for inst in instances:
@@ -757,113 +953,290 @@ def get_city_project_value(city_id: int) -> float:
         db.close()
 
 
+def get_city_production_buffs(player_id: int) -> Dict[str, float]:
+    """
+    Return combined production multipliers for a player based on their city's
+    active projects.
+
+    Returns:
+      output_multiplier        (>= 0.5)  multiply all production output quantities
+      wage_multiplier          (>= 0.1)  multiply all wage costs
+      input_multiplier         (>= 0.1)  multiply all input quantities
+      cycle_speed_multiplier   (<= 1.0)  multiply cycles_to_complete (lower = faster)
+      market_fee_multiplier    (>= 0.0)  multiply market fees (lower = cheaper)
+      construction_speed_mult  (<= 1.0)  multiply construction ticks (lower = faster)
+      loan_interest_multiplier (>= 0.1)  multiply loan interest rates
+      license_production_bonus (float)   extra licenses/tick added to city base
+      sales_tax_rate           (0–0.5)   fraction of market sale proceeds taxed
+    """
+    city_id = _get_player_city_id(player_id)
+    if not city_id:
+        return {
+            "output_multiplier": 1.0, "wage_multiplier": 1.0, "input_multiplier": 1.0,
+            "cycle_speed_multiplier": 1.0, "market_fee_multiplier": 1.0,
+            "construction_speed_mult": 1.0, "loan_interest_multiplier": 1.0,
+            "license_production_bonus": 0.0, "sales_tax_rate": 0.0,
+        }
+
+    db = get_db()
+    try:
+        instances = db.query(CityProjectInstance).filter(
+            CityProjectInstance.city_id == city_id,
+            CityProjectInstance.status == STATUS_ACTIVE,
+            CityProjectInstance.level > 0,
+        ).all()
+
+        total_output = total_wage_save = total_input_save = 0.0
+        total_wage_pen = total_input_pen = 0.0
+        total_cycle = total_fee = total_cs = total_loan = 0.0
+        total_lic_bonus = total_tax = 0.0
+
+        for inst in instances:
+            defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
+            b = defn.get("buffs", {})
+            d = defn.get("debuffs", {})
+            lv = inst.level
+            total_output    += b.get("output", 0.0)              * lv
+            total_wage_save += b.get("wage_savings", 0.0)        * lv
+            total_input_save+= b.get("input_savings", 0.0)       * lv
+            total_cycle     += b.get("cycle_speed", 0.0)         * lv
+            total_fee       += b.get("market_fee_reduction", 0.0)* lv
+            total_cs        += b.get("construction_speed", 0.0)  * lv
+            total_loan      += b.get("loan_interest_reduction", 0.0) * lv
+            total_lic_bonus += b.get("license_production", 0.0)  * lv
+            total_wage_pen  += d.get("wage_penalty", 0.0)        * lv
+            total_input_pen += d.get("input_penalty", 0.0)       * lv
+            total_tax       += d.get("sales_tax", 0.0)           * lv
+
+        return {
+            "output_multiplier":       max(0.5,  1.0 + total_output),
+            "wage_multiplier":         max(0.1,  1.0 - (total_wage_save - total_wage_pen)),
+            "input_multiplier":        max(0.1,  1.0 - (total_input_save - total_input_pen)),
+            "cycle_speed_multiplier":  max(0.3,  1.0 - total_cycle),
+            "market_fee_multiplier":   max(0.0,  1.0 - total_fee),
+            "construction_speed_mult": max(0.2,  1.0 - total_cs),
+            "loan_interest_multiplier":max(0.1,  1.0 - total_loan),
+            "license_production_bonus":total_lic_bonus,
+            "sales_tax_rate":          min(0.50, total_tax),
+        }
+    finally:
+        db.close()
+
+
+def get_city_sales_tax_rate(city_id: int) -> float:
+    """Return combined sales tax rate for a city (sum of all active project debuffs)."""
+    db = get_db()
+    try:
+        instances = db.query(CityProjectInstance).filter(
+            CityProjectInstance.city_id == city_id,
+            CityProjectInstance.status == STATUS_ACTIVE,
+            CityProjectInstance.level > 0,
+        ).all()
+        total = sum(
+            CITY_PROJECT_TYPES.get(inst.project_type, {}).get("debuffs", {}).get("sales_tax", 0.0)
+            * inst.level
+            for inst in instances
+        )
+        return min(0.50, total)
+    finally:
+        db.close()
+
+
+def get_effective_max_members(city_id: int) -> int:
+    """Return maximum city members after Municipal Center bonus (3 × level)."""
+    db = get_db()
+    try:
+        inst = db.query(CityProjectInstance).filter(
+            CityProjectInstance.city_id == city_id,
+            CityProjectInstance.project_type == MUNICIPAL_CENTER_KEY,
+            CityProjectInstance.status == STATUS_ACTIVE,
+        ).first()
+        bonus = (inst.level * 3) if inst else 0
+        return DEFAULT_MEMBER_SLOTS + bonus
+    finally:
+        db.close()
+
+
 # ──────────────────────────────────────────────────────────────
 # VAULT MANAGEMENT
 # ──────────────────────────────────────────────────────────────
 
-def deposit_to_vault(player_id: int, city_id: int, item_type: str, quantity: float) -> Tuple[bool, str]:
+def deposit_to_project_vault(player_id: int, city_id: int,
+                              project_type: str, item_type: str,
+                              quantity: float) -> Tuple[bool, str]:
+    """
+    Any city member may deposit materials to a project's construction vault.
+    Deposits are capped at the construction requirement for the next target level.
+    Deposits are rejected while the project is actively under construction.
+    """
     if quantity <= 0:
         return False, "Quantity must be positive."
+    if project_type not in CITY_PROJECT_TYPES:
+        return False, f"Unknown project type '{project_type}'."
     if not _is_city_member(player_id, city_id):
         return False, "You must be a city member to deposit resources."
+
+    db = get_db()
     try:
+        # Check if project is under construction / upgrading
+        inst = db.query(CityProjectInstance).filter(
+            CityProjectInstance.city_id == city_id,
+            CityProjectInstance.project_type == project_type,
+            CityProjectInstance.status != STATUS_DECONSTRUCTED,
+        ).first()
+        if inst and inst.status in (STATUS_CONSTRUCTING, STATUS_UPGRADING):
+            return False, "Cannot deposit while the project is under construction."
+
+        current_level = inst.level if inst else 0
+        target_level = current_level + 1
+        if target_level > MAX_PROJECT_LEVEL:
+            return False, "This project is already at maximum level."
+
+        required = get_construction_requirements(project_type, target_level)
+        if item_type not in required:
+            defn = CITY_PROJECT_TYPES[project_type]
+            return False, (f"{item_type} is not a required material for "
+                           f"{defn['name']} level {target_level}.")
+
+        max_qty = required[item_type]
+        vault_row = _get_vault_row(db, city_id, project_type, item_type)
+        space = max(0.0, max_qty - vault_row.quantity)
+        if space <= 0:
+            return False, f"The vault already holds the maximum {max_qty:,.0f} {item_type}."
+
+        deposit_qty = min(quantity, space)
+
         from inventory import get_player_inventory, remove_item
         inv = get_player_inventory(player_id)
-        if inv.get(item_type, 0) < quantity:
-            return False, f"You don't have {quantity:,.2f} {item_type} in your inventory."
-        remove_item(player_id, item_type, quantity)
-        db = get_db()
-        try:
-            row = _get_vault_row(db, city_id, item_type)
-            row.quantity += quantity
-            row.last_updated = datetime.utcnow()
-            db.commit()
-        finally:
-            db.close()
-        return True, f"Deposited {quantity:,.2f} {item_type} to city vault."
+        if inv.get(item_type, 0) < deposit_qty:
+            return False, f"You only have {inv.get(item_type, 0):,.2f} {item_type}."
+
+        remove_item(player_id, item_type, deposit_qty)
+        vault_row.quantity += deposit_qty
+        vault_row.last_updated = datetime.utcnow()
+        db.commit()
+
+        msg = f"Deposited {deposit_qty:,.2f} {item_type} to the {CITY_PROJECT_TYPES[project_type]['name']} vault."
+        if deposit_qty < quantity:
+            msg += f" (Vault capped; {quantity - deposit_qty:,.2f} not deposited.)"
+        return True, msg
     except Exception as e:
+        db.rollback()
         return False, f"Deposit failed: {e}"
+    finally:
+        db.close()
 
 
-def withdraw_from_vault(player_id: int, city_id: int, item_type: str, quantity: float) -> Tuple[bool, str]:
+def withdraw_from_project_vault(player_id: int, city_id: int,
+                                 project_type: str, item_type: str,
+                                 quantity: float) -> Tuple[bool, str]:
+    """Only the mayor may withdraw materials from a project vault."""
     if not _is_city_mayor(player_id, city_id):
-        return False, "Only the mayor can withdraw from the city vault."
+        return False, "Only the mayor can withdraw from a project vault."
     if quantity <= 0:
         return False, "Quantity must be positive."
+
+    db = get_db()
     try:
+        row = _get_vault_row(db, city_id, project_type, item_type)
+        if row.quantity < quantity:
+            return False, f"Vault only holds {row.quantity:,.2f} {item_type}."
+
         from inventory import add_item
-        db = get_db()
-        try:
-            row = _get_vault_row(db, city_id, item_type)
-            if row.quantity < quantity:
-                return False, f"Vault only has {row.quantity:,.2f} {item_type}."
-            row.quantity -= quantity
-            row.last_updated = datetime.utcnow()
-            db.commit()
-        finally:
-            db.close()
         add_item(player_id, item_type, quantity)
-        return True, f"Withdrew {quantity:,.2f} {item_type} from city vault."
+        row.quantity -= quantity
+        row.last_updated = datetime.utcnow()
+        db.commit()
+        return True, f"Withdrew {quantity:,.2f} {item_type} from vault."
     except Exception as e:
+        db.rollback()
         return False, f"Withdrawal failed: {e}"
+    finally:
+        db.close()
 
 
 # ──────────────────────────────────────────────────────────────
-# CONSTRUCTION & UPGRADES
+# PROJECT MANAGEMENT
 # ──────────────────────────────────────────────────────────────
 
 def start_project(player_id: int, city_id: int, project_type: str) -> Tuple[Optional[dict], str]:
-    """Start constructing a new project (level 0 → 1). Any city member can initiate."""
+    """
+    Start constructing a new project (level 0 → 1). Any city member can trigger this
+    once the vault is fully loaded and the city has sufficient licenses.
+    """
     if not _is_city_member(player_id, city_id):
         return None, "You must be a city member to start a project."
     if project_type not in CITY_PROJECT_TYPES:
         return None, f"Unknown project type '{project_type}'."
 
+    # All projects (except the post office) require the post office to be built first
+    if project_type != POST_OFFICE_KEY and not _has_post_office(city_id):
+        return None, ("The City Post Office must be constructed before any other project. "
+                      "Build the Post Office first to unlock municipal licenses.")
+
     db = get_db()
     try:
         active_count = db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status != STATUS_DECONSTRUCTED
+            CityProjectInstance.status != STATUS_DECONSTRUCTED,
         ).count()
         if active_count >= MAX_PROJECTS_PER_CITY:
-            return None, f"City already has the maximum of {MAX_PROJECTS_PER_CITY} projects."
+            return None, f"City has reached the maximum of {MAX_PROJECTS_PER_CITY} projects."
 
-        existing_construction = db.query(CityProjectInstance).filter(
+        if db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status == STATUS_CONSTRUCTING
-        ).count()
-        if existing_construction >= 1:
+            CityProjectInstance.status == STATUS_CONSTRUCTING,
+        ).count() >= 1:
             return None, "A new project is already under construction. Wait for it to complete."
 
-        existing = db.query(CityProjectInstance).filter(
+        if db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
             CityProjectInstance.project_type == project_type,
-            CityProjectInstance.status != STATUS_DECONSTRUCTED
-        ).first()
-        if existing:
+            CityProjectInstance.status != STATUS_DECONSTRUCTED,
+        ).first():
             return None, f"This city already has a {CITY_PROJECT_TYPES[project_type]['name']}."
 
+        defn = CITY_PROJECT_TYPES[project_type]
         required = get_construction_requirements(project_type, 1)
-        if not _deduct_from_vault(db, city_id, required):
-            vault = {r.item_type: r.quantity for r in db.query(CityResourceVault).filter(
-                CityResourceVault.city_id == city_id).all()}
-            shortage = [f"{item}: need {qty:,.1f}, have {vault.get(item, 0):,.1f}"
-                        for item, qty in required.items() if vault.get(item, 0) < qty]
-            return None, "Insufficient vault resources:\n" + "\n".join(shortage)
+        licenses_needed = defn.get("licenses_per_level", 0)
+
+        # Check vault has all required materials
+        vault = {r.item_type: r.quantity for r in db.query(CityProjectVault).filter(
+            CityProjectVault.city_id == city_id,
+            CityProjectVault.project_type == project_type,
+        ).all()}
+        shortage = [
+            f"{item}: need {qty:,.0f}, have {vault.get(item, 0):,.0f}"
+            for item, qty in required.items()
+            if vault.get(item, 0) < qty
+        ]
+        if shortage:
+            return None, "Vault is not fully loaded:\n" + "\n".join(shortage)
+
+        # Check city licenses
+        lic_held = _get_city_licenses(db, city_id)
+        if lic_held < licenses_needed:
+            return None, (f"City needs {licenses_needed:,.0f} licenses but only has "
+                          f"{lic_held:,.0f}. The Post Office generates more licenses each tick.")
+
+        # Deduct materials and licenses
+        if not _deduct_from_project_vault(db, city_id, project_type, required):
+            return None, "Vault deduction failed — check vault contents."
+        if not _deduct_city_licenses(db, city_id, licenses_needed):
+            return None, "License deduction failed."
 
         ticks = _construction_ticks(1)
         inst = CityProjectInstance(
             city_id=city_id, project_type=project_type,
             level=0, target_level=1, status=STATUS_CONSTRUCTING,
             construction_ticks_required=ticks, construction_ticks_completed=0,
-            construction_started_at=datetime.utcnow(), started_by=player_id
+            construction_started_at=datetime.utcnow(), started_by=player_id,
         )
         db.add(inst)
         db.commit()
         db.refresh(inst)
-        defn = CITY_PROJECT_TYPES[project_type]
         return {"id": inst.id, "name": defn["name"], "status": inst.status, "ticks": ticks}, \
-               f"Construction of {defn['name']} has begun!"
+               f"Construction of {defn['name']} (Level 1) has begun!"
     except Exception as e:
         db.rollback()
         return None, f"Construction failed: {e}"
@@ -872,7 +1245,7 @@ def start_project(player_id: int, city_id: int, project_type: str) -> Tuple[Opti
 
 
 def start_upgrade(player_id: int, city_id: int, instance_id: int) -> Tuple[bool, str]:
-    """Start upgrading an active project to the next level. Any city member can initiate."""
+    """Start upgrading an active project to the next level. Any city member can trigger."""
     if not _is_city_member(player_id, city_id):
         return False, "You must be a city member to upgrade a project."
 
@@ -880,7 +1253,7 @@ def start_upgrade(player_id: int, city_id: int, instance_id: int) -> Tuple[bool,
     try:
         inst = db.query(CityProjectInstance).filter(
             CityProjectInstance.id == instance_id,
-            CityProjectInstance.city_id == city_id
+            CityProjectInstance.city_id == city_id,
         ).first()
         if not inst:
             return False, "Project not found."
@@ -889,21 +1262,39 @@ def start_upgrade(player_id: int, city_id: int, instance_id: int) -> Tuple[bool,
         if inst.level >= MAX_PROJECT_LEVEL:
             return False, f"Already at maximum level {MAX_PROJECT_LEVEL}."
 
-        in_progress = db.query(CityProjectInstance).filter(
+        if db.query(CityProjectInstance).filter(
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status == STATUS_UPGRADING
-        ).count()
-        if in_progress >= 2:
+            CityProjectInstance.status == STATUS_UPGRADING,
+        ).count() >= 2:
             return False, "Already 2 upgrades in progress. Wait for one to finish."
 
         target = inst.level + 1
+        defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
         required = get_construction_requirements(inst.project_type, target)
-        if not _deduct_from_vault(db, city_id, required):
-            vault = {r.item_type: r.quantity for r in db.query(CityResourceVault).filter(
-                CityResourceVault.city_id == city_id).all()}
-            shortage = [f"{item}: need {qty:,.1f}, have {vault.get(item, 0):,.1f}"
-                        for item, qty in required.items() if vault.get(item, 0) < qty]
-            return False, "Insufficient vault resources:\n" + "\n".join(shortage)
+        licenses_needed = defn.get("licenses_per_level", 0)
+
+        # Check vault
+        vault = {r.item_type: r.quantity for r in db.query(CityProjectVault).filter(
+            CityProjectVault.city_id == city_id,
+            CityProjectVault.project_type == inst.project_type,
+        ).all()}
+        shortage = [
+            f"{item}: need {qty:,.0f}, have {vault.get(item, 0):,.0f}"
+            for item, qty in required.items()
+            if vault.get(item, 0) < qty
+        ]
+        if shortage:
+            return False, "Vault not fully loaded for this level:\n" + "\n".join(shortage)
+
+        lic_held = _get_city_licenses(db, city_id)
+        if lic_held < licenses_needed:
+            return False, (f"City needs {licenses_needed:,.0f} licenses for this upgrade "
+                           f"but only has {lic_held:,.0f}.")
+
+        if not _deduct_from_project_vault(db, city_id, inst.project_type, required):
+            return False, "Vault deduction failed."
+        if not _deduct_city_licenses(db, city_id, licenses_needed):
+            return False, "License deduction failed."
 
         ticks = _construction_ticks(target)
         inst.status = STATUS_UPGRADING
@@ -913,8 +1304,7 @@ def start_upgrade(player_id: int, city_id: int, instance_id: int) -> Tuple[bool,
         inst.construction_started_at = datetime.utcnow()
         inst.started_by = player_id
         db.commit()
-        defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
-        return True, f"Upgrade of {defn.get('name', inst.project_type)} to level {target} started."
+        return True, f"Upgrade of {defn.get('name', inst.project_type)} to Level {target} started!"
     except Exception as e:
         db.rollback()
         return False, f"Upgrade failed: {e}"
@@ -928,12 +1318,15 @@ def pause_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[bool, 
     db = get_db()
     try:
         inst = db.query(CityProjectInstance).filter(
-            CityProjectInstance.id == instance_id, CityProjectInstance.city_id == city_id).first()
+            CityProjectInstance.id == instance_id,
+            CityProjectInstance.city_id == city_id,
+        ).first()
         if not inst or inst.status != STATUS_ACTIVE:
             return False, "Active project not found."
         inst.status = STATUS_PAUSED
         db.commit()
-        return True, f"{CITY_PROJECT_TYPES.get(inst.project_type, {}).get('name', inst.project_type)} paused."
+        name = CITY_PROJECT_TYPES.get(inst.project_type, {}).get("name", inst.project_type)
+        return True, f"{name} paused."
     finally:
         db.close()
 
@@ -944,53 +1337,40 @@ def resume_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[bool,
     db = get_db()
     try:
         inst = db.query(CityProjectInstance).filter(
-            CityProjectInstance.id == instance_id, CityProjectInstance.city_id == city_id).first()
+            CityProjectInstance.id == instance_id,
+            CityProjectInstance.city_id == city_id,
+        ).first()
         if not inst or inst.status != STATUS_PAUSED:
             return False, "Paused project not found."
         inst.status = STATUS_ACTIVE
         db.commit()
-        return True, f"{CITY_PROJECT_TYPES.get(inst.project_type, {}).get('name', inst.project_type)} resumed."
+        name = CITY_PROJECT_TYPES.get(inst.project_type, {}).get("name", inst.project_type)
+        return True, f"{name} resumed."
     finally:
         db.close()
 
 
 def deconstruct_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[bool, str]:
+    """Deconstruct a project. Yields nothing; vault is cleared."""
     if not _is_city_mayor(mayor_id, city_id):
         return False, "Only the city mayor can deconstruct projects."
     db = get_db()
     try:
         inst = db.query(CityProjectInstance).filter(
-            CityProjectInstance.id == instance_id, CityProjectInstance.city_id == city_id).first()
-        if not inst or inst.status == STATUS_DECONSTRUCTED:
-            return False, "Project not found or already deconstructed."
-        name = CITY_PROJECT_TYPES.get(inst.project_type, {}).get("name", inst.project_type)
-        inst.status = STATUS_DECONSTRUCTED
-        db.commit()
-        return True, f"{name} deconstructed. No materials returned."
-    finally:
-        db.close()
-
-
-def downgrade_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[bool, str]:
-    if not _is_city_mayor(mayor_id, city_id):
-        return False, "Only the city mayor can downgrade projects."
-    db = get_db()
-    try:
-        inst = db.query(CityProjectInstance).filter(
             CityProjectInstance.id == instance_id,
             CityProjectInstance.city_id == city_id,
-            CityProjectInstance.status.in_([STATUS_ACTIVE, STATUS_PAUSED])
         ).first()
-        if not inst:
-            return False, "Active or paused project not found."
-        name = CITY_PROJECT_TYPES.get(inst.project_type, {}).get("name", inst.project_type)
-        inst.level -= 1
-        if inst.level <= 0:
-            inst.status = STATUS_DECONSTRUCTED
-            db.commit()
-            return True, f"{name} downgraded to level 0 and deconstructed. No materials returned."
+        if not inst or inst.status == STATUS_DECONSTRUCTED:
+            return False, "Project not found or already deconstructed."
+        project_type = inst.project_type
+        inst.status = STATUS_DECONSTRUCTED
+        _clear_project_vault(db, city_id, project_type)
         db.commit()
-        return True, f"{name} downgraded to level {inst.level}. No materials returned."
+        name = CITY_PROJECT_TYPES.get(project_type, {}).get("name", project_type)
+        return True, f"{name} has been deconstructed. All vault materials were lost."
+    except Exception as e:
+        db.rollback()
+        return False, f"Deconstruction failed: {e}"
     finally:
         db.close()
 
@@ -1002,85 +1382,160 @@ def downgrade_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[bo
 async def tick(current_tick: int, now: datetime):
     db = get_db()
     try:
-        # 1. Advance construction / upgrade ticks
+        # ── 1. Advance construction / upgrade ticks ────────────
         building = db.query(CityProjectInstance).filter(
             CityProjectInstance.status.in_([STATUS_CONSTRUCTING, STATUS_UPGRADING])
         ).all()
+        completed_ids = []
         for inst in building:
             inst.construction_ticks_completed += 1
             if inst.construction_ticks_completed >= inst.construction_ticks_required:
                 inst.level = inst.target_level
                 inst.status = STATUS_ACTIVE
+                completed_ids.append((inst.id, inst.city_id, inst.project_type))
                 defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
                 print(f"[CityProjects] {defn.get('name', inst.project_type)} "
-                      f"(city {inst.city_id}) completed → level {inst.level}")
+                      f"(city {inst.city_id}) → Level {inst.level} COMPLETE")
         db.commit()
 
-        # 2. Operational consumption for active projects
-        active = db.query(CityProjectInstance).filter(
+        # Clear vaults for newly completed projects
+        for _id, city_id, project_type in completed_ids:
+            _clear_project_vault(db, city_id, project_type)
+        if completed_ids:
+            db.commit()
+
+        # ── 2. Increment active ticks counter ─────────────────
+        db.query(CityProjectInstance).filter(
             CityProjectInstance.status == STATUS_ACTIVE
-        ).all()
-
-        # Evaluate operational consumption per project, not per city.
-        # A single resource-starved project pauses only itself — it cannot
-        # blackout every other project sharing the same city vault.
-        for inst in active:
-            defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
-            consumption = defn.get("operational_consumption", {})
-            if not consumption:
-                continue
-
-            # Check all required resources before deducting any.
-            can_run = True
-            for item_type, qty_per_level in consumption.items():
-                total_qty = qty_per_level * inst.level
-                if total_qty <= 0:
-                    continue
-                row = _get_vault_row(db, inst.city_id, item_type)
-                if row.quantity < total_qty:
-                    can_run = False
-                    print(f"[CityProjects] Project {inst.id} (city {inst.city_id}): "
-                          f"insufficient {item_type} "
-                          f"(need {total_qty:.1f}, have {row.quantity:.1f}) — pausing project")
-                    break
-
-            if can_run:
-                for item_type, qty_per_level in consumption.items():
-                    total_qty = qty_per_level * inst.level
-                    if total_qty <= 0:
-                        continue
-                    row = _get_vault_row(db, inst.city_id, item_type)
-                    row.quantity -= total_qty
-                    row.last_updated = now
-            else:
-                inst.status = STATUS_PAUSED
-
+        ).update({"total_ticks_active": CityProjectInstance.total_ticks_active + 1},
+                 synchronize_session=False)
         db.commit()
 
-        # 3. City Mint currency production
-        mint_active = db.query(CityProjectInstance).filter(
-            CityProjectInstance.project_type == "city_mint",
-            CityProjectInstance.status == STATUS_ACTIVE,
-            CityProjectInstance.level > 0
-        ).all()
-        if mint_active:
-            try:
-                from cities import CityBank, get_db as city_get_db
+        # ── 3. Post Office — license generation ───────────────
+        try:
+            from cities import CityBank, get_db as city_get_db
+
+            post_offices = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == POST_OFFICE_KEY,
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+
+            city_halls = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == "city_hall",
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            city_hall_by_city: Dict[int, int] = {i.city_id: i.level for i in city_halls}
+
+            libraries = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == "city_library",
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            library_by_city: Dict[int, int] = {i.city_id: i.level for i in libraries}
+
+            schools = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == "public_schools",
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            schools_by_city: Dict[int, int] = {i.city_id: i.level for i in schools}
+
+            arts = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == "cultural_arts_center",
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            arts_by_city: Dict[int, int] = {i.city_id: i.level for i in arts}
+
+            zoning = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == "zoning_office",
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            zoning_by_city: Dict[int, int] = {i.city_id: i.level for i in zoning}
+
+            if post_offices:
                 city_db = city_get_db()
                 try:
-                    defn = CITY_PROJECT_TYPES["city_mint"]
-                    cpt = defn.get("currency_per_tick", 0.0)
-                    for inst in mint_active:
-                        if cpt <= 0:
-                            continue
-                        bank = city_db.query(CityBank).filter(CityBank.city_id == inst.city_id).first()
+                    for inst in post_offices:
+                        cid = inst.city_id
+                        # Base license production from post office
+                        base_lic = LICENSES_PER_TICK_BASE * inst.level
+                        # Bonus from other projects' license_production buff
+                        lic_bonus = (
+                            CITY_PROJECT_TYPES["city_hall"]["buffs"].get("license_production", 0)
+                            * city_hall_by_city.get(cid, 0)
+                            + CITY_PROJECT_TYPES["city_library"]["buffs"].get("license_production", 0)
+                            * library_by_city.get(cid, 0)
+                            + CITY_PROJECT_TYPES["public_schools"]["buffs"].get("license_production", 0)
+                            * schools_by_city.get(cid, 0)
+                            + CITY_PROJECT_TYPES["cultural_arts_center"]["buffs"].get("license_production", 0)
+                            * arts_by_city.get(cid, 0)
+                            + CITY_PROJECT_TYPES["zoning_office"]["buffs"].get("license_production", 0)
+                            * zoning_by_city.get(cid, 0)
+                        )
+                        total_lic = base_lic + lic_bonus
+                        bank = city_db.query(CityBank).filter(CityBank.city_id == cid).first()
                         if bank:
-                            bank.currency_quantity = (bank.currency_quantity or 0.0) + cpt * inst.level
+                            current = getattr(bank, "city_licenses", 0.0) or 0.0
+                            bank.city_licenses = current + total_lic
                     city_db.commit()
                 finally:
                     city_db.close()
-            except Exception as e:
-                print(f"[CityProjects] Mint error: {e}")
+        except Exception as e:
+            print(f"[CityProjects] License tick error: {e}")
+
+        # ── 4. City Extractor — currency mining ───────────────
+        try:
+            from cities import CityBank, get_db as city_get_db
+
+            extractors = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == EXTRACTOR_KEY,
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            if extractors:
+                city_db = city_get_db()
+                try:
+                    for inst in extractors:
+                        bank = city_db.query(CityBank).filter(
+                            CityBank.city_id == inst.city_id).first()
+                        if bank:
+                            bank.currency_quantity = (bank.currency_quantity or 0.0) + \
+                                                     EXTRACTOR_CURRENCY_BASE * inst.level
+                    city_db.commit()
+                finally:
+                    city_db.close()
+        except Exception as e:
+            print(f"[CityProjects] Extractor tick error: {e}")
+
+        # ── 5. Comptroller — bond investment ──────────────────
+        try:
+            from cities import CityBank, get_db as city_get_db
+
+            comptrollers = db.query(CityProjectInstance).filter(
+                CityProjectInstance.project_type == COMPTROLLER_KEY,
+                CityProjectInstance.status == STATUS_ACTIVE,
+                CityProjectInstance.level > 0,
+            ).all()
+            if comptrollers:
+                city_db = city_get_db()
+                try:
+                    for inst in comptrollers:
+                        bank = city_db.query(CityBank).filter(
+                            CityBank.city_id == inst.city_id).first()
+                        if bank and bank.cash_reserves > 0:
+                            # Investment scales with comptroller level
+                            rate = COMPTROLLER_INVEST_RATE * inst.level
+                            returns = bank.cash_reserves * rate
+                            bank.cash_reserves += returns
+                    city_db.commit()
+                finally:
+                    city_db.close()
+        except Exception as e:
+            print(f"[CityProjects] Comptroller tick error: {e}")
 
     except Exception as e:
         print(f"[CityProjects] Tick error: {e}")
@@ -1099,19 +1554,17 @@ async def tick(current_tick: int, now: datetime):
 def initialize():
     print("[CityProjects] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+
+    # Add city_licenses column to city_banks if it doesn't exist
+    try:
+        with engine.connect() as conn:
+            conn.execute(text(
+                "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS city_licenses FLOAT DEFAULT 0.0"
+            ))
+            conn.commit()
+        print("[CityProjects] city_banks.city_licenses ensured.")
+    except Exception as e:
+        print(f"[CityProjects] Note (city_licenses col): {e}")
+
     count = len(CITY_PROJECT_TYPES)
-    print(f"[CityProjects] {count} project types available.")
-
-
-__all__ = [
-    "CITY_PROJECT_TYPES",
-    "CityProjectInstance", "CityResourceVault",
-    "STATUS_CONSTRUCTING", "STATUS_UPGRADING", "STATUS_ACTIVE", "STATUS_PAUSED", "STATUS_DECONSTRUCTED",
-    "MAX_PROJECTS_PER_CITY", "MAX_PROJECT_LEVEL",
-    "get_city_vault", "get_city_projects", "get_construction_requirements",
-    "get_city_production_buffs", "get_city_currency_production", "get_city_project_value",
-    "deposit_to_vault", "withdraw_from_vault",
-    "start_project", "start_upgrade",
-    "pause_project", "resume_project", "deconstruct_project", "downgrade_project",
-    "initialize", "tick",
-]
+    print(f"[CityProjects] {count} project types available ({len(SPECIAL_KEYS)} special).")
