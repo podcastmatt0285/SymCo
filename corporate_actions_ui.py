@@ -35,7 +35,10 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
     
     if not player:
         return HTMLResponse(content="<p>Please log in to view corporate actions.</p>", status_code=401)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     db = get_db()
     try:
         # Get player's companies
@@ -201,7 +204,7 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                             <span class="ticker">{company.ticker_symbol}</span>
                             <span style="color: #64748b; margin-left: 10px;">{company.company_name}</span>
                         </div>
-                        <div class="price">${company.current_price:.2f}</div>
+                        <div class="price">{fmt_usd(company.current_price, disp)}</div>
                     </div>
                     
                     <!-- Buyback Programs -->
@@ -231,7 +234,7 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                                 <div class="progress-fill" style="width: {progress_pct}%"></div>
                             </div>
                             <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
-                                Total spent: ${buyback.total_spent:,.2f} | Avg price: ${buyback.average_buy_price:.2f} | Treasury: {buyback.treasury_shares:,}
+                                Total spent: {fmt_usd(buyback.total_spent, disp)} | Avg price: {fmt_usd(buyback.average_buy_price, disp)} | Treasury: {buyback.treasury_shares:,}
                             </div>
                     """
                     
@@ -323,7 +326,7 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                                 <div class="progress-fill" style="width: {progress_pct}%"></div>
                             </div>
                             <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
-                                Raised: ${offering.total_raised:,.2f} | Dilution: {offering.dilution_pct*100:.1f}%
+                                Raised: {fmt_usd(offering.total_raised, disp)} | Dilution: {offering.dilution_pct*100:.1f}%
                     """
                     
                     if offering.last_offering_date:
@@ -368,7 +371,7 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                 <div class="card" style="border-left:4px solid #f59e0b;">
                     <div class="action-header">🔀 Reverse Stock Split — {company.ticker_symbol}</div>
                     <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                        Consolidates all shares (yours and all shareholders') at the selected ratio. Current price: <strong>${company.current_price:.2f}</strong> &bull; Outstanding: <strong>{company.shares_outstanding:,}</strong>
+                        Consolidates all shares (yours and all shareholders') at the selected ratio. Current price: <strong>{fmt_usd(company.current_price, disp)}</strong> &bull; Outstanding: <strong>{company.shares_outstanding:,}</strong>
                     </p>
                     <form action="/api/corporate-actions/reverse-split/execute" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                         <input type="hidden" name="company_shares_id" value="{company.id}">
@@ -388,12 +391,12 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                 <div class="card" style="border-left:4px solid #22c55e;">
                     <div class="action-header">💸 Special One-Time Dividend — {company.ticker_symbol}</div>
                     <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                        Distribute a special dividend to all float shareholders proportionally. For every $1 paid, the government awards <strong style="color:#22c55e;">${TAX_VOUCHER_RATE:.4f}</strong> in redeemable tax vouchers to you.
+                        Distribute a special dividend to all float shareholders proportionally. For every {disp["symbol"]}1 paid, the government awards <strong style="color:#22c55e;">{fmt_usd(TAX_VOUCHER_RATE, disp, precision=4)}</strong> in redeemable tax vouchers to you.
                     </p>
                     <form action="/api/corporate-actions/special-dividend/pay" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                         <input type="hidden" name="company_shares_id" value="{company.id}">
                         <div>
-                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Total Dividend Amount ($)</label>
+                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Total Dividend Amount ({disp["symbol"]})</label>
                             <input type="number" name="total_amount" min="1" step="0.01" placeholder="e.g. 50000" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" required>
                         </div>
                         <button type="submit" class="btn btn-success" onclick="return confirm('Pay this special dividend to all shareholders?')">Pay Dividend</button>
@@ -513,12 +516,12 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
             <div class="card" style="border-top:3px solid #22c55e;margin-top:8px;">
                 <h2 style="color:#22c55e;margin:0 0 12px 0;font-size:1.1rem;">🎟️ Tax Vouchers</h2>
                 <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                    Earned from special dividends at <strong>${TAX_VOUCHER_RATE:.4f}</strong> per $1 paid. Redeem for cash from the government at any time.
-                    Current balance: <strong style="color:#22c55e;">${voucher_balance:,.4f}</strong>
+                    Earned from special dividends at <strong>{fmt_usd(TAX_VOUCHER_RATE, disp, precision=4)}</strong> per {disp["symbol"]}1 paid. Redeem for cash from the government at any time.
+                    Current balance: <strong style="color:#22c55e;">{fmt_usd(voucher_balance, disp, precision=4)}</strong>
                 </p>
                 <form action="/api/corporate-actions/vouchers/redeem" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                     <div>
-                        <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Amount to Redeem ($)</label>
+                        <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Amount to Redeem ({disp["symbol"]})</label>
                         <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
                     </div>
                     <button type="submit" class="btn btn-success" {"disabled" if voucher_balance <= 0 else ""}>Redeem Vouchers</button>
@@ -536,15 +539,15 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
             </div>
             """
         else:
-            html += """
+            html += f"""
             <div class="card" style="border:2px solid #ef4444;margin-top:8px;">
                 <h2 style="color:#ef4444;margin:0 0 8px 0;font-size:1.1rem;">⚠️ Declare Bankruptcy</h2>
                 <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
                     <strong style="color:#ef4444;">This is irreversible.</strong> All assets will be liquidated: businesses, land, districts, inventory, stocks, crypto, executives, and ETF positions.
-                    All debts cleared. You will be restarted with <strong>$20,000 and one prairie land plot</strong>. A red Q will appear next to your name in the stock market for 30 days.
+                    All debts cleared. You will be restarted with <strong>{fmt_usd(20000, disp)} and one prairie land plot</strong>. A red Q will appear next to your name in the stock market for 30 days.
                     If you are a city mayor, you will be removed and a member vote will determine your replacement.
                 </p>
-                <form action="/api/corporate-actions/bankruptcy/declare" method="post" onsubmit="return confirm('FINAL WARNING: This permanently liquidates ALL your assets and restarts your account with $20,000. This CANNOT be undone. Type OK to confirm.') && prompt('Type BANKRUPT to confirm') === 'BANKRUPT'">
+                <form action="/api/corporate-actions/bankruptcy/declare" method="post" onsubmit="return confirm('FINAL WARNING: This permanently liquidates ALL your assets and restarts your account with {fmt_usd(20000, disp)}. This CANNOT be undone. Type OK to confirm.') && prompt('Type BANKRUPT to confirm') === 'BANKRUPT'">
                     <button type="submit" class="btn btn-danger" style="font-size:1rem;padding:10px 24px;">💀 Declare Bankruptcy</button>
                 </form>
             </div>
@@ -619,17 +622,20 @@ async def create_buyback_form(company_id: int, session_token: Optional[str] = Co
     
     if not player:
         return HTMLResponse(content="<p>Please log in.</p>", status_code=401)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     db = get_db()
     try:
         company = db.query(CompanyShares).filter(
             CompanyShares.id == company_id,
             CompanyShares.founder_id == player.id
         ).first()
-        
+
         if not company:
             return HTMLResponse(content="<p>Company not found.</p>", status_code=404)
-        
+
         max_shares = int(company.shares_outstanding * 0.30)
         
         html = f"""
@@ -669,7 +675,7 @@ async def create_buyback_form(company_id: int, session_token: Optional[str] = Co
                 <div class="card" style="margin-top: 15px;">
                 <h1>📦 Create Buyback Program</h1>
                 <p>Company: <span class="ticker">{company.ticker_symbol}</span> - {company.company_name}</p>
-                <p style="color: #64748b;">Current Price: <strong>${company.current_price:.2f}</strong></p>
+                <p style="color: #64748b;">Current Price: <strong>{fmt_usd(company.current_price, disp)}</strong></p>
                 
                 <form id="buyback-form">
                     <div class="form-group">
@@ -692,14 +698,14 @@ async def create_buyback_form(company_id: int, session_token: Optional[str] = Co
                         <div class="form-group">
                             <label>Drop Threshold (%)</label>
                             <input type="number" id="drop-threshold" value="15" min="5" max="50">
-                            <div class="help-text">Buy when price drops this % below target (e.g., 15% = buy at $8.50 if target is $10)</div>
+                            <div class="help-text">Buy when price drops this % below target (e.g., 15% = buy at {disp["symbol"]}8.50 if target is {disp["symbol"]}10)</div>
                         </div>
                     </div>
                     
                     <!-- Earnings Surplus Config -->
                     <div id="config-earnings-surplus" class="trigger-config">
                         <div class="form-group">
-                            <label>Surplus Threshold ($)</label>
+                            <label>Surplus Threshold ({disp["symbol"]})</label>
                             <input type="number" id="surplus-threshold" value="50000" step="1000">
                             <div class="help-text">Buy shares when your cash balance exceeds this amount</div>
                         </div>
@@ -819,17 +825,20 @@ async def create_split_form(company_id: int, session_token: Optional[str] = Cook
     
     if not player:
         return HTMLResponse(content="<p>Please log in.</p>", status_code=401)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     db = get_db()
     try:
         company = db.query(CompanyShares).filter(
             CompanyShares.id == company_id,
             CompanyShares.founder_id == player.id
         ).first()
-        
+
         if not company:
             return HTMLResponse(content="<p>Company not found.</p>", status_code=404)
-        
+
         html = f"""
         <!DOCTYPE html>
         <html>
@@ -854,8 +863,8 @@ async def create_split_form(company_id: int, session_token: Optional[str] = Cook
             <div class="container">
                 <h1>✂️ Create Stock Split Rule</h1>
                 <p>Company: <span class="ticker">{company.ticker_symbol}</span> - {company.company_name}</p>
-                <p>Current Price: <strong>${company.current_price:.2f}</strong></p>
-                
+                <p>Current Price: <strong>{fmt_usd(company.current_price, disp)}</strong></p>
+
                 <form id="split-form">
                     <div class="form-group">
                         <label>Price Threshold</label>
@@ -875,10 +884,10 @@ async def create_split_form(company_id: int, session_token: Optional[str] = Cook
                     </div>
                     
                     <div class="example">
-                        <strong>Example:</strong> If price hits $100 with a 2:1 split:
+                        <strong>Example:</strong> If price hits {disp["symbol"]}100 with a 2:1 split:
                         <ul>
                             <li>Shareholders get 2x their shares</li>
-                            <li>Price becomes $50</li>
+                            <li>Price becomes {disp["symbol"]}50</li>
                             <li>Total value unchanged</li>
                             <li>Makes stock more affordable for retail investors</li>
                         </ul>
@@ -940,17 +949,20 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
     
     if not player:
         return HTMLResponse(content="<p>Please log in.</p>", status_code=401)
-    
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
     db = get_db()
     try:
         company = db.query(CompanyShares).filter(
             CompanyShares.id == company_id,
             CompanyShares.founder_id == player.id
         ).first()
-        
+
         if not company:
             return HTMLResponse(content="<p>Company not found.</p>", status_code=404)
-        
+
         max_dilution_shares = int(company.shares_outstanding * 0.20)
         
         html = f"""
@@ -978,7 +990,7 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
             <div class="container">
                 <h1>📢 Create Secondary Offering</h1>
                 <p>Company: <span class="ticker">{company.ticker_symbol}</span> - {company.company_name}</p>
-                <p>Current Price: <strong>${company.current_price:.2f}</strong></p>
+                <p>Current Price: <strong>{fmt_usd(company.current_price, disp)}</strong></p>
                 <p>Outstanding Shares: <strong>{company.shares_outstanding:,}</strong></p>
                 
                 <div class="warning">
@@ -999,7 +1011,7 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
                     <!-- Cash Need Config -->
                     <div id="config-cash-need" class="trigger-config">
                         <div class="form-group">
-                            <label>Cash Threshold ($)</label>
+                            <label>Cash Threshold ({disp["symbol"]})</label>
                             <input type="number" id="cash-threshold" value="5000" step="1000">
                             <div class="help-text">Issue shares when your cash balance drops below this</div>
                         </div>
@@ -1027,7 +1039,7 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
                     </div>
                     
                     <div id="estimated-raise" style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 15px 0; display: none;">
-                        <strong>Estimated Raise:</strong> <span id="raise-amount">$0</span> (after 3% fee)
+                        <strong>Estimated Raise:</strong> <span id="raise-amount">{disp["symbol"]}0</span> (after 3% fee)
                     </div>
                     
                     <div style="margin-top: 30px;">
@@ -1057,7 +1069,7 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
                     const price = {company.current_price};
                     const gross = shares * price;
                     const net = gross * 0.97; // After 3% fee
-                    document.getElementById('raise-amount').textContent = '$' + net.toFixed(2).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ',');
+                    document.getElementById('raise-amount').textContent = '{disp["symbol"]}' + net.toFixed(2).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ',');
                     document.getElementById('estimated-raise').style.display = shares > 0 ? 'block' : 'none';
                 }});
                 
