@@ -597,10 +597,17 @@ def execute_trade(
         seller_id = sell_order.player_id
         
         total_value = quantity * price
-        
-        # Calculate commissions
-        buyer_commission = total_value * EQUITY_TRADE_COMMISSION
-        seller_commission = total_value * EQUITY_TRADE_COMMISSION
+
+        # Calculate commissions (reduced by city market_fee_reduction buff)
+        _buyer_fee_mult = _seller_fee_mult = 1.0
+        try:
+            from city_projects import get_city_production_buffs
+            _buyer_fee_mult = get_city_production_buffs(buyer_id).get("market_fee_multiplier", 1.0)
+            _seller_fee_mult = get_city_production_buffs(seller_id).get("market_fee_multiplier", 1.0)
+        except Exception:
+            pass
+        buyer_commission = total_value * EQUITY_TRADE_COMMISSION * _buyer_fee_mult
+        seller_commission = total_value * EQUITY_TRADE_COMMISSION * _seller_fee_mult
         
         # === BUYER SIDE ===
         

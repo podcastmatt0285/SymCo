@@ -716,11 +716,20 @@ def modify_credit_score(player_id: int, event: str) -> int:
 def get_credit_interest_rate(player_id: int) -> float:
     rating = get_player_credit(player_id)
     tier = get_credit_tier(rating.credit_score)
-    
+
+    base_rate = 0.20
     for t, (_, _, interest_rate, _, _) in CREDIT_TIERS.items():
         if t == tier:
-            return interest_rate
-    return 0.20
+            base_rate = interest_rate
+            break
+
+    try:
+        from city_projects import get_city_production_buffs
+        mult = get_city_production_buffs(player_id).get("loan_interest_multiplier", 1.0)
+        base_rate = max(0.01, base_rate * mult)
+    except Exception:
+        pass
+    return base_rate
 
 
 def get_max_leverage_for_player(player_id: int) -> float:
