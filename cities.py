@@ -2326,6 +2326,7 @@ def initialize():
     run_ddl_migration(engine, [
         "ALTER TABLE cities ADD COLUMN IF NOT EXISTS application_fee REAL DEFAULT 50000.0",
         "ALTER TABLE cities ADD COLUMN IF NOT EXISTS relocation_fee REAL DEFAULT 10000.0",
+        "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS city_licenses FLOAT DEFAULT 0.0",
     ])
 
     db = get_db()
