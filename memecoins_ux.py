@@ -597,13 +597,18 @@ async def meme_coin_page(
     my_orders = get_player_open_orders(player.id, symbol)
     my_order_history = get_player_order_history(player.id, symbol, limit=30)
 
-    # Player native token balance
+    # Player native token balance + current gas price for this chain
+    from counties import County, BASE_GAS_PRICE, GAS_UNITS_MEME_TRADE, GAS_UNITS_MEME_STAKE
     county_db = county_get_db()
     native_wallet = county_db.query(CryptoWallet).filter(
         CryptoWallet.player_id == player.id,
         CryptoWallet.crypto_symbol == detail["native_symbol"],
     ).first()
     native_balance = native_wallet.balance if native_wallet else 0.0
+    _county = county_db.query(County).filter(County.id == detail["county_id"]).first()
+    _chain_gas = max(_county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) if _county else BASE_GAS_PRICE
+    gas_fee_trade = _chain_gas * GAS_UNITS_MEME_TRADE   # per order / burn-to-mint
+    gas_fee_stake = _chain_gas * GAS_UNITS_MEME_STAKE   # per stake / unstake
     county_db.close()
 
     # Player meme coin balance
@@ -695,8 +700,9 @@ async def meme_coin_page(
                         <span style="color:#64748b;font-size:11px;"> staked · {pool_share:.2f}% of pool</span>
                         <div style="font-size:11px;color:#4ade80;margin-top:2px;">Earned: {dep["total_earned"]:,.4f} {symbol}</div>
                     </div>
-                    <form action="/api/memecoins/unstake" method="post" style="margin:0;">
+                    <form action="/api/memecoins/unstake" method="post" style="margin:0;text-align:right;">
                         <input type="hidden" name="deposit_id" value="{dep["id"]}">
+                        <div style="font-size:10px;color:#64748b;margin-bottom:4px;">Gas deducted on exit: {gas_fee_stake:.6f} {dep["native_symbol"]}</div>
                         <button type="submit" class="btn btn-cancel btn-sm">Unstake</button>
                     </form>
                 </div>
@@ -1150,8 +1156,12 @@ async def meme_coin_page(
                         <input type="number" name="native_amount" min="0.000001" step="0.000001"
                                max="{native_balance}" placeholder="e.g., 1.0">
                     </div>
-                    <div style="font-size:12px;color:#64748b;margin-bottom:10px;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:6px;">
                         Available: <span class="native-color">{native_balance:.4f} {detail["native_symbol"]}</span>
+                    </div>
+                    <div style="font-size:12px;color:#64748b;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:6px 10px;margin-bottom:10px;">
+                        Gas fee (charged on top): <strong style="color:#f59e0b;">{gas_fee_stake:.6f} {detail["native_symbol"]}</strong>
+                        &nbsp;&middot;&nbsp; Network: <span id="stake-gas-label"></span>
                     </div>
                     <button type="submit" class="btn btn-meme">⛏ Stake & Mine</button>
                 </form>
@@ -1388,16 +1398,31 @@ function toggleSellPrice() {{
     }}
 }}
 
+const CHAIN_GAS_TRADE = {gas_fee_trade:.8f};   // current gas fee for this chain (trade)
+const CHAIN_GAS_STAKE = {gas_fee_stake:.8f};   // current gas fee for this chain (stake)
+const NATIVE_SYM = "{detail["native_symbol"]}";
+
+function gasStatusLabel(g) {{
+    const base = 0.001;
+    const r = g / base;
+    if (r <= 1.05) return '<span style="color:#4ade80;font-size:10px;">⬤ LOW</span>';
+    if (r <= 3)    return '<span style="color:#a3e635;font-size:10px;">⬤ NORMAL</span>';
+    if (r <= 10)   return '<span style="color:#fbbf24;font-size:10px;">⬤ MODERATE</span>';
+    if (r <= 50)   return '<span style="color:#f97316;font-size:10px;">⬤ HIGH</span>';
+    return '<span style="color:#f87171;font-size:10px;">⬤ SURGE</span>';
+}}
+
 function calcBuyCost() {{
     const price = parseFloat(document.getElementById('buy-price').value) || 0;
     const qty = parseFloat(document.getElementById('buy-qty').value) || 0;
     const cost = price * qty;
     const fee = cost * {MEME_TRADE_FEE_TOTAL};
-    const total = cost + fee;
+    const total = cost + fee + CHAIN_GAS_TRADE;
     document.getElementById('buy-cost-display').innerHTML = cost > 0
-        ? `Cost: <span style="color:#a78bfa">${{cost.toFixed(6)}} {detail["native_symbol"]}</span>
+        ? `Cost: <span style="color:#a78bfa">${{cost.toFixed(6)}} ${{NATIVE_SYM}}</span>
            + Fee: <span style="color:#f59e0b">${{fee.toFixed(6)}}</span>
-           = Total: <strong style="color:#e5e7eb">${{total.toFixed(6)}}</strong>`
+           + Gas: <span style="color:#f59e0b">${{CHAIN_GAS_TRADE.toFixed(6)}}</span> ${{gasStatusLabel(CHAIN_GAS_TRADE)}}
+           = <strong style="color:#e5e7eb">Total: ${{total.toFixed(6)}} ${{NATIVE_SYM}}</strong>`
         : '';
 }}
 
@@ -1406,13 +1431,20 @@ function calcSellRevenue() {{
     const qty = parseFloat(document.getElementById('sell-qty').value) || 0;
     const gross = price * qty;
     const fee = gross * {MEME_TRADE_FEE_TOTAL};
-    const net = gross - fee;
+    const net = gross - fee - CHAIN_GAS_TRADE;
     document.getElementById('sell-revenue-display').innerHTML = gross > 0
-        ? `Gross: <span style="color:#a78bfa">${{gross.toFixed(6)}} {detail["native_symbol"]}</span>
+        ? `Gross: <span style="color:#a78bfa">${{gross.toFixed(6)}} ${{NATIVE_SYM}}</span>
            - Fee: <span style="color:#f59e0b">${{fee.toFixed(6)}}</span>
-           = Net: <strong style="color:#4ade80">${{net.toFixed(6)}}</strong>`
+           - Gas: <span style="color:#f59e0b">${{CHAIN_GAS_TRADE.toFixed(6)}}</span> ${{gasStatusLabel(CHAIN_GAS_TRADE)}}
+           = <strong style="color:#4ade80">Net: ${{net.toFixed(6)}} ${{NATIVE_SYM}}</strong>`
         : '';
 }}
+
+// Set stake gas status label on load
+(function() {{
+    const el = document.getElementById('stake-gas-label');
+    if (el) el.innerHTML = gasStatusLabel(CHAIN_GAS_STAKE);
+}})();
 
 // ==========================
 // BURN TO MINT CALCULATOR

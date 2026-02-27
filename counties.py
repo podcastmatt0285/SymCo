@@ -496,6 +496,8 @@ def get_all_counties() -> List[dict]:
                 "block_reward": calculate_block_reward(county.total_crypto_minted),
                 "price_change_24h": price_change_24h,
                 "total_mining_payouts": county.total_mining_payouts or 0,
+                "gas_price": county.gas_price or BASE_GAS_PRICE,
+                "recent_tx_count": county.recent_tx_count or 0,
             })
         return result
     except Exception as e:
