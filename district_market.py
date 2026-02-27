@@ -505,7 +505,7 @@ def cancel_order(order_id: int, player_id: int) -> bool:
     order = db.query(DistrictMarketOrder).filter(
         DistrictMarketOrder.id == order_id,
         DistrictMarketOrder.player_id == player_id,
-        DistrictMarketOrder.status == OrderStatus.ACTIVE
+        DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
     ).first()
     
     if not order:

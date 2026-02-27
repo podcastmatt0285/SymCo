@@ -881,7 +881,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                             <option value="sell">SELL</option>
                         </select>
                         <input type="number" name="quantity" placeholder="Quantity" step="0.01" required>
-                        <input type="number" name="price" step="0.01" placeholder="Price" required>
+                        <input type="number" name="price" step="0.01" placeholder="Price ({disp['code']})" required>
                         <button type="submit" class="btn-blue">Submit</button>
                     </form>
                 </div>
@@ -1024,7 +1024,8 @@ async def api_district_market_order(
     
     try:
         import district_market as dm
-        
+
+        price_usd = price * disp["usd_per_unit"]
         ot = dm.OrderType.BUY if order_type == "buy" else dm.OrderType.SELL
         order = dm.create_order(
             player_id=player.id,
@@ -1032,7 +1033,7 @@ async def api_district_market_order(
             order_mode=dm.OrderMode.LIMIT,
             item_type=item_type,
             quantity=quantity,
-            price=price
+            price=price_usd
         )
         
         if order:

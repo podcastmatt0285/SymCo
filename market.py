@@ -629,7 +629,7 @@ def get_market_price(item_type: str) -> Optional[float]:
 
 def cancel_order(order_id: int, player_id: int) -> bool:
     db = get_db()
-    order = db.query(MarketOrder).filter(MarketOrder.id == order_id, MarketOrder.player_id == player_id, MarketOrder.status == OrderStatus.ACTIVE).first()
+    order = db.query(MarketOrder).filter(MarketOrder.id == order_id, MarketOrder.player_id == player_id, MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])).first()
     if not order:
         db.close()
         return False

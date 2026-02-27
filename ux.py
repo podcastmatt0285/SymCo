@@ -980,7 +980,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                         <form action="/api/inventory/list" method="post" style="margin-top: 10px;">
                             <input type="hidden" name="item_type" value="{item}">
                             <input type="number" name="quantity" placeholder="Qty" style="width: 60px;" required>
-                            <input type="number" name="price" step="0.01" placeholder="Price" style="width: 80px;" required>
+                            <input type="number" name="price" step="0.01" placeholder="Price ({disp['code']})" style="width: 80px;" required>
                             <button type="submit" class="btn-blue">List</button>
                         </form>
                     </div>
@@ -1923,7 +1923,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                             <option value="sell">SELL</option>
                         </select>
                         <input type="number" name="quantity" placeholder="Quantity" required>
-                        <input type="number" name="price" step="0.01" placeholder="Price" required>
+                        <input type="number" name="price" step="0.01" placeholder="Price ({disp['code']})" required>
                         <button type="submit" class="btn-blue">Submit</button>
                     </form>
                 </div>
@@ -5925,7 +5925,8 @@ async def list_to_market(item_type: str = Form(...), quantity: float = Form(...)
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     import market
-    market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price)
+    price_usd = price * disp["usd_per_unit"]
+    market.create_order(player.id, market.OrderType.SELL, market.OrderMode.LIMIT, item_type, quantity, price_usd)
     return RedirectResponse(url="/inventory", status_code=303)
 
 @router.post("/api/market/order")
@@ -5935,13 +5936,14 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     import market
+    price_usd = price * disp["usd_per_unit"]
     market.create_order(
         player.id,
         market.OrderType.BUY if order_type == "buy" else market.OrderType.SELL,
         market.OrderMode.LIMIT,
         item_type,
         quantity,
-        price
+        price_usd
     )
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
 
