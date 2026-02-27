@@ -1996,7 +1996,7 @@ async def wallet_dashboard(
             <div>
                 <div style="font-size:12px;color:#a5b4fc;margin-bottom:4px;letter-spacing:1px;">WADSWORTH STABLE COIN (WSC)</div>
                 <div class="wsc-balance">{wsc_info["balance"]:.4f} <span style="font-size:16px;color:#6366f1;">WSC</span></div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">= {fmt_usd(wsc_info["balance"], disp)} redeemable &nbsp;&#8226;&nbsp; 1 WSC &#61; $1</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">= {fmt_usd(wsc_info["balance"], disp)} redeemable &nbsp;&#8226;&nbsp; 1 WSC &#61; {disp["symbol"]}1</div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:11px;color:#6366f1;margin-bottom:8px;">Total earned</div>
@@ -2011,7 +2011,7 @@ async def wallet_dashboard(
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid #312e81;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
             <form action="/api/wallet/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <div class="form-group" style="margin:0;">
-                    <label style="color:#a5b4fc;">Redeem WSC &#8594; In-Game Cash ($)</label>
+                    <label style="color:#a5b4fc;">Redeem WSC &#8594; In-Game Cash ({disp["symbol"]})</label>
                     <input type="number" name="amount" step="any" min="0.01"
                            max="{wsc_info['balance']:.4f}"
                            placeholder="Amount (max {wsc_info['balance']:.4f})"

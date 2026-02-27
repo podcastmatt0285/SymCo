@@ -1556,9 +1556,9 @@ async def crypto_exchange(
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Cash Amount ($)</label>
+                            <label>Cash Amount ({disp["symbol"]})</label>
                             <input type="number" name="cash_amount" min="0.01" step="0.0001"
-                                   max="{player.cash_balance}" placeholder="Amount in $" required>
+                                   max="{player.cash_balance}" placeholder="Amount in {disp['symbol']}" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Buy</button>
                     </form>
@@ -1913,7 +1913,7 @@ async def token_info_page(
                     <div>
                         <div class="stat">
                             <span class="stat-label">Blockchain Energy</span>
-                            <span class="stat-value {'positive' if info['mining_energy'] > 0 else 'negative'}">${info["mining_energy"]:,.2f}</span>
+                            <span class="stat-value {'positive' if info['mining_energy'] > 0 else 'negative'}">{fmt_usd(info["mining_energy"], disp)}</span>
                         </div>
                         <p style="color:#64748b;font-size:11px;margin-top:4px;">
                             {'&#9679; Blockchain ACTIVE - transactions enabled' if info['mining_energy'] > 0 else '&#9679; Blockchain OFFLINE - no energy, no transactions'}
