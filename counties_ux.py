@@ -1921,6 +1921,15 @@ async def token_info_page(
                     </div>
                     <div>
                         <div class="stat">
+                            <span class="stat-label">Gas Price</span>
+                            <span class="stat-value crypto">{info.get("gas_price", 0.001):.6f} {info["crypto_symbol"]}</span>
+                        </div>
+                        <p style="color:#64748b;font-size:11px;margin-top:4px;">
+                            Per-tx fee paid to miners &bull; {info.get("recent_tx_count", 0):,} txns this hour &bull; decays hourly toward {info.get("base_gas_price", 0.001):.4f}
+                        </p>
+                    </div>
+                    <div>
+                        <div class="stat">
                             <span class="stat-label">Created</span>
                             <span class="stat-value">{info["created_at"].strftime("%Y-%m-%d") if info["created_at"] else "N/A"}</span>
                         </div>

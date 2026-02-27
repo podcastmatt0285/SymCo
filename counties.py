@@ -60,6 +60,19 @@ MINING_REWARD_MULTIPLIER = 1.0  # Crypto minted per unit of consumed energy valu
 EXCHANGE_FEE_PERCENT = 0.02  # 2% fee on all exchange transactions
 EXCHANGE_FEE_TO_GOV_PERCENT = 0.50  # 50% of fees go to government
 
+# Dynamic gas fee system
+BASE_GAS_PRICE      = 0.001   # Minimum gas price in native tokens per gas unit
+MAX_GAS_PRICE       = 1.0     # Hard cap to prevent runaway gas prices
+GAS_PRICE_DECAY_RATE   = 0.90 # Gas price multiplied by this factor each hourly cycle
+GAS_SURGE_MULTIPLIER   = 0.05 # Each transaction raises gas_price by 5% of current value
+
+# Gas units per transaction type (higher = more expensive tx)
+GAS_UNITS_EXCHANGE       = 1.0  # Native buy / sell / swap
+GAS_UNITS_MINING_DEPOSIT = 0.5  # Mining node deposit (cheaper; encourages mining)
+GAS_UNITS_MEME_LAUNCH    = 5.0  # Launching a new meme coin (most expensive)
+GAS_UNITS_MEME_TRADE     = 1.0  # Burn-to-mint, order placement
+GAS_UNITS_MEME_STAKE     = 0.5  # Stake / unstake native tokens
+
 # Token Supply & Halving (Bitcoin-like)
 MAX_TOKEN_SUPPLY = 21_000_000.0  # 21 million max supply per token
 INITIAL_BLOCK_REWARD = 50.0  # Initial mining reward per payout cycle
@@ -160,6 +173,10 @@ class County(Base):
     # Governance-controlled parameters (can be changed via passed proposals)
     transaction_fee_percent = Column(Float, default=EXCHANGE_FEE_PERCENT)  # Exchange fee (0-0.10)
     mining_reward_multiplier = Column(Float, default=1.0)  # Multiplier on base mining reward (0.1-5.0)
+
+    # Dynamic gas fee system (EIP-1559-like)
+    gas_price = Column(Float, default=BASE_GAS_PRICE)   # Current gas price in native tokens
+    recent_tx_count = Column(Integer, default=0)         # Tx count since last hourly decay
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -679,6 +696,52 @@ def get_remaining_supply(county: County) -> float:
 
 
 # ==========================
+# DYNAMIC GAS FEE ENGINE
+# ==========================
+def _apply_gas(county: "County", native_wallet, gas_units: float = 1.0) -> Tuple[float, Optional[str]]:
+    """
+    Deduct a gas fee from native_wallet and credit it to county.mining_energy_pool.
+
+    - gas_price rises 5% per transaction (GAS_SURGE_MULTIPLIER) up to MAX_GAS_PRICE.
+    - Does NOT commit the session — the caller must commit.
+    - Returns (fee_amount, error_or_None).  On error the caller should abort.
+    """
+    gas_price = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE)
+    fee = gas_price * gas_units
+    balance = native_wallet.balance if native_wallet else 0.0
+    if balance < fee:
+        return fee, (
+            f"Insufficient {county.crypto_symbol} for gas "
+            f"(need {fee:.6f}, have {balance:.6f})"
+        )
+    native_wallet.balance -= fee
+    county.mining_energy_pool = (county.mining_energy_pool or 0.0) + fee
+    county.gas_price = min(gas_price * (1.0 + GAS_SURGE_MULTIPLIER), MAX_GAS_PRICE)
+    county.recent_tx_count = (county.recent_tx_count or 0) + 1
+    return fee, None
+
+
+def decay_gas_prices():
+    """
+    Decay every county's gas_price toward BASE_GAS_PRICE.
+    Called every hour alongside process_mining_payouts().
+    Also resets the rolling recent_tx_count window.
+    """
+    db = get_db()
+    try:
+        for county in db.query(County).all():
+            old = county.gas_price or BASE_GAS_PRICE
+            county.gas_price = max(old * GAS_PRICE_DECAY_RATE, BASE_GAS_PRICE)
+            county.recent_tx_count = 0
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[Counties] Gas decay error: {e}")
+    finally:
+        db.close()
+
+
+# ==========================
 # CRYPTO PRICE CALCULATION
 # ==========================
 def calculate_crypto_price(county_id: int) -> float:
@@ -1130,6 +1193,19 @@ def deposit_to_mining_node(player_id: int, county_id: int, quantity: float) -> T
         if county:
             county.mining_energy_pool += cash_value
 
+        # Gas fee in native tokens (waived if player has no native tokens at all —
+        # bootstrap case where the chain needs its very first deposit to come alive).
+        if county:
+            native_wallet = db.query(CryptoWallet).filter(
+                CryptoWallet.player_id == player_id,
+                CryptoWallet.crypto_symbol == county.crypto_symbol,
+            ).first()
+            if native_wallet and native_wallet.balance > 0:
+                gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MINING_DEPOSIT)
+                if gas_err:
+                    db.rollback()
+                    return False, gas_err
+
         db.commit()
 
         log_transaction(
@@ -1309,8 +1385,14 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == crypto_symbol,
         ).first()
+
+        # Gas is charged on top of the sell amount (player must hold both)
+        gas_fee, gas_err = _apply_gas(county, wallet, GAS_UNITS_EXCHANGE)
+        if gas_err:
+            return False, gas_err
+        # Recheck balance after gas deduction
         if not wallet or wallet.balance < amount:
-            return False, "Insufficient crypto balance"
+            return False, "Insufficient crypto balance (after gas fee)"
 
         price = get_crypto_price_by_symbol(crypto_symbol)
         if price <= 0:
@@ -1441,8 +1523,20 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
             db.add(wallet)
             db.flush()
 
-        wallet.balance += crypto_amount
-        wallet.total_bought += crypto_amount
+        # Gas is deducted from the tokens being received (buyer pays gas from their inbound amount)
+        gas_fee = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_EXCHANGE
+        net_crypto = crypto_amount - gas_fee
+        if net_crypto <= 0:
+            db.rollback()
+            return False, f"Transaction too small to cover gas fee ({gas_fee:.6f} {crypto_symbol})"
+        county.mining_energy_pool = (county.mining_energy_pool or 0.0) + gas_fee
+        county.gas_price = min(
+            max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * (1.0 + GAS_SURGE_MULTIPLIER),
+            MAX_GAS_PRICE,
+        )
+        county.recent_tx_count = (county.recent_tx_count or 0) + 1
+        wallet.balance += net_crypto
+        wallet.total_bought += net_crypto
 
         # Buying on exchange mints tokens (increases supply, but capped)
         remaining = get_remaining_supply(county)
@@ -1516,8 +1610,13 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == sell_symbol,
         ).first()
+
+        # Gas on the sell-side chain (paid from sell wallet, on top of the swap amount)
+        sell_gas_fee, sell_gas_err = _apply_gas(sell_county, sell_wallet, GAS_UNITS_EXCHANGE)
+        if sell_gas_err:
+            return False, sell_gas_err
         if not sell_wallet or sell_wallet.balance < sell_amount:
-            return False, f"Insufficient {sell_symbol} balance"
+            return False, f"Insufficient {sell_symbol} balance (after gas fee)"
 
         sell_price = get_crypto_price_by_symbol(sell_symbol)
         buy_price = get_crypto_price_by_symbol(buy_symbol)
@@ -1530,9 +1629,21 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         net_cash = gross_cash - fee
         buy_amount = net_cash / buy_price
 
+        # Gas on the buy-side chain (deducted from the received buy tokens)
+        buy_gas_fee = max(buy_county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_EXCHANGE
+        net_buy_amount = buy_amount - buy_gas_fee
+        if net_buy_amount <= 0:
+            return False, f"Swap too small to cover buy-side gas fee ({buy_gas_fee:.6f} {buy_symbol})"
+        buy_county.mining_energy_pool = (buy_county.mining_energy_pool or 0.0) + buy_gas_fee
+        buy_county.gas_price = min(
+            max(buy_county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * (1.0 + GAS_SURGE_MULTIPLIER),
+            MAX_GAS_PRICE,
+        )
+        buy_county.recent_tx_count = (buy_county.recent_tx_count or 0) + 1
+
         # Check buy side supply cap
         remaining = get_remaining_supply(buy_county)
-        if buy_amount > remaining:
+        if net_buy_amount > remaining:
             return False, f"Not enough {buy_symbol} supply remaining ({remaining:,.6f} left)"
 
         # Execute sell side
@@ -1555,9 +1666,9 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
             db.add(buy_wallet)
             db.flush()
 
-        buy_wallet.balance += buy_amount
-        buy_wallet.total_bought += buy_amount
-        buy_county.total_crypto_minted += buy_amount
+        buy_wallet.balance += net_buy_amount
+        buy_wallet.total_bought += net_buy_amount
+        buy_county.total_crypto_minted += net_buy_amount
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
@@ -1591,8 +1702,8 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
             reference_id=f"exchange_swap_{sell_symbol}_{buy_symbol}",
         )
 
-        print(f"[Counties] Crypto swap: Player {player_id} swapped {sell_amount:.6f} {sell_symbol} → {buy_amount:.6f} {buy_symbol}")
-        return True, f"Swapped {sell_amount:.6f} {sell_symbol} for {buy_amount:.6f} {buy_symbol} (fee: ${fee:,.4f})"
+        print(f"[Counties] Crypto swap: Player {player_id} swapped {sell_amount:.6f} {sell_symbol} → {net_buy_amount:.6f} {buy_symbol} (sell gas: {sell_gas_fee:.6f}, buy gas: {buy_gas_fee:.6f})")
+        return True, f"Swapped {sell_amount:.6f} {sell_symbol} for {net_buy_amount:.6f} {buy_symbol} (fee: ${fee:,.4f}, gas: {sell_gas_fee:.6f} {sell_symbol} + {buy_gas_fee:.6f} {buy_symbol})"
 
     except Exception as e:
         db.rollback()
@@ -2462,6 +2573,9 @@ def get_token_info(crypto_symbol: str) -> Optional[dict]:
             "city_count": city_count,
             "top_holders": whale_list,
             "created_at": county.created_at,
+            "gas_price": county.gas_price or BASE_GAS_PRICE,
+            "recent_tx_count": county.recent_tx_count or 0,
+            "base_gas_price": BASE_GAS_PRICE,
         }
     except Exception as e:
         print(f"[Counties] Error getting token info: {e}")
@@ -2488,6 +2602,8 @@ def initialize():
         "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS voting_mechanism TEXT DEFAULT 'token_weighted'",
         "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_value REAL",
         "ALTER TABLE governance_proposals ADD COLUMN IF NOT EXISTS proposal_target TEXT",
+        f"ALTER TABLE counties ADD COLUMN IF NOT EXISTS gas_price REAL DEFAULT {BASE_GAS_PRICE}",
+        "ALTER TABLE counties ADD COLUMN IF NOT EXISTS recent_tx_count INTEGER DEFAULT 0",
     ])
 
     db = get_db()
@@ -2548,9 +2664,10 @@ async def tick(current_tick: int, now: datetime):
 
         db.close()
 
-        # Mining payouts every hour
+        # Mining payouts and gas price decay every hour
         if current_tick % MINING_PAYOUT_INTERVAL_TICKS == 0:
             process_mining_payouts(current_tick)
+            decay_gas_prices()
 
         # Price snapshots every hour (same interval as mining)
         if current_tick % PRICE_SNAPSHOT_INTERVAL_TICKS == 0:
@@ -2601,6 +2718,12 @@ __all__ = [
     # Mining
     'deposit_to_mining_node', 'process_mining_payouts',
     'calculate_block_reward', 'get_circulating_supply', 'get_remaining_supply',
+
+    # Gas fee system
+    '_apply_gas', 'decay_gas_prices',
+    'BASE_GAS_PRICE', 'MAX_GAS_PRICE', 'GAS_SURGE_MULTIPLIER',
+    'GAS_UNITS_EXCHANGE', 'GAS_UNITS_MINING_DEPOSIT',
+    'GAS_UNITS_MEME_LAUNCH', 'GAS_UNITS_MEME_TRADE', 'GAS_UNITS_MEME_STAKE',
 
     # Crypto
     'calculate_crypto_price', 'get_crypto_price_by_symbol',

@@ -404,7 +404,7 @@ async def launch_meme_form(
         return RedirectResponse(url="/login", status_code=303)
 
     from memecoins import MEME_CREATION_FEE_NATIVE, MEME_FOUNDER_ALLOCATION_PCT, MEME_MINING_ALLOCATION_PCT
-    from counties import get_county_by_id, is_player_in_county, CryptoWallet, get_db as county_get_db
+    from counties import get_county_by_id, is_player_in_county, CryptoWallet, get_db as county_get_db, BASE_GAS_PRICE, GAS_UNITS_MEME_LAUNCH
 
     county = get_county_by_id(county_id)
     if not county:
@@ -419,6 +419,7 @@ async def launch_meme_form(
         CryptoWallet.crypto_symbol == county.crypto_symbol,
     ).first()
     native_balance = native_wallet.balance if native_wallet else 0.0
+    gas_preview = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_MEME_LAUNCH
     county_db.close()
 
     err_html = f'<div class="alert alert-error">{error}</div>' if error else ""
@@ -524,6 +525,10 @@ async def launch_meme_form(
             <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;margin-bottom:16px;font-size:13px;">
                 <div style="color:#94a3b8;margin-bottom:6px;">Your {county.crypto_symbol} balance:
                     <strong class="{("native-color" if native_balance >= MEME_CREATION_FEE_NATIVE else "negative")}">{native_balance:.4f}</strong>
+                </div>
+                <div style="color:#64748b;margin-bottom:4px;">
+                    Current gas fee: <strong style="color:#f59e0b;">{gas_preview:.6f} {county.crypto_symbol}</strong>
+                    (charged on top of creation burn &bull; rises with network activity)
                 </div>
                 {"<div style='color:#4ade80;'>✓ Sufficient balance to launch</div>" if native_balance >= MEME_CREATION_FEE_NATIVE else f'<div style="color:#f87171;">✗ Need {MEME_CREATION_FEE_NATIVE:.0f} {county.crypto_symbol} to launch. Mine or buy more.</div>'}
             </div>

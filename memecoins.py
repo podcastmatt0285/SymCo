@@ -369,7 +369,8 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
             county_db.close()
             return 0.0, 0.0, "County not found"
 
-        # Check player has enough native tokens in their wallet
+        # Check player has enough native tokens in their wallet (burn + gas)
+        from counties import _apply_gas, GAS_UNITS_MEME_TRADE
         native_wallet = county_db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == county.crypto_symbol,
@@ -398,6 +399,12 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
                 return 0.0, 0.0, "Max supply already reached"
             coins_minted = remaining_supply
             native_amount = coins_minted * backing_price  # adjust burn to match
+
+        # Charge gas fee (on top of the burn amount)
+        gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
+        if gas_err:
+            county_db.close()
+            return 0.0, 0.0, gas_err
 
         # Deduct native tokens from player wallet
         if not native_wallet or native_wallet.balance < native_amount:
@@ -522,16 +529,19 @@ def launch_meme_coin(
                 f"(the minimum creation fee)."
             )
 
-        # Check player has enough native tokens for the chosen burn amount
+        # Check player has enough native tokens for the chosen burn amount + gas
+        from counties import _apply_gas, GAS_UNITS_MEME_LAUNCH, BASE_GAS_PRICE
         native_wallet = county_db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == native_symbol,
         ).first()
-        if not native_wallet or native_wallet.balance < creation_burn_native:
+        gas_preview = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_MEME_LAUNCH
+        total_needed = creation_burn_native + gas_preview
+        if not native_wallet or native_wallet.balance < total_needed:
             have = native_wallet.balance if native_wallet else 0.0
             return None, (
-                f"Insufficient native tokens. You have {have:.4f} {native_symbol} "
-                f"but chose to burn {creation_burn_native:.2f} (min: {MEME_CREATION_FEE_NATIVE:.2f})."
+                f"Insufficient native tokens. Need {creation_burn_native:.2f} creation fee + "
+                f"{gas_preview:.6f} gas = {total_needed:.6f} {native_symbol}. Have {have:.4f}."
             )
 
         # Get creator's city_id
@@ -544,6 +554,12 @@ def launch_meme_coin(
         ).first()
         city_db.close()
         creator_city_id = membership.city_id if membership else 0
+
+        # --- Charge gas fee (before deducting creation burn) ---
+        gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_LAUNCH)
+        if gas_err:
+            county_db.close()
+            return None, gas_err
 
         # --- Deduct creation fee (burn native tokens) ---
         native_wallet.balance -= creation_burn_native
@@ -632,7 +648,7 @@ def stake_native_for_mining(
     Stake native tokens to mine a meme coin.
     Native tokens are locked until unstaked.
     """
-    from counties import CryptoWallet, County, get_db as county_get_db
+    from counties import CryptoWallet, County, get_db as county_get_db, _apply_gas, GAS_UNITS_MEME_STAKE
 
     if native_amount < MEME_MIN_STAKE:
         return False, f"Minimum stake is {MEME_MIN_STAKE} native tokens."
@@ -652,13 +668,22 @@ def stake_native_for_mining(
         county = county_db.query(County).filter(County.id == meme.county_id).first()
         native_symbol = county.crypto_symbol
 
-        # Check player's native token balance
+        # Check player's native token balance (stake + gas)
         native_wallet = county_db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == native_symbol,
         ).first()
         if not native_wallet or native_wallet.balance < native_amount:
             return False, f"Insufficient {native_symbol}. You have {native_wallet.balance if native_wallet else 0:.6f}."
+
+        # Charge gas (on top of the stake amount)
+        gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_STAKE)
+        if gas_err:
+            return False, gas_err
+
+        # Re-check balance after gas
+        if native_wallet.balance < native_amount:
+            return False, f"Insufficient {native_symbol} after gas fee. Have {native_wallet.balance:.6f}, need {native_amount:.6f} to stake."
 
         # Lock native tokens
         native_wallet.balance -= native_amount
@@ -698,7 +723,7 @@ def unstake_native(
     Unstake native tokens from a meme coin mining pool.
     Returns native tokens to player's wallet.
     """
-    from counties import CryptoWallet, get_db as county_get_db
+    from counties import CryptoWallet, County, get_db as county_get_db, _apply_gas, GAS_UNITS_MEME_STAKE
 
     db = get_db()
     county_db = county_get_db()
@@ -715,27 +740,43 @@ def unstake_native(
         if meme:
             meme.mining_pool_native = max(0.0, (meme.mining_pool_native or 0.0) - deposit.quantity)
 
-        # Return native tokens
+        # Look up county to compute gas fee
+        county = county_db.query(County).filter(County.crypto_symbol == deposit.native_symbol).first()
+
+        # Return native tokens (gas is deducted from the returned amount)
         native_wallet = county_db.query(CryptoWallet).filter(
             CryptoWallet.player_id == player_id,
             CryptoWallet.crypto_symbol == deposit.native_symbol,
         ).first()
-        if native_wallet:
-            native_wallet.balance += deposit.quantity
-        else:
-            from counties import CryptoWallet
+        if not native_wallet:
             new_wallet = CryptoWallet(
                 player_id=player_id,
                 crypto_symbol=deposit.native_symbol,
-                balance=deposit.quantity,
+                balance=0.0,
             )
             county_db.add(new_wallet)
+            county_db.flush()
+            native_wallet = new_wallet
+
+        return_amount = deposit.quantity
+        if county:
+            from counties import BASE_GAS_PRICE, GAS_SURGE_MULTIPLIER, MAX_GAS_PRICE
+            gas_fee = max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * GAS_UNITS_MEME_STAKE
+            return_amount = max(deposit.quantity - gas_fee, 0.0)
+            county.mining_energy_pool = (county.mining_energy_pool or 0.0) + gas_fee
+            county.gas_price = min(
+                max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * (1.0 + GAS_SURGE_MULTIPLIER),
+                MAX_GAS_PRICE,
+            )
+            county.recent_tx_count = (county.recent_tx_count or 0) + 1
+
+        native_wallet.balance += return_amount
 
         deposit.is_active = False
         db.commit()
         county_db.commit()
 
-        return True, f"Unstaked {deposit.quantity:.6f} {deposit.native_symbol} from {deposit.meme_symbol} mining."
+        return True, f"Unstaked {deposit.quantity:.6f} {deposit.native_symbol} from {deposit.meme_symbol} mining (received {return_amount:.6f} after gas)."
 
     except Exception as e:
         db.rollback()
@@ -844,7 +885,7 @@ def place_order(
     Sell limit: reserves meme coins from MemeCoinWallet.
     Market orders execute immediately against best available.
     """
-    from counties import CryptoWallet, County, get_db as county_get_db
+    from counties import CryptoWallet, County, get_db as county_get_db, _apply_gas, GAS_UNITS_MEME_TRADE
 
     if quantity <= 0:
         return None, "Quantity must be positive."
@@ -892,11 +933,15 @@ def place_order(
         if order_type == "buy":
             if order_mode == "limit":
                 cost = quantity * price
-                if native_balance < cost:
+                # Gas is charged on top of the order cost
+                gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
+                if gas_err:
+                    return None, gas_err
+                if native_balance - gas_fee < cost:
                     return None, (
-                        f"Insufficient {native_symbol}. Need {cost:.6f}, have {native_balance:.6f}."
+                        f"Insufficient {native_symbol}. Need {cost:.6f} + {gas_fee:.6f} gas = {cost + gas_fee:.6f}, have {native_balance:.6f}."
                     )
-                # Reserve native tokens
+                # Reserve native tokens (gas already deducted by _apply_gas)
                 if native_wallet:
                     native_wallet.balance -= cost
                 native_reserved = cost
@@ -908,6 +953,11 @@ def place_order(
                 return None, (
                     f"Insufficient {meme_symbol}. Need {quantity:.6f}, have {meme_balance:.6f}."
                 )
+            # Gas is paid from native wallet for sell orders
+            gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
+            if gas_err:
+                return None, gas_err
+            county_db.commit()
             # Reserve meme coins
             meme_wallet_obj = get_or_create_meme_wallet(db, player_id, meme_symbol)
             meme_wallet_obj.balance -= quantity
