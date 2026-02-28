@@ -606,9 +606,11 @@ def collect_hoarding_taxes():
         if not player:
             continue
 
-        actual_payment = min(hourly_payment, max(0, player.cash_balance))
+        from reserve_banks import get_usd_balance, debit_usd
+        current_balance = get_usd_balance(owner_id)
+        actual_payment = min(hourly_payment, max(0, current_balance))
         if actual_payment > 0:
-            player.cash_balance -= actual_payment
+            debit_usd(owner_id, actual_payment)
             total_collected += actual_payment
 
             log_transaction(
@@ -621,9 +623,8 @@ def collect_hoarding_taxes():
 
     # Pay to government
     if total_collected > 0:
-        gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-        if gov:
-            gov.cash_balance += total_collected
+        from reserve_banks import credit_usd
+        credit_usd(GOVERNMENT_PLAYER_ID, total_collected)
 
     db.commit()
     db.close()

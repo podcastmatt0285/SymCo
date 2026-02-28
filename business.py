@@ -101,12 +101,10 @@ def process_dismantling_tick(db):
         if player:
             try:
                 from reserve_banks import convert_to_legal_tender
-                amount, code = convert_to_legal_tender(player.id, sale.refund_per_tick)
-                if code == "USD":
-                    player.cash_balance += amount
-                # Non-USD: convert_to_legal_tender already credited the foreign balance.
+                convert_to_legal_tender(player.id, sale.refund_per_tick)
             except Exception:
-                player.cash_balance += sale.refund_per_tick
+                from reserve_banks import credit_usd
+                credit_usd(player.id, sale.refund_per_tick)
             sale.ticks_remaining -= 1
         
         # If dismantling is complete
@@ -272,7 +270,7 @@ def process_business_tick(db):
         wage_cost *= _city_wage_mult
 
         from reserve_banks import can_afford_usd
-        if not can_afford_usd(player.id, player.cash_balance, wage_cost):
+        if not can_afford_usd(player.id, wage_cost):
             continue
 
         player_inv = get_player_inventory(player.id)
@@ -392,16 +390,12 @@ def process_business_tick(db):
             net_revenue = total_revenue - wage_cost
             # Route income through the reserve bank so JPY (and other legal-
             # tender) players receive their earnings in their chosen currency.
-            # For USD players, convert_to_legal_tender is a no-op that returns
-            # the same amount so cash_balance is credited as before.
             try:
                 from reserve_banks import convert_to_legal_tender
-                amount, code = convert_to_legal_tender(player.id, net_revenue)
-                if code == "USD":
-                    player.cash_balance += amount
-                # Non-USD: already credited to PlayerCurrencyBalance.
+                convert_to_legal_tender(player.id, net_revenue)
             except Exception:
-                player.cash_balance += net_revenue
+                from reserve_banks import credit_usd
+                credit_usd(player.id, net_revenue)
             biz.progress_ticks = 0
             db.commit()
             if net_revenue > 0:
@@ -456,7 +450,7 @@ def create_business(player_id: int, plot_id: int, business_type_key: str):
         print(f"[Business] Startup cost for {business_type_key}: ${base_cost:.2f} × {multiplier:.2f} = ${startup_cost:,.2f}")
         
         from reserve_banks import spend_player_funds
-        ok, _err = spend_player_funds(db, player, startup_cost)
+        ok, _err = spend_player_funds(player_id, startup_cost)
         if not ok:
             print(f"[Business] Player {player_id} insufficient funds for startup: {_err}")
             db.close()
@@ -663,7 +657,7 @@ def create_district_business(owner_id: int, district_id: int, business_type: str
             return None, "Player not found"
         
         from reserve_banks import spend_player_funds
-        ok, err = spend_player_funds(db, player, total_cost)
+        ok, err = spend_player_funds(owner_id, total_cost)
         if not ok:
             return None, err
 

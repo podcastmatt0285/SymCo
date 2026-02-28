@@ -492,11 +492,12 @@ def check_economic_triggers() -> int:
     Uses milestone tracking to prevent duplicate creation.
     """
     from auth import get_db as get_auth_db, Player
-    
+    from reserve_banks import get_usd_balance
+
     auth_db = get_auth_db()
     try:
         players = auth_db.query(Player).all()
-        total_cash = sum(p.cash_balance for p in players)
+        total_cash = sum(get_usd_balance(p.id) for p in players)
     finally:
         auth_db.close()
     
@@ -711,39 +712,22 @@ def buy_auction_land(buyer_id: int, auction_id: int) -> bool:
             return False
         
         # Check if buyer has funds (supports foreign legal tender)
-        auth_db = get_auth_db()
-        try:
-            buyer = auth_db.query(Player).filter(Player.id == buyer_id).first()
-            from reserve_banks import can_afford_usd, spend_player_funds
-            if not buyer or not can_afford_usd(buyer_id, buyer.cash_balance, auction.current_price):
-                return False
+        from reserve_banks import can_afford_usd, spend_player_funds
+        if not can_afford_usd(buyer_id, auction.current_price):
+            return False
 
-            # Deduct (economic sink — government does not receive it)
-            ok, err = spend_player_funds(auth_db, buyer, auction.current_price)
-            if not ok:
-                print(f"[LandMarket] Auction payment failed for player {buyer_id}: {err}")
-                return False
-            auth_db.commit()
-        finally:
-            auth_db.close()
+        # Deduct (economic sink — government does not receive it)
+        ok, err = spend_player_funds(buyer_id, auction.current_price)
+        if not ok:
+            print(f"[LandMarket] Auction payment failed for player {buyer_id}: {err}")
+            return False
 
         # Transfer land to buyer
         if not transfer_land(auction.land_plot_id, buyer_id):
             # Refund if transfer fails (convert back to buyer's legal tender)
             try:
-                from reserve_banks import convert_to_legal_tender, get_player_legal_tender
-                auth_db2 = get_auth_db()
-                try:
-                    buyer2 = auth_db2.query(Player).filter(Player.id == buyer_id).first()
-                    if buyer2:
-                        tender = get_player_legal_tender(buyer_id)
-                        if tender == "USD":
-                            buyer2.cash_balance += auction.current_price
-                        else:
-                            convert_to_legal_tender(buyer_id, auction.current_price)
-                        auth_db2.commit()
-                finally:
-                    auth_db2.close()
+                from reserve_banks import credit_usd
+                credit_usd(buyer_id, auction.current_price)
             except Exception as _ref_e:
                 print(f"[LandMarket] Refund error after failed land transfer: {_ref_e}")
             return False
@@ -869,13 +853,14 @@ async def tick(current_tick: int, now: datetime):
 
         if plots_needed > 0:
             print(f"[LandMarket] Economy expanded! Creating {plots_needed} new auction(s)")
-            
+
             # Get current milestone level
             from auth import get_db as get_auth_db, Player
+            from reserve_banks import get_usd_balance
             auth_db = get_auth_db()
             try:
                 players = auth_db.query(Player).all()
-                total_cash = sum(p.cash_balance for p in players)
+                total_cash = sum(get_usd_balance(p.id) for p in players)
             finally:
                 auth_db.close()
             

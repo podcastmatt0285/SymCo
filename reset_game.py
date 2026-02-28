@@ -164,13 +164,17 @@ def truncate_tables(eng, tables: list[str], label: str):
 
 
 def reset_player_accounts(eng) -> list[tuple[int, str]]:
-    """Reset cash/tutorial on all real players (id > 0), delete all sessions."""
-    step("Resetting player cash and tutorial_step …")
+    """Reset tutorial_step on all real players (id > 0), delete all sessions.
+    Cash balances are now stored in PlayerCurrencyBalance in reserve_banks DB —
+    they get reset when that DB is truncated in Step 5.  Starting USD is re-seeded
+    per-player in give_starter_resources().
+    """
+    step("Resetting player tutorial_step and sessions …")
     if not DRY_RUN:
         with eng.connect() as conn:
             conn.execute(
-                text("UPDATE players SET cash_balance = :c, tutorial_step = :t WHERE id > 0"),
-                {"c": STARTING_CASH, "t": STARTING_TUTORIAL},
+                text("UPDATE players SET tutorial_step = :t WHERE id > 0"),
+                {"t": STARTING_TUTORIAL},
             )
             conn.execute(text("DELETE FROM sessions"))
             conn.commit()
@@ -183,11 +187,19 @@ def reset_player_accounts(eng) -> list[tuple[int, str]]:
 
 
 def give_starter_resources(player_id: int, business_name: str):
-    """Create 3 starter land plots and give starter inventory for one player."""
+    """Create 3 starter land plots, give starter inventory, and seed starting USD for one player."""
     step(f"Setting up starter resources for [{player_id}] {business_name} …")
     if DRY_RUN:
-        print(f"    [dry-run] would create 3 plots + starter inventory for player {player_id}")
+        print(f"    [dry-run] would create 3 plots + starter inventory + $50k USD for player {player_id}")
         return
+
+    # Seed starting USD in PlayerCurrencyBalance (reserve_banks DB was just truncated)
+    try:
+        from reserve_banks import credit_usd
+        credit_usd(player_id, STARTING_CASH)
+    except Exception as e:
+        print(f"    [WARN] credit_usd failed for {player_id}: {e}")
+
     try:
         from land import create_starter_plot
         create_starter_plot(player_id)
@@ -323,7 +335,7 @@ def main():
     banner("Reset complete!")
     print(f"  Players reset: {len(players)}")
     for pid, bname in players:
-        print(f"    [{pid}] {bname} → $50,000 cash, 3 plots, starter inventory")
+        print(f"    [{pid}] {bname} → $50,000 USD (PCB), 3 plots, starter inventory")
     print(f"\n  All sessions cleared — everyone will need to log back in.")
     if DRY_RUN:
         print("\n  This was a DRY RUN — no changes were made.")

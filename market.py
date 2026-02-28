@@ -146,7 +146,7 @@ def create_order(
         from auth import Player
         from reserve_banks import can_afford_usd
         player = db.query(Player).filter(Player.id == player_id).first()
-        if not player or not can_afford_usd(player_id, player.cash_balance, quantity * (price or 0)):
+        if not player or not can_afford_usd(player_id, quantity * (price or 0)):
             print(f"[Market] Player {player_id} has insufficient funds for buy order")
             db.close()
             return None
@@ -347,7 +347,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             
             # Deduct from buyer's account (respects legal tender preference)
             from reserve_banks import spend_player_funds
-            ok, _err = spend_player_funds(db, buyer, total_cost)
+            ok, _err = spend_player_funds(buy_order.player_id, total_cost)
             if not ok:
                 print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} insufficient funds: {_err}")
                 db.rollback()
@@ -403,11 +403,10 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             city_bank.cash_reserves -= total_cost
             try:
                 from reserve_banks import convert_to_legal_tender
-                _amt, _code = convert_to_legal_tender(seller_player.id, total_cost)
-                if _code == "USD":
-                    seller_player.cash_balance += _amt
+                convert_to_legal_tender(seller_player.id, total_cost)
             except Exception:
-                seller_player.cash_balance += total_cost
+                from reserve_banks import credit_usd
+                credit_usd(seller_player.id, total_cost)
             print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
         except Exception as e:
             print(f"[Market] City bank buy error: {e}")
@@ -447,21 +446,12 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     db.rollback()
                     return
                 from reserve_banks import spend_player_funds, convert_to_legal_tender
-                ok, _err = spend_player_funds(db, buyer, total_cost)
+                ok, _err = spend_player_funds(buy_order.player_id, total_cost)
                 if not ok:
                     print(f"[Market] Cash transfer error: Player {buy_order.player_id} insufficient funds: {_err}")
                     db.rollback()
                     return
-                try:
-                    _amt, _code = convert_to_legal_tender(seller.id, total_cost)
-                    if _code == "USD":
-                        seller_gross = _amt
-                    else:
-                        seller_gross = total_cost
-                except Exception:
-                    seller_gross = total_cost
-
-                # City sales tax: deduct from seller's proceeds, route to city bank
+                # City sales tax: compute tax on total_cost, route to city bank
                 _tax_deducted = 0.0
                 try:
                     from city_projects import get_city_sales_tax_rate, _get_player_city_id
@@ -470,7 +460,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     if _seller_city_id:
                         _tax_rate = get_city_sales_tax_rate(_seller_city_id)
                         if _tax_rate > 0:
-                            _tax_deducted = seller_gross * _tax_rate
+                            _tax_deducted = total_cost * _tax_rate
                             _city_db = _city_get_db()
                             try:
                                 _city_bank = _city_db.query(CityBank).filter(
@@ -483,7 +473,12 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 except Exception as _te:
                     _tax_deducted = 0.0
 
-                seller.cash_balance += (seller_gross - _tax_deducted)
+                seller_net = total_cost - _tax_deducted
+                try:
+                    convert_to_legal_tender(seller.id, seller_net)
+                except Exception:
+                    from reserve_banks import credit_usd
+                    credit_usd(seller.id, seller_net)
             except Exception as e:
                 print(f"[Market] Cash transfer error: {e}")
                 import traceback

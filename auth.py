@@ -17,7 +17,7 @@ import secrets
 import hashlib
 from fastapi import APIRouter, Form, Cookie, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import Column, String, Float, DateTime, Integer
+from sqlalchemy import Column, String, DateTime, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -37,7 +37,6 @@ class Player(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     business_name = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    cash_balance = Column(Float, default=50000.0)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
     tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
@@ -95,12 +94,17 @@ def get_db():
         raise
 
 
-def migrate_tutorial_column():
-    """Add tutorial_step column to players table if it doesn't exist."""
+def migrate_player_table():
+    """Apply incremental schema migrations for the players table."""
     from database import run_ddl_migration
     run_ddl_migration(
         engine,
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0",
+    )
+    # cash_balance has moved to PlayerCurrencyBalance in the reserve_banks DB.
+    run_ddl_migration(
+        engine,
+        "ALTER TABLE players DROP COLUMN IF EXISTS cash_balance",
     )
 
 
@@ -114,7 +118,7 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
 
     Respects each player's legal tender: the sender pays in their currency
     (via spend_player_funds) and the receiver is credited in theirs
-    (via process_income_conversion).
+    (via process_income_conversion).  All balances live in PlayerCurrencyBalance.
 
     Returns:
         True if successful, False if insufficient funds
@@ -122,37 +126,19 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
     if amount <= 0:
         return False
 
-    from reserve_banks import can_afford_usd, spend_player_funds, process_income_conversion, get_player_legal_tender
+    from reserve_banks import can_afford_usd, spend_player_funds, process_income_conversion
 
-    db = get_db()
-
-    sender   = db.query(Player).filter(Player.id == from_player_id).first()
-    receiver = db.query(Player).filter(Player.id == to_player_id).first()
-
-    if not sender or not receiver:
-        db.close()
-        return False
-
-    if not can_afford_usd(from_player_id, sender.cash_balance, amount):
+    if not can_afford_usd(from_player_id, amount):
         print(f"[Auth] Transfer failed: Player {from_player_id} has insufficient funds")
-        db.close()
         return False
 
-    ok, _err = spend_player_funds(db, sender, amount)
+    ok, _err = spend_player_funds(from_player_id, amount)
     if not ok:
         print(f"[Auth] Transfer failed: {_err}")
-        db.close()
         return False
 
-    # Credit receiver in their legal tender
-    recv_tender = get_player_legal_tender(to_player_id)
-    if recv_tender == "USD":
-        receiver.cash_balance += amount
-    else:
-        process_income_conversion(to_player_id, amount)
-
-    db.commit()
-    db.close()
+    # Credit receiver in their legal tender (process_income_conversion handles all currencies)
+    process_income_conversion(to_player_id, amount)
 
     print(f"[Auth] Transferred ${amount:.2f} from Player {from_player_id} to Player {to_player_id}")
     return True
@@ -169,7 +155,6 @@ def create_player(db: Session, business_name: str, password: str, ip_address: Op
     player = Player(
         business_name=business_name,
         password_hash=hash_password(password),
-        cash_balance=50000.0,
     )
 
     db.add(player)
@@ -179,9 +164,19 @@ def create_player(db: Session, business_name: str, password: str, ip_address: Op
     if ip_address:
         db.add(PlayerRegistrationIP(player_id=player.id, ip_address=ip_address))
         db.commit()
-    
+
     player_id = player.id
     print(f"[Auth] Created player {player_id}: {business_name}")
+
+    # Seed starting USD balance in the reserve_banks DB (USD is a reserve currency)
+    try:
+        from reserve_banks import credit_usd
+        credit_usd(player_id, 50000.0)
+        print(f"[Auth] Seeded $50,000 USD for player {player_id}")
+    except Exception as e:
+        print(f"[Auth] Failed to seed starting USD balance: {e}")
+        import traceback
+        traceback.print_exc()
     
     # Create starter land plot
     try:
@@ -618,10 +613,11 @@ async def register(
 
             # Cash fine on the original account (respects foreign legal tender).
             try:
-                from reserve_banks import spend_player_funds
-                spend_player_funds(db, prior, min(MULTI_ACCOUNT_FINE, prior.cash_balance or MULTI_ACCOUNT_FINE))
-            except Exception:
-                prior.cash_balance = max(0.0, (prior.cash_balance or 0.0) - MULTI_ACCOUNT_FINE)
+                from reserve_banks import spend_player_funds, get_usd_balance
+                bal = get_usd_balance(prior.id)
+                spend_player_funds(prior.id, min(MULTI_ACCOUNT_FINE, bal or MULTI_ACCOUNT_FINE))
+            except Exception as _fine_err:
+                print(f"[Auth] Multi-account fine error: {_fine_err}")
             db.commit()
 
             db.close()
@@ -677,7 +673,7 @@ def initialize():
     """Initialize auth module."""
     print("[Auth] Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    migrate_tutorial_column()
+    migrate_player_table()
     print("[Auth] Module initialized")
 
 async def tick(current_tick: int, now):

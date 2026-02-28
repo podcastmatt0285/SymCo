@@ -15,8 +15,9 @@ currencies.  Currency enters circulation ONLY through bond-interest payments:
 Cross-currency trades trigger an automatic forex conversion via the reserve
 banks (each bank holds reserves of other currencies, backed by swapped bonds).
 
-USD is the default game currency — no reserve bank is needed for it.
-All other currencies require a reserve bank.
+USD is a reserve currency like all others, backed by the Federal Reserve of
+Wadsworth and stored in PlayerCurrencyBalance just like JPY, EUR, etc.
+All currencies require a reserve bank.
 
 Supported currencies (plus USD as base):
   JPY  Japanese Yen         ¥
@@ -358,37 +359,6 @@ def initialize():
 # TICK (called hourly by app)
 # ==========================
 
-def _sweep_usd_currency_balances(rb_db):
-    """
-    Move any PlayerCurrencyBalance rows with currency_code='USD' back to
-    player.cash_balance.  These rows should never exist — USD income always
-    belongs in player.cash_balance — but _adjust_currency_balance doesn't
-    know about the auth DB, so USD bond interest can accumulate here
-    silently.  This sweeper corrects that every tick.
-    """
-    rows = rb_db.query(PlayerCurrencyBalance).filter(
-        PlayerCurrencyBalance.currency_code == "USD",
-        PlayerCurrencyBalance.balance       >  0,
-    ).all()
-    if not rows:
-        return
-
-    from auth import get_db as _auth_db_factory, Player as _Player
-    auth_db = _auth_db_factory()
-    try:
-        for row in rows:
-            p = auth_db.query(_Player).filter(_Player.id == row.player_id).first()
-            if p:
-                p.cash_balance = (p.cash_balance or 0.0) + row.balance
-                row.balance    = 0.0
-        auth_db.commit()
-    except Exception as e:
-        auth_db.rollback()
-        print(f"[ReserveBanks] USD balance sweep error: {e}")
-    finally:
-        auth_db.close()
-
-
 async def tick(app_tick: int, now: datetime):
     """Hourly housekeeping: accrue bond interest, adjust yields + FX rates, snapshot history."""
     if app_tick % RESERVE_BANKS_TICK_INTERVAL != 0:
@@ -408,8 +378,6 @@ async def tick(app_tick: int, now: datetime):
         # Daily WSC → currency liquidity swap (once per 24 h)
         if app_tick % WSC_DAILY_SWAP_TICKS == 0:
             _daily_wsc_liquidity_swap(db)
-        # Sweep any USD PlayerCurrencyBalance rows → player.cash_balance
-        _sweep_usd_currency_balances(db)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -870,8 +838,22 @@ def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float,
 
     Returns (converted_amount, currency_code).
     """
+    if usd_amount <= 0:
+        return 0.0, "USD"
+
     code = get_player_legal_tender(player_id)
-    if code == "USD" or usd_amount <= 0:
+
+    if code == "USD":
+        # USD is now a reserve currency stored in PlayerCurrencyBalance like all others.
+        db = get_db()
+        try:
+            _adjust_currency_balance(db, player_id, "USD", usd_amount)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            print(f"[ReserveBanks] USD income credit error (player {player_id}): {e}")
+        finally:
+            db.close()
         return usd_amount, "USD"
 
     db = get_db()
@@ -880,6 +862,9 @@ def process_income_conversion(player_id: int, usd_amount: float) -> Tuple[float,
             StateReserveBank.currency_code == code
         ).first()
         if not bank:
+            # Unknown tender — fall back to crediting USD
+            _adjust_currency_balance(db, player_id, "USD", usd_amount)
+            db.commit()
             return usd_amount, "USD"
 
         # Gross foreign amount at current rate
@@ -1221,36 +1206,23 @@ def _get_exchange_rate_internal(db, from_currency: str, to_currency: str) -> flo
     return usd_from / usd_to if usd_to > 0 else 0.0
 
 
-def _debit_currency(db, auth_db, player_id: int, currency_code: str, amount: float) -> Tuple[bool, str]:
-    if currency_code == "USD":
-        from auth import Player
-        p = auth_db.query(Player).filter(Player.id == player_id).first()
-        if not p or (p.cash_balance or 0.0) < amount:
-            bal = p.cash_balance if p else 0.0
-            return False, f"Insufficient USD: have ${bal:.2f}, need ${amount:.2f}."
-        p.cash_balance -= amount
-        return True, ""
-    else:
-        bal_row = db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id     == player_id,
-            PlayerCurrencyBalance.currency_code == currency_code,
-        ).first()
-        bal = bal_row.balance if bal_row else 0.0
-        if bal < amount:
-            return False, f"Insufficient {currency_code}: have {bal:.4f}, need {amount:.4f}."
-        bal_row.balance  -= amount
-        bal_row.total_spent += amount
-        return True, ""
+def _debit_currency(db, player_id: int, currency_code: str, amount: float) -> Tuple[bool, str]:
+    """Debit any currency (including USD) from PlayerCurrencyBalance."""
+    bal_row = db.query(PlayerCurrencyBalance).filter(
+        PlayerCurrencyBalance.player_id     == player_id,
+        PlayerCurrencyBalance.currency_code == currency_code,
+    ).first()
+    bal = bal_row.balance if bal_row else 0.0
+    if bal < amount:
+        return False, f"Insufficient {currency_code}: have {bal:.4f}, need {amount:.4f}."
+    bal_row.balance     -= amount
+    bal_row.total_spent += amount
+    return True, ""
 
 
-def _credit_currency(db, auth_db, player_id: int, currency_code: str, amount: float):
-    if currency_code == "USD":
-        from auth import Player
-        p = auth_db.query(Player).filter(Player.id == player_id).first()
-        if p:
-            p.cash_balance = (p.cash_balance or 0.0) + amount
-    else:
-        _adjust_currency_balance(db, player_id, currency_code, amount)
+def _credit_currency(db, player_id: int, currency_code: str, amount: float):
+    """Credit any currency (including USD) to PlayerCurrencyBalance."""
+    _adjust_currency_balance(db, player_id, currency_code, amount)
 
 
 # ==========================
@@ -1313,27 +1285,26 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
                     f"You can switch again in {days_left:.1f} days."
                 )
 
-        # ── Repatriation fee on the outgoing foreign balance ──────────────────
+        # ── Repatriation fee on the outgoing currency balance ─────────────────
         fee_msg = ""
-        if current_code != "USD":
-            bal = db.query(PlayerCurrencyBalance).filter(
-                PlayerCurrencyBalance.player_id     == player_id,
-                PlayerCurrencyBalance.currency_code == current_code,
+        bal = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == current_code,
+        ).first()
+        if bal and bal.balance > 0:
+            fee = bal.balance * TENDER_SWITCH_FEE_RATE
+            old_bank = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == current_code
             ).first()
-            if bal and bal.balance > 0:
-                fee = bal.balance * TENDER_SWITCH_FEE_RATE
-                old_bank = db.query(StateReserveBank).filter(
-                    StateReserveBank.currency_code == current_code
-                ).first()
-                # Deduct fee from player's balance (taken by the reserve bank)
-                _adjust_currency_balance(db, player_id, current_code, -fee)
-                if old_bank:
-                    _add_bank_reserve(db, old_bank.id, current_code, fee)
-                sym = old_bank.currency_symbol if old_bank else current_code
-                fee_msg = (
-                    f" A {TENDER_SWITCH_FEE_RATE*100:.0f}% repatriation fee of "
-                    f"{sym}{fee:,.2f} {current_code} was charged."
-                )
+            # Deduct fee from player's balance (taken by the reserve bank)
+            _adjust_currency_balance(db, player_id, current_code, -fee)
+            if old_bank:
+                _add_bank_reserve(db, old_bank.id, current_code, fee)
+            sym = old_bank.currency_symbol if old_bank else current_code
+            fee_msg = (
+                f" A {TENDER_SWITCH_FEE_RATE*100:.0f}% repatriation fee of "
+                f"{sym}{fee:,.2f} {current_code} was charged."
+            )
 
         # ── Persist the change ────────────────────────────────────────────────
         if row:
@@ -1409,30 +1380,48 @@ def fmt_usd(usd_amount: float, disp: dict, *, precision: int = 2) -> str:
     return f"{sym}{formatted}" if code == "USD" else f"{sym}{formatted}\u00a0{code}"
 
 
-def can_afford_usd(player_id: int, cash_balance: float, usd_cost: float) -> bool:
+def can_afford_usd(player_id: int, usd_cost: float) -> bool:
     """
     Returns True if the player can afford usd_cost using their legal tender.
-    Checks foreign currency balance for non-USD players, with USD fallback.
+    All balances (including USD) now live in PlayerCurrencyBalance.
+    For non-USD tender players, falls back to checking their USD balance.
     """
     if usd_cost <= 0:
         return True
     tender = get_player_legal_tender(player_id)
-    if tender == "USD":
-        return cash_balance >= usd_cost
     db = get_db()
     try:
+        if tender == "USD":
+            row = db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id     == player_id,
+                PlayerCurrencyBalance.currency_code == "USD",
+            ).first()
+            return (row.balance if row else 0.0) >= usd_cost
+
         bank = db.query(StateReserveBank).filter(
             StateReserveBank.currency_code == tender
         ).first()
         if not bank:
-            return cash_balance >= usd_cost
+            # Unknown tender — check USD fallback
+            row = db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id     == player_id,
+                PlayerCurrencyBalance.currency_code == "USD",
+            ).first()
+            return (row.balance if row else 0.0) >= usd_cost
+
         foreign_cost = usd_cost / bank.usd_per_unit
-        bal = db.query(PlayerCurrencyBalance).filter(
+        foreign_row = db.query(PlayerCurrencyBalance).filter(
             PlayerCurrencyBalance.player_id     == player_id,
             PlayerCurrencyBalance.currency_code == tender,
         ).first()
-        foreign_balance = bal.balance if bal else 0.0
-        return foreign_balance >= foreign_cost or cash_balance >= usd_cost
+        if (foreign_row.balance if foreign_row else 0.0) >= foreign_cost:
+            return True
+        # USD fallback
+        usd_row = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == "USD",
+        ).first()
+        return (usd_row.balance if usd_row else 0.0) >= usd_cost
     finally:
         db.close()
 
@@ -1441,64 +1430,122 @@ def convert_to_legal_tender(player_id: int, usd_amount: float) -> Tuple[float, s
     """
     Helper called by income functions: convert USD income to the player's legal tender.
     Delegates to process_income_conversion() which runs the full inter-bank settlement flow.
+    For all currencies (including USD) the balance is credited to PlayerCurrencyBalance.
     Returns (converted_amount, currency_code).
     """
     return process_income_conversion(player_id, usd_amount)
 
 
-def spend_player_funds(main_db, player, usd_cost: float) -> Tuple[bool, str]:
+# ==========================
+# USD BALANCE HELPERS  (USD is now a reserve currency like all others)
+# ==========================
+
+def get_usd_balance(player_id: int) -> float:
+    """Return the player's current USD balance from PlayerCurrencyBalance."""
+    db = get_db()
+    try:
+        row = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == "USD",
+        ).first()
+        return float(row.balance) if row else 0.0
+    finally:
+        db.close()
+
+
+def credit_usd(player_id: int, amount: float):
+    """Credit USD to a player's PlayerCurrencyBalance. Auto-commits."""
+    if amount <= 0:
+        return
+    db = get_db()
+    try:
+        _adjust_currency_balance(db, player_id, "USD", amount)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] credit_usd error (player {player_id}, ${amount}): {e}")
+    finally:
+        db.close()
+
+
+def debit_usd(player_id: int, amount: float) -> bool:
+    """Atomically debit USD from a player's PlayerCurrencyBalance. Returns True on success."""
+    if amount <= 0:
+        return True
+    db = get_db()
+    try:
+        success = _debit_currency_balance_atomic(db, player_id, "USD", amount)
+        if success:
+            db.commit()
+        return success
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] debit_usd error (player {player_id}, ${amount}): {e}")
+        return False
+    finally:
+        db.close()
+
+
+def spend_player_funds(player_id: int, usd_cost: float) -> Tuple[bool, str]:
     """
     Deduct a USD-denominated cost from the player using their preferred legal tender.
 
-    For USD players: deducts directly from player.cash_balance (caller must commit main_db).
-    For foreign-tender players: deducts from PlayerCurrencyBalance in the reserve DB
-      (auto-committed here); player.cash_balance is NOT changed.
-    Falls back to player.cash_balance when the foreign balance is insufficient.
+    All balances (including USD) now live in PlayerCurrencyBalance in the reserve DB.
+    For non-USD tender players, falls back to their USD balance if foreign balance
+    is insufficient.  Auto-commits on success.
 
     Returns (True, "") on success or (False, error_message) on failure.
     """
     if usd_cost <= 0:
         return True, ""
 
-    tender = get_player_legal_tender(player.id)
-
-    if tender == "USD":
-        if player.cash_balance < usd_cost:
-            return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${player.cash_balance:,.2f}."
-        player.cash_balance -= usd_cost
-        return True, ""
-
-    # Foreign legal tender — try to pay from PlayerCurrencyBalance
+    tender = get_player_legal_tender(player_id)
     db = get_db()
     try:
+        if tender == "USD":
+            if _debit_currency_balance_atomic(db, player_id, "USD", usd_cost):
+                db.commit()
+                return True, ""
+            usd_row = db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id     == player_id,
+                PlayerCurrencyBalance.currency_code == "USD",
+            ).first()
+            bal = usd_row.balance if usd_row else 0.0
+            return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${bal:,.2f}."
+
         bank = db.query(StateReserveBank).filter(
             StateReserveBank.currency_code == tender
         ).first()
         if not bank:
-            # No bank for this currency; fall back to USD
-            if player.cash_balance < usd_cost:
-                return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${player.cash_balance:,.2f}."
-            player.cash_balance -= usd_cost
-            return True, ""
+            # Unknown tender — try USD fallback
+            if _debit_currency_balance_atomic(db, player_id, "USD", usd_cost):
+                db.commit()
+                return True, ""
+            usd_row = db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id     == player_id,
+                PlayerCurrencyBalance.currency_code == "USD",
+            ).first()
+            bal = usd_row.balance if usd_row else 0.0
+            return False, f"Insufficient funds. Need ${usd_cost:,.2f}, have ${bal:,.2f}."
 
         foreign_cost = usd_cost / bank.usd_per_unit
 
         # Attempt atomic foreign-currency debit (eliminates TOCTOU race).
-        if _debit_currency_balance_atomic(db, player.id, tender, foreign_cost):
+        if _debit_currency_balance_atomic(db, player_id, tender, foreign_cost):
             db.commit()
             return True, ""
 
-        # Insufficient foreign balance (or no balance row) — try USD fallback.
-        if player.cash_balance >= usd_cost:
-            player.cash_balance -= usd_cost
+        # Insufficient foreign balance — try USD fallback.
+        if _debit_currency_balance_atomic(db, player_id, "USD", usd_cost):
+            db.commit()
             return True, ""
 
-        # Report current foreign balance in the error message.
-        bal = db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id     == player.id,
+        # Both insufficient — report foreign balance in the error message.
+        bal_row = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
             PlayerCurrencyBalance.currency_code == tender,
         ).first()
-        foreign_balance = bal.balance if bal else 0.0
+        foreign_balance = bal_row.balance if bal_row else 0.0
         symbol = bank.currency_symbol or tender
         return False, (
             f"Insufficient funds. Need {symbol}{foreign_cost:,.2f} {tender} "
@@ -1580,18 +1627,13 @@ def get_player_bonds(player_id: int) -> List[dict]:
         db.close()
 
 
-def get_player_usd_pcb_balance(player_id: int) -> float:
-    """
-    Return any USD balance sitting in a PlayerCurrencyBalance row for this
-    player.  Normally zero — USD lives in player.cash_balance — but USD bond
-    interest can accumulate here between tick sweeps.  Callers should add
-    this to player.cash_balance to get the player's true USD total.
-    """
+def get_player_currency_balance(player_id: int, currency_code: str) -> float:
+    """Return a player's balance in any currency (including USD) from PlayerCurrencyBalance."""
     db = get_db()
     try:
         row = db.query(PlayerCurrencyBalance).filter(
             PlayerCurrencyBalance.player_id     == player_id,
-            PlayerCurrencyBalance.currency_code == "USD",
+            PlayerCurrencyBalance.currency_code == currency_code,
         ).first()
         return float(row.balance) if row else 0.0
     finally:
@@ -1602,9 +1644,8 @@ def get_player_currency_balances(player_id: int) -> List[dict]:
     db = get_db()
     try:
         rows = db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id     == player_id,
-            PlayerCurrencyBalance.currency_code != "USD",   # USD lives in player.cash_balance
-            PlayerCurrencyBalance.balance       != 0.0,
+            PlayerCurrencyBalance.player_id == player_id,
+            PlayerCurrencyBalance.balance   != 0.0,
         ).all()
         result = []
         for r in rows:
@@ -1758,7 +1799,9 @@ __all__ = [
     "get_exchange_rate",
     "get_player_legal_tender", "set_player_legal_tender", "convert_to_legal_tender",
     "spend_player_funds", "can_afford_usd", "get_player_display_currency",
-    "get_all_banks", "get_player_bonds", "get_player_currency_balances",
+    "get_usd_balance", "credit_usd", "debit_usd",
+    "get_player_currency_balance", "get_player_currency_balances",
+    "get_all_banks", "get_player_bonds",
     "get_recent_forex_trades", "get_yield_history",
     "get_bank_reserves", "get_all_bank_reserves", "get_interbank_trades",
     "StateReserveBank", "ReserveBankBond", "PlayerLegalTender",

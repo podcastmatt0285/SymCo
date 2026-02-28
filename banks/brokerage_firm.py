@@ -912,7 +912,8 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
             try:
                 player = auth_db.query(Player).filter(Player.id == player_id).first()
                 if player:
-                    breakdown["cash_value"] = player.cash_balance
+                    from reserve_banks import get_usd_balance
+                    breakdown["cash_value"] = get_usd_balance(player_id)
             finally:
                 auth_db.close()
         except ImportError:
@@ -1278,12 +1279,11 @@ def _process_direct_listing_ipo(db, founder_id, company_name, ticker_symbol, con
     try:
         founder = auth_db.query(Player).filter(Player.id == founder_id).first()
         from reserve_banks import can_afford_usd, spend_player_funds
-        if not founder or not can_afford_usd(founder_id, founder.cash_balance, listing_fee):
+        if not founder or not can_afford_usd(founder_id, listing_fee):
             return None, f"You need ${listing_fee:,.0f} for the listing fee but have insufficient funds."
-        ok, err = spend_player_funds(auth_db, founder, listing_fee)
+        ok, err = spend_player_funds(founder_id, listing_fee)
         if not ok:
             return None, f"Listing fee payment failed: {err}"
-        auth_db.commit()
     finally:
         auth_db.close()
     
@@ -1390,16 +1390,9 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
     db.commit()
     db.refresh(company)
     
-    from auth import Player, get_db as get_auth_db
-    auth_db = get_auth_db()
-    try:
-        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-        if founder:
-            founder.cash_balance += total_cost
-            auth_db.commit()
-    finally:
-        auth_db.close()
-    
+    from reserve_banks import credit_usd
+    credit_usd(founder_id, total_cost)
+
     founder_shares = total_shares - shares_to_offer
     if founder_shares > 0:
         founder_position = ShareholderPosition(
@@ -1410,7 +1403,7 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
             average_cost_basis=0.0
         )
         db.add(founder_position)
-    
+
     firm_position = ShareholderPosition(
         player_id=BANK_PLAYER_ID,
         company_shares_id=company.id,
@@ -1489,16 +1482,9 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.commit()
     db.refresh(company)
     
-    from auth import Player, get_db as get_auth_db
-    auth_db = get_auth_db()
-    try:
-        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-        if founder:
-            founder.cash_balance += total_cost
-            auth_db.commit()
-    finally:
-        auth_db.close()
-    
+    from reserve_banks import credit_usd
+    credit_usd(founder_id, total_cost)
+
     if class_a_shares > 0:
         founder_position = ShareholderPosition(
             player_id=founder_id,
@@ -1588,15 +1574,8 @@ def _process_preferred_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.commit()
     db.refresh(company)
 
-    from auth import Player, get_db as get_auth_db
-    auth_db = get_auth_db()
-    try:
-        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-        if founder:
-            founder.cash_balance += total_cost
-            auth_db.commit()
-    finally:
-        auth_db.close()
+    from reserve_banks import credit_usd
+    credit_usd(founder_id, total_cost)
 
     founder_shares = total_shares - shares_to_offer
     if founder_shares > 0:
@@ -1675,15 +1654,8 @@ def _process_series_a_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.commit()
     db.refresh(company)
 
-    from auth import Player, get_db as get_auth_db
-    auth_db = get_auth_db()
-    try:
-        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-        if founder:
-            founder.cash_balance += total_payout
-            auth_db.commit()
-    finally:
-        auth_db.close()
+    from reserve_banks import credit_usd
+    credit_usd(founder_id, total_payout)
 
     founder_shares = total_shares - shares_to_offer
     if founder_shares > 0:
