@@ -1574,7 +1574,25 @@ def get_player_bonds(player_id: int) -> List[dict]:
         db.close()
 
 
-def get_player_currency_balances(player_id: int) -> List[dict]:
+def get_player_usd_pcb_balance(player_id: int) -> float:
+    """
+    Return any USD balance sitting in a PlayerCurrencyBalance row for this
+    player.  Normally zero — USD lives in player.cash_balance — but USD bond
+    interest can accumulate here between tick sweeps.  Callers should add
+    this to player.cash_balance to get the player's true USD total.
+    """
+    db = get_db()
+    try:
+        row = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code == "USD",
+        ).first()
+        return float(row.balance) if row else 0.0
+    finally:
+        db.close()
+
+
+
     db = get_db()
     try:
         rows = db.query(PlayerCurrencyBalance).filter(

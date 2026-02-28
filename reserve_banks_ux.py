@@ -353,7 +353,7 @@ def forex_dashboard(
     if not player:
         return RedirectResponse("/login")
 
-    from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd, get_player_usd_pcb_balance
     disp = get_player_display_currency(player.id)
 
     banks       = get_all_banks()
@@ -386,8 +386,11 @@ def forex_dashboard(
         </div>"""
 
     # ── Balance line ──
+    # Combine cash_balance with any USD held in a PlayerCurrencyBalance row
+    # (USD bond interest accumulates there between tick sweeps).
+    usd_display = (player.cash_balance or 0.0) + get_player_usd_pcb_balance(player.id)
     bal_line = '<span style="margin-right:12px;">USD <strong style="color:#38bdf8;">${:.2f}</strong></span>'.format(
-        player.cash_balance or 0.0)
+        usd_display)
     for b in my_balances:
         bal_line += (f'<span style="margin-right:12px;">{b["flag"]} {b["currency_code"]} '
                      f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong></span>')
