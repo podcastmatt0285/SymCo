@@ -201,8 +201,29 @@ def calculate_player_stats(player_id: int) -> dict:
         if not player:
             return None
 
+        # Start with USD cash balance, then add foreign currency balances
+        # converted to USD so the total is currency-agnostic
+        total_cash_usd = player.cash_balance or 0.0
+        try:
+            from reserve_banks import PlayerCurrencyBalance, StateReserveBank, get_db as get_rb_db
+            rb_db = get_rb_db()
+            try:
+                for row in rb_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id == player_id,
+                    PlayerCurrencyBalance.currency_code != "USD",
+                ).all():
+                    bank = rb_db.query(StateReserveBank).filter(
+                        StateReserveBank.currency_code == row.currency_code
+                    ).first()
+                    if bank and bank.usd_per_unit:
+                        total_cash_usd += row.balance * bank.usd_per_unit
+            finally:
+                rb_db.close()
+        except Exception:
+            pass
+
         stats = {
-            "cash_balance": player.cash_balance,
+            "cash_balance": total_cash_usd,
             "land_value": 0.0,
             "inventory_value": 0.0,
             "business_value": 0.0,
