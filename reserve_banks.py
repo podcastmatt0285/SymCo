@@ -1592,7 +1592,7 @@ def get_player_usd_pcb_balance(player_id: int) -> float:
         db.close()
 
 
-
+def get_player_currency_balances(player_id: int) -> List[dict]:
     db = get_db()
     try:
         rows = db.query(PlayerCurrencyBalance).filter(
