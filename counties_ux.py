@@ -1742,7 +1742,7 @@ async def crypto_exchange(
                 // Show live USD equivalent for non-USD players
                 const equivEl = document.getElementById('buy-usd-equiv');
                 if (equivEl && BUY_CURRENCY_CODE !== 'USD' && inputAmt > 0) {{
-                    equivEl.textContent = `≈ $${cashUsd.toFixed(2)} USD`;
+                    equivEl.textContent = `≈ ${{cashUsd.toFixed(2)}} USD`;
                 }} else if (equivEl) {{
                     equivEl.textContent = '';
                 }}
