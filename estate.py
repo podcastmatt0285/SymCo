@@ -709,6 +709,43 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         except:
             pass
 
+        # 3.5 Cancel meme coin buy-limit orders and restore native tokens to CryptoWallet
+        # This MUST happen before step 5b so that restored tokens are distributed to heirs.
+        try:
+            from memecoins import MemeCoinOrder, MemeCoin, get_db as get_meme_db
+            from counties import County, CryptoWallet, get_db as get_county_db
+            meme_db = get_meme_db()
+            county_db_mc = get_county_db()
+            try:
+                pending_meme = meme_db.query(MemeCoinOrder).filter(
+                    MemeCoinOrder.player_id == player_id,
+                    MemeCoinOrder.status.in_(["active", "partial"])
+                ).all()
+                for mo in pending_meme:
+                    if mo.native_reserved > 0:
+                        meme_coin = meme_db.query(MemeCoin).filter(
+                            MemeCoin.symbol == mo.meme_symbol
+                        ).first()
+                        if meme_coin:
+                            county = county_db_mc.query(County).filter(
+                                County.id == meme_coin.county_id
+                            ).first()
+                            if county:
+                                native_wallet = county_db_mc.query(CryptoWallet).filter(
+                                    CryptoWallet.player_id == player_id,
+                                    CryptoWallet.crypto_symbol == county.crypto_symbol
+                                ).first()
+                                if native_wallet:
+                                    native_wallet.balance += mo.native_reserved
+                    mo.status = "cancelled"
+                meme_db.commit()
+                county_db_mc.commit()
+            finally:
+                meme_db.close()
+                county_db_mc.close()
+        except Exception as e:
+            print(f"[Estate] Meme coin order cancellation error: {e}")
+
         # 4. Calculate remainder after debts
         remainder = max(0.0, liquidation_value - debt_payment)
 
@@ -747,9 +784,8 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 # Government holds the full gross amount as escrow;
                 # heir receives the net inheritance in INSTALLMENT_COUNT daily payments.
                 # The death tax (15%) stays with the government naturally.
-                gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-                if gov:
-                    gov.cash_balance += per_heir
+                from reserve_banks import credit_usd as _credit_usd
+                _credit_usd(GOVERNMENT_PLAYER_ID, per_heir)
 
                 total_inherited += inheritance_after_tax
                 total_death_tax += death_tax
@@ -772,10 +808,9 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                       f"net over {INSTALLMENT_COUNT} installments (tax: ${death_tax:,.2f} kept by gov)")
         else:
             # No heirs - government takes everything
-            gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-            if gov:
-                gov.cash_balance += remainder
-                print(f"[Estate] No heirs - government receives ${remainder:,.2f}")
+            from reserve_banks import credit_usd as _credit_usd
+            _credit_usd(GOVERNMENT_PLAYER_ID, remainder)
+            print(f"[Estate] No heirs - government receives ${remainder:,.2f}")
             government_took_all = True
 
         # 5b. Handle crypto assets — hidden from government, no death tax, no fees.
@@ -846,15 +881,12 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                         auth_db2 = get_db()
                         try:
                             for heir in living_heirs:
-                                heir_player2 = auth_db2.query(Player).filter(Player.id == heir.heir_player_id).first()
-                                if heir_player2:
-                                    try:
-                                        from reserve_banks import convert_to_legal_tender
-                                        _amt, _code = convert_to_legal_tender(heir_player2.id, per_heir_cash)
-                                        if _code == "USD":
-                                            heir_player2.cash_balance += _amt
-                                    except Exception:
-                                        heir_player2.cash_balance += per_heir_cash
+                                try:
+                                    from reserve_banks import convert_to_legal_tender
+                                    convert_to_legal_tender(heir.heir_player_id, per_heir_cash)
+                                except Exception:
+                                    from reserve_banks import credit_usd as _credit_usd
+                                    _credit_usd(heir.heir_player_id, per_heir_cash)
                                 notif = CryptoInheritanceNotification(
                                     heir_player_id=heir.heir_player_id,
                                     deceased_name=deceased_name_for_notif,
@@ -1061,6 +1093,74 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         except:
             pass
 
+        # Cancel district market orders
+        try:
+            from district_market import DistrictMarketOrder
+            db.query(DistrictMarketOrder).filter(
+                DistrictMarketOrder.player_id == player_id,
+                DistrictMarketOrder.status.in_(["active", "partial"])
+            ).update({"status": "cancelled"})
+        except Exception as e:
+            print(f"[Estate] District market order cancellation error: {e}")
+
+        # Deactivate land-for-sale listings
+        try:
+            from land_market import LandListing
+            db.query(LandListing).filter(
+                LandListing.seller_id == player_id,
+                LandListing.is_active == True
+            ).update({"is_active": False})
+        except Exception as e:
+            print(f"[Estate] Land listing deactivation error: {e}")
+
+        # Void P2P contracts the player created/listed/holds and cancel their bids
+        try:
+            from p2p import Contract, ContractBid, ContractStatus, BidStatus
+            from sqlalchemy import or_
+            db.query(Contract).filter(
+                or_(
+                    Contract.creator_id == player_id,
+                    Contract.lister_id == player_id,
+                    Contract.holder_id == player_id,
+                    Contract.buyer_id == player_id,
+                ),
+                Contract.status.in_([ContractStatus.LISTED.value, ContractStatus.ACTIVE.value,
+                                     ContractStatus.DRAFT.value])
+            ).update({"status": ContractStatus.VOIDED.value}, synchronize_session="fetch")
+            db.query(ContractBid).filter(
+                ContractBid.bidder_id == player_id,
+                ContractBid.status == BidStatus.ACTIVE.value
+            ).update({"status": BidStatus.LOST.value})
+        except Exception as e:
+            print(f"[Estate] P2P contract cancellation error: {e}")
+
+        # Cancel pending swap offers initiated by the player
+        try:
+            from trusted_trade import SwapOffer
+            db.query(SwapOffer).filter(
+                SwapOffer.initiator_id == player_id,
+                SwapOffer.status == "pending"
+            ).update({"status": "cancelled"})
+        except Exception as e:
+            print(f"[Estate] Swap offer cancellation error: {e}")
+
+        # Cancel corporate action programs for companies the player founded
+        try:
+            from banks.brokerage_firm import CompanyShares
+            from corporate_actions import BuybackProgram, StockSplitRule, SecondaryOffering, ActionStatus
+            founder_companies = db.query(CompanyShares).filter(
+                CompanyShares.founder_id == player_id
+            ).all()
+            company_ids = [c.id for c in founder_companies]
+            if company_ids:
+                for model in (BuybackProgram, StockSplitRule, SecondaryOffering):
+                    db.query(model).filter(
+                        model.company_shares_id.in_(company_ids),
+                        model.status == ActionStatus.ACTIVE.value
+                    ).update({"status": ActionStatus.CANCELLED.value}, synchronize_session="fetch")
+        except Exception as e:
+            print(f"[Estate] Corporate action cancellation error: {e}")
+
         # Remove heir designations (they're the deceased's designations)
         db.query(HeirDesignation).filter(
             HeirDesignation.player_id == player_id
@@ -1160,33 +1260,32 @@ def process_installments(current_tick: int):
 
             payment = inst.installment_amount
 
-            # Draw from government escrow and pay heir
-            gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
-            if gov and gov.cash_balance >= payment:
-                gov.cash_balance -= payment
-                try:
-                    from reserve_banks import convert_to_legal_tender
-                    _amt, _code = convert_to_legal_tender(heir.id, payment)
-                    if _code == "USD":
-                        heir.cash_balance += _amt
-                except Exception:
-                    heir.cash_balance += payment
-                inst.total_tax_paid += payment
-                inst.installments_remaining -= 1
-                inst.next_installment_tick = current_tick + INSTALLMENT_INTERVAL
+            # Draw from government escrow (PlayerCurrencyBalance) and pay heir
+            from reserve_banks import can_afford_usd, spend_player_funds, convert_to_legal_tender
+            if can_afford_usd(GOVERNMENT_PLAYER_ID, payment):
+                ok, _ = spend_player_funds(GOVERNMENT_PLAYER_ID, payment)
+                if ok:
+                    try:
+                        convert_to_legal_tender(heir.id, payment)
+                    except Exception:
+                        from reserve_banks import credit_usd as _credit_usd
+                        _credit_usd(heir.id, payment)
+                    inst.total_tax_paid += payment
+                    inst.installments_remaining -= 1
+                    inst.next_installment_tick = current_tick + INSTALLMENT_INTERVAL
 
-                log_transaction(
-                    player_id=inst.heir_player_id,
-                    transaction_type="inheritance",
-                    category="money",
-                    amount=payment,
-                    description=f"Inheritance installment from estate (#{inst.installments_remaining} remaining)"
-                )
+                    log_transaction(
+                        player_id=inst.heir_player_id,
+                        transaction_type="inheritance",
+                        category="money",
+                        amount=payment,
+                        description=f"Inheritance installment from estate (#{inst.installments_remaining} remaining)"
+                    )
 
-                print(f"[Estate] Heir {inst.heir_player_id} received ${payment:,.2f} "
-                      f"inheritance ({inst.installments_remaining} installments remaining)")
+                    print(f"[Estate] Heir {inst.heir_player_id} received ${payment:,.2f} "
+                          f"inheritance ({inst.installments_remaining} installments remaining)")
             else:
-                # Gov escrow insufficient (shouldn't happen) — push to next cycle
+                # Gov escrow insufficient — push to next cycle
                 inst.next_installment_tick = current_tick + INSTALLMENT_INTERVAL
                 print(f"[Estate] Government escrow insufficient for heir {inst.heir_player_id} installment")
 

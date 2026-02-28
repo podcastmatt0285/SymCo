@@ -1781,7 +1781,11 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Acquisition stake error: {e}")
 
-        # 8b. Cancel all pending brokerage order book orders
+        # 8b. Cancel ALL active marketplace orders across every trading system.
+        # For meme coin buy-limit orders, also restore native_reserved tokens back to
+        # the player's CryptoWallet (player keeps their crypto after bankruptcy).
+
+        # Brokerage order book (limit/market/stop orders)
         try:
             from banks.brokerage_order_book import OrderBook as BrokerageOrder, OrderStatus
             db = get_db()
@@ -1794,6 +1798,132 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
                 print(f"[Bankruptcy] Cancelled {cancelled} brokerage order(s) for player {player_id}")
         except Exception as e:
             print(f"[Bankruptcy] Order book cancellation error: {e}")
+
+        # Commodity market orders
+        try:
+            from market import MarketOrder
+            db = get_db()
+            db.query(MarketOrder).filter(
+                MarketOrder.player_id == player_id,
+                MarketOrder.status == "active"
+            ).update({"status": "cancelled"})
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Commodity market order cancellation error: {e}")
+
+        # District market orders
+        try:
+            from district_market import DistrictMarketOrder
+            db = get_db()
+            db.query(DistrictMarketOrder).filter(
+                DistrictMarketOrder.player_id == player_id,
+                DistrictMarketOrder.status.in_(["active", "partial"])
+            ).update({"status": "cancelled"})
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] District market order cancellation error: {e}")
+
+        # Land-for-sale listings
+        try:
+            from land_market import LandListing
+            db = get_db()
+            db.query(LandListing).filter(
+                LandListing.seller_id == player_id,
+                LandListing.is_active == True
+            ).update({"is_active": False})
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Land listing deactivation error: {e}")
+
+        # P2P contracts and bids
+        try:
+            from p2p import Contract, ContractBid, ContractStatus, BidStatus
+            from sqlalchemy import or_
+            db = get_db()
+            db.query(Contract).filter(
+                or_(
+                    Contract.creator_id == player_id,
+                    Contract.lister_id == player_id,
+                    Contract.holder_id == player_id,
+                    Contract.buyer_id == player_id,
+                ),
+                Contract.status.in_([ContractStatus.LISTED.value, ContractStatus.ACTIVE.value,
+                                     ContractStatus.DRAFT.value])
+            ).update({"status": ContractStatus.VOIDED.value}, synchronize_session="fetch")
+            db.query(ContractBid).filter(
+                ContractBid.bidder_id == player_id,
+                ContractBid.status == BidStatus.ACTIVE.value
+            ).update({"status": BidStatus.LOST.value})
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] P2P contract cancellation error: {e}")
+
+        # Pending swap offers
+        try:
+            from trusted_trade import SwapOffer
+            db = get_db()
+            db.query(SwapOffer).filter(
+                SwapOffer.initiator_id == player_id,
+                SwapOffer.status == "pending"
+            ).update({"status": "cancelled"})
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Swap offer cancellation error: {e}")
+
+        # Meme coin orders — cancel and restore native_reserved to CryptoWallet
+        try:
+            from memecoins import MemeCoinOrder, MemeCoin, get_db as get_meme_db
+            from counties import County, CryptoWallet, get_db as get_county_db
+            meme_db = get_meme_db()
+            county_db_mc = get_county_db()
+            try:
+                pending_meme = meme_db.query(MemeCoinOrder).filter(
+                    MemeCoinOrder.player_id == player_id,
+                    MemeCoinOrder.status.in_(["active", "partial"])
+                ).all()
+                for mo in pending_meme:
+                    if mo.native_reserved > 0:
+                        meme_coin = meme_db.query(MemeCoin).filter(
+                            MemeCoin.symbol == mo.meme_symbol
+                        ).first()
+                        if meme_coin:
+                            county = county_db_mc.query(County).filter(
+                                County.id == meme_coin.county_id
+                            ).first()
+                            if county:
+                                native_wallet = county_db_mc.query(CryptoWallet).filter(
+                                    CryptoWallet.player_id == player_id,
+                                    CryptoWallet.crypto_symbol == county.crypto_symbol
+                                ).first()
+                                if native_wallet:
+                                    native_wallet.balance += mo.native_reserved
+                    mo.status = "cancelled"
+                meme_db.commit()
+                county_db_mc.commit()
+            finally:
+                meme_db.close()
+                county_db_mc.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Meme coin order cancellation error: {e}")
+
+        # Corporate action programs for this player's companies
+        try:
+            from banks.brokerage_firm import CompanyShares
+            from corporate_actions import BuybackProgram, StockSplitRule, SecondaryOffering, ActionStatus
+            db = get_db()
+            founder_companies = db.query(CompanyShares).filter(
+                CompanyShares.founder_id == player_id
+            ).all()
+            company_ids = [c.id for c in founder_companies]
+            if company_ids:
+                for model in (BuybackProgram, StockSplitRule, SecondaryOffering):
+                    db.query(model).filter(
+                        model.company_shares_id.in_(company_ids),
+                        model.status == ActionStatus.ACTIVE.value
+                    ).update({"status": ActionStatus.CANCELLED.value}, synchronize_session="fetch")
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Corporate action cancellation error: {e}")
 
         # 9. Transfer mayor role if applicable
         try:
