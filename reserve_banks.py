@@ -352,6 +352,37 @@ def initialize():
 # TICK (called hourly by app)
 # ==========================
 
+def _sweep_usd_currency_balances(rb_db):
+    """
+    Move any PlayerCurrencyBalance rows with currency_code='USD' back to
+    player.cash_balance.  These rows should never exist — USD income always
+    belongs in player.cash_balance — but _adjust_currency_balance doesn't
+    know about the auth DB, so USD bond interest can accumulate here
+    silently.  This sweeper corrects that every tick.
+    """
+    rows = rb_db.query(PlayerCurrencyBalance).filter(
+        PlayerCurrencyBalance.currency_code == "USD",
+        PlayerCurrencyBalance.balance       >  0,
+    ).all()
+    if not rows:
+        return
+
+    from auth import get_db as _auth_db_factory, Player as _Player
+    auth_db = _auth_db_factory()
+    try:
+        for row in rows:
+            p = auth_db.query(_Player).filter(_Player.id == row.player_id).first()
+            if p:
+                p.cash_balance = (p.cash_balance or 0.0) + row.balance
+                row.balance    = 0.0
+        auth_db.commit()
+    except Exception as e:
+        auth_db.rollback()
+        print(f"[ReserveBanks] USD balance sweep error: {e}")
+    finally:
+        auth_db.close()
+
+
 async def tick(app_tick: int, now: datetime):
     """Hourly housekeeping: accrue bond interest, adjust yields + FX rates, snapshot history."""
     if app_tick % RESERVE_BANKS_TICK_INTERVAL != 0:
@@ -371,6 +402,8 @@ async def tick(app_tick: int, now: datetime):
         # Daily WSC → currency liquidity swap (once per 24 h)
         if app_tick % WSC_DAILY_SWAP_TICKS == 0:
             _daily_wsc_liquidity_swap(db)
+        # Sweep any USD PlayerCurrencyBalance rows → player.cash_balance
+        _sweep_usd_currency_balances(db)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -1545,8 +1578,9 @@ def get_player_currency_balances(player_id: int) -> List[dict]:
     db = get_db()
     try:
         rows = db.query(PlayerCurrencyBalance).filter(
-            PlayerCurrencyBalance.player_id == player_id,
-            PlayerCurrencyBalance.balance   != 0.0,
+            PlayerCurrencyBalance.player_id     == player_id,
+            PlayerCurrencyBalance.currency_code != "USD",   # USD lives in player.cash_balance
+            PlayerCurrencyBalance.balance       != 0.0,
         ).all()
         result = []
         for r in rows:
