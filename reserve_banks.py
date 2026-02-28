@@ -113,6 +113,12 @@ DEFAULT_BANKS = [
     ("EUR", "Wadsworth Central Bank",            "€",  "🇪🇺", 0.030,  1.080,  -0.010, 0.20),
     ("INR", "Reserve Bank of Wadsworth India",   "₹",  "🇮🇳", 0.065,  0.012,   0.030, 0.35),
     ("RUB", "Wadsworth Central Reserve Bank",    "₽",  "🇷🇺", 0.160,  0.011,   0.050, 0.99),
+    ("KRW", "Bank of Wadsworth Korea",           "₩",  "🇰🇷", 0.035,  0.00073, 0.010, 0.25),
+    ("ZAR", "Wadsworth South African Reserve Bank","R", "🇿🇦", 0.085,  0.055,   0.030, 0.45),
+    ("BRL", "Central Bank of Wadsworth Brazil",  "R$", "🇧🇷", 0.105,  0.180,   0.040, 0.60),
+    ("TRY", "Central Bank of the Wadsworth Republic","₺","🇹🇷",0.400,  0.029,   0.100, 0.99),
+    ("SAR", "Wadsworth Saudi Central Bank",      "﷼",  "🇸🇦", 0.050,  0.267,   0.045, 0.06),
+    ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,   0.030, 0.06),
 ]
 
 # How long a player must wait between legal-tender switches (days).
