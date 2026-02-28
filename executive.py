@@ -859,9 +859,12 @@ def fire_executive(db, player_id: int, executive_id: int) -> dict:
         monthly_wages = 0.0
         severance     = 0.0
 
-    # Severance deducted immediately
+    # Severance deducted immediately; respects legal tender preference
     if player and severance > 0:
-        player.cash_balance -= severance
+        from reserve_banks import spend_player_funds
+        ok, _ = spend_player_funds(db, player, severance)
+        if not ok:
+            player.cash_balance -= severance  # force-deduct as unavoidable obligation
 
     exec_obj.player_id              = None
     exec_obj.on_marketplace         = True
@@ -1071,8 +1074,11 @@ def _quit_for_nonpayment(db, ex: Executive, player):
     pension     = ex.wage * (PENSION_DURATION_TICKS       / cycle_ticks)
     severance   = ex.wage * (PENSION_DURATION_TICKS * 2.0 / cycle_ticks)
 
-    # Severance deducted immediately (can push balance negative)
-    player.cash_balance -= severance
+    # Severance deducted immediately; respects legal tender preference
+    from reserve_banks import spend_player_funds
+    ok, _ = spend_player_funds(db, player, severance)
+    if not ok:
+        player.cash_balance -= severance  # force-deduct as unavoidable obligation
 
     quitting_from = ex.player_id
     ex.pension_owed              = pension
@@ -1169,7 +1175,10 @@ def _process_pensions(db, current_tick: int):
         if ex.pension_owed_by:
             player = db.query(Player).filter(Player.id == ex.pension_owed_by).first()
             if player:
-                player.cash_balance -= payment
+                from reserve_banks import spend_player_funds
+                ok, _ = spend_player_funds(db, player, payment)
+                if not ok:
+                    player.cash_balance -= payment  # force-deduct as unavoidable obligation
 
         if ex.pension_ticks_remaining <= 0:
             ex.pension_owed      = 0.0

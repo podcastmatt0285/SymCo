@@ -1860,17 +1860,19 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
         due_date = datetime.utcnow() + timedelta(days=due_days)
         
         from auth import Player, get_db as get_auth_db
+        from reserve_banks import spend_player_funds
         auth_db = get_auth_db()
         try:
             borrower = auth_db.query(Player).filter(Player.id == borrower_id).first()
-            if not borrower or borrower.cash_balance < collateral_required:
+            if not borrower:
                 return None
-            
-            borrower.cash_balance -= collateral_required
+            ok, _ = spend_player_funds(auth_db, borrower, collateral_required)
+            if not ok:
+                return None
             auth_db.commit()
         finally:
             auth_db.close()
-        
+
         lender_position.shares_available_to_lend -= quantity
         lender_position.shares_lent_out += quantity
         
@@ -2135,17 +2137,19 @@ def borrow_commodity(borrower_id: int, listing_id: int, quantity: float) -> Opti
         fee_to_firm = total_fee * COMMODITY_LENDING_FEE_SPLIT
         
         from auth import Player, get_db as get_auth_db
+        from reserve_banks import spend_player_funds
         auth_db = get_auth_db()
         try:
             borrower = auth_db.query(Player).filter(Player.id == borrower_id).first()
-            if not borrower or borrower.cash_balance < collateral_required + total_fee:
+            if not borrower:
                 return None
-            
-            borrower.cash_balance -= (collateral_required + total_fee)
+            ok, _ = spend_player_funds(auth_db, borrower, collateral_required + total_fee)
+            if not ok:
+                return None
             auth_db.commit()
         finally:
             auth_db.close()
-        
+
         try:
             import inventory
             
