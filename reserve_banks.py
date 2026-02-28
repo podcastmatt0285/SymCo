@@ -386,9 +386,11 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         ReserveBankBond.status  == "active",
     ).all()
     for bond in active_bonds:
-        # Hourly interest = face_value_wsc × yield_rate / TICKS_PER_YEAR
+        # Hourly interest in the bank's own currency:
+        #   face_value_wsc / usd_per_unit  → face value in bank currency (1 WSC = $1)
+        #   × yield_rate / TICKS_PER_YEAR  → one hour's slice of the annual rate
         # Negative yield accrues negative interest (reduces balance).
-        hourly = bond.face_value_wsc * bank.yield_rate / TICKS_PER_YEAR
+        hourly = bond.face_value_wsc / bank.usd_per_unit * bank.yield_rate / TICKS_PER_YEAR
         bond.interest_accrued += hourly
 
         # Credit (or debit) the player's currency balance.
