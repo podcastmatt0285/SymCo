@@ -1419,8 +1419,43 @@ async def crypto_exchange(
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
-    from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import (
+        get_player_display_currency, fmt_usd,
+        get_player_currency_balances, get_player_legal_tender,
+    )
     disp = get_player_display_currency(player.id)
+
+    # --- Multi-currency cash holdings ---
+    player_tender = get_player_legal_tender(player.id)
+    player_currencies = get_player_currency_balances(player.id)
+    primary_foreign = next(
+        (b for b in player_currencies if b["currency_code"] == player_tender),
+        None,
+    )
+    # Effective USD spending power for the buy form max= attribute.
+    # spend_player_funds() tries foreign balance first, then falls back to USD —
+    # so the max is whichever is larger (can't combine both in one payment).
+    if primary_foreign and player_tender != "USD":
+        max_buy_usd = max(primary_foreign["usd_value"], player.cash_balance)
+    else:
+        max_buy_usd = player.cash_balance
+
+    # Header cash label: show primary tender, include USD equivalent
+    if primary_foreign and player_tender != "USD":
+        sym = primary_foreign["currency_symbol"]
+        bal = primary_foreign["balance"]
+        usd_eq = primary_foreign["usd_value"]
+        cash_header = (
+            f'{sym}{bal:,.2f}\u00a0{player_tender}'
+            f' <span style="color:#475569;">(≈\u00a0{fmt_usd(usd_eq, disp)})</span>'
+        )
+        if player.cash_balance > 0.005:
+            cash_header += (
+                f' <span style="color:#475569;font-size:11px;">'
+                f'+ {fmt_usd(player.cash_balance, disp)} USD</span>'
+            )
+    else:
+        cash_header = fmt_usd(player.cash_balance, disp)
 
     from counties import get_all_counties, get_player_wallets, County
     from cities import get_db
@@ -1436,9 +1471,40 @@ async def crypto_exchange(
 
     # Portfolio summary
     total_portfolio_value = sum(w["value"] for w in wallets)
+    # Cash holdings card (shown above crypto wallets)
+    cash_rows = ""
+    if primary_foreign and player_tender != "USD":
+        sym = primary_foreign["currency_symbol"]
+        bal = primary_foreign["balance"]
+        usd_eq = primary_foreign["usd_value"]
+        cash_rows += f'''
+        <div class="wallet-card" style="border-color:#22c55e22;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <span class="badge" style="background:#14532d;color:#4ade80;">{player_tender}</span>
+                    <span class="wallet-balance" style="margin-left:12px;color:#4ade80;">{sym}{bal:,.4f}</span>
+                    <span class="wallet-value">(≈ {fmt_usd(usd_eq, disp)} · spendable on exchange)</span>
+                </div>
+                <div style="font-size:11px;color:#64748b;">Primary legal tender</div>
+            </div>
+        </div>'''
+    if player.cash_balance > 0.005:
+        cash_rows += f'''
+        <div class="wallet-card" style="border-color:#3b82f622;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <span class="badge" style="background:#1e3a5f;color:#60a5fa;">USD</span>
+                    <span class="wallet-balance" style="margin-left:12px;color:#60a5fa;">{fmt_usd(player.cash_balance, disp)}</span>
+                    <span class="wallet-value">(spendable on exchange)</span>
+                </div>
+                <div style="font-size:11px;color:#64748b;">USD cash balance</div>
+            </div>
+        </div>'''
+
     wallets_html = ""
     if wallets:
         wallets_html = '<div style="margin-bottom: 20px;">'
+        wallets_html += cash_rows
         for w in wallets:
             wallets_html += f'''
             <div class="wallet-card">
@@ -1455,6 +1521,8 @@ async def crypto_exchange(
             </div>
             '''
         wallets_html += '</div>'
+    elif cash_rows:
+        wallets_html = f'<div style="margin-bottom:20px;">{cash_rows}</div>'
     else:
         wallets_html = '<p style="color: #94a3b8; margin-bottom: 20px;">You have no crypto yet. Mine some through a County Mining Node or buy on this exchange.</p>'
 
@@ -1525,7 +1593,7 @@ async def crypto_exchange(
             <div class="header">
                 <h1>Wadsworth Crypto Exchange</h1>
                 <div>
-                    <span style="color: #94a3b8;">Cash: {fmt_usd(player.cash_balance, disp)}</span>
+                    <span style="color: #94a3b8;">Cash: {cash_header}</span>
                     <a href="/counties" class="nav-link">Counties</a>
                     <a href="/" class="nav-link">Dashboard</a>
                 </div>
@@ -1556,10 +1624,15 @@ async def crypto_exchange(
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Cash Amount ({disp["symbol"]})</label>
+                            <label>Amount to Spend (USD)</label>
                             <input type="number" name="cash_amount" id="buy-cash" min="0.01" step="0.0001"
-                                   max="{player.cash_balance}" placeholder="Amount in {disp['symbol']}" required
+                                   max="{max_buy_usd:.4f}" placeholder="USD amount" required
                                    oninput="updateBuyGas()">
+                            <div style="font-size:11px;color:#64748b;margin-top:4px;">
+                                Available: <strong style="color:#4ade80;">{cash_header}</strong>
+                                &nbsp;·&nbsp; Enter the USD value you want to spend
+                                {'(your ' + player_tender + ' is auto-converted at server)' if player_tender != 'USD' else ''}
+                            </div>
                         </div>
                         <div id="buy-gas-preview" style="display:none;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;"></div>
                         <button type="submit" class="btn btn-primary">Buy</button>

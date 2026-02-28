@@ -1416,10 +1416,16 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         # Execute sale
         wallet.balance -= amount
         wallet.total_sold += amount
+        income_amt = net_value
+        income_code = "USD"
         try:
             from reserve_banks import convert_to_legal_tender
             _amt, _code = convert_to_legal_tender(player.id, net_value)
+            income_amt, income_code = _amt, _code
             if _code == "USD":
+                # USD players: credit cash_balance directly (non-USD players have
+                # their balance credited inside convert_to_legal_tender via
+                # PlayerCurrencyBalance — no further action needed here)
                 player.cash_balance += _amt
         except Exception:
             player.cash_balance += net_value
@@ -1460,8 +1466,12 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             reference_id=f"exchange_sell_{crypto_symbol}",
         )
 
-        print(f"[Counties] Crypto sale: Player {player_id} sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f}")
-        return True, f"Sold {amount:.6f} {crypto_symbol} for ${net_value:,.4f} (fee: ${fee:,.4f})"
+        if income_code == "USD":
+            income_display = f"${income_amt:,.4f}"
+        else:
+            income_display = f"{income_amt:,.4f} {income_code} (≈ ${net_value:,.4f} USD)"
+        print(f"[Counties] Crypto sale: Player {player_id} sold {amount:.6f} {crypto_symbol} → {income_display}")
+        return True, f"Sold {amount:.6f} {crypto_symbol} for {income_display} (exchange fee: ${fee:,.4f})"
 
     except Exception as e:
         db.rollback()
