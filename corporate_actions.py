@@ -1721,13 +1721,31 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Stock liquidation error: {e}")
 
-        # 6. Delist own companies, shares worth $0
+        # 6. Delist own companies — pay liquidation preference to shareholders first, then zero all
         try:
+            from banks.brokerage_firm import firm_deduct_cash
             db = get_db()
             for co in db.query(CompanyShares).filter(
                 CompanyShares.founder_id == player_id,
                 CompanyShares.is_delisted == False
             ).all():
+                # Pay liquidation preference to non-founder shareholders before zeroing
+                if co.liquidation_preference and co.liquidation_preference > 1.0 and co.ipo_price:
+                    payout_per_share = co.ipo_price * co.liquidation_preference
+                    for pos in db.query(ShareholderPosition).filter(
+                        ShareholderPosition.company_shares_id == co.id,
+                        ShareholderPosition.player_id != player_id,
+                        ShareholderPosition.shares_owned > 0,
+                    ).all():
+                        payout = payout_per_share * pos.shares_owned
+                        if firm_deduct_cash(payout, "liquidation_pref",
+                                            f"Liq pref {co.ticker_symbol} → player {pos.player_id}"):
+                            shareholder = auth_db.query(Player).filter(
+                                Player.id == pos.player_id
+                            ).first()
+                            if shareholder:
+                                shareholder.cash_balance += payout
+                    auth_db.commit()
                 for pos in db.query(ShareholderPosition).filter(
                     ShareholderPosition.company_shares_id == co.id
                 ).all():

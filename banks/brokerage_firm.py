@@ -95,11 +95,11 @@ class IPOType(str, Enum):
     DIRECT_LISTING = "direct_listing"
     FIRM_UNDERWRITTEN = "firm_underwritten"
     INCOME_SHARES = "income_shares"
-    # Legacy types kept for backward compatibility with existing companies
     PREFERRED_OFFERING = "preferred_offering"
     SERIES_A_GROWTH = "series_a_growth"
-    SERIES_B_INCOME = "series_b_income"
+    SERIES_B_INCOME = "series_b_income"  # legacy stub, no processor
     DUAL_CLASS = "dual_class"
+    QUAD_CLASS = "quad_class"
 
 
 class ShareClass(str, Enum):
@@ -109,6 +109,8 @@ class ShareClass(str, Enum):
     SERIES_B = "series_b"
     CLASS_A = "class_a"
     CLASS_B = "class_b"
+    CLASS_C = "class_c"
+    CLASS_D = "class_d"
 
 
 class DividendType(str, Enum):
@@ -235,6 +237,45 @@ IPO_CONFIG = {
         "max_float_pct": 0.49,
         "min_valuation": 100000,
         "founder_control_minimum": 0.51,
+    },
+    IPOType.PREFERRED_OFFERING: {
+        "name": "Preferred Share Offering",
+        "description": "Issue preferred shares with guaranteed quarterly dividends and liquidation priority. The Firm underwrites at only a 5% discount. Preferred shareholders receive 1.5\u00d7 their investment before common shareholders in any liquidation event — and shares are callable if you ever want to buy them back.",
+        "share_class": ShareClass.PREFERRED,
+        "firm_underwritten": True,
+        "discount_rate": 0.05,
+        "min_shares": 5000,
+        "max_float_pct": 0.40,
+        "min_valuation": 50000,
+        "fixed_dividend_rate": 0.12,
+        "liquidation_preference": 1.5,
+        "is_callable": True,
+    },
+    IPOType.SERIES_A_GROWTH: {
+        "name": "Series A Growth Round",
+        "description": "A venture-style growth financing round. The Firm takes a 12% underwriting discount \u2014 the steepest of any offering \u2014 but delivers a 20% growth capital bonus on top of standard proceeds. Best for established companies that need a large capital injection to accelerate expansion.",
+        "share_class": ShareClass.SERIES_A,
+        "firm_underwritten": True,
+        "discount_rate": 0.12,
+        "growth_bonus_pct": 0.20,
+        "min_shares": 10000,
+        "max_float_pct": 0.30,
+        "min_valuation": 150000,
+    },
+    IPOType.QUAD_CLASS: {
+        "name": "Quad-Class IPO",
+        "description": "The most complex offering structure available. Four classes of economic rights: Class A founder super-shares (non-lendable, can't be shorted), Class B public voting common, Class C preferred dividend shares, and Class D non-voting equity. Combines voting insulation, mandatory quarterly dividends, 1.2\u00d7 liquidation priority, and a 15% growth capital injection \u2014 at a 10% underwriting cost.",
+        "share_class": ShareClass.CLASS_B,
+        "firm_underwritten": True,
+        "discount_rate": 0.10,
+        "growth_bonus_pct": 0.15,
+        "fixed_dividend_rate": 0.10,
+        "liquidation_preference": 1.2,
+        "founder_control_minimum": 0.40,
+        "is_callable": True,
+        "min_shares": 20000,
+        "max_float_pct": 0.60,
+        "min_valuation": 200000,
     },
 }
 
@@ -1195,6 +1236,24 @@ def create_player_ipo(
                 shares_to_offer, total_shares, share_price,
                 dividend_config, total_valuation
             )
+        elif ipo_type == IPOType.PREFERRED_OFFERING:
+            return _process_preferred_ipo(
+                db, founder_id, company_name, ticker_symbol, config,
+                shares_to_offer, total_shares, share_price, actual_share_class,
+                dividend_config, total_valuation
+            )
+        elif ipo_type == IPOType.SERIES_A_GROWTH:
+            return _process_series_a_ipo(
+                db, founder_id, company_name, ticker_symbol, config,
+                shares_to_offer, total_shares, share_price, actual_share_class,
+                dividend_config, total_valuation
+            )
+        elif ipo_type == IPOType.QUAD_CLASS:
+            return _process_quad_class_ipo(
+                db, founder_id, company_name, ticker_symbol, config,
+                shares_to_offer, total_shares, share_price,
+                dividend_config, total_valuation
+            )
         else:
             return _process_underwritten_ipo(
                 db, founder_id, company_name, ticker_symbol, ipo_type, config,
@@ -1476,9 +1535,300 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     firm_add_cash(underwriting_profit, "underwriting_fee", f"Dual-class: {ticker_symbol}", founder_id, company.id)
     
     modify_credit_score(founder_id, "ipo_completed")
-    
+
     print(f"[{BANK_NAME}] 🎉 DUAL-CLASS: {ticker_symbol} (founder {class_a_shares} Class A, public {class_b_shares} Class B)")
 
+    return company, None
+
+
+def _process_preferred_ipo(db, founder_id, company_name, ticker_symbol, config,
+                            shares_to_offer, total_shares, share_price, share_class,
+                            dividend_config, total_valuation):
+    discount_rate = config.get("discount_rate", 0.05)
+    discounted_price = share_price * (1 - discount_rate)
+    total_cost = shares_to_offer * discounted_price
+
+    if not firm_deduct_cash(total_cost, "underwriting_cost", f"Preferred {ticker_symbol}"):
+        return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
+
+    actual_dividend_config = list(dividend_config) if dividend_config else []
+    if config.get("fixed_dividend_rate"):
+        actual_dividend_config.append({
+            "type": "cash",
+            "amount": share_price * config["fixed_dividend_rate"] / 4,
+            "frequency": "quarterly",
+            "required": True,
+            "share_class": share_class,
+        })
+
+    company = CompanyShares(
+        founder_id=founder_id,
+        business_id=0,
+        company_name=company_name,
+        ticker_symbol=ticker_symbol,
+        share_class=share_class,
+        total_shares_authorized=total_shares,
+        shares_outstanding=total_shares,
+        shares_held_by_founder=total_shares - shares_to_offer,
+        shares_held_by_firm=shares_to_offer,
+        shares_in_float=0,
+        current_price=share_price,
+        ipo_price=share_price,
+        high_52_week=share_price,
+        low_52_week=share_price,
+        dividend_config=actual_dividend_config,
+        fixed_dividend_rate=config.get("fixed_dividend_rate"),
+        liquidation_preference=config.get("liquidation_preference"),
+        is_callable=config.get("is_callable", False),
+        ipo_type=IPOType.PREFERRED_OFFERING.value,
+        ipo_date=datetime.utcnow(),
+        ipo_valuation=total_valuation,
+    )
+    db.add(company)
+    db.commit()
+    db.refresh(company)
+
+    from auth import Player, get_db as get_auth_db
+    auth_db = get_auth_db()
+    try:
+        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
+        if founder:
+            founder.cash_balance += total_cost
+            auth_db.commit()
+    finally:
+        auth_db.close()
+
+    founder_shares = total_shares - shares_to_offer
+    if founder_shares > 0:
+        db.add(ShareholderPosition(
+            player_id=founder_id,
+            company_shares_id=company.id,
+            shares_owned=founder_shares,
+            shares_available_to_lend=founder_shares,
+            average_cost_basis=0.0,
+        ))
+    db.add(ShareholderPosition(
+        player_id=BANK_PLAYER_ID,
+        company_shares_id=company.id,
+        shares_owned=shares_to_offer,
+        shares_available_to_lend=shares_to_offer,
+        average_cost_basis=discounted_price,
+    ))
+    db.commit()
+
+    try:
+        from banks.brokerage_order_book import place_limit_order, OrderSide
+        place_limit_order(
+            player_id=BANK_PLAYER_ID,
+            company_shares_id=company.id,
+            side=OrderSide.SELL,
+            quantity=shares_to_offer,
+            limit_price=share_price,
+        )
+    except ImportError:
+        pass
+
+    underwriting_profit = shares_to_offer * share_price * discount_rate
+    firm_add_cash(underwriting_profit, "underwriting_fee", f"Preferred: {ticker_symbol}", founder_id, company.id)
+    modify_credit_score(founder_id, "ipo_completed")
+    print(f"[{BANK_NAME}] 🎉 PREFERRED: {ticker_symbol} (12% div, 1.5× liq pref, callable)")
+    return company, None
+
+
+def _process_series_a_ipo(db, founder_id, company_name, ticker_symbol, config,
+                           shares_to_offer, total_shares, share_price, share_class,
+                           dividend_config, total_valuation):
+    discount_rate = config.get("discount_rate", 0.12)
+    growth_bonus_pct = config.get("growth_bonus_pct", 0.20)
+    discounted_price = share_price * (1 - discount_rate)
+    standard_proceeds = shares_to_offer * discounted_price
+    growth_bonus = standard_proceeds * growth_bonus_pct
+    total_payout = standard_proceeds + growth_bonus
+
+    if not firm_deduct_cash(standard_proceeds, "underwriting_cost", f"Series A {ticker_symbol}"):
+        return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
+    if not firm_deduct_cash(growth_bonus, "growth_bonus", f"Series A bonus: {ticker_symbol}"):
+        firm_add_cash(standard_proceeds, "underwriting_refund", f"Refund: {ticker_symbol}", founder_id)
+        return None, "The Firm doesn't have enough reserves for the Series A growth bonus right now."
+
+    company = CompanyShares(
+        founder_id=founder_id,
+        business_id=0,
+        company_name=company_name,
+        ticker_symbol=ticker_symbol,
+        share_class=share_class,
+        total_shares_authorized=total_shares,
+        shares_outstanding=total_shares,
+        shares_held_by_founder=total_shares - shares_to_offer,
+        shares_held_by_firm=shares_to_offer,
+        shares_in_float=0,
+        current_price=share_price,
+        ipo_price=share_price,
+        high_52_week=share_price,
+        low_52_week=share_price,
+        dividend_config=dividend_config or [],
+        ipo_type=IPOType.SERIES_A_GROWTH.value,
+        ipo_date=datetime.utcnow(),
+        ipo_valuation=total_valuation,
+    )
+    db.add(company)
+    db.commit()
+    db.refresh(company)
+
+    from auth import Player, get_db as get_auth_db
+    auth_db = get_auth_db()
+    try:
+        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
+        if founder:
+            founder.cash_balance += total_payout
+            auth_db.commit()
+    finally:
+        auth_db.close()
+
+    founder_shares = total_shares - shares_to_offer
+    if founder_shares > 0:
+        db.add(ShareholderPosition(
+            player_id=founder_id,
+            company_shares_id=company.id,
+            shares_owned=founder_shares,
+            shares_available_to_lend=founder_shares,
+            average_cost_basis=0.0,
+        ))
+    db.add(ShareholderPosition(
+        player_id=BANK_PLAYER_ID,
+        company_shares_id=company.id,
+        shares_owned=shares_to_offer,
+        shares_available_to_lend=shares_to_offer,
+        average_cost_basis=discounted_price,
+    ))
+    db.commit()
+
+    try:
+        from banks.brokerage_order_book import place_limit_order, OrderSide
+        place_limit_order(
+            player_id=BANK_PLAYER_ID,
+            company_shares_id=company.id,
+            side=OrderSide.SELL,
+            quantity=shares_to_offer,
+            limit_price=share_price,
+        )
+    except ImportError:
+        pass
+
+    underwriting_profit = shares_to_offer * share_price * discount_rate
+    firm_add_cash(underwriting_profit, "underwriting_fee", f"Series A: {ticker_symbol}", founder_id, company.id)
+    modify_credit_score(founder_id, "ipo_completed")
+    print(f"[{BANK_NAME}] 🎉 SERIES A: {ticker_symbol} (proceeds ${standard_proceeds:,.0f} + bonus ${growth_bonus:,.0f})")
+    return company, None
+
+
+def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
+                             shares_to_offer, total_shares, share_price,
+                             dividend_config, total_valuation):
+    discount_rate = config.get("discount_rate", 0.10)
+    growth_bonus_pct = config.get("growth_bonus_pct", 0.15)
+    discounted_price = share_price * (1 - discount_rate)
+    standard_proceeds = shares_to_offer * discounted_price
+    growth_bonus = standard_proceeds * growth_bonus_pct
+    total_payout = standard_proceeds + growth_bonus
+
+    class_b_shares = shares_to_offer
+    class_a_shares = total_shares - shares_to_offer
+    founder_ownership_pct = class_a_shares / total_shares
+    min_control = config.get("founder_control_minimum", 0.40)
+    if founder_ownership_pct < min_control:
+        return None, f"You must retain at least {min_control*100:.0f}% ownership (Class A) for a Quad-Class IPO. Reduce the number of shares offered."
+
+    if not firm_deduct_cash(standard_proceeds, "underwriting_cost", f"Quad-class {ticker_symbol}"):
+        return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
+    if not firm_deduct_cash(growth_bonus, "growth_bonus", f"Quad-class bonus: {ticker_symbol}"):
+        firm_add_cash(standard_proceeds, "underwriting_refund", f"Refund: {ticker_symbol}", founder_id)
+        return None, "The Firm doesn't have enough reserves for the Quad-Class growth capital injection right now."
+
+    actual_dividend_config = list(dividend_config) if dividend_config else []
+    if config.get("fixed_dividend_rate"):
+        actual_dividend_config.append({
+            "type": "cash",
+            "amount": share_price * config["fixed_dividend_rate"] / 4,
+            "frequency": "quarterly",
+            "required": True,
+            "share_class": ShareClass.CLASS_B.value,
+        })
+
+    company = CompanyShares(
+        founder_id=founder_id,
+        business_id=0,
+        company_name=company_name,
+        ticker_symbol=ticker_symbol,
+        share_class=ShareClass.CLASS_B.value,
+        total_shares_authorized=total_shares,
+        shares_outstanding=total_shares,
+        shares_held_by_founder=class_a_shares,
+        shares_held_by_firm=class_b_shares,
+        shares_in_float=0,
+        founder_class_a_shares=class_a_shares,
+        current_price=share_price,
+        ipo_price=share_price,
+        high_52_week=share_price,
+        low_52_week=share_price,
+        dividend_config=actual_dividend_config,
+        fixed_dividend_rate=config.get("fixed_dividend_rate"),
+        liquidation_preference=config.get("liquidation_preference"),
+        is_callable=True,
+        is_dual_class=True,
+        ipo_type=IPOType.QUAD_CLASS.value,
+        ipo_date=datetime.utcnow(),
+        ipo_valuation=total_valuation,
+    )
+    db.add(company)
+    db.commit()
+    db.refresh(company)
+
+    from auth import Player, get_db as get_auth_db
+    auth_db = get_auth_db()
+    try:
+        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
+        if founder:
+            founder.cash_balance += total_payout
+            auth_db.commit()
+    finally:
+        auth_db.close()
+
+    if class_a_shares > 0:
+        db.add(ShareholderPosition(
+            player_id=founder_id,
+            company_shares_id=company.id,
+            shares_owned=class_a_shares,
+            shares_available_to_lend=0,
+            average_cost_basis=0.0,
+        ))
+    db.add(ShareholderPosition(
+        player_id=BANK_PLAYER_ID,
+        company_shares_id=company.id,
+        shares_owned=class_b_shares,
+        shares_available_to_lend=class_b_shares,
+        average_cost_basis=discounted_price,
+    ))
+    db.commit()
+
+    try:
+        from banks.brokerage_order_book import place_limit_order, OrderSide
+        place_limit_order(
+            player_id=BANK_PLAYER_ID,
+            company_shares_id=company.id,
+            side=OrderSide.SELL,
+            quantity=class_b_shares,
+            limit_price=share_price,
+        )
+    except ImportError:
+        pass
+
+    underwriting_profit = shares_to_offer * share_price * discount_rate
+    firm_add_cash(underwriting_profit, "underwriting_fee", f"Quad-class: {ticker_symbol}", founder_id, company.id)
+    modify_credit_score(founder_id, "ipo_completed")
+    print(f"[{BANK_NAME}] 🎉 QUAD-CLASS: {ticker_symbol} "
+          f"(A:{class_a_shares} founder, B:{class_b_shares} public, "
+          f"bonus ${growth_bonus:,.0f}, 10% div, 1.2× liq pref)")
     return company, None
 
 

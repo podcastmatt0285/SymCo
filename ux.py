@@ -3926,8 +3926,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
             firm_status = '''
             <div class="card" style="border: 1px solid #f59e0b; background: #451a03; margin-bottom: 20px;">
                 <p style="color: #fbbf24; margin: 0; font-size: 0.9rem;">
-                    The Firm's cash reserves are currently low. Underwritten, Income Shares, and Dual-Class IPOs
-                    are temporarily unavailable. Direct Listing is still available.
+                    The Firm's cash reserves are currently low. All underwritten IPO types are temporarily unavailable. Direct Listing is still available.
                 </p>
             </div>'''
 
@@ -3936,6 +3935,9 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
         underwritten_config = IPO_CONFIG[IPOType.FIRM_UNDERWRITTEN]
         income_config = IPO_CONFIG[IPOType.INCOME_SHARES]
         dual_config = IPO_CONFIG[IPOType.DUAL_CLASS]
+        preferred_config = IPO_CONFIG[IPOType.PREFERRED_OFFERING]
+        series_a_config = IPO_CONFIG[IPOType.SERIES_A_GROWTH]
+        quad_config = IPO_CONFIG[IPOType.QUAD_CLASS]
 
         error_html = ""
         if error:
@@ -4127,6 +4129,115 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                     </div>
                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $100,000 &bull; Max float: 49% &bull; Class A (founder) + Class B (public)</div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #2e1065; border-color: #a78bfa;">Select Dual-Class IPO</button>
+                </div>
+
+                <!-- Option 5: Preferred Share Offering -->
+                <div class="card ipo-option" data-ipo-type="preferred_offering" style="cursor: pointer; border: 2px solid #1e293b; transition: border-color 0.2s; {'opacity: 0.5; pointer-events: none;' if not firm.is_accepting_ipos else ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #fb923c;">Preferred Share Offering</h4>
+                        <span style="background: #431407; color: #fdba74; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem;">5% TO FIRM · 12% DIV · 1.5× LIQ</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        {preferred_config['description']}
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 0.85rem; margin-bottom: 15px;">
+                        <div><span style="color: #64748b;">Cost:</span><br><span style="color: #22c55e;">Only 5% discount</span></div>
+                        <div><span style="color: #64748b;">Dividends:</span><br><span style="color: #ef4444;">12%/year (mandatory)</span></div>
+                        <div><span style="color: #64748b;">Liquidation:</span><br><span style="color: #22c55e;">1.5× priority payout</span></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; padding-top: 10px; border-top: 1px solid #1e293b;">
+                        <div>
+                            <span style="color: #22c55e;">Pros:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Cheapest underwriting (5%)</li>
+                                <li>Shareholders get 1.5× in bankruptcy</li>
+                                <li>Callable — buy shares back anytime</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <span style="color: #ef4444;">Cons:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Highest dividend obligation (12%)</li>
+                                <li>Missing payments hurts credit</li>
+                                <li>Liquidation preference costs you in bankruptcy</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; Max float: 40% &bull; Callable preferred shares</div>
+                    <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #431407; border-color: #fb923c;">Select Preferred Offering</button>
+                </div>
+
+                <!-- Option 6: Series A Growth Round -->
+                <div class="card ipo-option" data-ipo-type="series_a_growth" style="cursor: pointer; border: 2px solid #1e293b; transition: border-color 0.2s; {'opacity: 0.5; pointer-events: none;' if not firm.is_accepting_ipos else ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #34d399;">Series A Growth Round</h4>
+                        <span style="background: #022c22; color: #6ee7b7; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem;">12% TO FIRM · +20% GROWTH BONUS</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        {series_a_config['description']}
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 0.85rem; margin-bottom: 15px;">
+                        <div><span style="color: #64748b;">Cost:</span><br><span style="color: #ef4444;">12% discount (steepest)</span></div>
+                        <div><span style="color: #64748b;">Capital:</span><br><span style="color: #22c55e;">120% of standard proceeds</span></div>
+                        <div><span style="color: #64748b;">Dividends:</span><br><span style="color: #22c55e;">None required</span></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; padding-top: 10px; border-top: 1px solid #1e293b;">
+                        <div>
+                            <span style="color: #22c55e;">Pros:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Largest total capital injection</li>
+                                <li>No dividend obligations</li>
+                                <li>20% bonus above proceeds</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <span style="color: #ef4444;">Cons:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Steepest underwriting cost (12%)</li>
+                                <li>Small float (30% max)</li>
+                                <li>Needs $150,000 valuation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $150,000 &bull; Max float: 30% &bull; Growth capital injection</div>
+                    <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #022c22; border-color: #34d399;">Select Series A Growth Round</button>
+                </div>
+
+                <!-- Option 7: Quad-Class IPO -->
+                <div class="card ipo-option" data-ipo-type="quad_class" style="cursor: pointer; border: 2px solid #1e293b; transition: border-color 0.2s; {'opacity: 0.5; pointer-events: none;' if not firm.is_accepting_ipos else ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #e879f9;">Quad-Class IPO</h4>
+                        <span style="background: #2e1065; color: #e879f9; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem;">10% TO FIRM · A/B/C/D · FULL SUITE</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        {quad_config['description']}
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; font-size: 0.8rem; margin-bottom: 15px;">
+                        <div style="background:#1e293b; padding:6px; border-radius:4px;"><span style="color:#e879f9;">Class A</span><br><span style="color:#94a3b8;">Founder<br>Non-lendable</span></div>
+                        <div style="background:#1e293b; padding:6px; border-radius:4px;"><span style="color:#38bdf8;">Class B</span><br><span style="color:#94a3b8;">Public<br>Traded</span></div>
+                        <div style="background:#1e293b; padding:6px; border-radius:4px;"><span style="color:#fb923c;">Class C</span><br><span style="color:#94a3b8;">Preferred<br>10% div</span></div>
+                        <div style="background:#1e293b; padding:6px; border-radius:4px;"><span style="color:#34d399;">Class D</span><br><span style="color:#94a3b8;">Non-voting<br>1.2× liq</span></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; padding-top: 10px; border-top: 1px solid #1e293b;">
+                        <div>
+                            <span style="color: #22c55e;">Pros:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Highest max float (60%)</li>
+                                <li>15% growth capital bonus</li>
+                                <li>Voting insulation + div + liq pref</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <span style="color: #ef4444;">Cons:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Mandatory 10%/year dividends</li>
+                                <li>1.2× liquidation preference exposure</li>
+                                <li>Needs $200,000 valuation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $200,000 &bull; Max float: 60% &bull; Retain 40%+ as Class A</div>
+                    <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #1a0533; border-color: #e879f9;">Select Quad-Class IPO</button>
                 </div>
             </div>
         </div>
