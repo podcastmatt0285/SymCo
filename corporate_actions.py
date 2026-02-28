@@ -1781,6 +1781,20 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Acquisition stake error: {e}")
 
+        # 8b. Cancel all pending brokerage order book orders
+        try:
+            from banks.brokerage_order_book import OrderBook as BrokerageOrder, OrderStatus
+            db = get_db()
+            cancelled = db.query(BrokerageOrder).filter(
+                BrokerageOrder.player_id == player_id,
+                BrokerageOrder.status.in_([OrderStatus.PENDING.value, OrderStatus.PARTIAL.value])
+            ).update({"status": OrderStatus.CANCELLED.value})
+            db.commit(); db.close()
+            if cancelled:
+                print(f"[Bankruptcy] Cancelled {cancelled} brokerage order(s) for player {player_id}")
+        except Exception as e:
+            print(f"[Bankruptcy] Order book cancellation error: {e}")
+
         # 9. Transfer mayor role if applicable
         try:
             from cities import City, CityMember, get_db as get_city_db
@@ -1799,10 +1813,36 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Mayor error: {e}")
 
-        # 10. Reset cash
-        total_liquidated += player.cash_balance
-        player.cash_balance = BANKRUPTCY_RESTART_CASH
-        auth_db.commit()
+        # 10. Reset cash — cash now lives in PlayerCurrencyBalance (reserve_banks DB).
+        # Tally up the player's total USD-equivalent balance, clear all currency rows,
+        # then seed the restart amount as fresh USD.
+        try:
+            from reserve_banks import (
+                PlayerCurrencyBalance, StateReserveBank,
+                get_db as get_reserve_db, credit_usd,
+            )
+            reserve_db = get_reserve_db()
+            try:
+                balances = reserve_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id == player_id,
+                    PlayerCurrencyBalance.balance > 0
+                ).all()
+                for bal in balances:
+                    if bal.currency_code == "USD":
+                        total_liquidated += bal.balance
+                    else:
+                        bank = reserve_db.query(StateReserveBank).filter(
+                            StateReserveBank.currency_code == bal.currency_code
+                        ).first()
+                        if bank and bank.usd_per_unit:
+                            total_liquidated += bal.balance * bank.usd_per_unit
+                    bal.balance = 0.0
+                reserve_db.commit()
+            finally:
+                reserve_db.close()
+            credit_usd(player_id, BANKRUPTCY_RESTART_CASH)
+        except Exception as e:
+            print(f"[Bankruptcy] Cash reset error: {e}")
 
         # 11. Create starter land plot
         try:

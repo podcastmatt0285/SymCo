@@ -314,8 +314,32 @@ def calculate_estate_value(player_id: int, db) -> dict:
         return {"total": 0.0, "cash": 0.0, "inventory": 0.0, "land": 0.0,
                 "businesses": 0.0, "shares": 0.0, "districts": 0.0}
 
+    # Cash lives in PlayerCurrencyBalance (reserve_banks DB); sum all currencies in USD.
+    cash_usd = 0.0
+    try:
+        from reserve_banks import PlayerCurrencyBalance, StateReserveBank, get_db as get_reserve_db
+        reserve_db = get_reserve_db()
+        try:
+            balances = reserve_db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id == player_id,
+                PlayerCurrencyBalance.balance > 0
+            ).all()
+            for bal in balances:
+                if bal.currency_code == "USD":
+                    cash_usd += bal.balance
+                else:
+                    bank = reserve_db.query(StateReserveBank).filter(
+                        StateReserveBank.currency_code == bal.currency_code
+                    ).first()
+                    if bank and bank.usd_per_unit:
+                        cash_usd += bal.balance * bank.usd_per_unit
+        finally:
+            reserve_db.close()
+    except Exception as e:
+        print(f"[Estate] Cash balance query error: {e}")
+
     estate = {
-        "cash": player.cash_balance,
+        "cash": cash_usd,
         "inventory": 0.0,
         "land": 0.0,
         "businesses": 0.0,
@@ -500,6 +524,20 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
 
         # 2. Government seizes all assets - calculate total liquidation value
         liquidation_value = estate["cash"]
+
+        # Zero out the player's PlayerCurrencyBalance rows (cash already counted above)
+        try:
+            from reserve_banks import PlayerCurrencyBalance, get_db as get_reserve_db
+            reserve_db = get_reserve_db()
+            try:
+                reserve_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id == player_id
+                ).update({"balance": 0.0})
+                reserve_db.commit()
+            finally:
+                reserve_db.close()
+        except Exception as e:
+            print(f"[Estate] Currency balance seizure error: {e}")
 
         # Liquidate inventory (sell to government at discounted market price)
         try:
@@ -1000,7 +1038,20 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         db.add(deceased)
 
         # 7. Clean up player data
-        # Remove market orders
+        # Cancel brokerage order book orders (limit/market/stop orders).
+        # Reserved cash from buy orders was never deducted from PlayerCurrencyBalance
+        # (order book still used the legacy cash_balance field), so estate cash is
+        # already accurate — we just need to cancel the stale order records.
+        try:
+            from banks.brokerage_order_book import OrderBook as BrokerageOrder, OrderStatus
+            db.query(BrokerageOrder).filter(
+                BrokerageOrder.player_id == player_id,
+                BrokerageOrder.status.in_([OrderStatus.PENDING.value, OrderStatus.PARTIAL.value])
+            ).update({"status": OrderStatus.CANCELLED.value})
+        except Exception as e:
+            print(f"[Estate] Brokerage order cancellation error: {e}")
+
+        # Remove commodity market orders
         try:
             from market import MarketOrder
             db.query(MarketOrder).filter(
