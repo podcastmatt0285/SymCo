@@ -137,7 +137,7 @@ def bond_market(
     if not player:
         return RedirectResponse("/login")
 
-    from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd, get_player_usd_pcb_balance
     disp = get_player_display_currency(player.id)
 
     banks        = get_all_banks()
@@ -156,13 +156,24 @@ def bond_market(
         flash = f'<div class="alert-err">✗ {err}</div>'
 
     # ── Holdings summary card ──
-    # Currency balances row
-    if my_balances:
+    # Currency balances row — includes USD PCB (bond interest / matured proceeds) if non-zero
+    usd_pcb_bm   = get_player_usd_pcb_balance(player.id)
+    usd_total_bm = (player.cash_balance or 0.0) + usd_pcb_bm
+    bal_chips_list = list(my_balances)
+    if my_tender != "USD" and abs(usd_total_bm) > 0.005:
+        bal_chips_list.append({
+            "flag": "🇺🇸", "currency_code": "USD",
+            "currency_symbol": "$", "balance": usd_total_bm,
+            "usd_value": usd_total_bm,
+        })
+    # Sort: legal tender first
+    bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender))
+    if bal_chips_list:
         bal_chips = "".join(
             f'<span style="margin-right:14px;">{b["flag"]} <strong>{b["currency_code"]}</strong> '
             f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong> '
             f'<span class="mini">≈ {fmt_usd(b["usd_value"], disp)}</span></span>'
-            for b in my_balances
+            for b in bal_chips_list
         )
     else:
         bal_chips = '<span style="color:#475569;">None yet — earn income with your legal tender set to a foreign currency.</span>'
@@ -386,14 +397,27 @@ def forex_dashboard(
         </div>"""
 
     # ── Balance line ──
-    # Combine cash_balance with any USD held in a PlayerCurrencyBalance row
-    # (USD bond interest accumulates there between tick sweeps).
-    usd_display = (player.cash_balance or 0.0) + get_player_usd_pcb_balance(player.id)
-    bal_line = '<span style="margin-right:12px;">USD <strong style="color:#38bdf8;">${:.2f}</strong></span>'.format(
-        usd_display)
-    for b in my_balances:
-        bal_line += (f'<span style="margin-right:12px;">{b["flag"]} {b["currency_code"]} '
-                     f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong></span>')
+    usd_pcb   = get_player_usd_pcb_balance(player.id)
+    usd_total = (player.cash_balance or 0.0) + usd_pcb
+
+    if my_tender == "USD":
+        # USD player: primary balance first in blue, then foreign bond values
+        bal_line = '<span style="margin-right:12px;">USD <strong style="color:#38bdf8;">${:,.2f}</strong></span>'.format(
+            usd_total)
+        for b in my_balances:
+            bal_line += (f'<span style="margin-right:12px;">{b["flag"]} {b["currency_code"]} '
+                         f'<strong style="color:#22c55e;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong></span>')
+    else:
+        # Non-USD player: legal tender first in blue, others in green, USD last
+        tender_first = sorted(my_balances, key=lambda b: (b["currency_code"] != my_tender))
+        bal_line = ""
+        for b in tender_first:
+            color = "#38bdf8" if b["currency_code"] == my_tender else "#22c55e"
+            bal_line += (f'<span style="margin-right:12px;">{b["flag"]} {b["currency_code"]} '
+                         f'<strong style="color:{color};">{b["currency_symbol"]}{b["balance"]:,.4f}</strong></span>')
+        # USD balance (cash + PCB from bond interest/maturity) — show at end if non-trivial
+        if abs(usd_total) > 0.005:
+            bal_line += f'<span style="margin-right:12px;">🇺🇸 USD <strong style="color:#22c55e;">${usd_total:,.2f}</strong></span>'
 
     # ── Bank reserve matrix ──
     reserve_rows = ""
