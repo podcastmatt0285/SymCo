@@ -1457,6 +1457,23 @@ async def crypto_exchange(
     else:
         cash_header = fmt_usd(player.cash_balance, disp)
 
+    # Buy form: accept input in the player's actual legal tender, not USD.
+    # The API endpoint converts to USD before calling buy_crypto_with_cash().
+    if primary_foreign and player_tender != "USD":
+        buy_currency_code   = player_tender
+        buy_currency_symbol = primary_foreign["currency_symbol"]
+        buy_max             = primary_foreign["balance"]
+        # Approximate USD rate: usd_value / balance (matches _get_usd_rate)
+        buy_usd_per_unit = (
+            primary_foreign["usd_value"] / primary_foreign["balance"]
+            if primary_foreign["balance"] > 0 else 1.0
+        )
+    else:
+        buy_currency_code   = "USD"
+        buy_currency_symbol = "$"
+        buy_max             = player.cash_balance
+        buy_usd_per_unit    = 1.0
+
     from counties import get_all_counties, get_player_wallets, County
     from cities import get_db
 
@@ -1624,14 +1641,13 @@ async def crypto_exchange(
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Amount to Spend (USD)</label>
-                            <input type="number" name="cash_amount" id="buy-cash" min="0.01" step="0.0001"
-                                   max="{max_buy_usd:.4f}" placeholder="USD amount" required
+                            <label>Amount to Spend ({buy_currency_symbol} {buy_currency_code})</label>
+                            <input type="number" name="cash_amount" id="buy-cash" min="0.01" step="0.01"
+                                   max="{buy_max:.4f}" placeholder="{buy_currency_symbol} amount" required
                                    oninput="updateBuyGas()">
                             <div style="font-size:11px;color:#64748b;margin-top:4px;">
                                 Available: <strong style="color:#4ade80;">{cash_header}</strong>
-                                &nbsp;·&nbsp; Enter the USD value you want to spend
-                                {'(your ' + player_tender + ' is auto-converted at server)' if player_tender != 'USD' else ''}
+                                {'<span id="buy-usd-equiv" style="color:#475569;margin-left:6px;"></span>' if buy_currency_code != 'USD' else ''}
                             </div>
                         </div>
                         <div id="buy-gas-preview" style="display:none;background:#0a0f1a;border:1px solid #1e293b;border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:12px;"></div>
@@ -1701,6 +1717,9 @@ async def crypto_exchange(
             // Gas prices keyed by crypto symbol, injected server-side
             const GAS_PRICES = {{{','.join(f'"{c["crypto_symbol"]}": {c["gas_price"]:.8f}' for c in counties)}}};
             const EXCHANGE_FEE = 0.02;
+            // Buy form: exchange rate from player's legal tender to USD
+            const BUY_USD_PER_UNIT = {buy_usd_per_unit:.8f};
+            const BUY_CURRENCY_CODE = "{buy_currency_code}";
 
             function fmtGas(n) {{
                 return n < 0.0001 ? n.toExponential(4) : n.toFixed(6);
@@ -1717,11 +1736,19 @@ async def crypto_exchange(
 
             function updateBuyGas() {{
                 const sym = document.getElementById('buy-symbol').value;
-                const cash = parseFloat(document.getElementById('buy-cash').value) || 0;
+                const inputAmt = parseFloat(document.getElementById('buy-cash').value) || 0;
+                // Convert input to USD for the gas/preview calculations
+                const cashUsd = inputAmt * BUY_USD_PER_UNIT;
+                // Show live USD equivalent for non-USD players
+                const equivEl = document.getElementById('buy-usd-equiv');
+                if (equivEl && BUY_CURRENCY_CODE !== 'USD' && inputAmt > 0) {{
+                    equivEl.textContent = `≈ $${cashUsd.toFixed(2)} USD`;
+                }} else if (equivEl) {{
+                    equivEl.textContent = '';
+                }}
                 const box = document.getElementById('buy-gas-preview');
                 if (!sym || !GAS_PRICES[sym]) {{ box.style.display='none'; return; }}
                 const gas = GAS_PRICES[sym];
-                const netCash = cash * (1 - EXCHANGE_FEE);
                 box.style.display = 'block';
                 const gasFeeNote = gas > 0
                     ? `<div style="margin-top:4px;">Gas deducted from received tokens: <strong style="color:#f59e0b;">-${{fmtGas(gas)}} ${{sym}}</strong> &nbsp;${{gasLabel(gas)}}</div>`
@@ -1787,7 +1814,6 @@ async def gas_tracker_page(
     from counties import get_all_counties, BASE_GAS_PRICE, GAS_PRICE_DECAY_RATE, GAS_SURGE_MULTIPLIER
 
     player = get_current_player(session_token)
-    disp = get_display_currency(player)
 
     counties = get_all_counties()
     # Sort by gas_price descending so busiest chains are at the top
@@ -2347,14 +2373,29 @@ async def api_exchange_buy(
     cash_amount: float = Form(...),
     session_token: Optional[str] = Cookie(None),
 ):
-    """Buy crypto with cash."""
+    """Buy crypto with cash. cash_amount is in the player's legal tender (auto-converted to USD)."""
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
 
     from counties import buy_crypto_with_cash
+    from reserve_banks import get_player_legal_tender
 
-    success, message = buy_crypto_with_cash(player.id, crypto_symbol, cash_amount)
+    # Convert from player's legal tender to USD so buy_crypto_with_cash always
+    # receives a USD-denominated amount (its price calculations are in USD).
+    tender = get_player_legal_tender(player.id)
+    usd_amount = cash_amount
+    if tender != "USD":
+        from reserve_banks import get_db as _rb_db, StateReserveBank as _SRB
+        _db = _rb_db()
+        try:
+            _bank = _db.query(_SRB).filter(_SRB.currency_code == tender).first()
+            if _bank and _bank.usd_per_unit > 0:
+                usd_amount = cash_amount * _bank.usd_per_unit
+        finally:
+            _db.close()
+
+    success, message = buy_crypto_with_cash(player.id, crypto_symbol, usd_amount)
 
     if success:
         return RedirectResponse(url=f"/exchange?msg={message.replace(' ', '+')}", status_code=303)
