@@ -225,6 +225,17 @@ IPO_CONFIG = {
         "min_valuation": 75000,
         "fixed_dividend_rate": 0.10,
     },
+    IPOType.DUAL_CLASS: {
+        "name": "Dual-Class IPO",
+        "description": "The Firm underwrites a Class B public offering at an 8% discount while you retain all Class A founder shares. Investors get full economic rights; you keep permanent voting control \u2014 no shareholder vote can ever outvote you.",
+        "share_class": ShareClass.CLASS_B,
+        "firm_underwritten": True,
+        "discount_rate": 0.08,
+        "min_shares": 10000,
+        "max_float_pct": 0.49,
+        "min_valuation": 100000,
+        "founder_control_minimum": 0.51,
+    },
 }
 
 
@@ -1176,6 +1187,12 @@ def create_player_ipo(
             return _process_direct_listing_ipo(
                 db, founder_id, company_name, ticker_symbol, config,
                 shares_to_offer, total_shares, share_price, actual_share_class,
+                dividend_config, total_valuation
+            )
+        elif ipo_type == IPOType.DUAL_CLASS:
+            return _process_dual_class_ipo(
+                db, founder_id, company_name, ticker_symbol, config,
+                shares_to_offer, total_shares, share_price,
                 dividend_config, total_valuation
             )
         else:

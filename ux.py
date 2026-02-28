@@ -3926,7 +3926,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
             firm_status = '''
             <div class="card" style="border: 1px solid #f59e0b; background: #451a03; margin-bottom: 20px;">
                 <p style="color: #fbbf24; margin: 0; font-size: 0.9rem;">
-                    The Firm's cash reserves are currently low. Underwritten and Income Shares IPOs
+                    The Firm's cash reserves are currently low. Underwritten, Income Shares, and Dual-Class IPOs
                     are temporarily unavailable. Direct Listing is still available.
                 </p>
             </div>'''
@@ -3935,6 +3935,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
         direct_config = IPO_CONFIG[IPOType.DIRECT_LISTING]
         underwritten_config = IPO_CONFIG[IPOType.FIRM_UNDERWRITTEN]
         income_config = IPO_CONFIG[IPOType.INCOME_SHARES]
+        dual_config = IPO_CONFIG[IPOType.DUAL_CLASS]
 
         error_html = ""
         if error:
@@ -4090,6 +4091,42 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                     </div>
                     <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $75,000 &bull; Max float: 40%</div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #92400e; border-color: #f59e0b;">Select Income Shares IPO</button>
+                </div>
+
+                <!-- Option 4: Dual-Class IPO -->
+                <div class="card ipo-option" data-ipo-type="dual_class" style="cursor: pointer; border: 2px solid #1e293b; transition: border-color 0.2s; {'opacity: 0.5; pointer-events: none;' if not firm.is_accepting_ipos else ''}">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <h4 style="margin: 0; color: #a78bfa;">Dual-Class IPO</h4>
+                        <span style="background: #2e1065; color: #c4b5fd; padding: 3px 10px; border-radius: 4px; font-size: 0.75rem;">8% TO FIRM · YOU KEEP CONTROL</span>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px;">
+                        {dual_config['description']}
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 0.85rem; margin-bottom: 15px;">
+                        <div><span style="color: #64748b;">Cost:</span><br><span style="color: #f59e0b;">8% discount</span></div>
+                        <div><span style="color: #64748b;">Capital:</span><br><span style="color: #22c55e;">Guaranteed</span></div>
+                        <div><span style="color: #64748b;">Control:</span><br><span style="color: #22c55e;">Founder retains 51%+</span></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; padding-top: 10px; border-top: 1px solid #1e293b;">
+                        <div>
+                            <span style="color: #22c55e;">Pros:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Guaranteed upfront capital</li>
+                                <li>Permanent voting majority</li>
+                                <li>No mandatory dividends</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <span style="color: #ef4444;">Cons:</span>
+                            <ul style="margin: 5px 0 0 0; padding-left: 18px; color: #94a3b8;">
+                                <li>Higher 8% underwriting fee</li>
+                                <li>Max 49% float</li>
+                                <li>Requires $100,000 valuation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $100,000 &bull; Max float: 49% &bull; Class A (founder) + Class B (public)</div>
+                    <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #2e1065; border-color: #a78bfa;">Select Dual-Class IPO</button>
                 </div>
             </div>
         </div>
