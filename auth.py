@@ -118,7 +118,32 @@ def migrate_player_table():
         engine,
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0",
     )
+
     # cash_balance has moved to PlayerCurrencyBalance in the reserve_banks DB.
+    # Before dropping the column, rescue any non-zero values into PlayerCurrencyBalance
+    # so no player USD is silently lost during migration.
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            col_exists = conn.execute(text(
+                "SELECT 1 FROM information_schema.columns "
+                "WHERE table_name='players' AND column_name='cash_balance' LIMIT 1"
+            )).fetchone()
+            if col_exists:
+                rows = conn.execute(text(
+                    "SELECT id, cash_balance FROM players WHERE cash_balance > 0"
+                )).fetchall()
+                if rows:
+                    from reserve_banks import get_usd_balance, credit_usd
+                    for row in rows:
+                        pid, legacy_bal = row[0], float(row[1])
+                        # Only credit if the player has no PCB USD yet (avoid double-credit)
+                        if legacy_bal > 0 and get_usd_balance(pid) == 0:
+                            credit_usd(pid, legacy_bal)
+                            print(f"[Auth] Rescued ${legacy_bal:,.4f} legacy USD for player {pid} → PlayerCurrencyBalance")
+    except Exception as e:
+        print(f"[Auth] cash_balance rescue check: {e}")
+
     run_ddl_migration(
         engine,
         "ALTER TABLE players DROP COLUMN IF EXISTS cash_balance",

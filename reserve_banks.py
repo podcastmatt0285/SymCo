@@ -1441,16 +1441,46 @@ def convert_to_legal_tender(player_id: int, usd_amount: float) -> Tuple[float, s
 # ==========================
 
 def get_usd_balance(player_id: int) -> float:
-    """Return the player's current USD balance from PlayerCurrencyBalance."""
+    """Return the player's current USD balance from PlayerCurrencyBalance.
+
+    Also checks the legacy players.cash_balance column (in the auth DB) in case
+    the migration hasn't been applied yet on this server — if so, the legacy value
+    is rescued into PlayerCurrencyBalance automatically.
+    """
     db = get_db()
     try:
         row = db.query(PlayerCurrencyBalance).filter(
             PlayerCurrencyBalance.player_id     == player_id,
             PlayerCurrencyBalance.currency_code == "USD",
         ).first()
-        return float(row.balance) if row else 0.0
+        pcb_balance = float(row.balance) if row else 0.0
     finally:
         db.close()
+
+    # Fallback: if PCB says $0, check whether the legacy players.cash_balance column
+    # still exists in the auth DB. If it has a non-zero value, rescue it now.
+    if pcb_balance == 0.0:
+        try:
+            from database import engine as auth_engine
+            from sqlalchemy import text
+            with auth_engine.connect() as conn:
+                col = conn.execute(text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name='players' AND column_name='cash_balance' LIMIT 1"
+                )).fetchone()
+                if col:
+                    legacy = conn.execute(text(
+                        "SELECT cash_balance FROM players WHERE id = :pid"
+                    ), {"pid": player_id}).fetchone()
+                    if legacy and legacy[0] and float(legacy[0]) > 0:
+                        rescued = float(legacy[0])
+                        credit_usd(player_id, rescued)
+                        print(f"[ReserveBanks] Rescued ${rescued:,.4f} legacy USD for player {player_id}")
+                        return rescued
+        except Exception:
+            pass
+
+    return pcb_balance
 
 
 # Alias used by reserve_banks_ux
