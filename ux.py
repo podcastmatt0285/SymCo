@@ -1787,6 +1787,32 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
         traceback.print_exc()
         return shell("Land Market", f"Error loading land market: {e}", player.cash_balance, player.id)
 
+def _build_currency_legend_panel(banks_data: list) -> str:
+    """Sidebar card: flag, code, and exchange rate for every active reserve bank."""
+    rows = '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #1e293b;font-size:0.8rem;color:#64748b;font-weight:bold;"><span style="width:24px;">Flag</span><span style="flex:1;">Currency</span><span>Rate (USD)</span></div>'
+    # USD row first
+    rows += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:0.82rem;"><span style="width:24px;">🇺🇸</span><span style="flex:1;color:#e5e7eb;">USD</span><span style="color:#22c55e;">base</span></div>'
+    for b in sorted(banks_data, key=lambda x: x["code"]):
+        rate = b.get("usd_per_unit", 0)
+        rate_str = f"${rate:,.4f}" if rate < 1 else f"${rate:,.2f}"
+        rows += f'<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:0.82rem;"><span style="width:24px;">{b["flag"]}</span><span style="flex:1;color:#e5e7eb;">{b["code"]}</span><span style="color:#94a3b8;">{rate_str}</span></div>'
+    return f'<div class="card" style="margin-top:16px;"><h3 style="margin-bottom:10px;">Currency Legend</h3>{rows}<p style="margin-top:8px;font-size:0.75rem;color:#475569;">Flags show each trader\'s legal tender. A reserve bank swap may occur if yours differs.</p></div>'
+
+
+def _build_active_items_panel(active_items: list, current_item: str, base_url: str) -> str:
+    """Sidebar card: clickable list of items that currently have active orders."""
+    if not active_items:
+        return '<div class="card" style="margin-top:16px;"><h3>Active Markets</h3><p style="color:#64748b;font-size:0.85rem;">No active orders.</p></div>'
+    links = ""
+    for it in active_items:
+        display = it.replace("_", " ").title()
+        if it == current_item:
+            links += f'<div style="padding:4px 6px;background:#1e3a5f;border-left:3px solid #38bdf8;margin-bottom:3px;font-size:0.82rem;color:#38bdf8;border-radius:2px;">{display}</div>'
+        else:
+            links += f'<a href="{base_url}?item={it}" style="display:block;padding:4px 6px;margin-bottom:3px;font-size:0.82rem;color:#94a3b8;text-decoration:none;border-left:3px solid #1e293b;border-radius:2px;" onmouseover="this.style.color=\'#e5e7eb\'" onmouseout="this.style.color=\'#94a3b8\'">{display}</a>'
+    return f'<div class="card" style="margin-top:16px;"><h3 style="margin-bottom:10px;">Active Markets <span style="font-size:0.75rem;color:#64748b;font-weight:normal;">({len(active_items)})</span></h3>{links}</div>'
+
+
 @router.get("/market", response_class=HTMLResponse)
 def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
     """Market view with full order book including player names."""
@@ -1806,7 +1832,8 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
 
         # Build currency flag map for order book traders
         from reserve_banks import get_player_legal_tender as _get_tender, get_all_banks as _get_banks
-        _bank_flags = {b["code"]: b["flag"] for b in _get_banks()}
+        _banks_data = _get_banks()
+        _bank_flags = {b["code"]: b["flag"] for b in _banks_data}
         _bank_flags.setdefault("USD", "🇺🇸")
         _order_pids = set()
         if order_book:
@@ -1816,7 +1843,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 _order_pids.add(_e[4])
         player_flags = {pid: _bank_flags.get(_get_tender(pid), "🌐") for pid in _order_pids}
 
-        # Fetch player's own open orders for this item
+        # Fetch player's own open orders and items with active orders
         from market import MarketOrder, OrderStatus, get_db as get_market_db
         mkt_db = get_market_db()
         try:
@@ -1825,6 +1852,10 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 MarketOrder.item_type == item,
                 MarketOrder.status == OrderStatus.ACTIVE
             ).order_by(MarketOrder.created_at.desc()).all()
+            _active_rows = mkt_db.query(MarketOrder.item_type).filter(
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+            ).distinct().all()
+            active_items = sorted({r[0] for r in _active_rows})
         finally:
             mkt_db.close()
         
@@ -2104,6 +2135,8 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                     <p style="margin-top: 12px;"><strong>Total Trades:</strong><br>{stats["total_trades"]:,}</p>
                     <p style="margin-top: 12px;"><strong>Active Orders:</strong><br>{stats["active_orders"]:,}</p>
                 </div>
+                {_build_currency_legend_panel(_banks_data)}
+                {_build_active_items_panel(active_items, item, "/market")}
             </div>
         </div>
         '''
