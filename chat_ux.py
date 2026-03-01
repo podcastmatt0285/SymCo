@@ -351,6 +351,34 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
             .chat-msg.system-msg .msg-text {{
                 color: #64748b; font-size: 0.72rem; font-style: italic; text-align: center;
             }}
+            .chat-msg.patch-note-msg {{
+                background: rgba(245, 158, 11, 0.06);
+                border-left: 3px solid #f59e0b;
+                border-radius: 0 6px 6px 0;
+                padding: 6px 10px 6px 12px;
+                margin: 3px 0;
+                align-items: flex-start;
+            }}
+            .patch-note-icon {{
+                font-size: 1.1rem;
+                line-height: 1.6;
+                min-width: 28px;
+                text-align: center;
+                flex-shrink: 0;
+                color: #f59e0b;
+                font-style: normal;
+            }}
+            .patch-note-msg .msg-name {{
+                color: #f59e0b !important;
+                font-style: italic;
+                letter-spacing: 0.03em;
+            }}
+            .patch-note-msg .msg-text {{
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 0.78rem;
+                color: #e2e8f0;
+                white-space: pre-wrap;
+            }}
 
             .typing-indicator {{
                 padding: 3px 12px 6px;
@@ -832,36 +860,48 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         if (data.room !== currentRoom) return;
         const container = document.getElementById('messages');
         const div = document.createElement('div');
-        div.className = 'chat-msg';
-
-        const avatar = avatarCache[data.sender_id];
-        let avatarHtml;
-        if (avatar) {{
-            avatarHtml = `<img class="msg-avatar" src="${{avatar}}" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">`;
-        }} else {{
-            const letter = (data.sender_name || '?')[0].toUpperCase();
-            const hue = (data.sender_id * 137) % 360;
-            avatarHtml = `<div class="msg-avatar-letter" style="color: hsl(${{hue}},60%,65%);" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">${{letter}}</div>`;
-        }}
 
         const ts = new Date(data.timestamp);
         const timeStr = ts.toLocaleTimeString([], {{hour: '2-digit', minute: '2-digit'}});
         const filteredContent = filterBanWords(data.content);
 
-        const nameColor = data.sender_id === PLAYER_ID ? '#22c55e' : (ADMIN_IDS.includes(data.sender_id) ? '#f59e0b' : '#38bdf8');
-
-        div.innerHTML = `
-            ${{avatarHtml}}
-            <div class="msg-body">
-                <div class="msg-header">
-                    <span class="msg-name" style="color: ${{nameColor}}" onclick="openProfile(${{data.sender_id}})">${{escapeHtml(data.sender_name)}}</span>
-                    <span class="msg-time">${{timeStr}}</span>
+        if (data.message_type === 'patch_note') {{
+            div.className = 'chat-msg patch-note-msg';
+            div.innerHTML = `
+                <div class="patch-note-icon">&#9671;</div>
+                <div class="msg-body">
+                    <div class="msg-header">
+                        <span class="msg-name patch-note-name">${{escapeHtml(data.sender_name)}}</span>
+                        <span class="msg-time">${{timeStr}}</span>
+                    </div>
+                    <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
                 </div>
-                <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
-            </div>
-        `;
-        container.appendChild(div);
+            `;
+        }} else {{
+            div.className = 'chat-msg';
+            const avatar = avatarCache[data.sender_id];
+            let avatarHtml;
+            if (avatar) {{
+                avatarHtml = `<img class="msg-avatar" src="${{avatar}}" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">`;
+            }} else {{
+                const letter = (data.sender_name || '?')[0].toUpperCase();
+                const hue = (data.sender_id * 137) % 360;
+                avatarHtml = `<div class="msg-avatar-letter" style="color: hsl(${{hue}},60%,65%);" data-pid="${{data.sender_id}}" onclick="openProfile(${{data.sender_id}})">${{letter}}</div>`;
+            }}
+            const nameColor = data.sender_id === PLAYER_ID ? '#22c55e' : (ADMIN_IDS.includes(data.sender_id) ? '#f59e0b' : '#38bdf8');
+            div.innerHTML = `
+                ${{avatarHtml}}
+                <div class="msg-body">
+                    <div class="msg-header">
+                        <span class="msg-name" style="color: ${{nameColor}}" onclick="openProfile(${{data.sender_id}})">${{escapeHtml(data.sender_name)}}</span>
+                        <span class="msg-time">${{timeStr}}</span>
+                    </div>
+                    <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
+                </div>
+            `;
+        }}
 
+        container.appendChild(div);
         if (doScroll) scrollToBottom();
     }}
 

@@ -415,20 +415,25 @@ def edit_player_balance(admin_id: int, player_id: int, new_balance: float) -> di
 # UPDATES CHANNEL POSTING
 # ==========================
 
-def post_update(admin_id: int, content: str) -> dict:
-    """Post a message to the updates channel as the admin."""
-    import auth
-    from chat import save_message
+def post_update(admin_id: int, content: str, tag: str = None) -> dict:
+    """Post a message to the updates channel as the system.
 
-    db = auth.get_db()
-    player = db.query(auth.Player).filter(auth.Player.id == admin_id).first()
-    if not player:
-        db.close()
-        return {"ok": False, "error": "Admin player not found"}
-    admin_name = player.business_name
-    db.close()
+    If `tag` is provided the message is upserted (update existing if the tag
+    already exists in the updates room, otherwise insert).  This makes the
+    operation idempotent so the patch-notes script can be re-run safely.
+    """
+    from chat import save_message, upsert_message
 
-    saved = save_message("updates", admin_id, admin_name, content)
+    if tag:
+        saved = upsert_message(
+            "updates", admin_id, "System", content,
+            tag=tag, message_type="patch_note",
+        )
+    else:
+        saved = save_message(
+            "updates", admin_id, "System", content,
+            message_type="patch_note",
+        )
     if not saved:
         return {"ok": False, "error": "Failed to save message"}
 
