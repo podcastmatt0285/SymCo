@@ -87,6 +87,15 @@ DEFAULT_CREDIT_RATING = 25
 CREDIT_RATING_MIN = 0
 CREDIT_RATING_MAX = 100
 
+CALL_PREMIUM = 0.05           # 5% premium over current price when calling shares back
+CLASS_A_VOTE_MULTIPLIER = 10  # Class A shares count 10× in governance votes
+PROPOSAL_DURATION_HOURS = 72  # Governance proposals stay open for 72 hours
+
+# Quad-Class share split (fractions of the offered shares)
+QUAD_CLASS_B_FRACTION = 0.60  # 60% voting common
+QUAD_CLASS_C_FRACTION = 0.25  # 25% preferred dividend
+QUAD_CLASS_D_FRACTION = 0.15  # 15% non-voting equity
+
 # ==========================
 # ENUMS
 # ==========================
@@ -406,7 +415,11 @@ class CompanyShares(Base):
     halt_reason = Column(String, nullable=True)
     
     is_dual_class = Column(Boolean, default=False)
-    
+
+    # Quad-Class sub-records: non-null for Class C / Class D records
+    parent_company_id = Column(Integer, nullable=True, index=True)
+    share_class_label = Column(String, default="main")  # "main" | "class_c" | "class_d"
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -431,6 +444,43 @@ class ShareholderPosition(Base):
     
     created_at = Column(DateTime, default=datetime.utcnow)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CompanyProposal(Base):
+    """Governance proposal that shareholders vote on."""
+    __tablename__ = "company_proposals"
+
+    id = Column(Integer, primary_key=True)
+    company_shares_id = Column(Integer, ForeignKey("company_shares.id"), index=True, nullable=False)
+    proposer_id = Column(Integer, index=True, nullable=False)
+
+    proposal_type = Column(String, nullable=False)
+    # "dividend_change" | "secondary_offering" | "trading_halt" | "custom"
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+
+    yes_votes = Column(Float, default=0.0)   # weighted vote tally
+    no_votes = Column(Float, default=0.0)
+    total_voters = Column(Integer, default=0)
+
+    status = Column(String, default="open")  # "open" | "passed" | "rejected" | "cancelled"
+    result_applied = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    voting_ends_at = Column(DateTime, nullable=False)
+
+
+class CompanyVote(Base):
+    """A single player's vote on a governance proposal."""
+    __tablename__ = "company_votes"
+
+    id = Column(Integer, primary_key=True)
+    proposal_id = Column(Integer, ForeignKey("company_proposals.id"), index=True, nullable=False)
+    voter_id = Column(Integer, index=True, nullable=False)
+
+    vote = Column(Boolean, nullable=False)   # True = yes, False = no
+    voting_power = Column(Float, nullable=False)  # weighted shares at time of vote
+    voted_at = Column(DateTime, default=datetime.utcnow)
 
 
 class ShareLoan(Base):
@@ -1185,7 +1235,8 @@ def create_player_ipo(
 
         existing_company = db.query(CompanyShares).filter(
             CompanyShares.founder_id == founder_id,
-            CompanyShares.is_delisted == False
+            CompanyShares.is_delisted == False,
+            CompanyShares.parent_company_id == None  # exclude Quad-Class C/D sub-records
         ).first()
         if existing_company:
             return None, "You already have a public company. Delist it first to create a new one."
@@ -1756,16 +1807,10 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.commit()
     db.refresh(company)
 
-    from auth import Player, get_db as get_auth_db
-    auth_db = get_auth_db()
-    try:
-        founder = auth_db.query(Player).filter(Player.id == founder_id).first()
-        if founder:
-            founder.cash_balance += total_payout
-            auth_db.commit()
-    finally:
-        auth_db.close()
+    from reserve_banks import credit_usd
+    credit_usd(founder_id, total_payout)
 
+    # Class A position (founder super-shares — non-lendable, non-shortable)
     if class_a_shares > 0:
         db.add(ShareholderPosition(
             player_id=founder_id,
@@ -1774,24 +1819,121 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
             shares_available_to_lend=0,
             average_cost_basis=0.0,
         ))
+
+    # Class B: 60% of offered shares — public voting common
+    class_b_count = round(class_b_shares * QUAD_CLASS_B_FRACTION)
+    # Class C: 25% of offered shares — preferred dividend (separate record)
+    class_c_count = round(class_b_shares * QUAD_CLASS_C_FRACTION)
+    # Class D: 15% of offered shares — non-voting equity (separate record)
+    class_d_count = class_b_shares - class_b_count - class_c_count
+
     db.add(ShareholderPosition(
         player_id=BANK_PLAYER_ID,
         company_shares_id=company.id,
-        shares_owned=class_b_shares,
-        shares_available_to_lend=class_b_shares,
+        shares_owned=class_b_count,
+        shares_available_to_lend=class_b_count,
         average_cost_basis=discounted_price,
     ))
     db.commit()
 
+    # ── Class C: preferred dividend sub-record ──────────────────────────
+    class_c_div = [{
+        "type": "cash",
+        "amount": share_price * config["fixed_dividend_rate"] / 4,
+        "frequency": "quarterly",
+        "required": True,
+        "share_class": ShareClass.CLASS_C.value,
+    }]
+    company_c = CompanyShares(
+        founder_id=founder_id,
+        business_id=0,
+        company_name=f"{company_name} (Class C Preferred)",
+        ticker_symbol=f"{ticker_symbol}-C",
+        share_class=ShareClass.CLASS_C.value,
+        total_shares_authorized=class_c_count,
+        shares_outstanding=class_c_count,
+        shares_held_by_founder=0,
+        shares_held_by_firm=class_c_count,
+        shares_in_float=0,
+        current_price=share_price,
+        ipo_price=share_price,
+        high_52_week=share_price,
+        low_52_week=share_price,
+        dividend_config=class_c_div,
+        fixed_dividend_rate=config.get("fixed_dividend_rate"),
+        liquidation_preference=config.get("liquidation_preference"),
+        is_callable=True,
+        ipo_type=IPOType.QUAD_CLASS.value,
+        ipo_date=datetime.utcnow(),
+        ipo_valuation=total_valuation,
+        parent_company_id=company.id,
+        share_class_label="class_c",
+    )
+    db.add(company_c)
+    db.commit()
+    db.refresh(company_c)
+    db.add(ShareholderPosition(
+        player_id=BANK_PLAYER_ID,
+        company_shares_id=company_c.id,
+        shares_owned=class_c_count,
+        shares_available_to_lend=class_c_count,
+        average_cost_basis=discounted_price,
+    ))
+    db.commit()
+
+    # ── Class D: non-voting equity sub-record ──────────────────────────
+    company_d = CompanyShares(
+        founder_id=founder_id,
+        business_id=0,
+        company_name=f"{company_name} (Class D Non-Voting)",
+        ticker_symbol=f"{ticker_symbol}-D",
+        share_class=ShareClass.CLASS_D.value,
+        total_shares_authorized=class_d_count,
+        shares_outstanding=class_d_count,
+        shares_held_by_founder=0,
+        shares_held_by_firm=class_d_count,
+        shares_in_float=0,
+        current_price=share_price,
+        ipo_price=share_price,
+        high_52_week=share_price,
+        low_52_week=share_price,
+        dividend_config=[],
+        liquidation_preference=config.get("liquidation_preference"),
+        is_callable=True,
+        ipo_type=IPOType.QUAD_CLASS.value,
+        ipo_date=datetime.utcnow(),
+        ipo_valuation=total_valuation,
+        parent_company_id=company.id,
+        share_class_label="class_d",
+    )
+    db.add(company_d)
+    db.commit()
+    db.refresh(company_d)
+    db.add(ShareholderPosition(
+        player_id=BANK_PLAYER_ID,
+        company_shares_id=company_d.id,
+        shares_owned=class_d_count,
+        shares_available_to_lend=class_d_count,
+        average_cost_basis=discounted_price,
+    ))
+    db.commit()
+
+    # Place sell orders for all three public classes
     try:
         from banks.brokerage_order_book import place_limit_order, OrderSide
-        place_limit_order(
-            player_id=BANK_PLAYER_ID,
-            company_shares_id=company.id,
-            side=OrderSide.SELL,
-            quantity=class_b_shares,
-            limit_price=share_price,
-        )
+        for cs_id, qty in [
+            (company.id, class_b_count),
+            (company_c.id, class_c_count),
+            (company_d.id, class_d_count),
+        ]:
+            if qty > 0:
+                place_limit_order(
+                    player_id=BANK_PLAYER_ID,
+                    company_shares_id=cs_id,
+                    side=OrderSide.SELL,
+                    quantity=qty,
+                    limit_price=share_price,
+                )
     except ImportError:
         pass
 
@@ -1799,9 +1941,259 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     firm_add_cash(underwriting_profit, "underwriting_fee", f"Quad-class: {ticker_symbol}", founder_id, company.id)
     modify_credit_score(founder_id, "ipo_completed")
     print(f"[{BANK_NAME}] 🎉 QUAD-CLASS: {ticker_symbol} "
-          f"(A:{class_a_shares} founder, B:{class_b_shares} public, "
+          f"(A:{class_a_shares} founder, B:{class_b_count} voting, "
+          f"C:{class_c_count} preferred-div, D:{class_d_count} non-voting, "
           f"bonus ${growth_bonus:,.0f}, 10% div, 1.2× liq pref)")
     return company, None
+
+
+# ==========================
+# CALLABLE SHARE REDEMPTION
+# ==========================
+
+def call_shares(company_id: int, founder_id: int):
+    """Buy back all publicly-held shares of a callable company at current price + CALL_PREMIUM.
+
+    Unlike go-private (delist), this does NOT delist the company — it redeems the
+    callable share class and consolidates ownership back with the founder.
+    Returns (True, message) on success, (False, error) on failure.
+    """
+    db = get_db()
+    try:
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == company_id,
+            CompanyShares.founder_id == founder_id,
+            CompanyShares.is_delisted == False,
+            CompanyShares.is_callable == True,
+        ).first()
+        if not company:
+            return False, "Company not found, not yours, already delisted, or not callable."
+
+        public_positions = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company_id,
+            ShareholderPosition.player_id != founder_id,
+            ShareholderPosition.shares_owned > 0,
+        ).all()
+
+        if not public_positions:
+            return False, "There are no outstanding public shares to call back."
+
+        call_price = company.current_price * (1 + CALL_PREMIUM)
+        total_shares_called = sum(p.shares_owned for p in public_positions)
+        total_cost = total_shares_called * call_price
+
+        from reserve_banks import can_afford_usd, spend_player_funds, credit_usd
+        if not can_afford_usd(founder_id, total_cost):
+            return False, (
+                f"Insufficient funds. Calling {total_shares_called:,} shares at "
+                f"${call_price:.4f}/share (5% premium) costs ${total_cost:,.2f}."
+            )
+
+        ok, err = spend_player_funds(founder_id, total_cost)
+        if not ok:
+            return False, f"Payment failed: {err}"
+
+        # Pay each holder and transfer shares to founder
+        founder_pos = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company_id,
+            ShareholderPosition.player_id == founder_id,
+        ).first()
+
+        for pos in public_positions:
+            payout = pos.shares_owned * call_price
+            credit_usd(pos.player_id, payout)
+            if founder_pos:
+                founder_pos.shares_owned += pos.shares_owned
+                founder_pos.shares_available_to_lend += pos.shares_owned
+            pos.shares_owned = 0
+            pos.shares_available_to_lend = 0
+            pos.shares_lent_out = 0
+
+        company.shares_held_by_founder = (founder_pos.shares_owned if founder_pos else total_shares_called)
+        company.shares_held_by_firm = 0
+        company.shares_in_float = 0
+        db.commit()
+
+        print(f"[{BANK_NAME}] 📞 CALL: {company.ticker_symbol} — {total_shares_called:,} shares redeemed "
+              f"@ ${call_price:.4f}/share (${total_cost:,.2f} total)")
+        return True, (
+            f"Called {total_shares_called:,} shares at ${call_price:.4f}/share "
+            f"(5% premium, total ${total_cost:,.2f}). Shares returned to founder."
+        )
+
+    except Exception as e:
+        db.rollback()
+        print(f"[{BANK_NAME}] call_shares error: {e}")
+        return False, str(e)
+    finally:
+        db.close()
+
+
+# ==========================
+# SHAREHOLDER GOVERNANCE / VOTING
+# ==========================
+
+def get_voting_power(company: CompanyShares, position: ShareholderPosition) -> float:
+    """Return the weighted voting power of a position.
+
+    Dual-class / Quad-class founder (Class A): CLASS_A_VOTE_MULTIPLIER × shares.
+    Class C / Class D sub-records: 0 votes (non-voting by design).
+    All other shareholders: 1 × shares.
+    """
+    # Class C and D are non-voting — they live in sub-records (parent_company_id set)
+    if company.share_class_label in ("class_c", "class_d"):
+        return 0.0
+    # Dual/Quad-class: founder's position gets the super-vote
+    if company.is_dual_class and position.player_id == company.founder_id:
+        return float(position.shares_owned) * CLASS_A_VOTE_MULTIPLIER
+    return float(position.shares_owned)
+
+
+def create_proposal(
+    company_id: int,
+    proposer_id: int,
+    proposal_type: str,
+    title: str,
+    description: str,
+):
+    """Create a governance proposal for a company.
+
+    Any shareholder may propose; voting lasts PROPOSAL_DURATION_HOURS hours.
+    Returns (CompanyProposal, None) or (None, error_str).
+    """
+    db = get_db()
+    try:
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == company_id,
+            CompanyShares.is_delisted == False,
+            CompanyShares.parent_company_id == None,
+        ).first()
+        if not company:
+            return None, "Company not found."
+
+        # Confirm proposer holds shares
+        pos = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company_id,
+            ShareholderPosition.player_id == proposer_id,
+            ShareholderPosition.shares_owned > 0,
+        ).first()
+        if not pos:
+            return None, "You must hold shares in this company to create a proposal."
+
+        # Limit open proposals
+        open_count = db.query(CompanyProposal).filter(
+            CompanyProposal.company_shares_id == company_id,
+            CompanyProposal.status == "open",
+        ).count()
+        if open_count >= 3:
+            return None, "This company already has 3 open proposals. Wait for them to close."
+
+        proposal = CompanyProposal(
+            company_shares_id=company_id,
+            proposer_id=proposer_id,
+            proposal_type=proposal_type,
+            title=title,
+            description=description,
+            voting_ends_at=datetime.utcnow() + timedelta(hours=PROPOSAL_DURATION_HOURS),
+        )
+        db.add(proposal)
+        db.commit()
+        db.refresh(proposal)
+        return proposal, None
+    except Exception as e:
+        db.rollback()
+        return None, str(e)
+    finally:
+        db.close()
+
+
+def cast_vote(proposal_id: int, voter_id: int, vote: bool):
+    """Cast a weighted vote on an open governance proposal.
+
+    vote=True means YES, vote=False means NO.
+    Returns (True, message) or (False, error).
+    """
+    db = get_db()
+    try:
+        proposal = db.query(CompanyProposal).filter(
+            CompanyProposal.id == proposal_id,
+            CompanyProposal.status == "open",
+        ).first()
+        if not proposal:
+            return False, "Proposal not found or voting is closed."
+        if proposal.voting_ends_at <= datetime.utcnow():
+            return False, "Voting period has ended."
+
+        existing = db.query(CompanyVote).filter(
+            CompanyVote.proposal_id == proposal_id,
+            CompanyVote.voter_id == voter_id,
+        ).first()
+        if existing:
+            return False, "You have already voted on this proposal."
+
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == proposal.company_shares_id
+        ).first()
+        pos = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == proposal.company_shares_id,
+            ShareholderPosition.player_id == voter_id,
+            ShareholderPosition.shares_owned > 0,
+        ).first()
+        if not pos:
+            return False, "You must hold shares in this company to vote."
+
+        power = get_voting_power(company, pos)
+        if power <= 0:
+            return False, "Your share class carries no voting rights."
+
+        cv = CompanyVote(
+            proposal_id=proposal_id,
+            voter_id=voter_id,
+            vote=vote,
+            voting_power=power,
+        )
+        db.add(cv)
+
+        if vote:
+            proposal.yes_votes += power
+        else:
+            proposal.no_votes += power
+        proposal.total_voters += 1
+
+        db.commit()
+        label = "YES" if vote else "NO"
+        return True, f"Vote cast: {label} ({power:,.0f} weighted votes)"
+    except Exception as e:
+        db.rollback()
+        return False, str(e)
+    finally:
+        db.close()
+
+
+def resolve_proposals():
+    """Close expired proposals and record their outcome.
+
+    Called from the hourly tick. Does NOT auto-apply proposal effects —
+    the founder is expected to act on passed proposals manually.
+    """
+    db = get_db()
+    try:
+        expired = db.query(CompanyProposal).filter(
+            CompanyProposal.status == "open",
+            CompanyProposal.voting_ends_at <= datetime.utcnow(),
+        ).all()
+        for p in expired:
+            p.status = "passed" if p.yes_votes > p.no_votes else "rejected"
+            company = db.query(CompanyShares).filter(
+                CompanyShares.id == p.company_shares_id
+            ).first()
+            ticker = company.ticker_symbol if company else f"id={p.company_shares_id}"
+            print(f"[{BANK_NAME}] 🗳  Proposal #{p.id} '{p.title}' ({ticker}): "
+                  f"{p.status.upper()} ({p.yes_votes:.0f}Y / {p.no_votes:.0f}N)")
+        if expired:
+            db.commit()
+    finally:
+        db.close()
 
 
 def create_ipo(founder_id, business_id, ipo_type, shares_to_offer, total_shares,
@@ -3033,6 +3425,12 @@ def initialize():
     run_ddl_migration(engine, [
         "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS can_relist_after TIMESTAMP",
         "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS delisted_at TIMESTAMP",
+        # Quad-Class sub-record linkage
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS parent_company_id INTEGER",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS share_class_label VARCHAR DEFAULT 'main'",
+        # Governance tables (created by Base.metadata above, DDL guard for safety)
+        "CREATE INDEX IF NOT EXISTS ix_company_proposals_company ON company_proposals (company_shares_id)",
+        "CREATE INDEX IF NOT EXISTS ix_company_votes_proposal ON company_votes (proposal_id)",
     ])
 
     try:
@@ -3083,7 +3481,8 @@ async def tick(current_tick: int, now: datetime, bank_entity=None):
         accrue_margin_interest()
         process_share_loan_interest()
         check_firm_can_operate()
-        
+        resolve_proposals()
+
         try:
             from corporate_actions import process_corporate_actions
             process_corporate_actions()
@@ -3131,13 +3530,17 @@ __all__ = [
     'calculate_player_total_net_worth', 'calculate_player_company_valuation',
     'calculate_business_valuation',
     'create_player_ipo', 'create_ipo', 'delist_company', 'calculate_delisting_cost',
+    'call_shares',
+    'create_proposal', 'cast_vote', 'resolve_proposals', 'get_voting_power',
+    'CompanyProposal', 'CompanyVote',
     'IPOType', 'IPO_CONFIG', 'ShareClass',
+    'CALL_PREMIUM', 'CLASS_A_VOTE_MULTIPLIER', 'PROPOSAL_DURATION_HOURS',
     'calculate_margin_multiplier', 'record_price',
     'calculate_stock_volatility', 'calculate_commodity_volatility',
     'short_sell_shares', 'close_short_position',
     'list_commodity_for_lending', 'borrow_commodity', 'return_commodity',
     'extend_commodity_loan', 'calculate_commodity_due_date',
-    'CompanyShares', 'ShareholderPosition', 'ShareLoan',
+    'CompanyShares', 'ShareholderPosition', 'ShareLoan', 'CompanyProposal', 'CompanyVote',
     'CommodityListing', 'CommodityLoan', 'BrokerageLien',
     'PriceHistory', 'MarginCall', 'FirmTransaction',
     'DividendType', 'DividendFrequency', 'ShareLoanStatus',

@@ -2301,15 +2301,17 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
 
     try:
         from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, get_db as get_firm_db, delist_company
+            CompanyShares, ShareholderPosition, get_db as get_firm_db,
+            delist_company, call_shares, CompanyProposal
         )
         
         db = get_firm_db()
         try:
-            # Get companies founded by this player
+            # Get companies founded by this player (exclude Quad-Class C/D sub-records)
             my_companies = db.query(CompanyShares).filter(
                 CompanyShares.founder_id == player.id,
-                CompanyShares.is_delisted == False
+                CompanyShares.is_delisted == False,
+                CompanyShares.parent_company_id == None,
             ).all()
             
             company_data = []
@@ -2326,11 +2328,18 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                 # Founder can always attempt to go private — delist_company handles the buyback cost
                 can_delist = True
                 
+                # Count open governance proposals for this company
+                open_proposals = db.query(CompanyProposal).filter(
+                    CompanyProposal.company_shares_id == company.id,
+                    CompanyProposal.status == "open",
+                ).count()
+
                 company_data.append({
                     "company": company,
                     "founder_shares": founder_shares,
                     "ownership_pct": ownership_pct,
-                    "can_delist": can_delist
+                    "can_delist": can_delist,
+                    "open_proposals": open_proposals,
                 })
             
             # Get delisted companies
@@ -2378,6 +2387,24 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                 else:
                     go_private_form_html = '<span style="color: #64748b; font-size: 0.85rem;">Buy back all shares to go private</span>'
 
+                call_shares_html = ""
+                if company.is_callable:
+                    call_price = company.current_price * 1.05
+                    call_class_label = company.share_class_label.upper() if company.share_class_label != "main" else "public"
+                    call_confirm_msg = f"Call all outstanding {call_class_label} shares at {fmt_usd(call_price, disp, precision=4)}/share (5% call premium)?"
+                    call_shares_html = f'''
+                        <form action="/api/brokerage/call-shares" method="post" style="display: inline;">
+                            <input type="hidden" name="company_id" value="{company.id}">
+                            <button type="submit" class="btn-orange"
+                                onclick="return confirm({repr(call_confirm_msg)})">
+                                📞 Call Shares
+                            </button>
+                        </form>'''
+
+                proposals_badge = ""
+                if item["open_proposals"] > 0:
+                    proposals_badge = f' <span style="background:#7c3aed;color:#fff;padding:2px 7px;border-radius:10px;font-size:0.75rem;">{item["open_proposals"]} open vote{"s" if item["open_proposals"] != 1 else ""}</span>'
+
                 companies_html += f'''
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -2420,9 +2447,13 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                         </p>
                     </div>
                     
-                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue">View Trading</a>
+                        <a href="/brokerage/governance?company_id={company.id}" class="btn-blue" style="background:#4c1d95;">
+                            🗳 Governance{proposals_badge}
+                        </a>
                         {buyback_form_html}
+                        {call_shares_html}
                         {go_private_form_html}
                     </div>
                 </div>
@@ -4459,6 +4490,270 @@ async def go_private_endpoint(
         from urllib.parse import quote
         return RedirectResponse(
             url=f"/brokerage/ipo?error={quote(str(e))}",
+            status_code=303
+        )
+
+
+@router.post("/api/brokerage/call-shares")
+async def call_shares_endpoint(
+    company_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Redeem all outstanding callable shares at current price + 5% call premium."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    try:
+        from banks.brokerage_firm import call_shares
+        from urllib.parse import quote
+        success, message = call_shares(company_id, player.id)
+        param = "success" if success else "error"
+        return RedirectResponse(
+            url=f"/brokerage/my-companies?{param}={quote(message)}",
+            status_code=303
+        )
+    except Exception as e:
+        from urllib.parse import quote
+        return RedirectResponse(
+            url=f"/brokerage/my-companies?error={quote(str(e))}",
+            status_code=303
+        )
+
+
+@router.get("/brokerage/governance", response_class=HTMLResponse)
+def brokerage_governance_page(
+    company_id: int = None,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Governance / shareholder voting page for a company."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        from banks.brokerage_firm import (
+            CompanyShares, ShareholderPosition, CompanyProposal, CompanyVote,
+            get_db as get_firm_db, get_voting_power, PROPOSAL_DURATION_HOURS,
+            CLASS_A_VOTE_MULTIPLIER
+        )
+        db = get_firm_db()
+        try:
+            if company_id:
+                company = db.query(CompanyShares).filter(
+                    CompanyShares.id == company_id,
+                    CompanyShares.is_delisted == False,
+                    CompanyShares.parent_company_id == None,
+                ).first()
+            else:
+                company = None
+
+            # All companies where this player holds shares (main records only)
+            my_positions = db.query(ShareholderPosition).filter(
+                ShareholderPosition.player_id == player.id,
+                ShareholderPosition.shares_owned > 0,
+            ).all()
+            held_company_ids = [p.company_shares_id for p in my_positions]
+            selectable = db.query(CompanyShares).filter(
+                CompanyShares.id.in_(held_company_ids),
+                CompanyShares.is_delisted == False,
+                CompanyShares.parent_company_id == None,
+            ).all()
+
+            proposals = []
+            my_votes = set()
+            if company:
+                proposals = db.query(CompanyProposal).filter(
+                    CompanyProposal.company_shares_id == company.id,
+                ).order_by(CompanyProposal.created_at.desc()).limit(50).all()
+                voted = db.query(CompanyVote).filter(
+                    CompanyVote.voter_id == player.id,
+                    CompanyVote.proposal_id.in_([p.id for p in proposals]),
+                ).all()
+                my_votes = {v.proposal_id for v in voted}
+
+        finally:
+            db.close()
+
+        # Company selector
+        selector_options = "".join(
+            f'<option value="{c.id}" {"selected" if company and c.id == company.id else ""}>'
+            f'{c.ticker_symbol} — {c.company_name}</option>'
+            for c in selectable
+        )
+        selector_html = f'''
+            <form method="get" action="/brokerage/governance" style="margin-bottom:20px;">
+                <label style="color:#94a3b8;">Select company:</label>
+                <select name="company_id" onchange="this.form.submit()"
+                        style="margin-left:10px;padding:8px 12px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                    <option value="">— choose —</option>
+                    {selector_options}
+                </select>
+            </form>''' if selectable else '<p style="color:#64748b;">You don\'t hold shares in any listed companies.</p>'
+
+        # Proposal creation form (shown if viewing a company)
+        create_form = ""
+        if company:
+            is_founder = company.founder_id == player.id
+            voting_label = ""
+            if company.is_dual_class and is_founder:
+                voting_label = f'<span style="color:#f59e0b;font-size:0.85rem;">⚡ Your Class A shares carry {CLASS_A_VOTE_MULTIPLIER}× voting weight.</span>'
+            elif company.is_dual_class:
+                voting_label = f'<span style="color:#94a3b8;font-size:0.85rem;">Founder\'s Class A shares carry {CLASS_A_VOTE_MULTIPLIER}× the voting weight of your Class B shares.</span>'
+            create_form = f'''
+            <div class="card" style="margin-bottom:20px;">
+                <h3>Create Governance Proposal</h3>
+                {voting_label}
+                <form action="/api/brokerage/create-proposal" method="post" style="margin-top:15px;">
+                    <input type="hidden" name="company_id" value="{company.id}">
+                    <div style="margin-bottom:12px;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Proposal Type</label>
+                        <select name="proposal_type" style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                            <option value="dividend_change">Dividend Change</option>
+                            <option value="secondary_offering">Secondary Offering</option>
+                            <option value="trading_halt">Trading Halt Request</option>
+                            <option value="custom">Custom / Other</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Title</label>
+                        <input type="text" name="title" required maxlength="120"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;"
+                               placeholder="Short summary of the proposal">
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Description</label>
+                        <textarea name="description" required rows="4"
+                                  style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;resize:vertical;"
+                                  placeholder="Full details of the proposal..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-blue">Submit Proposal (voting open {PROPOSAL_DURATION_HOURS}h)</button>
+                </form>
+            </div>'''
+
+        # Proposals list
+        proposals_html = ""
+        if company and proposals:
+            for p in proposals:
+                total_w = p.yes_votes + p.no_votes
+                yes_pct = (p.yes_votes / total_w * 100) if total_w > 0 else 0
+                no_pct = 100 - yes_pct if total_w > 0 else 0
+                status_color = {"open": "#38bdf8", "passed": "#22c55e",
+                                "rejected": "#ef4444", "cancelled": "#64748b"}.get(p.status, "#94a3b8")
+                already_voted = p.id in my_votes
+                vote_form = ""
+                if p.status == "open" and not already_voted:
+                    vote_form = f'''
+                        <form action="/api/brokerage/vote" method="post" style="display:inline;margin-right:8px;">
+                            <input type="hidden" name="proposal_id" value="{p.id}">
+                            <button name="vote" value="yes" class="btn-blue" style="padding:4px 14px;">✓ Yes</button>
+                            <button name="vote" value="no" class="btn-red" style="padding:4px 14px;margin-left:6px;">✗ No</button>
+                        </form>'''
+                elif already_voted:
+                    vote_form = '<span style="color:#64748b;font-size:0.85rem;">✓ You voted</span>'
+                ends = p.voting_ends_at.strftime("%b %d %H:%M UTC") if p.voting_ends_at else "—"
+                proposals_html += f'''
+                <div class="card" style="margin-bottom:12px;border-left:3px solid {status_color};">
+                    <div style="display:flex;justify-content:space-between;align-items:start;">
+                        <div>
+                            <span style="color:{status_color};font-size:0.75rem;text-transform:uppercase;">{p.status}</span>
+                            <h4 style="margin:4px 0;">{p.title}</h4>
+                            <p style="color:#94a3b8;font-size:0.9rem;margin:4px 0;">{p.description}</p>
+                            <p style="color:#64748b;font-size:0.8rem;">Type: {p.proposal_type.replace("_"," ").title()} &nbsp;|&nbsp; Closes: {ends} &nbsp;|&nbsp; Voters: {p.total_voters}</p>
+                        </div>
+                    </div>
+                    <div style="margin:10px 0;">
+                        <div style="display:flex;gap:4px;height:8px;border-radius:4px;overflow:hidden;background:#1e293b;">
+                            <div style="width:{yes_pct:.1f}%;background:#22c55e;"></div>
+                            <div style="width:{no_pct:.1f}%;background:#ef4444;"></div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:#94a3b8;margin-top:4px;">
+                            <span>✓ {p.yes_votes:,.0f} weighted votes</span>
+                            <span>✗ {p.no_votes:,.0f} weighted votes</span>
+                        </div>
+                    </div>
+                    {vote_form}
+                </div>'''
+        elif company:
+            proposals_html = '<p style="color:#64748b;">No proposals yet. Be the first to create one.</p>'
+
+        company_header = f"<h2>{company.ticker_symbol} — {company.company_name}</h2>" if company else ""
+
+        body = f'''
+        <a href="/brokerage/my-companies" style="color:#38bdf8;">← My Companies</a>
+        <h1>Shareholder Governance</h1>
+        <p style="color:#64748b;">Propose and vote on company decisions. Dual/Quad-Class founders always maintain voting control via {CLASS_A_VOTE_MULTIPLIER}× Class A weight.</p>
+        {selector_html}
+        {company_header}
+        {create_form}
+        {proposals_html}
+        '''
+        return shell("Governance", body, player.cash_balance, player.id)
+
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return shell("Governance", f"Error: {e}", player.cash_balance, player.id)
+
+
+@router.post("/api/brokerage/create-proposal")
+async def create_proposal_endpoint(
+    company_id: int = Form(...),
+    proposal_type: str = Form(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from urllib.parse import quote
+    try:
+        from banks.brokerage_firm import create_proposal
+        proposal, err = create_proposal(company_id, player.id, proposal_type, title, description)
+        if proposal:
+            return RedirectResponse(
+                url=f"/brokerage/governance?company_id={company_id}&success=Proposal+submitted.",
+                status_code=303
+            )
+        return RedirectResponse(
+            url=f"/brokerage/governance?company_id={company_id}&error={quote(err or 'Failed')}",
+            status_code=303
+        )
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/brokerage/governance?company_id={company_id}&error={quote(str(e))}",
+            status_code=303
+        )
+
+
+@router.post("/api/brokerage/vote")
+async def cast_vote_endpoint(
+    proposal_id: int = Form(...),
+    vote: str = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from urllib.parse import quote
+    try:
+        from banks.brokerage_firm import cast_vote, CompanyProposal, get_db as get_firm_db
+        db = get_firm_db()
+        try:
+            p = db.query(CompanyProposal).filter(CompanyProposal.id == proposal_id).first()
+            company_id = p.company_shares_id if p else None
+        finally:
+            db.close()
+        success, message = cast_vote(proposal_id, player.id, vote == "yes")
+        param = "success" if success else "error"
+        return RedirectResponse(
+            url=f"/brokerage/governance?company_id={company_id}&{param}={quote(message)}",
+            status_code=303
+        )
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/brokerage/governance?error={quote(str(e))}",
             status_code=303
         )
 
