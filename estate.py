@@ -1000,15 +1000,57 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         db.add(deceased)
 
         # 7. Clean up player data
-        # Remove market orders
+        # Cancel market orders (active + partially filled)
         try:
             from market import MarketOrder
             db.query(MarketOrder).filter(
                 MarketOrder.player_id == player_id,
-                MarketOrder.status == "active"
-            ).update({"status": "cancelled"})
-        except:
-            pass
+                MarketOrder.status.in_(["active", "partial"])
+            ).update({"status": "cancelled"}, synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Market order cleanup error: {e}")
+
+        # Cancel district market orders
+        try:
+            from district_market import DistrictMarketOrder
+            db.query(DistrictMarketOrder).filter(
+                DistrictMarketOrder.player_id == player_id,
+                DistrictMarketOrder.status.in_(["active", "partial"])
+            ).update({"status": "cancelled"}, synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] District market order cleanup error: {e}")
+
+        # Cancel brokerage order book entries
+        try:
+            from banks.brokerage_order_book import OrderBook, get_db as get_ob_db
+            ob_db = get_ob_db()
+            try:
+                ob_db.query(OrderBook).filter(
+                    OrderBook.player_id == player_id,
+                    OrderBook.status.in_(["pending", "partial"])
+                ).update({"status": "cancelled"}, synchronize_session=False)
+                ob_db.commit()
+            finally:
+                ob_db.close()
+        except Exception as e:
+            print(f"[Estate] Brokerage order book cleanup error: {e}")
+
+        # Clean up reserve bank records (separate DB — no cascade from player delete)
+        try:
+            from reserve_banks import PlayerCurrencyBalance, PlayerLegalTender, get_db as get_rb_db
+            rb_db = get_rb_db()
+            try:
+                rb_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id == player_id
+                ).delete(synchronize_session=False)
+                rb_db.query(PlayerLegalTender).filter(
+                    PlayerLegalTender.player_id == player_id
+                ).delete(synchronize_session=False)
+                rb_db.commit()
+            finally:
+                rb_db.close()
+        except Exception as e:
+            print(f"[Estate] Reserve bank record cleanup error: {e}")
 
         # Remove heir designations (they're the deceased's designations)
         db.query(HeirDesignation).filter(

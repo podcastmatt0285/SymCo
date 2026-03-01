@@ -1799,12 +1799,107 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Mayor error: {e}")
 
-        # 10. Reset cash
+        # 10. Cancel all open market and brokerage orders
+        try:
+            from market import MarketOrder, get_db as get_mkt_db
+            mkt_db = get_mkt_db()
+            try:
+                mkt_db.query(MarketOrder).filter(
+                    MarketOrder.player_id == player_id,
+                    MarketOrder.status.in_(["active", "partial"])
+                ).update({"status": "cancelled"}, synchronize_session=False)
+                mkt_db.commit()
+            finally:
+                mkt_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Market order cleanup error: {e}")
+
+        try:
+            from district_market import DistrictMarketOrder, get_db as get_dm_db
+            dm_db = get_dm_db()
+            try:
+                dm_db.query(DistrictMarketOrder).filter(
+                    DistrictMarketOrder.player_id == player_id,
+                    DistrictMarketOrder.status.in_(["active", "partial"])
+                ).update({"status": "cancelled"}, synchronize_session=False)
+                dm_db.commit()
+            finally:
+                dm_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] District market order cleanup error: {e}")
+
+        try:
+            from banks.brokerage_order_book import OrderBook, get_db as get_ob_db
+            ob_db = get_ob_db()
+            try:
+                ob_db.query(OrderBook).filter(
+                    OrderBook.player_id == player_id,
+                    OrderBook.status.in_(["pending", "partial"])
+                ).update({"status": "cancelled"}, synchronize_session=False)
+                ob_db.commit()
+            finally:
+                ob_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Brokerage order book cleanup error: {e}")
+
+        # 11. Clear orphaned records left by deleted businesses
+        try:
+            from business import RetailPrice, SessionLocal as BizSession
+            biz_db = BizSession()
+            biz_db.query(RetailPrice).filter(RetailPrice.player_id == player_id).delete(synchronize_session=False)
+            biz_db.commit(); biz_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Retail price cleanup error: {e}")
+
+        try:
+            from stats_ux import PlayerStats, PlayerCostAverage, get_db as get_stats_db
+            stats_db = get_stats_db()
+            try:
+                stats_db.query(PlayerStats).filter(PlayerStats.player_id == player_id).delete(synchronize_session=False)
+                stats_db.query(PlayerCostAverage).filter(PlayerCostAverage.player_id == player_id).delete(synchronize_session=False)
+                stats_db.commit()
+            finally:
+                stats_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Stats cache cleanup error: {e}")
+
+        try:
+            from executive import Executive, get_db as get_exec_db
+            exec_db = get_exec_db()
+            try:
+                exec_db.query(Executive).filter(
+                    Executive.employer_id == player_id
+                ).update({"employer_id": None}, synchronize_session=False)
+                exec_db.commit()
+            finally:
+                exec_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Executive cleanup error: {e}")
+
+        # Clear non-USD currency balances (player restarts fresh)
+        try:
+            from reserve_banks import PlayerCurrencyBalance, PlayerLegalTender, get_db as get_rb_db
+            rb_db = get_rb_db()
+            try:
+                rb_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id == player_id,
+                    PlayerCurrencyBalance.currency_code != "USD"
+                ).delete(synchronize_session=False)
+                rb_db.query(PlayerLegalTender).filter(
+                    PlayerLegalTender.player_id == player_id
+                ).delete(synchronize_session=False)
+                rb_db.commit()
+            finally:
+                rb_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Reserve bank record cleanup error: {e}")
+
+        # 12. Reset cash (resets USD PlayerCurrencyBalance to restart amount)
         total_liquidated += player.cash_balance
         player.cash_balance = BANKRUPTCY_RESTART_CASH
         auth_db.commit()
 
-        # 11. Create starter land plot
+        # 13. Create starter land plot
         try:
             from land import LandPlot, get_db as get_land_db
             land_db = get_land_db()
@@ -1817,7 +1912,7 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Starter plot error: {e}")
 
-        # 12. Create bankruptcy record
+        # 14. Create bankruptcy record
         red_q_expires = datetime.utcnow() + timedelta(days=BANKRUPTCY_RED_Q_DAYS)
         db = get_db()
         db.add(BankruptcyRecord(
