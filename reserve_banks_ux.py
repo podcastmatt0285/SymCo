@@ -397,22 +397,30 @@ def forex_dashboard(
             <span class="mini">{bank['name']}</span>
         </div>"""
 
-    # ── Balance line: selected cash total + active bond values ──
+    # ── Balance card: all actual currency balances ──
     usd_pcb   = get_player_usd_pcb_balance(player.id)
     usd_total = (player.cash_balance or 0.0) + usd_pcb
 
-    # Selected currency cash total (blue)
-    if my_tender == "USD":
-        cash_chip = f'<span style="margin-right:16px;">🇺🇸 USD <strong style="color:#38bdf8;">${usd_total:,.4f}</strong></span>'
-    else:
-        tender_bal = next((b for b in my_balances if b["currency_code"] == my_tender), None)
-        if tender_bal:
-            cash_chip = (f'<span style="margin-right:16px;">{tender_bal["flag"]} {tender_bal["currency_code"]} '
-                         f'<strong style="color:#38bdf8;">{tender_bal["currency_symbol"]}{tender_bal["balance"]:,.4f}</strong></span>')
-        else:
-            cash_chip = f'<span style="margin-right:16px;color:#475569;">{my_tender} —</span>'
+    bal_chips_list = list(my_balances)
+    if my_tender != "USD" and abs(usd_total) > 0.005:
+        bal_chips_list.append({
+            "flag": "🇺🇸", "currency_code": "USD",
+            "currency_symbol": "$", "balance": usd_total,
+            "usd_value": usd_total,
+        })
+    bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender))
 
-    # Active bond face values, summed per currency (green)
+    if bal_chips_list:
+        bal_chips = "".join(
+            f'<span style="margin-right:16px;">{b["flag"]} <strong>{b["currency_code"]}</strong> '
+            f'<strong style="color:#38bdf8;">{b["currency_symbol"]}{b["balance"]:,.4f}</strong> '
+            f'<span class="mini">≈ {fmt_usd(b["usd_value"], disp)}</span></span>'
+            for b in bal_chips_list
+        )
+    else:
+        bal_chips = '<span style="color:#475569;">No balances yet.</span>'
+
+    # ── Active bond face values (separate from cash balances) ──
     bond_totals: dict = {}
     for b in my_bonds:
         cc = b["currency_code"]
@@ -424,8 +432,6 @@ def forex_dashboard(
         f'<strong style="color:#22c55e;">{v["symbol"]}{v["total"]:,.4f}</strong></span>'
         for cc, v in bond_totals.items()
     ) if bond_totals else '<span style="color:#475569;">No active bonds</span>'
-
-    bal_line = cash_chip + bond_chips
 
     # ── Bank reserve matrix ──
     reserve_rows = ""
@@ -537,7 +543,11 @@ def forex_dashboard(
 
     <div class="card" style="border-left:3px solid #38bdf8;margin-bottom:16px;">
         <h3>Your Balances</h3>
-        <div style="flex-wrap:wrap;display:flex;gap:4px;">{bal_line}</div>
+        <div style="flex-wrap:wrap;display:flex;gap:8px 4px;">{bal_chips}</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e293b;">
+            <span class="mini" style="display:block;margin-bottom:4px;color:#64748b;">Active bond face values (at maturity):</span>
+            <div style="flex-wrap:wrap;display:flex;gap:4px;">{bond_chips}</div>
+        </div>
     </div>
 
     <div class="card">
