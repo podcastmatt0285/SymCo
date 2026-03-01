@@ -41,6 +41,23 @@ class Player(Base):
     last_login = Column(DateTime, default=datetime.utcnow)
     tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
 
+    @property
+    def cash_balance(self) -> float:
+        """USD balance stored in PlayerCurrencyBalance (reserve_banks DB)."""
+        try:
+            from reserve_banks import get_usd_balance
+            return get_usd_balance(self.id)
+        except Exception:
+            return 0.0
+
+    @cash_balance.setter
+    def cash_balance(self, value: float):
+        try:
+            from reserve_banks import set_usd_balance
+            set_usd_balance(self.id, value)
+        except Exception as e:
+            print(f"[Player] cash_balance setter error for player {self.id}: {e}")
+
 
 class PlayerRegistrationIP(Base):
     """

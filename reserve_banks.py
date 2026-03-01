@@ -1486,6 +1486,22 @@ def debit_usd(player_id: int, amount: float) -> bool:
         db.close()
 
 
+def set_usd_balance(player_id: int, value: float):
+    """Set a player's USD balance to an exact value (may go negative). Auto-commits."""
+    db = get_db()
+    try:
+        current = get_usd_balance(player_id)
+        diff = value - current
+        if diff != 0:
+            _adjust_currency_balance(db, player_id, "USD", diff)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] set_usd_balance error (player {player_id}, value={value}): {e}")
+    finally:
+        db.close()
+
+
 def spend_player_funds(player_id: int, usd_cost: float) -> Tuple[bool, str]:
     """
     Deduct a USD-denominated cost from the player using their preferred legal tender.
@@ -1799,7 +1815,7 @@ __all__ = [
     "get_exchange_rate",
     "get_player_legal_tender", "set_player_legal_tender", "convert_to_legal_tender",
     "spend_player_funds", "can_afford_usd", "get_player_display_currency",
-    "get_usd_balance", "credit_usd", "debit_usd",
+    "get_usd_balance", "credit_usd", "debit_usd", "set_usd_balance",
     "get_player_currency_balance", "get_player_currency_balances",
     "get_all_banks", "get_player_bonds",
     "get_recent_forex_trades", "get_yield_history",
