@@ -203,16 +203,14 @@ def charge_p2p_access(player_id: int) -> bool:
 
     auth_db = get_auth_db()
     player = auth_db.query(Player).filter(Player.id == player_id).first()
-    if not player or not can_afford_usd(player_id, player.cash_balance, P2P_DASHBOARD_FEE):
+    if not player or not can_afford_usd(player_id, P2P_DASHBOARD_FEE):
         auth_db.close()
         return False
 
-    ok, _err = spend_player_funds(auth_db, player, P2P_DASHBOARD_FEE)
-    if not ok:
-        auth_db.close()
-        return False
-    auth_db.commit()
+    ok, _err = spend_player_funds(player_id, P2P_DASHBOARD_FEE)
     auth_db.close()
+    if not ok:
+        return False
 
     # Pay to government (player 0)
     from auth import transfer_cash
@@ -603,12 +601,12 @@ def relist_contract(contract_id: int, player_id: int, minimum_bid: float = 0.0,
     from reserve_banks import can_afford_usd, spend_player_funds
     auth_db = get_auth_db()
     player = auth_db.query(Player).filter(Player.id == player_id).first()
-    if not player or not can_afford_usd(player_id, player.cash_balance, RELIST_FEE):
+    if not player or not can_afford_usd(player_id, RELIST_FEE):
         auth_db.close()
         db.close()
         return f"Insufficient funds. Relisting costs ${RELIST_FEE:,.0f}."
 
-    ok, err = spend_player_funds(auth_db, player, RELIST_FEE)
+    ok, err = spend_player_funds(player_id, RELIST_FEE)
     if not ok:
         auth_db.close()
         db.close()
@@ -692,7 +690,7 @@ def process_delivery(contract_id: int, current_tick: int) -> Optional[str]:
     from reserve_banks import can_afford_usd
     auth_db = get_auth_db()
     buyer = auth_db.query(Player).filter(Player.id == buyer_id).first()
-    if not buyer or not can_afford_usd(buyer_id, buyer.cash_balance, contract.price_per_delivery):
+    if not buyer or not can_afford_usd(buyer_id, contract.price_per_delivery):
         auth_db.close()
         # Check grace period for buyer
         if current_tick > contract.next_delivery_tick + DELIVERY_GRACE_PERIOD:
