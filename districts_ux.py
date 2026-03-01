@@ -770,7 +770,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         player_flags = {pid: _bank_flags.get(_get_tender(pid), "🌐") for pid in _order_pids}
 
         # Fetch player's own open orders and items with active orders
-        from district_market import DistrictMarketOrder, OrderStatus, get_db as get_dm_db
+        from district_market import DistrictMarketOrder, OrderStatus, OrderType, get_db as get_dm_db
         dm_db = get_dm_db()
         try:
             my_orders = dm_db.query(DistrictMarketOrder).filter(
@@ -779,7 +779,8 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                 DistrictMarketOrder.status == OrderStatus.ACTIVE
             ).order_by(DistrictMarketOrder.created_at.desc()).all()
             _active_rows = dm_db.query(DistrictMarketOrder.item_type).filter(
-                DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+                DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+                DistrictMarketOrder.order_type == OrderType.SELL
             ).distinct().all()
             active_items = sorted({r[0] for r in _active_rows})
         finally:

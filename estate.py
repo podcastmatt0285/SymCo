@@ -1328,6 +1328,11 @@ async def tick(current_tick: int, now):
     if current_tick % IDLE_CHECK_INTERVAL == 0:
         check_idle_players(current_tick)
 
+    # Retroactive order cleanup every hour — catches any orders from players who
+    # died mid-session where the primary cleanup inside liquidate_estate failed
+    if current_tick % IDLE_CHECK_INTERVAL == 0:
+        _retroactive_deceased_cleanup()
+
 
 # ==========================
 # PUBLIC API

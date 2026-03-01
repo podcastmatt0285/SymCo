@@ -1844,7 +1844,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         player_flags = {pid: _bank_flags.get(_get_tender(pid), "🌐") for pid in _order_pids}
 
         # Fetch player's own open orders and items with active orders
-        from market import MarketOrder, OrderStatus, get_db as get_market_db
+        from market import MarketOrder, OrderStatus, OrderType, get_db as get_market_db
         mkt_db = get_market_db()
         try:
             my_orders = mkt_db.query(MarketOrder).filter(
@@ -1853,7 +1853,8 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 MarketOrder.status == OrderStatus.ACTIVE
             ).order_by(MarketOrder.created_at.desc()).all()
             _active_rows = mkt_db.query(MarketOrder.item_type).filter(
-                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+                MarketOrder.order_type == OrderType.SELL
             ).distinct().all()
             active_items = sorted({r[0] for r in _active_rows})
         finally:
