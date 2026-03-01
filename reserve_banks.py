@@ -1453,6 +1453,10 @@ def get_usd_balance(player_id: int) -> float:
         db.close()
 
 
+# Alias used by reserve_banks_ux
+get_player_usd_pcb_balance = get_usd_balance
+
+
 def credit_usd(player_id: int, amount: float):
     """Credit USD to a player's PlayerCurrencyBalance. Auto-commits."""
     if amount <= 0:
