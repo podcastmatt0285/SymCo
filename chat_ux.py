@@ -380,6 +380,63 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 white-space: pre-wrap;
             }}
 
+            /* ── Mention inline highlights ── */
+            .mention {{
+                display: inline;
+                padding: 1px 4px;
+                border-radius: 3px;
+                font-weight: 600;
+                font-size: 0.82em;
+            }}
+            .mention-player {{ background: rgba(34,197,94,0.15); color: #22c55e; }}
+            .mention-item   {{ background: rgba(56,189,248,0.15); color: #38bdf8; }}
+            .mention-crypto {{ background: rgba(251,191,36,0.15);  color: #fbbf24; }}
+
+            /* ── Mention autocomplete dropdown ── */
+            .mention-dropdown {{
+                display: none;
+                position: absolute;
+                bottom: 56px;
+                left: 0; right: 0;
+                background: #0f172a;
+                border: 1px solid #334155;
+                border-radius: 8px 8px 4px 4px;
+                max-height: 220px;
+                overflow-y: auto;
+                z-index: 101;
+                box-shadow: 0 -6px 16px rgba(0,0,0,0.5);
+            }}
+            .mention-dropdown.show {{ display: block; }}
+            .mention-dropdown-header {{
+                padding: 4px 12px;
+                font-size: 0.68rem;
+                color: #475569;
+                border-bottom: 1px solid #1e293b;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }}
+            .mention-option {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 7px 12px;
+                cursor: pointer;
+                font-size: 0.8rem;
+                transition: background 0.1s;
+            }}
+            .mention-option:hover, .mention-option.selected {{
+                background: #1e293b;
+            }}
+            .mention-trigger-badge {{
+                font-weight: 700;
+                font-size: 0.9rem;
+                width: 14px;
+                text-align: center;
+                flex-shrink: 0;
+            }}
+            .mention-primary {{ color: #e2e8f0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+            .mention-secondary {{ color: #475569; font-size: 0.7rem; flex-shrink: 0; }}
+
             .typing-indicator {{
                 padding: 3px 12px 6px;
                 font-size: 0.68rem;
@@ -669,6 +726,9 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 This channel is read-only.
             </div>
 
+            <!-- Mention Autocomplete Dropdown -->
+            <div class="mention-dropdown" id="mention-dropdown"></div>
+
             <!-- Emoji Picker -->
             <div class="emoji-picker" id="emoji-picker">
                 {"".join(f'<span onclick="insertEmoji(this.textContent)">{e}</span>' for e in emojis)}
@@ -874,7 +934,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                         <span class="msg-name patch-note-name">${{escapeHtml(data.sender_name)}}</span>
                         <span class="msg-time">${{timeStr}}</span>
                     </div>
-                    <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
+                    <div class="msg-text">${{formatMessageContent(filteredContent)}}</div>
                 </div>
             `;
         }} else {{
@@ -896,7 +956,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                         <span class="msg-name" style="color: ${{nameColor}}" onclick="openProfile(${{data.sender_id}})">${{escapeHtml(data.sender_name)}}</span>
                         <span class="msg-time">${{timeStr}}</span>
                     </div>
-                    <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
+                    <div class="msg-text">${{formatMessageContent(filteredContent)}}</div>
                 </div>
             `;
         }}
@@ -1017,6 +1077,127 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         }}
         isTyping = false;
         clearTimeout(typingTimeout);
+    }}
+
+    // ===== MENTION AUTOCOMPLETE =====
+    let mentionState = null;        // {{ type, start, query }} or null
+    let mentionSuggestions = [];
+    let mentionSelectedIdx = -1;
+    let mentionFetchTimer = null;
+
+    const TRIGGER_LABELS = {{'@': 'Players', '/': 'Businesses & Items', '$': 'Crypto'}};
+    const TRIGGER_COLORS = {{'@': '#22c55e', '/': '#38bdf8', '$': '#fbbf24'}};
+
+    function detectMentionTrigger(val, cursorPos) {{
+        const before = val.slice(0, cursorPos);
+        // '@' — no spaces in query
+        let m = before.match(/(?:^|[\s,])(@\S*)$/);
+        if (m) return {{ type: '@', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        // '$' — no spaces in query
+        m = before.match(/(?:^|[\s,])(\$\S*)$/);
+        if (m) return {{ type: '$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        // '/' — spaces allowed (item names can have spaces)
+        m = before.match(/(?:^|[\s,])(\/[^@$/]*)$/);
+        if (m && m[1].length > 1) return {{ type: '/', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        return null;
+    }}
+
+    function handleMentionInput() {{
+        const input = document.getElementById('msg-input');
+        const trigger = detectMentionTrigger(input.value, input.selectionStart);
+        if (!trigger) {{ closeMentionDropdown(); return; }}
+        mentionState = trigger;
+        clearTimeout(mentionFetchTimer);
+        mentionFetchTimer = setTimeout(() => fetchMentionSuggestions(trigger.type, trigger.query), 120);
+    }}
+
+    async function fetchMentionSuggestions(type, query) {{
+        const ep = {{'@': 'players', '/': 'items', '$': 'crypto'}}[type];
+        if (!ep) return;
+        try {{
+            const r = await fetch('/api/chat/suggest/' + ep + '?q=' + encodeURIComponent(query));
+            if (!r.ok) return;
+            const data = await r.json();
+            mentionSuggestions = data;
+            mentionSelectedIdx = data.length ? 0 : -1;
+            renderMentionDropdown(type, data);
+        }} catch {{}}
+    }}
+
+    function renderMentionDropdown(type, suggestions) {{
+        const dd = document.getElementById('mention-dropdown');
+        if (!suggestions.length) {{ dd.classList.remove('show'); dd.innerHTML = ''; return; }}
+        const color = TRIGGER_COLORS[type] || '#e2e8f0';
+        let html = `<div class="mention-dropdown-header">${{TRIGGER_LABELS[type] || type}}</div>`;
+        suggestions.forEach((s, i) => {{
+            const sel = i === mentionSelectedIdx ? ' selected' : '';
+            let primary, secondary;
+            if (type === '@') {{
+                primary = escapeHtml(s.name);
+                secondary = '#' + s.id;
+            }} else if (type === '/') {{
+                primary = escapeHtml(s.name);
+                secondary = escapeHtml(s.category);
+            }} else {{
+                primary = escapeHtml(s.symbol) + ' · ' + escapeHtml(s.name);
+                secondary = s.type;
+            }}
+            html += `<div class="mention-option${{sel}}" data-idx="${{i}}" onmousedown="event.preventDefault();selectMention(${{i}})">
+                <span class="mention-trigger-badge" style="color:${{color}}">${{escapeHtml(type)}}</span>
+                <span class="mention-primary">${{primary}}</span>
+                <span class="mention-secondary">${{secondary}}</span>
+            </div>`;
+        }});
+        dd.innerHTML = html;
+        dd.classList.add('show');
+    }}
+
+    function selectMention(idx) {{
+        if (!mentionState || idx < 0 || idx >= mentionSuggestions.length) return;
+        const s = mentionSuggestions[idx];
+        const type = mentionState.type;
+        let replacement;
+        if (type === '@')      replacement = '@[' + s.name + '] ';
+        else if (type === '/') replacement = '/[' + s.name + '] ';
+        else                   replacement = '$[' + s.symbol + '] ';
+        const input = document.getElementById('msg-input');
+        const after = input.value.slice(input.selectionStart);
+        input.value = input.value.slice(0, mentionState.start) + replacement + after;
+        const newPos = mentionState.start + replacement.length;
+        input.setSelectionRange(newPos, newPos);
+        closeMentionDropdown();
+        input.focus();
+    }}
+
+    function closeMentionDropdown() {{
+        mentionState = null;
+        mentionSuggestions = [];
+        mentionSelectedIdx = -1;
+        const dd = document.getElementById('mention-dropdown');
+        if (dd) {{ dd.classList.remove('show'); dd.innerHTML = ''; }}
+    }}
+
+    function moveMentionSelection(delta) {{
+        if (!mentionSuggestions.length) return;
+        mentionSelectedIdx = (mentionSelectedIdx + delta + mentionSuggestions.length) % mentionSuggestions.length;
+        document.querySelectorAll('.mention-option').forEach((el, i) => {{
+            el.classList.toggle('selected', i === mentionSelectedIdx);
+            if (i === mentionSelectedIdx) el.scrollIntoView({{block: 'nearest'}});
+        }});
+    }}
+
+    function formatMessageContent(raw) {{
+        const re = /@\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]/g;
+        let out = '', last = 0, m;
+        while ((m = re.exec(raw)) !== null) {{
+            if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
+            if (m[1] !== undefined)      out += '<span class="mention mention-player">@' + escapeHtml(m[1]) + '</span>';
+            else if (m[2] !== undefined) out += '<span class="mention mention-item">/'  + escapeHtml(m[2]) + '</span>';
+            else                         out += '<span class="mention mention-crypto">$' + escapeHtml(m[3]) + '</span>';
+            last = m.index + m[0].length;
+        }}
+        if (last < raw.length) out += escapeHtml(raw.slice(last));
+        return out;
     }}
 
     function showTyping(room, names) {{
@@ -1156,17 +1337,31 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
 
         const input = document.getElementById('msg-input');
         input.addEventListener('keydown', (e) => {{
+            const ddOpen = document.getElementById('mention-dropdown').classList.contains('show');
+            if (ddOpen) {{
+                if (e.key === 'ArrowDown')  {{ e.preventDefault(); moveMentionSelection(1); return; }}
+                if (e.key === 'ArrowUp')    {{ e.preventDefault(); moveMentionSelection(-1); return; }}
+                if (e.key === 'Escape')     {{ e.preventDefault(); closeMentionDropdown(); return; }}
+                if (e.key === 'Enter' || e.key === 'Tab') {{
+                    e.preventDefault();
+                    if (mentionSelectedIdx >= 0) selectMention(mentionSelectedIdx);
+                    return;
+                }}
+            }}
             if (e.key === 'Enter' && !e.shiftKey) {{
                 e.preventDefault();
                 sendMessage();
             }}
         }});
-        input.addEventListener('input', handleTypingInput);
+        input.addEventListener('input', () => {{ handleTypingInput(); handleMentionInput(); }});
 
         document.addEventListener('click', (e) => {{
             const picker = document.getElementById('emoji-picker');
             if (picker.classList.contains('show') && !e.target.closest('.emoji-picker') && !e.target.closest('.emoji-toggle')) {{
                 picker.classList.remove('show');
+            }}
+            if (!e.target.closest('#mention-dropdown') && !e.target.closest('#msg-input')) {{
+                closeMentionDropdown();
             }}
         }});
 
@@ -1216,6 +1411,113 @@ def upload_avatar_http(
         return JSONResponse({"error": "Failed to process image"}, status_code=400)
     compressed = get_avatar(player.id)
     return JSONResponse({"ok": True, "avatar": compressed})
+
+
+# ==========================
+# MENTION AUTOCOMPLETE APIs
+# ==========================
+
+@router.get("/api/chat/suggest/players")
+def suggest_players(q: str = Query("", max_length=60)):
+    """Return up to 8 players whose name or ID matches q."""
+    if not q:
+        return JSONResponse([])
+    from auth import get_db, Player
+    db = get_db()
+    try:
+        results = []
+        # Name search
+        rows = db.query(Player).filter(
+            Player.business_name.ilike(f"%{q}%")
+        ).order_by(Player.business_name).limit(8).all()
+        for p in rows:
+            results.append({"id": p.id, "name": p.business_name})
+        # ID search — prepend if not already in results
+        if q.isdigit():
+            p = db.query(Player).filter(Player.id == int(q)).first()
+            if p and not any(r["id"] == p.id for r in results):
+                results.insert(0, {"id": p.id, "name": p.business_name})
+        return JSONResponse(results[:8])
+    finally:
+        db.close()
+
+
+@router.get("/api/chat/suggest/items")
+def suggest_items(q: str = Query("", max_length=60)):
+    """Return up to 10 businesses/items matching q across all 4 JSON catalogues."""
+    if not q:
+        return JSONResponse([])
+    import json as _json
+    q_low = q.lower()
+    results = []
+    sources = [
+        ("business_types.json",      "Business"),
+        ("district_businesses.json", "District Business"),
+        ("item_types.json",          "Item"),
+        ("district_items.json",      "District Item"),
+    ]
+    for fname, category in sources:
+        try:
+            with open(fname) as f:
+                data = _json.load(f)
+            for key, val in data.items():
+                name = val.get("name", key)
+                if q_low in name.lower() or q_low in key.lower():
+                    results.append({"key": key, "name": name, "category": category})
+                    if len(results) >= 10:
+                        break
+        except Exception:
+            pass
+        if len(results) >= 10:
+            break
+    return JSONResponse(results[:10])
+
+
+@router.get("/api/chat/suggest/crypto")
+def suggest_crypto(q: str = Query("", max_length=30)):
+    """Return up to 10 crypto tokens (stable, native, meme) matching q."""
+    if not q:
+        return JSONResponse([])
+    q_low = q.lower()
+    results = []
+
+    # WSC stable coin
+    if q_low in "wsc" or q_low in "wadsworth stable coin":
+        results.append({"symbol": "WSC", "name": "Wadsworth Stable Coin", "type": "stable"})
+
+    # County native tokens
+    try:
+        from counties import get_db as cdb, County
+        db = cdb()
+        try:
+            rows = db.query(County).filter(
+                County.crypto_symbol.ilike(f"%{q}%") | County.crypto_name.ilike(f"%{q}%")
+            ).limit(8).all()
+            for c in rows:
+                results.append({"symbol": c.crypto_symbol, "name": c.crypto_name, "type": "native"})
+        finally:
+            db.close()
+    except Exception:
+        pass
+
+    # Meme coins
+    try:
+        from memecoins import get_db as mdb, MemeCoin
+        db = mdb()
+        try:
+            rows = db.query(MemeCoin).filter(
+                MemeCoin.is_active == True,
+            ).filter(
+                MemeCoin.symbol.ilike(f"%{q}%") | MemeCoin.name.ilike(f"%{q}%")
+            ).limit(8).all()
+            for c in rows:
+                results.append({"symbol": c.symbol, "name": c.name, "type": "meme"})
+        finally:
+            db.close()
+    except Exception:
+        pass
+
+    return JSONResponse(results[:10])
 
 
 # ==========================
