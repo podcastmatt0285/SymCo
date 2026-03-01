@@ -475,6 +475,12 @@ def get_player_lien_info(player_id: int) -> dict:
 # PAGES
 # ==========================
 
+@router.get("/dashboard")
+def dashboard_redirect():
+    """Legacy redirect — the dashboard lives at /."""
+    return RedirectResponse(url="/", status_code=301)
+
+
 @router.get("/", response_class=HTMLResponse)
 def home(session_token: Optional[str] = Cookie(None)):
     """Main dashboard."""
