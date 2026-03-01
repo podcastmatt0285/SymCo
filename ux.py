@@ -1804,6 +1804,18 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         stats = market_mod.get_market_stats()
         order_book = market_mod.get_order_book(item)
 
+        # Build currency flag map for order book traders
+        from reserve_banks import get_player_legal_tender as _get_tender, get_all_banks as _get_banks
+        _bank_flags = {b["code"]: b["flag"] for b in _get_banks()}
+        _bank_flags.setdefault("USD", "🇺🇸")
+        _order_pids = set()
+        if order_book:
+            for _e in order_book.get('bids', [])[:10]:
+                _order_pids.add(_e[4])
+            for _e in order_book.get('asks', [])[:10]:
+                _order_pids.add(_e[4])
+        player_flags = {pid: _bank_flags.get(_get_tender(pid), "🌐") for pid in _order_pids}
+
         # Fetch player's own open orders for this item
         from market import MarketOrder, OrderStatus, get_db as get_market_db
         mkt_db = get_market_db()
@@ -1996,18 +2008,19 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         
         if order_book and order_book.get('bids'):
             for price, qty, order_id, player_name, player_id in order_book['bids'][:10]:
+                p_flag = player_flags.get(player_id, "🌐")
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
                             <span>{fmt_usd(price, disp)}</span>
                             <span>{qty:,.2f}</span>
-                            <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
+                            <span style="font-size: 0.8rem; color: #64748b;" title="Legal tender flag">{p_flag} {player_name[:15]}</span>
                         </div>'''
         else:
             market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No bids</p>'
-        
+
         market_html += '''
                     </div>
-                    
+
                     <!-- ASKS -->
                     <div class="card">
                         <h3 style="color: #ef4444;">Asks (Sell Orders)</h3>
@@ -2016,14 +2029,15 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                             <span>Qty</span>
                             <span>Trader</span>
                         </div>'''
-        
+
         if order_book and order_book.get('asks'):
             for price, qty, order_id, player_name, player_id in order_book['asks'][:10]:
+                p_flag = player_flags.get(player_id, "🌐")
                 market_html += f'''
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
                             <span>{fmt_usd(price, disp)}</span>
                             <span>{qty:,.2f}</span>
-                            <span style="font-size: 0.8rem; color: #64748b;">{player_name[:15]}</span>
+                            <span style="font-size: 0.8rem; color: #64748b;" title="Legal tender flag">{p_flag} {player_name[:15]}</span>
                         </div>'''
         else:
             market_html += '<p style="color: #64748b; font-size: 0.85rem; padding: 8px 0;">No asks</p>'
