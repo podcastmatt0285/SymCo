@@ -816,10 +816,10 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
 
     hiring_fee = exec_obj.wage * (PAY_CYCLES["day"] / PAY_CYCLES[exec_obj.pay_cycle])
     from reserve_banks import can_afford_usd, spend_player_funds
-    if not can_afford_usd(player_id, player.cash_balance, hiring_fee):
+    if not can_afford_usd(player_id, hiring_fee):
         return {"success": False, "error": f"Insufficient funds. Hiring fee: ${hiring_fee:,.2f}"}
 
-    ok, err = spend_player_funds(db, player, hiring_fee)
+    ok, err = spend_player_funds(player.id, hiring_fee)
     if not ok:
         return {"success": False, "error": err}
     exec_obj.player_id       = player_id
@@ -862,7 +862,7 @@ def fire_executive(db, player_id: int, executive_id: int) -> dict:
     # Severance deducted immediately; respects legal tender preference
     if player and severance > 0:
         from reserve_banks import spend_player_funds
-        ok, _ = spend_player_funds(db, player, severance)
+        ok, _ = spend_player_funds(player.id, severance)
         if not ok:
             player.cash_balance -= severance  # force-deduct as unavoidable obligation
 
@@ -926,7 +926,7 @@ def send_to_school(db, player_id: int, executive_id: int) -> dict:
         ticks = ticks // 2
 
     from reserve_banks import spend_player_funds
-    ok, err = spend_player_funds(db, player, cost)
+    ok, err = spend_player_funds(player.id, cost)
     if not ok:
         return {"success": False, "error": err}
 
@@ -1076,7 +1076,7 @@ def _quit_for_nonpayment(db, ex: Executive, player):
 
     # Severance deducted immediately; respects legal tender preference
     from reserve_banks import spend_player_funds
-    ok, _ = spend_player_funds(db, player, severance)
+    ok, _ = spend_player_funds(player.id, severance)
     if not ok:
         player.cash_balance -= severance  # force-deduct as unavoidable obligation
 
@@ -1138,7 +1138,7 @@ def _process_wages(db, current_tick: int):
             continue
 
         from reserve_banks import can_afford_usd, spend_player_funds
-        if not can_afford_usd(player.id, player.cash_balance, wage):
+        if not can_afford_usd(player.id, wage):
             # ── Can't pay ─────────────────────────────────────────────────────
             if ex.is_special and ex.special_ability == "iron_will":
                 # Issues a formal warning instead of quitting
@@ -1154,7 +1154,7 @@ def _process_wages(db, current_tick: int):
                 _quit_for_nonpayment(db, ex, player)
         else:
             # ── Normal payment ────────────────────────────────────────────────
-            ok, _err = spend_player_funds(db, player, wage)
+            ok, _err = spend_player_funds(player.id, wage)
             if ok:
                 ex.missed_payments = 0  # reset on successful pay
             else:
@@ -1176,7 +1176,7 @@ def _process_pensions(db, current_tick: int):
             player = db.query(Player).filter(Player.id == ex.pension_owed_by).first()
             if player:
                 from reserve_banks import spend_player_funds
-                ok, _ = spend_player_funds(db, player, payment)
+                ok, _ = spend_player_funds(player.id, payment)
                 if not ok:
                     player.cash_balance -= payment  # force-deduct as unavoidable obligation
 

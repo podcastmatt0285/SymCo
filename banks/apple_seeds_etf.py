@@ -552,8 +552,8 @@ def collect_holder_fees():
             try:
                 player = auth_db.query(Player).filter(Player.id == player_id).first()
                 from reserve_banks import can_afford_usd, spend_player_funds
-                if player and can_afford_usd(player_id, player.cash_balance, fee_amount):
-                    ok, _ = spend_player_funds(auth_db, player, fee_amount)
+                if player and can_afford_usd(player_id, fee_amount):
+                    ok, _ = spend_player_funds(player.id, fee_amount)
                     if ok:
                         total_fees_collected += fee_amount
                         auth_db.commit()
@@ -894,8 +894,8 @@ def check_and_levy_shareholders(current_tick: int):
                 continue
             
             from reserve_banks import can_afford_usd, spend_player_funds
-            if can_afford_usd(player_id, player.cash_balance, levy_amount):
-                ok, _ = spend_player_funds(auth_db, player, levy_amount)
+            if can_afford_usd(player_id, levy_amount):
+                ok, _ = spend_player_funds(player.id, levy_amount)
                 if ok:
                     total_levied += levy_amount
                     print(f"[{BANK_NAME}] Levy ${levy_amount:,.2f} from Player {player_id}")

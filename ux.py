@@ -6663,12 +6663,12 @@ async def brokerage_disable_share_lending(
         try:
             player_record = auth_db.query(Player).filter(Player.id == player.id).first()
             from reserve_banks import can_afford_usd, spend_player_funds
-            if not player_record or not can_afford_usd(player.id, player_record.cash_balance, opt_out_fee):
+            if not player_record or not can_afford_usd(player.id, opt_out_fee):
                 return RedirectResponse(
                     url=f"/brokerage/portfolio?error=insufficient_funds_for_opt_out_fee_{opt_out_fee:.0f}",
                     status_code=303
                 )
-            ok, _err = spend_player_funds(auth_db, player_record, opt_out_fee)
+            ok, _err = spend_player_funds(player_record.id, opt_out_fee)
             if not ok:
                 return RedirectResponse(url="/brokerage/portfolio?error=payment_failed", status_code=303)
             # Fee goes to government
@@ -6722,9 +6722,9 @@ async def brokerage_deposit_margin(
         try:
             player_record = auth_db.query(Player).filter(Player.id == player.id).first()
             from reserve_banks import can_afford_usd, spend_player_funds
-            if not player_record or not can_afford_usd(player.id, player_record.cash_balance, amount):
+            if not player_record or not can_afford_usd(player.id, amount):
                 return RedirectResponse(url="/banks/brokerage-firm?error=insufficient_funds", status_code=303)
-            ok, _err = spend_player_funds(auth_db, player_record, amount)
+            ok, _err = spend_player_funds(player_record.id, amount)
             if not ok:
                 return RedirectResponse(url="/banks/brokerage-firm?error=payment_failed", status_code=303)
             auth_db.commit()

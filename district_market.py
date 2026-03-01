@@ -199,7 +199,7 @@ def create_order(
         from auth import Player
         from reserve_banks import can_afford_usd
         player = db.query(Player).filter(Player.id == player_id).first()
-        if not player or not can_afford_usd(player_id, player.cash_balance, quantity * (price or 0)):
+        if not player or not can_afford_usd(player_id, quantity * (price or 0)):
             print(f"[DistrictMarket] Player {player_id} has insufficient funds for buy order")
             db.close()
             return None

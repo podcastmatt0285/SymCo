@@ -437,11 +437,11 @@ def create_city(founder_id: int, city_name: str, district_ids: List[int]) -> Tup
         
         # Check founder has enough funds (respects foreign legal tender)
         from reserve_banks import spend_player_funds, can_afford_usd
-        if not can_afford_usd(founder_id, player.cash_balance, CITY_CREATION_COST):
+        if not can_afford_usd(founder_id, CITY_CREATION_COST):
             return None, f"Insufficient funds. Need ${CITY_CREATION_COST:,.2f}"
 
         # Deduct creation cost from player's legal tender
-        ok, _err = spend_player_funds(db, player, CITY_CREATION_COST)
+        ok, _err = spend_player_funds(player.id, CITY_CREATION_COST)
         if not ok:
             return None, _err
         # Log city creation cost
@@ -559,7 +559,7 @@ def apply_to_city(player_id: int, city_id: int) -> Tuple[Optional[CityApplicatio
 
         # Check player can afford the fee (respects foreign legal tender)
         from reserve_banks import can_afford_usd
-        if not can_afford_usd(player_id, player.cash_balance, fee):
+        if not can_afford_usd(player_id, fee):
             return None, f"Insufficient funds for application fee (${fee:,.2f})"
         
         # Create application
@@ -626,12 +626,12 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
             return False, "Mayor not found"
         
         from reserve_banks import spend_player_funds, can_afford_usd, convert_to_legal_tender
-        if not can_afford_usd(application.applicant_id, player.cash_balance, application.calculated_fee):
+        if not can_afford_usd(application.applicant_id, application.calculated_fee):
             application.status = "rejected"
             db.commit()
             return False, "Applicant can no longer afford the fee"
 
-        ok, _err = spend_player_funds(db, player, application.calculated_fee)
+        ok, _err = spend_player_funds(player.id, application.calculated_fee)
         if not ok:
             application.status = "rejected"
             db.commit()
@@ -714,13 +714,13 @@ def leave_city(player_id: int) -> Tuple[bool, str]:
         relocation_fee = city.relocation_fee or 10_000.0
 
         from reserve_banks import spend_player_funds, can_afford_usd
-        if not can_afford_usd(player_id, player.cash_balance, relocation_fee):
+        if not can_afford_usd(player_id, relocation_fee):
             return False, f"Insufficient funds for relocation fee (${relocation_fee:,.2f})"
 
         # Pay relocation fee to city bank
         bank = db.query(CityBank).filter(CityBank.city_id == city.id).first()
         if bank:
-            ok, _err = spend_player_funds(db, player, relocation_fee)
+            ok, _err = spend_player_funds(player.id, relocation_fee)
             if not ok:
                 return False, _err
             bank.cash_reserves += relocation_fee
@@ -842,9 +842,9 @@ def process_banishment(city_id: int, player_id: int) -> Tuple[bool, str]:
 
         if reimbursement > 0:
             from reserve_banks import can_afford_usd, spend_player_funds, convert_to_legal_tender as _clt
-            if can_afford_usd(city.mayor_id, mayor.cash_balance, reimbursement):
+            if can_afford_usd(city.mayor_id, reimbursement):
                 # Mayor pays in their own tender; player receives in theirs
-                ok, _err = spend_player_funds(db, mayor, reimbursement)
+                ok, _err = spend_player_funds(mayor.id, reimbursement)
                 if ok:
                     _amt, _code = _clt(player_id, reimbursement)
                     if _code == "USD":
@@ -1072,7 +1072,7 @@ def initiate_currency_change(mayor_id: int, city_id: int, new_currency: str, pol
             return None, "Mayor not found"
         
         from reserve_banks import can_afford_usd, spend_player_funds as _spf
-        if not can_afford_usd(mayor_id, mayor.cash_balance, poll_tax_amount):
+        if not can_afford_usd(mayor_id, poll_tax_amount):
             return None, f"Insufficient funds for poll tax (${poll_tax_amount:,.2f})"
 
         ok, err = _spf(db, mayor, poll_tax_amount)
@@ -1407,7 +1407,7 @@ def enforce_reserve_requirement(player_id: int) -> Tuple[bool, str]:
         fee = shortfall * RESERVE_SHORTFALL_FEE_MULTIPLIER
         
         from reserve_banks import can_afford_usd, spend_player_funds as _spf
-        if not can_afford_usd(player_id, player.cash_balance, fee):
+        if not can_afford_usd(player_id, fee):
             print(f"[Cities] WARNING: Player {player_id} cannot afford reserve fee ${fee:,.2f}")
             return False, "Insufficient funds for reserve fee"
 
@@ -1670,7 +1670,7 @@ def assume_bank_debt(player_id: int, loan_id: int) -> Tuple[bool, str]:
             return False, "Player not found"
         
         from reserve_banks import can_afford_usd, spend_player_funds as _spf
-        if not can_afford_usd(player_id, player.cash_balance, debt_amount):
+        if not can_afford_usd(player_id, debt_amount):
             return False, f"Insufficient funds (need ${debt_amount:,.2f})"
 
         ok, err = _spf(db, player, debt_amount)
@@ -1892,7 +1892,7 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             return False, "Outsider not found"
         
         from reserve_banks import can_afford_usd, spend_player_funds as _spf
-        if not can_afford_usd(outsider_id, outsider.cash_balance, trade_value):
+        if not can_afford_usd(outsider_id, trade_value):
             return False, "Outsider has insufficient funds"
         
         # Validate seller exists

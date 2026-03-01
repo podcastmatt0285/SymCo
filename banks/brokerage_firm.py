@@ -1901,10 +1901,10 @@ def delist_company(founder_id: int, company_id: int):
         try:
             founder = auth_db.query(Player).filter(Player.id == founder_id).first()
             from reserve_banks import can_afford_usd, spend_player_funds
-            if not founder or not can_afford_usd(founder_id, founder.cash_balance, total_cost):
+            if not founder or not can_afford_usd(founder_id, total_cost):
                 needed = total_cost - (founder.cash_balance if founder else 0)
                 return False, f"You need ${total_cost:,.0f} to go private but you're ${needed:,.0f} short."
-            ok, err = spend_player_funds(auth_db, founder, total_cost)
+            ok, err = spend_player_funds(founder.id, total_cost)
             if not ok:
                 return False, f"Go-private payment failed: {err}"
             auth_db.commit()
@@ -2205,7 +2205,7 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
             borrower = auth_db.query(Player).filter(Player.id == borrower_id).first()
             if not borrower:
                 return None
-            ok, _ = spend_player_funds(auth_db, borrower, collateral_required)
+            ok, _ = spend_player_funds(borrower.id, collateral_required)
             if not ok:
                 return None
             auth_db.commit()
@@ -2482,7 +2482,7 @@ def borrow_commodity(borrower_id: int, listing_id: int, quantity: float) -> Opti
             borrower = auth_db.query(Player).filter(Player.id == borrower_id).first()
             if not borrower:
                 return None
-            ok, _ = spend_player_funds(auth_db, borrower, collateral_required + total_fee)
+            ok, _ = spend_player_funds(borrower.id, collateral_required + total_fee)
             if not ok:
                 return None
             auth_db.commit()
@@ -2911,13 +2911,13 @@ def _process_cash_dividend(company, config, db):
         founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
         
         from reserve_banks import can_afford_usd, spend_player_funds
-        if not founder or not can_afford_usd(company.founder_id, founder.cash_balance, total_dividend):
+        if not founder or not can_afford_usd(company.founder_id, total_dividend):
             company.consecutive_dividend_payouts = 0
             company.dividend_warning_active = True
             company.last_dividend_warning = datetime.utcnow()
             modify_credit_score(company.founder_id, "dividend_missed")
             return
-        ok, _ = spend_player_funds(auth_db, founder, total_dividend)
+        ok, _ = spend_player_funds(founder.id, total_dividend)
         if not ok:
             company.consecutive_dividend_payouts = 0
             company.dividend_warning_active = True

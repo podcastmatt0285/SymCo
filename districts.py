@@ -376,11 +376,11 @@ def create_district(
     merge_cost = get_next_merge_cost(player_id)
     
     from reserve_banks import can_afford_usd, spend_player_funds
-    if not can_afford_usd(player.id, player.cash_balance, merge_cost):
+    if not can_afford_usd(player.id, merge_cost):
         db.close()
         return None, f"Insufficient funds. District merge costs ${merge_cost:,.2f}"
 
-    ok, err = spend_player_funds(db, player, merge_cost)
+    ok, err = spend_player_funds(player.id, merge_cost)
     if not ok:
         db.close()
         return None, err
@@ -543,8 +543,8 @@ def collect_district_taxes(current_month: int):
 
     from reserve_banks import can_afford_usd, spend_player_funds
     for district, owner in district_owner_pairs:
-        if can_afford_usd(owner.id, owner.cash_balance, district.monthly_tax):
-            ok, _err = spend_player_funds(db, owner, district.monthly_tax)
+        if can_afford_usd(owner.id, district.monthly_tax):
+            ok, _err = spend_player_funds(owner.id, district.monthly_tax)
             if not ok:
                 continue
             if government:

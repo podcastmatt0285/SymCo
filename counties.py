@@ -1503,7 +1503,7 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         if not player:
             return False, "Player not found"
         from reserve_banks import can_afford_usd, spend_player_funds
-        if not can_afford_usd(player_id, player.cash_balance, cash_amount):
+        if not can_afford_usd(player_id, cash_amount):
             return False, "Insufficient funds"
 
         price = get_crypto_price_by_symbol(crypto_symbol)
@@ -1515,7 +1515,7 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         crypto_amount = net_cash / price
 
         # Deduct cash from player (supports foreign legal tender)
-        ok, err = spend_player_funds(db, player, cash_amount)
+        ok, err = spend_player_funds(player.id, cash_amount)
         if not ok:
             return False, f"Payment failed: {err}"
 
