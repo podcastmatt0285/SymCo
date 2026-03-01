@@ -156,18 +156,26 @@ def bond_market(
         flash = f'<div class="alert-err">✗ {err}</div>'
 
     # ── Holdings summary card ──
-    # Currency balances row — includes USD PCB (bond interest / matured proceeds) if non-zero
-    usd_pcb_bm   = get_player_usd_pcb_balance(player.id)
-    usd_total_bm = (player.cash_balance or 0.0) + usd_pcb_bm
-    bal_chips_list = list(my_balances)
-    if my_tender != "USD" and abs(usd_total_bm) > 0.005:
-        bal_chips_list.append({
-            "flag": "🇺🇸", "currency_code": "USD",
-            "currency_symbol": "$", "balance": usd_total_bm,
-            "usd_value": usd_total_bm,
-        })
-    # Sort: legal tender first
-    bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender))
+    # USD balance — player.cash_balance IS get_usd_balance() IS PlayerCurrencyBalance USD.
+    # They are the same value (cash_balance was migrated into PlayerCurrencyBalance).
+    # We never add both; just read once.
+    usd_balance  = player.cash_balance or 0.0
+
+    # my_balances comes from get_player_currency_balances() which includes all
+    # non-zero PlayerCurrencyBalance rows. Strip USD from it (we'll add it explicitly
+    # so it always shows even when $0, and avoids any double-entry).
+    bal_chips_list = [b for b in my_balances if b["currency_code"] != "USD"]
+
+    # Always show USD so players can see their spendable USD balance.
+    # PlayerCurrencyBalance USD = all USD earned from income conversion, bond
+    # payouts, trading etc. This is the only USD that exists in-game now.
+    bal_chips_list.append({
+        "flag": "🇺🇸", "currency_code": "USD",
+        "currency_symbol": "$", "balance": usd_balance,
+        "usd_value": usd_balance,
+    })
+    # Sort: legal tender first, then by code
+    bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender, b["currency_code"]))
     if bal_chips_list:
         bal_chips = "".join(
             f'<span style="margin-right:14px;">{b["flag"]} <strong>{b["currency_code"]}</strong> '
@@ -218,8 +226,17 @@ def bond_market(
         </div>
       </div>
       <div style="margin-bottom:10px;">
-        <div class="mini" style="margin-bottom:4px;">Foreign currency balances</div>
+        <div class="mini" style="margin-bottom:4px;">Currency balances
+          <span style="color:#475569;font-style:italic;"> — spendable cash in each currency (USD = PlayerCurrencyBalance, your in-game wallet)</span>
+        </div>
         <div>{bal_chips}</div>
+        <div class="mini" style="color:#475569;margin-top:6px;line-height:1.5;">
+          💡 <strong style="color:#94a3b8;">How USD works:</strong>
+          All USD in the game is stored in your <em>PlayerCurrencyBalance</em> wallet —
+          this is the same balance your businesses earn into, bonds pay out to, and trades settle in.
+          Bond face values shown on the bond cards below are <em>what a bond will pay when it matures</em>,
+          not money you can spend yet.
+        </div>
       </div>
       <div style="margin-bottom:10px;">
         <div class="mini" style="margin-bottom:4px;">Yield farming deposits</div>
@@ -398,17 +415,19 @@ def forex_dashboard(
         </div>"""
 
     # ── Balance card: all actual currency balances ──
-    usd_pcb   = get_player_usd_pcb_balance(player.id)
-    usd_total = (player.cash_balance or 0.0) + usd_pcb
+    # player.cash_balance, get_usd_balance(), and get_player_usd_pcb_balance() all read
+    # the same PlayerCurrencyBalance USD row — read once to avoid double-counting.
+    usd_balance = player.cash_balance or 0.0
 
-    bal_chips_list = list(my_balances)
-    if my_tender != "USD" and abs(usd_total) > 0.005:
-        bal_chips_list.append({
-            "flag": "🇺🇸", "currency_code": "USD",
-            "currency_symbol": "$", "balance": usd_total,
-            "usd_value": usd_total,
-        })
-    bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender))
+    # Strip USD from my_balances (in case PlayerCurrencyBalance had a non-zero USD row)
+    # then always add it explicitly so it shows even at $0.
+    bal_chips_list = [b for b in my_balances if b["currency_code"] != "USD"]
+    bal_chips_list.append({
+        "flag": "🇺🇸", "currency_code": "USD",
+        "currency_symbol": "$", "balance": usd_balance,
+        "usd_value": usd_balance,
+    })
+    bal_chips_list.sort(key=lambda b: (b["currency_code"] != my_tender, b["currency_code"]))
 
     if bal_chips_list:
         bal_chips = "".join(
@@ -542,10 +561,15 @@ def forex_dashboard(
     {flash}
 
     <div class="card" style="border-left:3px solid #38bdf8;margin-bottom:16px;">
-        <h3>Your Balances</h3>
+        <h3>Your Balances <span class="mini" style="color:#475569;font-style:italic;">— spendable cash in your PlayerCurrencyBalance wallet</span></h3>
         <div style="flex-wrap:wrap;display:flex;gap:8px 4px;">{bal_chips}</div>
+        <div class="mini" style="color:#475569;margin-top:6px;line-height:1.5;">
+          💡 USD shown is your <em>PlayerCurrencyBalance</em> wallet — the single source of truth for all
+          in-game USD (income conversions, bond payouts, trades). Bond face values below are
+          <em>future payouts at maturity</em>, not yet spendable.
+        </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e293b;">
-            <span class="mini" style="display:block;margin-bottom:4px;color:#64748b;">Active bond face values (at maturity):</span>
+            <span class="mini" style="display:block;margin-bottom:4px;color:#64748b;">Active bond face values (at maturity — not yet spendable):</span>
             <div style="flex-wrap:wrap;display:flex;gap:4px;">{bond_chips}</div>
         </div>
     </div>
