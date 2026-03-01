@@ -68,8 +68,14 @@ def p2p_gate(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
-    from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency, fmt_usd, get_player_currency_balance
     disp = get_player_display_currency(player.id)
+    tender_bal = get_player_currency_balance(player.id, disp["code"])
+    tender_str = (
+        f"{disp['symbol']}{tender_bal:,.2f}"
+        if disp["code"] == "USD"
+        else f"{disp['symbol']}{tender_bal:,.2f}\u00a0{disp['code']}"
+    )
 
     from p2p import P2P_DASHBOARD_FEE
 
@@ -89,7 +95,7 @@ def p2p_gate(session_token: Optional[str] = Cookie(None)):
                 You will gain access to Contracts, and future P2P services.
             </p>
             <p style="color: #64748b; margin-bottom: 20px;">
-                Your balance: <span style="color: #22c55e;">{fmt_usd(player.cash_balance, disp)}</span>
+                Your balance: <span style="color: #22c55e;">{tender_str}</span>
             </p>
             <form action="/p2p/enter" method="post" style="display: inline;">
                 <button type="submit" class="btn-gold" style="padding: 12px 32px; font-size: 1rem;">
