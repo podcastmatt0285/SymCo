@@ -3315,21 +3315,28 @@ def _process_cash_dividend(company, config, db):
             company.dividend_warning_active = True
             modify_credit_score(company.founder_id, "dividend_missed")
             return
+        try:
+            from stats_ux import log_transaction as _lt
+            _lt(company.founder_id, "dividend_paid", "money", -total_dividend,
+                f"Dividend paid: {company.ticker_symbol} — {amount_per_share:.4f}/share",
+                reference_id=str(company.id))
+        except Exception:
+            pass
         auth_db.commit()
     finally:
         auth_db.close()
-    
+
     positions = db.query(ShareholderPosition).filter(
         ShareholderPosition.company_shares_id == company.id,
         ShareholderPosition.shares_owned > 0
     ).all()
-    
+
     for position in positions:
         dividend_amount = position.shares_owned * amount_per_share
-        
+
         if dividend_amount < 0.01:
             continue
-        
+
         auth_db = get_auth_db()
         try:
             player = auth_db.query(Player).filter(Player.id == position.player_id).first()
@@ -3342,6 +3349,13 @@ def _process_cash_dividend(company, config, db):
                 except Exception:
                     player.cash_balance += dividend_amount
                 auth_db.commit()
+                try:
+                    from stats_ux import log_transaction as _lt
+                    _lt(position.player_id, "dividend", "money", dividend_amount,
+                        f"Dividend received: {company.ticker_symbol} × {position.shares_owned:,.0f} shares",
+                        reference_id=str(company.id))
+                except Exception:
+                    pass
         finally:
             auth_db.close()
 

@@ -154,8 +154,12 @@ def log_transaction(
         )
         db.add(log)
         
-        # Update cost averages for purchases
-        if item_type and quantity > 0 and amount < 0 and transaction_type in ['market_buy', 'cash_out']:
+        # Update cost averages for purchases (any transaction where we paid money for an item)
+        _purchase_types = {
+            'market_buy', 'cash_out', 'district_market_buy',
+            'resource_gain',  # resource_gain with negative amount = paid for resources
+        }
+        if item_type and quantity > 0 and amount < 0 and transaction_type in _purchase_types:
             update_cost_average(db, player_id, item_type, abs(amount), quantity)
         
         db.commit()
@@ -1172,177 +1176,423 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     if not player:
         db.close()
         return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
-    
+
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     stats = calculate_player_stats(player.id)
-    
-    # Get recent transactions
+
+    # Fetch last 200 transactions
     txs = db.query(TransactionLog).filter(
         TransactionLog.player_id == player.id
     ).order_by(desc(TransactionLog.timestamp)).limit(200).all()
-    
+
     # Get cost averages
     averages = db.query(PlayerCostAverage).filter(
         PlayerCostAverage.player_id == player.id,
         PlayerCostAverage.total_quantity > 0
     ).order_by(desc(PlayerCostAverage.total_spent)).limit(200).all()
-    
+
+    # Multi-currency balances
+    currency_rows = []
+    try:
+        from reserve_banks import PlayerCurrencyBalance, StateReserveBank, get_db as get_rb_db
+        rb_db = get_rb_db()
+        try:
+            for row in rb_db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id == player.id,
+                PlayerCurrencyBalance.balance > 0,
+            ).all():
+                bank = rb_db.query(StateReserveBank).filter(
+                    StateReserveBank.currency_code == row.currency_code
+                ).first()
+                sym = bank.currency_symbol if bank else row.currency_code
+                usd_val = row.balance * bank.usd_per_unit if bank and bank.usd_per_unit else row.balance
+                currency_rows.append((row.currency_code, sym, row.balance, usd_val))
+        finally:
+            rb_db.close()
+    except Exception:
+        pass
+
     db.close()
-    
-    # Build transactions HTML
+
+    # ── Icon & badge-colour maps covering every transaction type ──────────────
     TYPE_ICONS = {
-        "market_buy": "🛒", "market_sell": "💰", "production": "🏭", "retail_sale": "🏪",
-        "banking": "🏦", "dividend": "💸", "tax": "📋", "land": "🏗️", "crypto": "₿",
-        "lien": "⚠️", "corporate": "📊", "inheritance": "📜", "city": "🏙️",
+        # Market
+        "market_buy": "🛒", "market_sell": "💰",
+        "resource_gain": "📦", "resource_loss": "📤", "resource_use": "🔧",
         "cash_in": "💵", "cash_out": "💸",
+        # Production / Business
+        "production": "🏭", "retail_sale": "🏪",
+        "business_startup": "🔨",
+        # Land
+        "land_buy": "🏗️", "land_sell": "🏷️", "land": "🏗️",
+        # Districts
+        "district_merge": "🏙️", "district_tax": "💲", "district_market_buy": "🏬", "district_market_sell": "🏬",
+        # Cities / Counties
+        "city_creation": "🌆", "city_application_fee": "📋", "city_application_income": "📋",
+        "city_relocation_fee": "🚛", "city_subsidy": "🎁",
+        "county_mining_deposit": "⛏️",
+        # Crypto
+        "crypto_buy": "₿", "crypto_sell": "₿", "crypto_swap": "🔄",
+        # Governance
+        "governance_proposal": "🗳️", "governance_vote": "🗳️",
+        # Treasury
+        "treasury_grant": "🏛️",
+        # Bonds / Forex
+        "bond_purchase": "📜", "bond_sell": "📄", "bond_maturity": "✅", "bond_called": "📣",
+        "forex_fee": "💱",
+        # Shares / Dividends
+        "share_buy": "📈", "share_sell": "📉",
+        "dividend": "💸", "dividend_paid": "💸",
+        "tax_voucher": "🎫",
+        # Corporate
+        "corporate": "📊",
+        # P2P Contracts
+        "p2p_access": "🔑", "p2p_contract_acquired": "📝", "p2p_contract_sold": "📝",
+        "p2p_relist_fee": "🔁", "p2p_contract_delivery": "📦",
+        "p2p_contract_payment": "💳", "p2p_breach_penalty": "⚠️", "p2p_breach_damages": "⚖️",
+        # Estate / Misc
+        "inheritance": "📜", "tax": "📋",
+        "banking": "🏦", "lien": "⚠️",
     }
     TYPE_BADGE_COLORS = {
+        # Market
         "market_buy": "#3b82f6", "market_sell": "#3b82f6",
-        "production": "#8b5cf6", "retail_sale": "#8b5cf6",
-        "banking": "#06b6d4", "dividend": "#22c55e",
-        "tax": "#f97316", "land": "#84cc16",
-        "crypto": "#f59e0b", "lien": "#ef4444",
-        "corporate": "#64748b", "inheritance": "#a78bfa",
-        "city": "#38bdf8",
+        "resource_gain": "#0ea5e9", "resource_loss": "#0ea5e9", "resource_use": "#7c3aed",
+        "cash_in": "#22c55e", "cash_out": "#ef4444",
+        # Production
+        "production": "#8b5cf6", "retail_sale": "#8b5cf6", "business_startup": "#7c3aed",
+        # Land
+        "land_buy": "#84cc16", "land_sell": "#84cc16", "land": "#84cc16",
+        # Districts / Cities
+        "district_merge": "#f59e0b", "district_tax": "#f97316",
+        "district_market_buy": "#10b981", "district_market_sell": "#10b981",
+        "city_creation": "#38bdf8", "city_application_fee": "#38bdf8",
+        "city_application_income": "#22c55e", "city_relocation_fee": "#f97316",
+        "city_subsidy": "#22c55e", "county_mining_deposit": "#92400e",
+        # Crypto / Governance / Treasury
+        "crypto_buy": "#f59e0b", "crypto_sell": "#f59e0b", "crypto_swap": "#f59e0b",
+        "governance_proposal": "#6366f1", "governance_vote": "#6366f1",
+        "treasury_grant": "#22c55e",
+        # Bonds / Forex
+        "bond_purchase": "#0891b2", "bond_sell": "#0891b2",
+        "bond_maturity": "#10b981", "bond_called": "#10b981", "forex_fee": "#f97316",
+        # Shares / Dividends
+        "share_buy": "#3b82f6", "share_sell": "#3b82f6",
+        "dividend": "#22c55e", "dividend_paid": "#ef4444", "tax_voucher": "#a78bfa",
+        # Corporate / P2P / Estate
+        "corporate": "#64748b",
+        "p2p_access": "#475569", "p2p_contract_acquired": "#6366f1",
+        "p2p_contract_sold": "#6366f1", "p2p_relist_fee": "#475569",
+        "p2p_contract_delivery": "#0ea5e9", "p2p_contract_payment": "#3b82f6",
+        "p2p_breach_penalty": "#ef4444", "p2p_breach_damages": "#22c55e",
+        "inheritance": "#a78bfa", "tax": "#f97316",
+        "banking": "#06b6d4", "lien": "#ef4444",
     }
+
+    # Category buckets for filter tabs (exact prefix / substring matching)
+    # Each tab key maps to a tuple of substrings; a tx matches if its type contains any of them
+    TAB_FILTERS = {
+        "shares":     ("share_buy", "share_sell"),
+        "bonds":      ("bond_",),
+        "cash":       ("cash_in", "cash_out"),
+        "resources":  ("resource_gain", "resource_loss", "resource_use", "production"),
+        "market":     ("market_buy", "market_sell"),
+        "district":   ("district_",),
+        "mining":     ("county_mining",),
+        "dividend":   ("dividend",),
+        "tax":        ("tax", "lien"),
+        "land":       ("land_buy", "land_sell", "land_"),
+        "crypto":     ("crypto_",),
+        "governance": ("governance_",),
+        "corporate":  ("corporate",),
+        "treasury":   ("treasury_",),
+        "city":       ("city_", "county_"),
+        "p2p":        ("p2p_",),
+        "forex":      ("forex_", "bond_"),
+    }
+    # Build a flat JSON map of type → category list for JS
+    type_to_tabs: Dict[str, List[str]] = {}
+    for tx in txs:
+        tt = tx.transaction_type or ""
+        if tt and tt not in type_to_tabs:
+            matched = [tab for tab, prefixes in TAB_FILTERS.items()
+                       if any(tt.startswith(p) or p in tt for p in prefixes)]
+            type_to_tabs[tt] = matched
+
+    # 30-day income/expense breakdown by category
+    cutoff_30d = datetime.utcnow() - timedelta(days=30)
+    cat_income: Dict[str, float] = {}
+    cat_expense: Dict[str, float] = {}
+    for tx in txs:
+        if tx.timestamp and tx.timestamp < cutoff_30d:
+            continue
+        # Group by first segment of transaction_type (e.g. "market_buy" → "market")
+        tt = tx.transaction_type or "other"
+        group = tt.split("_")[0]
+        if tx.amount > 0:
+            cat_income[group] = cat_income.get(group, 0.0) + tx.amount
+        elif tx.amount < 0:
+            cat_expense[group] = cat_expense.get(group, 0.0) + abs(tx.amount)
 
     total_income = sum(tx.amount for tx in txs if tx.amount > 0)
     total_expenses = sum(tx.amount for tx in txs if tx.amount < 0)
     net = total_income + total_expenses
 
-    tx_html = ""
-    for tx in txs:
-        amount_class = "positive" if tx.amount > 0 else "negative"
-        amount_str = f"+{fmt_usd(tx.amount, disp)}" if tx.amount > 0 else f"-{fmt_usd(abs(tx.amount), disp)}"
-        border_color = "#22c55e" if tx.amount > 0 else "#ef4444"
-        tx_type = tx.transaction_type or ""
-        icon = next((v for k, v in TYPE_ICONS.items() if k in tx_type), "📝")
-        badge_color = next((v for k, v in TYPE_BADGE_COLORS.items() if k in tx_type), "#475569")
-        desc_full = tx.description or tx_type
-        desc_short = (desc_full[:60] + "…") if len(desc_full) > 60 else desc_full
+    # ── Build transaction items HTML ─────────────────────────────────────────
+    def _tx_row(tx) -> str:
+        tt = tx.transaction_type or ""
+        icon = TYPE_ICONS.get(tt) or next((v for k, v in TYPE_ICONS.items() if tt.startswith(k)), "📝")
+        badge_color = TYPE_BADGE_COLORS.get(tt) or next(
+            (v for k, v in TYPE_BADGE_COLORS.items() if tt.startswith(k)), "#475569")
+        tabs_json = json.dumps(type_to_tabs.get(tt, []))
+        desc_full = tx.description or tt
+        desc_short = (desc_full[:64] + "…") if len(desc_full) > 64 else desc_full
+        if tx.amount > 0:
+            amount_str = f'<span class="transaction-amount positive">+{fmt_usd(tx.amount, disp)}</span>'
+            border_color = "#22c55e"
+        elif tx.amount < 0:
+            amount_str = f'<span class="transaction-amount negative">-{fmt_usd(abs(tx.amount), disp)}</span>'
+            border_color = "#ef4444"
+        else:
+            amount_str = f'<span class="transaction-amount" style="color:#64748b;">—</span>'
+            border_color = "#334155"
         item_line = ""
         if getattr(tx, "item_type", None):
-            qty = getattr(tx, "quantity", None)
+            qty = getattr(tx, "quantity", 0.0)
             unit_price = getattr(tx, "unit_price", None)
-            parts = [tx.item_type]
-            if qty is not None:
-                parts.append(f"× {qty:,.2f}")
+            parts = [f'<span style="color:#cbd5e1;">{tx.item_type.replace("_"," ")}</span>']
+            if qty:
+                parts.append(f'× {qty:,.2f}')
             if unit_price is not None:
-                parts.append(f"@ {fmt_usd(unit_price, disp, precision=4)}")
-            item_line = f'<div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">{" ".join(parts)}</div>'
-        tx_html += f"""
-        <div class="transaction-item" data-type="{tx_type}" data-desc="{desc_full.lower()}" style="border-left:3px solid {border_color};padding-left:10px;">
-            <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;">
-                <span style="font-size:1.1rem;">{icon}</span>
-                <div style="flex:1;min-width:0;">
-                    <div class="transaction-desc">{desc_short}</div>
-                    {item_line}
-                    <div class="transaction-time">{tx.timestamp.strftime('%Y-%m-%d %H:%M')}</div>
+                parts.append(f'@ {fmt_usd(unit_price, disp, precision=4)}')
+            item_line = f'<div style="font-size:0.77rem;color:#94a3b8;margin-top:2px;">{" ".join(parts)}</div>'
+        ts_str = tx.timestamp.strftime('%b %d %H:%M') if tx.timestamp else ""
+        return (
+            f'<div class="transaction-item" data-type="{tt}" data-tabs=\'{tabs_json}\' '
+            f'data-desc="{desc_full.lower()}" '
+            f'style="border-left:3px solid {border_color};padding-left:10px;">'
+            f'<div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;">'
+            f'<span style="font-size:1.1rem;flex-shrink:0;">{icon}</span>'
+            f'<div style="flex:1;min-width:0;">'
+            f'<div class="transaction-desc">{desc_short}</div>'
+            f'{item_line}'
+            f'<div class="transaction-time">{ts_str}</div>'
+            f'</div></div>'
+            f'<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">'
+            f'<span class="badge" style="background:{badge_color};color:#fff;font-size:0.7rem;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{tt}</span>'
+            f'{amount_str}'
+            f'</div></div>'
+        )
+
+    tx_html = "".join(_tx_row(tx) for tx in txs)
+
+    # ── Cost averages HTML ────────────────────────────────────────────────────
+    avg_html = "".join(
+        f'<div class="stat-row">'
+        f'<span class="stat-label">{a.item_type.replace("_"," ").title()}</span>'
+        f'<span class="stat-value">{fmt_usd(a.average_cost, disp)}/unit '
+        f'<span style="color:#64748b;font-size:0.8rem;">({a.total_quantity:,.0f} total, '
+        f'{fmt_usd(a.total_spent, disp)} spent)</span></span></div>'
+        for a in averages
+    )
+
+    # ── Multi-currency balances HTML ──────────────────────────────────────────
+    currency_html = ""
+    for code, sym, bal, usd_val in currency_rows:
+        currency_html += (
+            f'<div class="stat-row">'
+            f'<span class="stat-label">{code}</span>'
+            f'<span class="stat-value">{sym}{bal:,.4f} '
+            f'<span style="color:#64748b;font-size:0.8rem;">≈ {fmt_usd(usd_val, disp)}</span></span>'
+            f'</div>'
+        )
+
+    # ── 30-day category breakdown HTML ────────────────────────────────────────
+    all_groups = sorted(set(list(cat_income.keys()) + list(cat_expense.keys())))
+    breakdown_html = ""
+    if all_groups:
+        max_val = max(
+            (max((cat_income.get(g, 0) for g in all_groups), default=0),
+             max((cat_expense.get(g, 0) for g in all_groups), default=0))
+        )
+        for group in sorted(all_groups, key=lambda g: cat_income.get(g, 0) + cat_expense.get(g, 0), reverse=True)[:10]:
+            inc = cat_income.get(group, 0.0)
+            exp = cat_expense.get(group, 0.0)
+            inc_w = int(inc / max_val * 100) if max_val else 0
+            exp_w = int(exp / max_val * 100) if max_val else 0
+            breakdown_html += f"""
+            <div style="margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px;">
+                    <span style="color:#94a3b8;text-transform:capitalize;">{group}</span>
+                    <span>
+                        {f'<span style="color:#22c55e;">+{fmt_usd(inc, disp)}</span>' if inc else ''}
+                        {f'<span style="color:#64748b;margin:0 4px;">|</span><span style="color:#ef4444;">-{fmt_usd(exp, disp)}</span>' if exp else ''}
+                    </span>
                 </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-                <span class="badge" style="background:{badge_color};color:#fff;">{tx_type}</span>
-                <span class="transaction-amount {amount_class}">{amount_str}</span>
-            </div>
-        </div>
-        """
-    
-    # Build cost averages HTML
-    avg_html = ""
-    for avg in averages:
-        avg_html += f"""
-        <div class="stat-row">
-            <span class="stat-label">{avg.item_type.replace('_', ' ').title()}</span>
-            <span class="stat-value">{fmt_usd(avg.average_cost, disp)}/unit ({avg.total_quantity:,.0f} total)</span>
-        </div>
-        """
-    
+                {'<div style="height:4px;background:#22c55e;border-radius:2px;width:' + str(inc_w) + '%;margin-bottom:2px;"></div>' if inc else ''}
+                {'<div style="height:4px;background:#ef4444;border-radius:2px;width:' + str(exp_w) + '%;"></div>' if exp else ''}
+            </div>"""
+    else:
+        breakdown_html = '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No activity in last 30 days</div>'
+
+    net_color = "#22c55e" if net >= 0 else "#ef4444"
+    net_sign = "+" if net >= 0 else ""
+
     body = f"""
     <h1 class="page-title">💼 Your Business Economy</h1>
-    
+
     <div class="grid">
-        <div class="card" style="cursor: default;">
+        <div class="card" style="cursor:default;">
             <div class="card-header">
                 <span class="card-title">Net Worth Breakdown</span>
                 <span class="card-icon">💰</span>
             </div>
             <div class="card-value">{fmt_usd(stats['total_net_worth'], disp)}</div>
-            <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">{fmt_usd(stats['cash_balance'], disp)}</span></div>
-            <div class="stat-row"><span class="stat-label">Inventory</span><span class="stat-value">{fmt_usd(stats['inventory_value'], disp)}</span></div>
-            <div class="stat-row"><span class="stat-label">Land ({stats['lands_owned']})</span><span class="stat-value">{fmt_usd(stats['land_value'], disp)}</span></div>
+            <div class="stat-row"><span class="stat-label">Cash (USD)</span><span class="stat-value">{fmt_usd(stats['cash_balance'], disp)}</span></div>
+            {currency_html}
+            <div class="stat-row" style="border-top:1px solid #1e293b;margin-top:6px;padding-top:6px;">
+                <span class="stat-label">Inventory</span>
+                <span class="stat-value">{fmt_usd(stats['inventory_value'], disp)}</span>
+            </div>
+            <div class="stat-row"><span class="stat-label">Land ({stats['lands_owned']} plots)</span><span class="stat-value">{fmt_usd(stats['land_value'], disp)}</span></div>
             <div class="stat-row"><span class="stat-label">Businesses ({stats['businesses_owned']})</span><span class="stat-value">{fmt_usd(stats['business_value'], disp)}</span></div>
             <div class="stat-row"><span class="stat-label">Shares</span><span class="stat-value">{fmt_usd(stats['share_value'], disp)}</span></div>
             <div class="stat-row"><span class="stat-label">Districts ({stats['districts_owned']})</span><span class="stat-value">{fmt_usd(stats['district_value'], disp)}</span></div>
         </div>
-        
-        <div class="card" style="cursor: default;">
+
+        <div class="card" style="cursor:default;">
             <div class="card-header">
-                <span class="card-title">Cost Averages</span>
+                <span class="card-title">30-Day Activity</span>
                 <span class="card-icon">📊</span>
             </div>
-            {avg_html if avg_html else '<div class="stat-row"><span class="stat-label">No purchase history yet</span></div>'}
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+                <div><div style="color:#64748b;font-size:0.75rem;">Income</div><div style="color:#22c55e;font-weight:700;">+{fmt_usd(total_income, disp)}</div></div>
+                <div><div style="color:#64748b;font-size:0.75rem;">Expenses</div><div style="color:#ef4444;font-weight:700;">-{fmt_usd(abs(total_expenses), disp)}</div></div>
+                <div><div style="color:#64748b;font-size:0.75rem;">Net</div><div style="color:{net_color};font-weight:700;">{net_sign}{fmt_usd(net, disp)}</div></div>
+            </div>
+            {breakdown_html}
         </div>
     </div>
-    
-    <div style="margin-top: 24px;">
-        <div class="card" style="cursor: default;">
+
+    <div class="grid" style="margin-top:16px;">
+        <div class="card" style="cursor:default;">
             <div class="card-header">
-                <span class="card-title">Recent Transactions</span>
+                <span class="card-title">Purchase Cost Averages</span>
+                <span class="card-icon">📈</span>
+            </div>
+            {avg_html if avg_html else '<div style="color:#64748b;font-size:0.85rem;padding:8px 0;">No purchase history yet</div>'}
+        </div>
+    </div>
+
+    <div style="margin-top:16px;">
+        <div class="card" style="cursor:default;">
+            <div class="card-header">
+                <span class="card-title">Recent Transactions <span style="color:#64748b;font-size:0.8rem;">(last 200)</span></span>
                 <span class="card-icon">📝</span>
             </div>
-            <div style="display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;padding:10px;background:#0f172a;border-radius:6px;">
-                <div><span style="color:#64748b;font-size:0.8rem;">Income</span><br><span style="color:#22c55e;font-weight:bold;">+{fmt_usd(total_income, disp)}</span></div>
-                <div><span style="color:#64748b;font-size:0.8rem;">Expenses</span><br><span style="color:#ef4444;font-weight:bold;">{fmt_usd(total_expenses, disp)}</span></div>
-                <div><span style="color:#64748b;font-size:0.8rem;">Net</span><br><span style="color:{"#22c55e" if net >= 0 else "#ef4444"};font-weight:bold;">{"+" if net >= 0 else ""}{fmt_usd(net, disp)}</span></div>
-            </div>
             <div style="margin-bottom:10px;">
-                <input type="text" id="tx-search" placeholder="Search transactions…" oninput="searchTx(this.value)" style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid #1e293b;color:#f1f5f9;border-radius:4px;font-size:0.85rem;box-sizing:border-box;">
+                <input type="text" id="tx-search" placeholder="Search transactions…"
+                    oninput="searchTx(this.value)"
+                    style="width:100%;padding:7px 10px;background:#0f172a;border:1px solid #1e293b;
+                           color:#f1f5f9;border-radius:4px;font-size:0.85rem;box-sizing:border-box;">
             </div>
-            <div class="filter-tabs" style="margin-bottom: 12px; flex-wrap: wrap;">
+            <div class="filter-tabs" style="margin-bottom:12px;flex-wrap:wrap;">
                 <button class="filter-tab active" onclick="filterTx('all',this)">All</button>
-                <button class="filter-tab" onclick="filterTx('share',this)">Shares</button>
-                <button class="filter-tab" onclick="filterTx('cash',this)">Cash</button>
-                <button class="filter-tab" onclick="filterTx('resource',this)">Resources</button>
-                <button class="filter-tab" onclick="filterTx('district',this)">District</button>
-                <button class="filter-tab" onclick="filterTx('county',this)">Mining</button>
+                <button class="filter-tab" onclick="filterTx('market',this)">Market</button>
+                <button class="filter-tab" onclick="filterTx('shares',this)">Shares</button>
                 <button class="filter-tab" onclick="filterTx('dividend',this)">Dividend</button>
-                <button class="filter-tab" onclick="filterTx('tax',this)">Tax</button>
+                <button class="filter-tab" onclick="filterTx('bonds',this)">Bonds</button>
+                <button class="filter-tab" onclick="filterTx('resources',this)">Resources</button>
                 <button class="filter-tab" onclick="filterTx('land',this)">Land</button>
+                <button class="filter-tab" onclick="filterTx('district',this)">District</button>
+                <button class="filter-tab" onclick="filterTx('city',this)">City/County</button>
                 <button class="filter-tab" onclick="filterTx('crypto',this)">Crypto</button>
                 <button class="filter-tab" onclick="filterTx('governance',this)">Governance</button>
                 <button class="filter-tab" onclick="filterTx('corporate',this)">Corporate</button>
                 <button class="filter-tab" onclick="filterTx('treasury',this)">Treasury</button>
-                <button class="filter-tab" onclick="filterTx('city',this)">City/County</button>
+                <button class="filter-tab" onclick="filterTx('p2p',this)">P2P</button>
+                <button class="filter-tab" onclick="filterTx('tax',this)">Tax</button>
+                <button class="filter-tab" onclick="filterTx('mining',this)">Mining</button>
             </div>
             <div id="transactions">
-                {tx_html if tx_html else '<div style="padding: 20px; text-align: center; color: #64748b;">No transactions yet</div>'}
+                {tx_html if tx_html else '<div style="padding:20px;text-align:center;color:#64748b;">No transactions yet</div>'}
             </div>
+            <div id="tx-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:12px;"></div>
         </div>
     </div>
+
     <script>
-    var _txFilter = 'all';
-    var _txSearch = '';
-    function filterTx(type, btn) {{
-        _txFilter = type;
-        document.querySelectorAll('.filter-tab').forEach(function(b){{ b.classList.remove('active'); }});
-        if(btn) btn.classList.add('active');
-        _applyTxFilters();
-    }}
-    function searchTx(val) {{
-        _txSearch = val.toLowerCase();
-        _applyTxFilters();
-    }}
-    function _applyTxFilters() {{
-        document.querySelectorAll('.transaction-item').forEach(function(el){{
-            var typeMatch = _txFilter === 'all' || (el.dataset.type || '').indexOf(_txFilter) !== -1;
-            var searchMatch = !_txSearch || (el.dataset.desc || '').indexOf(_txSearch) !== -1;
-            el.style.display = (typeMatch && searchMatch) ? '' : 'none';
-        }});
-    }}
+    (function() {{
+        var _filter = 'all';
+        var _search = '';
+        var _page = 0;
+        var PAGE_SIZE = 50;
+        var _visible = [];
+
+        function _buildVisible() {{
+            _visible = [];
+            document.querySelectorAll('.transaction-item').forEach(function(el) {{
+                var tt = el.dataset.type || '';
+                var tabs = [];
+                try {{ tabs = JSON.parse(el.dataset.tabs || '[]'); }} catch(e) {{}}
+                var typeMatch = _filter === 'all' || tabs.indexOf(_filter) !== -1;
+                var searchMatch = !_search ||
+                    (el.dataset.desc || '').indexOf(_search) !== -1 ||
+                    tt.indexOf(_search) !== -1;
+                el.style.display = 'none';
+                if (typeMatch && searchMatch) _visible.push(el);
+            }});
+            _page = 0;
+            _render();
+        }}
+
+        function _render() {{
+            _visible.forEach(function(el) {{ el.style.display = 'none'; }});
+            var start = _page * PAGE_SIZE;
+            _visible.slice(start, start + PAGE_SIZE).forEach(function(el) {{ el.style.display = ''; }});
+            _renderPagination();
+        }}
+
+        function _renderPagination() {{
+            var total_pages = Math.ceil(_visible.length / PAGE_SIZE);
+            var container = document.getElementById('tx-pagination');
+            if (!container) return;
+            if (total_pages <= 1) {{ container.innerHTML = ''; return; }}
+            var html = '';
+            for (var i = 0; i < total_pages; i++) {{
+                var active = i === _page ? 'background:#3b82f6;color:#fff;' : 'background:#1e293b;color:#94a3b8;';
+                html += '<button onclick="__txPage(' + i + ')" style="' + active +
+                    'border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.8rem;">' + (i+1) + '</button>';
+            }}
+            html += '<span style="color:#64748b;font-size:0.8rem;align-self:center;">' +
+                _visible.length + ' results</span>';
+            container.innerHTML = html;
+        }}
+
+        window.__txPage = function(p) {{
+            _page = p;
+            _render();
+            document.getElementById('transactions').scrollIntoView({{behavior:'smooth',block:'start'}});
+        }};
+
+        window.filterTx = function(type, btn) {{
+            _filter = type;
+            document.querySelectorAll('.filter-tab').forEach(function(b) {{ b.classList.remove('active'); }});
+            if (btn) btn.classList.add('active');
+            _buildVisible();
+        }};
+
+        window.searchTx = function(val) {{
+            _search = val.toLowerCase();
+            _buildVisible();
+        }};
+
+        _buildVisible();
+    }})();
     </script>
     """
-    
+
     return HTMLResponse(stats_shell("My Business", body, player.cash_balance, player.business_name, player.id))
 
 

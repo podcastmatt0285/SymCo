@@ -440,8 +440,16 @@ def _call_bonds_if_needed(db, bank: StateReserveBank):
         bank.net_demand_wsc -= bond.face_value_wsc
 
         # Credit player: face value + call premium + accumulated interest
-        _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code,
-                                 call_value + bond.interest_accrued)
+        total_call_payout = call_value + bond.interest_accrued
+        _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, total_call_payout)
+        try:
+            from stats_ux import log_transaction as _lt
+            _lt(bond.holder_player_id, "bond_called", "money",
+                total_call_payout * bank.usd_per_unit,
+                f"Bond called by {bank.currency_code} bank: {total_call_payout:.4f} {bank.currency_code} (face+premium+interest)",
+                reference_id=str(bond.id))
+        except Exception:
+            pass
         print(f"[ReserveBanks] Bank {bank.currency_code} called bond #{bond.id} "
               f"(purchase yield {bond.purchase_yield:.4f}, current {bank.yield_rate:.4f}). "
               f"Player {bond.holder_player_id} received {call_value + bond.interest_accrued:.4f} "
@@ -500,6 +508,14 @@ def _mature_bonds(db, bank: StateReserveBank, now: datetime):
         # Return face value in the bank's own currency (1 WSC = $1 → convert at current FX)
         foreign_return = bond.face_value_wsc / bank.usd_per_unit
         _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, foreign_return)
+        try:
+            from stats_ux import log_transaction as _lt
+            _lt(bond.holder_player_id, "bond_maturity", "money",
+                foreign_return * bank.usd_per_unit,
+                f"Bond matured: {foreign_return:.4f} {bank.currency_code} received",
+                reference_id=str(bond.id))
+        except Exception:
+            pass
 
 
 def _snapshot_history(db, bank: StateReserveBank, now: datetime):
@@ -1056,6 +1072,14 @@ def purchase_bond(
             wallet_db.commit()
             return False, f"Bond creation failed (WSC refunded): {bond_err}"
 
+        try:
+            from stats_ux import log_transaction as _lt
+            _lt(player_id, "bond_purchase", "money", -wsc_amount,
+                f"Bond purchased: {wsc_amount:.2f} WSC → {currency_code} {maturity_days}d",
+                reference_id=str(bond.id))
+        except Exception:
+            pass
+
         annual_pct  = bank.yield_rate * 100
         daily_int   = wsc_amount * bank.yield_rate / 365
         currency_sym = bank.currency_symbol
@@ -1129,6 +1153,14 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         # Credit foreign currency to player
         _adjust_currency_balance(db, player_id, currency_code, foreign_return)
         db.commit()
+
+        try:
+            from stats_ux import log_transaction as _lt
+            _lt(player_id, "bond_sell", "money", foreign_return * bank.usd_per_unit,
+                f"Bond sold early: {foreign_return:.4f} {currency_code} received",
+                reference_id=str(bond_id))
+        except Exception:
+            pass
 
         face_foreign  = bond.face_value_wsc / bank.usd_per_unit
         gain_foreign  = foreign_return - face_foreign
@@ -1305,6 +1337,13 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
                 f" A {TENDER_SWITCH_FEE_RATE*100:.0f}% repatriation fee of "
                 f"{sym}{fee:,.2f} {current_code} was charged."
             )
+            try:
+                from stats_ux import log_transaction as _lt
+                fee_usd = fee * (old_bank.usd_per_unit if old_bank else 1.0)
+                _lt(player_id, "forex_fee", "money", -fee_usd,
+                    f"Legal tender switch fee: {sym}{fee:,.4f} {current_code} → {code}")
+            except Exception:
+                pass
 
         # ── Persist the change ────────────────────────────────────────────────
         if row:

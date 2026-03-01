@@ -469,6 +469,9 @@ def create_business(player_id: int, plot_id: int, business_type_key: str):
         db.commit()
         
         print(f"[Business] Created {business_type_key} on plot {plot.id} for Player {player_id} (cost: ${startup_cost:,.2f})")
+        log_transaction(player_id, "business_startup", "money", -startup_cost,
+                        f"Business created: {config.get('name', business_type_key)}",
+                        reference_id=str(business.id))
         return business
     except Exception as e:
         print(f"[Business] Error creating business: {e}")
