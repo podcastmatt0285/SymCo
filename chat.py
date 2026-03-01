@@ -77,6 +77,8 @@ class ChatMessage(Base):
     sender_id = Column(Integer, index=True, nullable=False)
     sender_name = Column(String, nullable=False)
     content = Column(Text, nullable=False)
+    message_type = Column(String, nullable=False, default="chat")  # "chat" | "patch_note"
+    tag = Column(String, nullable=True, index=True)                # unique key for upserts
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
@@ -112,13 +114,36 @@ def get_db():
 
 def initialize():
     Base.metadata.create_all(bind=engine)
+    from database import run_ddl_migration
+    run_ddl_migration(engine, "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS message_type VARCHAR NOT NULL DEFAULT 'chat'")
+    run_ddl_migration(engine, "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS tag VARCHAR")
 
 
 # ==========================
 # MESSAGE FUNCTIONS
 # ==========================
 
-def save_message(room_id: str, sender_id: int, sender_name: str, content: str) -> Optional[dict]:
+def _msg_dict(msg: ChatMessage) -> dict:
+    return {
+        "id": msg.id,
+        "room": msg.room_id,
+        "sender_id": msg.sender_id,
+        "sender_name": msg.sender_name,
+        "content": msg.content,
+        "message_type": msg.message_type or "chat",
+        "tag": msg.tag,
+        "timestamp": msg.created_at.isoformat(),
+    }
+
+
+def save_message(
+    room_id: str,
+    sender_id: int,
+    sender_name: str,
+    content: str,
+    message_type: str = "chat",
+    tag: Optional[str] = None,
+) -> Optional[dict]:
     """Save a chat message and return it as a dict."""
     if not content or len(content) > MAX_MESSAGE_LENGTH:
         return None
@@ -128,18 +153,53 @@ def save_message(room_id: str, sender_id: int, sender_name: str, content: str) -
         sender_id=sender_id,
         sender_name=sender_name,
         content=content,
+        message_type=message_type,
+        tag=tag,
     )
     db.add(msg)
     db.commit()
     db.refresh(msg)
-    result = {
-        "id": msg.id,
-        "room": msg.room_id,
-        "sender_id": msg.sender_id,
-        "sender_name": msg.sender_name,
-        "content": msg.content,
-        "timestamp": msg.created_at.isoformat(),
-    }
+    result = _msg_dict(msg)
+    db.close()
+    return result
+
+
+def upsert_message(
+    room_id: str,
+    sender_id: int,
+    sender_name: str,
+    content: str,
+    tag: str,
+    message_type: str = "chat",
+) -> Optional[dict]:
+    """Insert a tagged message or update its content if the tag already exists in the room."""
+    if not content or len(content) > MAX_MESSAGE_LENGTH:
+        return None
+    db = get_db()
+    existing = db.query(ChatMessage).filter(
+        ChatMessage.room_id == room_id,
+        ChatMessage.tag == tag,
+    ).first()
+    if existing:
+        existing.content = content
+        existing.sender_name = sender_name
+        existing.message_type = message_type
+        db.commit()
+        db.refresh(existing)
+        result = _msg_dict(existing)
+    else:
+        msg = ChatMessage(
+            room_id=room_id,
+            sender_id=sender_id,
+            sender_name=sender_name,
+            content=content,
+            message_type=message_type,
+            tag=tag,
+        )
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        result = _msg_dict(msg)
     db.close()
     return result
 
@@ -153,14 +213,7 @@ def get_room_messages(room_id: str, limit: int = MAX_HISTORY) -> list:
 
     result = []
     for msg in reversed(messages):
-        result.append({
-            "id": msg.id,
-            "room": msg.room_id,
-            "sender_id": msg.sender_id,
-            "sender_name": msg.sender_name,
-            "content": msg.content,
-            "timestamp": msg.created_at.isoformat(),
-        })
+        result.append(_msg_dict(msg))
     db.close()
     return result
 

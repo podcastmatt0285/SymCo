@@ -148,17 +148,18 @@ PATCH_NOTES = [
 
 
 def main():
-    print(f"Posting {len(PATCH_NOTES)} patch notes to the Updates channel...\n")
+    print(f"Upserting {len(PATCH_NOTES)} patch notes to the Updates channel...\n")
     for i, (title, content) in enumerate(PATCH_NOTES, 1):
         if len(content) > 500:
             print(f"  WARNING: Message {i} ({title}) is {len(content)} chars — truncating")
             content = content[:497] + "..."
-        result = post_update(ADMIN_ID, content)
+        tag = f"patch_{i:03d}"
+        result = post_update(ADMIN_ID, content, tag=tag)
         status = "OK" if result.get("ok") else f"FAILED: {result.get('error')}"
         print(f"  [{i:02d}/{len(PATCH_NOTES)}] {title[:50]:<50} {status}")
-        time.sleep(0.3)   # small delay to preserve ordering in the DB
+        time.sleep(0.1)
 
-    print("\nDone.")
+    print("\nDone. Re-running this script will update existing messages in place.")
 
 
 if __name__ == "__main__":
