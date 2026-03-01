@@ -1234,6 +1234,88 @@ def initialize():
     print("[Estate] Creating database tables...")
     Base.metadata.create_all(bind=engine)
     print("[Estate] Account deletion & estate system initialized")
+    _retroactive_deceased_cleanup()
+
+
+def _retroactive_deceased_cleanup():
+    """
+    Cancel any open market/district/brokerage orders that still belong to
+    deceased players (player record deleted, DeceasedPlayer record exists).
+    Also removes orphaned reserve-bank rows for those player IDs.
+    Runs at startup so previously-missed cleanups are always resolved.
+    """
+    db = get_db()
+    try:
+        dead_ids = [r.player_id for r in db.query(DeceasedPlayer.player_id).all()]
+        if not dead_ids:
+            return
+
+        # Market orders
+        try:
+            from market import MarketOrder
+            cancelled = db.query(MarketOrder).filter(
+                MarketOrder.player_id.in_(dead_ids),
+                MarketOrder.status.in_(["active", "partial"])
+            ).update({"status": "cancelled"}, synchronize_session=False)
+            db.commit()
+            if cancelled:
+                print(f"[Estate] Retroactive cleanup: cancelled {cancelled} market order(s) for deceased players")
+        except Exception as e:
+            print(f"[Estate] Retroactive market order cleanup error: {e}")
+            db.rollback()
+
+        # District market orders
+        try:
+            from district_market import DistrictMarketOrder
+            cancelled = db.query(DistrictMarketOrder).filter(
+                DistrictMarketOrder.player_id.in_(dead_ids),
+                DistrictMarketOrder.status.in_(["active", "partial"])
+            ).update({"status": "cancelled"}, synchronize_session=False)
+            db.commit()
+            if cancelled:
+                print(f"[Estate] Retroactive cleanup: cancelled {cancelled} district market order(s) for deceased players")
+        except Exception as e:
+            print(f"[Estate] Retroactive district market order cleanup error: {e}")
+            db.rollback()
+
+        # Brokerage order book entries
+        try:
+            from banks.brokerage_order_book import OrderBook, get_db as get_ob_db
+            ob_db = get_ob_db()
+            try:
+                cancelled = ob_db.query(OrderBook).filter(
+                    OrderBook.player_id.in_(dead_ids),
+                    OrderBook.status.in_(["pending", "partial"])
+                ).update({"status": "cancelled"}, synchronize_session=False)
+                ob_db.commit()
+                if cancelled:
+                    print(f"[Estate] Retroactive cleanup: cancelled {cancelled} brokerage order(s) for deceased players")
+            finally:
+                ob_db.close()
+        except Exception as e:
+            print(f"[Estate] Retroactive brokerage order cleanup error: {e}")
+
+        # Orphaned reserve-bank rows
+        try:
+            from reserve_banks import PlayerCurrencyBalance, PlayerLegalTender, get_db as get_rb_db
+            rb_db = get_rb_db()
+            try:
+                rb_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id.in_(dead_ids)
+                ).delete(synchronize_session=False)
+                rb_db.query(PlayerLegalTender).filter(
+                    PlayerLegalTender.player_id.in_(dead_ids)
+                ).delete(synchronize_session=False)
+                rb_db.commit()
+            finally:
+                rb_db.close()
+        except Exception as e:
+            print(f"[Estate] Retroactive reserve bank cleanup error: {e}")
+
+    except Exception as e:
+        print(f"[Estate] Retroactive deceased cleanup error: {e}")
+    finally:
+        db.close()
 
 
 async def tick(current_tick: int, now):
