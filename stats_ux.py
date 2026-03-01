@@ -1181,10 +1181,10 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     disp = get_player_display_currency(player.id)
     stats = calculate_player_stats(player.id)
 
-    # Fetch last 200 transactions
+    # Fetch last 500 transactions
     txs = db.query(TransactionLog).filter(
         TransactionLog.player_id == player.id
-    ).order_by(desc(TransactionLog.timestamp)).limit(200).all()
+    ).order_by(desc(TransactionLog.timestamp)).limit(500).all()
 
     # Get cost averages
     averages = db.query(PlayerCostAverage).filter(
@@ -1307,9 +1307,9 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     TAB_FILTERS = {
         "shares":     ("share_buy", "share_sell"),
         "bonds":      ("bond_",),
-        "cash":       ("cash_in", "cash_out"),
+        "cash":       ("cash_in", "cash_out", "banking"),
         "resources":  ("resource_gain", "resource_loss", "resource_use", "production"),
-        "market":     ("market_buy", "market_sell"),
+        "market":     ("market_buy", "market_sell", "retail_sale"),
         "district":   ("district_",),
         "mining":     ("county_mining",),
         "dividend":   ("dividend",),
@@ -1317,11 +1317,11 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "land":       ("land_buy", "land_sell", "land_"),
         "crypto":     ("crypto_",),
         "governance": ("governance_",),
-        "corporate":  ("corporate",),
+        "corporate":  ("corporate", "business_startup", "inheritance"),
         "treasury":   ("treasury_",),
         "city":       ("city_", "county_"),
         "p2p":        ("p2p_",),
-        "forex":      ("forex_", "bond_"),
+        "forex":      ("forex_",),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}
@@ -1547,6 +1547,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         </tr>"""
 
     # ── Transaction ledger rows ───────────────────────────────────────────────
+    import html as _html_mod
     def _tx_row(tx) -> str:
         tt = tx.transaction_type or ""
         icon = TYPE_ICONS.get(tt) or next((v for k, v in TYPE_ICONS.items() if tt.startswith(k)), "📝")
@@ -1571,8 +1572,11 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
             meta = f'<div style="font-size:0.75rem;color:#64748b;margin-top:2px;">{" ".join(parts)}</div>'
         ts_str = _rel_time(tx.timestamp)
         ts_abs = tx.timestamp.strftime('%Y-%m-%d %H:%M UTC') if tx.timestamp else ""
+        ts_epoch = int(tx.timestamp.timestamp()) if tx.timestamp else 0
+        desc_escaped = _html_mod.escape(desc_full.lower())
         return (
-            f'<div class="txr" data-type="{tt}" data-tabs=\'{tabs_json}\' data-desc="{desc_full.lower()}">'
+            f'<div class="txr" data-type="{tt}" data-tabs=\'{tabs_json}\' data-desc="{desc_escaped}"'
+            f' data-amount="{tx.amount:.4f}" data-ts="{ts_epoch}">'
             # left accent bar
             f'<div style="width:3px;background:{col};border-radius:3px 0 0 3px;flex-shrink:0;align-self:stretch;"></div>'
             # icon circle
@@ -1614,6 +1618,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         ("p2p", "P2P", count_by_tab.get("p2p", 0)),
         ("tax", "Tax", count_by_tab.get("tax", 0)),
         ("mining", "Mining", count_by_tab.get("mining", 0)),
+        ("cash", "Cash", count_by_tab.get("cash", 0)),
+        ("forex", "Forex", count_by_tab.get("forex", 0)),
     ]
     def _chip(k, label, cnt):
         active_cls = " txchip-active" if k == "all" else ""
@@ -1675,6 +1681,14 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 }}
 .txchip:hover {{ border-color:#334155; color:#94a3b8; }}
 .txchip-active {{ background:#1e3a5f; border-color:#3b82f6; color:#93c5fd; }}
+.txsort {{
+  display:inline-flex; align-items:center;
+  padding:3px 9px; border-radius:12px; font-size:0.75rem; font-weight:500;
+  border:1px solid #1e293b; background:#0f172a; color:#475569;
+  cursor:pointer; transition:all 0.15s; white-space:nowrap;
+}}
+.txsort:hover {{ border-color:#334155; color:#94a3b8; }}
+.txsort-active {{ background:#1a2744; border-color:#6366f1; color:#a5b4fc; }}
 .avg-tbl {{ width:100%; border-collapse:collapse; }}
 .avg-tbl thead th {{
   padding:8px 10px; text-align:left; font-size:0.72rem; font-weight:600;
@@ -1769,7 +1783,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 
 <!-- Transaction ledger -->
 <div class="card" style="cursor:default;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
     <div>
       <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;">Transaction Ledger</div>
       <div style="font-size:0.72rem;color:#475569;margin-top:2px;">Last {tx_count} transactions</div>
@@ -1777,6 +1791,15 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     <input type="text" id="tx-search" placeholder="Search…" oninput="searchTx(this.value)"
       style="padding:6px 12px;background:#0f172a;border:1px solid #1e293b;color:#f1f5f9;
              border-radius:20px;font-size:0.82rem;width:200px;outline:none;">
+  </div>
+
+  <!-- Sort controls -->
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+    <span style="font-size:0.72rem;color:#475569;letter-spacing:0.05em;text-transform:uppercase;">Sort:</span>
+    <button class="txsort txsort-active" onclick="sortTx('newest',this)">Newest first</button>
+    <button class="txsort" onclick="sortTx('oldest',this)">Oldest first</button>
+    <button class="txsort" onclick="sortTx('amount_desc',this)">$ High → Low</button>
+    <button class="txsort" onclick="sortTx('amount_asc',this)">$ Low → High</button>
   </div>
 
   <!-- Filter chips -->
@@ -1794,25 +1817,52 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 
 <script>
 (function() {{
-  var _filter = 'all', _search = '', _page = 0, PAGE = 50, _vis = [];
+  var _filter = 'all', _search = '', _page = 0, PAGE = 50;
+  var _sort = 'newest';
+  var _all = [], _vis = [];
+
+  function _init() {{
+    _all = Array.prototype.slice.call(
+      document.querySelectorAll('#transactions .txr')
+    );
+  }}
+
+  function _sortAll() {{
+    _all.sort(function(a, b) {{
+      var at = +(a.dataset.ts || 0), bt = +(b.dataset.ts || 0);
+      var aa = Math.abs(+(a.dataset.amount || 0));
+      var ba = Math.abs(+(b.dataset.amount || 0));
+      if (_sort === 'oldest')      return at - bt;
+      if (_sort === 'amount_desc') return ba - aa;
+      if (_sort === 'amount_asc')  return aa - ba;
+      return bt - at; // newest (default)
+    }});
+  }}
 
   function _build() {{
-    _vis = [];
-    document.querySelectorAll('.txr').forEach(function(el) {{
+    _sortAll();
+    _vis = _all.filter(function(el) {{
       var tabs = [];
       try {{ tabs = JSON.parse(el.dataset.tabs || '[]'); }} catch(e) {{}}
       var tm = _filter === 'all' || tabs.indexOf(_filter) !== -1;
-      var sm = !_search || (el.dataset.desc||'').indexOf(_search) !== -1 || (el.dataset.type||'').indexOf(_search) !== -1;
-      el.style.display = 'none';
-      if (tm && sm) _vis.push(el);
+      var sm = !_search ||
+               (el.dataset.desc || '').indexOf(_search) !== -1 ||
+               (el.dataset.type || '').indexOf(_search) !== -1;
+      return tm && sm;
     }});
     _page = 0;
     _render();
   }}
 
   function _render() {{
-    _vis.forEach(function(el) {{ el.style.display = 'none'; }});
-    _vis.slice(_page*PAGE, _page*PAGE+PAGE).forEach(function(el) {{ el.style.display = ''; }});
+    var cont = document.getElementById('transactions');
+    // Hide every row first
+    _all.forEach(function(el) {{ el.style.display = 'none'; }});
+    // Show + re-order the current page slice via appendChild
+    _vis.slice(_page * PAGE, _page * PAGE + PAGE).forEach(function(el) {{
+      el.style.display = '';
+      cont.appendChild(el);
+    }});
     _pages();
   }}
 
@@ -1820,14 +1870,16 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     var tp = Math.ceil(_vis.length / PAGE);
     var c = document.getElementById('tx-pagination');
     if (!c) return;
-    if (tp <= 1) {{ c.innerHTML = ''; return; }}
+    var total_lbl = '<span style="color:#475569;font-size:0.78rem;margin-left:4px;">'
+                    + _vis.length + ' of {tx_count}</span>';
+    if (tp <= 1) {{ c.innerHTML = total_lbl; return; }}
     var h = '';
     for (var i = 0; i < tp; i++) {{
       var a = i === _page;
       h += '<button onclick="__txP(' + i + ')" style="padding:4px 12px;border:none;border-radius:14px;cursor:pointer;font-size:0.8rem;'
         + (a ? 'background:#3b82f6;color:#fff;' : 'background:#1e293b;color:#64748b;') + '">' + (i+1) + '</button>';
     }}
-    h += '<span style="color:#475569;font-size:0.78rem;">' + _vis.length + ' of {tx_count}</span>';
+    h += total_lbl;
     c.innerHTML = h;
   }}
 
@@ -1843,8 +1895,16 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     _build();
   }};
 
+  window.sortTx = function(s, btn) {{
+    _sort = s;
+    document.querySelectorAll('.txsort').forEach(function(b) {{ b.classList.remove('txsort-active'); }});
+    if (btn) btn.classList.add('txsort-active');
+    _build();
+  }};
+
   window.searchTx = function(v) {{ _search = v.toLowerCase(); _build(); }};
 
+  _init();
   _build();
 }})();
 </script>
