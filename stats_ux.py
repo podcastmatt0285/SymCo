@@ -1302,25 +1302,24 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "banking": "#06b6d4", "lien": "#ef4444",
     }
 
-    # Category buckets for filter tabs (exact prefix / substring matching)
-    # Each tab key maps to a tuple of substrings; a tx matches if its type contains any of them
+    # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
     TAB_FILTERS = {
+        "market":     ("market_buy", "market_sell"),
+        "district":   ("district_merge", "district_tax", "district_market_"),
         "shares":     ("share_buy", "share_sell"),
-        "bonds":      ("bond_",),
-        "cash":       ("cash_in", "cash_out", "banking"),
-        "resources":  ("resource_gain", "resource_loss", "resource_use", "production"),
-        "market":     ("market_buy", "market_sell", "retail_sale"),
-        "district":   ("district_",),
+        "dividend":   ("dividend",),                           # matches dividend + dividend_paid
+        "bonds":      ("bond_",),                             # bond_purchase/sell/maturity/called
+        "resources":  ("resource_gain", "resource_loss", "resource_use"),
+        "land":       ("land_buy", "land_sell"),
+        "city":       ("city_", "county_"),                   # city_* + county_mining_deposit
         "mining":     ("county_mining",),
-        "dividend":   ("dividend",),
-        "tax":        ("tax", "lien"),
-        "land":       ("land_buy", "land_sell", "land_"),
         "crypto":     ("crypto_",),
         "governance": ("governance_",),
         "corporate":  ("corporate", "business_startup", "inheritance"),
         "treasury":   ("treasury_",),
-        "city":       ("city_", "county_"),
         "p2p":        ("p2p_",),
+        "tax":        ("tax",),                               # tax + tax_voucher
+        "cash":       ("cash_in", "cash_out"),                # land market cash flows, etc.
         "forex":      ("forex_",),
     }
     # Build a flat JSON map of type → category list for JS
@@ -1625,7 +1624,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         active_cls = " txchip-active" if k == "all" else ""
         badge = (f'<span style="margin-left:4px;padding:0 5px;background:rgba(255,255,255,0.12);'
                  f'border-radius:8px;font-size:0.7rem;">{cnt}</span>') if cnt else ""
-        return (f'<button class="txchip{active_cls}" onclick="filterTx(\'{k}\',this)" data-tab="{k}">'
+        return (f'<button class="txchip{active_cls}" onclick="txFilter(\'{k}\',this)" data-tab="{k}">'
                 f'{label}{badge}</button>')
     filter_chips_html = "".join(
         _chip(k, label, cnt) for k, label, cnt in TABS if cnt > 0 or k == "all"
@@ -1788,7 +1787,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
       <div style="font-size:0.85rem;font-weight:700;color:#e2e8f0;">Transaction Ledger</div>
       <div style="font-size:0.72rem;color:#475569;margin-top:2px;">Last {tx_count} transactions</div>
     </div>
-    <input type="text" id="tx-search" placeholder="Search…" oninput="searchTx(this.value)"
+    <input type="text" id="tx-search" placeholder="Search…" oninput="txSearch(this.value)"
       style="padding:6px 12px;background:#0f172a;border:1px solid #1e293b;color:#f1f5f9;
              border-radius:20px;font-size:0.82rem;width:200px;outline:none;">
   </div>
@@ -1796,10 +1795,10 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
   <!-- Sort controls -->
   <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
     <span style="font-size:0.72rem;color:#475569;letter-spacing:0.05em;text-transform:uppercase;">Sort:</span>
-    <button class="txsort txsort-active" onclick="sortTx('newest',this)">Newest first</button>
-    <button class="txsort" onclick="sortTx('oldest',this)">Oldest first</button>
-    <button class="txsort" onclick="sortTx('amount_desc',this)">$ High → Low</button>
-    <button class="txsort" onclick="sortTx('amount_asc',this)">$ Low → High</button>
+    <button class="txsort txsort-active" onclick="txSortBy('newest',this)">Newest first</button>
+    <button class="txsort" onclick="txSortBy('oldest',this)">Oldest first</button>
+    <button class="txsort" onclick="txSortBy('amount_desc',this)">$ High → Low</button>
+    <button class="txsort" onclick="txSortBy('amount_asc',this)">$ Low → High</button>
   </div>
 
   <!-- Filter chips -->
@@ -1876,33 +1875,33 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     var h = '';
     for (var i = 0; i < tp; i++) {{
       var a = i === _page;
-      h += '<button onclick="__txP(' + i + ')" style="padding:4px 12px;border:none;border-radius:14px;cursor:pointer;font-size:0.8rem;'
+      h += '<button onclick="txGoto(' + i + ')" style="padding:4px 12px;border:none;border-radius:14px;cursor:pointer;font-size:0.8rem;'
         + (a ? 'background:#3b82f6;color:#fff;' : 'background:#1e293b;color:#64748b;') + '">' + (i+1) + '</button>';
     }}
     h += total_lbl;
     c.innerHTML = h;
   }}
 
-  window.__txP = function(p) {{
+  window.txGoto = function(p) {{
     _page = p; _render();
     document.getElementById('transactions').scrollIntoView({{behavior:'smooth',block:'start'}});
   }};
 
-  window.filterTx = function(k, btn) {{
+  window.txFilter = function(k, btn) {{
     _filter = k;
     document.querySelectorAll('.txchip').forEach(function(b) {{ b.classList.remove('txchip-active'); }});
     if (btn) btn.classList.add('txchip-active');
     _build();
   }};
 
-  window.sortTx = function(s, btn) {{
+  window.txSortBy = function(s, btn) {{
     _sort = s;
     document.querySelectorAll('.txsort').forEach(function(b) {{ b.classList.remove('txsort-active'); }});
     if (btn) btn.classList.add('txsort-active');
     _build();
   }};
 
-  window.searchTx = function(v) {{ _search = v.toLowerCase(); _build(); }};
+  window.txSearch = function(v) {{ _search = v.toLowerCase(); _build(); }};
 
   _init();
   _build();

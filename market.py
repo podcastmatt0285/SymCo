@@ -552,46 +552,28 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     # 7. Commit everything
     db.commit()
     
-    # 8. Log transactions
-    # Log buyer's resource gain
+    # 8. Log transactions — one entry per side, with unit_price for cost-average tracking
+    _unit_price = price  # price per unit from the matched trade
     log_transaction(
         buy_order.player_id,
-        "resource_gain",
-        "resource",
-        quantity,
-        f"Market buy: {buy_order.item_type}",
-        buy_order.item_type
-    )
-    
-    # Log buyer's cash payment
-    log_transaction(
-        buy_order.player_id,
-        "cash_out",
+        "market_buy",
         "money",
-        -total_cost,  # negative for expense
-        f"Market purchase: {quantity} {buy_order.item_type}",
-        buy_order.item_type
+        -total_cost,
+        f"Market buy: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
+        buy_order.item_type,
+        quantity,
+        _unit_price,
     )
-    
-    # Log seller's cash receipt (only for non-bank sales)
     if not is_bank_ipo:
         log_transaction(
             sell_order.player_id,
-            "cash_in",
+            "market_sell",
             "money",
             total_cost,
-            f"Market sale: {quantity} {buy_order.item_type}",
-            buy_order.item_type
-        )
-        
-        # Log seller's resource loss
-        log_transaction(
-            sell_order.player_id,
-            "resource_loss",
-            "resource",
-            -quantity,  # negative because sold
-            f"Market sale: {buy_order.item_type}",
-            buy_order.item_type
+            f"Market sell: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
+            buy_order.item_type,
+            quantity,
+            _unit_price,
         )
 
 # ==========================

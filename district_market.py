@@ -388,41 +388,29 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
         db.rollback()
         return
     
-    # Log transactions
+    # Log transactions — one entry per side, with unit_price for cost-average tracking
     try:
         from stats_ux import log_transaction
-        
+        _unit_price = price
         log_transaction(
             buy_order.player_id,
-            "resource_gain",
-            "resource",
-            quantity,
-            f"District market buy: {buy_order.item_type}",
-            buy_order.item_type
-        )
-        log_transaction(
-            buy_order.player_id,
-            "cash_out",
+            "district_market_buy",
             "money",
             -total_cost,
-            f"District market purchase: {quantity} {buy_order.item_type}",
-            buy_order.item_type
+            f"District market buy: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
+            buy_order.item_type,
+            quantity,
+            _unit_price,
         )
         log_transaction(
             sell_order.player_id,
-            "cash_in",
+            "district_market_sell",
             "money",
             total_cost,
-            f"District market sale: {quantity} {buy_order.item_type}",
-            buy_order.item_type
-        )
-        log_transaction(
-            sell_order.player_id,
-            "resource_loss",
-            "resource",
-            -quantity,
-            f"District market sale: {buy_order.item_type}",
-            buy_order.item_type
+            f"District market sell: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
+            buy_order.item_type,
+            quantity,
+            _unit_price,
         )
     except:
         pass  # Stats logging is optional
