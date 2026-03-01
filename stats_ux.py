@@ -1064,7 +1064,18 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
     
     # Gather economy stats
     total_players = db.query(Player).count()
-    total_cash = db.query(func.sum(Player.cash_balance)).scalar() or 0.0
+    # cash_balance is a @property backed by reserve_banks — query that DB directly
+    try:
+        from reserve_banks import PlayerCurrencyBalance, get_db as get_rb_db
+        rb_db = get_rb_db()
+        try:
+            total_cash = rb_db.query(func.sum(PlayerCurrencyBalance.balance)).filter(
+                PlayerCurrencyBalance.currency_code == "USD"
+            ).scalar() or 0.0
+        finally:
+            rb_db.close()
+    except Exception:
+        total_cash = 0.0
     
     total_plots = occupied_plots = 0
     try:
@@ -1938,6 +1949,8 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
     # Build a map: district_terrain → list of business names
     terrain_to_biz: Dict[str, list] = {}
     for biz_key, biz_cfg in dist_biz.items():
+        if not isinstance(biz_cfg, dict):
+            continue
         for terrain in biz_cfg.get("allowed_terrain", []):
             terrain_to_biz.setdefault(terrain, []).append(biz_cfg.get("name", biz_key))
 
