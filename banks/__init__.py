@@ -182,14 +182,14 @@ def load_bank_modules():
                 
                 # Validate required attributes
                 required = ["BANK_ID", "BANK_NAME", "BANK_DESCRIPTION", "initialize", "tick"]
-                for attr in required:
-                    if not hasattr(module, attr):
-                        print(f"[Banks] ✗ {module_name} missing required attribute: {attr}")
-                        continue
-                
+                missing = [attr for attr in required if not hasattr(module, attr)]
+                if missing:
+                    print(f"[Banks] ✗ {module_name} missing required attributes: {', '.join(missing)} — skipping")
+                    continue
+
                 bank_id = module.BANK_ID
                 BANK_MODULES[bank_id] = module
-                
+
                 print(f"[Banks] ✓ Loaded {bank_id} ({module.BANK_NAME})")
                 
             except Exception as e:

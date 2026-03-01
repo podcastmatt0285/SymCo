@@ -538,7 +538,7 @@ def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None)
                 <span class="balance">$ {balance:,.2f}</span>
                 <a href="/p2p/dashboard" style="color: #94a3b8; font-size: 0.8rem;">P2P</a>
                 <a href="/chat" style="color: #c084fc; font-size: 0.8rem;">Chat</a>
-                <a href="/dashboard" style="color: #94a3b8; font-size: 0.8rem;">Dashboard</a>
+                <a href="/" style="color: #94a3b8; font-size: 0.8rem;">Dashboard</a>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.8rem;">Logout</a>
             </div>
         </div>

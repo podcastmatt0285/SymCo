@@ -643,7 +643,7 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
             <div class="header-right">
                 {lien_html}
                 <span class="balance">$ {balance:,.2f}</span>
-                <a href="/dashboard" style="color: #94a3b8; font-size: 0.8rem;">Dashboard</a>
+                <a href="/" style="color: #94a3b8; font-size: 0.8rem;">Dashboard</a>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.8rem;">Logout</a>
             </div>
         </div>

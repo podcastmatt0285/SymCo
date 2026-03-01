@@ -364,7 +364,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
             </div>
             <div class="header-right">
                 <span style="color: #94a3b8;">{player_name}</span>
-                <a href="/dashboard" style="color: #94a3b8;">Game</a>
+                <a href="/" style="color: #94a3b8;">Game</a>
                 <a href="/chat" style="color: #94a3b8;">Chat</a>
                 <a href="/api/logout" style="color: #ef4444;">Logout</a>
             </div>
