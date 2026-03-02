@@ -1233,11 +1233,10 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "market_buy": "🛒", "market_sell": "💰",
         "resource_gain": "📦", "resource_loss": "📤", "resource_use": "🔧",
         "cash_in": "💵", "cash_out": "💸",
-        # Production / Business
-        "production": "🏭", "retail_sale": "🏪",
-        "business_startup": "🔨",
+        # Business
+        "retail_sale": "🏪", "business_startup": "🔨",
         # Land
-        "land_buy": "🏗️", "land_sell": "🏷️", "land": "🏗️",
+        "land_buy": "🏗️", "land_sell": "🏷️",
         # Districts
         "district_merge": "🏙️", "district_tax": "💲", "district_market_buy": "🏬", "district_market_sell": "🏬",
         # Cities / Counties
@@ -1265,17 +1264,16 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "p2p_contract_payment": "💳", "p2p_breach_penalty": "⚠️", "p2p_breach_damages": "⚖️",
         # Estate / Misc
         "inheritance": "📜", "tax": "📋",
-        "banking": "🏦", "lien": "⚠️",
     }
     TYPE_BADGE_COLORS = {
         # Market
         "market_buy": "#3b82f6", "market_sell": "#3b82f6",
         "resource_gain": "#0ea5e9", "resource_loss": "#0ea5e9", "resource_use": "#7c3aed",
         "cash_in": "#22c55e", "cash_out": "#ef4444",
-        # Production
-        "production": "#8b5cf6", "retail_sale": "#8b5cf6", "business_startup": "#7c3aed",
+        # Business
+        "retail_sale": "#8b5cf6", "business_startup": "#7c3aed",
         # Land
-        "land_buy": "#84cc16", "land_sell": "#84cc16", "land": "#84cc16",
+        "land_buy": "#84cc16", "land_sell": "#84cc16",
         # Districts / Cities
         "district_merge": "#f59e0b", "district_tax": "#f97316",
         "district_market_buy": "#10b981", "district_market_sell": "#10b981",
@@ -1299,28 +1297,39 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "p2p_contract_delivery": "#0ea5e9", "p2p_contract_payment": "#3b82f6",
         "p2p_breach_penalty": "#ef4444", "p2p_breach_damages": "#22c55e",
         "inheritance": "#a78bfa", "tax": "#f97316",
-        "banking": "#06b6d4", "lien": "#ef4444",
     }
 
     # Maps filter-chip key → type-prefix tuples matching actual log_transaction() call sites.
     TAB_FILTERS = {
-        "market":     ("market_buy", "market_sell"),
-        "district":   ("district_merge", "district_tax", "district_market_"),
-        "shares":     ("share_buy", "share_sell"),
-        "dividend":   ("dividend",),                           # matches dividend + dividend_paid
-        "bonds":      ("bond_",),                             # bond_purchase/sell/maturity/called
-        "resources":  ("resource_gain", "resource_loss", "resource_use"),
-        "land":       ("land_buy", "land_sell"),
-        "city":       ("city_", "county_"),                   # city_* + county_mining_deposit
-        "mining":     ("county_mining",),
-        "crypto":     ("crypto_",),
-        "governance": ("governance_",),
-        "corporate":  ("corporate", "business_startup", "inheritance"),
-        "treasury":   ("treasury_",),
-        "p2p":        ("p2p_",),
-        "tax":        ("tax",),                               # tax + tax_voucher
-        "cash":       ("cash_in", "cash_out"),                # land market cash flows, etc.
-        "forex":      ("forex_",),
+        # Trading & Markets
+        "market":          ("market_buy", "market_sell"),
+        "district_market": ("district_market_buy", "district_market_sell"),
+        "shares":          ("share_buy", "share_sell"),
+        "dividend":        ("dividend",),             # dividend + dividend_paid
+        "bonds":           ("bond_",),                # bond_purchase/sell/maturity/called
+        "bond_income":     ("bond_maturity", "bond_called"),  # only payout events
+        "crypto":          ("crypto_",),
+        "forex":           ("forex_",),
+        # Business & Income
+        "retail":          ("retail_sale",),
+        "resources":       ("resource_gain", "resource_loss", "resource_use"),
+        "cash":            ("cash_in", "cash_out"),   # land market, brokerage cash side, etc.
+        "treasury":        ("treasury_",),
+        # Land & Property
+        "land":            ("land_buy", "land_sell"),
+        "mining":          ("county_mining",),
+        # District & City Government
+        "district":        ("district_merge", "district_tax"),
+        "city":            ("city_", "county_"),      # city_* + county_mining_deposit
+        "governance":      ("governance_",),
+        "tax":             ("tax",),                  # tax + tax_voucher + district_tax
+        # P2P Contracts
+        "p2p":             ("p2p_",),
+        "p2p_contracts":   ("p2p_contract",),         # acquired/sold/delivery/payment
+        "p2p_fees":        ("p2p_access", "p2p_relist_fee", "p2p_breach"),
+        # Corporate & Legal
+        "corporate":       ("corporate", "business_startup"),
+        "inheritance":     ("inheritance",),
     }
     # Build a flat JSON map of type → category list for JS
     type_to_tabs: Dict[str, List[str]] = {}
@@ -1601,24 +1610,36 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
 
     # ── Filter chip counts ────────────────────────────────────────────────────
     TABS = [
-        ("all", "All", tx_count),
-        ("market", "Market", count_by_tab.get("market", 0)),
-        ("shares", "Shares", count_by_tab.get("shares", 0)),
-        ("dividend", "Dividends", count_by_tab.get("dividend", 0)),
-        ("bonds", "Bonds", count_by_tab.get("bonds", 0)),
-        ("resources", "Resources", count_by_tab.get("resources", 0)),
-        ("land", "Land", count_by_tab.get("land", 0)),
-        ("district", "District", count_by_tab.get("district", 0)),
-        ("city", "City/County", count_by_tab.get("city", 0)),
-        ("crypto", "Crypto", count_by_tab.get("crypto", 0)),
-        ("governance", "Governance", count_by_tab.get("governance", 0)),
-        ("corporate", "Corporate", count_by_tab.get("corporate", 0)),
-        ("treasury", "Treasury", count_by_tab.get("treasury", 0)),
-        ("p2p", "P2P", count_by_tab.get("p2p", 0)),
-        ("tax", "Tax", count_by_tab.get("tax", 0)),
-        ("mining", "Mining", count_by_tab.get("mining", 0)),
-        ("cash", "Cash", count_by_tab.get("cash", 0)),
-        ("forex", "Forex", count_by_tab.get("forex", 0)),
+        ("all",             "All",             tx_count),
+        # — Trading & Markets —
+        ("market",          "Market",          count_by_tab.get("market", 0)),
+        ("district_market", "District Market", count_by_tab.get("district_market", 0)),
+        ("shares",          "Shares",          count_by_tab.get("shares", 0)),
+        ("dividend",        "Dividends",       count_by_tab.get("dividend", 0)),
+        ("bonds",           "Bonds",           count_by_tab.get("bonds", 0)),
+        ("bond_income",     "Bond Payouts",    count_by_tab.get("bond_income", 0)),
+        ("crypto",          "Crypto",          count_by_tab.get("crypto", 0)),
+        ("forex",           "Forex",           count_by_tab.get("forex", 0)),
+        # — Business & Income —
+        ("retail",          "Retail Sales",    count_by_tab.get("retail", 0)),
+        ("resources",       "Resources",       count_by_tab.get("resources", 0)),
+        ("cash",            "Cash Flows",      count_by_tab.get("cash", 0)),
+        ("treasury",        "Treasury",        count_by_tab.get("treasury", 0)),
+        # — Land & Property —
+        ("land",            "Land",            count_by_tab.get("land", 0)),
+        ("mining",          "Mining",          count_by_tab.get("mining", 0)),
+        # — District & City Government —
+        ("district",        "District",        count_by_tab.get("district", 0)),
+        ("city",            "City/County",     count_by_tab.get("city", 0)),
+        ("governance",      "Governance",      count_by_tab.get("governance", 0)),
+        ("tax",             "Tax",             count_by_tab.get("tax", 0)),
+        # — P2P Contracts —
+        ("p2p",             "P2P (All)",       count_by_tab.get("p2p", 0)),
+        ("p2p_contracts",   "P2P Contracts",   count_by_tab.get("p2p_contracts", 0)),
+        ("p2p_fees",        "P2P Fees",        count_by_tab.get("p2p_fees", 0)),
+        # — Corporate & Legal —
+        ("corporate",       "Corporate",       count_by_tab.get("corporate", 0)),
+        ("inheritance",     "Inheritance",     count_by_tab.get("inheritance", 0)),
     ]
     def _chip(k, label, cnt):
         active_cls = " txchip-active" if k == "all" else ""
