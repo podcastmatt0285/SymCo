@@ -401,10 +401,10 @@ def process_business_tick(db):
             if net_revenue > 0:
                 log_transaction(
                     biz.owner_id,
-                    "cash_in",
+                    "retail_sale",
                     "money",
                     net_revenue,
-                    f"Revenue: {biz.business_type}",
+                    f"Retail revenue: {biz.business_type}",
                     str(biz.id)
                 )
 
