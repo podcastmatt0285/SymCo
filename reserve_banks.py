@@ -1007,10 +1007,14 @@ def purchase_bond(
     currency_code: str,
     wsc_amount: float,
     maturity_days: int,
+    stable_coin_symbol: str = "WSC",
 ) -> Tuple[bool, str]:
     """
-    Buy a bond from the specified reserve bank using WSC.
-    The bond pays interest in the bank's currency over its lifetime.
+    Buy a bond from the specified reserve bank using WSC or any comptroller
+    stable coin.  When a comptroller coin is used (e.g. 'AQUA-JPY') the coin
+    amount is converted to its USD-equivalent face value and deducted from the
+    player's CityStableCoinBalance; bank stats are updated in WSC-equivalent
+    terms so downstream interest accrual is unchanged.
     """
     if wsc_amount <= 0:
         return False, "Bond face value must be positive."
@@ -1018,6 +1022,7 @@ def purchase_bond(
         return False, f"Invalid maturity. Choose from {BOND_MATURITIES} days."
 
     from wallet import get_db as wallet_get_db, WSCWallet, sa_update
+    use_wsc = (stable_coin_symbol.upper() == "WSC")
 
     db = get_db()
     wallet_db = wallet_get_db()
@@ -1028,63 +1033,104 @@ def purchase_bond(
         if not bank:
             return False, f"No reserve bank found for currency '{currency_code}'."
 
-        # Atomic WSC deduction
-        result = wallet_db.execute(
-            sa_update(WSCWallet)
-            .where(WSCWallet.player_id == player_id)
-            .where(WSCWallet.balance   >= wsc_amount)
-            .values(balance=WSCWallet.balance - wsc_amount)
-        )
-        wallet_db.commit()
-        if result.rowcount == 0:
-            current = wallet_db.query(WSCWallet.balance).filter(
-                WSCWallet.player_id == player_id
-            ).scalar() or 0.0
-            return False, f"Insufficient WSC: have {current:.4f}, need {wsc_amount:.4f}."
+        if use_wsc:
+            # ── WSC path (original behaviour) ──────────────────────────────
+            face_value_usd = wsc_amount
+            result = wallet_db.execute(
+                sa_update(WSCWallet)
+                .where(WSCWallet.player_id == player_id)
+                .where(WSCWallet.balance   >= wsc_amount)
+                .values(balance=WSCWallet.balance - wsc_amount)
+            )
+            wallet_db.commit()
+            if result.rowcount == 0:
+                current = wallet_db.query(WSCWallet.balance).filter(
+                    WSCWallet.player_id == player_id
+                ).scalar() or 0.0
+                return False, f"Insufficient WSC: have {current:.4f}, need {wsc_amount:.4f}."
+            coin_db   = None
+            coin_row  = None
+        else:
+            # ── Comptroller stable-coin path ────────────────────────────────
+            from cities import get_db as cities_get_db, CityStableCoinBalance, CityBank, _get_peg_usd_per_unit
+            sym = stable_coin_symbol.upper()
+            peg = sym.split("-", 1)[1] if "-" in sym else sym
+            usd_per_coin = _get_peg_usd_per_unit(peg)
+            face_value_usd = wsc_amount * usd_per_coin   # USD-equivalent face value
 
-        # Create bond — if this fails, refund the WSC that was already committed above
+            coin_db = cities_get_db()
+            # Find the city bank that issued this coin
+            city_bank = coin_db.query(CityBank).filter(
+                CityBank.stable_coin_symbol == sym
+            ).first()
+            if not city_bank:
+                coin_db.close()
+                return False, f"No city bank found for stable coin '{sym}'."
+
+            coin_row = coin_db.query(CityStableCoinBalance).filter(
+                CityStableCoinBalance.player_id == player_id,
+                CityStableCoinBalance.city_id   == city_bank.city_id,
+            ).first()
+            if not coin_row or (coin_row.balance or 0) < wsc_amount:
+                have = coin_row.balance if coin_row else 0.0
+                coin_db.close()
+                return False, f"Insufficient {sym}: have {have:.4f}, need {wsc_amount:.4f}."
+
+            coin_row.balance -= wsc_amount
+            coin_db.commit()
+
+        # ── Create bond ─────────────────────────────────────────────────────
         try:
             bond = ReserveBankBond(
                 bank_id          = bank.id,
                 holder_player_id = player_id,
-                face_value_wsc   = wsc_amount,
+                face_value_wsc   = face_value_usd,   # stored as USD-equiv for interest calc
                 purchase_yield   = bank.yield_rate,
                 maturity_days    = maturity_days,
                 matures_at       = datetime.utcnow() + timedelta(days=maturity_days),
             )
             db.add(bond)
 
-            # Update bank stats and demand tracker (positive = bought)
             bank.total_bonds_issued   += 1
-            bank.total_face_value_wsc += wsc_amount
-            bank.net_demand_wsc       += wsc_amount
-            bank.wsc_holdings         += wsc_amount   # WSC held pending daily liquidity swap
+            bank.total_face_value_wsc += face_value_usd
+            bank.net_demand_wsc       += face_value_usd
+            bank.wsc_holdings         += face_value_usd
 
             db.commit()
         except Exception as bond_err:
             db.rollback()
-            # WSC was already deducted and committed; compensate the player
-            wallet_db.execute(
-                sa_update(WSCWallet)
-                .where(WSCWallet.player_id == player_id)
-                .values(balance=WSCWallet.balance + wsc_amount)
-            )
-            wallet_db.commit()
-            return False, f"Bond creation failed (WSC refunded): {bond_err}"
+            # Refund whichever coin was deducted
+            if use_wsc:
+                wallet_db.execute(
+                    sa_update(WSCWallet)
+                    .where(WSCWallet.player_id == player_id)
+                    .values(balance=WSCWallet.balance + wsc_amount)
+                )
+                wallet_db.commit()
+            else:
+                coin_row.balance += wsc_amount
+                coin_db.commit()
+            if not use_wsc:
+                coin_db.close()
+            return False, f"Bond creation failed (coins refunded): {bond_err}"
 
+        if not use_wsc and coin_db:
+            coin_db.close()
+
+        paid_label = f"{wsc_amount:.2f} {stable_coin_symbol}" if not use_wsc else f"{wsc_amount:.2f} WSC"
         try:
             from stats_ux import log_transaction as _lt
-            _lt(player_id, "bond_purchase", "money", -wsc_amount,
-                f"Bond purchased: {wsc_amount:.2f} WSC → {currency_code} {maturity_days}d",
+            _lt(player_id, "bond_purchase", "money", -face_value_usd,
+                f"Bond purchased: {paid_label} → {currency_code} {maturity_days}d",
                 reference_id=str(bond.id))
         except Exception:
             pass
 
-        annual_pct  = bank.yield_rate * 100
-        daily_int   = wsc_amount * bank.yield_rate / 365
+        annual_pct   = bank.yield_rate * 100
+        daily_int    = face_value_usd * bank.yield_rate / 365
         currency_sym = bank.currency_symbol
         return True, (
-            f"Bond purchased: {wsc_amount:.2f} WSC → {currency_code} {maturity_days}-day bond. "
+            f"Bond purchased: {paid_label} → {currency_code} {maturity_days}-day bond. "
             f"Current yield: {annual_pct:.3f}% p.a. "
             f"Est. daily interest: {currency_sym}{daily_int:.4f} {currency_code}. "
             f"Matures: {bond.matures_at.strftime('%Y-%m-%d')}."

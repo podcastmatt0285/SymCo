@@ -1722,6 +1722,9 @@ async def wallet_dashboard(
     faucet_st   = get_faucet_status(player.id)
     swap_hist   = get_recent_swaps(player.id, limit=8)
 
+    from cities import get_player_stable_coin_balances
+    comptroller_coins = get_player_stable_coin_balances(player.id)
+
     # ---- AMM pool state for each native token the player holds ----
     from wallet import WSCPool, WSC_AMM_FEE, get_db as wallet_get_db
     amm_pool_data = {}
@@ -2060,6 +2063,41 @@ async def wallet_dashboard(
             </form>
         </div>
     </div>
+
+    <!-- COMPTROLLER STABLE COINS -->
+    {"".join(f'''
+    <div class="wsc-card" style="border-color:#7c3aed66;margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:12px;color:#a78bfa;margin-bottom:4px;letter-spacing:1px;">{coin["symbol"]} &mdash; {coin["city_name"].upper()} COMPTROLLER COIN</div>
+                <div class="wsc-balance">{coin["balance"]:.4f} <span style="font-size:16px;color:#7c3aed;">{coin["symbol"]}</span></div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                    = {fmt_usd(coin["usd_value"], disp)} &nbsp;&#8226;&nbsp; 1 {coin["symbol"]} = 1 {coin["peg_label"]} (${coin["usd_per_coin"]:.6f})
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:11px;color:#7c3aed;margin-bottom:8px;">Lifetime stats</div>
+                <div style="font-size:12px;margin-bottom:3px;">Received: <strong style="color:#4ade80;">{coin["total_received"]:.4f}</strong></div>
+                <div style="font-size:12px;color:#475569;">Redeemed: {coin["total_redeemed"]:.4f}</div>
+            </div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #3b1d6e;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <form action="/api/city/stablecoin/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="city_id" value="{coin["city_id"]}">
+                <div class="form-group" style="margin:0;">
+                    <label style="color:#a78bfa;">Redeem {coin["symbol"]} &#8594; Cash ({disp["symbol"]})</label>
+                    <input type="number" name="amount" step="any" min="0.01"
+                           max="{coin["balance"]:.4f}"
+                           placeholder="Amount (max {coin["balance"]:.4f})"
+                           style="width:200px;border-color:#7c3aed;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
+                    &#9654; Redeem for Cash
+                </button>
+            </form>
+        </div>
+    </div>
+    ''' for coin in comptroller_coins)}
 
     <!-- WSC TREASURY POOLS -->
     <div class="card">

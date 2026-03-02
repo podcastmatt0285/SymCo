@@ -2369,7 +2369,7 @@ def get_all_city_stable_coins() -> list:
 
 
 def get_player_stable_coin_balances(player_id: int) -> list:
-    """Return all city stable coin balances held by a player."""
+    """Return all comptroller stable coin balances held by a player (balance > 0)."""
     db = get_db()
     try:
         rows = db.query(CityStableCoinBalance).filter(
@@ -2380,11 +2380,17 @@ def get_player_stable_coin_balances(player_id: int) -> list:
         for row in rows:
             bank = db.query(CityBank).filter(CityBank.city_id == row.city_id).first()
             city = db.query(City).filter(City.id == row.city_id).first()
+            sym = bank.stable_coin_symbol if bank else "?"
+            peg_label = sym.split("-", 1)[1] if sym and "-" in sym else sym
+            usd_per_coin = _get_peg_usd_per_unit(peg_label)
             result.append({
-                "city_id":   row.city_id,
-                "city_name": city.name if city else f"City #{row.city_id}",
-                "symbol":    bank.stable_coin_symbol if bank else "?",
-                "balance":   row.balance,
+                "city_id":        row.city_id,
+                "city_name":      city.name if city else f"City #{row.city_id}",
+                "symbol":         sym,
+                "peg_label":      peg_label,
+                "usd_per_coin":   usd_per_coin,
+                "balance":        row.balance,
+                "usd_value":      row.balance * usd_per_coin,
                 "total_received": row.total_received,
                 "total_redeemed": row.total_redeemed,
             })

@@ -148,6 +148,9 @@ def bond_market(
     treasury     = get_treasury_info()
     my_deposits  = get_player_yield_deposits(player.id)
 
+    from cities import get_player_stable_coin_balances
+    comptroller_coins = get_player_stable_coin_balances(player.id)
+
     # ── Flash messages ──
     flash = ""
     if msg:
@@ -293,6 +296,15 @@ def bond_market(
     else:
         bonds_section = '<div class="card"><p style="color:#64748b;">No active bonds. Buy one below.</p></div>'
 
+    # ── "Pay with" options: WSC + any comptroller coins the player holds ──
+    pay_with_opts = f'<option value="WSC">WSC ({wsc_info["balance"]:.4f} available)</option>'
+    for _cc in comptroller_coins:
+        pay_with_opts += (
+            f'<option value="{_cc["symbol"]}">'
+            f'{_cc["symbol"]} ({_cc["balance"]:.4f} available — {_cc["city_name"]})'
+            f'</option>'
+        )
+
     # ── Bank cards with buy form ──
     bank_cards = ""
     maturity_opts = "".join(f'<option value="{d}">{d} days</option>' for d in BOND_MATURITIES)
@@ -338,7 +350,11 @@ def bond_market(
                   style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;">
                 <input type="hidden" name="currency_code" value="{bank['code']}">
                 <div>
-                    <label>WSC Amount</label>
+                    <label>Pay with</label>
+                    <select name="stable_coin_symbol" style="width:220px;">{pay_with_opts}</select>
+                </div>
+                <div>
+                    <label>Amount</label>
                     <input type="number" name="wsc_amount" min="0.01" step="0.01"
                            placeholder="e.g. 500" style="width:130px;" required>
                 </div>
@@ -601,16 +617,17 @@ def forex_dashboard(
 
 @router.post("/api/reserve-banks/bonds/buy")
 def api_buy_bond(
-    currency_code: str  = Form(...),
-    wsc_amount: float   = Form(...),
-    maturity_days: int  = Form(...),
+    currency_code:       str   = Form(...),
+    wsc_amount:          float = Form(...),
+    maturity_days:       int   = Form(...),
+    stable_coin_symbol:  str   = Form("WSC"),
     session_token: Optional[str] = Cookie(None),
 ):
     player = _auth(session_token)
     if not player:
         return RedirectResponse("/login", status_code=303)
 
-    ok, msg = purchase_bond(player.id, currency_code, wsc_amount, maturity_days)
+    ok, msg = purchase_bond(player.id, currency_code, wsc_amount, maturity_days, stable_coin_symbol)
     param   = "msg" if ok else "err"
     from urllib.parse import quote
     return RedirectResponse(f"/reserve-banks/bonds?{param}={quote(msg)}", status_code=303)

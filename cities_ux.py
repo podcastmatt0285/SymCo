@@ -1492,16 +1492,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
         sc = get_city_stable_coin_info(city_id)
         if sc.get("active"):
             sym = sc["symbol"]
-            # Player's own balance in this city's coin
-            player_sc = next(
-                (b for b in get_player_stable_coin_balances(player.id) if b["city_id"] == city_id),
-                None
-            )
-            player_balance = player_sc["balance"] if player_sc else 0.0
-            usd_per_coin   = sc.get("usd_per_coin", 1.0)
-            player_usd_val = player_balance * usd_per_coin
-
-            backing_pct = sc["backing_ratio"] * 100
+            backing_pct   = sc["backing_ratio"] * 100
             backing_color = "#22c55e" if backing_pct >= 100 else ("#f59e0b" if backing_pct >= 50 else "#ef4444")
 
             mayor_controls_sc = ""
@@ -1522,27 +1513,13 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     </form>
                 </div>"""
 
-            redeem_html = ""
-            if player_balance > 0:
-                redeem_html = f"""
-                <div style="margin-top:10px;">
-                    <form method="post" action="/api/city/stablecoin/redeem" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                        <input type="hidden" name="city_id" value="{city_id}">
-                        <label style="font-size:0.75rem;color:#94a3b8;">Redeem {sym} → USD:</label>
-                        <input type="number" name="amount" min="0.01" step="0.01"
-                               max="{player_balance:.4f}" style="width:110px;font-size:0.8rem;" required>
-                        <button type="submit" class="btn" style="font-size:0.75rem;padding:4px 12px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;">
-                            Redeem at {sc.get('peg_label','USD')} rate</button>
-                    </form>
-                </div>"""
-
             stable_coin_section = f"""
             <div class="card" style="border-color:#7c3aed44;">
                 <h2 style="color:#a78bfa;">🪙 {sc['display_name']}</h2>
                 <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
                     Issued by the Office of the Comptroller (level 12).
-                    Pegged 1:1 to the mayor's legal tender: <strong style="color:#e2e8f0;">{sc.get('peg_label', sc['symbol'])}</strong>.
-                    Redeem any time for USD from the city's cash reserves.
+                    Pegged 1:1 to the mayor's legal tender: <strong style="color:#e2e8f0;">{sc.get('peg_label', sym)}</strong>.
+                    Manage your balance in your <a href="/wallet" style="color:#a78bfa;">Wallet</a>.
                 </p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
@@ -1559,12 +1536,10 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                         <div style="color:#64748b;font-size:0.7rem;">${sc['reserves']:,.2f} in bank</div>
                     </div>
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
-                        <div style="color:#94a3b8;font-size:0.7rem;">Your Balance</div>
-                        <div style="color:#34d399;font-size:1.1rem;font-weight:bold;">{player_balance:,.4f} {sym}</div>
-                        <div style="color:#64748b;font-size:0.7rem;">≈ ${player_usd_val:,.2f} USD</div>
+                        <div style="color:#94a3b8;font-size:0.7rem;">Members Holding</div>
+                        <div style="color:#e2e8f0;font-size:1.1rem;font-weight:bold;">{sc['member_count']}</div>
                     </div>
                 </div>
-                {redeem_html}
                 {mayor_controls_sc}
             </div>"""
 
@@ -2028,8 +2003,8 @@ async def api_stablecoin_redeem(
     ok, msg = redeem_stable_coins(player.id, city_id, amount)
     encoded = msg.replace(" ", "+")
     if ok:
-        return RedirectResponse(url=f"/city/{city_id}?msg={encoded}", status_code=303)
-    return RedirectResponse(url=f"/city/{city_id}?error={encoded}", status_code=303)
+        return RedirectResponse(url=f"/wallet?msg={encoded}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={encoded}", status_code=303)
 
 
 # ==========================
