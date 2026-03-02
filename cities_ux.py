@@ -1539,7 +1539,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 <h2 style="color:#a78bfa;">🪙 {sc['display_name']}</h2>
                 <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
                     Issued by the Office of the Comptroller (level 12).
-                    Pegged 1:1 to <strong style="color:#e2e8f0;">{sc.get('currency_type') or 'city currency'}</strong>.
+                    Pegged 1:1 to the mayor's legal tender: <strong style="color:#e2e8f0;">{sc.get('peg_label', sc['symbol'])}</strong>.
                     Redeem any time for USD from the city's cash reserves.
                 </p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">

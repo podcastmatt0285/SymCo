@@ -1551,13 +1551,20 @@ async def tick(current_tick: int, now: datetime):
                                 try:
                                     city_row = _cdb.query(City).filter(City.id == inst.city_id).first()
                                     city_name = city_row.name if city_row else ""
-                                    ctype = (city_row.currency_type or "") if city_row else ""
+                                    mayor_id  = city_row.mayor_id if city_row else None
                                 finally:
                                     _cdb.close()
 
-                                # Build a symbol that reflects both city and peg:
-                                # e.g. "New York" + "gold" → "NY-GOLD"
-                                #      "Springfield" + "iron" → "SPR-IRON"
+                                # Peg = mayor's chosen legal tender (e.g. "JPY", "USD", "EUR")
+                                peg_code = "USD"
+                                if mayor_id:
+                                    try:
+                                        from reserve_banks import get_player_legal_tender
+                                        peg_code = get_player_legal_tender(mayor_id) or "USD"
+                                    except Exception:
+                                        pass
+
+                                # City code: initials of each word (multi-word) or first 4 chars
                                 words = city_name.split() if city_name else []
                                 if len(words) > 1:
                                     city_code = "".join(w[0] for w in words if w)[:4].upper()
@@ -1565,9 +1572,8 @@ async def tick(current_tick: int, now: datetime):
                                     city_code = words[0][:4].upper()
                                 else:
                                     city_code = "CTY"
-                                # Treat underscored item types (e.g. "copper_wire") as one word
-                                peg_raw = ctype.replace("_", " ").split()[0] if ctype else "COIN"
-                                peg_code = peg_raw[:4].upper()
+
+                                # e.g. "New York" + JPY → "NY-JPY"
                                 symbol = f"{city_code}-{peg_code}"
 
                                 minted = bank.cash_reserves * 0.0001  # 0.01% per tick

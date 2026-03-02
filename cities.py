@@ -126,7 +126,11 @@ class CityBank(Base):
     # Currency inventory (the commodity)
     currency_type = Column(String, nullable=True)
     currency_quantity = Column(Float, default=0.0)
-    
+
+    # Comptroller level-12 stable coin
+    stable_coin_supply = Column(Float, default=0.0)
+    stable_coin_symbol = Column(String(16), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -2409,11 +2413,15 @@ def get_city_stable_coin_info(city_id: int) -> dict:
         sym = bank.stable_coin_symbol
         city = db.query(City).filter(City.id == city_id).first()
         city_name = city.name if city else f"City #{city_id}"
+        # Derive peg label from symbol (e.g. "NY-JPY" → "JPY")
+        peg_label = sym.split("-", 1)[1] if sym and "-" in sym else sym
+
         return {
             "active":         True,
             "symbol":         sym,
             "display_name":   f"{city_name} Municipal Stable Coin ({sym})",
             "city_name":      city_name,
+            "peg_label":      peg_label,
             "supply":         bank.stable_coin_supply or 0.0,
             "in_circulation": in_circulation,
             "undistributed":  max(0.0, (bank.stable_coin_supply or 0.0) - in_circulation),
