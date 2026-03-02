@@ -1688,6 +1688,220 @@ _WALLET_STYLES = """
 </style>
 """
 
+def _build_city_coin_section(coin, cw_data, disp, wsc_info, portfolio, faucet_cooldown_h, faucet_min, faucet_max):
+    """Render the full economy card for one comptroller stable coin."""
+    from reserve_banks import fmt_usd
+    sym      = coin["symbol"]
+    cid      = coin["city_id"]
+    bal      = coin["balance"]
+    peg      = coin["peg_label"]
+    usd_val  = coin["usd_value"]
+    usd_coin = coin["usd_per_coin"]
+
+    treasury = cw_data.get("treasury", {})
+    pool     = cw_data.get("amm_pool", {})
+    yields   = cw_data.get("yields",   [])
+    faucet   = cw_data.get("faucet_st", {"can_claim": True, "remaining_seconds": 0})
+
+    # ── Implied rate from pool ──
+    rate_str = ""
+    if pool.get("ccc_reserve", 0) > 0 and pool.get("wsc_reserve", 0) > 0:
+        rate = pool["wsc_reserve"] / pool["ccc_reserve"]
+        rate_str = f"Pool rate: 1 {sym} ≈ {rate:.6f} WSC"
+
+    # ── Faucet button ──
+    if faucet["can_claim"]:
+        faucet_btn = f"""
+        <form action="/api/city-wallet/faucet" method="post" style="display:inline;">
+            <input type="hidden" name="city_id" value="{cid}">
+            <button type="submit" class="btn" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;">
+                &#127881; Claim {sym} Faucet ({faucet_min:.2f}–{faucet_max:.2f})
+            </button>
+        </form>"""
+    else:
+        secs = faucet["remaining_seconds"]
+        hrs  = secs // 3600
+        mins = (secs % 3600) // 60
+        faucet_btn = f'<span style="color:#64748b;font-size:12px;">Faucet cooldown: {hrs}h {mins}m</span>'
+
+    # ── Active yield deposits ──
+    yield_rows = ""
+    for d in yields:
+        yield_rows += f"""
+        <tr>
+            <td>{d["meme_symbol"]}</td>
+            <td>{d["quantity"]:.4f}</td>
+            <td style="color:#a78bfa;">{d["total_earned"]:.4f} {sym}</td>
+            <td>
+                <form action="/api/city-wallet/yield-farm/remove/{d["id"]}" method="post" style="display:inline;">
+                    <button type="submit" class="btn" style="font-size:11px;padding:2px 8px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;">Unstake</button>
+                </form>
+            </td>
+        </tr>"""
+    if not yield_rows:
+        yield_rows = '<tr><td colspan="4" style="color:#64748b;text-align:center;">No active stakes</td></tr>'
+
+    # ── Meme coin options for yield farming ──
+    meme_opts = "".join(
+        f'<option value="{h["symbol"]}">{h["symbol"]} ({h["balance"]:.4f} available)</option>'
+        for h in portfolio.get("meme_holdings", [])
+        if h.get("balance", 0) > 0
+    )
+    if not meme_opts:
+        meme_opts = '<option disabled>No meme coins in wallet</option>'
+
+    return f"""
+    <!-- {sym} ECONOMY -->
+    <div class="wsc-card" style="border-color:#7c3aed66;margin-top:16px;">
+        <!-- Balance header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:12px;color:#a78bfa;margin-bottom:4px;letter-spacing:1px;">
+                    {sym} &mdash; {coin["city_name"].upper()} COMPTROLLER COIN
+                </div>
+                <div class="wsc-balance">{bal:.4f} <span style="font-size:16px;color:#7c3aed;">{sym}</span></div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                    = {fmt_usd(usd_val, disp)} &nbsp;&#8226;&nbsp; 1 {sym} = 1 {peg} (${usd_coin:.6f})
+                    {"&nbsp;&#8226;&nbsp;" + rate_str if rate_str else ""}
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:11px;color:#7c3aed;margin-bottom:8px;">Lifetime</div>
+                <div style="font-size:12px;margin-bottom:3px;">Received: <strong style="color:#4ade80;">{coin["total_received"]:.4f}</strong></div>
+                <div style="font-size:12px;color:#475569;">Redeemed: {coin["total_redeemed"]:.4f}</div>
+            </div>
+        </div>
+
+        <!-- Redeem -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #3b1d6e;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <form action="/api/city/stablecoin/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="city_id" value="{cid}">
+                <div class="form-group" style="margin:0;">
+                    <label style="color:#a78bfa;">Redeem {sym} &#8594; Cash ({disp["symbol"]})</label>
+                    <input type="number" name="amount" step="any" min="0.01" max="{bal:.4f}"
+                           placeholder="Amount (max {bal:.4f})" style="width:200px;border-color:#7c3aed;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
+                    &#9654; Redeem for Cash
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- {sym} TREASURY POOLS -->
+    <div class="card" style="border-color:#7c3aed33;">
+        <h2 style="color:#a78bfa;">&#128176; {sym} Treasury &amp; Reward Pools</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+            Every WSC&#8596;{sym} swap burns 0.3&#37; &#8594; 90&#37; re-minted as {sym} and split into pools below.
+        </p>
+        <div class="grid grid-3">
+            <div class="reward-pool">
+                <span style="color:#64748b;font-size:11px;">&#9881; Yield Pool</span>
+                <span class="pool-val" style="color:#a78bfa;">{treasury.get("yield_pool", 0.0):.4f} {sym}</span>
+                <span style="color:#475569;font-size:10px;">Distributed hourly to meme coin stakers</span>
+            </div>
+            <div class="reward-pool">
+                <span style="color:#64748b;font-size:11px;">&#128241; Faucet Pool</span>
+                <span class="pool-val" style="color:#a78bfa;">{treasury.get("faucet_pool", 0.0):.4f} {sym}</span>
+                <span style="color:#475569;font-size:10px;">Claim every {faucet_cooldown_h}h &bull; {faucet_min:.2f}&ndash;{faucet_max:.2f} {sym}</span>
+            </div>
+            <div class="reward-pool">
+                <span style="color:#64748b;font-size:11px;">&#127881; Airdrop Pool</span>
+                <span class="pool-val" style="color:#a78bfa;">{treasury.get("airdrop_pool", 0.0):.4f} {sym}</span>
+                <span style="color:#475569;font-size:10px;">Periodic drops to city members</span>
+            </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#475569;text-align:right;">
+            Total ever minted: <strong style="color:#a78bfa;">{treasury.get("total_minted", 0.0):.4f} {sym}</strong>
+        </div>
+    </div>
+
+    <!-- {sym} FAUCET -->
+    <div class="card" style="border-color:#7c3aed22;">
+        <h2 style="color:#a78bfa;">&#128241; {sym} Faucet</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+            Free {sym} dispensed from the faucet pool every {faucet_cooldown_h} hour(s). City members only.
+        </p>
+        {faucet_btn}
+        <span style="color:#64748b;font-size:12px;margin-left:12px;">
+            Pool: <strong style="color:#a78bfa;">{treasury.get("faucet_pool", 0.0):.4f} {sym}</strong>
+        </span>
+    </div>
+
+    <!-- {sym} AMM SWAP (WSC ↔ CCC) -->
+    <div class="card" style="border-color:#7c3aed22;">
+        <h2 style="color:#a78bfa;">&#9851; {sym} AMM Pool — WSC &#8596; {sym}</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:10px;">
+            Constant-product pool mirrors the live {peg}/USD forex rate.
+            Pool reserves: <strong style="color:#a78bfa;">{pool.get("wsc_reserve", 0.0):.4f} WSC</strong>
+            / <strong style="color:#a78bfa;">{pool.get("ccc_reserve", 0.0):.4f} {sym}</strong>
+            &bull; {pool.get("total_swaps", 0):,} total swaps
+        </p>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <form action="/api/city-wallet/swap/wsc-to-ccc" method="post"
+                  style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <input type="hidden" name="city_id" value="{cid}">
+                <div class="form-group" style="margin:0;">
+                    <label style="color:#a78bfa;">WSC &#8594; {sym}</label>
+                    <input type="number" name="wsc_amount" step="any" min="0.0001"
+                           placeholder="WSC amount" style="width:150px;border-color:#7c3aed;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
+                    Buy {sym}
+                </button>
+            </form>
+            <form action="/api/city-wallet/swap/ccc-to-wsc" method="post"
+                  style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <input type="hidden" name="city_id" value="{cid}">
+                <div class="form-group" style="margin:0;">
+                    <label style="color:#a78bfa;">{sym} &#8594; WSC</label>
+                    <input type="number" name="ccc_amount" step="any" min="0.0001"
+                           max="{bal:.4f}"
+                           placeholder="{sym} amount" style="width:150px;border-color:#7c3aed;">
+                </div>
+                <button type="submit" class="btn" style="background:#4f46e5;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;margin-top:18px;">
+                    Sell {sym}
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- {sym} YIELD FARMING -->
+    <div class="card" style="border-color:#7c3aed22;">
+        <h2 style="color:#a78bfa;">&#9881; {sym} Yield Farming</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:10px;">
+            Stake meme coins to earn {sym} from the yield pool every hour.
+            Rewards are proportional to stake value (quantity &times; price).
+        </p>
+        <form action="/api/city-wallet/yield-farm/add" method="post"
+              style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
+            <input type="hidden" name="city_id" value="{cid}">
+            <div class="form-group" style="margin:0;">
+                <label style="color:#a78bfa;">Meme Coin</label>
+                <select name="meme_symbol" style="border-color:#7c3aed;">{meme_opts}</select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label style="color:#a78bfa;">Quantity</label>
+                <input type="number" name="quantity" step="any" min="0.0001"
+                       placeholder="Amount to stake" style="width:150px;border-color:#7c3aed;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
+                &#9651; Stake
+            </button>
+        </form>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <tr style="color:#64748b;border-bottom:1px solid #334155;">
+                <th style="text-align:left;padding:4px;">Coin</th>
+                <th style="text-align:left;padding:4px;">Staked</th>
+                <th style="text-align:left;padding:4px;">Earned {sym}</th>
+                <th style="text-align:left;padding:4px;"></th>
+            </tr>
+            {yield_rows}
+        </table>
+    </div>
+    """
+
+
 @router.get("/wallet", response_class=HTMLResponse)
 async def wallet_dashboard(
     session_token: Optional[str] = Cookie(None),
@@ -1724,6 +1938,24 @@ async def wallet_dashboard(
 
     from cities import get_player_stable_coin_balances
     comptroller_coins = get_player_stable_coin_balances(player.id)
+
+    # ---- Per-city data for the full CCC economy sections ----
+    from city_wallet import (
+        get_city_treasury_info, get_city_amm_pool_info,
+        get_player_city_yield_deposits, get_city_faucet_status,
+        get_wsc_to_ccc_quote, get_ccc_to_wsc_quote,
+        CCC_FAUCET_COOLDOWN_HOURS, CCC_FAUCET_AMOUNT_MIN, CCC_FAUCET_AMOUNT_MAX,
+    )
+    city_wallet_data = {}
+    for _cc in comptroller_coins:
+        _cid = _cc["city_id"]
+        _fsec = get_city_faucet_status(player.id, _cid)
+        city_wallet_data[_cid] = {
+            "treasury":  get_city_treasury_info(_cid),
+            "amm_pool":  get_city_amm_pool_info(_cid),
+            "yields":    get_player_city_yield_deposits(player.id, _cid),
+            "faucet_st": _fsec,
+        }
 
     # ---- AMM pool state for each native token the player holds ----
     from wallet import WSCPool, WSC_AMM_FEE, get_db as wallet_get_db
@@ -2064,40 +2296,8 @@ async def wallet_dashboard(
         </div>
     </div>
 
-    <!-- COMPTROLLER STABLE COINS -->
-    {"".join(f'''
-    <div class="wsc-card" style="border-color:#7c3aed66;margin-top:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-            <div>
-                <div style="font-size:12px;color:#a78bfa;margin-bottom:4px;letter-spacing:1px;">{coin["symbol"]} &mdash; {coin["city_name"].upper()} COMPTROLLER COIN</div>
-                <div class="wsc-balance">{coin["balance"]:.4f} <span style="font-size:16px;color:#7c3aed;">{coin["symbol"]}</span></div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                    = {fmt_usd(coin["usd_value"], disp)} &nbsp;&#8226;&nbsp; 1 {coin["symbol"]} = 1 {coin["peg_label"]} (${coin["usd_per_coin"]:.6f})
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:11px;color:#7c3aed;margin-bottom:8px;">Lifetime stats</div>
-                <div style="font-size:12px;margin-bottom:3px;">Received: <strong style="color:#4ade80;">{coin["total_received"]:.4f}</strong></div>
-                <div style="font-size:12px;color:#475569;">Redeemed: {coin["total_redeemed"]:.4f}</div>
-            </div>
-        </div>
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #3b1d6e;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-            <form action="/api/city/stablecoin/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <input type="hidden" name="city_id" value="{coin["city_id"]}">
-                <div class="form-group" style="margin:0;">
-                    <label style="color:#a78bfa;">Redeem {coin["symbol"]} &#8594; Cash ({disp["symbol"]})</label>
-                    <input type="number" name="amount" step="any" min="0.01"
-                           max="{coin["balance"]:.4f}"
-                           placeholder="Amount (max {coin["balance"]:.4f})"
-                           style="width:200px;border-color:#7c3aed;">
-                </div>
-                <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
-                    &#9654; Redeem for Cash
-                </button>
-            </form>
-        </div>
-    </div>
-    ''' for coin in comptroller_coins)}
+    <!-- COMPTROLLER STABLE COINS — full economy per city -->
+    {"".join(_build_city_coin_section(coin, city_wallet_data.get(coin["city_id"], {}), disp, wsc_info, portfolio, CCC_FAUCET_COOLDOWN_HOURS, CCC_FAUCET_AMOUNT_MIN, CCC_FAUCET_AMOUNT_MAX) for coin in comptroller_coins)}
 
     <!-- WSC TREASURY POOLS -->
     <div class="card">
@@ -2485,6 +2685,94 @@ async def api_amm_wsc_to_native(
         return RedirectResponse(url="/login", status_code=303)
     from wallet import swap_wsc_for_native
     ok, msg, _ = swap_wsc_for_native(player.id, native_symbol.upper().strip(), wsc_amount)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+# ==========================
+# CITY WALLET API ENDPOINTS
+# ==========================
+
+@router.post("/api/city-wallet/swap/wsc-to-ccc")
+async def api_city_swap_wsc_to_ccc(
+    city_id:    int   = Form(...),
+    wsc_amount: float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_wallet import swap_wsc_for_city_coin
+    ok, msg = swap_wsc_for_city_coin(player.id, city_id, wsc_amount)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+@router.post("/api/city-wallet/swap/ccc-to-wsc")
+async def api_city_swap_ccc_to_wsc(
+    city_id:    int   = Form(...),
+    ccc_amount: float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_wallet import swap_city_coin_for_wsc
+    ok, msg = swap_city_coin_for_wsc(player.id, city_id, ccc_amount)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+@router.post("/api/city-wallet/faucet")
+async def api_city_faucet(
+    city_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_wallet import claim_city_faucet
+    ok, msg, _ = claim_city_faucet(player.id, city_id)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+@router.post("/api/city-wallet/yield-farm/add")
+async def api_city_yield_farm_add(
+    city_id:     int   = Form(...),
+    meme_symbol: str   = Form(...),
+    quantity:    float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_wallet import add_city_yield_farming
+    ok, msg = add_city_yield_farming(player.id, city_id, meme_symbol.upper().strip(), quantity)
+    enc = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+
+
+@router.post("/api/city-wallet/yield-farm/remove/{deposit_id}")
+async def api_city_yield_farm_remove(
+    deposit_id: int,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from city_wallet import remove_city_yield_farming
+    ok, msg = remove_city_yield_farming(player.id, deposit_id)
     enc = msg.replace(" ", "+")
     if ok:
         return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
