@@ -1324,6 +1324,130 @@ def get_all_moderators() -> list:
 
 
 # ==========================
+# CITY PROJECT ADMIN HELPERS
+# ==========================
+
+def admin_get_city_projects(city_id: int) -> list:
+    """Return all non-deconstructed city project instances for a city."""
+    try:
+        from city_projects import (
+            CityProjectInstance, CITY_PROJECT_TYPES,
+            STATUS_DECONSTRUCTED, get_db as cp_get_db,
+        )
+        db = cp_get_db()
+        try:
+            instances = db.query(CityProjectInstance).filter(
+                CityProjectInstance.city_id == city_id,
+                CityProjectInstance.status != STATUS_DECONSTRUCTED,
+            ).all()
+            result = []
+            for inst in instances:
+                defn = CITY_PROJECT_TYPES.get(inst.project_type, {})
+                ticks_req = inst.construction_ticks_required or 1
+                result.append({
+                    "id":            inst.id,
+                    "project_type":  inst.project_type,
+                    "name":          defn.get("name", inst.project_type),
+                    "level":         inst.level,
+                    "target_level":  inst.target_level,
+                    "status":        inst.status,
+                    "ticks_required": ticks_req,
+                    "ticks_done":    inst.construction_ticks_completed,
+                    "progress_pct":  round(100 * min(inst.construction_ticks_completed, ticks_req) / ticks_req, 1),
+                })
+            return result
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Admins] admin_get_city_projects error: {e}")
+        return []
+
+
+def admin_force_complete_project(admin_id: int, instance_id: int) -> dict:
+    """Force-complete construction/upgrade: set level = target_level, status = active."""
+    try:
+        from city_projects import CityProjectInstance, STATUS_ACTIVE, get_db as cp_get_db
+        db = cp_get_db()
+        try:
+            inst = db.query(CityProjectInstance).filter(
+                CityProjectInstance.id == instance_id
+            ).first()
+            if not inst:
+                return {"ok": False, "error": "Project instance not found."}
+            inst.level = inst.target_level
+            inst.construction_ticks_completed = inst.construction_ticks_required
+            inst.status = STATUS_ACTIVE
+            db.commit()
+            return {"ok": True}
+        except Exception as e:
+            db.rollback()
+            return {"ok": False, "error": str(e)}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_set_project_level(admin_id: int, instance_id: int, new_level: int) -> dict:
+    """Directly set a project's level (1–12). Keeps status active."""
+    try:
+        from city_projects import (
+            CityProjectInstance, STATUS_ACTIVE,
+            MAX_PROJECT_LEVEL, get_db as cp_get_db,
+        )
+        if new_level < 0 or new_level > MAX_PROJECT_LEVEL:
+            return {"ok": False, "error": f"Level must be 0–{MAX_PROJECT_LEVEL}."}
+        db = cp_get_db()
+        try:
+            inst = db.query(CityProjectInstance).filter(
+                CityProjectInstance.id == instance_id
+            ).first()
+            if not inst:
+                return {"ok": False, "error": "Project instance not found."}
+            inst.level = new_level
+            inst.target_level = new_level
+            inst.status = STATUS_ACTIVE
+            db.commit()
+            return {"ok": True}
+        except Exception as e:
+            db.rollback()
+            return {"ok": False, "error": str(e)}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_set_project_status(admin_id: int, instance_id: int, new_status: str) -> dict:
+    """Force a project's status to active, paused, or deconstructed."""
+    try:
+        from city_projects import (
+            CityProjectInstance, STATUS_ACTIVE, STATUS_PAUSED,
+            STATUS_DECONSTRUCTED, get_db as cp_get_db,
+        )
+        allowed = {STATUS_ACTIVE, STATUS_PAUSED, STATUS_DECONSTRUCTED}
+        if new_status not in allowed:
+            return {"ok": False, "error": f"Status must be one of: {', '.join(sorted(allowed))}."}
+        db = cp_get_db()
+        try:
+            inst = db.query(CityProjectInstance).filter(
+                CityProjectInstance.id == instance_id
+            ).first()
+            if not inst:
+                return {"ok": False, "error": "Project instance not found."}
+            inst.status = new_status
+            db.commit()
+            return {"ok": True}
+        except Exception as e:
+            db.rollback()
+            return {"ok": False, "error": str(e)}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+# ==========================
 # TICK
 # ==========================
 

@@ -178,8 +178,8 @@ CITY_PROJECT_TYPES: Dict[str, Dict[str, Any]] = {
         "description": (
             "The city's sovereign wealth engine. Each tick it invests 0.05 % of the city "
             "bank's cash reserves in municipal bonds, compounding returns directly back into "
-            "reserves. At level 12 it may issue a new stable coin pegged 1:1 to the mayor's "
-            "selected currency (future feature). No member buffs or debuffs."
+            "reserves. At level 12 it mints a city-backed stable coin pegged 1:1 to the "
+            "mayor's selected currency (0.01 % of reserves / tick). No member buffs or debuffs."
         ),
         "construction_materials": {
             "concrete": 10_000, "steel": 8_000, "circuit_board": 4_000,
@@ -1539,10 +1539,25 @@ async def tick(current_tick: int, now: datetime):
                         bank = city_db.query(CityBank).filter(
                             CityBank.city_id == inst.city_id).first()
                         if bank and bank.cash_reserves > 0:
-                            # Investment scales with comptroller level
+                            # Bond investment scales with comptroller level
                             rate = COMPTROLLER_INVEST_RATE * inst.level
                             returns = bank.cash_reserves * rate
                             bank.cash_reserves += returns
+
+                            # Level 12: mint stable coins backed by reserves
+                            if inst.level >= MAX_PROJECT_LEVEL and bank.cash_reserves > 0:
+                                from cities import City, get_db as _cities_get_db
+                                _cdb = _cities_get_db()
+                                try:
+                                    city_row = _cdb.query(City).filter(City.id == inst.city_id).first()
+                                    ctype = (city_row.currency_type or "CITY") if city_row else "CITY"
+                                finally:
+                                    _cdb.close()
+                                symbol = ("x" + ctype.upper()[:5]).rstrip("_")
+                                minted = bank.cash_reserves * 0.0001  # 0.01% per tick
+                                bank.stable_coin_supply = (bank.stable_coin_supply or 0.0) + minted
+                                if not bank.stable_coin_symbol:
+                                    bank.stable_coin_symbol = symbol
                     city_db.commit()
                 finally:
                     city_db.close()
@@ -1574,6 +1589,9 @@ def initialize():
         "ALTER TABLE city_project_instances ADD COLUMN IF NOT EXISTS target_level INTEGER DEFAULT 1",
         "ALTER TABLE city_project_instances ADD COLUMN IF NOT EXISTS construction_started_at TIMESTAMP",
         "ALTER TABLE city_project_instances ADD COLUMN IF NOT EXISTS started_by INTEGER",
+        # Comptroller level-12 stable coin
+        "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS stable_coin_supply FLOAT DEFAULT 0.0",
+        "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS stable_coin_symbol VARCHAR(16)",
     ])
 
     count = len(CITY_PROJECT_TYPES)

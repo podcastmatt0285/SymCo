@@ -1239,7 +1239,16 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 elif p["project_type"] == "municipal_center":
                     special_note = f'<div style="font-size:11px;color:#a78bfa;">👥 City capacity: {25 + 3*p["level"]} members ({25} base + {3*p["level"]} bonus)</div>'
                 elif p["project_type"] == "comptroller_office":
-                    special_note = f'<div style="font-size:11px;color:#a78bfa;">📈 Investing {0.05 * p["level"]:.2f}% of bank reserves / tick into bonds</div>'
+                    bond_note = f'📈 Investing {0.05 * p["level"]:.2f}% of bank reserves / tick into bonds'
+                    coin_note = ""
+                    if p["level"] >= MAX_PROJECT_LEVEL:
+                        sc_supply = getattr(bank, "stable_coin_supply", 0.0) or 0.0
+                        sc_symbol = getattr(bank, "stable_coin_symbol", None) or "xCITY"
+                        coin_note = (
+                            f' &nbsp;·&nbsp; 🪙 Minting {sc_symbol} stable coin '
+                            f'(0.01%/tick · supply: {sc_supply:,.2f} {sc_symbol})'
+                        )
+                    special_note = f'<div style="font-size:11px;color:#a78bfa;">{bond_note}{coin_note}</div>'
 
             proj_cards += f"""
             <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:10px;">

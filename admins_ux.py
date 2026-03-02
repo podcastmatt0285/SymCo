@@ -37,6 +37,8 @@ from admins import (
     get_all_cities_admin, get_player_city_info,
     admin_add_player_to_city, admin_remove_player_from_city,
     admin_get_city_polls, admin_resolve_city_poll,
+    admin_get_city_projects, admin_force_complete_project,
+    admin_set_project_level, admin_set_project_status,
     # County admin
     get_all_counties_admin, get_player_county_info,
     admin_add_city_to_county, admin_remove_city_from_county,
@@ -1230,6 +1232,59 @@ def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
             <td style="color:#64748b;">{p['yes_votes']} / {p['no_votes']}</td>
         </tr>"""
 
+    # ── City Projects panel ──────────────────────────────────────
+    city_projects = admin_get_city_projects(city_id)
+    def _status_badge(st):
+        colours = {"active": "#22c55e", "constructing": "#f59e0b", "upgrading": "#60a5fa",
+                   "paused": "#94a3b8", "deconstructed": "#ef4444"}
+        return f'<span style="color:{colours.get(st,"#94a3b8")};font-weight:600;">{st}</span>'
+
+    proj_rows = ""
+    for p in city_projects:
+        bar_w = int(p["progress_pct"])
+        bar_html = ""
+        if p["status"] in ("constructing", "upgrading"):
+            bar_html = (
+                f'<div style="background:#1e293b;border-radius:3px;height:4px;width:80px;display:inline-block;vertical-align:middle;margin-left:4px;">'
+                f'<div style="background:#60a5fa;height:4px;border-radius:3px;width:{bar_w}%;"></div></div>'
+                f'<span style="font-size:0.65rem;color:#94a3b8;margin-left:3px;">{p["progress_pct"]:.0f}%</span>'
+            )
+        proj_rows += f"""<tr>
+            <td style="font-size:0.75rem;">#{p['id']}</td>
+            <td style="font-size:0.75rem;"><strong>{p['name']}</strong><br>
+                <span style="color:#64748b;font-size:0.65rem;">{p['project_type']}</span></td>
+            <td style="text-align:center;font-size:0.75rem;">{p['level']} / {p['target_level']}</td>
+            <td>{_status_badge(p['status'])} {bar_html}</td>
+            <td style="white-space:nowrap;">
+                <form method="post" action="/admin/cities/{city_id}/projects/{p['id']}/complete" style="display:inline;">
+                    <button class="btn btn-green" style="font-size:0.6rem;padding:2px 6px;"
+                        {'disabled' if p['status'] not in ('constructing','upgrading') else ''}>
+                        Complete</button>
+                </form>
+                <form method="post" action="/admin/cities/{city_id}/projects/{p['id']}/set-level" style="display:inline;margin-left:3px;">
+                    <input type="number" name="level" value="{p['level']}" min="0" max="12"
+                           style="width:40px;font-size:0.7rem;display:inline;">
+                    <button class="btn" style="font-size:0.6rem;padding:2px 6px;background:#475569;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+                        Set Lvl</button>
+                </form>
+                <form method="post" action="/admin/cities/{city_id}/projects/{p['id']}/set-status" style="display:inline;margin-left:3px;">
+                    <select name="status" style="font-size:0.65rem;padding:1px 3px;">
+                        <option value="active" {'selected' if p['status']=='active' else ''}>Active</option>
+                        <option value="paused" {'selected' if p['status']=='paused' else ''}>Paused</option>
+                        <option value="deconstructed">Deconstruct</option>
+                    </select>
+                    <button class="btn btn-red" style="font-size:0.6rem;padding:2px 5px;">Set</button>
+                </form>
+            </td>
+        </tr>"""
+
+    projects_panel = f"""
+    <div class="card">
+        <h3>City Projects ({len(city_projects)})</h3>
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Project</th><th>Lvl</th><th>Status</th><th>Actions</th></tr>{proj_rows}</table></div>'
+          if city_projects else '<p style="color:#64748b;font-size:0.75rem;">No projects yet.</p>'}
+    </div>"""
+
     body = f"""
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <a href="/admin/cities" style="color:#64748b;font-size:0.75rem;">← Cities</a>
@@ -1251,6 +1306,8 @@ def admin_city_detail(city_id: int, session_token: Optional[str] = Cookie(None),
           if member_rows else '<p style="color:#64748b;font-size:0.75rem;">No members.</p>'}
     </div>
 
+    {projects_panel}
+
     {f'''<div class="card">
         <h3>Recent Polls (last {len(past_polls[:10])})</h3>
         <div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Target</th><th>Result</th><th>Y/N</th></tr>{past_poll_rows}</table></div>
@@ -1265,11 +1322,47 @@ def post_resolve_city_poll(city_id: int, session_token: Optional[str] = Cookie(N
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(admin.id)
     result = admin_resolve_city_poll(admin.id, poll_id, force_result)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/cities/{city_id}?msg=Poll+%23{poll_id}+{force_result}ed", status_code=303)
+    return RedirectResponse(url=f"/admin/cities/{city_id}?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/cities/{city_id}/projects/{instance_id}/complete")
+def post_admin_complete_project(city_id: int, instance_id: int,
+                                session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_force_complete_project(admin.id, instance_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/cities/{city_id}?msg=Project+%23{instance_id}+completed", status_code=303)
+    return RedirectResponse(url=f"/admin/cities/{city_id}?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/cities/{city_id}/projects/{instance_id}/set-level")
+def post_admin_set_project_level(city_id: int, instance_id: int,
+                                 session_token: Optional[str] = Cookie(None),
+                                 level: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_set_project_level(admin.id, instance_id, level)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/cities/{city_id}?msg=Project+%23{instance_id}+set+to+level+{level}", status_code=303)
+    return RedirectResponse(url=f"/admin/cities/{city_id}?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/cities/{city_id}/projects/{instance_id}/set-status")
+def post_admin_set_project_status(city_id: int, instance_id: int,
+                                  session_token: Optional[str] = Cookie(None),
+                                  status: str = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_set_project_status(admin.id, instance_id, status)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/cities/{city_id}?msg=Project+%23{instance_id}+status+set+to+{status}", status_code=303)
     return RedirectResponse(url=f"/admin/cities/{city_id}?err={result['error']}", status_code=303)
 
 
