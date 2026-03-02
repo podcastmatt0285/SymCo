@@ -16,7 +16,8 @@
           { "item": "paper", "quantity": 2050 },
           { "item": "leather", "quantity": 15 },
           { "item": "glue", "quantity": 10 },
-          { "item": "energy", "quantity": 50 }
+          { "item": "energy", "quantity": 50 },
+          { "item": "ink", "quantity": 4000 }
         ]
       },
       {
@@ -26,7 +27,8 @@
           { "item": "paper", "quantity": 5750 },
           { "item": "leather", "quantity": 5 },
           { "item": "glue", "quantity": 10 },
-          { "item": "energy", "quantity": 50 }
+          { "item": "energy", "quantity": 50 },
+          { "item": "ink", "quantity": 4000 }
         ]
       },
       {
@@ -36,7 +38,8 @@
           { "item": "paper", "quantity": 5750 },
           { "item": "leather", "quantity": 5 },
           { "item": "glue", "quantity": 10 },
-          { "item": "energy", "quantity": 50 }
+          { "item": "energy", "quantity": 50 },
+          { "item": "ink", "quantity": 4000 }
         ]
       },
       {
@@ -46,7 +49,8 @@
           { "item": "paper", "quantity": 50750 },
           { "item": "leather", "quantity": 5 },
           { "item": "glue", "quantity": 10 },
-          { "item": "energy", "quantity": 50 }
+          { "item": "energy", "quantity": 50 },
+          { "item": "ink", "quantity": 5000 }
         ]
       }
     ]
@@ -68,8 +72,7 @@
       "jungle",
       "savanna",
       "hills",
-      "island",
-      "ocean"
+      "island"
     ],
     "allowed_proximity": [
       "urban",
@@ -287,6 +290,15 @@
       },
       {
         "output_item": "paper",
+        "output_qty": 250,
+        "inputs": [
+          { "item": "grass", "quantity": 3750 },
+          { "item": "water", "quantity": 1 },
+          { "item": "glue", "quantity": 1 }
+        ]
+      },
+      {
+        "output_item": "paper",
         "output_qty": 4750,
         "inputs": [
           { "item": "sawdust", "quantity": 60 },
@@ -366,7 +378,7 @@
       },
       {
         "output_item": "lettuce",
-        "output_qty": 9,
+        "output_qty": 12,
         "inputs": [
           { "item": "water", "quantity": 9.5 },
           { "item": "paper", "quantity": 1 }
