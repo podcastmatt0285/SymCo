@@ -18,7 +18,7 @@ Handles:
 
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Text, Enum as SQLEnum
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Text, Enum as SQLEnum, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from enum import Enum
@@ -199,6 +199,20 @@ class CityVote(Base):
     vote_weight = Column(Integer, default=1)  # Mayor gets extra votes
     
     cast_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CityStableCoinBalance(Base):
+    """Per-player balance of a city's stable coin."""
+    __tablename__ = "city_stable_coin_balances"
+    __table_args__ = (UniqueConstraint("player_id", "city_id"),)
+
+    id        = Column(Integer, primary_key=True, index=True)
+    player_id = Column(Integer, index=True, nullable=False)
+    city_id   = Column(Integer, index=True, nullable=False)
+    balance   = Column(Float, default=0.0)
+    total_received = Column(Float, default=0.0)
+    total_redeemed = Column(Float, default=0.0)
+    last_received  = Column(DateTime, nullable=True)
 
 
 class CityBankLoan(Base):
@@ -2314,6 +2328,180 @@ def calculate_city_nav(city_id: int) -> dict:
 
 
 # ==========================
+# STABLE COIN FUNCTIONS
+# ==========================
+
+def get_all_city_stable_coins() -> list:
+    """Return all cities that have an active stable coin (supply > 0)."""
+    db = get_db()
+    try:
+        banks = db.query(CityBank).filter(
+            CityBank.stable_coin_supply > 0,
+            CityBank.stable_coin_symbol.isnot(None),
+        ).all()
+        result = []
+        for bank in banks:
+            city = db.query(City).filter(City.id == bank.city_id).first()
+            if not city:
+                continue
+            backing_ratio = (
+                bank.stable_coin_supply / bank.cash_reserves
+                if bank.cash_reserves and bank.cash_reserves > 0 else 0.0
+            )
+            result.append({
+                "city_id":       bank.city_id,
+                "city_name":     city.name,
+                "symbol":        bank.stable_coin_symbol,
+                "supply":        bank.stable_coin_supply or 0.0,
+                "reserves":      bank.cash_reserves or 0.0,
+                "backing_ratio": backing_ratio,
+                "currency_type": bank.currency_type,
+            })
+        return result
+    finally:
+        db.close()
+
+
+def get_player_stable_coin_balances(player_id: int) -> list:
+    """Return all city stable coin balances held by a player."""
+    db = get_db()
+    try:
+        rows = db.query(CityStableCoinBalance).filter(
+            CityStableCoinBalance.player_id == player_id,
+            CityStableCoinBalance.balance > 0,
+        ).all()
+        result = []
+        for row in rows:
+            bank = db.query(CityBank).filter(CityBank.city_id == row.city_id).first()
+            city = db.query(City).filter(City.id == row.city_id).first()
+            result.append({
+                "city_id":   row.city_id,
+                "city_name": city.name if city else f"City #{row.city_id}",
+                "symbol":    bank.stable_coin_symbol if bank else "?",
+                "balance":   row.balance,
+                "total_received": row.total_received,
+                "total_redeemed": row.total_redeemed,
+            })
+        return result
+    finally:
+        db.close()
+
+
+def get_city_stable_coin_info(city_id: int) -> dict:
+    """Return stable coin stats for a city."""
+    db = get_db()
+    try:
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+        if not bank or not bank.stable_coin_symbol:
+            return {"active": False}
+        backing_ratio = (
+            bank.stable_coin_supply / bank.cash_reserves
+            if bank.cash_reserves and bank.cash_reserves > 0 else 0.0
+        )
+        members = db.query(CityMember).filter(CityMember.city_id == city_id).all()
+        member_ids = [m.player_id for m in members]
+        distributed = db.query(CityStableCoinBalance).filter(
+            CityStableCoinBalance.city_id == city_id
+        ).all()
+        in_circulation = sum(r.balance for r in distributed)
+        return {
+            "active":         True,
+            "symbol":         bank.stable_coin_symbol,
+            "supply":         bank.stable_coin_supply or 0.0,
+            "in_circulation": in_circulation,
+            "undistributed":  max(0.0, (bank.stable_coin_supply or 0.0) - in_circulation),
+            "reserves":       bank.cash_reserves or 0.0,
+            "backing_ratio":  backing_ratio,
+            "currency_type":  bank.currency_type,
+            "member_count":   len(member_ids),
+        }
+    finally:
+        db.close()
+
+
+def distribute_stable_coins(mayor_id: int, city_id: int, amount_per_member: float) -> tuple:
+    """Mayor distributes stable coins from bank supply to all members equally."""
+    db = get_db()
+    try:
+        city = db.query(City).filter(City.id == city_id).first()
+        if not city or city.mayor_id != mayor_id:
+            return False, "Only the city mayor can distribute stable coins."
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+        if not bank or not bank.stable_coin_symbol or (bank.stable_coin_supply or 0) <= 0:
+            return False, "This city has no stable coins to distribute."
+        if amount_per_member <= 0:
+            return False, "Amount must be positive."
+        members = db.query(CityMember).filter(CityMember.city_id == city_id).all()
+        total_needed = amount_per_member * len(members)
+        if total_needed > (bank.stable_coin_supply or 0):
+            return False, (
+                f"Not enough supply. Need {total_needed:,.2f} {bank.stable_coin_symbol}, "
+                f"bank has {bank.stable_coin_supply:,.2f}."
+            )
+        now = datetime.utcnow()
+        for member in members:
+            bal = db.query(CityStableCoinBalance).filter(
+                CityStableCoinBalance.player_id == member.player_id,
+                CityStableCoinBalance.city_id == city_id,
+            ).first()
+            if not bal:
+                bal = CityStableCoinBalance(player_id=member.player_id, city_id=city_id)
+                db.add(bal)
+            bal.balance = (bal.balance or 0) + amount_per_member
+            bal.total_received = (bal.total_received or 0) + amount_per_member
+            bal.last_received = now
+        bank.stable_coin_supply -= total_needed
+        db.commit()
+        sym = bank.stable_coin_symbol
+        return True, f"Distributed {amount_per_member:,.2f} {sym} to each of {len(members)} members ({total_needed:,.2f} {sym} total)."
+    except Exception as e:
+        db.rollback()
+        return False, f"Distribution failed: {e}"
+    finally:
+        db.close()
+
+
+def redeem_stable_coins(player_id: int, city_id: int, amount: float) -> tuple:
+    """Redeem stable coins for USD cash at 1:1 to the city bank's cash reserves."""
+    db = get_db()
+    try:
+        if amount <= 0:
+            return False, "Amount must be positive."
+        bal = db.query(CityStableCoinBalance).filter(
+            CityStableCoinBalance.player_id == player_id,
+            CityStableCoinBalance.city_id == city_id,
+        ).first()
+        if not bal or (bal.balance or 0) < amount:
+            have = bal.balance if bal else 0
+            return False, f"Insufficient balance. You have {have:,.4f} coins."
+        bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
+        if not bank or (bank.cash_reserves or 0) < amount:
+            return False, "City bank has insufficient reserves to redeem right now."
+        # Burn coins, transfer cash from reserves to player
+        from auth import Player, get_db as auth_get_db
+        auth_db = auth_get_db()
+        try:
+            player = auth_db.query(Player).filter(Player.id == player_id).first()
+            if not player:
+                return False, "Player not found."
+            player.cash_balance = (player.cash_balance or 0) + amount
+            auth_db.commit()
+        finally:
+            auth_db.close()
+        bank.cash_reserves -= amount
+        bal.balance -= amount
+        bal.total_redeemed = (bal.total_redeemed or 0) + amount
+        db.commit()
+        sym = bank.stable_coin_symbol or "coins"
+        return True, f"Redeemed {amount:,.2f} {sym} for ${amount:,.2f} USD."
+    except Exception as e:
+        db.rollback()
+        return False, f"Redemption failed: {e}"
+    finally:
+        db.close()
+
+
+# ==========================
 # MODULE LIFECYCLE
 # ==========================
 def initialize():
@@ -2327,6 +2515,8 @@ def initialize():
         "ALTER TABLE cities ADD COLUMN IF NOT EXISTS application_fee REAL DEFAULT 50000.0",
         "ALTER TABLE cities ADD COLUMN IF NOT EXISTS relocation_fee REAL DEFAULT 10000.0",
         "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS city_licenses FLOAT DEFAULT 0.0",
+        "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS stable_coin_supply FLOAT DEFAULT 0.0",
+        "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS stable_coin_symbol VARCHAR(16)",
     ])
 
     db = get_db()

@@ -683,7 +683,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
     from cities import (
         get_city_by_id, get_city_stats, get_city_members, get_city_bank,
         is_city_member, is_mayor, get_player_total_value, CityPoll, CityApplication,
-        PollStatus, calculate_city_nav
+        PollStatus, calculate_city_nav,
+        get_city_stable_coin_info, get_player_stable_coin_balances,
     )
     from auth import Player, get_db
 
@@ -1485,6 +1486,85 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
 
         projects_section = sales_tax_html + projects_card + catalog_card
 
+    # ── Stable Coin Panel (members only) ────────────────────────
+    stable_coin_section = ""
+    if is_member:
+        sc = get_city_stable_coin_info(city_id)
+        if sc.get("active"):
+            sym = sc["symbol"]
+            # Player's own balance in this city's coin
+            player_sc = next(
+                (b for b in get_player_stable_coin_balances(player.id) if b["city_id"] == city_id),
+                None
+            )
+            player_balance = player_sc["balance"] if player_sc else 0.0
+
+            backing_pct = sc["backing_ratio"] * 100
+            backing_color = "#22c55e" if backing_pct >= 100 else ("#f59e0b" if backing_pct >= 50 else "#ef4444")
+
+            mayor_controls_sc = ""
+            if is_city_mayor:
+                mayor_controls_sc = f"""
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid #334155;">
+                    <div style="font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">
+                        Mayor — Distribute from treasury ({sc['undistributed']:,.2f} {sym} undistributed)
+                    </div>
+                    <form method="post" action="/api/city/stablecoin/distribute" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        <input type="hidden" name="city_id" value="{city_id}">
+                        <label style="font-size:0.75rem;color:#94a3b8;">{sym} per member:</label>
+                        <input type="number" name="amount_per_member" min="0.01" step="0.01"
+                               max="{sc['undistributed'] / max(sc['member_count'],1):.4f}"
+                               style="width:110px;font-size:0.8rem;" required>
+                        <button type="submit" class="btn btn-primary" style="font-size:0.75rem;padding:4px 12px;">
+                            Airdrop to All Members</button>
+                    </form>
+                </div>"""
+
+            redeem_html = ""
+            if player_balance > 0:
+                redeem_html = f"""
+                <div style="margin-top:10px;">
+                    <form method="post" action="/api/city/stablecoin/redeem" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        <input type="hidden" name="city_id" value="{city_id}">
+                        <label style="font-size:0.75rem;color:#94a3b8;">Redeem {sym} → USD:</label>
+                        <input type="number" name="amount" min="0.01" step="0.01"
+                               max="{player_balance:.4f}" style="width:110px;font-size:0.8rem;" required>
+                        <button type="submit" class="btn" style="font-size:0.75rem;padding:4px 12px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+                            Redeem 1:1 for USD</button>
+                    </form>
+                </div>"""
+
+            stable_coin_section = f"""
+            <div class="card" style="border-color:#7c3aed44;">
+                <h2 style="color:#a78bfa;">🪙 {sym} — City Stable Coin</h2>
+                <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
+                    Issued by the Office of the Comptroller (level 12). Pegged 1:1 to {sc.get('currency_type') or 'the city currency'}.
+                    Redeem any time for USD from the city's cash reserves.
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
+                        <div style="color:#94a3b8;font-size:0.7rem;">Total Supply (treasury)</div>
+                        <div style="color:#a78bfa;font-size:1.1rem;font-weight:bold;">{sc['supply']:,.2f} {sym}</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
+                        <div style="color:#94a3b8;font-size:0.7rem;">In Circulation</div>
+                        <div style="color:#e2e8f0;font-size:1.1rem;font-weight:bold;">{sc['in_circulation']:,.2f} {sym}</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
+                        <div style="color:#94a3b8;font-size:0.7rem;">Reserve Backing</div>
+                        <div style="color:{backing_color};font-size:1.1rem;font-weight:bold;">{backing_pct:.1f}%</div>
+                        <div style="color:#64748b;font-size:0.7rem;">${sc['reserves']:,.2f} in bank</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
+                        <div style="color:#94a3b8;font-size:0.7rem;">Your Balance</div>
+                        <div style="color:#34d399;font-size:1.1rem;font-weight:bold;">{player_balance:,.4f} {sym}</div>
+                        <div style="color:#64748b;font-size:0.7rem;">≈ ${player_balance:,.2f} USD</div>
+                    </div>
+                </div>
+                {redeem_html}
+                {mayor_controls_sc}
+            </div>"""
+
     db.close()
 
     return f"""
@@ -1605,6 +1685,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             </div>
             '''}
             
+            {stable_coin_section}
             {banking_section}
             {projects_section}
             {member_actions}
@@ -1912,6 +1993,40 @@ async def api_project_deconstruct(
     from city_projects import deconstruct_project
     success, message = deconstruct_project(player.id, city_id, instance_id)
     return RedirectResponse(url=f"/city/{city_id}?msg={message.replace(' ', '+')}", status_code=303)
+
+
+@router.post("/api/city/stablecoin/distribute")
+async def api_stablecoin_distribute(
+    city_id: int = Form(...),
+    amount_per_member: float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from cities import distribute_stable_coins
+    ok, msg = distribute_stable_coins(player.id, city_id, amount_per_member)
+    encoded = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/city/{city_id}?msg={encoded}", status_code=303)
+    return RedirectResponse(url=f"/city/{city_id}?error={encoded}", status_code=303)
+
+
+@router.post("/api/city/stablecoin/redeem")
+async def api_stablecoin_redeem(
+    city_id: int = Form(...),
+    amount: float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    from cities import redeem_stable_coins
+    ok, msg = redeem_stable_coins(player.id, city_id, amount)
+    encoded = msg.replace(" ", "+")
+    if ok:
+        return RedirectResponse(url=f"/city/{city_id}?msg={encoded}", status_code=303)
+    return RedirectResponse(url=f"/city/{city_id}?error={encoded}", status_code=303)
 
 
 # ==========================

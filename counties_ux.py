@@ -1475,10 +1475,12 @@ async def crypto_exchange(
         buy_usd_per_unit    = 1.0
 
     from counties import get_all_counties, get_player_wallets, County
-    from cities import get_db
+    from cities import get_db, get_all_city_stable_coins, get_player_stable_coin_balances
 
     wallets = get_player_wallets(player.id)
     counties = get_all_counties()
+    city_stable_coins = get_all_city_stable_coins()
+    player_sc_balances = {b["city_id"]: b for b in get_player_stable_coin_balances(player.id)}
 
     alert_html = ""
     if msg:
@@ -1595,6 +1597,44 @@ async def crypto_exchange(
     market_html += '</tbody></table>'
 
     ticker_html = get_crypto_ticker_html(disp)
+
+    # Build stable coin section HTML as a plain string to avoid nested-f-string issues
+    if city_stable_coins:
+        sc_rows = ""
+        for sc in city_stable_coins:
+            my_bal = player_sc_balances.get(sc["city_id"], {}).get("balance", 0.0)
+            ratio_pct = sc["backing_ratio"] * 100
+            ratio_color = "#22c55e" if ratio_pct >= 100 else ("#f59e0b" if ratio_pct >= 50 else "#ef4444")
+            sym = sc["symbol"]
+            supply_fmt = f'{sc["supply"]:,.2f}'
+            bal_fmt = f'{my_bal:,.4f}'
+            sc_rows += (
+                f'<div class="wallet-card" style="border-color:#7c3aed33;margin-bottom:8px;">'
+                f'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'
+                f'<div>'
+                f'<span class="badge" style="background:#3b0764;color:#c4b5fd;">{sym}</span>'
+                f'<span style="margin-left:10px;font-weight:600;color:#e2e8f0;">{sc["city_name"]}</span>'
+                f'<span style="margin-left:8px;font-size:12px;color:#64748b;">'
+                f'Supply: {supply_fmt} &nbsp;&middot;&nbsp; '
+                f'Backing: <span style="color:{ratio_color};">{ratio_pct:.1f}%</span>'
+                f' &nbsp;&middot;&nbsp; Peg: 1 {sym} = $1.00 USD'
+                f'</span>'
+                f'</div>'
+                f'<div style="text-align:right;">'
+                f'<span style="color:#34d399;font-weight:600;">Your balance: {bal_fmt} {sym}</span><br>'
+                f'<a href="/city/{sc["city_id"]}" style="font-size:11px;color:#7c3aed;">Redeem on city page ↗</a>'
+                f'</div>'
+                f'</div>'
+                f'</div>'
+            )
+        sc_exchange_html = sc_rows
+    else:
+        sc_exchange_html = (
+            '<p style="color:#64748b;font-size:13px;">'
+            'No cities have issued a stable coin yet. '
+            'Build an Office of the Comptroller to level 12 to unlock this.'
+            '</p>'
+        )
 
     return f"""
     <!DOCTYPE html>
@@ -1795,6 +1835,16 @@ async def crypto_exchange(
                     All tokens have a max supply of 21M with Bitcoin-like halving rewards.
                 </p>
                 {market_html if counties else '<p style="color: #64748b;">No cryptocurrencies exist yet.</p>'}
+            </div>
+
+            <div class="card" style="border-color:#7c3aed44;">
+                <h2 style="color:#a78bfa;">🪙 Municipal Stable Coins</h2>
+                <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">
+                    Issued by cities with an Office of the Comptroller at level 12.
+                    Each coin is redeemable 1:1 for USD from the issuing city's cash reserves.
+                    Visit the city page to redeem your balance.
+                </p>
+                {sc_exchange_html}
             </div>
         </div>
         {ticker_html}
