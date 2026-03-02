@@ -1550,10 +1550,26 @@ async def tick(current_tick: int, now: datetime):
                                 _cdb = _cities_get_db()
                                 try:
                                     city_row = _cdb.query(City).filter(City.id == inst.city_id).first()
-                                    ctype = (city_row.currency_type or "CITY") if city_row else "CITY"
+                                    city_name = city_row.name if city_row else ""
+                                    ctype = (city_row.currency_type or "") if city_row else ""
                                 finally:
                                     _cdb.close()
-                                symbol = ("x" + ctype.upper()[:5]).rstrip("_")
+
+                                # Build a symbol that reflects both city and peg:
+                                # e.g. "New York" + "gold" → "NY-GOLD"
+                                #      "Springfield" + "iron" → "SPR-IRON"
+                                words = city_name.split() if city_name else []
+                                if len(words) > 1:
+                                    city_code = "".join(w[0] for w in words if w)[:4].upper()
+                                elif words:
+                                    city_code = words[0][:4].upper()
+                                else:
+                                    city_code = "CTY"
+                                # Treat underscored item types (e.g. "copper_wire") as one word
+                                peg_raw = ctype.replace("_", " ").split()[0] if ctype else "COIN"
+                                peg_code = peg_raw[:4].upper()
+                                symbol = f"{city_code}-{peg_code}"
+
                                 minted = bank.cash_reserves * 0.0001  # 0.01% per tick
                                 bank.stable_coin_supply = (bank.stable_coin_supply or 0.0) + minted
                                 if not bank.stable_coin_symbol:

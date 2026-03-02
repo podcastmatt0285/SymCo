@@ -1613,7 +1613,7 @@ async def crypto_exchange(
                 f'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'
                 f'<div>'
                 f'<span class="badge" style="background:#3b0764;color:#c4b5fd;">{sym}</span>'
-                f'<span style="margin-left:10px;font-weight:600;color:#e2e8f0;">{sc["city_name"]}</span>'
+                f'<span style="margin-left:10px;font-weight:600;color:#e2e8f0;">{sc.get("display_name", sc["city_name"])}</span>'
                 f'<span style="margin-left:8px;font-size:12px;color:#64748b;">'
                 f'Supply: {supply_fmt} &nbsp;&middot;&nbsp; '
                 f'Backing: <span style="color:{ratio_color};">{ratio_pct:.1f}%</span>'

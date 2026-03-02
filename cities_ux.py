@@ -1244,7 +1244,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     coin_note = ""
                     if p["level"] >= MAX_PROJECT_LEVEL:
                         sc_supply = getattr(bank, "stable_coin_supply", 0.0) or 0.0
-                        sc_symbol = getattr(bank, "stable_coin_symbol", None) or "xCITY"
+                        sc_symbol = getattr(bank, "stable_coin_symbol", None) or "—"
                         coin_note = (
                             f' &nbsp;·&nbsp; 🪙 Minting {sc_symbol} stable coin '
                             f'(0.01%/tick · supply: {sc_supply:,.2f} {sc_symbol})'
@@ -1536,9 +1536,10 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
 
             stable_coin_section = f"""
             <div class="card" style="border-color:#7c3aed44;">
-                <h2 style="color:#a78bfa;">🪙 {sym} — City Stable Coin</h2>
+                <h2 style="color:#a78bfa;">🪙 {sc['display_name']}</h2>
                 <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
-                    Issued by the Office of the Comptroller (level 12). Pegged 1:1 to {sc.get('currency_type') or 'the city currency'}.
+                    Issued by the Office of the Comptroller (level 12).
+                    Pegged 1:1 to <strong style="color:#e2e8f0;">{sc.get('currency_type') or 'city currency'}</strong>.
                     Redeem any time for USD from the city's cash reserves.
                 </p>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">

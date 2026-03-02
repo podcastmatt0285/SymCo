@@ -2348,10 +2348,12 @@ def get_all_city_stable_coins() -> list:
                 bank.stable_coin_supply / bank.cash_reserves
                 if bank.cash_reserves and bank.cash_reserves > 0 else 0.0
             )
+            sym = bank.stable_coin_symbol
             result.append({
                 "city_id":       bank.city_id,
                 "city_name":     city.name,
-                "symbol":        bank.stable_coin_symbol,
+                "symbol":        sym,
+                "display_name":  f"{city.name} Municipal Stable Coin ({sym})",
                 "supply":        bank.stable_coin_supply or 0.0,
                 "reserves":      bank.cash_reserves or 0.0,
                 "backing_ratio": backing_ratio,
@@ -2404,9 +2406,14 @@ def get_city_stable_coin_info(city_id: int) -> dict:
             CityStableCoinBalance.city_id == city_id
         ).all()
         in_circulation = sum(r.balance for r in distributed)
+        sym = bank.stable_coin_symbol
+        city = db.query(City).filter(City.id == city_id).first()
+        city_name = city.name if city else f"City #{city_id}"
         return {
             "active":         True,
-            "symbol":         bank.stable_coin_symbol,
+            "symbol":         sym,
+            "display_name":   f"{city_name} Municipal Stable Coin ({sym})",
+            "city_name":      city_name,
             "supply":         bank.stable_coin_supply or 0.0,
             "in_circulation": in_circulation,
             "undistributed":  max(0.0, (bank.stable_coin_supply or 0.0) - in_circulation),
