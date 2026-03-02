@@ -1902,6 +1902,56 @@ def _build_city_coin_section(coin, cw_data, disp, wsc_info, portfolio, faucet_co
     """
 
 
+def _build_city_coin_discovery(coins, wsc_info):
+    """Render a discovery card for city coins the player doesn't hold yet."""
+    if not coins:
+        return ""
+    rows = ""
+    for c in coins:
+        sym = c["symbol"]
+        cid = c["city_id"]
+        rows += f"""
+        <tr style="border-bottom:1px solid #1e293b;">
+            <td style="padding:10px 8px;">
+                <div style="color:#e2e8f0;font-weight:600;">{sym}</div>
+                <div style="font-size:11px;color:#64748b;">{c["city_name"]}</div>
+            </td>
+            <td style="padding:10px 8px;color:#a78bfa;">
+                1 {sym} = 1 {c["peg_label"]} (${c["usd_per_coin"]:.6f})
+            </td>
+            <td style="padding:10px 8px;color:#64748b;">{c["supply"]:,.2f} minted</td>
+            <td style="padding:10px 8px;">
+                <form action="/api/city-wallet/swap/wsc-to-ccc" method="post"
+                      style="display:flex;gap:6px;align-items:center;">
+                    <input type="hidden" name="city_id" value="{cid}">
+                    <input type="number" name="wsc_amount" step="any" min="0.0001"
+                           placeholder="WSC" style="width:100px;font-size:12px;padding:4px 6px;background:#0f172a;border:1px solid #7c3aed;border-radius:4px;color:#e2e8f0;">
+                    <button type="submit" class="btn" style="font-size:12px;padding:4px 10px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">
+                        Buy {sym}
+                    </button>
+                </form>
+            </td>
+        </tr>"""
+    wsc_bal = wsc_info.get("balance", 0.0)
+    return f"""
+    <div class="card" style="border-color:#7c3aed44;">
+        <h2 style="color:#a78bfa;">&#127758; City Stable Coins — Available to Buy</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
+            Swap WSC for any city's stable coin via its AMM pool.
+            Your WSC balance: <strong style="color:#a5b4fc;">{wsc_bal:.4f} WSC</strong>
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <tr style="color:#64748b;font-size:11px;border-bottom:1px solid #334155;">
+                <th style="text-align:left;padding:6px 8px;">Coin / City</th>
+                <th style="text-align:left;padding:6px 8px;">Peg</th>
+                <th style="text-align:left;padding:6px 8px;">Supply</th>
+                <th style="text-align:left;padding:6px 8px;">Buy with WSC</th>
+            </tr>
+            {rows}
+        </table>
+    </div>"""
+
+
 @router.get("/wallet", response_class=HTMLResponse)
 async def wallet_dashboard(
     session_token: Optional[str] = Cookie(None),
@@ -1936,8 +1986,11 @@ async def wallet_dashboard(
     faucet_st   = get_faucet_status(player.id)
     swap_hist   = get_recent_swaps(player.id, limit=8)
 
-    from cities import get_player_stable_coin_balances
-    comptroller_coins = get_player_stable_coin_balances(player.id)
+    from cities import get_player_stable_coin_balances, get_all_active_city_coins
+    comptroller_coins   = get_player_stable_coin_balances(player.id)    # player holds these
+    all_city_coins      = get_all_active_city_coins()                   # all that exist
+    held_city_ids       = {c["city_id"] for c in comptroller_coins}
+    unowned_city_coins  = [c for c in all_city_coins if c["city_id"] not in held_city_ids]
 
     # ---- Per-city data for the full CCC economy sections ----
     from city_wallet import (
@@ -2298,6 +2351,9 @@ async def wallet_dashboard(
 
     <!-- COMPTROLLER STABLE COINS — full economy per city -->
     {"".join(_build_city_coin_section(coin, city_wallet_data.get(coin["city_id"], {}), disp, wsc_info, portfolio, CCC_FAUCET_COOLDOWN_HOURS, CCC_FAUCET_AMOUNT_MIN, CCC_FAUCET_AMOUNT_MAX) for coin in comptroller_coins)}
+
+    <!-- DISCOVER CITY STABLE COINS (not yet held) -->
+    {_build_city_coin_discovery(unowned_city_coins, wsc_info)}
 
     <!-- WSC TREASURY POOLS -->
     <div class="card">

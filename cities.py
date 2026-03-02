@@ -2399,6 +2399,33 @@ def get_player_stable_coin_balances(player_id: int) -> list:
         db.close()
 
 
+def get_all_active_city_coins() -> list:
+    """Return info for every city that has an active comptroller stable coin."""
+    db = get_db()
+    try:
+        banks = db.query(CityBank).filter(
+            CityBank.stable_coin_symbol.isnot(None),
+            CityBank.stable_coin_symbol != "",
+        ).all()
+        result = []
+        for bank in banks:
+            city = db.query(City).filter(City.id == bank.city_id).first()
+            sym = bank.stable_coin_symbol
+            peg = sym.split("-", 1)[1] if sym and "-" in sym else sym
+            usd = _get_peg_usd_per_unit(peg)
+            result.append({
+                "city_id":      bank.city_id,
+                "city_name":    city.name if city else f"City #{bank.city_id}",
+                "symbol":       sym,
+                "peg_label":    peg,
+                "usd_per_coin": usd,
+                "supply":       bank.stable_coin_supply or 0.0,
+            })
+        return result
+    finally:
+        db.close()
+
+
 def _get_peg_usd_per_unit(peg_label: str) -> float:
     """Return the USD value of one unit of peg_label (e.g. 'JPY' → 0.0067)."""
     if not peg_label or peg_label == "USD":
