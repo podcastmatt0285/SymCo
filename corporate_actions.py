@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from enum import Enum
 
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, JSON
+from sqlalchemy import Column, String, Float, DateTime, Integer, BigInteger, Boolean, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from stats_ux import log_transaction
 # Import from existing brokerage firm
@@ -94,23 +94,23 @@ class BuybackProgram(Base):
     # {"schedule_ticks": 3600}  # Buy every hour
     
     # Limits
-    max_shares_to_buy = Column(Integer, nullable=False)  # Total program size
+    max_shares_to_buy = Column(BigInteger, nullable=False)  # Total program size
     max_price_per_share = Column(Float, nullable=False)  # Won't buy above this
     max_treasury_pct = Column(Float, default=0.30)  # Max % to hold in treasury
     
     # Execution
-    shares_bought = Column(Integer, default=0)
+    shares_bought = Column(BigInteger, default=0)
     total_spent = Column(Float, default=0.0)
     average_buy_price = Column(Float, default=0.0)
     last_execution = Column(DateTime, nullable=True)
-    
+
     # Status
     status = Column(String, default=ActionStatus.ACTIVE.value)
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
-    
+
     # Treasury shares (bought but not retired)
-    treasury_shares = Column(Integer, default=0)
+    treasury_shares = Column(BigInteger, default=0)
 
 
 class StockSplitRule(Base):
@@ -162,7 +162,7 @@ class SecondaryOffering(Base):
     # {"business_count_trigger": 5}  # Offer when player has 5+ businesses (expansion)
     
     # Offering size
-    shares_to_issue = Column(Integer, nullable=False)
+    shares_to_issue = Column(BigInteger, nullable=False)
     min_price_per_share = Column(Float, nullable=False)  # Won't sell below this
     
     # Execution
@@ -189,7 +189,7 @@ class CorporateActionHistory(Base):
     action_type = Column(String, nullable=False)  # buyback, split, offering
     
     # Details
-    shares_affected = Column(Integer, nullable=False)
+    shares_affected = Column(BigInteger, nullable=False)
     price_per_share = Column(Float, nullable=True)
     total_value = Column(Float, nullable=True)
     
@@ -909,8 +909,8 @@ class ReverseSplitRecord(Base):
     ratio = Column(Integer, nullable=False)
     old_price = Column(Float, nullable=False)
     new_price = Column(Float, nullable=False)
-    old_shares_outstanding = Column(Integer, nullable=False)
-    new_shares_outstanding = Column(Integer, nullable=False)
+    old_shares_outstanding = Column(BigInteger, nullable=False)
+    new_shares_outstanding = Column(BigInteger, nullable=False)
     executed_at = Column(DateTime, default=datetime.utcnow)
     executed_by = Column(Integer, nullable=False)
 
@@ -921,7 +921,7 @@ class SpecialDividendRecord(Base):
     company_shares_id = Column(Integer, index=True, nullable=False)
     total_amount = Column(Float, nullable=False)
     per_share_amount = Column(Float, nullable=False)
-    shares_at_time = Column(Integer, nullable=False)
+    shares_at_time = Column(BigInteger, nullable=False)
     vouchers_granted = Column(Float, nullable=False)
     paid_at = Column(DateTime, default=datetime.utcnow)
     paid_by = Column(Integer, nullable=False)

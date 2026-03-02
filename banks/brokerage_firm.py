@@ -39,7 +39,7 @@ from typing import Optional, List, Dict, Any
 from enum import Enum
 import math
 
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, JSON, ForeignKey, text
+from sqlalchemy import Column, String, Float, DateTime, Integer, BigInteger, Boolean, JSON, ForeignKey, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -366,13 +366,13 @@ class CompanyShares(Base):
     ticker_symbol = Column(String, unique=True, nullable=False)
     share_class = Column(String, default=ShareClass.COMMON.value)
     
-    total_shares_authorized = Column(Integer, nullable=False)
-    shares_outstanding = Column(Integer, default=0)
-    shares_held_by_founder = Column(Integer, default=0)
-    shares_held_by_firm = Column(Integer, default=0)
-    shares_in_float = Column(Integer, default=0)
-    
-    founder_class_a_shares = Column(Integer, default=0)
+    total_shares_authorized = Column(BigInteger, nullable=False)
+    shares_outstanding = Column(BigInteger, default=0)
+    shares_held_by_founder = Column(BigInteger, default=0)
+    shares_held_by_firm = Column(BigInteger, default=0)
+    shares_in_float = Column(BigInteger, default=0)
+
+    founder_class_a_shares = Column(BigInteger, default=0)
     
     current_price = Column(Float, default=0.0)
     ipo_price = Column(Float, default=0.0)
@@ -397,9 +397,9 @@ class CompanyShares(Base):
     ipo_date = Column(DateTime, nullable=True)
     ipo_valuation = Column(Float, default=0.0)
     
-    drip_shares_remaining = Column(Integer, default=0)
+    drip_shares_remaining = Column(BigInteger, default=0)
     drip_last_release = Column(DateTime, nullable=True)
-    shelf_shares_remaining = Column(Integer, default=0)
+    shelf_shares_remaining = Column(BigInteger, default=0)
     shelf_tranches_used = Column(Integer, default=0)
     shelf_expiry = Column(DateTime, nullable=True)
     stabilization_active = Column(Boolean, default=False)
@@ -1268,6 +1268,12 @@ def create_player_ipo(
 
         if shares_to_offer < config["min_shares"]:
             return None, f"{config['name']} requires offering at least {config['min_shares']:,} shares."
+
+        MAX_TOTAL_SHARES = 1_000_000_000  # 1 billion hard cap
+        if total_shares > MAX_TOTAL_SHARES:
+            return None, (f"Total shares cannot exceed 1,000,000,000 (1 billion). "
+                          f"You entered {total_shares:,}. Lower your share count — "
+                          f"a higher share price per unit is equivalent.")
 
         firm = get_firm_entity()
         if config.get("firm_underwritten") and not firm.is_accepting_ipos:
