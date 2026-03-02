@@ -1498,6 +1498,8 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 None
             )
             player_balance = player_sc["balance"] if player_sc else 0.0
+            usd_per_coin   = sc.get("usd_per_coin", 1.0)
+            player_usd_val = player_balance * usd_per_coin
 
             backing_pct = sc["backing_ratio"] * 100
             backing_color = "#22c55e" if backing_pct >= 100 else ("#f59e0b" if backing_pct >= 50 else "#ef4444")
@@ -1530,7 +1532,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                         <input type="number" name="amount" min="0.01" step="0.01"
                                max="{player_balance:.4f}" style="width:110px;font-size:0.8rem;" required>
                         <button type="submit" class="btn" style="font-size:0.75rem;padding:4px 12px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;">
-                            Redeem 1:1 for USD</button>
+                            Redeem at {sc.get('peg_label','USD')} rate</button>
                     </form>
                 </div>"""
 
@@ -1559,7 +1561,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
                         <div style="color:#94a3b8;font-size:0.7rem;">Your Balance</div>
                         <div style="color:#34d399;font-size:1.1rem;font-weight:bold;">{player_balance:,.4f} {sym}</div>
-                        <div style="color:#64748b;font-size:0.7rem;">≈ ${player_balance:,.2f} USD</div>
+                        <div style="color:#64748b;font-size:0.7rem;">≈ ${player_usd_val:,.2f} USD</div>
                     </div>
                 </div>
                 {redeem_html}

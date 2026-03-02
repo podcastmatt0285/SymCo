@@ -2393,6 +2393,24 @@ def get_player_stable_coin_balances(player_id: int) -> list:
         db.close()
 
 
+def _get_peg_usd_per_unit(peg_label: str) -> float:
+    """Return the USD value of one unit of peg_label (e.g. 'JPY' → 0.0067)."""
+    if not peg_label or peg_label == "USD":
+        return 1.0
+    try:
+        from reserve_banks import StateReserveBank, get_db as _rb_get_db
+        _db = _rb_get_db()
+        try:
+            rb = _db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == peg_label
+            ).first()
+            return float(rb.usd_per_unit) if rb and rb.usd_per_unit else 1.0
+        finally:
+            _db.close()
+    except Exception:
+        return 1.0
+
+
 def get_city_stable_coin_info(city_id: int) -> dict:
     """Return stable coin stats for a city."""
     db = get_db()
@@ -2400,10 +2418,6 @@ def get_city_stable_coin_info(city_id: int) -> dict:
         bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
         if not bank or not bank.stable_coin_symbol:
             return {"active": False}
-        backing_ratio = (
-            bank.stable_coin_supply / bank.cash_reserves
-            if bank.cash_reserves and bank.cash_reserves > 0 else 0.0
-        )
         members = db.query(CityMember).filter(CityMember.city_id == city_id).all()
         member_ids = [m.player_id for m in members]
         distributed = db.query(CityStableCoinBalance).filter(
@@ -2413,8 +2427,15 @@ def get_city_stable_coin_info(city_id: int) -> dict:
         sym = bank.stable_coin_symbol
         city = db.query(City).filter(City.id == city_id).first()
         city_name = city.name if city else f"City #{city_id}"
-        # Derive peg label from symbol (e.g. "NY-JPY" → "JPY")
+        # Derive peg label from symbol (e.g. "AQUA-JPY" → "JPY")
         peg_label = sym.split("-", 1)[1] if sym and "-" in sym else sym
+
+        usd_per_coin = _get_peg_usd_per_unit(peg_label)
+        supply = bank.stable_coin_supply or 0.0
+        reserves = bank.cash_reserves or 0.0
+        # backing_ratio = USD reserves / total USD value of all minted coins
+        total_usd_obligation = supply * usd_per_coin
+        backing_ratio = (reserves / total_usd_obligation) if total_usd_obligation > 0 else 0.0
 
         return {
             "active":         True,
@@ -2422,10 +2443,11 @@ def get_city_stable_coin_info(city_id: int) -> dict:
             "display_name":   f"{city_name} Municipal Stable Coin ({sym})",
             "city_name":      city_name,
             "peg_label":      peg_label,
-            "supply":         bank.stable_coin_supply or 0.0,
+            "usd_per_coin":   usd_per_coin,
+            "supply":         supply,
             "in_circulation": in_circulation,
-            "undistributed":  max(0.0, (bank.stable_coin_supply or 0.0) - in_circulation),
-            "reserves":       bank.cash_reserves or 0.0,
+            "undistributed":  max(0.0, supply - in_circulation),
+            "reserves":       reserves,
             "backing_ratio":  backing_ratio,
             "currency_type":  bank.currency_type,
             "member_count":   len(member_ids),
@@ -2477,7 +2499,7 @@ def distribute_stable_coins(mayor_id: int, city_id: int, amount_per_member: floa
 
 
 def redeem_stable_coins(player_id: int, city_id: int, amount: float) -> tuple:
-    """Redeem stable coins for USD cash at 1:1 to the city bank's cash reserves."""
+    """Redeem stable coins for USD at the mayor's legal-tender exchange rate."""
     db = get_db()
     try:
         if amount <= 0:
@@ -2490,25 +2512,31 @@ def redeem_stable_coins(player_id: int, city_id: int, amount: float) -> tuple:
             have = bal.balance if bal else 0
             return False, f"Insufficient balance. You have {have:,.4f} coins."
         bank = db.query(CityBank).filter(CityBank.city_id == city_id).first()
-        if not bank or (bank.cash_reserves or 0) < amount:
+        if not bank:
+            return False, "City bank not found."
+        sym = bank.stable_coin_symbol or "coins"
+        # Determine USD value: 1 coin = 1 unit of peg currency → usd_per_coin USD
+        peg_label = sym.split("-", 1)[1] if "-" in sym else "USD"
+        usd_per_coin = _get_peg_usd_per_unit(peg_label)
+        usd_amount = amount * usd_per_coin
+        if (bank.cash_reserves or 0) < usd_amount:
             return False, "City bank has insufficient reserves to redeem right now."
-        # Burn coins, transfer cash from reserves to player
+        # Burn coins, transfer USD from reserves to player
         from auth import Player, get_db as auth_get_db
         auth_db = auth_get_db()
         try:
             player = auth_db.query(Player).filter(Player.id == player_id).first()
             if not player:
                 return False, "Player not found."
-            player.cash_balance = (player.cash_balance or 0) + amount
+            player.cash_balance = (player.cash_balance or 0) + usd_amount
             auth_db.commit()
         finally:
             auth_db.close()
-        bank.cash_reserves -= amount
+        bank.cash_reserves -= usd_amount
         bal.balance -= amount
         bal.total_redeemed = (bal.total_redeemed or 0) + amount
         db.commit()
-        sym = bank.stable_coin_symbol or "coins"
-        return True, f"Redeemed {amount:,.2f} {sym} for ${amount:,.2f} USD."
+        return True, f"Redeemed {amount:,.2f} {sym} for ${usd_amount:,.2f} USD (1 {peg_label} = ${usd_per_coin:.6f})."
     except Exception as e:
         db.rollback()
         return False, f"Redemption failed: {e}"
