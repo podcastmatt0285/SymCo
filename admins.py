@@ -1419,15 +1419,15 @@ def admin_set_project_level(admin_id: int, instance_id: int, new_level: int) -> 
 
 
 def admin_set_project_status(admin_id: int, instance_id: int, new_status: str) -> dict:
-    """Force a project's status to active, paused, or deconstructed."""
+    """Force a project's status to active or paused. Use admin_deconstruct_project for deconstructing."""
     try:
         from city_projects import (
             CityProjectInstance, STATUS_ACTIVE, STATUS_PAUSED,
             STATUS_DECONSTRUCTED, get_db as cp_get_db,
         )
-        allowed = {STATUS_ACTIVE, STATUS_PAUSED, STATUS_DECONSTRUCTED}
+        allowed = {STATUS_ACTIVE, STATUS_PAUSED}
         if new_status not in allowed:
-            return {"ok": False, "error": f"Status must be one of: {', '.join(sorted(allowed))}."}
+            return {"ok": False, "error": f"Use the Deconstruct button to deconstruct. Status must be one of: {', '.join(sorted(allowed))}."}
         db = cp_get_db()
         try:
             inst = db.query(CityProjectInstance).filter(
@@ -1438,6 +1438,95 @@ def admin_set_project_status(admin_id: int, instance_id: int, new_status: str) -
             inst.status = new_status
             db.commit()
             return {"ok": True}
+        except Exception as e:
+            db.rollback()
+            return {"ok": False, "error": str(e)}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_deconstruct_project(admin_id: int, instance_id: int) -> dict:
+    """Deconstruct a project and clear its vault."""
+    try:
+        from city_projects import (
+            CityProjectInstance, CityProjectVault,
+            STATUS_DECONSTRUCTED, CITY_PROJECT_TYPES,
+            get_db as cp_get_db,
+        )
+        db = cp_get_db()
+        try:
+            inst = db.query(CityProjectInstance).filter(
+                CityProjectInstance.id == instance_id
+            ).first()
+            if not inst:
+                return {"ok": False, "error": "Project instance not found."}
+            if inst.status == STATUS_DECONSTRUCTED:
+                return {"ok": False, "error": "Project is already deconstructed."}
+            project_type = inst.project_type
+            inst.status = STATUS_DECONSTRUCTED
+            # Clear the vault
+            db.query(CityProjectVault).filter(
+                CityProjectVault.city_id == inst.city_id,
+                CityProjectVault.project_type == project_type,
+            ).delete()
+            db.commit()
+            name = CITY_PROJECT_TYPES.get(project_type, {}).get("name", project_type)
+            return {"ok": True, "msg": f"{name} deconstructed."}
+        except Exception as e:
+            db.rollback()
+            return {"ok": False, "error": str(e)}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_construct_project(admin_id: int, city_id: int, project_type: str) -> dict:
+    """Force-create a new project at level 1 (active), bypassing vault and license requirements."""
+    try:
+        from city_projects import (
+            CityProjectInstance, CITY_PROJECT_TYPES,
+            STATUS_ACTIVE, STATUS_DECONSTRUCTED,
+            MAX_PROJECTS_PER_CITY, get_db as cp_get_db,
+            _construction_ticks,
+        )
+        from datetime import datetime
+        if project_type not in CITY_PROJECT_TYPES:
+            return {"ok": False, "error": f"Unknown project type '{project_type}'."}
+        db = cp_get_db()
+        try:
+            active_count = db.query(CityProjectInstance).filter(
+                CityProjectInstance.city_id == city_id,
+                CityProjectInstance.status != STATUS_DECONSTRUCTED,
+            ).count()
+            if active_count >= MAX_PROJECTS_PER_CITY:
+                return {"ok": False, "error": f"City has reached the maximum of {MAX_PROJECTS_PER_CITY} projects."}
+            existing = db.query(CityProjectInstance).filter(
+                CityProjectInstance.city_id == city_id,
+                CityProjectInstance.project_type == project_type,
+                CityProjectInstance.status != STATUS_DECONSTRUCTED,
+            ).first()
+            if existing:
+                name = CITY_PROJECT_TYPES[project_type]["name"]
+                return {"ok": False, "error": f"City already has a {name}."}
+            ticks = _construction_ticks(1)
+            inst = CityProjectInstance(
+                city_id=city_id,
+                project_type=project_type,
+                level=1,
+                target_level=1,
+                status=STATUS_ACTIVE,
+                construction_ticks_required=ticks,
+                construction_ticks_completed=ticks,
+                construction_started_at=datetime.utcnow(),
+                started_by=admin_id,
+            )
+            db.add(inst)
+            db.commit()
+            name = CITY_PROJECT_TYPES[project_type]["name"]
+            return {"ok": True, "msg": f"{name} constructed at level 1."}
         except Exception as e:
             db.rollback()
             return {"ok": False, "error": str(e)}
