@@ -1643,13 +1643,17 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
     ]
     def _chip(k, label, cnt):
         active_cls = " txchip-active" if k == "all" else ""
-        badge = (f'<span style="margin-left:4px;padding:0 5px;background:rgba(255,255,255,0.12);'
-                 f'border-radius:8px;font-size:0.7rem;">{cnt}</span>') if cnt else ""
-        return (f'<button class="txchip{active_cls}" onclick="txFilter(\'{k}\',this)" data-tab="{k}">'
+        # Always show all chips; dim zero-count ones so users can see every category
+        if cnt:
+            badge = (f'<span style="margin-left:4px;padding:0 5px;background:rgba(255,255,255,0.12);'
+                     f'border-radius:8px;font-size:0.7rem;">{cnt}</span>')
+            dim_style = ""
+        else:
+            badge = ""
+            dim_style = ' style="opacity:0.35;cursor:default;"'
+        return (f'<button class="txchip{active_cls}"{dim_style} onclick="txFilter(\'{k}\',this)" data-tab="{k}">'
                 f'{label}{badge}</button>')
-    filter_chips_html = "".join(
-        _chip(k, label, cnt) for k, label, cnt in TABS if cnt > 0 or k == "all"
-    )
+    filter_chips_html = "".join(_chip(k, label, cnt) for k, label, cnt in TABS)
 
     # ── Net worth multi-currency ──────────────────────────────────────────────
     currency_rows_html = ""
