@@ -1093,7 +1093,7 @@ def initiate_currency_change(mayor_id: int, city_id: int, new_currency: str, pol
         if not can_afford_usd(mayor_id, poll_tax_amount):
             return None, f"Insufficient funds for poll tax (${poll_tax_amount:,.2f})"
 
-        ok, err = _spf(db, mayor, poll_tax_amount)
+        ok, err = _spf(mayor.id, poll_tax_amount)
         if not ok:
             return None, f"Poll tax payment failed: {err}"
         bank.cash_reserves += poll_tax_amount
@@ -1429,7 +1429,7 @@ def enforce_reserve_requirement(player_id: int) -> Tuple[bool, str]:
             print(f"[Cities] WARNING: Player {player_id} cannot afford reserve fee ${fee:,.2f}")
             return False, "Insufficient funds for reserve fee"
 
-        ok, err = _spf(db, player, fee)
+        ok, err = _spf(player_id, fee)
         if not ok:
             return False, f"Reserve fee payment failed: {err}"
         
@@ -1691,7 +1691,7 @@ def assume_bank_debt(player_id: int, loan_id: int) -> Tuple[bool, str]:
         if not can_afford_usd(player_id, debt_amount):
             return False, f"Insufficient funds (need ${debt_amount:,.2f})"
 
-        ok, err = _spf(db, player, debt_amount)
+        ok, err = _spf(player.id, debt_amount)
         if not ok:
             return False, f"Debt assumption payment failed: {err}"
         loan.amount_paid += debt_amount
@@ -1949,7 +1949,7 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
                 return False, f"Trade pending: bank acquiring {city.currency_type} — retry when filled"
         
         # ---- STEP 3: Outsider pays in their legal tender; bank receives USD equivalent ----
-        ok, _err = _spf(db, outsider, trade_value)
+        ok, _err = _spf(outsider.id, trade_value)
         if not ok:
             return False, f"Payment failed: {_err}"
         bank.cash_reserves += trade_value
