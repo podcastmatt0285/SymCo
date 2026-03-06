@@ -1688,275 +1688,12 @@ _WALLET_STYLES = """
 </style>
 """
 
-def _build_city_coin_section(coin, cw_data, disp, wsc_info, portfolio, faucet_cooldown_h, faucet_min, faucet_max):
-    """Render the full economy card for one comptroller stable coin."""
-    from reserve_banks import fmt_usd
-    sym      = coin["symbol"]
-    cid      = coin["city_id"]
-    bal      = coin["balance"]
-    peg      = coin["peg_label"]
-    usd_val  = coin["usd_value"]
-    usd_coin = coin["usd_per_coin"]
-
-    treasury = cw_data.get("treasury", {})
-    pool     = cw_data.get("amm_pool", {})
-    yields   = cw_data.get("yields",   [])
-    faucet   = cw_data.get("faucet_st", {"can_claim": True, "remaining_seconds": 0})
-
-    # ── Implied rate from pool ──
-    rate_str = ""
-    if pool.get("ccc_reserve", 0) > 0 and pool.get("wsc_reserve", 0) > 0:
-        rate = pool["wsc_reserve"] / pool["ccc_reserve"]
-        rate_str = f"Pool rate: 1 {sym} ≈ {rate:.6f} WSC"
-
-    # ── Faucet button ──
-    if faucet["can_claim"]:
-        faucet_btn = f"""
-        <form action="/api/city-wallet/faucet" method="post" style="display:inline;">
-            <input type="hidden" name="city_id" value="{cid}">
-            <button type="submit" class="btn" style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;">
-                &#127881; Claim {sym} Faucet ({faucet_min:.2f}–{faucet_max:.2f})
-            </button>
-        </form>"""
-    else:
-        secs = faucet["remaining_seconds"]
-        hrs  = secs // 3600
-        mins = (secs % 3600) // 60
-        faucet_btn = f'<span style="color:#64748b;font-size:12px;">Faucet cooldown: {hrs}h {mins}m</span>'
-
-    # ── Active yield deposits ──
-    yield_rows = ""
-    for d in yields:
-        yield_rows += f"""
-        <tr>
-            <td>{d["meme_symbol"]}</td>
-            <td>{d["quantity"]:.4f}</td>
-            <td style="color:#a78bfa;">{d["total_earned"]:.4f} {sym}</td>
-            <td>
-                <form action="/api/city-wallet/yield-farm/remove/{d["id"]}" method="post" style="display:inline;">
-                    <button type="submit" class="btn" style="font-size:11px;padding:2px 8px;background:#dc2626;color:#fff;border:none;border-radius:4px;cursor:pointer;">Unstake</button>
-                </form>
-            </td>
-        </tr>"""
-    if not yield_rows:
-        yield_rows = '<tr><td colspan="4" style="color:#64748b;text-align:center;">No active stakes</td></tr>'
-
-    # ── Meme coin options for yield farming ──
-    meme_opts = "".join(
-        f'<option value="{h["symbol"]}">{h["symbol"]} ({h["balance"]:.4f} available)</option>'
-        for h in portfolio.get("meme_holdings", [])
-        if h.get("balance", 0) > 0
-    )
-    if not meme_opts:
-        meme_opts = '<option disabled>No meme coins in wallet</option>'
-
-    return f"""
-    <!-- {sym} ECONOMY -->
-    <div class="wsc-card" style="border-color:#7c3aed66;margin-top:16px;">
-        <!-- Balance header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-            <div>
-                <div style="font-size:12px;color:#a78bfa;margin-bottom:4px;letter-spacing:1px;">
-                    {sym} &mdash; {coin["city_name"].upper()} COMPTROLLER COIN
-                </div>
-                <div class="wsc-balance">{bal:.4f} <span style="font-size:16px;color:#7c3aed;">{sym}</span></div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">
-                    = {fmt_usd(usd_val, disp)} &nbsp;&#8226;&nbsp; 1 {sym} = 1 {peg} (${usd_coin:.6f})
-                    {"&nbsp;&#8226;&nbsp;" + rate_str if rate_str else ""}
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:11px;color:#7c3aed;margin-bottom:8px;">Lifetime</div>
-                <div style="font-size:12px;margin-bottom:3px;">Received: <strong style="color:#4ade80;">{coin["total_received"]:.4f}</strong></div>
-                <div style="font-size:12px;color:#475569;">Redeemed: {coin["total_redeemed"]:.4f}</div>
-            </div>
-        </div>
-
-        <!-- Redeem -->
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #3b1d6e;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-            <form action="/api/city/stablecoin/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <input type="hidden" name="city_id" value="{cid}">
-                <div class="form-group" style="margin:0;">
-                    <label style="color:#a78bfa;">Redeem {sym} &#8594; Cash ({disp["symbol"]})</label>
-                    <input type="number" name="amount" step="any" min="0.01" max="{bal:.4f}"
-                           placeholder="Amount (max {bal:.4f})" style="width:200px;border-color:#7c3aed;">
-                </div>
-                <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
-                    &#9654; Redeem for Cash
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- {sym} TREASURY POOLS -->
-    <div class="card" style="border-color:#7c3aed33;">
-        <h2 style="color:#a78bfa;">&#128176; {sym} Treasury &amp; Reward Pools</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
-            Every WSC&#8596;{sym} swap burns 0.3&#37; &#8594; 90&#37; re-minted as {sym} and split into pools below.
-        </p>
-        <div class="grid grid-3">
-            <div class="reward-pool">
-                <span style="color:#64748b;font-size:11px;">&#9881; Yield Pool</span>
-                <span class="pool-val" style="color:#a78bfa;">{treasury.get("yield_pool", 0.0):.4f} {sym}</span>
-                <span style="color:#475569;font-size:10px;">Distributed hourly to meme coin stakers</span>
-            </div>
-            <div class="reward-pool">
-                <span style="color:#64748b;font-size:11px;">&#128241; Faucet Pool</span>
-                <span class="pool-val" style="color:#a78bfa;">{treasury.get("faucet_pool", 0.0):.4f} {sym}</span>
-                <span style="color:#475569;font-size:10px;">Claim every {faucet_cooldown_h}h &bull; {faucet_min:.2f}&ndash;{faucet_max:.2f} {sym}</span>
-            </div>
-            <div class="reward-pool">
-                <span style="color:#64748b;font-size:11px;">&#127881; Airdrop Pool</span>
-                <span class="pool-val" style="color:#a78bfa;">{treasury.get("airdrop_pool", 0.0):.4f} {sym}</span>
-                <span style="color:#475569;font-size:10px;">Periodic drops to city members</span>
-            </div>
-        </div>
-        <div style="margin-top:10px;font-size:11px;color:#475569;text-align:right;">
-            Total ever minted: <strong style="color:#a78bfa;">{treasury.get("total_minted", 0.0):.4f} {sym}</strong>
-        </div>
-    </div>
-
-    <!-- {sym} FAUCET -->
-    <div class="card" style="border-color:#7c3aed22;">
-        <h2 style="color:#a78bfa;">&#128241; {sym} Faucet</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
-            Free {sym} dispensed from the faucet pool every {faucet_cooldown_h} hour(s). City members only.
-        </p>
-        {faucet_btn}
-        <span style="color:#64748b;font-size:12px;margin-left:12px;">
-            Pool: <strong style="color:#a78bfa;">{treasury.get("faucet_pool", 0.0):.4f} {sym}</strong>
-        </span>
-    </div>
-
-    <!-- {sym} AMM SWAP (WSC ↔ CCC) -->
-    <div class="card" style="border-color:#7c3aed22;">
-        <h2 style="color:#a78bfa;">&#9851; {sym} AMM Pool — WSC &#8596; {sym}</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:10px;">
-            Constant-product pool mirrors the live {peg}/USD forex rate.
-            Pool reserves: <strong style="color:#a78bfa;">{pool.get("wsc_reserve", 0.0):.4f} WSC</strong>
-            / <strong style="color:#a78bfa;">{pool.get("ccc_reserve", 0.0):.4f} {sym}</strong>
-            &bull; {pool.get("total_swaps", 0):,} total swaps
-        </p>
-        <div style="display:flex;gap:20px;flex-wrap:wrap;">
-            <form action="/api/city-wallet/swap/wsc-to-ccc" method="post"
-                  style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-                <input type="hidden" name="city_id" value="{cid}">
-                <div class="form-group" style="margin:0;">
-                    <label style="color:#a78bfa;">WSC &#8594; {sym}</label>
-                    <input type="number" name="wsc_amount" step="any" min="0.0001"
-                           placeholder="WSC amount" style="width:150px;border-color:#7c3aed;">
-                </div>
-                <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
-                    Buy {sym}
-                </button>
-            </form>
-            <form action="/api/city-wallet/swap/ccc-to-wsc" method="post"
-                  style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-                <input type="hidden" name="city_id" value="{cid}">
-                <div class="form-group" style="margin:0;">
-                    <label style="color:#a78bfa;">{sym} &#8594; WSC</label>
-                    <input type="number" name="ccc_amount" step="any" min="0.0001"
-                           max="{bal:.4f}"
-                           placeholder="{sym} amount" style="width:150px;border-color:#7c3aed;">
-                </div>
-                <button type="submit" class="btn" style="background:#4f46e5;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;margin-top:18px;">
-                    Sell {sym}
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- {sym} YIELD FARMING -->
-    <div class="card" style="border-color:#7c3aed22;">
-        <h2 style="color:#a78bfa;">&#9881; {sym} Yield Farming</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:10px;">
-            Stake meme coins to earn {sym} from the yield pool every hour.
-            Rewards are proportional to stake value (quantity &times; price).
-        </p>
-        <form action="/api/city-wallet/yield-farm/add" method="post"
-              style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
-            <input type="hidden" name="city_id" value="{cid}">
-            <div class="form-group" style="margin:0;">
-                <label style="color:#a78bfa;">Meme Coin</label>
-                <select name="meme_symbol" style="border-color:#7c3aed;">{meme_opts}</select>
-            </div>
-            <div class="form-group" style="margin:0;">
-                <label style="color:#a78bfa;">Quantity</label>
-                <input type="number" name="quantity" step="any" min="0.0001"
-                       placeholder="Amount to stake" style="width:150px;border-color:#7c3aed;">
-            </div>
-            <button type="submit" class="btn btn-primary" style="background:#7c3aed;margin-top:18px;">
-                &#9651; Stake
-            </button>
-        </form>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-            <tr style="color:#64748b;border-bottom:1px solid #334155;">
-                <th style="text-align:left;padding:4px;">Coin</th>
-                <th style="text-align:left;padding:4px;">Staked</th>
-                <th style="text-align:left;padding:4px;">Earned {sym}</th>
-                <th style="text-align:left;padding:4px;"></th>
-            </tr>
-            {yield_rows}
-        </table>
-    </div>
-    """
-
-
-def _build_city_coin_discovery(coins, wsc_info):
-    """Render a discovery card for city coins the player doesn't hold yet."""
-    if not coins:
-        return ""
-    rows = ""
-    for c in coins:
-        sym = c["symbol"]
-        cid = c["city_id"]
-        rows += f"""
-        <tr style="border-bottom:1px solid #1e293b;">
-            <td style="padding:10px 8px;">
-                <div style="color:#e2e8f0;font-weight:600;">{sym}</div>
-                <div style="font-size:11px;color:#64748b;">{c["city_name"]}</div>
-            </td>
-            <td style="padding:10px 8px;color:#a78bfa;">
-                1 {sym} = 1 {c["peg_label"]} (${c["usd_per_coin"]:.6f})
-            </td>
-            <td style="padding:10px 8px;color:#64748b;">{c["supply"]:,.2f} minted</td>
-            <td style="padding:10px 8px;">
-                <form action="/api/city-wallet/swap/wsc-to-ccc" method="post"
-                      style="display:flex;gap:6px;align-items:center;">
-                    <input type="hidden" name="city_id" value="{cid}">
-                    <input type="number" name="wsc_amount" step="any" min="0.0001"
-                           placeholder="WSC" style="width:100px;font-size:12px;padding:4px 6px;background:#0f172a;border:1px solid #7c3aed;border-radius:4px;color:#e2e8f0;">
-                    <button type="submit" class="btn" style="font-size:12px;padding:4px 10px;background:#7c3aed;color:#fff;border:none;border-radius:4px;cursor:pointer;white-space:nowrap;">
-                        Buy {sym}
-                    </button>
-                </form>
-            </td>
-        </tr>"""
-    wsc_bal = wsc_info.get("balance", 0.0)
-    return f"""
-    <div class="card" style="border-color:#7c3aed44;">
-        <h2 style="color:#a78bfa;">&#127758; City Stable Coins — Available to Buy</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
-            Swap WSC for any city's stable coin via its AMM pool.
-            Your WSC balance: <strong style="color:#a5b4fc;">{wsc_bal:.4f} WSC</strong>
-        </p>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            <tr style="color:#64748b;font-size:11px;border-bottom:1px solid #334155;">
-                <th style="text-align:left;padding:6px 8px;">Coin / City</th>
-                <th style="text-align:left;padding:6px 8px;">Peg</th>
-                <th style="text-align:left;padding:6px 8px;">Supply</th>
-                <th style="text-align:left;padding:6px 8px;">Buy with WSC</th>
-            </tr>
-            {rows}
-        </table>
-    </div>"""
-
-
 @router.get("/wallet", response_class=HTMLResponse)
 async def wallet_dashboard(
     session_token: Optional[str] = Cookie(None),
     msg: Optional[str] = Query(None),
     error: Optional[str] = Query(None),
+    coin: Optional[str] = Query("WSC"),
 ):
     player = get_current_player(session_token)
     if not player:
@@ -1986,29 +1723,80 @@ async def wallet_dashboard(
     faucet_st   = get_faucet_status(player.id)
     swap_hist   = get_recent_swaps(player.id, limit=8)
 
+    # ---- All city stable coins (for the selector dropdown) ----
     from cities import get_player_stable_coin_balances, get_all_active_city_coins
-    comptroller_coins   = get_player_stable_coin_balances(player.id)    # player holds these
-    all_city_coins      = get_all_active_city_coins()                   # all that exist
-    held_city_ids       = {c["city_id"] for c in comptroller_coins}
-    unowned_city_coins  = [c for c in all_city_coins if c["city_id"] not in held_city_ids]
-
-    # ---- Per-city data for the full CCC economy sections ----
     from city_wallet import (
         get_city_treasury_info, get_city_amm_pool_info,
         get_player_city_yield_deposits, get_city_faucet_status,
-        get_wsc_to_ccc_quote, get_ccc_to_wsc_quote,
         CCC_FAUCET_COOLDOWN_HOURS, CCC_FAUCET_AMOUNT_MIN, CCC_FAUCET_AMOUNT_MAX,
     )
-    city_wallet_data = {}
-    for _cc in comptroller_coins:
-        _cid = _cc["city_id"]
-        _fsec = get_city_faucet_status(player.id, _cid)
-        city_wallet_data[_cid] = {
-            "treasury":  get_city_treasury_info(_cid),
-            "amm_pool":  get_city_amm_pool_info(_cid),
-            "yields":    get_player_city_yield_deposits(player.id, _cid),
-            "faucet_st": _fsec,
+    held_city_coins = get_player_stable_coin_balances(player.id)
+    all_city_coins  = get_all_active_city_coins()
+    # Map symbol → city coin info for quick lookup
+    city_coin_map   = {c["symbol"]: c for c in all_city_coins}
+
+    # ---- Resolve selected coin (WSC or a city coin symbol) ----
+    selected_coin = (coin or "WSC").upper()
+    if selected_coin != "WSC" and selected_coin not in city_coin_map:
+        selected_coin = "WSC"   # fall back if unknown
+
+    # ---- Populate coin-agnostic vars for the balance/treasury/faucet sections ----
+    if selected_coin == "WSC":
+        coin_info         = {"symbol": "WSC", "peg_label": "USD", "usd_per_coin": 1.0, "city_id": None}
+        coin_balance      = wsc_info["balance"]
+        coin_total_recv   = wsc_info["total_earned_yield"] + wsc_info["total_earned_faucet"] + wsc_info["total_earned_airdrop"]
+        coin_redeemed     = wsc_info["total_redeemed"]
+        coin_treasury     = {
+            "yield_pool":   treasury["yield_farming_pool"],
+            "faucet_pool":  treasury["faucet_pool"],
+            "airdrop_pool": treasury["airdrop_pool"],
+            "total_minted": treasury["total_minted"],
         }
+        coin_faucet_st    = faucet_st
+        coin_faucet_hours = FAUCET_COOLDOWN_HOURS
+        coin_faucet_min   = FAUCET_AMOUNT_MIN
+        coin_faucet_max   = FAUCET_AMOUNT_MAX
+        coin_yield_deps   = yield_deps        # list of WSC yield deposit dicts
+        coin_amm_pool     = None              # WSC uses native-token pools, rendered separately
+        coin_redeem_url   = "/api/wallet/redeem"
+        coin_redeem_field = "amount"
+        coin_faucet_url   = "/api/wallet/faucet"
+        coin_yield_url    = "/api/wallet/yield-farm"
+        coin_yield_unstake= "/api/wallet/yield-unstake"
+        coin_earned_label = {
+            "yield":   f'{wsc_info["total_earned_yield"]:.4f}',
+            "faucet":  f'{wsc_info["total_earned_faucet"]:.4f}',
+            "airdrop": f'{wsc_info["total_earned_airdrop"]:.4f}',
+        }
+        city_id_for_coin  = None
+    else:
+        _cc               = city_coin_map[selected_coin]
+        _held             = next((c for c in held_city_coins if c["symbol"] == selected_coin), None)
+        city_id_for_coin  = _cc["city_id"]
+        coin_info         = _cc
+        coin_balance      = _held["balance"] if _held else 0.0
+        coin_total_recv   = _held["total_received"] if _held else 0.0
+        coin_redeemed     = _held["total_redeemed"] if _held else 0.0
+        _ct               = get_city_treasury_info(city_id_for_coin)
+        coin_treasury     = {
+            "yield_pool":   _ct["yield_pool"],
+            "faucet_pool":  _ct["faucet_pool"],
+            "airdrop_pool": _ct["airdrop_pool"],
+            "total_minted": _ct["total_minted"],
+        }
+        _cfs              = get_city_faucet_status(player.id, city_id_for_coin)
+        coin_faucet_st    = {"can_claim": _cfs["can_claim"], "remaining_seconds": _cfs["remaining_seconds"], "last_amount": 0.0}
+        coin_faucet_hours = CCC_FAUCET_COOLDOWN_HOURS
+        coin_faucet_min   = CCC_FAUCET_AMOUNT_MIN
+        coin_faucet_max   = CCC_FAUCET_AMOUNT_MAX
+        coin_yield_deps   = get_player_city_yield_deposits(player.id, city_id_for_coin)
+        coin_amm_pool     = get_city_amm_pool_info(city_id_for_coin)
+        coin_redeem_url   = "/api/city/stablecoin/redeem"
+        coin_redeem_field = "amount"
+        coin_faucet_url   = "/api/city-wallet/faucet"
+        coin_yield_url    = "/api/city-wallet/yield-farm/add"
+        coin_yield_unstake= None   # city unstake is deposit-id-based, handled below
+        coin_earned_label = {"yield": "—", "faucet": "—", "airdrop": "—"}
 
     # ---- AMM pool state for each native token the player holds ----
     from wallet import WSCPool, WSC_AMM_FEE, get_db as wallet_get_db
@@ -2115,26 +1903,34 @@ async def wallet_dashboard(
     if not stake_rows:
         stake_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:16px;">No active mining stakes.</td></tr>'
 
-    # ---- Yield farming deposits ----
+    # ---- Yield farming deposits (coin-agnostic) ----
     yield_rows = ""
-    for yd in yield_deps:
+    for yd in coin_yield_deps:
+        earned_key = "total_earned_wsc" if selected_coin == "WSC" else "total_earned"
+        earned_val = yd.get(earned_key, 0.0)
+        if selected_coin == "WSC":
+            unstake_form = f'''
+                <form action="/api/wallet/yield-unstake" method="post" style="display:inline;">
+                    <input type="hidden" name="deposit_id" value="{yd["id"]}">
+                    <button type="submit" class="btn btn-cancel btn-sm">Unstake</button>
+                </form>'''
+        else:
+            unstake_form = f'''
+                <form action="/api/city-wallet/yield-farm/remove/{yd["id"]}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-cancel btn-sm">Unstake</button>
+                </form>'''
         yield_rows += f'''
         <tr>
             <td><a href="/memecoins/{yd["meme_symbol"]}" class="nav-link">{yd["meme_symbol"]}</a>
                 <span style="color:#475569;font-size:11px;"> {yd["meme_name"]}</span></td>
             <td class="meme-color" style="text-align:right;">{yd["quantity"]:,.4f}</td>
             <td style="text-align:right;">{yd["last_price"]:.6f}</td>
-            <td class="positive" style="text-align:right;">{yd["total_earned_wsc"]:.4f} WSC</td>
+            <td class="positive" style="text-align:right;">{earned_val:.4f} {selected_coin}</td>
             <td style="text-align:right;color:#64748b;">{yd["deposited_at"][:10]}</td>
-            <td style="text-align:right;">
-                <form action="/api/wallet/yield-unstake" method="post" style="display:inline;">
-                    <input type="hidden" name="deposit_id" value="{yd["id"]}">
-                    <button type="submit" class="btn btn-cancel btn-sm">Unstake</button>
-                </form>
-            </td>
+            <td style="text-align:right;">{unstake_form}</td>
         </tr>'''
     if not yield_rows:
-        yield_rows = '<tr><td colspan="6" style="color:#475569;text-align:center;padding:16px;">No yield positions. Stake meme coins below to earn WSC.</td></tr>'
+        yield_rows = f'<tr><td colspan="6" style="color:#475569;text-align:center;padding:16px;">No yield positions. Stake meme coins below to earn {selected_coin}.</td></tr>'
 
     yield_stake_opts = "".join(
         f'<option value="{m["symbol"]}">{m["symbol"]} — {m["balance"]:,.4f} held</option>'
@@ -2180,9 +1976,9 @@ async def wallet_dashboard(
     if not swap_hist_rows:
         swap_hist_rows = '<tr><td colspan="5" style="color:#475569;text-align:center;padding:12px;">No swap history yet.</td></tr>'
 
-    # ---- Faucet ----
-    faucet_can   = faucet_st["can_claim"]
-    faucet_secs  = faucet_st["remaining_seconds"]
+    # ---- Faucet (uses coin-agnostic coin_faucet_st) ----
+    faucet_can   = coin_faucet_st["can_claim"]
+    faucet_secs  = coin_faucet_st["remaining_seconds"]
     faucet_hrs   = faucet_secs // 3600
     faucet_mins  = (faucet_secs % 3600) // 60
     faucet_btn   = (
@@ -2197,7 +1993,8 @@ async def wallet_dashboard(
         ns = m["native_symbol"]
         total_meme_val[ns] = total_meme_val.get(ns, 0.0) + m["value_native"]
     total_staked = sum(s["staked_native"] for s in stakes)
-    total_yield_earned = sum(yd["total_earned_wsc"] for yd in yield_deps)
+    earned_key = "total_earned_wsc" if selected_coin == "WSC" else "total_earned"
+    total_yield_earned = sum(yd.get(earned_key, 0.0) for yd in coin_yield_deps)
 
     portfolio_summary = "".join(
         f'<span style="margin-right:18px;">Meme Value: <strong class="native-color">{v:.4f} {ns}</strong></span>'
@@ -2215,6 +2012,44 @@ async def wallet_dashboard(
     ) or '<span style="color:#475569;font-size:12px;">— hold meme coins to see live prices —</span>'
 
     fee_pct = int((SWAP_FEE_SELL + SWAP_FEE_BUY) * 100)
+
+    # ---- City coin AMM HTML (pre-computed to avoid nested f-string format issues) ----
+    if selected_coin != "WSC" and coin_amm_pool:
+        _ap = coin_amm_pool
+        city_amm_html = f"""
+        <div style="background:#0f172a;border:1px solid #4c1d9555;border-radius:8px;padding:14px;">
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">
+                Pool reserves: <strong style="color:#a78bfa;">{_ap["wsc_reserve"]:.4f} WSC</strong>
+                / <strong style="color:#a78bfa;">{_ap["ccc_reserve"]:.4f} {selected_coin}</strong>
+                &nbsp;&bull;&nbsp; {_ap["total_swaps"]:,} swaps
+            </div>
+            <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:11px;color:#64748b;margin-bottom:5px;">WSC &rarr; {selected_coin} &nbsp;(buy {selected_coin})</div>
+                    <form action="/api/city-wallet/swap/wsc-to-ccc" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
+                        <input type="hidden" name="city_id" value="{city_id_for_coin}">
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:11px;color:#94a3b8;">WSC amount (have {wsc_info["balance"]:.4f})</label>
+                            <input type="number" name="wsc_amount" step="any" min="0.0001" max="{wsc_info["balance"]:.4f}" placeholder="WSC amount" style="width:150px;font-size:12px;">
+                        </div>
+                        <button type="submit" class="btn" style="background:#4c1d95;color:#e9d5ff;font-size:12px;padding:6px 12px;">&#9654; Get {selected_coin}</button>
+                    </form>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:#64748b;margin-bottom:5px;">{selected_coin} &rarr; WSC &nbsp;(sell {selected_coin})</div>
+                    <form action="/api/city-wallet/swap/ccc-to-wsc" method="post" style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
+                        <input type="hidden" name="city_id" value="{city_id_for_coin}">
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-size:11px;color:#94a3b8;">{selected_coin} amount (have {coin_balance:.4f})</label>
+                            <input type="number" name="ccc_amount" step="any" min="0.0001" max="{coin_balance:.4f}" placeholder="{selected_coin} amount" style="width:150px;font-size:12px;">
+                        </div>
+                        <button type="submit" class="btn" style="background:#1e1b4b;color:#a5b4fc;font-size:12px;padding:6px 12px;">&#9654; Get WSC</button>
+                    </form>
+                </div>
+            </div>
+        </div>"""
+    else:
+        city_amm_html = ""
 
     # ---- AMM pool HTML ----
     if not native_holdings:
@@ -2273,6 +2108,46 @@ async def wallet_dashboard(
             </div>""")
         amm_pools_html = "".join(amm_sections)
 
+    # ---- Pre-compute all coin-conditional HTML fragments (no logic inside f-string) ----
+    _is_wsc = (selected_coin == "WSC")
+
+    _cc_opts  = "".join(
+        f'<option value="{c["symbol"]}" {"selected" if selected_coin == c["symbol"] else ""}>'
+        f'{c["symbol"]} — {c["city_name"]} (1 {c["peg_label"]} = ${c["usd_per_coin"]:.6f})'
+        f'</option>'
+        for c in all_city_coins
+    )
+
+    _card_border   = "" if _is_wsc else 'style="border-color:#7c3aed;"'
+    _card_label    = "WADSWORTH STABLE COIN (WSC)" if _is_wsc else f"{selected_coin} — {coin_info['city_name'].upper()} COMPTROLLER COIN"
+    _peg_note      = "$1" if _is_wsc else f"1 {coin_info['peg_label']} (${coin_info['usd_per_coin']:.6f})"
+    _redeem_hidden = "" if _is_wsc else f'<input type="hidden" name="city_id" value="{city_id_for_coin}">'
+    _faucet_hidden = "" if _is_wsc else f'<input type="hidden" name="city_id" value="{city_id_for_coin}">'
+    _yield_hidden  = "" if _is_wsc else f'<input type="hidden" name="city_id" value="{city_id_for_coin}">'
+
+    _treasury_desc = (
+        f"Every instant swap burns {fee_pct}% in fees &rarr; 90% is re-minted as WSC and split below. Pool balances fund all wallet rewards."
+        if _is_wsc else
+        f"Every WSC&#8596;{selected_coin} AMM swap burns 0.3% &rarr; 90% re-minted as {selected_coin} and split below."
+    )
+    _airdrop_note  = "Periodic drops to commodity holders" if _is_wsc else "Periodic drops to city members"
+    _burn_note     = f"&nbsp;&bull;&nbsp; Total native value burned: <strong>{treasury['total_native_burned']:.4f}</strong>" if _is_wsc else ""
+
+    _faucet_desc   = (
+        f"Free WSC dispensed from the faucet pool every {FAUCET_COOLDOWN_HOURS} hours. You also earn faucet credits automatically when you buy or sell commodities in-game."
+        if _is_wsc else
+        f"Free {selected_coin} dispensed from the city faucet pool every {coin_faucet_hours} hour(s). City members only."
+    )
+    _last_claim    = f'&nbsp;&bull;&nbsp; Last claim: <strong style="color:#4ade80;">{coin_faucet_st["last_amount"]:.4f} {selected_coin}</strong>' if "last_amount" in coin_faucet_st else ""
+
+    _amm_title     = "mint or sell WSC" if _is_wsc else f"buy or sell {selected_coin} with WSC"
+    _amm_desc      = (
+        f"Constant-product AMM (k=x&times;y). Swap county native tokens for WSC to <strong style='color:#c084fc;'>mint WSC</strong>, or swap WSC back to native tokens. Fee: <strong style='color:#f59e0b;'>{int(WSC_AMM_FEE*100*10)/10:.1f}%</strong> stays in the pool."
+        if _is_wsc else
+        f"Constant-product WSC&#8596;{selected_coin} forex pool at the live {coin_info['peg_label']}/USD rate. Fee: 0.3% stays in the pool and funds treasury rewards."
+    )
+    _amm_content   = amm_pools_html if _is_wsc else city_amm_html
+
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -2315,31 +2190,46 @@ async def wallet_dashboard(
     <!-- PRICE ALERTS -->
     {alerts_html}
 
-    <!-- WSC BALANCE CARD -->
-    <div class="wsc-card">
+    <!-- STABLE COIN SELECTOR -->
+    <form method="get" action="/wallet" style="margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="color:#94a3b8;font-size:12px;letter-spacing:1px;">STABLE COIN:</label>
+        <select name="coin" onchange="this.form.submit()"
+                style="background:#0f172a;border:1px solid #4f46e5;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:13px;">
+            <option value="WSC" {_sel_wsc}>WSC — Wadsworth Stable Coin ($1.00)</option>
+            {_cc_opts}
+        </select>
+        <span style="color:#64748b;font-size:12px;">Switch to see its balance, pools, faucet, AMM &amp; yield.</span>
+    </form>
+
+    <!-- STABLE COIN BALANCE CARD -->
+    <div class="wsc-card" {_card_border}>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
             <div>
-                <div style="font-size:12px;color:#a5b4fc;margin-bottom:4px;letter-spacing:1px;">WADSWORTH STABLE COIN (WSC)</div>
-                <div class="wsc-balance">{wsc_info["balance"]:.4f} <span style="font-size:16px;color:#6366f1;">WSC</span></div>
-                <div style="font-size:12px;color:#64748b;margin-top:4px;">= {fmt_usd(wsc_info["balance"], disp)} redeemable &nbsp;&#8226;&nbsp; 1 WSC &#61; $1</div>
+                <div style="font-size:12px;color:#a5b4fc;margin-bottom:4px;letter-spacing:1px;">{_card_label}</div>
+                <div class="wsc-balance">{coin_balance:.4f} <span style="font-size:16px;color:#6366f1;">{selected_coin}</span></div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                    = {fmt_usd(coin_balance * coin_info["usd_per_coin"], disp)} redeemable
+                    &nbsp;&#8226;&nbsp; 1 {selected_coin} = {_peg_note}
+                </div>
             </div>
             <div style="text-align:right;">
                 <div style="font-size:11px;color:#6366f1;margin-bottom:8px;">Total earned</div>
-                <div style="font-size:12px;margin-bottom:3px;">Yield: <strong style="color:#4ade80;">{wsc_info["total_earned_yield"]:.4f}</strong></div>
-                <div style="font-size:12px;margin-bottom:3px;">Faucet: <strong style="color:#38bdf8;">{wsc_info["total_earned_faucet"]:.4f}</strong></div>
-                <div style="font-size:12px;margin-bottom:3px;">Airdrop: <strong style="color:#f59e0b;">{wsc_info["total_earned_airdrop"]:.4f}</strong></div>
-                <div style="font-size:12px;color:#475569;">Redeemed: {wsc_info["total_redeemed"]:.4f}</div>
+                <div style="font-size:12px;margin-bottom:3px;">Yield: <strong style="color:#4ade80;">{coin_earned_label["yield"]}</strong></div>
+                <div style="font-size:12px;margin-bottom:3px;">Faucet: <strong style="color:#38bdf8;">{coin_earned_label["faucet"]}</strong></div>
+                <div style="font-size:12px;margin-bottom:3px;">Airdrop: <strong style="color:#f59e0b;">{coin_earned_label["airdrop"]}</strong></div>
+                <div style="font-size:12px;color:#475569;">Redeemed: {coin_redeemed:.4f}</div>
             </div>
         </div>
 
         <!-- Redeem form -->
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid #312e81;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-            <form action="/api/wallet/redeem" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <form action="{coin_redeem_url}" method="post" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                {_redeem_hidden}
                 <div class="form-group" style="margin:0;">
-                    <label style="color:#a5b4fc;">Redeem WSC &#8594; In-Game Cash ({disp["symbol"]})</label>
-                    <input type="number" name="amount" step="any" min="0.01"
-                           max="{wsc_info['balance']:.4f}"
-                           placeholder="Amount (max {wsc_info['balance']:.4f})"
+                    <label style="color:#a5b4fc;">Redeem {selected_coin} &#8594; In-Game Cash ({disp["symbol"]})</label>
+                    <input type="number" name="{coin_redeem_field}" step="any" min="0.01"
+                           max="{coin_balance:.4f}"
+                           placeholder="Amount (max {coin_balance:.4f})"
                            style="width:200px;border-color:#4f46e5;">
                 </div>
                 <button type="submit" class="btn btn-primary" style="background:#4f46e5;margin-top:18px;">
@@ -2349,54 +2239,43 @@ async def wallet_dashboard(
         </div>
     </div>
 
-    <!-- COMPTROLLER STABLE COINS — full economy per city -->
-    {"".join(_build_city_coin_section(coin, city_wallet_data.get(coin["city_id"], {}), disp, wsc_info, portfolio, CCC_FAUCET_COOLDOWN_HOURS, CCC_FAUCET_AMOUNT_MIN, CCC_FAUCET_AMOUNT_MAX) for coin in comptroller_coins)}
-
-    <!-- DISCOVER CITY STABLE COINS (not yet held) -->
-    {_build_city_coin_discovery(unowned_city_coins, wsc_info)}
-
-    <!-- WSC TREASURY POOLS -->
+    <!-- TREASURY POOLS -->
     <div class="card">
-        <h2 style="color:#6366f1;">&#128176; WSC Treasury &amp; Reward Pools</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
-            Every instant swap burns {fee_pct}% in fees &rarr; 90% is re-minted as WSC and split below.
-            Pool balances fund all wallet rewards.
-        </p>
+        <h2 style="color:#6366f1;">&#128176; {selected_coin} Treasury &amp; Reward Pools</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">{_treasury_desc}</p>
         <div class="grid grid-3">
             <div class="reward-pool">
                 <span style="color:#64748b;font-size:11px;">&#9881; Yield Farming Pool</span>
-                <span class="pool-val">{treasury["yield_farming_pool"]:.4f} WSC</span>
+                <span class="pool-val">{coin_treasury["yield_pool"]:.4f} {selected_coin}</span>
                 <span style="color:#475569;font-size:10px;">Distributed hourly to yield stakers</span>
             </div>
             <div class="reward-pool">
                 <span style="color:#64748b;font-size:11px;">&#128241; Faucet Pool</span>
-                <span class="pool-val" style="color:#38bdf8;">{treasury["faucet_pool"]:.4f} WSC</span>
-                <span style="color:#475569;font-size:10px;">Claim every {FAUCET_COOLDOWN_HOURS}h &bull; {FAUCET_AMOUNT_MIN:.2f}&ndash;{FAUCET_AMOUNT_MAX:.2f} WSC</span>
+                <span class="pool-val" style="color:#38bdf8;">{coin_treasury["faucet_pool"]:.4f} {selected_coin}</span>
+                <span style="color:#475569;font-size:10px;">Claim every {coin_faucet_hours}h &bull; {coin_faucet_min:.2f}&ndash;{coin_faucet_max:.2f} {selected_coin}</span>
             </div>
             <div class="reward-pool">
                 <span style="color:#64748b;font-size:11px;">&#127881; Airdrop Pool</span>
-                <span class="pool-val" style="color:#f59e0b;">{treasury["airdrop_pool"]:.4f} WSC</span>
-                <span style="color:#475569;font-size:10px;">Periodic drops to commodity holders</span>
+                <span class="pool-val" style="color:#f59e0b;">{coin_treasury["airdrop_pool"]:.4f} {selected_coin}</span>
+                <span style="color:#475569;font-size:10px;">{_airdrop_note}</span>
             </div>
         </div>
         <div style="margin-top:10px;font-size:11px;color:#475569;text-align:right;">
-            Total ever minted: <strong style="color:#6366f1;">{treasury["total_minted"]:.4f} WSC</strong>
-            &nbsp;&bull;&nbsp; Total native value burned: <strong>{treasury["total_native_burned"]:.4f}</strong>
+            Total ever minted: <strong style="color:#6366f1;">{coin_treasury["total_minted"]:.4f} {selected_coin}</strong>
+            {_burn_note}
         </div>
     </div>
 
     <!-- CRYPTO FAUCET -->
     <div class="card" style="border-color:#0369a133;">
-        <h2 style="color:#38bdf8;">&#128241; Crypto Faucet</h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
-            Free WSC dispensed from the faucet pool every {FAUCET_COOLDOWN_HOURS} hours.
-            You also earn faucet credits automatically when you buy or sell commodities in-game.
-        </p>
-        <form action="/api/wallet/faucet" method="post" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <h2 style="color:#38bdf8;">&#128241; {selected_coin} Faucet</h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:12px;">{_faucet_desc}</p>
+        <form action="{coin_faucet_url}" method="post" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            {_faucet_hidden}
             {faucet_btn}
             <span style="color:#64748b;font-size:12px;">
-                Pool: <strong style="color:#38bdf8;">{treasury["faucet_pool"]:.4f} WSC</strong>
-                &nbsp;&bull;&nbsp; Last claim: <strong style="color:#4ade80;">{faucet_st["last_amount"]:.4f} WSC</strong>
+                Pool: <strong style="color:#38bdf8;">{coin_treasury["faucet_pool"]:.4f} {selected_coin}</strong>
+                {_last_claim}
             </span>
         </form>
     </div>
@@ -2493,20 +2372,20 @@ async def wallet_dashboard(
         </table>
     </div>
 
-    <!-- WSC AMM POOL -->
+    <!-- AMM POOL (native↔WSC for WSC, WSC↔CCC for city coins) -->
     <div class="card" style="border-color:#7c3aed55;">
-        <h2 style="color:#c084fc;">&#128984; Native &#8596; WSC AMM Pool <span style="font-size:12px;font-weight:400;color:#64748b;">— mint or sell WSC</span></h2>
+        <h2 style="color:#c084fc;">&#128984; {selected_coin} AMM Pool <span style="font-size:12px;font-weight:400;color:#64748b;">— {"mint or sell WSC" if selected_coin == "WSC" else f"buy or sell {selected_coin} with WSC"}</span></h2>
         <p style="color:#64748b;font-size:12px;margin-bottom:14px;">
-            Constant-product AMM (k=x&times;y). Swap county native tokens for WSC to
-            <strong style="color:#c084fc;">mint WSC</strong>, or swap WSC back to native tokens.
-            Fee: <strong style="color:#f59e0b;">{int(WSC_AMM_FEE*100*10)/10:.1f}%</strong> stays in the pool.
+            {"Constant-product AMM (k=x&times;y). Swap county native tokens for WSC to <strong style='color:#c084fc;'>mint WSC</strong>, or swap WSC back to native tokens. Fee: <strong style='color:#f59e0b;'>" + f"{int(WSC_AMM_FEE*100*10)/10:.1f}%" + "</strong> stays in the pool."
+             if selected_coin == "WSC" else
+             f"Constant-product WSC&#8596;{selected_coin} forex pool at the live {coin_info['peg_label']}/USD rate. Fee: 0.3% stays in the pool and funds treasury rewards."}
         </p>
-        {amm_pools_html}
+        {amm_pools_html if selected_coin == "WSC" else city_amm_html}
     </div>
 
     <!-- YIELD FARMING -->
     <div class="card" style="border-color:#15803d33;">
-        <h2 style="color:#4ade80;">&#9881; Yield Farming <span style="font-size:12px;font-weight:400;color:#64748b;">— stake meme coins, earn WSC hourly</span></h2>
+        <h2 style="color:#4ade80;">&#9881; Yield Farming <span style="font-size:12px;font-weight:400;color:#64748b;">— stake meme coins, earn {selected_coin} hourly</span></h2>
         <p style="color:#64748b;font-size:12px;margin-bottom:12px;">
             Deposit any meme coin. Rewards are proportional to your staked value vs. total pool.
             Payouts come from the Yield Pool every hour. Unstake anytime to retrieve your coins.
@@ -2515,13 +2394,14 @@ async def wallet_dashboard(
             <thead><tr>
                 <th>Coin</th><th style="text-align:right;">Staked</th>
                 <th style="text-align:right;">Price</th>
-                <th style="text-align:right;">Earned (WSC)</th>
+                <th style="text-align:right;">Earned ({selected_coin})</th>
                 <th style="text-align:right;">Since</th>
                 <th style="text-align:right;">Action</th>
             </tr></thead>
             <tbody>{yield_rows}</tbody>
         </table>
-        <form action="/api/wallet/yield-stake" method="post" style="margin-top:14px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <form action="{coin_yield_url}" method="post" style="margin-top:14px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            {"" if selected_coin == "WSC" else f'<input type="hidden" name="city_id" value="{city_id_for_coin}">'}
             <div class="form-group" style="margin:0;">
                 <label>Coin to Stake</label>
                 <select name="meme_symbol" required style="width:160px;">{yield_stake_opts}</select>
