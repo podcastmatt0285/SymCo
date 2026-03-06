@@ -22,6 +22,23 @@ sys.path.insert(0, SCRIPT_DIR)
 os.chdir(SCRIPT_DIR)
 
 # ---------------------------------------------------------------------------
+# Bootstrap venv site-packages so dependencies (sqlalchemy, psycopg2, etc.)
+# are importable regardless of which system Python is used to invoke the
+# script.  The venv packages are built for Python 3.12; if we're running on
+# a different interpreter, re-exec with /usr/bin/python3.12.
+# ---------------------------------------------------------------------------
+_venv_site = os.path.join(SCRIPT_DIR, "venv", "lib", "python3.12", "site-packages")
+if os.path.isdir(_venv_site) and _venv_site not in sys.path:
+    sys.path.insert(1, _venv_site)
+
+# If we're not on Python 3.12, re-exec with it so the compiled extensions load.
+if sys.version_info[:2] != (3, 12):
+    _py312 = "/usr/bin/python3.12"
+    if os.path.exists(_py312):
+        os.execv(_py312, [_py312] + sys.argv)
+    # If /usr/bin/python3.12 not found, continue and hope for the best.
+
+# ---------------------------------------------------------------------------
 # Load .env before importing database.py so it picks up the right credentials.
 # If .env doesn't exist, copy .env.example → .env automatically.
 # ---------------------------------------------------------------------------
