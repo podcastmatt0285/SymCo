@@ -903,7 +903,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                             <span style="color: #38bdf8; font-weight: bold;">{current_p}</span>
                             <form action="/api/retail/set-price" method="post" style="display: flex; gap: 4px;">
                                 <input type="hidden" name="item_type" value="{item}">
-                                <input type="number" name="price" step="0.01" placeholder="Set Price" style="padding: 4px; width: 80px;" required>
+                                <input type="number" name="price" step="0.01" placeholder="Set Price ({disp['code']})" style="padding: 4px; width: 80px;" required>
                                 <button type="submit" class="btn-blue" style="padding: 4px 8px; font-size: 0.8rem;">Update</button>
                             </form>
                             <form action="/api/business/toggle-retail" method="post">
@@ -1305,11 +1305,11 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                             business_name = config.get("name", btype)
                             land_html += f'<option value="{btype}">{business_name} ({fmt_usd(actual_cost, disp, precision=0)})</option>'
 
-                    land_html += '''</select><button type="submit" class="btn-blue">Build</button>
+                    land_html += f'''</select><button type="submit" class="btn-blue">Build</button>
                             </form>
                             <form action="/api/land-market/list-land" method="post" style="display: flex; gap: 8px; align-items: center;">
-                                <input type="hidden" name="land_plot_id" value="''' + str(plot.id) + '''">
-                                <input type="number" name="asking_price" step="0.01" placeholder="Asking $" style="width: 110px;" required>
+                                <input type="hidden" name="land_plot_id" value="{plot.id}">
+                                <input type="number" name="asking_price" step="0.01" placeholder="Asking ({disp['code']})" style="width: 110px;" required>
                                 <button type="submit" class="btn-orange">List for Sale</button>
                             </form>
                         </div>'''
@@ -6457,7 +6457,8 @@ async def set_retail_price_endpoint(item_type: str = Form(...), price: float = F
     disp = get_player_display_currency(player.id)
     try:
         from business import set_retail_price
-        set_retail_price(player.id, item_type, price)
+        price_usd = price * disp["usd_per_unit"]
+        set_retail_price(player.id, item_type, price_usd)
         return RedirectResponse(url="/businesses", status_code=303)
     except Exception as e:
         print(f"[UX] Retail price error: {e}")
@@ -6551,7 +6552,8 @@ async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float 
     disp = get_player_display_currency(player.id)
     
     from land_market import list_land_for_sale
-    if list_land_for_sale(player.id, land_plot_id, asking_price):
+    price_usd = asking_price * disp["usd_per_unit"]
+    if list_land_for_sale(player.id, land_plot_id, price_usd):
         return RedirectResponse(url="/land-market?success=land_listed", status_code=303)
     return RedirectResponse(url="/land-market?error=listing_failed", status_code=303)
 
