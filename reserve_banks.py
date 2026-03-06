@@ -39,7 +39,8 @@ Bond mechanics
   - Interest accrues hourly: interest = face_value × yield_rate / TICKS_PER_YEAR
   - Interest paid in the bank's own currency (credited to player's
     currency_balances row).
-  - Available maturities: 30 / 90 / 180 / 365 calendar days.
+  - Available maturities: 7 / 14 / 30 calendar days (player bonds).
+  - Interbank swap bonds use a fixed 3-day maturity and pay no interest.
   - Selling before maturity: player receives WSC back at a discount/premium
     calculated from the current yield vs. the purchase yield.
   - At maturity: face value returned in WSC + all accrued interest.
@@ -84,7 +85,8 @@ YIELD_SENSITIVITY  = 0.00001       # yield change per $1 of net demand per tick
 FX_YIELD_LINK      = 0.005         # usd_per_unit fractional change per 1 % yield Δ (inverse)
 
 FOREX_FEE_RATE     = 0.002         # 0.2 % fee on each forex conversion
-BOND_MATURITIES    = [30, 90, 180, 365]   # calendar days
+BOND_MATURITIES             = [7, 14, 30]  # calendar days available to players
+INTERBANK_BOND_MATURITY_DAYS = 3           # interbank swap bonds mature after 3 days
 
 # Early redemption: 1.5 % flat fee if a bond is sold within the first 7 days.
 BOND_EARLY_REDEMPTION_DAYS = 7
@@ -393,6 +395,11 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         ReserveBankBond.status  == "active",
     ).all()
     for bond in active_bonds:
+        # Interbank bonds (holder_player_id == 0) carry no interest — they are
+        # purely a reserve-management instrument and will be expired by _mature_bonds.
+        if bond.holder_player_id <= 0:
+            continue
+
         # Hourly interest in the bank's own currency:
         #   face_value_wsc / usd_per_unit  → face value in bank currency (1 WSC = $1)
         #   × yield_rate / TICKS_PER_YEAR  → one hour's slice of the annual rate
@@ -426,6 +433,8 @@ def _call_bonds_if_needed(db, bank: StateReserveBank):
     ).all()
 
     for bond in callable_bonds:
+        if bond.holder_player_id <= 0:
+            continue  # never call interbank bonds
         if bond.purchase_yield <= 0:
             continue
         # Only call when current yield is well below purchase yield
@@ -505,6 +514,12 @@ def _mature_bonds(db, bank: StateReserveBank, now: datetime):
         bank.total_face_value_wsc = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
         # Reduce WSC holdings — this WSC is now being redeemed as bank currency
         bank.wsc_holdings = max(0.0, bank.wsc_holdings - bond.face_value_wsc)
+
+        # Interbank bonds (holder_player_id == 0) have no player to pay out to.
+        # They exist solely to throttle swap frequency; just expire them silently.
+        if bond.holder_player_id <= 0:
+            continue
+
         # Return face value in the bank's own currency (1 WSC = $1 → convert at current FX)
         foreign_return = bond.face_value_wsc / bank.usd_per_unit
         _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, foreign_return)
@@ -686,6 +701,22 @@ def _interbank_bond_swap(db, buyer_bank: StateReserveBank, seller_bank: StateRes
     buyer_bank.net_demand_wsc  += usd_equiv   # JPY bond demand up → yield falls
     seller_bank.net_demand_wsc -= usd_equiv * 0.1  # small negative on USD (capital outflow)
 
+    # Create a 3-day interbank bond on the buyer bank so _tick_interbank_settlement
+    # will not trigger another swap for this bank until it matures.  holder_player_id=0
+    # marks it as a system/interbank bond (no interest accrual, no payout on maturity).
+    interbank_bond = ReserveBankBond(
+        bank_id          = buyer_bank.id,
+        holder_player_id = 0,
+        face_value_wsc   = usd_equiv,
+        purchase_yield   = buyer_bank.yield_rate,
+        maturity_days    = INTERBANK_BOND_MATURITY_DAYS,
+        purchased_at     = datetime.utcnow(),
+        matures_at       = datetime.utcnow() + timedelta(days=INTERBANK_BOND_MATURITY_DAYS),
+        interest_accrued = 0.0,
+        status           = "active",
+    )
+    db.add(interbank_bond)
+
     # Record inter-bank trade
     trade = InterbankTrade(
         buyer_bank_code      = seller_bank.currency_code,   # seller bank bought buyer's bonds
@@ -732,6 +763,17 @@ def _tick_interbank_settlement(db):
         if outstanding_usd <= 0:
             continue
 
+        # Only trigger a new swap if no active interbank bond (holder=0) exists for
+        # this bank.  Interbank bonds are 3-day instruments; while one is active the
+        # bank is already "in settlement" and should not compound yield suppression.
+        active_interbank = db.query(ReserveBankBond).filter(
+            ReserveBankBond.bank_id          == bank.id,
+            ReserveBankBond.holder_player_id == 0,
+            ReserveBankBond.status           == "active",
+        ).first()
+        if active_interbank:
+            continue
+
         foreign_reserves = db.query(BankReserveBalance).filter(
             BankReserveBalance.bank_id == bank.id,
         ).all()
@@ -745,6 +787,7 @@ def _tick_interbank_settlement(db):
                 target_bank   = bank_map.get(reserve.currency_code)
                 if target_bank:
                     _interbank_bond_swap(db, bank, target_bank, min(shortfall_usd, outstanding_usd * 0.05))
+                    break  # one swap per bank per settlement cycle
 
 
 # ==========================
