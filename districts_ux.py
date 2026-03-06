@@ -924,7 +924,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                             <option value="sell">SELL</option>
                         </select>
                         <input type="number" name="quantity" placeholder="Quantity" step="0.01" required>
-                        <input type="number" name="price" step="0.01" placeholder="Price ({disp['code']})" required>
+                        <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" required>
                         <button type="submit" class="btn-blue">Submit</button>
                     </form>
                 </div>

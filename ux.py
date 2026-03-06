@@ -1034,7 +1034,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                         <form action="/api/inventory/list" method="post" style="margin-top: 10px;">
                             <input type="hidden" name="item_type" value="{item}">
                             <input type="number" name="quantity" placeholder="Qty" style="width: 60px;" required>
-                            <input type="number" name="price" step="0.01" placeholder="Price ({disp['code']})" style="width: 80px;" required>
+                            <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" style="width: 80px;" required>
                             <button type="submit" class="btn-blue">List</button>
                         </form>
                     </div>
@@ -2021,7 +2021,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                             <option value="sell">SELL</option>
                         </select>
                         <input type="number" name="quantity" placeholder="Quantity" required>
-                        <input type="number" name="price" step="0.01" placeholder="Price ({disp['code']})" required>
+                        <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" required>
                         <button type="submit" class="btn-blue">Submit</button>
                     </form>
                 </div>
