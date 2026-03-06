@@ -560,9 +560,9 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         "money",
         -total_cost,
         f"Market buy: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
-        buy_order.item_type,
-        quantity,
-        _unit_price,
+        item_type=buy_order.item_type,
+        quantity=quantity,
+        unit_price=_unit_price,
     )
     if not is_bank_ipo:
         log_transaction(
@@ -571,9 +571,9 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             "money",
             total_cost,
             f"Market sell: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
-            buy_order.item_type,
-            quantity,
-            _unit_price,
+            item_type=buy_order.item_type,
+            quantity=quantity,
+            unit_price=_unit_price,
         )
 
 # ==========================

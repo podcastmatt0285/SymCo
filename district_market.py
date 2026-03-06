@@ -398,9 +398,9 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
             "money",
             -total_cost,
             f"District market buy: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
-            buy_order.item_type,
-            quantity,
-            _unit_price,
+            item_type=buy_order.item_type,
+            quantity=quantity,
+            unit_price=_unit_price,
         )
         log_transaction(
             sell_order.player_id,
@@ -408,9 +408,9 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
             "money",
             total_cost,
             f"District market sell: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
-            buy_order.item_type,
-            quantity,
-            _unit_price,
+            item_type=buy_order.item_type,
+            quantity=quantity,
+            unit_price=_unit_price,
         )
     except:
         pass  # Stats logging is optional
