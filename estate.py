@@ -781,6 +781,27 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         except Exception as e:
             print(f"[Estate] Margin call cleanup error: {e}")
 
+        # Deactivate commodity listings and close active commodity loans
+        try:
+            from banks.brokerage_firm import CommodityListing, CommodityLoan
+            from sqlalchemy import or_
+            db.query(CommodityListing).filter(
+                CommodityListing.lender_player_id == player_id,
+                CommodityListing.is_active == True
+            ).update({"is_active": False}, synchronize_session=False)
+            commodity_loans = db.query(CommodityLoan).filter(
+                or_(
+                    CommodityLoan.borrower_player_id == player_id,
+                    CommodityLoan.lender_player_id == player_id
+                ),
+                CommodityLoan.status == "active"
+            ).all()
+            for cl in commodity_loans:
+                cl.status = "force_closed"
+                print(f"[Estate] Force-closed commodity loan #{cl.id}")
+        except Exception as e:
+            print(f"[Estate] Commodity loan cleanup error: {e}")
+
         # 4. Calculate remainder after debts
         remainder = max(0.0, liquidation_value - debt_payment)
 
