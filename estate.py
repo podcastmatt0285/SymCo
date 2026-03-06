@@ -314,8 +314,32 @@ def calculate_estate_value(player_id: int, db) -> dict:
         return {"total": 0.0, "cash": 0.0, "inventory": 0.0, "land": 0.0,
                 "businesses": 0.0, "shares": 0.0, "districts": 0.0}
 
+    # Get actual USD cash from PlayerCurrencyBalance (reserve_banks DB)
+    cash_usd = player.cash_balance  # fallback if reserve_banks unavailable
+    try:
+        from reserve_banks import PlayerCurrencyBalance, StateReserveBank, get_db as get_rb_db
+        rb_db = get_rb_db()
+        try:
+            pcb_records = rb_db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id == player_id
+            ).all()
+            cash_usd = 0.0
+            for pcb in pcb_records:
+                if pcb.currency_code == "USD":
+                    cash_usd += pcb.balance
+                else:
+                    bank = rb_db.query(StateReserveBank).filter(
+                        StateReserveBank.currency_code == pcb.currency_code
+                    ).first()
+                    usd_per_unit = bank.usd_per_unit if bank else 1.0
+                    cash_usd += pcb.balance * usd_per_unit
+        finally:
+            rb_db.close()
+    except Exception as e:
+        print(f"[Estate] Cash valuation error (PCB): {e}")
+
     estate = {
-        "cash": player.cash_balance,
+        "cash": cash_usd,
         "inventory": 0.0,
         "land": 0.0,
         "businesses": 0.0,
@@ -567,6 +591,41 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         except Exception as e:
             print(f"[Estate] Brokerage liquidation error: {e}")
 
+        # Force-delist companies founded by the dead player (IPO shares cleanup)
+        try:
+            from banks.brokerage_firm import CompanyShares as CS, ShareholderPosition as SHP
+            founded_companies = db.query(CS).filter(
+                CS.founder_id == player_id,
+                CS.is_delisted == False
+            ).all()
+            for company in founded_companies:
+                liq_price = (company.current_price or 0.0) * LIQUIDATION_DISCOUNT
+                # Pay all current shareholders the liquidation price from the estate
+                all_positions = db.query(SHP).filter(
+                    SHP.company_shares_id == company.id,
+                    SHP.shares_owned > 0
+                ).all()
+                for sh_pos in all_positions:
+                    payout = sh_pos.shares_owned * liq_price
+                    if payout > 0:
+                        liquidation_value -= payout
+                        if sh_pos.player_id != player_id and sh_pos.player_id != GOVERNMENT_PLAYER_ID:
+                            shareholder = db.query(Player).filter(Player.id == sh_pos.player_id).first()
+                            if shareholder:
+                                shareholder.cash_balance += payout
+                    sh_pos.shares_owned = 0
+                    print(f"[Estate] Delist {company.ticker_symbol}: paid ${payout:,.2f} to player {sh_pos.player_id}")
+                # Mark company as delisted
+                company.is_delisted = True
+                company.delisted_at = datetime.utcnow()
+                company.shares_in_float = 0
+                company.shares_outstanding = 0
+                company.shares_held_by_founder = 0
+                company.shares_held_by_firm = 0
+                print(f"[Estate] Force-delisted {company.ticker_symbol} (founder deceased)")
+        except Exception as e:
+            print(f"[Estate] Company delist error: {e}")
+
         # Liquidate land (transfer to government for auction)
         try:
             from land import LandPlot
@@ -604,6 +663,30 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 print(f"[Estate] Seized district {d.id} ({d.district_type}) (${district_value:,.2f})")
         except Exception as e:
             print(f"[Estate] District liquidation error: {e}")
+
+        # Cancel active reserve bank bonds — return face value + accrued interest to estate
+        try:
+            from reserve_banks import ReserveBankBond, StateReserveBank, get_db as get_rb_db
+            rb_db = get_rb_db()
+            try:
+                active_bonds = rb_db.query(ReserveBankBond).filter(
+                    ReserveBankBond.holder_player_id == player_id,
+                    ReserveBankBond.status == "active"
+                ).all()
+                for bond in active_bonds:
+                    bank = rb_db.query(StateReserveBank).filter(
+                        StateReserveBank.id == bond.bank_id
+                    ).first()
+                    interest_usd = (bond.interest_accrued * bank.usd_per_unit) if bank else 0.0
+                    bond_usd_value = bond.face_value_wsc + interest_usd
+                    liquidation_value += bond_usd_value
+                    bond.status = "matured"
+                    print(f"[Estate] Cancelled reserve bond #{bond.id}: +${bond_usd_value:,.2f}")
+                rb_db.commit()
+            finally:
+                rb_db.close()
+        except Exception as e:
+            print(f"[Estate] Reserve bond cleanup error: {e}")
 
         # 3. Pay debts from estate (60% of debts)
         debt_payment = min(total_debts * DEBT_PAYMENT_PERCENTAGE, liquidation_value * 0.5)
@@ -670,6 +753,33 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 pos.is_margin_position = False
         except:
             pass
+
+        # Close active share loans involving dead player
+        try:
+            from banks.brokerage_firm import ShareLoan
+            from sqlalchemy import or_
+            share_loans = db.query(ShareLoan).filter(
+                or_(
+                    ShareLoan.borrower_player_id == player_id,
+                    ShareLoan.lender_player_id == player_id
+                ),
+                ShareLoan.status == "active"
+            ).all()
+            for loan in share_loans:
+                loan.status = "closed"
+                print(f"[Estate] Closed share loan #{loan.id}")
+        except Exception as e:
+            print(f"[Estate] Share loan cleanup error: {e}")
+
+        # Delete unresolved margin calls for dead player
+        try:
+            from banks.brokerage_firm import MarginCall
+            db.query(MarginCall).filter(
+                MarginCall.player_id == player_id,
+                MarginCall.is_resolved == False
+            ).delete(synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Margin call cleanup error: {e}")
 
         # 4. Calculate remainder after debts
         remainder = max(0.0, liquidation_value - debt_payment)
