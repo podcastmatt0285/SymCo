@@ -6052,6 +6052,7 @@ def production_costs_page(
                 rows = ""
                 for item in items:
                     cc = cat_colors.get(item.get("category","unknown"), "#64748b")
+                    biz_label = item.get("business", "-") or '<span style="color:#ef4444;">No recipe</span>'
                     rows += (
                         f'<tr style="border-bottom:1px solid #1e293b;cursor:pointer;"'
                         f' onclick="window.location=\'/stats/production-costs/{item["item_key"]}\'">'
@@ -6065,7 +6066,7 @@ def production_costs_page(
                         f'color:{_cost_color(item["cost"])};">'
                         f'{fmt_usd(item["cost"], disp, precision=4)}</td>'
                         f'<td style="padding:12px 8px;color:#64748b;font-size:0.85rem;">'
-                        f'{item.get("business","-") or "<span style=\'color:#ef4444;\'>No recipe</span>"}</td>'
+                        f'{biz_label}</td>'
                         f'<td style="padding:12px 8px;text-align:center;">'
                         f'<a href="/stats/production-costs/{item["item_key"]}" class="btn-blue"'
                         f' style="padding:4px 12px;font-size:0.8rem;">View</a></td></tr>'
