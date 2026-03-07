@@ -639,62 +639,94 @@ def home(session_token: Optional[str] = Cookie(None)):
         f"""
         {dashboard_top}
         <h2>Welcome, CEO of {player.business_name}</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="card">
-                <h3>Businesses</h3>
-                <p>Operate plantations, factories, and services</p>
-                <a href="/businesses" class="btn-blue">Open Terminal</a>
-            </div>
-            <div class="card">
-                <h3>Inventory</h3>
-                <p>Raw materials, goods, and finished products</p>
-                <a href="/inventory" class="btn-blue">View Stock</a>
-            </div>
-            <div class="card">
-                <h3>Land</h3>
-                <p>Owned plots and land marketplace</p>
-                <a href="/land" class="btn-blue">Real Estate</a>
-            </div>
-            <div class="card">
-                <h3>Market</h3>
-                <p>Buy and sell with other players</p>
-                <a href="/market" class="btn-blue">Trading Floor</a>
-            </div>
-            <div class="card">
-                <h3>Land Market</h3>
-                <p>Government auctions and player land sales</p>
-                <a href="/land-market" class="btn-blue">View Market</a>
-            </div>
-            <div class="card">
-                <h3>Banks</h3>
-                <p>Investment funds and share trading</p>
-                <a href="/banks" class="btn-blue">Banking</a>
-            </div>
-            <div class="card">
-                <h3>Executives</h3>
-                <p>Hire and manage high-level employees</p>
-                <a href="/executives" class="btn-purple" style="display:inline-block;padding:10px 20px;background:#c084fc;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">Executives</a>
-            </div>
-            <div class="card" style="border-color: #f59e0b;">
-                <h3 style="color: #f59e0b;">Peer to Peer</h3>
-                <p>Contracts, chatrooms, and direct messages</p>
-                <a href="/p2p" style="display:inline-block;padding:10px 20px;background:#f59e0b;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">P2P Network</a>
-            </div>
-            <div class="card">
-                <h3>Stats & Leaderboard</h3>
-                <p>Statistics, Leaderboard and Data</p>
-                <a href="/stats" class="btn-gold">📊 Stats 🪙</a>
-            </div>
-            <div class="card">
-                <h3>Estate & Succession</h3>
-                <p>Heirs, account deletion, and deceased registry</p>
-                <a href="/estate" style="display:inline-block;padding:10px 20px;background:#475569;color:#e5e7eb;text-decoration:none;border-radius:6px;font-weight:bold;">Estate</a>
-            </div>
-            <div class="card" style="border-color: #22c55e;">
-                <h3 style="color: #22c55e;">World Map</h3>
-                <p>Visualize your economic empire on an interactive grid map</p>
-                <a href="/world-map" style="display:inline-block;padding:10px 20px;background:#22c55e;color:#020617;text-decoration:none;border-radius:6px;font-weight:bold;">Open Map</a>
-            </div>
+        <style>
+        .dc{{background:linear-gradient(135deg,#0a0f1e,#0f1628);border:1px solid var(--c);border-radius:12px;padding:22px 20px 18px;position:relative;overflow:hidden;transition:transform 0.18s,box-shadow 0.18s;display:block;text-decoration:none;color:inherit;}}
+        .dc::before{{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--g);}}
+        .dc:hover{{transform:translateY(-3px);box-shadow:0 10px 36px rgba(0,0,0,0.55),0 0 28px var(--glow);text-decoration:none;}}
+        .dc-ico{{font-size:1.9rem;margin-bottom:10px;display:block;}}
+        .dc-t{{font-size:0.95rem;font-weight:700;color:var(--c);margin-bottom:4px;font-family:'Segoe UI',system-ui,sans-serif;letter-spacing:-0.01em;}}
+        .dc-d{{font-size:0.74rem;color:#4a6080;line-height:1.55;margin-bottom:14px;font-family:'Segoe UI',system-ui,sans-serif;}}
+        .dc-btn{{display:inline-block;padding:7px 16px;background:var(--btn);color:var(--fg,#020617);border-radius:6px;font-size:0.74rem;font-weight:700;font-family:'Segoe UI',system-ui,sans-serif;text-decoration:none;letter-spacing:0.01em;}}
+        </style>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:16px;">
+
+            <a href="/businesses" class="dc" style="--c:#38bdf8;--g:linear-gradient(90deg,#38bdf8,#67e8f9);--glow:rgba(56,189,248,0.12);--btn:#38bdf8;">
+                <span class="dc-ico">🏭</span>
+                <div class="dc-t">Businesses</div>
+                <div class="dc-d">Operate factories, plantations, and production chains across your land portfolio</div>
+                <span class="dc-btn">Open Terminal</span>
+            </a>
+
+            <a href="/inventory" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e);--glow:rgba(245,168,85,0.12);--btn:#f5a855;">
+                <span class="dc-ico">📦</span>
+                <div class="dc-t">Inventory</div>
+                <div class="dc-d">Raw materials, finished goods, and district items ready to sell or process</div>
+                <span class="dc-btn">View Stock</span>
+            </a>
+
+            <a href="/land" class="dc" style="--c:#22c55e;--g:linear-gradient(90deg,#22c55e,#4ade80);--glow:rgba(34,197,94,0.12);--btn:#22c55e;">
+                <span class="dc-ico">🌿</span>
+                <div class="dc-t">Land</div>
+                <div class="dc-d">Your owned plots, terrain types, business placement, and land portfolio</div>
+                <span class="dc-btn">Real Estate</span>
+            </a>
+
+            <a href="/market" class="dc" style="--c:#67e8f9;--g:linear-gradient(90deg,#67e8f9,#a5f3fc);--glow:rgba(103,232,249,0.12);--btn:#67e8f9;">
+                <span class="dc-ico">📈</span>
+                <div class="dc-t">Market</div>
+                <div class="dc-d">Buy and sell commodities with other players on the Wadsworth Exchange</div>
+                <span class="dc-btn">Trading Floor</span>
+            </a>
+
+            <a href="/land-market" class="dc" style="--c:#f5d76e;--g:linear-gradient(90deg,#f5d76e,#fde68a);--glow:rgba(245,215,110,0.12);--btn:#f5d76e;">
+                <span class="dc-ico">🏗️</span>
+                <div class="dc-t">Land Market</div>
+                <div class="dc-d">Government auctions, player-listed plots, and new land opportunities</div>
+                <span class="dc-btn">View Auctions</span>
+            </a>
+
+            <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
+                <span class="dc-ico">🏦</span>
+                <div class="dc-t">Banks</div>
+                <div class="dc-d">ETF investment funds, share trading, dividends, and reserve banking</div>
+                <span class="dc-btn">Banking</span>
+            </a>
+
+            <a href="/executives" class="dc" style="--c:#c084fc;--g:linear-gradient(90deg,#c084fc,#e879f9);--glow:rgba(192,132,252,0.12);--btn:#c084fc;">
+                <span class="dc-ico">👔</span>
+                <div class="dc-t">Executives</div>
+                <div class="dc-d">Hire C-suite talent, unlock abilities, and train your leadership team</div>
+                <span class="dc-btn">C-Suite</span>
+            </a>
+
+            <a href="/p2p" class="dc" style="--c:#f59e0b;--g:linear-gradient(90deg,#f59e0b,#fbbf24);--glow:rgba(245,158,11,0.12);--btn:#f59e0b;">
+                <span class="dc-ico">💬</span>
+                <div class="dc-t">Peer to Peer</div>
+                <div class="dc-d">Private contracts, chatrooms, and direct messages between players</div>
+                <span class="dc-btn">P2P Network</span>
+            </a>
+
+            <a href="/stats/wiki" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e,#90c4f0);--glow:rgba(245,168,85,0.18);--btn:linear-gradient(90deg,#f5a855,#f5d76e);">
+                <span class="dc-ico">📖</span>
+                <div class="dc-t">WikaWads</div>
+                <div class="dc-d">The living encyclopedia — businesses, districts, items, city projects, executives & analytics</div>
+                <span class="dc-btn">Open Wiki</span>
+            </a>
+
+            <a href="/estate" class="dc" style="--c:#94a3b8;--g:linear-gradient(90deg,#475569,#94a3b8);--glow:rgba(148,163,184,0.08);--btn:#1e293b;--fg:#94a3b8;">
+                <span class="dc-ico">⚖️</span>
+                <div class="dc-t">Estate & Succession</div>
+                <div class="dc-d">Manage heirs, succession planning, and the deceased player registry</div>
+                <span class="dc-btn">Estate Office</span>
+            </a>
+
+            <a href="/world-map" class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12);--btn:#4ade80;">
+                <span class="dc-ico">🗺️</span>
+                <div class="dc-t">World Map</div>
+                <div class="dc-d">Visualize your economic empire on an interactive grid map of Wadsworth</div>
+                <span class="dc-btn">Open Map</span>
+            </a>
+
         </div>
         """,
         player.cash_balance,
