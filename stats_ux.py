@@ -996,24 +996,6 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
             <div class="card-subtitle">Top players by category</div>
         </a>
         
-        <a href="/stats/businesses" class="card" style="text-decoration: none;">
-            <div class="card-header">
-                <span class="card-title">Business Encyclopedia</span>
-                <span class="card-icon">🏭</span>
-            </div>
-            <div class="card-value">Production</div>
-            <div class="card-subtitle">All businesses, recipes, terrain requirements</div>
-        </a>
-        
-        <a href="/stats/items" class="card" style="text-decoration: none;">
-            <div class="card-header">
-                <span class="card-title">Item Catalog</span>
-                <span class="card-icon">📦</span>
-            </div>
-            <div class="card-value">Market Data</div>
-            <div class="card-subtitle">All items, price charts, categories</div>
-        </a>
-
         <a href="/stats/production-costs" class="card" style="text-decoration: none;">
             <div class="card-header">
                 <span class="card-title">Production Costs</span>
@@ -1023,13 +1005,13 @@ async def stats_overview(session_token: Optional[str] = Cookie(None)):
             <div class="card-subtitle">Cheapest recipes for every item including district items</div>
         </a>
 
-        <a href="/stats/districts" class="card" style="text-decoration: none;">
+        <a href="/stats/wiki" class="card" style="text-decoration: none;">
             <div class="card-header">
-                <span class="card-title">Districts</span>
-                <span class="card-icon">🏙️</span>
+                <span class="card-title">Wiki</span>
+                <span class="card-icon">📖</span>
             </div>
             <div class="card-value">Encyclopedia</div>
-            <div class="card-subtitle">All district types, terrain rules, taxes, businesses</div>
+            <div class="card-subtitle">Businesses, districts, items, city projects, executives</div>
         </a>
     </div>
     
