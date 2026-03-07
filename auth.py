@@ -378,7 +378,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         }
 
         .splash {
-            max-width: 440px;
+            max-width: 600px;
             width: 100%;
             padding: 32px;
         }
@@ -494,6 +494,48 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             color: #64748b;
             text-align: center;
         }
+
+        .marquee-wrap {
+            margin-top: 28px;
+            text-align: center;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .marquee-text {
+            font-size: 14px;
+            font-style: italic;
+            color: #38bdf8;
+            opacity: 0;
+            transition: opacity 0.9s ease;
+            max-width: 480px;
+            line-height: 1.5;
+            letter-spacing: 0.01em;
+        }
+
+        .marquee-text.visible {
+            opacity: 1;
+        }
+
+        .video-wrap {
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: 1px solid #1e293b;
+        }
+
+        .video-wrap iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
     </style>
 </head>
 
@@ -536,6 +578,20 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                 <div class="hint">Password must be at least 8 characters</div>
             </form>
         </div>
+
+        <!-- Rotating tagline -->
+        <div class="marquee-wrap">
+            <div class="marquee-text" id="marquee"></div>
+        </div>
+
+        <!-- Intro video -->
+        <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/_uunsDAShzM?si=34QJSMx-dj_-Imf3"
+                    title="YouTube video player"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+        </div>
     </div>
 
     <script>
@@ -546,6 +602,53 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             document.querySelectorAll('.form').forEach(f => f.classList.remove('active'));
             document.getElementById(tab + '-form').classList.add('active');
         }
+
+        (function () {
+            const lines = [
+                "Price is what you pay. Value is what you build.",
+                "Every asset has a price. What\u2019s yours?",
+                "In Wadsworth, liquidity is king.",
+                "Wealth is just a function of time, land, and leverage.",
+                "Master the supply chain. Rule the exchange.",
+                "Govern cities, manipulate markets, and mint your own wealth.",
+                "Real estate. Forex. Total vertical integration.",
+                "Trade on the Wadsworth Exchange. Control the world.",
+                "Scale your production. Leverage your assets. Crush your rivals.",
+                "Corner the market. Liquidate the rest.",
+                "Billion-dollar empires aren\u2019t built on good intentions.",
+                "Where monopolies rise and margin calls loom.",
+                "From a single prairie plot to global corporate hegemony.",
+                "Hire the best. Short the rest.",
+                "Capitalism, simulated.",
+                "Initialize your portfolio.",
+                "Build. Trade. Dominate.",
+                "Your economic empire starts here.",
+                "The market is open."
+            ];
+
+            // Fisher-Yates shuffle so the order is fresh each page load
+            for (let i = lines.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [lines[i], lines[j]] = [lines[j], lines[i]];
+            }
+
+            const el = document.getElementById('marquee');
+            let idx = 0;
+
+            function showNext() {
+                // Fade out
+                el.classList.remove('visible');
+                setTimeout(() => {
+                    el.textContent = '\u201c' + lines[idx] + '\u201d';
+                    idx = (idx + 1) % lines.length;
+                    // Fade in
+                    el.classList.add('visible');
+                }, 900); // matches transition duration
+            }
+
+            showNext();
+            setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
+        })();
     </script>
 </body>
 </html>
