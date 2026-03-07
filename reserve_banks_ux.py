@@ -275,7 +275,7 @@ def bond_market(
                     </div>
                     <div style="text-align:right;">
                         <div>Face value at maturity: <strong>{b['currency_symbol']}{b['maturity_value_foreign']:.4f} {b['currency_code']}</strong>
-                            <span class="mini"> ({b['face_value_wsc']:.4f} WSC equiv)</span></div>
+                            <span class="mini"> (${b['face_value_wsc']:.4f} USD equiv)</span></div>
                         <div class="mini">Sell now: <strong style="color:#f59e0b;">{b['currency_symbol']}{b['sell_value_foreign']:.4f} {b['currency_code']}</strong> (×{b['price_factor']:.4f})</div>
                     </div>
                 </div>
@@ -342,7 +342,7 @@ def bond_market(
                 </div>
             </div>
             <div style="font-size:0.75rem;color:#475569;margin-bottom:6px;">
-                {bank['total_bonds']:,} bonds outstanding &bull; {bank['total_face_wsc']:,.2f} WSC face value &bull;
+                {bank['total_bonds']:,} bonds outstanding &bull; ${bank['total_face_wsc']:,.2f} USD-equiv face value &bull;
                 floor {bank['min_yield_pct']:+.4f}% &bull; ceiling {bank['max_yield_pct']:+.4f}%
             </div>
             {sparkline}
@@ -351,10 +351,13 @@ def bond_market(
                 <input type="hidden" name="currency_code" value="{bank['code']}">
                 <div>
                     <label>Pay with</label>
-                    <select name="stable_coin_symbol" style="width:220px;">{pay_with_opts}</select>
+                    <select name="stable_coin_symbol" style="width:220px;"
+                            onchange="this.closest('form').querySelector('.amt-label').textContent='Amount ('+this.value+')'">
+                        {pay_with_opts}
+                    </select>
                 </div>
                 <div>
-                    <label>Amount</label>
+                    <label class="amt-label">Amount (WSC)</label>
                     <input type="number" name="wsc_amount" min="0.01" step="0.01"
                            placeholder="e.g. 500" style="width:130px;" required>
                 </div>
@@ -370,7 +373,7 @@ def bond_market(
     <a href="/" class="nav">← Dashboard</a>
     <h1>🏦 State Reserve Banks — Bond Market</h1>
     <p style="color:#64748b;margin:0 0 20px 0;">
-        Buy bonds with WSC to earn interest in foreign currencies.
+        Buy bonds with WSC or any comptroller stable coin to earn interest in foreign currencies.
         Auto-conversion routes all business income into your legal tender.
         <a href="/reserve-banks/forex" class="nav">Forex Dashboard →</a>
     </p>

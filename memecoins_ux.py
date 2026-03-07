@@ -2143,7 +2143,10 @@ async def wallet_dashboard(
         if _is_wsc else
         f"Free {selected_coin} dispensed from the city faucet pool every {coin_faucet_hours} hour(s). City members only."
     )
-    _last_claim    = f'&nbsp;&bull;&nbsp; Last claim: <strong style="color:#4ade80;">{coin_faucet_st["last_amount"]:.4f} {selected_coin}</strong>' if "last_amount" in coin_faucet_st else ""
+    _last_claim    = (
+        f'&nbsp;&bull;&nbsp; Last claim: <strong style="color:#4ade80;">{coin_faucet_st["last_amount"]:.4f} {selected_coin}</strong>'
+        if coin_faucet_st.get("last_amount", 0.0) > 0 else ""
+    )
 
     _amm_title     = "mint or sell WSC" if _is_wsc else f"buy or sell {selected_coin} with WSC"
     _amm_desc      = (
@@ -2333,7 +2336,7 @@ async def wallet_dashboard(
             Uses volume-weighted average price (not last trade) to prevent price manipulation.
             Works across all county blockchains. Fee: <strong style="color:#f59e0b;">{fee_pct}%</strong>
             ({int(SWAP_FEE_SELL*100)}% sell + {int(SWAP_FEE_BUY*100)}% buy) &rarr; permanently burned.
-            <span style="color:#38bdf8;">WSC is earned via the native-token AMM pool, not from swap fees.</span>
+            <span style="color:#38bdf8;">{"WSC is earned via the native-token AMM pool, not from swap fees." if _is_wsc else f"Swap fees always mint WSC (global). Earn {selected_coin} via the faucet, yield farming, or AMM above."}</span>
         </p>
         <div class="swap-box">
             <form action="/api/wallet/swap" method="post">
@@ -2379,13 +2382,9 @@ async def wallet_dashboard(
 
     <!-- AMM POOL (native↔WSC for WSC, WSC↔CCC for city coins) -->
     <div class="card" style="border-color:#7c3aed55;">
-        <h2 style="color:#c084fc;">&#128984; {selected_coin} AMM Pool <span style="font-size:12px;font-weight:400;color:#64748b;">— {"mint or sell WSC" if selected_coin == "WSC" else f"buy or sell {selected_coin} with WSC"}</span></h2>
-        <p style="color:#64748b;font-size:12px;margin-bottom:14px;">
-            {"Constant-product AMM (k=x&times;y). Swap county native tokens for WSC to <strong style='color:#c084fc;'>mint WSC</strong>, or swap WSC back to native tokens. Fee: <strong style='color:#f59e0b;'>" + f"{int(WSC_AMM_FEE*100*10)/10:.1f}%" + "</strong> stays in the pool."
-             if selected_coin == "WSC" else
-             f"Constant-product WSC&#8596;{selected_coin} forex pool at the live {coin_info['peg_label']}/USD rate. Fee: 0.3% stays in the pool and funds treasury rewards."}
-        </p>
-        {amm_pools_html if selected_coin == "WSC" else city_amm_html}
+        <h2 style="color:#c084fc;">&#128984; {selected_coin} AMM Pool <span style="font-size:12px;font-weight:400;color:#64748b;">— {_amm_title}</span></h2>
+        <p style="color:#64748b;font-size:12px;margin-bottom:14px;">{_amm_desc}</p>
+        {_amm_content}
     </div>
 
     <!-- YIELD FARMING -->
