@@ -2902,6 +2902,14 @@ def borrow_commodity(borrower_id: int, listing_id: int, quantity: float) -> Opti
                 return None
             
             inventory.add_item(borrower_id, listing.item_type, quantity)
+            # WMA: cost basis of borrowed items = total fee paid / quantity borrowed
+            try:
+                from wma import update_wma
+                if quantity > 0:
+                    update_wma(borrower_id, listing.item_type,
+                               quantity, total_fee / quantity)
+            except Exception:
+                pass
         except Exception as e:
             return None
         

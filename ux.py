@@ -5937,202 +5937,467 @@ Copy everything below into your ux.py file.
 @router.get("/stats/production-costs", response_class=HTMLResponse)
 def production_costs_page(
     session_token: Optional[str] = Cookie(None),
+    mode: str = "vertical",
     category: str = "all",
     sort: str = "cost",
     order: str = "asc",
     search: str = ""
 ):
-    """Interactive production cost explorer."""
+    """Interactive production cost explorer (vertical integration + WMA cost basis)."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
-    
+
+    # Normalise mode
+    if mode not in ("vertical", "cost_basis"):
+        mode = "vertical"
+
+    # ── shared palette ───────────────────────────────────────────────────────
+    cat_colors = {
+        "seeds": "#22c55e", "fruits": "#84cc16", "vegetables": "#16a34a",
+        "crops": "#eab308", "food": "#f97316", "prepared_food": "#fb923c",
+        "beverage": "#06b6d4", "alcohol": "#a855f7", "ingredients": "#ec4899",
+        "livestock": "#92400e", "feed": "#a3e635", "health": "#ef4444",
+        "personal_care": "#f472b6", "industrial": "#64748b", "materials": "#78716c",
+        "textiles": "#c084fc", "wood": "#a16207", "ore": "#71717a",
+        "metals": "#94a3b8", "components": "#6366f1", "auto_parts": "#3b82f6",
+        "marine_parts": "#0ea5e9", "vehicle": "#2563eb", "apparel": "#d946ef",
+        "accessories": "#e879f9", "home_goods": "#14b8a6", "packaging": "#737373",
+        "media": "#facc15", "liquids": "#38bdf8", "energy": "#f59e0b",
+        "financial": "#10b981", "luxury": "#d4af37", "minerals": "#a8a29e",
+        "utilities": "#0891b2", "fuel": "#dc2626", "unknown": "#64748b"
+    }
+
+    def _cost_color(cost):
+        if cost <= 0:   return "#64748b"
+        if cost < 1:    return "#22c55e"
+        if cost < 100:  return "#38bdf8"
+        if cost < 1000: return "#f59e0b"
+        return "#ef4444"
+
+    # ── mode switcher (prominent, always visible) ────────────────────────────
+    def _ms(m, label, icon, desc):
+        active = mode == m
+        bg  = "#1e40af" if active else "#1e293b"
+        bdr = "2px solid #38bdf8" if active else "2px solid #334155"
+        return (
+            f'<a href="/stats/production-costs?mode={m}&category={category}'
+            f'&sort={sort}&order={order}&search={search}" '
+            f'style="display:flex;align-items:center;gap:10px;padding:14px 20px;'
+            f'border-radius:8px;text-decoration:none;background:{bg};border:{bdr};'
+            f'flex:1;min-width:220px;">'
+            f'<span style="font-size:1.5rem;">{icon}</span>'
+            f'<span><strong style="color:#e2e8f0;display:block;">{label}</strong>'
+            f'<span style="color:#94a3b8;font-size:0.75rem;">{desc}</span></span>'
+            f'</a>'
+        )
+
+    mode_switcher = f'''
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 22px;">
+        {_ms("vertical",   "Vertical Integration",
+             "🏭", "Theoretical minimum — you produce every input yourself")}
+        {_ms("cost_basis", "My Cost Basis",
+             "📈", "Your real economics — built from actual purchase prices & exec/city buffs")}
+    </div>'''
+
     try:
-        from production_costs import get_calculator
-        
-        calc = get_calculator()
-        summary = calc.get_summary()
-        categories = calc.get_categories()
-        
-        # Get items based on filters
-        if search:
-            items = calc.search_items(search)
-        elif category != "all":
-            by_cat = calc.get_by_category()
-            items = by_cat.get(category, [])
+        # ════════════════════════════════════════════════════════════════════
+        # MODE A — Vertical Integration (existing calculator)
+        # ════════════════════════════════════════════════════════════════════
+        if mode == "vertical":
+            from production_costs import get_calculator
+            calc    = get_calculator()
+            summary = calc.get_summary()
+            categories = calc.get_categories()
+
+            if search:
+                items = calc.search_items(search)
+            elif category != "all":
+                by_cat = calc.get_by_category()
+                items  = by_cat.get(category, [])
+            else:
+                items = calc.get_all_items_sorted(sort_by=sort, ascending=(order == "asc"))
+
+            # Category tabs
+            cat_tabs = (
+                f'<a href="/stats/production-costs?mode=vertical&category=all'
+                f'&sort={sort}&order={order}" '
+                f'style="padding:6px 12px;margin-right:8px;border-radius:4px;'
+                f'text-decoration:none;'
+                f'background:{"#38bdf8" if category=="all" else "#1e293b"};'
+                f'color:{"#020617" if category=="all" else "#94a3b8"};">'
+                f'All ({summary["total_items"]})</a>'
+            )
+            for cat in categories:
+                cnt   = len(calc.get_by_category().get(cat, []))
+                color = cat_colors.get(cat, "#64748b")
+                sel   = category == cat
+                cat_tabs += (
+                    f'<a href="/stats/production-costs?mode=vertical'
+                    f'&category={cat}&sort={sort}&order={order}" '
+                    f'style="padding:6px 12px;margin-right:8px;margin-bottom:8px;'
+                    f'border-radius:4px;text-decoration:none;display:inline-block;'
+                    f'background:{"" + color if sel else "#1e293b"};'
+                    f'color:{"#020617" if sel else color};">'
+                    f'{cat.replace("_"," ").title()} ({cnt})</a>'
+                )
+
+            sort_ind  = "▲" if order == "asc" else "▼"
+            next_ord  = "desc" if order == "asc" else "asc"
+            base_url  = f"/stats/production-costs?mode=vertical&category={category}&search={search}"
+
+            if items:
+                rows = ""
+                for item in items:
+                    cc = cat_colors.get(item.get("category","unknown"), "#64748b")
+                    rows += (
+                        f'<tr style="border-bottom:1px solid #1e293b;cursor:pointer;"'
+                        f' onclick="window.location=\'/stats/production-costs/{item["item_key"]}\'">'
+                        f'<td style="padding:12px 8px;"><strong>{item["name"]}</strong><br>'
+                        f'<span style="color:#64748b;font-size:0.8rem;">{item["item_key"]}</span></td>'
+                        f'<td style="padding:12px 8px;">'
+                        f'<span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;'
+                        f'background:{cc}20;color:{cc};">'
+                        f'{item.get("category","unknown").replace("_"," ").upper()}</span></td>'
+                        f'<td style="padding:12px 8px;text-align:right;font-family:monospace;'
+                        f'color:{_cost_color(item["cost"])};">'
+                        f'{fmt_usd(item["cost"], disp, precision=4)}</td>'
+                        f'<td style="padding:12px 8px;color:#64748b;font-size:0.85rem;">'
+                        f'{item.get("business","-") or "<span style=\'color:#ef4444;\'>No recipe</span>"}</td>'
+                        f'<td style="padding:12px 8px;text-align:center;">'
+                        f'<a href="/stats/production-costs/{item["item_key"]}" class="btn-blue"'
+                        f' style="padding:4px 12px;font-size:0.8rem;">View</a></td></tr>'
+                    )
+                items_html = (
+                    f'<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">'
+                    f'<thead><tr style="border-bottom:2px solid #1e293b;text-align:left;">'
+                    f'<th style="padding:12px 8px;">'
+                    f'<a href="{base_url}&sort=name&order={"asc" if sort!="name" else next_ord}"'
+                    f' style="color:#94a3b8;text-decoration:none;">'
+                    f'Item {"↕" if sort!="name" else sort_ind}</a></th>'
+                    f'<th style="padding:12px 8px;">Category</th>'
+                    f'<th style="padding:12px 8px;text-align:right;">'
+                    f'<a href="{base_url}&sort=cost&order={"asc" if sort!="cost" else next_ord}"'
+                    f' style="color:#94a3b8;text-decoration:none;">'
+                    f'Cost {"↕" if sort!="cost" else sort_ind}</a></th>'
+                    f'<th style="padding:12px 8px;">Producer</th>'
+                    f'<th style="padding:12px 8px;text-align:center;">Details</th>'
+                    f'</tr></thead><tbody>{rows}</tbody></table>'
+                )
+            else:
+                items_html = '<p style="color:#64748b;text-align:center;padding:40px;">No items found.</p>'
+
+            table_title = (
+                f'Search results for "{search}"' if search
+                else f'{category.replace("_"," ").title()} Items' if category != "all"
+                else "All Items"
+            )
+
+            body = f'''
+            <a href="/stats" style="color:#38bdf8;">← Stats Dashboard</a>
+            <h1 style="margin-bottom:4px;">📊 Production Cost Explorer</h1>
+            {mode_switcher}
+
+            <!-- Summary cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:15px;margin-bottom:20px;">
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">TOTAL ITEMS</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#38bdf8;">{summary["total_items"]}</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">CHEAPEST</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#22c55e;">{fmt_usd(summary["min_cost"],disp,precision=4)}</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">MEDIAN</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#f59e0b;">{fmt_usd(summary["median_cost"],disp)}</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">MOST EXPENSIVE</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#ef4444;">{fmt_usd(summary["max_cost"],disp,precision=0)}</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">MISSING RECIPES</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#64748b;">{len(summary["missing_items"])}</div>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="card">
+                <form action="/stats/production-costs" method="get" style="display:flex;gap:10px;">
+                    <input type="hidden" name="mode" value="vertical">
+                    <input type="hidden" name="category" value="{category}">
+                    <input type="hidden" name="sort" value="{sort}">
+                    <input type="hidden" name="order" value="{order}">
+                    <input type="text" name="search" value="{search}"
+                           placeholder="🔍 Search items..." style="flex:1;padding:12px;font-size:1rem;">
+                    <button type="submit" class="btn-blue" style="padding:12px 24px;">Search</button>
+                    {f'<a href="/stats/production-costs?mode=vertical&category={category}&sort={sort}&order={order}" class="btn-orange" style="padding:12px 24px;">Clear</a>' if search else ""}
+                </form>
+            </div>
+
+            <!-- Category filters -->
+            <div class="card" style="margin-top:15px;">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">{cat_tabs}</div>
+            </div>
+
+            <!-- Items table -->
+            <div class="card" style="margin-top:15px;overflow-x:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+                    <h3 style="margin:0;">{table_title}
+                        <span style="color:#64748b;font-weight:normal;">({len(items)} items)</span>
+                    </h3>
+                </div>
+                {items_html}
+            </div>'''
+
+        # ════════════════════════════════════════════════════════════════════
+        # MODE B — WMA Cost Basis (player-personalised)
+        # ════════════════════════════════════════════════════════════════════
         else:
-            items = calc.get_all_items_sorted(sort_by=sort, ascending=(order == "asc"))
-        
-        # Category filter tabs
-        cat_colors = {
-            "seeds": "#22c55e", "fruits": "#84cc16", "vegetables": "#16a34a",
-            "crops": "#eab308", "food": "#f97316", "prepared_food": "#fb923c",
-            "beverage": "#06b6d4", "alcohol": "#a855f7", "ingredients": "#ec4899",
-            "livestock": "#92400e", "feed": "#a3e635", "health": "#ef4444",
-            "personal_care": "#f472b6", "industrial": "#64748b", "materials": "#78716c",
-            "textiles": "#c084fc", "wood": "#a16207", "ore": "#71717a",
-            "metals": "#94a3b8", "components": "#6366f1", "auto_parts": "#3b82f6",
-            "marine_parts": "#0ea5e9", "vehicle": "#2563eb", "apparel": "#d946ef",
-            "accessories": "#e879f9", "home_goods": "#14b8a6", "packaging": "#737373",
-            "media": "#facc15", "liquids": "#38bdf8", "energy": "#f59e0b",
-            "financial": "#10b981", "luxury": "#d4af37", "minerals": "#a8a29e",
-            "utilities": "#0891b2", "fuel": "#dc2626", "unknown": "#64748b"
-        }
-        
-        # Build category tabs
-        cat_tabs = f'''
-        <a href="/stats/production-costs?category=all&sort={sort}&order={order}" 
-           style="padding: 6px 12px; margin-right: 8px; border-radius: 4px; text-decoration: none;
-                  background: {'#38bdf8' if category == 'all' else '#1e293b'}; 
-                  color: {'#020617' if category == 'all' else '#94a3b8'};">
-            All ({summary['total_items']})
-        </a>'''
-        
-        for cat in categories:
-            cat_count = len(calc.get_by_category().get(cat, []))
-            color = cat_colors.get(cat, "#64748b")
-            is_selected = category == cat
-            cat_tabs += f'''
-            <a href="/stats/production-costs?category={cat}&sort={sort}&order={order}" 
-               style="padding: 6px 12px; margin-right: 8px; margin-bottom: 8px; border-radius: 4px; 
-                      text-decoration: none; display: inline-block;
-                      background: {color if is_selected else '#1e293b'}; 
-                      color: {'#020617' if is_selected else color};">
-                {cat.replace('_', ' ').title()} ({cat_count})
-            </a>'''
-        
-        # Build items table
-        items_html = ""
-        if items:
-            # Sort controls
-            sort_indicator = "▲" if order == "asc" else "▼"
-            next_order = "desc" if order == "asc" else "asc"
-            
-            items_html = f'''
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                <thead>
-                    <tr style="border-bottom: 2px solid #1e293b; text-align: left;">
-                        <th style="padding: 12px 8px;">
-                            <a href="/stats/production-costs?category={category}&sort=name&order={next_order if sort == 'name' else 'asc'}&search={search}" 
-                               style="color: #94a3b8; text-decoration: none;">
-                                Item {'↕' if sort != 'name' else sort_indicator}
-                            </a>
-                        </th>
-                        <th style="padding: 12px 8px;">Category</th>
-                        <th style="padding: 12px 8px; text-align: right;">
-                            <a href="/stats/production-costs?category={category}&sort=cost&order={next_order if sort == 'cost' else 'asc'}&search={search}" 
-                               style="color: #94a3b8; text-decoration: none;">
-                                Cost {'↕' if sort != 'cost' else sort_indicator}
-                            </a>
-                        </th>
-                        <th style="padding: 12px 8px;">Producer</th>
-                        <th style="padding: 12px 8px; text-align: center;">Details</th>
-                    </tr>
-                </thead>
-                <tbody>'''
-            
-            for item in items:
-                cat_color = cat_colors.get(item.get('category', 'unknown'), '#64748b')
-                cost_color = "#22c55e" if item['cost'] < 1 else "#38bdf8" if item['cost'] < 100 else "#f59e0b" if item['cost'] < 1000 else "#ef4444"
-                
-                items_html += f'''
-                <tr style="border-bottom: 1px solid #1e293b; cursor: pointer;" 
-                    onclick="window.location='/stats/production-costs/{item['item_key']}'">
-                    <td style="padding: 12px 8px;">
-                        <strong>{item['name']}</strong><br>
-                        <span style="color: #64748b; font-size: 0.8rem;">{item['item_key']}</span>
-                    </td>
-                    <td style="padding: 12px 8px;">
-                        <span style="padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;
-                                     background: {cat_color}20; color: {cat_color};">
-                            {item.get('category', 'unknown').replace('_', ' ').upper()}
-                        </span>
-                    </td>
-                    <td style="padding: 12px 8px; text-align: right; font-family: monospace; color: {cost_color};">
-                        {fmt_usd(item['cost'], disp, precision=4)}
-                    </td>
-                    <td style="padding: 12px 8px; color: #64748b; font-size: 0.85rem;">
-                        {item.get('business', '-') or '<span style="color: #ef4444;">No recipe</span>'}
-                    </td>
-                    <td style="padding: 12px 8px; text-align: center;">
-                        <a href="/stats/production-costs/{item['item_key']}" class="btn-blue" 
-                           style="padding: 4px 12px; font-size: 0.8rem;">View</a>
-                    </td>
-                </tr>'''
-            
-            items_html += '</tbody></table>'
-        else:
-            items_html = '<p style="color: #64748b; text-align: center; padding: 40px;">No items found.</p>'
-        
-        body = f'''
-        <a href="/stats" style="color: #38bdf8;">← Stats Dashboard</a>
-        <h1>📊 Production Cost Explorer</h1>
-        <p style="color: #64748b;">Base production costs assuming full vertical integration (you produce all inputs yourself).</p>
-        
-        <!-- Summary Cards -->
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin: 20px 0;">
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 0.8rem; color: #64748b;">TOTAL ITEMS</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">{summary['total_items']}</div>
+            from wma import get_player_cost_basis_items, get_all_wma
+
+            raw_items = get_player_cost_basis_items(player.id)
+            wma_data  = get_all_wma(player.id)
+
+            # Apply filters
+            if search:
+                q = search.lower()
+                raw_items = [i for i in raw_items
+                             if q in i["item_key"].lower() or q in i["name"].lower()]
+            if category != "all":
+                raw_items = [i for i in raw_items if i["category"] == category]
+
+            # Sort
+            rev = order == "desc"
+            if sort == "name":
+                raw_items.sort(key=lambda x: x["name"].lower(), reverse=rev)
+            elif sort == "category":
+                raw_items.sort(key=lambda x: (x["category"], x["unit_cost"]), reverse=rev)
+            else:  # cost
+                raw_items.sort(key=lambda x: x["unit_cost"], reverse=rev)
+
+            # Separate items with complete WMA vs partial/none
+            complete   = [i for i in raw_items if i["has_all_wma"]]
+            incomplete = [i for i in raw_items if not i["has_all_wma"]]
+
+            # Summary stats from complete items only
+            costs_ok = [i["unit_cost"] for i in complete if i["unit_cost"] > 0]
+            if costs_ok:
+                costs_ok_s = sorted(costs_ok)
+                cb_min    = costs_ok_s[0]
+                cb_median = costs_ok_s[len(costs_ok_s) // 2]
+                cb_max    = costs_ok_s[-1]
+            else:
+                cb_min = cb_median = cb_max = 0.0
+
+            n_tracked = len(wma_data)
+
+            def _cb_row(item):
+                cb   = item["detail"]
+                cc   = cat_colors.get(item.get("category","unknown"), "#64748b")
+                cost = item["unit_cost"]
+                # WMA coverage badge
+                if item["has_all_wma"]:
+                    cov_badge = '<span style="color:#22c55e;font-size:0.7rem;">● complete</span>'
+                elif cb["inputs"] and any(i["has_wma"] for i in cb["inputs"]):
+                    miss = len(item["missing_wma"])
+                    cov_badge = f'<span style="color:#f59e0b;font-size:0.7rem;">⚠ {miss} missing</span>'
+                else:
+                    cov_badge = '<span style="color:#64748b;font-size:0.7rem;">○ no data</span>'
+
+                # Modifier pills
+                pills = ""
+                if cb["exec_output_bonus"] > 0:
+                    pills += f'<span style="padding:1px 5px;border-radius:3px;background:#16a34a20;color:#22c55e;font-size:0.65rem;">+{cb["exec_output_bonus"]*100:.0f}% output</span> '
+                if cb["exec_wage_reduction"] > 0:
+                    pills += f'<span style="padding:1px 5px;border-radius:3px;background:#1e40af20;color:#60a5fa;font-size:0.65rem;">-{cb["exec_wage_reduction"]*100:.0f}% wages</span> '
+                if cb["exec_input_cost_reduction"] > 0:
+                    pills += f'<span style="padding:1px 5px;border-radius:3px;background:#7e22ce20;color:#c084fc;font-size:0.65rem;">-{cb["exec_input_cost_reduction"]*100:.0f}% inputs</span> '
+
+                cost_str = (
+                    fmt_usd(cost, disp, precision=4) if item["has_all_wma"] and cost > 0
+                    else f'<span style="color:#64748b;">—</span>'
+                )
+
+                return (
+                    f'<tr style="border-bottom:1px solid #1e293b;">'
+                    f'<td style="padding:10px 8px;"><strong>{item["name"]}</strong><br>'
+                    f'<span style="color:#64748b;font-size:0.75rem;">{item["item_key"]}</span><br>'
+                    f'{cov_badge}</td>'
+                    f'<td style="padding:10px 8px;">'
+                    f'<span style="padding:2px 8px;border-radius:4px;font-size:0.75rem;'
+                    f'background:{cc}20;color:{cc};">'
+                    f'{item.get("category","unknown").replace("_"," ").upper()}</span></td>'
+                    f'<td style="padding:10px 8px;text-align:right;font-family:monospace;'
+                    f'color:{_cost_color(cost)};">{cost_str}</td>'
+                    f'<td style="padding:10px 8px;text-align:right;font-family:monospace;'
+                    f'color:#64748b;font-size:0.8rem;">'
+                    f'{fmt_usd(cb["capex_per_unit"],disp,precision=4) if cb["capex_per_unit"]>0 else "—"}</td>'
+                    f'<td style="padding:10px 8px;color:#64748b;font-size:0.8rem;">'
+                    f'<div>{item.get("business","-") or "-"}</div>'
+                    f'<div style="margin-top:3px;">{pills}</div></td>'
+                    f'</tr>'
+                )
+
+            # Category set for filter tabs
+            all_cats = sorted({i["category"] for i in raw_items})
+            all_raw  = get_player_cost_basis_items(player.id)  # unfiltered for counts
+            cat_tabs = (
+                f'<a href="/stats/production-costs?mode=cost_basis&category=all'
+                f'&sort={sort}&order={order}" '
+                f'style="padding:6px 12px;margin-right:8px;border-radius:4px;'
+                f'text-decoration:none;'
+                f'background:{"#38bdf8" if category=="all" else "#1e293b"};'
+                f'color:{"#020617" if category=="all" else "#94a3b8"};">'
+                f'All ({len(all_raw)})</a>'
+            )
+            for cat in sorted({i["category"] for i in all_raw}):
+                cnt   = sum(1 for i in all_raw if i["category"] == cat)
+                color = cat_colors.get(cat, "#64748b")
+                sel   = category == cat
+                cat_tabs += (
+                    f'<a href="/stats/production-costs?mode=cost_basis'
+                    f'&category={cat}&sort={sort}&order={order}" '
+                    f'style="padding:6px 12px;margin-right:8px;margin-bottom:8px;'
+                    f'border-radius:4px;text-decoration:none;display:inline-block;'
+                    f'background:{"" + color if sel else "#1e293b"};'
+                    f'color:{"#020617" if sel else color};">'
+                    f'{cat.replace("_"," ").title()} ({cnt})</a>'
+                )
+
+            sort_ind = "▲" if order == "asc" else "▼"
+            next_ord = "desc" if order == "asc" else "asc"
+            base_url = f"/stats/production-costs?mode=cost_basis&category={category}&search={search}"
+
+            def _th(label, s_key, align="left"):
+                direction = "asc" if sort != s_key else next_ord
+                return (
+                    f'<th style="padding:12px 8px;text-align:{align};">'
+                    f'<a href="{base_url}&sort={s_key}&order={direction}"'
+                    f' style="color:#94a3b8;text-decoration:none;">'
+                    f'{label} {"↕" if sort!=s_key else sort_ind}</a></th>'
+                )
+
+            complete_rows   = "".join(_cb_row(i) for i in complete) if complete else ""
+            incomplete_rows = "".join(_cb_row(i) for i in incomplete) if incomplete else ""
+
+            # Banner for missing WMA data
+            missing_banner = ""
+            if not wma_data:
+                missing_banner = '''
+                <div style="background:#78350f20;border:1px solid #92400e;border-radius:8px;
+                            padding:16px;margin-bottom:16px;color:#fcd34d;">
+                    <strong>No purchase history yet.</strong> Your cost basis builds automatically as you
+                    buy items on the market, produce goods, or borrow from the WCE.
+                    Prices shown below are $0 until your first transactions are recorded.
+                </div>'''
+            elif incomplete:
+                missing_banner = (
+                    f'<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;'
+                    f'padding:12px 16px;margin-bottom:16px;color:#94a3b8;font-size:0.8rem;">'
+                    f'<strong style="color:#f59e0b;">⚠ {len(incomplete)} items</strong> have incomplete '
+                    f'WMA data — you haven\'t purchased all their inputs yet. '
+                    f'They appear at the bottom of the table.</div>'
+                )
+
+            items_section = (
+                f'<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">'
+                f'<thead><tr style="border-bottom:2px solid #1e293b;text-align:left;">'
+                f'{_th("Item","name")} {_th("Category","category")} '
+                f'{_th("My Unit Cost","cost","right")} {_th("CapEx/unit","cost","right")} '
+                f'<th style="padding:12px 8px;">Producer / Buffs</th>'
+                f'</tr></thead><tbody>'
+                f'{complete_rows}'
+                f'{"<tr><td colspan=5 style=padding:8px;background:#0f172a;color:#475569;font-size:0.75rem;text-transform:uppercase;letter-spacing:.05em;>Incomplete WMA Data</td></tr>" if incomplete else ""}'
+                f'{incomplete_rows}'
+                f'</tbody></table>'
+            ) if (complete or incomplete) else (
+                '<p style="color:#64748b;text-align:center;padding:40px;">No items found.</p>'
+            )
+
+            body = f'''
+            <a href="/stats" style="color:#38bdf8;">← Stats Dashboard</a>
+            <h1 style="margin-bottom:4px;">📊 Production Cost Explorer</h1>
+            {mode_switcher}
+
+            <!-- Summary cards -->
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px;">
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">ITEMS TRACKED</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#38bdf8;">{n_tracked}</div>
+                    <div style="font-size:0.7rem;color:#475569;">in WMA ledger</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">MY CHEAPEST</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#22c55e;">{fmt_usd(cb_min,disp,precision=4) if cb_min else "—"}</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">MY MEDIAN</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#f59e0b;">{fmt_usd(cb_median,disp) if cb_median else "—"}</div>
+                </div>
+                <div class="card" style="text-align:center;padding:15px;">
+                    <div style="font-size:0.8rem;color:#64748b;">MY MOST EXPENSIVE</div>
+                    <div style="font-size:1.8rem;font-weight:bold;color:#ef4444;">{fmt_usd(cb_max,disp,precision=0) if cb_max else "—"}</div>
+                </div>
             </div>
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 0.8rem; color: #64748b;">CHEAPEST</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #22c55e;">{fmt_usd(summary['min_cost'], disp, precision=4)}</div>
+
+            {missing_banner}
+
+            <!-- Search -->
+            <div class="card">
+                <form action="/stats/production-costs" method="get" style="display:flex;gap:10px;">
+                    <input type="hidden" name="mode" value="cost_basis">
+                    <input type="hidden" name="category" value="{category}">
+                    <input type="hidden" name="sort" value="{sort}">
+                    <input type="hidden" name="order" value="{order}">
+                    <input type="text" name="search" value="{search}"
+                           placeholder="🔍 Search items..." style="flex:1;padding:12px;font-size:1rem;">
+                    <button type="submit" class="btn-blue" style="padding:12px 24px;">Search</button>
+                    {f'<a href="/stats/production-costs?mode=cost_basis&category={category}&sort={sort}&order={order}" class="btn-orange" style="padding:12px 24px;">Clear</a>' if search else ""}
+                </form>
             </div>
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 0.8rem; color: #64748b;">MEDIAN</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b;">{fmt_usd(summary['median_cost'], disp)}</div>
+
+            <!-- Category filters -->
+            <div class="card" style="margin-top:15px;">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">{cat_tabs}</div>
             </div>
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 0.8rem; color: #64748b;">MOST EXPENSIVE</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #ef4444;">{fmt_usd(summary['max_cost'], disp, precision=0)}</div>
+
+            <!-- Items table -->
+            <div class="card" style="margin-top:15px;overflow-x:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <h3 style="margin:0;">
+                        {"Search: &quot;" + search + "&quot;" if search else category.replace("_"," ").title() + " Items" if category!="all" else "All Items"}
+                        <span style="color:#64748b;font-weight:normal;">({len(raw_items)} items — {len(complete)} complete)</span>
+                    </h3>
+                    <div style="font-size:0.72rem;color:#64748b;">
+                        CapEx amortised over 10,000 units &nbsp;|&nbsp;
+                        City subsidy (4.75%) applied &nbsp;|&nbsp;
+                        Your exec & city buffs included
+                    </div>
+                </div>
+                {items_section}
             </div>
-            <div class="card" style="text-align: center; padding: 15px;">
-                <div style="font-size: 0.8rem; color: #64748b;">MISSING RECIPES</div>
-                <div style="font-size: 1.8rem; font-weight: bold; color: #64748b;">{len(summary['missing_items'])}</div>
-            </div>
-        </div>
-        
-        <!-- Search -->
-        <div class="card">
-            <form action="/stats/production-costs" method="get" style="display: flex; gap: 10px;">
-                <input type="hidden" name="category" value="{category}">
-                <input type="hidden" name="sort" value="{sort}">
-                <input type="hidden" name="order" value="{order}">
-                <input type="text" name="search" value="{search}" placeholder="🔍 Search items..." 
-                       style="flex: 1; padding: 12px; font-size: 1rem;">
-                <button type="submit" class="btn-blue" style="padding: 12px 24px;">Search</button>
-                {f'<a href="/stats/production-costs?category={category}&sort={sort}&order={order}" class="btn-orange" style="padding: 12px 24px;">Clear</a>' if search else ''}
-            </form>
-        </div>
-        
-        <!-- Category Filters -->
-        <div class="card" style="margin-top: 15px;">
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                {cat_tabs}
-            </div>
-        </div>
-        
-        <!-- Items Table -->
-        <div class="card" style="margin-top: 15px; overflow-x: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">
-                    {f'Search results for "{search}"' if search else f'{category.replace("_", " ").title()} Items' if category != 'all' else 'All Items'}
-                    <span style="color: #64748b; font-weight: normal;">({len(items)} items)</span>
-                </h3>
-            </div>
-            {items_html}
-        </div>
-        '''
-        
-        # Inject tutorial overlay for production-costs step
+
+            <!-- Legend -->
+            <div class="card" style="margin-top:12px;font-size:0.75rem;color:#64748b;">
+                <strong style="color:#94a3b8;">How this works:</strong>
+                Each time you buy on the market, borrow from the WCE, or complete a
+                production cycle, your WMA (Weighted Moving Average) ledger is updated.
+                <em>My Unit Cost</em> = the true net cost of producing one unit using
+                <em>your actual input prices</em>, accounting for land efficiency,
+                city buffs, executive bonuses, and the 4.75 % city production subsidy.
+                <em>CapEx/unit</em> = startup cost amortised over 10,000 units.
+            </div>'''
+
+        # ── tutorial overlay (both modes) ────────────────────────────────────
         try:
             from tutorial_ux import get_tutorial_overlay_html
-            tut_overlay = get_tutorial_overlay_html(player, "production_costs")
-            if tut_overlay:
-                body = tut_overlay + body
+            tut = get_tutorial_overlay_html(player, "production_costs")
+            if tut:
+                body = tut + body
         except Exception:
             pass
 

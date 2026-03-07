@@ -349,9 +349,24 @@ def process_business_tick(db):
                         str(biz.id)
                     )
                     player_inv[req["item"]] -= req["quantity"]
+                    # Reduce WMA qty_basis for consumed inputs
+                    try:
+                        from wma import consume_wma
+                        consume_wma(player.id, req["item"], req["quantity"])
+                    except Exception:
+                        pass
                 # Apply city project output multiplier
                 effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult))
                 add_item(player.id, line["output_item"], effective_output_qty)
+                # Update WMA cost basis for the newly produced output
+                try:
+                    from wma import compute_production_cost_basis, update_wma
+                    _cb = compute_production_cost_basis(player.id, config, line)
+                    if _cb["unit_cost"] > 0:
+                        update_wma(player.id, line["output_item"],
+                                   effective_output_qty, _cb["unit_cost"])
+                except Exception as _wma_e:
+                    print(f"[Business] WMA update error: {_wma_e}")
                 # Log resource production
                 log_transaction(
                     biz.owner_id,

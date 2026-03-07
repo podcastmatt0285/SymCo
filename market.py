@@ -551,7 +551,15 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
 
     # 7. Commit everything
     db.commit()
-    
+
+    # 7b. Update WMA cost basis for the buyer (real players only).
+    if not is_bank_buyer and buy_order.player_id > 0:
+        try:
+            from wma import update_wma
+            update_wma(buy_order.player_id, buy_order.item_type, quantity, price)
+        except Exception as _wma_e:
+            print(f"[Market] WMA update error: {_wma_e}")
+
     # 8. Log transactions — one entry per side, with unit_price for cost-average tracking
     _unit_price = price  # price per unit from the matched trade
     log_transaction(
