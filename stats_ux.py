@@ -3077,15 +3077,15 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
     and executives in the Wadsworth economic simulation. Updated every game tick.</p>
     <div class="whero-sw">
         <span class="whero-sw-ico">🔍</span>
-        <input type="text" id="hsearch" placeholder="Press Enter to search businesses…"
-               onkeydown="if(event.key==='Enter')location.href='/stats/wiki/businesses?q='+encodeURIComponent(this.value)">
+        <input type="text" id="hsearch" placeholder="Search videos and audio…"
+               oninput="hubSearch(this.value)">
     </div>
 </div>
 
 <div class="ws"><span class="ws-t">📺 Video Tutorials</span><span class="ws-l"></span></div>
 <div class="wg-lg">
     {"".join(
-        f'<div class="wvc">'
+        f'<div class="wvc" data-search="{v["title"]} {v.get("description","")}">'
         f'<div class="wvc-embed">'
         f'<iframe src="https://www.youtube.com/embed/{v["youtube_id"]}"'
         f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
@@ -3097,7 +3097,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
         f'</div></div>'
         for v in _videos
     )}
-    <div class="wvc" style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+    <div class="wvc" data-search="more tutorials coming soon" style="display:flex;flex-direction:column;align-items:center;justify-content:center;
          min-height:220px;border-style:dashed;opacity:0.4;">
         <div style="font-size:2.5rem;margin-bottom:10px;">🎬</div>
         <div style="color:#607098;font-size:0.88rem;">{"More tutorials coming soon" if _videos else "No tutorials yet — add one at /admin/wiki"}</div>
@@ -3107,7 +3107,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
 <div class="ws"><span class="ws-t">🎙️ Audio Deep Dives</span><span class="ws-l"></span></div>
 <div class="wg">
     {"".join(
-        f'<div class="wvc">'
+        f'<div class="wvc" data-search="audio deep dive {a["title"]} {a.get("description","")}">'
         f'<div class="wvc-embed">'
         f'<iframe src="https://www.youtube.com/embed/{a["youtube_id"]}"'
         f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
@@ -3120,7 +3120,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
         for a in _audio
     ) if _audio else
     "".join(
-        f'<div class="wac"><div class="wac-ico">{ico}</div>'
+        f'<div class="wac" data-search="audio deep dive {ttl}"><div class="wac-ico">{ico}</div>'
         f'<div><div class="wac-lbl">Audio Deep Dive</div>'
         f'<div class="wac-title">{ttl}</div>'
         f'<div class="wac-soon">⏳ Coming soon</div></div></div>'
@@ -3135,8 +3135,26 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
     )}
 </div>
 
+<p id="hub-none" style="color:#607098;text-align:center;padding:24px;display:none;font-style:italic;">
+    No videos or audio match your search.
+</p>
+
 <div class="ws"><span class="ws-t">📚 Reference Pages</span><span class="ws-l"></span></div>
 <div class="wg-sm">{ref_html}</div>
+
+<script>
+function hubSearch(q){{
+    q = q.toLowerCase().trim();
+    var cards = document.querySelectorAll('[data-search]');
+    var vis = 0;
+    cards.forEach(function(c){{
+        var ok = !q || c.dataset.search.toLowerCase().includes(q);
+        c.style.display = ok ? '' : 'none';
+        if (ok) vis++;
+    }});
+    document.getElementById('hub-none').style.display = (q && vis === 0) ? '' : 'none';
+}}
+</script>
 """
     return HTMLResponse(wiki_shell("Wiki Home", body, player.business_name, "hub"))
 
