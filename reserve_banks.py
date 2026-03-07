@@ -1435,6 +1435,48 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
             except Exception:
                 pass
 
+        # ── Convert all existing currency balances into the new legal tender ─
+        usd_per_new  = _get_usd_rate(db, code)
+        all_balances = db.query(PlayerCurrencyBalance).filter(
+            PlayerCurrencyBalance.player_id == player_id,
+            PlayerCurrencyBalance.balance   >  0,
+        ).all()
+
+        conversion_details = []
+        for cb in all_balances:
+            if cb.currency_code == code:
+                continue  # already in the target currency
+            amt = cb.balance
+            if amt <= 0:
+                continue
+
+            usd_per_from = _get_usd_rate(db, cb.currency_code)
+
+            # Apply forex fee on the source amount before converting
+            fee_native = amt * FOREX_FEE_RATE
+            net_native = amt - fee_native
+            usd_val    = net_native * usd_per_from
+            new_amt    = usd_val / usd_per_new if usd_per_new > 0 else 0.0
+
+            # Credit the fee to the source bank's reserves
+            src_bank = db.query(StateReserveBank).filter(
+                StateReserveBank.currency_code == cb.currency_code
+            ).first()
+            if src_bank:
+                _add_bank_reserve(db, src_bank.id, cb.currency_code, fee_native)
+
+            # Zero the old balance and credit new currency
+            _adjust_currency_balance(db, player_id, cb.currency_code, -amt)
+            _adjust_currency_balance(db, player_id, code, new_amt)
+
+            conversion_details.append(
+                f"{cb.currency_code} {amt:,.2f} → {code} {new_amt:,.2f}"
+            )
+
+        conversion_msg = ""
+        if conversion_details:
+            conversion_msg = " Converted: " + "; ".join(conversion_details) + "."
+
         # ── Persist the change ────────────────────────────────────────────────
         if row:
             row.currency_code = code
@@ -1445,11 +1487,11 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
         db.commit()
 
         if code == "USD":
-            return True, f"Legal tender set back to USD (default game currency).{fee_msg}"
+            return True, f"Legal tender set back to USD (default game currency).{fee_msg}{conversion_msg}"
 
         return True, (
             f"Legal tender changed to {new_bank.flag_emoji} {new_bank.currency_name} ({code}). "
-            f"Future income will be auto-converted at the live forex rate.{fee_msg}"
+            f"Future income will be auto-converted at the live forex rate.{fee_msg}{conversion_msg}"
         )
     except Exception as e:
         db.rollback()
