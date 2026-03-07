@@ -3052,6 +3052,36 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
     _videos: list = _media.get("videos", [])
     _audio:  list = _media.get("audio",  [])
 
+    # Live counts for new tabs
+    bank_count = 0
+    listed_count = 0
+    reserve_count = 0
+    county_count = 0
+    meme_count = 0
+    native_count = 0
+    try:
+        from banks import BankEntity as _HubBE
+        _hub_db = get_db()
+        bank_count = _hub_db.query(_HubBE).filter(_HubBE.is_active == True).count()
+        from banks.brokerage_firm import CompanyShares as _HubCS
+        listed_count = _hub_db.query(_HubCS).filter(_HubCS.is_delisted == False, _HubCS.parent_company_id == None).count()
+        from counties import County as _HubCo
+        county_count = _hub_db.query(_HubCo).count()
+        native_count = county_count
+        from memecoins import MemeCoin as _HubMC
+        meme_count = _hub_db.query(_HubMC).filter(_HubMC.is_active == True).count()
+        _hub_db.close()
+    except Exception:
+        pass
+    try:
+        from database import ReserveSessionLocal as _HubRS
+        from reserve_banks import StateReserveBank as _HubSRB
+        _rdb = _HubRS()
+        reserve_count = _rdb.query(_HubSRB).count()
+        _rdb.close()
+    except Exception:
+        pass
+
     # Reference cards
     _REF = [
         ("businesses",    "🏭", "Businesses",    "All production and retail business types — startup costs, cycles, recipes, and terrain requirements.",     f"{biz_count} types",    "Encyclopedia"),
@@ -3059,6 +3089,9 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
         ("items",         "📦", "Items",         "Every craftable and tradeable item — categories, descriptions, and live market prices.",                   f"{item_count}+ items",  "Catalog"),
         ("city_projects", "🏗️", "City Projects", "30 municipal mega-projects with buffs, debuffs, construction materials, and NAV contributions.",          "30 projects",           "Reference"),
         ("executives",    "👔", "Executives",    "23 executive roles, ability pools, school system, legendary bonuses, and marketplace mechanics.",          "23 roles",              "Reference"),
+        ("banks",         "🏦", "Banks",         f"Brokerage firm, {bank_count} active banks, {listed_count} public listings, ETFs, city banks, and all {reserve_count} reserve banks with live yield charts.", f"{bank_count} banks",    "Finance"),
+        ("counties",      "🗺️", "Counties",      "County federations with native blockchains — tokenomics, treasury, mining pools, city members, and governance.", f"{county_count} counties", "Governance"),
+        ("crypto",        "🪙", "Crypto",        f"WSC stable coin, {native_count} county native tokens, and {meme_count} community-launched meme coins with live order-book prices.", f"{meme_count + native_count} tokens", "Crypto"),
     ]
     ref_html = "".join(
         f'<a href="/stats/wiki/{slug}" class="wc">'
