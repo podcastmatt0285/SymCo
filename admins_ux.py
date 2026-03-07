@@ -13,6 +13,8 @@ Features:
 """
 
 import json
+import re
+import os
 from typing import Optional
 from datetime import datetime
 
@@ -68,6 +70,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/landbank", "Land Bank"),
         ("/admin/etf", "ETF Banks"),
         ("/admin/logs", "Logs"),
+        ("/admin/wiki", "Wiki Media"),
     ]
     nav_html = ""
     for href, label in nav_items:
@@ -2366,3 +2369,212 @@ def admin_etf_zero_inventory(
         return RedirectResponse(url=f"/admin/etf?msg=Zeroed+{removed}+bank+shares+for+{bank_id}", status_code=303)
     except Exception as ex:
         return RedirectResponse(url=f"/admin/etf?err={str(ex)[:80]}", status_code=303)
+
+
+# ============================================================
+# WIKI MEDIA MANAGEMENT  —  /admin/wiki
+# ============================================================
+
+_WIKI_MEDIA_PATH = os.path.join(os.path.dirname(__file__), "wiki_media.json")
+
+
+def _load_wiki_media() -> dict:
+    try:
+        with open(_WIKI_MEDIA_PATH) as f:
+            data = json.load(f)
+        data.setdefault("videos", [])
+        data.setdefault("audio", [])
+        return data
+    except Exception:
+        return {"videos": [], "audio": []}
+
+
+def _save_wiki_media(data: dict) -> None:
+    with open(_WIKI_MEDIA_PATH, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+def _extract_yt_id(raw: str) -> str:
+    """Return bare 11-char YouTube video ID from any URL or ID string."""
+    raw = raw.strip()
+    # youtu.be/ID
+    m = re.search(r"youtu\.be/([A-Za-z0-9_-]{11})", raw)
+    if m:
+        return m.group(1)
+    # youtube.com/watch?v=ID or /embed/ID or /v/ID
+    m = re.search(r"(?:v=|/embed/|/v/)([A-Za-z0-9_-]{11})", raw)
+    if m:
+        return m.group(1)
+    # bare 11-char ID
+    if re.fullmatch(r"[A-Za-z0-9_-]{11}", raw):
+        return raw
+    return ""
+
+
+@router.get("/admin/wiki", response_class=HTMLResponse)
+def admin_wiki(
+    session_token: Optional[str] = Cookie(None),
+    msg: Optional[str] = Query(None),
+    err: Optional[str] = Query(None),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    data = _load_wiki_media()
+    videos = data["videos"]
+    audio  = data["audio"]
+
+    def _entry_row(entry: dict, kind: str, idx: int) -> str:
+        ytid  = entry.get("youtube_id", "")
+        title = entry.get("title", "")
+        desc  = entry.get("description", "")
+        thumb = f"https://img.youtube.com/vi/{ytid}/mqdefault.jpg"
+        return (
+            f'<tr>'
+            f'<td style="width:100px;"><a href="https://youtube.com/watch?v={ytid}" target="_blank">'
+            f'<img src="{thumb}" style="width:96px;border-radius:4px;"></a></td>'
+            f'<td><strong style="color:#e5e7eb;">{title}</strong><br>'
+            f'<span style="font-size:0.78rem;color:#94a3b8;">{desc[:120]}</span><br>'
+            f'<code style="font-size:0.7rem;color:#64748b;">{ytid}</code></td>'
+            f'<td>'
+            f'<form method="post" action="/admin/wiki/delete" '
+            f'onsubmit="return confirm(\'Delete this entry?\');">'
+            f'<input type="hidden" name="kind" value="{kind}">'
+            f'<input type="hidden" name="idx" value="{idx}">'
+            f'<button class="btn btn-red" style="font-size:0.72rem;padding:4px 10px;">Delete</button>'
+            f'</form>'
+            f'</td></tr>'
+        )
+
+    vid_rows  = "".join(_entry_row(e, "video", i) for i, e in enumerate(videos))
+    aud_rows  = "".join(_entry_row(e, "audio", i) for i, e in enumerate(audio))
+    empty_vid = '<tr><td colspan="3" style="color:#64748b;font-size:0.8rem;padding:16px;">No video entries yet.</td></tr>'
+    empty_aud = '<tr><td colspan="3" style="color:#64748b;font-size:0.8rem;padding:16px;">No audio deep dive entries yet.</td></tr>'
+
+    msg_html = (f'<div class="card" style="background:rgba(34,197,94,0.1);border-color:#22c55e;'
+                f'color:#86efac;margin-bottom:16px;">{msg}</div>') if msg else ""
+    err_html = (f'<div class="card" style="background:rgba(239,68,68,0.1);border-color:#ef4444;'
+                f'color:#fca5a5;margin-bottom:16px;">{err}</div>') if err else ""
+
+    add_form = """
+<div class="card" style="margin-top:24px;">
+    <h3 style="font-size:0.85rem;color:#e5e7eb;margin-bottom:16px;">➕ Add Entry</h3>
+    <form method="post" action="/admin/wiki/add">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+                <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">
+                    YouTube URL or Video ID *
+                </label>
+                <input name="youtube_url" required placeholder="https://youtu.be/... or 11-char ID"
+                       style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid #334155;
+                              border-radius:6px;color:#e5e7eb;font-size:0.85rem;">
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">
+                    Section *
+                </label>
+                <select name="kind" style="width:100%;padding:8px 10px;background:#1e293b;
+                        border:1px solid #334155;border-radius:6px;color:#e5e7eb;font-size:0.85rem;">
+                    <option value="video">📺 Video Tutorial</option>
+                    <option value="audio">🎙️ Audio Deep Dive</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">Title *</label>
+            <input name="title" required placeholder="e.g. Getting Started in Wadsworth"
+                   style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid #334155;
+                          border-radius:6px;color:#e5e7eb;font-size:0.85rem;">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">
+                Description (shown under the embed)
+            </label>
+            <textarea name="description" rows="2" placeholder="Brief description shown under the embed…"
+                      style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid #334155;
+                             border-radius:6px;color:#e5e7eb;font-size:0.85rem;resize:vertical;
+                             font-family:inherit;"></textarea>
+        </div>
+        <button class="btn" type="submit">Add to Wiki</button>
+    </form>
+</div>
+"""
+
+    body = f"""
+{msg_html}{err_html}
+<h2 style="font-size:1rem;color:#e5e7eb;margin-bottom:4px;">Wiki Media Manager</h2>
+<p style="font-size:0.8rem;color:#64748b;margin-bottom:20px;">
+    Paste any YouTube URL (watch / share / embed) or bare 11-character video ID.
+    Entries appear on <a href="/stats/wiki" target="_blank" style="color:#38bdf8;">/stats/wiki</a> immediately.
+</p>
+
+<h3 style="font-size:0.85rem;color:#38bdf8;margin-bottom:10px;">📺 Video Tutorials ({len(videos)})</h3>
+<div class="table-wrap">
+<table>
+    <tr><th>Thumbnail</th><th>Details</th><th></th></tr>
+    {vid_rows or empty_vid}
+</table>
+</div>
+
+<h3 style="font-size:0.85rem;color:#38bdf8;margin-top:24px;margin-bottom:10px;">
+    🎙️ Audio Deep Dives ({len(audio)})
+</h3>
+<div class="table-wrap">
+<table>
+    <tr><th>Thumbnail</th><th>Details</th><th></th></tr>
+    {aud_rows or empty_aud}
+</table>
+</div>
+
+{add_form}
+"""
+    return HTMLResponse(admin_shell("Wiki Media", body, admin.business_name, "/admin/wiki"))
+
+
+@router.post("/admin/wiki/add")
+def admin_wiki_add(
+    session_token: Optional[str] = Cookie(None),
+    youtube_url: str  = Form(...),
+    kind:        str  = Form(...),
+    title:       str  = Form(...),
+    description: str  = Form(""),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    ytid = _extract_yt_id(youtube_url)
+    if not ytid:
+        return RedirectResponse(url="/admin/wiki?err=Could+not+extract+a+valid+YouTube+video+ID", status_code=303)
+
+    data = _load_wiki_media()
+    entry = {"youtube_id": ytid, "title": title.strip(), "description": description.strip()}
+    if kind == "audio":
+        data["audio"].append(entry)
+    else:
+        data["videos"].append(entry)
+    _save_wiki_media(data)
+
+    log_action(admin.id, "wiki_media_add", None, f"{kind}: {title[:60]} ({ytid})")
+    return RedirectResponse(url=f"/admin/wiki?msg=Added+{kind}%3A+{title[:40]}", status_code=303)
+
+
+@router.post("/admin/wiki/delete")
+def admin_wiki_delete(
+    session_token: Optional[str] = Cookie(None),
+    kind: str = Form(...),
+    idx:  int = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    data = _load_wiki_media()
+    lst  = data["audio"] if kind == "audio" else data["videos"]
+    if 0 <= idx < len(lst):
+        removed = lst.pop(idx)
+        _save_wiki_media(data)
+        log_action(admin.id, "wiki_media_delete", None, f"{kind}: {removed.get('title','?')}")
+        return RedirectResponse(url="/admin/wiki?msg=Entry+deleted", status_code=303)
+    return RedirectResponse(url="/admin/wiki?err=Invalid+index", status_code=303)

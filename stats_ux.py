@@ -3039,22 +3039,15 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
-    # Audio placeholders
-    _AUDIO = [
-        ("🏙️", "The Economics of Districts"),
-        ("👔", "Executive Strategy Masterclass"),
-        ("🏗️", "City Projects &amp; Urban Planning"),
-        ("📈", "Market Manipulation 101"),
-        ("💰", "Building Your First Production Empire"),
-        ("🌐", "Forex, Crypto &amp; Reserve Banking"),
-    ]
-    audio_html = "".join(
-        f'<div class="wac"><div class="wac-ico">{ico}</div>'
-        f'<div><div class="wac-lbl">Audio Deep Dive</div>'
-        f'<div class="wac-title">{ttl}</div>'
-        f'<div class="wac-soon">⏳ Coming soon</div></div></div>'
-        for ico, ttl in _AUDIO
-    )
+    # Load wiki media from JSON (managed via /admin/wiki)
+    _media: dict = {"videos": [], "audio": []}
+    try:
+        with open("wiki_media.json") as _f:
+            _media = json.load(_f)
+    except Exception:
+        pass
+    _videos: list = _media.get("videos", [])
+    _audio:  list = _media.get("audio",  [])
 
     # Reference cards
     _REF = [
@@ -3091,27 +3084,56 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
 
 <div class="ws"><span class="ws-t">📺 Video Tutorials</span><span class="ws-l"></span></div>
 <div class="wg-lg">
-    <div class="wvc">
-        <div class="wvc-embed">
-            <iframe src="https://www.youtube.com/embed/_uunsDAShzM?si=34QJSMx-dj_-Imf3"
-                allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"
-                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-        </div>
-        <div class="wvc-info">
-            <div class="wvc-title">Getting Started in Wadsworth</div>
-            <div class="wvc-desc">An introduction to the platform — creating your account, navigating the dashboard,
-            and making your first land purchase and business decision.</div>
-        </div>
-    </div>
+    {"".join(
+        f'<div class="wvc">'
+        f'<div class="wvc-embed">'
+        f'<iframe src="https://www.youtube.com/embed/{v["youtube_id"]}"'
+        f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
+        f' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+        f'</div>'
+        f'<div class="wvc-info">'
+        f'<div class="wvc-title">{v["title"]}</div>'
+        f'<div class="wvc-desc">{v.get("description","")}</div>'
+        f'</div></div>'
+        for v in _videos
+    )}
     <div class="wvc" style="display:flex;flex-direction:column;align-items:center;justify-content:center;
          min-height:220px;border-style:dashed;opacity:0.4;">
         <div style="font-size:2.5rem;margin-bottom:10px;">🎬</div>
-        <div style="color:#607098;font-size:0.88rem;">More tutorials coming soon</div>
+        <div style="color:#607098;font-size:0.88rem;">{"More tutorials coming soon" if _videos else "No tutorials yet — add one at /admin/wiki"}</div>
     </div>
 </div>
 
 <div class="ws"><span class="ws-t">🎙️ Audio Deep Dives</span><span class="ws-l"></span></div>
-<div class="wg">{audio_html}</div>
+<div class="wg">
+    {"".join(
+        f'<div class="wvc">'
+        f'<div class="wvc-embed">'
+        f'<iframe src="https://www.youtube.com/embed/{a["youtube_id"]}"'
+        f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
+        f' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+        f'</div>'
+        f'<div class="wvc-info">'
+        f'<div class="wvc-title">🎙️ {a["title"]}</div>'
+        f'<div class="wvc-desc">{a.get("description","")}</div>'
+        f'</div></div>'
+        for a in _audio
+    ) if _audio else
+    "".join(
+        f'<div class="wac"><div class="wac-ico">{ico}</div>'
+        f'<div><div class="wac-lbl">Audio Deep Dive</div>'
+        f'<div class="wac-title">{ttl}</div>'
+        f'<div class="wac-soon">⏳ Coming soon</div></div></div>'
+        for ico, ttl in [
+            ("🏙️", "The Economics of Districts"),
+            ("👔", "Executive Strategy Masterclass"),
+            ("🏗️", "City Projects &amp; Urban Planning"),
+            ("📈", "Market Manipulation 101"),
+            ("💰", "Building Your First Production Empire"),
+            ("🌐", "Forex, Crypto &amp; Reserve Banking"),
+        ]
+    )}
+</div>
 
 <div class="ws"><span class="ws-t">📚 Reference Pages</span><span class="ws-l"></span></div>
 <div class="wg-sm">{ref_html}</div>
