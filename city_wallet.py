@@ -371,9 +371,22 @@ def swap_city_coin_for_wsc(player_id: int, city_id: int, ccc_amount: float) -> T
         if pool.wsc_reserve <= 0:
             return False, "Pool has no WSC liquidity."
 
-        bal = _get_or_create_csc_balance(csc_db, player_id, city_id)
-        if (bal.balance or 0.0) < ccc_amount:
-            return False, f"Insufficient {info['symbol']}: have {bal.balance:.4f}, need {ccc_amount:.4f}."
+        # Atomic CCC deduction — prevents double-spend under concurrent requests
+        res = csc_db.execute(
+            sa_update(CityStableCoinBalance)
+            .where(CityStableCoinBalance.player_id == player_id)
+            .where(CityStableCoinBalance.city_id   == city_id)
+            .where(CityStableCoinBalance.balance   >= ccc_amount)
+            .values(balance=CityStableCoinBalance.balance - ccc_amount)
+        )
+        csc_db.flush()
+        if res.rowcount == 0:
+            bal = csc_db.query(CityStableCoinBalance).filter(
+                CityStableCoinBalance.player_id == player_id,
+                CityStableCoinBalance.city_id   == city_id,
+            ).first()
+            have = bal.balance if bal else 0.0
+            return False, f"Insufficient {info['symbol']}: have {have:.4f}, need {ccc_amount:.4f}."
 
         fee_ccc = ccc_amount * CCC_AMM_FEE
         amt     = ccc_amount - fee_ccc
@@ -382,10 +395,8 @@ def swap_city_coin_for_wsc(player_id: int, city_id: int, ccc_amount: float) -> T
         new_wsc = k / new_ccc
         wsc_out = pool.wsc_reserve - new_wsc
         if wsc_out <= 0:
+            csc_db.rollback()
             return False, "Swap would drain the WSC reserve. Try a smaller amount."
-
-        # Deduct CCC
-        bal.balance -= ccc_amount
 
         # Update pool
         pool.ccc_reserve  = new_ccc + fee_ccc
