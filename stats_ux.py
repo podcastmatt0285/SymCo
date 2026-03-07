@@ -3817,25 +3817,136 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
     reserve_rows_html = ""
     try:
         from database import ReserveSessionLocal as _RSession
-        from reserve_banks import StateReserveBank as _SRB, DEFAULT_BANKS as _DB
+        from reserve_banks import StateReserveBank as _SRB, ReserveBankBond as _RBB, BondYieldHistory as _BYH, DEFAULT_BANKS as _DB
+        from auth import Player as _RBPlayer
         rdb = _RSession()
-        rb_all = rdb.query(_SRB).all()
-        rdb.close()
-        # Build description map from DEFAULT_BANKS tuple
+        rb_all = rdb.query(_SRB).order_by(_SRB.currency_code).all()
         db_desc = {row[0]: row[1] for row in _DB}
+        cutoff = datetime.utcnow() - timedelta(days=30)
+
+        def _yield_svg(history, code):
+            if not history:
+                return '<div class="rb-no-hist">No yield history yet — updates hourly.</div>'
+            W, H, PAD = 560, 100, 20
+            pts = [(h.recorded_at, h.yield_rate) for h in history]
+            ys = [y for _, y in pts]
+            mn, mx = min(ys), max(ys)
+            rng = mx - mn or 0.001
+            t0 = pts[0][0].timestamp(); t1 = pts[-1][0].timestamp(); trng = t1 - t0 or 1
+            def _x(t): return PAD + (t.timestamp() - t0) / trng * (W - 2*PAD)
+            def _y(y): return H - PAD - (y - mn) / rng * (H - 2*PAD)
+            coords = [(f"{_x(t):.1f}", f"{_y(y):.1f}") for t, y in pts]
+            path_d = "M " + " L ".join(f"{x},{y}" for x, y in coords)
+            area_d = path_d + f" L {coords[-1][0]},{H-PAD} L {PAD},{H-PAD} Z"
+            stroke = "#6ee7b7" if ys[-1] <= ys[0] else "#f87171"
+            grad = f"rbg{code}"
+            # Date ticks: first, mid, last
+            ticks = ""
+            for idx in [0, len(pts)//2, -1]:
+                t, _ = pts[idx]
+                ticks += f'<text x="{_x(t):.0f}" y="{H+6}" fill="#607098" font-size="9" text-anchor="middle">{t.strftime("%m/%d")}</text>'
+            # Y labels
+            for y_val in [mn, mx]:
+                yp = _y(y_val)
+                ticks += f'<text x="{PAD-2}" y="{yp:.0f}" fill="#607098" font-size="9" text-anchor="end" dominant-baseline="middle">{y_val*100:.2f}%</text>'
+            return f'''<svg viewBox="0 0 {W} {H+12}" style="width:100%;height:110px;display:block;">
+  <defs><linearGradient id="{grad}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="{stroke}" stop-opacity="0.25"/><stop offset="100%" stop-color="{stroke}" stop-opacity="0"/>
+  </linearGradient></defs>
+  <path d="{area_d}" fill="url(#{grad})" stroke="none"/>
+  <path d="{path_d}" fill="none" stroke="{stroke}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+  {ticks}
+</svg>'''
+
         for rb in rb_all:
             yield_color = "#f5a855" if rb.yield_rate > 0.05 else ("#90c4f0" if rb.yield_rate < 0 else "#f5d76e")
-            reserve_rows_html += f"""
-<div class="wb-reserve-row">
-  <div class="wb-res-flag">{rb.flag_emoji}</div>
-  <div class="wb-res-code">{rb.currency_code}</div>
-  <div class="wb-res-name">{db_desc.get(rb.currency_code, rb.currency_name)}<br><small style="color:#607098;">{rb.currency_name}</small></div>
-  <div class="wb-res-sym">{rb.currency_symbol}</div>
-  <div class="wb-res-yield" style="color:{yield_color};">{rb.yield_rate*100:.3f}%</div>
-  <div class="wb-res-fx">{rb.usd_per_unit:.4f} USD</div>
-  <div class="wb-res-bonds">{rb.total_bonds_issued:,} bonds</div>
-  <div class="wb-res-vol">{_fmt(rb.total_forex_volume)} forex vol</div>
+
+            # Yield history chart
+            hist = (rdb.query(_BYH)
+                    .filter(_BYH.bank_id == rb.id, _BYH.recorded_at >= cutoff)
+                    .order_by(_BYH.recorded_at)
+                    .all())
+            chart_svg = _yield_svg(hist, rb.currency_code)
+
+            # Active bond holders
+            bonds = (rdb.query(_RBB)
+                     .filter(_RBB.bank_id == rb.id)
+                     .order_by(_RBB.purchased_at.desc())
+                     .limit(50)
+                     .all())
+            bond_rows = ""
+            for bond in bonds:
+                holder = db.query(_RBPlayer).filter(_RBPlayer.id == bond.holder_player_id).first()
+                holder_name = holder.business_name if holder else f"Player #{bond.holder_player_id}"
+                due = bond.matures_at.strftime("%b %d, %Y") if bond.matures_at else "—"
+                days_left = (bond.matures_at - datetime.utcnow()).days if bond.matures_at else 0
+                dl_color = "#f87171" if days_left < 0 else ("#f5a855" if days_left <= 3 else "#6ee7b7")
+                status_badge = {
+                    "active": '<span class="rb-bond-active">Active</span>',
+                    "matured": '<span class="rb-bond-matured">Matured</span>',
+                    "sold": '<span class="rb-bond-sold">Sold</span>',
+                }.get(bond.status or "active", f'<span class="rb-bond-active">{bond.status}</span>')
+                bond_rows += f"""
+<div class="rb-bond-row">
+  <div class="rb-bond-holder">{holder_name}</div>
+  <div class="rb-bond-fv">{_fmt(bond.face_value_wsc)} WSC</div>
+  <div class="rb-bond-yr">{bond.purchase_yield*100:.3f}%</div>
+  <div class="rb-bond-int">{_fmt(bond.interest_accrued)} {rb.currency_symbol}</div>
+  <div class="rb-bond-mat" style="color:{dl_color};">{due}</div>
+  <div class="rb-bond-days" style="color:{dl_color};">{f"{days_left}d" if bond.matures_at else "—"}</div>
+  <div>{status_badge}</div>
 </div>"""
+            if not bond_rows:
+                bond_rows = '<div class="rb-bond-empty">No bonds issued yet.</div>'
+
+            # Stats for additional detail panel
+            reserve_rows_html += f"""
+<div class="rb-card" id="rb-{rb.currency_code}">
+  <div class="rb-header" onclick="rbToggle('{rb.currency_code}')">
+    <div class="wb-res-flag">{rb.flag_emoji}</div>
+    <div class="wb-res-code">{rb.currency_code}</div>
+    <div class="wb-res-name">{db_desc.get(rb.currency_code, rb.currency_name)}<br><small style="color:#607098;">{rb.currency_name}</small></div>
+    <div class="wb-res-sym">{rb.currency_symbol}</div>
+    <div class="wb-res-yield" style="color:{yield_color};">{rb.yield_rate*100:.3f}%</div>
+    <div class="wb-res-fx">{rb.usd_per_unit:.4f} USD</div>
+    <div class="wb-res-bonds">{rb.total_bonds_issued:,} bonds</div>
+    <div class="wb-res-vol">{_fmt(rb.total_forex_volume)}</div>
+    <div class="rb-chevron">▾</div>
+  </div>
+  <div class="rb-drawer" id="rb-drawer-{rb.currency_code}">
+    <div class="rb-drawer-inner">
+
+      <div class="rb-drawer-cols">
+        <!-- LEFT: yield chart -->
+        <div class="rb-chart-col">
+          <div class="rb-panel-title">30-Day Yield</div>
+          <div class="rb-chart-box">{chart_svg}</div>
+          <div class="rb-stats-mini">
+            <div class="rb-sm"><span>WSC Holdings</span><strong>{_fmt(rb.wsc_holdings)}</strong></div>
+            <div class="rb-sm"><span>Total Interest Paid</span><strong>{_fmt(rb.total_interest_paid)} {rb.currency_symbol}</strong></div>
+            <div class="rb-sm"><span>Total Forex Volume</span><strong>{_fmt(rb.total_forex_volume)} USD</strong></div>
+            <div class="rb-sm"><span>Min Yield Floor</span><strong>{rb.min_yield*100:.3f}%</strong></div>
+            <div class="rb-sm"><span>Max Yield Cap</span><strong>{rb.max_yield*100:.3f}%</strong></div>
+            <div class="rb-sm"><span>Net Demand (WSC)</span><strong>{_fmt(rb.net_demand_wsc)}</strong></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: bond holder table -->
+        <div class="rb-bonds-col">
+          <div class="rb-panel-title">Bond Holders</div>
+          <div class="rb-bond-hdr">
+            <div>Holder</div><div>Face Value</div><div>Yield@Buy</div>
+            <div>Interest</div><div>Matures</div><div>Days</div><div>Status</div>
+          </div>
+          {bond_rows}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>"""
+
+        rdb.close()
     except Exception as _e:
         reserve_rows_html = f'<p class="wb-empty">Reserve bank data unavailable: {_e}</p>'
 
@@ -3873,8 +3984,6 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
 .wb-bk-desc{{color:#607098;font-size:0.78rem;margin-bottom:10px;}}
 .wb-bk-row{{display:flex;justify-content:space-between;font-size:0.8rem;color:#90c4f0;padding:2px 0;border-bottom:1px solid rgba(29,47,85,.5);}}
 .wb-bk-row strong{{color:#dde8ff;}}
-.wb-reserve-table{{width:100%;border-collapse:separate;border-spacing:0 4px;}}
-.wb-reserve-row{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px;gap:10px;align-items:center;padding:10px 14px;border-radius:8px;background:#0c1528;border:1px solid #1d2f55;margin-bottom:5px;font-size:0.82rem;}}
 .wb-res-flag{{font-size:1.3rem;}}
 .wb-res-code{{font-weight:800;color:#f5a855;}}
 .wb-res-name{{color:#dde8ff;font-size:0.82rem;line-height:1.3;}}
@@ -3883,7 +3992,37 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
 .wb-res-fx{{color:#90c4f0;}}
 .wb-res-bonds,.wb-res-vol{{color:#607098;font-size:0.75rem;}}
 .wb-empty{{color:#607098;font-style:italic;padding:16px 0;}}
-.wb-reserve-hdr{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px;gap:10px;padding:4px 14px;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}}
+/* Reserve bank accordion */
+.rb-card{{background:#0c1528;border:1px solid #1d2f55;border-radius:10px;margin-bottom:6px;overflow:hidden;transition:border-color .15s;}}
+.rb-card.rb-open{{border-color:#f5a855;}}
+.rb-header{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px 24px;gap:10px;align-items:center;padding:11px 14px;font-size:0.82rem;cursor:pointer;user-select:none;transition:background .15s;}}
+.rb-header:hover{{background:#111c35;}}
+.rb-chevron{{color:#607098;font-size:0.9rem;transition:transform .3s;text-align:right;}}
+.rb-open .rb-chevron{{transform:rotate(180deg);color:#f5a855;}}
+.rb-drawer{{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1);}}
+.rb-drawer.open{{max-height:700px;}}
+.rb-drawer-inner{{border-top:1px solid #1d2f55;padding:20px;}}
+.rb-drawer-cols{{display:grid;grid-template-columns:1fr 1.6fr;gap:24px;}}
+@media(max-width:900px){{.rb-drawer-cols{{grid-template-columns:1fr;}}}}
+.rb-panel-title{{font-size:0.75rem;font-weight:700;color:#f5d76e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}}
+.rb-chart-box{{background:#090e1c;border-radius:8px;padding:10px 6px 2px;margin-bottom:12px;}}
+.rb-no-hist{{color:#607098;font-style:italic;font-size:0.78rem;padding:20px 0;text-align:center;}}
+.rb-stats-mini{{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;}}
+.rb-sm{{display:flex;flex-direction:column;font-size:0.78rem;}}
+.rb-sm span{{color:#607098;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;}}
+.rb-sm strong{{color:#dde8ff;}}
+.rb-bond-hdr{{display:grid;grid-template-columns:1fr 100px 75px 90px 100px 44px 72px;gap:6px;font-size:.68rem;color:#607098;text-transform:uppercase;letter-spacing:.04em;padding:0 8px 4px;}}
+.rb-bond-row{{display:grid;grid-template-columns:1fr 100px 75px 90px 100px 44px 72px;gap:6px;align-items:center;padding:6px 8px;border-radius:6px;font-size:0.78rem;background:#090e1c;margin-bottom:3px;}}
+.rb-bond-holder{{color:#dde8ff;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
+.rb-bond-fv{{color:#90c4f0;}}
+.rb-bond-yr{{color:#f5d76e;}}
+.rb-bond-int{{color:#6ee7b7;}}
+.rb-bond-mat,.rb-bond-days{{font-size:0.72rem;}}
+.rb-bond-active{{padding:2px 7px;background:rgba(110,231,183,.12);color:#6ee7b7;border:1px solid rgba(110,231,183,.25);border-radius:10px;font-size:.68rem;font-weight:600;}}
+.rb-bond-matured{{padding:2px 7px;background:rgba(144,196,240,.1);color:#90c4f0;border:1px solid rgba(144,196,240,.25);border-radius:10px;font-size:.68rem;font-weight:600;}}
+.rb-bond-sold{{padding:2px 7px;background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.25);border-radius:10px;font-size:.68rem;font-weight:600;}}
+.rb-bond-empty{{color:#607098;font-style:italic;font-size:0.78rem;padding:12px 8px;}}
+.wb-reserve-hdr{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px 24px;gap:10px;padding:4px 14px;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}}
 </style>
 
 <h1 class="wpt">🏦 Banks</h1>
@@ -3944,12 +4083,21 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
     <span class="ws-sh-label">🌍 State Reserve Banks</span>
     <span class="ws-sh-line"></span>
   </div>
+  <p style="color:#607098;font-size:0.8rem;margin-bottom:14px;">Click any bank to expand yield history and bond holder details.</p>
   <div class="wb-reserve-hdr">
     <div></div><div>Code</div><div>Institution</div><div>Symbol</div>
-    <div>Yield</div><div>FX Rate</div><div>Bonds</div><div>Forex Vol</div>
+    <div>Yield</div><div>FX Rate</div><div>Bonds</div><div>Forex Vol</div><div></div>
   </div>
   {reserve_rows_html}
 </div>
+<script>
+function rbToggle(code) {{
+  const drawer = document.getElementById('rb-drawer-' + code);
+  const card   = document.getElementById('rb-' + code);
+  const isOpen = drawer.classList.toggle('open');
+  card.classList.toggle('rb-open', isOpen);
+}}
+</script>
 """
     return HTMLResponse(wiki_shell("Banks", body, player.business_name, "banks"))
 
