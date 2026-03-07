@@ -136,6 +136,16 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0",
     )
 
+
+def migrate_ip_tables():
+    """Add columns that were appended to existing IP-tracking tables."""
+    from database import run_ddl_migration
+    # user_agent was added after the initial table creation.
+    run_ddl_migration(
+        engine,
+        "ALTER TABLE player_registration_ips ADD COLUMN IF NOT EXISTS user_agent TEXT",
+    )
+
     # cash_balance has moved to PlayerCurrencyBalance in the reserve_banks DB.
     # Before dropping the column, rescue any non-zero values into PlayerCurrencyBalance
     # so no player USD is silently lost during migration.
@@ -786,6 +796,7 @@ def initialize():
     print("[Auth] Creating database tables...")
     Base.metadata.create_all(bind=engine)
     migrate_player_table()
+    migrate_ip_tables()
     print("[Auth] Module initialized")
 
 async def tick(current_tick: int, now):
