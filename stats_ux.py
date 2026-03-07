@@ -707,6 +707,7 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
         <a href="/stats/districts">Districts</a>
         <a href="/stats/items">Items</a>
         <a href="/stats/production-costs">Costs</a>
+        <a href="/stats/wiki" style="color:#f5a855;font-weight:600;">📖 Wiki</a>
     </div>
     
     <div class="container">
@@ -2847,6 +2848,817 @@ async def stats_production_costs(
     <a href="/stats" style="display:inline-block;margin-top:8px;">← Back to Analytics</a>
     """
     return HTMLResponse(stats_shell("Production Costs", body, player.cash_balance, player.business_name, player.id))
+
+
+# ============================================================
+# WIKI — Wadsworth living encyclopedia
+# 10 / 30 / 60 colour rule:
+#   60 % deep navy  #04070f / #090e1c
+#   30 % slate      #111c35 / #0c1528 / #1d2f55
+#   10 % accents    #f5a855 orange | #f5d76e yellow | #90c4f0 blue
+# ============================================================
+
+_WIKI_BUFF_LABELS: Dict[str, tuple] = {
+    "output":                  ("⬆ Output",         True),
+    "wage_savings":            ("⬇ Wages",           True),
+    "input_savings":           ("⬇ Input Costs",     True),
+    "cycle_speed":             ("⚡ Cycle Speed",     True),
+    "market_fee_reduction":    ("⬇ Market Fees",     True),
+    "license_production":      ("🔖 Licenses/tick",  False),
+    "construction_speed":      ("⬆ Build Speed",     True),
+    "loan_interest_reduction": ("⬇ Loan Interest",   True),
+}
+_WIKI_DEBUFF_LABELS: Dict[str, tuple] = {
+    "sales_tax":    ("⬆ Sales Tax",  True),
+    "wage_penalty": ("⬆ Wage Cost",  True),
+    "input_penalty":("⬆ Input Cost", True),
+}
+
+
+def _wiki_buff(key: str, val: float) -> str:
+    lbl, pct = _WIKI_BUFF_LABELS.get(key, (key.replace("_", " ").title(), True))
+    v = f"{val*100:.1f}%/lv" if pct else f"{val:g}/lv"
+    return f'<span class="buff">{lbl} {v}</span>'
+
+
+def _wiki_debuff(key: str, val: float) -> str:
+    lbl, pct = _WIKI_DEBUFF_LABELS.get(key, (key.replace("_", " ").title(), True))
+    v = f"{val*100:.1f}%/lv" if pct else f"{val:g}/lv"
+    return f'<span class="debuff">{lbl} {v}</span>'
+
+
+def wiki_shell(title: str, body: str, player_name: str = "", active: str = "") -> str:
+    """Beautiful wiki wrapper — 10/30/60 pastel orange/yellow/blue palette."""
+    _NAV_ITEMS = [
+        ("hub",           "/stats/wiki",               "◈ Home"),
+        ("businesses",    "/stats/wiki/businesses",    "🏭 Businesses"),
+        ("districts",     "/stats/wiki/districts",     "🏙️ Districts"),
+        ("items",         "/stats/wiki/items",         "📦 Items"),
+        ("city_projects", "/stats/wiki/city_projects", "🏗️ City Projects"),
+        ("executives",    "/stats/wiki/executives",    "👔 Executives"),
+    ]
+    nav = "".join(
+        f'<a href="{hr}" class="{"active" if active == k else ""}">{lb}</a>'
+        for k, hr, lb in _NAV_ITEMS
+    )
+    player_el = (f"<span class='wh-player'>{player_name}</span>" if player_name else "")
+
+    # CSS as a plain string — no f-string escaping needed for braces
+    css = """
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#04070f;color:#dde8ff;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+a{color:#90c4f0;text-decoration:none;}a:hover{color:#f5d76e;}
+/* HEADER */
+.wh{background:#090e1c;border-bottom:2px solid transparent;border-image:linear-gradient(90deg,#f5a855,#f5d76e 50%,#90c4f0) 1;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.wh-logo{font-size:1.05rem;font-weight:800;background:linear-gradient(90deg,#f5a855,#f5d76e 60%,#90c4f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.02em;}
+.wh-right{display:flex;align-items:center;gap:12px;font-size:0.82rem;}
+.wh-player{color:#607098;}
+.wh-btn{padding:5px 12px;border:1px solid #1d2f55;border-radius:6px;color:#607098;font-size:0.78rem;transition:all 0.15s;}
+.wh-btn:hover{color:#f5a855;border-color:rgba(245,168,85,0.4);}
+/* NAV */
+.wn{background:#0c1528;border-bottom:1px solid #1d2f55;padding:0 24px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;}
+.wn::-webkit-scrollbar{display:none;}
+.wn a{padding:12px 16px;color:#607098;font-size:0.82rem;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.15s;display:block;}
+.wn a:hover{color:#f5d76e;border-bottom-color:rgba(245,215,110,0.5);}
+.wn a.active{color:#f5a855;border-bottom-color:#f5a855;}
+/* MAIN */
+.wm{max-width:1320px;margin:0 auto;padding:36px 24px;}
+/* PAGE HEADER */
+.wpt{font-size:1.8rem;font-weight:800;background:linear-gradient(100deg,#f5a855,#f5d76e 55%,#90c4f0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;letter-spacing:-0.025em;}
+.wpd{color:#607098;font-size:0.88rem;margin-bottom:28px;line-height:1.6;}
+/* SECTION DIVIDER */
+.ws{display:flex;align-items:center;gap:12px;margin:36px 0 18px;}
+.ws-t{font-size:0.75rem;font-weight:700;color:#f5a855;text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;}
+.ws-l{flex:1;height:1px;background:linear-gradient(90deg,#1d2f55,transparent);}
+/* GRIDS */
+.wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.wg-lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;}
+.wg-sm{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+/* CARD */
+.wc{background:#111c35;border:1px solid #1d2f55;border-radius:12px;padding:20px;display:block;color:inherit;position:relative;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s,transform 0.2s;}
+.wc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#f5a855,#f5d76e);opacity:0;transition:opacity 0.2s;}
+.wc:hover{border-color:#f5a855;box-shadow:0 8px 32px rgba(245,168,85,0.12),0 2px 8px rgba(0,0,0,0.5);transform:translateY(-2px);color:inherit;}
+.wc:hover::after{opacity:1;}
+.wcs{cursor:default;}.wcs:hover{transform:none;box-shadow:none;border-color:#1d2f55;}.wcs:hover::after{opacity:0;}
+.wc-icon{font-size:2rem;margin-bottom:12px;display:block;}
+.wc-title{font-size:0.95rem;font-weight:700;color:#dde8ff;margin-bottom:6px;}
+.wc-desc{font-size:0.80rem;color:#607098;line-height:1.55;}
+.wc-meta{margin-top:14px;padding-top:12px;border-top:1px solid #0f1a30;display:flex;gap:6px;flex-wrap:wrap;}
+/* KEY-VALUE ROW */
+.wkv{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #0f1a30;font-size:0.82rem;}
+.wkv:last-child{border-bottom:none;}.wk{color:#607098;}.wv{color:#dde8ff;font-weight:500;}
+.wv.ora{color:#f5a855;}.wv.yel{color:#f5d76e;}.wv.blu{color:#90c4f0;}
+/* BADGES */
+.wb{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.68rem;font-weight:600;letter-spacing:0.04em;}
+.wb-o{background:rgba(245,168,85,0.15);color:#f5a855;border:1px solid rgba(245,168,85,0.3);}
+.wb-y{background:rgba(245,215,110,0.12);color:#f5d76e;border:1px solid rgba(245,215,110,0.25);}
+.wb-b{background:rgba(144,196,240,0.12);color:#90c4f0;border:1px solid rgba(144,196,240,0.25);}
+.wb-g{background:rgba(96,112,152,0.18);color:#90a0c8;border:1px solid rgba(96,112,152,0.3);}
+.wb-grn{background:rgba(134,239,172,0.12);color:#86efac;border:1px solid rgba(134,239,172,0.25);}
+.wb-red{background:rgba(252,165,165,0.12);color:#fca5a5;border:1px solid rgba(252,165,165,0.25);}
+/* BUFF / DEBUFF PILLS */
+.buff{display:inline-block;padding:2px 7px;border-radius:4px;background:rgba(134,239,172,0.1);color:#86efac;border:1px solid rgba(134,239,172,0.2);font-size:0.67rem;margin:2px;}
+.debuff{display:inline-block;padding:2px 7px;border-radius:4px;background:rgba(252,165,165,0.1);color:#fca5a5;border:1px solid rgba(252,165,165,0.2);font-size:0.67rem;margin:2px;}
+/* SEARCH & FILTERS */
+.wsw{position:relative;margin-bottom:16px;}
+.wsw-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#607098;pointer-events:none;}
+.wsbox{width:100%;padding:12px 16px 12px 42px;background:#111c35;border:1px solid #1d2f55;border-radius:8px;color:#dde8ff;font-size:0.9rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;font-family:inherit;}
+.wsbox:focus{border-color:#f5a855;box-shadow:0 0 0 3px rgba(245,168,85,0.1);}
+.wfilters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.wft{padding:6px 14px;border-radius:20px;font-size:0.78rem;font-weight:500;color:#607098;background:#111c35;border:1px solid #1d2f55;text-decoration:none;transition:all 0.15s;cursor:pointer;}
+.wft:hover{color:#f5a855;border-color:rgba(245,168,85,0.4);}
+.wft.active{color:#f5a855;background:rgba(245,168,85,0.08);border-color:rgba(245,168,85,0.45);}
+/* NO-RESULTS */
+.wnone{color:#607098;padding:32px;text-align:center;font-style:italic;grid-column:1/-1;}
+/* VIDEO CARD */
+.wvc{background:#111c35;border:1px solid #1d2f55;border-radius:12px;overflow:hidden;}
+.wvc-embed{aspect-ratio:16/9;width:100%;}.wvc-embed iframe{width:100%;height:100%;border:none;display:block;}
+.wvc-info{padding:16px;}.wvc-title{font-weight:700;color:#dde8ff;margin-bottom:5px;font-size:0.95rem;}.wvc-desc{font-size:0.80rem;color:#607098;line-height:1.5;}
+/* AUDIO CARD */
+.wac{background:#111c35;border:1px solid #1d2f55;border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:center;}
+.wac-ico{width:44px;height:44px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(245,168,85,0.18),rgba(245,215,110,0.08));border:1px solid rgba(245,168,85,0.28);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+.wac-lbl{font-size:0.68rem;color:#607098;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;}
+.wac-title{font-weight:600;color:#dde8ff;font-size:0.88rem;}.wac-soon{font-size:0.72rem;color:#f5d76e;margin-top:3px;}
+/* MATERIALS */
+.mats{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.mat{padding:2px 7px;background:#0c1528;border:1px solid #1d2f55;border-radius:4px;font-size:0.67rem;color:#90a0c8;}
+/* HERO */
+.whero{text-align:center;padding:60px 24px 52px;background:radial-gradient(ellipse at 50% -20%,rgba(245,168,85,0.09) 0%,transparent 65%);border-bottom:1px solid #1d2f55;margin-bottom:44px;}
+.whero-tag{display:inline-block;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:#f5a855;background:rgba(245,168,85,0.1);border:1px solid rgba(245,168,85,0.25);border-radius:20px;padding:4px 14px;margin-bottom:20px;}
+.whero-title{font-size:2.9rem;font-weight:800;background:linear-gradient(135deg,#f5a855 0%,#f5d76e 45%,#90c4f0 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;letter-spacing:-0.03em;line-height:1.15;}
+.whero-sub{color:#607098;font-size:0.95rem;max-width:520px;margin:0 auto 32px;line-height:1.65;}
+.whero-sw{max-width:520px;margin:0 auto;position:relative;}
+.whero-sw input{width:100%;padding:15px 20px 15px 50px;background:#111c35;border:1px solid #1d2f55;border-radius:12px;color:#dde8ff;font-size:0.95rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;font-family:inherit;}
+.whero-sw input:focus{border-color:#f5a855;box-shadow:0 0 0 4px rgba(245,168,85,0.1);}
+.whero-sw-ico{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#607098;font-size:1.05rem;pointer-events:none;}
+/* EXEC DOT */
+.edot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+@media(max-width:768px){.whero-title{font-size:1.9rem;}.wg,.wg-lg{grid-template-columns:1fr;}.wm{padding:20px 16px;}}
+"""
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{title} · Wadsworth Wiki</title>
+<style>{css}</style>
+</head>
+<body>
+<header class="wh">
+    <span class="wh-logo">◈ Wadsworth Wiki</span>
+    <div class="wh-right">
+        {player_el}
+        <a href="/stats" class="wh-btn">← Analytics</a>
+        <a href="/" class="wh-btn">Dashboard</a>
+    </div>
+</header>
+<nav class="wn">{nav}</nav>
+<main class="wm">{body}</main>
+</body></html>"""
+
+
+# ── Wiki: Hub ────────────────────────────────────────────────
+@router.get("/stats/wiki", response_class=HTMLResponse)
+async def wiki_hub(session_token: Optional[str] = Cookie(None)):
+    """Wadsworth Wiki landing page — videos, audio, and reference links."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    # Gather live counts for reference cards
+    biz_count = 0
+    try:
+        with open("business_types.json") as f:
+            biz_count += sum(1 for v in json.load(f).values() if isinstance(v, dict))
+    except Exception:
+        pass
+    try:
+        with open("district_businesses.json") as f:
+            biz_count += sum(1 for v in json.load(f).values() if isinstance(v, dict))
+    except Exception:
+        pass
+    item_count = 0
+    try:
+        with open("item_types.json") as f:
+            item_count += sum(1 for v in json.load(f).values() if isinstance(v, dict))
+    except Exception:
+        pass
+    try:
+        with open("district_items.json") as f:
+            item_count += sum(1 for v in json.load(f).values() if isinstance(v, dict))
+    except Exception:
+        pass
+    dist_count = 17
+    try:
+        from districts import DISTRICT_TYPES as _DT
+        dist_count = len(_DT)
+    except Exception:
+        pass
+
+    # Audio placeholders
+    _AUDIO = [
+        ("🏙️", "The Economics of Districts"),
+        ("👔", "Executive Strategy Masterclass"),
+        ("🏗️", "City Projects &amp; Urban Planning"),
+        ("📈", "Market Manipulation 101"),
+        ("💰", "Building Your First Production Empire"),
+        ("🌐", "Forex, Crypto &amp; Reserve Banking"),
+    ]
+    audio_html = "".join(
+        f'<div class="wac"><div class="wac-ico">{ico}</div>'
+        f'<div><div class="wac-lbl">Audio Deep Dive</div>'
+        f'<div class="wac-title">{ttl}</div>'
+        f'<div class="wac-soon">⏳ Coming soon</div></div></div>'
+        for ico, ttl in _AUDIO
+    )
+
+    # Reference cards
+    _REF = [
+        ("businesses",    "🏭", "Businesses",    "All production and retail business types — startup costs, cycles, recipes, and terrain requirements.",     f"{biz_count} types",    "Encyclopedia"),
+        ("districts",     "🏙️", "Districts",     "District terrain types, base taxes, allowed businesses, and formation rules.",                             f"{dist_count} types",   "Encyclopedia"),
+        ("items",         "📦", "Items",         "Every craftable and tradeable item — categories, descriptions, and live market prices.",                   f"{item_count}+ items",  "Catalog"),
+        ("city_projects", "🏗️", "City Projects", "30 municipal mega-projects with buffs, debuffs, construction materials, and NAV contributions.",          "30 projects",           "Reference"),
+        ("executives",    "👔", "Executives",    "23 executive roles, ability pools, school system, legendary bonuses, and marketplace mechanics.",          "23 roles",              "Reference"),
+    ]
+    ref_html = "".join(
+        f'<a href="/stats/wiki/{slug}" class="wc">'
+        f'<span class="wc-icon">{ico}</span>'
+        f'<div class="wc-title">{name}</div>'
+        f'<div class="wc-desc">{desc}</div>'
+        f'<div class="wc-meta">'
+        f'<span class="wb wb-o">{cnt}</span>'
+        f'<span class="wb wb-b">{tag}</span>'
+        f'</div></a>'
+        for slug, ico, name, desc, cnt, tag in _REF
+    )
+
+    body = f"""
+<div class="whero">
+    <div class="whero-tag">Living Encyclopedia</div>
+    <h1 class="whero-title">Wadsworth Wiki</h1>
+    <p class="whero-sub">The definitive reference for businesses, districts, items, city projects,
+    and executives in the Wadsworth economic simulation. Updated every game tick.</p>
+    <div class="whero-sw">
+        <span class="whero-sw-ico">🔍</span>
+        <input type="text" id="hsearch" placeholder="Press Enter to search businesses…"
+               onkeydown="if(event.key==='Enter')location.href='/stats/wiki/businesses?q='+encodeURIComponent(this.value)">
+    </div>
+</div>
+
+<div class="ws"><span class="ws-t">📺 Video Tutorials</span><span class="ws-l"></span></div>
+<div class="wg-lg">
+    <div class="wvc">
+        <div class="wvc-embed">
+            <iframe src="https://www.youtube.com/embed/_uunsDAShzM?si=34QJSMx-dj_-Imf3"
+                allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <div class="wvc-info">
+            <div class="wvc-title">Getting Started in Wadsworth</div>
+            <div class="wvc-desc">An introduction to the platform — creating your account, navigating the dashboard,
+            and making your first land purchase and business decision.</div>
+        </div>
+    </div>
+    <div class="wvc" style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+         min-height:220px;border-style:dashed;opacity:0.4;">
+        <div style="font-size:2.5rem;margin-bottom:10px;">🎬</div>
+        <div style="color:#607098;font-size:0.88rem;">More tutorials coming soon</div>
+    </div>
+</div>
+
+<div class="ws"><span class="ws-t">🎙️ Audio Deep Dives</span><span class="ws-l"></span></div>
+<div class="wg">{audio_html}</div>
+
+<div class="ws"><span class="ws-t">📚 Reference Pages</span><span class="ws-l"></span></div>
+<div class="wg-sm">{ref_html}</div>
+"""
+    return HTMLResponse(wiki_shell("Wiki Home", body, player.business_name, "hub"))
+
+
+# ── Wiki: Businesses ─────────────────────────────────────────
+@router.get("/stats/wiki/businesses", response_class=HTMLResponse)
+async def wiki_businesses(
+    session_token: Optional[str] = Cookie(None),
+    category: str = Query("all"),
+    q: str = Query(""),
+):
+    """Business encyclopedia with wiki shell."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    business_types: dict = {}
+    district_businesses: dict = {}
+    try:
+        with open("business_types.json") as f:
+            business_types = json.load(f)
+    except Exception:
+        pass
+    try:
+        with open("district_businesses.json") as f:
+            district_businesses = json.load(f)
+    except Exception:
+        pass
+
+    dist_keys = set(district_businesses.keys())
+    if category == "district":
+        pool = {k: v for k, v in district_businesses.items() if isinstance(v, dict)}
+    elif category == "all":
+        pool = {k: v for k, v in business_types.items() if isinstance(v, dict)}
+        pool.update({k: v for k, v in district_businesses.items() if isinstance(v, dict)})
+    else:
+        pool = {k: v for k, v in business_types.items() if isinstance(v, dict) and v.get("class") == category}
+
+    _BADGE = {"production": "wb-grn", "retail": "wb-b"}
+    cards = ""
+    for key, biz in sorted(pool.items(), key=lambda x: x[1].get("name", x[0])):
+        name    = biz.get("name", key.replace("_", " ").title())
+        desc    = biz.get("description", "")[:90]
+        cost    = biz.get("startup_cost", 0)
+        cycles  = biz.get("cycles_to_complete", 1)
+        bclass  = biz.get("class", "production")
+        is_dist = key in dist_keys
+        bc      = _BADGE.get(bclass, "wb-g")
+        dtag    = '<span class="wb wb-o" style="font-size:0.62rem;margin-right:4px;">district</span>' if is_dist else ""
+        safe_name = name.lower().replace('"', '')
+        safe_desc = desc.lower().replace('"', '')
+        cards += (
+            f'<a href="/stats/business/{key}" class="wc"'
+            f' data-n="{safe_name}" data-d="{safe_desc}" data-c="{bclass}">'
+            f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">'
+            f'{dtag}<span class="wb {bc}">{bclass}</span>'
+            f'<span class="wc-title" style="margin:0;">{name}</span></div>'
+            f'<div class="wc-desc">{desc}</div>'
+            f'<div class="wkv" style="margin-top:10px;">'
+            f'<span class="wk">Startup Cost</span><span class="wv ora">{fmt_usd(cost, disp, precision=0)}</span></div>'
+            f'<div class="wkv"><span class="wk">Cycle Time</span>'
+            f'<span class="wv">{cycles:,} ticks</span></div>'
+            f'</a>'
+        )
+
+    filters = ""
+    for slug, lbl in [("all", "All"), ("production", "Production"), ("retail", "Retail"), ("district", "District")]:
+        act = " active" if category == slug else ""
+        filters += f'<a href="/stats/wiki/businesses?category={slug}" class="wft{act}">{lbl}</a>'
+
+    pre_search = f"bizSearch(document.getElementById('bs').value);" if q else ""
+    body = f"""
+<h1 class="wpt">🏭 Businesses</h1>
+<p class="wpd">All production and retail business types in Wadsworth. Click any card for detailed recipes,
+terrain requirements, and cost breakdowns.</p>
+<div class="wfilters">{filters}</div>
+<div class="wsw">
+    <span class="wsw-ico">🔍</span>
+    <input class="wsbox" id="bs" placeholder="Search businesses…" value="{q}"
+           oninput="bizSearch(this.value)">
+</div>
+<div class="wg" id="bg">
+    {cards if cards else '<div class="wnone">No businesses in this category.</div>'}
+</div>
+<p id="bn" style="color:#607098;text-align:center;margin-top:16px;display:none;">No businesses match your search.</p>
+<script>
+function bizSearch(q){{
+    q=q.toLowerCase().trim();let v=0;
+    document.querySelectorAll('#bg .wc').forEach(c=>{{
+        const ok=!q||c.dataset.n.includes(q)||c.dataset.d.includes(q)||c.dataset.c.includes(q);
+        c.style.display=ok?'':'none';if(ok)v++;
+    }});
+    document.getElementById('bn').style.display=(q&&v===0)?'':'none';
+}}
+{pre_search}
+</script>
+"""
+    return HTMLResponse(wiki_shell("Businesses", body, player.business_name, "businesses"))
+
+
+# ── Wiki: Districts ──────────────────────────────────────────
+@router.get("/stats/wiki/districts", response_class=HTMLResponse)
+async def wiki_districts_page(session_token: Optional[str] = Cookie(None)):
+    """Districts encyclopedia with wiki shell."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+    try:
+        from districts import DISTRICT_TYPES, DISTRICT_TAX_MULTIPLIER
+    except Exception:
+        DISTRICT_TYPES = {}
+        DISTRICT_TAX_MULTIPLIER = 15.0
+
+    dist_biz: dict = {}
+    try:
+        with open("district_businesses.json") as f:
+            dist_biz = json.load(f)
+    except Exception:
+        pass
+
+    terrain_map: Dict[str, list] = {}
+    for bk, bc in dist_biz.items():
+        if not isinstance(bc, dict):
+            continue
+        for t in bc.get("allowed_terrain", []):
+            terrain_map.setdefault(t, []).append((bc.get("name", bk), bk))
+
+    cards = ""
+    for dtype, cfg in sorted(DISTRICT_TYPES.items(), key=lambda x: x[1]["name"]):
+        tkey  = cfg.get("district_terrain", f"district_{dtype}")
+        base  = cfg["base_tax"]
+        ex    = base * 1.0 * DISTRICT_TAX_MULTIPLIER
+        terr  = ", ".join(t.replace("_", " ").title() for t in cfg.get("allowed_terrain", []))
+        desc  = cfg.get("description", "")
+        bizz  = terrain_map.get(tkey, [])
+        blist = "".join(
+            f'<a href="/stats/business/{bk}" style="display:block;font-size:0.72rem;color:#90c4f0;padding:2px 0;">{bn}</a>'
+            for bn, bk in sorted(bizz)
+        ) if bizz else '<span style="color:#3d5080;font-size:0.72rem;">No special businesses</span>'
+        desc_el = f'<div class="wc-desc" style="margin:6px 0 10px;">{desc}</div>' if desc else ""
+        cards += (
+            f'<div class="wc wcs">'
+            f'<div class="wc-title">{cfg["name"]}</div>'
+            f'{desc_el}'
+            f'<div class="wkv"><span class="wk">Monthly Tax ×{int(DISTRICT_TAX_MULTIPLIER)}</span>'
+            f'<span class="wv yel">{fmt_usd(ex, disp, precision=0)}/mo*</span></div>'
+            f'<div class="wkv"><span class="wk">Terrain</span>'
+            f'<span class="wv" style="font-size:0.75rem;text-align:right;max-width:60%;">{terr}</span></div>'
+            f'<div class="wkv" style="align-items:flex-start;">'
+            f'<span class="wk" style="padding-top:2px;">Businesses</span>'
+            f'<div style="text-align:right;">{blist}</div></div>'
+            f'</div>'
+        )
+
+    body = f"""
+<h1 class="wpt">🏙️ Districts</h1>
+<p class="wpd">Districts are formed by merging land plots (Fibonacci sequence).
+Monthly tax = Base Tax × Size × {int(DISTRICT_TAX_MULTIPLIER)}.
+*Example shows size = 1 with no modifiers.</p>
+<div class="wg">{cards if cards else '<div class="wnone">District data unavailable.</div>'}</div>
+"""
+    return HTMLResponse(wiki_shell("Districts", body, player.business_name, "districts"))
+
+
+# ── Wiki: Items ──────────────────────────────────────────────
+@router.get("/stats/wiki/items", response_class=HTMLResponse)
+async def wiki_items_page(
+    session_token: Optional[str] = Cookie(None),
+    category: str = Query("all"),
+):
+    """Item catalog with wiki shell."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    items: dict = {}
+    try:
+        with open("item_types.json") as f:
+            items = json.load(f)
+    except Exception:
+        pass
+    try:
+        with open("district_items.json") as f:
+            items.update(json.load(f))
+    except Exception:
+        pass
+
+    try:
+        from market import get_market_price
+    except Exception:
+        get_market_price = lambda x: None  # noqa: E731
+
+    cats = sorted({v.get("category", "misc") for v in items.values() if isinstance(v, dict)})
+    pool = {k: v for k, v in items.items()
+            if isinstance(v, dict) and (category == "all" or v.get("category") == category)}
+
+    filters = (
+        f'<a href="/stats/wiki/items?category=all" class="wft {"active" if category=="all" else ""}">'
+        f'All ({sum(1 for v in items.values() if isinstance(v, dict))})</a>'
+    )
+    for cat in cats:
+        cnt = sum(1 for v in items.values() if isinstance(v, dict) and v.get("category") == cat)
+        act = " active" if category == cat else ""
+        filters += (
+            f'<a href="/stats/wiki/items?category={cat}" class="wft{act}">'
+            f'{cat.replace("_"," ").title()} ({cnt})</a>'
+        )
+
+    cards = ""
+    for key, item in sorted(pool.items(), key=lambda x: x[1].get("name", x[0])):
+        name = item.get("name", key.replace("_", " ").title())
+        desc = item.get("description", "")[:80]
+        cat  = item.get("category", "misc")
+        try:
+            price = get_market_price(key)
+            price_str = fmt_usd(price, disp) if price else "No market data"
+            price_cls = "ora" if price else ""
+        except Exception:
+            price_str, price_cls = "No market data", ""
+        safe = name.lower().replace('"', '')
+        cards += (
+            f'<div class="wc wcs" data-n="{safe}" data-c="{cat}">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
+            f'<div class="wc-title" style="margin:0;">{name}</div>'
+            f'<span class="wb wb-g">{cat.replace("_"," ").title()}</span></div>'
+            f'<div class="wc-desc">{desc}</div>'
+            f'<div class="wkv" style="margin-top:10px;"><span class="wk">Market Price</span>'
+            f'<span class="wv {price_cls}">{price_str}</span></div>'
+            f'</div>'
+        )
+
+    body = f"""
+<h1 class="wpt">📦 Items</h1>
+<p class="wpd">Every craftable and tradeable item in the Wadsworth economy.
+Prices update live from the market.</p>
+<div class="wfilters">{filters}</div>
+<div class="wsw">
+    <span class="wsw-ico">🔍</span>
+    <input class="wsbox" id="is" placeholder="Search items…" oninput="itemSearch(this.value)">
+</div>
+<div class="wg" id="ig">
+    {cards if cards else '<div class="wnone">No items found.</div>'}
+</div>
+<p id="in2" style="color:#607098;text-align:center;margin-top:16px;display:none;">No items match your search.</p>
+<script>
+function itemSearch(q){{
+    q=q.toLowerCase().trim();let v=0;
+    document.querySelectorAll('#ig .wc').forEach(c=>{{
+        const ok=!q||c.dataset.n.includes(q)||c.dataset.c.includes(q);
+        c.style.display=ok?'':'none';if(ok)v++;
+    }});
+    document.getElementById('in2').style.display=(q&&v===0)?'':'none';
+}}
+</script>
+"""
+    return HTMLResponse(wiki_shell("Items", body, player.business_name, "items"))
+
+
+# ── Wiki: City Projects ──────────────────────────────────────
+@router.get("/stats/wiki/city_projects", response_class=HTMLResponse)
+async def wiki_city_projects(
+    session_token: Optional[str] = Cookie(None),
+    category: str = Query("all"),
+):
+    """City projects encyclopedia — 30 municipal mega-projects."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        from city_projects import CITY_PROJECT_TYPES, SPECIAL_KEYS
+    except Exception:
+        err = '<div class="wnone">City project data unavailable.</div>'
+        return HTMLResponse(wiki_shell("City Projects", err, player.business_name, "city_projects"))
+
+    _CAT = {
+        "foundation":    ("🏛️", "Foundation"),
+        "public_safety": ("🚔", "Public Safety"),
+        "utilities":     ("⚡", "Utilities"),
+        "transportation":("🚆", "Transportation"),
+        "commerce":      ("💹", "Commerce"),
+        "education":     ("🎓", "Education"),
+        "culture":       ("🎭", "Culture"),
+        "industry":      ("🏭", "Industry"),
+    }
+
+    all_cats = sorted({v["category"] for v in CITY_PROJECT_TYPES.values()})
+    pool = {k: v for k, v in CITY_PROJECT_TYPES.items()
+            if category == "all" or v["category"] == category}
+
+    filters = (
+        f'<a href="/stats/wiki/city_projects?category=all" class="wft {"active" if category=="all" else ""}">'
+        f'All ({len(CITY_PROJECT_TYPES)})</a>'
+    )
+    for cat in all_cats:
+        ico, lbl = _CAT.get(cat, ("🏗️", cat.replace("_", " ").title()))
+        cnt = sum(1 for v in CITY_PROJECT_TYPES.values() if v["category"] == cat)
+        act = " active" if category == cat else ""
+        filters += f'<a href="/stats/wiki/city_projects?category={cat}" class="wft{act}">{ico} {lbl} ({cnt})</a>'
+
+    cards = ""
+    for key, proj in sorted(pool.items(), key=lambda x: (x[1]["category"], x[1]["name"])):
+        cat   = proj["category"]
+        ico, cat_lbl = _CAT.get(cat, ("🏗️", cat.replace("_", " ").title()))
+        mats  = proj.get("construction_materials", {})
+        buffs = proj.get("buffs", {})
+        debs  = proj.get("debuffs", {})
+        lic   = proj.get("licenses_per_level", 0)
+        val   = proj.get("base_project_value", 0)
+        spec  = key in SPECIAL_KEYS
+
+        pills = "".join(_wiki_buff(k, v) for k, v in buffs.items())
+        pills += "".join(_wiki_debuff(k, v) for k, v in debs.items())
+        mat_tags = "".join(
+            f'<span class="mat">{qty:,}× {item.replace("_"," ").title()}</span>'
+            for item, qty in mats.items()
+        )
+        spec_note = (
+            '<div style="margin:8px 0;padding:8px 10px;background:rgba(245,215,110,0.06);'
+            'border-radius:6px;border:1px solid rgba(245,215,110,0.15);font-size:0.75rem;color:#f5d76e;">'
+            '⚡ Special project — see description for unique mechanics.</div>'
+        ) if spec else ""
+
+        cards += (
+            f'<div class="wc wcs">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
+            f'<div class="wc-title" style="margin:0;">{ico} {proj["name"]}</div>'
+            f'<span class="wb wb-o">{cat_lbl}</span></div>'
+            f'<div class="wc-desc">{proj["description"]}</div>'
+            f'{spec_note}'
+            f'<div class="wkv"><span class="wk">NAV / Level</span>'
+            f'<span class="wv yel">{fmt_usd(val, disp, precision=0)}</span></div>'
+            f'<div class="wkv"><span class="wk">Licenses / Level</span>'
+            f'<span class="wv">{lic:,}</span></div>'
+            + (f'<div style="margin-top:10px;"><div style="font-size:0.68rem;color:#607098;margin-bottom:4px;'
+               f'text-transform:uppercase;letter-spacing:0.06em;">Effects per level</div>{pills}</div>'
+               if pills else "")
+            + (f'<div style="margin-top:8px;"><div style="font-size:0.68rem;color:#607098;margin-bottom:4px;'
+               f'text-transform:uppercase;letter-spacing:0.06em;">Construction materials</div>'
+               f'<div class="mats">{mat_tags}</div></div>'
+               if mat_tags else "")
+            + f'</div>'
+        )
+
+    body = f"""
+<h1 class="wpt">🏗️ City Projects</h1>
+<p class="wpd">All 30 municipal mega-projects available to city governments. Buffs and debuffs scale
+linearly per level (max level 12). The City Post Office must be constructed first — it generates
+the licenses required for every other project.</p>
+<div class="wfilters">{filters}</div>
+<div class="wsw">
+    <span class="wsw-ico">🔍</span>
+    <input class="wsbox" id="ps" placeholder="Search projects, materials, effects…"
+           oninput="projSearch(this.value)">
+</div>
+<div class="wg" id="pg">
+    {cards if cards else '<div class="wnone">No projects found.</div>'}
+</div>
+<p id="pn" style="color:#607098;text-align:center;margin-top:16px;display:none;">No projects match your search.</p>
+<script>
+function projSearch(q){{
+    q=q.toLowerCase().trim();let v=0;
+    document.querySelectorAll('#pg .wc').forEach(c=>{{
+        const ok=!q||c.textContent.toLowerCase().includes(q);
+        c.style.display=ok?'':'none';if(ok)v++;
+    }});
+    document.getElementById('pn').style.display=(q&&v===0)?'':'none';
+}}
+</script>
+"""
+    return HTMLResponse(wiki_shell("City Projects", body, player.business_name, "city_projects"))
+
+
+# ── Wiki: Executives ─────────────────────────────────────────
+@router.get("/stats/wiki/executives", response_class=HTMLResponse)
+async def wiki_executives(
+    session_token: Optional[str] = Cookie(None),
+    category: str = Query("all"),
+):
+    """Executives encyclopedia — 23 roles, abilities, school, marketplace."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    try:
+        from executive import EXECUTIVE_JOBS, EXECUTIVE_CATEGORIES, EXEC_ABILITIES, JOB_ABILITY_POOLS
+    except Exception:
+        err = '<div class="wnone">Executive data unavailable.</div>'
+        return HTMLResponse(wiki_shell("Executives", err, player.business_name, "executives"))
+
+    pool = {k: v for k, v in EXECUTIVE_JOBS.items()
+            if category == "all" or v["category"] == category}
+
+    filters = (
+        f'<a href="/stats/wiki/executives?category=all" class="wft {"active" if category=="all" else ""}">'
+        f'All ({len(EXECUTIVE_JOBS)})</a>'
+    )
+    for ck, cc in EXECUTIVE_CATEGORIES.items():
+        cnt = sum(1 for v in EXECUTIVE_JOBS.values() if v["category"] == ck)
+        if not cnt:
+            continue
+        act = " active" if category == ck else ""
+        clr = cc["color"]
+        filters += (
+            f'<a href="/stats/wiki/executives?category={ck}" class="wft{act}">'
+            f'<span class="edot" style="background:{clr};"></span>{cc["label"]} ({cnt})</a>'
+        )
+
+    cards = ""
+    for jk, job in sorted(pool.items(), key=lambda x: (x[1]["category"], x[1]["title"])):
+        ck  = job["category"]
+        cc  = EXECUTIVE_CATEGORIES.get(ck, {"label": ck, "color": "#607098"})
+        clr = cc["color"]
+        ab_keys = JOB_ABILITY_POOLS.get(jk, [])
+        ab_html = "".join(
+            f'<span class="wb wb-b" style="font-size:0.63rem;margin:2px;" title="{EXEC_ABILITIES[ak]["desc"]}">'
+            f'{EXEC_ABILITIES[ak]["name"]}</span>'
+            for ak in ab_keys if ak in EXEC_ABILITIES
+        )
+        cards += (
+            f'<div class="wc wcs">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
+            f'<div><div class="wc-title" style="margin:0;">{job["title"]}</div>'
+            f'<div style="font-size:0.72rem;color:#607098;margin-top:2px;font-family:monospace;">{job["abbr"]}</div></div>'
+            f'<span style="background:rgba(0,0,0,0.35);padding:3px 10px;border-radius:20px;'
+            f'font-size:0.68rem;font-weight:600;white-space:nowrap;">'
+            f'<span class="edot" style="background:{clr};"></span>{cc["label"]}</span>'
+            f'</div>'
+            f'<div class="wc-desc">{job["description"]}</div>'
+            f'<div class="wkv"><span class="wk">Effect Area</span>'
+            f'<span class="wv blu">{job["effect"].replace("_"," ").title()}</span></div>'
+            + (f'<div style="margin-top:8px;">'
+               f'<div style="font-size:0.68rem;color:#607098;margin-bottom:4px;text-transform:uppercase;'
+               f'letter-spacing:0.06em;">Ability Pool ({len(ab_keys)})</div>'
+               f'<div style="line-height:2;">{ab_html}</div></div>'
+               if ab_html else "")
+            + f'</div>'
+        )
+
+    mechanics = (
+        '<div class="wc wcs" style="grid-column:1/-1;margin-top:8px;'
+        'background:rgba(245,215,110,0.03);border-color:rgba(245,215,110,0.18);">'
+        '<div class="wc-title" style="color:#f5d76e;margin-bottom:16px;">⚙️ Executive Mechanics</div>'
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;">'
+        + "".join(
+            f'<div><div style="font-size:0.7rem;color:#f5a855;font-weight:700;text-transform:uppercase;'
+            f'letter-spacing:0.08em;margin-bottom:6px;">{hd}</div>'
+            f'<div style="font-size:0.8rem;color:#90a0c8;line-height:1.7;">{tx}</div></div>'
+            for hd, tx in [
+                ("Hiring & Pay",
+                 "Each exec spawns with 3–5 abilities drawn from their job pool. "
+                 "Wages auto-raise 7.85% each year. Late payment triggers immediate quit "
+                 "+ full pension and severance. Max 8 executives per player."),
+                ("School System",
+                 "School boosts existing ability performance — never adds new abilities. "
+                 "Base cost: $5,000 · Duration: ~30 min real time. "
+                 "Graduation raises wage by 15%."),
+                ("Legendary Executives",
+                 "5% spawn chance. Legendary execs receive one bonus ability from the "
+                 "legendary pool: Double Efficiency, Half Wages, Fast Learner, "
+                 "Golden Parachute Refusal, Eternal Youth, Mentor, Market Maker, "
+                 "Crisis Manager, Rainmaker, Polymath."),
+                ("Marketplace",
+                 "Fired, retired, and quit executives re-enter the marketplace. "
+                 "New execs spawn every 180 ticks. Marketplace holds up to 20 execs. "
+                 "Retirement age: 65 · Max age: 85."),
+            ]
+        )
+        + '</div></div>'
+    )
+
+    body = f"""
+<h1 class="wpt">👔 Executives</h1>
+<p class="wpd">23 executive roles across 11 specialisations. Each exec brings a unique pool of
+abilities that scale with level and school training. Legendary executives (5% spawn chance)
+receive a bonus ability from the legendary pool. Hover ability badges to see their effects.</p>
+<div class="wfilters">{filters}</div>
+<div class="wsw">
+    <span class="wsw-ico">🔍</span>
+    <input class="wsbox" id="es" placeholder="Search executives, abilities…"
+           oninput="execSearch(this.value)">
+</div>
+<div class="wg" id="eg">
+    {cards if cards else '<div class="wnone">No executives found.</div>'}
+    {mechanics if category == "all" else ""}
+</div>
+<p id="en" style="color:#607098;text-align:center;margin-top:16px;display:none;">No executives match your search.</p>
+<script>
+function execSearch(q){{
+    q=q.toLowerCase().trim();let v=0;
+    document.querySelectorAll('#eg .wcs:not([style*="grid-column"])').forEach(c=>{{
+        const ok=!q||c.textContent.toLowerCase().includes(q);
+        c.style.display=ok?'':'none';if(ok)v++;
+    }});
+    document.getElementById('en').style.display=(q&&v===0)?'':'none';
+}}
+</script>
+"""
+    return HTMLResponse(wiki_shell("Executives", body, player.business_name, "executives"))
 
 
 # ==========================
