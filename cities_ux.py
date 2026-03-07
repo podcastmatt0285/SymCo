@@ -1999,12 +1999,17 @@ async def api_stablecoin_redeem(
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    from cities import redeem_stable_coins
+    from cities import redeem_stable_coins, get_city_stable_coin_info
     ok, msg = redeem_stable_coins(player.id, city_id, amount)
     encoded = msg.replace(" ", "+")
+    try:
+        info = get_city_stable_coin_info(city_id)
+        sym  = f"&coin={info['symbol']}" if info.get("active") and info.get("symbol") else ""
+    except Exception:
+        sym = ""
     if ok:
-        return RedirectResponse(url=f"/wallet?msg={encoded}", status_code=303)
-    return RedirectResponse(url=f"/wallet?error={encoded}", status_code=303)
+        return RedirectResponse(url=f"/wallet?msg={encoded}{sym}", status_code=303)
+    return RedirectResponse(url=f"/wallet?error={encoded}{sym}", status_code=303)
 
 
 # ==========================

@@ -1785,7 +1785,7 @@ async def wallet_dashboard(
             "total_minted": _ct["total_minted"],
         }
         _cfs              = get_city_faucet_status(player.id, city_id_for_coin)
-        coin_faucet_st    = {"can_claim": _cfs["can_claim"], "remaining_seconds": _cfs["remaining_seconds"], "last_amount": 0.0}
+        coin_faucet_st    = {"can_claim": _cfs["can_claim"], "remaining_seconds": _cfs["remaining_seconds"]}
         coin_faucet_hours = CCC_FAUCET_COOLDOWN_HOURS
         coin_faucet_min   = CCC_FAUCET_AMOUNT_MIN
         coin_faucet_max   = CCC_FAUCET_AMOUNT_MAX
@@ -1995,6 +1995,10 @@ async def wallet_dashboard(
     total_staked = sum(s["staked_native"] for s in stakes)
     earned_key = "total_earned_wsc" if selected_coin == "WSC" else "total_earned"
     total_yield_earned = sum(yd.get(earned_key, 0.0) for yd in coin_yield_deps)
+    if selected_coin == "WSC":
+        yield_staked_value = sum(yd.get("value_native", 0.0) for yd in coin_yield_deps)
+    else:
+        yield_staked_value = sum(yd.get("quantity", 0.0) * yd.get("last_price", 0.0) for yd in coin_yield_deps)
 
     portfolio_summary = "".join(
         f'<span style="margin-right:18px;">Meme Value: <strong class="native-color">{v:.4f} {ns}</strong></span>'
@@ -2109,7 +2113,8 @@ async def wallet_dashboard(
         amm_pools_html = "".join(amm_sections)
 
     # ---- Pre-compute all coin-conditional HTML fragments (no logic inside f-string) ----
-    _is_wsc = (selected_coin == "WSC")
+    _is_wsc   = (selected_coin == "WSC")
+    _sel_wsc  = "selected" if _is_wsc else ""
 
     _cc_opts  = "".join(
         f'<option value="{c["symbol"]}" {"selected" if selected_coin == c["symbol"] else ""}>'
@@ -2287,8 +2292,8 @@ async def wallet_dashboard(
         {portfolio_summary}
         <span style="margin-left:auto;color:#94a3b8;">
             Mining staked: <strong class="native-color">{total_staked:.4f}</strong>
-            &nbsp;|&nbsp; Yield staked value: <strong class="meme-color">{sum(yd["value_native"] for yd in yield_deps):.4f}</strong>
-            &nbsp;|&nbsp; Yield earned: <strong class="positive">{total_yield_earned:.4f} WSC</strong>
+            &nbsp;|&nbsp; Yield staked value: <strong class="meme-color">{yield_staked_value:.4f}</strong>
+            &nbsp;|&nbsp; Yield earned: <strong class="positive">{total_yield_earned:.4f} {selected_coin}</strong>
         </span>
     </div>
 
@@ -2631,6 +2636,24 @@ async def api_amm_wsc_to_native(
 # CITY WALLET API ENDPOINTS
 # ==========================
 
+def _city_coin_sym(city_id: int) -> str:
+    """Return the stable coin symbol for a city, or empty string if none."""
+    try:
+        from city_wallet import _get_city_coin_info
+        info = _get_city_coin_info(city_id)
+        return info["symbol"] if info else ""
+    except Exception:
+        return ""
+
+
+def _city_redirect(sym: str, ok: bool, msg: str) -> RedirectResponse:
+    """Redirect back to /wallet keeping the selected city coin active."""
+    enc  = msg.replace(" ", "+")
+    coin = f"&coin={sym}" if sym else ""
+    key  = "msg" if ok else "error"
+    return RedirectResponse(url=f"/wallet?{key}={enc}{coin}", status_code=303)
+
+
 @router.post("/api/city-wallet/swap/wsc-to-ccc")
 async def api_city_swap_wsc_to_ccc(
     city_id:    int   = Form(...),
@@ -2642,10 +2665,7 @@ async def api_city_swap_wsc_to_ccc(
         return RedirectResponse(url="/login", status_code=303)
     from city_wallet import swap_wsc_for_city_coin
     ok, msg = swap_wsc_for_city_coin(player.id, city_id, wsc_amount)
-    enc = msg.replace(" ", "+")
-    if ok:
-        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
-    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+    return _city_redirect(_city_coin_sym(city_id), ok, msg)
 
 
 @router.post("/api/city-wallet/swap/ccc-to-wsc")
@@ -2659,10 +2679,7 @@ async def api_city_swap_ccc_to_wsc(
         return RedirectResponse(url="/login", status_code=303)
     from city_wallet import swap_city_coin_for_wsc
     ok, msg = swap_city_coin_for_wsc(player.id, city_id, ccc_amount)
-    enc = msg.replace(" ", "+")
-    if ok:
-        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
-    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+    return _city_redirect(_city_coin_sym(city_id), ok, msg)
 
 
 @router.post("/api/city-wallet/faucet")
@@ -2675,10 +2692,7 @@ async def api_city_faucet(
         return RedirectResponse(url="/login", status_code=303)
     from city_wallet import claim_city_faucet
     ok, msg, _ = claim_city_faucet(player.id, city_id)
-    enc = msg.replace(" ", "+")
-    if ok:
-        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
-    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+    return _city_redirect(_city_coin_sym(city_id), ok, msg)
 
 
 @router.post("/api/city-wallet/yield-farm/add")
@@ -2693,10 +2707,7 @@ async def api_city_yield_farm_add(
         return RedirectResponse(url="/login", status_code=303)
     from city_wallet import add_city_yield_farming
     ok, msg = add_city_yield_farming(player.id, city_id, meme_symbol.upper().strip(), quantity)
-    enc = msg.replace(" ", "+")
-    if ok:
-        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
-    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+    return _city_redirect(_city_coin_sym(city_id), ok, msg)
 
 
 @router.post("/api/city-wallet/yield-farm/remove/{deposit_id}")
@@ -2707,12 +2718,20 @@ async def api_city_yield_farm_remove(
     player = get_current_player(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    from city_wallet import remove_city_yield_farming
+    # Look up city_id before removing so we can redirect back to the right coin.
+    from city_wallet import remove_city_yield_farming, CityYieldDeposit, get_db as _cw_db
+    _db  = _cw_db()
+    try:
+        dep = _db.query(CityYieldDeposit).filter(
+            CityYieldDeposit.id == deposit_id,
+            CityYieldDeposit.player_id == player.id,
+        ).first()
+        city_id = dep.city_id if dep else None
+    finally:
+        _db.close()
     ok, msg = remove_city_yield_farming(player.id, deposit_id)
-    enc = msg.replace(" ", "+")
-    if ok:
-        return RedirectResponse(url=f"/wallet?msg={enc}", status_code=303)
-    return RedirectResponse(url=f"/wallet?error={enc}", status_code=303)
+    sym = _city_coin_sym(city_id) if city_id else ""
+    return _city_redirect(sym, ok, msg)
 
 
 # ==========================

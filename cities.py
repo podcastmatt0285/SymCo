@@ -2406,6 +2406,7 @@ def get_all_active_city_coins() -> list:
         banks = db.query(CityBank).filter(
             CityBank.stable_coin_symbol.isnot(None),
             CityBank.stable_coin_symbol != "",
+            CityBank.stable_coin_supply > 0,
         ).all()
         result = []
         for bank in banks:
