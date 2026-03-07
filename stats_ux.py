@@ -2061,28 +2061,35 @@ async def stats_businesses(
             district_businesses = json.load(f)
     except: pass
     
-    # Build business list
+    # Build business list — "All" merges both regular and district businesses
     biz_html = ""
-    all_businesses = list(business_types.items())
     if category == "district":
         all_businesses = list(district_businesses.items())
-    elif category != "all":
+    elif category == "all":
+        # Merge both dicts; district businesses are tagged so badge reflects correctly
+        merged = dict(business_types)
+        merged.update(district_businesses)
+        all_businesses = list(merged.items())
+    else:
         all_businesses = [(k, v) for k, v in business_types.items() if v.get("class") == category]
-    
+
+    district_keys = set(district_businesses.keys())
     for key, biz in sorted(all_businesses, key=lambda x: x[1].get("name", x[0])):
         name = biz.get("name", key.replace("_", " ").title())
         desc = biz.get("description", "")[:80]
         cost = biz.get("startup_cost", 0)
         cycles = biz.get("cycles_to_complete", 1)
         biz_class = biz.get("class", "production")
-        
+        is_dist_biz = key in district_keys
+
         badge_class = "badge-green" if biz_class == "production" else "badge-blue" if biz_class == "retail" else "badge-gray"
-        
+        dist_tag = '<span class="badge badge-gray" style="margin-left:4px;font-size:0.6rem;">district</span>' if is_dist_biz else ""
+
         biz_html += f"""
         <a href="/stats/business/{key}" class="card" style="text-decoration: none;">
             <div class="card-header">
                 <span class="card-title">{name}</span>
-                <span class="badge {badge_class}">{biz_class}</span>
+                <span>{dist_tag}<span class="badge {badge_class}">{biz_class}</span></span>
             </div>
             <div class="card-subtitle">{desc}</div>
             <div class="stat-row" style="margin-top: 8px;">
@@ -2091,7 +2098,7 @@ async def stats_businesses(
             </div>
             <div class="stat-row">
                 <span class="stat-label">Cycle Time</span>
-                <span class="stat-value">{cycles} ticks</span>
+                <span class="stat-value">{cycles:,} ticks</span>
             </div>
         </a>
         """
@@ -2109,17 +2116,21 @@ async def stats_businesses(
     </div>
     
     <div class="grid" id="biz-grid">
-        {biz_html}
+        {biz_html if biz_html else '<p style="color:#64748b;grid-column:1/-1;">No businesses in this category.</p>'}
     </div>
-    
+    <p id="biz-no-results" style="color:#64748b;display:none;margin-top:12px;">No businesses match your search.</p>
+
     <script>
     function searchBiz(query) {{
         const cards = document.querySelectorAll('#biz-grid .card');
-        const q = query.toLowerCase();
+        const q = query.toLowerCase().trim();
+        let visible = 0;
         cards.forEach(card => {{
-            const text = card.textContent.toLowerCase();
-            card.style.display = text.includes(q) ? 'block' : 'none';
+            const match = !q || card.textContent.toLowerCase().includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) visible++;
         }});
+        document.getElementById('biz-no-results').style.display = (q && visible === 0) ? '' : 'none';
     }}
     </script>
     """
@@ -2162,7 +2173,10 @@ async def stats_business_detail(
         except: pass
     
     if not biz:
-        return HTMLResponse(stats_shell("Not Found", "<h1>Business not found</h1>", player.cash_balance, player.business_name, player.id))
+        return HTMLResponse(
+            stats_shell("Not Found", '<h1 class="page-title">Business not found</h1><a href="/stats/businesses">← Back to Businesses</a>', player.cash_balance, player.business_name, player.id),
+            status_code=404,
+        )
     
     name = biz.get("name", business_key.replace("_", " ").title())
     desc = biz.get("description", "")
@@ -2170,6 +2184,7 @@ async def stats_business_detail(
     cycles = biz.get("cycles_to_complete", 1)
     wage = biz.get("base_wage_cost", 0)
     biz_class = biz.get("class", "production")
+    cycles_display = f"{cycles:,} ticks"
     
     # Terrain requirements
     terrain = biz.get("allowed_terrain", [])
@@ -2209,10 +2224,11 @@ async def stats_business_detail(
             </div>
             """
     
+    dist_badge = '<span class="badge badge-gray" style="margin-left:6px;">District Business</span>' if is_district else ""
     body = f"""
-    <h1 class="page-title">{name}</h1>
+    <h1 class="page-title">{name}{dist_badge}</h1>
     <p style="color: #94a3b8; margin-bottom: 24px;">{desc}</p>
-    
+
     <div class="grid">
         <div class="card" style="cursor: default;">
             <div class="card-header">
@@ -2220,7 +2236,7 @@ async def stats_business_detail(
                 <span class="badge {'badge-green' if biz_class == 'production' else 'badge-blue'}">{biz_class}</span>
             </div>
             <div class="stat-row"><span class="stat-label">Startup Cost</span><span class="stat-value">{fmt_usd(cost, disp, precision=0)}</span></div>
-            <div class="stat-row"><span class="stat-label">Cycle Time</span><span class="stat-value">{cycles} ticks</span></div>
+            <div class="stat-row"><span class="stat-label">Cycle Time</span><span class="stat-value">{cycles_display}</span></div>
             <div class="stat-row"><span class="stat-label">Wage Cost</span><span class="stat-value">{fmt_usd(wage, disp)}/cycle</span></div>
         </div>
         
@@ -2545,34 +2561,50 @@ async def stats_districts(session_token: Optional[str] = Cookie(None)):
         for terrain in biz_cfg.get("allowed_terrain", []):
             terrain_to_biz.setdefault(terrain, []).append(biz_cfg.get("name", biz_key))
 
+    # Build a lookup: terrain_key → list of (biz_name, biz_key) for detail links
+    terrain_to_biz_full: Dict[str, list] = {}
+    for biz_key, biz_cfg in dist_biz.items():
+        if not isinstance(biz_cfg, dict):
+            continue
+        for terrain in biz_cfg.get("allowed_terrain", []):
+            terrain_to_biz_full.setdefault(terrain, []).append((biz_cfg.get("name", biz_key), biz_key))
+
     cards = ""
     for dtype, cfg in sorted(DISTRICT_TYPES.items(), key=lambda x: x[1]["name"]):
         terrain_key = cfg.get("district_terrain", f"district_{dtype}")
         base_tax = cfg["base_tax"]
         monthly_ex = base_tax * 1.0 * DISTRICT_TAX_MULTIPLIER  # size=1 example
-        allowed = ", ".join(t.title() for t in cfg.get("allowed_terrain", []))
-        businesses_here = terrain_to_biz.get(terrain_key, [])
-        biz_list = "".join(f'<li style="color:#94a3b8;">{b}</li>' for b in sorted(businesses_here)) if businesses_here else '<li style="color:#475569;">No special businesses</li>'
+        allowed = ", ".join(t.replace("_", " ").title() for t in cfg.get("allowed_terrain", []))
+        desc_text = cfg.get("description", "")
+        businesses_here = terrain_to_biz_full.get(terrain_key, [])
+        if businesses_here:
+            biz_list = "".join(
+                f'<li><a href="/stats/business/{bk}" style="color:#38bdf8;font-size:0.7rem;">{bn}</a></li>'
+                for bn, bk in sorted(businesses_here)
+            )
+        else:
+            biz_list = '<li style="color:#475569;font-size:0.7rem;">No special businesses</li>'
 
         cards += f"""
         <div class="card" style="cursor:default;">
             <div class="card-header">
                 <span class="card-title">{cfg["name"]}</span>
-                <span class="card-icon" style="font-size:0.7rem;color:#f59e0b;">{fmt_usd(monthly_ex, disp, precision=0)}/mo*</span>
+                <span style="font-size:0.7rem;color:#f59e0b;">{fmt_usd(monthly_ex, disp, precision=0)}/mo*</span>
             </div>
-            <div class="stat-row"><span class="stat-label">Base Tax</span><span class="stat-value">{fmt_usd(base_tax, disp, precision=0)}/mo × 15</span></div>
+            {('<div class="card-subtitle" style="margin-bottom:10px;">' + desc_text + "</div>") if desc_text else ""}
+            <div class="stat-row"><span class="stat-label">Base Tax</span><span class="stat-value">{fmt_usd(base_tax, disp, precision=0)}/mo × {int(DISTRICT_TAX_MULTIPLIER)}</span></div>
             <div class="stat-row"><span class="stat-label">Terrain</span><span class="stat-value" style="font-size:0.75rem;">{allowed}</span></div>
-            <div class="stat-row" style="align-items:flex-start;">
+            <div class="stat-row" style="align-items:flex-start;border-bottom:none;">
                 <span class="stat-label">Businesses</span>
-                <ul style="list-style:none;text-align:right;margin:0;padding:0;font-size:0.7rem;">{biz_list}</ul>
+                <ul style="list-style:none;text-align:right;margin:0;padding:0;">{biz_list}</ul>
             </div>
         </div>"""
 
     body = f"""
     <h1 class="page-title">🏙️ Districts Encyclopedia</h1>
     <p style="color:#64748b;font-size:0.8rem;margin-bottom:16px;">
-        Districts are formed by merging {5} land plots (Fibonacci sequence). Tax = Base × Size × 15.
-        *Example shows size=1.
+        Districts are formed by merging land plots (Fibonacci sequence). Tax = Base Tax × Size × {int(DISTRICT_TAX_MULTIPLIER)}.
+        *Example shows size=1, no modifiers.
     </p>
     <div class="grid">{cards}</div>
     <a href="/stats" style="display:inline-block;margin-top:16px;">← Back to Analytics</a>
