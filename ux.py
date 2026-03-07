@@ -6180,9 +6180,10 @@ def production_costs_page(
             else:  # cost
                 raw_items.sort(key=lambda x: x["unit_cost"], reverse=rev)
 
-            # Separate items with complete WMA vs partial/none
-            complete   = [i for i in raw_items if i["has_all_wma"]]
-            incomplete = [i for i in raw_items if not i["has_all_wma"]]
+            # "complete" = every input has SOME price (WMA or theoretical fallback)
+            # "incomplete" = at least one input has truly no price at all
+            complete   = [i for i in raw_items if i.get("has_all_priced", i["has_all_wma"])]
+            incomplete = [i for i in raw_items if not i.get("has_all_priced", i["has_all_wma"])]
 
             # Summary stats from complete items only
             costs_ok = [i["unit_cost"] for i in complete if i["unit_cost"] > 0]
@@ -6201,11 +6202,14 @@ def production_costs_page(
                 cc   = cat_colors.get(item.get("category","unknown"), "#64748b")
                 cost = item["unit_cost"]
                 # WMA coverage badge
+                theo_n = item.get("theoretical_fallback_count", 0)
+                miss_n = len(item["missing_wma"])
                 if item["has_all_wma"]:
-                    cov_badge = '<span style="color:#22c55e;font-size:0.7rem;">● complete</span>'
-                elif cb["inputs"] and any(i["has_wma"] for i in cb["inputs"]):
-                    miss = len(item["missing_wma"])
-                    cov_badge = f'<span style="color:#f59e0b;font-size:0.7rem;">⚠ {miss} missing</span>'
+                    cov_badge = '<span style="color:#22c55e;font-size:0.7rem;">● live WMA</span>'
+                elif miss_n == 0 and theo_n > 0:
+                    cov_badge = f'<span style="color:#38bdf8;font-size:0.7rem;">~ {theo_n} theoretical</span>'
+                elif miss_n > 0 and any(i["has_wma"] for i in cb["inputs"]):
+                    cov_badge = f'<span style="color:#f59e0b;font-size:0.7rem;">⚠ {miss_n} no price</span>'
                 else:
                     cov_badge = '<span style="color:#64748b;font-size:0.7rem;">○ no data</span>'
 
@@ -6218,8 +6222,9 @@ def production_costs_page(
                 if cb["exec_input_cost_reduction"] > 0:
                     pills += f'<span style="padding:1px 5px;border-radius:3px;background:#7e22ce20;color:#c084fc;font-size:0.65rem;">-{cb["exec_input_cost_reduction"]*100:.0f}% inputs</span> '
 
+                all_priced = item.get("has_all_priced", item["has_all_wma"])
                 cost_str = (
-                    fmt_usd(cost, disp, precision=4) if item["has_all_wma"] and cost > 0
+                    fmt_usd(cost, disp, precision=4) if all_priced and cost > 0
                     else f'<span style="color:#64748b;">—</span>'
                 )
 
@@ -6299,9 +6304,10 @@ def production_costs_page(
                 missing_banner = (
                     f'<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;'
                     f'padding:12px 16px;margin-bottom:16px;color:#94a3b8;font-size:0.8rem;">'
-                    f'<strong style="color:#f59e0b;">⚠ {len(incomplete)} items</strong> have incomplete '
-                    f'WMA data — you haven\'t purchased all their inputs yet. '
-                    f'They appear at the bottom of the table.</div>'
+                    f'<strong style="color:#f59e0b;">⚠ {len(incomplete)} items</strong> have inputs '
+                    f'with no price in your WMA ledger <em>and</em> no theoretical recipe — '
+                    f'they appear at the bottom. All other items show their best available cost '
+                    f'(live WMA where you have purchase history, theoretical otherwise).</div>'
                 )
 
             items_section = (
@@ -6385,12 +6391,14 @@ def production_costs_page(
             <!-- Legend -->
             <div class="card" style="margin-top:12px;font-size:0.75rem;color:#64748b;">
                 <strong style="color:#94a3b8;">How this works:</strong>
-                Each time you buy on the market, borrow from the WCE, or complete a
-                production cycle, your WMA (Weighted Moving Average) ledger is updated.
-                <em>My Unit Cost</em> = the true net cost of producing one unit using
-                <em>your actual input prices</em>, accounting for land efficiency,
-                city buffs, executive bonuses, and the 4.75 % city production subsidy.
-                <em>CapEx/unit</em> = startup cost amortised over 10,000 units.
+                Each time you buy on the market, borrow from the WCE, or complete a production
+                cycle, your WMA (Weighted Moving Average) ledger is updated.
+                <em>My Unit Cost</em> = net cost per output unit using the best available input
+                price: <span style="color:#22c55e;">● live WMA</span> when you have purchase
+                history, or <span style="color:#38bdf8;">~ theoretical</span> (vertical
+                integration floor) as a fallback — so you always see a useful estimate.
+                Accounts for land efficiency, city buffs, executive bonuses, and the 4.75 %
+                city production subsidy. <em>CapEx/unit</em> = startup cost ÷ 10,000 units.
             </div>'''
 
         # ── tutorial overlay (both modes) ────────────────────────────────────

@@ -235,11 +235,20 @@ def compute_production_cost_basis(player_id: int,
             * (1.0 - min(0.95, exec_wage_reduction))
         )
 
-        # ── Step 2: Gross batch cost from WMA prices ─────────────────────────
+        # ── Step 2: Gross batch cost — WMA prices with theoretical fallback ──
+        # Priority: player's WMA record → theoretical (vertical integration) → 0
+        # Only flag an input as "missing" if there is truly no price source at all.
         wma_data = get_all_wma(player_id)
+        try:
+            from production_costs import get_calculator
+            _calc = get_calculator()
+            theo_costs = _calc.get_all_costs()
+        except Exception:
+            theo_costs = {}
+
         input_breakdown  = []
         gross_input_cost = 0.0
-        missing_wma      = []
+        missing_wma      = []   # inputs with NO price source at all
 
         for req in inputs:
             item     = req["item"]
@@ -248,20 +257,32 @@ def compute_production_cost_basis(player_id: int,
             wma      = wma_data.get(item, {}).get("wma_cost", 0.0)
             has_wma  = wma > 0
 
-            # supply_chain_opt lowers effective input cost (not quantity)
-            eff_wma   = wma * (1.0 - min(0.95, exec_input_cost_reduction))
-            line_cost = eff_qty * eff_wma
-            gross_input_cost += line_cost
+            if has_wma:
+                price_used = wma
+                price_source = "wma"
+            else:
+                theo = theo_costs.get(item, 0.0)
+                if theo > 0:
+                    price_used   = theo
+                    price_source = "theoretical"
+                else:
+                    price_used   = 0.0
+                    price_source = "unknown"
+                    missing_wma.append(item)
 
-            if not has_wma:
-                missing_wma.append(item)
+            # supply_chain_opt lowers effective input cost (not quantity)
+            eff_price = price_used * (1.0 - min(0.95, exec_input_cost_reduction))
+            line_cost = eff_qty * eff_price
+            gross_input_cost += line_cost
 
             input_breakdown.append({
                 "item":          item,
                 "base_qty":      base_qty,
                 "effective_qty": eff_qty,
                 "wma_cost":      wma,
-                "effective_cost": eff_wma,
+                "price_used":    price_used,
+                "price_source":  price_source,   # "wma" | "theoretical" | "unknown"
+                "effective_cost": eff_price,
                 "line_cost":     line_cost,
                 "has_wma":       has_wma,
             })
@@ -281,6 +302,7 @@ def compute_production_cost_basis(player_id: int,
         capex_per_unit = startup_cost / CAPEX_AMORTIZE_UNITS
         true_unit_cost = op_unit_cost + capex_per_unit
 
+        theo_count = sum(1 for i in input_breakdown if i["price_source"] == "theoretical")
         return {
             "unit_cost":               true_unit_cost,
             "operational_unit_cost":   op_unit_cost,
@@ -291,7 +313,11 @@ def compute_production_cost_basis(player_id: int,
             "gross_input_cost":        gross_input_cost,
             "actual_output_qty":       actual_output_qty,
             "inputs":                  input_breakdown,
-            "has_all_wma":             len(missing_wma) == 0,
+            # has_all_wma: True only when every input price came from the player's own WMA ledger
+            "has_all_wma":             len(missing_wma) == 0 and theo_count == 0,
+            # has_all_priced: True when every input has SOME price (WMA or theoretical)
+            "has_all_priced":          len(missing_wma) == 0,
+            "theoretical_fallback_count": theo_count,
             "missing_wma_items":       missing_wma,
             "subsidy_rate":            PRODUCTION_SUBSIDY_RATE,
             "eff_pct":                 eff_pct,
@@ -371,6 +397,8 @@ def get_player_cost_basis_items(player_id: int) -> list:
                 "category":    category,
                 "unit_cost":   cb["unit_cost"],
                 "has_all_wma": cb["has_all_wma"],
+                "has_all_priced": cb["has_all_priced"],
+                "theoretical_fallback_count": cb["theoretical_fallback_count"],
                 "missing_wma": cb["missing_wma_items"],
                 "business":    biz_data.get("name", biz_key),
                 "business_key": biz_key,
