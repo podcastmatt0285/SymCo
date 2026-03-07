@@ -335,6 +335,98 @@ def get_player_bans(player_id: int) -> list:
 
 
 # ==========================
+# MULTI-ACCOUNT LINK DETECTION
+# ==========================
+
+def get_related_accounts(player_id: int) -> list:
+    """
+    Return all accounts that share a registration or login IP with *player_id*.
+
+    Each entry: {player_id, business_name, shared_ip, link_type, seen_at, is_banned}
+    link_type is one of: "registration", "login", or "reg→login"
+    (the last meaning the OTHER account's login IP matches THIS account's reg IP).
+
+    Uses lazy import to avoid a circular dependency with auth.py.
+    """
+    from auth import PlayerRegistrationIP, PlayerLoginIP, Player, get_db as auth_get_db
+
+    adb = auth_get_db()   # auth / main DB (same engine as admins)
+    try:
+        # Collect all IPs ever associated with the target player.
+        reg_ips   = {r.ip_address for r in adb.query(PlayerRegistrationIP)
+                     .filter(PlayerRegistrationIP.player_id == player_id).all()}
+        login_ips = {r.ip_address for r in adb.query(PlayerLoginIP)
+                     .filter(PlayerLoginIP.player_id == player_id).all()}
+        all_ips = reg_ips | login_ips
+
+        if not all_ips:
+            return []
+
+        seen: dict = {}   # other_player_id → {shared_ip, link_type, seen_at}
+
+        # Other accounts that registered from any of these IPs.
+        for row in (adb.query(PlayerRegistrationIP)
+                    .filter(PlayerRegistrationIP.ip_address.in_(all_ips),
+                            PlayerRegistrationIP.player_id != player_id).all()):
+            pid = row.player_id
+            if pid not in seen:
+                link = "registration" if row.ip_address in reg_ips else "reg→login"
+                seen[pid] = {"shared_ip": row.ip_address,
+                             "link_type": link,
+                             "seen_at": row.registered_at}
+
+        # Other accounts that logged in from any of these IPs.
+        for row in (adb.query(PlayerLoginIP)
+                    .filter(PlayerLoginIP.ip_address.in_(all_ips),
+                            PlayerLoginIP.player_id != player_id).all()):
+            pid = row.player_id
+            if pid not in seen:
+                link = "reg→login" if row.ip_address in reg_ips else "login"
+                seen[pid] = {"shared_ip": row.ip_address,
+                             "link_type": link,
+                             "seen_at": row.logged_in_at}
+
+        if not seen:
+            return []
+
+        # Enrich with player names.
+        player_rows = (adb.query(Player)
+                       .filter(Player.id.in_(list(seen.keys()))).all())
+        name_map = {p.id: p.business_name for p in player_rows}
+
+        # Enrich with ban status (query the admins DB — same engine, works fine).
+        ban_db = get_db()
+        try:
+            banned_ids = {
+                b.player_id for b in ban_db.query(PlayerBan).filter(
+                    PlayerBan.player_id.in_(list(seen.keys())),
+                    PlayerBan.ban_type == "ban",
+                    PlayerBan.revoked == False,
+                ).all()
+            }
+        finally:
+            ban_db.close()
+
+        return sorted(
+            [
+                {
+                    "player_id":     pid,
+                    "business_name": name_map.get(pid, f"#{pid}"),
+                    "shared_ip":     info["shared_ip"],
+                    "link_type":     info["link_type"],
+                    "seen_at":       info["seen_at"].isoformat() if info["seen_at"] else "",
+                    "is_banned":     pid in banned_ids,
+                }
+                for pid, info in seen.items()
+            ],
+            key=lambda x: x["seen_at"],
+            reverse=True,
+        )
+    finally:
+        adb.close()
+
+
+# ==========================
 # PLAYER DATA FUNCTIONS
 # ==========================
 

@@ -71,7 +71,24 @@ class PlayerRegistrationIP(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     player_id = Column(Integer, index=True, nullable=False)
     ip_address = Column(String, nullable=False, index=True)
+    user_agent = Column(String, nullable=True)   # browser fingerprint signal
     registered_at = Column(DateTime, default=datetime.utcnow)
+
+
+class PlayerLoginIP(Base):
+    """
+    Records the IP address and user-agent on every successful login.
+    Used for post-registration multi-account detection: two accounts that
+    repeatedly log in from the same IP are strong candidates for alts even
+    if they registered from different IPs (e.g. VPN rotated at registration).
+    """
+    __tablename__ = "player_login_ips"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    player_id = Column(Integer, index=True, nullable=False)
+    ip_address = Column(String, nullable=False, index=True)
+    user_agent = Column(String, nullable=True)
+    logged_in_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Session(Base):
@@ -188,7 +205,9 @@ def transfer_cash(from_player_id: int, to_player_id: int, amount: float) -> bool
 # ==========================
 # AUTHENTICATION LOGIC
 # ==========================
-def create_player(db: Session, business_name: str, password: str, ip_address: Optional[str] = None) -> Optional[Player]:
+def create_player(db: Session, business_name: str, password: str,
+                  ip_address: Optional[str] = None,
+                  user_agent: Optional[str] = None) -> Optional[Player]:
     """Create a new player account."""
     existing = db.query(Player).filter(Player.business_name == business_name).first()
     if existing:
@@ -204,7 +223,11 @@ def create_player(db: Session, business_name: str, password: str, ip_address: Op
     db.refresh(player)
 
     if ip_address:
-        db.add(PlayerRegistrationIP(player_id=player.id, ip_address=ip_address))
+        db.add(PlayerRegistrationIP(
+            player_id=player.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        ))
         db.commit()
 
     player_id = player.id
@@ -520,6 +543,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
 @router.post("/api/login")
 async def login(
+    request: Request,
     response: Response,
     business_name: str = Form(...),
     password: str = Form(...)
@@ -557,6 +581,48 @@ async def login(
             )
     except ImportError:
         pass
+
+    # Track login IP and detect cross-account IP collisions
+    forwarded_for = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+    login_ip = forwarded_for or (request.client.host if request.client else None)
+    login_ua = (request.headers.get("User-Agent", "") or "")[:512] or None
+
+    if login_ip:
+        try:
+            db.add(PlayerLoginIP(
+                player_id=player.id,
+                ip_address=login_ip,
+                user_agent=login_ua,
+            ))
+            # Check if this IP has recently been used by a DIFFERENT account.
+            # We don't auto-ban (shared wifi / NAT is common) but log for admin review.
+            collision = (
+                db.query(PlayerLoginIP)
+                .filter(
+                    PlayerLoginIP.ip_address == login_ip,
+                    PlayerLoginIP.player_id  != player.id,
+                    PlayerLoginIP.logged_in_at >= datetime.utcnow() - timedelta(days=30),
+                )
+                .first()
+            )
+            db.commit()
+            if collision:
+                try:
+                    from admins import log_action
+                    log_action(
+                        admin_id=0,
+                        action="suspicious_login_ip",
+                        target_player_id=player.id,
+                        details=(
+                            f"Login from IP {login_ip} also used by "
+                            f"player #{collision.player_id} within 30 days."
+                        ),
+                    )
+                except Exception:
+                    pass
+        except Exception as _lip_err:
+            db.rollback()
+            print(f"[Auth] Login IP tracking error: {_lip_err}")
 
     session_token = create_session(db, player.id)
     db.close()
@@ -599,8 +665,10 @@ async def register(
     # Resolve the client IP, honouring a reverse-proxy X-Forwarded-For header.
     forwarded_for = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
     ip_address = forwarded_for or (request.client.host if request.client else None)
+    user_agent = (request.headers.get("User-Agent", "") or "")[:512] or None
 
-    player = create_player(db, business_name.strip(), password, ip_address=ip_address)
+    player = create_player(db, business_name.strip(), password,
+                           ip_address=ip_address, user_agent=user_agent)
 
     if not player:
         db.close()
@@ -656,8 +724,10 @@ async def register(
             # Cash fine on the original account (respects foreign legal tender).
             try:
                 from reserve_banks import spend_player_funds, get_usd_balance
-                bal = get_usd_balance(prior.id)
-                spend_player_funds(prior.id, min(MULTI_ACCOUNT_FINE, bal or MULTI_ACCOUNT_FINE))
+                bal = get_usd_balance(prior.id) or 0.0
+                fine = min(MULTI_ACCOUNT_FINE, bal)
+                if fine > 0:
+                    spend_player_funds(prior.id, fine)
             except Exception as _fine_err:
                 print(f"[Auth] Multi-account fine error: {_fine_err}")
             db.commit()

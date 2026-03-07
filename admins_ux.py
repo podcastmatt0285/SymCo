@@ -562,7 +562,7 @@ def admin_player_detail(
 
     # Tab navigation — moderators only see the Moderation tab
     if is_full:
-        tab_list = [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("moderation", "Moderation")]
+        tab_list = [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("moderation", "Moderation"), ("linked", "Linked Accounts")]
     else:
         tab_list = [("moderation", "Moderation")]
     tabs_html = ""
@@ -586,6 +586,8 @@ def admin_player_detail(
         tab_body = _player_businesses_tab(pid)
     elif tab == "moderation":
         tab_body = _player_moderation_tab(pid, detail, is_full_admin=is_full)
+    elif tab == "linked" and is_full:
+        tab_body = _player_linked_tab(pid)
 
     body = f"""
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
@@ -846,6 +848,67 @@ def _player_businesses_tab(pid):
     <div class="card">
         <h3>Businesses ({len(businesses)})</h3>
         {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Location</th><th>Status</th><th>Ticks</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No businesses.</p>'}
+    </div>
+    """
+
+
+def _player_linked_tab(pid: int) -> str:
+    """Show all accounts that share a registration or login IP with this player."""
+    try:
+        from admins import get_related_accounts
+        accounts = get_related_accounts(pid)
+    except Exception as e:
+        return f'<div class="card"><p style="color:#ef4444;">Error loading linked accounts: {e}</p></div>'
+
+    if not accounts:
+        return '<div class="card"><h3>Linked Accounts</h3><p style="color:#64748b;font-size:0.8rem;">No shared IPs found. This account appears to have a unique fingerprint.</p></div>'
+
+    rows = ""
+    for a in accounts:
+        ban_badge = ' <span class="badge badge-red">BANNED</span>' if a["is_banned"] else ""
+        link_color = {
+            "registration": "#ef4444",
+            "login":        "#f59e0b",
+            "reg→login":    "#f97316",
+        }.get(a["link_type"], "#94a3b8")
+        rows += (
+            f'<tr>'
+            f'<td><a href="/admin/player/{a["player_id"]}" style="color:#38bdf8;">#{a["player_id"]}</a></td>'
+            f'<td><a href="/admin/player/{a["player_id"]}" style="color:#e2e8f0;">{a["business_name"]}</a>{ban_badge}</td>'
+            f'<td style="color:#64748b;font-size:0.75rem;">{a["shared_ip"]}</td>'
+            f'<td><span style="color:{link_color};font-size:0.75rem;font-weight:bold;">{a["link_type"].upper()}</span></td>'
+            f'<td style="color:#64748b;font-size:0.75rem;">{a["seen_at"][:16].replace("T"," ") if a["seen_at"] else "-"}</td>'
+            f'<td>'
+            f'<form method="post" action="/admin/player/{a["player_id"]}/ban" style="display:inline;">'
+            f'<input type="hidden" name="reason" value="Alt account — linked to #{pid} via shared IP">'
+            f'<button type="submit" class="btn btn-red" style="font-size:0.65rem;padding:2px 6px;"'
+            f'{"disabled" if a["is_banned"] else ""}>Ban</button></form>'
+            f'</td>'
+            f'</tr>'
+        )
+
+    legend = (
+        '<p style="font-size:0.72rem;color:#64748b;margin-top:10px;">'
+        '<span style="color:#ef4444;">■</span> REGISTRATION — same IP at sign-up &nbsp;|&nbsp; '
+        '<span style="color:#f59e0b;">■</span> LOGIN — same IP used to log in &nbsp;|&nbsp; '
+        '<span style="color:#f97316;">■</span> REG→LOGIN — this account\'s reg IP matches another account\'s login IP'
+        '</p>'
+    )
+
+    return f"""
+    <div class="card">
+        <h3>Linked Accounts <span style="font-size:0.7rem;color:#64748b;">({len(accounts)} found)</span></h3>
+        <p style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">
+            Accounts sharing a registration or login IP address with this player.
+            Shared IPs may indicate alternate accounts or shared networks (VPN, household, school).
+        </p>
+        <div class="table-wrap">
+            <table>
+                <tr><th>ID</th><th>Account</th><th>Shared IP</th><th>Link Type</th><th>Last Seen</th><th>Action</th></tr>
+                {rows}
+            </table>
+        </div>
+        {legend}
     </div>
     """
 
