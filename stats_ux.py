@@ -2878,6 +2878,9 @@ def wiki_shell(title: str, body: str, player_name: str = "", active: str = "") -
         ("items",         "/stats/wiki/items",         "📦 Items"),
         ("city_projects", "/stats/wiki/city_projects", "🏗️ City Projects"),
         ("executives",    "/stats/wiki/executives",    "👔 Executives"),
+        ("banks",         "/stats/wiki/banks",         "🏦 Banks"),
+        ("counties",      "/stats/wiki/counties",      "🗺️ Counties"),
+        ("crypto",        "/stats/wiki/crypto",        "🪙 Crypto"),
     ]
     nav = "".join(
         f'<a href="{hr}" class="{"active" if active == k else ""}">{lb}</a>'
@@ -3681,6 +3684,586 @@ function execSearch(q){{
 </script>
 """
     return HTMLResponse(wiki_shell("Executives", body, player.business_name, "executives"))
+
+
+# ── Wiki: Banks ──────────────────────────────────────────────
+@router.get("/stats/wiki/banks", response_class=HTMLResponse)
+async def wiki_banks(session_token: Optional[str] = Cookie(None)):
+    """Banks wiki — Brokerage Firm, ETFs, City Banks, Reserve Banks."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    if not player:
+        db.close()
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    # ── Brokerage firm ──────────────────────────────────────
+    from banks.brokerage_firm import (
+        FirmEntity, CompanyShares, BANK_NAME as FIRM_NAME,
+        BANK_DESCRIPTION as FIRM_DESC, STARTING_CAPITAL,
+        EQUITY_TRADE_COMMISSION,
+    )
+    firm = db.query(FirmEntity).first()
+    listed = (
+        db.query(CompanyShares)
+        .filter(CompanyShares.is_delisted == False, CompanyShares.parent_company_id == None)
+        .order_by(CompanyShares.current_price.desc())
+        .all()
+    )
+
+    def _pct(val): return f"{val*100:.3f}%"
+    def _fmt(n):
+        if n is None: return "—"
+        if abs(n) >= 1e12: return f"${n/1e12:.2f}T"
+        if abs(n) >= 1e9:  return f"${n/1e9:.2f}B"
+        if abs(n) >= 1e6:  return f"${n/1e6:.2f}M"
+        return f"${n:,.2f}"
+
+    firm_html = ""
+    if firm:
+        svc_flags = []
+        if firm.is_accepting_ipos:     svc_flags.append('<span class="wb-badge wb-ok">IPOs Open</span>')
+        if firm.is_accepting_margin:   svc_flags.append('<span class="wb-badge wb-ok">Margin Active</span>')
+        if firm.is_accepting_shorts:   svc_flags.append('<span class="wb-badge wb-ok">Shorts Active</span>')
+        if firm.is_accepting_lending:  svc_flags.append('<span class="wb-badge wb-ok">Lending Active</span>')
+        firm_html = f"""
+<div class="wb-firm-card">
+  <div class="wb-firm-header">
+    <div>
+      <div class="wb-firm-name">🏛️ {FIRM_NAME}</div>
+      <div class="wb-firm-desc">{FIRM_DESC}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">{"".join(svc_flags)}</div>
+    </div>
+    <div class="wb-firm-stats">
+      <div class="wb-stat"><span class="wb-stat-l">Cash Reserves</span><span class="wb-stat-v">{_fmt(firm.cash_reserves)}</span></div>
+      <div class="wb-stat"><span class="wb-stat-l">Margin Loans Out</span><span class="wb-stat-v">{_fmt(firm.margin_loans_outstanding)}</span></div>
+      <div class="wb-stat"><span class="wb-stat-l">Shares Held (value)</span><span class="wb-stat-v">{_fmt(firm.shares_held_value)}</span></div>
+      <div class="wb-stat"><span class="wb-stat-l">Trade Commission</span><span class="wb-stat-v">{_pct(EQUITY_TRADE_COMMISSION/100)}</span></div>
+      <div class="wb-stat"><span class="wb-stat-l">Lifetime Commissions</span><span class="wb-stat-v">{_fmt(firm.total_trading_commissions_earned)}</span></div>
+      <div class="wb-stat"><span class="wb-stat-l">Underwriting Earned</span><span class="wb-stat-v">{_fmt(firm.total_underwriting_fees_earned)}</span></div>
+    </div>
+  </div>
+</div>"""
+
+    listed_html = ""
+    for cs in listed:
+        chg_class = "wb-up" if cs.current_price >= cs.ipo_price else "wb-dn"
+        chg_arrow = "▲" if cs.current_price >= cs.ipo_price else "▼"
+        listed_html += f"""
+<div class="wb-share-row">
+  <div class="wb-share-ticker">{cs.ticker_symbol}</div>
+  <div class="wb-share-name">{cs.company_name}</div>
+  <div class="wb-share-class">{cs.share_class or "Common"}</div>
+  <div class="wb-share-price">{_fmt(cs.current_price)} <span class="{chg_class}">{chg_arrow}</span></div>
+  <div class="wb-share-ipo">IPO {_fmt(cs.ipo_price)}</div>
+  <div class="wb-share-float">{cs.shares_in_float:,} float</div>
+  <div class="wb-share-vol">{cs.volume_today:,} vol</div>
+</div>"""
+    if not listed_html:
+        listed_html = '<p class="wb-empty">No publicly listed companies yet.</p>'
+
+    # ── ETF Banks ───────────────────────────────────────────
+    from banks import BankEntity as _BE
+    ETF_IDS = {"city_nav_etf", "energy_etf", "apple_seeds_etf"}
+    etf_entities = db.query(_BE).filter(_BE.bank_id.in_(list(ETF_IDS))).all()
+    ETF_META = {
+        "city_nav_etf":     ("🏙️ City NAV ETF", "Tracks net asset value across all city economies"),
+        "energy_etf":       ("⚡ Wadsworth Energy ETF", "Tracks the in-game energy commodity market"),
+        "apple_seeds_etf":  ("🍎 Apple Seeds ETF", "Tracks the apple seeds commodity market"),
+    }
+    etf_html = ""
+    for e in etf_entities:
+        icon, desc = ETF_META.get(e.bank_id, ("🏦", e.description or ""))
+        nav_val = e.cash_reserves + e.asset_value
+        etf_html += f"""
+<div class="wb-bank-card">
+  <div class="wb-bk-icon">{icon.split()[0]}</div>
+  <div class="wb-bk-body">
+    <div class="wb-bk-name">{icon}</div>
+    <div class="wb-bk-desc">{desc}</div>
+    <div class="wb-bk-row"><span>NAV</span><strong>{_fmt(nav_val)}</strong></div>
+    <div class="wb-bk-row"><span>Share Price</span><strong>{_fmt(e.share_price)}</strong></div>
+    <div class="wb-bk-row"><span>Shares Issued</span><strong>{e.total_shares_issued:,}</strong></div>
+    <div class="wb-bk-row"><span>Cash Reserves</span><strong>{_fmt(e.cash_reserves)}</strong></div>
+    <div class="wb-bk-row"><span>Status</span><strong>{"🟢 Active" if e.is_active else "🔴 Inactive"}</strong></div>
+  </div>
+</div>"""
+    if not etf_html:
+        etf_html = '<p class="wb-empty">No ETF banks registered.</p>'
+
+    # ── City Banks ──────────────────────────────────────────
+    from cities import City as _City, CityBank as _CityBank
+    city_banks = db.query(_CityBank, _City).join(_City, _CityBank.city_id == _City.id).all()
+    city_bank_html = ""
+    for cb, city in city_banks:
+        stable = f"<div class='wb-bk-row'><span>Stable Coin</span><strong>{cb.stable_coin_symbol or '—'} ({cb.stable_coin_supply:,.2f} supply)</strong></div>" if cb.stable_coin_symbol else ""
+        city_bank_html += f"""
+<div class="wb-bank-card">
+  <div class="wb-bk-icon">🏦</div>
+  <div class="wb-bk-body">
+    <div class="wb-bk-name">First Bank of {city.name}</div>
+    <div class="wb-bk-desc">Municipal bank serving city members of {city.name}</div>
+    <div class="wb-bk-row"><span>Cash Reserves</span><strong>{_fmt(cb.cash_reserves)}</strong></div>
+    <div class="wb-bk-row"><span>City Licenses</span><strong>{cb.city_licenses:,.0f}</strong></div>
+    <div class="wb-bk-row"><span>Currency Type</span><strong>{cb.currency_type or "None"}</strong></div>
+    <div class="wb-bk-row"><span>Currency Stock</span><strong>{cb.currency_quantity:,.2f}</strong></div>
+    {stable}
+  </div>
+</div>"""
+    if not city_bank_html:
+        city_bank_html = '<p class="wb-empty">No city banks exist yet.</p>'
+
+    # ── Reserve Banks ────────────────────────────────────────
+    reserve_rows_html = ""
+    try:
+        from database import ReserveSessionLocal as _RSession
+        from reserve_banks import StateReserveBank as _SRB, DEFAULT_BANKS as _DB
+        rdb = _RSession()
+        rb_all = rdb.query(_SRB).all()
+        rdb.close()
+        # Build description map from DEFAULT_BANKS tuple
+        db_desc = {row[0]: row[1] for row in _DB}
+        for rb in rb_all:
+            yield_color = "#f5a855" if rb.yield_rate > 0.05 else ("#90c4f0" if rb.yield_rate < 0 else "#f5d76e")
+            reserve_rows_html += f"""
+<div class="wb-reserve-row">
+  <div class="wb-res-flag">{rb.flag_emoji}</div>
+  <div class="wb-res-code">{rb.currency_code}</div>
+  <div class="wb-res-name">{db_desc.get(rb.currency_code, rb.currency_name)}<br><small style="color:#607098;">{rb.currency_name}</small></div>
+  <div class="wb-res-sym">{rb.currency_symbol}</div>
+  <div class="wb-res-yield" style="color:{yield_color};">{rb.yield_rate*100:.3f}%</div>
+  <div class="wb-res-fx">{rb.usd_per_unit:.4f} USD</div>
+  <div class="wb-res-bonds">{rb.total_bonds_issued:,} bonds</div>
+  <div class="wb-res-vol">{_fmt(rb.total_forex_volume)} forex vol</div>
+</div>"""
+    except Exception as _e:
+        reserve_rows_html = f'<p class="wb-empty">Reserve bank data unavailable: {_e}</p>'
+
+    db.close()
+
+    body = f"""
+<style>
+.wb-section-anchor{{scroll-margin-top:80px;}}
+.wb-jump{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}}
+.wb-jump a{{padding:6px 14px;background:#111c35;border:1px solid #1d2f55;border-radius:20px;color:#90c4f0;font-size:0.8rem;transition:all .15s;}}
+.wb-jump a:hover{{background:#1d2f55;color:#f5a855;border-color:#f5a855;}}
+.wb-firm-card{{background:#0c1528;border:1px solid #1d2f55;border-radius:12px;padding:24px;margin-bottom:24px;}}
+.wb-firm-header{{display:flex;gap:24px;flex-wrap:wrap;justify-content:space-between;}}
+.wb-firm-name{{font-size:1.25rem;font-weight:800;color:#f5a855;margin-bottom:4px;}}
+.wb-firm-desc{{color:#90c4f0;font-size:0.85rem;max-width:480px;}}
+.wb-firm-stats{{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;min-width:300px;}}
+.wb-stat{{display:flex;flex-direction:column;}}
+.wb-stat-l{{font-size:0.72rem;color:#607098;text-transform:uppercase;letter-spacing:.04em;}}
+.wb-stat-v{{font-size:0.95rem;font-weight:600;color:#dde8ff;}}
+.wb-badge{{padding:3px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;}}
+.wb-ok{{background:rgba(144,196,240,.15);color:#90c4f0;border:1px solid rgba(144,196,240,.3);}}
+.wb-share-row{{display:grid;grid-template-columns:70px 1fr 90px 100px 100px 120px 90px;gap:8px;align-items:center;padding:10px 14px;border-radius:8px;background:#0c1528;border:1px solid #1d2f55;margin-bottom:6px;font-size:0.83rem;}}
+.wb-share-ticker{{font-weight:800;color:#f5a855;font-size:0.95rem;}}
+.wb-share-name{{color:#dde8ff;}}
+.wb-share-class{{color:#90c4f0;font-size:0.75rem;}}
+.wb-share-price{{font-weight:700;color:#dde8ff;}}
+.wb-up{{color:#6ee7b7;}} .wb-dn{{color:#f87171;}}
+.wb-share-ipo,.wb-share-float,.wb-share-vol{{color:#607098;font-size:0.78rem;}}
+.wb-bank-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:8px;}}
+.wb-bank-card{{background:#0c1528;border:1px solid #1d2f55;border-radius:12px;padding:18px;display:flex;gap:14px;align-items:flex-start;transition:border-color .15s;}}
+.wb-bank-card:hover{{border-color:#f5a855;}}
+.wb-bk-icon{{font-size:1.8rem;flex-shrink:0;}}
+.wb-bk-body{{flex:1;min-width:0;}}
+.wb-bk-name{{font-weight:700;color:#f5d76e;margin-bottom:4px;}}
+.wb-bk-desc{{color:#607098;font-size:0.78rem;margin-bottom:10px;}}
+.wb-bk-row{{display:flex;justify-content:space-between;font-size:0.8rem;color:#90c4f0;padding:2px 0;border-bottom:1px solid rgba(29,47,85,.5);}}
+.wb-bk-row strong{{color:#dde8ff;}}
+.wb-reserve-table{{width:100%;border-collapse:separate;border-spacing:0 4px;}}
+.wb-reserve-row{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px;gap:10px;align-items:center;padding:10px 14px;border-radius:8px;background:#0c1528;border:1px solid #1d2f55;margin-bottom:5px;font-size:0.82rem;}}
+.wb-res-flag{{font-size:1.3rem;}}
+.wb-res-code{{font-weight:800;color:#f5a855;}}
+.wb-res-name{{color:#dde8ff;font-size:0.82rem;line-height:1.3;}}
+.wb-res-sym{{color:#f5d76e;font-weight:700;font-size:1rem;}}
+.wb-res-yield{{font-weight:700;}}
+.wb-res-fx{{color:#90c4f0;}}
+.wb-res-bonds,.wb-res-vol{{color:#607098;font-size:0.75rem;}}
+.wb-empty{{color:#607098;font-style:italic;padding:16px 0;}}
+.wb-reserve-hdr{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px;gap:10px;padding:4px 14px;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}}
+</style>
+
+<h1 class="wpt">🏦 Banks</h1>
+<p class="wpd">All financial institutions in Wadsworth — from the brokerage exchange to reserve banks backing global currencies.</p>
+
+<div class="wb-jump">
+  <a href="#brokerage">🏛️ Brokerage Firm</a>
+  <a href="#etfs">📊 ETF Banks</a>
+  <a href="#city-banks">🏦 City Banks</a>
+  <a href="#reserve">🌍 Reserve Banks</a>
+</div>
+
+<!-- BROKERAGE FIRM -->
+<div id="brokerage" class="wb-section-anchor">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">🏛️ Wadsworth Brokerage Firm</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  {firm_html}
+  <div class="ws-section-header" style="margin-top:20px;">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">Publicly Traded Companies</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  <div style="margin-bottom:8px;">
+    <div class="wb-share-row" style="background:#0a1020;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;">
+      <div>Ticker</div><div>Company</div><div>Class</div><div>Price</div><div>IPO Price</div><div>Float</div><div>Volume</div>
+    </div>
+    {listed_html}
+  </div>
+</div>
+
+<!-- ETF BANKS -->
+<div id="etfs" class="wb-section-anchor" style="margin-top:36px;">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">📊 ETF Banks</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  <div class="wb-bank-grid">{etf_html}</div>
+</div>
+
+<!-- CITY BANKS -->
+<div id="city-banks" class="wb-section-anchor" style="margin-top:36px;">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">🏦 City Banks</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  <div class="wb-bank-grid">{city_bank_html}</div>
+</div>
+
+<!-- RESERVE BANKS -->
+<div id="reserve" class="wb-section-anchor" style="margin-top:36px;">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">🌍 State Reserve Banks</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  <div class="wb-reserve-hdr">
+    <div></div><div>Code</div><div>Institution</div><div>Symbol</div>
+    <div>Yield</div><div>FX Rate</div><div>Bonds</div><div>Forex Vol</div>
+  </div>
+  {reserve_rows_html}
+</div>
+"""
+    return HTMLResponse(wiki_shell("Banks", body, player.business_name, "banks"))
+
+
+# ── Wiki: Counties ────────────────────────────────────────────
+@router.get("/stats/wiki/counties", response_class=HTMLResponse)
+async def wiki_counties(session_token: Optional[str] = Cookie(None)):
+    """Counties wiki — all counties with crypto, cities, and member bios."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    if not player:
+        db.close()
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    from counties import County as _County, CountyCity as _CC
+    from cities import City as _City, CityMember as _CM
+    from auth import Player as _Player
+
+    counties_all = db.query(_County).order_by(_County.name).all()
+
+    def _fmt2(n):
+        if n is None: return "—"
+        if abs(n) >= 1e9:  return f"${n/1e9:.2f}B"
+        if abs(n) >= 1e6:  return f"${n/1e6:.2f}M"
+        if abs(n) >= 1e3:  return f"${n/1e3:.1f}K"
+        return f"${n:,.2f}"
+
+    counties_html = ""
+    for county in counties_all:
+        # Cities in this county
+        cc_rows = db.query(_CC).filter(_CC.county_id == county.id).all()
+        city_ids = [r.city_id for r in cc_rows]
+        cities = db.query(_City).filter(_City.id.in_(city_ids)).all() if city_ids else []
+
+        city_cards = ""
+        for city in cities:
+            members = db.query(_CM).filter(_CM.city_id == city.id).all()
+            member_rows = ""
+            for m in members:
+                p = db.query(_Player).filter(_Player.id == m.player_id).first()
+                pname = p.business_name if p else f"Player #{m.player_id}"
+                role = "👑 Mayor" if m.is_mayor else "👤 Member"
+                member_rows += f"""
+<div class="wco-member">
+  <span class="wco-role">{role}</span>
+  <span class="wco-pname">{pname}</span>
+  <span class="wco-since">since {m.joined_at.strftime('%b %Y') if m.joined_at else '—'}</span>
+</div>"""
+            if not member_rows:
+                member_rows = '<div class="wco-member" style="color:#607098;font-style:italic;">No members yet</div>'
+            city_cards += f"""
+<div class="wco-city-card">
+  <div class="wco-city-name">🏙️ {city.name}</div>
+  <div class="wco-city-currency">Currency: <strong>{city.currency_type or "None"}</strong></div>
+  <div class="wco-members-list">{member_rows}</div>
+</div>"""
+        if not city_cards:
+            city_cards = '<p style="color:#607098;font-style:italic;font-size:.82rem;">No cities in this county yet.</p>'
+
+        # Supply stats
+        circulating = county.total_crypto_minted - county.total_crypto_burned
+        pct_mined = (county.total_crypto_minted / county.max_supply * 100) if county.max_supply else 0
+        price_display = f"{county.crypto_symbol} / USD via treasury"
+
+        counties_html += f"""
+<div class="wco-county">
+  <div class="wco-county-header">
+    <div class="wco-county-left">
+      <div class="wco-county-name">{county.name}</div>
+      <div class="wco-token-badge">{county.crypto_symbol} &middot; {county.crypto_name}</div>
+    </div>
+    <div class="wco-token-stats">
+      <div class="wco-ts"><span>Max Supply</span><strong>{county.max_supply:,.0f}</strong></div>
+      <div class="wco-ts"><span>Minted</span><strong>{county.total_crypto_minted:,.4f} ({pct_mined:.1f}%)</strong></div>
+      <div class="wco-ts"><span>Circulating</span><strong>{circulating:,.4f}</strong></div>
+      <div class="wco-ts"><span>Total Burned</span><strong>{county.total_crypto_burned:,.4f}</strong></div>
+      <div class="wco-ts"><span>Treasury</span><strong>{_fmt2(county.treasury_balance)}</strong></div>
+      <div class="wco-ts"><span>Mining Pool</span><strong>{county.mining_energy_pool:,.2f} energy</strong></div>
+      <div class="wco-ts"><span>Tx Fee</span><strong>{county.transaction_fee_percent*100:.2f}%</strong></div>
+      <div class="wco-ts"><span>Gas Price</span><strong>{county.gas_price:.6f} {county.crypto_symbol}</strong></div>
+    </div>
+  </div>
+  <div class="wco-cities-grid">{city_cards}</div>
+</div>"""
+
+    if not counties_html:
+        counties_html = '<div class="wco-empty">No counties have been formed yet. Be the first to unite your city!</div>'
+
+    db.close()
+
+    body = f"""
+<style>
+.wco-county{{background:#0c1528;border:1px solid #1d2f55;border-radius:14px;padding:24px;margin-bottom:24px;}}
+.wco-county-header{{display:flex;gap:24px;flex-wrap:wrap;justify-content:space-between;margin-bottom:18px;}}
+.wco-county-left{{flex:1;min-width:180px;}}
+.wco-county-name{{font-size:1.35rem;font-weight:800;color:#f5a855;margin-bottom:6px;}}
+.wco-token-badge{{display:inline-block;padding:3px 10px;background:rgba(245,215,110,.1);border:1px solid rgba(245,215,110,.3);border-radius:20px;color:#f5d76e;font-size:0.8rem;font-weight:700;}}
+.wco-token-stats{{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;min-width:300px;}}
+.wco-ts{{display:flex;flex-direction:column;font-size:0.78rem;}}
+.wco-ts span{{color:#607098;text-transform:uppercase;font-size:.68rem;letter-spacing:.04em;}}
+.wco-ts strong{{color:#dde8ff;font-size:.9rem;}}
+.wco-cities-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}}
+.wco-city-card{{background:#090e1c;border:1px solid #1d2f55;border-radius:10px;padding:16px;}}
+.wco-city-name{{font-weight:700;color:#90c4f0;margin-bottom:4px;font-size:.95rem;}}
+.wco-city-currency{{font-size:.75rem;color:#607098;margin-bottom:10px;}}
+.wco-city-currency strong{{color:#dde8ff;}}
+.wco-members-list{{display:flex;flex-direction:column;gap:4px;}}
+.wco-member{{display:flex;align-items:center;gap:8px;font-size:0.78rem;padding:4px 8px;background:#0c1528;border-radius:6px;}}
+.wco-role{{color:#f5a855;font-size:.7rem;min-width:58px;}}
+.wco-pname{{color:#dde8ff;font-weight:600;flex:1;}}
+.wco-since{{color:#607098;font-size:.68rem;}}
+.wco-empty{{color:#607098;font-style:italic;text-align:center;padding:48px;}}
+</style>
+
+<h1 class="wpt">🗺️ Counties</h1>
+<p class="wpd">Wadsworth's counties are federated city-states, each governing its own native blockchain, cryptocurrency, and parliamentary democracy.</p>
+
+{counties_html}
+"""
+    return HTMLResponse(wiki_shell("Counties", body, player.business_name, "counties"))
+
+
+# ── Wiki: Crypto ──────────────────────────────────────────────
+@router.get("/stats/wiki/crypto", response_class=HTMLResponse)
+async def wiki_crypto(session_token: Optional[str] = Cookie(None)):
+    """Crypto wiki — WSC, county native tokens, and meme coins."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    if not player:
+        db.close()
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    from counties import County as _County
+    from memecoins import MemeCoin as _MC
+    from wallet import (
+        WSCWallet as _WSCW, WSCTreasury as _WSCT,
+        WSC_NAME, WSC_SYMBOL, WSC_PEG_RATE,
+    )
+    from auth import Player as _Player
+
+    def _tokfmt(n):
+        if n is None: return "—"
+        if abs(n) >= 1e12: return f"{n/1e12:.4f}T"
+        if abs(n) >= 1e9:  return f"{n/1e9:.4f}B"
+        if abs(n) >= 1e6:  return f"{n/1e6:.4f}M"
+        if abs(n) >= 1e3:  return f"{n/1e3:.4f}K"
+        return f"{n:.8f}"
+
+    def _usd(n):
+        if n is None: return "—"
+        if abs(n) >= 1e9:  return f"${n/1e9:.2f}B"
+        if abs(n) >= 1e6:  return f"${n/1e6:.2f}M"
+        return f"${n:,.2f}"
+
+    # ── WSC ─────────────────────────────────────────────────
+    treasury = db.query(_WSCT).filter(_WSCT.id == 1).first()
+    total_wsc_wallets = db.query(func.sum(_WSCW.balance)).scalar() or 0.0
+    wsc_html = f"""
+<div class="wc-token-hero" style="--tok-c:#f5d76e;--tok-g:linear-gradient(135deg,rgba(245,215,110,.15),rgba(144,196,240,.05));">
+  <div class="wc-th-left">
+    <div class="wc-th-symbol">{WSC_SYMBOL}</div>
+    <div class="wc-th-name">{WSC_NAME}</div>
+    <div class="wc-th-desc">Wadsworth's dollar-pegged stable coin. 1 {WSC_SYMBOL} = ${WSC_PEG_RATE:.2f} USD. Earned via yield farming, airdrops, and commodity fees.</div>
+  </div>
+  <div class="wc-th-stats">
+    <div class="wc-ts2"><span>Player Holdings</span><strong>{_tokfmt(total_wsc_wallets)} {WSC_SYMBOL}</strong></div>
+    <div class="wc-ts2"><span>Peg Rate</span><strong>${WSC_PEG_RATE:.2f} USD</strong></div>
+    {"".join([
+        f'<div class="wc-ts2"><span>Total Minted</span><strong>{_tokfmt(treasury.total_minted)} WSC</strong></div>',
+        f'<div class="wc-ts2"><span>Yield Pool</span><strong>{_tokfmt(treasury.yield_farming_pool)} WSC</strong></div>',
+        f'<div class="wc-ts2"><span>Airdrop Pool</span><strong>{_tokfmt(treasury.airdrop_pool)} WSC</strong></div>',
+        f'<div class="wc-ts2"><span>Faucet Pool</span><strong>{_tokfmt(treasury.faucet_pool)} WSC</strong></div>',
+    ]) if treasury else '<div class="wc-ts2"><span>Treasury</span><strong>Not initialized</strong></div>'}
+  </div>
+</div>"""
+
+    # ── Native County Tokens ─────────────────────────────────
+    counties_all = db.query(_County).order_by(_County.name).all()
+    native_html = ""
+    for county in counties_all:
+        circ = county.total_crypto_minted - county.total_crypto_burned
+        pct = (county.total_crypto_minted / county.max_supply * 100) if county.max_supply else 0
+        # Peg price: treasury_balance / circulating supply (or 0)
+        implied_price = (county.treasury_balance / circ) if circ > 0 else 0
+        native_html += f"""
+<div class="wc-native-card">
+  <div class="wc-nat-sym">{county.crypto_symbol}</div>
+  <div class="wc-nat-body">
+    <div class="wc-nat-name">{county.crypto_name} <small style="color:#607098;">({county.name})</small></div>
+    <div class="wc-nat-stats">
+      <div class="wc-ts2"><span>Max Supply</span><strong>{county.max_supply:,.0f}</strong></div>
+      <div class="wc-ts2"><span>Minted</span><strong>{_tokfmt(county.total_crypto_minted)} ({pct:.1f}%)</strong></div>
+      <div class="wc-ts2"><span>Circulating</span><strong>{_tokfmt(circ)}</strong></div>
+      <div class="wc-ts2"><span>Burned</span><strong>{_tokfmt(county.total_crypto_burned)}</strong></div>
+      <div class="wc-ts2"><span>Treasury</span><strong>{_usd(county.treasury_balance)}</strong></div>
+      <div class="wc-ts2"><span>Implied Price</span><strong>{_usd(implied_price)}</strong></div>
+    </div>
+  </div>
+</div>"""
+    if not native_html:
+        native_html = '<p class="wc-empty">No county native tokens exist yet.</p>'
+
+    # ── Meme Coins ───────────────────────────────────────────
+    memes = db.query(_MC).filter(_MC.is_active == True).order_by(_MC.total_volume_native.desc()).all()
+    county_map = {c.id: c for c in counties_all}
+    meme_html = ""
+    for mc in memes:
+        county = county_map.get(mc.county_id)
+        native_sym = county.crypto_symbol if county else "???"
+        creator = db.query(_Player).filter(_Player.id == mc.creator_id).first()
+        creator_name = creator.business_name if creator else f"Player #{mc.creator_id}"
+        halving_pct = (mc.mining_minted / mc.mining_allocation * 100) if mc.mining_allocation else 0
+        meme_html += f"""
+<div class="wc-meme-card">
+  <div class="wc-meme-header">
+    <div>
+      <div class="wc-meme-sym">{mc.symbol}</div>
+      <div class="wc-meme-name">{mc.name}</div>
+      <div class="wc-meme-county">on {county.name if county else "Unknown"} chain ({native_sym})</div>
+    </div>
+    <div class="wc-meme-price">{_tokfmt(mc.last_price)} {native_sym}</div>
+  </div>
+  {f'<div class="wc-meme-desc">{mc.description}</div>' if mc.description else ""}
+  <div class="wc-meme-stats">
+    <div class="wc-ts2"><span>Total Supply</span><strong>{_tokfmt(mc.total_supply)}</strong></div>
+    <div class="wc-ts2"><span>Minted</span><strong>{_tokfmt(mc.minted_supply)}</strong></div>
+    <div class="wc-ts2"><span>Mining Pool</span><strong>{_tokfmt(mc.mining_pool_native)} {native_sym}</strong></div>
+    <div class="wc-ts2"><span>Mining Progress</span><strong>{halving_pct:.1f}% of allocation</strong></div>
+    <div class="wc-ts2"><span>Volume</span><strong>{_tokfmt(mc.total_volume_native)} {native_sym}</strong></div>
+    <div class="wc-ts2"><span>Trades</span><strong>{mc.total_trades:,}</strong></div>
+    <div class="wc-ts2"><span>ATH</span><strong>{_tokfmt(mc.all_time_high)} {native_sym}</strong></div>
+    <div class="wc-ts2"><span>Creator</span><strong>{creator_name}</strong></div>
+  </div>
+</div>"""
+    if not meme_html:
+        meme_html = '<p class="wc-empty">No meme coins have been launched yet.</p>'
+
+    db.close()
+
+    body = f"""
+<style>
+.wc-jump{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px;}}
+.wc-jump a{{padding:6px 14px;background:#111c35;border:1px solid #1d2f55;border-radius:20px;color:#90c4f0;font-size:0.8rem;transition:all .15s;}}
+.wc-jump a:hover{{background:#1d2f55;color:#f5a855;border-color:#f5a855;}}
+.wc-anchor{{scroll-margin-top:80px;}}
+.wc-token-hero{{background:var(--tok-g);border:1px solid rgba(245,215,110,.25);border-radius:14px;padding:24px;margin-bottom:28px;display:flex;gap:24px;flex-wrap:wrap;justify-content:space-between;}}
+.wc-th-left{{flex:1;min-width:200px;}}
+.wc-th-symbol{{font-size:2rem;font-weight:900;color:var(--tok-c);letter-spacing:-.02em;}}
+.wc-th-name{{font-size:1rem;font-weight:700;color:#dde8ff;margin-bottom:8px;}}
+.wc-th-desc{{color:#607098;font-size:0.82rem;line-height:1.6;max-width:420px;}}
+.wc-th-stats{{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;min-width:260px;}}
+.wc-ts2{{display:flex;flex-direction:column;font-size:0.8rem;}}
+.wc-ts2 span{{color:#607098;text-transform:uppercase;font-size:.68rem;letter-spacing:.04em;}}
+.wc-ts2 strong{{color:#dde8ff;font-size:.9rem;}}
+.wc-native-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:8px;}}
+.wc-native-card{{background:#0c1528;border:1px solid #1d2f55;border-radius:12px;padding:18px;display:flex;gap:14px;align-items:flex-start;}}
+.wc-nat-sym{{font-size:1.6rem;font-weight:900;color:#f5a855;min-width:52px;text-align:center;padding-top:2px;}}
+.wc-nat-body{{flex:1;}}
+.wc-nat-name{{font-weight:700;color:#f5d76e;margin-bottom:10px;}}
+.wc-nat-stats{{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;}}
+.wc-meme-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}}
+.wc-meme-card{{background:#0c1528;border:1px solid #1d2f55;border-radius:12px;padding:18px;}}
+.wc-meme-header{{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}}
+.wc-meme-sym{{font-size:1.2rem;font-weight:900;color:#f5a855;}}
+.wc-meme-name{{color:#dde8ff;font-weight:600;font-size:0.9rem;}}
+.wc-meme-county{{color:#607098;font-size:0.72rem;margin-top:2px;}}
+.wc-meme-price{{font-weight:800;color:#6ee7b7;font-size:0.95rem;text-align:right;}}
+.wc-meme-desc{{color:#607098;font-size:0.78rem;line-height:1.5;margin-bottom:10px;background:#090e1c;border-radius:6px;padding:8px;}}
+.wc-meme-stats{{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;}}
+.wc-empty{{color:#607098;font-style:italic;padding:20px 0;}}
+</style>
+
+<h1 class="wpt">🪙 Crypto</h1>
+<p class="wpd">Wadsworth's crypto ecosystem — from the stable WSC to county native blockchains and community-launched meme coins.</p>
+
+<div class="wc-jump">
+  <a href="#wsc">💵 WSC Stable Coin</a>
+  <a href="#native">⛏️ Native Tokens</a>
+  <a href="#memes">🚀 Meme Coins</a>
+</div>
+
+<!-- WSC -->
+<div id="wsc" class="wc-anchor">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">💵 Wadsworth Stable Coin (WSC)</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  {wsc_html}
+</div>
+
+<!-- NATIVE TOKENS -->
+<div id="native" class="wc-anchor" style="margin-top:36px;">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">⛏️ County Native Tokens</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  <div class="wc-native-grid">{native_html}</div>
+</div>
+
+<!-- MEME COINS -->
+<div id="memes" class="wc-anchor" style="margin-top:36px;">
+  <div class="ws-section-header">
+    <span class="ws-sh-line"></span>
+    <span class="ws-sh-label">🚀 Meme Coins</span>
+    <span class="ws-sh-line"></span>
+  </div>
+  <div class="wc-meme-grid">{meme_html}</div>
+</div>
+"""
+    return HTMLResponse(wiki_shell("Crypto", body, player.business_name, "crypto"))
 
 
 # ==========================
