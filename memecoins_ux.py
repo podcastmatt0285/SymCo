@@ -1728,6 +1728,7 @@ async def wallet_dashboard(
     from city_wallet import (
         get_city_treasury_info, get_city_amm_pool_info,
         get_player_city_yield_deposits, get_city_faucet_status,
+        get_city_coin_earned_breakdown,
         CCC_FAUCET_COOLDOWN_HOURS, CCC_FAUCET_AMOUNT_MIN, CCC_FAUCET_AMOUNT_MAX,
     )
     held_city_coins = get_player_stable_coin_balances(player.id)
@@ -1761,7 +1762,7 @@ async def wallet_dashboard(
         coin_redeem_url   = "/api/wallet/redeem"
         coin_redeem_field = "amount"
         coin_faucet_url   = "/api/wallet/faucet"
-        coin_yield_url    = "/api/wallet/yield-farm"
+        coin_yield_url    = "/api/wallet/yield-stake"
         coin_yield_unstake= "/api/wallet/yield-unstake"
         coin_earned_label = {
             "yield":   f'{wsc_info["total_earned_yield"]:.4f}',
@@ -1796,7 +1797,12 @@ async def wallet_dashboard(
         coin_faucet_url   = "/api/city-wallet/faucet"
         coin_yield_url    = "/api/city-wallet/yield-farm/add"
         coin_yield_unstake= None   # city unstake is deposit-id-based, handled below
-        coin_earned_label = {"yield": "—", "faucet": "—", "airdrop": "—"}
+        _ccc_earned       = get_city_coin_earned_breakdown(player.id, city_id_for_coin)
+        coin_earned_label = {
+            "yield":   f'{_ccc_earned["yield"]:.4f}',
+            "faucet":  f'{_ccc_earned["faucet"]:.4f}',
+            "airdrop": f'{_ccc_earned["airdrop"]:.4f}',
+        }
 
     # ---- AMM pool state for each native token the player holds ----
     from wallet import WSCPool, WSC_AMM_FEE, get_db as wallet_get_db

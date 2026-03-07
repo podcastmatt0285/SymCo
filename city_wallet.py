@@ -655,6 +655,56 @@ def _tick_city_airdrops(cw_db, city_id: int, current_tick: int):
 # READ HELPERS
 # ──────────────────────────────────────────────────────────────────────────────
 
+def get_city_coin_earned_breakdown(player_id: int, city_id: int) -> dict:
+    """
+    Return a breakdown of how much CCC a player has earned from each source.
+
+    - yield:   sum of CityYieldDeposit.total_earned (all deposits, active or closed)
+    - faucet:  sum of CityFaucetClaim.amount
+    - airdrop: total_received - yield - faucet  (distributions and airdrops share this bucket)
+    """
+    db = get_db()
+    try:
+        from cities import CityStableCoinBalance, get_db as cities_get_db
+        csc_db = cities_get_db()
+        try:
+            bal = csc_db.query(CityStableCoinBalance).filter(
+                CityStableCoinBalance.player_id == player_id,
+                CityStableCoinBalance.city_id   == city_id,
+            ).first()
+            total_received = bal.total_received if bal else 0.0
+        finally:
+            csc_db.close()
+
+        yield_total = (
+            db.query(sqlfunc.sum(CityYieldDeposit.total_earned))
+            .filter(
+                CityYieldDeposit.player_id == player_id,
+                CityYieldDeposit.city_id   == city_id,
+            )
+            .scalar() or 0.0
+        )
+
+        faucet_total = (
+            db.query(sqlfunc.sum(CityFaucetClaim.amount))
+            .filter(
+                CityFaucetClaim.player_id == player_id,
+                CityFaucetClaim.city_id   == city_id,
+            )
+            .scalar() or 0.0
+        )
+
+        airdrop_total = max(0.0, total_received - yield_total - faucet_total)
+
+        return {
+            "yield":   yield_total,
+            "faucet":  faucet_total,
+            "airdrop": airdrop_total,
+        }
+    finally:
+        db.close()
+
+
 def get_city_treasury_info(city_id: int) -> dict:
     db = get_db()
     try:
