@@ -379,6 +379,16 @@
     "description": "Fermented apple beverage",
     "category": "alcohol"
   },
+  "sake": {
+    "name": "Sake",
+    "description": "Japanese rice wine brewed from fermented rice, served warm or chilled",
+    "category": "alcohol"
+  },
+  "rice_wine": {
+    "name": "Rice Wine",
+    "description": "Fermented rice wine used as a cooking ingredient and mild table drink",
+    "category": "alcohol"
+  },
   "painkillers": {
     "name": "Pain Relievers",
     "description": "Over-the-counter analgesic",
@@ -814,6 +824,11 @@
     "description": "Burlap sack for storing carrots",
     "category": "packaging"
   },
+  "rice_sack": {
+    "name": "Rice Sack",
+    "description": "Burlap sack filled with rice, ready for market sale",
+    "category": "packaging"
+  },
   "blouse": {
     "name": "Silk Blouse",
     "description": "Elegant silk blouse",
@@ -974,6 +989,16 @@
     "description": "Seeds for planting onions",
     "category": "seeds"
   },
+  "rice_seeds": {
+    "name": "Rice Seeds",
+    "description": "Seeds for planting flooded rice paddies",
+    "category": "seeds"
+  },
+  "tomato_seeds": {
+    "name": "Tomato Seeds",
+    "description": "Seeds for growing tomato plants",
+    "category": "seeds"
+  },
   "cherries": {
     "name": "Cherries",
     "description": "Sweet red fruit",
@@ -1104,6 +1129,11 @@
     "description": "Fresh leafy greens",
     "category": "vegetables"
   },
+  "tomato": {
+    "name": "Tomatoes",
+    "description": "Fresh ripe tomatoes for cooking and processing",
+    "category": "vegetables"
+  },
   "lotion": {
     "name": "Body Lotion",
     "description": "Skincare moisturizer",
@@ -1112,6 +1142,11 @@
   "peanut": {
     "name": "Peanuts",
     "description": "Legume for cooking and snacks",
+    "category": "crops"
+  },
+  "rice": {
+    "name": "Rice",
+    "description": "Staple grain harvested from flooded paddies, used in cooking and brewing",
     "category": "crops"
   },
   "perfume": {
@@ -1637,6 +1672,36 @@
   "worcestershire_sauce": {
     "name": "Worcestershire Sauce",
     "description": "Fermented anchovy and vinegar sauce used as a condiment and cooking ingredient",
+    "category": "ingredients"
+  },
+  "rice_flour": {
+    "name": "Rice Flour",
+    "description": "Finely milled rice flour used in baking, noodles, and rice paper",
+    "category": "ingredients"
+  },
+  "rice_paper": {
+    "name": "Rice Paper",
+    "description": "Thin translucent edible sheets used in sushi wrapping and spring rolls",
+    "category": "ingredients"
+  },
+  "ketchup": {
+    "name": "Ketchup",
+    "description": "Sweetened tomato condiment sauce used in cooking and as a topping",
+    "category": "ingredients"
+  },
+  "tomato_sauce": {
+    "name": "Tomato Sauce",
+    "description": "Cooked reduced tomato sauce used as a pasta and cooking base",
+    "category": "ingredients"
+  },
+  "pizza_sauce": {
+    "name": "Pizza Sauce",
+    "description": "Seasoned tomato sauce spread on pizza bases before topping",
+    "category": "ingredients"
+  },
+  "salsa": {
+    "name": "Salsa",
+    "description": "Chopped tomato, onion and chilli sauce used in Mexican cooking",
     "category": "ingredients"
   },
   "fish_meal": {

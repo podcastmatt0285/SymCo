@@ -234,6 +234,10 @@ BUSINESS_COMPATIBILITY = {
     "towel_mill":             {"allowed_terrain": ['prairie', 'hills'],                  "allowed_proximity": ['urban', 'road']},
     "jeweler":                {"allowed_terrain": ['urban', 'prairie'],                  "allowed_proximity": ['urban']},
     "pet_store":              {"allowed_terrain": ['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island'], "allowed_proximity": ['urban', 'road', 'coastal', 'oasis', 'remote', 'riverside', 'lakeside', 'hot_springs', 'volcanic']},
+    # Rice and tomato chain businesses
+    "rice_paddy":             {"allowed_terrain": ['marsh', 'jungle', 'savanna', 'prairie'],          "allowed_proximity": ['riverside', 'lakeside']},
+    "sake_brewery":           {"allowed_terrain": ['urban', 'prairie', 'hills'],                       "allowed_proximity": ['urban', 'riverside']},
+    "tomato_cannery":         {"allowed_terrain": ['prairie', 'savanna', 'urban'],                     "allowed_proximity": ['urban', 'road', 'riverside']},
 }
 
 # ==========================

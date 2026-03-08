@@ -2672,6 +2672,36 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "tomato",
+        "output_qty": 120,
+        "inputs": [
+          {"item": "tomato_seeds", "quantity": 6},
+          {"item": "water", "quantity": 25},
+          {"item": "energy", "quantity": 8},
+          {"item": "paper", "quantity": 1}
+        ]
+      },
+      {
+        "output_item": "tomato",
+        "output_qty": 160,
+        "inputs": [
+          {"item": "tomato_seeds", "quantity": 6},
+          {"item": "fish_emulsion", "quantity": 5},
+          {"item": "water", "quantity": 25},
+          {"item": "energy", "quantity": 8},
+          {"item": "paper", "quantity": 1}
+        ]
+      },
+      {
+        "output_item": "tomato_seeds",
+        "output_qty": 12,
+        "inputs": [
+          {"item": "tomato", "quantity": 8},
+          {"item": "water", "quantity": 3},
+          {"item": "paper", "quantity": 1}
+        ]
       }
     ]
   },
@@ -3447,6 +3477,26 @@
             "item": "paper",
             "quantity": 1
           }
+        ]
+      },
+      {
+        "output_item": "rice_flour",
+        "output_qty": 90,
+        "inputs": [
+          {"item": "rice", "quantity": 110},
+          {"item": "energy", "quantity": 25},
+          {"item": "water", "quantity": 10},
+          {"item": "paper", "quantity": 1}
+        ]
+      },
+      {
+        "output_item": "rice_paper",
+        "output_qty": 60,
+        "inputs": [
+          {"item": "rice_flour", "quantity": 80},
+          {"item": "water", "quantity": 30},
+          {"item": "energy", "quantity": 20},
+          {"item": "paper", "quantity": 1}
         ]
       }
     ]
@@ -9059,6 +9109,16 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "rice_sack",
+        "output_qty": 30,
+        "inputs": [
+          {"item": "rice", "quantity": 120},
+          {"item": "burlap", "quantity": 30},
+          {"item": "energy", "quantity": 5},
+          {"item": "paper", "quantity": 1}
+        ]
       }
     ]
   },
@@ -11626,7 +11686,163 @@
       "calamari": {
         "elasticity": 0.9,
         "base_sale_chance": 0.03
+      },
+      "rice": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
+      },
+      "sake": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.025
       }
     }
+  },
+  "rice_paddy": {
+    "name": "Rice Paddy",
+    "description": "Flooded paddy fields producing staple white rice and seeds for replanting.",
+    "startup_cost": 14000,
+    "cycles_to_complete": 480,
+    "base_wage_cost": 120.0,
+    "allowed_terrain": [
+      "marsh",
+      "jungle",
+      "savanna",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "lakeside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "rice",
+        "output_qty": 150,
+        "inputs": [
+          {"item": "rice_seeds", "quantity": 8},
+          {"item": "water", "quantity": 60},
+          {"item": "energy", "quantity": 10},
+          {"item": "paper", "quantity": 1}
+        ]
+      },
+      {
+        "output_item": "rice_seeds",
+        "output_qty": 15,
+        "inputs": [
+          {"item": "rice", "quantity": 10},
+          {"item": "water", "quantity": 5},
+          {"item": "paper", "quantity": 1}
+        ]
+      }
+    ]
+  },
+  "sake_brewery": {
+    "name": "Sake Brewery",
+    "description": "Traditional brewery fermenting rice into sake and cooking rice wine.",
+    "startup_cost": 42000,
+    "cycles_to_complete": 240,
+    "base_wage_cost": 140.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "sake",
+        "output_qty": 40,
+        "inputs": [
+          {"item": "rice", "quantity": 120},
+          {"item": "water", "quantity": 80},
+          {"item": "yeast", "quantity": 5},
+          {"item": "energy", "quantity": 50},
+          {"item": "bottle", "quantity": 40},
+          {"item": "paper", "quantity": 2}
+        ]
+      },
+      {
+        "output_item": "rice_wine",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "rice", "quantity": 100},
+          {"item": "water", "quantity": 60},
+          {"item": "yeast", "quantity": 3},
+          {"item": "energy", "quantity": 35},
+          {"item": "bottle", "quantity": 50},
+          {"item": "paper", "quantity": 2}
+        ]
+      }
+    ]
+  },
+  "tomato_cannery": {
+    "name": "Tomato Cannery",
+    "description": "Processes fresh tomatoes into sauces, ketchup, salsa and cooking bases.",
+    "startup_cost": 28000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 110.0,
+    "allowed_terrain": [
+      "prairie",
+      "savanna",
+      "urban"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road",
+      "riverside"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tomato_sauce",
+        "output_qty": 80,
+        "inputs": [
+          {"item": "tomato", "quantity": 200},
+          {"item": "onions", "quantity": 30},
+          {"item": "energy", "quantity": 20},
+          {"item": "jar", "quantity": 80},
+          {"item": "paper", "quantity": 2}
+        ]
+      },
+      {
+        "output_item": "pizza_sauce",
+        "output_qty": 80,
+        "inputs": [
+          {"item": "tomato", "quantity": 200},
+          {"item": "onions", "quantity": 20},
+          {"item": "energy", "quantity": 20},
+          {"item": "jar", "quantity": 80},
+          {"item": "paper", "quantity": 2}
+        ]
+      },
+      {
+        "output_item": "ketchup",
+        "output_qty": 60,
+        "inputs": [
+          {"item": "tomato", "quantity": 180},
+          {"item": "sugar", "quantity": 40},
+          {"item": "vinegar", "quantity": 20},
+          {"item": "energy", "quantity": 20},
+          {"item": "jar", "quantity": 60},
+          {"item": "paper", "quantity": 2}
+        ]
+      },
+      {
+        "output_item": "salsa",
+        "output_qty": 60,
+        "inputs": [
+          {"item": "tomato", "quantity": 150},
+          {"item": "onions", "quantity": 40},
+          {"item": "vinegar", "quantity": 10},
+          {"item": "energy", "quantity": 15},
+          {"item": "jar", "quantity": 60},
+          {"item": "paper", "quantity": 2}
+        ]
+      }
+    ]
   }
 }

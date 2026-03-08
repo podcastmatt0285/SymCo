@@ -6008,6 +6008,10 @@
             "quantity": 200
           },
           {
+            "item": "pizza_sauce",
+            "quantity": 120
+          },
+          {
             "item": "pork",
             "quantity": 100
           },
@@ -6104,16 +6108,24 @@
         "output_qty": 300,
         "inputs": [
           {
-            "item": "beef",
-            "quantity": 150
+            "item": "salmon_fillet",
+            "quantity": 100
           },
           {
-            "item": "flour",
+            "item": "tuna_steak",
+            "quantity": 80
+          },
+          {
+            "item": "rice",
             "quantity": 200
           },
           {
-            "item": "water",
-            "quantity": 150
+            "item": "rice_paper",
+            "quantity": 60
+          },
+          {
+            "item": "rice_wine",
+            "quantity": 20
           },
           {
             "item": "paper",
@@ -6168,7 +6180,7 @@
         "output_qty": 350,
         "inputs": [
           {
-            "item": "flour",
+            "item": "rice",
             "quantity": 250
           },
           {
