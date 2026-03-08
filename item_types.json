@@ -389,6 +389,116 @@
     "description": "Fermented rice wine used as a cooking ingredient and mild table drink",
     "category": "alcohol"
   },
+  "cigarette": {
+    "name": "Cigarettes",
+    "description": "Standard filter cigarettes from a blended Virginia and Burley tobacco mix",
+    "category": "tobacco"
+  },
+  "virginia_cigarette": {
+    "name": "Virginia Cigarettes",
+    "description": "Mild, full-flavoured cigarettes made from pure flue-cured Virginia tobacco",
+    "category": "tobacco"
+  },
+  "menthol_cigarette": {
+    "name": "Menthol Cigarettes",
+    "description": "Cigarettes infused with menthol crystals for a cool, minty smoking experience",
+    "category": "tobacco"
+  },
+  "turkish_cigarette": {
+    "name": "Turkish Cigarettes",
+    "description": "Aromatic oval cigarettes blended from sun-cured Oriental and Greek Basma tobaccos",
+    "category": "tobacco"
+  },
+  "clove_cigarette": {
+    "name": "Clove Cigarettes",
+    "description": "Indonesian-style kretek cigarettes blended with tobacco and ground cinnamon-clove spice",
+    "category": "tobacco"
+  },
+  "cigarillo": {
+    "name": "Cigarillo",
+    "description": "Small, slim cigar made from natural leaf wrapper, bridging cigarettes and full cigars",
+    "category": "tobacco"
+  },
+  "corona_cigar": {
+    "name": "Corona Cigar",
+    "description": "Classic medium-sized handrolled cigar in the traditional corona format",
+    "category": "tobacco"
+  },
+  "robusto_cigar": {
+    "name": "Robusto Cigar",
+    "description": "Short, thick handrolled cigar delivering a concentrated, full-bodied smoke",
+    "category": "tobacco"
+  },
+  "churchill_cigar": {
+    "name": "Churchill Cigar",
+    "description": "Generously sized 7-inch cigar in the grand Churchill format, for a long, slow smoke",
+    "category": "tobacco"
+  },
+  "premium_cigar": {
+    "name": "Premium Cigar",
+    "description": "Luxury handrolled cigar using the finest aged wrapper, binder, and filler \u2014 Holt's-quality",
+    "category": "tobacco"
+  },
+  "cuban_style_cigar": {
+    "name": "Cuban-Style Cigar",
+    "description": "Ultra-premium handrolled cigar crafted entirely from Cuban-heritage Habano and Corojo tobaccos",
+    "category": "tobacco"
+  },
+  "aromatic_pipe_tobacco": {
+    "name": "Aromatic Pipe Tobacco",
+    "description": "Sweetened Cavendish-based pipe blend with flavourings, the entry point for casual pipe smokers",
+    "category": "tobacco"
+  },
+  "english_blend_pipe_tobacco": {
+    "name": "English Blend Pipe Tobacco",
+    "description": "Classic Latakia-forward pipe blend with Oriental and Virginia components, rich and smoky",
+    "category": "tobacco"
+  },
+  "virginia_pipe_tobacco": {
+    "name": "Virginia Pipe Tobacco",
+    "description": "Pure flue-cured Virginia blend, naturally sweet and mild, ideal for beginning pipe smokers",
+    "category": "tobacco"
+  },
+  "flake_pipe_tobacco": {
+    "name": "Flake Pipe Tobacco",
+    "description": "Pressed Virginia and Cavendish tobacco sliced into flakes and rubbed out before smoking",
+    "category": "tobacco"
+  },
+  "dokha": {
+    "name": "Dokha",
+    "description": "Extremely potent Middle Eastern tobacco smoked in a traditional midwaha brass pipe \u2014 one draw is enough",
+    "category": "tobacco"
+  },
+  "snuff": {
+    "name": "Snuff",
+    "description": "Finely ground dry tobacco inhaled through the nostrils, a centuries-old European and Asian tradition",
+    "category": "tobacco"
+  },
+  "chewing_tobacco": {
+    "name": "Chewing Tobacco",
+    "description": "Dark fired tobacco pressed into plugs or loose cut for chewing, traditional among sailors and labourers",
+    "category": "tobacco"
+  },
+  "hookah_tobacco": {
+    "name": "Hookah Tobacco",
+    "description": "Molasses-moistened shisha tobacco for water pipe smoking, staple of Middle Eastern cafes and casino lounges",
+    "category": "tobacco"
+  },
+  "tobacco_rope": {
+    "name": "Tobacco Rope",
+    "description": "Twisted rope of dark fired tobacco, cut to length for chewing or pipe smoking \u2014 historical trade good",
+    "category": "tobacco"
+  },
+  "sacred_tobacco": {
+    "name": "Sacred Tobacco",
+    "description": "Ceremonial grade tobacco prepared for ritual and spiritual use, distinct from commercial smoking tobacco",
+    "category": "tobacco"
+  },
+  "tobacco_cured_fish": {
+    "name": "Tobacco-Cured Fish",
+    "description": "Eel cold-smoked over fire-cured tobacco leaves, yielding a rich, complex flavour prized in specialty cuisine",
+    "category": "seafood_product"
+  },
   "painkillers": {
     "name": "Pain Relievers",
     "description": "Over-the-counter analgesic",
@@ -999,6 +1109,11 @@
     "description": "Seeds for growing tomato plants",
     "category": "seeds"
   },
+  "tobacco_seeds": {
+    "name": "Tobacco Seeds",
+    "description": "Tiny seeds for cultivating all tobacco varieties, from bright Virginia leaf to premium cigar wrappers",
+    "category": "seeds"
+  },
   "cherries": {
     "name": "Cherries",
     "description": "Sweet red fruit",
@@ -1147,6 +1262,86 @@
   "rice": {
     "name": "Rice",
     "description": "Staple grain harvested from flooded paddies, used in cooking and brewing",
+    "category": "crops"
+  },
+  "virginia_leaf": {
+    "name": "Virginia Tobacco Leaf",
+    "description": "Bright flue-cured tobacco leaf with high sugar content, backbone of most cigarette blends",
+    "category": "crops"
+  },
+  "burley_leaf": {
+    "name": "Burley Tobacco Leaf",
+    "description": "Air-cured leaf with low sugar and high nicotine, essential for American cigarette blends",
+    "category": "crops"
+  },
+  "golden_burley_leaf": {
+    "name": "Golden Burley Leaf",
+    "description": "Light-coloured air-cured burley variant with a sweeter, milder character",
+    "category": "crops"
+  },
+  "oriental_leaf": {
+    "name": "Oriental Tobacco Leaf",
+    "description": "Small sun-cured aromatic leaf from Mediterranean regions, key to Turkish blends",
+    "category": "crops"
+  },
+  "greek_basma_leaf": {
+    "name": "Greek Basma Oriental Leaf",
+    "description": "Exceptionally fine aromatic sun-cured Oriental tobacco from northern Greece",
+    "category": "crops"
+  },
+  "dokha_leaf": {
+    "name": "Dokha Leaf",
+    "description": "Extremely potent dried tobacco from the Middle East, smoked in a traditional midwaha pipe",
+    "category": "crops"
+  },
+  "latakia_leaf": {
+    "name": "Latakia Leaf",
+    "description": "Syrian and Cypriot fire-cured tobacco leaf with a distinctive smoky, campfire aroma",
+    "category": "crops"
+  },
+  "perique_leaf": {
+    "name": "Perique Leaf",
+    "description": "Rare Louisiana delta tobacco pressure-fermented under its own weight, adds spice to pipe blends",
+    "category": "crops"
+  },
+  "cavendish_leaf": {
+    "name": "Cavendish Leaf",
+    "description": "Base tobacco leaf selected for sweetened fermentation processing into Cavendish tobacco",
+    "category": "crops"
+  },
+  "corojo_leaf": {
+    "name": "Corojo Leaf",
+    "description": "Cuban-heritage wrapper leaf with rich complex flavour and a distinctive red-brown hue",
+    "category": "crops"
+  },
+  "habano_leaf": {
+    "name": "Habano Leaf",
+    "description": "Premium Cuban-style wrapper grown from Cuban seed stock, the gold standard of cigar wrappers",
+    "category": "crops"
+  },
+  "criollo_leaf": {
+    "name": "Criollo Leaf",
+    "description": "Traditional Central American binder and filler leaf with an earthy, medium-bodied character",
+    "category": "crops"
+  },
+  "connecticut_shade_leaf": {
+    "name": "Connecticut Shade Leaf",
+    "description": "Delicate light wrapper leaf grown under shade cloth in the Connecticut River valley",
+    "category": "crops"
+  },
+  "connecticut_broadleaf": {
+    "name": "Connecticut Broadleaf",
+    "description": "Dark, oily, naturally sweet binder leaf grown in the Connecticut valley",
+    "category": "crops"
+  },
+  "cameroon_leaf": {
+    "name": "Cameroon Leaf",
+    "description": "Central African wrapper leaf with a distinctive toothy texture and rich, spicy flavour",
+    "category": "crops"
+  },
+  "sumatra_leaf": {
+    "name": "Sumatra Leaf",
+    "description": "Indonesian wrapper and binder leaf with thin, silky texture and a mild, creamy character",
     "category": "crops"
   },
   "perfume": {
@@ -1702,6 +1897,36 @@
   "salsa": {
     "name": "Salsa",
     "description": "Chopped tomato, onion and chilli sauce used in Mexican cooking",
+    "category": "ingredients"
+  },
+  "flue_cured_tobacco": {
+    "name": "Flue-Cured Tobacco",
+    "description": "Bright golden tobacco cured by heat from metal flues, producing a high-sugar, low-nicotine leaf",
+    "category": "ingredients"
+  },
+  "air_cured_tobacco": {
+    "name": "Air-Cured Tobacco",
+    "description": "Burley tobacco dried slowly in ventilated barns, producing a dry, high-nicotine, low-sugar leaf",
+    "category": "ingredients"
+  },
+  "fire_cured_tobacco": {
+    "name": "Fire-Cured Tobacco",
+    "description": "Tobacco cured by open hardwood fires, imparting a bold smoky flavour used in pipe and dark blends",
+    "category": "ingredients"
+  },
+  "sun_cured_tobacco": {
+    "name": "Sun-Cured Tobacco",
+    "description": "Oriental tobacco dried in direct sunlight, producing a light aromatic leaf for Turkish-style blends",
+    "category": "ingredients"
+  },
+  "cavendish_tobacco": {
+    "name": "Cavendish Tobacco",
+    "description": "Sweetened, steam-pressed and fermented tobacco, soft and mild, the base of aromatic pipe blends",
+    "category": "ingredients"
+  },
+  "perique_tobacco": {
+    "name": "Perique Tobacco",
+    "description": "Pressure-fermented under its own juices for months, producing a uniquely spicy, plummy condiment tobacco",
     "category": "ingredients"
   },
   "fish_meal": {

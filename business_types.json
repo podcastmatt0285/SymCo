@@ -2677,30 +2677,66 @@
         "output_item": "tomato",
         "output_qty": 120,
         "inputs": [
-          {"item": "tomato_seeds", "quantity": 6},
-          {"item": "water", "quantity": 25},
-          {"item": "energy", "quantity": 8},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "tomato_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       },
       {
         "output_item": "tomato",
         "output_qty": 160,
         "inputs": [
-          {"item": "tomato_seeds", "quantity": 6},
-          {"item": "fish_emulsion", "quantity": 5},
-          {"item": "water", "quantity": 25},
-          {"item": "energy", "quantity": 8},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "tomato_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "fish_emulsion",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       },
       {
         "output_item": "tomato_seeds",
         "output_qty": 12,
         "inputs": [
-          {"item": "tomato", "quantity": 8},
-          {"item": "water", "quantity": 3},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "tomato",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       }
     ]
@@ -3483,20 +3519,44 @@
         "output_item": "rice_flour",
         "output_qty": 90,
         "inputs": [
-          {"item": "rice", "quantity": 110},
-          {"item": "energy", "quantity": 25},
-          {"item": "water", "quantity": 10},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "rice",
+            "quantity": 110
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       },
       {
         "output_item": "rice_paper",
         "output_qty": 60,
         "inputs": [
-          {"item": "rice_flour", "quantity": 80},
-          {"item": "water", "quantity": 30},
-          {"item": "energy", "quantity": 20},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "rice_flour",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       }
     ]
@@ -9114,10 +9174,22 @@
         "output_item": "rice_sack",
         "output_qty": 30,
         "inputs": [
-          {"item": "rice", "quantity": 120},
-          {"item": "burlap", "quantity": 30},
-          {"item": "energy", "quantity": 5},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "rice",
+            "quantity": 120
+          },
+          {
+            "item": "burlap",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       }
     ]
@@ -11127,6 +11199,32 @@
             "quantity": 15
           }
         ]
+      },
+      {
+        "output_item": "tobacco_cured_fish",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "eel",
+            "quantity": 80
+          },
+          {
+            "item": "fire_cured_tobacco",
+            "quantity": 20
+          },
+          {
+            "item": "lumber",
+            "quantity": 15
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
       }
     ]
   },
@@ -11719,19 +11817,40 @@
         "output_item": "rice",
         "output_qty": 150,
         "inputs": [
-          {"item": "rice_seeds", "quantity": 8},
-          {"item": "water", "quantity": 60},
-          {"item": "energy", "quantity": 10},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "rice_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       },
       {
         "output_item": "rice_seeds",
         "output_qty": 15,
         "inputs": [
-          {"item": "rice", "quantity": 10},
-          {"item": "water", "quantity": 5},
-          {"item": "paper", "quantity": 1}
+          {
+            "item": "rice",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
         ]
       }
     ]
@@ -11757,24 +11876,60 @@
         "output_item": "sake",
         "output_qty": 40,
         "inputs": [
-          {"item": "rice", "quantity": 120},
-          {"item": "water", "quantity": 80},
-          {"item": "yeast", "quantity": 5},
-          {"item": "energy", "quantity": 50},
-          {"item": "bottle", "quantity": 40},
-          {"item": "paper", "quantity": 2}
+          {
+            "item": "rice",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "yeast",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "bottle",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
         ]
       },
       {
         "output_item": "rice_wine",
         "output_qty": 50,
         "inputs": [
-          {"item": "rice", "quantity": 100},
-          {"item": "water", "quantity": 60},
-          {"item": "yeast", "quantity": 3},
-          {"item": "energy", "quantity": 35},
-          {"item": "bottle", "quantity": 50},
-          {"item": "paper", "quantity": 2}
+          {
+            "item": "rice",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "yeast",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "bottle",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
         ]
       }
     ]
@@ -11801,48 +11956,1529 @@
         "output_item": "tomato_sauce",
         "output_qty": 80,
         "inputs": [
-          {"item": "tomato", "quantity": 200},
-          {"item": "onions", "quantity": 30},
-          {"item": "energy", "quantity": 20},
-          {"item": "jar", "quantity": 80},
-          {"item": "paper", "quantity": 2}
+          {
+            "item": "tomato",
+            "quantity": 200
+          },
+          {
+            "item": "onions",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "jar",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
         ]
       },
       {
         "output_item": "pizza_sauce",
         "output_qty": 80,
         "inputs": [
-          {"item": "tomato", "quantity": 200},
-          {"item": "onions", "quantity": 20},
-          {"item": "energy", "quantity": 20},
-          {"item": "jar", "quantity": 80},
-          {"item": "paper", "quantity": 2}
+          {
+            "item": "tomato",
+            "quantity": 200
+          },
+          {
+            "item": "onions",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "jar",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
         ]
       },
       {
         "output_item": "ketchup",
         "output_qty": 60,
         "inputs": [
-          {"item": "tomato", "quantity": 180},
-          {"item": "sugar", "quantity": 40},
-          {"item": "vinegar", "quantity": 20},
-          {"item": "energy", "quantity": 20},
-          {"item": "jar", "quantity": 60},
-          {"item": "paper", "quantity": 2}
+          {
+            "item": "tomato",
+            "quantity": 180
+          },
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "vinegar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
         ]
       },
       {
         "output_item": "salsa",
         "output_qty": 60,
         "inputs": [
-          {"item": "tomato", "quantity": 150},
-          {"item": "onions", "quantity": 40},
-          {"item": "vinegar", "quantity": 10},
-          {"item": "energy", "quantity": 15},
-          {"item": "jar", "quantity": 60},
-          {"item": "paper", "quantity": 2}
+          {
+            "item": "tomato",
+            "quantity": 150
+          },
+          {
+            "item": "onions",
+            "quantity": 40
+          },
+          {
+            "item": "vinegar",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
         ]
       }
     ]
+  },
+  "virginia_tobacco_farm": {
+    "name": "Virginia Tobacco Farm",
+    "description": "Flue-cured bright tobacco farm growing Virginia leaf \u2014 the high-sugar backbone of cigarette blends.",
+    "startup_cost": 9000,
+    "cycles_to_complete": 400,
+    "base_wage_cost": 90.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "savanna"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "virginia_leaf",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "virginia_leaf",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "fish_emulsion",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_seeds",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "virginia_leaf",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "burley_tobacco_farm": {
+    "name": "Burley Tobacco Farm",
+    "description": "Air-cured tobacco farm producing Burley and Golden Burley leaf \u2014 high-nicotine, low-sugar, essential for blending.",
+    "startup_cost": 9500,
+    "cycles_to_complete": 420,
+    "base_wage_cost": 90.0,
+    "allowed_terrain": [
+      "hills",
+      "mountain",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "burley_leaf",
+        "output_qty": 140,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 45
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "golden_burley_leaf",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_seeds",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "burley_leaf",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "oriental_tobacco_farm": {
+    "name": "Oriental Tobacco Farm",
+    "description": "Sun-cured tobacco farm growing aromatic Oriental, Greek Basma and potent Dokha leaf varieties.",
+    "startup_cost": 10000,
+    "cycles_to_complete": 360,
+    "base_wage_cost": 95.0,
+    "allowed_terrain": [
+      "hills",
+      "mountain",
+      "savanna"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "oriental_leaf",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "greek_basma_leaf",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 6
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "dokha_leaf",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 4
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_seeds",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "oriental_leaf",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 2
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "cigar_wrapper_farm": {
+    "name": "Cigar Wrapper Farm",
+    "description": "Premium shade-grown and sun-grown wrapper and binder farms producing Corojo, Habano, Criollo, Connecticut, Cameroon and Sumatra leaf.",
+    "startup_cost": 20000,
+    "cycles_to_complete": 480,
+    "base_wage_cost": 130.0,
+    "allowed_terrain": [
+      "jungle",
+      "island",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "riverside",
+      "oasis"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "corojo_leaf",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "habano_leaf",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "criollo_leaf",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 55
+          },
+          {
+            "item": "energy",
+            "quantity": 11
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "connecticut_shade_leaf",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "connecticut_broadleaf",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cameroon_leaf",
+        "output_qty": 55,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 55
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "sumatra_leaf",
+        "output_qty": 65,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 11
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_seeds",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "corojo_leaf",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "specialty_tobacco_farm": {
+    "name": "Specialty Tobacco Farm",
+    "description": "Grows rare and regionally unique tobaccos: fire-cured Latakia, pressure-fermented Perique, and Cavendish base leaf.",
+    "startup_cost": 13000,
+    "cycles_to_complete": 450,
+    "base_wage_cost": 110.0,
+    "allowed_terrain": [
+      "marsh",
+      "forest",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "remote",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "latakia_leaf",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "perique_leaf",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 4
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cavendish_leaf",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 45
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_seeds",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "latakia_leaf",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "tobacco_curing_house": {
+    "name": "Tobacco Curing House",
+    "description": "Industrial curing facility performing all four curing methods: flue-curing, air-curing, fire-curing, and sun-curing, plus Cavendish fermentation and Perique pressure-curing.",
+    "startup_cost": 38000,
+    "cycles_to_complete": 200,
+    "base_wage_cost": 160.0,
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "forest"
+    ],
+    "allowed_proximity": [
+      "road",
+      "remote"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "flue_cured_tobacco",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "virginia_leaf",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "air_cured_tobacco",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "burley_leaf",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "fire_cured_tobacco",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "latakia_leaf",
+            "quantity": 120
+          },
+          {
+            "item": "lumber",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "sun_cured_tobacco",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "oriental_leaf",
+            "quantity": 130
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cavendish_tobacco",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "cavendish_leaf",
+            "quantity": 100
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "perique_tobacco",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "perique_leaf",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "cigarette_factory": {
+    "name": "Cigarette Factory",
+    "description": "High-volume factory rolling cigarettes in multiple styles: blended, Virginia, menthol, Turkish aromatic and Indonesian clove.",
+    "startup_cost": 90000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 380.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "cigarette",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 120
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 60
+          },
+          {
+            "item": "cotton",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 35000
+          }
+        ]
+      },
+      {
+        "output_item": "virginia_cigarette",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 200
+          },
+          {
+            "item": "cotton",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 28000
+          }
+        ]
+      },
+      {
+        "output_item": "menthol_cigarette",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 120
+          },
+          {
+            "item": "mint",
+            "quantity": 30
+          },
+          {
+            "item": "cotton",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 28000
+          }
+        ]
+      },
+      {
+        "output_item": "turkish_cigarette",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "sun_cured_tobacco",
+            "quantity": 150
+          },
+          {
+            "item": "greek_basma_leaf",
+            "quantity": 50
+          },
+          {
+            "item": "cotton",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          }
+        ]
+      },
+      {
+        "output_item": "clove_cigarette",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 50
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 30
+          },
+          {
+            "item": "cotton",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          }
+        ]
+      },
+      {
+        "output_item": "cigarillo",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "connecticut_broadleaf",
+            "quantity": 50
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          }
+        ]
+      }
+    ]
+  },
+  "cigar_workshop": {
+    "name": "Cigar Workshop",
+    "description": "Handcraft cigar rollers producing corona, robusto, churchill, premium and ultra-luxury Cuban-style cigars \u2014 Holt's-grade quality.",
+    "startup_cost": 50000,
+    "cycles_to_complete": 180,
+    "base_wage_cost": 320.0,
+    "allowed_terrain": [
+      "urban",
+      "hills",
+      "island"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "corona_cigar",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "habano_leaf",
+            "quantity": 80
+          },
+          {
+            "item": "criollo_leaf",
+            "quantity": 60
+          },
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 12000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "robusto_cigar",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "corojo_leaf",
+            "quantity": 60
+          },
+          {
+            "item": "criollo_leaf",
+            "quantity": 50
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "churchill_cigar",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "connecticut_shade_leaf",
+            "quantity": 50
+          },
+          {
+            "item": "habano_leaf",
+            "quantity": 40
+          },
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 120
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 9000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "premium_cigar",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "connecticut_shade_leaf",
+            "quantity": 40
+          },
+          {
+            "item": "corojo_leaf",
+            "quantity": 40
+          },
+          {
+            "item": "habano_leaf",
+            "quantity": 30
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "cavendish_tobacco",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "cuban_style_cigar",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "connecticut_shade_leaf",
+            "quantity": 25
+          },
+          {
+            "item": "corojo_leaf",
+            "quantity": 30
+          },
+          {
+            "item": "habano_leaf",
+            "quantity": 25
+          },
+          {
+            "item": "criollo_leaf",
+            "quantity": 20
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 12000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      }
+    ]
+  },
+  "pipe_tobacco_house": {
+    "name": "Pipe Tobacco House",
+    "description": "Artisan blending house producing aromatic, English, Virginia and flake pipe tobaccos, plus dokha and traditional tobacco rope.",
+    "startup_cost": 32000,
+    "cycles_to_complete": 150,
+    "base_wage_cost": 210.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "aromatic_pipe_tobacco",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "cavendish_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "sugar",
+            "quantity": 30
+          },
+          {
+            "item": "jar",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "english_blend_pipe_tobacco",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "latakia_leaf",
+            "quantity": 80
+          },
+          {
+            "item": "sun_cured_tobacco",
+            "quantity": 60
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 40
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "virginia_pipe_tobacco",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "flue_cured_tobacco",
+            "quantity": 120
+          },
+          {
+            "item": "jar",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "flake_pipe_tobacco",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "virginia_leaf",
+            "quantity": 120
+          },
+          {
+            "item": "cavendish_tobacco",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "jar",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_rope",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "fire_cured_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "dokha",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "dokha_leaf",
+            "quantity": 80
+          },
+          {
+            "item": "sun_cured_tobacco",
+            "quantity": 20
+          },
+          {
+            "item": "jar",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "snuff_and_chew_factory": {
+    "name": "Snuff and Chew Factory",
+    "description": "Produces smokeless and specialist tobacco: snuff, chewing tobacco, hookah shisha, and rare ceremonial sacred tobacco.",
+    "startup_cost": 26000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 185.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "snuff",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "fire_cured_tobacco",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "jar",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "chewing_tobacco",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "fire_cured_tobacco",
+            "quantity": 120
+          },
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 60
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "hookah_tobacco",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "air_cured_tobacco",
+            "quantity": 80
+          },
+          {
+            "item": "cavendish_tobacco",
+            "quantity": 40
+          },
+          {
+            "item": "sugar",
+            "quantity": 50
+          },
+          {
+            "item": "jar",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "sacred_tobacco",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "perique_tobacco",
+            "quantity": 40
+          },
+          {
+            "item": "fire_cured_tobacco",
+            "quantity": 30
+          },
+          {
+            "item": "sun_cured_tobacco",
+            "quantity": 20
+          },
+          {
+            "item": "jar",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "tobacco_shop": {
+    "name": "Tobacco Shop",
+    "description": "Specialist retailer stocking cigarettes, cigars, pipe tobaccos, snuff, dokha, chewing tobacco and hookah blends.",
+    "startup_cost": 24000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 200.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills",
+      "island"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "retail",
+    "products": {
+      "cigarette": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.09
+      },
+      "virginia_cigarette": {
+        "elasticity": 0.95,
+        "base_sale_chance": 0.07
+      },
+      "menthol_cigarette": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.08
+      },
+      "turkish_cigarette": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.04
+      },
+      "clove_cigarette": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.035
+      },
+      "cigarillo": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.05
+      },
+      "corona_cigar": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.025
+      },
+      "robusto_cigar": {
+        "elasticity": 0.72,
+        "base_sale_chance": 0.022
+      },
+      "churchill_cigar": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.018
+      },
+      "premium_cigar": {
+        "elasticity": 0.5,
+        "base_sale_chance": 0.01
+      },
+      "cuban_style_cigar": {
+        "elasticity": 0.35,
+        "base_sale_chance": 0.005
+      },
+      "aromatic_pipe_tobacco": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.03
+      },
+      "english_blend_pipe_tobacco": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.025
+      },
+      "virginia_pipe_tobacco": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.03
+      },
+      "flake_pipe_tobacco": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.025
+      },
+      "tobacco_rope": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.02
+      },
+      "dokha": {
+        "elasticity": 0.5,
+        "base_sale_chance": 0.015
+      },
+      "snuff": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.03
+      },
+      "chewing_tobacco": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.04
+      },
+      "hookah_tobacco": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.025
+      }
+    }
   }
 }

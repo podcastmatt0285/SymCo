@@ -238,6 +238,18 @@ BUSINESS_COMPATIBILITY = {
     "rice_paddy":             {"allowed_terrain": ['marsh', 'jungle', 'savanna', 'prairie'],          "allowed_proximity": ['riverside', 'lakeside']},
     "sake_brewery":           {"allowed_terrain": ['urban', 'prairie', 'hills'],                       "allowed_proximity": ['urban', 'riverside']},
     "tomato_cannery":         {"allowed_terrain": ['prairie', 'savanna', 'urban'],                     "allowed_proximity": ['urban', 'road', 'riverside']},
+    # Tobacco chain businesses
+    "virginia_tobacco_farm":  {"allowed_terrain": ['prairie', 'hills', 'savanna'],                    "allowed_proximity": ['riverside', 'road', 'remote']},
+    "burley_tobacco_farm":    {"allowed_terrain": ['hills', 'mountain', 'prairie'],                   "allowed_proximity": ['riverside', 'road', 'remote']},
+    "oriental_tobacco_farm":  {"allowed_terrain": ['hills', 'mountain', 'savanna'],                   "allowed_proximity": ['volcanic', 'road', 'remote']},
+    "cigar_wrapper_farm":     {"allowed_terrain": ['jungle', 'island', 'marsh'],                      "allowed_proximity": ['coastal', 'riverside', 'oasis']},
+    "specialty_tobacco_farm": {"allowed_terrain": ['marsh', 'forest', 'hills'],                       "allowed_proximity": ['riverside', 'remote', 'road']},
+    "tobacco_curing_house":   {"allowed_terrain": ['prairie', 'hills', 'forest'],                     "allowed_proximity": ['road', 'remote']},
+    "cigarette_factory":      {"allowed_terrain": ['urban', 'prairie'],                               "allowed_proximity": ['urban', 'road']},
+    "cigar_workshop":         {"allowed_terrain": ['urban', 'hills', 'island'],                       "allowed_proximity": ['urban', 'road']},
+    "pipe_tobacco_house":     {"allowed_terrain": ['urban', 'prairie', 'hills'],                      "allowed_proximity": ['urban', 'road']},
+    "snuff_and_chew_factory": {"allowed_terrain": ['urban', 'prairie'],                               "allowed_proximity": ['urban', 'road']},
+    "tobacco_shop":           {"allowed_terrain": ['urban', 'prairie', 'hills', 'island'],            "allowed_proximity": ['urban', 'road']},
 }
 
 # ==========================
