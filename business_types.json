@@ -495,6 +495,46 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "glue",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "lard",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "fish_oil",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -2102,6 +2142,84 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "wheat",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "wheat_seeds",
+            "quantity": 10
+          },
+          {
+            "item": "fish_emulsion",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "barley",
+        "output_qty": 160,
+        "inputs": [
+          {
+            "item": "barley_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "fish_emulsion",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "corn",
+        "output_qty": 270,
+        "inputs": [
+          {
+            "item": "corn_seeds",
+            "quantity": 12
+          },
+          {
+            "item": "fish_emulsion",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -2216,6 +2334,32 @@
           {
             "item": "water",
             "quantity": 3
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "onions",
+        "output_qty": 140,
+        "inputs": [
+          {
+            "item": "onion_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "fish_emulsion",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
           },
           {
             "item": "paper",
@@ -5268,6 +5412,102 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "omega_3_capsule",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "fish_oil",
+            "quantity": 80
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "bandage",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "chitin",
+            "quantity": 40
+          },
+          {
+            "item": "cotton",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ointment",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "collagen_powder",
+            "quantity": 30
+          },
+          {
+            "item": "fish_oil",
+            "quantity": 15
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 22
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "vitamins",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "collagen_powder",
+            "quantity": 20
+          },
+          {
+            "item": "omega_3_capsule",
+            "quantity": 15
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ]
   },
@@ -8008,6 +8248,58 @@
           {
             "item": "paper",
             "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "collagen_powder",
+            "quantity": 25
+          },
+          {
+            "item": "fish_oil",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "bottle",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "soap",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "fish_oil",
+            "quantity": 50
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ]
       }
