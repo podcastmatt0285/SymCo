@@ -5671,6 +5671,14 @@
           {
             "item": "energy",
             "quantity": 25000
+          },
+          {
+            "item": "pasta",
+            "quantity": 300
+          },
+          {
+            "item": "vinegar",
+            "quantity": 30
           }
         ]
       }
@@ -6123,7 +6131,7 @@
         "inputs": [
           {
             "item": "flour",
-            "quantity": 200
+            "quantity": 50
           },
           {
             "item": "pork",
@@ -6148,6 +6156,10 @@
           {
             "item": "energy",
             "quantity": 22000
+          },
+          {
+            "item": "noodles",
+            "quantity": 150
           }
         ]
       },
@@ -6191,7 +6203,7 @@
         "inputs": [
           {
             "item": "flour",
-            "quantity": 150
+            "quantity": 30
           },
           {
             "item": "eggs",
@@ -6212,6 +6224,14 @@
           {
             "item": "energy",
             "quantity": 18000
+          },
+          {
+            "item": "noodles",
+            "quantity": 120
+          },
+          {
+            "item": "vinegar",
+            "quantity": 20
           }
         ]
       },
@@ -6238,6 +6258,10 @@
           {
             "item": "energy",
             "quantity": 19000
+          },
+          {
+            "item": "yogurt",
+            "quantity": 40
           }
         ]
       }
@@ -6428,6 +6452,24 @@
           {
             "item": "energy",
             "quantity": 8000
+          }
+        ]
+      },
+      {
+        "output_item": "cardboard_box",
+        "output_qty": 600,
+        "inputs": [
+          {
+            "item": "cardboard",
+            "quantity": 300
+          },
+          {
+            "item": "glue",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
           }
         ]
       }
@@ -7370,6 +7412,28 @@
             "quantity": 25000
           }
         ]
+      },
+      {
+        "output_item": "notebook",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 5000
+          },
+          {
+            "item": "glue",
+            "quantity": 25
+          },
+          {
+            "item": "ink",
+            "quantity": 1000
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          }
+        ]
       }
     ]
   },
@@ -7391,7 +7455,7 @@
         "inputs": [
           {
             "item": "bread",
-            "quantity": 250
+            "quantity": 150
           },
           {
             "item": "beef",
@@ -7416,6 +7480,14 @@
           {
             "item": "energy",
             "quantity": 18000
+          },
+          {
+            "item": "pasta",
+            "quantity": 150
+          },
+          {
+            "item": "jam",
+            "quantity": 50
           }
         ]
       }
@@ -9954,7 +10026,9 @@
     "startup_cost": 8000000,
     "cycles_to_complete": 86400,
     "base_wage_cost": 40000,
-    "allowed_terrain": ["district_coastal"],
+    "allowed_terrain": [
+      "district_coastal"
+    ],
     "allowed_proximity": [],
     "class": "production",
     "production_lines": [

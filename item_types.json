@@ -1753,5 +1753,90 @@
     "name": "Satay",
     "description": "Grilled skewered pork served with a rich peanut dipping sauce",
     "category": "food"
+  },
+  "jam": {
+    "name": "Jam",
+    "description": "Sweetened fruit preserve made from cooked cherries or apples",
+    "category": "food"
+  },
+  "jelly": {
+    "name": "Jelly",
+    "description": "Clear fruit preserve made from strained grape juice and sugar",
+    "category": "food"
+  },
+  "pasta": {
+    "name": "Pasta",
+    "description": "Dried egg pasta made from durum wheat flour",
+    "category": "food"
+  },
+  "spaghetti": {
+    "name": "Spaghetti",
+    "description": "Long thin pasta strands made from durum wheat",
+    "category": "food"
+  },
+  "noodles": {
+    "name": "Noodles",
+    "description": "Soft wheat noodles used in soups and stir-fries",
+    "category": "food"
+  },
+  "vinegar": {
+    "name": "Vinegar",
+    "description": "Acidic liquid fermented from red wine",
+    "category": "ingredients"
+  },
+  "apple_cider_vinegar": {
+    "name": "Apple Cider Vinegar",
+    "description": "Tangy vinegar fermented from apple cider",
+    "category": "ingredients"
+  },
+  "yogurt": {
+    "name": "Yogurt",
+    "description": "Creamy fermented dairy product made from cultured milk",
+    "category": "food"
+  },
+  "cardboard": {
+    "name": "Cardboard",
+    "description": "Heavy corrugated paper board for packaging and construction",
+    "category": "industrial"
+  },
+  "cardboard_box": {
+    "name": "Cardboard Box",
+    "description": "Corrugated cardboard shipping and storage container",
+    "category": "packaging"
+  },
+  "notebook": {
+    "name": "Notebook",
+    "description": "Bound paper notebook for writing and notes",
+    "category": "media"
+  },
+  "postcard": {
+    "name": "Postcard",
+    "description": "Printed card for correspondence and greetings",
+    "category": "media"
+  },
+  "envelope": {
+    "name": "Envelope",
+    "description": "Paper envelope for letters and mail",
+    "category": "packaging"
+  },
+  "beeswax": {
+    "name": "Beeswax",
+    "description": "Natural wax secreted by honeybees; used in cosmetics and polish",
+    "category": "industrial"
+  },
+  "royal_jelly": {
+    "name": "Royal Jelly",
+    "description": "Nutrient-rich secretion produced by worker bees for the queen",
+    "category": "ingredients"
+  },
+  "condensed_milk": {
+    "name": "Condensed Milk",
+    "description": "Sweetened concentrated milk reduced by slow cooking",
+    "category": "food"
+  },
+  "nails": {
+    "name": "Nails",
+    "description": "Iron fasteners for construction and woodworking",
+    "category": "industrial"
   }
 }

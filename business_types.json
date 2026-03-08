@@ -125,6 +125,64 @@
             "quantity": 5000
           }
         ]
+      },
+      {
+        "output_item": "notebook",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 1000
+          },
+          {
+            "item": "glue",
+            "quantity": 5
+          },
+          {
+            "item": "ink",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "postcard",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 300
+          },
+          {
+            "item": "ink",
+            "quantity": 1000
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "envelope",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 800
+          },
+          {
+            "item": "glue",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
       }
     ]
   },
@@ -268,6 +326,50 @@
           {
             "item": "energy",
             "quantity": 1550
+          }
+        ]
+      },
+      {
+        "output_item": "yogurt",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "milk",
+            "quantity": 80
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "condensed_milk",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "milk",
+            "quantity": 100
+          },
+          {
+            "item": "sugar",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
           }
         ]
       }
@@ -631,6 +733,46 @@
             "quantity": 2.5
           }
         ]
+      },
+      {
+        "output_item": "cardboard",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "paper",
+            "quantity": 200
+          },
+          {
+            "item": "glue",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "cardboard_box",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "cardboard",
+            "quantity": 50
+          },
+          {
+            "item": "glue",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -836,6 +978,46 @@
       "peanut_flour": {
         "elasticity": 0.8,
         "base_sale_chance": 0.03
+      },
+      "jam": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.05
+      },
+      "jelly": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "yogurt": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.06
+      },
+      "condensed_milk": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.04
+      },
+      "vinegar": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.03
+      },
+      "apple_cider_vinegar": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.03
+      },
+      "pasta": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.05
+      },
+      "spaghetti": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.05
+      },
+      "noodles": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.04
+      },
+      "envelope": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.02
       }
     }
   },
@@ -874,6 +1056,18 @@
       "paint": {
         "elasticity": 1.1,
         "base_sale_chance": 0.45
+      },
+      "notebook": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.07
+      },
+      "postcard": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.08
+      },
+      "envelope": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.06
       }
     }
   },
@@ -1341,6 +1535,24 @@
           {
             "item": "energy",
             "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "nails",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "iron",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30
           },
           {
             "item": "paper",
@@ -1886,6 +2098,10 @@
       "apple_sauce": {
         "elasticity": 0.9,
         "base_sale_chance": 0.06
+      },
+      "yogurt": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.05
       }
     }
   },
@@ -1941,6 +2157,10 @@
           {
             "item": "cream",
             "quantity": 1
+          },
+          {
+            "item": "vinegar",
+            "quantity": 3
           }
         ]
       },
@@ -1971,6 +2191,10 @@
           {
             "item": "sugar",
             "quantity": 1
+          },
+          {
+            "item": "noodles",
+            "quantity": 10
           }
         ]
       },
@@ -1993,6 +2217,58 @@
           {
             "item": "energy",
             "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "jam",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "cherries",
+            "quantity": 40
+          },
+          {
+            "item": "sugar",
+            "quantity": 30
+          },
+          {
+            "item": "jar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "jelly",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "grapes",
+            "quantity": 50
+          },
+          {
+            "item": "sugar",
+            "quantity": 35
+          },
+          {
+            "item": "jar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20
           },
           {
             "item": "paper",
@@ -2987,6 +3263,46 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "beeswax",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "royal_jelly",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "honey",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -3967,6 +4283,84 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "pasta",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 60
+          },
+          {
+            "item": "eggs",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "spaghetti",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 60
+          },
+          {
+            "item": "eggs",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "noodles",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "flour",
+            "quantity": 55
+          },
+          {
+            "item": "eggs",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -4030,6 +4424,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "jam",
+            "quantity": 5
           }
         ]
       },
@@ -4332,7 +4730,7 @@
         "inputs": [
           {
             "item": "cream",
-            "quantity": 30
+            "quantity": 15
           },
           {
             "item": "eggs",
@@ -4353,6 +4751,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "condensed_milk",
+            "quantity": 15
           }
         ]
       }
@@ -5131,6 +5533,24 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "vinegar",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "red_wine",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -5268,6 +5688,24 @@
           {
             "item": "paper",
             "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "apple_cider_vinegar",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "cider",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
           }
         ]
       }
@@ -7523,6 +7961,18 @@
       "ointment": {
         "elasticity": 0.45,
         "base_sale_chance": 0.04
+      },
+      "royal_jelly": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.03
+      },
+      "apple_cider_vinegar": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.03
+      },
+      "beeswax": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.02
       }
     }
   },
@@ -7659,6 +8109,14 @@
       "peanut_butter_cookie": {
         "elasticity": 1.2,
         "base_sale_chance": 0.07
+      },
+      "jam": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
+      },
+      "jelly": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.05
       }
     }
   },
@@ -7923,6 +8381,18 @@
       "religious_book": {
         "elasticity": 0.3,
         "base_sale_chance": 0.015
+      },
+      "notebook": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
+      },
+      "postcard": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.07
+      },
+      "envelope": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.05
       }
     }
   },
@@ -8058,6 +8528,18 @@
       "comforter": {
         "elasticity": 0.95,
         "base_sale_chance": 0.025
+      },
+      "beeswax": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.04
+      },
+      "nails": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.03
+      },
+      "cardboard_box": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.03
       }
     }
   },
@@ -8114,6 +8596,26 @@
       "peanut_butter": {
         "elasticity": 1.1,
         "base_sale_chance": 0.06
+      },
+      "jam": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.07
+      },
+      "jelly": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.06
+      },
+      "yogurt": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.08
+      },
+      "beeswax": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "royal_jelly": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.02
       }
     }
   },
