@@ -727,6 +727,13 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Map</span>
             </a>
 
+            <a href="/stats/production-costs" class="dc" style="--c:#f87171;--g:linear-gradient(90deg,#f87171,#fca5a5);--glow:rgba(248,113,113,0.12);--btn:#f87171;">
+                <span class="dc-ico">🏭</span>
+                <div class="dc-t">Cost Calculator</div>
+                <div class="dc-d">Vertical integration cost breakdowns and your personal WMA cost basis for every item</div>
+                <span class="dc-btn">Open Calculator</span>
+            </a>
+
         </div>
         """,
         player.cash_balance,
