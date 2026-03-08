@@ -1367,10 +1367,12 @@ def apply_school_upgrade(db, player_id: int, executive_id: int, bonus_key: str) 
     exec_obj.level          += 1
     exec_obj.pending_upgrade = False
 
-    # Wage: school graduation = +15% raise, then apply any wage modifier
-    exec_obj.wage = round(exec_obj.wage * (1.0 + WAGE_RAISE_ON_SCHOOL) * upgrade["wage_mod"], 2)
-    if exec_obj.wage < 0.01:
-        exec_obj.wage = 0.01
+    # Wage: school graduation = +15% raise, then apply any wage modifier.
+    # First Ladies have a permanent $0 wage (free forever) — do not inflate it.
+    if not getattr(exec_obj, 'is_first_lady', False):
+        exec_obj.wage = round(exec_obj.wage * (1.0 + WAGE_RAISE_ON_SCHOOL) * upgrade["wage_mod"], 2)
+        if exec_obj.wage < 0.01:
+            exec_obj.wage = 0.01
 
     db.commit()
 
@@ -1418,8 +1420,9 @@ def _process_aging(db, current_tick: int):
         ex.age_tick_accumulator = 0
         ex.current_age         += 1
 
-        # ── 7.85% automatic pay raise every birthday ──────────────────────────
-        ex.wage = round(ex.wage * (1.0 + WAGE_RAISE_ON_AGEUP), 2)
+        # ── 7.85% automatic pay raise every birthday (not for free First Ladies) ─
+        if not getattr(ex, 'is_first_lady', False):
+            ex.wage = round(ex.wage * (1.0 + WAGE_RAISE_ON_AGEUP), 2)
 
         # Death check
         if ex.current_age >= ex.max_age:
