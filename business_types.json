@@ -806,6 +806,18 @@
       "carrots": {
         "elasticity": 0.85,
         "base_sale_chance": 0.022
+      },
+      "peanut_butter": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.05
+      },
+      "peanut_oil": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.04
+      },
+      "peanut_flour": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.03
       }
     }
   },
@@ -4066,6 +4078,36 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "peanut_butter_cookie",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "peanut_butter",
+            "quantity": 15
+          },
+          {
+            "item": "peanut_flour",
+            "quantity": 10
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "eggs",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -5689,6 +5731,36 @@
           {
             "item": "jar",
             "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "satay",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "pork",
+            "quantity": 20
+          },
+          {
+            "item": "peanut_butter",
+            "quantity": 15
+          },
+          {
+            "item": "peanut_oil",
+            "quantity": 10
+          },
+          {
+            "item": "onions",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 35
           },
           {
             "item": "paper",
@@ -7543,6 +7615,10 @@
       "cheesecake": {
         "elasticity": 0.7,
         "base_sale_chance": 0.03
+      },
+      "peanut_butter_cookie": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.07
       }
     }
   },
@@ -7912,6 +7988,10 @@
       "prawn_cocktail": {
         "elasticity": 0.85,
         "base_sale_chance": 0.025
+      },
+      "satay": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.03
       }
     }
   },
@@ -7990,6 +8070,10 @@
       "grapes": {
         "elasticity": 1.0,
         "base_sale_chance": 0.04
+      },
+      "peanut_butter": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
       }
     }
   },
@@ -8550,6 +8634,68 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "peanut_butter",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "peanut",
+            "quantity": 30
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "jar",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "peanut_oil",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "peanut",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "peanut_flour",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "peanut",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -8622,22 +8768,183 @@
     "startup_cost": 150000,
     "cycles_to_complete": 7200,
     "base_wage_cost": 300.0,
-    "allowed_terrain": ["coastal", "ocean"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "ocean"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "cod", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "haddock", "output_qty": 180, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "pollock", "output_qty": 250, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "flounder", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "sole", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "dab", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "coley", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "gurnard", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "red_mullet", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "halibut", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "turbot", "output_qty": 60, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "skate", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 70}, {"item": "energy", "quantity": 15}]}
+      {
+        "output_item": "cod",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "haddock",
+        "output_qty": 180,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "pollock",
+        "output_qty": 250,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "flounder",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "sole",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "dab",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "coley",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "gurnard",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "red_mullet",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "halibut",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "turbot",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "skate",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      }
     ]
   },
   "purse_seine_fleet": {
@@ -8646,16 +8953,99 @@
     "startup_cost": 200000,
     "cycles_to_complete": 7200,
     "base_wage_cost": 350.0,
-    "allowed_terrain": ["coastal", "ocean"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "ocean"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "sardines", "output_qty": 600, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "anchovies", "output_qty": 500, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "herring", "output_qty": 550, "inputs": [{"item": "bio_fuel", "quantity": 90}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "mackerel", "output_qty": 450, "inputs": [{"item": "bio_fuel", "quantity": 90}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "yellowfin_tuna", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 120}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "bluefish", "output_qty": 300, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 15}]}
+      {
+        "output_item": "sardines",
+        "output_qty": 600,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "anchovies",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "herring",
+        "output_qty": 550,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 90
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "mackerel",
+        "output_qty": 450,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 90
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "yellowfin_tuna",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 120
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "bluefish",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      }
     ]
   },
   "deep_sea_fleet": {
@@ -8664,19 +9054,141 @@
     "startup_cost": 380000,
     "cycles_to_complete": 14400,
     "base_wage_cost": 600.0,
-    "allowed_terrain": ["coastal", "ocean"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "ocean"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "swordfish", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 200}, {"item": "energy", "quantity": 40}]},
-      {"output_item": "mahi_mahi", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 180}, {"item": "energy", "quantity": 35}]},
-      {"output_item": "snapper", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 160}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "bluefin_tuna", "output_qty": 40, "inputs": [{"item": "bio_fuel", "quantity": 250}, {"item": "energy", "quantity": 50}]},
-      {"output_item": "barracuda", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 150}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "monkfish", "output_qty": 90, "inputs": [{"item": "bio_fuel", "quantity": 160}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "tilefish", "output_qty": 90, "inputs": [{"item": "bio_fuel", "quantity": 160}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "sea_trout", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 140}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "seabass", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 150}, {"item": "energy", "quantity": 30}]}
+      {
+        "output_item": "swordfish",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "mahi_mahi",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 180
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          }
+        ]
+      },
+      {
+        "output_item": "snapper",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 160
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "bluefin_tuna",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 250
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "barracuda",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "monkfish",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 160
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "tilefish",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 160
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "sea_trout",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 140
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "seabass",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      }
     ]
   },
   "crustacean_trappers": {
@@ -8685,14 +9197,72 @@
     "startup_cost": 80000,
     "cycles_to_complete": 7200,
     "base_wage_cost": 200.0,
-    "allowed_terrain": ["coastal", "ocean", "marsh"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "ocean",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "lobster", "output_qty": 60, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "blue_crab", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 50}, {"item": "energy", "quantity": 10}]},
-      {"output_item": "dungeness_crab", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 12}]},
-      {"output_item": "langoustine", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 55}, {"item": "energy", "quantity": 12}]}
+      {
+        "output_item": "lobster",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "blue_crab",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "dungeness_crab",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          }
+        ]
+      },
+      {
+        "output_item": "langoustine",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 55
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          }
+        ]
+      }
     ]
   },
   "shrimp_fleet": {
@@ -8701,11 +9271,30 @@
     "startup_cost": 120000,
     "cycles_to_complete": 7200,
     "base_wage_cost": 250.0,
-    "allowed_terrain": ["coastal", "ocean", "marsh"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "ocean",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "shrimp", "output_qty": 600, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]}
+      {
+        "output_item": "shrimp",
+        "output_qty": 600,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      }
     ]
   },
   "shellfish_beds": {
@@ -8714,15 +9303,86 @@
     "startup_cost": 35000,
     "cycles_to_complete": 5400,
     "base_wage_cost": 80.0,
-    "allowed_terrain": ["coastal", "marsh", "island"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "marsh",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "scallops", "output_qty": 300, "inputs": [{"item": "bio_fuel", "quantity": 30}, {"item": "energy", "quantity": 10}]},
-      {"output_item": "clams", "output_qty": 400, "inputs": [{"item": "bio_fuel", "quantity": 25}, {"item": "energy", "quantity": 8}]},
-      {"output_item": "oysters", "output_qty": 350, "inputs": [{"item": "bio_fuel", "quantity": 25}, {"item": "energy", "quantity": 8}]},
-      {"output_item": "mussels", "output_qty": 500, "inputs": [{"item": "bio_fuel", "quantity": 20}, {"item": "energy", "quantity": 8}]},
-      {"output_item": "barnacles", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 20}, {"item": "energy", "quantity": 8}]}
+      {
+        "output_item": "scallops",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "clams",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "oysters",
+        "output_qty": 350,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "mussels",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "barnacles",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          }
+        ]
+      }
     ]
   },
   "dive_operations": {
@@ -8731,15 +9391,86 @@
     "startup_cost": 60000,
     "cycles_to_complete": 3600,
     "base_wage_cost": 150.0,
-    "allowed_terrain": ["coastal", "ocean", "island"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "ocean",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "urchin", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 40}, {"item": "energy", "quantity": 10}]},
-      {"output_item": "conch", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 35}, {"item": "energy", "quantity": 10}]},
-      {"output_item": "squid", "output_qty": 300, "inputs": [{"item": "bio_fuel", "quantity": 40}, {"item": "energy", "quantity": 10}]},
-      {"output_item": "octopus", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 40}, {"item": "energy", "quantity": 10}]},
-      {"output_item": "eel", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 35}, {"item": "energy", "quantity": 10}]}
+      {
+        "output_item": "urchin",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "conch",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "squid",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "octopus",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "eel",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "bio_fuel",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      }
     ]
   },
   "freshwater_fishing": {
@@ -8748,15 +9479,66 @@
     "startup_cost": 15000,
     "cycles_to_complete": 3600,
     "base_wage_cost": 80.0,
-    "allowed_terrain": ["lake", "marsh"],
-    "allowed_proximity": ["lakeside", "riverside"],
+    "allowed_terrain": [
+      "lake",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "lakeside",
+      "riverside"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "catfish", "output_qty": 200, "inputs": [{"item": "energy", "quantity": 20}]},
-      {"output_item": "perch", "output_qty": 250, "inputs": [{"item": "energy", "quantity": 20}]},
-      {"output_item": "bass", "output_qty": 200, "inputs": [{"item": "energy", "quantity": 20}]},
-      {"output_item": "trout", "output_qty": 180, "inputs": [{"item": "energy", "quantity": 20}]},
-      {"output_item": "crawfish", "output_qty": 400, "inputs": [{"item": "energy", "quantity": 15}]}
+      {
+        "output_item": "catfish",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "perch",
+        "output_qty": 250,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "bass",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "trout",
+        "output_qty": 180,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "crawfish",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      }
     ]
   },
   "aquaculture_farm": {
@@ -8765,16 +9547,124 @@
     "startup_cost": 200000,
     "cycles_to_complete": 86400,
     "base_wage_cost": 500.0,
-    "allowed_terrain": ["coastal", "lake"],
-    "allowed_proximity": ["coastal", "lakeside"],
+    "allowed_terrain": [
+      "coastal",
+      "lake"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "lakeside"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "salmon", "output_qty": 400, "inputs": [{"item": "fish_meal", "quantity": 200}, {"item": "energy", "quantity": 100}, {"item": "water", "quantity": 500}]},
-      {"output_item": "tilapia", "output_qty": 600, "inputs": [{"item": "fish_meal", "quantity": 150}, {"item": "energy", "quantity": 80}, {"item": "water", "quantity": 400}]},
-      {"output_item": "pangasius", "output_qty": 600, "inputs": [{"item": "fish_meal", "quantity": 150}, {"item": "energy", "quantity": 80}, {"item": "water", "quantity": 400}]},
-      {"output_item": "seabass", "output_qty": 300, "inputs": [{"item": "fish_meal", "quantity": 180}, {"item": "energy", "quantity": 90}, {"item": "water", "quantity": 450}]},
-      {"output_item": "barramundi", "output_qty": 350, "inputs": [{"item": "fish_meal", "quantity": 180}, {"item": "energy", "quantity": 90}, {"item": "water", "quantity": 450}]},
-      {"output_item": "trout", "output_qty": 350, "inputs": [{"item": "fish_meal", "quantity": 160}, {"item": "energy", "quantity": 85}, {"item": "water", "quantity": 420}]}
+      {
+        "output_item": "salmon",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 500
+          }
+        ]
+      },
+      {
+        "output_item": "tilapia",
+        "output_qty": 600,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 400
+          }
+        ]
+      },
+      {
+        "output_item": "pangasius",
+        "output_qty": 600,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 400
+          }
+        ]
+      },
+      {
+        "output_item": "seabass",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 180
+          },
+          {
+            "item": "energy",
+            "quantity": 90
+          },
+          {
+            "item": "water",
+            "quantity": 450
+          }
+        ]
+      },
+      {
+        "output_item": "barramundi",
+        "output_qty": 350,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 180
+          },
+          {
+            "item": "energy",
+            "quantity": 90
+          },
+          {
+            "item": "water",
+            "quantity": 450
+          }
+        ]
+      },
+      {
+        "output_item": "trout",
+        "output_qty": 350,
+        "inputs": [
+          {
+            "item": "fish_meal",
+            "quantity": 160
+          },
+          {
+            "item": "energy",
+            "quantity": 85
+          },
+          {
+            "item": "water",
+            "quantity": 420
+          }
+        ]
+      }
     ]
   },
   "fish_processing_plant": {
@@ -8783,42 +9673,529 @@
     "startup_cost": 75000,
     "cycles_to_complete": 3600,
     "base_wage_cost": 250.0,
-    "allowed_terrain": ["coastal", "urban", "prairie"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "fish_fillet", "output_qty": 150, "inputs": [{"item": "cod", "quantity": 200}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_fillet", "output_qty": 150, "inputs": [{"item": "haddock", "quantity": 200}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_fillet", "output_qty": 200, "inputs": [{"item": "pollock", "quantity": 250}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_fillet", "output_qty": 120, "inputs": [{"item": "tilapia", "quantity": 160}, {"item": "salt", "quantity": 8}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "fish_fillet", "output_qty": 100, "inputs": [{"item": "catfish", "quantity": 140}, {"item": "salt", "quantity": 8}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "salmon_fillet", "output_qty": 120, "inputs": [{"item": "salmon", "quantity": 160}, {"item": "salt", "quantity": 8}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "tuna_steak", "output_qty": 100, "inputs": [{"item": "yellowfin_tuna", "quantity": 130}, {"item": "salt", "quantity": 6}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "bluefin_tuna_sashimi", "output_qty": 40, "inputs": [{"item": "bluefin_tuna", "quantity": 50}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "swordfish_steak", "output_qty": 60, "inputs": [{"item": "swordfish", "quantity": 80}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "halibut_steak", "output_qty": 60, "inputs": [{"item": "halibut", "quantity": 80}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "shrimp_peeled", "output_qty": 400, "inputs": [{"item": "shrimp", "quantity": 500}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "crab_meat", "output_qty": 80, "inputs": [{"item": "blue_crab", "quantity": 120}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "crab_meat", "output_qty": 80, "inputs": [{"item": "dungeness_crab", "quantity": 100}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "lobster_meat", "output_qty": 40, "inputs": [{"item": "lobster", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "scallop_meat", "output_qty": 200, "inputs": [{"item": "scallops", "quantity": 300}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "calamari", "output_qty": 200, "inputs": [{"item": "squid", "quantity": 300}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "octopus_cleaned", "output_qty": 60, "inputs": [{"item": "octopus", "quantity": 80}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "fish_fingers", "output_qty": 300, "inputs": [{"item": "pollock", "quantity": 200}, {"item": "flour", "quantity": 50}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_fingers", "output_qty": 300, "inputs": [{"item": "cod", "quantity": 200}, {"item": "flour", "quantity": 50}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "surimi", "output_qty": 400, "inputs": [{"item": "pollock", "quantity": 500}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 40}]},
-      {"output_item": "imitation_crab", "output_qty": 350, "inputs": [{"item": "surimi", "quantity": 300}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "fish_meal", "output_qty": 500, "inputs": [{"item": "sardines", "quantity": 800}, {"item": "energy", "quantity": 40}]},
-      {"output_item": "fish_meal", "output_qty": 500, "inputs": [{"item": "anchovies", "quantity": 800}, {"item": "energy", "quantity": 40}]},
-      {"output_item": "fish_oil", "output_qty": 200, "inputs": [{"item": "sardines", "quantity": 600}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_oil", "output_qty": 200, "inputs": [{"item": "mackerel", "quantity": 500}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_oil", "output_qty": 200, "inputs": [{"item": "salmon", "quantity": 400}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "chitin", "output_qty": 150, "inputs": [{"item": "shrimp", "quantity": 400}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "chitin", "output_qty": 120, "inputs": [{"item": "blue_crab", "quantity": 300}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "collagen_powder", "output_qty": 100, "inputs": [{"item": "fish_fillet", "quantity": 200}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_emulsion", "output_qty": 300, "inputs": [{"item": "sardines", "quantity": 500}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "salmon_roe", "output_qty": 50, "inputs": [{"item": "salmon", "quantity": 100}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "omega_3_capsule", "output_qty": 400, "inputs": [{"item": "fish_oil", "quantity": 100}, {"item": "energy", "quantity": 20}]}
+      {
+        "output_item": "fish_fillet",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "cod",
+            "quantity": 200
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_fillet",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "haddock",
+            "quantity": 200
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_fillet",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "pollock",
+            "quantity": 250
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_fillet",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "tilapia",
+            "quantity": 160
+          },
+          {
+            "item": "salt",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "fish_fillet",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "catfish",
+            "quantity": 140
+          },
+          {
+            "item": "salt",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "salmon_fillet",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "salmon",
+            "quantity": 160
+          },
+          {
+            "item": "salt",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "tuna_steak",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "yellowfin_tuna",
+            "quantity": 130
+          },
+          {
+            "item": "salt",
+            "quantity": 6
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "bluefin_tuna_sashimi",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "bluefin_tuna",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "swordfish_steak",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "swordfish",
+            "quantity": 80
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "halibut_steak",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "halibut",
+            "quantity": 80
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "shrimp_peeled",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "shrimp",
+            "quantity": 500
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "crab_meat",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "blue_crab",
+            "quantity": 120
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "crab_meat",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "dungeness_crab",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "lobster_meat",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "lobster",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "scallop_meat",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "scallops",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "calamari",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "squid",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "octopus_cleaned",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "octopus",
+            "quantity": 80
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "fish_fingers",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "pollock",
+            "quantity": 200
+          },
+          {
+            "item": "flour",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_fingers",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "cod",
+            "quantity": 200
+          },
+          {
+            "item": "flour",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "surimi",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "pollock",
+            "quantity": 500
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "imitation_crab",
+        "output_qty": 350,
+        "inputs": [
+          {
+            "item": "surimi",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "fish_meal",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "sardines",
+            "quantity": 800
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "fish_meal",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "anchovies",
+            "quantity": 800
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "fish_oil",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "sardines",
+            "quantity": 600
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_oil",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "mackerel",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_oil",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "salmon",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "chitin",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "shrimp",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "chitin",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "blue_crab",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "collagen_powder",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "fish_fillet",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_emulsion",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "sardines",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "salmon_roe",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "salmon",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "omega_3_capsule",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "fish_oil",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      }
     ]
   },
   "cannery": {
@@ -8827,18 +10204,161 @@
     "startup_cost": 120000,
     "cycles_to_complete": 7200,
     "base_wage_cost": 400.0,
-    "allowed_terrain": ["coastal", "urban", "prairie"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "canned_tuna", "output_qty": 300, "inputs": [{"item": "yellowfin_tuna", "quantity": 200}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 40}]},
-      {"output_item": "canned_sardines", "output_qty": 500, "inputs": [{"item": "sardines", "quantity": 400}, {"item": "salt", "quantity": 25}, {"item": "energy", "quantity": 35}]},
-      {"output_item": "canned_salmon", "output_qty": 300, "inputs": [{"item": "salmon", "quantity": 220}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 35}]},
-      {"output_item": "canned_mackerel", "output_qty": 350, "inputs": [{"item": "mackerel", "quantity": 280}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 35}]},
-      {"output_item": "canned_clams", "output_qty": 400, "inputs": [{"item": "clams", "quantity": 350}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 35}]},
-      {"output_item": "canned_crab", "output_qty": 200, "inputs": [{"item": "blue_crab", "quantity": 200}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "canned_oysters", "output_qty": 300, "inputs": [{"item": "oysters", "quantity": 300}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "canned_anchovies", "output_qty": 400, "inputs": [{"item": "anchovies", "quantity": 350}, {"item": "salt", "quantity": 25}, {"item": "energy", "quantity": 30}]}
+      {
+        "output_item": "canned_tuna",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "yellowfin_tuna",
+            "quantity": 200
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "canned_sardines",
+        "output_qty": 500,
+        "inputs": [
+          {
+            "item": "sardines",
+            "quantity": 400
+          },
+          {
+            "item": "salt",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          }
+        ]
+      },
+      {
+        "output_item": "canned_salmon",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "salmon",
+            "quantity": 220
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          }
+        ]
+      },
+      {
+        "output_item": "canned_mackerel",
+        "output_qty": 350,
+        "inputs": [
+          {
+            "item": "mackerel",
+            "quantity": 280
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          }
+        ]
+      },
+      {
+        "output_item": "canned_clams",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "clams",
+            "quantity": 350
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          }
+        ]
+      },
+      {
+        "output_item": "canned_crab",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "blue_crab",
+            "quantity": 200
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "canned_oysters",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "canned_anchovies",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "anchovies",
+            "quantity": 350
+          },
+          {
+            "item": "salt",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      }
     ]
   },
   "seafood_smokehouse": {
@@ -8847,20 +10367,201 @@
     "startup_cost": 45000,
     "cycles_to_complete": 5400,
     "base_wage_cost": 200.0,
-    "allowed_terrain": ["coastal", "forest", "hills"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "forest",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "smoked_salmon", "output_qty": 100, "inputs": [{"item": "salmon", "quantity": 150}, {"item": "lumber", "quantity": 30}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "smoked_mackerel", "output_qty": 150, "inputs": [{"item": "mackerel", "quantity": 200}, {"item": "lumber", "quantity": 25}, {"item": "salt", "quantity": 12}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "smoked_eel", "output_qty": 80, "inputs": [{"item": "eel", "quantity": 120}, {"item": "lumber", "quantity": 20}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "salt_cod", "output_qty": 200, "inputs": [{"item": "cod", "quantity": 300}, {"item": "salt", "quantity": 60}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "pickled_herring", "output_qty": 250, "inputs": [{"item": "herring", "quantity": 300}, {"item": "salt", "quantity": 40}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "dried_anchovies", "output_qty": 200, "inputs": [{"item": "anchovies", "quantity": 300}, {"item": "salt", "quantity": 40}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "dried_squid", "output_qty": 150, "inputs": [{"item": "squid", "quantity": 250}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "unagi_kabayaki", "output_qty": 80, "inputs": [{"item": "eel", "quantity": 120}, {"item": "sugar", "quantity": 20}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "isinglass", "output_qty": 50, "inputs": [{"item": "cod", "quantity": 100}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "isinglass", "output_qty": 50, "inputs": [{"item": "haddock", "quantity": 100}, {"item": "energy", "quantity": 15}]}
+      {
+        "output_item": "smoked_salmon",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "salmon",
+            "quantity": 150
+          },
+          {
+            "item": "lumber",
+            "quantity": 30
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "smoked_mackerel",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "mackerel",
+            "quantity": 200
+          },
+          {
+            "item": "lumber",
+            "quantity": 25
+          },
+          {
+            "item": "salt",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "smoked_eel",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "eel",
+            "quantity": 120
+          },
+          {
+            "item": "lumber",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "salt_cod",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "cod",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "pickled_herring",
+        "output_qty": 250,
+        "inputs": [
+          {
+            "item": "herring",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "dried_anchovies",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "anchovies",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "dried_squid",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "squid",
+            "quantity": 250
+          },
+          {
+            "item": "salt",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "unagi_kabayaki",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "eel",
+            "quantity": 120
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "isinglass",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "cod",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "isinglass",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "haddock",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      }
     ]
   },
   "seafood_condiment_factory": {
@@ -8869,17 +10570,139 @@
     "startup_cost": 55000,
     "cycles_to_complete": 7200,
     "base_wage_cost": 250.0,
-    "allowed_terrain": ["coastal", "urban", "prairie"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "fish_sauce", "output_qty": 300, "inputs": [{"item": "anchovies", "quantity": 400}, {"item": "salt", "quantity": 80}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "fish_sauce", "output_qty": 300, "inputs": [{"item": "sardines", "quantity": 400}, {"item": "salt", "quantity": 80}, {"item": "energy", "quantity": 30}]},
-      {"output_item": "oyster_sauce", "output_qty": 250, "inputs": [{"item": "oysters", "quantity": 300}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "shrimp_paste", "output_qty": 200, "inputs": [{"item": "shrimp", "quantity": 350}, {"item": "salt", "quantity": 60}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "worcestershire_sauce", "output_qty": 200, "inputs": [{"item": "anchovies", "quantity": 200}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "anchovy_paste", "output_qty": 250, "inputs": [{"item": "anchovies", "quantity": 350}, {"item": "salt", "quantity": 50}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "conch_shell", "output_qty": 50, "inputs": [{"item": "conch", "quantity": 100}, {"item": "energy", "quantity": 10}]}
+      {
+        "output_item": "fish_sauce",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "anchovies",
+            "quantity": 400
+          },
+          {
+            "item": "salt",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "fish_sauce",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "sardines",
+            "quantity": 400
+          },
+          {
+            "item": "salt",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "oyster_sauce",
+        "output_qty": 250,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "shrimp_paste",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "shrimp",
+            "quantity": 350
+          },
+          {
+            "item": "salt",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "worcestershire_sauce",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "anchovies",
+            "quantity": 200
+          },
+          {
+            "item": "salt",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "anchovy_paste",
+        "output_qty": 250,
+        "inputs": [
+          {
+            "item": "anchovies",
+            "quantity": 350
+          },
+          {
+            "item": "salt",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "conch_shell",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "conch",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      }
     ]
   },
   "pearl_oyster_farm": {
@@ -8888,16 +10711,115 @@
     "startup_cost": 350000,
     "cycles_to_complete": 86400,
     "base_wage_cost": 400.0,
-    "allowed_terrain": ["coastal", "island"],
-    "allowed_proximity": ["coastal"],
+    "allowed_terrain": [
+      "coastal",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal"
+    ],
     "class": "production",
     "production_lines": [
-      {"output_item": "white_pearl", "output_qty": 5, "inputs": [{"item": "oysters", "quantity": 200}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 40}]},
-      {"output_item": "black_pearl", "output_qty": 3, "inputs": [{"item": "oysters", "quantity": 300}, {"item": "salt", "quantity": 25}, {"item": "energy", "quantity": 50}]},
-      {"output_item": "pink_pearl", "output_qty": 4, "inputs": [{"item": "oysters", "quantity": 250}, {"item": "salt", "quantity": 22}, {"item": "energy", "quantity": 45}]},
-      {"output_item": "golden_pearl", "output_qty": 2, "inputs": [{"item": "oysters", "quantity": 400}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 60}]},
-      {"output_item": "mother_of_pearl", "output_qty": 80, "inputs": [{"item": "oysters", "quantity": 150}, {"item": "energy", "quantity": 25}]},
-      {"output_item": "mother_of_pearl", "output_qty": 60, "inputs": [{"item": "clams", "quantity": 150}, {"item": "energy", "quantity": 25}]}
+      {
+        "output_item": "white_pearl",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 200
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "black_pearl",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 300
+          },
+          {
+            "item": "salt",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "pink_pearl",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 250
+          },
+          {
+            "item": "salt",
+            "quantity": 22
+          },
+          {
+            "item": "energy",
+            "quantity": 45
+          }
+        ]
+      },
+      {
+        "output_item": "golden_pearl",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 400
+          },
+          {
+            "item": "salt",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          }
+        ]
+      },
+      {
+        "output_item": "mother_of_pearl",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "oysters",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "mother_of_pearl",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "clams",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          }
+        ]
+      }
     ]
   },
   "fish_market": {
@@ -8906,33 +10828,109 @@
     "startup_cost": 20000,
     "cycles_to_complete": 60,
     "base_wage_cost": 100.0,
-    "allowed_terrain": ["coastal", "urban", "marsh"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "urban",
+      "marsh"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "retail",
     "products": {
-      "cod": {"elasticity": 1.1, "base_sale_chance": 0.04},
-      "haddock": {"elasticity": 1.1, "base_sale_chance": 0.04},
-      "salmon": {"elasticity": 1.0, "base_sale_chance": 0.035},
-      "salmon_fillet": {"elasticity": 1.0, "base_sale_chance": 0.04},
-      "fish_fillet": {"elasticity": 1.2, "base_sale_chance": 0.05},
-      "tuna_steak": {"elasticity": 0.9, "base_sale_chance": 0.025},
-      "bluefin_tuna_sashimi": {"elasticity": 0.6, "base_sale_chance": 0.008},
-      "halibut_steak": {"elasticity": 0.85, "base_sale_chance": 0.02},
-      "swordfish_steak": {"elasticity": 0.85, "base_sale_chance": 0.02},
-      "shrimp_peeled": {"elasticity": 1.0, "base_sale_chance": 0.04},
-      "lobster_meat": {"elasticity": 0.7, "base_sale_chance": 0.01},
-      "crab_meat": {"elasticity": 0.8, "base_sale_chance": 0.02},
-      "scallop_meat": {"elasticity": 0.85, "base_sale_chance": 0.02},
-      "calamari": {"elasticity": 0.9, "base_sale_chance": 0.03},
-      "smoked_salmon": {"elasticity": 0.8, "base_sale_chance": 0.025},
-      "smoked_mackerel": {"elasticity": 0.9, "base_sale_chance": 0.03},
-      "canned_tuna": {"elasticity": 1.2, "base_sale_chance": 0.06},
-      "canned_sardines": {"elasticity": 1.3, "base_sale_chance": 0.065},
-      "canned_salmon": {"elasticity": 1.1, "base_sale_chance": 0.05},
-      "fish_sauce": {"elasticity": 1.0, "base_sale_chance": 0.04},
-      "oyster_sauce": {"elasticity": 1.0, "base_sale_chance": 0.04},
-      "omega_3_capsule": {"elasticity": 0.9, "base_sale_chance": 0.035},
-      "fish_emulsion": {"elasticity": 1.1, "base_sale_chance": 0.04}
+      "cod": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.04
+      },
+      "haddock": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.04
+      },
+      "salmon": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.035
+      },
+      "salmon_fillet": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "fish_fillet": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.05
+      },
+      "tuna_steak": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.025
+      },
+      "bluefin_tuna_sashimi": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.008
+      },
+      "halibut_steak": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.02
+      },
+      "swordfish_steak": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.02
+      },
+      "shrimp_peeled": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "lobster_meat": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.01
+      },
+      "crab_meat": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.02
+      },
+      "scallop_meat": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.02
+      },
+      "calamari": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.03
+      },
+      "smoked_salmon": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.025
+      },
+      "smoked_mackerel": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.03
+      },
+      "canned_tuna": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.06
+      },
+      "canned_sardines": {
+        "elasticity": 1.3,
+        "base_sale_chance": 0.065
+      },
+      "canned_salmon": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.05
+      },
+      "fish_sauce": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "oyster_sauce": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "omega_3_capsule": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.035
+      },
+      "fish_emulsion": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.04
+      }
     }
   },
   "seafood_restaurant": {
@@ -8941,24 +10939,141 @@
     "startup_cost": 45000,
     "cycles_to_complete": 90,
     "base_wage_cost": 500.0,
-    "allowed_terrain": ["coastal", "urban", "island"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "urban",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "retail",
     "products": {
-      "fish_and_chips": {"elasticity": 1.1, "base_sale_chance": 0.05},
-      "seafood_chowder": {"elasticity": 0.9, "base_sale_chance": 0.04},
-      "lobster_bisque": {"elasticity": 0.7, "base_sale_chance": 0.02},
-      "grilled_salmon": {"elasticity": 0.85, "base_sale_chance": 0.03},
-      "prawn_cocktail": {"elasticity": 0.9, "base_sale_chance": 0.04},
-      "calamari": {"elasticity": 1.0, "base_sale_chance": 0.04},
-      "lobster_meat": {"elasticity": 0.65, "base_sale_chance": 0.015}
+      "fish_and_chips": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.05
+      },
+      "seafood_chowder": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.04
+      },
+      "lobster_bisque": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.02
+      },
+      "grilled_salmon": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.03
+      },
+      "prawn_cocktail": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.04
+      },
+      "calamari": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "lobster_meat": {
+        "elasticity": 0.65,
+        "base_sale_chance": 0.015
+      }
     },
     "production_lines": [
-      {"output_item": "fish_and_chips", "output_qty": 60, "inputs": [{"item": "fish_fillet", "quantity": 50}, {"item": "potatoes", "quantity": 60}, {"item": "energy", "quantity": 20}]},
-      {"output_item": "seafood_chowder", "output_qty": 50, "inputs": [{"item": "clams", "quantity": 80}, {"item": "shrimp_peeled", "quantity": 40}, {"item": "cream", "quantity": 30}, {"item": "potatoes", "quantity": 40}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "lobster_bisque", "output_qty": 40, "inputs": [{"item": "lobster_meat", "quantity": 30}, {"item": "cream", "quantity": 40}, {"item": "butter", "quantity": 15}, {"item": "energy", "quantity": 15}]},
-      {"output_item": "grilled_salmon", "output_qty": 60, "inputs": [{"item": "salmon_fillet", "quantity": 50}, {"item": "energy", "quantity": 12}]},
-      {"output_item": "prawn_cocktail", "output_qty": 80, "inputs": [{"item": "shrimp_peeled", "quantity": 80}, {"item": "energy", "quantity": 10}]}
+      {
+        "output_item": "fish_and_chips",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "fish_fillet",
+            "quantity": 50
+          },
+          {
+            "item": "potatoes",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "seafood_chowder",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "clams",
+            "quantity": 80
+          },
+          {
+            "item": "shrimp_peeled",
+            "quantity": 40
+          },
+          {
+            "item": "cream",
+            "quantity": 30
+          },
+          {
+            "item": "potatoes",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "lobster_bisque",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "lobster_meat",
+            "quantity": 30
+          },
+          {
+            "item": "cream",
+            "quantity": 40
+          },
+          {
+            "item": "butter",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "grilled_salmon",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "salmon_fillet",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          }
+        ]
+      },
+      {
+        "output_item": "prawn_cocktail",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "shrimp_peeled",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          }
+        ]
+      }
     ]
   },
   "sushi_bar": {
@@ -8967,17 +11082,45 @@
     "startup_cost": 55000,
     "cycles_to_complete": 90,
     "base_wage_cost": 600.0,
-    "allowed_terrain": ["coastal", "urban", "island"],
-    "allowed_proximity": ["coastal", "urban"],
+    "allowed_terrain": [
+      "coastal",
+      "urban",
+      "island"
+    ],
+    "allowed_proximity": [
+      "coastal",
+      "urban"
+    ],
     "class": "retail",
     "products": {
-      "salmon_fillet": {"elasticity": 1.0, "base_sale_chance": 0.04},
-      "tuna_steak": {"elasticity": 0.9, "base_sale_chance": 0.03},
-      "bluefin_tuna_sashimi": {"elasticity": 0.6, "base_sale_chance": 0.008},
-      "unagi_kabayaki": {"elasticity": 0.75, "base_sale_chance": 0.015},
-      "imitation_crab": {"elasticity": 1.1, "base_sale_chance": 0.05},
-      "salmon_roe": {"elasticity": 0.7, "base_sale_chance": 0.012},
-      "calamari": {"elasticity": 0.9, "base_sale_chance": 0.03}
+      "salmon_fillet": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.04
+      },
+      "tuna_steak": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.03
+      },
+      "bluefin_tuna_sashimi": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.008
+      },
+      "unagi_kabayaki": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.015
+      },
+      "imitation_crab": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.05
+      },
+      "salmon_roe": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.012
+      },
+      "calamari": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.03
+      }
     }
   }
 }

@@ -280,7 +280,7 @@
     "category": "beverage"
   },
   "latte": {
-    "name": "Caffè Latte",
+    "name": "Caff\u00e8 Latte",
     "description": "Espresso with steamed milk",
     "category": "beverage"
   },
@@ -350,7 +350,7 @@
     "category": "alcohol"
   },
   "rose_wine": {
-    "name": "Rosé Wine",
+    "name": "Ros\u00e9 Wine",
     "description": "Light pink wine",
     "category": "alcohol"
   },
@@ -590,7 +590,7 @@
     "category": "prepared_food"
   },
   "pate": {
-    "name": "Pâté",
+    "name": "P\u00e2t\u00e9",
     "description": "Rich liver spread",
     "category": "prepared_food"
   },
@@ -646,7 +646,7 @@
   },
   "cotton_seeds": {
     "name": "Cotton Seeds",
-    "description": "Seeds for planting cotton fields",
+    "description": "Seeds collected from cotton harvesting for replanting.",
     "category": "seeds"
   },
   "water": {
@@ -909,11 +909,6 @@
     "description": "Tradeable ETF shares that trace worldwide City Net Asset Value, backed by land holdings",
     "category": "financial"
   },
-  "cotton_seeds": {
-    "name": "Cotton Seeds",
-    "description": "Seeds collected from cotton harvesting for replanting.",
-    "category": "seeds"
-  },
   "blackstrap_molasses": {
     "name": "Blackstrap Molasses",
     "description": "Thick, dark, and bitter molasses byproduct of sugar refining.",
@@ -939,130 +934,130 @@
     "description": "Confectionery product made by heating sugar.",
     "category": "food"
   },
-  "pig": { 
-    "name": "Pig", 
-    "description": "Livestock for pork production", 
-    "category": "livestock" 
+  "pig": {
+    "name": "Pig",
+    "description": "Livestock for pork production",
+    "category": "livestock"
   },
-  "duck": { 
-    "name": "Duck", 
-    "description": "Waterfowl for meat and feathers", 
-    "category": "livestock" 
+  "duck": {
+    "name": "Duck",
+    "description": "Waterfowl for meat and feathers",
+    "category": "livestock"
   },
-  "chicken": { 
+  "chicken": {
     "name": "Chicken",
     "description": "Beautiful yet dethroned bird for meat and feathers",
     "category": "livestock"
   },
-  "pork": { 
-    "name": "Pork", 
-    "description": "Fresh pork cuts", 
-    "category": "food" 
+  "pork": {
+    "name": "Pork",
+    "description": "Fresh pork cuts",
+    "category": "food"
   },
-  "duck_meat": { 
-    "name": "Duck Meat", 
-    "description": "Rich poultry meat", 
-    "category": "food" 
+  "duck_meat": {
+    "name": "Duck Meat",
+    "description": "Rich poultry meat",
+    "category": "food"
   },
-  "feathers": { 
-    "name": "Feathers", 
-    "description": "Down feathers for upholstery", 
-    "category": "materials" 
+  "feathers": {
+    "name": "Feathers",
+    "description": "Down feathers for upholstery",
+    "category": "materials"
   },
-  "cherry_seeds": { 
-    "name": "Cherry Seeds", 
-    "description": "Seeds for cherry trees", 
-    "category": "seeds" 
+  "cherry_seeds": {
+    "name": "Cherry Seeds",
+    "description": "Seeds for cherry trees",
+    "category": "seeds"
   },
-  "onion_seeds": { 
-    "name": "Onion Seeds", 
-    "description": "Seeds for planting onions", 
-    "category": "seeds" 
+  "onion_seeds": {
+    "name": "Onion Seeds",
+    "description": "Seeds for planting onions",
+    "category": "seeds"
   },
-  "cherries": { 
-    "name": "Cherries", 
-    "description": "Sweet red fruit", 
-    "category": "fruits" 
+  "cherries": {
+    "name": "Cherries",
+    "description": "Sweet red fruit",
+    "category": "fruits"
   },
-  "onions": { 
-    "name": "Onions", 
-    "description": "Essential savory vegetable", 
-    "category": "vegetables" 
+  "onions": {
+    "name": "Onions",
+    "description": "Essential savory vegetable",
+    "category": "vegetables"
   },
-  "wheat": { 
-    "name": "Wheat", 
-    "description": "Grain for baking", 
-    "category": "crops" 
+  "wheat": {
+    "name": "Wheat",
+    "description": "Grain for baking",
+    "category": "crops"
   },
-  "flour": { 
-    "name": "Flour", 
-    "description": "Milled wheat powder", 
-    "category": "food" 
+  "flour": {
+    "name": "Flour",
+    "description": "Milled wheat powder",
+    "category": "food"
   },
-  "sand": { 
-    "name": "Silica Sand", 
-    "description": "Raw material for glass", 
-    "category": "ore" 
+  "sand": {
+    "name": "Silica Sand",
+    "description": "Raw material for glass",
+    "category": "ore"
   },
-  "glass": { 
-    "name": "Glass", 
-    "description": "Industrial glass sheets", 
-    "category": "industrial" 
+  "glass": {
+    "name": "Glass",
+    "description": "Industrial glass sheets",
+    "category": "industrial"
   },
-  "rubber": { 
-    "name": "Synthetic Rubber", 
-    "description": "Derived from oil for tires and seals", 
-    "category": "industrial" 
+  "rubber": {
+    "name": "Synthetic Rubber",
+    "description": "Derived from oil for tires and seals",
+    "category": "industrial"
   },
-  "car": { 
-    "name": "Sedan", 
-    "description": "Standard consumer vehicle", 
-    "category": "vehicle" 
+  "car": {
+    "name": "Sedan",
+    "description": "Standard consumer vehicle",
+    "category": "vehicle"
   },
-  "boat": { 
-    "name": "Motorboat", 
-    "description": "Recreational watercraft", 
-    "category": "vehicle" 
+  "boat": {
+    "name": "Motorboat",
+    "description": "Recreational watercraft",
+    "category": "vehicle"
   },
-  "candy_bar": { 
-    "name": "Chocolate Bar", 
-    "description": "Sugar and cocoa treat", 
-    "category": "food" 
+  "candy_bar": {
+    "name": "Chocolate Bar",
+    "description": "Sugar and cocoa treat",
+    "category": "food"
   },
-  "lollipop": { 
-    "name": "Lollipop", 
-    "description": "Hard candy on a stick", 
-    "category": "food" 
+  "lollipop": {
+    "name": "Lollipop",
+    "description": "Hard candy on a stick",
+    "category": "food"
   },
-  "apple_pie": { 
-    "name": "Apple Pie", 
-    "description": "Fresh baked pie", 
-    "category": "prepared_food" 
+  "apple_pie": {
+    "name": "Apple Pie",
+    "description": "Fresh baked pie",
+    "category": "prepared_food"
   },
-  "bread": { 
-    "name": "Artisan Bread", 
-    "description": "Fresh baked loaf", 
-    "category": "food" 
+  "bread": {
+    "name": "Artisan Bread",
+    "description": "Fresh baked loaf",
+    "category": "food"
   },
-  "medicine": { 
-    "name": "Antibiotics", 
-    "description": "Standard medical supplies", 
-    "category": "health" 
+  "medicine": {
+    "name": "Antibiotics",
+    "description": "Standard medical supplies",
+    "category": "health"
   },
-  "bandage": { 
-    "name": "Bandages", 
-    "description": "Cotton medical dressings", 
-    "category": "health" 
+  "bandage": {
+    "name": "Bandages",
+    "description": "Cotton medical dressings",
+    "category": "health"
   },
-  "magazine": { 
-    "name": "Lifestyle Magazine", 
-    "description": "Weekly glossy publication", 
-    "category": "media" 
+  "magazine": {
+    "name": "Lifestyle Magazine",
+    "description": "Weekly glossy publication",
+    "category": "media"
   },
-  "novel": { 
-    "name": "Mystery Novel", 
-    "description": "Paperback fiction", 
-    "category": "media" 
+  "novel": {
+    "name": "Mystery Novel",
+    "description": "Paperback fiction",
+    "category": "media"
   },
   "butter": {
     "name": "Butter",
@@ -1076,7 +1071,7 @@
   },
   "law_book": {
     "name": "Law Book",
-    "description": "Legal reference and case law compilation",
+    "description": "Legal reference text",
     "category": "media"
   },
   "encyclopedia": {
@@ -1086,7 +1081,7 @@
   },
   "paint": {
     "name": "Paint",
-    "description": "Pigmented coating for artistic and industrial use",
+    "description": "Colored coating for surfaces",
     "category": "industrial"
   },
   "cheese": {
@@ -1104,11 +1099,6 @@
     "description": "Precious metal accessories",
     "category": "accessories"
   },
-  "law_book": {
-    "name": "Law Book",
-    "description": "Legal reference text",
-    "category": "media"
-  },
   "lettuce": {
     "name": "Lettuce",
     "description": "Fresh leafy greens",
@@ -1118,11 +1108,6 @@
     "name": "Body Lotion",
     "description": "Skincare moisturizer",
     "category": "personal_care"
-  },
-  "paint": {
-    "name": "Paint",
-    "description": "Colored coating for surfaces",
-    "category": "industrial"
   },
   "peanut": {
     "name": "Peanuts",
@@ -1743,5 +1728,30 @@
     "name": "Grilled Salmon",
     "description": "Fresh salmon fillet grilled to perfection served in upscale restaurants",
     "category": "prepared_food"
+  },
+  "peanut_butter": {
+    "name": "Peanut Butter",
+    "description": "Smooth spread made from ground roasted peanuts",
+    "category": "food"
+  },
+  "peanut_flour": {
+    "name": "Peanut Flour",
+    "description": "Finely ground defatted peanut powder used in baking",
+    "category": "food"
+  },
+  "peanut_oil": {
+    "name": "Peanut Oil",
+    "description": "Refined cooking oil cold-pressed from peanuts",
+    "category": "food"
+  },
+  "peanut_butter_cookie": {
+    "name": "Peanut Butter Cookie",
+    "description": "Classic baked cookie made with creamy peanut butter",
+    "category": "food"
+  },
+  "satay": {
+    "name": "Satay",
+    "description": "Grilled skewered pork served with a rich peanut dipping sauce",
+    "category": "food"
   }
 }
