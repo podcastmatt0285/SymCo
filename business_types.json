@@ -3295,7 +3295,7 @@
   },
   "apiary": {
     "name": "Apiary & Honey Farm",
-    "description": "Beekeeping operation producing honey and beeswax.",
+    "description": "Beekeeping operation with live colonies. Bees produce pollen, honey, beeswax and royal jelly. Queen bees are extraordinarily rare and require vast reserves of royal jelly to rear.",
     "startup_cost": 6000,
     "cycles_to_complete": 80,
     "base_wage_cost": 30.0,
@@ -3313,9 +3313,57 @@
     "class": "production",
     "production_lines": [
       {
+        "output_item": "bees",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "bees",
+            "quantity": 5
+          },
+          {
+            "item": "pollen",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "pollen",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "bees",
+            "quantity": 3
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
         "output_item": "honey",
         "output_qty": 60,
         "inputs": [
+          {
+            "item": "bees",
+            "quantity": 5
+          },
           {
             "item": "water",
             "quantity": 20
@@ -3335,6 +3383,10 @@
         "output_qty": 30,
         "inputs": [
           {
+            "item": "bees",
+            "quantity": 3
+          },
+          {
             "item": "water",
             "quantity": 15
           },
@@ -3353,6 +3405,10 @@
         "output_qty": 5,
         "inputs": [
           {
+            "item": "bees",
+            "quantity": 10
+          },
+          {
             "item": "honey",
             "quantity": 5
           },
@@ -3367,6 +3423,28 @@
           {
             "item": "paper",
             "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "queen_bee",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "royal_jelly",
+            "quantity": 2000
+          },
+          {
+            "item": "bees",
+            "quantity": 500
+          },
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 2000
           }
         ]
       }
@@ -8072,17 +8150,9 @@
         "elasticity": 0.45,
         "base_sale_chance": 0.04
       },
-      "royal_jelly": {
-        "elasticity": 0.75,
-        "base_sale_chance": 0.03
-      },
       "apple_cider_vinegar": {
         "elasticity": 0.8,
         "base_sale_chance": 0.03
-      },
-      "beeswax": {
-        "elasticity": 0.7,
-        "base_sale_chance": 0.02
       }
     }
   },
@@ -8639,10 +8709,6 @@
         "elasticity": 0.95,
         "base_sale_chance": 0.025
       },
-      "beeswax": {
-        "elasticity": 0.9,
-        "base_sale_chance": 0.04
-      },
       "nails": {
         "elasticity": 0.6,
         "base_sale_chance": 0.03
@@ -8650,6 +8716,22 @@
       "cardboard_box": {
         "elasticity": 0.7,
         "base_sale_chance": 0.03
+      },
+      "tea_light": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.06
+      },
+      "birthday_candle": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.05
+      },
+      "ornamental_candle": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.04
+      },
+      "religious_candle": {
+        "elasticity": 0.4,
+        "base_sale_chance": 0.008
       }
     }
   },
@@ -8718,14 +8800,6 @@
       "yogurt": {
         "elasticity": 0.9,
         "base_sale_chance": 0.08
-      },
-      "beeswax": {
-        "elasticity": 1.0,
-        "base_sale_chance": 0.04
-      },
-      "royal_jelly": {
-        "elasticity": 0.7,
-        "base_sale_chance": 0.02
       }
     }
   },
@@ -9038,6 +9112,36 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "beeswax",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "oil",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ]
   },
@@ -9191,6 +9295,28 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "rope_wick",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "cotton",
+            "quantity": 30
+          },
+          {
+            "item": "apple_seeds",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -9229,6 +9355,36 @@
           {
             "item": "energy",
             "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "dye",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "oil",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "copper_ore",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "jar",
+            "quantity": 50
           },
           {
             "item": "paper",
@@ -13480,5 +13636,144 @@
         "base_sale_chance": 0.025
       }
     }
+  },
+  "candle_maker": {
+    "name": "Candle Maker",
+    "description": "Artisan candle workshop crafting beeswax candles in four tiers: simple tea lights, birthday candles, scented ornamental pillars, and an exquisite luxury religious candle woven from inputs spanning the marine, spice, textile, mineral and apiary chains.",
+    "startup_cost": 18000,
+    "cycles_to_complete": 120,
+    "base_wage_cost": 110.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "tea_light",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "beeswax",
+            "quantity": 80
+          },
+          {
+            "item": "cotton",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "birthday_candle",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "beeswax",
+            "quantity": 60
+          },
+          {
+            "item": "dye",
+            "quantity": 10
+          },
+          {
+            "item": "cotton",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ornamental_candle",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "beeswax",
+            "quantity": 100
+          },
+          {
+            "item": "dye",
+            "quantity": 20
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 10
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "religious_candle",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "beeswax",
+            "quantity": 200
+          },
+          {
+            "item": "golden_pearl",
+            "quantity": 5
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 30
+          },
+          {
+            "item": "silk",
+            "quantity": 20
+          },
+          {
+            "item": "rope_wick",
+            "quantity": 10
+          },
+          {
+            "item": "cardboard_box",
+            "quantity": 10
+          },
+          {
+            "item": "dye",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      }
+    ]
   }
 }

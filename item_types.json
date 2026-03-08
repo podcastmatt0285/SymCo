@@ -99,6 +99,16 @@
     "description": "Natural sweetener from bees",
     "category": "food"
   },
+  "bees": {
+    "name": "Bees",
+    "description": "Live honeybee colony. Required for all apiary production. Self-reproducing with pollen.",
+    "category": "livestock"
+  },
+  "queen_bee": {
+    "name": "Queen Bee",
+    "description": "Extremely rare fertile queen bee, raised on vast reserves of royal jelly. Establishes new colonies.",
+    "category": "livestock"
+  },
   "salt": {
     "name": "Salt",
     "description": "Essential mineral for food and industry",
@@ -2114,10 +2124,45 @@
     "description": "Natural wax secreted by honeybees; used in cosmetics and polish",
     "category": "industrial"
   },
+  "tea_light": {
+    "name": "Tea Light",
+    "description": "Small circular beeswax candle in a thin metal cup, burns for 3-5 hours",
+    "category": "home_goods"
+  },
+  "birthday_candle": {
+    "name": "Birthday Candles",
+    "description": "Slender dyed beeswax candles for celebration cakes, sold in packs",
+    "category": "home_goods"
+  },
+  "ornamental_candle": {
+    "name": "Ornamental Candle",
+    "description": "Hand-poured scented and coloured beeswax pillar candle, decorative and aromatic",
+    "category": "home_goods"
+  },
+  "religious_candle": {
+    "name": "Religious Candle",
+    "description": "Luxury hand-crafted devotional candle: dyed, cinnamon-scented beeswax poured over a pearl-adorned silk-wrapped cardboard vessel with an apple-fibre rope wick \u2014 a sacred heirloom object",
+    "category": "luxury"
+  },
   "royal_jelly": {
     "name": "Royal Jelly",
     "description": "Nutrient-rich secretion produced by worker bees for the queen",
     "category": "ingredients"
+  },
+  "pollen": {
+    "name": "Pollen",
+    "description": "Flower pollen collected by worker bees, essential feed for larvae and colony growth",
+    "category": "ingredients"
+  },
+  "dye": {
+    "name": "Dye",
+    "description": "Mineral-based pigment dissolved in solution, used to colour candles, textiles and crafts",
+    "category": "ingredients"
+  },
+  "rope_wick": {
+    "name": "Rope Wick",
+    "description": "Braided cotton wick twisted with dried apple-seed fibre, slow-burning and used in premium candles",
+    "category": "materials"
   },
   "condensed_milk": {
     "name": "Condensed Milk",

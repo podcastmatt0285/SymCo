@@ -250,6 +250,8 @@ BUSINESS_COMPATIBILITY = {
     "pipe_tobacco_house":     {"allowed_terrain": ['urban', 'prairie', 'hills'],                      "allowed_proximity": ['urban', 'road']},
     "snuff_and_chew_factory": {"allowed_terrain": ['urban', 'prairie'],                               "allowed_proximity": ['urban', 'road']},
     "tobacco_shop":           {"allowed_terrain": ['urban', 'prairie', 'hills', 'island'],            "allowed_proximity": ['urban', 'road']},
+    # Candle chain
+    "candle_maker":           {"allowed_terrain": ['urban', 'prairie', 'hills'],                      "allowed_proximity": ['urban', 'road']},
 }
 
 # ==========================

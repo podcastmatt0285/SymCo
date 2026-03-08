@@ -93,7 +93,11 @@ STARTER_INVENTORY = {
     "coffee_seeds": 12,
     "cherry_seeds": 12,
     "cocoa_seeds": 12,
-    "grape_seeds": 12
+    "grape_seeds": 12,
+    "tomato_seeds": 5,
+    "tobacco_seeds": 3,
+    "rice_seeds": 10,
+    "bees": 2,
 }
 
 # ==========================
