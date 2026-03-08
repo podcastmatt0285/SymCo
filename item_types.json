@@ -1168,5 +1168,580 @@
     "name": "Towel",
     "description": "Absorbent cloth",
     "category": "home_goods"
+  },
+  "trawler": {
+    "name": "Trawler",
+    "description": "Bottom-fishing vessel with large nets for demersal fish species",
+    "category": "vehicle"
+  },
+  "purse_seiner": {
+    "name": "Purse Seiner",
+    "description": "Vessel for catching schooling pelagic fish with purse seine nets",
+    "category": "vehicle"
+  },
+  "longliner": {
+    "name": "Long-liner",
+    "description": "Deep-sea fishing vessel using long lines with hundreds of baited hooks",
+    "category": "vehicle"
+  },
+  "lobster_boat": {
+    "name": "Lobster Boat",
+    "description": "Small vessel rigged for deploying and retrieving crustacean traps and pots",
+    "category": "vehicle"
+  },
+  "shrimp_trawler": {
+    "name": "Shrimp Trawler",
+    "description": "Specialized trawling vessel with fine-mesh nets for shrimp harvesting",
+    "category": "vehicle"
+  },
+  "dredger": {
+    "name": "Shellfish Dredger",
+    "description": "Vessel equipped with metal dredges for harvesting shellfish beds",
+    "category": "vehicle"
+  },
+  "dive_vessel": {
+    "name": "Dive Vessel",
+    "description": "Support vessel for commercial dive operations targeting exotic marine species",
+    "category": "vehicle"
+  },
+  "aquaculture_raft": {
+    "name": "Aquaculture Raft",
+    "description": "Floating net-pen platform for farming fish and shellfish in open water",
+    "category": "vehicle"
+  },
+  "freshwater_boat": {
+    "name": "Freshwater Fishing Boat",
+    "description": "Small flat-bottom boat suited for river, lake and pond fishing",
+    "category": "vehicle"
+  },
+  "shrimp": {
+    "name": "Shrimp",
+    "description": "Small saltwater crustacean, widely consumed worldwide",
+    "category": "shellfish"
+  },
+  "lobster": {
+    "name": "Lobster",
+    "description": "Large marine crustacean prized for its sweet, rich meat",
+    "category": "shellfish"
+  },
+  "blue_crab": {
+    "name": "Blue Crab",
+    "description": "Atlantic blue crab known for its delicate flavor",
+    "category": "shellfish"
+  },
+  "dungeness_crab": {
+    "name": "Dungeness Crab",
+    "description": "Pacific coast crab prized for its sweet, tender meat",
+    "category": "shellfish"
+  },
+  "scallops": {
+    "name": "Scallops",
+    "description": "Bivalve mollusks with sweet, tender adductor muscles",
+    "category": "shellfish"
+  },
+  "mussels": {
+    "name": "Mussels",
+    "description": "Bivalve mollusks commonly farmed on ropes or nets",
+    "category": "shellfish"
+  },
+  "clams": {
+    "name": "Clams",
+    "description": "Hard-shelled bivalve mollusks harvested from sandy seabeds",
+    "category": "shellfish"
+  },
+  "crawfish": {
+    "name": "Crawfish",
+    "description": "Freshwater crustacean resembling a small lobster, popular in Southern cuisine",
+    "category": "shellfish"
+  },
+  "oysters": {
+    "name": "Oysters",
+    "description": "Bivalve mollusks that filter seawater, valued for food and pearl production",
+    "category": "shellfish"
+  },
+  "langoustine": {
+    "name": "Langoustine",
+    "description": "Slender European lobster with delicate, sweet flavor",
+    "category": "shellfish"
+  },
+  "barnacles": {
+    "name": "Barnacles",
+    "description": "Unusual crustaceans found on rocks and hulls, prized as a delicacy in Iberia",
+    "category": "shellfish"
+  },
+  "conch": {
+    "name": "Conch",
+    "description": "Large marine snail with sweet, chewy meat and iconic spiral shell",
+    "category": "shellfish"
+  },
+  "urchin": {
+    "name": "Sea Urchin",
+    "description": "Spiny echinoderm with prized golden roe used in sushi and pasta",
+    "category": "shellfish"
+  },
+  "cod": {
+    "name": "Cod",
+    "description": "Classic white-fleshed demersal fish, cornerstone of fish and chips",
+    "category": "seafood"
+  },
+  "haddock": {
+    "name": "Haddock",
+    "description": "North Atlantic white fish, prized for smoking and frying",
+    "category": "seafood"
+  },
+  "tilapia": {
+    "name": "Tilapia",
+    "description": "Mild freshwater fish widely farmed globally",
+    "category": "seafood"
+  },
+  "pollock": {
+    "name": "Pollock",
+    "description": "Abundant white fish used in processed seafood products",
+    "category": "seafood"
+  },
+  "flounder": {
+    "name": "Flounder",
+    "description": "Flat white-fleshed fish with mild, delicate flavor",
+    "category": "seafood"
+  },
+  "halibut": {
+    "name": "Halibut",
+    "description": "Large flatfish with firm, meaty white flesh",
+    "category": "seafood"
+  },
+  "snapper": {
+    "name": "Red Snapper",
+    "description": "Tropical reef fish with firm, moist flesh",
+    "category": "seafood"
+  },
+  "mahi_mahi": {
+    "name": "Mahi-Mahi",
+    "description": "Tropical pelagic fish with firm, sweet flesh",
+    "category": "seafood"
+  },
+  "seabass": {
+    "name": "Sea Bass",
+    "description": "Prized white fish with delicate flavor, popular in fine dining",
+    "category": "seafood"
+  },
+  "sole": {
+    "name": "Dover Sole",
+    "description": "Premium flatfish with delicate flavor and fine texture",
+    "category": "seafood"
+  },
+  "pangasius": {
+    "name": "Pangasius",
+    "description": "Freshwater catfish widely farmed in Southeast Asia",
+    "category": "seafood"
+  },
+  "gurnard": {
+    "name": "Gurnard",
+    "description": "Distinctive spiny fish with firm, flavorful white flesh",
+    "category": "seafood"
+  },
+  "red_mullet": {
+    "name": "Red Mullet",
+    "description": "Mediterranean fish prized for its liver and rich flavor",
+    "category": "seafood"
+  },
+  "coley": {
+    "name": "Coley",
+    "description": "Sustainable white fish related to cod with a slightly stronger flavor",
+    "category": "seafood"
+  },
+  "dab": {
+    "name": "Dab",
+    "description": "Small flatfish similar to plaice with sweet, mild flavor",
+    "category": "seafood"
+  },
+  "turbot": {
+    "name": "Turbot",
+    "description": "Prized European flatfish with firm white flesh, among the most expensive fish",
+    "category": "seafood"
+  },
+  "skate": {
+    "name": "Skate",
+    "description": "Flat cartilaginous fish with wing-shaped fins used in French and British cuisine",
+    "category": "seafood"
+  },
+  "monkfish": {
+    "name": "Monkfish",
+    "description": "Prized fish with dense, sweet flesh called the poor mans lobster",
+    "category": "seafood"
+  },
+  "tilefish": {
+    "name": "Tilefish",
+    "description": "Deep-water fish with mild, sweet flesh resembling lobster in texture",
+    "category": "seafood"
+  },
+  "salmon": {
+    "name": "Atlantic Salmon",
+    "description": "Popular fatty fish farmed and wild-caught, rich in omega-3 fatty acids",
+    "category": "seafood"
+  },
+  "bluefin_tuna": {
+    "name": "Bluefin Tuna",
+    "description": "Premium apex predator fish, highly prized for sashimi and sushi",
+    "category": "seafood"
+  },
+  "yellowfin_tuna": {
+    "name": "Yellowfin Tuna",
+    "description": "Versatile mid-tier tuna used in steaks, sushi and canning",
+    "category": "seafood"
+  },
+  "mackerel": {
+    "name": "Mackerel",
+    "description": "Oily, fast-swimming schooling fish rich in omega-3 fatty acids",
+    "category": "seafood"
+  },
+  "sardines": {
+    "name": "Sardines",
+    "description": "Small oily fish caught in huge quantities for canning and processing",
+    "category": "seafood"
+  },
+  "trout": {
+    "name": "Rainbow Trout",
+    "description": "Freshwater salmonid widely farmed with delicate pink flesh",
+    "category": "seafood"
+  },
+  "anchovies": {
+    "name": "Anchovies",
+    "description": "Small oily fish essential for fish sauce, condiments and cooking",
+    "category": "seafood"
+  },
+  "herring": {
+    "name": "Herring",
+    "description": "Versatile oily fish used in pickling, smoking and canning",
+    "category": "seafood"
+  },
+  "swordfish": {
+    "name": "Swordfish",
+    "description": "Large predatory fish with firm, meaty steaks popular for grilling",
+    "category": "seafood"
+  },
+  "sea_trout": {
+    "name": "Sea Trout",
+    "description": "Migratory salmonid with rich flavor similar to wild salmon",
+    "category": "seafood"
+  },
+  "bluefish": {
+    "name": "Bluefish",
+    "description": "Aggressive pelagic predator with strong, distinctive flavor",
+    "category": "seafood"
+  },
+  "barracuda": {
+    "name": "Barracuda",
+    "description": "Fast predatory fish with firm flesh used in Caribbean and Pacific cuisines",
+    "category": "seafood"
+  },
+  "catfish": {
+    "name": "Catfish",
+    "description": "Bottom-dwelling freshwater fish widely farmed and popular in Southern cuisine",
+    "category": "seafood"
+  },
+  "perch": {
+    "name": "Perch",
+    "description": "Small freshwater fish with sweet, delicate white flesh",
+    "category": "seafood"
+  },
+  "bass": {
+    "name": "Bass",
+    "description": "Popular freshwater game fish with firm, mild white flesh",
+    "category": "seafood"
+  },
+  "barramundi": {
+    "name": "Barramundi",
+    "description": "Versatile Indo-Pacific fish that thrives in salt and freshwater aquaculture",
+    "category": "seafood"
+  },
+  "squid": {
+    "name": "Squid",
+    "description": "Fast-swimming cephalopod used in calamari, stir-fries and stews",
+    "category": "cephalopod"
+  },
+  "octopus": {
+    "name": "Octopus",
+    "description": "Eight-armed cephalopod prized in Mediterranean and Asian cuisine",
+    "category": "cephalopod"
+  },
+  "eel": {
+    "name": "Eel",
+    "description": "Snake-like fish with rich, fatty meat known as unagi in Japanese cuisine",
+    "category": "seafood"
+  },
+  "fish_fillet": {
+    "name": "Fish Fillet",
+    "description": "Boneless, skinless fillet from white fish ready for cooking",
+    "category": "seafood_product"
+  },
+  "salmon_fillet": {
+    "name": "Salmon Fillet",
+    "description": "Fresh skin-on salmon fillet rich in omega-3 fatty acids",
+    "category": "seafood_product"
+  },
+  "tuna_steak": {
+    "name": "Tuna Steak",
+    "description": "Thick-cut yellowfin tuna steak for grilling or searing",
+    "category": "seafood_product"
+  },
+  "bluefin_tuna_sashimi": {
+    "name": "Bluefin Tuna Sashimi",
+    "description": "Sashimi-grade bluefin tuna sliced for high-end sushi and omakase",
+    "category": "seafood_product"
+  },
+  "swordfish_steak": {
+    "name": "Swordfish Steak",
+    "description": "Thick-cut swordfish steak with meaty texture ideal for grilling",
+    "category": "seafood_product"
+  },
+  "halibut_steak": {
+    "name": "Halibut Steak",
+    "description": "Thick-cut halibut with firm white flesh",
+    "category": "seafood_product"
+  },
+  "shrimp_peeled": {
+    "name": "Peeled Shrimp",
+    "description": "Cleaned, deveined shrimp ready for cooking",
+    "category": "seafood_product"
+  },
+  "crab_meat": {
+    "name": "Crab Meat",
+    "description": "Picked crab meat from shells ready to use in dishes",
+    "category": "seafood_product"
+  },
+  "lobster_meat": {
+    "name": "Lobster Meat",
+    "description": "Extracted lobster tail and claw meat",
+    "category": "seafood_product"
+  },
+  "scallop_meat": {
+    "name": "Scallop Meat",
+    "description": "Cleaned scallop adductor muscles ready to sear",
+    "category": "seafood_product"
+  },
+  "calamari": {
+    "name": "Calamari Rings",
+    "description": "Cleaned and sliced squid rings for frying or grilling",
+    "category": "seafood_product"
+  },
+  "octopus_cleaned": {
+    "name": "Cleaned Octopus",
+    "description": "Prepared octopus ready for braising, grilling or salad",
+    "category": "seafood_product"
+  },
+  "fish_fingers": {
+    "name": "Fish Fingers",
+    "description": "Breaded pollock or cod portions, a staple frozen food product",
+    "category": "seafood_product"
+  },
+  "smoked_salmon": {
+    "name": "Smoked Salmon",
+    "description": "Cold-smoked salmon slices prized for charcuterie and brunch dishes",
+    "category": "seafood_product"
+  },
+  "smoked_mackerel": {
+    "name": "Smoked Mackerel",
+    "description": "Hot-smoked mackerel fillet with rich, intense flavor",
+    "category": "seafood_product"
+  },
+  "smoked_eel": {
+    "name": "Smoked Eel",
+    "description": "Delicately smoked eel fillets, a Dutch and British delicacy",
+    "category": "seafood_product"
+  },
+  "salt_cod": {
+    "name": "Salt Cod",
+    "description": "Dried and salted cod, a preserved staple with centuries of tradition",
+    "category": "seafood_product"
+  },
+  "pickled_herring": {
+    "name": "Pickled Herring",
+    "description": "Herring cured in vinegar brine, a Scandinavian specialty",
+    "category": "seafood_product"
+  },
+  "dried_anchovies": {
+    "name": "Dried Anchovies",
+    "description": "Salt-cured and dried anchovies widely used in Asian cuisine",
+    "category": "seafood_product"
+  },
+  "anchovy_paste": {
+    "name": "Anchovy Paste",
+    "description": "Concentrated anchovy puree used to add umami to sauces and dressings",
+    "category": "seafood_product"
+  },
+  "salmon_roe": {
+    "name": "Salmon Roe",
+    "description": "Vibrant orange salmon eggs used in sushi and gourmet dishes",
+    "category": "seafood_product"
+  },
+  "dried_squid": {
+    "name": "Dried Squid",
+    "description": "Dried and seasoned squid popular as a snack in Asian markets",
+    "category": "seafood_product"
+  },
+  "unagi_kabayaki": {
+    "name": "Unagi Kabayaki",
+    "description": "Grilled eel glazed with tare sauce, a celebrated Japanese delicacy",
+    "category": "seafood_product"
+  },
+  "surimi": {
+    "name": "Surimi",
+    "description": "Processed pollock paste base for imitation seafood products",
+    "category": "seafood_product"
+  },
+  "imitation_crab": {
+    "name": "Imitation Crab Sticks",
+    "description": "Crab-flavored seafood sticks made from surimi popular in sushi rolls",
+    "category": "seafood_product"
+  },
+  "canned_tuna": {
+    "name": "Canned Tuna",
+    "description": "Shelf-stable tuna in water or oil, a pantry staple worldwide",
+    "category": "canned_goods"
+  },
+  "canned_sardines": {
+    "name": "Canned Sardines",
+    "description": "Oil-packed whole sardines in a tin, nutritious and shelf-stable",
+    "category": "canned_goods"
+  },
+  "canned_salmon": {
+    "name": "Canned Salmon",
+    "description": "Convenient shelf-stable salmon packed in water",
+    "category": "canned_goods"
+  },
+  "canned_mackerel": {
+    "name": "Canned Mackerel",
+    "description": "Mackerel preserved in oil or tomato sauce",
+    "category": "canned_goods"
+  },
+  "canned_clams": {
+    "name": "Canned Clams",
+    "description": "Minced or whole clams in juice used in chowder and pasta sauces",
+    "category": "canned_goods"
+  },
+  "canned_crab": {
+    "name": "Canned Crab",
+    "description": "Picked crab meat in shelf-stable tins",
+    "category": "canned_goods"
+  },
+  "canned_oysters": {
+    "name": "Canned Oysters",
+    "description": "Smoked or plain oysters in oil used in dips and appetizers",
+    "category": "canned_goods"
+  },
+  "canned_anchovies": {
+    "name": "Canned Anchovies",
+    "description": "Salt-packed anchovy fillets in oil essential for cooking and pizza",
+    "category": "canned_goods"
+  },
+  "fish_sauce": {
+    "name": "Fish Sauce",
+    "description": "Pungent fermented fish liquid essential to Thai, Vietnamese and Asian cuisines",
+    "category": "ingredients"
+  },
+  "oyster_sauce": {
+    "name": "Oyster Sauce",
+    "description": "Thick, sweet-savory sauce made from oyster extracts used in Chinese cooking",
+    "category": "ingredients"
+  },
+  "shrimp_paste": {
+    "name": "Shrimp Paste",
+    "description": "Fermented shrimp condiment essential to Southeast Asian cooking",
+    "category": "ingredients"
+  },
+  "worcestershire_sauce": {
+    "name": "Worcestershire Sauce",
+    "description": "Fermented anchovy and vinegar sauce used as a condiment and cooking ingredient",
+    "category": "ingredients"
+  },
+  "fish_meal": {
+    "name": "Fish Meal",
+    "description": "Dried, ground fish used as a high-protein animal feed supplement",
+    "category": "feed"
+  },
+  "fish_oil": {
+    "name": "Fish Oil",
+    "description": "Oil extracted from oily fish tissue rich in omega-3 fatty acids",
+    "category": "health"
+  },
+  "omega_3_capsule": {
+    "name": "Omega-3 Capsules",
+    "description": "Encapsulated fish oil supplement for cardiovascular and brain health",
+    "category": "health"
+  },
+  "collagen_powder": {
+    "name": "Marine Collagen Powder",
+    "description": "Protein supplement derived from fish skin and bones for skin and joint health",
+    "category": "health"
+  },
+  "chitin": {
+    "name": "Chitin",
+    "description": "Structural polymer from crustacean shells used in medical and bioplastic applications",
+    "category": "industrial"
+  },
+  "fish_emulsion": {
+    "name": "Fish Emulsion Fertilizer",
+    "description": "Liquid organic fertilizer made from processed fish waste rich in nitrogen",
+    "category": "industrial"
+  },
+  "isinglass": {
+    "name": "Isinglass",
+    "description": "Fining agent derived from fish swim bladders used to clarify beer and wine",
+    "category": "ingredients"
+  },
+  "conch_shell": {
+    "name": "Conch Shell",
+    "description": "Large spiral shell used in decor, musical instruments and jewelry",
+    "category": "accessories"
+  },
+  "white_pearl": {
+    "name": "White Pearl",
+    "description": "Classic white freshwater or Akoya pearl used in fine jewelry",
+    "category": "luxury"
+  },
+  "black_pearl": {
+    "name": "Black Pearl",
+    "description": "Rare Tahitian black pearl with natural dark luster, highly valued",
+    "category": "luxury"
+  },
+  "pink_pearl": {
+    "name": "Pink Pearl",
+    "description": "Delicate pink-hued pearl from abalone or freshwater oysters",
+    "category": "luxury"
+  },
+  "golden_pearl": {
+    "name": "Golden Pearl",
+    "description": "Rare South Sea golden pearl among the most valuable in the world",
+    "category": "luxury"
+  },
+  "mother_of_pearl": {
+    "name": "Mother of Pearl",
+    "description": "Iridescent nacre shell lining used in jewelry, buttons and decorative inlay",
+    "category": "luxury"
+  },
+  "fish_and_chips": {
+    "name": "Fish and Chips",
+    "description": "Battered fried fish fillet served with thick-cut chips, a British staple",
+    "category": "prepared_food"
+  },
+  "seafood_chowder": {
+    "name": "Seafood Chowder",
+    "description": "Rich cream-based soup loaded with clams, shrimp and fish",
+    "category": "prepared_food"
+  },
+  "lobster_bisque": {
+    "name": "Lobster Bisque",
+    "description": "Velvety cream soup made from lobster shells and meat, a fine dining classic",
+    "category": "prepared_food"
+  },
+  "prawn_cocktail": {
+    "name": "Prawn Cocktail",
+    "description": "Chilled shrimp served with zesty cocktail sauce, a classic appetizer",
+    "category": "prepared_food"
+  },
+  "grilled_salmon": {
+    "name": "Grilled Salmon",
+    "description": "Fresh salmon fillet grilled to perfection served in upscale restaurants",
+    "category": "prepared_food"
   }
 }
