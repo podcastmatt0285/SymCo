@@ -535,6 +535,24 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "peanut_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "peanut",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -3086,6 +3104,28 @@
           {
             "item": "water",
             "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "peanut_flour",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "peanut",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 10
           },
           {
             "item": "paper",
@@ -8654,42 +8694,6 @@
           {
             "item": "jar",
             "quantity": 20
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ]
-      },
-      {
-        "output_item": "peanut_oil",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "peanut",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 15
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ]
-      },
-      {
-        "output_item": "peanut_flour",
-        "output_qty": 25,
-        "inputs": [
-          {
-            "item": "peanut",
-            "quantity": 35
-          },
-          {
-            "item": "energy",
-            "quantity": 10
           },
           {
             "item": "paper",
