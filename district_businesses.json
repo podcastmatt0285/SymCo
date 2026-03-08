@@ -7415,23 +7415,23 @@
     "class": "retail",
     "products": {
       "fast_food_combo": {
-        "elasticity": 0.8,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0005
       },
       "international_platter": {
-        "elasticity": 0.6,
+        "elasticity": 0.8,
         "base_sale_chance": 0.0003
       },
       "dessert_sampler": {
-        "elasticity": 0.7,
+        "elasticity": 1.2,
         "base_sale_chance": 0.0004
       },
       "beverage_package": {
-        "elasticity": 0.9,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0006
       },
       "kids_meal": {
-        "elasticity": 0.8,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0004
       }
     },
@@ -7609,11 +7609,11 @@
         "base_sale_chance": 0.0008
       },
       "home_maintenance_package": {
-        "elasticity": 0.4,
+        "elasticity": 0.7,
         "base_sale_chance": 0.0003
       },
       "lawn_service": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0003
       },
       "waste_service": {
@@ -7621,11 +7621,11 @@
         "base_sale_chance": 0.0006
       },
       "internet_bundle": {
-        "elasticity": 0.3,
+        "elasticity": 0.5,
         "base_sale_chance": 0.0005
       },
       "security_package": {
-        "elasticity": 0.4,
+        "elasticity": 0.7,
         "base_sale_chance": 0.0003
       }
     },
@@ -7813,27 +7813,27 @@
     "class": "retail",
     "products": {
       "fashion_bundle": {
-        "elasticity": 0.6,
+        "elasticity": 1.2,
         "base_sale_chance": 0.0004
       },
       "electronics_package": {
-        "elasticity": 0.5,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0003
       },
       "furnishing_set": {
-        "elasticity": 0.4,
+        "elasticity": 0.8,
         "base_sale_chance": 0.0002
       },
       "beauty_kit": {
-        "elasticity": 0.7,
+        "elasticity": 1.1,
         "base_sale_chance": 0.0004
       },
       "sporting_goods": {
-        "elasticity": 0.5,
+        "elasticity": 1.2,
         "base_sale_chance": 0.0003
       },
       "toy_bundle": {
-        "elasticity": 0.6,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0004
       }
     },
@@ -8049,11 +8049,11 @@
         "base_sale_chance": 0.0002
       },
       "diagnostic_panel": {
-        "elasticity": 0.2,
+        "elasticity": 0.3,
         "base_sale_chance": 0.0003
       },
       "therapy_program": {
-        "elasticity": 0.3,
+        "elasticity": 0.6,
         "base_sale_chance": 0.0003
       },
       "maternity_package": {
@@ -8565,27 +8565,27 @@
     "class": "retail",
     "products": {
       "concert_package": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0003
       },
       "sports_package": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0004
       },
       "casino_night": {
-        "elasticity": 0.4,
+        "elasticity": 1.1,
         "base_sale_chance": 0.0003
       },
       "movie_premier": {
-        "elasticity": 0.6,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0004
       },
       "theme_park_pass": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0004
       },
       "nightclub_vip": {
-        "elasticity": 0.4,
+        "elasticity": 1.2,
         "base_sale_chance": 0.0003
       }
     },
@@ -8837,27 +8837,27 @@
     "class": "retail",
     "products": {
       "airline_ticket": {
-        "elasticity": 0.4,
+        "elasticity": 0.7,
         "base_sale_chance": 0.0003
       },
       "cruise_package": {
-        "elasticity": 0.3,
+        "elasticity": 0.8,
         "base_sale_chance": 0.0001
       },
       "rail_pass": {
-        "elasticity": 0.5,
+        "elasticity": 0.7,
         "base_sale_chance": 0.0004
       },
       "freight_contract": {
-        "elasticity": 0.3,
+        "elasticity": 0.4,
         "base_sale_chance": 0.0002
       },
       "rental_car": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0004
       },
       "charter_service": {
-        "elasticity": 0.4,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0002
       }
     },
@@ -9037,27 +9037,27 @@
     "class": "retail",
     "products": {
       "zoo_pass": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0005
       },
       "safari_tour": {
-        "elasticity": 0.4,
+        "elasticity": 1.0,
         "base_sale_chance": 0.0002
       },
       "animal_adoption": {
-        "elasticity": 0.6,
+        "elasticity": 0.8,
         "base_sale_chance": 0.0003
       },
       "conservation_membership": {
-        "elasticity": 0.4,
+        "elasticity": 0.7,
         "base_sale_chance": 0.0002
       },
       "behind_scenes_tour": {
-        "elasticity": 0.5,
+        "elasticity": 1.1,
         "base_sale_chance": 0.0002
       },
       "wildlife_program": {
-        "elasticity": 0.4,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0002
       }
     },
@@ -9309,23 +9309,23 @@
         "base_sale_chance": 0.0003
       },
       "rehabilitation_program": {
-        "elasticity": 0.3,
+        "elasticity": 0.5,
         "base_sale_chance": 0.0002
       },
       "commissary_package": {
-        "elasticity": 0.5,
+        "elasticity": 0.9,
         "base_sale_chance": 0.0004
       },
       "work_release": {
-        "elasticity": 0.3,
+        "elasticity": 0.5,
         "base_sale_chance": 0.0002
       },
       "legal_aid": {
-        "elasticity": 0.2,
+        "elasticity": 0.4,
         "base_sale_chance": 0.0002
       },
       "reentry_package": {
-        "elasticity": 0.3,
+        "elasticity": 0.6,
         "base_sale_chance": 0.0002
       }
     },
@@ -9530,7 +9530,7 @@
     "products": {
       "defense_contract": {
         "elasticity": 0.1,
-        "base_sale_chance": 0.0001
+        "base_sale_chance": 5e-05
       },
       "military_training": {
         "elasticity": 0.2,
@@ -9541,16 +9541,16 @@
         "base_sale_chance": 0.0002
       },
       "veterans_package": {
-        "elasticity": 0.3,
+        "elasticity": 0.5,
         "base_sale_chance": 0.0002
       },
       "security_clearance": {
         "elasticity": 0.2,
-        "base_sale_chance": 0.0002
+        "base_sale_chance": 0.00015
       },
       "logistics_contract": {
-        "elasticity": 0.2,
-        "base_sale_chance": 0.0002
+        "elasticity": 0.25,
+        "base_sale_chance": 0.0001
       }
     },
     "production_lines": [
