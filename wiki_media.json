@@ -4,6 +4,11 @@
             "youtube_id": "_uunsDAShzM",
             "title": "Getting Started in Wadsworth",
             "description": "An introduction to the platform \u2014 creating your account, navigating the dashboard, and making your first land purchase and business decision."
+        },
+        {
+            "youtube_id": "REPLACE_WITH_EXECUTIVES_VIDEO_ID",
+            "title": "Executives in Wadsworth",
+            "description": "A 2-minute overview of the executive hiring system \u2014 job types, ability buffs, school progression, wages, and how executives shape your company\u2019s long-term strategy."
         }
     ],
     "audio": []
