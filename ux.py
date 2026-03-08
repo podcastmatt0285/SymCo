@@ -1892,8 +1892,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 MarketOrder.status == OrderStatus.ACTIVE
             ).order_by(MarketOrder.created_at.desc()).all()
             _active_rows = mkt_db.query(MarketOrder.item_type).filter(
-                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
-                MarketOrder.order_type == OrderType.SELL
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).distinct().all()
             active_items = sorted({r[0] for r in _active_rows})
         finally:

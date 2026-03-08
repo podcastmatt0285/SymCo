@@ -7,13 +7,8 @@
         },
         {
             "youtube_id": "Zk7J9ETwVwY",
-<<<<<<< HEAD
-            "title": "Wadsworth Executive Tutorial",
-            "description": "The Executives Explained."
-=======
             "title": "Wadsworth: Executives Tutorial",
             "description": "An introduction to the executives \u2014 purpose, penalties, and rewards."
->>>>>>> refs/remotes/origin/claude/register-auth-routes-ZMUZO
         }
     ],
     "audio": [

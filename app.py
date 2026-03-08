@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Cookie
@@ -13,6 +14,24 @@ TICK_INTERVAL = 5.0  # seconds
 current_tick = 0
 tick_start_time = None
 tick_task = None
+
+_TICK_STATE_FILE = os.path.join(os.path.dirname(__file__), "tick_state.txt")
+
+def _load_tick_state() -> int:
+    """Load persisted tick counter from disk, or 0 if not found."""
+    try:
+        with open(_TICK_STATE_FILE, "r") as f:
+            return int(f.read().strip())
+    except Exception:
+        return 0
+
+def _save_tick_state(tick: int):
+    """Persist tick counter to disk."""
+    try:
+        with open(_TICK_STATE_FILE, "w") as f:
+            f.write(str(tick))
+    except Exception as e:
+        print(f"[Tick] WARNING: could not save tick state: {e}")
 
 # ==========================
 # MODULE REGISTRY
@@ -51,9 +70,10 @@ async def tick_loop():
                     await module.tick(current_tick, now)
                 except Exception as e:
                     print(f"[Tick {current_tick}] ERROR in {name}: {e}")
-        
+
         if current_tick % 60 == 0:
             print(f"[Tick {current_tick}] {now.isoformat()}")
+            _save_tick_state(current_tick)
         await asyncio.sleep(TICK_INTERVAL)
 
 # ==========================
@@ -80,10 +100,12 @@ def initialize_modules():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global tick_start_time, tick_task
+    global tick_start_time, tick_task, current_tick
     print("=" * 50)
     print("Starting Real-Time Economic Simulation")
     print("=" * 50)
+    current_tick = _load_tick_state()
+    print(f"Tick counter restored: {current_tick}")
     tick_start_time = datetime.utcnow()
     load_modules()
     initialize_modules()
