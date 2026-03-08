@@ -47,6 +47,9 @@ TERRAIN_TYPES = {
     "savanna": {"description": "Tropical grassland", "base_tax": 45.0},
     "hills": {"description": "Rolling terrain", "base_tax": 52.0},
     "island": {"description": "Isolated landmass", "base_tax": 65.0},
+    "coastal": {"description": "Shoreline with ocean access, fishing and trade hub", "base_tax": 80.0},
+    "ocean": {"description": "Open water, offshore and deep-sea operations", "base_tax": 100.0},
+    "lake": {"description": "Freshwater lake, fishing and aquaculture potential", "base_tax": 60.0},
     "district_food": {"description": "Food production zone", "base_tax": 500.0},
     "district_hospital": {"description": "Medical services complex", "base_tax": 800.0},
     "district_industrial": {"description": "Heavy manufacturing zone", "base_tax": 600.0},
@@ -54,7 +57,28 @@ TERRAIN_TYPES = {
     "district_neighborhood": {"description": "Residential services hub", "base_tax": 550.0},
     "district_transport": {"description": "Transportation hub", "base_tax": 700.0},
     "district_utilities": {"description": "Utility infrastructure zone", "base_tax": 650.0},
-    "district_zoo": {"description": "Wildlife conservation zone", "base_tax": 600.0}
+    "district_zoo": {"description": "Wildlife conservation zone", "base_tax": 600.0},
+    # Additional district terrain types used by district businesses
+    "district_aerospace": {"description": "Aerospace and aviation manufacturing district", "base_tax": 900.0},
+    "district_coastal": {"description": "Coastal marine and fishing industry district", "base_tax": 700.0},
+    "district_education": {"description": "Schools and educational facilities district", "base_tax": 600.0},
+    "district_entertainment": {"description": "Entertainment venues and media district", "base_tax": 650.0},
+    "district_food_court": {"description": "Multi-vendor food service district", "base_tax": 500.0},
+    "district_mall": {"description": "Premium retail shopping district", "base_tax": 700.0},
+    "district_military": {"description": "Military base and defense operations", "base_tax": 800.0},
+    "district_prison": {"description": "Correctional facility complex", "base_tax": 500.0},
+    "district_shipyard": {"description": "Shipbuilding and marine manufacturing district", "base_tax": 750.0},
+    "district_tech": {"description": "Technology and semiconductor manufacturing district", "base_tax": 850.0},
+    # Legacy district terrain keys used in BUSINESS_COMPATIBILITY
+    "district_airport": {"description": "Airport and aerospace terminal district", "base_tax": 900.0},
+    "district_convention_center": {"description": "Convention and events district", "base_tax": 650.0},
+    "district_entertainment_district": {"description": "Casino and entertainment complex", "base_tax": 650.0},
+    "district_mega_mall": {"description": "Large-scale wholesale and retail district", "base_tax": 750.0},
+    "district_military_base": {"description": "Military base and defense manufacturing", "base_tax": 800.0},
+    "district_prison_complex": {"description": "Prison facility and support services", "base_tax": 500.0},
+    "district_research_campus": {"description": "University and research facility district", "base_tax": 800.0},
+    "district_seaport": {"description": "Seaport shipping and trade district", "base_tax": 750.0},
+    "district_tech_park": {"description": "Technology park and data center district", "base_tax": 850.0}
 }
 
 # Proximity features - special attributes (can have multiple)
@@ -180,6 +204,36 @@ BUSINESS_COMPATIBILITY = {
     "tech_incubator": {"allowed_terrain": ['district_tech_park'], "allowed_proximity": []},
     "casino_operations": {"allowed_terrain": ['district_entertainment_district'], "allowed_proximity": []},
     "entertainment_complex": {"allowed_terrain": ['district_entertainment_district'], "allowed_proximity": []},
+    # Marine / fishing businesses
+    "trawler_fleet":          {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},
+    "purse_seine_fleet":      {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},
+    "deep_sea_fleet":         {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},
+    "crustacean_trappers":    {"allowed_terrain": ['coastal', 'ocean', 'marsh'],         "allowed_proximity": ['coastal']},
+    "shrimp_fleet":           {"allowed_terrain": ['coastal', 'ocean', 'marsh'],         "allowed_proximity": ['coastal']},
+    "shellfish_beds":         {"allowed_terrain": ['coastal', 'marsh', 'island'],        "allowed_proximity": ['coastal']},
+    "dive_operations":        {"allowed_terrain": ['coastal', 'ocean', 'island'],        "allowed_proximity": ['coastal']},
+    "aquaculture_farm":       {"allowed_terrain": ['coastal', 'lake'],                   "allowed_proximity": ['coastal', 'lakeside']},
+    "freshwater_fishing":     {"allowed_terrain": ['lake', 'marsh'],                     "allowed_proximity": ['lakeside', 'riverside']},
+    "pearl_oyster_farm":      {"allowed_terrain": ['coastal', 'island'],                 "allowed_proximity": ['coastal']},
+    "fish_processing_plant":  {"allowed_terrain": ['coastal', 'urban', 'prairie'],       "allowed_proximity": ['coastal', 'urban']},
+    "cannery":                {"allowed_terrain": ['coastal', 'urban', 'prairie'],       "allowed_proximity": ['coastal', 'urban']},
+    "seafood_smokehouse":     {"allowed_terrain": ['coastal', 'forest', 'hills'],        "allowed_proximity": ['coastal', 'urban']},
+    "seafood_condiment_factory": {"allowed_terrain": ['coastal', 'urban', 'prairie'],   "allowed_proximity": ['coastal', 'urban']},
+    "fish_market":            {"allowed_terrain": ['coastal', 'urban', 'marsh'],         "allowed_proximity": ['coastal', 'urban']},
+    "seafood_restaurant":     {"allowed_terrain": ['coastal', 'urban', 'island'],        "allowed_proximity": ['coastal', 'urban']},
+    "sushi_bar":              {"allowed_terrain": ['coastal', 'urban', 'island'],        "allowed_proximity": ['coastal', 'urban']},
+    # Other businesses added since initial compatibility list
+    "peanut_farm":            {"allowed_terrain": ['prairie', 'savanna'],                "allowed_proximity": ['riverside', 'road', 'remote']},
+    "creamery":               {"allowed_terrain": ['prairie', 'hills'],                  "allowed_proximity": ['riverside', 'road', 'urban']},
+    "coal_mine":              {"allowed_terrain": ['mountain', 'hills'],                 "allowed_proximity": ['remote', 'road']},
+    "bottling_plant":         {"allowed_terrain": ['urban', 'prairie'],                  "allowed_proximity": ['urban', 'road', 'riverside']},
+    "paint_factory":          {"allowed_terrain": ['urban', 'prairie'],                  "allowed_proximity": ['urban', 'road']},
+    "personal_care_factory":  {"allowed_terrain": ['urban', 'prairie'],                  "allowed_proximity": ['urban', 'road']},
+    "shoe_factory":           {"allowed_terrain": ['urban', 'prairie', 'hills'],         "allowed_proximity": ['urban', 'road']},
+    "rope_works":             {"allowed_terrain": ['prairie', 'forest', 'hills'],        "allowed_proximity": ['road', 'riverside']},
+    "towel_mill":             {"allowed_terrain": ['prairie', 'hills'],                  "allowed_proximity": ['urban', 'road']},
+    "jeweler":                {"allowed_terrain": ['urban', 'prairie'],                  "allowed_proximity": ['urban']},
+    "pet_store":              {"allowed_terrain": ['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island'], "allowed_proximity": ['urban', 'road', 'coastal', 'oasis', 'remote', 'riverside', 'lakeside', 'hot_springs', 'volcanic']},
 }
 
 # ==========================
