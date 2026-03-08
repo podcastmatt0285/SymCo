@@ -16,6 +16,10 @@ for root, dirs, files in os.walk(source_dir):
     if "Leaflet-Wadsworth" in dirs:
         dirs.remove("Leaflet-Wadsworth")
 
+    # Exclude venv directory
+    if "venv" in dirs:
+        dirs.remove("venv")
+
     for file in files:
         if file.endswith(extensions):
             src_path = os.path.join(root, file)

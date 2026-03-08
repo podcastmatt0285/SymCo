@@ -1,4 +1,4 @@
-#!/home/maph/SymCo/venv/bin/python3
+#!/home/maphematics/SymCo/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

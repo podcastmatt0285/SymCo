@@ -4,7 +4,18 @@
             "youtube_id": "_uunsDAShzM",
             "title": "Getting Started in Wadsworth",
             "description": "An introduction to the platform \u2014 creating your account, navigating the dashboard, and making your first land purchase and business decision."
+        },
+        {
+            "youtube_id": "Zk7J9ETwVwY",
+            "title": "Wadsworth: Executives Tutorial",
+            "description": "An introduction to the executives \u2014 purpose, penalties, and rewards."
         }
     ],
-    "audio": []
+    "audio": [
+        {
+            "youtube_id": "CNlbq2Djo5c",
+            "title": "The Brutal Banking Mechanics of Wadsworth",
+            "description": "From the point of view of a player: Are the banks slaves to the government or are they the overlords?"
+        }
+    ]
 }
