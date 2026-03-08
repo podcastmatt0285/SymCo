@@ -8309,15 +8309,15 @@
         "base_sale_chance": 0.0003
       },
       "bachelors_degree": {
-        "elasticity": 0.25,
+        "elasticity": 0.5,
         "base_sale_chance": 0.0002
       },
       "masters_degree": {
-        "elasticity": 0.2,
+        "elasticity": 0.7,
         "base_sale_chance": 0.0001
       },
       "vocational_certificate": {
-        "elasticity": 0.35,
+        "elasticity": 0.5,
         "base_sale_chance": 0.0003
       },
       "research_grant": {
@@ -8325,7 +8325,7 @@
         "base_sale_chance": 8e-05
       },
       "study_abroad": {
-        "elasticity": 0.3,
+        "elasticity": 1.1,
         "base_sale_chance": 0.0001
       }
     },
