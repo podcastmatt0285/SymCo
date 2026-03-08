@@ -120,6 +120,8 @@ BUSINESS_COMPATIBILITY = {
     "bistro": {"allowed_terrain": ['prairie', 'hills', 'island'], "allowed_proximity": ['urban', 'road']},
     "soup_kitchen": {"allowed_terrain": ['prairie', 'hills', 'savanna'], "allowed_proximity": ['urban', 'road']},
     "oil_rig": {"allowed_terrain": ['desert', 'marsh', 'ocean'], "allowed_proximity": ['coastal', 'remote']},
+    "oil_refinery": {"allowed_terrain": ['urban', 'prairie', 'desert', 'coastal'], "allowed_proximity": ['road', 'urban', 'coastal']},
+    "gas_station": {"allowed_terrain": ['urban', 'prairie', 'desert'], "allowed_proximity": ['urban', 'road']},
     "grain_farm": {"allowed_terrain": ['prairie', 'savanna', 'hills'], "allowed_proximity": ['riverside', 'road', 'remote']},
     "orchard": {"allowed_terrain": ['prairie', 'hills', 'forest'], "allowed_proximity": ['riverside', 'lakeside', 'road']},
     "vegetable_farm": {"allowed_terrain": ['prairie', 'savanna', 'marsh'], "allowed_proximity": ['riverside', 'oasis', 'road']},
