@@ -36,6 +36,7 @@ from admins import (
     # District admin
     admin_create_district, admin_delete_district, admin_edit_district_tax,
     # City admin
+    admin_create_city,
     get_all_cities_admin, get_player_city_info,
     admin_add_player_to_city, admin_remove_player_from_city,
     admin_get_city_polls, admin_resolve_city_poll,
@@ -1111,9 +1112,11 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
 
     cities = get_all_cities_admin()
     counties = get_all_counties_admin()
+    all_players = get_all_players()
 
     city_opts_county = "".join(f'<option value="{c["id"]}">#{c["id"]} — {c["name"]}</option>' for c in cities)
     county_opts = "".join(f'<option value="{cn["id"]}">#{cn["id"]} — {cn["name"]} ({cn.get("city_count",0)} cities)</option>' for cn in counties)
+    player_opts = "".join(f'<option value="{p["id"]}">#{p["id"]} — {p["business_name"]}</option>' for p in all_players)
 
     city_rows = ""
     for c in cities:
@@ -1153,6 +1156,24 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
     {_flash(msg=msg, err=err)}
 
     <div class="card">
+        <h3>Create City</h3>
+        <p style="color:#94a3b8;font-size:0.78rem;margin-bottom:10px;">Admin shortcut — bypasses the district and $10M requirements. The selected player becomes mayor.</p>
+        <form method="post" action="/admin/cities/create">
+            <div class="form-row">
+                <div style="flex:2;">
+                    <div class="form-label">City Name</div>
+                    <input type="text" name="city_name" placeholder="City name" required style="width:100%;">
+                </div>
+                <div style="flex:2;">
+                    <div class="form-label">Mayor (Player)</div>
+                    <select name="mayor_id" style="width:100%;">{player_opts}</select>
+                </div>
+                <button type="submit" class="btn btn-green" style="align-self:flex-end;">Create</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
         <h3>Add City to County</h3>
         <form method="post" action="/admin/counties/add-city">
             <div class="form-row">
@@ -1174,6 +1195,17 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
     </div>
     """
     return HTMLResponse(admin_shell("Cities & Counties", body, admin.business_name, "/admin/cities"))
+
+
+@router.post("/admin/cities/create")
+def post_admin_create_city(session_token: Optional[str] = Cookie(None), city_name: str = Form(...), mayor_id: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_create_city(admin.id, city_name, mayor_id)
+    if result.get("ok"):
+        return RedirectResponse(url=f"/admin/cities?msg={result['msg'].replace(' ', '+')}", status_code=303)
+    return RedirectResponse(url=f"/admin/cities?err={result['error'].replace(' ', '+')}", status_code=303)
 
 
 @router.post("/admin/counties/add-city")

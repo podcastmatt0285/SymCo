@@ -963,6 +963,64 @@ def admin_edit_district_tax(admin_id: int, district_id: int, new_tax: float) -> 
 # CITY ADMIN
 # ==========================
 
+def admin_create_city(admin_id: int, city_name: str, mayor_id: int) -> dict:
+    """
+    Admin shortcut: create a city without district or cost requirements.
+    The named player becomes mayor and a bank is seeded with $0 reserves.
+    """
+    try:
+        from cities import City, CityMember, CityBank, get_db as get_city_db, get_player_city
+        from auth import Player
+
+        city_name = city_name.strip()
+        if not city_name:
+            return {"ok": False, "error": "City name cannot be empty"}
+
+        db = get_city_db()
+        try:
+            # Check name uniqueness
+            existing = db.query(City).filter(City.name == city_name).first()
+            if existing:
+                return {"ok": False, "error": f"A city named '{city_name}' already exists"}
+
+            # Validate mayor player
+            player = db.query(Player).filter(Player.id == mayor_id).first()
+            if not player:
+                return {"ok": False, "error": "Mayor player not found"}
+
+            # Check player isn't already in a city
+            current = get_player_city(mayor_id)
+            if current:
+                return {"ok": False, "error": f"Player is already a member of '{current.name}'"}
+
+            # Create city
+            city = City(
+                name=city_name,
+                mayor_id=mayor_id,
+                application_fee=50_000.0,
+                relocation_fee=10_000.0,
+                application_fee_percent=25.0,
+                relocation_fee_percent=10.0,
+            )
+            db.add(city)
+            db.flush()
+
+            # Add mayor as member
+            membership = CityMember(city_id=city.id, player_id=mayor_id)
+            db.add(membership)
+
+            # Create bank with zero reserves
+            bank = CityBank(city_id=city.id, cash_reserves=0.0)
+            db.add(bank)
+
+            db.commit()
+            return {"ok": True, "city_id": city.id, "msg": f"City '{city_name}' created (ID #{city.id})"}
+        finally:
+            db.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 def get_all_cities_admin() -> list:
     """Return all cities with member counts for admin overview."""
     try:
