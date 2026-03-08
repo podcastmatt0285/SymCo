@@ -490,11 +490,12 @@ def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False, d
     school_perf_html = _school_perf_bar(ex)
 
     # Level bar
-    level_pct = min(ex.level / 7.0, 1.0) * 100
+    max_lvl   = getattr(ex, 'max_level', 7) or 7
+    level_pct = min(ex.level / max_lvl, 1.0) * 100
     level_html = f"""
     <div class="stat-row">
         <span class="stat-label">Level</span>
-        <span class="stat-value purple">{ex.level}/7</span>
+        <span class="stat-value purple">{ex.level}/{max_lvl}</span>
     </div>
     <div class="level-bar"><div class="level-fill" style="width:{level_pct:.0f}%"></div></div>"""
 
@@ -611,7 +612,7 @@ def render_exec_card(ex, show_actions=True, is_owner=False, marketplace=False, d
     actions_html = ""
     if show_actions and is_owner:
         btns = []
-        if not ex.is_in_school and not ex.pending_upgrade and ex.level < 7:
+        if not ex.is_in_school and not ex.pending_upgrade and ex.level < (getattr(ex, 'max_level', 7) or 7):
             btns.append(f'<a href="/executives/school/{ex.id}" class="btn btn-orange btn-small">Send to School</a>')
         fire_msg = f"Fire {ex.first_name}? You will owe severance + pension immediately."
         btns.append(f"""
@@ -860,7 +861,8 @@ def school_confirm(executive_id: int, session_token: Optional[str] = Cookie(None
         ).first()
         if not ex:
             return RedirectResponse(url="/executives?msg=Executive not found", status_code=303)
-        if ex.level >= 7:
+        ex_max_lvl = getattr(ex, 'max_level', 7) or 7
+        if ex.level >= ex_max_lvl:
             return RedirectResponse(url="/executives?msg=Executive is at max level", status_code=303)
 
         target_level = ex.level + 1
