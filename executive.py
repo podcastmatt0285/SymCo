@@ -265,6 +265,13 @@ EXECUTIVE_JOBS = {
         "description": "Manages DMs, contract notifications, and P2P deal flow",
         "effect": "p2p",
     },
+    # ── SPECIAL: FIRST LADY (tutorial reward) ─────────────────────────────────
+    "first_lady": {
+        "title": "Former First Lady", "abbr": "FL",
+        "category": "business",
+        "description": "A legendary figure from American history — free forever, unique buff, levels up to 18",
+        "effect": "special",
+    },
 }
 
 # ==========================
@@ -368,7 +375,177 @@ EXEC_ABILITIES = {
     "deal_scout":          {"name": "Deal Scout",              "desc": "Early access to new P2P marketplace listings",         "effect": "p2p","value": 1.0},
     "rep_shield":          {"name": "Reputation Shield",       "desc": "P2P reputation score protected from dispute fallout",  "effect": "p2p","value": 1.0},
     "mediation_svc":       {"name": "Mediation Service",       "desc": "P2P disputes resolved in your favour 20% more often", "effect": "p2p","value": 0.20},
+    # ── FIRST LADIES (unique — one per exec, tutorial reward) ─────────────────
+    "fl_estate_manager":   {"name": "Estate Management",       "desc": "All farming & plantation output +15%",                 "effect": "production","value": 0.15},
+    "fl_political_advisor":{"name": "Political Advisor",       "desc": "Overall business strategy output +10%",               "effect": "business","value": 0.10},
+    "fl_social_diplomat":  {"name": "Social Diplomacy",        "desc": "All P2P transaction fees −20%",                        "effect": "p2p","value": 0.20},
+    "fl_un_diplomat":      {"name": "UN Diplomacy",            "desc": "Market listing/transaction fees −15%",                 "effect": "sales","value": 0.15},
+    "fl_retail_entrepreneur":{"name":"Retail Entrepreneur",    "desc": "Retail sales revenue +12%",                           "effect": "sales","value": 0.12},
+    "fl_base_logistics":   {"name": "Base Logistics",          "desc": "All production cycles 12% faster",                    "effect": "production","value": 0.12},
+    "fl_photojournalist":  {"name": "Photojournalist",         "desc": "Brand equity and media income +12%",                  "effect": "sales","value": 0.12},
+    "fl_broadcaster":      {"name": "Broadcasting Executive",  "desc": "Passive income from all businesses +14%",             "effect": "sales","value": 0.14},
+    "fl_retail_teacher":   {"name": "Retail & Teaching",       "desc": "Sales volume and demand multiplier +10%",             "effect": "sales","value": 0.10},
+    "fl_performing_artist":{"name": "Performing Artist",       "desc": "All executive wages −12%",                            "effect": "wages","value": 0.12},
+    "fl_health_advocate":  {"name": "Health Advocate",         "desc": "All executives age 15% slower",                       "effect": "business","value": 0.15},
+    "fl_silver_screen":    {"name": "Silver Screen Star",      "desc": "Business consumer demand +10%",                       "effect": "sales","value": 0.10},
+    "fl_literacy_author":  {"name": "Literacy Author",         "desc": "Executive school duration −22%",                      "effect": "school","value": 0.22},
+    "fl_secretary_state":  {"name": "Secretary of State",      "desc": "All property and land taxes −14%",                    "effect": "taxes","value": 0.14},
+    "fl_librarian":        {"name": "Librarian & Educator",    "desc": "Executive school costs −18%",                         "effect": "school","value": 0.18},
+    "fl_corporate_attorney":{"name":"Corporate Attorney",      "desc": "Full compliance/audit immunity + all taxes −8%",      "effect": "taxes","value": 0.08},
+    "fl_fashion_model":    {"name": "Fashion & Brand Model",   "desc": "Brand equity across all businesses +16%",             "effect": "sales","value": 0.16},
+    "fl_professor":        {"name": "English Professor",       "desc": "School upgrade effectiveness +25%",                   "effect": "school","value": 0.25},
 }
+
+# ==========================
+# FIRST LADY EXECUTIVES
+# Tutorial reward — player chooses one; she starts age 18, retires at 110, max level 18
+# ==========================
+FIRST_LADY_EXECUTIVES = [
+    {
+        "key":       "martha_washington",
+        "name":      "Martha Washington",
+        "years":     "1789–1797",
+        "real_role": "Plantation & estate manager for Mount Vernon",
+        "ability":   "fl_estate_manager",
+        "flavor":    "America's first First Lady oversaw one of Virginia's largest working plantations, managing hundreds of workers, crops, and supply chains.",
+    },
+    {
+        "key":       "abigail_adams",
+        "name":      "Abigail Adams",
+        "years":     "1797–1801",
+        "real_role": "Political writer, policy advisor, and farmer",
+        "ability":   "fl_political_advisor",
+        "flavor":    "One of the most politically astute First Ladies, Abigail Adams actively advised her husband on policy and ran the family farm entirely on her own during the Revolution.",
+    },
+    {
+        "key":       "dolley_madison",
+        "name":      "Dolley Madison",
+        "years":     "1809–1817",
+        "real_role": "Renowned social diplomat and hostess",
+        "ability":   "fl_social_diplomat",
+        "flavor":    "Dolley Madison redefined the role of First Lady through masterful social diplomacy, forging alliances and easing tensions through relationship-building.",
+    },
+    {
+        "key":       "eleanor_roosevelt",
+        "name":      "Eleanor Roosevelt",
+        "years":     "1933–1945",
+        "real_role": "Journalist, UN delegate, and civil rights diplomat",
+        "ability":   "fl_un_diplomat",
+        "flavor":    "Eleanor Roosevelt was the first US delegate to the UN and wrote a syndicated newspaper column. She negotiated, wrote, and advocated on the world stage.",
+    },
+    {
+        "key":       "bess_truman",
+        "name":      "Bess Truman",
+        "years":     "1945–1953",
+        "real_role": "Co-manager of the family clothing business",
+        "ability":   "fl_retail_entrepreneur",
+        "flavor":    "Before Washington, Bess helped manage her family's retail clothing operation in Missouri — she knew margins, inventory, and customers firsthand.",
+    },
+    {
+        "key":       "mamie_eisenhower",
+        "name":      "Mamie Eisenhower",
+        "years":     "1953–1961",
+        "real_role": "Military household logistics & base management",
+        "ability":   "fl_base_logistics",
+        "flavor":    "Having moved 27 times across military postings worldwide, Mamie became an expert at rapid operational setup and efficient household logistics.",
+    },
+    {
+        "key":       "jacqueline_kennedy",
+        "name":      "Jacqueline Kennedy",
+        "years":     "1961–1963",
+        "real_role": "Photojournalist and Inquiring Camera Girl",
+        "ability":   "fl_photojournalist",
+        "flavor":    "Before the White House, Jackie Kennedy worked as a photojournalist for the Washington Times-Herald, developing a keen eye for brand storytelling.",
+    },
+    {
+        "key":       "lady_bird_johnson",
+        "name":      "Lady Bird Johnson",
+        "years":     "1963–1969",
+        "real_role": "Broadcasting company owner and media executive",
+        "ability":   "fl_broadcaster",
+        "flavor":    "Lady Bird personally ran LBJ Holding Company, a profitable Texas broadcasting empire, making her one of the few First Ladies who was a genuine media executive.",
+    },
+    {
+        "key":       "pat_nixon",
+        "name":      "Pat Nixon",
+        "years":     "1969–1974",
+        "real_role": "Retail worker, teacher, and stage actress",
+        "ability":   "fl_retail_teacher",
+        "flavor":    "Pat Nixon worked retail, taught typing and shorthand, and acted on stage — a practical, demand-focused background that gave her deep consumer insight.",
+    },
+    {
+        "key":       "betty_ford",
+        "name":      "Betty Ford",
+        "years":     "1974–1977",
+        "real_role": "Professional dancer and fashion model",
+        "ability":   "fl_performing_artist",
+        "flavor":    "Betty Ford trained as a dancer under Martha Graham and modeled in New York. She understood the performance economy and made every dollar count.",
+    },
+    {
+        "key":       "rosalynn_carter",
+        "name":      "Rosalynn Carter",
+        "years":     "1977–1981",
+        "real_role": "Mental health advocate and business partner",
+        "ability":   "fl_health_advocate",
+        "flavor":    "Rosalynn co-managed the Carter family peanut business and devoted her career to mental health reform — her staff always outlasted the competition.",
+    },
+    {
+        "key":       "nancy_reagan",
+        "name":      "Nancy Reagan",
+        "years":     "1981–1989",
+        "real_role": "MGM actress and television star",
+        "ability":   "fl_silver_screen",
+        "flavor":    "Nancy Reagan appeared in 11 MGM films, understanding how image, audience, and demand drive consumer behaviour at a national scale.",
+    },
+    {
+        "key":       "barbara_bush",
+        "name":      "Barbara Bush",
+        "years":     "1989–1993",
+        "real_role": "Literacy advocate and published author",
+        "ability":   "fl_literacy_author",
+        "flavor":    "Barbara Bush founded the Barbara Bush Foundation for Family Literacy and authored multiple books. She believed education was the fastest path to any goal.",
+    },
+    {
+        "key":       "hillary_clinton",
+        "name":      "Hillary Clinton",
+        "years":     "1993–2001",
+        "real_role": "Attorney, US Senator, and Secretary of State",
+        "ability":   "fl_secretary_state",
+        "flavor":    "Hillary Clinton was a practicing attorney before the White House, then a US Senator, then the nation's chief diplomat — she knows how to cut through red tape.",
+    },
+    {
+        "key":       "laura_bush",
+        "name":      "Laura Bush",
+        "years":     "2001–2009",
+        "real_role": "Librarian and public school teacher",
+        "ability":   "fl_librarian",
+        "flavor":    "Laura Bush worked as a librarian and second-grade teacher in Houston public schools — two careers defined by patience, low budgets, and doing more with less.",
+    },
+    {
+        "key":       "michelle_obama",
+        "name":      "Michelle Obama",
+        "years":     "2009–2017",
+        "real_role": "Corporate attorney and hospital VP of Community Affairs",
+        "ability":   "fl_corporate_attorney",
+        "flavor":    "Michelle Obama was a partner-track corporate lawyer at Sidley Austin and a VP at University of Chicago Medical Center — the definition of strategic compliance.",
+    },
+    {
+        "key":       "melania_trump",
+        "name":      "Melania Trump",
+        "years":     "2017–2021",
+        "real_role": "International fashion model and brand entrepreneur",
+        "ability":   "fl_fashion_model",
+        "flavor":    "Melania Trump modeled across Europe and New York, building a personal brand recognised in dozens of markets. She understands what moves product.",
+    },
+    {
+        "key":       "jill_biden",
+        "name":      "Jill Biden",
+        "years":     "2021–2025",
+        "real_role": "English professor and career educator",
+        "ability":   "fl_professor",
+        "flavor":    "Dr. Jill Biden holds a doctorate in education and continued teaching full-time while serving as First Lady — the first to do so. School, to her, is everything.",
+    },
+]
 
 # Ability pools per job — execs draw 3-5 at creation
 JOB_ABILITY_POOLS = {
@@ -501,6 +678,10 @@ class Executive(Base):
     special_ability = Column(String,  nullable=True)   # key from LEGENDARY_BONUS_ABILITIES
     special_title   = Column(String,  nullable=True)
     special_flavor  = Column(Text,    nullable=True)
+
+    # First Lady (tutorial reward)
+    is_first_lady   = Column(Boolean, default=False)
+    max_level       = Column(Integer, default=7)  # 18 for First Ladies
 
     # Per-exec abilities (3-5 keys from JOB_ABILITY_POOLS, comma-separated)
     abilities = Column(Text, default="")
@@ -911,8 +1092,9 @@ def send_to_school(db, player_id: int, executive_id: int) -> dict:
         return {"success": False, "error": "Executive is already in school"}
     if exec_obj.pending_upgrade:
         return {"success": False, "error": "Executive has a pending upgrade selection"}
-    if exec_obj.level >= 7:
-        return {"success": False, "error": "Executive is at maximum level (7)"}
+    max_lvl = getattr(exec_obj, "max_level", 7) or 7
+    if exec_obj.level >= max_lvl:
+        return {"success": False, "error": f"Executive is at maximum level ({max_lvl})"}
 
     target_level = exec_obj.level + 1
     cost  = SCHOOL_BASE_COST * target_level

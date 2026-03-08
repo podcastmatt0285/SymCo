@@ -2,7 +2,7 @@
 tutorial_ux.py
 
 Startup Company Tutorial for Wadsworth.
-Guides new players through core game mechanics in 10 steps.
+Guides new players through core game mechanics in 11 steps.
 
 Tutorial is triggered when a player has:
   - No businesses
@@ -20,7 +20,8 @@ Steps:
   8  - Stats/business/free_range_pasture: production chains
   9  - Reward: claim free tax-exempt plot (choose terrain)
   10 - Land market: locations & proximities explained
-  11 - Complete (unlocked)
+  11 - Executives: watch video + claim free First Lady executive
+  12 - Complete (unlocked)
 """
 
 from typing import Optional
@@ -33,7 +34,7 @@ router = APIRouter()
 # TUTORIAL STEP DEFINITIONS
 # ==========================
 
-TOTAL_STEPS = 10
+TOTAL_STEPS = 11
 
 STEP_REDIRECT = {
     1: "/",          # Welcome on dashboard
@@ -46,7 +47,8 @@ STEP_REDIRECT = {
     8: "/stats/business/free_range_pasture",  # Production chain demo
     9: "/",          # Reward (dashboard) — player claims via form
     10: "/land-market",  # Land market explanation
-    11: "/",         # Tutorial complete
+    11: "/",         # Executives video + First Lady reward
+    12: "/",         # Tutorial complete
 }
 
 TERRAIN_OPTIONS = [
@@ -68,7 +70,7 @@ ALL_PROXIMITY_FEATURES = "urban,coastal,riverside,lakeside,oasis,hot_springs,cav
 # ==========================
 
 def get_tutorial_step(player_id: int) -> int:
-    """Return the player's current tutorial step (0-11)."""
+    """Return the player's current tutorial step (0-12)."""
     try:
         from auth import get_db, Player
         db = get_db()
@@ -226,7 +228,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
     expected page for the current step.
     """
     step = get_tutorial_step(player.id)
-    if step == 0 or step >= 11:
+    if step == 0 or step >= 12:
         return ""
 
     # Only show overlay on the expected page(s) for each step.
@@ -242,6 +244,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         8: "stats_business",
         9: "dashboard",
         10: "land_market",
+        11: "dashboard",
     }
     expected_page = STEP_PAGE.get(step, "")
     if expected_page:
@@ -598,11 +601,138 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             Your tutorial reward plot is already in your land portfolio — head there to start building on it!
             You are now <strong style="color:#d4af37;">free to play</strong> however you like. Good luck, CEO!
         </p>
-        <form action="/api/tutorial/complete" method="post">
-            <button type="submit" style="background:#22c55e;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Complete Tutorial — Start Playing!
+        <form action="/api/tutorial/advance" method="post">
+            <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Next: Meet Your Executives →
             </button>
         </form>
+        """
+
+    elif step == 11:
+        import json as _json
+        _video_id = "_uunsDAShzM"  # fallback
+        try:
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            _video_id = _media["videos"][1]["youtube_id"]
+        except Exception:
+            pass
+
+        from executive import FIRST_LADY_EXECUTIVES
+        fl_cards = ""
+        for fl in FIRST_LADY_EXECUTIVES:
+            ab_key  = fl["ability"]
+            fl_cards += f"""
+            <label class="fl-card" for="fl_{fl['key']}" style="
+                display:block;cursor:pointer;border:2px solid #1d2f55;border-radius:6px;
+                padding:10px 12px;margin-bottom:8px;background:#090e1c;
+                transition:border-color .2s;
+            ">
+                <input type="radio" name="first_lady" id="fl_{fl['key']}" value="{fl['key']}"
+                       style="display:none;" required
+                       onchange="document.querySelectorAll('.fl-card').forEach(c=>c.style.borderColor='#1d2f55');this.closest('.fl-card').style.borderColor='#d4af37';">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;">
+                    <span style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{fl['name']}</span>
+                    <span style="color:#64748b;font-size:0.75rem;">{fl['years']}</span>
+                </div>
+                <div style="color:#94a3b8;font-size:0.78rem;margin-top:2px;">{fl['real_role']}</div>
+                <div style="color:#f5a855;font-size:0.76rem;margin-top:4px;">
+                    ✦ Unique buff: {fl['flavor'].split('.')[0]}.
+                </div>
+            </label>"""
+
+        title = "Bonus Step — Executive Hiring"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Every great company needs great <strong style="color:#e5e7eb;">Executives</strong>.
+            In Wadsworth, executives are living characters — they age, level up through school,
+            earn wages, and each brings unique <strong style="color:#f5a855;">ability buffs</strong>
+            that give your business a real edge.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Watch the 2-minute executives overview, then claim your free
+            <strong style="color:#d4af37;">Former First Lady</strong> executive —
+            a forever-free hire who starts age 18, retires at 110, and can level up
+            all the way to <strong style="color:#d4af37;">Level 18</strong> through school.
+        </p>
+
+        <!-- YouTube IFrame Player -->
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;border:1px solid #1d2f55;margin-bottom:16px;">
+            <div id="yt-player-container" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+
+        <!-- Watch-progress indicator -->
+        <div id="tut-watch-bar" style="background:#111c35;border:1px solid #1d2f55;border-radius:4px;height:6px;margin-bottom:12px;overflow:hidden;">
+            <div id="tut-watch-fill" style="background:#d4af37;height:6px;width:0%;transition:width .5s;"></div>
+        </div>
+        <p id="tut-watch-label" style="color:#64748b;font-size:0.8rem;margin:0 0 16px 0;text-align:center;">
+            ⏳ Watch the video to unlock your First Lady selection…
+        </p>
+
+        <!-- First Lady selector — hidden until video watched -->
+        <div id="fl-selector" style="display:none;">
+            <p style="color:#d4af37;font-weight:bold;margin:0 0 10px 0;">
+                Choose your Former First Lady executive:
+            </p>
+            <div style="max-height:340px;overflow-y:auto;padding-right:4px;margin-bottom:14px;">
+                <form id="fl-claim-form" action="/api/tutorial/claim-executive" method="post">
+                    {fl_cards}
+                    <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;width:100%;margin-top:4px;">
+                        Hire Her — Free Forever! →
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        // YouTube IFrame Player API — no API key needed
+        (function() {{
+            var WATCH_THRESHOLD = 0.90;
+            var watched = false;
+
+            function unlockSelector() {{
+                if (watched) return;
+                watched = true;
+                document.getElementById('tut-watch-label').innerHTML =
+                    '<span style="color:#4ade80;">✓ Video complete! Now choose your First Lady below.</span>';
+                document.getElementById('tut-watch-fill').style.width = '100%';
+                document.getElementById('fl-selector').style.display = 'block';
+            }}
+
+            // Load YT API
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+
+            var ytPlayer;
+            window.onYouTubeIframeAPIReady = function() {{
+                ytPlayer = new YT.Player('yt-player-container', {{
+                    videoId: '{_video_id}',
+                    playerVars: {{ rel: 0, modestbranding: 1 }},
+                    events: {{
+                        onStateChange: function(e) {{
+                            // State 0 = ENDED — counts as watched regardless of duration
+                            if (e.data === YT.PlayerState.ENDED) unlockSelector();
+                        }}
+                    }}
+                }});
+            }};
+
+            // Poll every 2 s — unlock at 90% of duration
+            var pollTimer = setInterval(function() {{
+                if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+                try {{
+                    var cur = ytPlayer.getCurrentTime();
+                    var dur = ytPlayer.getDuration();
+                    if (dur > 0) {{
+                        var pct = Math.min(cur / dur, 1);
+                        document.getElementById('tut-watch-fill').style.width = (pct * 100).toFixed(1) + '%';
+                        if (pct >= WATCH_THRESHOLD) {{ unlockSelector(); clearInterval(pollTimer); }}
+                    }}
+                }} catch(ex) {{}}
+            }}, 2000);
+        }})();
+        </script>
         """
 
     else:
@@ -734,21 +864,21 @@ def claim_tutorial_reward(
 
 @router.post("/api/tutorial/complete")
 def complete_tutorial(session_token: Optional[str] = Cookie(None)):
-    """Step 10 → 11: Mark tutorial as complete."""
+    """Step 11 → 12: Mark tutorial as complete (fallback — normally via claim-executive)."""
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    set_tutorial_step(player.id, 11)
+    set_tutorial_step(player.id, 12)
     return RedirectResponse(url="/", status_code=303)
 
 
 @router.post("/api/tutorial/dismiss")
 def dismiss_tutorial(session_token: Optional[str] = Cookie(None)):
-    """Dismiss the tutorial permanently (set to step 11 = complete)."""
+    """Dismiss the tutorial permanently (set to step 12 = complete)."""
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    set_tutorial_step(player.id, 11)
+    set_tutorial_step(player.id, 12)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -758,5 +888,76 @@ def dismiss_tutorial_get(session_token: Optional[str] = Cookie(None)):
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    set_tutorial_step(player.id, 11)
+    set_tutorial_step(player.id, 12)
     return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/api/tutorial/claim-executive")
+def claim_first_lady(
+    session_token: Optional[str] = Cookie(None),
+    first_lady: str = Form(...)
+):
+    """
+    Step 11: Create the chosen First Lady executive and advance to step 12.
+    The executive is free, permanent, starts age 18, retires at 110, max level 18.
+    """
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial_step(player.id)
+    if step != 11:
+        return RedirectResponse(url="/", status_code=303)
+
+    from executive import (
+        Executive, FIRST_LADY_EXECUTIVES, SessionLocal as ExecSessionLocal,
+    )
+
+    fl_data = next((f for f in FIRST_LADY_EXECUTIVES if f["key"] == first_lady), None)
+    if fl_data is None:
+        return RedirectResponse(url="/?tutorial_error=invalid_first_lady", status_code=303)
+
+    try:
+        db = ExecSessionLocal()
+
+        # Split name into first / last
+        name_parts = fl_data["name"].split(" ", 1)
+        first_name = name_parts[0]
+        last_name  = name_parts[1] if len(name_parts) > 1 else ""
+
+        exec_obj = Executive(
+            first_name       = first_name,
+            last_name        = last_name,
+            player_id        = player.id,
+            level            = 1,
+            job              = "first_lady",
+            wage             = 0.0,         # free forever
+            pay_cycle        = "hour",
+            current_age      = 18,
+            retirement_age   = 110,
+            max_age          = 120,
+            is_retired       = False,
+            is_dead          = False,
+            is_special       = False,
+            is_first_lady    = True,
+            max_level        = 18,
+            abilities        = fl_data["ability"],
+            bonuses          = "",
+            on_marketplace   = False,
+            marketplace_reason = "tutorial",
+            hired_at         = __import__("datetime").datetime.utcnow(),
+        )
+        db.add(exec_obj)
+        db.commit()
+        db.close()
+        print(f"[Tutorial] Created First Lady executive '{fl_data['name']}' for player {player.id}")
+    except Exception as e:
+        print(f"[Tutorial] Error creating First Lady executive: {e}")
+        try:
+            db.close()
+        except Exception:
+            pass
+        return RedirectResponse(url="/?tutorial_error=exec_failed", status_code=303)
+
+    set_tutorial_step(player.id, 12)
+    return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
