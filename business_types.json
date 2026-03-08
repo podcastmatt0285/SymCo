@@ -404,6 +404,20 @@
             "quantity": 300
           }
         ]
+      },
+      {
+        "output_item": "cow",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 600
+          },
+          {
+            "item": "fish_meal",
+            "quantity": 200
+          }
+        ]
       }
     ]
   },
@@ -2704,6 +2718,60 @@
           {
             "item": "paper",
             "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "pig",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "fish_meal",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "duck",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "fish_meal",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "chicken",
+        "output_qty": 18,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "fish_meal",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ]
       }
@@ -6477,6 +6545,348 @@
         ]
       },
       {
+        "output_item": "trawler",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 6
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 6
+          },
+          {
+            "item": "propeller",
+            "quantity": 6
+          },
+          {
+            "item": "iron",
+            "quantity": 75
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 6
+          },
+          {
+            "item": "car_battery",
+            "quantity": 6
+          },
+          {
+            "item": "energy",
+            "quantity": 270
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "purse_seiner",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 6
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 6
+          },
+          {
+            "item": "propeller",
+            "quantity": 6
+          },
+          {
+            "item": "iron",
+            "quantity": 80
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 6
+          },
+          {
+            "item": "car_battery",
+            "quantity": 6
+          },
+          {
+            "item": "energy",
+            "quantity": 288
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "longliner",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 8
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 8
+          },
+          {
+            "item": "propeller",
+            "quantity": 8
+          },
+          {
+            "item": "iron",
+            "quantity": 100
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 8
+          },
+          {
+            "item": "car_battery",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 360
+          },
+          {
+            "item": "paper",
+            "quantity": 6
+          }
+        ]
+      },
+      {
+        "output_item": "lobster_boat",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 4
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 4
+          },
+          {
+            "item": "propeller",
+            "quantity": 4
+          },
+          {
+            "item": "iron",
+            "quantity": 45
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 4
+          },
+          {
+            "item": "car_battery",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 162
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "shrimp_trawler",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 5
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 5
+          },
+          {
+            "item": "propeller",
+            "quantity": 5
+          },
+          {
+            "item": "iron",
+            "quantity": 60
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 5
+          },
+          {
+            "item": "car_battery",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 216
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ]
+      },
+      {
+        "output_item": "dredger",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 5
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 5
+          },
+          {
+            "item": "propeller",
+            "quantity": 5
+          },
+          {
+            "item": "iron",
+            "quantity": 65
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 5
+          },
+          {
+            "item": "car_battery",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 234
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ]
+      },
+      {
+        "output_item": "dive_vessel",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 4
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 4
+          },
+          {
+            "item": "propeller",
+            "quantity": 4
+          },
+          {
+            "item": "iron",
+            "quantity": 50
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 4
+          },
+          {
+            "item": "car_battery",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "aquaculture_raft",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 4
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 4
+          },
+          {
+            "item": "propeller",
+            "quantity": 4
+          },
+          {
+            "item": "iron",
+            "quantity": 55
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 4
+          },
+          {
+            "item": "car_battery",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 198
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "freshwater_boat",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "hull",
+            "quantity": 3
+          },
+          {
+            "item": "outboard_motor",
+            "quantity": 3
+          },
+          {
+            "item": "propeller",
+            "quantity": 3
+          },
+          {
+            "item": "iron",
+            "quantity": 35
+          },
+          {
+            "item": "fuel_tank",
+            "quantity": 3
+          },
+          {
+            "item": "car_battery",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 126
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
         "output_item": "yacht",
         "output_qty": 1,
         "inputs": [
@@ -7082,6 +7492,42 @@
       "yacht": {
         "elasticity": 0.7,
         "base_sale_chance": 0.0001
+      },
+      "trawler": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.0006
+      },
+      "purse_seiner": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.0005
+      },
+      "longliner": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.0003
+      },
+      "lobster_boat": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.0007
+      },
+      "shrimp_trawler": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.0006
+      },
+      "dredger": {
+        "elasticity": 1.1,
+        "base_sale_chance": 0.0007
+      },
+      "dive_vessel": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.0006
+      },
+      "aquaculture_raft": {
+        "elasticity": 0.9,
+        "base_sale_chance": 0.0005
+      },
+      "freshwater_boat": {
+        "elasticity": 1.2,
+        "base_sale_chance": 0.0009
       }
     }
   },
@@ -7206,6 +7652,26 @@
       "champagne": {
         "elasticity": 0.85,
         "base_sale_chance": 0.03
+      },
+      "grilled_salmon": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.025
+      },
+      "lobster_bisque": {
+        "elasticity": 0.7,
+        "base_sale_chance": 0.015
+      },
+      "tuna_steak": {
+        "elasticity": 0.75,
+        "base_sale_chance": 0.02
+      },
+      "seafood_chowder": {
+        "elasticity": 0.8,
+        "base_sale_chance": 0.02
+      },
+      "prawn_cocktail": {
+        "elasticity": 0.85,
+        "base_sale_chance": 0.025
       }
     }
   },
@@ -7856,6 +8322,370 @@
         "elasticity": 1.4,
         "base_sale_chance": 0.011
       }
+    }
+  },
+  "trawler_fleet": {
+    "name": "Trawler Fleet",
+    "description": "Commercial bottom-trawling operation targeting demersal fish species.",
+    "startup_cost": 150000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 300.0,
+    "allowed_terrain": ["coastal", "ocean"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "cod", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "haddock", "output_qty": 180, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "pollock", "output_qty": 250, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "flounder", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "sole", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "dab", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "coley", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "gurnard", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "red_mullet", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "halibut", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "turbot", "output_qty": 60, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "skate", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 70}, {"item": "energy", "quantity": 15}]}
+    ]
+  },
+  "purse_seine_fleet": {
+    "name": "Purse Seine Fleet",
+    "description": "Pelagic fishing operation using purse seine nets to catch schooling fish.",
+    "startup_cost": 200000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 350.0,
+    "allowed_terrain": ["coastal", "ocean"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "sardines", "output_qty": 600, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "anchovies", "output_qty": 500, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "herring", "output_qty": 550, "inputs": [{"item": "bio_fuel", "quantity": 90}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "mackerel", "output_qty": 450, "inputs": [{"item": "bio_fuel", "quantity": 90}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "yellowfin_tuna", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 120}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "bluefish", "output_qty": 300, "inputs": [{"item": "bio_fuel", "quantity": 80}, {"item": "energy", "quantity": 15}]}
+    ]
+  },
+  "deep_sea_fleet": {
+    "name": "Deep Sea Long-liner Fleet",
+    "description": "Deep-sea fishing operation using long-lines to target large pelagic and deep-water species.",
+    "startup_cost": 380000,
+    "cycles_to_complete": 14400,
+    "base_wage_cost": 600.0,
+    "allowed_terrain": ["coastal", "ocean"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "swordfish", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 200}, {"item": "energy", "quantity": 40}]},
+      {"output_item": "mahi_mahi", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 180}, {"item": "energy", "quantity": 35}]},
+      {"output_item": "snapper", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 160}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "bluefin_tuna", "output_qty": 40, "inputs": [{"item": "bio_fuel", "quantity": 250}, {"item": "energy", "quantity": 50}]},
+      {"output_item": "barracuda", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 150}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "monkfish", "output_qty": 90, "inputs": [{"item": "bio_fuel", "quantity": 160}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "tilefish", "output_qty": 90, "inputs": [{"item": "bio_fuel", "quantity": 160}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "sea_trout", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 140}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "seabass", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 150}, {"item": "energy", "quantity": 30}]}
+    ]
+  },
+  "crustacean_trappers": {
+    "name": "Crustacean Trappers",
+    "description": "Trap-based fishing operation targeting high-value crustaceans.",
+    "startup_cost": 80000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 200.0,
+    "allowed_terrain": ["coastal", "ocean", "marsh"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "lobster", "output_qty": 60, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "blue_crab", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 50}, {"item": "energy", "quantity": 10}]},
+      {"output_item": "dungeness_crab", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 60}, {"item": "energy", "quantity": 12}]},
+      {"output_item": "langoustine", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 55}, {"item": "energy", "quantity": 12}]}
+    ]
+  },
+  "shrimp_fleet": {
+    "name": "Shrimp Fleet",
+    "description": "Specialized shrimp trawling operation using fine-mesh nets in coastal waters.",
+    "startup_cost": 120000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 250.0,
+    "allowed_terrain": ["coastal", "ocean", "marsh"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "shrimp", "output_qty": 600, "inputs": [{"item": "bio_fuel", "quantity": 100}, {"item": "energy", "quantity": 20}]}
+    ]
+  },
+  "shellfish_beds": {
+    "name": "Shellfish Beds",
+    "description": "Managed shellfish harvesting operation using dredges on natural and cultivated beds.",
+    "startup_cost": 35000,
+    "cycles_to_complete": 5400,
+    "base_wage_cost": 80.0,
+    "allowed_terrain": ["coastal", "marsh", "island"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "scallops", "output_qty": 300, "inputs": [{"item": "bio_fuel", "quantity": 30}, {"item": "energy", "quantity": 10}]},
+      {"output_item": "clams", "output_qty": 400, "inputs": [{"item": "bio_fuel", "quantity": 25}, {"item": "energy", "quantity": 8}]},
+      {"output_item": "oysters", "output_qty": 350, "inputs": [{"item": "bio_fuel", "quantity": 25}, {"item": "energy", "quantity": 8}]},
+      {"output_item": "mussels", "output_qty": 500, "inputs": [{"item": "bio_fuel", "quantity": 20}, {"item": "energy", "quantity": 8}]},
+      {"output_item": "barnacles", "output_qty": 200, "inputs": [{"item": "bio_fuel", "quantity": 20}, {"item": "energy", "quantity": 8}]}
+    ]
+  },
+  "dive_operations": {
+    "name": "Commercial Dive Operations",
+    "description": "Hand-harvesting exotic marine species through professional diving.",
+    "startup_cost": 60000,
+    "cycles_to_complete": 3600,
+    "base_wage_cost": 150.0,
+    "allowed_terrain": ["coastal", "ocean", "island"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "urchin", "output_qty": 150, "inputs": [{"item": "bio_fuel", "quantity": 40}, {"item": "energy", "quantity": 10}]},
+      {"output_item": "conch", "output_qty": 100, "inputs": [{"item": "bio_fuel", "quantity": 35}, {"item": "energy", "quantity": 10}]},
+      {"output_item": "squid", "output_qty": 300, "inputs": [{"item": "bio_fuel", "quantity": 40}, {"item": "energy", "quantity": 10}]},
+      {"output_item": "octopus", "output_qty": 80, "inputs": [{"item": "bio_fuel", "quantity": 40}, {"item": "energy", "quantity": 10}]},
+      {"output_item": "eel", "output_qty": 120, "inputs": [{"item": "bio_fuel", "quantity": 35}, {"item": "energy", "quantity": 10}]}
+    ]
+  },
+  "freshwater_fishing": {
+    "name": "Freshwater Fishing Operation",
+    "description": "Lake and river fishing targeting freshwater species using small boats and nets.",
+    "startup_cost": 15000,
+    "cycles_to_complete": 3600,
+    "base_wage_cost": 80.0,
+    "allowed_terrain": ["lake", "marsh"],
+    "allowed_proximity": ["lakeside", "riverside"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "catfish", "output_qty": 200, "inputs": [{"item": "energy", "quantity": 20}]},
+      {"output_item": "perch", "output_qty": 250, "inputs": [{"item": "energy", "quantity": 20}]},
+      {"output_item": "bass", "output_qty": 200, "inputs": [{"item": "energy", "quantity": 20}]},
+      {"output_item": "trout", "output_qty": 180, "inputs": [{"item": "energy", "quantity": 20}]},
+      {"output_item": "crawfish", "output_qty": 400, "inputs": [{"item": "energy", "quantity": 15}]}
+    ]
+  },
+  "aquaculture_farm": {
+    "name": "Aquaculture Fish Farm",
+    "description": "Net-pen and pond aquaculture operation farming high-demand fish species.",
+    "startup_cost": 200000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 500.0,
+    "allowed_terrain": ["coastal", "lake"],
+    "allowed_proximity": ["coastal", "lakeside"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "salmon", "output_qty": 400, "inputs": [{"item": "fish_meal", "quantity": 200}, {"item": "energy", "quantity": 100}, {"item": "water", "quantity": 500}]},
+      {"output_item": "tilapia", "output_qty": 600, "inputs": [{"item": "fish_meal", "quantity": 150}, {"item": "energy", "quantity": 80}, {"item": "water", "quantity": 400}]},
+      {"output_item": "pangasius", "output_qty": 600, "inputs": [{"item": "fish_meal", "quantity": 150}, {"item": "energy", "quantity": 80}, {"item": "water", "quantity": 400}]},
+      {"output_item": "seabass", "output_qty": 300, "inputs": [{"item": "fish_meal", "quantity": 180}, {"item": "energy", "quantity": 90}, {"item": "water", "quantity": 450}]},
+      {"output_item": "barramundi", "output_qty": 350, "inputs": [{"item": "fish_meal", "quantity": 180}, {"item": "energy", "quantity": 90}, {"item": "water", "quantity": 450}]},
+      {"output_item": "trout", "output_qty": 350, "inputs": [{"item": "fish_meal", "quantity": 160}, {"item": "energy", "quantity": 85}, {"item": "water", "quantity": 420}]}
+    ]
+  },
+  "fish_processing_plant": {
+    "name": "Fish Processing Plant",
+    "description": "Industrial fish processing facility producing fillets, meal, oil and specialty products.",
+    "startup_cost": 75000,
+    "cycles_to_complete": 3600,
+    "base_wage_cost": 250.0,
+    "allowed_terrain": ["coastal", "urban", "prairie"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "fish_fillet", "output_qty": 150, "inputs": [{"item": "cod", "quantity": 200}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_fillet", "output_qty": 150, "inputs": [{"item": "haddock", "quantity": 200}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_fillet", "output_qty": 200, "inputs": [{"item": "pollock", "quantity": 250}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_fillet", "output_qty": 120, "inputs": [{"item": "tilapia", "quantity": 160}, {"item": "salt", "quantity": 8}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "fish_fillet", "output_qty": 100, "inputs": [{"item": "catfish", "quantity": 140}, {"item": "salt", "quantity": 8}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "salmon_fillet", "output_qty": 120, "inputs": [{"item": "salmon", "quantity": 160}, {"item": "salt", "quantity": 8}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "tuna_steak", "output_qty": 100, "inputs": [{"item": "yellowfin_tuna", "quantity": 130}, {"item": "salt", "quantity": 6}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "bluefin_tuna_sashimi", "output_qty": 40, "inputs": [{"item": "bluefin_tuna", "quantity": 50}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "swordfish_steak", "output_qty": 60, "inputs": [{"item": "swordfish", "quantity": 80}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "halibut_steak", "output_qty": 60, "inputs": [{"item": "halibut", "quantity": 80}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "shrimp_peeled", "output_qty": 400, "inputs": [{"item": "shrimp", "quantity": 500}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "crab_meat", "output_qty": 80, "inputs": [{"item": "blue_crab", "quantity": 120}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "crab_meat", "output_qty": 80, "inputs": [{"item": "dungeness_crab", "quantity": 100}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "lobster_meat", "output_qty": 40, "inputs": [{"item": "lobster", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "scallop_meat", "output_qty": 200, "inputs": [{"item": "scallops", "quantity": 300}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "calamari", "output_qty": 200, "inputs": [{"item": "squid", "quantity": 300}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "octopus_cleaned", "output_qty": 60, "inputs": [{"item": "octopus", "quantity": 80}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "fish_fingers", "output_qty": 300, "inputs": [{"item": "pollock", "quantity": 200}, {"item": "flour", "quantity": 50}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_fingers", "output_qty": 300, "inputs": [{"item": "cod", "quantity": 200}, {"item": "flour", "quantity": 50}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "surimi", "output_qty": 400, "inputs": [{"item": "pollock", "quantity": 500}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 40}]},
+      {"output_item": "imitation_crab", "output_qty": 350, "inputs": [{"item": "surimi", "quantity": 300}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "fish_meal", "output_qty": 500, "inputs": [{"item": "sardines", "quantity": 800}, {"item": "energy", "quantity": 40}]},
+      {"output_item": "fish_meal", "output_qty": 500, "inputs": [{"item": "anchovies", "quantity": 800}, {"item": "energy", "quantity": 40}]},
+      {"output_item": "fish_oil", "output_qty": 200, "inputs": [{"item": "sardines", "quantity": 600}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_oil", "output_qty": 200, "inputs": [{"item": "mackerel", "quantity": 500}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_oil", "output_qty": 200, "inputs": [{"item": "salmon", "quantity": 400}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "chitin", "output_qty": 150, "inputs": [{"item": "shrimp", "quantity": 400}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "chitin", "output_qty": 120, "inputs": [{"item": "blue_crab", "quantity": 300}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "collagen_powder", "output_qty": 100, "inputs": [{"item": "fish_fillet", "quantity": 200}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_emulsion", "output_qty": 300, "inputs": [{"item": "sardines", "quantity": 500}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "salmon_roe", "output_qty": 50, "inputs": [{"item": "salmon", "quantity": 100}, {"item": "salt", "quantity": 5}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "omega_3_capsule", "output_qty": 400, "inputs": [{"item": "fish_oil", "quantity": 100}, {"item": "energy", "quantity": 20}]}
+    ]
+  },
+  "cannery": {
+    "name": "Cannery",
+    "description": "Canning facility preserving fish and shellfish in shelf-stable tins.",
+    "startup_cost": 120000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 400.0,
+    "allowed_terrain": ["coastal", "urban", "prairie"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "canned_tuna", "output_qty": 300, "inputs": [{"item": "yellowfin_tuna", "quantity": 200}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 40}]},
+      {"output_item": "canned_sardines", "output_qty": 500, "inputs": [{"item": "sardines", "quantity": 400}, {"item": "salt", "quantity": 25}, {"item": "energy", "quantity": 35}]},
+      {"output_item": "canned_salmon", "output_qty": 300, "inputs": [{"item": "salmon", "quantity": 220}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 35}]},
+      {"output_item": "canned_mackerel", "output_qty": 350, "inputs": [{"item": "mackerel", "quantity": 280}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 35}]},
+      {"output_item": "canned_clams", "output_qty": 400, "inputs": [{"item": "clams", "quantity": 350}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 35}]},
+      {"output_item": "canned_crab", "output_qty": 200, "inputs": [{"item": "blue_crab", "quantity": 200}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "canned_oysters", "output_qty": 300, "inputs": [{"item": "oysters", "quantity": 300}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "canned_anchovies", "output_qty": 400, "inputs": [{"item": "anchovies", "quantity": 350}, {"item": "salt", "quantity": 25}, {"item": "energy", "quantity": 30}]}
+    ]
+  },
+  "seafood_smokehouse": {
+    "name": "Seafood Smokehouse",
+    "description": "Traditional smokehouse preserving and flavoring fish through cold and hot smoking.",
+    "startup_cost": 45000,
+    "cycles_to_complete": 5400,
+    "base_wage_cost": 200.0,
+    "allowed_terrain": ["coastal", "forest", "hills"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "smoked_salmon", "output_qty": 100, "inputs": [{"item": "salmon", "quantity": 150}, {"item": "lumber", "quantity": 30}, {"item": "salt", "quantity": 15}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "smoked_mackerel", "output_qty": 150, "inputs": [{"item": "mackerel", "quantity": 200}, {"item": "lumber", "quantity": 25}, {"item": "salt", "quantity": 12}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "smoked_eel", "output_qty": 80, "inputs": [{"item": "eel", "quantity": 120}, {"item": "lumber", "quantity": 20}, {"item": "salt", "quantity": 10}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "salt_cod", "output_qty": 200, "inputs": [{"item": "cod", "quantity": 300}, {"item": "salt", "quantity": 60}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "pickled_herring", "output_qty": 250, "inputs": [{"item": "herring", "quantity": 300}, {"item": "salt", "quantity": 40}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "dried_anchovies", "output_qty": 200, "inputs": [{"item": "anchovies", "quantity": 300}, {"item": "salt", "quantity": 40}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "dried_squid", "output_qty": 150, "inputs": [{"item": "squid", "quantity": 250}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "unagi_kabayaki", "output_qty": 80, "inputs": [{"item": "eel", "quantity": 120}, {"item": "sugar", "quantity": 20}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "isinglass", "output_qty": 50, "inputs": [{"item": "cod", "quantity": 100}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "isinglass", "output_qty": 50, "inputs": [{"item": "haddock", "quantity": 100}, {"item": "energy", "quantity": 15}]}
+    ]
+  },
+  "seafood_condiment_factory": {
+    "name": "Seafood Condiment Factory",
+    "description": "Produces fermented and processed seafood condiments, sauces and specialty items.",
+    "startup_cost": 55000,
+    "cycles_to_complete": 7200,
+    "base_wage_cost": 250.0,
+    "allowed_terrain": ["coastal", "urban", "prairie"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "fish_sauce", "output_qty": 300, "inputs": [{"item": "anchovies", "quantity": 400}, {"item": "salt", "quantity": 80}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "fish_sauce", "output_qty": 300, "inputs": [{"item": "sardines", "quantity": 400}, {"item": "salt", "quantity": 80}, {"item": "energy", "quantity": 30}]},
+      {"output_item": "oyster_sauce", "output_qty": 250, "inputs": [{"item": "oysters", "quantity": 300}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "shrimp_paste", "output_qty": 200, "inputs": [{"item": "shrimp", "quantity": 350}, {"item": "salt", "quantity": 60}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "worcestershire_sauce", "output_qty": 200, "inputs": [{"item": "anchovies", "quantity": 200}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "anchovy_paste", "output_qty": 250, "inputs": [{"item": "anchovies", "quantity": 350}, {"item": "salt", "quantity": 50}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "conch_shell", "output_qty": 50, "inputs": [{"item": "conch", "quantity": 100}, {"item": "energy", "quantity": 10}]}
+    ]
+  },
+  "pearl_oyster_farm": {
+    "name": "Pearl Oyster Farm",
+    "description": "Cultivates oysters over long growth periods to produce natural pearls of multiple colors.",
+    "startup_cost": 350000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 400.0,
+    "allowed_terrain": ["coastal", "island"],
+    "allowed_proximity": ["coastal"],
+    "class": "production",
+    "production_lines": [
+      {"output_item": "white_pearl", "output_qty": 5, "inputs": [{"item": "oysters", "quantity": 200}, {"item": "salt", "quantity": 20}, {"item": "energy", "quantity": 40}]},
+      {"output_item": "black_pearl", "output_qty": 3, "inputs": [{"item": "oysters", "quantity": 300}, {"item": "salt", "quantity": 25}, {"item": "energy", "quantity": 50}]},
+      {"output_item": "pink_pearl", "output_qty": 4, "inputs": [{"item": "oysters", "quantity": 250}, {"item": "salt", "quantity": 22}, {"item": "energy", "quantity": 45}]},
+      {"output_item": "golden_pearl", "output_qty": 2, "inputs": [{"item": "oysters", "quantity": 400}, {"item": "salt", "quantity": 30}, {"item": "energy", "quantity": 60}]},
+      {"output_item": "mother_of_pearl", "output_qty": 80, "inputs": [{"item": "oysters", "quantity": 150}, {"item": "energy", "quantity": 25}]},
+      {"output_item": "mother_of_pearl", "output_qty": 60, "inputs": [{"item": "clams", "quantity": 150}, {"item": "energy", "quantity": 25}]}
+    ]
+  },
+  "fish_market": {
+    "name": "Fish Market",
+    "description": "Fresh seafood retail market selling whole fish, fillets, shellfish and preserved seafood to consumers.",
+    "startup_cost": 20000,
+    "cycles_to_complete": 60,
+    "base_wage_cost": 100.0,
+    "allowed_terrain": ["coastal", "urban", "marsh"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "retail",
+    "products": {
+      "cod": {"elasticity": 1.1, "base_sale_chance": 0.04},
+      "haddock": {"elasticity": 1.1, "base_sale_chance": 0.04},
+      "salmon": {"elasticity": 1.0, "base_sale_chance": 0.035},
+      "salmon_fillet": {"elasticity": 1.0, "base_sale_chance": 0.04},
+      "fish_fillet": {"elasticity": 1.2, "base_sale_chance": 0.05},
+      "tuna_steak": {"elasticity": 0.9, "base_sale_chance": 0.025},
+      "bluefin_tuna_sashimi": {"elasticity": 0.6, "base_sale_chance": 0.008},
+      "halibut_steak": {"elasticity": 0.85, "base_sale_chance": 0.02},
+      "swordfish_steak": {"elasticity": 0.85, "base_sale_chance": 0.02},
+      "shrimp_peeled": {"elasticity": 1.0, "base_sale_chance": 0.04},
+      "lobster_meat": {"elasticity": 0.7, "base_sale_chance": 0.01},
+      "crab_meat": {"elasticity": 0.8, "base_sale_chance": 0.02},
+      "scallop_meat": {"elasticity": 0.85, "base_sale_chance": 0.02},
+      "calamari": {"elasticity": 0.9, "base_sale_chance": 0.03},
+      "smoked_salmon": {"elasticity": 0.8, "base_sale_chance": 0.025},
+      "smoked_mackerel": {"elasticity": 0.9, "base_sale_chance": 0.03},
+      "canned_tuna": {"elasticity": 1.2, "base_sale_chance": 0.06},
+      "canned_sardines": {"elasticity": 1.3, "base_sale_chance": 0.065},
+      "canned_salmon": {"elasticity": 1.1, "base_sale_chance": 0.05},
+      "fish_sauce": {"elasticity": 1.0, "base_sale_chance": 0.04},
+      "oyster_sauce": {"elasticity": 1.0, "base_sale_chance": 0.04},
+      "omega_3_capsule": {"elasticity": 0.9, "base_sale_chance": 0.035},
+      "fish_emulsion": {"elasticity": 1.1, "base_sale_chance": 0.04}
+    }
+  },
+  "seafood_restaurant": {
+    "name": "Seafood Restaurant",
+    "description": "Full-service restaurant specializing in fresh seafood dishes and shellfish platters.",
+    "startup_cost": 45000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 500.0,
+    "allowed_terrain": ["coastal", "urban", "island"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "retail",
+    "products": {
+      "fish_and_chips": {"elasticity": 1.1, "base_sale_chance": 0.05},
+      "seafood_chowder": {"elasticity": 0.9, "base_sale_chance": 0.04},
+      "lobster_bisque": {"elasticity": 0.7, "base_sale_chance": 0.02},
+      "grilled_salmon": {"elasticity": 0.85, "base_sale_chance": 0.03},
+      "prawn_cocktail": {"elasticity": 0.9, "base_sale_chance": 0.04},
+      "calamari": {"elasticity": 1.0, "base_sale_chance": 0.04},
+      "lobster_meat": {"elasticity": 0.65, "base_sale_chance": 0.015}
+    },
+    "production_lines": [
+      {"output_item": "fish_and_chips", "output_qty": 60, "inputs": [{"item": "fish_fillet", "quantity": 50}, {"item": "potatoes", "quantity": 60}, {"item": "energy", "quantity": 20}]},
+      {"output_item": "seafood_chowder", "output_qty": 50, "inputs": [{"item": "clams", "quantity": 80}, {"item": "shrimp_peeled", "quantity": 40}, {"item": "cream", "quantity": 30}, {"item": "potatoes", "quantity": 40}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "lobster_bisque", "output_qty": 40, "inputs": [{"item": "lobster_meat", "quantity": 30}, {"item": "cream", "quantity": 40}, {"item": "butter", "quantity": 15}, {"item": "energy", "quantity": 15}]},
+      {"output_item": "grilled_salmon", "output_qty": 60, "inputs": [{"item": "salmon_fillet", "quantity": 50}, {"item": "energy", "quantity": 12}]},
+      {"output_item": "prawn_cocktail", "output_qty": 80, "inputs": [{"item": "shrimp_peeled", "quantity": 80}, {"item": "energy", "quantity": 10}]}
+    ]
+  },
+  "sushi_bar": {
+    "name": "Sushi Bar",
+    "description": "Japanese-style restaurant serving fresh sushi, sashimi and specialty rolls.",
+    "startup_cost": 55000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 600.0,
+    "allowed_terrain": ["coastal", "urban", "island"],
+    "allowed_proximity": ["coastal", "urban"],
+    "class": "retail",
+    "products": {
+      "salmon_fillet": {"elasticity": 1.0, "base_sale_chance": 0.04},
+      "tuna_steak": {"elasticity": 0.9, "base_sale_chance": 0.03},
+      "bluefin_tuna_sashimi": {"elasticity": 0.6, "base_sale_chance": 0.008},
+      "unagi_kabayaki": {"elasticity": 0.75, "base_sale_chance": 0.015},
+      "imitation_crab": {"elasticity": 1.1, "base_sale_chance": 0.05},
+      "salmon_roe": {"elasticity": 0.7, "base_sale_chance": 0.012},
+      "calamari": {"elasticity": 0.9, "base_sale_chance": 0.03}
     }
   }
 }
