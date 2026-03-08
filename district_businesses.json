@@ -4704,6 +4704,170 @@
             "quantity": 25000
           }
         ]
+      },
+      {
+        "output_item": "manta_ray",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "beef",
+            "quantity": 300
+          },
+          {
+            "item": "water",
+            "quantity": 12000
+          },
+          {
+            "item": "veterinary_supplies",
+            "quantity": 20
+          },
+          {
+            "item": "aquarium_tank",
+            "quantity": 1
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 70000
+          }
+        ]
+      },
+      {
+        "output_item": "seahorse",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 2000
+          },
+          {
+            "item": "salt",
+            "quantity": 60
+          },
+          {
+            "item": "animal_feed",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          }
+        ]
+      },
+      {
+        "output_item": "sea_lion",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "beef",
+            "quantity": 400
+          },
+          {
+            "item": "water",
+            "quantity": 8000
+          },
+          {
+            "item": "veterinary_supplies",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 45
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          }
+        ]
+      },
+      {
+        "output_item": "puffer_fish",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 3000
+          },
+          {
+            "item": "salt",
+            "quantity": 80
+          },
+          {
+            "item": "animal_feed",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 28000
+          }
+        ]
+      },
+      {
+        "output_item": "clownfish",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 2500
+          },
+          {
+            "item": "salt",
+            "quantity": 60
+          },
+          {
+            "item": "animal_feed",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          }
+        ]
+      },
+      {
+        "output_item": "stingray",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "beef",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 6000
+          },
+          {
+            "item": "veterinary_supplies",
+            "quantity": 12
+          },
+          {
+            "item": "aquarium_tank",
+            "quantity": 1
+          },
+          {
+            "item": "paper",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 45000
+          }
+        ]
       }
     ]
   },
@@ -9779,6 +9943,70 @@
           {
             "item": "energy",
             "quantity": 120000
+          }
+        ]
+      }
+    ]
+  },
+  "sturgeon_farm": {
+    "name": "Sturgeon Farm",
+    "description": "High-security luxury aquaculture operation cultivating slow-growing sturgeon for premium caviar production.",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 40000,
+    "allowed_terrain": ["district_coastal"],
+    "allowed_proximity": [],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "sturgeon",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 10000
+          },
+          {
+            "item": "animal_feed",
+            "quantity": 200
+          },
+          {
+            "item": "veterinary_supplies",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "caviar",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "sturgeon",
+            "quantity": 10
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 1000
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
           }
         ]
       }

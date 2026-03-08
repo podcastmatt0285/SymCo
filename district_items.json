@@ -1428,5 +1428,55 @@
     "name": "Logistics Support Contract",
     "description": "Supply chain management",
     "category": "retail_military"
+  },
+  "sturgeon": {
+    "name": "Sturgeon",
+    "description": "Ancient, slow-maturing fish cultivated in high-security district facilities for its prized roe",
+    "category": "animals"
+  },
+  "caviar": {
+    "name": "Caviar",
+    "description": "Salt-cured sturgeon roe, the worlds most prestigious luxury food product",
+    "category": "retail_food"
+  },
+  "premium_sashimi": {
+    "name": "Premium Sashimi Platter",
+    "description": "Chef-curated assortment of sashimi-grade bluefin tuna and seasonal selections",
+    "category": "retail_food"
+  },
+  "seafood_tower": {
+    "name": "Seafood Tower",
+    "description": "Luxury tiered display of chilled shellfish and seafood for fine dining service",
+    "category": "retail_food"
+  },
+  "manta_ray": {
+    "name": "Manta Ray",
+    "description": "Graceful ocean ray housed in large aquarium exhibits",
+    "category": "animals"
+  },
+  "seahorse": {
+    "name": "Seahorse",
+    "description": "Delicate fish with a prehensile tail popular in aquarium displays",
+    "category": "animals"
+  },
+  "sea_lion": {
+    "name": "Sea Lion",
+    "description": "Playful pinniped marine mammal prized in aquarium and zoo exhibits",
+    "category": "animals"
+  },
+  "puffer_fish": {
+    "name": "Puffer Fish",
+    "description": "Spiny defensive fish that inflates when threatened, popular in marine exhibits",
+    "category": "animals"
+  },
+  "clownfish": {
+    "name": "Clownfish",
+    "description": "Brightly colored reef fish that lives among sea anemones, beloved in aquariums",
+    "category": "animals"
+  },
+  "stingray": {
+    "name": "Stingray",
+    "description": "Flat cartilaginous fish with a barbed tail popular in touch-tank aquarium exhibits",
+    "category": "animals"
   }
 }
