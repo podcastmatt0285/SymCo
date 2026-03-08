@@ -6212,10 +6212,15 @@ def production_costs_page(
             else:  # cost
                 raw_items.sort(key=lambda x: x["unit_cost"], reverse=rev)
 
-            # "complete" = every input has SOME price (WMA or theoretical fallback)
-            # "incomplete" = at least one input has truly no price at all
-            complete   = [i for i in raw_items if i.get("has_all_priced", i["has_all_wma"])]
-            incomplete = [i for i in raw_items if not i.get("has_all_priced", i["has_all_wma"])]
+            # "complete" = every input has SOME price (WMA or theoretical fallback),
+            # OR the player already has a live WMA for the output (they produce it).
+            def _is_complete(i):
+                if i.get("has_all_priced", i["has_all_wma"]):
+                    return True
+                rec = wma_data.get(i["item_key"], {})
+                return rec.get("wma_cost", 0.0) > 0 and len(i["missing_wma"]) == 0
+            complete   = [i for i in raw_items if _is_complete(i)]
+            incomplete = [i for i in raw_items if not _is_complete(i)]
 
             # Summary stats from complete items only
             costs_ok = [i["unit_cost"] for i in complete if i["unit_cost"] > 0]
@@ -6236,8 +6241,21 @@ def production_costs_page(
                 # WMA coverage badge
                 theo_n = item.get("theoretical_fallback_count", 0)
                 miss_n = len(item["missing_wma"])
+                # Check whether the player has a live WMA record for this OUTPUT item.
+                # If they do, their cost is real production data regardless of how
+                # individual inputs were priced — "theoretical" should not bleed upward.
+                own_rec = wma_data.get(item["item_key"], {})
+                has_own_wma = own_rec.get("wma_cost", 0.0) > 0
                 if item["has_all_wma"]:
                     cov_badge = '<span style="color:#22c55e;font-size:0.7rem;">● live WMA</span>'
+                elif has_own_wma and miss_n == 0:
+                    # Player produces this — WMA is live, some inputs just used estimates
+                    est_note = (
+                        f' <span style="color:#607098;font-size:0.65rem;">'
+                        f'{theo_n} input est.</span>'
+                        if theo_n > 0 else ""
+                    )
+                    cov_badge = f'<span style="color:#22c55e;font-size:0.7rem;">● live WMA</span>{est_note}'
                 elif miss_n == 0 and theo_n > 0:
                     cov_badge = f'<span style="color:#38bdf8;font-size:0.7rem;">~ {theo_n} theoretical</span>'
                 elif miss_n > 0 and any(i["has_wma"] for i in cb["inputs"]):
@@ -6255,8 +6273,9 @@ def production_costs_page(
                     pills += f'<span style="padding:1px 5px;border-radius:3px;background:#7e22ce20;color:#c084fc;font-size:0.65rem;">-{cb["exec_input_cost_reduction"]*100:.0f}% inputs</span> '
 
                 all_priced = item.get("has_all_priced", item["has_all_wma"])
+                # Also show cost when the player has their own live WMA for this item
                 cost_str = (
-                    fmt_usd(cost, disp, precision=4) if all_priced and cost > 0
+                    fmt_usd(cost, disp, precision=4) if (all_priced or has_own_wma) and cost > 0
                     else f'<span style="color:#64748b;">—</span>'
                 )
 
