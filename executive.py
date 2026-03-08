@@ -898,7 +898,8 @@ def generate_executive(force_special: bool = False) -> dict:
 
     first_name = random.choice(NAME_DATA["first_names"])
     last_name  = random.choice(NAME_DATA["last_names"])
-    job        = random.choice(list(EXECUTIVE_JOBS.keys()))
+    _spawnable_jobs = [k for k in EXECUTIVE_JOBS if k != "first_lady"]
+    job        = random.choice(_spawnable_jobs)
 
     current_age = random.randint(18, 50)
 
@@ -1477,6 +1478,8 @@ def initialize():
         "ALTER TABLE executives ADD COLUMN pension_owed_by INTEGER",
         "ALTER TABLE executives ADD COLUMN severance_owed REAL DEFAULT 0.0",
         "ALTER TABLE executives ADD COLUMN severance_owed_by INTEGER",
+        "ALTER TABLE executives ADD COLUMN is_first_lady BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE executives ADD COLUMN max_level INTEGER DEFAULT 7",
     ])
 
     db = get_db()
