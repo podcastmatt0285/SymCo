@@ -96,7 +96,7 @@ PROXIMITY_FEATURES = {
     "remote": {"description": "Far from civilization", "tax_modifier": 0.7}
 }
 
-# Business type requirements (what can operate where) - ALL 106 BUSINESS TYPES
+# Business type requirements (what can operate where) - ALL 131 BUSINESS TYPES
 BUSINESS_COMPATIBILITY = {
     "bookbindery": {"allowed_terrain": ['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island'], "allowed_proximity": ['urban']},
     "dairy_and_fermentation": {"allowed_terrain": ['prairie', 'forest', 'desert', 'mountain'], "allowed_proximity": ['urban', 'road']},
