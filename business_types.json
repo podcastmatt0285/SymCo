@@ -3952,15 +3952,19 @@
                 "inputs": [
                     {
                         "item": "bees",
-                        "quantity": 5
+                        "quantity": 500000
                     },
                     {
                         "item": "pollen",
-                        "quantity": 20
+                        "quantity": 200
                     },
                     {
                         "item": "water",
-                        "quantity": 10
+                        "quantity": 100
+                    },
+                    {
+                        "item": "queen_bee",
+                        "quantity": 1
                     },
                     {
                         "item": "energy",
@@ -3970,7 +3974,7 @@
             },
             {
                 "output_item": "pollen",
-                "output_qty": 50,
+                "output_qty": 5,
                 "inputs": [
                     {
                         "item": "bees",
@@ -4040,19 +4044,19 @@
                 "inputs": [
                     {
                         "item": "bees",
-                        "quantity": 10
+                        "quantity": 1000
                     },
                     {
                         "item": "honey",
-                        "quantity": 5
+                        "quantity": 50
                     },
                     {
                         "item": "water",
-                        "quantity": 10
+                        "quantity": 100
                     },
                     {
                         "item": "energy",
-                        "quantity": 15
+                        "quantity": 1500
                     },
                     {
                         "item": "paper",
@@ -4066,19 +4070,19 @@
                 "inputs": [
                     {
                         "item": "royal_jelly",
-                        "quantity": 2000
+                        "quantity": 200000
                     },
                     {
                         "item": "bees",
-                        "quantity": 500
+                        "quantity": 1
                     },
                     {
                         "item": "water",
-                        "quantity": 500
+                        "quantity": 50
                     },
                     {
                         "item": "energy",
-                        "quantity": 2000
+                        "quantity": 20
                     }
                 ]
             }
