@@ -96,8 +96,16 @@ PROXIMITY_FEATURES = {
     "remote": {"description": "Far from civilization", "tax_modifier": 0.7}
 }
 
-# Business type requirements (what can operate where) - ALL 131 BUSINESS TYPES
+# Business type requirements (what can operate where) - ALL 138 BUSINESS TYPES
 BUSINESS_COMPATIBILITY = {
+    # ── Sheep & wool system ──────────────────────────────────────────────────
+    "paddock":              {"allowed_terrain": ["prairie", "hills", "savanna", "mountain"],         "allowed_proximity": ["remote", "riverside", "oasis"]},
+    "sheep_dog_kennel":     {"allowed_terrain": ["prairie", "hills", "forest", "mountain"],          "allowed_proximity": ["remote", "road"]},
+    "wool_mill":            {"allowed_terrain": ["prairie", "hills", "savanna", "mountain"],         "allowed_proximity": ["riverside", "road", "remote"]},
+    "yarn_mill":            {"allowed_terrain": ["prairie", "hills", "savanna", "forest"],           "allowed_proximity": ["riverside", "road", "urban"]},
+    "thread_mill":          {"allowed_terrain": ["prairie", "hills", "savanna", "forest"],           "allowed_proximity": ["riverside", "road", "urban"]},
+    "arts_and_crafts_store":{"allowed_terrain": ["prairie", "forest", "desert", "marsh", "mountain", "tundra", "jungle", "savanna", "hills", "island"], "allowed_proximity": ["urban", "road", "remote", "coastal", "riverside", "lakeside"]},
+    "ritual_grounds":       {"allowed_terrain": ["prairie", "hills", "mountain", "desert", "savanna"], "allowed_proximity": ["remote", "oasis"]},
     "bookbindery": {"allowed_terrain": ['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island'], "allowed_proximity": ['urban']},
     "dairy_and_fermentation": {"allowed_terrain": ['prairie', 'forest', 'desert', 'mountain'], "allowed_proximity": ['urban', 'road']},
     "solar_plant": {"allowed_terrain": ['desert', 'prairie', 'savanna', 'hills', 'tundra'], "allowed_proximity": ['coastal', 'oasis', 'road', 'remote']},

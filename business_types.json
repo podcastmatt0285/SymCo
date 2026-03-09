@@ -228,6 +228,138 @@
             "parrot": {
                 "elasticity": 0.9,
                 "base_sale_chance": 0.004
+            },
+            "old_english_sheepdog": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "border_collie": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "german_shepherd": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "belgian_shepherd": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "white_swiss_shepherd": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "belgian_malinois": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "icelandic_sheepdog": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "pembroke_welsh_corgi": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "rottweiler": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "catalan_sheepdog": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "miniature_american_shepherd": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "lapponian_herder": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "english_shepherd": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "pyrenean_sheepdog": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "samoyed": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "australian_kelpie": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "beauceron": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "scotch_collie": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "bergamasco_shepherd": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "finnish_lapphund": {
+                "elasticity": 0.8,
+                "base_sale_chance": 0.005
+            },
+            "belgian_tervuren": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "polish_lowland_sheepdog": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "carpathian_shepherd": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "bearded_collie": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "schipperke": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "catahoula_leopard_dog": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "cardigan_welsh_corgi": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "appenzeller_sennenhund": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "belgian_laekenois": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "bouvier_des_flandres": {
+                "elasticity": 0.65,
+                "base_sale_chance": 0.002
+            },
+            "tibetan_terrier": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "basque_shepherd": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
+            },
+            "croatian_sheepdog": {
+                "elasticity": 0.5,
+                "base_sale_chance": 0.0003
             }
         }
     },
@@ -366,6 +498,72 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "sheep_milk",
+                "output_qty": 30,
+                "inputs": [
+                    {
+                        "item": "fries_melkschaap",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "sheep_milk",
+                "output_qty": 30,
+                "inputs": [
+                    {
+                        "item": "lacaune_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "sheep_milk",
+                "output_qty": 30,
+                "inputs": [
+                    {
+                        "item": "icelandic_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 10
                     },
                     {
                         "item": "paper",
@@ -645,6 +843,222 @@
                     {
                         "item": "peanut",
                         "quantity": 80
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "merino",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "corriedale",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "suffolk_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "dorset_horn_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "oxford_down_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "columbia_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "romney_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "charollais_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "poll_dorset",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "south_african_meat_merino",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "royal_white_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lard",
+                "output_qty": 6,
+                "inputs": [
+                    {
+                        "item": "north_country_cheviot",
+                        "quantity": 1
                     },
                     {
                         "item": "energy",
@@ -1166,6 +1580,186 @@
                         "quantity": 1
                     }
                 ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "merino",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "corriedale",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "suffolk_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "lincoln_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "border_leicester_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "romney_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "columbia_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "karakul_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "icelandic_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leather",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "poll_dorset",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
             }
         ]
     },
@@ -1594,6 +2188,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 2
                     }
                 ]
             },
@@ -1615,6 +2213,10 @@
                     },
                     {
                         "item": "paper",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "thread",
                         "quantity": 1
                     }
                 ]
@@ -1638,6 +2240,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 1
                     }
                 ]
             },
@@ -1660,6 +2266,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 3
                     }
                 ]
             },
@@ -1678,6 +2288,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 2
                     }
                 ]
             },
@@ -1708,6 +2322,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 4
                     }
                 ]
             },
@@ -1738,6 +2356,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 4
                     }
                 ]
             },
@@ -1756,6 +2378,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 3
                     }
                 ]
             }
@@ -1849,6 +2475,10 @@
                     {
                         "item": "paper",
                         "quantity": 1
+                    },
+                    {
+                        "item": "thread",
+                        "quantity": 3
                     }
                 ]
             },
@@ -1886,6 +2516,10 @@
                     },
                     {
                         "item": "paper",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "thread",
                         "quantity": 1
                     }
                 ]
@@ -4176,6 +4810,1150 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "merino",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "corriedale",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "shetland_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "bluefaced_leicester",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "border_leicester_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "romney_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "suffolk_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "dorset_horn_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "black_welsh_mountain_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "finnsheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "lincoln_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "southdown_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "alpaca",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "angora_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "cheviot_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "mohair_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "rambouillet_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "targhee_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "cashmere_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "columbia_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "polwarth_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "polypay_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "jacob_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "cotswold_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "leicester_longwool",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "soay_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "welsh_mountain_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "lincoln_longwool",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "oxford_down_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "barbados_black_belly",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "american_tunis",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "shropshire_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "fries_melkschaap",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "st_croix_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "australian_white_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "charollais_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "icelandic_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "karakul_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "romanov_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "clun_forest_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "royal_white_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "south_african_meat_merino",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "lacaune_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "north_country_cheviot",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "poll_dorset",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "rideau_arcott",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "gulf_coast_native_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "ile_de_france_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "cameroon_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "damara_sheep",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "badger_face_welsh_mountain",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lamb_meat",
+                "output_qty": 50,
+                "inputs": [
+                    {
+                        "item": "berrichon_du_cher",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
                     },
                     {
                         "item": "paper",
@@ -8627,6 +10405,10 @@
             "bacon": {
                 "elasticity": 0.8,
                 "base_sale_chance": 0.08
+            },
+            "lamb_meat": {
+                "elasticity": 0.85,
+                "base_sale_chance": 0.04
             }
         }
     },
@@ -14036,5 +15818,3586 @@
                 "base_sale_chance": 0.02
             }
         }
+    },
+    "paddock": {
+        "name": "Sheep Paddock",
+        "description": "Fenced grazing paddock where a sheep dog herds and manages flocks of sheep. Different dog breeds yield different quantities of each sheep variety.",
+        "startup_cost": 12000,
+        "cycles_to_complete": 180,
+        "base_wage_cost": 55.0,
+        "allowed_terrain": [
+            "prairie",
+            "hills",
+            "savanna",
+            "mountain"
+        ],
+        "allowed_proximity": [
+            "remote",
+            "riverside",
+            "oasis"
+        ],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "merino",
+                "output_qty": 4,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "border_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "corriedale",
+                "output_qty": 4,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "border_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "suffolk_sheep",
+                "output_qty": 4,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "border_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "australian_white_sheep",
+                "output_qty": 4,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "australian_kelpie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "south_african_meat_merino",
+                "output_qty": 4,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "australian_kelpie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "poll_dorset",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "australian_kelpie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "charollais_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "german_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "oxford_down_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "german_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "columbia_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "german_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "ile_de_france_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "belgian_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "berrichon_du_cher",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "belgian_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "bluefaced_leicester",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "old_english_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "border_leicester_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "old_english_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "welsh_mountain_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "pembroke_welsh_corgi",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "cheviot_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "pembroke_welsh_corgi",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "badger_face_welsh_mountain",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "cardigan_welsh_corgi",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "black_welsh_mountain_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "cardigan_welsh_corgi",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "shetland_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "scotch_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "romney_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "scotch_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lincoln_longwool",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "scotch_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "soay_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "bearded_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "north_country_cheviot",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "bearded_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "dorset_horn_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "bearded_collie",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "american_tunis",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "english_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "shropshire_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "english_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "gulf_coast_native_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "english_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "rambouillet_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "white_swiss_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "barbados_black_belly",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "belgian_malinois",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "st_croix_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "belgian_malinois",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "icelandic_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "icelandic_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "finnsheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "icelandic_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "romanov_sheep",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "samoyed",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "leicester_longwool",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "samoyed",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "clun_forest_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "lapponian_herder",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lacaune_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "pyrenean_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lincoln_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "pyrenean_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "soay_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "finnish_lapphund",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "polypay_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "belgian_tervuren",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "polwarth_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "polish_lowland_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "rideau_arcott",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "carpathian_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "karakul_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "catalan_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "damara_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "catalan_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "gulf_coast_native_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "catahoula_leopard_dog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "cameroon_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "miniature_american_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "ile_de_france_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "beauceron",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "jacob_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "croatian_sheepdog",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "fries_melkschaap",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "bouvier_des_flandres",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "royal_white_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "rottweiler",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "southdown_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "rottweiler",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "cotswold_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "bergamasco_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "angora_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "bergamasco_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "alpaca",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "schipperke",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "mohair_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "appenzeller_sennenhund",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "cameroon_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "belgian_laekenois",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "cashmere_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "tibetan_terrier",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "targhee_sheep",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "grass",
+                        "quantity": 300
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "lettuce",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "basque_shepherd",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "sheep_dog_kennel": {
+        "name": "Sheep Dog Kennel & Training",
+        "description": "Specialist breeding and training facility for working sheep dogs. Each breed demands a unique diet and produces offspring at its own rare rate.",
+        "startup_cost": 25000,
+        "cycles_to_complete": 960,
+        "base_wage_cost": 150.0,
+        "allowed_terrain": [
+            "prairie",
+            "hills",
+            "forest",
+            "mountain"
+        ],
+        "allowed_proximity": [
+            "remote",
+            "road"
+        ],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "border_collie",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "german_shepherd",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "australian_kelpie",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "old_english_sheepdog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "belgian_shepherd",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "white_swiss_shepherd",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "belgian_malinois",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 14
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "pembroke_welsh_corgi",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "english_shepherd",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "scotch_collie",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "bearded_collie",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "samoyed",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "icelandic_sheepdog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "cardigan_welsh_corgi",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "catalan_sheepdog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "miniature_american_shepherd",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "lapponian_herder",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "pyrenean_sheepdog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "finnish_lapphund",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "belgian_tervuren",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "polish_lowland_sheepdog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "beauceron",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 14
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "catahoula_leopard_dog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 14
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "croatian_sheepdog",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "bouvier_des_flandres",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 14
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "rottweiler",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "basque_shepherd",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "carpathian_shepherd",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "bergamasco_shepherd",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "schipperke",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 8
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "appenzeller_sennenhund",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "pork",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "belgian_laekenois",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "beef",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "tibetan_terrier",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "chicken",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "corn",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "eggs",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "wool_mill": {
+        "name": "Wool Scouring & Processing Mill",
+        "description": "Shears, scours, and cards raw fleece from sheep into clean, processed wool ready for spinning. Premium fibre breeds yield higher output per animal.",
+        "startup_cost": 9000,
+        "cycles_to_complete": 90,
+        "base_wage_cost": 60.0,
+        "allowed_terrain": [
+            "prairie",
+            "hills",
+            "savanna",
+            "mountain"
+        ],
+        "allowed_proximity": [
+            "riverside",
+            "road",
+            "remote"
+        ],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "merino",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "corriedale",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "shetland_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "bluefaced_leicester",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "border_leicester_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "romney_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "suffolk_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "dorset_horn_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "black_welsh_mountain_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "finnsheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "lincoln_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "southdown_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "alpaca",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "angora_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "cheviot_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "mohair_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "rambouillet_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "targhee_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "cashmere_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "columbia_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "polwarth_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "polypay_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "jacob_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "cotswold_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "leicester_longwool",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "soay_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "welsh_mountain_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 12,
+                "inputs": [
+                    {
+                        "item": "lincoln_longwool",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "oxford_down_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "icelandic_sheep",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "american_tunis",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "north_country_cheviot",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "poll_dorset",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "wool",
+                "output_qty": 8,
+                "inputs": [
+                    {
+                        "item": "south_african_meat_merino",
+                        "quantity": 1
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 15
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "yarn_mill": {
+        "name": "Yarn Spinning Mill",
+        "description": "Spins and plies clean wool fibre into finished yarn for retail crafts and thread production.",
+        "startup_cost": 7500,
+        "cycles_to_complete": 120,
+        "base_wage_cost": 50.0,
+        "allowed_terrain": [
+            "prairie",
+            "hills",
+            "savanna",
+            "forest"
+        ],
+        "allowed_proximity": [
+            "riverside",
+            "road",
+            "urban"
+        ],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "yarn",
+                "output_qty": 40,
+                "inputs": [
+                    {
+                        "item": "wool",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 25
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "thread_mill": {
+        "name": "Thread Mill",
+        "description": "Further spins and twists yarn into fine sewing thread used as an essential input in garment manufacturing.",
+        "startup_cost": 6000,
+        "cycles_to_complete": 100,
+        "base_wage_cost": 45.0,
+        "allowed_terrain": [
+            "prairie",
+            "hills",
+            "savanna",
+            "forest"
+        ],
+        "allowed_proximity": [
+            "riverside",
+            "road",
+            "urban"
+        ],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "thread",
+                "output_qty": 60,
+                "inputs": [
+                    {
+                        "item": "yarn",
+                        "quantity": 25
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            }
+        ]
+    },
+    "arts_and_crafts_store": {
+        "name": "Arts & Crafts Store",
+        "description": "Retail shop selling yarn, thread, and craft supplies to hobbyist knitters, weavers, and makers.",
+        "startup_cost": 8000,
+        "cycles_to_complete": 60,
+        "base_wage_cost": 140.0,
+        "allowed_terrain": [
+            "prairie",
+            "forest",
+            "desert",
+            "marsh",
+            "mountain",
+            "tundra",
+            "jungle",
+            "savanna",
+            "hills",
+            "island"
+        ],
+        "allowed_proximity": [
+            "urban",
+            "road",
+            "remote",
+            "coastal",
+            "riverside",
+            "lakeside"
+        ],
+        "class": "retail",
+        "products": {
+            "yarn": {
+                "elasticity": 1.3,
+                "base_sale_chance": 0.025
+            },
+            "thread": {
+                "elasticity": 1.1,
+                "base_sale_chance": 0.03
+            }
+        }
+    },
+    "ritual_grounds": {
+        "name": "Sacred Ritual Grounds",
+        "description": "A consecrated site where trained clergy bless sheep for religious sacrifice. The exceptionally rare ram's horn can only be produced here, requiring an enormous offering.",
+        "startup_cost": 50000,
+        "cycles_to_complete": 300,
+        "base_wage_cost": 200.0,
+        "allowed_terrain": [
+            "prairie",
+            "hills",
+            "mountain",
+            "desert",
+            "savanna"
+        ],
+        "allowed_proximity": [
+            "remote",
+            "oasis"
+        ],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "merino",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "corriedale",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "suffolk_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "dorset_horn_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "romney_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "oxford_down_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "blessed_sheep",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "columbia_sheep",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 10
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 1
+                    }
+                ]
+            },
+            {
+                "output_item": "rams_horn",
+                "output_qty": 1,
+                "inputs": [
+                    {
+                        "item": "merino",
+                        "quantity": 200
+                    },
+                    {
+                        "item": "rambouillet_sheep",
+                        "quantity": 150
+                    },
+                    {
+                        "item": "suffolk_sheep",
+                        "quantity": 150
+                    },
+                    {
+                        "item": "salt",
+                        "quantity": 100
+                    },
+                    {
+                        "item": "beeswax",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 1000
+                    },
+                    {
+                        "item": "water",
+                        "quantity": 200
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 10
+                    }
+                ]
+            }
+        ]
     }
 }

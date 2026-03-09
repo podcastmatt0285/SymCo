@@ -2193,5 +2193,465 @@
         "name": "Plastic",
         "description": "Synthetic polymer material refined from petroleum; used in packaging, components, and consumer goods.",
         "category": "industrial"
+    },
+    "merino": {
+        "name": "Merino",
+        "description": "Fine-wool breed producing the world's softest, highest-quality fleece.",
+        "category": "livestock"
+    },
+    "corriedale": {
+        "name": "Corriedale",
+        "description": "Dual-purpose wool-meat breed with medium-grade fleece and robust frame.",
+        "category": "livestock"
+    },
+    "shetland_sheep": {
+        "name": "Shetland Sheep",
+        "description": "Hardy island breed producing soft, colourful Shetland wool for Fair Isle knitwear.",
+        "category": "livestock"
+    },
+    "bluefaced_leicester": {
+        "name": "Bluefaced Leicester",
+        "description": "High-lustre longwool breed prized for luxury hand-spinning yarns.",
+        "category": "livestock"
+    },
+    "border_leicester_sheep": {
+        "name": "Border Leicester",
+        "description": "Large longwool breed with lustrous fleece prized for weaving and spinning.",
+        "category": "livestock"
+    },
+    "romney_sheep": {
+        "name": "Romney",
+        "description": "Dual-purpose breed with heavy, long white fleece, popular in New Zealand.",
+        "category": "livestock"
+    },
+    "suffolk_sheep": {
+        "name": "Suffolk Sheep",
+        "description": "Black-faced breed with moderate wool and superior meat conformation.",
+        "category": "livestock"
+    },
+    "dorset_horn_sheep": {
+        "name": "Dorset Horn",
+        "description": "Horned breed valued for out-of-season lambing; medium-quality white wool.",
+        "category": "livestock"
+    },
+    "black_welsh_mountain_sheep": {
+        "name": "Black Welsh Mountain",
+        "description": "Dark-fleeced hill breed yielding naturally black, undyed fleece for artisan textiles.",
+        "category": "livestock"
+    },
+    "finnsheep": {
+        "name": "Finnsheep",
+        "description": "Prolific Finnish breed producing fine, soft fleece and exceptionally large litters.",
+        "category": "livestock"
+    },
+    "lincoln_sheep": {
+        "name": "Lincoln",
+        "description": "World's heaviest longwool breed with coarse, lustrous fleece ideal for tapestries.",
+        "category": "livestock"
+    },
+    "southdown_sheep": {
+        "name": "Southdown",
+        "description": "Compact Down breed with fine, short wool and excellent meat quality.",
+        "category": "livestock"
+    },
+    "alpaca": {
+        "name": "Alpaca",
+        "description": "Fibre camelid producing exceptionally soft, hypoallergenic fleece in many natural colours.",
+        "category": "livestock"
+    },
+    "angora_sheep": {
+        "name": "Angora",
+        "description": "Fleece-producing breed yielding long, silky Angora fibre for luxury garments.",
+        "category": "livestock"
+    },
+    "cheviot_sheep": {
+        "name": "Cheviot Sheep",
+        "description": "Hardy upland breed with bright, springy white wool and good meat yield.",
+        "category": "livestock"
+    },
+    "mohair_sheep": {
+        "name": "Mohair Sheep",
+        "description": "Angora-type breed yielding long, lustrous mohair fibre with silky sheen.",
+        "category": "livestock"
+    },
+    "rambouillet_sheep": {
+        "name": "Rambouillet",
+        "description": "French descendant of Merino; fine, dense fleece prized for next-to-skin wear.",
+        "category": "livestock"
+    },
+    "targhee_sheep": {
+        "name": "Targhee Sheep",
+        "description": "Dual-purpose American breed with uniformly fine, dense wool clip.",
+        "category": "livestock"
+    },
+    "cashmere_sheep": {
+        "name": "Cashmere Sheep",
+        "description": "Produces ultra-fine cashmere undercoat \u2014 among the most valuable fibres in the world.",
+        "category": "livestock"
+    },
+    "columbia_sheep": {
+        "name": "Columbia Sheep",
+        "description": "Large American dual-purpose breed with heavy medium-grade wool clip.",
+        "category": "livestock"
+    },
+    "polwarth_sheep": {
+        "name": "Polwarth",
+        "description": "Fine-wool breed crossed from Merino and Lincoln; a favourite of hand-spinners.",
+        "category": "livestock"
+    },
+    "polypay_sheep": {
+        "name": "Polypay Sheep",
+        "description": "High-prolificacy American breed with moderate wool and good lamb growth rates.",
+        "category": "livestock"
+    },
+    "jacob_sheep": {
+        "name": "Jacob Sheep",
+        "description": "Multi-horned piebald breed producing distinctive natural brown-and-white fleece.",
+        "category": "livestock"
+    },
+    "cotswold_sheep": {
+        "name": "Cotswold",
+        "description": "Ancient English longwool breed with wavy, lustrous fleece and docile temperament.",
+        "category": "livestock"
+    },
+    "leicester_longwool": {
+        "name": "Leicester Longwool",
+        "description": "Historic English longwool breed; very long lustrous staple used in upholstery and rugs.",
+        "category": "livestock"
+    },
+    "soay_sheep": {
+        "name": "Soay Sheep",
+        "description": "Primitive feral breed with short, brown moult-shed fleece and ancient lineage.",
+        "category": "livestock"
+    },
+    "welsh_mountain_sheep": {
+        "name": "Welsh Mountain Sheep",
+        "description": "Hardy upland breed producing fine, short white wool on challenging terrain.",
+        "category": "livestock"
+    },
+    "lincoln_longwool": {
+        "name": "Lincoln Longwool",
+        "description": "Produces the longest staple of any British breed; lustrous heavy fleece.",
+        "category": "livestock"
+    },
+    "oxford_down_sheep": {
+        "name": "Oxford Down Sheep",
+        "description": "Large Down breed with dense, medium-grade fleece and rapid meat growth.",
+        "category": "livestock"
+    },
+    "barbados_black_belly": {
+        "name": "Barbados Black Belly",
+        "description": "Caribbean hair sheep prized for lean, flavourful meat in tropical climates.",
+        "category": "livestock"
+    },
+    "american_tunis": {
+        "name": "American Tunis",
+        "description": "Reddish-faced American breed producing lean meat and medium-grade wool.",
+        "category": "livestock"
+    },
+    "shropshire_sheep": {
+        "name": "Shropshire Sheep",
+        "description": "Compact British Down breed with excellent feed conversion and mild fleece.",
+        "category": "livestock"
+    },
+    "fries_melkschaap": {
+        "name": "Fries Melkschaap",
+        "description": "Dutch milk sheep yielding high volumes of rich milk for artisan cheese-making.",
+        "category": "livestock"
+    },
+    "st_croix_sheep": {
+        "name": "St. Croix Sheep",
+        "description": "White Caribbean hair sheep highly resistant to heat and internal parasites.",
+        "category": "livestock"
+    },
+    "australian_white_sheep": {
+        "name": "Australian White Sheep",
+        "description": "Low-maintenance hair breed developed for Australian conditions and prime lamb.",
+        "category": "livestock"
+    },
+    "charollais_sheep": {
+        "name": "Charollais Sheep",
+        "description": "French terminal sire breed with exceptional carcass conformation and meat quality.",
+        "category": "livestock"
+    },
+    "icelandic_sheep": {
+        "name": "Icelandic Sheep",
+        "description": "Tripurpose Nordic breed valued for wool, rich milk, and lean flavourful meat.",
+        "category": "livestock"
+    },
+    "karakul_sheep": {
+        "name": "Karakul Sheep",
+        "description": "Ancient Central Asian breed prized for distinctive pelt and desert hardiness.",
+        "category": "livestock"
+    },
+    "romanov_sheep": {
+        "name": "Romanov Sheep",
+        "description": "Russian breed with extreme prolificacy; dark fleece lightens naturally with age.",
+        "category": "livestock"
+    },
+    "clun_forest_sheep": {
+        "name": "Clun Forest Sheep",
+        "description": "Hardy British breed thriving on marginal hill pasture with good lambing ease.",
+        "category": "livestock"
+    },
+    "royal_white_sheep": {
+        "name": "Royal White Sheep",
+        "description": "Modern American hair breed combining Dorper and St. Croix genetics for fast gains.",
+        "category": "livestock"
+    },
+    "south_african_meat_merino": {
+        "name": "South African Meat Merino",
+        "description": "Dual-purpose breed balancing fine Merino wool with superior meat conformation.",
+        "category": "livestock"
+    },
+    "lacaune_sheep": {
+        "name": "Lacaune Sheep",
+        "description": "Primary French dairy sheep; its rich milk is used in authentic Roquefort cheese.",
+        "category": "livestock"
+    },
+    "north_country_cheviot": {
+        "name": "North Country Cheviot",
+        "description": "Large hornless hill breed renowned for hardiness and efficient lamb production.",
+        "category": "livestock"
+    },
+    "poll_dorset": {
+        "name": "Poll Dorset",
+        "description": "Polled Dorset variant popular for year-round lambing and consistent white wool.",
+        "category": "livestock"
+    },
+    "rideau_arcott": {
+        "name": "Rideau Arcott",
+        "description": "Canadian breed with extraordinary lambing rates; commonly 3\u20134 lambs per birth.",
+        "category": "livestock"
+    },
+    "gulf_coast_native_sheep": {
+        "name": "Gulf Coast Native Sheep",
+        "description": "Disease-resistant American heritage breed adapted to the humid Gulf South.",
+        "category": "livestock"
+    },
+    "ile_de_france_sheep": {
+        "name": "\u00cele-de-France Sheep",
+        "description": "Refined French breed blending Merino and Leicester blood for balanced production.",
+        "category": "livestock"
+    },
+    "cameroon_sheep": {
+        "name": "Cameroon Sheep",
+        "description": "Small West African hair sheep; extremely heat-tolerant and trypanosome-resistant.",
+        "category": "livestock"
+    },
+    "damara_sheep": {
+        "name": "Damara Sheep",
+        "description": "Ancient Namibian fat-tailed breed thriving in extreme arid desert conditions.",
+        "category": "livestock"
+    },
+    "badger_face_welsh_mountain": {
+        "name": "Badger Face Welsh Mountain",
+        "description": "Distinctive tan-and-black Welsh hill breed with strong constitution and striking markings.",
+        "category": "livestock"
+    },
+    "berrichon_du_cher": {
+        "name": "Berrichon du Cher",
+        "description": "Traditional French breed from the Berry region; excellent meat quality and medium wool.",
+        "category": "livestock"
+    },
+    "old_english_sheepdog": {
+        "name": "Old English Sheepdog",
+        "description": "Shaggy bobtailed herder of English origin; affectionate and tireless.",
+        "category": "livestock"
+    },
+    "border_collie": {
+        "name": "Border Collie",
+        "description": "World's most intelligent herding dog; exceptional agility and tireless work ethic.",
+        "category": "livestock"
+    },
+    "german_shepherd": {
+        "name": "German Shepherd",
+        "description": "Versatile working dog with superior intelligence and protective instincts.",
+        "category": "livestock"
+    },
+    "belgian_shepherd": {
+        "name": "Belgian Shepherd",
+        "description": "Highly driven working dog from Belgium used in herding, protection, and military roles.",
+        "category": "livestock"
+    },
+    "white_swiss_shepherd": {
+        "name": "White Swiss Shepherd",
+        "description": "Elegant white variant of the German Shepherd; gentler temperament and attentive herder.",
+        "category": "livestock"
+    },
+    "belgian_malinois": {
+        "name": "Belgian Malinois",
+        "description": "Intense, athletic Belgian herder prized by military and police worldwide.",
+        "category": "livestock"
+    },
+    "icelandic_sheepdog": {
+        "name": "Icelandic Sheepdog",
+        "description": "Iceland's only native dog; energetic cheerful herder adapted to harsh Nordic conditions.",
+        "category": "livestock"
+    },
+    "pembroke_welsh_corgi": {
+        "name": "Pembroke Welsh Corgi",
+        "description": "Low-slung Welsh sheep driver famously associated with British royalty.",
+        "category": "livestock"
+    },
+    "rottweiler": {
+        "name": "Rottweiler",
+        "description": "Powerful German drover historically used to herd cattle to market; loyal and confident.",
+        "category": "livestock"
+    },
+    "catalan_sheepdog": {
+        "name": "Catalan Sheepdog",
+        "description": "Catalan herder with wavy coat; alert and independent on rocky Pyrenean terrain.",
+        "category": "livestock"
+    },
+    "miniature_american_shepherd": {
+        "name": "Miniature American Shepherd",
+        "description": "Compact herding dog developed from the Australian Shepherd; versatile and energetic.",
+        "category": "livestock"
+    },
+    "lapponian_herder": {
+        "name": "Lapponian Herder",
+        "description": "Scandinavian reindeer and sheep herder; tough, calm, and highly trainable.",
+        "category": "livestock"
+    },
+    "english_shepherd": {
+        "name": "English Shepherd",
+        "description": "Versatile American farm dog descended from British herding breeds; adaptable and loyal.",
+        "category": "livestock"
+    },
+    "pyrenean_sheepdog": {
+        "name": "Pyrenean Sheepdog",
+        "description": "Liveliest of all French herders; fanatically devoted to its flock.",
+        "category": "livestock"
+    },
+    "samoyed": {
+        "name": "Samoyed",
+        "description": "Arctic herder and sled dog with distinctive white coat; friendly and enduring.",
+        "category": "livestock"
+    },
+    "australian_kelpie": {
+        "name": "Australian Kelpie",
+        "description": "Australia's premier mustering dog; works cattle and sheep independently in heat.",
+        "category": "livestock"
+    },
+    "beauceron": {
+        "name": "Beauceron",
+        "description": "Large French herder with natural double dew claws; intelligent and authoritative.",
+        "category": "livestock"
+    },
+    "scotch_collie": {
+        "name": "Scotch Collie",
+        "description": "Traditional Scottish rough collie; origin of Lassie fame; devoted and gentle.",
+        "category": "livestock"
+    },
+    "bergamasco_shepherd": {
+        "name": "Bergamasco Shepherd",
+        "description": "Ancient Italian mountain herder with a uniquely matted, felted coat.",
+        "category": "livestock"
+    },
+    "finnish_lapphund": {
+        "name": "Finnish Lapphund",
+        "description": "Finnish reindeer herder with thick insulating coat; calm and people-oriented.",
+        "category": "livestock"
+    },
+    "belgian_tervuren": {
+        "name": "Belgian Tervuren",
+        "description": "Long-coated Belgian shepherd variant; elegant, highly trainable, and energetic.",
+        "category": "livestock"
+    },
+    "polish_lowland_sheepdog": {
+        "name": "Polish Lowland Sheepdog",
+        "description": "Shaggy Polish herder with an excellent memory and independent thinking style.",
+        "category": "livestock"
+    },
+    "carpathian_shepherd": {
+        "name": "Carpathian Shepherd Dog",
+        "description": "Large Romanian flock guardian and herder; brave against wolves and bears.",
+        "category": "livestock"
+    },
+    "bearded_collie": {
+        "name": "Bearded Collie",
+        "description": "Shaggy Scottish drover; boisterous, lively, and excellent on rough hill terrain.",
+        "category": "livestock"
+    },
+    "schipperke": {
+        "name": "Schipperke",
+        "description": "Small Belgian barge dog historically used to herd sheep in markets; fearless and curious.",
+        "category": "livestock"
+    },
+    "catahoula_leopard_dog": {
+        "name": "Catahoula Leopard Dog",
+        "description": "Louisiana's state dog; bays and herds semi-feral livestock with unique vocalisations.",
+        "category": "livestock"
+    },
+    "cardigan_welsh_corgi": {
+        "name": "Cardigan Welsh Corgi",
+        "description": "Ancient Welsh cattle driver with a long tail; the older of the two Corgi breeds.",
+        "category": "livestock"
+    },
+    "appenzeller_sennenhund": {
+        "name": "Appenzeller Sennenhund",
+        "description": "Swiss mountain dog used to drive cattle and sheep; lively, self-confident, and rare.",
+        "category": "livestock"
+    },
+    "belgian_laekenois": {
+        "name": "Belgian Laekenois",
+        "description": "Rough-coated Belgian shepherd variant; rarest of the four Belgian shepherd types.",
+        "category": "livestock"
+    },
+    "bouvier_des_flandres": {
+        "name": "Bouvier des Flandres",
+        "description": "Belgian farm dog bred for general cattle and sheep herding; powerful and versatile.",
+        "category": "livestock"
+    },
+    "tibetan_terrier": {
+        "name": "Tibetan Terrier",
+        "description": "Ancient Tibetan companion and flock guide used in high-altitude mountain terrain.",
+        "category": "livestock"
+    },
+    "basque_shepherd": {
+        "name": "Basque Shepherd Dog",
+        "description": "Traditional Basque herder working sheep and goats across the Pyrenean highlands.",
+        "category": "livestock"
+    },
+    "croatian_sheepdog": {
+        "name": "Croatian Sheepdog",
+        "description": "Ancient Croatian national breed; agile herder in the Dalmatian countryside.",
+        "category": "livestock"
+    },
+    "wool": {
+        "name": "Raw Wool",
+        "description": "Shorn fleece ready for washing and carding. The primary fibre for yarn production.",
+        "category": "textile"
+    },
+    "yarn": {
+        "name": "Yarn",
+        "description": "Spun and plied wool yarn; sold for home knitting, weaving, and arts & crafts.",
+        "category": "textile"
+    },
+    "thread": {
+        "name": "Thread",
+        "description": "Fine-spun sewing thread used as an essential input in garment manufacture.",
+        "category": "textile"
+    },
+    "lamb_meat": {
+        "name": "Lamb Meat",
+        "description": "Tender cuts from young sheep; prized for its mild, delicate flavour.",
+        "category": "food"
+    },
+    "sheep_milk": {
+        "name": "Sheep Milk",
+        "description": "Rich, fatty milk from dairy sheep breeds; used in artisan cheese and yoghurt production.",
+        "category": "food"
+    },
+    "blessed_sheep": {
+        "name": "Blessed Sheep",
+        "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
+        "category": "luxury"
+    },
+    "rams_horn": {
+        "name": "Ram's Horn",
+        "description": "A hand-polished ceremonial ram's horn \u2014 an extraordinarily rare luxury religious artefact of immense spiritual significance.",
+        "category": "luxury"
     }
 }
