@@ -9279,62 +9279,32 @@
                 ]
             },
             {
-                "output_item": "fishing_boat",
-                "output_qty": 4,
-                "inputs": [
-                    {
-                        "item": "hull",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "outboard_motor",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "propeller",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "iron",
-                        "quantity": 50
-                    },
-                    {
-                        "item": "fuel_tank",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "car_battery",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 180
-                    },
-                    {
-                        "item": "paper",
-                        "quantity": 3
-                    }
-                ]
-            },
-            {
                 "output_item": "trawler",
                 "output_qty": 2,
                 "inputs": [
                     {
                         "item": "hull",
-                        "quantity": 6
+                        "quantity": 8
                     },
                     {
                         "item": "outboard_motor",
-                        "quantity": 6
+                        "quantity": 4
                     },
                     {
                         "item": "propeller",
-                        "quantity": 6
+                        "quantity": 4
                     },
                     {
                         "item": "iron",
-                        "quantity": 75
+                        "quantity": 120
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 80
+                    },
+                    {
+                        "item": "rubber",
+                        "quantity": 30
                     },
                     {
                         "item": "fuel_tank",
@@ -9342,11 +9312,11 @@
                     },
                     {
                         "item": "car_battery",
-                        "quantity": 6
+                        "quantity": 4
                     },
                     {
                         "item": "energy",
-                        "quantity": 270
+                        "quantity": 320
                     },
                     {
                         "item": "paper",
@@ -9360,19 +9330,27 @@
                 "inputs": [
                     {
                         "item": "hull",
-                        "quantity": 6
+                        "quantity": 7
                     },
                     {
                         "item": "outboard_motor",
-                        "quantity": 6
+                        "quantity": 5
                     },
                     {
                         "item": "propeller",
-                        "quantity": 6
+                        "quantity": 5
                     },
                     {
                         "item": "iron",
-                        "quantity": 80
+                        "quantity": 70
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 160
+                    },
+                    {
+                        "item": "copper",
+                        "quantity": 40
                     },
                     {
                         "item": "fuel_tank",
@@ -9380,11 +9358,11 @@
                     },
                     {
                         "item": "car_battery",
-                        "quantity": 6
+                        "quantity": 5
                     },
                     {
                         "item": "energy",
-                        "quantity": 288
+                        "quantity": 280
                     },
                     {
                         "item": "paper",
@@ -9398,19 +9376,31 @@
                 "inputs": [
                     {
                         "item": "hull",
-                        "quantity": 8
+                        "quantity": 10
                     },
                     {
                         "item": "outboard_motor",
-                        "quantity": 8
+                        "quantity": 6
                     },
                     {
                         "item": "propeller",
-                        "quantity": 8
+                        "quantity": 6
                     },
                     {
                         "item": "iron",
-                        "quantity": 100
+                        "quantity": 90
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 200
+                    },
+                    {
+                        "item": "lead",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "brass",
+                        "quantity": 30
                     },
                     {
                         "item": "fuel_tank",
@@ -9418,11 +9408,11 @@
                     },
                     {
                         "item": "car_battery",
-                        "quantity": 8
+                        "quantity": 6
                     },
                     {
                         "item": "energy",
-                        "quantity": 360
+                        "quantity": 420
                     },
                     {
                         "item": "paper",
@@ -9432,201 +9422,11 @@
             },
             {
                 "output_item": "lobster_boat",
-                "output_qty": 4,
-                "inputs": [
-                    {
-                        "item": "hull",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "outboard_motor",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "propeller",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "iron",
-                        "quantity": 45
-                    },
-                    {
-                        "item": "fuel_tank",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "car_battery",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 162
-                    },
-                    {
-                        "item": "paper",
-                        "quantity": 3
-                    }
-                ]
-            },
-            {
-                "output_item": "shrimp_trawler",
                 "output_qty": 3,
                 "inputs": [
                     {
                         "item": "hull",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "outboard_motor",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "propeller",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "iron",
-                        "quantity": 60
-                    },
-                    {
-                        "item": "fuel_tank",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "car_battery",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 216
-                    },
-                    {
-                        "item": "paper",
                         "quantity": 4
-                    }
-                ]
-            },
-            {
-                "output_item": "dredger",
-                "output_qty": 2,
-                "inputs": [
-                    {
-                        "item": "hull",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "outboard_motor",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "propeller",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "iron",
-                        "quantity": 65
-                    },
-                    {
-                        "item": "fuel_tank",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "car_battery",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 234
-                    },
-                    {
-                        "item": "paper",
-                        "quantity": 4
-                    }
-                ]
-            },
-            {
-                "output_item": "dive_vessel",
-                "output_qty": 4,
-                "inputs": [
-                    {
-                        "item": "hull",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "outboard_motor",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "propeller",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "iron",
-                        "quantity": 50
-                    },
-                    {
-                        "item": "fuel_tank",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "car_battery",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 180
-                    },
-                    {
-                        "item": "paper",
-                        "quantity": 3
-                    }
-                ]
-            },
-            {
-                "output_item": "aquaculture_raft",
-                "output_qty": 4,
-                "inputs": [
-                    {
-                        "item": "hull",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "outboard_motor",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "propeller",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "iron",
-                        "quantity": 55
-                    },
-                    {
-                        "item": "fuel_tank",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "car_battery",
-                        "quantity": 4
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 198
-                    },
-                    {
-                        "item": "paper",
-                        "quantity": 3
-                    }
-                ]
-            },
-            {
-                "output_item": "freshwater_boat",
-                "output_qty": 5,
-                "inputs": [
-                    {
-                        "item": "hull",
-                        "quantity": 3
                     },
                     {
                         "item": "outboard_motor",
@@ -9641,6 +9441,18 @@
                         "quantity": 35
                     },
                     {
+                        "item": "rope",
+                        "quantity": 50
+                    },
+                    {
+                        "item": "lumber",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "rubber",
+                        "quantity": 15
+                    },
+                    {
                         "item": "fuel_tank",
                         "quantity": 3
                     },
@@ -9650,7 +9462,241 @@
                     },
                     {
                         "item": "energy",
-                        "quantity": 126
+                        "quantity": 160
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 3
+                    }
+                ]
+            },
+            {
+                "output_item": "shrimp_trawler",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "hull",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "outboard_motor",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "propeller",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "iron",
+                        "quantity": 55
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 70
+                    },
+                    {
+                        "item": "rubber",
+                        "quantity": 35
+                    },
+                    {
+                        "item": "salt",
+                        "quantity": 40
+                    },
+                    {
+                        "item": "fuel_tank",
+                        "quantity": 5
+                    },
+                    {
+                        "item": "car_battery",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 220
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 4
+                    }
+                ]
+            },
+            {
+                "output_item": "dredger",
+                "output_qty": 2,
+                "inputs": [
+                    {
+                        "item": "hull",
+                        "quantity": 6
+                    },
+                    {
+                        "item": "outboard_motor",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "propeller",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "iron",
+                        "quantity": 200
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "brass",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "fuel_tank",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "car_battery",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 250
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 4
+                    }
+                ]
+            },
+            {
+                "output_item": "dive_vessel",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "hull",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "outboard_motor",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "propeller",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "iron",
+                        "quantity": 25
+                    },
+                    {
+                        "item": "rubber",
+                        "quantity": 60
+                    },
+                    {
+                        "item": "copper",
+                        "quantity": 35
+                    },
+                    {
+                        "item": "glass",
+                        "quantity": 25
+                    },
+                    {
+                        "item": "fuel_tank",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "car_battery",
+                        "quantity": 6
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 190
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 3
+                    }
+                ]
+            },
+            {
+                "output_item": "aquaculture_raft",
+                "output_qty": 3,
+                "inputs": [
+                    {
+                        "item": "lumber",
+                        "quantity": 100
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 80
+                    },
+                    {
+                        "item": "rubber",
+                        "quantity": 40
+                    },
+                    {
+                        "item": "iron",
+                        "quantity": 60
+                    },
+                    {
+                        "item": "fiberglass",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "car_battery",
+                        "quantity": 4
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 160
+                    },
+                    {
+                        "item": "paper",
+                        "quantity": 3
+                    }
+                ]
+            },
+            {
+                "output_item": "freshwater_boat",
+                "output_qty": 4,
+                "inputs": [
+                    {
+                        "item": "hull",
+                        "quantity": 3
+                    },
+                    {
+                        "item": "outboard_motor",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "propeller",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "lumber",
+                        "quantity": 30
+                    },
+                    {
+                        "item": "rope",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "rubber",
+                        "quantity": 12
+                    },
+                    {
+                        "item": "iron",
+                        "quantity": 20
+                    },
+                    {
+                        "item": "fuel_tank",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "car_battery",
+                        "quantity": 2
+                    },
+                    {
+                        "item": "energy",
+                        "quantity": 110
                     },
                     {
                         "item": "paper",
@@ -10272,10 +10318,6 @@
             "boat": {
                 "elasticity": 1.2,
                 "base_sale_chance": 0.0008
-            },
-            "fishing_boat": {
-                "elasticity": 1.1,
-                "base_sale_chance": 0.001
             },
             "yacht": {
                 "elasticity": 0.7,
@@ -11410,6 +11452,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11424,6 +11470,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11438,6 +11488,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11452,6 +11506,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11466,6 +11524,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11480,6 +11542,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11494,6 +11560,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11508,6 +11578,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11522,6 +11596,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11536,6 +11614,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11550,6 +11632,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11564,6 +11650,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "trawler",
+                        "quantity": 1
                     }
                 ]
             }
@@ -11595,6 +11685,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "purse_seiner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11609,6 +11703,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "purse_seiner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11623,6 +11721,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "purse_seiner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11637,6 +11739,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "purse_seiner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11651,6 +11757,10 @@
                     {
                         "item": "energy",
                         "quantity": 25
+                    },
+                    {
+                        "item": "purse_seiner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11665,6 +11775,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "purse_seiner",
+                        "quantity": 1
                     }
                 ]
             }
@@ -11696,6 +11810,10 @@
                     {
                         "item": "energy",
                         "quantity": 40
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11710,6 +11828,10 @@
                     {
                         "item": "energy",
                         "quantity": 35
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11724,6 +11846,10 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11738,6 +11864,10 @@
                     {
                         "item": "energy",
                         "quantity": 50
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11752,6 +11882,10 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11766,6 +11900,10 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11780,6 +11918,10 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11794,6 +11936,10 @@
                     {
                         "item": "energy",
                         "quantity": 25
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11808,6 +11954,10 @@
                     {
                         "item": "energy",
                         "quantity": 30
+                    },
+                    {
+                        "item": "longliner",
+                        "quantity": 1
                     }
                 ]
             }
@@ -11914,6 +12064,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "shrimp_trawler",
+                        "quantity": 1
                     }
                 ]
             }
@@ -11946,6 +12100,10 @@
                     {
                         "item": "energy",
                         "quantity": 10
+                    },
+                    {
+                        "item": "dredger",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11960,6 +12118,10 @@
                     {
                         "item": "energy",
                         "quantity": 8
+                    },
+                    {
+                        "item": "dredger",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11974,6 +12136,10 @@
                     {
                         "item": "energy",
                         "quantity": 8
+                    },
+                    {
+                        "item": "dredger",
+                        "quantity": 1
                     }
                 ]
             },
@@ -11988,6 +12154,10 @@
                     {
                         "item": "energy",
                         "quantity": 8
+                    },
+                    {
+                        "item": "dredger",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12002,6 +12172,10 @@
                     {
                         "item": "energy",
                         "quantity": 8
+                    },
+                    {
+                        "item": "dredger",
+                        "quantity": 1
                     }
                 ]
             }
@@ -12034,6 +12208,10 @@
                     {
                         "item": "energy",
                         "quantity": 10
+                    },
+                    {
+                        "item": "dive_vessel",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12048,6 +12226,10 @@
                     {
                         "item": "energy",
                         "quantity": 10
+                    },
+                    {
+                        "item": "dive_vessel",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12062,6 +12244,10 @@
                     {
                         "item": "energy",
                         "quantity": 10
+                    },
+                    {
+                        "item": "dive_vessel",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12076,6 +12262,10 @@
                     {
                         "item": "energy",
                         "quantity": 10
+                    },
+                    {
+                        "item": "dive_vessel",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12090,6 +12280,10 @@
                     {
                         "item": "energy",
                         "quantity": 10
+                    },
+                    {
+                        "item": "dive_vessel",
+                        "quantity": 1
                     }
                 ]
             }
@@ -12118,6 +12312,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "freshwater_boat",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12128,6 +12326,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "freshwater_boat",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12138,6 +12340,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "freshwater_boat",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12148,6 +12354,10 @@
                     {
                         "item": "energy",
                         "quantity": 20
+                    },
+                    {
+                        "item": "freshwater_boat",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12158,6 +12368,10 @@
                     {
                         "item": "energy",
                         "quantity": 15
+                    },
+                    {
+                        "item": "freshwater_boat",
+                        "quantity": 1
                     }
                 ]
             }
@@ -12194,6 +12408,10 @@
                     {
                         "item": "water",
                         "quantity": 500
+                    },
+                    {
+                        "item": "aquaculture_raft",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12212,6 +12430,10 @@
                     {
                         "item": "water",
                         "quantity": 400
+                    },
+                    {
+                        "item": "aquaculture_raft",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12230,6 +12452,10 @@
                     {
                         "item": "water",
                         "quantity": 400
+                    },
+                    {
+                        "item": "aquaculture_raft",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12248,6 +12474,10 @@
                     {
                         "item": "water",
                         "quantity": 450
+                    },
+                    {
+                        "item": "aquaculture_raft",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12266,6 +12496,10 @@
                     {
                         "item": "water",
                         "quantity": 450
+                    },
+                    {
+                        "item": "aquaculture_raft",
+                        "quantity": 1
                     }
                 ]
             },
@@ -12284,6 +12518,10 @@
                     {
                         "item": "water",
                         "quantity": 420
+                    },
+                    {
+                        "item": "aquaculture_raft",
+                        "quantity": 1
                     }
                 ]
             }

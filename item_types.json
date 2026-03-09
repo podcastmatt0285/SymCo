@@ -654,11 +654,6 @@
         "description": "Premium watercraft",
         "category": "vehicle"
     },
-    "fishing_boat": {
-        "name": "Fishing Boat",
-        "description": "Commercial fishing vessel",
-        "category": "vehicle"
-    },
     "fiberglass": {
         "name": "Fiberglass",
         "description": "Reinforced plastic composite",
