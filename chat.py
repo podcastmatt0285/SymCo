@@ -78,7 +78,7 @@ class ChatMessage(Base):
     sender_name = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     message_type = Column(String, nullable=False, default="chat")  # "chat" | "patch_note"
-    tag = Column(String, nullable=True, index=True)                # unique key for upserts
+    tag = Column(String, nullable=True, index=True)                # unique key for upserts (partial unique index enforced via DDL)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
 
@@ -117,6 +117,9 @@ def initialize():
     from database import run_ddl_migration
     run_ddl_migration(engine, "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS message_type VARCHAR NOT NULL DEFAULT 'chat'")
     run_ddl_migration(engine, "ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS tag VARCHAR")
+    # Partial unique index: prevents duplicate tags within a room while allowing
+    # many NULL-tagged regular chat messages in the same room.
+    run_ddl_migration(engine, "CREATE UNIQUE INDEX IF NOT EXISTS uix_chat_messages_room_tag ON chat_messages (room_id, tag) WHERE tag IS NOT NULL")
 
 
 # ==========================
@@ -204,8 +207,28 @@ def upsert_message(
     return result
 
 
+def get_patch_notes() -> list:
+    """Return ALL patch notes from the updates room in chronological order.
+
+    Unlike get_room_messages(), this is not capped at MAX_HISTORY so that
+    old patch notes are never silently hidden as the history grows.
+    """
+    db = get_db()
+    messages = db.query(ChatMessage).filter(
+        ChatMessage.room_id == "updates",
+        ChatMessage.message_type == "patch_note",
+    ).order_by(ChatMessage.created_at.asc()).all()
+    result = [_msg_dict(m) for m in messages]
+    db.close()
+    return result
+
+
 def get_room_messages(room_id: str, limit: int = MAX_HISTORY) -> list:
-    """Get the last N messages for a room."""
+    """Get the last N messages for a room.
+
+    For the updates room, prefer get_patch_notes() to avoid the MAX_HISTORY cap
+    silently hiding older patch notes.
+    """
     db = get_db()
     messages = db.query(ChatMessage).filter(
         ChatMessage.room_id == room_id

@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from chat import (
     manager, STATIC_ROOMS, ADMIN_PLAYER_IDS, DEFAULT_BAN_WORDS,
     MAX_MESSAGE_LENGTH, MAX_UPLOAD_BYTES,
-    get_rooms_for_player, get_room_messages, save_message,
+    get_rooms_for_player, get_room_messages, get_patch_notes, save_message,
     get_user_ban_words, initialize_default_ban_words, set_user_ban_words,
     add_ban_word, remove_ban_word,
     save_avatar, get_avatar, delete_avatar,
@@ -1576,8 +1576,8 @@ async def chat_websocket(websocket: WebSocket):
                     })
                     continue
 
-                # Send history
-                messages = get_room_messages(room_id)
+                # Send history (updates room returns all patch notes uncapped)
+                messages = get_patch_notes() if room_id == "updates" else get_room_messages(room_id)
                 for msg in messages:
                     sid = msg["sender_id"]
                     if sid not in manager.avatar_cache:

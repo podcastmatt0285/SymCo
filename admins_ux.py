@@ -1728,8 +1728,8 @@ def admin_updates(session_token: Optional[str] = Cookie(None), msg: Optional[str
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
-    from chat import get_room_messages
-    messages = get_room_messages("updates", limit=30)
+    from chat import get_patch_notes
+    messages = get_patch_notes()
     msg_rows = ""
     for m in messages:
         msg_rows += f'<tr><td style="color:#64748b;">{_ts(m.get("timestamp"))}</td><td style="color:#f59e0b;">{m["sender_name"]}</td><td>{m["content"]}</td></tr>'
