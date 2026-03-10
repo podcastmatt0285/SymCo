@@ -3948,11 +3948,11 @@
         "production_lines": [
             {
                 "output_item": "bees",
-                "output_qty": 10,
+                "output_qty": 500000,
                 "inputs": [
                     {
                         "item": "bees",
-                        "quantity": 500000
+                        "quantity": 1
                     },
                     {
                         "item": "pollen",
@@ -3974,22 +3974,10 @@
             },
             {
                 "output_item": "pollen",
-                "output_qty": 5,
+                "output_qty": 50000,
                 "inputs": [
                     {
                         "item": "bees",
-                        "quantity": 3
-                    },
-                    {
-                        "item": "water",
-                        "quantity": 10
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 5
-                    },
-                    {
-                        "item": "paper",
                         "quantity": 1
                     }
                 ]
@@ -4047,18 +4035,6 @@
                         "quantity": 1000
                     },
                     {
-                        "item": "honey",
-                        "quantity": 50
-                    },
-                    {
-                        "item": "water",
-                        "quantity": 100
-                    },
-                    {
-                        "item": "energy",
-                        "quantity": 1500
-                    },
-                    {
                         "item": "paper",
                         "quantity": 1
                     }
@@ -4070,15 +4046,11 @@
                 "inputs": [
                     {
                         "item": "royal_jelly",
-                        "quantity": 200000
+                        "quantity": 2000
                     },
                     {
                         "item": "bees",
                         "quantity": 1
-                    },
-                    {
-                        "item": "water",
-                        "quantity": 50
                     },
                     {
                         "item": "energy",

@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 # ==========================
-# GLOBAL TICK STATE
+# GLOBAL TICK STATE-
 # ==========================
 
 TICK_INTERVAL = 5.0  # seconds
