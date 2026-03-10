@@ -10001,6 +10001,14 @@
             "apple_cider_vinegar": {
                 "elasticity": 0.8,
                 "base_sale_chance": 0.03
+            },
+            "orange_essential_oil": {
+                "elasticity": 1.2,
+                "base_sale_chance": 0.05
+            },
+            "cotton_essential_oil": {
+                "elasticity": 1.2,
+                "base_sale_chance": 0.05
             }
         }
     },
