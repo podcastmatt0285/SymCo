@@ -9,6 +9,16 @@
         "description": "Seeds for vineyard propagation",
         "category": "seeds"
     },
+    "cotton_essential_oil": {
+        "name": "Orange Essential Oil",
+        "description": "Highly concentrated aromatic orange extract for health and beauty.",
+        "category": "personal_care"
+    },
+    "orange_essential_oil": {
+        "name": "Cotton Essential Oil",
+        "description": "Highly concentrated aromatic orange extract for health and beauty.",
+        "category": "personal_care"
+    },
     "coffee_beans": {
         "name": "Coffee Beans",
         "description": "Green arabica beans ready for roasting",

@@ -186,6 +186,38 @@
             }
         ]
     },
+    "essential_oil_distillery": {
+        "name": "Essential Oil Press",
+        "description": "Extracts essential oils from aromatic plants.",
+        "startup_cost": 95000,
+        "cycles_to_complete": 60,
+        "base_wage_cost": 500.0,
+        "allowed_terrain": ["prairie", "forest", "hills"],
+        "allowed_proximity": ["riverside", "urban"],
+        "class": "production",
+        "production_lines": [
+            {
+                "output_item": "orange_essential_oil",
+                "output_qty": 20,
+                "inputs": [
+                    {"item": "orange_seeds", "quantity": 1200},
+                    {"item": "water", "quantity": 30},
+                    {"item": "energy", "quantity": 25},
+                    {"item": "paper", "quantity": 1}
+                ]
+            },
+            {
+                "output_item": "cotton_essential_oil",
+                "output_qty": 20,
+                "inputs": [
+                    {"item": "cotton_seeds", "quantity": 5000},
+                    {"item": "water", "quantity": 30},
+                    {"item": "energy", "quantity": 25},
+                    {"item": "paper", "quantity": 1}
+                ]
+            }
+        ]
+     },
     "pet_store": {
         "name": "Pet Store",
         "description": "Retail shop selling companion birds and aquarium fish.",
