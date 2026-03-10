@@ -1,0 +1,2651 @@
+{
+    "grapes": {
+        "name": "Wine Grapes",
+        "description": "Premium varietal grapes for winemaking",
+        "category": "fruits"
+    },
+    "grape_seeds": {
+        "name": "Grape Seeds",
+        "description": "Seeds for vineyard propagation",
+        "category": "seeds"
+    },
+    "coffee_beans": {
+        "name": "Coffee Beans",
+        "description": "Green arabica beans ready for roasting",
+        "category": "crops"
+    },
+    "coffee_seeds": {
+        "name": "Coffee Seeds",
+        "description": "Seeds for coffee plant cultivation",
+        "category": "seeds"
+    },
+    "tea_leaves": {
+        "name": "Tea Leaves",
+        "description": "Fresh picked tea leaves",
+        "category": "crops"
+    },
+    "tea_seeds": {
+        "name": "Tea Seeds",
+        "description": "Seeds for tea plant cultivation",
+        "category": "seeds"
+    },
+    "hops": {
+        "name": "Hops",
+        "description": "Aromatic flowers for brewing",
+        "category": "crops"
+    },
+    "barley": {
+        "name": "Barley",
+        "description": "Cereal grain for malting and feed",
+        "category": "crops"
+    },
+    "barley_seeds": {
+        "name": "Barley Seeds",
+        "description": "Seeds for barley cultivation",
+        "category": "seeds"
+    },
+    "wheat_seeds": {
+        "name": "Wheat Seeds",
+        "description": "Seeds for wheat cultivation",
+        "category": "seeds"
+    },
+    "cocoa_seeds": {
+        "name": "Cocoa Seeds",
+        "description": "Seeds for cacao tree cultivation",
+        "category": "seeds"
+    },
+    "agave": {
+        "name": "Blue Agave",
+        "description": "Desert succulent for tequila production",
+        "category": "crops"
+    },
+    "juniper_berries": {
+        "name": "Juniper Berries",
+        "description": "Aromatic berries for gin production",
+        "category": "crops"
+    },
+    "vanilla_beans": {
+        "name": "Vanilla Beans",
+        "description": "Aromatic flavoring pods",
+        "category": "crops"
+    },
+    "cinnamon": {
+        "name": "Cinnamon",
+        "description": "Sweet aromatic bark spice",
+        "category": "crops"
+    },
+    "mint": {
+        "name": "Fresh Mint",
+        "description": "Aromatic herb for flavoring",
+        "category": "crops"
+    },
+    "corn": {
+        "name": "Corn",
+        "description": "Versatile grain crop",
+        "category": "crops"
+    },
+    "corn_seeds": {
+        "name": "Corn Seeds",
+        "description": "Seeds for corn cultivation",
+        "category": "seeds"
+    },
+    "eggs": {
+        "name": "Eggs",
+        "description": "Fresh poultry eggs",
+        "category": "food"
+    },
+    "honey": {
+        "name": "Honey",
+        "description": "Natural sweetener from bees",
+        "category": "food"
+    },
+    "bees": {
+        "name": "Bees",
+        "description": "Live honeybee colony. Required for all apiary production. Self-reproducing with pollen.",
+        "category": "livestock"
+    },
+    "queen_bee": {
+        "name": "Queen Bee",
+        "description": "Extremely rare fertile queen bee, raised on vast reserves of royal jelly. Establishes new colonies.",
+        "category": "livestock"
+    },
+    "salt": {
+        "name": "Salt",
+        "description": "Essential mineral for food and industry",
+        "category": "minerals"
+    },
+    "yeast": {
+        "name": "Baker's Yeast",
+        "description": "Living culture for leavening and fermentation",
+        "category": "ingredients"
+    },
+    "malt": {
+        "name": "Malted Barley",
+        "description": "Processed grain for brewing and distilling",
+        "category": "ingredients"
+    },
+    "roasted_coffee": {
+        "name": "Roasted Coffee",
+        "description": "Roasted beans ready for grinding",
+        "category": "ingredients"
+    },
+    "ground_coffee": {
+        "name": "Ground Coffee",
+        "description": "Ready-to-brew coffee grounds",
+        "category": "ingredients"
+    },
+    "cocoa_powder": {
+        "name": "Cocoa Powder",
+        "description": "Processed cacao for baking",
+        "category": "ingredients"
+    },
+    "cocoa_butter": {
+        "name": "Cocoa Butter",
+        "description": "Fat extracted from cacao beans",
+        "category": "ingredients"
+    },
+    "dough": {
+        "name": "Raw Dough",
+        "description": "Prepared bread dough",
+        "category": "ingredients"
+    },
+    "pastry_dough": {
+        "name": "Pastry Dough",
+        "description": "Buttery laminated dough",
+        "category": "ingredients"
+    },
+    "pie_crust": {
+        "name": "Pie Crust",
+        "description": "Pre-made pastry shell",
+        "category": "ingredients"
+    },
+    "fruit_filling": {
+        "name": "Fruit Filling",
+        "description": "Cooked sweetened fruit for pies",
+        "category": "ingredients"
+    },    "frosting": {
+        "name": "Frosting",
+        "description": "Sweet cake topping",
+        "category": "ingredients"
+    },
+    "gelatin": {
+        "name": "Gelatin",
+        "description": "Gelling agent from animal collagen",
+        "category": "ingredients"
+    },
+    "corn_syrup": {
+        "name": "Corn Syrup",
+        "description": "Sweet liquid sugar from corn",
+        "category": "ingredients"
+    },
+    "ink": {
+        "name": "Printing Ink",
+        "description": "Ink for publishing",
+        "category": "industrial"
+    },
+    "baguette": {
+        "name": "French Baguette",
+        "description": "Crusty artisan bread",
+        "category": "food"
+    },
+    "croissant": {
+        "name": "Butter Croissant",
+        "description": "Flaky French pastry",
+        "category": "food"
+    },
+    "donut": {
+        "name": "Glazed Donut",
+        "description": "Fried ring pastry",
+        "category": "food"
+    },
+    "muffin": {
+        "name": "Muffin",
+        "description": "Sweet breakfast cake",
+        "category": "food"
+    },
+    "cinnamon_roll": {
+        "name": "Cinnamon Roll",
+        "description": "Spiraled sweet bread",
+        "category": "food"
+    },
+    "cookie": {
+        "name": "Cookie",
+        "description": "Baked sweet treat",
+        "category": "food"
+    },
+    "brownie": {
+        "name": "Fudge Brownie",
+        "description": "Dense chocolate square",
+        "category": "food"
+    },
+    "cherry_pie": {
+        "name": "Cherry Pie",
+        "description": "Classic fruit pie",
+        "category": "prepared_food"
+    },
+    "chocolate_cake": {
+        "name": "Chocolate Cake",
+        "description": "Layered celebration cake",
+        "category": "prepared_food"
+    },
+    "cheesecake": {
+        "name": "Cheesecake",
+        "description": "Rich cream cheese dessert",
+        "category": "prepared_food"
+    },
+    "pretzel": {
+        "name": "Soft Pretzel",
+        "description": "Salted twisted bread",
+        "category": "food"
+    },
+    "gummy_bears": {
+        "name": "Gummy Bears",
+        "description": "Chewy fruit candy",
+        "category": "food"
+    },
+    "hard_candy": {
+        "name": "Hard Candy",
+        "description": "Classic boiled sweets",
+        "category": "food"
+    },
+    "taffy": {
+        "name": "Salt Water Taffy",
+        "description": "Chewy pulled candy",
+        "category": "food"
+    },
+    "fudge": {
+        "name": "Chocolate Fudge",
+        "description": "Dense chocolate candy",
+        "category": "food"
+    },
+    "truffles": {
+        "name": "Chocolate Truffles",
+        "description": "Premium chocolate confection",
+        "category": "food"
+    },
+    "toffee": {
+        "name": "English Toffee",
+        "description": "Buttery hard candy",
+        "category": "food"
+    },
+    "licorice": {
+        "name": "Licorice",
+        "description": "Chewy anise candy",
+        "category": "food"
+    },
+    "marshmallow": {
+        "name": "Marshmallows",
+        "description": "Fluffy sugar confection",
+        "category": "food"
+    },
+    "peppermint": {
+        "name": "Peppermints",
+        "description": "Refreshing mint candy",
+        "category": "food"
+    },
+    "espresso": {
+        "name": "Espresso",
+        "description": "Concentrated coffee shot",
+        "category": "beverage"
+    },
+    "latte": {
+        "name": "Caff\u00e8 Latte",
+        "description": "Espresso with steamed milk",
+        "category": "beverage"
+    },
+    "cappuccino": {
+        "name": "Cappuccino",
+        "description": "Espresso with foam",
+        "category": "beverage"
+    },
+    "hot_chocolate": {
+        "name": "Hot Chocolate",
+        "description": "Rich cocoa drink",
+        "category": "beverage"
+    },
+    "tea": {
+        "name": "Brewed Tea",
+        "description": "Hot steeped tea",
+        "category": "beverage"
+    },
+    "iced_tea": {
+        "name": "Iced Tea",
+        "description": "Chilled sweet tea",
+        "category": "beverage"
+    },
+    "vodka": {
+        "name": "Vodka",
+        "description": "Neutral grain spirit",
+        "category": "alcohol"
+    },
+    "whiskey": {
+        "name": "Whiskey",
+        "description": "Oak-aged grain spirit",
+        "category": "alcohol"
+    },
+    "rum": {
+        "name": "Aged Rum",
+        "description": "Molasses-based spirit",
+        "category": "alcohol"
+    },
+    "gin": {
+        "name": "London Dry Gin",
+        "description": "Juniper-flavored spirit",
+        "category": "alcohol"
+    },
+    "tequila": {
+        "name": "Tequila",
+        "description": "Agave spirit",
+        "category": "alcohol"
+    },
+    "brandy": {
+        "name": "Brandy",
+        "description": "Distilled wine",
+        "category": "alcohol"
+    },
+    "moonshine": {
+        "name": "Moonshine",
+        "description": "Unaged corn whiskey",
+        "category": "alcohol"
+    },
+    "red_wine": {
+        "name": "Red Wine",
+        "description": "Full-bodied cabernet",
+        "category": "alcohol"
+    },
+    "white_wine": {
+        "name": "White Wine",
+        "description": "Crisp chardonnay",
+        "category": "alcohol"
+    },
+    "rose_wine": {
+        "name": "Ros\u00e9 Wine",
+        "description": "Light pink wine",
+        "category": "alcohol"
+    },
+    "champagne": {
+        "name": "Champagne",
+        "description": "Sparkling celebration wine",
+        "category": "alcohol"
+    },
+    "beer": {
+        "name": "Craft Beer",
+        "description": "Hoppy ale",
+        "category": "alcohol"
+    },
+    "lager": {
+        "name": "Lager",
+        "description": "Crisp pilsner",
+        "category": "alcohol"
+    },
+    "stout": {
+        "name": "Stout",
+        "description": "Dark roasted beer",
+        "category": "alcohol"
+    },
+    "cider": {
+        "name": "Hard Cider",
+        "description": "Fermented apple beverage",
+        "category": "alcohol"
+    },
+    "sake": {
+        "name": "Sake",
+        "description": "Japanese rice wine brewed from fermented rice, served warm or chilled",
+        "category": "alcohol"
+    },
+    "rice_wine": {
+        "name": "Rice Wine",
+        "description": "Fermented rice wine used as a cooking ingredient and mild table drink",
+        "category": "alcohol"
+    },
+    "cigarette": {
+        "name": "Cigarettes",
+        "description": "Standard filter cigarettes from a blended Virginia and Burley tobacco mix",
+        "category": "tobacco"
+    },
+    "virginia_cigarette": {
+        "name": "Virginia Cigarettes",
+        "description": "Mild, full-flavoured cigarettes made from pure flue-cured Virginia tobacco",
+        "category": "tobacco"
+    },
+    "menthol_cigarette": {
+        "name": "Menthol Cigarettes",
+        "description": "Cigarettes infused with menthol crystals for a cool, minty smoking experience",
+        "category": "tobacco"
+    },
+    "turkish_cigarette": {
+        "name": "Turkish Cigarettes",
+        "description": "Aromatic oval cigarettes blended from sun-cured Oriental and Greek Basma tobaccos",
+        "category": "tobacco"
+    },
+    "clove_cigarette": {
+        "name": "Clove Cigarettes",
+        "description": "Indonesian-style kretek cigarettes blended with tobacco and ground cinnamon-clove spice",
+        "category": "tobacco"
+    },
+    "cigarillo": {
+        "name": "Cigarillo",
+        "description": "Small, slim cigar made from natural leaf wrapper, bridging cigarettes and full cigars",
+        "category": "tobacco"
+    },
+    "corona_cigar": {
+        "name": "Corona Cigar",
+        "description": "Classic medium-sized handrolled cigar in the traditional corona format",
+        "category": "tobacco"
+    },
+    "robusto_cigar": {
+        "name": "Robusto Cigar",
+        "description": "Short, thick handrolled cigar delivering a concentrated, full-bodied smoke",
+        "category": "tobacco"
+    },
+    "churchill_cigar": {
+        "name": "Churchill Cigar",
+        "description": "Generously sized 7-inch cigar in the grand Churchill format, for a long, slow smoke",
+        "category": "tobacco"
+    },
+    "premium_cigar": {
+        "name": "Premium Cigar",
+        "description": "Luxury handrolled cigar using the finest aged wrapper, binder, and filler \u2014 Holt's-quality",
+        "category": "tobacco"
+    },
+    "cuban_style_cigar": {
+        "name": "Cuban-Style Cigar",
+        "description": "Ultra-premium handrolled cigar crafted entirely from Cuban-heritage Habano and Corojo tobaccos",
+        "category": "tobacco"
+    },
+    "aromatic_pipe_tobacco": {
+        "name": "Aromatic Pipe Tobacco",
+        "description": "Sweetened Cavendish-based pipe blend with flavourings, the entry point for casual pipe smokers",
+        "category": "tobacco"
+    },
+    "english_blend_pipe_tobacco": {
+        "name": "English Blend Pipe Tobacco",
+        "description": "Classic Latakia-forward pipe blend with Oriental and Virginia components, rich and smoky",
+        "category": "tobacco"
+    },
+    "virginia_pipe_tobacco": {
+        "name": "Virginia Pipe Tobacco",
+        "description": "Pure flue-cured Virginia blend, naturally sweet and mild, ideal for beginning pipe smokers",
+        "category": "tobacco"
+    },
+    "flake_pipe_tobacco": {
+        "name": "Flake Pipe Tobacco",
+        "description": "Pressed Virginia and Cavendish tobacco sliced into flakes and rubbed out before smoking",
+        "category": "tobacco"
+    },
+    "dokha": {
+        "name": "Dokha",
+        "description": "Extremely potent Middle Eastern tobacco smoked in a traditional midwaha brass pipe \u2014 one draw is enough",
+        "category": "tobacco"
+    },
+    "snuff": {
+        "name": "Snuff",
+        "description": "Finely ground dry tobacco inhaled through the nostrils, a centuries-old European and Asian tradition",
+        "category": "tobacco"
+    },
+    "chewing_tobacco": {
+        "name": "Chewing Tobacco",
+        "description": "Dark fired tobacco pressed into plugs or loose cut for chewing, traditional among sailors and labourers",
+        "category": "tobacco"
+    },
+    "hookah_tobacco": {
+        "name": "Hookah Tobacco",
+        "description": "Molasses-moistened shisha tobacco for water pipe smoking, staple of Middle Eastern cafes and casino lounges",
+        "category": "tobacco"
+    },
+    "tobacco_rope": {
+        "name": "Tobacco Rope",
+        "description": "Twisted rope of dark fired tobacco, cut to length for chewing or pipe smoking \u2014 historical trade good",
+        "category": "tobacco"
+    },
+    "sacred_tobacco": {
+        "name": "Sacred Tobacco",
+        "description": "Ceremonial grade tobacco prepared for ritual and spiritual use, distinct from commercial smoking tobacco",
+        "category": "tobacco"
+    },
+    "tobacco_cured_fish": {
+        "name": "Tobacco-Cured Fish",
+        "description": "Eel cold-smoked over fire-cured tobacco leaves, yielding a rich, complex flavour prized in specialty cuisine",
+        "category": "seafood_product"
+    },
+    "painkillers": {
+        "name": "Pain Relievers",
+        "description": "Over-the-counter analgesic",
+        "category": "health"
+    },
+    "vitamins": {
+        "name": "Vitamins",
+        "description": "Daily supplements",
+        "category": "health"
+    },
+    "cough_syrup": {
+        "name": "Cough Syrup",
+        "description": "Liquid cold medicine",
+        "category": "health"
+    },
+    "antiseptic": {
+        "name": "Antiseptic",
+        "description": "Wound cleaner",
+        "category": "health"
+    },
+    "ointment": {
+        "name": "Medicinal Ointment",
+        "description": "Topical treatment cream",
+        "category": "health"
+    },
+    "pill_bottle": {
+        "name": "Pill Bottles",
+        "description": "Pharmaceutical containers",
+        "category": "packaging"
+    },
+    "active_ingredient": {
+        "name": "Active Pharmaceutical Ingredient",
+        "description": "Synthesized medicinal compound",
+        "category": "ingredients"
+    },
+    "engine": {
+        "name": "Combustion Engine",
+        "description": "Vehicle power unit",
+        "category": "auto_parts"
+    },
+    "engine_block": {
+        "name": "Engine Block",
+        "description": "Core engine casting",
+        "category": "auto_parts"
+    },
+    "transmission": {
+        "name": "Transmission",
+        "description": "Vehicle gear system",
+        "category": "auto_parts"
+    },
+    "tires": {
+        "name": "Rubber Tires",
+        "description": "Set of 4 vehicle tires",
+        "category": "auto_parts"
+    },
+    "chassis": {
+        "name": "Vehicle Chassis",
+        "description": "Structural frame",
+        "category": "auto_parts"
+    },
+    "windshield": {
+        "name": "Windshield",
+        "description": "Safety glass panel",
+        "category": "auto_parts"
+    },
+    "headlights": {
+        "name": "Headlight Assembly",
+        "description": "Front lighting pair",
+        "category": "auto_parts"
+    },
+    "car_battery": {
+        "name": "Car Battery",
+        "description": "12V starter battery",
+        "category": "auto_parts"
+    },
+    "exhaust": {
+        "name": "Exhaust System",
+        "description": "Emissions control",
+        "category": "auto_parts"
+    },
+    "brake_pads": {
+        "name": "Brake Pads",
+        "description": "Stopping system",
+        "category": "auto_parts"
+    },
+    "car_seat": {
+        "name": "Vehicle Seat",
+        "description": "Upholstered seat",
+        "category": "auto_parts"
+    },
+    "steering_wheel": {
+        "name": "Steering Wheel",
+        "description": "Driver control",
+        "category": "auto_parts"
+    },
+    "radiator": {
+        "name": "Radiator",
+        "description": "Cooling system",
+        "category": "auto_parts"
+    },
+    "spark_plugs": {
+        "name": "Spark Plugs",
+        "description": "Ignition components",
+        "category": "auto_parts"
+    },
+    "fuel_tank": {
+        "name": "Fuel Tank",
+        "description": "Gas reservoir",
+        "category": "auto_parts"
+    },
+    "truck": {
+        "name": "Pickup Truck",
+        "description": "Utility work vehicle",
+        "category": "vehicle"
+    },
+    "luxury_car": {
+        "name": "Luxury Sedan",
+        "description": "Premium automobile",
+        "category": "vehicle"
+    },
+    "motorcycle": {
+        "name": "Motorcycle",
+        "description": "Two-wheeled transport",
+        "category": "vehicle"
+    },
+    "hull": {
+        "name": "Boat Hull",
+        "description": "Fiberglass boat body",
+        "category": "marine_parts"
+    },
+    "outboard_motor": {
+        "name": "Outboard Motor",
+        "description": "Boat propulsion unit",
+        "category": "marine_parts"
+    },
+    "propeller": {
+        "name": "Propeller",
+        "description": "Marine propulsion blade",
+        "category": "marine_parts"
+    },
+    "yacht": {
+        "name": "Luxury Yacht",
+        "description": "Premium watercraft",
+        "category": "vehicle"
+    },
+    "fiberglass": {
+        "name": "Fiberglass",
+        "description": "Reinforced plastic composite",
+        "category": "industrial"
+    },
+    "lead": {
+        "name": "Lead",
+        "description": "Heavy metal for batteries",
+        "category": "metals"
+    },
+    "lead_ore": {
+        "name": "Lead Ore",
+        "description": "Raw lead from mines",
+        "category": "ore"
+    },
+    "bottle": {
+        "name": "Glass Bottles",
+        "description": "Container for beverages",
+        "category": "packaging"
+    },
+    "jar": {
+        "name": "Glass Jars",
+        "description": "Container for preserves",
+        "category": "packaging"
+    },
+    "newspaper": {
+        "name": "Daily Newspaper",
+        "description": "Current events publication",
+        "category": "media"
+    },
+    "textbook": {
+        "name": "Textbook",
+        "description": "Educational publication",
+        "category": "media"
+    },
+    "pillow": {
+        "name": "Feather Pillow",
+        "description": "Down-filled bedding",
+        "category": "home_goods"
+    },
+    "comforter": {
+        "name": "Down Comforter",
+        "description": "Feather-filled blanket",
+        "category": "home_goods"
+    },
+    "sausage": {
+        "name": "Sausage",
+        "description": "Processed pork links",
+        "category": "food"
+    },
+    "bacon": {
+        "name": "Bacon",
+        "description": "Cured pork belly",
+        "category": "food"
+    },
+    "duck_confit": {
+        "name": "Duck Confit",
+        "description": "Slow-cooked preserved duck",
+        "category": "prepared_food"
+    },
+    "pate": {
+        "name": "P\u00e2t\u00e9",
+        "description": "Rich liver spread",
+        "category": "prepared_food"
+    },
+    "wine_barrel": {
+        "name": "Wine Barrel",
+        "description": "Oak aging barrel",
+        "category": "industrial"
+    },
+    "ceramic": {
+        "name": "Ceramics",
+        "description": "Fired clay products",
+        "category": "industrial"
+    },
+    "apple_seeds": {
+        "name": "Apple Seeds",
+        "description": "Seeds for growing apple trees",
+        "category": "seeds"
+    },
+    "orange_seeds": {
+        "name": "Orange Seeds",
+        "description": "Seeds for growing orange trees",
+        "category": "seeds"
+    },
+    "apples": {
+        "name": "Apples",
+        "description": "Fresh apples from the orchard",
+        "category": "fruits"
+    },
+    "oranges": {
+        "name": "Oranges",
+        "description": "Fresh oranges from the grove",
+        "category": "fruits"
+    },
+    "chocolate": {
+        "name": "Chocolate",
+        "description": "Delicious Food",
+        "category": "food"
+    },
+    "cocoa_beans": {
+        "name": "Cocoa Beans",
+        "description": "Fresh cocoa",
+        "category": "fruits"
+    },
+    "potatoes": {
+        "name": "Potatoes",
+        "description": "Fresh potatoes from the field",
+        "category": "vegetables"
+    },
+    "carrots": {
+        "name": "Carrots",
+        "description": "Fresh carrots from the field",
+        "category": "vegetables"
+    },
+    "cotton_seeds": {
+        "name": "Cotton Seeds",
+        "description": "Seeds collected from cotton harvesting for replanting.",
+        "category": "seeds"
+    },
+    "water": {
+        "name": "Water",
+        "description": "Clean water for irrigation and production",
+        "category": "liquids"
+    },
+    "energy": {
+        "name": "Energy",
+        "description": "Electrical energy from solar panels",
+        "category": "energy"
+    },
+    "bio_fuel": {
+        "name": "Bio Fuel",
+        "description": "Renewable fuel from agricultural products",
+        "category": "energy"
+    },
+    "horse": {
+        "name": "Horse",
+        "description": "Livestock used for industrial rendering",
+        "category": "livestock"
+    },
+    "cow": {
+        "name": "Cow",
+        "description": "Livestock for meat, leather, and dairy products",
+        "category": "livestock"
+    },
+    "grass": {
+        "name": "Grass",
+        "description": "Food for grazing animals",
+        "category": "feed"
+    },
+    "glue": {
+        "name": "Industrial Glue",
+        "description": "Industrial adhesive made from rendered animals",
+        "category": "industrial"
+    },
+    "paper": {
+        "name": "Paper",
+        "description": "Universal industrial requirement for all production and documentation",
+        "category": "industrial"
+    },
+    "leather": {
+        "name": "Leather",
+        "description": "High-quality hides for bookbinding and luxury goods",
+        "category": "materials"
+    },
+    "lard": {
+        "name": "Lard",
+        "description": "Rendered animal fat used for industrial lubricants and food processing",
+        "category": "industrial"
+    },
+    "beef": {
+        "name": "Beef",
+        "description": "Processed meat ready for retail distribution",
+        "category": "food"
+    },
+    "milk": {
+        "name": "Milk",
+        "description": "Cows Milk",
+        "category": "beverage"
+    },
+    "cream": {
+        "name": "Cream",
+        "description": "Dairy ingredient",
+        "category": "food"
+    },
+    "ice_cream": {
+        "name": "Ice Cream",
+        "description": "Dairy ingredient",
+        "category": "food"
+    },
+    "cotton": {
+        "name": "Cotton",
+        "description": "Processed cotton fiber for textile manufacturing",
+        "category": "textiles"
+    },
+    "burlap": {
+        "name": "Burlap",
+        "description": "Coarse woven fabric used for sacks and industrial packaging",
+        "category": "textiles"
+    },
+    "polyester": {
+        "name": "Polyester",
+        "description": "Synthetic textile fiber used in modern manufacturing",
+        "category": "textiles"
+    },
+    "silk": {
+        "name": "Silk",
+        "description": "Luxury textile fiber for high-end goods",
+        "category": "textiles"
+    },
+    "timber": {
+        "name": "Timber",
+        "description": "Raw logs from the forest",
+        "category": "wood"
+    },
+    "lumber": {
+        "name": "Lumber",
+        "description": "Processed wood for construction and manufacturing",
+        "category": "wood"
+    },
+    "sawdust": {
+        "name": "Sawdust",
+        "description": "Wood byproduct used in manufacturing",
+        "category": "wood"
+    },
+    "copper_ore": {
+        "name": "Copper Ore",
+        "description": "Raw copper extracted from mines",
+        "category": "ore"
+    },
+    "iron_ore": {
+        "name": "Iron Ore",
+        "description": "Raw iron extracted from mines",
+        "category": "ore"
+    },
+    "zinc_ore": {
+        "name": "Zinc Ore",
+        "description": "Raw zinc extracted from mines",
+        "category": "ore"
+    },
+    "copper": {
+        "name": "Copper",
+        "description": "Refined copper metal for industrial use",
+        "category": "metals"
+    },
+    "brass": {
+        "name": "Brass",
+        "description": "Copper-zinc alloy for hardware and fasteners",
+        "category": "metals"
+    },
+    "iron": {
+        "name": "Iron",
+        "description": "Refined iron metal for industrial use",
+        "category": "metals"
+    },
+    "zippers": {
+        "name": "Zippers",
+        "description": "Metal fasteners for clothing and bags",
+        "category": "components"
+    },
+    "buttons": {
+        "name": "Buttons",
+        "description": "Fasteners for clothing",
+        "category": "components"
+    },
+    "cane": {
+        "name": "Sugar Cane",
+        "description": "Raw cane for sugar production",
+        "category": "crops"
+    },
+    "sugar": {
+        "name": "Sugar",
+        "description": "Refined sugar for food production",
+        "category": "food"
+    },
+    "potato_sack": {
+        "name": "Potato Sack",
+        "description": "Burlap sack for storing potatoes",
+        "category": "packaging"
+    },
+    "carrot_sack": {
+        "name": "Carrot Sack",
+        "description": "Burlap sack for storing carrots",
+        "category": "packaging"
+    },
+    "rice_sack": {
+        "name": "Rice Sack",
+        "description": "Burlap sack filled with rice, ready for market sale",
+        "category": "packaging"
+    },
+    "blouse": {
+        "name": "Silk Blouse",
+        "description": "Elegant silk blouse",
+        "category": "apparel"
+    },
+    "bra": {
+        "name": "Bra",
+        "description": "Silk and polyester undergarment",
+        "category": "apparel"
+    },
+    "panties": {
+        "name": "Panties",
+        "description": "Silk and polyester undergarment",
+        "category": "apparel"
+    },
+    "dress": {
+        "name": "Dress",
+        "description": "Cotton and polyester dress",
+        "category": "apparel"
+    },
+    "leggings": {
+        "name": "Leggings",
+        "description": "Polyester athletic wear",
+        "category": "apparel"
+    },
+    "bomber_jacket": {
+        "name": "Bomber Jacket",
+        "description": "Leather and silk jacket with zipper",
+        "category": "apparel"
+    },
+    "suit_jacket": {
+        "name": "Suit Jacket",
+        "description": "Formal leather and silk jacket with buttons",
+        "category": "apparel"
+    },
+    "trousers": {
+        "name": "Trousers",
+        "description": "Polyester dress pants",
+        "category": "apparel"
+    },
+    "purse": {
+        "name": "Purse",
+        "description": "Luxury handbag with mixed materials",
+        "category": "accessories"
+    },
+    "wallet": {
+        "name": "Wallet",
+        "description": "Leather wallet with hardware",
+        "category": "accessories"
+    },
+    "cheap_luggage": {
+        "name": "Budget Luggage",
+        "description": "Polyester travel bag",
+        "category": "accessories"
+    },
+    "stew": {
+        "name": "Beef Stew",
+        "description": "Hearty vegetable and beef stew",
+        "category": "prepared_food"
+    },
+    "cider_soup": {
+        "name": "Apple Cider Soup",
+        "description": "Sweet and savory apple beef soup",
+        "category": "prepared_food"
+    },
+    "apple_sauce": {
+        "name": "Apple Sauce",
+        "description": "Sweet apple sauce",
+        "category": "prepared_food"
+    },
+    "religious_book": {
+        "name": "Religious Text",
+        "description": "A thick, leather-bound spiritual manuscript. High value.",
+        "category": "luxury"
+    },
+    "land_bank_shares": {
+        "name": "Land Bank Shares",
+        "description": "Tradeable equity shares in the Land Bank",
+        "category": "financial"
+    },
+    "apple_seeds_etf_shares": {
+        "name": "Apple Seeds ETF Shares",
+        "description": "Tradeable ETF shares backed by apple seed reserves",
+        "category": "financial"
+    },
+    "energy_etf_shares": {
+        "name": "Energy ETF Shares",
+        "description": "Tradeable ETF shares backed by energy reserves",
+        "category": "financial"
+    },
+    "city_nav_etf_shares": {
+        "name": "City NAV ETF Shares",
+        "description": "Tradeable ETF shares that trace worldwide City Net Asset Value, backed by land holdings",
+        "category": "financial"
+    },
+    "blackstrap_molasses": {
+        "name": "Blackstrap Molasses",
+        "description": "Thick, dark, and bitter molasses byproduct of sugar refining.",
+        "category": "food"
+    },
+    "rum_molasses": {
+        "name": "Rum Molasses",
+        "description": "High-quality molasses suitable for fermentation and distillation.",
+        "category": "food"
+    },
+    "oil": {
+        "name": "Crude Oil",
+        "description": "Unrefined petroleum extracted from the earth.",
+        "category": "liquids"
+    },
+    "silk_worm": {
+        "name": "Silkworm",
+        "description": "Larvae used to produce silk threads.",
+        "category": "livestock"
+    },
+    "caramel": {
+        "name": "Caramel",
+        "description": "Confectionery product made by heating sugar.",
+        "category": "food"
+    },
+    "pig": {
+        "name": "Pig",
+        "description": "Livestock for pork production",
+        "category": "livestock"
+    },
+    "duck": {
+        "name": "Duck",
+        "description": "Waterfowl for meat and feathers",
+        "category": "livestock"
+    },
+    "chicken": {
+        "name": "Chicken",
+        "description": "Beautiful yet dethroned bird for meat and feathers",
+        "category": "livestock"
+    },
+    "pork": {
+        "name": "Pork",
+        "description": "Fresh pork cuts",
+        "category": "food"
+    },
+    "duck_meat": {
+        "name": "Duck Meat",
+        "description": "Rich poultry meat",
+        "category": "food"
+    },
+    "feathers": {
+        "name": "Feathers",
+        "description": "Down feathers for upholstery",
+        "category": "materials"
+    },
+    "cherry_seeds": {
+        "name": "Cherry Seeds",
+        "description": "Seeds for cherry trees",
+        "category": "seeds"
+    },
+    "onion_seeds": {
+        "name": "Onion Seeds",
+        "description": "Seeds for planting onions",
+        "category": "seeds"
+    },
+    "rice_seeds": {
+        "name": "Rice Seeds",
+        "description": "Seeds for planting flooded rice paddies",
+        "category": "seeds"
+    },
+    "tomato_seeds": {
+        "name": "Tomato Seeds",
+        "description": "Seeds for growing tomato plants",
+        "category": "seeds"
+    },
+    "tobacco_seeds": {
+        "name": "Tobacco Seeds",
+        "description": "Tiny seeds for cultivating all tobacco varieties, from bright Virginia leaf to premium cigar wrappers",
+        "category": "seeds"
+    },
+    "cherries": {
+        "name": "Cherries",
+        "description": "Sweet red fruit",
+        "category": "fruits"
+    },
+    "onions": {
+        "name": "Onions",
+        "description": "Essential savory vegetable",
+        "category": "vegetables"
+    },
+    "wheat": {
+        "name": "Wheat",
+        "description": "Grain for baking",
+        "category": "crops"
+    },
+    "flour": {
+        "name": "Flour",
+        "description": "Milled wheat powder",
+        "category": "food"
+    },
+    "sand": {
+        "name": "Silica Sand",
+        "description": "Raw material for glass",
+        "category": "ore"
+    },
+    "glass": {
+        "name": "Glass",
+        "description": "Industrial glass sheets",
+        "category": "industrial"
+    },
+    "rubber": {
+        "name": "Synthetic Rubber",
+        "description": "Derived from oil for tires and seals",
+        "category": "industrial"
+    },
+    "car": {
+        "name": "Sedan",
+        "description": "Standard consumer vehicle",
+        "category": "vehicle"
+    },
+    "boat": {
+        "name": "Motorboat",
+        "description": "Recreational watercraft",
+        "category": "vehicle"
+    },
+    "candy_bar": {
+        "name": "Chocolate Bar",
+        "description": "Sugar and cocoa treat",
+        "category": "food"
+    },
+    "lollipop": {
+        "name": "Lollipop",
+        "description": "Hard candy on a stick",
+        "category": "food"
+    },
+    "apple_pie": {
+        "name": "Apple Pie",
+        "description": "Fresh baked pie",
+        "category": "prepared_food"
+    },
+    "bread": {
+        "name": "Artisan Bread",
+        "description": "Fresh baked loaf",
+        "category": "food"
+    },
+    "medicine": {
+        "name": "Antibiotics",
+        "description": "Standard medical supplies",
+        "category": "health"
+    },
+    "bandage": {
+        "name": "Bandages",
+        "description": "Cotton medical dressings",
+        "category": "health"
+    },
+    "magazine": {
+        "name": "Lifestyle Magazine",
+        "description": "Weekly glossy publication",
+        "category": "media"
+    },
+    "novel": {
+        "name": "Mystery Novel",
+        "description": "Paperback fiction",
+        "category": "media"
+    },
+    "butter": {
+        "name": "Butter",
+        "description": "Churned dairy product for baking and cooking",
+        "category": "food"
+    },
+    "art_book": {
+        "name": "Art Book",
+        "description": "High-quality art and design publication",
+        "category": "media"
+    },
+    "law_book": {
+        "name": "Law Book",
+        "description": "Legal reference text",
+        "category": "media"
+    },
+    "encyclopedia": {
+        "name": "Encyclopedia",
+        "description": "Comprehensive multi-volume reference work",
+        "category": "media"
+    },
+    "paint": {
+        "name": "Paint",
+        "description": "Colored coating for surfaces",
+        "category": "industrial"
+    },
+    "cheese": {
+        "name": "Cheese",
+        "description": "Dairy product for cooking and consumption",
+        "category": "food"
+    },
+    "coal": {
+        "name": "Coal",
+        "description": "Fossil fuel for smelting and energy",
+        "category": "minerals"
+    },
+    "jewelry": {
+        "name": "Jewelry",
+        "description": "Precious metal accessories",
+        "category": "accessories"
+    },
+    "lettuce": {
+        "name": "Lettuce",
+        "description": "Fresh leafy greens",
+        "category": "vegetables"
+    },
+    "tomato": {
+        "name": "Tomatoes",
+        "description": "Fresh ripe tomatoes for cooking and processing",
+        "category": "vegetables"
+    },
+    "lotion": {
+        "name": "Body Lotion",
+        "description": "Skincare moisturizer",
+        "category": "personal_care"
+    },
+    "peanut": {
+        "name": "Peanuts",
+        "description": "Legume for cooking and snacks",
+        "category": "crops"
+    },
+    "rice": {
+        "name": "Rice",
+        "description": "Staple grain harvested from flooded paddies, used in cooking and brewing",
+        "category": "crops"
+    },
+    "virginia_leaf": {
+        "name": "Virginia Tobacco Leaf",
+        "description": "Bright flue-cured tobacco leaf with high sugar content, backbone of most cigarette blends",
+        "category": "crops"
+    },
+    "burley_leaf": {
+        "name": "Burley Tobacco Leaf",
+        "description": "Air-cured leaf with low sugar and high nicotine, essential for American cigarette blends",
+        "category": "crops"
+    },
+    "golden_burley_leaf": {
+        "name": "Golden Burley Leaf",
+        "description": "Light-coloured air-cured burley variant with a sweeter, milder character",
+        "category": "crops"
+    },
+    "oriental_leaf": {
+        "name": "Oriental Tobacco Leaf",
+        "description": "Small sun-cured aromatic leaf from Mediterranean regions, key to Turkish blends",
+        "category": "crops"
+    },
+    "greek_basma_leaf": {
+        "name": "Greek Basma Oriental Leaf",
+        "description": "Exceptionally fine aromatic sun-cured Oriental tobacco from northern Greece",
+        "category": "crops"
+    },
+    "dokha_leaf": {
+        "name": "Dokha Leaf",
+        "description": "Extremely potent dried tobacco from the Middle East, smoked in a traditional midwaha pipe",
+        "category": "crops"
+    },
+    "latakia_leaf": {
+        "name": "Latakia Leaf",
+        "description": "Syrian and Cypriot fire-cured tobacco leaf with a distinctive smoky, campfire aroma",
+        "category": "crops"
+    },
+    "perique_leaf": {
+        "name": "Perique Leaf",
+        "description": "Rare Louisiana delta tobacco pressure-fermented under its own weight, adds spice to pipe blends",
+        "category": "crops"
+    },
+    "cavendish_leaf": {
+        "name": "Cavendish Leaf",
+        "description": "Base tobacco leaf selected for sweetened fermentation processing into Cavendish tobacco",
+        "category": "crops"
+    },
+    "corojo_leaf": {
+        "name": "Corojo Leaf",
+        "description": "Cuban-heritage wrapper leaf with rich complex flavour and a distinctive red-brown hue",
+        "category": "crops"
+    },
+    "habano_leaf": {
+        "name": "Habano Leaf",
+        "description": "Premium Cuban-style wrapper grown from Cuban seed stock, the gold standard of cigar wrappers",
+        "category": "crops"
+    },
+    "criollo_leaf": {
+        "name": "Criollo Leaf",
+        "description": "Traditional Central American binder and filler leaf with an earthy, medium-bodied character",
+        "category": "crops"
+    },
+    "connecticut_shade_leaf": {
+        "name": "Connecticut Shade Leaf",
+        "description": "Delicate light wrapper leaf grown under shade cloth in the Connecticut River valley",
+        "category": "crops"
+    },
+    "connecticut_broadleaf": {
+        "name": "Connecticut Broadleaf",
+        "description": "Dark, oily, naturally sweet binder leaf grown in the Connecticut valley",
+        "category": "crops"
+    },
+    "cameroon_leaf": {
+        "name": "Cameroon Leaf",
+        "description": "Central African wrapper leaf with a distinctive toothy texture and rich, spicy flavour",
+        "category": "crops"
+    },
+    "sumatra_leaf": {
+        "name": "Sumatra Leaf",
+        "description": "Indonesian wrapper and binder leaf with thin, silky texture and a mild, creamy character",
+        "category": "crops"
+    },
+    "perfume": {
+        "name": "Perfume",
+        "description": "Fragrance product",
+        "category": "personal_care"
+    },
+    "rope": {
+        "name": "Rope",
+        "description": "Twisted fiber cord",
+        "category": "industrial"
+    },
+    "shampoo": {
+        "name": "Shampoo",
+        "description": "Hair cleaning product",
+        "category": "personal_care"
+    },
+    "shoes": {
+        "name": "Shoes",
+        "description": "Footwear",
+        "category": "apparel"
+    },
+    "soap": {
+        "name": "Soap",
+        "description": "Cleaning product",
+        "category": "personal_care"
+    },
+    "soda": {
+        "name": "Soda",
+        "description": "Carbonated beverage",
+        "category": "beverage"
+    },
+    "toothpaste": {
+        "name": "Toothpaste",
+        "description": "Dental hygiene product",
+        "category": "personal_care"
+    },
+    "towel": {
+        "name": "Towel",
+        "description": "Absorbent cloth",
+        "category": "home_goods"
+    },
+    "trawler": {
+        "name": "Trawler",
+        "description": "Bottom-fishing vessel with large nets for demersal fish species",
+        "category": "vehicle"
+    },
+    "purse_seiner": {
+        "name": "Purse Seiner",
+        "description": "Vessel for catching schooling pelagic fish with purse seine nets",
+        "category": "vehicle"
+    },
+    "longliner": {
+        "name": "Long-liner",
+        "description": "Deep-sea fishing vessel using long lines with hundreds of baited hooks",
+        "category": "vehicle"
+    },
+    "lobster_boat": {
+        "name": "Lobster Boat",
+        "description": "Small vessel rigged for deploying and retrieving crustacean traps and pots",
+        "category": "vehicle"
+    },
+    "shrimp_trawler": {
+        "name": "Shrimp Trawler",
+        "description": "Specialized trawling vessel with fine-mesh nets for shrimp harvesting",
+        "category": "vehicle"
+    },
+    "dredger": {
+        "name": "Shellfish Dredger",
+        "description": "Vessel equipped with metal dredges for harvesting shellfish beds",
+        "category": "vehicle"
+    },
+    "dive_vessel": {
+        "name": "Dive Vessel",
+        "description": "Support vessel for commercial dive operations targeting exotic marine species",
+        "category": "vehicle"
+    },
+    "aquaculture_raft": {
+        "name": "Aquaculture Raft",
+        "description": "Floating net-pen platform for farming fish and shellfish in open water",
+        "category": "vehicle"
+    },
+    "freshwater_boat": {
+        "name": "Freshwater Fishing Boat",
+        "description": "Small flat-bottom boat suited for river, lake and pond fishing",
+        "category": "vehicle"
+    },
+    "shrimp": {
+        "name": "Shrimp",
+        "description": "Small saltwater crustacean, widely consumed worldwide",
+        "category": "shellfish"
+    },
+    "lobster": {
+        "name": "Lobster",
+        "description": "Large marine crustacean prized for its sweet, rich meat",
+        "category": "shellfish"
+    },
+    "blue_crab": {
+        "name": "Blue Crab",
+        "description": "Atlantic blue crab known for its delicate flavor",
+        "category": "shellfish"
+    },
+    "dungeness_crab": {
+        "name": "Dungeness Crab",
+        "description": "Pacific coast crab prized for its sweet, tender meat",
+        "category": "shellfish"
+    },
+    "scallops": {
+        "name": "Scallops",
+        "description": "Bivalve mollusks with sweet, tender adductor muscles",
+        "category": "shellfish"
+    },
+    "mussels": {
+        "name": "Mussels",
+        "description": "Bivalve mollusks commonly farmed on ropes or nets",
+        "category": "shellfish"
+    },
+    "clams": {
+        "name": "Clams",
+        "description": "Hard-shelled bivalve mollusks harvested from sandy seabeds",
+        "category": "shellfish"
+    },
+    "crawfish": {
+        "name": "Crawfish",
+        "description": "Freshwater crustacean resembling a small lobster, popular in Southern cuisine",
+        "category": "shellfish"
+    },
+    "oysters": {
+        "name": "Oysters",
+        "description": "Bivalve mollusks that filter seawater, valued for food and pearl production",
+        "category": "shellfish"
+    },
+    "langoustine": {
+        "name": "Langoustine",
+        "description": "Slender European lobster with delicate, sweet flavor",
+        "category": "shellfish"
+    },
+    "barnacles": {
+        "name": "Barnacles",
+        "description": "Unusual crustaceans found on rocks and hulls, prized as a delicacy in Iberia",
+        "category": "shellfish"
+    },
+    "conch": {
+        "name": "Conch",
+        "description": "Large marine snail with sweet, chewy meat and iconic spiral shell",
+        "category": "shellfish"
+    },
+    "urchin": {
+        "name": "Sea Urchin",
+        "description": "Spiny echinoderm with prized golden roe used in sushi and pasta",
+        "category": "shellfish"
+    },
+    "cod": {
+        "name": "Cod",
+        "description": "Classic white-fleshed demersal fish, cornerstone of fish and chips",
+        "category": "seafood"
+    },
+    "haddock": {
+        "name": "Haddock",
+        "description": "North Atlantic white fish, prized for smoking and frying",
+        "category": "seafood"
+    },
+    "tilapia": {
+        "name": "Tilapia",
+        "description": "Mild freshwater fish widely farmed globally",
+        "category": "seafood"
+    },
+    "pollock": {
+        "name": "Pollock",
+        "description": "Abundant white fish used in processed seafood products",
+        "category": "seafood"
+    },
+    "flounder": {
+        "name": "Flounder",
+        "description": "Flat white-fleshed fish with mild, delicate flavor",
+        "category": "seafood"
+    },
+    "halibut": {
+        "name": "Halibut",
+        "description": "Large flatfish with firm, meaty white flesh",
+        "category": "seafood"
+    },
+    "snapper": {
+        "name": "Red Snapper",
+        "description": "Tropical reef fish with firm, moist flesh",
+        "category": "seafood"
+    },
+    "mahi_mahi": {
+        "name": "Mahi-Mahi",
+        "description": "Tropical pelagic fish with firm, sweet flesh",
+        "category": "seafood"
+    },
+    "seabass": {
+        "name": "Sea Bass",
+        "description": "Prized white fish with delicate flavor, popular in fine dining",
+        "category": "seafood"
+    },
+    "sole": {
+        "name": "Dover Sole",
+        "description": "Premium flatfish with delicate flavor and fine texture",
+        "category": "seafood"
+    },
+    "pangasius": {
+        "name": "Pangasius",
+        "description": "Freshwater catfish widely farmed in Southeast Asia",
+        "category": "seafood"
+    },
+    "gurnard": {
+        "name": "Gurnard",
+        "description": "Distinctive spiny fish with firm, flavorful white flesh",
+        "category": "seafood"
+    },
+    "red_mullet": {
+        "name": "Red Mullet",
+        "description": "Mediterranean fish prized for its liver and rich flavor",
+        "category": "seafood"
+    },
+    "coley": {
+        "name": "Coley",
+        "description": "Sustainable white fish related to cod with a slightly stronger flavor",
+        "category": "seafood"
+    },
+    "dab": {
+        "name": "Dab",
+        "description": "Small flatfish similar to plaice with sweet, mild flavor",
+        "category": "seafood"
+    },
+    "turbot": {
+        "name": "Turbot",
+        "description": "Prized European flatfish with firm white flesh, among the most expensive fish",
+        "category": "seafood"
+    },
+    "skate": {
+        "name": "Skate",
+        "description": "Flat cartilaginous fish with wing-shaped fins used in French and British cuisine",
+        "category": "seafood"
+    },
+    "monkfish": {
+        "name": "Monkfish",
+        "description": "Prized fish with dense, sweet flesh called the poor mans lobster",
+        "category": "seafood"
+    },
+    "tilefish": {
+        "name": "Tilefish",
+        "description": "Deep-water fish with mild, sweet flesh resembling lobster in texture",
+        "category": "seafood"
+    },
+    "salmon": {
+        "name": "Atlantic Salmon",
+        "description": "Popular fatty fish farmed and wild-caught, rich in omega-3 fatty acids",
+        "category": "seafood"
+    },
+    "bluefin_tuna": {
+        "name": "Bluefin Tuna",
+        "description": "Premium apex predator fish, highly prized for sashimi and sushi",
+        "category": "seafood"
+    },
+    "yellowfin_tuna": {
+        "name": "Yellowfin Tuna",
+        "description": "Versatile mid-tier tuna used in steaks, sushi and canning",
+        "category": "seafood"
+    },
+    "mackerel": {
+        "name": "Mackerel",
+        "description": "Oily, fast-swimming schooling fish rich in omega-3 fatty acids",
+        "category": "seafood"
+    },
+    "sardines": {
+        "name": "Sardines",
+        "description": "Small oily fish caught in huge quantities for canning and processing",
+        "category": "seafood"
+    },
+    "trout": {
+        "name": "Rainbow Trout",
+        "description": "Freshwater salmonid widely farmed with delicate pink flesh",
+        "category": "seafood"
+    },
+    "anchovies": {
+        "name": "Anchovies",
+        "description": "Small oily fish essential for fish sauce, condiments and cooking",
+        "category": "seafood"
+    },
+    "herring": {
+        "name": "Herring",
+        "description": "Versatile oily fish used in pickling, smoking and canning",
+        "category": "seafood"
+    },
+    "swordfish": {
+        "name": "Swordfish",
+        "description": "Large predatory fish with firm, meaty steaks popular for grilling",
+        "category": "seafood"
+    },
+    "sea_trout": {
+        "name": "Sea Trout",
+        "description": "Migratory salmonid with rich flavor similar to wild salmon",
+        "category": "seafood"
+    },
+    "bluefish": {
+        "name": "Bluefish",
+        "description": "Aggressive pelagic predator with strong, distinctive flavor",
+        "category": "seafood"
+    },
+    "barracuda": {
+        "name": "Barracuda",
+        "description": "Fast predatory fish with firm flesh used in Caribbean and Pacific cuisines",
+        "category": "seafood"
+    },
+    "catfish": {
+        "name": "Catfish",
+        "description": "Bottom-dwelling freshwater fish widely farmed and popular in Southern cuisine",
+        "category": "seafood"
+    },
+    "perch": {
+        "name": "Perch",
+        "description": "Small freshwater fish with sweet, delicate white flesh",
+        "category": "seafood"
+    },
+    "bass": {
+        "name": "Bass",
+        "description": "Popular freshwater game fish with firm, mild white flesh",
+        "category": "seafood"
+    },
+    "barramundi": {
+        "name": "Barramundi",
+        "description": "Versatile Indo-Pacific fish that thrives in salt and freshwater aquaculture",
+        "category": "seafood"
+    },
+    "squid": {
+        "name": "Squid",
+        "description": "Fast-swimming cephalopod used in calamari, stir-fries and stews",
+        "category": "cephalopod"
+    },
+    "octopus": {
+        "name": "Octopus",
+        "description": "Eight-armed cephalopod prized in Mediterranean and Asian cuisine",
+        "category": "cephalopod"
+    },
+    "eel": {
+        "name": "Eel",
+        "description": "Snake-like fish with rich, fatty meat known as unagi in Japanese cuisine",
+        "category": "seafood"
+    },
+    "fish_fillet": {
+        "name": "Fish Fillet",
+        "description": "Boneless, skinless fillet from white fish ready for cooking",
+        "category": "seafood_product"
+    },
+    "salmon_fillet": {
+        "name": "Salmon Fillet",
+        "description": "Fresh skin-on salmon fillet rich in omega-3 fatty acids",
+        "category": "seafood_product"
+    },
+    "tuna_steak": {
+        "name": "Tuna Steak",
+        "description": "Thick-cut yellowfin tuna steak for grilling or searing",
+        "category": "seafood_product"
+    },
+    "bluefin_tuna_sashimi": {
+        "name": "Bluefin Tuna Sashimi",
+        "description": "Sashimi-grade bluefin tuna sliced for high-end sushi and omakase",
+        "category": "seafood_product"
+    },
+    "swordfish_steak": {
+        "name": "Swordfish Steak",
+        "description": "Thick-cut swordfish steak with meaty texture ideal for grilling",
+        "category": "seafood_product"
+    },
+    "halibut_steak": {
+        "name": "Halibut Steak",
+        "description": "Thick-cut halibut with firm white flesh",
+        "category": "seafood_product"
+    },
+    "shrimp_peeled": {
+        "name": "Peeled Shrimp",
+        "description": "Cleaned, deveined shrimp ready for cooking",
+        "category": "seafood_product"
+    },
+    "crab_meat": {
+        "name": "Crab Meat",
+        "description": "Picked crab meat from shells ready to use in dishes",
+        "category": "seafood_product"
+    },
+    "lobster_meat": {
+        "name": "Lobster Meat",
+        "description": "Extracted lobster tail and claw meat",
+        "category": "seafood_product"
+    },
+    "scallop_meat": {
+        "name": "Scallop Meat",
+        "description": "Cleaned scallop adductor muscles ready to sear",
+        "category": "seafood_product"
+    },
+    "calamari": {
+        "name": "Calamari Rings",
+        "description": "Cleaned and sliced squid rings for frying or grilling",
+        "category": "seafood_product"
+    },
+    "octopus_cleaned": {
+        "name": "Cleaned Octopus",
+        "description": "Prepared octopus ready for braising, grilling or salad",
+        "category": "seafood_product"
+    },
+    "fish_fingers": {
+        "name": "Fish Fingers",
+        "description": "Breaded pollock or cod portions, a staple frozen food product",
+        "category": "seafood_product"
+    },
+    "smoked_salmon": {
+        "name": "Smoked Salmon",
+        "description": "Cold-smoked salmon slices prized for charcuterie and brunch dishes",
+        "category": "seafood_product"
+    },
+    "smoked_mackerel": {
+        "name": "Smoked Mackerel",
+        "description": "Hot-smoked mackerel fillet with rich, intense flavor",
+        "category": "seafood_product"
+    },
+    "smoked_eel": {
+        "name": "Smoked Eel",
+        "description": "Delicately smoked eel fillets, a Dutch and British delicacy",
+        "category": "seafood_product"
+    },
+    "salt_cod": {
+        "name": "Salt Cod",
+        "description": "Dried and salted cod, a preserved staple with centuries of tradition",
+        "category": "seafood_product"
+    },
+    "pickled_herring": {
+        "name": "Pickled Herring",
+        "description": "Herring cured in vinegar brine, a Scandinavian specialty",
+        "category": "seafood_product"
+    },
+    "dried_anchovies": {
+        "name": "Dried Anchovies",
+        "description": "Salt-cured and dried anchovies widely used in Asian cuisine",
+        "category": "seafood_product"
+    },
+    "anchovy_paste": {
+        "name": "Anchovy Paste",
+        "description": "Concentrated anchovy puree used to add umami to sauces and dressings",
+        "category": "seafood_product"
+    },
+    "salmon_roe": {
+        "name": "Salmon Roe",
+        "description": "Vibrant orange salmon eggs used in sushi and gourmet dishes",
+        "category": "seafood_product"
+    },
+    "dried_squid": {
+        "name": "Dried Squid",
+        "description": "Dried and seasoned squid popular as a snack in Asian markets",
+        "category": "seafood_product"
+    },
+    "unagi_kabayaki": {
+        "name": "Unagi Kabayaki",
+        "description": "Grilled eel glazed with tare sauce, a celebrated Japanese delicacy",
+        "category": "seafood_product"
+    },
+    "surimi": {
+        "name": "Surimi",
+        "description": "Processed pollock paste base for imitation seafood products",
+        "category": "seafood_product"
+    },
+    "imitation_crab": {
+        "name": "Imitation Crab Sticks",
+        "description": "Crab-flavored seafood sticks made from surimi popular in sushi rolls",
+        "category": "seafood_product"
+    },
+    "canned_tuna": {
+        "name": "Canned Tuna",
+        "description": "Shelf-stable tuna in water or oil, a pantry staple worldwide",
+        "category": "canned_goods"
+    },
+    "canned_sardines": {
+        "name": "Canned Sardines",
+        "description": "Oil-packed whole sardines in a tin, nutritious and shelf-stable",
+        "category": "canned_goods"
+    },
+    "canned_salmon": {
+        "name": "Canned Salmon",
+        "description": "Convenient shelf-stable salmon packed in water",
+        "category": "canned_goods"
+    },
+    "canned_mackerel": {
+        "name": "Canned Mackerel",
+        "description": "Mackerel preserved in oil or tomato sauce",
+        "category": "canned_goods"
+    },
+    "canned_clams": {
+        "name": "Canned Clams",
+        "description": "Minced or whole clams in juice used in chowder and pasta sauces",
+        "category": "canned_goods"
+    },
+    "canned_crab": {
+        "name": "Canned Crab",
+        "description": "Picked crab meat in shelf-stable tins",
+        "category": "canned_goods"
+    },
+    "canned_oysters": {
+        "name": "Canned Oysters",
+        "description": "Smoked or plain oysters in oil used in dips and appetizers",
+        "category": "canned_goods"
+    },
+    "canned_anchovies": {
+        "name": "Canned Anchovies",
+        "description": "Salt-packed anchovy fillets in oil essential for cooking and pizza",
+        "category": "canned_goods"
+    },
+    "fish_sauce": {
+        "name": "Fish Sauce",
+        "description": "Pungent fermented fish liquid essential to Thai, Vietnamese and Asian cuisines",
+        "category": "ingredients"
+    },
+    "oyster_sauce": {
+        "name": "Oyster Sauce",
+        "description": "Thick, sweet-savory sauce made from oyster extracts used in Chinese cooking",
+        "category": "ingredients"
+    },
+    "shrimp_paste": {
+        "name": "Shrimp Paste",
+        "description": "Fermented shrimp condiment essential to Southeast Asian cooking",
+        "category": "ingredients"
+    },
+    "worcestershire_sauce": {
+        "name": "Worcestershire Sauce",
+        "description": "Fermented anchovy and vinegar sauce used as a condiment and cooking ingredient",
+        "category": "ingredients"
+    },
+    "rice_flour": {
+        "name": "Rice Flour",
+        "description": "Finely milled rice flour used in baking, noodles, and rice paper",
+        "category": "ingredients"
+    },
+    "rice_paper": {
+        "name": "Rice Paper",
+        "description": "Thin translucent edible sheets used in sushi wrapping and spring rolls",
+        "category": "ingredients"
+    },
+    "ketchup": {
+        "name": "Ketchup",
+        "description": "Sweetened tomato condiment sauce used in cooking and as a topping",
+        "category": "ingredients"
+    },
+    "tomato_sauce": {
+        "name": "Tomato Sauce",
+        "description": "Cooked reduced tomato sauce used as a pasta and cooking base",
+        "category": "ingredients"
+    },
+    "pizza_sauce": {
+        "name": "Pizza Sauce",
+        "description": "Seasoned tomato sauce spread on pizza bases before topping",
+        "category": "ingredients"
+    },
+    "salsa": {
+        "name": "Salsa",
+        "description": "Chopped tomato, onion and chilli sauce used in Mexican cooking",
+        "category": "ingredients"
+    },
+    "flue_cured_tobacco": {
+        "name": "Flue-Cured Tobacco",
+        "description": "Bright golden tobacco cured by heat from metal flues, producing a high-sugar, low-nicotine leaf",
+        "category": "ingredients"
+    },
+    "air_cured_tobacco": {
+        "name": "Air-Cured Tobacco",
+        "description": "Burley tobacco dried slowly in ventilated barns, producing a dry, high-nicotine, low-sugar leaf",
+        "category": "ingredients"
+    },
+    "fire_cured_tobacco": {
+        "name": "Fire-Cured Tobacco",
+        "description": "Tobacco cured by open hardwood fires, imparting a bold smoky flavour used in pipe and dark blends",
+        "category": "ingredients"
+    },
+    "sun_cured_tobacco": {
+        "name": "Sun-Cured Tobacco",
+        "description": "Oriental tobacco dried in direct sunlight, producing a light aromatic leaf for Turkish-style blends",
+        "category": "ingredients"
+    },
+    "cavendish_tobacco": {
+        "name": "Cavendish Tobacco",
+        "description": "Sweetened, steam-pressed and fermented tobacco, soft and mild, the base of aromatic pipe blends",
+        "category": "ingredients"
+    },
+    "perique_tobacco": {
+        "name": "Perique Tobacco",
+        "description": "Pressure-fermented under its own juices for months, producing a uniquely spicy, plummy condiment tobacco",
+        "category": "ingredients"
+    },
+    "fish_meal": {
+        "name": "Fish Meal",
+        "description": "Dried, ground fish used as a high-protein animal feed supplement",
+        "category": "feed"
+    },
+    "fish_oil": {
+        "name": "Fish Oil",
+        "description": "Oil extracted from oily fish tissue rich in omega-3 fatty acids",
+        "category": "health"
+    },
+    "omega_3_capsule": {
+        "name": "Omega-3 Capsules",
+        "description": "Encapsulated fish oil supplement for cardiovascular and brain health",
+        "category": "health"
+    },
+    "collagen_powder": {
+        "name": "Marine Collagen Powder",
+        "description": "Protein supplement derived from fish skin and bones for skin and joint health",
+        "category": "health"
+    },
+    "chitin": {
+        "name": "Chitin",
+        "description": "Structural polymer from crustacean shells used in medical and bioplastic applications",
+        "category": "industrial"
+    },
+    "fish_emulsion": {
+        "name": "Fish Emulsion Fertilizer",
+        "description": "Liquid organic fertilizer made from processed fish waste rich in nitrogen",
+        "category": "industrial"
+    },
+    "isinglass": {
+        "name": "Isinglass",
+        "description": "Fining agent derived from fish swim bladders used to clarify beer and wine",
+        "category": "ingredients"
+    },
+    "conch_shell": {
+        "name": "Conch Shell",
+        "description": "Large spiral shell used in decor, musical instruments and jewelry",
+        "category": "accessories"
+    },
+    "white_pearl": {
+        "name": "White Pearl",
+        "description": "Classic white freshwater or Akoya pearl used in fine jewelry",
+        "category": "luxury"
+    },
+    "black_pearl": {
+        "name": "Black Pearl",
+        "description": "Rare Tahitian black pearl with natural dark luster, highly valued",
+        "category": "luxury"
+    },
+    "pink_pearl": {
+        "name": "Pink Pearl",
+        "description": "Delicate pink-hued pearl from abalone or freshwater oysters",
+        "category": "luxury"
+    },
+    "golden_pearl": {
+        "name": "Golden Pearl",
+        "description": "Rare South Sea golden pearl among the most valuable in the world",
+        "category": "luxury"
+    },
+    "mother_of_pearl": {
+        "name": "Mother of Pearl",
+        "description": "Iridescent nacre shell lining used in jewelry, buttons and decorative inlay",
+        "category": "luxury"
+    },
+    "fish_and_chips": {
+        "name": "Fish and Chips",
+        "description": "Battered fried fish fillet served with thick-cut chips, a British staple",
+        "category": "prepared_food"
+    },
+    "seafood_chowder": {
+        "name": "Seafood Chowder",
+        "description": "Rich cream-based soup loaded with clams, shrimp and fish",
+        "category": "prepared_food"
+    },
+    "lobster_bisque": {
+        "name": "Lobster Bisque",
+        "description": "Velvety cream soup made from lobster shells and meat, a fine dining classic",
+        "category": "prepared_food"
+    },
+    "prawn_cocktail": {
+        "name": "Prawn Cocktail",
+        "description": "Chilled shrimp served with zesty cocktail sauce, a classic appetizer",
+        "category": "prepared_food"
+    },
+    "grilled_salmon": {
+        "name": "Grilled Salmon",
+        "description": "Fresh salmon fillet grilled to perfection served in upscale restaurants",
+        "category": "prepared_food"
+    },
+    "peanut_butter": {
+        "name": "Peanut Butter",
+        "description": "Smooth spread made from ground roasted peanuts",
+        "category": "food"
+    },
+    "peanut_flour": {
+        "name": "Peanut Flour",
+        "description": "Finely ground defatted peanut powder used in baking",
+        "category": "food"
+    },
+    "peanut_oil": {
+        "name": "Peanut Oil",
+        "description": "Refined cooking oil cold-pressed from peanuts",
+        "category": "food"
+    },
+    "peanut_butter_cookie": {
+        "name": "Peanut Butter Cookie",
+        "description": "Classic baked cookie made with creamy peanut butter",
+        "category": "food"
+    },
+    "satay": {
+        "name": "Satay",
+        "description": "Grilled skewered pork served with a rich peanut dipping sauce",
+        "category": "food"
+    },
+    "jam": {
+        "name": "Jam",
+        "description": "Sweetened fruit preserve made from cooked cherries or apples",
+        "category": "food"
+    },
+    "jelly": {
+        "name": "Jelly",
+        "description": "Clear fruit preserve made from strained grape juice and sugar",
+        "category": "food"
+    },
+    "pasta": {
+        "name": "Pasta",
+        "description": "Dried egg pasta made from durum wheat flour",
+        "category": "food"
+    },
+    "spaghetti": {
+        "name": "Spaghetti",
+        "description": "Long thin pasta strands made from durum wheat",
+        "category": "food"
+    },
+    "noodles": {
+        "name": "Noodles",
+        "description": "Soft wheat noodles used in soups and stir-fries",
+        "category": "food"
+    },
+    "vinegar": {
+        "name": "Vinegar",
+        "description": "Acidic liquid fermented from red wine",
+        "category": "ingredients"
+    },
+    "apple_cider_vinegar": {
+        "name": "Apple Cider Vinegar",
+        "description": "Tangy vinegar fermented from apple cider",
+        "category": "ingredients"
+    },
+    "yogurt": {
+        "name": "Yogurt",
+        "description": "Creamy fermented dairy product made from cultured milk",
+        "category": "food"
+    },
+    "cardboard": {
+        "name": "Cardboard",
+        "description": "Heavy corrugated paper board for packaging and construction",
+        "category": "industrial"
+    },
+    "cardboard_box": {
+        "name": "Cardboard Box",
+        "description": "Corrugated cardboard shipping and storage container",
+        "category": "packaging"
+    },
+    "notebook": {
+        "name": "Notebook",
+        "description": "Bound paper notebook for writing and notes",
+        "category": "media"
+    },
+    "postcard": {
+        "name": "Postcard",
+        "description": "Printed card for correspondence and greetings",
+        "category": "media"
+    },
+    "envelope": {
+        "name": "Envelope",
+        "description": "Paper envelope for letters and mail",
+        "category": "packaging"
+    },
+    "beeswax": {
+        "name": "Beeswax",
+        "description": "Natural wax secreted by honeybees; used in cosmetics and polish",
+        "category": "industrial"
+    },
+    "tea_light": {
+        "name": "Tea Light",
+        "description": "Small circular beeswax candle in a thin metal cup, burns for 3-5 hours",
+        "category": "home_goods"
+    },
+    "birthday_candle": {
+        "name": "Birthday Candles",
+        "description": "Slender dyed beeswax candles for celebration cakes, sold in packs",
+        "category": "home_goods"
+    },
+    "ornamental_candle": {
+        "name": "Ornamental Candle",
+        "description": "Hand-poured scented and coloured beeswax pillar candle, decorative and aromatic",
+        "category": "home_goods"
+    },
+    "religious_candle": {
+        "name": "Religious Candle",
+        "description": "Luxury hand-crafted devotional candle: dyed, cinnamon-scented beeswax poured over a pearl-adorned silk-wrapped cardboard vessel with an apple-fibre rope wick \u2014 a sacred heirloom object",
+        "category": "luxury"
+    },
+    "royal_jelly": {
+        "name": "Royal Jelly",
+        "description": "Nutrient-rich secretion produced by worker bees for the queen",
+        "category": "ingredients"
+    },
+    "pollen": {
+        "name": "Pollen",
+        "description": "Flower pollen collected by worker bees, essential feed for larvae and colony growth",
+        "category": "ingredients"
+    },
+    "dye": {
+        "name": "Dye",
+        "description": "Mineral-based pigment dissolved in solution, used to colour candles, textiles and crafts",
+        "category": "ingredients"
+    },
+    "rope_wick": {
+        "name": "Rope Wick",
+        "description": "Braided cotton wick twisted with dried apple-seed fibre, slow-burning and used in premium candles",
+        "category": "materials"
+    },
+    "condensed_milk": {
+        "name": "Condensed Milk",
+        "description": "Sweetened concentrated milk reduced by slow cooking",
+        "category": "food"
+    },
+    "nails": {
+        "name": "Nails",
+        "description": "Iron fasteners for construction and woodworking",
+        "category": "industrial"
+    },
+    "gasoline": {
+        "name": "Gasoline",
+        "description": "Refined petroleum fuel for passenger vehicles and small engines.",
+        "category": "energy"
+    },
+    "diesel": {
+        "name": "Diesel Fuel",
+        "description": "Heavy refined petroleum fuel for trucks, machinery, and industrial engines.",
+        "category": "energy"
+    },
+    "paraffin_wax": {
+        "name": "Paraffin Wax",
+        "description": "Petroleum byproduct used in candles, cosmetics, and food-grade coatings.",
+        "category": "industrial"
+    },
+    "plastic": {
+        "name": "Plastic",
+        "description": "Synthetic polymer material refined from petroleum; used in packaging, components, and consumer goods.",
+        "category": "industrial"
+    },
+    "merino": {
+        "name": "Merino",
+        "description": "Fine-wool breed producing the world's softest, highest-quality fleece.",
+        "category": "livestock"
+    },
+    "corriedale": {
+        "name": "Corriedale",
+        "description": "Dual-purpose wool-meat breed with medium-grade fleece and robust frame.",
+        "category": "livestock"
+    },
+    "shetland_sheep": {
+        "name": "Shetland Sheep",
+        "description": "Hardy island breed producing soft, colourful Shetland wool for Fair Isle knitwear.",
+        "category": "livestock"
+    },
+    "bluefaced_leicester": {
+        "name": "Bluefaced Leicester",
+        "description": "High-lustre longwool breed prized for luxury hand-spinning yarns.",
+        "category": "livestock"
+    },
+    "border_leicester_sheep": {
+        "name": "Border Leicester",
+        "description": "Large longwool breed with lustrous fleece prized for weaving and spinning.",
+        "category": "livestock"
+    },
+    "romney_sheep": {
+        "name": "Romney",
+        "description": "Dual-purpose breed with heavy, long white fleece, popular in New Zealand.",
+        "category": "livestock"
+    },
+    "suffolk_sheep": {
+        "name": "Suffolk Sheep",
+        "description": "Black-faced breed with moderate wool and superior meat conformation.",
+        "category": "livestock"
+    },
+    "dorset_horn_sheep": {
+        "name": "Dorset Horn",
+        "description": "Horned breed valued for out-of-season lambing; medium-quality white wool.",
+        "category": "livestock"
+    },
+    "black_welsh_mountain_sheep": {
+        "name": "Black Welsh Mountain",
+        "description": "Dark-fleeced hill breed yielding naturally black, undyed fleece for artisan textiles.",
+        "category": "livestock"
+    },
+    "finnsheep": {
+        "name": "Finnsheep",
+        "description": "Prolific Finnish breed producing fine, soft fleece and exceptionally large litters.",
+        "category": "livestock"
+    },
+    "lincoln_sheep": {
+        "name": "Lincoln",
+        "description": "World's heaviest longwool breed with coarse, lustrous fleece ideal for tapestries.",
+        "category": "livestock"
+    },
+    "southdown_sheep": {
+        "name": "Southdown",
+        "description": "Compact Down breed with fine, short wool and excellent meat quality.",
+        "category": "livestock"
+    },
+    "alpaca": {
+        "name": "Alpaca",
+        "description": "Fibre camelid producing exceptionally soft, hypoallergenic fleece in many natural colours.",
+        "category": "livestock"
+    },
+    "angora_sheep": {
+        "name": "Angora",
+        "description": "Fleece-producing breed yielding long, silky Angora fibre for luxury garments.",
+        "category": "livestock"
+    },
+    "cheviot_sheep": {
+        "name": "Cheviot Sheep",
+        "description": "Hardy upland breed with bright, springy white wool and good meat yield.",
+        "category": "livestock"
+    },
+    "mohair_sheep": {
+        "name": "Mohair Sheep",
+        "description": "Angora-type breed yielding long, lustrous mohair fibre with silky sheen.",
+        "category": "livestock"
+    },
+    "rambouillet_sheep": {
+        "name": "Rambouillet",
+        "description": "French descendant of Merino; fine, dense fleece prized for next-to-skin wear.",
+        "category": "livestock"
+    },
+    "targhee_sheep": {
+        "name": "Targhee Sheep",
+        "description": "Dual-purpose American breed with uniformly fine, dense wool clip.",
+        "category": "livestock"
+    },
+    "cashmere_sheep": {
+        "name": "Cashmere Sheep",
+        "description": "Produces ultra-fine cashmere undercoat \u2014 among the most valuable fibres in the world.",
+        "category": "livestock"
+    },
+    "columbia_sheep": {
+        "name": "Columbia Sheep",
+        "description": "Large American dual-purpose breed with heavy medium-grade wool clip.",
+        "category": "livestock"
+    },
+    "polwarth_sheep": {
+        "name": "Polwarth",
+        "description": "Fine-wool breed crossed from Merino and Lincoln; a favourite of hand-spinners.",
+        "category": "livestock"
+    },
+    "polypay_sheep": {
+        "name": "Polypay Sheep",
+        "description": "High-prolificacy American breed with moderate wool and good lamb growth rates.",
+        "category": "livestock"
+    },
+    "jacob_sheep": {
+        "name": "Jacob Sheep",
+        "description": "Multi-horned piebald breed producing distinctive natural brown-and-white fleece.",
+        "category": "livestock"
+    },
+    "cotswold_sheep": {
+        "name": "Cotswold",
+        "description": "Ancient English longwool breed with wavy, lustrous fleece and docile temperament.",
+        "category": "livestock"
+    },
+    "leicester_longwool": {
+        "name": "Leicester Longwool",
+        "description": "Historic English longwool breed; very long lustrous staple used in upholstery and rugs.",
+        "category": "livestock"
+    },
+    "soay_sheep": {
+        "name": "Soay Sheep",
+        "description": "Primitive feral breed with short, brown moult-shed fleece and ancient lineage.",
+        "category": "livestock"
+    },
+    "welsh_mountain_sheep": {
+        "name": "Welsh Mountain Sheep",
+        "description": "Hardy upland breed producing fine, short white wool on challenging terrain.",
+        "category": "livestock"
+    },
+    "lincoln_longwool": {
+        "name": "Lincoln Longwool",
+        "description": "Produces the longest staple of any British breed; lustrous heavy fleece.",
+        "category": "livestock"
+    },
+    "oxford_down_sheep": {
+        "name": "Oxford Down Sheep",
+        "description": "Large Down breed with dense, medium-grade fleece and rapid meat growth.",
+        "category": "livestock"
+    },
+    "barbados_black_belly": {
+        "name": "Barbados Black Belly",
+        "description": "Caribbean hair sheep prized for lean, flavourful meat in tropical climates.",
+        "category": "livestock"
+    },
+    "american_tunis": {
+        "name": "American Tunis",
+        "description": "Reddish-faced American breed producing lean meat and medium-grade wool.",
+        "category": "livestock"
+    },
+    "shropshire_sheep": {
+        "name": "Shropshire Sheep",
+        "description": "Compact British Down breed with excellent feed conversion and mild fleece.",
+        "category": "livestock"
+    },
+    "fries_melkschaap": {
+        "name": "Fries Melkschaap",
+        "description": "Dutch milk sheep yielding high volumes of rich milk for artisan cheese-making.",
+        "category": "livestock"
+    },
+    "st_croix_sheep": {
+        "name": "St. Croix Sheep",
+        "description": "White Caribbean hair sheep highly resistant to heat and internal parasites.",
+        "category": "livestock"
+    },
+    "australian_white_sheep": {
+        "name": "Australian White Sheep",
+        "description": "Low-maintenance hair breed developed for Australian conditions and prime lamb.",
+        "category": "livestock"
+    },
+    "charollais_sheep": {
+        "name": "Charollais Sheep",
+        "description": "French terminal sire breed with exceptional carcass conformation and meat quality.",
+        "category": "livestock"
+    },
+    "icelandic_sheep": {
+        "name": "Icelandic Sheep",
+        "description": "Tripurpose Nordic breed valued for wool, rich milk, and lean flavourful meat.",
+        "category": "livestock"
+    },
+    "karakul_sheep": {
+        "name": "Karakul Sheep",
+        "description": "Ancient Central Asian breed prized for distinctive pelt and desert hardiness.",
+        "category": "livestock"
+    },
+    "romanov_sheep": {
+        "name": "Romanov Sheep",
+        "description": "Russian breed with extreme prolificacy; dark fleece lightens naturally with age.",
+        "category": "livestock"
+    },
+    "clun_forest_sheep": {
+        "name": "Clun Forest Sheep",
+        "description": "Hardy British breed thriving on marginal hill pasture with good lambing ease.",
+        "category": "livestock"
+    },
+    "royal_white_sheep": {
+        "name": "Royal White Sheep",
+        "description": "Modern American hair breed combining Dorper and St. Croix genetics for fast gains.",
+        "category": "livestock"
+    },
+    "south_african_meat_merino": {
+        "name": "South African Meat Merino",
+        "description": "Dual-purpose breed balancing fine Merino wool with superior meat conformation.",
+        "category": "livestock"
+    },
+    "lacaune_sheep": {
+        "name": "Lacaune Sheep",
+        "description": "Primary French dairy sheep; its rich milk is used in authentic Roquefort cheese.",
+        "category": "livestock"
+    },
+    "north_country_cheviot": {
+        "name": "North Country Cheviot",
+        "description": "Large hornless hill breed renowned for hardiness and efficient lamb production.",
+        "category": "livestock"
+    },
+    "poll_dorset": {
+        "name": "Poll Dorset",
+        "description": "Polled Dorset variant popular for year-round lambing and consistent white wool.",
+        "category": "livestock"
+    },
+    "rideau_arcott": {
+        "name": "Rideau Arcott",
+        "description": "Canadian breed with extraordinary lambing rates; commonly 3\u20134 lambs per birth.",
+        "category": "livestock"
+    },
+    "gulf_coast_native_sheep": {
+        "name": "Gulf Coast Native Sheep",
+        "description": "Disease-resistant American heritage breed adapted to the humid Gulf South.",
+        "category": "livestock"
+    },
+    "ile_de_france_sheep": {
+        "name": "\u00cele-de-France Sheep",
+        "description": "Refined French breed blending Merino and Leicester blood for balanced production.",
+        "category": "livestock"
+    },
+    "cameroon_sheep": {
+        "name": "Cameroon Sheep",
+        "description": "Small West African hair sheep; extremely heat-tolerant and trypanosome-resistant.",
+        "category": "livestock"
+    },
+    "damara_sheep": {
+        "name": "Damara Sheep",
+        "description": "Ancient Namibian fat-tailed breed thriving in extreme arid desert conditions.",
+        "category": "livestock"
+    },
+    "badger_face_welsh_mountain": {
+        "name": "Badger Face Welsh Mountain",
+        "description": "Distinctive tan-and-black Welsh hill breed with strong constitution and striking markings.",
+        "category": "livestock"
+    },
+    "berrichon_du_cher": {
+        "name": "Berrichon du Cher",
+        "description": "Traditional French breed from the Berry region; excellent meat quality and medium wool.",
+        "category": "livestock"
+    },
+    "old_english_sheepdog": {
+        "name": "Old English Sheepdog",
+        "description": "Shaggy bobtailed herder of English origin; affectionate and tireless.",
+        "category": "livestock"
+    },
+    "border_collie": {
+        "name": "Border Collie",
+        "description": "World's most intelligent herding dog; exceptional agility and tireless work ethic.",
+        "category": "livestock"
+    },
+    "german_shepherd": {
+        "name": "German Shepherd",
+        "description": "Versatile working dog with superior intelligence and protective instincts.",
+        "category": "livestock"
+    },
+    "belgian_shepherd": {
+        "name": "Belgian Shepherd",
+        "description": "Highly driven working dog from Belgium used in herding, protection, and military roles.",
+        "category": "livestock"
+    },
+    "white_swiss_shepherd": {
+        "name": "White Swiss Shepherd",
+        "description": "Elegant white variant of the German Shepherd; gentler temperament and attentive herder.",
+        "category": "livestock"
+    },
+    "belgian_malinois": {
+        "name": "Belgian Malinois",
+        "description": "Intense, athletic Belgian herder prized by military and police worldwide.",
+        "category": "livestock"
+    },
+    "icelandic_sheepdog": {
+        "name": "Icelandic Sheepdog",
+        "description": "Iceland's only native dog; energetic cheerful herder adapted to harsh Nordic conditions.",
+        "category": "livestock"
+    },
+    "pembroke_welsh_corgi": {
+        "name": "Pembroke Welsh Corgi",
+        "description": "Low-slung Welsh sheep driver famously associated with British royalty.",
+        "category": "livestock"
+    },
+    "rottweiler": {
+        "name": "Rottweiler",
+        "description": "Powerful German drover historically used to herd cattle to market; loyal and confident.",
+        "category": "livestock"
+    },
+    "catalan_sheepdog": {
+        "name": "Catalan Sheepdog",
+        "description": "Catalan herder with wavy coat; alert and independent on rocky Pyrenean terrain.",
+        "category": "livestock"
+    },
+    "miniature_american_shepherd": {
+        "name": "Miniature American Shepherd",
+        "description": "Compact herding dog developed from the Australian Shepherd; versatile and energetic.",
+        "category": "livestock"
+    },
+    "lapponian_herder": {
+        "name": "Lapponian Herder",
+        "description": "Scandinavian reindeer and sheep herder; tough, calm, and highly trainable.",
+        "category": "livestock"
+    },
+    "english_shepherd": {
+        "name": "English Shepherd",
+        "description": "Versatile American farm dog descended from British herding breeds; adaptable and loyal.",
+        "category": "livestock"
+    },
+    "pyrenean_sheepdog": {
+        "name": "Pyrenean Sheepdog",
+        "description": "Liveliest of all French herders; fanatically devoted to its flock.",
+        "category": "livestock"
+    },
+    "samoyed": {
+        "name": "Samoyed",
+        "description": "Arctic herder and sled dog with distinctive white coat; friendly and enduring.",
+        "category": "livestock"
+    },
+    "australian_kelpie": {
+        "name": "Australian Kelpie",
+        "description": "Australia's premier mustering dog; works cattle and sheep independently in heat.",
+        "category": "livestock"
+    },
+    "beauceron": {
+        "name": "Beauceron",
+        "description": "Large French herder with natural double dew claws; intelligent and authoritative.",
+        "category": "livestock"
+    },
+    "scotch_collie": {
+        "name": "Scotch Collie",
+        "description": "Traditional Scottish rough collie; origin of Lassie fame; devoted and gentle.",
+        "category": "livestock"
+    },
+    "bergamasco_shepherd": {
+        "name": "Bergamasco Shepherd",
+        "description": "Ancient Italian mountain herder with a uniquely matted, felted coat.",
+        "category": "livestock"
+    },
+    "finnish_lapphund": {
+        "name": "Finnish Lapphund",
+        "description": "Finnish reindeer herder with thick insulating coat; calm and people-oriented.",
+        "category": "livestock"
+    },
+    "belgian_tervuren": {
+        "name": "Belgian Tervuren",
+        "description": "Long-coated Belgian shepherd variant; elegant, highly trainable, and energetic.",
+        "category": "livestock"
+    },
+    "polish_lowland_sheepdog": {
+        "name": "Polish Lowland Sheepdog",
+        "description": "Shaggy Polish herder with an excellent memory and independent thinking style.",
+        "category": "livestock"
+    },
+    "carpathian_shepherd": {
+        "name": "Carpathian Shepherd Dog",
+        "description": "Large Romanian flock guardian and herder; brave against wolves and bears.",
+        "category": "livestock"
+    },
+    "bearded_collie": {
+        "name": "Bearded Collie",
+        "description": "Shaggy Scottish drover; boisterous, lively, and excellent on rough hill terrain.",
+        "category": "livestock"
+    },
+    "schipperke": {
+        "name": "Schipperke",
+        "description": "Small Belgian barge dog historically used to herd sheep in markets; fearless and curious.",
+        "category": "livestock"
+    },
+    "catahoula_leopard_dog": {
+        "name": "Catahoula Leopard Dog",
+        "description": "Louisiana's state dog; bays and herds semi-feral livestock with unique vocalisations.",
+        "category": "livestock"
+    },
+    "cardigan_welsh_corgi": {
+        "name": "Cardigan Welsh Corgi",
+        "description": "Ancient Welsh cattle driver with a long tail; the older of the two Corgi breeds.",
+        "category": "livestock"
+    },
+    "appenzeller_sennenhund": {
+        "name": "Appenzeller Sennenhund",
+        "description": "Swiss mountain dog used to drive cattle and sheep; lively, self-confident, and rare.",
+        "category": "livestock"
+    },
+    "belgian_laekenois": {
+        "name": "Belgian Laekenois",
+        "description": "Rough-coated Belgian shepherd variant; rarest of the four Belgian shepherd types.",
+        "category": "livestock"
+    },
+    "bouvier_des_flandres": {
+        "name": "Bouvier des Flandres",
+        "description": "Belgian farm dog bred for general cattle and sheep herding; powerful and versatile.",
+        "category": "livestock"
+    },
+    "tibetan_terrier": {
+        "name": "Tibetan Terrier",
+        "description": "Ancient Tibetan companion and flock guide used in high-altitude mountain terrain.",
+        "category": "livestock"
+    },
+    "basque_shepherd": {
+        "name": "Basque Shepherd Dog",
+        "description": "Traditional Basque herder working sheep and goats across the Pyrenean highlands.",
+        "category": "livestock"
+    },
+    "croatian_sheepdog": {
+        "name": "Croatian Sheepdog",
+        "description": "Ancient Croatian national breed; agile herder in the Dalmatian countryside.",
+        "category": "livestock"
+    },
+    "wool": {
+        "name": "Raw Wool",
+        "description": "Shorn fleece ready for washing and carding. The primary fibre for yarn production.",
+        "category": "textile"
+    },
+    "yarn": {
+        "name": "Yarn",
+        "description": "Spun and plied wool yarn; sold for home knitting, weaving, and arts & crafts.",
+        "category": "textile"
+    },
+    "thread": {
+        "name": "Thread",
+        "description": "Fine-spun sewing thread used as an essential input in garment manufacture.",
+        "category": "textile"
+    },
+    "lamb_meat": {
+        "name": "Lamb Meat",
+        "description": "Tender cuts from young sheep; prized for its mild, delicate flavour.",
+        "category": "food"
+    },
+    "sheep_milk": {
+        "name": "Sheep Milk",
+        "description": "Rich, fatty milk from dairy sheep breeds; used in artisan cheese and yoghurt production.",
+        "category": "food"
+    },
+    "blessed_sheep": {
+        "name": "Blessed Sheep",
+        "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
+        "category": "luxury"
+    },
+    "rams_horn": {
+        "name": "Ram's Horn",
+        "description": "A hand-polished ceremonial ram's horn \u2014 an extraordinarily rare luxury religious artefact of immense spiritual significance.",
+        "category": "luxury"
+    }
+}
