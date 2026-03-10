@@ -194,6 +194,7 @@ BUSINESS_COMPATIBILITY = {
     "home_goods_store": {"allowed_terrain": ['urban', 'prairie'], "allowed_proximity": ['urban', 'road']},
     "farmers_market": {"allowed_terrain": ['prairie', 'hills', 'savanna'], "allowed_proximity": ['road', 'urban', 'remote']},
     "fashion_outlet": {"allowed_terrain": ['prairie', 'hills', 'island'], "allowed_proximity": ['urban', 'road']},
+    "essential_oil_press": {"allowed_terrain": ['prairie', 'forest', 'hills'], "allowed_proximity": ['riverside', 'urban']},
     # Marine / fishing businesses
     "trawler_fleet":          {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},
     "purse_seine_fleet":      {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},
