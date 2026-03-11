@@ -50,6 +50,7 @@ TERRAIN_TYPES = {
     "coastal": {"description": "Shoreline with ocean access, fishing and trade hub", "base_tax": 80.0},
     "ocean": {"description": "Open water, offshore and deep-sea operations", "base_tax": 100.0},
     "lake": {"description": "Freshwater lake, fishing and aquaculture potential", "base_tax": 60.0},
+    "urban": {"description": "Downtown city center", "base_tax": 10000.0},
     "district_food": {"description": "Food production zone", "base_tax": 500.0},
     "district_hospital": {"description": "Medical services complex", "base_tax": 800.0},
     "district_industrial": {"description": "Heavy manufacturing zone", "base_tax": 600.0},

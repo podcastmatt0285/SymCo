@@ -101,8 +101,8 @@ class EconomicMilestone(Base):
 # ==========================
 
 AUCTION_DURATION_TICKS = 4000
-PRICE_DROP_RATE = 0.15  # Price drops to 35% every hour
-ECONOMIC_THRESHOLD = 10000000  # $1M triggers 1 new plot
+PRICE_DROP_RATE = 0.05  # Price drops to 5% every hour
+ECONOMIC_THRESHOLD = 10000000  # $10M triggers 1 new plot
 LAND_BANK_ID = -1  # Special owner ID for land bank
 GOVERNMENT_ID = 0  # Government owner ID
 LAND_BANK_MAX_SLOTS = 100  # Maximum plots the land bank can hold
@@ -114,8 +114,14 @@ TERRAIN_BASE_PRICES = {
     "desert": 120000,
     "marsh": 140000,
     "mountain": 200000,
-    "tundra": 130000,
+    "tundra": 3000,
     "jungle": 170000,
+    "urban": 250000,
+    "hills": 155000,
+    "lake": 175000,
+    "coastal": 250000,
+    "ocean": 300000,
+    "island": 350000,
     "savanna": 160000
 }
 
