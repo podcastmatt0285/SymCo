@@ -1287,7 +1287,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         return shell("Inventory", f"Error: {e}", player.cash_balance, player.id)
 
 @router.get("/land", response_class=HTMLResponse)
-def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc"):
+def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
     """Land management view with organized layout, sorting, and explanatory info."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -1306,6 +1306,18 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
         from land import get_db as get_land_db
         land_db = get_land_db()
         owned_businesses_count = land_db.query(Business).filter(Business.owner_id == player.id).count()
+
+        # Fetch active listings owned by this player
+        from land_market import LandListing
+        from database import SessionLocal as _MainSession
+        _lm_db = _MainSession()
+        _active_listings = _lm_db.query(LandListing).filter(
+            LandListing.seller_id == player.id,
+            LandListing.is_active == True,
+        ).all()
+        _lm_db.close()
+        listed_plot_ids = {l.land_plot_id for l in _active_listings}
+        listing_id_by_plot = {l.land_plot_id: l.id for l in _active_listings}
 
         # Sort plots
         def sort_key(p):
@@ -1346,6 +1358,13 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
             return f'<a href="/land?sort={field}&order={new_order}" style="padding: 6px 12px; font-size: 0.8rem; background: {"#1e293b" if sort == field else "#0f172a"}; color: {"#38bdf8" if sort == field else "#94a3b8"}; border: 1px solid #1e293b; border-radius: 3px; text-decoration: none; white-space: nowrap;">{label}{arrow}</a>'
 
         land_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+
+        _land_success = {"listing_cancelled": "Listing cancelled.", "land_listed": "Plot listed on the market."}
+        _land_errors = {"cancel_failed": "Could not cancel — listing may already be inactive.", "listing_failed": "Could not list plot. Ensure it is vacant and not already listed."}
+        if success in _land_success:
+            land_html += f'<div style="padding:10px 16px; background:#052e16; border:1px solid #16a34a; color:#4ade80; margin:8px 0;">{_land_success[success]}</div>'
+        elif error in _land_errors:
+            land_html += f'<div style="padding:10px 16px; background:#1a0505; border:1px solid #dc2626; color:#f87171; margin:8px 0;">{_land_errors[error]}</div>'
 
         # Header with navigation
         land_html += '''
@@ -1468,6 +1487,10 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                 # Efficiency bar width
                 eff_width = min(100, max(0, eff))
 
+                is_listed = plot.id in listed_plot_ids
+                listing_id_for_plot = listing_id_by_plot.get(plot.id)
+                listed_badge = '<span class="badge" style="background: #f59e0b; color: #020617;">LISTED</span>' if is_listed else ""
+
                 land_html += f'''
                 <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
@@ -1475,6 +1498,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                 <span class="badge" style="background: {status_color}; color: #020617;">{status}</span>
+                                {listed_badge}
                                 <span class="badge" style="background: {terrain_color}22; color: {terrain_color}; border: 1px solid {terrain_color}44;">{plot.terrain_type.replace("_", " ").title()}</span>
                             </div>
                             <p style="color: #64748b; font-size: 0.8rem; margin: 4px 0;">{terrain_desc}</p>
@@ -1511,30 +1535,40 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
 
                 # Actions column
                 if not plot.occupied_by_business_id:
-                    land_html += f'''
-                        <div style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">
+                    land_html += '<div style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">'
+                    if is_listed:
+                        # Plot is listed — show cancel button; no building allowed while listed
+                        land_html += f'''
+                            <div style="font-size: 0.8rem; color: #f59e0b; margin-bottom: 4px;">Listed for sale on the market.</div>
+                            <form action="/api/land-market/cancel-listing" method="post">
+                                <input type="hidden" name="listing_id" value="{listing_id_for_plot}">
+                                <button type="submit" class="btn-red" style="width: 100%;">Cancel Listing</button>
+                            </form>
+                            <a href="/land-market?tab=listings" class="btn-blue" style="text-align:center; padding: 8px 12px; font-size: 0.85rem; text-decoration: none;">View on Market</a>'''
+                    else:
+                        # Vacant and not listed — show build + list forms
+                        land_html += f'''
                             <form action="/api/business/create" method="post" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                 <input type="hidden" name="land_plot_id" value="{plot.id}">
                                 <select name="business_type" required style="flex: 1; min-width: 140px;">
                                     <option value="">Build Business...</option>'''
 
-                    # Calculate actual startup costs for each business type
-                    for btype, config in sorted(BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
-                        if plot.terrain_type in config.get("allowed_terrain", []):
-                            base_cost = config.get("startup_cost", 2500.0)
-                            multiplier = max(1.25, owned_businesses_count)
-                            actual_cost = base_cost * multiplier
-                            business_name = config.get("name", btype)
-                            land_html += f'<option value="{btype}">{business_name} ({fmt_usd(actual_cost, disp, precision=0)})</option>'
+                        for btype, config in sorted(BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0])):
+                            if plot.terrain_type in config.get("allowed_terrain", []):
+                                base_cost = config.get("startup_cost", 2500.0)
+                                multiplier = max(1.25, owned_businesses_count)
+                                actual_cost = base_cost * multiplier
+                                business_name = config.get("name", btype)
+                                land_html += f'<option value="{btype}">{business_name} ({fmt_usd(actual_cost, disp, precision=0)})</option>'
 
-                    land_html += f'''</select><button type="submit" class="btn-blue">Build</button>
+                        land_html += f'''</select><button type="submit" class="btn-blue">Build</button>
                             </form>
                             <form action="/api/land-market/list-land" method="post" style="display: flex; gap: 8px; align-items: center;">
                                 <input type="hidden" name="land_plot_id" value="{plot.id}">
                                 <input type="number" name="asking_price" step="0.01" placeholder="Asking ({disp['code']})" style="width: 110px;" required>
                                 <button type="submit" class="btn-orange">List for Sale</button>
-                            </form>
-                        </div>'''
+                            </form>'''
+                    land_html += '</div>'
                 else:
                     # Show which business occupies this plot
                     biz = land_db.query(Business).filter(Business.id == plot.occupied_by_business_id).first()
@@ -1565,7 +1599,7 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
         return shell("Land", f"Error: {e}", player.cash_balance, player.id)
 
 @router.get("/land-market", response_class=HTMLResponse)
-def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions"):
+def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
     """Land market view - government auctions and player listings with search, sort, and filter."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -1573,13 +1607,16 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
     disp = get_player_display_currency(player.id)
 
     try:
-        from land_market import get_active_auctions, get_active_listings, get_land_bank_plots, get_recent_sales
+        from land_market import (get_active_auctions, get_active_listings, get_land_bank_plots,
+                                  get_recent_sales, get_player_buy_orders, get_all_active_buy_orders)
         from land import get_land_plot, TERRAIN_TYPES, PROXIMITY_FEATURES
 
         auctions = get_active_auctions()
         listings = get_active_listings()
         bank_plots = get_land_bank_plots()
         recent_sales = get_recent_sales(limit=8)
+        my_buy_orders = get_player_buy_orders(player.id)
+        all_buy_orders = get_all_active_buy_orders()
 
         # Terrain colors
         terrain_colors = {
@@ -1612,6 +1649,25 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
         avg_listing_price = (sum(l.asking_price for l in listings) / total_listings) if total_listings else 0
 
         market_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+
+        if success:
+            _success_msgs = {
+                "listing_cancelled": "Listing cancelled successfully.",
+                "listing_bought": "Purchase complete — the plot is now yours.",
+                "auction_bought": "Auction purchase complete — the plot is now yours.",
+                "buy_order_placed": "Buy order placed. It will execute automatically when a matching listing appears.",
+                "buy_order_cancelled": "Buy order cancelled.",
+                "land_listed": "Plot listed on the market.",
+            }
+            market_html += f'<div style="padding: 10px 16px; background: #052e16; border: 1px solid #16a34a; color: #4ade80; margin-bottom: 12px;">{_success_msgs.get(success, success)}</div>'
+        if error:
+            _error_msgs = {
+                "cancel_failed": "Could not cancel listing — it may already be inactive.",
+                "purchase_failed": "Purchase failed — the plot may have been sold or is no longer available.",
+                "buy_order_failed": "Could not place buy order. Check that your price is valid.",
+                "listing_failed": "Could not create listing.",
+            }
+            market_html += f'<div style="padding: 10px 16px; background: #1a0505; border: 1px solid #dc2626; color: #f87171; margin-bottom: 12px;">{_error_msgs.get(error, error)}</div>'
 
         # Header
         market_html += '''
@@ -1665,6 +1721,7 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
         <div style="display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap;">
             <a href="/land-market?tab=auctions&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("auctions")}">Government Auctions ({total_auctions})</a>
             <a href="/land-market?tab=listings&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("listings")}">Player Listings ({total_listings})</a>
+            <a href="/land-market?tab=orders&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("orders")}">Buy Orders ({len(all_buy_orders)})</a>
             <a href="/land-market?tab=history&sort={sort}&order={order}&terrain={terrain}" style="{tab_style("history")}">Recent Sales</a>
         </div>'''
 
@@ -1934,6 +1991,86 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                                 </form>'''
 
                     market_html += '</div></div></div>'
+
+        # ===== BUY ORDERS TAB =====
+        elif tab == "orders":
+            market_html += '''
+            <div style="padding: 10px 16px; background: #0f172a; border-left: 4px solid #38bdf8; margin-bottom: 16px; font-size: 0.85rem; color: #94a3b8;">
+                <strong style="color: #38bdf8;">Limit Buy Orders</strong> — place a standing bid at your maximum price.
+                When a seller lists land at or below your max price (and terrain matches if filtered), the purchase executes automatically.
+            </div>'''
+
+            # Place new buy order form
+            all_terrains_sorted = ["prairie","forest","desert","marsh","mountain","tundra","jungle","savanna","hills","island"]
+            terrain_options = "".join(f'<option value="{t}">{t.replace("_"," ").title()}</option>' for t in all_terrains_sorted)
+            market_html += f'''
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 style="margin: 0 0 12px 0;">Place a Buy Order</h3>
+                <form action="/api/land-market/buy-order" method="post" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                    <div>
+                        <label style="display:block; font-size:0.8rem; color:#64748b; margin-bottom:4px;">Max Price ({disp["code"]})</label>
+                        <input type="number" name="max_price" step="0.01" min="1" placeholder="e.g. 50000" required
+                               style="width:140px; background:#020617; border:1px solid #334155; color:#e5e7eb; padding:8px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; color:#64748b; margin-bottom:4px;">Terrain (optional)</label>
+                        <select name="terrain" style="background:#020617; border:1px solid #334155; color:#e5e7eb; padding:8px;">
+                            <option value="">Any terrain</option>
+                            {terrain_options}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-blue" style="padding: 8px 20px;">Place Order</button>
+                </form>
+            </div>'''
+
+            # My active buy orders
+            if my_buy_orders:
+                market_html += '<h3 style="color:#e5e7eb; margin-bottom:10px;">Your Active Buy Orders</h3>'
+                for bo in my_buy_orders:
+                    terrain_label = bo.terrain.replace("_"," ").title() if bo.terrain else "Any"
+                    placed = bo.created_at.strftime("%b %d, %H:%M") if bo.created_at else ""
+                    market_html += f'''
+                    <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px; border-left:4px solid #38bdf8;">
+                        <div>
+                            <div style="font-size:0.85rem; color:#64748b; margin-bottom:4px;">Max price</div>
+                            <div style="font-size:1.2rem; font-weight:bold; color:#38bdf8;">{fmt_usd(bo.max_price, disp, precision=0)}</div>
+                            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Terrain: {terrain_label} &nbsp;·&nbsp; Placed {placed}</div>
+                        </div>
+                        <form action="/api/land-market/cancel-buy-order" method="post">
+                            <input type="hidden" name="order_id" value="{bo.id}">
+                            <button type="submit" class="btn-red" style="padding:8px 16px;">Cancel</button>
+                        </form>
+                    </div>'''
+
+            # All market buy orders (read-only depth view)
+            other_orders = [o for o in all_buy_orders if o.buyer_id != player.id]
+            if other_orders:
+                market_html += '<h3 style="color:#e5e7eb; margin:20px 0 10px 0;">Open Market Buy Orders</h3>'
+                market_html += '''
+                <div class="card" style="padding:0; overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead><tr style="border-bottom:1px solid #1e293b; color:#64748b;">
+                            <th style="padding:10px 12px; text-align:left;">Max Price</th>
+                            <th style="padding:10px 12px; text-align:left;">Terrain</th>
+                            <th style="padding:10px 12px; text-align:right;">Placed</th>
+                        </tr></thead><tbody>'''
+                from auth import get_db as get_auth_db, Player as AuthPlayer
+                for o in other_orders:
+                    terrain_label = o.terrain.replace("_"," ").title() if o.terrain else "Any"
+                    placed = o.created_at.strftime("%b %d, %H:%M") if o.created_at else ""
+                    market_html += f'''
+                        <tr style="border-bottom:1px solid #0f172a;">
+                            <td style="padding:10px 12px; color:#38bdf8; font-weight:bold;">{fmt_usd(o.max_price, disp, precision=0)}</td>
+                            <td style="padding:10px 12px; color:#94a3b8;">{terrain_label}</td>
+                            <td style="padding:10px 12px; text-align:right; color:#64748b;">{placed}</td>
+                        </tr>'''
+                market_html += '</tbody></table></div>'
+
+            if not my_buy_orders and not other_orders:
+                market_html += '''
+                <div class="card" style="text-align:center; padding:30px;">
+                    <p style="color:#94a3b8;">No active buy orders. Place one above to get notified when matching land is listed.</p>
+                </div>'''
 
         # ===== RECENT SALES TAB =====
         elif tab == "history":
@@ -7288,21 +7425,19 @@ async def buy_listing_endpoint(listing_id: int = Form(...), session_token: Optio
     
     from land_market import buy_listed_land
     if buy_listed_land(player.id, listing_id):
-        return RedirectResponse(url="/land-market?success=listing_bought", status_code=303)
-    return RedirectResponse(url="/land-market?error=purchase_failed", status_code=303)
+        return RedirectResponse(url="/land-market?tab=listings&success=listing_bought", status_code=303)
+    return RedirectResponse(url="/land-market?tab=listings&error=purchase_failed", status_code=303)
 
 @router.post("/api/land-market/cancel-listing")
 async def cancel_listing_endpoint(listing_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
     """Cancel your own land listing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
-    
+
     from land_market import cancel_listing
     if cancel_listing(player.id, listing_id):
-        return RedirectResponse(url="/land-market?success=listing_cancelled", status_code=303)
-    return RedirectResponse(url="/land-market?error=cancel_failed", status_code=303)
+        return RedirectResponse(url="/land?success=listing_cancelled", status_code=303)
+    return RedirectResponse(url="/land?error=cancel_failed", status_code=303)
 
 @router.post("/api/land-market/list-land")
 async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float = Form(...), session_token: Optional[str] = Cookie(None)):
@@ -7315,8 +7450,39 @@ async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float 
     from land_market import list_land_for_sale
     price_usd = asking_price * disp["usd_per_unit"]
     if list_land_for_sale(player.id, land_plot_id, price_usd):
-        return RedirectResponse(url="/land-market?success=land_listed", status_code=303)
-    return RedirectResponse(url="/land-market?error=listing_failed", status_code=303)
+        return RedirectResponse(url="/land?success=land_listed", status_code=303)
+    return RedirectResponse(url="/land?error=listing_failed", status_code=303)
+
+@router.post("/api/land-market/buy-order")
+async def place_buy_order_endpoint(
+    max_price: float = Form(...),
+    terrain: str = Form(""),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Place a standing limit buy order for land."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return player
+    from reserve_banks import get_player_display_currency
+    disp = get_player_display_currency(player.id)
+    from land_market import place_land_buy_order
+    price_usd = max_price * disp["usd_per_unit"]
+    result = place_land_buy_order(player.id, price_usd, terrain if terrain else None)
+    if result is not False:  # None means immediately executed, LandBuyOrder means standing order
+        return RedirectResponse(url="/land-market?tab=orders&success=buy_order_placed", status_code=303)
+    return RedirectResponse(url="/land-market?tab=orders&error=buy_order_failed", status_code=303)
+
+@router.post("/api/land-market/cancel-buy-order")
+async def cancel_buy_order_endpoint(
+    order_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Cancel a standing land buy order."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return player
+    from land_market import cancel_land_buy_order
+    if cancel_land_buy_order(player.id, order_id):
+        return RedirectResponse(url="/land-market?tab=orders&success=buy_order_cancelled", status_code=303)
+    return RedirectResponse(url="/land-market?tab=orders&error=cancel_failed", status_code=303)
 
 @router.post("/api/brokerage/etf-order")
 async def brokerage_etf_order(

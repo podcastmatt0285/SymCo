@@ -87,6 +87,18 @@ class LandBank(Base):
     last_auction_price = Column(Float, nullable=True)
 
 
+class LandBuyOrder(Base):
+    """Standing limit buy order for a land plot."""
+    __tablename__ = "land_buy_orders"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    buyer_id   = Column(Integer, index=True, nullable=False)
+    max_price  = Column(Float, nullable=False)           # buyer's maximum acceptable price
+    terrain    = Column(String(32), nullable=True)       # optional terrain filter, None = any
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active  = Column(Boolean, default=True)
+
+
 class EconomicMilestone(Base):
     """Track which economic milestones have triggered land creation."""
     __tablename__ = "economic_milestones"
@@ -196,7 +208,7 @@ def list_land_for_sale(seller_id: int, land_plot_id: int, asking_price: float) -
             print("[LandMarket] Player doesn't own this plot")
             return None
         
-        if plot.occupied_by_business_id:
+        if plot.occupied_by_business_id is not None:
             print("[LandMarket] Cannot sell occupied land")
             return None
         
@@ -274,8 +286,11 @@ def buy_listed_land(buyer_id: int, listing_id: int) -> bool:
         
         # Transfer land ownership
         if not transfer_land(listing.land_plot_id, buyer_id):
-            # Refund if land transfer fails
+            # Refund if land transfer fails (e.g. plot was occupied after listing)
             transfer_cash(listing.seller_id, buyer_id, listing.asking_price)
+            print(f"[LandMarket] Transfer failed for plot {listing.land_plot_id} (occupied?) — cancelling stale listing")
+            listing.is_active = False
+            db.commit()
             return False
        
         # Get plot details for logging
@@ -361,6 +376,87 @@ def cancel_listing(seller_id: int, listing_id: int) -> bool:
         
         print(f"[LandMarket] Listing {listing_id} cancelled")
         return True
+    finally:
+        db.close()
+
+
+def place_land_buy_order(buyer_id: int, max_price: float, terrain: Optional[str] = None) -> Optional[LandBuyOrder]:
+    """Place a standing limit buy order for land."""
+    if max_price <= 0:
+        return None
+    db = get_db()
+    try:
+        # Auto-execute if a matching active listing already exists
+        query = db.query(LandListing).filter(
+            LandListing.is_active == True,
+            LandListing.asking_price <= max_price,
+            LandListing.seller_id != buyer_id,
+        )
+        if terrain:
+            from land import LandPlot
+            matching = None
+            for listing in query.all():
+                plot = db.query(LandPlot).filter(LandPlot.id == listing.land_plot_id).first()
+                if plot and plot.terrain_type == terrain:
+                    matching = listing
+                    break
+        else:
+            matching = query.order_by(LandListing.asking_price.asc()).first()
+
+        if matching:
+            db.close()
+            ok = buy_listed_land(buyer_id, matching.id)
+            if ok:
+                return None  # executed immediately, no standing order needed
+            # fall through and create the order if execution failed
+
+        order = LandBuyOrder(buyer_id=buyer_id, max_price=max_price, terrain=terrain)
+        db.add(order)
+        db.commit()
+        db.refresh(order)
+        print(f"[LandMarket] Buy order placed: player {buyer_id} max ${max_price:,.2f} terrain={terrain}")
+        return order
+    finally:
+        db.close()
+
+
+def cancel_land_buy_order(buyer_id: int, order_id: int) -> bool:
+    """Cancel a standing land buy order."""
+    db = get_db()
+    try:
+        order = db.query(LandBuyOrder).filter(
+            LandBuyOrder.id == order_id,
+            LandBuyOrder.buyer_id == buyer_id,
+            LandBuyOrder.is_active == True,
+        ).first()
+        if not order:
+            return False
+        order.is_active = False
+        db.commit()
+        return True
+    finally:
+        db.close()
+
+
+def get_player_buy_orders(player_id: int) -> List[LandBuyOrder]:
+    """Get all active buy orders for a player."""
+    db = get_db()
+    try:
+        return db.query(LandBuyOrder).filter(
+            LandBuyOrder.buyer_id == player_id,
+            LandBuyOrder.is_active == True,
+        ).order_by(LandBuyOrder.created_at.desc()).all()
+    finally:
+        db.close()
+
+
+def get_all_active_buy_orders() -> List[LandBuyOrder]:
+    """Get all active buy orders (for market display)."""
+    db = get_db()
+    try:
+        return db.query(LandBuyOrder).filter(
+            LandBuyOrder.is_active == True,
+        ).order_by(LandBuyOrder.max_price.desc()).all()
     finally:
         db.close()
 
