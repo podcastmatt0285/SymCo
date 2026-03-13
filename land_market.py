@@ -95,6 +95,7 @@ class LandBuyOrder(Base):
     buyer_id   = Column(Integer, index=True, nullable=False)
     max_price  = Column(Float, nullable=False)           # buyer's maximum acceptable price
     terrain    = Column(String(32), nullable=True)       # optional terrain filter, None = any
+    proximity  = Column(String(64), nullable=True)       # optional proximity feature filter, None = any
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active  = Column(Boolean, default=True)
 
@@ -380,44 +381,64 @@ def cancel_listing(seller_id: int, listing_id: int) -> bool:
         db.close()
 
 
-def place_land_buy_order(buyer_id: int, max_price: float, terrain: Optional[str] = None) -> Optional[LandBuyOrder]:
-    """Place a standing limit buy order for land."""
+def place_land_buy_order(buyer_id: int, max_price: float,
+                          terrain: Optional[str] = None,
+                          proximity: Optional[str] = None) -> Optional[LandBuyOrder]:
+    """Place a standing limit buy order for land.
+
+    terrain  – restrict to a specific terrain type (None = any)
+    proximity – require a specific proximity feature (None = any)
+    Returns the new LandBuyOrder, or None if it auto-executed immediately.
+    """
     if max_price <= 0:
         return None
     db = get_db()
     try:
         # Auto-execute if a matching active listing already exists
-        query = db.query(LandListing).filter(
+        candidates = db.query(LandListing).filter(
             LandListing.is_active == True,
             LandListing.asking_price <= max_price,
             LandListing.seller_id != buyer_id,
-        )
-        if terrain:
+        ).order_by(LandListing.asking_price.asc()).all()
+
+        matching = None
+        if terrain or proximity:
             from land import LandPlot
-            matching = None
-            for listing in query.all():
+            for listing in candidates:
                 plot = db.query(LandPlot).filter(LandPlot.id == listing.land_plot_id).first()
-                if plot and plot.terrain_type == terrain:
-                    matching = listing
-                    break
-        else:
-            matching = query.order_by(LandListing.asking_price.asc()).first()
+                if not plot:
+                    continue
+                if terrain and plot.terrain_type != terrain:
+                    continue
+                if proximity:
+                    feats = [f.strip() for f in (plot.proximity_features or "").split(",")]
+                    if proximity not in feats:
+                        continue
+                matching = listing
+                break
+        elif candidates:
+            matching = candidates[0]
 
         if matching:
             db.close()
             ok = buy_listed_land(buyer_id, matching.id)
             if ok:
                 return None  # executed immediately, no standing order needed
-            # fall through and create the order if execution failed
+            db = get_db()  # reopen for the standing order insert below
 
-        order = LandBuyOrder(buyer_id=buyer_id, max_price=max_price, terrain=terrain)
+        order = LandBuyOrder(buyer_id=buyer_id, max_price=max_price,
+                              terrain=terrain, proximity=proximity)
         db.add(order)
         db.commit()
         db.refresh(order)
-        print(f"[LandMarket] Buy order placed: player {buyer_id} max ${max_price:,.2f} terrain={terrain}")
+        print(f"[LandMarket] Buy order placed: player {buyer_id} max ${max_price:,.2f} "
+              f"terrain={terrain} proximity={proximity}")
         return order
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 def cancel_land_buy_order(buyer_id: int, order_id: int) -> bool:
@@ -916,6 +937,11 @@ def initialize():
     """Initialize land market module."""
     print("[LandMarket] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+
+    # Migrations for columns added after initial deployment
+    from database import run_ddl_migration
+    run_ddl_migration(engine, "land_buy_orders", "proximity",
+                      "ALTER TABLE land_buy_orders ADD COLUMN proximity VARCHAR(64)")
     
     # Check land bank status
     db = get_db()
