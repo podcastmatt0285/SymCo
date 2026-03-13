@@ -2057,6 +2057,7 @@ async def stats_businesses(
         all_businesses = [(k, v) for k, v in business_types.items() if v.get("class") == category]
 
     district_keys = set(district_businesses.keys())
+    all_businesses = [(k, v) for k, v in all_businesses if isinstance(v, dict)]
     for key, biz in sorted(all_businesses, key=lambda x: x[1].get("name", x[0])):
         name = biz.get("name", key.replace("_", " ").title())
         desc = biz.get("description", "")[:80]
