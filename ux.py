@@ -74,7 +74,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         all_items = list(inv_mod.ITEM_RECIPES.keys()) if inv_mod.ITEM_RECIPES else list(market_mod.STARTER_INVENTORY.keys())
         
         ticker_items = []
-        for item in all_items:
+        for item in sorted(all_items):
             price = market_mod.get_market_price(item)
             if price:
                 ticker_items.append(f"{item.replace('_', ' ').upper()}: {fmt_usd(price, disp)}")
@@ -199,13 +199,60 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: #020617;
-                border-top: 1px solid #1e293b;
-                padding: 6px 0;
-                font-size: 0.85rem;
-                color: #64748b;
+                background: #0f172a;
+                border-top: 1px solid #334155;
+                padding: 4px 8px;
+                font-size: 0.8rem;
+                color: #cbd5e1;
                 white-space: nowrap;
                 overflow: hidden;
+                display: flex;
+                align-items: center;
+                gap: 0;
+                height: 34px;
+                z-index: 1000;
+            }}
+
+            .ticker-controls {{
+                display: flex;
+                align-items: center;
+                gap: 3px;
+                flex-shrink: 0;
+                padding-right: 8px;
+                margin-right: 8px;
+                border-right: 1px solid #334155;
+            }}
+
+            .ticker-btn {{
+                background: #1e293b;
+                border: 1px solid #334155;
+                color: #94a3b8;
+                border-radius: 3px;
+                padding: 2px 5px;
+                font-size: 0.7rem;
+                cursor: pointer;
+                font-family: inherit;
+                line-height: 1.5;
+                user-select: none;
+            }}
+
+            .ticker-btn:hover {{
+                background: #334155;
+                color: #e2e8f0;
+            }}
+
+            .ticker-btn.active {{
+                background: #1d4ed8;
+                border-color: #3b82f6;
+                color: #e2e8f0;
+            }}
+
+            #tkViewport {{
+                overflow: hidden;
+                flex: 1;
+                height: 100%;
+                display: flex;
+                align-items: center;
             }}
 
             @keyframes lien-pulse {{
@@ -275,9 +322,111 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             {body}
         </div>
 
-        <div class="ticker">
-            <marquee scrollamount="12">{ticker_html} &nbsp;&nbsp;&nbsp; {ticker_html}</marquee>
+        <div class="ticker" id="tickerBar">
+            <div class="ticker-controls">
+                <button class="ticker-btn" id="tkRestart" title="Restart">&#9198;</button>
+                <button class="ticker-btn" id="tkRewind" title="Rewind">&#9194;</button>
+                <button class="ticker-btn" id="tkPlay" title="Pause">&#9208;</button>
+                <button class="ticker-btn" id="tkSpeed" title="Speed">1&times;</button>
+            </div>
+            <div id="tkViewport">
+                <div id="tkTrack" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">
+                    {ticker_html} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {ticker_html}
+                </div>
+            </div>
         </div>
+        <script>
+        (function() {{
+            var STORE = 'wadsTickerState';
+            var SPEEDS = [0.5, 1, 1.5, 2];
+            var BASE_PX = 0.9;
+
+            var state = {{ paused: false, speedIdx: 1, direction: 1, offset: 0 }};
+
+            try {{
+                var saved = JSON.parse(localStorage.getItem(STORE) || '{{}}');
+                if (typeof saved.paused === 'boolean') state.paused = saved.paused;
+                if (typeof saved.speedIdx === 'number' && saved.speedIdx >= 0 && saved.speedIdx < SPEEDS.length) state.speedIdx = saved.speedIdx;
+                if (typeof saved.direction === 'number') state.direction = saved.direction;
+                if (typeof saved.offset === 'number') state.offset = saved.offset;
+            }} catch(e) {{}}
+
+            var track  = document.getElementById('tkTrack');
+            var btnPlay    = document.getElementById('tkPlay');
+            var btnRewind  = document.getElementById('tkRewind');
+            var btnRestart = document.getElementById('tkRestart');
+            var btnSpeed   = document.getElementById('tkSpeed');
+
+            var halfWidth = 0;
+            var rafId = null;
+
+            function measureHalf() {{
+                halfWidth = track.scrollWidth / 2;
+            }}
+
+            function saveState() {{
+                try {{ localStorage.setItem(STORE, JSON.stringify(state)); }} catch(e) {{}}
+            }}
+
+            function updateUI() {{
+                btnPlay.innerHTML   = state.paused ? '&#9654;' : '&#9208;';
+                btnPlay.title       = state.paused ? 'Play' : 'Pause';
+                btnSpeed.innerHTML  = SPEEDS[state.speedIdx] + '&times;';
+                btnRewind.classList.toggle('active', state.direction === -1);
+            }}
+
+            function applyTransform() {{
+                track.style.transform = 'translateX(' + state.offset + 'px)';
+            }}
+
+            function step() {{
+                if (!state.paused) {{
+                    if (!halfWidth) measureHalf();
+                    var px = BASE_PX * SPEEDS[state.speedIdx] * state.direction;
+                    state.offset -= px;
+                    /* seamless loop: keep offset within -halfWidth..0 */
+                    if (state.offset < -halfWidth) state.offset += halfWidth;
+                    if (state.offset > 0)          state.offset -= halfWidth;
+                    applyTransform();
+                }}
+                rafId = requestAnimationFrame(step);
+            }}
+
+            btnPlay.addEventListener('click', function() {{
+                state.paused = !state.paused;
+                if (!state.paused) state.direction = 1;
+                updateUI(); saveState();
+            }});
+
+            btnRewind.addEventListener('click', function() {{
+                state.direction = state.direction === -1 ? 1 : -1;
+                state.paused = false;
+                updateUI(); saveState();
+            }});
+
+            btnRestart.addEventListener('click', function() {{
+                state.offset = 0;
+                state.direction = 1;
+                state.paused = false;
+                applyTransform();
+                updateUI(); saveState();
+            }});
+
+            btnSpeed.addEventListener('click', function() {{
+                state.speedIdx = (state.speedIdx + 1) % SPEEDS.length;
+                updateUI(); saveState();
+            }});
+
+            applyTransform();
+            updateUI();
+            measureHalf();
+            rafId = requestAnimationFrame(step);
+
+            /* persist position on unload so next page load resumes cleanly */
+            window.addEventListener('pagehide', saveState);
+            window.addEventListener('beforeunload', saveState);
+        }})();
+        </script>
     </body>
     </html>
     """
