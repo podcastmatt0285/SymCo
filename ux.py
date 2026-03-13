@@ -3048,7 +3048,6 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                         </p>
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                        <a href="/reserve-banks" class="btn-blue" style="background:#a78bfa;">Reserve Banks</a>
                         <a href="/reserve-banks/bonds" class="btn-blue">Bond Market</a>
                         <a href="/reserve-banks/forex" class="btn-orange">Forex</a>
                     </div>
