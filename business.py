@@ -439,6 +439,17 @@ def create_business(player_id: int, plot_id: int, business_type_key: str):
             print("[Business] Invalid plot, ownership, or occupancy.")
             db.close()
             return None
+
+        # Block building on a plot that is currently listed for sale
+        from land_market import LandListing
+        active_listing = db.query(LandListing).filter(
+            LandListing.land_plot_id == plot_id,
+            LandListing.is_active == True,
+        ).first()
+        if active_listing:
+            print(f"[Business] Plot {plot_id} is listed for sale — cancel the listing before building.")
+            db.close()
+            return None
             
         allowed = config.get("allowed_terrain")
         if allowed and plot.terrain_type not in allowed:
