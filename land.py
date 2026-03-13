@@ -50,7 +50,6 @@ TERRAIN_TYPES = {
     "coastal": {"description": "Shoreline with ocean access, fishing and trade hub", "base_tax": 80.0},
     "ocean": {"description": "Open water, offshore and deep-sea operations", "base_tax": 100.0},
     "lake": {"description": "Freshwater lake, fishing and aquaculture potential", "base_tax": 60.0},
-    "urban": {"description": "Downtown city center", "base_tax": 10000.0},
     "district_food": {"description": "Food production zone", "base_tax": 500.0},
     "district_hospital": {"description": "Medical services complex", "base_tax": 800.0},
     "district_industrial": {"description": "Heavy manufacturing zone", "base_tax": 600.0},
@@ -195,7 +194,6 @@ BUSINESS_COMPATIBILITY = {
     "home_goods_store": {"allowed_terrain": ['urban', 'prairie'], "allowed_proximity": ['urban', 'road']},
     "farmers_market": {"allowed_terrain": ['prairie', 'hills', 'savanna'], "allowed_proximity": ['road', 'urban', 'remote']},
     "fashion_outlet": {"allowed_terrain": ['prairie', 'hills', 'island'], "allowed_proximity": ['urban', 'road']},
-    "essential_oil_press": {"allowed_terrain": ['prairie', 'forest', 'hills'], "allowed_proximity": ['riverside', 'urban']},
     # Marine / fishing businesses
     "trawler_fleet":          {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},
     "purse_seine_fleet":      {"allowed_terrain": ['coastal', 'ocean'],                  "allowed_proximity": ['coastal']},

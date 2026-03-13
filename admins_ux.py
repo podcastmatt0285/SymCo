@@ -686,7 +686,7 @@ def _player_land_tab(pid):
     plots = get_player_land(pid)
 
     # Terrain options for creating new land
-    terrains = ["prairie", "forest", "desert", "marsh", "mountain", "tundra", "jungle", "savanna", "hills", "urban", "coastal", "ocean", "lake", "island"]
+    terrains = ["prairie", "forest", "desert", "marsh", "mountain", "tundra", "jungle", "savanna", "hills", "island"]
     terrain_opts = "".join(f'<option value="{t}">{t.title()}</option>' for t in terrains)
     prox_opts = "urban, coastal, riverside, lakeside, oasis, hot_springs, caves, volcanic, road, deposits, remote"
 
