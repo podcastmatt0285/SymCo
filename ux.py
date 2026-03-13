@@ -2911,6 +2911,80 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             '''
 
         # ==========================
+        # INDICES CARD
+        # ==========================
+        try:
+            from banks.indices import INDICES, _get_history, _fmt, _pct_change
+            from datetime import timedelta as _td
+            import datetime as _dt
+
+            # Grab WBC50 for a quick preview and count data points
+            snaps = _get_history("WBC50", 2)
+            wbc_now  = snaps[-1].value if snaps else 0.0
+            wbc_prev = snaps[0].value  if len(snaps) >= 2 else wbc_now
+            wbc_ch   = _pct_change(wbc_now, wbc_prev)
+            wbc_str  = _fmt(wbc_now, "USD")
+            wbc_col  = "#22c55e" if wbc_ch >= 0 else "#ef4444"
+            wbc_arrow = "▲" if wbc_ch >= 0 else "▼"
+
+            # GFI preview
+            gfi_snaps = _get_history("GFI", 1)
+            gfi_val   = gfi_snaps[-1].value if gfi_snaps else 50.0
+            gfi_col   = ("#dc2626" if gfi_val <= 24 else "#f97316" if gfi_val <= 44
+                         else "#eab308" if gfi_val <= 55 else "#22c55e")
+            gfi_label = ("Extreme Fear" if gfi_val <= 24 else "Fear" if gfi_val <= 44
+                         else "Neutral" if gfi_val <= 55 else "Greed" if gfi_val <= 75
+                         else "Extreme Greed")
+
+            bank_html += f'''
+            <div class="card" style="border:1px solid #7c3aed;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <h3 style="margin:0;">📊 Market Indices</h3>
+                        <p style="color:#64748b;margin-top:5px;font-size:.85rem;">
+                            {len(INDICES)} composite indices tracking the Wadsworth economy in real time.
+                        </p>
+                    </div>
+                    <span class="badge" style="background:#7c3aed;">LIVE</span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px;">
+                    <div>
+                        <div style="color:#64748b;font-size:.8rem;">WBC-50</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">{wbc_str}</div>
+                        <div style="font-size:.72rem;color:{wbc_col};">{wbc_arrow} {abs(wbc_ch):.2f}%</div>
+                    </div>
+                    <div>
+                        <div style="color:#64748b;font-size:.8rem;">Greed &amp; Fear</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:{gfi_col};">{gfi_val:.0f}</div>
+                        <div style="font-size:.72rem;color:{gfi_col};">{gfi_label}</div>
+                    </div>
+                    <div>
+                        <div style="color:#64748b;font-size:.8rem;">Indices</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:#a78bfa;">{len(INDICES)}</div>
+                        <div style="font-size:.72rem;color:#64748b;">active</div>
+                    </div>
+                    <div>
+                        <div style="color:#64748b;font-size:.8rem;">Coverage</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:#34d399;">Global</div>
+                        <div style="font-size:.72rem;color:#64748b;">economy</div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;">
+                    <a href="/banks/indices" class="btn-blue" style="background:#7c3aed;">View All Indices</a>
+                </div>
+            </div>
+            '''
+        except Exception as _ie:
+            bank_html += '''
+            <div class="card" style="border:1px solid #7c3aed;">
+                <h3>📊 Market Indices</h3>
+                <p style="color:#64748b;font-size:.85rem;">
+                    19 composite economic indices — <a href="/banks/indices" style="color:#a78bfa;">View Indices →</a>
+                </p>
+            </div>
+            '''
+
+        # ==========================
         # ETF AND OTHER BANKS
         # ==========================
         for bank in bank_entities:

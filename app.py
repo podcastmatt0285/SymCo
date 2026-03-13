@@ -325,6 +325,14 @@ try:
 except ModuleNotFoundError:
     pass
 
+try:
+    from banks import indices as indices_mod
+    app.include_router(indices_mod.router)
+    modules['indices'] = indices_mod
+    print("Indices routes registered")
+except Exception as _ie:
+    print(f"Indices failed to load: {_ie}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
