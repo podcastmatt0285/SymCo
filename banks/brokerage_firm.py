@@ -3351,6 +3351,12 @@ def _process_cash_dividend(company, config, db):
         if dividend_amount < 0.01:
             continue
 
+        if position.player_id == BANK_PLAYER_ID:
+            firm_add_cash(dividend_amount, "dividend",
+                          f"Dividend received: {company.ticker_symbol} × {position.shares_owned:,.0f} shares",
+                          company_id=company.id)
+            continue
+
         auth_db = get_auth_db()
         try:
             player = auth_db.query(Player).filter(Player.id == position.player_id).first()
@@ -3395,7 +3401,7 @@ def _process_commodity_dividend(company, config, db):
         ShareholderPosition.shares_owned > 0
     ).all()
     
-    total_needed = sum((pos.shares_owned // per_shares) * amount for pos in positions)
+    total_needed = sum((pos.shares_owned // per_shares) * amount for pos in positions if pos.player_id != BANK_PLAYER_ID)
     
     founder_qty = inventory.get_item_quantity(company.founder_id, item)
     
@@ -3406,6 +3412,8 @@ def _process_commodity_dividend(company, config, db):
         return
     
     for position in positions:
+        if position.player_id == BANK_PLAYER_ID:
+            continue  # Firm has no commodity inventory; its share is absorbed back
         units = (position.shares_owned // per_shares) * amount
         if units >= 1:
             inventory.remove_item(company.founder_id, item, units)

@@ -1107,6 +1107,12 @@ def pay_special_dividend(company_shares_id: int, founder_id: int, total_amount: 
                 payout = pos.shares_owned * per_share
                 if payout <= 0:
                     continue
+                from banks.brokerage_firm import BANK_PLAYER_ID, firm_add_cash
+                if pos.player_id == BANK_PLAYER_ID:
+                    firm_add_cash(payout, "dividend",
+                                  f"Special dividend: {company.ticker_symbol} (${per_share:.4f}/share × {pos.shares_owned:,})")
+                    distributed += payout
+                    continue
                 holder = auth_db2.query(Player).filter(Player.id == pos.player_id).first()
                 if holder:
                     try:
