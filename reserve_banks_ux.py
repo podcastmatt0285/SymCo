@@ -672,6 +672,6 @@ def api_set_legal_tender(
     ok, msg = set_player_legal_tender(player.id, currency_code.upper())
     param   = "msg" if ok else "err"
     from urllib.parse import quote
-    return RedirectResponse(f"/corporate-actions/dashboard?{param}={quote(msg)}", status_code=303)
+    return RedirectResponse(f"/banks?{param}={quote(msg)}", status_code=303)
 
 
