@@ -295,6 +295,8 @@ last_efficiency_update_tick = 0
 
 # Track last month for tax collection
 last_tax_month = datetime.utcnow().month
+# Track last hoarding tax collection time for hourly deduction
+last_hoarding_collection: Optional[datetime] = None
 
 
 # ==========================
@@ -724,26 +726,29 @@ def initialize():
 async def tick(current_tick: int, now: datetime):
     """
     Land module tick handler.
-    
+
     Handles:
     - Efficiency degradation (every tick)
     - Monthly tax collection (when month changes)
+    - Hourly hoarding tax deduction (proportionate to monthly rate)
     """
-    global last_tax_month
-    
+    global last_tax_month, last_hoarding_collection
+
     # Degrade efficiency every tick
     degrade_efficiency(current_tick)
-    
+
     # Check if month has changed for tax collection
     current_month = now.month
     if current_month != last_tax_month:
         print(f"[Land] Month changed: {last_tax_month} -> {current_month}")
         collect_monthly_taxes(current_month)
         last_tax_month = current_month
-    
-    # Collect hoarding taxes every hour (720 ticks = 3600 seconds)
-    if current_tick % 720 == 0:
+
+    # Collect hoarding taxes every hour using real time (not tick modulo)
+    # Rate is calculated monthly but deducted proportionately each hour (1/720 per hour)
+    if last_hoarding_collection is None or (now - last_hoarding_collection).total_seconds() >= 3600:
         collect_hoarding_taxes()
+        last_hoarding_collection = now
 
     # Log stats every hour (3600 ticks)
     if current_tick % 3600 == 0:
