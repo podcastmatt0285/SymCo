@@ -783,6 +783,38 @@ def home(session_token: Optional[str] = Cookie(None)):
     if crypto_inherit_banners:
         dashboard_top = dashboard_top + crypto_inherit_banners
 
+    # Bankruptcy card (inserted into dashboard grid before Estate card)
+    bankruptcy_card_html = ""
+    try:
+        from corporate_actions import is_player_bankrupt
+        _bankrupt = is_player_bankrupt(player.id)
+        _restart_amt = fmt_usd(20000, disp)
+        if _bankrupt:
+            bankruptcy_card_html = """
+            <div class="dc" style="--c:#ef4444;--g:linear-gradient(90deg,#7f1d1d,#ef4444);--glow:rgba(239,68,68,0.12);--btn:#7f1d1d;--fg:#fca5a5;cursor:default;">
+                <span class="dc-ico">🔴</span>
+                <div class="dc-t">Bankruptcy — Active</div>
+                <div class="dc-d">You are currently in a bankruptcy period. A red Q marker is shown next to your name on the stock market for the duration of the period.</div>
+                <span class="dc-btn" style="background:#7f1d1d;color:#fca5a5;">Active Period</span>
+            </div>"""
+        else:
+            bankruptcy_card_html = f"""
+            <div class="dc" style="--c:#ef4444;--g:linear-gradient(90deg,#7f1d1d,#ef4444);--glow:rgba(239,68,68,0.12);--btn:#ef4444;cursor:default;">
+                <span class="dc-ico">💀</span>
+                <div class="dc-t" style="color:#ef4444;">Declare Bankruptcy</div>
+                <div class="dc-d"><strong style="color:#ef4444;">Irreversible.</strong> Liquidates all assets — businesses, land, districts, inventory, stocks, crypto, executives, and ETF positions. Restarts account with {_restart_amt} + one prairie plot. Red Q marker for 30 days.</div>
+                <form action="/api/corporate-actions/bankruptcy/declare" method="post"
+                      onsubmit="return confirm('FINAL WARNING: This permanently liquidates ALL your assets and restarts your account with {_restart_amt}. This CANNOT be undone.') && prompt('Type BANKRUPT to confirm') === 'BANKRUPT'">
+                    <button type="submit"
+                            style="background:#ef4444;color:#fff;border:none;padding:7px 16px;border-radius:6px;
+                                   font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit;">
+                        💀 Declare Bankruptcy
+                    </button>
+                </form>
+            </div>"""
+    except Exception:
+        pass
+
     return shell(
         "Dashboard",
         f"""
@@ -861,6 +893,8 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <div class="dc-d">The living encyclopedia — businesses, districts, items, city projects, executives & analytics</div>
                 <span class="dc-btn">Open Wiki</span>
             </a>
+
+            {bankruptcy_card_html}
 
             <a href="/estate" class="dc" style="--c:#94a3b8;--g:linear-gradient(90deg,#475569,#94a3b8);--glow:rgba(148,163,184,0.08);--btn:#1e293b;--fg:#94a3b8;">
                 <span class="dc-ico">⚖️</span>
@@ -2985,6 +3019,62 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             '''
 
         # ==========================
+        # RESERVE NOTES & BONDS
+        # ==========================
+        try:
+            from reserve_banks import get_all_banks, get_player_legal_tender
+            all_banks_rb  = get_all_banks()
+            current_code  = get_player_legal_tender(player.id)
+            currency_rows = ('<option value="USD"'
+                             + (' selected' if current_code == "USD" else '')
+                             + '>🇺🇸 USD — Wadsworth Dollar (default)</option>')
+            for bk in all_banks_rb:
+                sel = ' selected' if current_code == bk["code"] else ''
+                currency_rows += (
+                    f'<option value="{bk["code"]}"{sel}>'
+                    f'{bk["flag"]} {bk["code"]} — {bk["name"]} '
+                    f'(yield {bk["yield_pct"]:+.4f}%,  1 {bk["code"]} = ${bk["usd_per_unit"]:.6f})'
+                    f'</option>'
+                )
+            bank_html += f'''
+            <div class="card" style="border-top:3px solid #a78bfa;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <h3 style="margin:0;">🌍 Reserve Notes &amp; Bonds</h3>
+                        <p style="color:#64748b;margin:6px 0 0;font-size:.85rem;">
+                            Set your legal tender — income is auto-converted to this currency.
+                            Currently: <strong style="color:#a78bfa;">{current_code}</strong>.
+                            Earn foreign balances via bond interest to unlock new currencies.
+                        </p>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <a href="/reserve-banks" class="btn-blue" style="background:#a78bfa;">Reserve Banks</a>
+                        <a href="/reserve-banks/bonds" class="btn-blue">Bond Market</a>
+                        <a href="/reserve-banks/forex" class="btn-orange">Forex</a>
+                    </div>
+                </div>
+                <form action="/api/corporate-actions/legal-tender/set" method="post"
+                      style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:14px;">
+                    <div>
+                        <label style="color:#94a3b8;font-size:.8rem;display:block;margin-bottom:4px;">Legal Tender Currency</label>
+                        <select name="currency_code"
+                                style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;
+                                       padding:6px 10px;border-radius:3px;min-width:320px;font-family:inherit;">
+                            {currency_rows}
+                        </select>
+                    </div>
+                    <button type="submit"
+                            style="background:#a78bfa;color:#020617;padding:8px 18px;border:none;
+                                   border-radius:3px;cursor:pointer;font-family:inherit;font-weight:bold;">
+                        Set Legal Tender
+                    </button>
+                </form>
+            </div>
+            '''
+        except Exception:
+            pass  # reserve_banks not loaded yet
+
+        # ==========================
         # ETF AND OTHER BANKS
         # ==========================
         for bank in bank_entities:
@@ -3023,7 +3113,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 </div>
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                     <a href="{detail_url}" class="btn-blue">View Details</a>
-                    <a href="/market?item={market_item}" class="btn-orange">Trade Shares</a>
+                    <a href="/brokerage/trading?mode=etf" class="btn-orange">Trade Shares</a>
                 </div>
             </div>
             '''
@@ -3117,7 +3207,7 @@ def land_bank_dashboard(session_token: Optional[str] = Cookie(None)):
         </div>
 
         <div style="margin-top: 15px; display: flex; gap: 10px;">
-            <a href="/market?item=land_bank_shares" class="btn-orange">Trade Shares</a>
+            <a href="/brokerage/trading?mode=etf" class="btn-orange">Trade Shares</a>
             <a href="/land-market" class="btn-blue">View Land Market</a>
         </div>
         """
@@ -3402,7 +3492,7 @@ def city_nav_etf_dashboard(session_token: Optional[str] = Cookie(None)):
         </div>
 
         <div style="margin-top: 15px; display: flex; gap: 10px;">
-            <a href="/market?item=city_nav_etf_shares" class="btn-orange">Trade Shares</a>
+            <a href="/brokerage/trading?mode=etf" class="btn-orange">Trade Shares</a>
             <a href="/land-market" class="btn-blue">View Land Market</a>
         </div>
         """
@@ -3668,8 +3758,8 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
 
 
 @router.get("/brokerage/trading", response_class=HTMLResponse)
-def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: str = None):
-    """WPE equity trading page."""
+def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: str = None, mode: str = "equity"):
+    """WPE equity and ETF trading page."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -3953,11 +4043,129 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         td_css += '@media(max-width:1024px){.td-layout{grid-template-columns:1fr!important;}.td-sidebar{max-height:none;overflow-x:auto;white-space:nowrap;display:flex;}.td-sidebar>a{min-width:140px;white-space:normal;}}'
         td_css += '</style>'
 
+        # ── ETF mode ─────────────────────────────────────────────────────────────
+        if mode == "etf":
+            etf_configs = [
+                ("apple_seeds_etf", "Apple Seeds ETF", "apple_seeds_etf_shares", "🍎"),
+                ("energy_etf",      "Energy ETF",      "energy_etf_shares",      "⚡"),
+                ("city_nav_etf",    "City NAV ETF",    "city_nav_etf_shares",    "🏙️"),
+                ("land_bank",       "Land Bank",        "land_bank_shares",       "🏦"),
+            ]
+            import banks as _banks_mod
+            import inventory as _inv_mod
+            import market as _mkt_mod
+
+            fund_cards = ""
+            for bank_id, name, share_item, icon in etf_configs:
+                try:
+                    be = _banks_mod.get_bank_entity(bank_id)
+                    if not be:
+                        continue
+                    your_shares = _inv_mod.get_item_quantity(player.id, share_item)
+                    mkt_price   = _mkt_mod.get_market_price(share_item)
+                    nav         = (be.cash_reserves or 0) + (be.asset_value or 0)
+                    mkt_price_display = fmt_usd(mkt_price, disp, precision=6) if mkt_price else "—"
+                    your_value  = fmt_usd(your_shares * (mkt_price or be.share_price), disp)
+                    nav_display = fmt_usd(nav, disp)
+                    fund_cards += f'''
+                    <div class="card" style="border-top:3px solid #86efac;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                            <div>
+                                <h3 style="margin:0;">{icon} {name}</h3>
+                                <p style="color:#64748b;font-size:.8rem;margin:4px 0 0;">{be.description or ""}</p>
+                            </div>
+                            <a href="/banks/{bank_id.replace("_","-")}" class="btn-blue" style="font-size:.75rem;">Details</a>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;">
+                            <div><div style="color:#64748b;font-size:.75rem;">Market Price</div>
+                                 <div style="font-weight:bold;color:#22c55e;">{mkt_price_display}</div></div>
+                            <div><div style="color:#64748b;font-size:.75rem;">NAV</div>
+                                 <div style="font-weight:bold;">{nav_display}</div></div>
+                            <div><div style="color:#64748b;font-size:.75rem;">Your Shares</div>
+                                 <div style="font-weight:bold;color:#38bdf8;">{your_shares:,.4f}
+                                     <span style="font-size:.7rem;color:#64748b;">({your_value})</span></div></div>
+                        </div>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <form action="/api/brokerage/etf-order" method="post"
+                                  style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
+                                <input type="hidden" name="item_type"   value="{share_item}">
+                                <input type="hidden" name="order_type"  value="buy">
+                                <div>
+                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Qty</label>
+                                    <input type="number" name="quantity" min="1" step="1" value="100"
+                                           style="width:90px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Limit Price ({disp["symbol"]})</label>
+                                    <input type="number" name="price" min="0.000001" step="0.000001"
+                                           value="{round((mkt_price or be.share_price) / disp["usd_per_unit"], 6)}"
+                                           style="width:120px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
+                                </div>
+                                <button type="submit" style="background:#22c55e;color:#020617;border:none;padding:7px 14px;border-radius:3px;cursor:pointer;font-weight:bold;font-family:inherit;">Buy</button>
+                            </form>
+                            <form action="/api/brokerage/etf-order" method="post"
+                                  style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
+                                <input type="hidden" name="item_type"   value="{share_item}">
+                                <input type="hidden" name="order_type"  value="sell">
+                                <div>
+                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Qty</label>
+                                    <input type="number" name="quantity" min="1" step="1" value="100"
+                                           style="width:90px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
+                                </div>
+                                <div>
+                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Limit Price ({disp["symbol"]})</label>
+                                    <input type="number" name="price" min="0.000001" step="0.000001"
+                                           value="{round((mkt_price or be.share_price) / disp["usd_per_unit"], 6)}"
+                                           style="width:120px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
+                                </div>
+                                <button type="submit" style="background:#ef4444;color:#fff;border:none;padding:7px 14px;border-radius:3px;cursor:pointer;font-weight:bold;font-family:inherit;">Sell</button>
+                            </form>
+                        </div>
+                    </div>'''
+                except Exception:
+                    continue
+
+            etf_body = f'''
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:.8rem;">&larr; Brokerage Firm</a>
+                <span style="font-size:.85rem;color:#94a3b8;font-weight:600;">WPE Trading Floor</span>
+            </div>
+            <!-- Mode tabs -->
+            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                <a href="/brokerage/trading"
+                   style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#1e293b;color:#94a3b8;font-size:.8rem;">
+                    WPE Equities
+                </a>
+                <a href="/brokerage/trading?mode=etf"
+                   style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#22c55e;color:#020617;font-size:.8rem;font-weight:bold;">
+                    ETF Funds
+                </a>
+            </div>
+            <h2 style="margin:0 0 4px;">ETF Fund Trading</h2>
+            <p style="color:#64748b;font-size:.85rem;margin:0 0 16px;">
+                Place limit orders on ETF fund shares via the Wadsworth commodity market.
+            </p>
+            {fund_cards}
+            '''
+            return shell("ETF Trading", etf_body, player.cash_balance, player.id)
+        # ─────────────────────────────────────────────────────────────────────────
+
         # Assemble the full dashboard body
         body = td_css + f'''
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
             <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:0.8rem;">&larr; Brokerage Firm</a>
             <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">WPE Trading Floor</span>
+        </div>
+        <!-- Mode tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <a href="/brokerage/trading"
+               style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#38bdf8;color:#020617;font-size:.8rem;font-weight:bold;">
+                WPE Equities
+            </a>
+            <a href="/brokerage/trading?mode=etf"
+               style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#1e293b;color:#94a3b8;font-size:.8rem;">
+                ETF Funds
+            </a>
         </div>
 
         <!-- Portfolio Summary Bar -->
@@ -7110,6 +7318,33 @@ async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float 
     if list_land_for_sale(player.id, land_plot_id, price_usd):
         return RedirectResponse(url="/land-market?success=land_listed", status_code=303)
     return RedirectResponse(url="/land-market?error=listing_failed", status_code=303)
+
+@router.post("/api/brokerage/etf-order")
+async def brokerage_etf_order(
+    item_type:  str   = Form(...),
+    order_type: str   = Form(...),
+    quantity:   float = Form(...),
+    price:      float = Form(...),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Place a limit order for an ETF fund share via the commodity market, then return to ETF trading view."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from reserve_banks import get_player_display_currency
+    disp = get_player_display_currency(player.id)
+    import market
+    price_usd = price * disp["usd_per_unit"]
+    market.create_order(
+        player.id,
+        market.OrderType.BUY if order_type == "buy" else market.OrderType.SELL,
+        market.OrderMode.LIMIT,
+        item_type,
+        quantity,
+        price_usd,
+    )
+    return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
+
 
 @router.post("/api/brokerage/create-ipo")
 async def brokerage_create_ipo(
