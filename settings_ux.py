@@ -71,7 +71,7 @@ def _audio_tab() -> str:
                                cursor:pointer;font-size:0.85rem;min-width:90px;">
                     ⏸ Pause
                 </button>
-                <button onclick="gsNext();stSyncNow();"
+                <button onclick="stSkip()"
                         style="background:#1e293b;border:1px solid #334155;color:#94a3b8;
                                padding:8px 14px;border-radius:6px;cursor:pointer;font-size:0.85rem;">
                     ⏭ Skip
@@ -142,6 +142,12 @@ def _audio_tab() -> str:
         window.stToggle = function() {
             gsTogglePlay();
             setTimeout(stSyncUI, 80);
+        };
+
+        // ── skip ──
+        window.stSkip = function() {
+            gsNext();
+            setTimeout(stSyncUI, 150);
         };
 
         function stSyncUI() {
