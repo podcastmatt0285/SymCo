@@ -427,6 +427,237 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             window.addEventListener('beforeunload', saveState);
         }})();
         </script>
+
+        <!-- ══════════════════════════════════════════════════════════
+             GAME AUDIO PLAYER  — persists across page loads via localStorage
+             State key: wadsST  (enabled, volume, shuffleOrder, trackIdx, time)
+             Track cache key: wadsST_tracks (TTL 5 min)
+             ══════════════════════════════════════════════════════════ -->
+        <audio id="gs-audio" preload="auto" style="display:none;"></audio>
+
+        <!-- Mini floating player bar -->
+        <div id="gs-bar" style="
+            position:fixed;bottom:50px;right:12px;z-index:150;
+            background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;
+            padding:6px 10px;display:flex;align-items:center;gap:8px;
+            font-size:0.72rem;color:#94a3b8;min-width:220px;max-width:300px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.5);
+            transition:opacity 0.3s;">
+            <span style="font-size:1rem;flex-shrink:0;" title="Game Music">🎵</span>
+            <div style="flex:1;min-width:0;">
+                <div id="gs-title" style="color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading…</div>
+            </div>
+            <button id="gs-pp" onclick="gsTogglePlay()" title="Play/Pause"
+                    style="background:none;border:none;color:#38bdf8;font-size:1rem;cursor:pointer;padding:0;line-height:1;">⏸</button>
+            <button onclick="gsNext()" title="Next track"
+                    style="background:none;border:none;color:#64748b;font-size:0.9rem;cursor:pointer;padding:0;line-height:1;">⏭</button>
+            <input id="gs-vol" type="range" min="0" max="1" step="0.05"
+                   oninput="gsSetVolume(this.value)"
+                   style="width:50px;accent-color:#38bdf8;cursor:pointer;" title="Volume">
+        </div>
+
+        <script>
+        (function() {{
+            var ST_KEY    = 'wadsST';
+            var CACHE_KEY = 'wadsST_tracks';
+            var CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+            var audio  = document.getElementById('gs-audio');
+            var bar    = document.getElementById('gs-bar');
+            var ppBtn  = document.getElementById('gs-pp');
+            var titleEl= document.getElementById('gs-title');
+            var volSlider = document.getElementById('gs-vol');
+
+            // ── state ──
+            var st = {{
+                enabled:     true,
+                volume:      0.35,
+                shuffleOrder: [],  // array of track ids in shuffle order
+                trackIdx:    0,    // index into shuffleOrder
+                time:        0,
+                disabledIds: []    // player-hidden tracks
+            }};
+
+            function loadSt() {{
+                try {{
+                    var s = JSON.parse(localStorage.getItem(ST_KEY) || '{{}}');
+                    if (typeof s.enabled     === 'boolean') st.enabled      = s.enabled;
+                    if (typeof s.volume      === 'number')  st.volume       = Math.max(0, Math.min(1, s.volume));
+                    if (Array.isArray(s.shuffleOrder))      st.shuffleOrder = s.shuffleOrder;
+                    if (typeof s.trackIdx    === 'number')  st.trackIdx     = s.trackIdx;
+                    if (typeof s.time        === 'number')  st.time         = s.time;
+                    if (Array.isArray(s.disabledIds))       st.disabledIds  = s.disabledIds;
+                }} catch(e) {{}}
+            }}
+            function saveSt() {{
+                try {{
+                    st.time = audio.currentTime || 0;
+                    localStorage.setItem(ST_KEY, JSON.stringify(st));
+                }} catch(e) {{}}
+            }}
+
+            // ── track cache ──
+            var tracks = [];  // {{id, title, url}}
+
+            function loadCache() {{
+                try {{
+                    var c = JSON.parse(localStorage.getItem(CACHE_KEY) || '{{}}');
+                    if (c.ts && (Date.now() - c.ts) < CACHE_TTL && Array.isArray(c.tracks) && c.tracks.length) {{
+                        tracks = c.tracks;
+                        return true;
+                    }}
+                }} catch(e) {{}}
+                return false;
+            }}
+            function saveCache() {{
+                try {{
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({{ts: Date.now(), tracks: tracks}}));
+                }} catch(e) {{}}
+            }}
+            function fetchTracks(cb) {{
+                if (loadCache()) {{ cb(); return; }}
+                fetch('/soundtrack/list')
+                    .then(function(r) {{ return r.json(); }})
+                    .then(function(data) {{
+                        tracks = data;
+                        saveCache();
+                        cb();
+                    }})
+                    .catch(function() {{ bar.style.display = 'none'; }});
+            }}
+
+            // ── shuffle ──
+            function shuffle(arr) {{
+                for (var i = arr.length - 1; i > 0; i--) {{
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+                }}
+                return arr;
+            }}
+            function buildShuffle() {{
+                var available = tracks
+                    .filter(function(t) {{ return st.disabledIds.indexOf(t.id) === -1; }})
+                    .map(function(t) {{ return t.id; }});
+                shuffle(available);
+                st.shuffleOrder = available;
+                st.trackIdx = 0;
+            }}
+            function getTrackById(id) {{
+                return tracks.find(function(t) {{ return t.id === id; }}) || null;
+            }}
+            function currentTrack() {{
+                if (!st.shuffleOrder.length) return null;
+                var id = st.shuffleOrder[st.trackIdx % st.shuffleOrder.length];
+                return getTrackById(id);
+            }}
+
+            // ── playback ──
+            function applyTrack(t, seek) {{
+                if (!t) {{ bar.style.display = 'none'; return; }}
+                audio.src = t.url;
+                audio.volume = st.volume;
+                audio.load();
+                if (seek > 0) {{
+                    audio.addEventListener('canplay', function onCP() {{
+                        audio.removeEventListener('canplay', onCP);
+                        audio.currentTime = seek;
+                        if (st.enabled) audio.play().catch(function() {{}});
+                    }}, {{once: true}});
+                }} else if (st.enabled) {{
+                    audio.play().catch(function() {{}});
+                }}
+                titleEl.textContent = t.title;
+                updatePP();
+            }}
+
+            function updatePP() {{
+                ppBtn.textContent = (st.enabled && !audio.paused) ? '⏸' : '▶';
+            }}
+
+            audio.addEventListener('ended', function() {{
+                gsNext();
+            }});
+            audio.addEventListener('pause', updatePP);
+            audio.addEventListener('play',  updatePP);
+
+            // save time every 5s
+            setInterval(function() {{ if (!audio.paused) saveSt(); }}, 5000);
+
+            // ── public API (used by dashboard audio card) ──
+            window.gsTogglePlay = function() {{
+                if (audio.paused) {{
+                    st.enabled = true;
+                    audio.play().catch(function() {{}});
+                }} else {{
+                    st.enabled = false;
+                    audio.pause();
+                }}
+                saveSt();
+                updatePP();
+            }};
+            window.gsNext = function() {{
+                st.trackIdx = (st.trackIdx + 1) % (st.shuffleOrder.length || 1);
+                saveSt();
+                applyTrack(currentTrack(), 0);
+            }};
+            window.gsSetVolume = function(v) {{
+                st.volume = parseFloat(v);
+                audio.volume = st.volume;
+                saveSt();
+            }};
+            window.gsSetEnabled = function(on) {{
+                st.enabled = !!on;
+                if (on) {{ audio.play().catch(function() {{}}); }}
+                else    {{ audio.pause(); }}
+                saveSt(); updatePP();
+            }};
+            window.gsSetTrackDisabled = function(id, disabled) {{
+                var idx = st.disabledIds.indexOf(id);
+                if (disabled && idx === -1)  st.disabledIds.push(id);
+                if (!disabled && idx !== -1) st.disabledIds.splice(idx, 1);
+                // rebuild shuffle, keep playing something valid
+                buildShuffle();
+                var cur = currentTrack();
+                if (!cur || st.disabledIds.indexOf(cur.id) !== -1) {{
+                    applyTrack(currentTrack(), 0);
+                }}
+                saveSt();
+            }};
+            window.gsRefreshTracks = function() {{
+                try {{ localStorage.removeItem(CACHE_KEY); }} catch(e) {{}}
+                fetchTracks(function() {{
+                    buildShuffle();
+                    applyTrack(currentTrack(), 0);
+                    // rebuild dashboard track list if visible
+                    if (typeof gsBuildTrackList === 'function') gsBuildTrackList();
+                }});
+            }};
+
+            // ── init ──
+            loadSt();
+            volSlider.value = st.volume;
+
+            if (!st.enabled) {{
+                bar.style.opacity = '0.45';
+            }}
+
+            fetchTracks(function() {{
+                if (!tracks.length) {{ bar.style.display = 'none'; return; }}
+
+                // Validate / rebuild shuffle if stale ids
+                var validIds = tracks.map(function(t){{return t.id;}});
+                var needRebuild = !st.shuffleOrder.length ||
+                    st.shuffleOrder.some(function(id){{ return validIds.indexOf(id) === -1; }});
+                if (needRebuild) buildShuffle();
+
+                var t = currentTrack();
+                applyTrack(t, st.time || 0);
+            }});
+
+            window.addEventListener('pagehide', saveSt);
+            window.addEventListener('beforeunload', saveSt);
+        }})();
+        </script>
     </body>
     </html>
     """
@@ -917,7 +1148,91 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Calculator</span>
             </a>
 
+            <!-- ── Audio Settings Card ── -->
+            <div class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);cursor:default;"
+                 id="audio-card">
+                <span class="dc-ico">🎵</span>
+                <div class="dc-t">Game Music</div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    <button onclick="gsTogglePlay();updateAudioCard();"
+                            id="ac-pp-btn"
+                            style="background:#818cf8;border:none;color:#020617;padding:6px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-size:0.8rem;">
+                        ⏸ Pause
+                    </button>
+                    <button onclick="gsNext();updateAudioCard();"
+                            style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 10px;border-radius:5px;cursor:pointer;font-size:0.8rem;" title="Skip to next track">
+                        ⏭ Next
+                    </button>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                    <span style="color:#64748b;font-size:0.75rem;">🔈</span>
+                    <input type="range" min="0" max="1" step="0.05" id="ac-vol"
+                           oninput="gsSetVolume(this.value);document.getElementById('gs-vol').value=this.value;"
+                           style="flex:1;accent-color:#818cf8;cursor:pointer;">
+                    <span style="color:#64748b;font-size:0.75rem;">🔊</span>
+                </div>
+                <div style="font-size:0.7rem;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Tracks</div>
+                <div id="ac-tracklist" style="max-height:180px;overflow-y:auto;font-size:0.78rem;"></div>
+                <div id="ac-now" style="margin-top:8px;font-size:0.72rem;color:#818cf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+
         </div>
+
+        <script>
+        // ── Audio Card init ──
+        (function() {{
+            function updateAudioCard() {{
+                var audio = document.getElementById('gs-audio');
+                var ppBtn = document.getElementById('ac-pp-btn');
+                var volEl = document.getElementById('ac-vol');
+                var nowEl = document.getElementById('ac-now');
+                if (!audio) return;
+                ppBtn.textContent = (audio.paused ? '▶ Play' : '⏸ Pause');
+                try {{
+                    var st = JSON.parse(localStorage.getItem('wadsST') || '{{}}');
+                    if (volEl && typeof st.volume === 'number') volEl.value = st.volume;
+                    if (nowEl) {{
+                        var titleEl = document.getElementById('gs-title');
+                        nowEl.textContent = titleEl ? ('Now: ' + titleEl.textContent) : '';
+                    }}
+                }} catch(e) {{}}
+            }}
+            window.updateAudioCard = updateAudioCard;
+
+            // Build track list with checkboxes
+            window.gsBuildTrackList = function() {{
+                var listEl = document.getElementById('ac-tracklist');
+                if (!listEl) return;
+                fetch('/soundtrack/list')
+                    .then(function(r){{ return r.json(); }})
+                    .then(function(tracks) {{
+                        var st = {{}};
+                        try {{ st = JSON.parse(localStorage.getItem('wadsST') || '{{}}'); }} catch(e) {{}}
+                        var disabled = Array.isArray(st.disabledIds) ? st.disabledIds : [];
+                        listEl.innerHTML = tracks.map(function(t) {{
+                            var checked = disabled.indexOf(t.id) === -1 ? 'checked' : '';
+                            return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;border-bottom:1px solid #0f172a;">'
+                                + '<input type="checkbox" ' + checked + ' onchange="gsSetTrackDisabled(' + t.id + ',!this.checked)" style="accent-color:#818cf8;cursor:pointer;">'
+                                + '<span style="color:#e5e7eb;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + t.title + '</span>'
+                                + '</label>';
+                        }}).join('') || '<span style="color:#64748b;">No tracks loaded.</span>';
+                    }})
+                    .catch(function() {{ listEl.innerHTML = '<span style="color:#64748b;">Could not load tracks.</span>'; }});
+            }};
+
+            // Init on DOMContentLoaded
+            document.addEventListener('DOMContentLoaded', function() {{
+                updateAudioCard();
+                gsBuildTrackList();
+                // sync volume slider from saved state
+                try {{
+                    var st = JSON.parse(localStorage.getItem('wadsST') || '{{}}');
+                    var volEl = document.getElementById('ac-vol');
+                    if (volEl && typeof st.volume === 'number') volEl.value = st.volume;
+                }} catch(e) {{}}
+            }});
+        }})();
+        </script>
         """,
         player.cash_balance,
         player.id
