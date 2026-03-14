@@ -385,11 +385,12 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
         finally:
             ldb.close()
         if plots:
+            occupied_dot = '<span style="color:#ef4444;">●</span>'
             plot_html = "".join(
                 f'<span style="background:#0f172a; border:1px solid #1e293b; padding:2px 8px; border-radius:3px; margin:2px; display:inline-block;">'
                 f'<span style="color:#94a3b8;">#{p.id}</span> '
-                f'<span style="color:#e5e7eb;">{p.terrain_type.replace("_"," ").title()}</span>'
-                f'{"<span style=\'color:#ef4444;\'>●</span>" if p.occupied_by_business_id else ""}'
+                f'<span style="color:#e5e7eb;">{p.terrain_type.replace("_", " ").title()}</span>'
+                f'{occupied_dot if p.occupied_by_business_id else ""}'
                 f'</span>'
                 for p in plots
             )
