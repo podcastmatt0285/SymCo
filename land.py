@@ -35,6 +35,10 @@ HOARDING_BASE_TAX_MONTHLY = 5000.0  # $5000/month base rate per excess plot
 HOARDING_HOURS_PER_MONTH = 720   # 30 days × 24 hours
 GOVERNMENT_PLAYER_ID = 0
 
+# Business types exempt from land hoarding tax (food carts / trucks occupy plots
+# but are considered transient street vendors, not land holdings)
+FOOD_CART_TYPES = {"fish_cart", "hot_dog_cart", "burrito_truck"}
+
 # Terrain types - the base land type
 TERRAIN_TYPES = {
     "prairie": {"description": "Flat grassland, good for farming", "base_tax": 50.0},
@@ -643,13 +647,22 @@ def collect_hoarding_taxes():
 
     db = get_db()
 
-    # Find players with more than HOARDING_FREE_PLOTS plots (exclude government and tutorial reward plots)
+    # Collect land_plot_ids occupied by food carts (exempt from hoarding count)
+    from business import Business as _Business
+    food_cart_plot_ids = db.query(_Business.land_plot_id).filter(
+        _Business.business_type.in_(FOOD_CART_TYPES),
+        _Business.land_plot_id != None
+    ).subquery()
+
+    # Find players with more than HOARDING_FREE_PLOTS plots (exclude government,
+    # tutorial reward plots, and food-cart plots)
     plot_counts = db.query(
         LandPlot.owner_id,
         func.count(LandPlot.id)
     ).filter(
         LandPlot.is_government_owned == False,
-        LandPlot.is_tutorial_reward == False
+        LandPlot.is_tutorial_reward == False,
+        ~LandPlot.id.in_(food_cart_plot_ids)
     ).group_by(LandPlot.owner_id).having(
         func.count(LandPlot.id) > HOARDING_FREE_PLOTS
     ).all()

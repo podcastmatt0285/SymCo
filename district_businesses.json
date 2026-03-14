@@ -1487,6 +1487,28 @@
             "quantity": 50
           }
         ]
+      },
+      {
+        "output_item": "lab_equipment",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "barnacles",
+            "quantity": 50
+          },
+          {
+            "item": "glass",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ]
   },
@@ -5940,6 +5962,10 @@
           {
             "item": "energy",
             "quantity": 15000
+          },
+          {
+            "item": "ketchup",
+            "quantity": 50
           }
         ]
       },
@@ -6056,6 +6082,10 @@
           {
             "item": "energy",
             "quantity": 18000
+          },
+          {
+            "item": "salsa",
+            "quantity": 30
           }
         ]
       },
@@ -6086,6 +6116,10 @@
           {
             "item": "energy",
             "quantity": 16000
+          },
+          {
+            "item": "salsa",
+            "quantity": 40
           }
         ]
       }
@@ -6206,6 +6240,10 @@
           {
             "item": "energy",
             "quantity": 20000
+          },
+          {
+            "item": "shrimp_paste",
+            "quantity": 15
           }
         ]
       },
@@ -6243,6 +6281,10 @@
           },
           {
             "item": "vinegar",
+            "quantity": 20
+          },
+          {
+            "item": "shrimp_paste",
             "quantity": 20
           }
         ]
@@ -7715,6 +7757,18 @@
           {
             "item": "energy",
             "quantity": 10000
+          },
+          {
+            "item": "hot_dog",
+            "quantity": 50
+          },
+          {
+            "item": "pizza_slice",
+            "quantity": 50
+          },
+          {
+            "item": "burrito",
+            "quantity": 50
           }
         ]
       },
@@ -7749,6 +7803,14 @@
           {
             "item": "energy",
             "quantity": 12000
+          },
+          {
+            "item": "pad_thai",
+            "quantity": 25
+          },
+          {
+            "item": "gyro",
+            "quantity": 25
           }
         ]
       },
@@ -7905,6 +7967,10 @@
           {
             "item": "energy",
             "quantity": 15000
+          },
+          {
+            "item": "heating_oil",
+            "quantity": 50
           }
         ]
       },
@@ -7939,6 +8005,10 @@
           {
             "item": "energy",
             "quantity": 20000
+          },
+          {
+            "item": "fire_truck",
+            "quantity": 1
           }
         ]
       },
@@ -8353,6 +8423,10 @@
           {
             "item": "energy",
             "quantity": 50000
+          },
+          {
+            "item": "ambulance",
+            "quantity": 1
           }
         ]
       },
@@ -8399,6 +8473,14 @@
           {
             "item": "energy",
             "quantity": 100000
+          },
+          {
+            "item": "chemotherapy_drug",
+            "quantity": 5
+          },
+          {
+            "item": "ventilator",
+            "quantity": 2
           }
         ]
       },
@@ -8501,6 +8583,10 @@
           {
             "item": "energy",
             "quantity": 45000
+          },
+          {
+            "item": "vaccine",
+            "quantity": 25
           }
         ]
       },
@@ -8535,6 +8621,56 @@
           {
             "item": "energy",
             "quantity": 20000
+          },
+          {
+            "item": "vaccine",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "emergency_room_visit",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "hospital_bed",
+            "quantity": 10
+          },
+          {
+            "item": "helicopter",
+            "quantity": 1
+          },
+          {
+            "item": "defibrillator",
+            "quantity": 5
+          },
+          {
+            "item": "iv_bag",
+            "quantity": 100
+          },
+          {
+            "item": "gauze",
+            "quantity": 200
+          },
+          {
+            "item": "surgical_gloves",
+            "quantity": 200
+          },
+          {
+            "item": "antibiotic",
+            "quantity": 50
+          },
+          {
+            "item": "painkiller",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
           }
         ]
       }
@@ -8621,6 +8757,22 @@
           {
             "item": "energy",
             "quantity": 80000
+          },
+          {
+            "item": "band_instruments",
+            "quantity": 10
+          },
+          {
+            "item": "artificial_turf",
+            "quantity": 1
+          },
+          {
+            "item": "basketball_hoop",
+            "quantity": 5
+          },
+          {
+            "item": "encyclopedia",
+            "quantity": 100
           }
         ]
       },
@@ -8663,6 +8815,18 @@
           {
             "item": "energy",
             "quantity": 120000
+          },
+          {
+            "item": "art_supplies",
+            "quantity": 10
+          },
+          {
+            "item": "dissection_kit",
+            "quantity": 15
+          },
+          {
+            "item": "encyclopedia",
+            "quantity": 50
           }
         ]
       },
@@ -8919,6 +9083,22 @@
           {
             "item": "energy",
             "quantity": 100000
+          },
+          {
+            "item": "artificial_turf",
+            "quantity": 1
+          },
+          {
+            "item": "basketball_hoop",
+            "quantity": 5
+          },
+          {
+            "item": "goal_post",
+            "quantity": 4
+          },
+          {
+            "item": "championship_trophy",
+            "quantity": 2
           }
         ]
       },
@@ -9223,6 +9403,18 @@
           {
             "item": "energy",
             "quantity": 180000
+          },
+          {
+            "item": "delivery_truck",
+            "quantity": 5
+          },
+          {
+            "item": "tugboat",
+            "quantity": 1
+          },
+          {
+            "item": "ferry",
+            "quantity": 1
           }
         ]
       },
@@ -9267,6 +9459,14 @@
           {
             "item": "energy",
             "quantity": 40000
+          },
+          {
+            "item": "helicopter",
+            "quantity": 5
+          },
+          {
+            "item": "private_jet",
+            "quantity": 2
           }
         ]
       }
@@ -9357,6 +9557,14 @@
           {
             "item": "energy",
             "quantity": 100000
+          },
+          {
+            "item": "barracuda",
+            "quantity": 2
+          },
+          {
+            "item": "mahi_mahi",
+            "quantity": 2
           }
         ]
       },
@@ -9399,6 +9607,18 @@
           {
             "item": "energy",
             "quantity": 80000
+          },
+          {
+            "item": "crocodile",
+            "quantity": 2
+          },
+          {
+            "item": "flamingo",
+            "quantity": 10
+          },
+          {
+            "item": "kangaroo",
+            "quantity": 5
           }
         ]
       },
@@ -9429,6 +9649,10 @@
           {
             "item": "energy",
             "quantity": 40000
+          },
+          {
+            "item": "koala",
+            "quantity": 2
           }
         ]
       },
@@ -9463,6 +9687,14 @@
           {
             "item": "energy",
             "quantity": 50000
+          },
+          {
+            "item": "sea_turtle",
+            "quantity": 2
+          },
+          {
+            "item": "seal",
+            "quantity": 2
           }
         ]
       },
@@ -9497,6 +9729,42 @@
           {
             "item": "energy",
             "quantity": 60000
+          },
+          {
+            "item": "clownfish",
+            "quantity": 10
+          },
+          {
+            "item": "jellyfish",
+            "quantity": 5
+          },
+          {
+            "item": "manta_ray",
+            "quantity": 1
+          },
+          {
+            "item": "puffer_fish",
+            "quantity": 5
+          },
+          {
+            "item": "sea_lion",
+            "quantity": 2
+          },
+          {
+            "item": "seahorse",
+            "quantity": 10
+          },
+          {
+            "item": "stingray",
+            "quantity": 2
+          },
+          {
+            "item": "barracuda",
+            "quantity": 1
+          },
+          {
+            "item": "mahi_mahi",
+            "quantity": 1
           }
         ]
       },
@@ -9535,6 +9803,30 @@
           {
             "item": "energy",
             "quantity": 45000
+          },
+          {
+            "item": "eagle",
+            "quantity": 3
+          },
+          {
+            "item": "python",
+            "quantity": 5
+          },
+          {
+            "item": "flamingo",
+            "quantity": 5
+          },
+          {
+            "item": "kangaroo",
+            "quantity": 3
+          },
+          {
+            "item": "crocodile",
+            "quantity": 1
+          },
+          {
+            "item": "koala",
+            "quantity": 2
           }
         ]
       }
@@ -9841,6 +10133,22 @@
           {
             "item": "energy",
             "quantity": 500000
+          },
+          {
+            "item": "submarine",
+            "quantity": 1
+          },
+          {
+            "item": "military_helicopter",
+            "quantity": 1
+          },
+          {
+            "item": "apc",
+            "quantity": 5
+          },
+          {
+            "item": "drone",
+            "quantity": 10
           }
         ]
       },
@@ -9891,6 +10199,18 @@
           {
             "item": "energy",
             "quantity": 150000
+          },
+          {
+            "item": "grenade",
+            "quantity": 200
+          },
+          {
+            "item": "night_vision",
+            "quantity": 50
+          },
+          {
+            "item": "tactical_vest",
+            "quantity": 100
           }
         ]
       },
@@ -10027,6 +10347,14 @@
           {
             "item": "energy",
             "quantity": 120000
+          },
+          {
+            "item": "delivery_truck",
+            "quantity": 5
+          },
+          {
+            "item": "tugboat",
+            "quantity": 1
           }
         ]
       }
