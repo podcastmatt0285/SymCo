@@ -940,8 +940,7 @@ def initialize():
 
     # Migrations for columns added after initial deployment
     from database import run_ddl_migration
-    run_ddl_migration(engine, "land_buy_orders", "proximity",
-                      "ALTER TABLE land_buy_orders ADD COLUMN proximity VARCHAR(64)")
+    run_ddl_migration(engine, "ALTER TABLE land_buy_orders ADD COLUMN IF NOT EXISTS proximity VARCHAR(64)")
     
     # Check land bank status
     db = get_db()
