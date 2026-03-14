@@ -33,5 +33,19 @@
     "title": "Gogo Doo-Wop Fusion 2 (Variation)",
     "is_active": true,
     "order": 4
+  },
+  {
+    "id": 6,
+    "filename": "Gogo Doo-Wop Fusion.mp3",
+    "title": "Gogo Doo-Wop Fusion",
+    "is_active": true,
+    "order": 5
+  },
+  {
+    "id": 7,
+    "filename": "Highland Trap Odyssey _Alt Take_.mp3",
+    "title": "Highland Trap Odyssey (Alt Take)",
+    "is_active": true,
+    "order": 6
   }
 ]
