@@ -61,5 +61,33 @@
     "title": "Highland Trap Odyssey",
     "is_active": true,
     "order": 8
+  },
+  {
+    "id": 10,
+    "filename": "The Tycoon_s Suite _Version 1_.mp3",
+    "title": "The Tycoon",
+    "is_active": true,
+    "order": 9
+  },
+  {
+    "id": 11,
+    "filename": "Tycoon Orchestral Trap Mix _Variation_.mp3",
+    "title": "The Tycoon (Orchestral Trap Mix - Variation)",
+    "is_active": true,
+    "order": 10
+  },
+  {
+    "id": 12,
+    "filename": "Tycoon Orchestral Trap Mix.mp3",
+    "title": "The Tycoon (Orchestral Trap Mix)",
+    "is_active": true,
+    "order": 11
+  },
+  {
+    "id": 13,
+    "filename": "Tycoon Soulful Country Rock Remix.mp3",
+    "title": "Country Business Ain't Your Business",
+    "is_active": true,
+    "order": 12
   }
 ]
