@@ -17,11 +17,16 @@ _TABS = [
 
 
 def _require_auth(session_token):
-    from auth import get_session_player
-    player = get_session_player(session_token)
-    if not player:
+    try:
+        import auth
+        db = auth.get_db()
+        player = auth.get_player_from_session(db, session_token)
+        db.close()
+        if not player:
+            return RedirectResponse(url="/login", status_code=303)
+        return player
+    except Exception:
         return RedirectResponse(url="/login", status_code=303)
-    return player
 
 
 def _tab_bar(active: str) -> str:
