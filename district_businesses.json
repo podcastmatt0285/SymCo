@@ -412,7 +412,7 @@
     "allowed_terrain": [
       "district_tech"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "remote"],
     "class": "production",
     "production_lines": [
       {
@@ -571,7 +571,7 @@
     "allowed_terrain": [
       "district_tech"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "remote"],
     "class": "production",
     "production_lines": [
       {
@@ -1692,7 +1692,7 @@
     "allowed_terrain": [
       "district_aerospace"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["remote", "coastal", "riverside"],
     "class": "production",
     "production_lines": [
       {
@@ -2271,7 +2271,7 @@
     "allowed_terrain": [
       "district_shipyard"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["coastal"],
     "class": "production",
     "production_lines": [
       {
@@ -2756,7 +2756,7 @@
     "allowed_terrain": [
       "district_medical"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "road"],
     "class": "production",
     "production_lines": [
       {
@@ -3727,7 +3727,7 @@
     "allowed_terrain": [
       "district_military"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["remote", "coastal"],
     "class": "production",
     "production_lines": [
       {
@@ -3837,7 +3837,7 @@
     "allowed_terrain": [
       "district_military"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["coastal"],
     "class": "production",
     "production_lines": [
       {
@@ -7701,7 +7701,7 @@
     "allowed_terrain": [
       "district_food_court"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "road"],
     "class": "retail",
     "products": {
       "fast_food_combo": {
@@ -7911,7 +7911,7 @@
     "allowed_terrain": [
       "district_neighborhood"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "road"],
     "class": "retail",
     "products": {
       "monthly_utility_bill": {
@@ -8127,7 +8127,7 @@
     "allowed_terrain": [
       "district_mall"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "road"],
     "class": "retail",
     "products": {
       "fashion_bundle": {
@@ -8355,7 +8355,7 @@
     "allowed_terrain": [
       "district_hospital"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "road"],
     "class": "retail",
     "products": {
       "emergency_room_visit": {
@@ -9261,7 +9261,7 @@
     "allowed_terrain": [
       "district_transport"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["urban", "road", "coastal"],
     "class": "retail",
     "products": {
       "airline_ticket": {
@@ -10369,7 +10369,7 @@
     "allowed_terrain": [
       "district_coastal"
     ],
-    "allowed_proximity": [],
+    "allowed_proximity": ["riverside", "lakeside", "coastal"],
     "class": "production",
     "production_lines": [
       {
