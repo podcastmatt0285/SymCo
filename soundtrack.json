@@ -5,5 +5,19 @@
     "title": "Districts",
     "is_active": true,
     "order": 0
+  },
+  {
+    "id": 2,
+    "filename": "District Swing Take 2.mp3",
+    "title": "District Swing",
+    "is_active": true,
+    "order": 1
+  },
+  {
+    "id": 3,
+    "filename": "Fragmented Impact _Heavy Pivot_.mp3",
+    "title": "Fragmented Impact (Heavy Pivot)",
+    "is_active": true,
+    "order": 2
   }
 ]
