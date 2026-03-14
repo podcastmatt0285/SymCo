@@ -47,5 +47,19 @@
     "title": "Highland Trap Odyssey (Alt Take)",
     "is_active": true,
     "order": 6
+  },
+  {
+    "id": 8,
+    "filename": "Highland Trap Odyssey _DC Gogo Intro_.mp3",
+    "title": "Highland Trap Odyssey (Gogo Remix)",
+    "is_active": true,
+    "order": 7
+  },
+  {
+    "id": 9,
+    "filename": "Highland Trap Odyssey.mp3",
+    "title": "Highland Trap Odyssey",
+    "is_active": true,
+    "order": 8
   }
 ]
