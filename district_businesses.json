@@ -10425,5 +10425,962 @@
         ]
       }
     ]
+  },
+  "cargo_hub": {
+    "name": "Cargo Hub",
+    "description": "Freight consolidation and distribution center",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_airport"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "freight_container",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "iron", "quantity": 2000},
+          {"item": "lumber", "quantity": 500},
+          {"item": "rubber", "quantity": 200},
+          {"item": "energy", "quantity": 80000},
+          {"item": "paper", "quantity": 100}
+        ]
+      },
+      {
+        "output_item": "cargo_manifest",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "paper", "quantity": 500},
+          {"item": "energy", "quantity": 5000}
+        ]
+      }
+    ]
+  },
+  "aircraft_maintenance_facility": {
+    "name": "Aircraft Maintenance Facility",
+    "description": "MRO center for aircraft",
+    "startup_cost": 25000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 65000,
+    "allowed_terrain": ["district_airport"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "aircraft_service_report",
+        "output_qty": 10,
+        "inputs": [
+          {"item": "iron", "quantity": 1000},
+          {"item": "copper", "quantity": 500},
+          {"item": "rubber", "quantity": 300},
+          {"item": "oil", "quantity": 2000},
+          {"item": "energy", "quantity": 100000},
+          {"item": "paper", "quantity": 200}
+        ]
+      }
+    ]
+  },
+  "duty_free_shop": {
+    "name": "Duty Free Shop",
+    "description": "Airport retail selling tax-exempt goods",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 30000,
+    "allowed_terrain": ["district_airport"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "retail",
+    "products": {
+      "duty_free_spirits": {"elasticity": 1.2, "base_sale_chance": 0.0004},
+      "duty_free_tobacco": {"elasticity": 0.9, "base_sale_chance": 0.0005},
+      "duty_free_luxury": {"elasticity": 1.5, "base_sale_chance": 0.0002},
+      "duty_free_confections": {"elasticity": 0.8, "base_sale_chance": 0.0006}
+    },
+    "production_lines": [
+      {
+        "output_item": "duty_free_spirits",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "whiskey", "quantity": 200},
+          {"item": "gin", "quantity": 100},
+          {"item": "rum", "quantity": 100},
+          {"item": "vodka", "quantity": 100},
+          {"item": "energy", "quantity": 5000},
+          {"item": "paper", "quantity": 50}
+        ]
+      }
+    ]
+  },
+  "airport_fuel_depot": {
+    "name": "Airport Fuel Depot",
+    "description": "Aviation fuel storage and distribution",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_airport"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "aviation_fuel",
+        "output_qty": 5000,
+        "inputs": [
+          {"item": "oil", "quantity": 12000},
+          {"item": "energy", "quantity": 200000},
+          {"item": "water", "quantity": 5000}
+        ]
+      },
+      {
+        "output_item": "jet_fuel_additive",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "oil", "quantity": 500},
+          {"item": "energy", "quantity": 20000},
+          {"item": "copper", "quantity": 50}
+        ]
+      }
+    ]
+  },
+  "convention_center": {
+    "name": "Convention Center",
+    "description": "Event and conference hosting facility",
+    "startup_cost": 20000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 60000,
+    "allowed_terrain": ["district_convention_center"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "event_booth_package": {"elasticity": 0.9, "base_sale_chance": 0.0003},
+      "keynote_sponsorship": {"elasticity": 1.5, "base_sale_chance": 0.0001},
+      "banquet_ticket": {"elasticity": 0.8, "base_sale_chance": 0.0005},
+      "conference_pass": {"elasticity": 0.7, "base_sale_chance": 0.0006}
+    },
+    "production_lines": [
+      {
+        "output_item": "conference_pass",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "energy", "quantity": 30000},
+          {"item": "paper", "quantity": 500},
+          {"item": "plastic", "quantity": 200}
+        ]
+      }
+    ]
+  },
+  "event_catering_service": {
+    "name": "Event Catering Service",
+    "description": "Large-scale catering for conventions and events",
+    "startup_cost": 8000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 30000,
+    "allowed_terrain": ["district_convention_center"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "catered_banquet_service",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "flour", "quantity": 2000},
+          {"item": "eggs", "quantity": 500},
+          {"item": "butter", "quantity": 300},
+          {"item": "sugar", "quantity": 500},
+          {"item": "milk", "quantity": 1000},
+          {"item": "energy", "quantity": 30000},
+          {"item": "water", "quantity": 5000},
+          {"item": "paper", "quantity": 200}
+        ]
+      },
+      {
+        "output_item": "cocktail_service",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "whiskey", "quantity": 100},
+          {"item": "gin", "quantity": 100},
+          {"item": "white_wine", "quantity": 100},
+          {"item": "beer", "quantity": 200},
+          {"item": "energy", "quantity": 10000},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "hospitality_supply_factory": {
+    "name": "Hospitality Supply Factory",
+    "description": "Produces linen, signage, and event equipment",
+    "startup_cost": 7000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 28000,
+    "allowed_terrain": ["district_convention_center"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "hospitality_linen_set",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "cotton", "quantity": 1000},
+          {"item": "energy", "quantity": 20000},
+          {"item": "water", "quantity": 2000},
+          {"item": "paper", "quantity": 50}
+        ]
+      },
+      {
+        "output_item": "event_supply_kit",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "paper", "quantity": 1000},
+          {"item": "plastic", "quantity": 500},
+          {"item": "lumber", "quantity": 200},
+          {"item": "energy", "quantity": 15000}
+        ]
+      }
+    ]
+  },
+  "casino": {
+    "name": "Casino",
+    "description": "Full-service gaming and entertainment complex",
+    "startup_cost": 35000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 90000,
+    "allowed_terrain": ["district_entertainment_district"],
+    "allowed_proximity": ["urban", "road", "coastal"],
+    "class": "retail",
+    "products": {
+      "casino_floor_credit": {"elasticity": 1.5, "base_sale_chance": 0.0006},
+      "vip_gaming_package": {"elasticity": 2.0, "base_sale_chance": 0.0002},
+      "premium_show_ticket": {"elasticity": 1.2, "base_sale_chance": 0.0004},
+      "casino_dining": {"elasticity": 0.8, "base_sale_chance": 0.0005}
+    },
+    "production_lines": [
+      {
+        "output_item": "casino_floor_credit",
+        "output_qty": 500,
+        "inputs": [
+          {"item": "energy", "quantity": 50000},
+          {"item": "paper", "quantity": 1000},
+          {"item": "plastic", "quantity": 500},
+          {"item": "whiskey", "quantity": 100},
+          {"item": "champagne", "quantity": 50}
+        ]
+      }
+    ]
+  },
+  "nightclub": {
+    "name": "Nightclub",
+    "description": "Upscale nightclub and live music venue",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_entertainment_district"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "club_entry": {"elasticity": 1.0, "base_sale_chance": 0.0008},
+      "premium_cocktail": {"elasticity": 1.3, "base_sale_chance": 0.0006},
+      "bottle_service": {"elasticity": 2.0, "base_sale_chance": 0.0002},
+      "vip_lounge_pass": {"elasticity": 1.8, "base_sale_chance": 0.0003}
+    },
+    "production_lines": [
+      {
+        "output_item": "premium_cocktail",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "gin", "quantity": 100},
+          {"item": "rum", "quantity": 100},
+          {"item": "whiskey", "quantity": 100},
+          {"item": "vodka", "quantity": 100},
+          {"item": "energy", "quantity": 10000},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "theme_park": {
+    "name": "Theme Park",
+    "description": "Large-scale amusement and entertainment park",
+    "startup_cost": 45000000,
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 100000,
+    "allowed_terrain": ["district_entertainment_district"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "day_pass": {"elasticity": 1.0, "base_sale_chance": 0.0006},
+      "annual_pass": {"elasticity": 0.7, "base_sale_chance": 0.0002},
+      "vip_experience": {"elasticity": 2.0, "base_sale_chance": 0.0002},
+      "park_merchandise": {"elasticity": 1.2, "base_sale_chance": 0.0004}
+    },
+    "production_lines": [
+      {
+        "output_item": "day_pass",
+        "output_qty": 500,
+        "inputs": [
+          {"item": "energy", "quantity": 100000},
+          {"item": "water", "quantity": 10000},
+          {"item": "paper", "quantity": 1000},
+          {"item": "plastic", "quantity": 500}
+        ]
+      }
+    ]
+  },
+  "hotel": {
+    "name": "Hotel",
+    "description": "Full-service hotel and resort",
+    "startup_cost": 25000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 70000,
+    "allowed_terrain": ["district_entertainment_district"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "standard_room_night": {"elasticity": 0.8, "base_sale_chance": 0.0007},
+      "suite_night": {"elasticity": 1.2, "base_sale_chance": 0.0003},
+      "penthouse_night": {"elasticity": 2.0, "base_sale_chance": 0.0001},
+      "concierge_package": {"elasticity": 1.5, "base_sale_chance": 0.0002}
+    },
+    "production_lines": [
+      {
+        "output_item": "standard_room_night",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "energy", "quantity": 50000},
+          {"item": "water", "quantity": 10000},
+          {"item": "cotton", "quantity": 200},
+          {"item": "milk", "quantity": 100},
+          {"item": "eggs", "quantity": 50},
+          {"item": "paper", "quantity": 200}
+        ]
+      }
+    ]
+  },
+  "wholesale_warehouse": {
+    "name": "Wholesale Warehouse",
+    "description": "High-volume bulk goods retailer",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 45000,
+    "allowed_terrain": ["district_mega_mall"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "bulk_grocery_pallet": {"elasticity": 0.6, "base_sale_chance": 0.0007},
+      "bulk_household_pallet": {"elasticity": 0.7, "base_sale_chance": 0.0005},
+      "bulk_industrial_pallet": {"elasticity": 0.8, "base_sale_chance": 0.0003},
+      "members_subscription": {"elasticity": 0.3, "base_sale_chance": 0.0008}
+    },
+    "production_lines": [
+      {
+        "output_item": "bulk_grocery_pallet",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "flour", "quantity": 2000},
+          {"item": "sugar", "quantity": 1000},
+          {"item": "salt", "quantity": 500},
+          {"item": "oil", "quantity": 1000},
+          {"item": "energy", "quantity": 20000},
+          {"item": "paper", "quantity": 300},
+          {"item": "cardboard_box", "quantity": 500}
+        ]
+      }
+    ]
+  },
+  "furniture_megastore": {
+    "name": "Furniture Megastore",
+    "description": "Large-format home furniture retailer",
+    "startup_cost": 14000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 40000,
+    "allowed_terrain": ["district_mega_mall"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "bedroom_set": {"elasticity": 1.0, "base_sale_chance": 0.0003},
+      "living_room_set": {"elasticity": 1.1, "base_sale_chance": 0.0003},
+      "kitchen_package": {"elasticity": 0.9, "base_sale_chance": 0.0003},
+      "office_furniture": {"elasticity": 0.8, "base_sale_chance": 0.0004}
+    },
+    "production_lines": [
+      {
+        "output_item": "bedroom_set",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "lumber", "quantity": 1000},
+          {"item": "cotton", "quantity": 500},
+          {"item": "plastic", "quantity": 300},
+          {"item": "iron", "quantity": 200},
+          {"item": "energy", "quantity": 20000},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "electronics_superstore": {
+    "name": "Electronics Superstore",
+    "description": "Consumer electronics and appliance megastore",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 35000,
+    "allowed_terrain": ["district_mega_mall"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "consumer_electronics_bundle": {"elasticity": 1.5, "base_sale_chance": 0.0004},
+      "home_appliance_set": {"elasticity": 1.0, "base_sale_chance": 0.0003},
+      "gaming_setup": {"elasticity": 2.0, "base_sale_chance": 0.0002},
+      "smart_home_kit": {"elasticity": 1.8, "base_sale_chance": 0.0002}
+    },
+    "production_lines": [
+      {
+        "output_item": "consumer_electronics_bundle",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "copper", "quantity": 500},
+          {"item": "plastic", "quantity": 500},
+          {"item": "glass", "quantity": 200},
+          {"item": "energy", "quantity": 30000},
+          {"item": "paper", "quantity": 200}
+        ]
+      }
+    ]
+  },
+  "munitions_depot": {
+    "name": "Munitions Depot",
+    "description": "Ammunition and ordnance manufacturing facility",
+    "startup_cost": 22000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_military_base"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "ammunition_crate",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "lead", "quantity": 2000},
+          {"item": "copper", "quantity": 1000},
+          {"item": "iron", "quantity": 500},
+          {"item": "energy", "quantity": 50000},
+          {"item": "paper", "quantity": 100}
+        ]
+      },
+      {
+        "output_item": "explosive_ordnance",
+        "output_qty": 20,
+        "inputs": [
+          {"item": "lead", "quantity": 500},
+          {"item": "coal", "quantity": 1000},
+          {"item": "iron", "quantity": 500},
+          {"item": "copper", "quantity": 200},
+          {"item": "energy", "quantity": 80000},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "armored_vehicle_depot": {
+    "name": "Armored Vehicle Depot",
+    "description": "Armored transport vehicle assembly",
+    "startup_cost": 40000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 80000,
+    "allowed_terrain": ["district_military_base"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "armored_personnel_carrier",
+        "output_qty": 5,
+        "inputs": [
+          {"item": "iron", "quantity": 5000},
+          {"item": "rubber", "quantity": 500},
+          {"item": "glass", "quantity": 200},
+          {"item": "plastic", "quantity": 1000},
+          {"item": "copper", "quantity": 500},
+          {"item": "energy", "quantity": 200000},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "military_commissary": {
+    "name": "Military Commissary",
+    "description": "Military base supply store for personnel",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 22000,
+    "allowed_terrain": ["district_military_base"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "retail",
+    "products": {
+      "ration_pack": {"elasticity": 0.2, "base_sale_chance": 0.0009},
+      "field_gear_set": {"elasticity": 0.4, "base_sale_chance": 0.0005},
+      "uniform_kit": {"elasticity": 0.3, "base_sale_chance": 0.0006},
+      "medical_supply_kit": {"elasticity": 0.2, "base_sale_chance": 0.0007}
+    },
+    "production_lines": [
+      {
+        "output_item": "ration_pack",
+        "output_qty": 500,
+        "inputs": [
+          {"item": "beef", "quantity": 500},
+          {"item": "flour", "quantity": 500},
+          {"item": "salt", "quantity": 200},
+          {"item": "sugar", "quantity": 200},
+          {"item": "energy", "quantity": 10000},
+          {"item": "paper", "quantity": 200},
+          {"item": "cardboard_box", "quantity": 300}
+        ]
+      }
+    ]
+  },
+  "maximum_security_facility": {
+    "name": "Maximum Security Facility",
+    "description": "High-security correctional services provider",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_prison_complex"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "retail",
+    "products": {
+      "incarceration_contract": {"elasticity": 0.1, "base_sale_chance": 0.0008},
+      "rehabilitation_program": {"elasticity": 0.5, "base_sale_chance": 0.0004},
+      "prisoner_transport_service": {"elasticity": 0.3, "base_sale_chance": 0.0005},
+      "correctional_training": {"elasticity": 0.6, "base_sale_chance": 0.0003}
+    },
+    "production_lines": [
+      {
+        "output_item": "incarceration_contract",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "energy", "quantity": 50000},
+          {"item": "water", "quantity": 10000},
+          {"item": "paper", "quantity": 500}
+        ]
+      }
+    ]
+  },
+  "prison_farm_operations": {
+    "name": "Prison Farm Operations",
+    "description": "Agricultural production using supervised prison labor",
+    "startup_cost": 5000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 18000,
+    "allowed_terrain": ["district_prison_complex"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "prison_produce_crate",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "corn_seeds", "quantity": 200},
+          {"item": "water", "quantity": 5000},
+          {"item": "energy", "quantity": 20000},
+          {"item": "paper", "quantity": 50}
+        ]
+      },
+      {
+        "output_item": "livestock_product_supply",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "grass", "quantity": 1000},
+          {"item": "water", "quantity": 2000},
+          {"item": "energy", "quantity": 10000},
+          {"item": "paper", "quantity": 30}
+        ]
+      }
+    ]
+  },
+  "prison_workshop": {
+    "name": "Prison Workshop",
+    "description": "Light manufacturing and assembly using prison labor",
+    "startup_cost": 6000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 18000,
+    "allowed_terrain": ["district_prison_complex"],
+    "allowed_proximity": ["remote", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "license_plate_batch",
+        "output_qty": 500,
+        "inputs": [
+          {"item": "iron", "quantity": 1000},
+          {"item": "paint", "quantity": 200},
+          {"item": "energy", "quantity": 30000},
+          {"item": "paper", "quantity": 100}
+        ]
+      },
+      {
+        "output_item": "institutional_furniture_set",
+        "output_qty": 20,
+        "inputs": [
+          {"item": "lumber", "quantity": 500},
+          {"item": "iron", "quantity": 200},
+          {"item": "plastic", "quantity": 300},
+          {"item": "energy", "quantity": 15000},
+          {"item": "paint", "quantity": 50}
+        ]
+      }
+    ]
+  },
+  "biotech_lab": {
+    "name": "Biotech Lab",
+    "description": "Biotechnology research and compound development",
+    "startup_cost": 30000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 85000,
+    "allowed_terrain": ["district_research_campus"],
+    "allowed_proximity": ["urban", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "biotech_compound",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "active_ingredient", "quantity": 100},
+          {"item": "water", "quantity": 5000},
+          {"item": "energy", "quantity": 150000},
+          {"item": "glass", "quantity": 100},
+          {"item": "paper", "quantity": 200}
+        ]
+      },
+      {
+        "output_item": "research_enzyme",
+        "output_qty": 20,
+        "inputs": [
+          {"item": "active_ingredient", "quantity": 50},
+          {"item": "water", "quantity": 2000},
+          {"item": "energy", "quantity": 50000},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "robotics_lab": {
+    "name": "Robotics Lab",
+    "description": "Industrial robotics research and prototyping",
+    "startup_cost": 28000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 80000,
+    "allowed_terrain": ["district_research_campus"],
+    "allowed_proximity": ["urban", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "industrial_robot",
+        "output_qty": 5,
+        "inputs": [
+          {"item": "iron", "quantity": 2000},
+          {"item": "copper", "quantity": 1000},
+          {"item": "plastic", "quantity": 500},
+          {"item": "glass", "quantity": 100},
+          {"item": "energy", "quantity": 200000},
+          {"item": "paper", "quantity": 100}
+        ]
+      },
+      {
+        "output_item": "robotic_arm_assembly",
+        "output_qty": 20,
+        "inputs": [
+          {"item": "iron", "quantity": 1000},
+          {"item": "copper", "quantity": 500},
+          {"item": "plastic", "quantity": 200},
+          {"item": "energy", "quantity": 80000},
+          {"item": "paper", "quantity": 50}
+        ]
+      }
+    ]
+  },
+  "advanced_materials_lab": {
+    "name": "Advanced Materials Lab",
+    "description": "Novel alloys and polymer research",
+    "startup_cost": 22000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 70000,
+    "allowed_terrain": ["district_research_campus"],
+    "allowed_proximity": ["urban", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "composite_alloy",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "iron", "quantity": 1000},
+          {"item": "copper", "quantity": 500},
+          {"item": "zinc_ore", "quantity": 200},
+          {"item": "energy", "quantity": 100000},
+          {"item": "paper", "quantity": 50}
+        ]
+      },
+      {
+        "output_item": "polymer_compound",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "rubber", "quantity": 500},
+          {"item": "plastic", "quantity": 1000},
+          {"item": "energy", "quantity": 50000},
+          {"item": "paper", "quantity": 50}
+        ]
+      }
+    ]
+  },
+  "research_campus_hub": {
+    "name": "Research Campus Hub",
+    "description": "University and corporate R&D licensing center",
+    "startup_cost": 15000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_research_campus"],
+    "allowed_proximity": ["urban", "remote"],
+    "class": "retail",
+    "products": {
+      "research_grant_contract": {"elasticity": 1.0, "base_sale_chance": 0.0003},
+      "technology_license": {"elasticity": 1.5, "base_sale_chance": 0.0002},
+      "consulting_contract": {"elasticity": 1.2, "base_sale_chance": 0.0004},
+      "lab_access_package": {"elasticity": 0.9, "base_sale_chance": 0.0004}
+    },
+    "production_lines": [
+      {
+        "output_item": "consulting_contract",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "energy", "quantity": 20000},
+          {"item": "paper", "quantity": 1000},
+          {"item": "plastic", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "container_terminal": {
+    "name": "Container Terminal",
+    "description": "Large-scale shipping container processing hub",
+    "startup_cost": 32000000,
+    "cycles_to_complete": 72000,
+    "base_wage_cost": 85000,
+    "allowed_terrain": ["district_seaport"],
+    "allowed_proximity": ["coastal", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "shipping_container",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "iron", "quantity": 3000},
+          {"item": "rubber", "quantity": 200},
+          {"item": "lumber", "quantity": 500},
+          {"item": "energy", "quantity": 100000},
+          {"item": "paper", "quantity": 200}
+        ]
+      },
+      {
+        "output_item": "freight_manifest",
+        "output_qty": 500,
+        "inputs": [
+          {"item": "paper", "quantity": 1000},
+          {"item": "energy", "quantity": 10000}
+        ]
+      }
+    ]
+  },
+  "port_fuel_depot": {
+    "name": "Port Fuel Depot",
+    "description": "Marine fuel production and distribution",
+    "startup_cost": 20000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 55000,
+    "allowed_terrain": ["district_seaport"],
+    "allowed_proximity": ["coastal", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "marine_fuel",
+        "output_qty": 5000,
+        "inputs": [
+          {"item": "oil", "quantity": 12000},
+          {"item": "energy", "quantity": 200000},
+          {"item": "water", "quantity": 5000}
+        ]
+      },
+      {
+        "output_item": "bunker_fuel",
+        "output_qty": 2000,
+        "inputs": [
+          {"item": "oil", "quantity": 6000},
+          {"item": "coal", "quantity": 500},
+          {"item": "energy", "quantity": 80000}
+        ]
+      }
+    ]
+  },
+  "cold_storage_warehouse": {
+    "name": "Cold Storage Warehouse",
+    "description": "Refrigerated cargo processing and storage",
+    "startup_cost": 14000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 42000,
+    "allowed_terrain": ["district_seaport"],
+    "allowed_proximity": ["coastal", "road"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "refrigerated_container",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "energy", "quantity": 200000},
+          {"item": "water", "quantity": 2000},
+          {"item": "plastic", "quantity": 500},
+          {"item": "salt", "quantity": 500},
+          {"item": "paper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "seaport_operations_hub": {
+    "name": "Seaport Operations Hub",
+    "description": "Port logistics, customs, and shipping services",
+    "startup_cost": 16000000,
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 50000,
+    "allowed_terrain": ["district_seaport"],
+    "allowed_proximity": ["coastal", "road"],
+    "class": "retail",
+    "products": {
+      "dock_berth_lease": {"elasticity": 0.5, "base_sale_chance": 0.0005},
+      "customs_clearance_service": {"elasticity": 0.4, "base_sale_chance": 0.0006},
+      "cargo_insurance": {"elasticity": 0.6, "base_sale_chance": 0.0004},
+      "port_logistics_package": {"elasticity": 0.7, "base_sale_chance": 0.0003}
+    },
+    "production_lines": [
+      {
+        "output_item": "customs_clearance_service",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "energy", "quantity": 15000},
+          {"item": "paper", "quantity": 1000}
+        ]
+      }
+    ]
+  },
+  "software_company": {
+    "name": "Software Company",
+    "description": "Commercial software development and licensing",
+    "startup_cost": 10000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 42000,
+    "allowed_terrain": ["district_tech_park"],
+    "allowed_proximity": ["urban", "road", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "software_license",
+        "output_qty": 500,
+        "inputs": [
+          {"item": "copper", "quantity": 100},
+          {"item": "energy", "quantity": 50000},
+          {"item": "paper", "quantity": 1000}
+        ]
+      },
+      {
+        "output_item": "enterprise_software_suite",
+        "output_qty": 50,
+        "inputs": [
+          {"item": "copper", "quantity": 500},
+          {"item": "energy", "quantity": 200000},
+          {"item": "paper", "quantity": 2000}
+        ]
+      }
+    ]
+  },
+  "cybersecurity_firm": {
+    "name": "Cybersecurity Firm",
+    "description": "Cybersecurity products and managed services",
+    "startup_cost": 12000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 48000,
+    "allowed_terrain": ["district_tech_park"],
+    "allowed_proximity": ["urban", "road", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "security_contract",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "copper", "quantity": 200},
+          {"item": "energy", "quantity": 80000},
+          {"item": "paper", "quantity": 500}
+        ]
+      },
+      {
+        "output_item": "threat_intelligence_report",
+        "output_qty": 100,
+        "inputs": [
+          {"item": "energy", "quantity": 30000},
+          {"item": "paper", "quantity": 1000}
+        ]
+      }
+    ]
+  },
+  "data_center": {
+    "name": "Data Center",
+    "description": "Cloud computing and data storage infrastructure",
+    "startup_cost": 22000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 65000,
+    "allowed_terrain": ["district_tech_park"],
+    "allowed_proximity": ["urban", "road", "remote"],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "compute_credit",
+        "output_qty": 10000,
+        "inputs": [
+          {"item": "energy", "quantity": 500000},
+          {"item": "water", "quantity": 10000},
+          {"item": "copper", "quantity": 200},
+          {"item": "plastic", "quantity": 100}
+        ]
+      },
+      {
+        "output_item": "cloud_storage_unit",
+        "output_qty": 5000,
+        "inputs": [
+          {"item": "energy", "quantity": 200000},
+          {"item": "water", "quantity": 5000},
+          {"item": "copper", "quantity": 100}
+        ]
+      }
+    ]
+  },
+  "tech_startup_hub": {
+    "name": "Tech Startup Hub",
+    "description": "Co-working and startup accelerator space",
+    "startup_cost": 9000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 32000,
+    "allowed_terrain": ["district_tech_park"],
+    "allowed_proximity": ["urban", "road"],
+    "class": "retail",
+    "products": {
+      "coworking_membership": {"elasticity": 0.9, "base_sale_chance": 0.0006},
+      "startup_accelerator_seat": {"elasticity": 1.5, "base_sale_chance": 0.0002},
+      "tech_consulting_day": {"elasticity": 1.2, "base_sale_chance": 0.0004},
+      "venture_capital_advisory": {"elasticity": 2.0, "base_sale_chance": 0.0002}
+    },
+    "production_lines": [
+      {
+        "output_item": "coworking_membership",
+        "output_qty": 200,
+        "inputs": [
+          {"item": "energy", "quantity": 30000},
+          {"item": "paper", "quantity": 500},
+          {"item": "plastic", "quantity": 100}
+        ]
+      }
+    ]
   }
 }

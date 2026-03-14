@@ -246,6 +246,47 @@ BUSINESS_COMPATIBILITY = {
     "tobacco_shop":           {"allowed_terrain": ['urban', 'prairie', 'hills', 'island'],            "allowed_proximity": ['urban', 'road']},
     # Candle chain
     "candle_maker":           {"allowed_terrain": ['urban', 'prairie', 'hills'],                      "allowed_proximity": ['urban', 'road']},
+    # ── Airport district ─────────────────────────────────────────────────────
+    "cargo_hub":                      {"allowed_terrain": ["district_airport"],              "allowed_proximity": ["remote", "road"]},
+    "aircraft_maintenance_facility":  {"allowed_terrain": ["district_airport"],              "allowed_proximity": ["remote", "road"]},
+    "duty_free_shop":                 {"allowed_terrain": ["district_airport"],              "allowed_proximity": ["remote", "road"]},
+    "airport_fuel_depot":             {"allowed_terrain": ["district_airport"],              "allowed_proximity": ["remote", "road", "coastal"]},
+    # ── Convention center district ────────────────────────────────────────────
+    "convention_center":              {"allowed_terrain": ["district_convention_center"],    "allowed_proximity": ["urban", "road"]},
+    "event_catering_service":         {"allowed_terrain": ["district_convention_center"],    "allowed_proximity": ["urban", "road"]},
+    "hospitality_supply_factory":     {"allowed_terrain": ["district_convention_center"],    "allowed_proximity": ["urban", "road"]},
+    # ── Entertainment district ────────────────────────────────────────────────
+    "casino":                         {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road", "coastal"]},
+    "nightclub":                      {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road"]},
+    "theme_park":                     {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road"]},
+    "hotel":                          {"allowed_terrain": ["district_entertainment_district"], "allowed_proximity": ["urban", "road", "coastal"]},
+    # ── Mega mall district ────────────────────────────────────────────────────
+    "wholesale_warehouse":            {"allowed_terrain": ["district_mega_mall"],            "allowed_proximity": ["urban", "road"]},
+    "furniture_megastore":            {"allowed_terrain": ["district_mega_mall"],            "allowed_proximity": ["urban", "road"]},
+    "electronics_superstore":         {"allowed_terrain": ["district_mega_mall"],            "allowed_proximity": ["urban", "road"]},
+    # ── Military base district ────────────────────────────────────────────────
+    "munitions_depot":                {"allowed_terrain": ["district_military_base"],        "allowed_proximity": ["remote", "road"]},
+    "armored_vehicle_depot":          {"allowed_terrain": ["district_military_base"],        "allowed_proximity": ["remote", "road"]},
+    "military_commissary":            {"allowed_terrain": ["district_military_base"],        "allowed_proximity": ["remote", "road"]},
+    # ── Prison complex district ───────────────────────────────────────────────
+    "maximum_security_facility":      {"allowed_terrain": ["district_prison_complex"],       "allowed_proximity": ["remote", "road"]},
+    "prison_farm_operations":         {"allowed_terrain": ["district_prison_complex"],       "allowed_proximity": ["remote", "road"]},
+    "prison_workshop":                {"allowed_terrain": ["district_prison_complex"],       "allowed_proximity": ["remote", "road"]},
+    # ── Research campus district ──────────────────────────────────────────────
+    "biotech_lab":                    {"allowed_terrain": ["district_research_campus"],      "allowed_proximity": ["urban", "remote"]},
+    "robotics_lab":                   {"allowed_terrain": ["district_research_campus"],      "allowed_proximity": ["urban", "remote"]},
+    "advanced_materials_lab":         {"allowed_terrain": ["district_research_campus"],      "allowed_proximity": ["urban", "remote"]},
+    "research_campus_hub":            {"allowed_terrain": ["district_research_campus"],      "allowed_proximity": ["urban", "remote"]},
+    # ── Seaport district ──────────────────────────────────────────────────────
+    "container_terminal":             {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
+    "port_fuel_depot":                {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
+    "cold_storage_warehouse":         {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
+    "seaport_operations_hub":         {"allowed_terrain": ["district_seaport"],              "allowed_proximity": ["coastal", "road"]},
+    # ── Tech park district ────────────────────────────────────────────────────
+    "software_company":               {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
+    "cybersecurity_firm":             {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
+    "data_center":                    {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
+    "tech_startup_hub":               {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road"]},
 }
 
 # ==========================
