@@ -1148,91 +1148,14 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Calculator</span>
             </a>
 
-            <!-- ── Audio Settings Card ── -->
-            <div class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);cursor:default;"
-                 id="audio-card">
-                <span class="dc-ico">🎵</span>
-                <div class="dc-t">Game Music</div>
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                    <button onclick="gsTogglePlay();updateAudioCard();"
-                            id="ac-pp-btn"
-                            style="background:#818cf8;border:none;color:#020617;padding:6px 14px;border-radius:5px;font-weight:bold;cursor:pointer;font-size:0.8rem;">
-                        ⏸ Pause
-                    </button>
-                    <button onclick="gsNext();updateAudioCard();"
-                            style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:6px 10px;border-radius:5px;cursor:pointer;font-size:0.8rem;" title="Skip to next track">
-                        ⏭ Next
-                    </button>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <span style="color:#64748b;font-size:0.75rem;">🔈</span>
-                    <input type="range" min="0" max="1" step="0.05" id="ac-vol"
-                           oninput="gsSetVolume(this.value);document.getElementById('gs-vol').value=this.value;"
-                           style="flex:1;accent-color:#818cf8;cursor:pointer;">
-                    <span style="color:#64748b;font-size:0.75rem;">🔊</span>
-                </div>
-                <div style="font-size:0.7rem;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Tracks</div>
-                <div id="ac-tracklist" style="max-height:180px;overflow-y:auto;font-size:0.78rem;"></div>
-                <div id="ac-now" style="margin-top:8px;font-size:0.72rem;color:#818cf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-            </div>
+            <a href="/settings" class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);--btn:#818cf8;">
+                <span class="dc-ico">⚙️</span>
+                <div class="dc-t">Settings</div>
+                <div class="dc-d">Audio player controls, track selection, volume, and game preferences</div>
+                <span class="dc-btn">Open Settings</span>
+            </a>
 
         </div>
-
-        <script>
-        // ── Audio Card init ──
-        (function() {{
-            function updateAudioCard() {{
-                var audio = document.getElementById('gs-audio');
-                var ppBtn = document.getElementById('ac-pp-btn');
-                var volEl = document.getElementById('ac-vol');
-                var nowEl = document.getElementById('ac-now');
-                if (!audio) return;
-                ppBtn.textContent = (audio.paused ? '▶ Play' : '⏸ Pause');
-                try {{
-                    var st = JSON.parse(localStorage.getItem('wadsST') || '{{}}');
-                    if (volEl && typeof st.volume === 'number') volEl.value = st.volume;
-                    if (nowEl) {{
-                        var titleEl = document.getElementById('gs-title');
-                        nowEl.textContent = titleEl ? ('Now: ' + titleEl.textContent) : '';
-                    }}
-                }} catch(e) {{}}
-            }}
-            window.updateAudioCard = updateAudioCard;
-
-            // Build track list with checkboxes
-            window.gsBuildTrackList = function() {{
-                var listEl = document.getElementById('ac-tracklist');
-                if (!listEl) return;
-                fetch('/soundtrack/list')
-                    .then(function(r){{ return r.json(); }})
-                    .then(function(tracks) {{
-                        var st = {{}};
-                        try {{ st = JSON.parse(localStorage.getItem('wadsST') || '{{}}'); }} catch(e) {{}}
-                        var disabled = Array.isArray(st.disabledIds) ? st.disabledIds : [];
-                        listEl.innerHTML = tracks.map(function(t) {{
-                            var checked = disabled.indexOf(t.id) === -1 ? 'checked' : '';
-                            return '<label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;border-bottom:1px solid #0f172a;">'
-                                + '<input type="checkbox" ' + checked + ' onchange="gsSetTrackDisabled(' + t.id + ',!this.checked)" style="accent-color:#818cf8;cursor:pointer;">'
-                                + '<span style="color:#e5e7eb;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + t.title + '</span>'
-                                + '</label>';
-                        }}).join('') || '<span style="color:#64748b;">No tracks loaded.</span>';
-                    }})
-                    .catch(function() {{ listEl.innerHTML = '<span style="color:#64748b;">Could not load tracks.</span>'; }});
-            }};
-
-            // Init on DOMContentLoaded
-            document.addEventListener('DOMContentLoaded', function() {{
-                updateAudioCard();
-                gsBuildTrackList();
-                // sync volume slider from saved state
-                try {{
-                    var st = JSON.parse(localStorage.getItem('wadsST') || '{{}}');
-                    var volEl = document.getElementById('ac-vol');
-                    if (volEl && typeof st.volume === 'number') volEl.value = st.volume;
-                }} catch(e) {{}}
-            }});
-        }})();
-        </script>
         """,
         player.cash_balance,
         player.id

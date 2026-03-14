@@ -347,6 +347,13 @@ try:
 except ModuleNotFoundError:
     pass
 
+try:
+    from settings_ux import router as settings_router
+    app.include_router(settings_router)
+    print("Settings routes registered")
+except ModuleNotFoundError:
+    pass
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
