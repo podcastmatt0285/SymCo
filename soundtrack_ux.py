@@ -8,6 +8,7 @@ Admin (requires admin session):
   GET  /admin/soundtrack        — manage uploads
   POST /admin/soundtrack/upload — upload audio file
   POST /admin/soundtrack/toggle — toggle track active/inactive
+  POST /admin/soundtrack/rename — rename a track
   POST /admin/soundtrack/delete — delete track + file
 """
 
@@ -87,9 +88,24 @@ def admin_soundtrack_page(
         for t in tracks:
             active_color = "#22c55e" if t.get("is_active", True) else "#64748b"
             active_label = "Active" if t.get("is_active", True) else "Hidden"
+            safe_title = t["title"].replace('"', '&quot;').replace("'", "&#39;")
             rows += f'''
             <tr style="border-bottom:1px solid #0f172a;">
-                <td style="padding:10px 8px;color:#e5e7eb;">{t["title"]}</td>
+                <td style="padding:10px 8px;color:#e5e7eb;">
+                    <span id="title-text-{t["id"]}">{t["title"]}</span>
+                    <button onclick="gsRenameToggle({t["id"]})" title="Rename"
+                            style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.8rem;padding:0 4px;vertical-align:middle;">✏️</button>
+                    <form id="rename-form-{t["id"]}" action="/admin/soundtrack/rename" method="post"
+                          style="display:none;margin-top:6px;display:none;">
+                        <input type="hidden" name="track_id" value="{t["id"]}">
+                        <input type="text" name="title" value="{safe_title}" required maxlength="120"
+                               style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:4px 6px;font-size:0.8rem;width:160px;box-sizing:border-box;">
+                        <button type="submit"
+                                style="background:#0c4a6e;border:1px solid #0284c7;color:#7dd3fc;padding:3px 8px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-left:4px;">Save</button>
+                        <button type="button" onclick="gsRenameToggle({t["id"]})"
+                                style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:3px 8px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-left:2px;">Cancel</button>
+                    </form>
+                </td>
                 <td style="padding:10px 8px;color:#64748b;font-size:0.8rem;">{t["filename"]}</td>
                 <td style="padding:10px 8px;">
                     <audio controls preload="none" style="height:28px;width:180px;">
@@ -165,6 +181,12 @@ def admin_soundtrack_page(
         <h3 style="margin:0 0 14px 0;">Uploaded Tracks ({len(tracks)})</h3>
         {track_table}
     </div>
+    <script>
+    function gsRenameToggle(id) {{
+        var form = document.getElementById('rename-form-' + id);
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }}
+    </script>
 
     <p style="color:#475569;font-size:0.75rem;margin-top:16px;">
         The in-game player shuffles active tracks automatically. Players can adjust volume, enable/disable individual tracks, and pause via the Audio card on the dashboard.
@@ -240,6 +262,25 @@ def admin_soundtrack_toggle(
         new_state = not target.get("is_active", True)
         set_active(track_id, new_state)
     return RedirectResponse("/admin/soundtrack?msg=Updated", status_code=303)
+
+
+@router.post("/admin/soundtrack/rename")
+def admin_soundtrack_rename(
+    session_token: Optional[str] = Cookie(None),
+    track_id: int = Form(...),
+    title: str = Form(...),
+):
+    player, redirect = _admin_guard(session_token)
+    if redirect:
+        return redirect
+    new_title = title.strip()[:120]
+    if not new_title:
+        return RedirectResponse("/admin/soundtrack?err=Title+cannot+be+empty", status_code=303)
+    from soundtrack import rename_track
+    from urllib.parse import quote
+    if rename_track(track_id, new_title):
+        return RedirectResponse(f"/admin/soundtrack?msg={quote(f'Renamed to: {new_title}')}", status_code=303)
+    return RedirectResponse("/admin/soundtrack?err=Track+not+found", status_code=303)
 
 
 @router.post("/admin/soundtrack/delete")
