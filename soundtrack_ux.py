@@ -6,7 +6,8 @@ Public:
 
 Admin (requires admin session):
   GET  /admin/soundtrack        — manage uploads
-  POST /admin/soundtrack/upload — upload audio file
+  POST /admin/soundtrack/upload      — upload single audio file (custom title)
+  POST /admin/soundtrack/bulk_upload — upload multiple audio files at once
   POST /admin/soundtrack/toggle — toggle track active/inactive
   POST /admin/soundtrack/rename — rename a track
   POST /admin/soundtrack/delete — delete track + file
@@ -14,7 +15,7 @@ Admin (requires admin session):
 
 import os
 import re
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Cookie, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
@@ -176,6 +177,43 @@ def admin_soundtrack_page(
         </form>
     </div>
 
+    <!-- Bulk Upload -->
+    <div class="card" style="margin-bottom:20px;">
+        <h3 style="margin:0 0 6px 0;">Bulk Upload</h3>
+        <p style="color:#64748b;font-size:0.8rem;margin:0 0 12px 0;">
+            Select multiple files at once. Titles are auto-generated from filenames and can be renamed after upload.
+        </p>
+        <form id="bulk-form" action="/admin/soundtrack/bulk_upload" method="post" enctype="multipart/form-data">
+            <div style="margin-bottom:10px;">
+                <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:4px;">Audio Files * (MP3/OGG/WAV/FLAC/M4A/AAC, max {MAX_FILE_MB} MB each)</label>
+                <input type="file" name="files" multiple required accept="audio/*" id="bulk-input"
+                       style="width:100%;background:#020617;border:1px solid #334155;color:#e5e7eb;padding:7px;box-sizing:border-box;">
+            </div>
+            <div id="bulk-preview" style="margin-bottom:10px;display:none;">
+                <p style="font-size:0.75rem;color:#64748b;margin:0 0 6px 0;">Files to upload:</p>
+                <ul id="bulk-list" style="margin:0;padding-left:18px;color:#94a3b8;font-size:0.8rem;"></ul>
+            </div>
+            <button type="submit" class="btn-blue" style="padding:9px 20px;">Upload All</button>
+        </form>
+    </div>
+    <script>
+    document.getElementById('bulk-input').addEventListener('change', function() {{
+        var list = document.getElementById('bulk-list');
+        var preview = document.getElementById('bulk-preview');
+        list.innerHTML = '';
+        if (this.files.length) {{
+            Array.from(this.files).forEach(function(f) {{
+                var li = document.createElement('li');
+                li.textContent = f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)';
+                list.appendChild(li);
+            }});
+            preview.style.display = 'block';
+        }} else {{
+            preview.style.display = 'none';
+        }}
+    }});
+    </script>
+
     <!-- Track List -->
     <div class="card">
         <h3 style="margin:0 0 14px 0;">Uploaded Tracks ({len(tracks)})</h3>
@@ -245,6 +283,71 @@ async def admin_soundtrack_upload(
     from urllib.parse import quote
     msg = quote(f"Uploaded: {track['title']}")
     return RedirectResponse(f"/admin/soundtrack?msg={msg}", status_code=303)
+
+
+def _title_from_filename(filename: str) -> str:
+    """Derive a human-readable title from an audio filename."""
+    base, _ = os.path.splitext(os.path.basename(filename))
+    # Replace separators with spaces, collapse runs, title-case
+    title = re.sub(r"[_\-]+", " ", base).strip()
+    title = re.sub(r"\s+", " ", title)
+    return title.title()[:120] or "Untitled"
+
+
+@router.post("/admin/soundtrack/bulk_upload")
+async def admin_soundtrack_bulk_upload(
+    session_token: Optional[str] = Cookie(None),
+    files: List[UploadFile] = File(...),
+):
+    player, redirect = _admin_guard(session_token)
+    if redirect:
+        return redirect
+
+    from soundtrack import SOUNDTRACK_DIR, add_track
+    import time as _time
+    from urllib.parse import quote
+
+    os.makedirs(SOUNDTRACK_DIR, exist_ok=True)
+    uploaded, skipped = [], []
+
+    for file in files:
+        _, ext = os.path.splitext(file.filename or "")
+        ext = ext.lower()
+        if ext not in ALLOWED_AUDIO_EXTS:
+            skipped.append(f"{file.filename} (unsupported type)")
+            continue
+
+        data = await file.read()
+        if len(data) > MAX_FILE_MB * 1024 * 1024:
+            skipped.append(f"{file.filename} (too large)")
+            continue
+
+        safe_name = _safe_filename(file.filename or f"track{ext}")
+        dest = os.path.join(SOUNDTRACK_DIR, safe_name)
+        if os.path.exists(dest):
+            base, e = os.path.splitext(safe_name)
+            safe_name = f"{base}_{int(_time.time())}{e}"
+            dest = os.path.join(SOUNDTRACK_DIR, safe_name)
+
+        with open(dest, "wb") as f_out:
+            f_out.write(data)
+
+        title = _title_from_filename(file.filename or safe_name)
+        add_track(safe_name, title)
+        uploaded.append(title)
+
+    parts = []
+    if uploaded:
+        parts.append(f"{len(uploaded)} track(s) uploaded")
+    if skipped:
+        parts.append(f"{len(skipped)} skipped: {', '.join(skipped)}")
+
+    if not parts:
+        return RedirectResponse("/admin/soundtrack?err=No+valid+files+selected", status_code=303)
+
+    if skipped:
+        return RedirectResponse(f"/admin/soundtrack?err={quote('; '.join(parts))}", status_code=303)
+    return RedirectResponse(f"/admin/soundtrack?msg={quote('; '.join(parts))}", status_code=303)
 
 
 @router.post("/admin/soundtrack/toggle")
