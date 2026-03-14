@@ -27,8 +27,9 @@ router = APIRouter()
 # ──────────────────────────────────────────────────────────────────────────────
 
 def _require_auth(session_token):
-    from auth import get_session_player
-    player = get_session_player(session_token)
+    from auth import get_player_from_session, get_db
+    db = next(get_db())
+    player = get_player_from_session(db, session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     return player
