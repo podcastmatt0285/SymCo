@@ -2000,9 +2000,16 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                 When a seller lists land at or below your max price (and terrain matches if filtered), the purchase executes automatically.
             </div>'''
 
-            # Place new buy order form
-            all_terrains_sorted = ["prairie","forest","desert","marsh","mountain","tundra","jungle","savanna","hills","island"]
-            terrain_options = "".join(f'<option value="{t}">{t.replace("_"," ").title()}</option>' for t in all_terrains_sorted)
+            # Place new buy order form — build options dynamically from land constants
+            _terrain_opts = "".join(
+                f'<option value="{t}">{t.replace("_"," ").title()}</option>'
+                for t in sorted(TERRAIN_TYPES.keys())
+                if not t.startswith("district_")
+            )
+            _prox_opts = "".join(
+                f'<option value="{p}">{PROXIMITY_FEATURES[p].get("name", p.replace("_"," ").title())}</option>'
+                for p in sorted(PROXIMITY_FEATURES.keys())
+            )
             market_html += f'''
             <div class="card" style="margin-bottom: 20px;">
                 <h3 style="margin: 0 0 12px 0;">Place a Buy Order</h3>
@@ -2016,7 +2023,14 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                         <label style="display:block; font-size:0.8rem; color:#64748b; margin-bottom:4px;">Terrain (optional)</label>
                         <select name="terrain" style="background:#020617; border:1px solid #334155; color:#e5e7eb; padding:8px;">
                             <option value="">Any terrain</option>
-                            {terrain_options}
+                            {_terrain_opts}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; color:#64748b; margin-bottom:4px;">Proximity feature (optional)</label>
+                        <select name="proximity" style="background:#020617; border:1px solid #334155; color:#e5e7eb; padding:8px;">
+                            <option value="">Any proximity</option>
+                            {_prox_opts}
                         </select>
                     </div>
                     <button type="submit" class="btn-blue" style="padding: 8px 20px;">Place Order</button>
@@ -2027,14 +2041,17 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
             if my_buy_orders:
                 market_html += '<h3 style="color:#e5e7eb; margin-bottom:10px;">Your Active Buy Orders</h3>'
                 for bo in my_buy_orders:
-                    terrain_label = bo.terrain.replace("_"," ").title() if bo.terrain else "Any"
+                    terrain_label  = bo.terrain.replace("_"," ").title() if bo.terrain else "Any"
+                    prox_label     = PROXIMITY_FEATURES.get(bo.proximity, {}).get("name", bo.proximity.replace("_"," ").title()) if bo.proximity else "Any"
                     placed = bo.created_at.strftime("%b %d, %H:%M") if bo.created_at else ""
                     market_html += f'''
                     <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px; border-left:4px solid #38bdf8;">
                         <div>
                             <div style="font-size:0.85rem; color:#64748b; margin-bottom:4px;">Max price</div>
                             <div style="font-size:1.2rem; font-weight:bold; color:#38bdf8;">{fmt_usd(bo.max_price, disp, precision=0)}</div>
-                            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">Terrain: {terrain_label} &nbsp;·&nbsp; Placed {placed}</div>
+                            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;">
+                                Terrain: {terrain_label} &nbsp;·&nbsp; Proximity: {prox_label} &nbsp;·&nbsp; Placed {placed}
+                            </div>
                         </div>
                         <form action="/api/land-market/cancel-buy-order" method="post">
                             <input type="hidden" name="order_id" value="{bo.id}">
@@ -2052,16 +2069,18 @@ def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "p
                         <thead><tr style="border-bottom:1px solid #1e293b; color:#64748b;">
                             <th style="padding:10px 12px; text-align:left;">Max Price</th>
                             <th style="padding:10px 12px; text-align:left;">Terrain</th>
+                            <th style="padding:10px 12px; text-align:left;">Proximity</th>
                             <th style="padding:10px 12px; text-align:right;">Placed</th>
                         </tr></thead><tbody>'''
-                from auth import get_db as get_auth_db, Player as AuthPlayer
                 for o in other_orders:
                     terrain_label = o.terrain.replace("_"," ").title() if o.terrain else "Any"
+                    prox_label    = PROXIMITY_FEATURES.get(o.proximity, {}).get("name", o.proximity.replace("_"," ").title()) if o.proximity else "Any"
                     placed = o.created_at.strftime("%b %d, %H:%M") if o.created_at else ""
                     market_html += f'''
                         <tr style="border-bottom:1px solid #0f172a;">
                             <td style="padding:10px 12px; color:#38bdf8; font-weight:bold;">{fmt_usd(o.max_price, disp, precision=0)}</td>
                             <td style="padding:10px 12px; color:#94a3b8;">{terrain_label}</td>
+                            <td style="padding:10px 12px; color:#94a3b8;">{prox_label}</td>
                             <td style="padding:10px 12px; text-align:right; color:#64748b;">{placed}</td>
                         </tr>'''
                 market_html += '</tbody></table></div>'
@@ -7457,6 +7476,7 @@ async def list_land_endpoint(land_plot_id: int = Form(...), asking_price: float 
 async def place_buy_order_endpoint(
     max_price: float = Form(...),
     terrain: str = Form(""),
+    proximity: str = Form(""),
     session_token: Optional[str] = Cookie(None),
 ):
     """Place a standing limit buy order for land."""
@@ -7466,8 +7486,12 @@ async def place_buy_order_endpoint(
     disp = get_player_display_currency(player.id)
     from land_market import place_land_buy_order
     price_usd = max_price * disp["usd_per_unit"]
-    result = place_land_buy_order(player.id, price_usd, terrain if terrain else None)
-    if result is not False:  # None means immediately executed, LandBuyOrder means standing order
+    result = place_land_buy_order(
+        player.id, price_usd,
+        terrain=terrain if terrain else None,
+        proximity=proximity if proximity else None,
+    )
+    if result is not False:  # None = auto-executed, LandBuyOrder = standing order
         return RedirectResponse(url="/land-market?tab=orders&success=buy_order_placed", status_code=303)
     return RedirectResponse(url="/land-market?tab=orders&error=buy_order_failed", status_code=303)
 
