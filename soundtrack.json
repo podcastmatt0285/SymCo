@@ -19,5 +19,19 @@
     "title": "Fragmented Impact (Heavy Pivot)",
     "is_active": true,
     "order": 2
+  },
+  {
+    "id": 4,
+    "filename": "Gogo Doo-Wop Fusion _Variation_.mp3",
+    "title": "Gogo Doo-Wop Fusion (Variation)",
+    "is_active": true,
+    "order": 3
+  },
+  {
+    "id": 5,
+    "filename": "Gogo Doo-Wop Fusion 2 _Variation_ _1_.mp3",
+    "title": "Gogo Doo-Wop Fusion 2 (Variation)",
+    "is_active": true,
+    "order": 4
   }
 ]
