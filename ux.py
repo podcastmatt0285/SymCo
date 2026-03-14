@@ -470,28 +470,31 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 
             // ── state ──
             var st = {{
-                enabled:     true,
-                volume:      0.35,
-                shuffleOrder: [],  // array of track ids in shuffle order
-                trackIdx:    0,    // index into shuffleOrder
-                time:        0,
-                disabledIds: []    // player-hidden tracks
+                enabled:        true,
+                volume:         0.35,
+                shuffleOrder:   [],   // rebuilt fresh every page load
+                trackIdx:       0,
+                time:           0,
+                currentTrackId: null, // persisted so we can resume the right song
+                disabledIds:    []
             }};
 
             function loadSt() {{
                 try {{
                     var s = JSON.parse(localStorage.getItem(ST_KEY) || '{{}}');
-                    if (typeof s.enabled     === 'boolean') st.enabled      = s.enabled;
-                    if (typeof s.volume      === 'number')  st.volume       = Math.max(0, Math.min(1, s.volume));
-                    if (Array.isArray(s.shuffleOrder))      st.shuffleOrder = s.shuffleOrder;
-                    if (typeof s.trackIdx    === 'number')  st.trackIdx     = s.trackIdx;
-                    if (typeof s.time        === 'number')  st.time         = s.time;
-                    if (Array.isArray(s.disabledIds))       st.disabledIds  = s.disabledIds;
+                    if (typeof s.enabled        === 'boolean') st.enabled        = s.enabled;
+                    if (typeof s.volume         === 'number')  st.volume         = Math.max(0, Math.min(1, s.volume));
+                    if (typeof s.time           === 'number')  st.time           = s.time;
+                    if (typeof s.currentTrackId !== 'undefined') st.currentTrackId = s.currentTrackId;
+                    if (Array.isArray(s.disabledIds))          st.disabledIds    = s.disabledIds;
+                    // NOTE: shuffleOrder is intentionally NOT restored — always rebuilt
                 }} catch(e) {{}}
             }}
             function saveSt() {{
                 try {{
                     st.time = audio.currentTime || 0;
+                    var cur = currentTrack();
+                    st.currentTrackId = cur ? cur.id : st.currentTrackId;
                     localStorage.setItem(ST_KEY, JSON.stringify(st));
                 }} catch(e) {{}}
             }}
@@ -644,14 +647,16 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             fetchTracks(function() {{
                 if (!tracks.length) {{ bar.style.display = 'none'; return; }}
 
-                // Validate / rebuild shuffle if stale ids
-                var validIds = tracks.map(function(t){{return t.id;}});
-                var needRebuild = !st.shuffleOrder.length ||
-                    st.shuffleOrder.some(function(id){{ return validIds.indexOf(id) === -1; }});
-                if (needRebuild) buildShuffle();
+                // Always build a fresh shuffle so new tracks are always included
+                buildShuffle();
 
-                var t = currentTrack();
-                applyTrack(t, st.time || 0);
+                // Resume the previously-playing track if it's still available
+                if (st.currentTrackId != null) {{
+                    var idx = st.shuffleOrder.indexOf(st.currentTrackId);
+                    if (idx !== -1) st.trackIdx = idx;
+                }}
+
+                applyTrack(currentTrack(), st.time || 0);
             }});
 
             window.addEventListener('pagehide', saveSt);
