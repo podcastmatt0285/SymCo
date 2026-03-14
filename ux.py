@@ -556,18 +556,18 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 if (!t) {{ bar.style.display = 'none'; return; }}
                 audio.src = t.url;
                 audio.volume = st.volume;
-                audio.load();
-                if (seek > 0) {{
-                    audio.addEventListener('canplay', function onCP() {{
-                        audio.removeEventListener('canplay', onCP);
-                        audio.currentTime = seek;
-                        if (st.enabled) audio.play().catch(function() {{}});
-                    }}, {{once: true}});
-                }} else if (st.enabled) {{
-                    audio.play().catch(function() {{}});
-                }}
                 titleEl.textContent = t.title;
                 updatePP();
+                if (!st.enabled) {{ audio.load(); return; }}
+                /* Always wait for canplay so the new src is loaded before
+                   we seek/play — calling play() right after load() races
+                   the browser and replays the previous track. */
+                audio.addEventListener('canplay', function onCP() {{
+                    audio.removeEventListener('canplay', onCP);
+                    if (seek > 0) audio.currentTime = seek;
+                    audio.play().catch(function() {{}});
+                }}, {{once: true}});
+                audio.load();
             }}
 
             function updatePP() {{
