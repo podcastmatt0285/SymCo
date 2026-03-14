@@ -219,6 +219,12 @@ def p2p_dashboard(session_token: Optional[str] = Cookie(None)):
                 <p style="color: #64748b; font-size: 0.85rem;">Search for players, start conversations, keep your deals private.</p>
                 <a href="/p2p/dms" class="btn-blue" style="display: inline-block; padding: 10px 20px; margin-top: 12px; background: #f59e0b;">Open DMs</a>
             </div>
+            <div class="card" style="border-color: #22c55e;">
+                <h3 style="color: #22c55e;">Contacts</h3>
+                <p>Build your private contact network. View detailed player cards for mutual contacts.</p>
+                <p style="color: #64748b; font-size: 0.85rem;">Contacts reveal full player profiles: net worth, inventory, businesses, land, stocks, bonds, and more.</p>
+                <a href="/contacts" class="btn-blue" style="display: inline-block; padding: 10px 20px; margin-top: 12px; background: #22c55e;">Open Contacts</a>
+            </div>
         </div>
         """,
         player.cash_balance,

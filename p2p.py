@@ -27,7 +27,7 @@ Base = declarative_base()
 # CONSTANTS
 # ==========================
 
-P2P_DASHBOARD_FEE = 5000.0  # $5,000 entry fee each time you access the P2P dashboard
+P2P_DASHBOARD_FEE = 100.0  # $100 entry fee each time you access the P2P dashboard
 
 # Delivery intervals (in ticks). 1 tick = 5 seconds.
 # 1 game-day ~ 120 ticks (10 min real time based on business cycle patterns)

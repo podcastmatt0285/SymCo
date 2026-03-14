@@ -702,6 +702,16 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
 
             <div class="sidebar-section">
                 <button class="sidebar-btn" onclick="openBanModal()">Word Filter Settings</button>
+                <a href="/p2p/dashboard" class="sidebar-btn" style="display:block;text-align:center;text-decoration:none;margin-top:4px;">&larr; P2P Dashboard</a>
+            </div>
+
+            <div class="sidebar-section" style="border-top:1px solid #1e293b;padding-top:10px;">
+                <h4 style="font-size:0.7rem;color:#64748b;margin-bottom:6px;">TAG LEGEND</h4>
+                <div style="font-size:0.72rem;line-height:1.8;">
+                    <div><span style="background:rgba(34,197,94,0.15);color:#22c55e;padding:1px 5px;border-radius:3px;">@Player</span> <span style="color:#64748b;">mention a player</span></div>
+                    <div><span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:1px 5px;border-radius:3px;">#item</span> <span style="color:#64748b;">tag a commodity</span></div>
+                    <div><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:1px 5px;border-radius:3px;">$crypto</span> <span style="color:#64748b;">tag a memecoin</span></div>
+                </div>
             </div>
         </div>
 

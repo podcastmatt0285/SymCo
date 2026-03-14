@@ -46,7 +46,7 @@ def register_module(name: str, module):
 
 def load_modules():
     """Attempt to load all game modules."""
-    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade']
+    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade', 'contacts']
     for name in module_names:
         try:
             mod = __import__(name)
@@ -332,6 +332,13 @@ try:
     print("Indices routes registered")
 except Exception as _ie:
     print(f"Indices failed to load: {_ie}")
+
+try:
+    from contacts_ux import router as contacts_router
+    app.include_router(contacts_router)
+    print("Contacts routes registered")
+except ModuleNotFoundError:
+    pass
 
 if __name__ == "__main__":
     import uvicorn
