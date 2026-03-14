@@ -82,6 +82,16 @@ def delete_track(track_id: int) -> bool:
     return True
 
 
+def rename_track(track_id: int, new_title: str) -> bool:
+    tracks = _load()
+    for t in tracks:
+        if t["id"] == track_id:
+            t["title"] = new_title
+            _save(tracks)
+            return True
+    return False
+
+
 def reorder_tracks(ordered_ids: List[int]) -> None:
     tracks = _load()
     id_map = {t["id"]: t for t in tracks}

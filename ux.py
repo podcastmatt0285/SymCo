@@ -260,6 +260,11 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 50% {{ opacity: 0.6; }}
             }}
 
+            @keyframes gs-scroll-title {{
+                0%,  15% {{ transform: translateX(0); }}
+                85%, 100% {{ transform: translateX(var(--gs-se, 0px)); }}
+            }}
+
             .lien-critical {{
                 animation: lien-pulse 2s ease-in-out infinite;
             }}
@@ -444,8 +449,8 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             box-shadow:0 4px 20px rgba(0,0,0,0.5);
             transition:opacity 0.3s;">
             <span style="font-size:1rem;flex-shrink:0;" title="Game Music">🎵</span>
-            <div style="flex:1;min-width:0;">
-                <div id="gs-title" style="color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading…</div>
+            <div style="flex:1;min-width:0;overflow:hidden;">
+                <div id="gs-title" style="color:#e5e7eb;white-space:nowrap;display:inline-block;">Loading…</div>
             </div>
             <button id="gs-pp" onclick="gsTogglePlay()" title="Play/Pause"
                     style="background:none;border:none;color:#38bdf8;font-size:1rem;cursor:pointer;padding:0;line-height:1;">⏸</button>
@@ -555,11 +560,24 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }}
 
             // ── playback ──
+            function startTitleScroll() {{
+                titleEl.style.animation = 'none';
+                void titleEl.offsetWidth; // force reflow before re-enabling
+                var clip = titleEl.parentElement;
+                var overflow = titleEl.scrollWidth - clip.clientWidth;
+                if (overflow > 4) {{
+                    titleEl.style.setProperty('--gs-se', '-' + overflow + 'px');
+                    var dur = Math.max(6, overflow / 30); // ~30px/s
+                    titleEl.style.animation = 'gs-scroll-title ' + dur + 's ease-in-out infinite alternate';
+                }}
+            }}
+
             function applyTrack(t, seek) {{
                 if (!t) {{ bar.style.display = 'none'; return; }}
                 audio.src = t.url;
                 audio.volume = st.volume;
                 titleEl.textContent = t.title;
+                requestAnimationFrame(startTitleScroll);
                 updatePP();
                 if (!st.enabled) {{ audio.load(); return; }}
                 /* Always wait for canplay so the new src is loaded before
