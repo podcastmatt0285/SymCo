@@ -1439,26 +1439,65 @@ async function bizPost(url,fd){
         return await r.json();
     }catch(e){return {ok:false,error:e.message};}
 }
-// Live progress polling — updates bars and tick labels every 5 s
-async function pollProgress(){
-    try{
-        const r=await fetch('/api/biz/progress',{credentials:'include'});
-        if(!r.ok){console.warn('[biz poll] status',r.status);return;}
-        const data=await r.json();
-        for(const b of (data||[])){
-            const ct=b.cycles_to_complete||1;
-            const pct=Math.min(100,(b.progress_ticks/ct)*100);
-            const pb=document.getElementById('pb-'+b.id);
-            if(pb) pb.style.width=pct.toFixed(1)+'%';
-            const pt=document.getElementById('pt-'+b.id);
-            if(pt) pt.textContent=b.progress_ticks.toLocaleString()+' / '+ct.toLocaleString()+' ticks ('+pct.toFixed(1)+'%)';
-            const card=document.getElementById('biz-card-'+b.id);
-            if(card) card.dataset.progress=pct.toFixed(1);
-        }
-    }catch(e){console.error('[biz poll]',e);}
+// ── Client-side tick emulation ──────────────────────────────────────────
+// Server ticks every 5 s. We advance local counters at the same rate,
+// then re-sync from the server every 30 s to correct any drift.
+const TICK_SECS = 5;
+
+// Seed state from data attributes set at render time
+const bizState = {};
+document.querySelectorAll('#biz-grid .biz-card[id]').forEach(card => {
+    if (!card.id.startsWith('biz-card-')) return;
+    const id  = card.id.slice(9);
+    const cyc = parseInt(card.dataset.cycles || '1') || 1;
+    const pct = parseFloat(card.dataset.progress || '0');
+    bizState[id] = {
+        ticks:  Math.round(pct * cyc / 100),
+        cycles: cyc,
+        active: card.dataset.active === 'true'
+    };
+});
+
+function updateBar(id, ticks, cycles) {
+    const pct = Math.min(100, ticks / cycles * 100);
+    const pb = document.getElementById('pb-' + id);
+    if (pb) pb.style.width = pct.toFixed(2) + '%';
+    const pt = document.getElementById('pt-' + id);
+    if (pt) pt.textContent = ticks.toLocaleString() + ' / ' +
+        cycles.toLocaleString() + ' ticks (' + pct.toFixed(1) + '%)';
+    const card = document.getElementById('biz-card-' + id);
+    if (card) card.dataset.progress = pct.toFixed(1);
 }
-pollProgress();
-setInterval(pollProgress,5000);
+
+// Advance every business counter by 1 tick
+function clientTick() {
+    for (const id in bizState) {
+        const s = bizState[id];
+        if (!s.active || s.ticks >= s.cycles) continue;
+        s.ticks = Math.min(s.ticks + 1, s.cycles);
+        updateBar(id, s.ticks, s.cycles);
+    }
+}
+setInterval(clientTick, TICK_SECS * 1000);
+
+// Re-sync with server every 30 s to correct drift
+async function syncProgress() {
+    try {
+        const r = await fetch('/api/biz/progress', {credentials: 'include'});
+        if (!r.ok) { console.warn('[biz sync] HTTP', r.status); return; }
+        const data = await r.json();
+        for (const b of (data || [])) {
+            const ct = b.cycles_to_complete || 1;
+            if (bizState[String(b.id)]) {
+                bizState[String(b.id)].ticks  = b.progress_ticks;
+                bizState[String(b.id)].cycles = ct;
+            }
+            updateBar(b.id, b.progress_ticks, ct);
+        }
+    } catch(e) { console.error('[biz sync]', e); }
+}
+syncProgress();
+setInterval(syncProgress, 30000);
 async function toggleBiz(bizId,btn){
     btn.disabled=true;
     const fd=new FormData(); fd.append('business_id',bizId);
@@ -1470,6 +1509,7 @@ async function toggleBiz(bizId,btn){
     if(badge){badge.textContent=r.is_active?'ACTIVE':'PAUSED'; badge.style.background=r.is_active?'#22c55e':'#f59e0b';}
     btn.textContent=r.is_active?'Pause':'Resume';
     btn.className='btn-sm '+(r.is_active?'btn-sm-orange':'btn-sm-green');
+    if(bizState[String(bizId)]) bizState[String(bizId)].active=r.is_active;
     showToast(r.is_active?'Business resumed':'Business paused'); applyFilter();
 }
 async function dismantleBiz(bizId,cardEl){
