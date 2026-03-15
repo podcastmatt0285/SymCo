@@ -523,7 +523,7 @@ def _audio_tab() -> str:
         if (klbl) klbl.textContent = isWlol ? 'WLOL' : 'WCPR';
 
         var ico = $('rp-ico'), sname = $('rp-sname');
-        if (ico)   ico.textContent   = isWlol ? '\uD83C\uDFB5' : '\uD83D\uDCFB';
+        if (ico)   ico.textContent   = isWlol ? '🎵' : '📻';
         if (sname) sname.innerHTML   = isWlol
             ? 'WLOL &mdash; Listen Out Loud'
             : 'WCPR 104.1 &mdash; Wadsworth Carter Public Radio';
