@@ -2653,5 +2653,70 @@
     "name": "Bottled Water",
     "description": "Clean purified water sealed in a plastic bottle, sold everywhere from carts to vending machines.",
     "category": "beverages"
+  },
+  "apple_essential_oil": {
+    "name": "Apple Essential Oil",
+    "description": "Cold-pressed oil extracted from apple seeds, rich in vitamin E and used in skin-care lotions and hair products.",
+    "category": "ingredients"
+  },
+  "barley_essential_oil": {
+    "name": "Barley Essential Oil",
+    "description": "Oil distilled from barley seeds, prized for its moisturizing and scalp-soothing properties in shampoos and conditioners.",
+    "category": "ingredients"
+  },
+  "cherry_essential_oil": {
+    "name": "Cherry Essential Oil",
+    "description": "Aromatic oil pressed from cherry seeds, used as a fragrance base in perfumes and as an antioxidant-rich skin tonic.",
+    "category": "ingredients"
+  },
+  "cocoa_essential_oil": {
+    "name": "Cocoa Essential Oil",
+    "description": "Rich emollient oil derived from cocoa seeds, a premium base for moisturizing lotions, lip balms, and healing ointments.",
+    "category": "ingredients"
+  },
+  "coffee_essential_oil": {
+    "name": "Coffee Essential Oil",
+    "description": "Stimulating oil extracted from coffee seeds, used to add invigorating aroma to shampoos and as a circulation-boosting ingredient.",
+    "category": "ingredients"
+  },
+  "corn_essential_oil": {
+    "name": "Corn Essential Oil",
+    "description": "Light oil cold-pressed from corn seeds, a versatile emollient base for soaps, lotions, and skin-conditioning products.",
+    "category": "ingredients"
+  },
+  "grape_essential_oil": {
+    "name": "Grape Essential Oil",
+    "description": "Fine oil extracted from grape seeds, renowned for its antioxidant content and use in high-end perfumes and moisturizing lotions.",
+    "category": "ingredients"
+  },
+  "onion_essential_oil": {
+    "name": "Onion Essential Oil",
+    "description": "Potent oil distilled from onion seeds with natural antimicrobial compounds, used in medicinal syrups and topical anti-inflammatory treatments.",
+    "category": "ingredients"
+  },
+  "rice_essential_oil": {
+    "name": "Rice Essential Oil",
+    "description": "Lightweight oil pressed from rice bran, widely used in luxury skin-care formulations and hair-smoothing shampoos.",
+    "category": "ingredients"
+  },
+  "tea_essential_oil": {
+    "name": "Tea Essential Oil",
+    "description": "Antimicrobial oil distilled from tea plant seeds, a key active ingredient in antiseptics, dandruff shampoos, and skin-clearing treatments.",
+    "category": "ingredients"
+  },
+  "tobacco_essential_oil": {
+    "name": "Tobacco Essential Oil",
+    "description": "Rich, smoky-sweet oil extracted from tobacco seeds, a prized base note in luxury perfumes and aromatic cosmetics.",
+    "category": "ingredients"
+  },
+  "tomato_essential_oil": {
+    "name": "Tomato Essential Oil",
+    "description": "Lycopene-rich oil cold-pressed from tomato seeds, used in anti-aging serums, moisturizing lotions, and UV-protection skin creams.",
+    "category": "ingredients"
+  },
+  "wheat_essential_oil": {
+    "name": "Wheat Essential Oil",
+    "description": "Nourishing oil pressed from wheat germ, packed with vitamin E and used in restorative soaps, lotions, and hair-treatment products.",
+    "category": "ingredients"
   }
 }

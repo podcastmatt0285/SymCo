@@ -246,6 +246,292 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "apple_essential_oil",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "apple_seeds",
+            "quantity": 1000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "barley_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "barley_seeds",
+            "quantity": 2000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cherry_essential_oil",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "cherry_seeds",
+            "quantity": 800
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "cocoa_essential_oil",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "cocoa_seeds",
+            "quantity": 600
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "coffee_essential_oil",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "coffee_seeds",
+            "quantity": 400
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "corn_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "corn_seeds",
+            "quantity": 1500
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "grape_essential_oil",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "grape_seeds",
+            "quantity": 1000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "onion_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "onion_seeds",
+            "quantity": 3000
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "rice_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "rice_seeds",
+            "quantity": 2000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tea_essential_oil",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "tea_seeds",
+            "quantity": 800
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tobacco_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "tobacco_seeds",
+            "quantity": 5000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "tomato_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "tomato_seeds",
+            "quantity": 2500
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "wheat_essential_oil",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "wheat_seeds",
+            "quantity": 2000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -8143,6 +8429,218 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "antiseptic",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "tea_essential_oil",
+            "quantity": 12
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "bottle",
+            "quantity": 90
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ointment",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "cocoa_essential_oil",
+            "quantity": 15
+          },
+          {
+            "item": "lard",
+            "quantity": 20
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 22
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ointment",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "cotton_essential_oil",
+            "quantity": 12
+          },
+          {
+            "item": "active_ingredient",
+            "quantity": 10
+          },
+          {
+            "item": "jar",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 22
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "vitamins",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "cherry_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "gelatin",
+            "quantity": 25
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "vitamins",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "apple_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "oranges",
+            "quantity": 30
+          },
+          {
+            "item": "gelatin",
+            "quantity": 20
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 28
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "cough_syrup",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "onion_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "honey",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "bottle",
+            "quantity": 70
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "medicine",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "biotech_compound",
+            "quantity": 15
+          },
+          {
+            "item": "gelatin",
+            "quantity": 15
+          },
+          {
+            "item": "pill_bottle",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "active_ingredient",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "research_enzyme",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ]
   },
@@ -11469,6 +11967,388 @@
           {
             "item": "energy",
             "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "perfume",
+        "output_qty": 18,
+        "inputs": [
+          {
+            "item": "orange_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 18
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "perfume",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "grape_essential_oil",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "perfume",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "cherry_essential_oil",
+            "quantity": 6
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 12
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "perfume",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "tobacco_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "shampoo",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "tea_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "shampoo",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "coffee_essential_oil",
+            "quantity": 4
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "shampoo",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "barley_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "cocoa_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "rice_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "tomato_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "apple_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "soap",
+        "output_qty": 45,
+        "inputs": [
+          {
+            "item": "cotton_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "soap",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "corn_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "soap",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "wheat_essential_oil",
+            "quantity": 8
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "toothpaste",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "apple_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "plastic",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
           },
           {
             "item": "paper",
