@@ -340,7 +340,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 </div>
             </div>
         </div>
-        <script>
+        <script data-cfasync="false">
         (function() {{
             var STORE = 'wadsTickerState';
             var SPEEDS = [0.5, 1, 1.5, 2];
@@ -480,7 +480,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             </div>
         </div>
 
-        <script>
+        <script data-cfasync="false">
         (function() {{
             var PASTELS = ["#FFB7B2","#FFDAC1","#E2F0CB","#B5EAD7","#C7CEEA","#FF9AA2","#F8BBD0","#E1BEE7","#D1C4E9","#BBDEFB","#C8E6C9","#F0F4C3","#FFF9C4","#FFE0B2","#F5F5DC"];
             var SLOGANS = ["Dream big, work hard.","The sky is the limit.","Believe in yourself.","Seize the day.","Make it happen.","Stay hungry, stay foolish.","Innovation distinguishes leaders.","The best is yet to come.","Focus on the goal.","Everything you imagine is real.","Turn your wounds into wisdom.","Be the change.","Action is the key to success.","Don't wait for opportunity, create it.","Your time is limited.","Follow your heart.","Stay positive.","Work hard in silence.","Success is a journey.","Be original.","Never give up.","Chase your dreams.","Limitless potential.","Mindset is everything.","Prove them wrong.","Good things take time.","Focus on the good.","Be fearless.","The only way out is through.","Rise and grind.","Consistency is key.","Keep moving forward.","Life is what you make it.","Greatness takes time.","Push your limits.","Build your empire.","Vision without action is a dream.","Make every day count.","Lead with purpose.","Excellence is not an act, but a habit.","The power of now.","Unlock your potential.","Great things never come from comfort zones.","Do what you love.","Small steps, big results.","Radiate positivity.","Your only limit is you.","Keep the dream alive.","Focus on your vision.","Success favors the bold."];
@@ -672,7 +672,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         }})();
         </script>
 
-        <script>
+        <script data-cfasync="false">
         (function() {{
             var ST_KEY    = 'wadsST';
             var CACHE_KEY = 'wadsST_tracks';
@@ -1603,7 +1603,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
             return f'<button class="biz-sort-btn{ac}" data-sort="{sval}" onclick="setSort(\'{sval}\')">{label}</button>'
 
         # JS as plain string (no f-string) to avoid escaping every brace
-        js = """<script>
+        js = """<script data-cfasync="false">
 console.log('[biz] script loaded');
 let curFilter='BIZ_FILTER', curSort='BIZ_SORT';
 function applyFilter(){
