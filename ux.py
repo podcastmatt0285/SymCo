@@ -1442,10 +1442,10 @@ async function bizPost(url,fd){
 // Live progress polling — updates bars and tick labels every 5 s
 async function pollProgress(){
     try{
-        const r=await fetch('/api/status',{credentials:'include'});
+        const r=await fetch('/api/biz/progress',{credentials:'include'});
         if(!r.ok){console.warn('[biz poll] status',r.status);return;}
         const data=await r.json();
-        for(const b of (data.businesses||[])){
+        for(const b of (data||[])){
             const ct=b.cycles_to_complete||1;
             const pct=Math.min(100,(b.progress_ticks/ct)*100);
             const pb=document.getElementById('pb-'+b.id);
@@ -7865,6 +7865,26 @@ async def biz_set_price_ajax(item_type: str = Form(...), price: float = Form(...
         return JSONResponse({"ok": True, "display_price": fmt_usd(price_usd, disp)})
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)})
+
+@router.get("/api/biz/progress")
+async def biz_progress(session_token: Optional[str] = Cookie(None)):
+    """Return live progress_ticks for all player businesses."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return JSONResponse([])
+    from business import Business, BUSINESS_TYPES, get_district_business_types
+    from land import get_db as get_land_db
+    db = get_land_db()
+    try:
+        all_types = {**BUSINESS_TYPES, **get_district_business_types()}
+        rows = db.query(Business).filter(Business.owner_id == player.id).all()
+        return JSONResponse([
+            {"id": b.id,
+             "progress_ticks": b.progress_ticks,
+             "cycles_to_complete": all_types.get(b.business_type, {}).get("cycles_to_complete", 1)}
+            for b in rows
+        ])
+    finally:
+        db.close()
 
 @router.post("/api/inventory/list")
 async def list_to_market(item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
