@@ -89,6 +89,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
     <html>
     <head>
         <title>{title} · Wadsworth</title>
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
             * {{ box-sizing: border-box; }}
@@ -493,7 +494,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             var wcprIdx = -1;
             var wcprAudio = document.getElementById('wcpr-shell-audio');
 
-            // ── Petal cycle ──────────────────────────────────────────────
+            // -- Petal cycle ----------------------------------------------
             function randP() {{ return PASTELS[Math.floor(Math.random() * PASTELS.length)]; }}
             function cyclePetals() {{
                 var c = randP();
@@ -507,7 +508,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }}
             setInterval(cyclePetals, 5000);
 
-            // ── Slogan ───────────────────────────────────────────────────
+            // -- Slogan ---------------------------------------------------
             function nextSlogan() {{
                 var el = document.getElementById('gsbar-slogan');
                 if (!el) return;
@@ -523,7 +524,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }})();
             setInterval(nextSlogan, 4000);
 
-            // ── Station label ────────────────────────────────────────────
+            // -- Station label --------------------------------------------
             function updateStationLabel() {{
                 var sname = document.getElementById('gsbar-sname');
                 var kind  = document.getElementById('gsbar-kind');
@@ -543,7 +544,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }}
             updateStationLabel();
 
-            // ── Progress bar ─────────────────────────────────────────────
+            // -- Progress bar ---------------------------------------------
             function fmtT(s) {{
                 s = Math.floor(s||0); var m=Math.floor(s/60); var sec=s%60;
                 return m+':'+(sec<10?'0':'')+sec;
@@ -564,7 +565,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }}
             }}, 1000);
 
-            // ── Tuner toggle ─────────────────────────────────────────────
+            // -- Tuner toggle ---------------------------------------------
             window.gsBarTune = function() {{
                 if (gbStation === 'wlol') {{
                     // Switch to WCPR
@@ -585,7 +586,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }}
             }};
 
-            // ── Play/Pause/Skip (station-aware wrappers) ─────────────────
+            // -- Play/Pause/Skip (station-aware wrappers) -----------------
             window.gsBarPlay = window.gsBarToggle = function() {{
                 if (gbStation === 'wlol') {{
                     try {{ gsTogglePlay(); }} catch(e) {{}}
@@ -618,7 +619,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }}
             }};
 
-            // ── WCPR audio ───────────────────────────────────────────────
+            // -- WCPR audio -----------------------------------------------
             function wcprLoad(idx) {{
                 if (!wcprTracks.length || idx < 0 || idx >= wcprTracks.length) return;
                 wcprIdx = idx;
@@ -653,7 +654,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }});
             }}
 
-            // ── Volume passthrough ───────────────────────────────────────
+            // -- Volume passthrough ---------------------------------------
             var origGsSetVolume = window.gsSetVolume;
             window.gsSetVolume = function(v) {{
                 gbVol = parseFloat(v) || 0;
@@ -661,7 +662,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 if (gbStation === 'wcpr' && wcprAudio) wcprAudio.volume = gbMuted ? 0 : gbVol;
             }};
 
-            // ── Init: restore station ────────────────────────────────────
+            // -- Init: restore station ------------------------------------
             if (gbStation === 'wcpr') {{
                 updateStationLabel();
                 // Don't autostart WCPR on page load — wait for user interaction
@@ -684,7 +685,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             var titleEl= document.getElementById('gs-title');
             var volSlider = document.getElementById('gs-vol');
 
-            // ── state ──
+            // -- state --
             var st = {{
                 enabled:        true,
                 volume:         0.35,
@@ -715,7 +716,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }} catch(e) {{}}
             }}
 
-            // ── track cache ──
+            // -- track cache --
             var tracks = [];  // {{id, title, url}}
 
             function loadCache() {{
@@ -745,7 +746,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                     .catch(function() {{ bar.style.display = 'none'; }});
             }}
 
-            // ── shuffle ──
+            // -- shuffle --
             function shuffle(arr) {{
                 for (var i = arr.length - 1; i > 0; i--) {{
                     var j = Math.floor(Math.random() * (i + 1));
@@ -770,7 +771,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 return getTrackById(id);
             }}
 
-            // ── playback ──
+            // -- playback --
             function startTitleScroll() {{
                 titleEl.style.animation = 'none';
                 void titleEl.offsetWidth; // force reflow before re-enabling
@@ -815,7 +816,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             // save time every 5s
             setInterval(function() {{ if (!audio.paused) saveSt(); }}, 5000);
 
-            // ── public API (used by dashboard audio card) ──
+            // -- public API (used by dashboard audio card) --
             window.gsTogglePlay = function() {{
                 if (audio.paused) {{
                     st.enabled = true;
@@ -865,7 +866,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 }});
             }};
 
-            // ── init ──
+            // -- init --
             loadSt();
             volSlider.value = st.volume;
 
@@ -1651,7 +1652,7 @@ async function bizPost(url,fd){
         return await r.json();
     }catch(e){return {ok:false,error:e.message};}
 }
-// ── Client-side tick emulation ──────────────────────────────────────────
+// -- Client-side tick emulation ------------------------------------------
 // Server ticks every 5 s. We advance local counters at the same rate,
 // then re-sync from the server every 30 s to correct any drift.
 const TICK_SECS = 5;
