@@ -14,7 +14,7 @@ Provides:
 
 from typing import Optional
 from fastapi import APIRouter, Cookie, Form, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from datetime import timedelta
 from datetime import datetime
 
@@ -1194,6 +1194,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
     try:
         from business import Business, BUSINESS_TYPES, get_dismantling_status, DISMANTLING_TICKS, RetailPrice
         from land import LandPlot, get_db as get_land_db
+        import json as _json
         land_db = get_land_db()
         player_businesses = land_db.query(Business).filter(Business.owner_id == player.id).all()
 
@@ -1201,8 +1202,8 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
             land_db.close()
             return shell("Businesses", "<h3>No businesses found.</h3><a href='/land' class='btn-blue'>Go to Land</a>", player.cash_balance, player.id)
 
-        # Build list of (biz, config, biz_name, biz_class, progress_pct) tuples for sorting/filtering
-        biz_tuples = []
+        # Build enriched data list
+        biz_data = []
         for biz in player_businesses:
             config = BUSINESS_TYPES.get(biz.business_type)
             if not config:
@@ -1214,200 +1215,324 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
             cycles_total = config.get("cycles_to_complete", 1)
             progress_pct = (biz.progress_ticks / cycles_total * 100) if cycles_total > 0 else 0
             dismantle_status = get_dismantling_status(biz.id)
-            biz_tuples.append((biz, config, biz_name, biz_class, progress_pct, dismantle_status))
+            plot = land_db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first() if biz.land_plot_id else None
+            biz_data.append({"biz": biz, "config": config, "name": biz_name, "cls": biz_class,
+                              "cycles_total": cycles_total, "progress_pct": progress_pct,
+                              "dismantle": dismantle_status, "plot": plot})
 
-        # Apply biz_filter
-        if biz_filter == "active":
-            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if b.is_active and not d]
-        elif biz_filter == "paused":
-            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if not b.is_active and not d]
-        elif biz_filter == "production":
-            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if cl == "production"]
-        elif biz_filter == "retail":
-            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if cl == "retail"]
-        elif biz_filter == "dismantling":
-            biz_tuples = [(b, c, n, cl, p, d) for b, c, n, cl, p, d in biz_tuples if d]
+        # Summary stats
+        total        = len(biz_data)
+        n_active     = sum(1 for d in biz_data if d["biz"].is_active and not d["dismantle"])
+        n_paused     = sum(1 for d in biz_data if not d["biz"].is_active and not d["dismantle"])
+        n_dismantling= sum(1 for d in biz_data if d["dismantle"])
+        n_production = sum(1 for d in biz_data if d["cls"] == "production")
+        n_retail     = sum(1 for d in biz_data if d["cls"] == "retail")
 
-        # Apply sort
-        if sort == "status":
-            biz_tuples.sort(key=lambda x: (0 if x[0].is_active else 1, x[2]))
-        elif sort == "type":
-            biz_tuples.sort(key=lambda x: (x[3], x[2]))
-        elif sort == "progress":
-            biz_tuples.sort(key=lambda x: x[4], reverse=True)
-        else:
-            # name sort
-            biz_tuples.sort(key=lambda x: x[2])
-
-        # Filter/sort bar
-        def _f_link(f_val, label):
-            color = "#38bdf8" if biz_filter == f_val else "#64748b"
-            border = "1px solid #38bdf8" if biz_filter == f_val else "1px solid #1e293b"
-            return f'<a href="/businesses?sort={sort}&biz_filter={f_val}" style="color:{color};border:{border};padding:4px 10px;border-radius:4px;text-decoration:none;font-size:0.82rem;">{label}</a>'
-
-        def _s_link(s_val, label):
-            color = "#38bdf8" if sort == s_val else "#64748b"
-            return f'<a href="/businesses?sort={s_val}&biz_filter={biz_filter}" style="color:{color};text-decoration:none;font-size:0.82rem;">{label}</a>'
-
-        filter_sort_bar = f'''
-        <div style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-            <span style="color:#64748b;font-size:0.82rem;">Filter:</span>
-            {_f_link("all","All")} {_f_link("active","Active")} {_f_link("paused","Paused")} {_f_link("production","Production")} {_f_link("retail","Retail")} {_f_link("dismantling","Dismantling")}
-            <span style="color:#1e293b;margin:0 4px;">|</span>
-            <span style="color:#64748b;font-size:0.82rem;">Sort:</span>
-            {_s_link("name","Name")} {_s_link("status","Status")} {_s_link("type","Type")} {_s_link("progress","Progress")}
-        </div>'''
-
-        # City production bonuses panel
+        # City production buffs panel
         city_buffs_html = ""
         try:
             from city_projects import get_city_production_buffs
             _cb = get_city_production_buffs(player.id)
             _buff_rows = []
-            if abs(_cb.get("output_multiplier", 1.0) - 1.0) > 0.001:
-                pct = (_cb["output_multiplier"] - 1.0) * 100
-                sign = "+" if pct >= 0 else ""
-                _buff_rows.append(f'<span style="color:#4ade80;">Output {sign}{pct:.1f}%</span>')
-            if abs(_cb.get("wage_multiplier", 1.0) - 1.0) > 0.001:
-                pct = (_cb["wage_multiplier"] - 1.0) * 100
-                sign = "+" if pct >= 0 else ""
-                col = "#f87171" if pct > 0 else "#4ade80"
-                _buff_rows.append(f'<span style="color:{col};">Wages {sign}{pct:.1f}%</span>')
-            if abs(_cb.get("input_multiplier", 1.0) - 1.0) > 0.001:
-                pct = (_cb["input_multiplier"] - 1.0) * 100
-                sign = "+" if pct >= 0 else ""
-                col = "#f87171" if pct > 0 else "#4ade80"
-                _buff_rows.append(f'<span style="color:{col};">Inputs {sign}{pct:.1f}%</span>')
-            if abs(_cb.get("cycle_speed_multiplier", 1.0) - 1.0) > 0.001:
-                pct = (_cb["cycle_speed_multiplier"] - 1.0) * 100
-                sign = "+" if pct >= 0 else ""
-                col = "#f87171" if pct > 0 else "#4ade80"
-                _buff_rows.append(f'<span style="color:{col};">Cycle Speed {sign}{pct:.1f}%</span>')
-            if abs(_cb.get("market_fee_multiplier", 1.0) - 1.0) > 0.001:
-                pct = (_cb["market_fee_multiplier"] - 1.0) * 100
-                sign = "+" if pct >= 0 else ""
-                col = "#f87171" if pct > 0 else "#4ade80"
-                _buff_rows.append(f'<span style="color:{col};">Market Fees {sign}{pct:.1f}%</span>')
-            if abs(_cb.get("loan_interest_multiplier", 1.0) - 1.0) > 0.001:
-                pct = (_cb["loan_interest_multiplier"] - 1.0) * 100
-                sign = "+" if pct >= 0 else ""
-                col = "#f87171" if pct > 0 else "#4ade80"
-                _buff_rows.append(f'<span style="color:{col};">Loan Interest {sign}{pct:.1f}%</span>')
+            for _key, _label, _bad in [
+                ("output_multiplier", "Output", False), ("wage_multiplier", "Wages", True),
+                ("input_multiplier", "Inputs", True), ("cycle_speed_multiplier", "Cycle Speed", True),
+                ("market_fee_multiplier", "Market Fees", True), ("loan_interest_multiplier", "Loan Interest", True),
+            ]:
+                _val = _cb.get(_key, 1.0)
+                if abs(_val - 1.0) > 0.001:
+                    _pct = (_val - 1.0) * 100
+                    _sign = "+" if _pct >= 0 else ""
+                    _col = ("#f87171" if _pct > 0 else "#4ade80") if _bad else ("#4ade80" if _pct > 0 else "#f87171")
+                    _buff_rows.append(f'<span style="color:{_col};">{_label} {_sign}{_pct:.1f}%</span>')
             if _cb.get("sales_tax_rate", 0.0) > 0:
                 _buff_rows.append(f'<span style="color:#f87171;">Sales Tax {_cb["sales_tax_rate"]*100:.2f}%</span>')
             if _buff_rows:
-                city_buffs_html = f'''
-                <div class="card" style="margin-bottom:16px;border-color:#334155;padding:10px 16px;">
+                city_buffs_html = f'''<div class="card" style="margin-bottom:14px;border-color:#334155;padding:10px 16px;">
                     <div style="font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;">City Production Modifiers</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">
-                        {"&nbsp;·&nbsp;".join(_buff_rows)}
-                    </div>
-                </div>'''
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:13px;">{"&nbsp;·&nbsp;".join(_buff_rows)}</div></div>'''
         except Exception:
             pass
 
-        biz_html = f'<a href="/" style="color: #38bdf8;"><- Dashboard</a><h1>Business Terminal</h1><a href="/stats/production-costs" class="btn-blue">📊 Production Costs</a>{filter_sort_bar}{city_buffs_html}'
-        for biz, config, biz_name, biz_class, progress_pct, dismantle_status in biz_tuples:
-            cycles_total = config.get("cycles_to_complete", 1)
-            plot = land_db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
-            plot_info = f"Plot #{plot.id} ({plot.terrain_type.title()})" if plot else "Unknown Location"
+        # Build a card for each business
+        def make_card(d):
+            biz          = d["biz"]
+            config       = d["config"]
+            biz_name     = d["name"]
+            biz_class    = d["cls"]
+            cycles_total = d["cycles_total"]
+            progress_pct = d["progress_pct"]
+            ds           = d["dismantle"]
+            plot         = d["plot"]
+            startup_cost = config.get("startup_cost", 0)
+            wage_cost    = config.get("base_wage_cost", 0)
+            if plot:
+                plot_info = f"Plot #{plot.id} · {plot.terrain_type.title()}"
+            elif getattr(biz, "district_id", None):
+                plot_info = f"District #{biz.district_id}"
+            else:
+                plot_info = "Unknown Location"
 
-            if dismantle_status:
-                biz_html += f'''
-                <div class="card" style="border-color: #ef4444;">
-                    <h3>{biz_name} <span class="badge" style="background: #ef4444;">DISMANTLING</span></h3>
-                    <p>{plot_info} | ID: #{biz.id}</p>
-                    <p>Ticks Remaining: {dismantle_status['ticks_remaining']}/{DISMANTLING_TICKS} ({dismantle_status['progress_pct']:.0f}%)</p>
-                    <p>Total Refund: {fmt_usd(dismantle_status['total_refund'], disp)} (Paid: {fmt_usd(dismantle_status['paid_so_far'], disp)})</p>
-                </div>'''
-                continue
-            status_badge = f'<span class="badge badge-{"active" if biz.is_active else "paused"}">{"ACTIVE" if biz.is_active else "PAUSED"}</span>'
-            class_badge = f'<span class="badge" style="background: #38bdf8; color: #020617; margin-left: 5px;">{biz_class.upper()}</span>'
-
-            biz_html += f'''
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <h3>{biz_name} {status_badge} {class_badge}</h3>
-                        <p>{plot_info} | ID: #{biz.id}</p>
-                        <p>Progress: {biz.progress_ticks}/{cycles_total} ticks ({progress_pct:.0f}%)</p>
+            if ds:
+                prog = ds["progress_pct"]
+                return f'''<div class="biz-card" data-name="{biz_name.lower()}" data-class="{biz_class}" data-active="false" data-dismantling="true" data-progress="0" style="border-color:#ef4444;">
+                    <div class="biz-card-header">
+                        <div><span class="biz-name" style="font-weight:bold;">{biz_name}</span>
+                        <span class="badge" style="background:#ef4444;color:#fff;margin-left:6px;">DISMANTLING</span></div>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <form action="/api/business/toggle" method="post">
-                            <input type="hidden" name="business_id" value="{biz.id}">
-                            <button type="submit" class="{"btn-orange" if biz.is_active else "btn-blue"}">
-                                {"Pause" if biz.is_active else "Resume"}
-                            </button>
-                        </form>
-                        <form action="/api/business/dismantle" method="post">
-                            <input type="hidden" name="business_id" value="{biz.id}">
-                            <button type="submit" class="btn-red" onclick="return confirm('Dismantle for 50% refund over time?')">Dismantle</button>
-                        </form>
+                    <div style="padding:0 16px 4px;font-size:0.75rem;color:#64748b;">{plot_info} · ID #{biz.id}</div>
+                    <div class="biz-card-progress">
+                        <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;margin-bottom:2px;">
+                            <span>Refund Progress</span>
+                            <span>{ds["ticks_remaining"]}/{DISMANTLING_TICKS} ticks · {fmt_usd(ds["paid_so_far"], disp)} of {fmt_usd(ds["total_refund"], disp)}</span>
+                        </div>
+                        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:{prog:.1f}%;background:#ef4444;"></div></div>
                     </div>
                 </div>'''
 
-            import json as _json
+            status_color     = "#22c55e" if biz.is_active else "#f59e0b"
+            status_label     = "ACTIVE" if biz.is_active else "PAUSED"
+            class_color      = "#4ade80" if biz_class == "production" else "#38bdf8"
+            toggle_lbl       = "Pause" if biz.is_active else "Resume"
+            toggle_cls       = "btn-sm-orange" if biz.is_active else "btn-sm-green"
             paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
-            paused_product_keys = set(_json.loads(biz.paused_products or "[]"))
+            paused_prod_keys = set(_json.loads(biz.paused_products or "[]"))
 
             if biz_class == "production":
-                biz_html += '<div style="margin-top: 10px; border-top: 1px solid #1e293b; padding-top: 10px;"><strong>Production Lines:</strong>'
+                lines_html = ""
                 for li, line in enumerate(config.get("production_lines", [])):
-                    inputs = " + ".join([f"{req['quantity']} {req['item'].replace('_', ' ').title()}" for req in line.get("inputs", [])])
-                    output = f"{line['output_qty']} {line['output_item'].replace('_', ' ').title()}"
-                    line_paused = li in paused_line_idxs
-                    pause_label = "Resume" if line_paused else "Pause"
-                    pause_color = "#22c55e" if line_paused else "#f59e0b"
-                    line_style = "opacity:0.45;" if line_paused else ""
-                    biz_html += f'''
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding:5px;background:#020617;border-radius:4px;{line_style}">
-                        <span style="font-size:0.85rem;color:#64748b;">→ {inputs or "No inputs"} = {output}</span>
-                        <form action="/api/business/toggle-line" method="post" style="margin-left:8px;flex-shrink:0;">
-                            <input type="hidden" name="business_id" value="{biz.id}">
-                            <input type="hidden" name="line_index" value="{li}">
-                            <button type="submit" style="padding:3px 8px;font-size:0.75rem;background:{pause_color};color:#020617;border:none;border-radius:3px;cursor:pointer;font-weight:bold;">{pause_label}</button>
-                        </form>
+                    inp_parts = [f"{req['quantity']:,}× {req['item'].replace('_',' ').title()}" for req in line.get("inputs", [])]
+                    inp_str   = " + ".join(inp_parts) if inp_parts else "No inputs"
+                    out_str   = f"{line['output_qty']:,}× {line['output_item'].replace('_',' ').title()}"
+                    lp        = li in paused_line_idxs
+                    lines_html += f'''<div class="line-row{' paused' if lp else ''}" id="line-{biz.id}-{li}">
+                        <span style="font-size:0.78rem;color:#94a3b8;">{inp_str} → {out_str}</span>
+                        <button class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}" style="flex-shrink:0;" onclick="toggleLine({biz.id},{li},this.closest('.line-row'))">{'Resume' if lp else 'Pause'}</button>
                     </div>'''
-                biz_html += '</div>'
-
-            elif biz_class == "retail":
-                biz_html += '<div style="margin-top: 10px; border-top: 1px solid #1e293b; padding-top: 10px;"><strong>Retail Sales & Pricing:</strong>'
+                detail_html = f'''<div class="biz-card-body">
+                    <div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Production Lines</div>
+                    {lines_html or '<span style="color:#475569;font-size:0.82rem;">No production lines configured</span>'}
+                </div>'''
+            else:
+                retail_rows = ""
                 for item, stats in config.get("products", {}).items():
-                    price_entry = land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id, RetailPrice.item_type == item).first()
-                    current_p = f"{fmt_usd(price_entry.price, disp)}" if price_entry else "MKT Default"
-                    item_paused = item in paused_product_keys
-                    pause_label = "Resume" if item_paused else "Pause"
-                    pause_color = "#22c55e" if item_paused else "#f59e0b"
-                    row_style = "opacity:0.45;" if item_paused else ""
-                    biz_html += f'''
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 5px; background: #020617; border-radius: 4px;{row_style}">
-                        <span style="font-size: 0.9rem;">{item.replace("_", " ").title()} (E: {stats["elasticity"]})</span>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="color: #38bdf8; font-weight: bold;">{current_p}</span>
-                            <form action="/api/retail/set-price" method="post" style="display: flex; gap: 4px;">
-                                <input type="hidden" name="item_type" value="{item}">
-                                <input type="number" name="price" step="0.01" placeholder="Set Price ({disp['code']})" style="padding: 4px; width: 80px;" required>
-                                <button type="submit" class="btn-blue" style="padding: 4px 8px; font-size: 0.8rem;">Update</button>
-                            </form>
-                            <form action="/api/business/toggle-retail" method="post">
-                                <input type="hidden" name="business_id" value="{biz.id}">
-                                <input type="hidden" name="item_type" value="{item}">
-                                <button type="submit" style="padding:4px 8px;font-size:0.8rem;background:{pause_color};color:#020617;border:none;border-radius:3px;cursor:pointer;font-weight:bold;">{pause_label}</button>
-                            </form>
+                    pe        = land_db.query(RetailPrice).filter(RetailPrice.player_id == player.id, RetailPrice.item_type == item).first()
+                    cur_p     = fmt_usd(pe.price, disp) if pe else "Market"
+                    ip        = item in paused_prod_keys
+                    safe_item = item.replace("'", "\\'")
+                    retail_rows += f'''<div class="line-row{' paused' if ip else ''}" id="retail-{biz.id}-{item}" style="flex-wrap:wrap;gap:6px;">
+                        <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span></span>
+                        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+                            <span id="price-{biz.id}-{item}" style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
+                            <input type="number" step="0.01" min="0.01" placeholder="{disp["code"]}" id="pi-{biz.id}-{item}" style="width:90px;padding:3px 5px;font-size:0.78rem;" onkeydown="if(event.key==='Enter')setPrice({biz.id},'{safe_item}',this)">
+                            <button class="btn-sm btn-sm-blue" onclick="setPrice({biz.id},'{safe_item}',document.getElementById('pi-{biz.id}-{item}'))">Set</button>
+                            <button class="btn-sm {'btn-sm-green' if ip else 'btn-sm-orange'}" onclick="toggleRetail({biz.id},'{safe_item}',this.closest('.line-row'))">{'Resume' if ip else 'Pause'}</button>
                         </div>
                     </div>'''
-                biz_html += '</div>'
-            
-            biz_html += '</div>'
+                detail_html = f'''<div class="biz-card-body">
+                    <div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Retail Products</div>
+                    {retail_rows}
+                </div>'''
 
+            return f'''<div class="biz-card" id="biz-card-{biz.id}" data-name="{biz_name.lower()}" data-class="{biz_class}" data-active="{'true' if biz.is_active else 'false'}" data-dismantling="false" data-progress="{progress_pct:.1f}">
+                <div class="biz-card-header">
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            <span class="biz-name" style="font-weight:bold;">{biz_name}</span>
+                            <span id="status-badge-{biz.id}" class="badge" style="background:{status_color};color:#020617;">{status_label}</span>
+                            <span class="badge" style="background:{class_color};color:#020617;">{biz_class.upper()}</span>
+                        </div>
+                        <div style="font-size:0.75rem;color:#64748b;margin-top:3px;">{plot_info} · ID #{biz.id} · Start {fmt_usd(startup_cost, disp)} · Wage {fmt_usd(wage_cost, disp)}/cycle</div>
+                    </div>
+                    <div class="biz-actions">
+                        <button id="toggle-btn-{biz.id}" class="btn-sm {toggle_cls}" onclick="toggleBiz({biz.id},this)">{toggle_lbl}</button>
+                        <button class="btn-sm btn-sm-red" onclick="dismantleBiz({biz.id},this.closest('.biz-card'))">Dismantle</button>
+                    </div>
+                </div>
+                <div class="biz-card-progress">
+                    <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;margin-bottom:2px;">
+                        <span>Cycle Progress</span>
+                        <span>{biz.progress_ticks:,} / {cycles_total:,} ticks ({progress_pct:.1f}%)</span>
+                    </div>
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:{min(progress_pct,100):.1f}%;"></div></div>
+                </div>
+                {detail_html}
+            </div>'''
+
+        cards_html = "".join(make_card(d) for d in biz_data)
         land_db.close()
+
+        # Filter/sort button helpers
+        def fb(fval, label, count):
+            ac = " active" if biz_filter == fval else ""
+            return f'<button class="biz-filter-btn{ac}" data-filter="{fval}" onclick="setFilter(\'{fval}\')">{label} ({count})</button>'
+        def sb(sval, label):
+            ac = " active" if sort == sval else ""
+            return f'<button class="biz-sort-btn{ac}" data-sort="{sval}" onclick="setSort(\'{sval}\')">{label}</button>'
+
+        # JS as plain string (no f-string) to avoid escaping every brace
+        js = """<script>
+let curFilter='BIZ_FILTER', curSort='BIZ_SORT';
+function applyFilter(){
+    const q=(document.getElementById('biz-search').value||'').toLowerCase();
+    document.querySelectorAll('#biz-grid .biz-card').forEach(c=>{
+        const nm=c.dataset.name||'', cl=c.dataset.class||'';
+        const active=c.dataset.active==='true', dis=c.dataset.dismantling==='true';
+        let show=true;
+        if(q&&!nm.includes(q)) show=false;
+        if(curFilter==='active'&&(!active||dis)) show=false;
+        if(curFilter==='paused'&&(active||dis)) show=false;
+        if(curFilter==='production'&&cl!=='production') show=false;
+        if(curFilter==='retail'&&cl!=='retail') show=false;
+        if(curFilter==='dismantling'&&!dis) show=false;
+        c.style.display=show?'':'none';
+    });
+    const grid=document.getElementById('biz-grid');
+    const vis=[...grid.querySelectorAll('.biz-card')].filter(c=>c.style.display!=='none');
+    const hid=[...grid.querySelectorAll('.biz-card')].filter(c=>c.style.display==='none');
+    if(curSort==='name') vis.sort((a,b)=>(a.dataset.name||'').localeCompare(b.dataset.name||''));
+    else if(curSort==='status') vis.sort((a,b)=>(b.dataset.active==='true')-(a.dataset.active==='true'));
+    else if(curSort==='progress') vis.sort((a,b)=>parseFloat(b.dataset.progress||0)-parseFloat(a.dataset.progress||0));
+    [...vis,...hid].forEach(c=>grid.appendChild(c));
+}
+function setFilter(f){
+    curFilter=f;
+    document.querySelectorAll('.biz-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
+    applyFilter();
+}
+function setSort(s){
+    curSort=s;
+    document.querySelectorAll('.biz-sort-btn').forEach(b=>b.classList.toggle('active',b.dataset.sort===s));
+    applyFilter();
+}
+function showToast(msg,isError){
+    const t=document.getElementById('biz-toast');
+    t.textContent=msg; t.className='biz-toast'+(isError?' error':''); t.style.opacity='1';
+    clearTimeout(t._timer); t._timer=setTimeout(()=>{t.style.opacity='0';},2500);
+}
+async function bizPost(url,fd){
+    try{
+        const r=await fetch(url,{method:'POST',body:fd});
+        if(!r.ok) return {ok:false,error:'HTTP '+r.status};
+        return await r.json();
+    }catch(e){return {ok:false,error:e.message};}
+}
+async function toggleBiz(bizId,btn){
+    btn.disabled=true;
+    const fd=new FormData(); fd.append('business_id',bizId);
+    const r=await bizPost('/api/biz/toggle',fd); btn.disabled=false;
+    if(!r.ok){showToast('Toggle failed',true);return;}
+    const card=document.getElementById('biz-card-'+bizId);
+    card.dataset.active=r.is_active?'true':'false';
+    const badge=document.getElementById('status-badge-'+bizId);
+    if(badge){badge.textContent=r.is_active?'ACTIVE':'PAUSED'; badge.style.background=r.is_active?'#22c55e':'#f59e0b';}
+    btn.textContent=r.is_active?'Pause':'Resume';
+    btn.className='btn-sm '+(r.is_active?'btn-sm-orange':'btn-sm-green');
+    showToast(r.is_active?'Business resumed':'Business paused'); applyFilter();
+}
+async function dismantleBiz(bizId,cardEl){
+    const nm=(cardEl.querySelector('.biz-name')||{}).textContent||'this business';
+    if(!confirm('Dismantle "'+nm.trim()+'"?\nYou receive 50% of startup cost paid over 100 ticks. This cannot be undone.')) return;
+    const fd=new FormData(); fd.append('business_id',bizId);
+    const r=await bizPost('/api/biz/dismantle',fd);
+    if(!r.ok){showToast('Dismantle failed',true);return;}
+    cardEl.style.borderColor='#ef4444'; cardEl.dataset.active='false'; cardEl.dataset.dismantling='true';
+    const hdr=cardEl.querySelector('.biz-card-header');
+    if(hdr) hdr.innerHTML='<div><span class="biz-name" style="font-weight:bold;">'+nm.trim()+'</span><span class="badge" style="background:#ef4444;color:#fff;margin-left:6px;">DISMANTLING</span></div>';
+    cardEl.querySelectorAll('.biz-card-progress,.biz-card-body').forEach(el=>el.remove());
+    showToast('Dismantling started — refund over 100 ticks'); applyFilter();
+}
+async function toggleLine(bizId,lineIdx,rowEl){
+    const fd=new FormData(); fd.append('business_id',bizId); fd.append('line_index',lineIdx);
+    const r=await bizPost('/api/biz/toggle-line',fd);
+    if(!r.ok){showToast('Failed',true);return;}
+    rowEl.classList.toggle('paused',r.paused);
+    const btn=rowEl.querySelector('button');
+    btn.textContent=r.paused?'Resume':'Pause'; btn.className='btn-sm '+(r.paused?'btn-sm-green':'btn-sm-orange');
+    showToast(r.paused?'Line paused':'Line resumed');
+}
+async function toggleRetail(bizId,itemType,rowEl){
+    const fd=new FormData(); fd.append('business_id',bizId); fd.append('item_type',itemType);
+    const r=await bizPost('/api/biz/toggle-retail',fd);
+    if(!r.ok){showToast('Failed',true);return;}
+    rowEl.classList.toggle('paused',r.paused);
+    const btns=rowEl.querySelectorAll('button'); const pb=btns[btns.length-1];
+    pb.textContent=r.paused?'Resume':'Pause'; pb.className='btn-sm '+(r.paused?'btn-sm-green':'btn-sm-orange');
+    showToast(r.paused?'Item paused':'Item resumed');
+}
+async function setPrice(bizId,itemType,inputEl){
+    const price=parseFloat(inputEl.value);
+    if(isNaN(price)||price<=0){showToast('Enter a valid price',true);return;}
+    const fd=new FormData(); fd.append('item_type',itemType); fd.append('price',price);
+    const r=await bizPost('/api/biz/set-price',fd);
+    if(!r.ok){showToast('Price update failed',true);return;}
+    const lbl=document.getElementById('price-'+bizId+'-'+itemType);
+    if(lbl) lbl.textContent=r.display_price;
+    inputEl.value=''; showToast('Price updated to '+r.display_price);
+}
+applyFilter();
+</script>""".replace('BIZ_FILTER', biz_filter).replace('BIZ_SORT', sort)
+
+        body = f'''<style>
+.biz-summary{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}}
+.biz-stat{{background:#0f172a;border:1px solid #1e293b;padding:8px 14px;border-radius:4px;text-align:center;min-width:72px;}}
+.biz-stat .val{{font-size:1.4rem;font-weight:bold;}} .biz-stat .lbl{{font-size:0.68rem;color:#64748b;letter-spacing:.05em;text-transform:uppercase;}}
+.biz-filter-btn{{padding:4px 10px;border:1px solid #1e293b;background:#0f172a;color:#64748b;border-radius:4px;cursor:pointer;font-size:0.8rem;font-family:inherit;}}
+.biz-filter-btn:hover,.biz-filter-btn.active{{border-color:#38bdf8;color:#38bdf8;}}
+.biz-sort-btn{{padding:4px 6px;border:none;background:none;color:#64748b;cursor:pointer;font-size:0.8rem;font-family:inherit;text-decoration:underline;}}
+.biz-sort-btn.active{{color:#38bdf8;}}
+.biz-grid{{display:grid;gap:12px;}}
+.biz-card{{background:#0f172a;border:1px solid #1e293b;border-radius:4px;overflow:hidden;}}
+.biz-card-header{{padding:14px 16px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}}
+.biz-card-progress{{padding:0 16px 12px;}}
+.biz-card-body{{border-top:1px solid #1e293b;padding:12px 16px;}}
+.biz-actions{{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}}
+.btn-sm{{padding:5px 10px;font-size:0.78rem;border:none;border-radius:3px;cursor:pointer;font-family:inherit;font-weight:600;}}
+.btn-sm-blue{{background:#38bdf8;color:#020617;}} .btn-sm-orange{{background:#f59e0b;color:#020617;}}
+.btn-sm-red{{background:#ef4444;color:#fff;}} .btn-sm-green{{background:#22c55e;color:#020617;}}
+.progress-bar-wrap{{background:#020617;height:6px;border-radius:3px;overflow:hidden;margin-top:4px;}}
+.progress-bar-fill{{height:100%;background:#38bdf8;border-radius:3px;}}
+.line-row{{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#020617;border-radius:4px;margin-bottom:4px;gap:8px;}}
+.line-row.paused{{opacity:0.4;}}
+.biz-toast{{position:fixed;top:16px;right:16px;background:#0f172a;border:1px solid #22c55e;color:#22c55e;padding:8px 14px;border-radius:4px;font-size:0.85rem;z-index:9999;opacity:0;transition:opacity 0.2s;pointer-events:none;}}
+.biz-toast.error{{border-color:#ef4444;color:#ef4444;}}
+</style>
+<div id="biz-toast" class="biz-toast"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+        <a href="/" style="color:#64748b;font-size:0.85rem;">← Dashboard</a>
+        <h2 style="margin:0;font-size:1.2rem;">Business Terminal</h2>
+    </div>
+    <a href="/stats/production-costs" class="btn-blue" style="font-size:0.8rem;">📊 Production Costs</a>
+</div>
+<div class="biz-summary">
+    <div class="biz-stat"><div class="val">{total}</div><div class="lbl">Total</div></div>
+    <div class="biz-stat" style="border-color:#22c55e;"><div class="val" style="color:#22c55e;">{n_active}</div><div class="lbl">Active</div></div>
+    <div class="biz-stat" style="border-color:#f59e0b;"><div class="val" style="color:#f59e0b;">{n_paused}</div><div class="lbl">Paused</div></div>
+    <div class="biz-stat" style="border-color:#ef4444;"><div class="val" style="color:#ef4444;">{n_dismantling}</div><div class="lbl">Dismantling</div></div>
+    <div class="biz-stat" style="border-color:#4ade80;"><div class="val" style="color:#4ade80;">{n_production}</div><div class="lbl">Production</div></div>
+    <div class="biz-stat" style="border-color:#38bdf8;"><div class="val" style="color:#38bdf8;">{n_retail}</div><div class="lbl">Retail</div></div>
+</div>
+{city_buffs_html}
+<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:16px;">
+    <span style="color:#64748b;font-size:0.78rem;">Filter:</span>
+    {fb("all","All",total)} {fb("active","Active",n_active)} {fb("paused","Paused",n_paused)}
+    {fb("production","Production",n_production)} {fb("retail","Retail",n_retail)} {fb("dismantling","Dismantling",n_dismantling)}
+    <span style="color:#334155;margin:0 2px;">|</span>
+    <span style="color:#64748b;font-size:0.78rem;">Sort:</span>
+    {sb("name","Name")} {sb("status","Status")} {sb("progress","Progress")}
+    <input type="search" id="biz-search" oninput="applyFilter()" placeholder="Search..." style="padding:4px 8px;font-size:0.78rem;margin-left:4px;width:130px;">
+</div>
+<div id="biz-grid" class="biz-grid">{cards_html}</div>
+{js}'''
+
         tut_overlay = ""
         try:
             from tutorial_ux import get_tutorial_overlay_html
             tut_overlay = get_tutorial_overlay_html(player, "businesses")
         except Exception:
             pass
-        return shell("Businesses", tut_overlay + biz_html, player.cash_balance, player.id)
+        return shell("Businesses", tut_overlay + body, player.cash_balance, player.id)
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -7641,6 +7766,63 @@ async def set_retail_price_endpoint(item_type: str = Form(...), price: float = F
     except Exception as e:
         print(f"[UX] Retail price error: {e}")
         return RedirectResponse(url="/businesses?error=price_update_failed", status_code=303)
+
+# ==========================
+# AJAX JSON endpoints for /businesses dashboard (no page reload)
+# ==========================
+
+@router.post("/api/biz/toggle")
+async def biz_toggle_ajax(business_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return JSONResponse({"ok": False, "error": "not_authed"})
+    from business import toggle_business, Business
+    from land import get_db as get_land_db
+    ok = toggle_business(player.id, business_id)
+    if not ok:
+        return JSONResponse({"ok": False, "error": "toggle_failed"})
+    db = get_land_db()
+    biz = db.query(Business).filter(Business.id == business_id).first()
+    is_active = biz.is_active if biz else False
+    db.close()
+    return JSONResponse({"ok": True, "is_active": is_active})
+
+@router.post("/api/biz/toggle-line")
+async def biz_toggle_line_ajax(business_id: int = Form(...), line_index: int = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return JSONResponse({"ok": False, "error": "not_authed"})
+    from business import toggle_production_line
+    result = toggle_production_line(player.id, business_id, line_index)
+    return JSONResponse(result)
+
+@router.post("/api/biz/toggle-retail")
+async def biz_toggle_retail_ajax(business_id: int = Form(...), item_type: str = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return JSONResponse({"ok": False, "error": "not_authed"})
+    from business import toggle_retail_item
+    result = toggle_retail_item(player.id, business_id, item_type)
+    return JSONResponse(result)
+
+@router.post("/api/biz/dismantle")
+async def biz_dismantle_ajax(business_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return JSONResponse({"ok": False, "error": "not_authed"})
+    from business import start_business_dismantling
+    ok = start_business_dismantling(player.id, business_id)
+    return JSONResponse({"ok": bool(ok)})
+
+@router.post("/api/biz/set-price")
+async def biz_set_price_ajax(item_type: str = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return JSONResponse({"ok": False, "error": "not_authed"})
+    from reserve_banks import get_player_display_currency, fmt_usd
+    from business import set_retail_price
+    disp = get_player_display_currency(player.id)
+    try:
+        price_usd = price * disp["usd_per_unit"]
+        set_retail_price(player.id, item_type, price_usd)
+        return JSONResponse({"ok": True, "display_price": fmt_usd(price_usd, disp)})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
 
 @router.post("/api/inventory/list")
 async def list_to_market(item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
