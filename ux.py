@@ -1195,8 +1195,10 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
         from business import Business, BUSINESS_TYPES, get_dismantling_status, DISMANTLING_TICKS, RetailPrice
         from land import LandPlot, get_db as get_land_db
         import json as _json
+        import inventory as _inv_mod
         land_db = get_land_db()
         player_businesses = land_db.query(Business).filter(Business.owner_id == player.id).all()
+        inv = _inv_mod.get_player_inventory(player.id)  # {item_type: qty}
 
         if not player_businesses:
             land_db.close()
@@ -1275,7 +1277,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
 
             if ds:
                 prog = ds["progress_pct"]
-                return f'''<div class="biz-card" data-name="{biz_name.lower()}" data-class="{biz_class}" data-active="false" data-dismantling="true" data-progress="0" style="border-color:#ef4444;">
+                return f'''<div class="biz-card" data-name="{biz_name.lower()}" data-bizclass="{biz_class}" data-active="false" data-dismantling="true" data-progress="0" style="border-color:#ef4444;">
                     <div class="biz-card-header">
                         <div><span class="biz-name" style="font-weight:bold;">{biz_name}</span>
                         <span class="badge" style="background:#ef4444;color:#fff;margin-left:6px;">DISMANTLING</span></div>
@@ -1305,8 +1307,21 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     inp_str   = " + ".join(inp_parts) if inp_parts else "No inputs"
                     out_str   = f"{line['output_qty']:,}× {line['output_item'].replace('_',' ').title()}"
                     lp        = li in paused_line_idxs
+                    # Feasibility: check inventory covers every required input
+                    missing = []
+                    for req in line.get("inputs", []):
+                        have = inv.get(req["item"], 0)
+                        need = req["quantity"]
+                        if have < need:
+                            missing.append(f"{req['item'].replace('_',' ').title()}: {have:,.0f} / {need:,} needed")
+                    if not missing:
+                        dot = '<span style="color:#22c55e;font-size:0.85rem;flex-shrink:0;" title="All inputs available">●</span>'
+                    else:
+                        tip = "Missing — " + " | ".join(missing)
+                        dot = f'<span style="color:#ef4444;font-size:0.85rem;flex-shrink:0;" title="{tip}">●</span>'
                     lines_html += f'''<div class="line-row{' paused' if lp else ''}" id="line-{biz.id}-{li}">
-                        <span style="font-size:0.78rem;color:#94a3b8;">{inp_str} → {out_str}</span>
+                        {dot}
+                        <span style="font-size:0.78rem;color:#94a3b8;flex:1;">{inp_str} → {out_str}</span>
                         <button class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}" style="flex-shrink:0;" onclick="toggleLine({biz.id},{li},this.closest('.line-row'))">{'Resume' if lp else 'Pause'}</button>
                     </div>'''
                 detail_html = f'''<div class="biz-card-body">
@@ -1320,8 +1335,14 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     cur_p     = fmt_usd(pe.price, disp) if pe else "Market"
                     ip        = item in paused_prod_keys
                     safe_item = item.replace("'", "\\'")
+                    # Stock feasibility
+                    in_stock  = inv.get(item, 0)
+                    if in_stock > 0:
+                        dot = f'<span style="color:#22c55e;font-size:0.75rem;" title="In stock: {in_stock:,.0f}">● {in_stock:,.0f}</span>'
+                    else:
+                        dot = '<span style="color:#ef4444;font-size:0.75rem;" title="No stock — nothing to sell">● Out of stock</span>'
                     retail_rows += f'''<div class="line-row{' paused' if ip else ''}" id="retail-{biz.id}-{item}" style="flex-wrap:wrap;gap:6px;">
-                        <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span></span>
+                        <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span> {dot}</span>
                         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
                             <span id="price-{biz.id}-{item}" style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
                             <input type="number" step="0.01" min="0.01" placeholder="{disp["code"]}" id="pi-{biz.id}-{item}" style="width:90px;padding:3px 5px;font-size:0.78rem;" onkeydown="if(event.key==='Enter')setPrice({biz.id},'{safe_item}',this)">
@@ -1334,7 +1355,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     {retail_rows}
                 </div>'''
 
-            return f'''<div class="biz-card" id="biz-card-{biz.id}" data-name="{biz_name.lower()}" data-class="{biz_class}" data-active="{'true' if biz.is_active else 'false'}" data-dismantling="false" data-progress="{progress_pct:.1f}">
+            return f'''<div class="biz-card" id="biz-card-{biz.id}" data-name="{biz_name.lower()}" data-bizclass="{biz_class}" data-active="{'true' if biz.is_active else 'false'}" data-dismantling="false" data-progress="{progress_pct:.1f}" data-cycles="{cycles_total}">
                 <div class="biz-card-header">
                     <div style="flex:1;min-width:0;">
                         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -1352,9 +1373,9 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                 <div class="biz-card-progress">
                     <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:#94a3b8;margin-bottom:2px;">
                         <span>Cycle Progress</span>
-                        <span>{biz.progress_ticks:,} / {cycles_total:,} ticks ({progress_pct:.1f}%)</span>
+                        <span id="pt-{biz.id}">{biz.progress_ticks:,} / {cycles_total:,} ticks ({progress_pct:.1f}%)</span>
                     </div>
-                    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:{min(progress_pct,100):.1f}%;"></div></div>
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="pb-{biz.id}" style="width:{min(progress_pct,100):.1f}%;"></div></div>
                 </div>
                 {detail_html}
             </div>'''
@@ -1376,7 +1397,7 @@ let curFilter='BIZ_FILTER', curSort='BIZ_SORT';
 function applyFilter(){
     const q=(document.getElementById('biz-search').value||'').toLowerCase();
     document.querySelectorAll('#biz-grid .biz-card').forEach(c=>{
-        const nm=c.dataset.name||'', cl=c.dataset.class||'';
+        const nm=c.dataset.name||'', cl=c.dataset.bizclass||'';
         const active=c.dataset.active==='true', dis=c.dataset.dismantling==='true';
         let show=true;
         if(q&&!nm.includes(q)) show=false;
@@ -1388,8 +1409,9 @@ function applyFilter(){
         c.style.display=show?'':'none';
     });
     const grid=document.getElementById('biz-grid');
-    const vis=[...grid.querySelectorAll('.biz-card')].filter(c=>c.style.display!=='none');
-    const hid=[...grid.querySelectorAll('.biz-card')].filter(c=>c.style.display==='none');
+    const all=[...grid.querySelectorAll('.biz-card')];
+    const vis=all.filter(c=>c.style.display!=='none');
+    const hid=all.filter(c=>c.style.display==='none');
     if(curSort==='name') vis.sort((a,b)=>(a.dataset.name||'').localeCompare(b.dataset.name||''));
     else if(curSort==='status') vis.sort((a,b)=>(b.dataset.active==='true')-(a.dataset.active==='true'));
     else if(curSort==='progress') vis.sort((a,b)=>parseFloat(b.dataset.progress||0)-parseFloat(a.dataset.progress||0));
@@ -1417,6 +1439,24 @@ async function bizPost(url,fd){
         return await r.json();
     }catch(e){return {ok:false,error:e.message};}
 }
+// Live progress polling — updates bars and tick labels every 5 s
+async function pollProgress(){
+    try{
+        const r=await fetch('/api/status'); if(!r.ok) return;
+        const data=await r.json();
+        for(const b of (data.businesses||[])){
+            const ct=parseFloat(document.getElementById('biz-card-'+b.id)?.dataset.cycles||0)||1;
+            const pct=Math.min(100,(b.progress_ticks/ct)*100);
+            const pb=document.getElementById('pb-'+b.id);
+            if(pb) pb.style.width=pct.toFixed(1)+'%';
+            const pt=document.getElementById('pt-'+b.id);
+            if(pt) pt.textContent=b.progress_ticks.toLocaleString()+' / '+ct.toLocaleString()+' ticks ('+pct.toFixed(1)+'%)';
+            const card=document.getElementById('biz-card-'+b.id);
+            if(card) card.dataset.progress=pct.toFixed(1);
+        }
+    }catch(e){}
+}
+setInterval(pollProgress,5000);
 async function toggleBiz(bizId,btn){
     btn.disabled=true;
     const fd=new FormData(); fd.append('business_id',bizId);
