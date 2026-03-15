@@ -172,12 +172,12 @@
   "microscope": {
     "name": "Microscope",
     "description": "Scientific magnification instrument",
-    "category": "equipment"
+    "category": "lab_equipment"
   },
   "lab_equipment": {
     "name": "Laboratory Equipment",
     "description": "Scientific research apparatus",
-    "category": "equipment"
+    "category": "lab_equipment"
   },
   "medical_scanner": {
     "name": "Medical Scanner",
@@ -572,17 +572,17 @@
   "food_tray": {
     "name": "Food Tray",
     "description": "Disposable serving tray",
-    "category": "packaging"
+    "category": "food_service"
   },
   "takeout_container": {
     "name": "Takeout Container",
     "description": "Food packaging box",
-    "category": "packaging"
+    "category": "food_service"
   },
   "disposable_utensils": {
     "name": "Disposable Utensils",
     "description": "Plastic cutlery set",
-    "category": "packaging"
+    "category": "food_service"
   },
   "curriculum_package": {
     "name": "Curriculum Package",
@@ -1557,47 +1557,47 @@
   "industrial_robot": {
     "name": "Industrial Robot",
     "description": "Fully assembled programmable robotic system designed for precision manufacturing, assembly-line automation, and heavy-duty maintenance tasks.",
-    "category": "equipment"
+    "category": "robotics"
   },
   "robotic_arm_assembly": {
     "name": "Robotic Arm Assembly",
     "description": "Multi-axis robotic arm module used as a sub-assembly in industrial robots and as a standalone precision tool in advanced manufacturing.",
-    "category": "equipment"
+    "category": "robotics"
   },
   "freight_container": {
     "name": "Freight Container",
     "description": "Standard ISO air-freight container used to consolidate and protect cargo during airport handling and transit.",
-    "category": "industrial"
+    "category": "logistics"
   },
   "shipping_container": {
     "name": "Shipping Container",
     "description": "Heavy-gauge steel intermodal container used for ocean freight, stackable on container ships and rail flatcars.",
-    "category": "industrial"
+    "category": "logistics"
   },
   "refrigerated_container": {
     "name": "Refrigerated Container",
     "description": "Temperature-controlled reefer container maintaining cold-chain integrity for perishable cargo in sea freight.",
-    "category": "industrial"
+    "category": "logistics"
   },
   "cargo_manifest": {
     "name": "Cargo Manifest",
     "description": "Official document listing the contents, weight, and destination of all freight packages in an air-cargo shipment.",
-    "category": "industrial"
+    "category": "logistics"
   },
   "freight_manifest": {
     "name": "Freight Manifest",
     "description": "Comprehensive sea-freight bill of lading and cargo declaration submitted to port authorities for customs processing.",
-    "category": "industrial"
+    "category": "logistics"
   },
   "aircraft_service_report": {
     "name": "Aircraft Service Report",
     "description": "Certified maintenance log confirming that an aircraft has passed all MRO inspections and is cleared for commercial operations.",
-    "category": "industrial"
+    "category": "intelligence"
   },
   "threat_intelligence_report": {
     "name": "Threat Intelligence Report",
     "description": "Classified cybersecurity analysis documenting active threat actors, vulnerabilities, and recommended countermeasures.",
-    "category": "industrial"
+    "category": "intelligence"
   },
   "license_plate_batch": {
     "name": "License Plate Batch",
@@ -1617,12 +1617,12 @@
   "hospitality_linen_set": {
     "name": "Hospitality Linen Set",
     "description": "Commercial-grade set of bed sheets, pillowcases, and towels produced for hotels and event venues.",
-    "category": "industrial"
+    "category": "hospitality"
   },
   "event_supply_kit": {
     "name": "Event Supply Kit",
     "description": "Complete convention and conference supply kit including signage, badge holders, folding furniture, and presentation materials.",
-    "category": "industrial"
+    "category": "hospitality"
   },
   "institutional_furniture_set": {
     "name": "Institutional Furniture Set",
