@@ -2,7 +2,7 @@
   "grapes": {
     "name": "Wine Grapes",
     "description": "Premium varietal grapes for winemaking",
-    "category": "fruits"
+    "category": "produce"
   },
   "grape_seeds": {
     "name": "Grape Seeds",
@@ -97,7 +97,7 @@
   "honey": {
     "name": "Honey",
     "description": "Natural sweetener from bees",
-    "category": "food"
+    "category": "sweeteners"
   },
   "bees": {
     "name": "Bees",
@@ -112,7 +112,7 @@
   "salt": {
     "name": "Salt",
     "description": "Essential mineral for food and industry",
-    "category": "minerals"
+    "category": "ingredients"
   },
   "yeast": {
     "name": "Baker's Yeast",
@@ -147,27 +147,27 @@
   "dough": {
     "name": "Raw Dough",
     "description": "Prepared bread dough",
-    "category": "ingredients"
+    "category": "baked_goods"
   },
   "pastry_dough": {
     "name": "Pastry Dough",
     "description": "Buttery laminated dough",
-    "category": "ingredients"
+    "category": "baked_goods"
   },
   "pie_crust": {
     "name": "Pie Crust",
     "description": "Pre-made pastry shell",
-    "category": "ingredients"
+    "category": "baked_goods"
   },
   "fruit_filling": {
     "name": "Fruit Filling",
     "description": "Cooked sweetened fruit for pies",
-    "category": "ingredients"
+    "category": "baked_goods"
   },
   "frosting": {
     "name": "Frosting",
     "description": "Sweet cake topping",
-    "category": "ingredients"
+    "category": "baked_goods"
   },
   "gelatin": {
     "name": "Gelatin",
@@ -177,7 +177,7 @@
   "corn_syrup": {
     "name": "Corn Syrup",
     "description": "Sweet liquid sugar from corn",
-    "category": "ingredients"
+    "category": "sweeteners"
   },
   "ink": {
     "name": "Printing Ink",
@@ -187,37 +187,37 @@
   "baguette": {
     "name": "French Baguette",
     "description": "Crusty artisan bread",
-    "category": "food"
+    "category": "baked_goods"
   },
   "croissant": {
     "name": "Butter Croissant",
     "description": "Flaky French pastry",
-    "category": "food"
+    "category": "baked_goods"
   },
   "donut": {
     "name": "Glazed Donut",
     "description": "Fried ring pastry",
-    "category": "food"
+    "category": "baked_goods"
   },
   "muffin": {
     "name": "Muffin",
     "description": "Sweet breakfast cake",
-    "category": "food"
+    "category": "baked_goods"
   },
   "cinnamon_roll": {
     "name": "Cinnamon Roll",
     "description": "Spiraled sweet bread",
-    "category": "food"
+    "category": "baked_goods"
   },
   "cookie": {
     "name": "Cookie",
     "description": "Baked sweet treat",
-    "category": "food"
+    "category": "baked_goods"
   },
   "brownie": {
     "name": "Fudge Brownie",
     "description": "Dense chocolate square",
-    "category": "food"
+    "category": "baked_goods"
   },
   "cherry_pie": {
     "name": "Cherry Pie",
@@ -237,82 +237,82 @@
   "pretzel": {
     "name": "Soft Pretzel",
     "description": "Salted twisted bread",
-    "category": "food"
+    "category": "baked_goods"
   },
   "gummy_bears": {
     "name": "Gummy Bears",
     "description": "Chewy fruit candy",
-    "category": "food"
+    "category": "confectionery"
   },
   "hard_candy": {
     "name": "Hard Candy",
     "description": "Classic boiled sweets",
-    "category": "food"
+    "category": "confectionery"
   },
   "taffy": {
     "name": "Salt Water Taffy",
     "description": "Chewy pulled candy",
-    "category": "food"
+    "category": "confectionery"
   },
   "fudge": {
     "name": "Chocolate Fudge",
     "description": "Dense chocolate candy",
-    "category": "food"
+    "category": "confectionery"
   },
   "truffles": {
     "name": "Chocolate Truffles",
     "description": "Premium chocolate confection",
-    "category": "food"
+    "category": "confectionery"
   },
   "toffee": {
     "name": "English Toffee",
     "description": "Buttery hard candy",
-    "category": "food"
+    "category": "confectionery"
   },
   "licorice": {
     "name": "Licorice",
     "description": "Chewy anise candy",
-    "category": "food"
+    "category": "confectionery"
   },
   "marshmallow": {
     "name": "Marshmallows",
     "description": "Fluffy sugar confection",
-    "category": "food"
+    "category": "confectionery"
   },
   "peppermint": {
     "name": "Peppermints",
     "description": "Refreshing mint candy",
-    "category": "food"
+    "category": "confectionery"
   },
   "espresso": {
     "name": "Espresso",
     "description": "Concentrated coffee shot",
-    "category": "beverage"
+    "category": "beverages"
   },
   "latte": {
     "name": "Caff\u00e8 Latte",
     "description": "Espresso with steamed milk",
-    "category": "beverage"
+    "category": "beverages"
   },
   "cappuccino": {
     "name": "Cappuccino",
     "description": "Espresso with foam",
-    "category": "beverage"
+    "category": "beverages"
   },
   "hot_chocolate": {
     "name": "Hot Chocolate",
     "description": "Rich cocoa drink",
-    "category": "beverage"
+    "category": "beverages"
   },
   "tea": {
     "name": "Brewed Tea",
     "description": "Hot steeped tea",
-    "category": "beverage"
+    "category": "beverages"
   },
   "iced_tea": {
     "name": "Iced Tea",
     "description": "Chilled sweet tea",
-    "category": "beverage"
+    "category": "beverages"
   },
   "vodka": {
     "name": "Vodka",
@@ -547,77 +547,77 @@
   "engine": {
     "name": "Combustion Engine",
     "description": "Vehicle power unit",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "engine_block": {
     "name": "Engine Block",
     "description": "Core engine casting",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "transmission": {
     "name": "Transmission",
     "description": "Vehicle gear system",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "tires": {
     "name": "Rubber Tires",
     "description": "Set of 4 vehicle tires",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "chassis": {
     "name": "Vehicle Chassis",
     "description": "Structural frame",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "windshield": {
     "name": "Windshield",
     "description": "Safety glass panel",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "headlights": {
     "name": "Headlight Assembly",
     "description": "Front lighting pair",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "car_battery": {
     "name": "Car Battery",
     "description": "12V starter battery",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "exhaust": {
     "name": "Exhaust System",
     "description": "Emissions control",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "brake_pads": {
     "name": "Brake Pads",
     "description": "Stopping system",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "car_seat": {
     "name": "Vehicle Seat",
     "description": "Upholstered seat",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "steering_wheel": {
     "name": "Steering Wheel",
     "description": "Driver control",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "radiator": {
     "name": "Radiator",
     "description": "Cooling system",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "spark_plugs": {
     "name": "Spark Plugs",
     "description": "Ignition components",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "fuel_tank": {
     "name": "Fuel Tank",
     "description": "Gas reservoir",
-    "category": "auto_parts"
+    "category": "vehicle_parts"
   },
   "truck": {
     "name": "Pickup Truck",
@@ -637,17 +637,17 @@
   "hull": {
     "name": "Boat Hull",
     "description": "Fiberglass boat body",
-    "category": "marine_parts"
+    "category": "vehicle_parts"
   },
   "outboard_motor": {
     "name": "Outboard Motor",
     "description": "Boat propulsion unit",
-    "category": "marine_parts"
+    "category": "vehicle_parts"
   },
   "propeller": {
     "name": "Propeller",
     "description": "Marine propulsion blade",
-    "category": "marine_parts"
+    "category": "vehicle_parts"
   },
   "yacht": {
     "name": "Luxury Yacht",
@@ -702,12 +702,12 @@
   "sausage": {
     "name": "Sausage",
     "description": "Processed pork links",
-    "category": "food"
+    "category": "meat"
   },
   "bacon": {
     "name": "Bacon",
     "description": "Cured pork belly",
-    "category": "food"
+    "category": "meat"
   },
   "duck_confit": {
     "name": "Duck Confit",
@@ -742,32 +742,32 @@
   "apples": {
     "name": "Apples",
     "description": "Fresh apples from the orchard",
-    "category": "fruits"
+    "category": "produce"
   },
   "oranges": {
     "name": "Oranges",
     "description": "Fresh oranges from the grove",
-    "category": "fruits"
+    "category": "produce"
   },
   "chocolate": {
     "name": "Chocolate",
     "description": "Delicious Food",
-    "category": "food"
+    "category": "confectionery"
   },
   "cocoa_beans": {
     "name": "Cocoa Beans",
     "description": "Fresh cocoa",
-    "category": "fruits"
+    "category": "produce"
   },
   "potatoes": {
     "name": "Potatoes",
     "description": "Fresh potatoes from the field",
-    "category": "vegetables"
+    "category": "produce"
   },
   "carrots": {
     "name": "Carrots",
     "description": "Fresh carrots from the field",
-    "category": "vegetables"
+    "category": "produce"
   },
   "cotton_seeds": {
     "name": "Cotton Seeds",
@@ -802,7 +802,7 @@
   "grass": {
     "name": "Grass",
     "description": "Food for grazing animals",
-    "category": "feed"
+    "category": "crops"
   },
   "glue": {
     "name": "Industrial Glue",
@@ -817,7 +817,7 @@
   "leather": {
     "name": "Leather",
     "description": "High-quality hides for bookbinding and luxury goods",
-    "category": "materials"
+    "category": "textiles"
   },
   "lard": {
     "name": "Lard",
@@ -827,22 +827,22 @@
   "beef": {
     "name": "Beef",
     "description": "Processed meat ready for retail distribution",
-    "category": "food"
+    "category": "meat"
   },
   "milk": {
     "name": "Milk",
     "description": "Cows Milk",
-    "category": "beverage"
+    "category": "dairy"
   },
   "cream": {
     "name": "Cream",
     "description": "Dairy ingredient",
-    "category": "food"
+    "category": "dairy"
   },
   "ice_cream": {
     "name": "Ice Cream",
     "description": "Dairy ingredient",
-    "category": "food"
+    "category": "dairy"
   },
   "cotton": {
     "name": "Cotton",
@@ -867,17 +867,17 @@
   "timber": {
     "name": "Timber",
     "description": "Raw logs from the forest",
-    "category": "wood"
+    "category": "industrial"
   },
   "lumber": {
     "name": "Lumber",
     "description": "Processed wood for construction and manufacturing",
-    "category": "wood"
+    "category": "industrial"
   },
   "sawdust": {
     "name": "Sawdust",
     "description": "Wood byproduct used in manufacturing",
-    "category": "wood"
+    "category": "industrial"
   },
   "copper_ore": {
     "name": "Copper Ore",
@@ -912,12 +912,12 @@
   "zippers": {
     "name": "Zippers",
     "description": "Metal fasteners for clothing and bags",
-    "category": "components"
+    "category": "textiles"
   },
   "buttons": {
     "name": "Buttons",
     "description": "Fasteners for clothing",
-    "category": "components"
+    "category": "textiles"
   },
   "cane": {
     "name": "Sugar Cane",
@@ -927,7 +927,7 @@
   "sugar": {
     "name": "Sugar",
     "description": "Refined sugar for food production",
-    "category": "food"
+    "category": "sweeteners"
   },
   "potato_sack": {
     "name": "Potato Sack",
@@ -1042,12 +1042,12 @@
   "blackstrap_molasses": {
     "name": "Blackstrap Molasses",
     "description": "Thick, dark, and bitter molasses byproduct of sugar refining.",
-    "category": "food"
+    "category": "sweeteners"
   },
   "rum_molasses": {
     "name": "Rum Molasses",
     "description": "High-quality molasses suitable for fermentation and distillation.",
-    "category": "food"
+    "category": "sweeteners"
   },
   "oil": {
     "name": "Crude Oil",
@@ -1062,7 +1062,7 @@
   "caramel": {
     "name": "Caramel",
     "description": "Confectionery product made by heating sugar.",
-    "category": "food"
+    "category": "sweeteners"
   },
   "pig": {
     "name": "Pig",
@@ -1082,17 +1082,17 @@
   "pork": {
     "name": "Pork",
     "description": "Fresh pork cuts",
-    "category": "food"
+    "category": "meat"
   },
   "duck_meat": {
     "name": "Duck Meat",
     "description": "Rich poultry meat",
-    "category": "food"
+    "category": "meat"
   },
   "feathers": {
     "name": "Feathers",
     "description": "Down feathers for upholstery",
-    "category": "materials"
+    "category": "textiles"
   },
   "cherry_seeds": {
     "name": "Cherry Seeds",
@@ -1122,12 +1122,12 @@
   "cherries": {
     "name": "Cherries",
     "description": "Sweet red fruit",
-    "category": "fruits"
+    "category": "produce"
   },
   "onions": {
     "name": "Onions",
     "description": "Essential savory vegetable",
-    "category": "vegetables"
+    "category": "produce"
   },
   "wheat": {
     "name": "Wheat",
@@ -1137,12 +1137,12 @@
   "flour": {
     "name": "Flour",
     "description": "Milled wheat powder",
-    "category": "food"
+    "category": "ingredients"
   },
   "sand": {
     "name": "Silica Sand",
     "description": "Raw material for glass",
-    "category": "ore"
+    "category": "industrial"
   },
   "glass": {
     "name": "Glass",
@@ -1167,12 +1167,12 @@
   "candy_bar": {
     "name": "Chocolate Bar",
     "description": "Sugar and cocoa treat",
-    "category": "food"
+    "category": "confectionery"
   },
   "lollipop": {
     "name": "Lollipop",
     "description": "Hard candy on a stick",
-    "category": "food"
+    "category": "confectionery"
   },
   "apple_pie": {
     "name": "Apple Pie",
@@ -1182,7 +1182,7 @@
   "bread": {
     "name": "Artisan Bread",
     "description": "Fresh baked loaf",
-    "category": "food"
+    "category": "baked_goods"
   },
   "medicine": {
     "name": "Antibiotics",
@@ -1207,7 +1207,7 @@
   "butter": {
     "name": "Butter",
     "description": "Churned dairy product for baking and cooking",
-    "category": "food"
+    "category": "dairy"
   },
   "art_book": {
     "name": "Art Book",
@@ -1232,12 +1232,12 @@
   "cheese": {
     "name": "Cheese",
     "description": "Dairy product for cooking and consumption",
-    "category": "food"
+    "category": "dairy"
   },
   "coal": {
     "name": "Coal",
     "description": "Fossil fuel for smelting and energy",
-    "category": "minerals"
+    "category": "energy"
   },
   "jewelry": {
     "name": "Jewelry",
@@ -1247,12 +1247,12 @@
   "lettuce": {
     "name": "Lettuce",
     "description": "Fresh leafy greens",
-    "category": "vegetables"
+    "category": "produce"
   },
   "tomato": {
     "name": "Tomatoes",
     "description": "Fresh ripe tomatoes for cooking and processing",
-    "category": "vegetables"
+    "category": "produce"
   },
   "lotion": {
     "name": "Body Lotion",
@@ -1377,7 +1377,7 @@
   "soda": {
     "name": "Soda",
     "description": "Carbonated beverage",
-    "category": "beverage"
+    "category": "beverages"
   },
   "toothpaste": {
     "name": "Toothpaste",
@@ -1677,12 +1677,12 @@
   "squid": {
     "name": "Squid",
     "description": "Fast-swimming cephalopod used in calamari, stir-fries and stews",
-    "category": "cephalopod"
+    "category": "seafood"
   },
   "octopus": {
     "name": "Octopus",
     "description": "Eight-armed cephalopod prized in Mediterranean and Asian cuisine",
-    "category": "cephalopod"
+    "category": "seafood"
   },
   "eel": {
     "name": "Eel",
@@ -1857,22 +1857,22 @@
   "fish_sauce": {
     "name": "Fish Sauce",
     "description": "Pungent fermented fish liquid essential to Thai, Vietnamese and Asian cuisines",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "oyster_sauce": {
     "name": "Oyster Sauce",
     "description": "Thick, sweet-savory sauce made from oyster extracts used in Chinese cooking",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "shrimp_paste": {
     "name": "Shrimp Paste",
     "description": "Fermented shrimp condiment essential to Southeast Asian cooking",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "worcestershire_sauce": {
     "name": "Worcestershire Sauce",
     "description": "Fermented anchovy and vinegar sauce used as a condiment and cooking ingredient",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "rice_flour": {
     "name": "Rice Flour",
@@ -1887,57 +1887,57 @@
   "ketchup": {
     "name": "Ketchup",
     "description": "Sweetened tomato condiment sauce used in cooking and as a topping",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "tomato_sauce": {
     "name": "Tomato Sauce",
     "description": "Cooked reduced tomato sauce used as a pasta and cooking base",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "pizza_sauce": {
     "name": "Pizza Sauce",
     "description": "Seasoned tomato sauce spread on pizza bases before topping",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "salsa": {
     "name": "Salsa",
     "description": "Chopped tomato, onion and chilli sauce used in Mexican cooking",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "flue_cured_tobacco": {
     "name": "Flue-Cured Tobacco",
     "description": "Bright golden tobacco cured by heat from metal flues, producing a high-sugar, low-nicotine leaf",
-    "category": "ingredients"
+    "category": "cured_tobacco"
   },
   "air_cured_tobacco": {
     "name": "Air-Cured Tobacco",
     "description": "Burley tobacco dried slowly in ventilated barns, producing a dry, high-nicotine, low-sugar leaf",
-    "category": "ingredients"
+    "category": "cured_tobacco"
   },
   "fire_cured_tobacco": {
     "name": "Fire-Cured Tobacco",
     "description": "Tobacco cured by open hardwood fires, imparting a bold smoky flavour used in pipe and dark blends",
-    "category": "ingredients"
+    "category": "cured_tobacco"
   },
   "sun_cured_tobacco": {
     "name": "Sun-Cured Tobacco",
     "description": "Oriental tobacco dried in direct sunlight, producing a light aromatic leaf for Turkish-style blends",
-    "category": "ingredients"
+    "category": "cured_tobacco"
   },
   "cavendish_tobacco": {
     "name": "Cavendish Tobacco",
     "description": "Sweetened, steam-pressed and fermented tobacco, soft and mild, the base of aromatic pipe blends",
-    "category": "ingredients"
+    "category": "cured_tobacco"
   },
   "perique_tobacco": {
     "name": "Perique Tobacco",
     "description": "Pressure-fermented under its own juices for months, producing a uniquely spicy, plummy condiment tobacco",
-    "category": "ingredients"
+    "category": "cured_tobacco"
   },
   "fish_meal": {
     "name": "Fish Meal",
     "description": "Dried, ground fish used as a high-protein animal feed supplement",
-    "category": "feed"
+    "category": "ingredients"
   },
   "fish_oil": {
     "name": "Fish Oil",
@@ -2052,12 +2052,12 @@
   "jam": {
     "name": "Jam",
     "description": "Sweetened fruit preserve made from cooked cherries or apples",
-    "category": "food"
+    "category": "sweeteners"
   },
   "jelly": {
     "name": "Jelly",
     "description": "Clear fruit preserve made from strained grape juice and sugar",
-    "category": "food"
+    "category": "sweeteners"
   },
   "pasta": {
     "name": "Pasta",
@@ -2077,17 +2077,17 @@
   "vinegar": {
     "name": "Vinegar",
     "description": "Acidic liquid fermented from red wine",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "apple_cider_vinegar": {
     "name": "Apple Cider Vinegar",
     "description": "Tangy vinegar fermented from apple cider",
-    "category": "ingredients"
+    "category": "condiments"
   },
   "yogurt": {
     "name": "Yogurt",
     "description": "Creamy fermented dairy product made from cultured milk",
-    "category": "food"
+    "category": "dairy"
   },
   "cardboard": {
     "name": "Cardboard",
@@ -2157,12 +2157,12 @@
   "rope_wick": {
     "name": "Rope Wick",
     "description": "Braided cotton wick twisted with dried apple-seed fibre, slow-burning and used in premium candles",
-    "category": "materials"
+    "category": "industrial"
   },
   "condensed_milk": {
     "name": "Condensed Milk",
     "description": "Sweetened concentrated milk reduced by slow cooking",
-    "category": "food"
+    "category": "dairy"
   },
   "nails": {
     "name": "Nails",
@@ -2617,27 +2617,27 @@
   "wool": {
     "name": "Raw Wool",
     "description": "Shorn fleece ready for washing and carding. The primary fibre for yarn production.",
-    "category": "textile"
+    "category": "textiles"
   },
   "yarn": {
     "name": "Yarn",
     "description": "Spun and plied wool yarn; sold for home knitting, weaving, and arts & crafts.",
-    "category": "textile"
+    "category": "textiles"
   },
   "thread": {
     "name": "Thread",
     "description": "Fine-spun sewing thread used as an essential input in garment manufacture.",
-    "category": "textile"
+    "category": "textiles"
   },
   "lamb_meat": {
     "name": "Lamb Meat",
     "description": "Tender cuts from young sheep; prized for its mild, delicate flavour.",
-    "category": "food"
+    "category": "meat"
   },
   "sheep_milk": {
     "name": "Sheep Milk",
     "description": "Rich, fatty milk from dairy sheep breeds; used in artisan cheese and yoghurt production.",
-    "category": "food"
+    "category": "dairy"
   },
   "blessed_sheep": {
     "name": "Blessed Sheep",
@@ -2653,5 +2653,70 @@
     "name": "Bottled Water",
     "description": "Clean purified water sealed in a plastic bottle, sold everywhere from carts to vending machines.",
     "category": "beverages"
+  },
+  "apple_essential_oil": {
+    "name": "Apple Essential Oil",
+    "description": "Cold-pressed oil extracted from apple seeds, rich in vitamin E and used in skin-care lotions and hair products.",
+    "category": "essential_oils"
+  },
+  "barley_essential_oil": {
+    "name": "Barley Essential Oil",
+    "description": "Oil distilled from barley seeds, prized for its moisturizing and scalp-soothing properties in shampoos and conditioners.",
+    "category": "essential_oils"
+  },
+  "cherry_essential_oil": {
+    "name": "Cherry Essential Oil",
+    "description": "Aromatic oil pressed from cherry seeds, used as a fragrance base in perfumes and as an antioxidant-rich skin tonic.",
+    "category": "essential_oils"
+  },
+  "cocoa_essential_oil": {
+    "name": "Cocoa Essential Oil",
+    "description": "Rich emollient oil derived from cocoa seeds, a premium base for moisturizing lotions, lip balms, and healing ointments.",
+    "category": "essential_oils"
+  },
+  "coffee_essential_oil": {
+    "name": "Coffee Essential Oil",
+    "description": "Stimulating oil extracted from coffee seeds, used to add invigorating aroma to shampoos and as a circulation-boosting ingredient.",
+    "category": "essential_oils"
+  },
+  "corn_essential_oil": {
+    "name": "Corn Essential Oil",
+    "description": "Light oil cold-pressed from corn seeds, a versatile emollient base for soaps, lotions, and skin-conditioning products.",
+    "category": "essential_oils"
+  },
+  "grape_essential_oil": {
+    "name": "Grape Essential Oil",
+    "description": "Fine oil extracted from grape seeds, renowned for its antioxidant content and use in high-end perfumes and moisturizing lotions.",
+    "category": "essential_oils"
+  },
+  "onion_essential_oil": {
+    "name": "Onion Essential Oil",
+    "description": "Potent oil distilled from onion seeds with natural antimicrobial compounds, used in medicinal syrups and topical anti-inflammatory treatments.",
+    "category": "essential_oils"
+  },
+  "rice_essential_oil": {
+    "name": "Rice Essential Oil",
+    "description": "Lightweight oil pressed from rice bran, widely used in luxury skin-care formulations and hair-smoothing shampoos.",
+    "category": "essential_oils"
+  },
+  "tea_essential_oil": {
+    "name": "Tea Essential Oil",
+    "description": "Antimicrobial oil distilled from tea plant seeds, a key active ingredient in antiseptics, dandruff shampoos, and skin-clearing treatments.",
+    "category": "essential_oils"
+  },
+  "tobacco_essential_oil": {
+    "name": "Tobacco Essential Oil",
+    "description": "Rich, smoky-sweet oil extracted from tobacco seeds, a prized base note in luxury perfumes and aromatic cosmetics.",
+    "category": "essential_oils"
+  },
+  "tomato_essential_oil": {
+    "name": "Tomato Essential Oil",
+    "description": "Lycopene-rich oil cold-pressed from tomato seeds, used in anti-aging serums, moisturizing lotions, and UV-protection skin creams.",
+    "category": "essential_oils"
+  },
+  "wheat_essential_oil": {
+    "name": "Wheat Essential Oil",
+    "description": "Nourishing oil pressed from wheat germ, packed with vitamin E and used in restorative soaps, lotions, and hair-treatment products.",
+    "category": "essential_oils"
   }
 }

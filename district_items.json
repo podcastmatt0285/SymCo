@@ -172,12 +172,12 @@
   "microscope": {
     "name": "Microscope",
     "description": "Scientific magnification instrument",
-    "category": "equipment"
+    "category": "lab_equipment"
   },
   "lab_equipment": {
     "name": "Laboratory Equipment",
     "description": "Scientific research apparatus",
-    "category": "equipment"
+    "category": "lab_equipment"
   },
   "medical_scanner": {
     "name": "Medical Scanner",
@@ -572,17 +572,17 @@
   "food_tray": {
     "name": "Food Tray",
     "description": "Disposable serving tray",
-    "category": "packaging"
+    "category": "food_service"
   },
   "takeout_container": {
     "name": "Takeout Container",
     "description": "Food packaging box",
-    "category": "packaging"
+    "category": "food_service"
   },
   "disposable_utensils": {
     "name": "Disposable Utensils",
     "description": "Plastic cutlery set",
-    "category": "packaging"
+    "category": "food_service"
   },
   "curriculum_package": {
     "name": "Curriculum Package",
@@ -1478,5 +1478,175 @@
     "name": "Stingray",
     "description": "Flat cartilaginous fish with a barbed tail popular in touch-tank aquarium exhibits",
     "category": "animals"
+  },
+  "aviation_fuel": {
+    "name": "Aviation Fuel",
+    "description": "High-grade kerosene-based jet fuel refined for commercial and cargo aircraft.",
+    "category": "fuel"
+  },
+  "jet_fuel_additive": {
+    "name": "Jet Fuel Additive",
+    "description": "Performance-enhancing chemical additive blended with aviation fuel to prevent icing and boost combustion efficiency.",
+    "category": "fuel"
+  },
+  "marine_fuel": {
+    "name": "Marine Fuel",
+    "description": "Distillate fuel oil used by port service vessels and short-haul ships operating in and around the harbor.",
+    "category": "fuel"
+  },
+  "bunker_fuel": {
+    "name": "Bunker Fuel",
+    "description": "Heavy residual fuel oil used by large ocean-going cargo ships and container vessels.",
+    "category": "fuel"
+  },
+  "ammunition_crate": {
+    "name": "Ammunition Crate",
+    "description": "Standardized wooden and steel crate loaded with small-arms cartridges for security and law-enforcement operations.",
+    "category": "military"
+  },
+  "explosive_ordnance": {
+    "name": "Explosive Ordnance",
+    "description": "Controlled demolition charges and breaching devices used in high-security tactical operations.",
+    "category": "military"
+  },
+  "armored_personnel_carrier": {
+    "name": "Armored Personnel Carrier",
+    "description": "Blast-resistant transport vehicle designed to move security personnel and high-value detainees safely.",
+    "category": "vehicles"
+  },
+  "ration_pack": {
+    "name": "Ration Pack",
+    "description": "Self-contained field meal providing a day's worth of calories and nutrition for military and correctional personnel.",
+    "category": "retail_military"
+  },
+  "field_gear_set": {
+    "name": "Field Gear Set",
+    "description": "Complete set of tactical field equipment including webbing, load-bearing vest, and utility pouches.",
+    "category": "retail_military"
+  },
+  "uniform_kit": {
+    "name": "Uniform Kit",
+    "description": "Full issue of standardized duty uniforms, boots, and insignia for military or correctional-facility personnel.",
+    "category": "retail_military"
+  },
+  "medical_supply_kit": {
+    "name": "Medical Supply Kit",
+    "description": "Field-ready kit stocked with trauma dressings, antiseptics, splints, and emergency medications.",
+    "category": "retail_military"
+  },
+  "composite_alloy": {
+    "name": "Composite Alloy",
+    "description": "High-performance metal matrix blending iron, copper, and zinc into a lightweight, ultra-strong structural material.",
+    "category": "metals"
+  },
+  "polymer_compound": {
+    "name": "Polymer Compound",
+    "description": "Engineered polymer blend derived from rubber and plastic, formulated for high-stress mechanical applications.",
+    "category": "industrial"
+  },
+  "biotech_compound": {
+    "name": "Biotech Compound",
+    "description": "Synthesized biological compound produced through advanced fermentation and purification, used as a base for next-generation pharmaceuticals.",
+    "category": "pharmaceuticals"
+  },
+  "research_enzyme": {
+    "name": "Research Enzyme",
+    "description": "Highly purified biological enzyme produced in controlled lab conditions, used to catalyze pharmaceutical synthesis reactions.",
+    "category": "pharmaceuticals"
+  },
+  "industrial_robot": {
+    "name": "Industrial Robot",
+    "description": "Fully assembled programmable robotic system designed for precision manufacturing, assembly-line automation, and heavy-duty maintenance tasks.",
+    "category": "robotics"
+  },
+  "robotic_arm_assembly": {
+    "name": "Robotic Arm Assembly",
+    "description": "Multi-axis robotic arm module used as a sub-assembly in industrial robots and as a standalone precision tool in advanced manufacturing.",
+    "category": "robotics"
+  },
+  "freight_container": {
+    "name": "Freight Container",
+    "description": "Standard ISO air-freight container used to consolidate and protect cargo during airport handling and transit.",
+    "category": "logistics"
+  },
+  "shipping_container": {
+    "name": "Shipping Container",
+    "description": "Heavy-gauge steel intermodal container used for ocean freight, stackable on container ships and rail flatcars.",
+    "category": "logistics"
+  },
+  "refrigerated_container": {
+    "name": "Refrigerated Container",
+    "description": "Temperature-controlled reefer container maintaining cold-chain integrity for perishable cargo in sea freight.",
+    "category": "logistics"
+  },
+  "cargo_manifest": {
+    "name": "Cargo Manifest",
+    "description": "Official document listing the contents, weight, and destination of all freight packages in an air-cargo shipment.",
+    "category": "logistics"
+  },
+  "freight_manifest": {
+    "name": "Freight Manifest",
+    "description": "Comprehensive sea-freight bill of lading and cargo declaration submitted to port authorities for customs processing.",
+    "category": "logistics"
+  },
+  "aircraft_service_report": {
+    "name": "Aircraft Service Report",
+    "description": "Certified maintenance log confirming that an aircraft has passed all MRO inspections and is cleared for commercial operations.",
+    "category": "intelligence"
+  },
+  "threat_intelligence_report": {
+    "name": "Threat Intelligence Report",
+    "description": "Classified cybersecurity analysis documenting active threat actors, vulnerabilities, and recommended countermeasures.",
+    "category": "intelligence"
+  },
+  "license_plate_batch": {
+    "name": "License Plate Batch",
+    "description": "Set of stamped and painted metal license plates produced for government vehicle registration programs.",
+    "category": "prison"
+  },
+  "livestock_product_supply": {
+    "name": "Livestock Product Supply",
+    "description": "Mixed bulk supply of beef, pork, and poultry produced on supervised prison farm operations.",
+    "category": "prison"
+  },
+  "prison_produce_crate": {
+    "name": "Prison Produce Crate",
+    "description": "Crate of fresh-grown vegetables and grains harvested from prison agricultural programs and sold to food-service buyers.",
+    "category": "prison"
+  },
+  "hospitality_linen_set": {
+    "name": "Hospitality Linen Set",
+    "description": "Commercial-grade set of bed sheets, pillowcases, and towels produced for hotels and event venues.",
+    "category": "hospitality"
+  },
+  "event_supply_kit": {
+    "name": "Event Supply Kit",
+    "description": "Complete convention and conference supply kit including signage, badge holders, folding furniture, and presentation materials.",
+    "category": "hospitality"
+  },
+  "institutional_furniture_set": {
+    "name": "Institutional Furniture Set",
+    "description": "Durable, tamper-resistant furniture set including beds, tables, and benches manufactured for correctional and government facilities.",
+    "category": "prison_infrastructure"
+  },
+  "bedroom_set": {
+    "name": "Bedroom Set",
+    "description": "Complete bedroom furniture ensemble including bed frame, mattress, wardrobe, and nightstands.",
+    "category": "retail_shopping"
+  },
+  "living_room_set": {
+    "name": "Living Room Set",
+    "description": "Coordinated living room furniture package featuring sofa, coffee table, entertainment unit, and accent chairs.",
+    "category": "retail_shopping"
+  },
+  "kitchen_package": {
+    "name": "Kitchen Package",
+    "description": "Full kitchen fit-out including cabinets, countertop, dining table, and chairs sold as a single bundled package.",
+    "category": "retail_shopping"
+  },
+  "office_furniture": {
+    "name": "Office Furniture",
+    "description": "Professional office furniture bundle including desk, ergonomic chair, filing cabinet, and shelving units.",
+    "category": "retail_shopping"
   }
 }
