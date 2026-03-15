@@ -690,10 +690,12 @@ def collect_hoarding_taxes():
 
     # Collect land_plot_ids occupied by food carts (exempt from hoarding count)
     from business import Business as _Business
-    food_cart_plot_ids = db.query(_Business.land_plot_id).filter(
-        _Business.business_type.in_(FOOD_CART_TYPES),
-        _Business.land_plot_id != None
-    ).subquery()
+    food_cart_plot_ids = [
+        r.land_plot_id for r in db.query(_Business.land_plot_id).filter(
+            _Business.business_type.in_(FOOD_CART_TYPES),
+            _Business.land_plot_id != None
+        ).all()
+    ]
 
     # Find players with more than HOARDING_FREE_PLOTS plots (exclude government,
     # tutorial reward plots, and food-cart plots)
