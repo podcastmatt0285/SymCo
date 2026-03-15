@@ -348,6 +348,13 @@ except ModuleNotFoundError:
     pass
 
 try:
+    from wcpr_ux import router as wcpr_router
+    app.include_router(wcpr_router)
+    print("WCPR routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
     from settings_ux import router as settings_router
     app.include_router(settings_router)
     print("Settings routes registered")

@@ -97,7 +97,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 color: #e5e7eb;
                 font-family: 'JetBrains Mono', monospace;
                 margin: 0;
-                padding-bottom: 60px;
+                padding-bottom: 80px;
                 font-size: 18px;
             }}
 
@@ -439,27 +439,401 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
              Track cache key: wadsST_tracks (TTL 5 min)
              ══════════════════════════════════════════════════════════ -->
         <audio id="gs-audio" preload="auto" style="display:none;"></audio>
+        <audio id="wcpr-shell-audio" preload="none" style="display:none;"></audio>
 
-        <!-- Mini floating player bar -->
-        <div id="gs-bar" style="
-            position:fixed;bottom:50px;right:12px;z-index:150;
-            background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;
-            padding:6px 10px;display:flex;align-items:center;gap:8px;
-            font-size:0.72rem;color:#94a3b8;min-width:220px;max-width:300px;
-            box-shadow:0 4px 20px rgba(0,0,0,0.5);
-            transition:opacity 0.3s;">
-            <span style="font-size:1rem;flex-shrink:0;" title="Game Music">🎵</span>
-            <div style="flex:1;min-width:0;overflow:hidden;">
-                <div id="gs-title" style="color:#e5e7eb;white-space:nowrap;display:inline-block;">Loading…</div>
+        <style>
+        #gs-bar {{
+            position:fixed;bottom:0;left:0;right:0;z-index:150;
+            background:#1A0F0A;border-top:2px solid rgba(176,141,87,0.5);
+            box-shadow:0 -4px 24px rgba(0,0,0,0.7);
+            display:flex;align-items:center;height:72px;
+            font-family:Georgia,serif;color:#F5F5DC;transition:opacity 0.3s;
+        }}
+        #gsbar-inlay {{
+            position:absolute;inset:2px;border:1px solid rgba(176,141,87,0.12);
+            pointer-events:none;
+        }}
+        #gsbar-flower {{
+            width:52px;height:52px;flex-shrink:0;margin:0 10px;
+            background:black;border:1px solid rgba(166,124,0,0.3);
+            overflow:hidden;display:flex;align-items:center;justify-content:center;
+        }}
+        #gsbar-flower svg {{
+            width:82%;height:82%;
+            animation:gsbar-sway 6s ease-in-out infinite;transform-origin:center;
+        }}
+        .gsbar-station {{
+            display:flex;flex-direction:column;justify-content:center;
+            width:190px;flex-shrink:0;padding:0 12px;
+            border-right:1px solid rgba(176,141,87,0.12);
+        }}
+        .gsbar-sname {{
+            font-size:0.62rem;font-weight:900;color:#B08D57;
+            text-transform:uppercase;letter-spacing:0.1em;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+        }}
+        #gsbar-slogan {{
+            font-size:0.52rem;font-style:italic;color:#F5F5DC;opacity:0.35;
+            text-transform:uppercase;letter-spacing:0.12em;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+            height:13px;
+        }}
+        .gsbar-title-wrap {{
+            flex:1;min-width:0;overflow:hidden;padding:0 14px;
+            border-right:1px solid rgba(176,141,87,0.12);
+        }}
+        #gs-title {{
+            color:#e5e7eb;white-space:nowrap;font-size:0.75rem;
+            display:inline-block;
+        }}
+        .gsbar-transport {{
+            display:flex;align-items:center;gap:8px;padding:0 14px;
+            border-right:1px solid rgba(176,141,87,0.12);flex-shrink:0;
+        }}
+        #gs-pp {{
+            width:34px;height:34px;border-radius:50%;
+            border:1px solid rgba(176,141,87,0.5);background:#241812;
+            color:#B08D57;font-size:0.95rem;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            transition:background 0.2s,color 0.2s;
+        }}
+        #gs-pp:hover {{ background:#B08D57;color:black; }}
+        .gsbar-skip {{
+            background:none;border:none;color:#B08D57;opacity:0.4;
+            cursor:pointer;font-size:1rem;transition:opacity 0.2s;padding:0;
+        }}
+        .gsbar-skip:hover {{ opacity:1; }}
+        .gsbar-prog-wrap {{
+            flex:1;min-width:60px;max-width:200px;padding:0 14px;
+            display:flex;flex-direction:column;gap:3px;
+            border-right:1px solid rgba(176,141,87,0.12);
+        }}
+        .gsbar-prog-bar {{
+            height:2px;background:rgba(255,255,255,0.08);
+            border-radius:999px;overflow:hidden;
+        }}
+        #gsbar-pfill {{
+            height:100%;background:linear-gradient(to right,#8B4513,#B08D57);
+            width:0%;transition:width 0.5s linear;
+        }}
+        #gsbar-time {{
+            font-size:0.48rem;color:#B08D57;opacity:0.5;
+            text-align:right;letter-spacing:0.08em;
+        }}
+        .gsbar-right {{
+            display:flex;align-items:center;gap:12px;
+            padding:0 14px;flex-shrink:0;
+        }}
+        .gsbar-tuner {{
+            display:flex;flex-direction:column;align-items:center;
+            gap:2px;cursor:pointer;user-select:none;
+        }}
+        .gsbar-knob {{
+            width:30px;height:30px;border-radius:50%;
+            background:linear-gradient(to bottom,#3d2b1f,#1a0f0a);
+            border:1px solid rgba(176,141,87,0.4);position:relative;
+            box-shadow:0 2px 6px rgba(0,0,0,0.5);transition:transform 0.1s;
+        }}
+        .gsbar-knob:active {{ transform:scale(0.93); }}
+        #gsbar-kind {{
+            position:absolute;top:3px;left:50%;width:3px;height:9px;
+            background:#B08D57;border-radius:999px;
+            transform:translateX(-50%) rotate(0deg);
+            transform-origin:50% 100%;transition:transform 0.5s ease;
+        }}
+        #gsbar-klbl {{
+            font-size:0.46rem;text-transform:uppercase;color:#B08D57;
+            font-weight:bold;letter-spacing:0.08em;
+        }}
+        .gsbar-mute {{
+            background:none;border:none;color:#B08D57;opacity:0.5;
+            cursor:pointer;font-size:0.85rem;padding:0;transition:opacity 0.2s;
+        }}
+        .gsbar-mute:hover {{ opacity:1; }}
+        #gs-vol {{ width:52px;accent-color:#B08D57;cursor:pointer; }}
+        .gsbar-cog {{
+            position:absolute;right:6px;bottom:4px;opacity:0.04;
+            font-size:1.8rem;animation:gsbar-spin 15s linear infinite;
+            color:#B08D57;pointer-events:none;line-height:1;
+        }}
+        @keyframes gsbar-sway {{
+            0%,100% {{ transform:rotate(-2deg) scale(1); }}
+            50%      {{ transform:rotate(2deg) scale(1.02); }}
+        }}
+        @keyframes gsbar-slogan-fade {{
+            0% {{ opacity:0;transform:translateY(3px); }}
+            12% {{ opacity:0.35;transform:translateY(0); }}
+            88% {{ opacity:0.35;transform:translateY(0); }}
+            100% {{ opacity:0;transform:translateY(-3px); }}
+        }}
+        .gsbar-slogan-anim {{ animation:gsbar-slogan-fade 4s ease-in-out; }}
+        @keyframes gsbar-spin {{ from {{ transform:rotate(0deg); }} to {{ transform:rotate(360deg); }} }}
+        </style>
+
+        <!-- Mini radio bar -->
+        <div id="gs-bar">
+            <div id="gsbar-inlay"></div>
+
+            <!-- Flower artwork -->
+            <div id="gsbar-flower">
+                <svg viewBox="0 0 201.5 207.54" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="gbLg"><stop id="gbS1" stop-color="#F8BBD0" offset="0"/><stop id="gbS2" stop-color="#F8BBD0" stop-opacity="0" offset="1"/></linearGradient>
+                        <radialGradient id="gbRg" xlink:href="#gbLg" gradientUnits="userSpaceOnUse" cy="172.36" cx="342.86" gradientTransform="matrix(1 0 0 1.0417 0 -7.1934)" r="193.09"/>
+                    </defs>
+                    <g transform="matrix(.15791 0 0 .15791 16.376 41.416)">
+                        <path style="fill-rule:evenodd;fill:#2D5A27" d="m470.03 168.72c-34.81 0.55-75.98 25.14-120.23 80.45 287.24-187.49 318.09 308.34-234.97 802.83h105.53c11.37-10.2 22.06-19.9 30.58-28.8 404.11-366.71 376.62-856.94 219.09-854.48z"/>
+                        <path style="fill-rule:evenodd;fill:#2D5A27" d="m834.13 625.57c77.98-166.27-189.49-144.42-409.81 189.81l-7.81-53.51c195.76-321.73 564.68-292.21 417.62-136.3z"/>
+                        <path style="fill-rule:evenodd;fill:#2D5A27" d="m44.425 533.84c57.285-180.94 245.14 23.08 178.28 431.36l43.44-35.18c76.75-381.56-224.17-617.67-221.72-396.18z"/>
+                        <g transform="translate(17.143 -148.57)">
+                            <path id="gbP1" style="fill-rule:evenodd;transition:fill 3s" fill="#FFB7B2" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(219.15 -163.07)"/>
+                            <path id="gbP2" style="fill-rule:evenodd;transition:fill 3s" fill="#FFB7B2" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(27.721 -188.78)"/>
+                            <path id="gbP3" style="fill-rule:evenodd;transition:fill 3s" fill="#FFB7B2" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-86.565 -45.925)"/>
+                            <path id="gbP4" style="fill-rule:evenodd;transition:fill 3s" fill="#FFB7B2" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(256.29 14.075)"/>
+                            <path id="gbP5" style="fill-rule:evenodd;transition:fill 3s" fill="#FFB7B2" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(150.58 151.22)"/>
+                            <path id="gbP6" style="fill-rule:evenodd;transition:fill 3s" fill="#FFB7B2" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-12.279 128.36)"/>
+                            <path style="fill-rule:evenodd;fill:url(#gbRg)" d="m500 300.93c-39.84 48.69-62.4-55.86-121.24-33.61s-6.6 115.57-68.68 105.42c-62.08-10.16 17.18-81.97-31.51-121.81-48.69-39.83-103.38 52.08-125.63-6.76-22.25-58.85 79.57-26.11 89.73-88.2 10.15-62.077-96.79-63.492-56.96-112.18 39.84-48.687 62.4 55.86 121.25 33.613 58.84-22.247 6.59-115.57 68.67-105.42 62.08 10.158-17.17 81.973 31.51 121.81 48.69 39.837 103.39-52.077 125.63 6.767 22.25 58.84-79.57 26.11-89.73 88.19-10.15 62.08 96.8 63.5 56.96 112.18z" transform="matrix(1.2126 0 0 1.2126 -107.6 -19.596)"/>
+                            <path style="fill-rule:evenodd;fill:#ffd5d5" d="m514.29 249.39c0.01 44.19-33.25 80.02-74.29 80.02s-74.3-35.83-74.29-80.02c-0.01-44.2 33.25-80.03 74.29-80.03s74.3 35.83 74.29 80.03z" transform="translate(-131.87 -59.983)"/>
+                        </g>
+                        <g transform="matrix(.37085 .64112 -.64112 .37085 1004.3 1085.6)">
+                            <path style="fill-rule:evenodd;fill:#00ff00" d="m-514.29 660.81s-168.57-82.85-5.71-242.85 162.86-154.29 162.86-154.29 97.14 128.57 51.43 242.86c-45.72 114.28-205.72 154.28-208.58 154.28z" transform="translate(-129.42 -54.497)"/>
+                            <path style="fill-rule:evenodd;fill:#2D5A27" d="m-385.71 357.96l-148.58 365.71h45.72l102.86-365.71z" transform="translate(-129.42 -54.497)"/>
+                        </g>
+                    </g>
+                </svg>
             </div>
-            <button id="gs-pp" onclick="gsTogglePlay()" title="Play/Pause"
-                    style="background:none;border:none;color:#38bdf8;font-size:1rem;cursor:pointer;padding:0;line-height:1;">⏸</button>
-            <button onclick="gsNext()" title="Next track"
-                    style="background:none;border:none;color:#64748b;font-size:0.9rem;cursor:pointer;padding:0;line-height:1;">⏭</button>
-            <input id="gs-vol" type="range" min="0" max="1" step="0.05"
-                   oninput="gsSetVolume(this.value)"
-                   style="width:50px;accent-color:#38bdf8;cursor:pointer;" title="Volume">
+
+            <!-- Station name + slogan -->
+            <div class="gsbar-station">
+                <div class="gsbar-sname" id="gsbar-sname">WLOL 92.8 FM</div>
+                <div id="gsbar-slogan"></div>
+            </div>
+
+            <!-- Track title -->
+            <div class="gsbar-title-wrap">
+                <div id="gs-title">Loading&hellip;</div>
+            </div>
+
+            <!-- Transport: play/pause + skip -->
+            <div class="gsbar-transport">
+                <button id="gs-pp" onclick="gsBarToggle()" title="Play/Pause">&#9654;</button>
+                <button class="gsbar-skip" onclick="gsBarSkip()" title="Skip">&#9197;</button>
+            </div>
+
+            <!-- Progress -->
+            <div class="gsbar-prog-wrap">
+                <div class="gsbar-prog-bar"><div id="gsbar-pfill"></div></div>
+                <div id="gsbar-time"></div>
+            </div>
+
+            <!-- Tuner + Volume -->
+            <div class="gsbar-right">
+                <div class="gsbar-tuner" onclick="gsBarTune()">
+                    <div class="gsbar-knob"><div id="gsbar-kind"></div></div>
+                    <span id="gsbar-klbl">WLOL</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                    <button class="gsbar-mute" id="gsbar-mute" onclick="gsBarMute()">&#128266;</button>
+                    <input id="gs-vol" type="range" min="0" max="1" step="0.05"
+                           oninput="gsSetVolume(parseFloat(this.value))"
+                           title="Volume">
+                </div>
+            </div>
+
+            <div class="gsbar-cog">&#9881;</div>
         </div>
+
+        <script>
+        (function() {{
+            var PASTELS = ["#FFB7B2","#FFDAC1","#E2F0CB","#B5EAD7","#C7CEEA","#FF9AA2","#F8BBD0","#E1BEE7","#D1C4E9","#BBDEFB","#C8E6C9","#F0F4C3","#FFF9C4","#FFE0B2","#F5F5DC"];
+            var SLOGANS = ["Dream big, work hard.","The sky is the limit.","Believe in yourself.","Seize the day.","Make it happen.","Stay hungry, stay foolish.","Innovation distinguishes leaders.","The best is yet to come.","Focus on the goal.","Everything you imagine is real.","Turn your wounds into wisdom.","Be the change.","Action is the key to success.","Don't wait for opportunity, create it.","Your time is limited.","Follow your heart.","Stay positive.","Work hard in silence.","Success is a journey.","Be original.","Never give up.","Chase your dreams.","Limitless potential.","Mindset is everything.","Prove them wrong.","Good things take time.","Focus on the good.","Be fearless.","The only way out is through.","Rise and grind.","Consistency is key.","Keep moving forward.","Life is what you make it.","Greatness takes time.","Push your limits.","Build your empire.","Vision without action is a dream.","Make every day count.","Lead with purpose.","Excellence is not an act, but a habit.","The power of now.","Unlock your potential.","Great things never come from comfort zones.","Do what you love.","Small steps, big results.","Radiate positivity.","Your only limit is you.","Keep the dream alive.","Focus on your vision.","Success favors the bold."];
+
+            var gbStation = (localStorage.getItem('wadsStation') || 'wlol');
+            var gbSloganIdx = Math.floor(Math.random() * SLOGANS.length);
+            var gbMuted = false;
+            var gbVol = 0.35;
+            var wcprTracks = [];
+            var wcprIdx = -1;
+            var wcprAudio = document.getElementById('wcpr-shell-audio');
+
+            // ── Petal cycle ──────────────────────────────────────────────
+            function randP() {{ return PASTELS[Math.floor(Math.random() * PASTELS.length)]; }}
+            function cyclePetals() {{
+                var c = randP();
+                ['gbP1','gbP2','gbP3','gbP4','gbP5','gbP6'].forEach(function(id) {{
+                    var el = document.getElementById(id);
+                    if (el) el.setAttribute('fill', c);
+                }});
+                var s1 = document.getElementById('gbS1'), s2 = document.getElementById('gbS2');
+                if (s1) s1.setAttribute('stop-color', randP());
+                if (s2) s2.setAttribute('stop-color', randP());
+            }}
+            setInterval(cyclePetals, 5000);
+
+            // ── Slogan ───────────────────────────────────────────────────
+            function nextSlogan() {{
+                var el = document.getElementById('gsbar-slogan');
+                if (!el) return;
+                gbSloganIdx = (gbSloganIdx + 1) % SLOGANS.length;
+                el.textContent = '"' + SLOGANS[gbSloganIdx] + '"';
+                el.className = '';
+                void el.offsetHeight;
+                el.className = 'gsbar-slogan-anim';
+            }}
+            (function initSlogan() {{
+                var el = document.getElementById('gsbar-slogan');
+                if (el) {{ el.textContent = '"' + SLOGANS[gbSloganIdx] + '"'; el.className = 'gsbar-slogan-anim'; }}
+            }})();
+            setInterval(nextSlogan, 4000);
+
+            // ── Station label ────────────────────────────────────────────
+            function updateStationLabel() {{
+                var sname = document.getElementById('gsbar-sname');
+                var kind  = document.getElementById('gsbar-kind');
+                var klbl  = document.getElementById('gsbar-klbl');
+                var titleEl = document.getElementById('gs-title');
+                if (gbStation === 'wlol') {{
+                    if (sname) sname.textContent = 'WLOL 92.8 FM';
+                    if (kind)  kind.style.transform = 'translateX(-50%) rotate(180deg)';
+                    if (klbl)  klbl.textContent = 'WLOL';
+                }} else {{
+                    if (sname) sname.textContent = 'WCPR 104.1 FM';
+                    if (kind)  kind.style.transform = 'translateX(-50%) rotate(0deg)';
+                    if (klbl)  klbl.textContent = 'WCPR';
+                    if (titleEl && wcprIdx >= 0 && wcprTracks[wcprIdx]) titleEl.textContent = wcprTracks[wcprIdx].title;
+                    else if (titleEl && wcprTracks.length) titleEl.textContent = wcprTracks[0].title;
+                }}
+            }}
+            updateStationLabel();
+
+            // ── Progress bar ─────────────────────────────────────────────
+            function fmtT(s) {{
+                s = Math.floor(s||0); var m=Math.floor(s/60); var sec=s%60;
+                return m+':'+(sec<10?'0':'')+sec;
+            }}
+            setInterval(function() {{
+                var fill = document.getElementById('gsbar-pfill');
+                var time = document.getElementById('gsbar-time');
+                var audio;
+                if (gbStation === 'wlol') {{
+                    audio = document.getElementById('gs-audio');
+                }} else {{
+                    audio = wcprAudio;
+                }}
+                if (audio && audio.duration) {{
+                    var pct = (audio.currentTime / audio.duration) * 100;
+                    if (fill) fill.style.width = pct.toFixed(1) + '%';
+                    if (time) time.textContent = fmtT(audio.currentTime) + ' / ' + fmtT(audio.duration);
+                }}
+            }}, 1000);
+
+            // ── Tuner toggle ─────────────────────────────────────────────
+            window.gsBarTune = function() {{
+                if (gbStation === 'wlol') {{
+                    // Switch to WCPR
+                    try {{ gsSetEnabled(false); }} catch(e) {{}}
+                    gbStation = 'wcpr';
+                    localStorage.setItem('wadsStation', 'wcpr');
+                    updateStationLabel();
+                    wcprStart();
+                }} else {{
+                    // Switch to WLOL
+                    if (wcprAudio) wcprAudio.pause();
+                    gbStation = 'wlol';
+                    localStorage.setItem('wadsStation', 'wlol');
+                    updateStationLabel();
+                    try {{ gsSetEnabled(true); }} catch(e) {{}}
+                    var ppBtn = document.getElementById('gs-pp');
+                    if (ppBtn) ppBtn.innerHTML = '&#9646;&#9646;';
+                }}
+            }};
+
+            // ── Play/Pause/Skip (station-aware wrappers) ─────────────────
+            window.gsBarToggle = function() {{
+                if (gbStation === 'wlol') {{
+                    try {{ gsTogglePlay(); }} catch(e) {{}}
+                }} else {{
+                    if (!wcprAudio) return;
+                    if (wcprTracks.length && wcprIdx < 0) {{ wcprLoad(0); return; }}
+                    if (wcprAudio.paused) {{ wcprAudio.play().catch(function(){{}}); }}
+                    else                  {{ wcprAudio.pause(); }}
+                    var ppBtn = document.getElementById('gs-pp');
+                    if (ppBtn) ppBtn.innerHTML = wcprAudio.paused ? '&#9654;' : '&#9646;&#9646;';
+                }}
+            }};
+            window.gsBarSkip = function() {{
+                if (gbStation === 'wlol') {{
+                    try {{ gsNext(); }} catch(e) {{}}
+                }} else {{
+                    if (wcprTracks.length) wcprLoad((wcprIdx + 1) % wcprTracks.length);
+                }}
+            }};
+            window.gsBarMute = function() {{
+                gbMuted = !gbMuted;
+                var btn = document.getElementById('gsbar-mute');
+                if (btn) btn.innerHTML = gbMuted ? '&#128263;' : '&#128266;';
+                if (gbStation === 'wlol') {{
+                    try {{ gsSetVolume(gbMuted ? 0 : gbVol); }} catch(e) {{}}
+                    var vol = document.getElementById('gs-vol');
+                    if (vol) vol.value = gbMuted ? 0 : gbVol;
+                }} else {{
+                    if (wcprAudio) wcprAudio.volume = gbMuted ? 0 : gbVol;
+                }}
+            }};
+
+            // ── WCPR audio ───────────────────────────────────────────────
+            function wcprLoad(idx) {{
+                if (!wcprTracks.length || idx < 0 || idx >= wcprTracks.length) return;
+                wcprIdx = idx;
+                var t = wcprTracks[idx];
+                if (wcprAudio) {{
+                    wcprAudio.src    = t.url;
+                    wcprAudio.volume = gbMuted ? 0 : gbVol;
+                    wcprAudio.play().catch(function(){{}});
+                }}
+                var titleEl = document.getElementById('gs-title');
+                if (titleEl) titleEl.textContent = t.title;
+                var ppBtn = document.getElementById('gs-pp');
+                if (ppBtn) ppBtn.innerHTML = '&#9646;&#9646;';
+            }}
+            function wcprStart() {{
+                if (wcprTracks.length) {{
+                    wcprLoad(wcprIdx >= 0 ? wcprIdx : 0);
+                }} else {{
+                    fetch('/wcpr/list').then(function(r){{return r.json();}}).then(function(tr){{
+                        wcprTracks = tr || [];
+                        if (wcprTracks.length) wcprLoad(0);
+                        else {{
+                            var t = document.getElementById('gs-title');
+                            if (t) t.textContent = 'No WCPR episodes yet';
+                        }}
+                    }}).catch(function(){{}});
+                }}
+            }}
+            if (wcprAudio) {{
+                wcprAudio.addEventListener('ended', function() {{
+                    if (wcprTracks.length) wcprLoad((wcprIdx+1) % wcprTracks.length);
+                }});
+            }}
+
+            // ── Volume passthrough ───────────────────────────────────────
+            var origGsSetVolume = window.gsSetVolume;
+            window.gsSetVolume = function(v) {{
+                gbVol = parseFloat(v) || 0;
+                if (origGsSetVolume) origGsSetVolume(v);
+                if (gbStation === 'wcpr' && wcprAudio) wcprAudio.volume = gbMuted ? 0 : gbVol;
+            }};
+
+            // ── Init: restore station ────────────────────────────────────
+            if (gbStation === 'wcpr') {{
+                updateStationLabel();
+                // Don't autostart WCPR on page load — wait for user interaction
+                fetch('/wcpr/list').then(function(r){{return r.json();}}).then(function(tr){{
+                    wcprTracks = tr || [];
+                }}).catch(function(){{}});
+            }}
+        }})();
+        </script>
 
         <script>
         (function() {{
