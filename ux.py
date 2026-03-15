@@ -1442,10 +1442,11 @@ async function bizPost(url,fd){
 // Live progress polling — updates bars and tick labels every 5 s
 async function pollProgress(){
     try{
-        const r=await fetch('/api/status'); if(!r.ok) return;
+        const r=await fetch('/api/status',{credentials:'include'});
+        if(!r.ok){console.warn('[biz poll] status',r.status);return;}
         const data=await r.json();
         for(const b of (data.businesses||[])){
-            const ct=parseFloat(document.getElementById('biz-card-'+b.id)?.dataset.cycles||0)||1;
+            const ct=b.cycles_to_complete||1;
             const pct=Math.min(100,(b.progress_ticks/ct)*100);
             const pb=document.getElementById('pb-'+b.id);
             if(pb) pb.style.width=pct.toFixed(1)+'%';
@@ -1454,8 +1455,9 @@ async function pollProgress(){
             const card=document.getElementById('biz-card-'+b.id);
             if(card) card.dataset.progress=pct.toFixed(1);
         }
-    }catch(e){}
+    }catch(e){console.error('[biz poll]',e);}
 }
+pollProgress();
 setInterval(pollProgress,5000);
 async function toggleBiz(bizId,btn){
     btn.disabled=true;
