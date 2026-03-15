@@ -665,7 +665,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             // -- Init: restore station ------------------------------------
             if (gbStation === 'wcpr') {{
                 updateStationLabel();
-                // Don't autostart WCPR on page load — wait for user interaction
+                // Don't autostart WCPR on page load -- wait for user interaction
                 fetch('/wcpr/list').then(function(r){{return r.json();}}).then(function(tr){{
                     wcprTracks = tr || [];
                 }}).catch(function(){{}});
@@ -704,7 +704,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                     if (typeof s.time           === 'number')  st.time           = s.time;
                     if (typeof s.currentTrackId !== 'undefined') st.currentTrackId = s.currentTrackId;
                     if (Array.isArray(s.disabledIds))          st.disabledIds    = s.disabledIds;
-                    // NOTE: shuffleOrder is intentionally NOT restored — always rebuilt
+                    // NOTE: shuffleOrder is intentionally NOT restored -- always rebuilt
                 }} catch(e) {{}}
             }}
             function saveSt() {{
@@ -793,7 +793,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 updatePP();
                 if (!st.enabled) {{ audio.load(); return; }}
                 /* Always wait for canplay so the new src is loaded before
-                   we seek/play — calling play() right after load() races
+                   we seek/play -- calling play() right after load() races
                    the browser and replays the previous track. */
                 audio.addEventListener('canplay', function onCP() {{
                     audio.removeEventListener('canplay', onCP);
@@ -1534,7 +1534,11 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     lines_html += f'''<div class="line-row{' paused' if lp else ''}" id="line-{biz.id}-{li}">
                         {dot}
                         <span style="font-size:0.78rem;color:#94a3b8;flex:1;">{inp_str} → {out_str}</span>
-                        <button class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}" style="flex-shrink:0;" onclick="toggleLine({biz.id},{li},this.closest('.line-row'))">{'Resume' if lp else 'Pause'}</button>
+                        <form action="/api/business/toggle-line" method="post" style="flex-shrink:0;display:inline;">
+                            <input type="hidden" name="business_id" value="{biz.id}">
+                            <input type="hidden" name="line_index" value="{li}">
+                            <button type="submit" class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}">{'Resume' if lp else 'Pause'}</button>
+                        </form>
                     </div>'''
                 detail_html = f'''<div class="biz-card-body">
                     <div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Production Lines</div>
@@ -1556,10 +1560,17 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     retail_rows += f'''<div class="line-row{' paused' if ip else ''}" id="retail-{biz.id}-{item}" style="flex-wrap:wrap;gap:6px;">
                         <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span> {dot}</span>
                         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-                            <span id="price-{biz.id}-{item}" style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
-                            <input type="number" step="0.01" min="0.01" placeholder="{disp["code"]}" id="pi-{biz.id}-{item}" style="width:90px;padding:3px 5px;font-size:0.78rem;" onkeydown="if(event.key==='Enter')setPrice({biz.id},'{safe_item}',this)">
-                            <button class="btn-sm btn-sm-blue" onclick="setPrice({biz.id},'{safe_item}',document.getElementById('pi-{biz.id}-{item}'))">Set</button>
-                            <button class="btn-sm {'btn-sm-green' if ip else 'btn-sm-orange'}" onclick="toggleRetail({biz.id},'{safe_item}',this.closest('.line-row'))">{'Resume' if ip else 'Pause'}</button>
+                            <span style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
+                            <form action="/api/retail/set-price" method="post" style="display:flex;gap:4px;align-items:center;">
+                                <input type="hidden" name="item_type" value="{item}">
+                                <input type="number" name="price" step="0.01" min="0.01" placeholder="{disp["code"]}" style="width:90px;padding:3px 5px;font-size:0.78rem;">
+                                <button type="submit" class="btn-sm btn-sm-blue">Set</button>
+                            </form>
+                            <form action="/api/business/toggle-retail" method="post" style="display:inline;">
+                                <input type="hidden" name="business_id" value="{biz.id}">
+                                <input type="hidden" name="item_type" value="{item}">
+                                <button type="submit" class="btn-sm {'btn-sm-green' if ip else 'btn-sm-orange'}">{'Resume' if ip else 'Pause'}</button>
+                            </form>
                         </div>
                     </div>'''
                 detail_html = f'''<div class="biz-card-body">
@@ -1578,8 +1589,14 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                         <div style="font-size:0.75rem;color:#64748b;margin-top:3px;">{plot_info} · ID #{biz.id} · Start {fmt_usd(startup_cost, disp)} · Wage {fmt_usd(wage_cost, disp)}/cycle</div>
                     </div>
                     <div class="biz-actions">
-                        <button id="toggle-btn-{biz.id}" class="btn-sm {toggle_cls}" onclick="toggleBiz({biz.id},this)">{toggle_lbl}</button>
-                        <button class="btn-sm btn-sm-red" onclick="dismantleBiz({biz.id},this.closest('.biz-card'))">Dismantle</button>
+                        <form action="/api/business/toggle" method="post" style="display:inline;">
+                            <input type="hidden" name="business_id" value="{biz.id}">
+                            <button type="submit" class="btn-sm {toggle_cls}">{toggle_lbl}</button>
+                        </form>
+                        <form action="/api/business/dismantle" method="post" style="display:inline;" onsubmit="return confirm('Dismantle this business? You receive 50% of startup cost paid over 100 ticks.')">
+                            <input type="hidden" name="business_id" value="{biz.id}">
+                            <button type="submit" class="btn-sm btn-sm-red">Dismantle</button>
+                        </form>
                     </div>
                 </div>
                 <div class="biz-card-progress">
@@ -1595,199 +1612,23 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
         cards_html = "".join(make_card(d) for d in biz_data)
         land_db.close()
 
-        # Filter/sort button helpers
+        # Filter/sort button helpers (href-based, no JS required)
         def fb(fval, label, count):
             ac = " active" if biz_filter == fval else ""
-            return f'<button class="biz-filter-btn{ac}" data-filter="{fval}" onclick="setFilter(\'{fval}\')">{label} ({count})</button>'
+            return f'<a href="/businesses?sort={sort}&biz_filter={fval}" class="biz-filter-btn{ac}">{label} ({count})</a>'
         def sb(sval, label):
             ac = " active" if sort == sval else ""
-            return f'<button class="biz-sort-btn{ac}" data-sort="{sval}" onclick="setSort(\'{sval}\')">{label}</button>'
+            return f'<a href="/businesses?sort={sval}&biz_filter={biz_filter}" class="biz-sort-btn{ac}">{label}</a>'
 
-        # JS as plain string (no f-string) to avoid escaping every brace
-        js = """<script data-cfasync="false">
-console.log('[biz] script loaded');
-let curFilter='BIZ_FILTER', curSort='BIZ_SORT';
-function applyFilter(){
-    const q=(document.getElementById('biz-search').value||'').toLowerCase();
-    document.querySelectorAll('#biz-grid .biz-card').forEach(c=>{
-        const nm=c.dataset.name||'', cl=c.dataset.bizclass||'';
-        const active=c.dataset.active==='true', dis=c.dataset.dismantling==='true';
-        let show=true;
-        if(q&&!nm.includes(q)) show=false;
-        if(curFilter==='active'&&(!active||dis)) show=false;
-        if(curFilter==='paused'&&(active||dis)) show=false;
-        if(curFilter==='production'&&cl!=='production') show=false;
-        if(curFilter==='retail'&&cl!=='retail') show=false;
-        if(curFilter==='dismantling'&&!dis) show=false;
-        c.style.display=show?'':'none';
-    });
-    const grid=document.getElementById('biz-grid');
-    const all=[...grid.querySelectorAll('.biz-card')];
-    const vis=all.filter(c=>c.style.display!=='none');
-    const hid=all.filter(c=>c.style.display==='none');
-    if(curSort==='name') vis.sort((a,b)=>(a.dataset.name||'').localeCompare(b.dataset.name||''));
-    else if(curSort==='status') vis.sort((a,b)=>(b.dataset.active==='true')-(a.dataset.active==='true'));
-    else if(curSort==='progress') vis.sort((a,b)=>parseFloat(b.dataset.progress||0)-parseFloat(a.dataset.progress||0));
-    [...vis,...hid].forEach(c=>grid.appendChild(c));
-}
-function setFilter(f){
-    curFilter=f;
-    document.querySelectorAll('.biz-filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
-    applyFilter();
-}
-function setSort(s){
-    curSort=s;
-    document.querySelectorAll('.biz-sort-btn').forEach(b=>b.classList.toggle('active',b.dataset.sort===s));
-    applyFilter();
-}
-function showToast(msg,isError){
-    const t=document.getElementById('biz-toast');
-    t.textContent=msg; t.className='biz-toast'+(isError?' error':''); t.style.opacity='1';
-    clearTimeout(t._timer); t._timer=setTimeout(()=>{t.style.opacity='0';},2500);
-}
-async function bizPost(url,fd){
-    try{
-        const r=await fetch(url,{method:'POST',body:fd,credentials:'include'});
-        if(!r.ok) return {ok:false,error:'HTTP '+r.status};
-        return await r.json();
-    }catch(e){return {ok:false,error:e.message};}
-}
-// -- Client-side tick emulation ------------------------------------------
-// Server ticks every 5 s. We advance local counters at the same rate,
-// then re-sync from the server every 30 s to correct any drift.
-const TICK_SECS = 5;
-
-// Seed state from data attributes set at render time
-const bizState = {};
-document.querySelectorAll('#biz-grid .biz-card[id]').forEach(card => {
-    if (!card.id.startsWith('biz-card-')) return;
-    const id  = card.id.slice(9);
-    const cyc = parseInt(card.dataset.cycles || '1') || 1;
-    const pct = parseFloat(card.dataset.progress || '0');
-    bizState[id] = {
-        ticks:  Math.round(pct * cyc / 100),
-        cycles: cyc,
-        active: card.dataset.active === 'true'
-    };
-});
-console.log('[biz] initialized', Object.keys(bizState).length, 'businesses', bizState);
-
-function updateBar(id, ticks, cycles) {
-    const pct = Math.min(100, ticks / cycles * 100);
-    const pb = document.getElementById('pb-' + id);
-    if (pb) pb.style.width = pct.toFixed(2) + '%';
-    const pt = document.getElementById('pt-' + id);
-    if (pt) pt.textContent = ticks.toLocaleString() + ' / ' +
-        cycles.toLocaleString() + ' ticks (' + pct.toFixed(1) + '%)';
-    const card = document.getElementById('biz-card-' + id);
-    if (card) card.dataset.progress = pct.toFixed(1);
-}
-
-// Advance every business counter by 1 tick
-function clientTick() {
-    for (const id in bizState) {
-        const s = bizState[id];
-        if (!s.active || s.ticks >= s.cycles) continue;
-        s.ticks = Math.min(s.ticks + 1, s.cycles);
-        updateBar(id, s.ticks, s.cycles);
-    }
-}
-setInterval(clientTick, TICK_SECS * 1000);
-
-// Re-sync with server every 30 s to correct drift
-async function syncProgress() {
-    try {
-        const r = await fetch('/api/biz/progress', {credentials: 'include'});
-        if (!r.ok) { console.warn('[biz sync] HTTP', r.status); return; }
-        const data = await r.json();
-        if (!data || !data.length) { console.warn('[biz sync] empty response'); return; }
-        for (const b of data) {
-            const ct = b.cycles_to_complete || 1;
-            const sid = String(b.id);
-            if (bizState[sid]) {
-                bizState[sid].ticks  = b.progress_ticks;
-                bizState[sid].cycles = ct;
-                if (typeof b.is_active === 'boolean') bizState[sid].active = b.is_active;
-            }
-            updateBar(b.id, b.progress_ticks, ct);
-            // Sync status badge & toggle button to server state
-            if (typeof b.is_active === 'boolean') {
-                const badge = document.getElementById('status-badge-' + b.id);
-                if (badge) { badge.textContent = b.is_active ? 'ACTIVE' : 'PAUSED'; badge.style.background = b.is_active ? '#22c55e' : '#f59e0b'; }
-                const btn = document.getElementById('toggle-btn-' + b.id);
-                if (btn) { btn.textContent = b.is_active ? 'Pause' : 'Resume'; btn.className = 'btn-sm ' + (b.is_active ? 'btn-sm-orange' : 'btn-sm-green'); }
-                const card = document.getElementById('biz-card-' + b.id);
-                if (card) card.dataset.active = b.is_active ? 'true' : 'false';
-            }
-        }
-    } catch(e) { console.error('[biz sync]', e); }
-}
-syncProgress();
-setInterval(syncProgress, 30000);
-async function toggleBiz(bizId,btn){
-    btn.disabled=true;
-    const fd=new FormData(); fd.append('business_id',bizId);
-    const r=await bizPost('/api/biz/toggle',fd); btn.disabled=false;
-    if(!r.ok){console.error('[biz] toggle failed',r);showToast('Toggle failed'+(r.error?' ('+r.error+')':''),true);return;}
-    const card=document.getElementById('biz-card-'+bizId);
-    card.dataset.active=r.is_active?'true':'false';
-    const badge=document.getElementById('status-badge-'+bizId);
-    if(badge){badge.textContent=r.is_active?'ACTIVE':'PAUSED'; badge.style.background=r.is_active?'#22c55e':'#f59e0b';}
-    btn.textContent=r.is_active?'Pause':'Resume';
-    btn.className='btn-sm '+(r.is_active?'btn-sm-orange':'btn-sm-green');
-    if(bizState[String(bizId)]) bizState[String(bizId)].active=r.is_active;
-    showToast(r.is_active?'Business resumed':'Business paused'); applyFilter();
-}
-async function dismantleBiz(bizId,cardEl){
-    const nm=(cardEl.querySelector('.biz-name')||{}).textContent||'this business';
-    if(!confirm('Dismantle "'+nm.trim()+'"?\nYou receive 50% of startup cost paid over 100 ticks. This cannot be undone.')) return;
-    const fd=new FormData(); fd.append('business_id',bizId);
-    const r=await bizPost('/api/biz/dismantle',fd);
-    if(!r.ok){console.error('[biz] dismantle failed',r);showToast('Dismantle failed'+(r.error?' ('+r.error+')':''),true);return;}
-    cardEl.style.borderColor='#ef4444'; cardEl.dataset.active='false'; cardEl.dataset.dismantling='true';
-    const hdr=cardEl.querySelector('.biz-card-header');
-    if(hdr) hdr.innerHTML='<div><span class="biz-name" style="font-weight:bold;">'+nm.trim()+'</span><span class="badge" style="background:#ef4444;color:#fff;margin-left:6px;">DISMANTLING</span></div>';
-    cardEl.querySelectorAll('.biz-card-progress,.biz-card-body').forEach(el=>el.remove());
-    showToast('Dismantling started — refund over 100 ticks'); applyFilter();
-}
-async function toggleLine(bizId,lineIdx,rowEl){
-    const fd=new FormData(); fd.append('business_id',bizId); fd.append('line_index',lineIdx);
-    const r=await bizPost('/api/biz/toggle-line',fd);
-    if(!r.ok){showToast('Failed',true);return;}
-    rowEl.classList.toggle('paused',r.paused);
-    const btn=rowEl.querySelector('button');
-    btn.textContent=r.paused?'Resume':'Pause'; btn.className='btn-sm '+(r.paused?'btn-sm-green':'btn-sm-orange');
-    showToast(r.paused?'Line paused':'Line resumed');
-}
-async function toggleRetail(bizId,itemType,rowEl){
-    const fd=new FormData(); fd.append('business_id',bizId); fd.append('item_type',itemType);
-    const r=await bizPost('/api/biz/toggle-retail',fd);
-    if(!r.ok){showToast('Failed',true);return;}
-    rowEl.classList.toggle('paused',r.paused);
-    const btns=rowEl.querySelectorAll('button'); const pb=btns[btns.length-1];
-    pb.textContent=r.paused?'Resume':'Pause'; pb.className='btn-sm '+(r.paused?'btn-sm-green':'btn-sm-orange');
-    showToast(r.paused?'Item paused':'Item resumed');
-}
-async function setPrice(bizId,itemType,inputEl){
-    const price=parseFloat(inputEl.value);
-    if(isNaN(price)||price<=0){showToast('Enter a valid price',true);return;}
-    const fd=new FormData(); fd.append('item_type',itemType); fd.append('price',price);
-    const r=await bizPost('/api/biz/set-price',fd);
-    if(!r.ok){showToast('Price update failed',true);return;}
-    const lbl=document.getElementById('price-'+bizId+'-'+itemType);
-    if(lbl) lbl.textContent=r.display_price;
-    inputEl.value=''; showToast('Price updated to '+r.display_price);
-}
-applyFilter();
-</script>""".replace('BIZ_FILTER', biz_filter).replace('BIZ_SORT', sort)
+        # No inline JS needed -- all actions use standard form/href submissions
 
         body = f'''<style>
 .biz-summary{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}}
 .biz-stat{{background:#0f172a;border:1px solid #1e293b;padding:8px 14px;border-radius:4px;text-align:center;min-width:72px;}}
 .biz-stat .val{{font-size:1.4rem;font-weight:bold;}} .biz-stat .lbl{{font-size:0.68rem;color:#64748b;letter-spacing:.05em;text-transform:uppercase;}}
-.biz-filter-btn{{padding:4px 10px;border:1px solid #1e293b;background:#0f172a;color:#64748b;border-radius:4px;cursor:pointer;font-size:0.8rem;font-family:inherit;}}
+.biz-filter-btn{{display:inline-block;padding:4px 10px;border:1px solid #1e293b;background:#0f172a;color:#64748b;border-radius:4px;cursor:pointer;font-size:0.8rem;text-decoration:none;}}
 .biz-filter-btn:hover,.biz-filter-btn.active{{border-color:#38bdf8;color:#38bdf8;}}
-.biz-sort-btn{{padding:4px 6px;border:none;background:none;color:#64748b;cursor:pointer;font-size:0.8rem;font-family:inherit;text-decoration:underline;}}
+.biz-sort-btn{{display:inline-block;padding:4px 6px;color:#64748b;cursor:pointer;font-size:0.8rem;text-decoration:underline;}}
 .biz-sort-btn.active{{color:#38bdf8;}}
 .biz-grid{{display:grid;gap:12px;}}
 .biz-card{{background:#0f172a;border:1px solid #1e293b;border-radius:4px;overflow:hidden;}}
@@ -1802,10 +1643,7 @@ applyFilter();
 .progress-bar-fill{{height:100%;background:#38bdf8;border-radius:3px;}}
 .line-row{{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#020617;border-radius:4px;margin-bottom:4px;gap:8px;}}
 .line-row.paused{{opacity:0.4;}}
-.biz-toast{{position:fixed;top:16px;right:16px;background:#0f172a;border:1px solid #22c55e;color:#22c55e;padding:8px 14px;border-radius:4px;font-size:0.85rem;z-index:9999;opacity:0;transition:opacity 0.2s;pointer-events:none;}}
-.biz-toast.error{{border-color:#ef4444;color:#ef4444;}}
 </style>
-<div id="biz-toast" class="biz-toast"></div>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div style="display:flex;align-items:center;gap:12px;">
         <a href="/" style="color:#64748b;font-size:0.85rem;">← Dashboard</a>
@@ -1829,10 +1667,8 @@ applyFilter();
     <span style="color:#334155;margin:0 2px;">|</span>
     <span style="color:#64748b;font-size:0.78rem;">Sort:</span>
     {sb("name","Name")} {sb("status","Status")} {sb("progress","Progress")}
-    <input type="search" id="biz-search" oninput="applyFilter()" placeholder="Search..." style="padding:4px 8px;font-size:0.78rem;margin-left:4px;width:130px;">
 </div>
-<div id="biz-grid" class="biz-grid">{cards_html}</div>
-{js}'''
+<div id="biz-grid" class="biz-grid">{cards_html}</div>'''
 
         tut_overlay = ""
         try:
