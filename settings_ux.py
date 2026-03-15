@@ -373,14 +373,11 @@ def _audio_tab() -> str:
                 </div>
             </div>
 
-            <!-- WCPR panel: deep dives list + YouTube embed -->
+            <!-- WCPR panel: episode list -->
             <div class="rp-panel" id="rp-wcpr-panel">
-                <div class="rp-panel-hdr">&#128251; Deep Dive Broadcasts</div>
+                <div class="rp-panel-hdr">&#128251; Talk Radio Episodes</div>
                 <div id="rp-dives-list" class="rp-tracklist">
-                    <div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;">Loading broadcasts…</div>
-                </div>
-                <div class="rp-yt-wrap" id="rp-yt-wrap">
-                    <iframe id="rp-yt-iframe" src="" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
+                    <div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;">Loading episodes…</div>
                 </div>
             </div>
 
@@ -401,6 +398,7 @@ def _audio_tab() -> str:
 
         </div>
     </div>
+    <audio id="wcpr-audio" preload="none" style="display:none;"></audio>
     <div class="rp-cog">&#9881;</div>
 </div>
 </div>
@@ -445,9 +443,9 @@ def _audio_tab() -> str:
     var rpVolume    = 35;
     var rpMuted     = false;
     var rpSloganIdx = 0;
-    var rpDeepDives = [];
-    var rpCurDive   = -1;
-    var rpPending   = null;
+    var wcprTracks  = [];
+    var wcprIdx     = -1;
+    var wcprAudio   = null;
 
     // ── DOM refs ─────────────────────────────────────────────────────────────
     var $ = function(id) { return document.getElementById(id); };
@@ -525,11 +523,11 @@ def _audio_tab() -> str:
         var ico = $('rp-ico'), sname = $('rp-sname');
         if (ico)   ico.textContent   = isWlol ? '🎵' : '📻';
         if (sname) sname.innerHTML   = isWlol
-            ? 'WLOL &mdash; Listen Out Loud'
+            ? 'WLOL 92.8 &mdash; Listen Out Loud'
             : 'WCPR 104.1 &mdash; Wadsworth Carter Public Radio';
 
         var m3 = $('rp-m3');
-        if (m3) m3.textContent = isWlol ? 'WLOL FM' : '104.1 FM';
+        if (m3) m3.textContent = isWlol ? '92.8 FM' : '104.1 FM';
 
         var wcprPanel = $('rp-wcpr-panel'), wlolPanel = $('rp-wlol-panel');
         if (wcprPanel) wcprPanel.style.display = isWlol ? 'none' : 'block';
@@ -540,13 +538,14 @@ def _audio_tab() -> str:
             if (!isWlol) {
                 try { gsTogglePlay(); } catch(e) {}
             } else {
-                rpPauseYT();
+                wcprPause();
             }
             rpPlaying = false;
         }
 
         rpUpdateUI();
         if (isWlol) { rpSyncWlol(); rpBuildTrackList(); }
+        else        { wcprBuildList(); }
     };
 
     // ── UI sync ──────────────────────────────────────────────────────────────
@@ -620,7 +619,7 @@ def _audio_tab() -> str:
             try { gsTogglePlay(); } catch(e) {}
             setTimeout(rpSyncWlol, 80);
         } else {
-            rpToggleYT();
+            wcprToggle();
         }
     };
 
@@ -630,8 +629,8 @@ def _audio_tab() -> str:
             try { gsNext(); } catch(e) {}
             setTimeout(rpSyncWlol, 200);
         } else {
-            if (rpDeepDives.length) {
-                window.rpPlayDive((rpCurDive + 1) % rpDeepDives.length);
+            if (wcprTracks.length) {
+                wcprLoad((wcprIdx + 1) % wcprTracks.length);
             }
         }
     };
@@ -645,6 +644,8 @@ def _audio_tab() -> str:
             try { gsSetVolume(v / 100); } catch(e) {}
             var mini = document.getElementById('gs-vol');
             if (mini) mini.value = v / 100;
+        } else {
+            if (wcprAudio) wcprAudio.volume = (rpMuted ? 0 : v) / 100;
         }
     };
 
@@ -659,137 +660,89 @@ def _audio_tab() -> str:
             var btn = $('rp-mute');
             if (btn) btn.innerHTML = '&#128263;';
             if (rpStation === 'wlol') { try { gsSetVolume(0); } catch(e) {} }
+            else { if (wcprAudio) wcprAudio.volume = 0; }
         }
     };
 
-    // ── YouTube IFrame API ───────────────────────────────────────────────────
-    var ytPlayer  = null;
-    var ytReady   = false;
-    var ytPollTimer = null;
-
-    function rpLoadYTApi() {
-        if (window.YT && window.YT.Player) { ytReady = true; return; }
-        if ($('rp-yt-script')) return;
-        var tag = document.createElement('script');
-        tag.id  = 'rp-yt-script';
-        tag.src = 'https://www.youtube.com/iframe_api';
-        document.head.appendChild(tag);
-    }
-
-    window.onYouTubeIframeAPIReady = function() {
-        ytReady = true;
-        if (rpPending !== null) {
-            window.rpPlayDive(rpPending);
-            rpPending = null;
-        }
-    };
-
-    window.rpPlayDive = function(idx) {
-        if (!rpDeepDives.length || idx < 0 || idx >= rpDeepDives.length) return;
-        rpCurDive = idx;
-        var dive  = rpDeepDives[idx];
+    // ── WCPR native audio ────────────────────────────────────────────────────
+    function wcprLoad(idx) {
+        if (!wcprTracks.length || idx < 0 || idx >= wcprTracks.length) return;
+        wcprIdx = idx;
+        var track = wcprTracks[idx];
 
         document.querySelectorAll('.rp-dive-item').forEach(function(el, i) {
             el.classList.toggle('rp-active', i === idx);
         });
 
         var title = $('rp-title'), ref = $('rp-ref'), lbl = $('rp-track-lbl');
-        if (title) title.textContent = dive.title;
-        if (ref)   ref.textContent   = 'WCPR \u00B7 Deep Dive';
+        if (title) title.textContent = track.title;
+        if (ref)   ref.textContent   = 'WCPR 104.1 \u00B7 Talk Radio';
         if (lbl)   lbl.textContent   = 'Now Playing';
 
-        var ytWrap = $('rp-yt-wrap');
-        if (ytWrap) ytWrap.style.display = 'block';
-
-        if (!ytReady) { rpPending = idx; rpLoadYTApi(); return; }
-
-        if (ytPlayer) {
-            ytPlayer.loadVideoById(dive.youtube_id);
-        } else {
-            ytPlayer = new YT.Player('rp-yt-iframe', {
-                videoId: dive.youtube_id,
-                playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
-                events: {
-                    onStateChange: function(e) {
-                        rpPlaying = (e.data === YT.PlayerState.PLAYING);
-                        rpUpdateUI();
-                    }
-                }
-            });
+        if (wcprAudio) {
+            wcprAudio.src    = track.url;
+            wcprAudio.volume = (rpMuted ? 0 : rpVolume) / 100;
+            wcprAudio.play().catch(function() {});
         }
         rpPlaying = true;
         rpUpdateUI();
-        rpStartYtPoll();
-    };
+    }
 
-    function rpToggleYT() {
-        if (!ytPlayer) {
-            if (rpDeepDives.length) window.rpPlayDive(rpCurDive >= 0 ? rpCurDive : 0);
-            return;
-        }
-        var state = ytPlayer.getPlayerState();
-        if (state === 1) { ytPlayer.pauseVideo(); rpPlaying = false; }
-        else             { ytPlayer.playVideo();  rpPlaying = true;  }
+    function wcprToggle() {
+        if (!wcprAudio) return;
+        if (wcprTracks.length && wcprIdx < 0) { wcprLoad(0); return; }
+        if (wcprAudio.paused) { wcprAudio.play().catch(function() {}); rpPlaying = true; }
+        else                  { wcprAudio.pause(); rpPlaying = false; }
         rpUpdateUI();
     }
 
-    function rpPauseYT() {
-        if (ytPlayer) { try { ytPlayer.pauseVideo(); } catch(e) {} }
+    function wcprPause() {
+        if (wcprAudio && !wcprAudio.paused) wcprAudio.pause();
         rpPlaying = false;
-        rpStopYtPoll();
         rpUpdateUI();
     }
 
-    function rpStartYtPoll() {
-        rpStopYtPoll();
-        ytPollTimer = setInterval(function() {
-            if (!ytPlayer) return;
-            try {
-                var cur = ytPlayer.getCurrentTime() || 0;
-                var dur = ytPlayer.getDuration()    || 0;
-                if (dur > 0) {
-                    var fill = $('rp-pfill'), time = $('rp-time');
-                    if (fill) fill.style.width = ((cur / dur) * 100).toFixed(1) + '%';
-                    if (time) time.textContent = fmtTime(cur) + ' / ' + fmtTime(dur);
-                }
-            } catch(e) {}
-        }, 1000);
-    }
-
-    function rpStopYtPoll() {
-        if (ytPollTimer) { clearInterval(ytPollTimer); ytPollTimer = null; }
-    }
-
-    // ── Deep Dives loader ────────────────────────────────────────────────────
-    function rpLoadDeepDives() {
-        fetch('/api/deep-dives')
+    // ── WCPR track list builder ──────────────────────────────────────────────
+    function wcprBuildList() {
+        var list = $('rp-dives-list');
+        if (!list) return;
+        fetch('/wcpr/list')
             .then(function(r) { return r.json(); })
-            .then(function(dives) {
-                rpDeepDives = dives || [];
+            .then(function(tracks) {
+                wcprTracks = tracks || [];
                 var m1 = $('rp-m1');
-                if (m1 && rpStation === 'wcpr') m1.textContent = rpDeepDives.length + ' broadcasts';
-                var list = $('rp-dives-list');
-                if (!list) return;
-                if (!rpDeepDives.length) {
-                    list.innerHTML = '<div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;font-style:italic;">No broadcasts available yet.<br><span style="font-size:0.65rem;opacity:0.6;">Admins can add audio deep dives at /admin/wiki</span></div>';
+                if (m1 && rpStation === 'wcpr') m1.textContent = wcprTracks.length + ' episodes';
+                if (!wcprTracks.length) {
+                    list.innerHTML = '<div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;font-style:italic;">'
+                        + 'No episodes uploaded yet.<br><span style="font-size:0.65rem;opacity:0.6;">Admins can upload at /admin/wcpr</span></div>';
                     return;
                 }
-                list.innerHTML = rpDeepDives.map(function(d, i) {
-                    return '<div class="rp-dive-item" onclick="rpPlayDive(' + i + ')">'
+                list.innerHTML = wcprTracks.map(function(t, i) {
+                    return '<div class="rp-dive-item" onclick="wcprLoad(' + i + ')">'
                         + '<span class="rp-dive-num">' + (i + 1) + '</span>'
-                        + '<span class="rp-dive-title">' + d.title + '</span>'
+                        + '<span class="rp-dive-title">' + t.title + '</span>'
                         + '<span class="rp-dive-play">&#9654;</span>'
                         + '</div>';
                 }).join('');
             })
             .catch(function() {
-                var list = $('rp-dives-list');
-                if (list) list.innerHTML = '<div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;">Could not load broadcasts.</div>';
+                if (list) list.innerHTML = '<div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;">Could not load episodes.</div>';
             });
     }
 
     // ── Init ─────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
+
+        // WCPR audio element
+        wcprAudio = $('wcpr-audio');
+        if (wcprAudio) {
+            wcprAudio.addEventListener('ended', function() {
+                if (wcprTracks.length) wcprLoad((wcprIdx + 1) % wcprTracks.length);
+                else { rpPlaying = false; rpUpdateUI(); }
+            });
+            wcprAudio.addEventListener('play',  function() { rpPlaying = true;  rpUpdateUI(); });
+            wcprAudio.addEventListener('pause', function() { rpPlaying = false; rpUpdateUI(); });
+        }
 
         // Canvas sizing
         var canvas = $('rp-canvas');
@@ -817,8 +770,7 @@ def _audio_tab() -> str:
         } catch(e) {}
 
         // Load data
-        rpLoadYTApi();
-        rpLoadDeepDives();
+        wcprBuildList();
 
         // Start waveform
         drawWave();
@@ -828,7 +780,14 @@ def _audio_tab() -> str:
 
         // Progress sync loop
         setInterval(function() {
-            if (rpStation === 'wlol') rpSyncWlolProgress();
+            if (rpStation === 'wlol') {
+                rpSyncWlolProgress();
+            } else if (wcprAudio && wcprAudio.duration) {
+                var pct = (wcprAudio.currentTime / wcprAudio.duration) * 100;
+                var fill = $('rp-pfill'), time = $('rp-time');
+                if (fill) fill.style.width = pct.toFixed(1) + '%';
+                if (time) time.textContent = fmtTime(wcprAudio.currentTime) + ' / ' + fmtTime(wcprAudio.duration);
+            }
         }, 1000);
 
         // Hook into WLOL audio element events

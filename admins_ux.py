@@ -468,7 +468,8 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         <a href="/admin/etf" class="link-card"><div class="lc-icon">📈</div><div class="lc-title">ETF Banks</div><div class="lc-desc">Share audit &amp; repair</div></a>
         <a href="/admin/logs" class="link-card"><div class="lc-icon">📜</div><div class="lc-title">Audit Log</div><div class="lc-desc">Admin actions</div></a>
         <a href="/admin/wiki" class="link-card"><div class="lc-icon">📖</div><div class="lc-title">Wiki / Media</div><div class="lc-desc">Tutorial videos &amp; audio</div></a>
-        <a href="/admin/soundtrack" class="link-card"><div class="lc-icon">🎵</div><div class="lc-title">Soundtrack</div><div class="lc-desc">Upload &amp; manage tracks</div></a>
+        <a href="/admin/soundtrack" class="link-card"><div class="lc-icon">🎵</div><div class="lc-title">WLOL 92.8 FM</div><div class="lc-desc">Music playlist uploads</div></a>
+        <a href="/admin/wcpr" class="link-card"><div class="lc-icon">📻</div><div class="lc-title">WCPR 104.1 FM</div><div class="lc-desc">Talk radio uploads</div></a>
     </div>
 
     <div class="card">
