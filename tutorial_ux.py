@@ -57,10 +57,13 @@ TERRAIN_OPTIONS = [
     ("desert",  "Desert — Arid land, ideal for solar plants and mining operations"),
     ("marsh",   "Marsh — Wetland terrain, unique for water and specialized production"),
     ("mountain","Mountain — Rocky highlands with strong mining and refinery potential"),
+    ("tundra",  "Tundra — Cold climate terrain with unique cold-weather production"),
     ("savanna", "Savanna — Tropical grassland great for animal pastures and plantations"),
     ("hills",   "Hills — Rolling terrain supporting a wide variety of businesses"),
     ("island",  "Island — Isolated landmass with coastal access and premium appeal"),
     ("jungle",  "Jungle — Dense vegetation with exotic resources and unique production"),
+    ("coastal", "Coastal — Shoreline with ocean access, ideal for fishing and trade"),
+    ("lake",    "Lake — Freshwater terrain, excellent for fishing and aquaculture"),
 ]
 
 ALL_PROXIMITY_FEATURES = "urban,coastal,riverside,lakeside,oasis,hot_springs,caves,volcanic,road,deposits"

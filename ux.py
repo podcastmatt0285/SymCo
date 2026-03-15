@@ -1604,6 +1604,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
 
         # JS as plain string (no f-string) to avoid escaping every brace
         js = """<script>
+console.log('[biz] script loaded');
 let curFilter='BIZ_FILTER', curSort='BIZ_SORT';
 function applyFilter(){
     const q=(document.getElementById('biz-search').value||'').toLowerCase();
@@ -1645,7 +1646,7 @@ function showToast(msg,isError){
 }
 async function bizPost(url,fd){
     try{
-        const r=await fetch(url,{method:'POST',body:fd});
+        const r=await fetch(url,{method:'POST',body:fd,credentials:'include'});
         if(!r.ok) return {ok:false,error:'HTTP '+r.status};
         return await r.json();
     }catch(e){return {ok:false,error:e.message};}
@@ -1668,6 +1669,7 @@ document.querySelectorAll('#biz-grid .biz-card[id]').forEach(card => {
         active: card.dataset.active === 'true'
     };
 });
+console.log('[biz] initialized', Object.keys(bizState).length, 'businesses', bizState);
 
 function updateBar(id, ticks, cycles) {
     const pct = Math.min(100, ticks / cycles * 100);
@@ -1697,13 +1699,25 @@ async function syncProgress() {
         const r = await fetch('/api/biz/progress', {credentials: 'include'});
         if (!r.ok) { console.warn('[biz sync] HTTP', r.status); return; }
         const data = await r.json();
-        for (const b of (data || [])) {
+        if (!data || !data.length) { console.warn('[biz sync] empty response'); return; }
+        for (const b of data) {
             const ct = b.cycles_to_complete || 1;
-            if (bizState[String(b.id)]) {
-                bizState[String(b.id)].ticks  = b.progress_ticks;
-                bizState[String(b.id)].cycles = ct;
+            const sid = String(b.id);
+            if (bizState[sid]) {
+                bizState[sid].ticks  = b.progress_ticks;
+                bizState[sid].cycles = ct;
+                if (typeof b.is_active === 'boolean') bizState[sid].active = b.is_active;
             }
             updateBar(b.id, b.progress_ticks, ct);
+            // Sync status badge & toggle button to server state
+            if (typeof b.is_active === 'boolean') {
+                const badge = document.getElementById('status-badge-' + b.id);
+                if (badge) { badge.textContent = b.is_active ? 'ACTIVE' : 'PAUSED'; badge.style.background = b.is_active ? '#22c55e' : '#f59e0b'; }
+                const btn = document.getElementById('toggle-btn-' + b.id);
+                if (btn) { btn.textContent = b.is_active ? 'Pause' : 'Resume'; btn.className = 'btn-sm ' + (b.is_active ? 'btn-sm-orange' : 'btn-sm-green'); }
+                const card = document.getElementById('biz-card-' + b.id);
+                if (card) card.dataset.active = b.is_active ? 'true' : 'false';
+            }
         }
     } catch(e) { console.error('[biz sync]', e); }
 }
@@ -1713,7 +1727,7 @@ async function toggleBiz(bizId,btn){
     btn.disabled=true;
     const fd=new FormData(); fd.append('business_id',bizId);
     const r=await bizPost('/api/biz/toggle',fd); btn.disabled=false;
-    if(!r.ok){showToast('Toggle failed',true);return;}
+    if(!r.ok){console.error('[biz] toggle failed',r);showToast('Toggle failed'+(r.error?' ('+r.error+')':''),true);return;}
     const card=document.getElementById('biz-card-'+bizId);
     card.dataset.active=r.is_active?'true':'false';
     const badge=document.getElementById('status-badge-'+bizId);
@@ -1728,7 +1742,7 @@ async function dismantleBiz(bizId,cardEl){
     if(!confirm('Dismantle "'+nm.trim()+'"?\nYou receive 50% of startup cost paid over 100 ticks. This cannot be undone.')) return;
     const fd=new FormData(); fd.append('business_id',bizId);
     const r=await bizPost('/api/biz/dismantle',fd);
-    if(!r.ok){showToast('Dismantle failed',true);return;}
+    if(!r.ok){console.error('[biz] dismantle failed',r);showToast('Dismantle failed'+(r.error?' ('+r.error+')':''),true);return;}
     cardEl.style.borderColor='#ef4444'; cardEl.dataset.active='false'; cardEl.dataset.dismantling='true';
     const hdr=cardEl.querySelector('.biz-card-header');
     if(hdr) hdr.innerHTML='<div><span class="biz-name" style="font-weight:bold;">'+nm.trim()+'</span><span class="badge" style="background:#ef4444;color:#fff;margin-left:6px;">DISMANTLING</span></div>';
@@ -8131,7 +8145,8 @@ async def biz_progress(session_token: Optional[str] = Cookie(None)):
         return JSONResponse([
             {"id": b.id,
              "progress_ticks": b.progress_ticks,
-             "cycles_to_complete": all_types.get(b.business_type, {}).get("cycles_to_complete", 1)}
+             "cycles_to_complete": all_types.get(b.business_type, {}).get("cycles_to_complete", 1),
+             "is_active": b.is_active}
             for b in rows
         ])
     finally:
