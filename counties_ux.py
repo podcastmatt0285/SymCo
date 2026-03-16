@@ -1927,7 +1927,7 @@ async def gas_tracker_page(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="30">
-<title>Gas Tracker — SymCo</title>
+<title>Gas Tracker — Wadsworth Economic Tycoon Simulator</title>
 <style>
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 body {{ background: #020817; color: #e5e7eb; font-family: 'Courier New', monospace; min-height: 100vh; }}
@@ -1958,7 +1958,7 @@ tr:hover {{ background: #0f172a; }}
 <div class="container">
 
     <div class="info-box">
-        <strong>How gas fees work on SymCo blockchains</strong><br>
+        <strong>How gas fees work on Wadsworth blockchains</strong><br>
         Each county blockchain has its own gas price in native tokens. Gas is charged on every transaction (buy, sell, swap, meme trade, stake, etc.) and flows directly into the <strong>mining energy pool</strong> — so active chains also reward their miners.<br>
         &bull; Price <strong>rises +5%</strong> with every transaction &bull; Decays <strong>-10%</strong> every hour back toward the floor ({BASE_GAS_PRICE:.4f})<br>
         &bull; Gas units: Exchange = 1.0 &bull; Meme trade = 1.0 &bull; Meme launch = 5.0 &bull; Stake = 0.5 &bull; Mining deposit = 0.5<br>

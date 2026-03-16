@@ -1,7 +1,7 @@
 """
 database.py
 
-Central database configuration for SymCo.
+Central database configuration for Wadsworth Economic Tycoon Simulator.
 
 Connection settings are read from a .env file in the project root (or from
 real environment variables if you prefer).  Copy .env.example to .env and

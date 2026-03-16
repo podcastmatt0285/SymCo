@@ -530,7 +530,7 @@ def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None)
         <div class="header">
             <div class="header-left">
                 <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">&#9776;</button>
-                <span class="brand">SymCo</span>
+                <span class="brand">Wadsworth</span>
                 <span style="color: #c084fc; font-size: 0.8rem;">Direct Messages</span>
             </div>
             <div class="header-right">

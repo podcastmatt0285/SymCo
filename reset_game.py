@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-reset_game.py — Soft game reset for SymCo / Wadsworth.
+reset_game.py — Soft game reset for Wadsworth Economic Tycoon Simulator.
 
 Keeps:   player accounts, bans, admin logs, moderators, ban-word config
 Wipes:   everything else (all game state, businesses, land, inventory,
@@ -8,7 +8,7 @@ Wipes:   everything else (all game state, businesses, land, inventory,
 Resets:  each player back to $50,000 cash, tutorial at step 0,
          3 fresh starter plots, and starter inventory.
 
-Usage (from /home/user/SymCo, with PostgreSQL running):
+Usage (from the project root, with PostgreSQL running):
     python reset_game.py            # live run
     python reset_game.py --dry-run  # print what would happen, no changes
 """
@@ -16,7 +16,7 @@ Usage (from /home/user/SymCo, with PostgreSQL running):
 import os
 import sys
 
-# Add SymCo root to path so all modules resolve
+# Add project root to path so all modules resolve
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 os.chdir(SCRIPT_DIR)
@@ -70,7 +70,7 @@ from database import engine, SessionLocal, reserve_engine, ReserveSessionLocal
 # ---------------------------------------------------------------------------
 # Admin engine for the wipe step.
 #
-# The app user (symco) may not own the tables and therefore can't DELETE them.
+# The app user may not own the tables and therefore can't DELETE them.
 # We detect the actual table owner from pg_tables and connect as that user
 # instead (using local trust-auth — no password required on a standard
 # Termux / dev PostgreSQL install).
@@ -81,7 +81,7 @@ from database import engine, SessionLocal, reserve_engine, ReserveSessionLocal
 
 def _detect_table_owner(eng) -> str | None:
     """Return the most common non-app-user table owner in the public schema."""
-    app_user = re.search(r"//([^:@]+)", os.environ.get("DATABASE_URL", "")).group(1) if re.search(r"//([^:@]+)", os.environ.get("DATABASE_URL", "")) else "symco"
+    app_user = re.search(r"//([^:@]+)", os.environ.get("DATABASE_URL", "")).group(1) if re.search(r"//([^:@]+)", os.environ.get("DATABASE_URL", "")) else "wadsworth"
     try:
         with eng.connect() as conn:
             rows = conn.execute(text(
@@ -247,7 +247,7 @@ def reinit_main_banks():
 
 
 def regrant_app_user(admin_eng, app_url: str, label: str):
-    """GRANT ALL ON ALL TABLES/SEQUENCES to the app user (symco) via the admin connection."""
+    """GRANT ALL ON ALL TABLES/SEQUENCES to the app user via the admin connection."""
     m = re.search(r"//([^:@]+)", app_url)
     if not m:
         print(f"  [WARN] Could not parse app user from URL — skipping GRANT for {label}")
@@ -283,7 +283,7 @@ def reinit_reserve_banks():
 # ---------------------------------------------------------------------------
 
 def main():
-    banner("SymCo Soft Game Reset" + (" [DRY RUN]" if DRY_RUN else " [LIVE]"))
+    banner("Wadsworth Soft Game Reset" + (" [DRY RUN]" if DRY_RUN else " [LIVE]"))
 
     if not DRY_RUN:
         print("\n  WARNING: This will wipe ALL game progress.")
@@ -296,8 +296,8 @@ def main():
     # ------------------------------------------------------------------
     # 0. Build admin engines (table-owner / superuser) for the wipe step
     # ------------------------------------------------------------------
-    _main_url    = os.environ.get("DATABASE_URL",         "postgresql://symco:symco@localhost:5432/wadsworth")
-    _reserve_url = os.environ.get("RESERVE_DATABASE_URL", "postgresql://symco:symco@localhost:5432/reserve_banks")
+    _main_url    = os.environ.get("DATABASE_URL",         "postgresql://wadsworth:wadsworth@localhost:5432/wadsworth")
+    _reserve_url = os.environ.get("RESERVE_DATABASE_URL", "postgresql://wadsworth:wadsworth@localhost:5432/reserve_banks")
     admin_engine         = _make_admin_engine(_main_url,    engine)
     admin_reserve_engine = _make_admin_engine(_reserve_url, reserve_engine)
 
