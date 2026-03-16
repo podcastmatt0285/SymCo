@@ -1783,7 +1783,7 @@ def post_update_msg(session_token: Optional[str] = Cookie(None), content: str = 
 # ==========================
 
 @router.get("/admin/chat", response_class=HTMLResponse)
-def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] = Query(None)):
+def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] = Query(None), msg: Optional[str] = Query(None)):
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
@@ -1824,9 +1824,16 @@ def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] 
                 f'</div>'
             )
 
+        sync_btn = (
+            '<form method="post" action="/admin/chat/sync-patch-notes" style="margin-bottom:10px;">'
+            '<button type="submit" class="btn btn-blue">&#8595; Sync Patch Notes from GitHub</button>'
+            '</form>'
+        ) if room == "updates" else ""
+
         messages_html = f"""
         <div class="card">
             <h3>{room_name} — Messages</h3>
+            {sync_btn}
             {msg_items if msg_items else '<p style="color:#64748b;font-size:0.75rem;">No messages.</p>'}
         </div>
         """
@@ -1849,6 +1856,7 @@ def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] 
 
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">Chat Rooms</h2>
+    {_flash(msg=msg)}
     <div class="tabs">{room_links}</div>
     {messages_html}
     {dm_html}
@@ -1907,6 +1915,32 @@ def admin_chat_delete_message(
     admin_delete_chat_message(player.id, message_id)
     dest = f"/admin/chat?room={room}" if room else "/admin/chat"
     return RedirectResponse(dest, status_code=303)
+
+
+@router.post("/admin/chat/sync-patch-notes")
+def admin_sync_patch_notes(session_token: Optional[str] = Cookie(None)):
+    """Run post_patch_notes.py to pull all commits from GitHub into the Updates channel."""
+    player, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    import subprocess
+    import sys
+    script = os.path.join(os.path.dirname(__file__), "post_patch_notes.py")
+    try:
+        result = subprocess.run(
+            [sys.executable, script],
+            capture_output=True, text=True, timeout=120,
+        )
+        output = (result.stdout + result.stderr).strip()
+        # Pull the last summary line as the flash message
+        summary = output.splitlines()[-1] if output else "Done"
+        log_action(player.id, "sync_patch_notes", details=summary[:200])
+        from urllib.parse import quote
+        return RedirectResponse(f"/admin/chat?room=updates&msg={quote(summary)}", status_code=303)
+    except subprocess.TimeoutExpired:
+        return RedirectResponse("/admin/chat?room=updates&msg=Timed+out", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/chat?room=updates&msg=Error:+{str(e)[:80]}", status_code=303)
 
 
 # ==========================
