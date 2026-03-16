@@ -3830,6 +3830,19 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 <div><span style="color:#f59e0b;font-weight:600;">Share Price Updates</span> — Price recalculated every 30 ticks (2.5 min) as NAV / 420B shares.</div>
                 </div>
                 </details>""",
+            "land_bank": """
+                <details style="margin-top:14px;">
+                <summary style="cursor:pointer;color:#38bdf8;font-size:0.78rem;font-weight:600;letter-spacing:.04em;">HOW THIS ETF WORKS ▾</summary>
+                <div style="margin-top:10px;font-size:0.75rem;color:#cbd5e1;line-height:1.7;border-top:1px solid #1e293b;padding-top:10px;">
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Backed by land holdings. NAV = cash reserves + active auction prices + 90 % of last-sold value of bank-held plots.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">No Holder Fee</span> — No periodic fee is charged on shares you hold.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Dividends</span> — Paid every 600 ticks (~50 min). Payout = 35 % of cash reserves, distributed pro-rata to all shareholders. Requires ≥ $5,000,000,000 cash reserve. Skipped if bank is insolvent.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Stock Split</span> — Triggers at $80/share (5-for-1). Hard cap of 50 trillion total shares. Checked every 720 ticks.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Share Buyback</span> — When cash reserves exceed $750,000,000 the bank buys back 33 % of outstanding shares at +15 % premium. Capped at 20 % of cash reserves per cycle. Checked every 72 ticks.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Insolvency &amp; Liens</span> — If cash reserves go negative, shareholders are levied every 60 ticks to recapitalise. Unpaid levies become a lien at 0.01 % annual interest; 50 % of your available cash is garnished each minute until cleared.</div>
+                <div><span style="color:#f59e0b;font-weight:600;">Quantitative Easing</span> — When share price drops below −$49.99 the bank creates emergency discounted land auctions every 60 ticks. Auction starting price has no markup (vs the normal 1.5× multiplier); floor is set at 75 % of the base terrain price. Stops when the land bank reaches capacity.</div>
+                </div>
+                </details>""",
         }
 
         for bank in bank_entities:
