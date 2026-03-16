@@ -3784,6 +3784,54 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
         # ==========================
         # ETF AND OTHER BANKS
         # ==========================
+        ETF_EXPLANATIONS = {
+            "apple_seeds_etf": """
+                <details style="margin-top:14px;">
+                <summary style="cursor:pointer;color:#38bdf8;font-size:0.78rem;font-weight:600;letter-spacing:.04em;">HOW THIS ETF WORKS ▾</summary>
+                <div style="margin-top:10px;font-size:0.75rem;color:#cbd5e1;line-height:1.7;border-top:1px solid #1e293b;padding-top:10px;">
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Each share is backed by physical Apple Seeds held by the ETF. NAV = cash&nbsp;+ commodity value.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Holder Fee</span> — 0.00011918 per share per tick (~3.76 % annually). Collected every 60&nbsp;ticks. Deducted from your share count.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Dividends</span> — Paid weekly (every 120,960 ticks). Payout = 3 % of cash reserves, distributed pro-rata. Requires ≥ $500,000 cash reserve. Skipped if bank is insolvent.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Market Making — Buy</span> — Every 300 ticks the ETF checks the Apple Seeds spot price. If price &lt; 98 % of the rolling average it buys 5 % of total market supply at +2 % above spot, using its cash reserves.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Market Making — Sell</span> — When the ETF's own Apple Seeds inventory reaches ≥ 85 % of total supply it sells 100 % of that inventory at −5 % below market price.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Stock Split</span> — Triggers at $50/share (5-for-1). Hard cap of 10 billion total shares. Checked every 60 ticks.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Share Buyback</span> — If share price falls to 50 % of IPO price, the ETF buys back 80 % of outstanding shares. Capped at spending 90 % of cash reserves. Checked every 120 ticks.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Insolvency &amp; Liens</span> — If cash reserves go negative, the ETF levies shareholders every 60 ticks to recapitalise. Unpaid levies become a lien on your account at 0.01 % annual interest; 50 % of your future dividends are garnished until the lien is cleared.</div>
+                <div><span style="color:#f59e0b;font-weight:600;">Quantitative Easing</span> — While insolvent and below 50 % of IPO price, the ETF buys back shares every 360 ticks (15 % of market supply, up to 5 % of absolute cash per cycle) to support the share price.</div>
+                </div>
+                </details>""",
+            "energy_etf": """
+                <details style="margin-top:14px;">
+                <summary style="cursor:pointer;color:#38bdf8;font-size:0.78rem;font-weight:600;letter-spacing:.04em;">HOW THIS ETF WORKS ▾</summary>
+                <div style="margin-top:10px;font-size:0.75rem;color:#cbd5e1;line-height:1.7;border-top:1px solid #1e293b;padding-top:10px;">
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Each share is backed by Energy units held by the ETF. NAV = cash&nbsp;+ commodity value.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Holder Fee</span> — 0.00011918 per share per tick (~3.76 % annually). Collected every 60&nbsp;ticks. Deducted from your share count.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Dividends</span> — Paid weekly (every 120,960 ticks). Payout = 3 % of cash reserves, distributed pro-rata. Requires ≥ $500,000 cash reserve. Skipped if bank is insolvent.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Market Making — Buy</span> — Every 300 ticks, if Energy spot price &lt; 80 % of the rolling average, the ETF buys 5 % of total market supply at +2 % above spot. <em>Wider 20 % discount trigger vs Apple Seeds (2 %).</em></div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Market Making — Sell</span> — When the ETF holds ≥ 33 % of total Energy supply it liquidates 100 % of that inventory at −5 % below market price. <em>Much lower threshold than Apple Seeds (85 %).</em></div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Stock Split</span> — Triggers at $50/share (5-for-1). Hard cap of 10 billion total shares. Checked every 60 ticks.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Share Buyback</span> — If share price falls to 50 % of IPO price, the ETF buys back 80 % of outstanding shares. Capped at 90 % of cash reserves. Checked every 120 ticks.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Insolvency &amp; Liens</span> — If cash reserves go negative, shareholders are levied every 60 ticks. Unpaid levies become a lien at 0.1 % annual interest (10× higher than Apple Seeds); 33 % of future dividends garnished until cleared.</div>
+                <div><span style="color:#f59e0b;font-weight:600;">Quantitative Easing</span> — While insolvent and below 50 % of IPO price, the ETF runs QE every 36 ticks (10 % of supply, up to 5 % of absolute cash). <em>Runs 10× more frequently than Apple Seeds.</em></div>
+                </div>
+                </details>""",
+            "city_nav_etf": """
+                <details style="margin-top:14px;">
+                <summary style="cursor:pointer;color:#38bdf8;font-size:0.78rem;font-weight:600;letter-spacing:.04em;">HOW THIS ETF WORKS ▾</summary>
+                <div style="margin-top:10px;font-size:0.75rem;color:#cbd5e1;line-height:1.7;border-top:1px solid #1e293b;padding-top:10px;">
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Backed entirely by real land plots. NAV = cash + estimated land portfolio value. Tracks the total Net Asset Value of all cities worldwide.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Fixed Supply</span> — 420 billion shares issued at IPO. No stock splits, no buybacks, no new issuance — ever. Supply is permanently fixed.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">No Dividends</span> — This ETF pays no dividends. All value accrues through NAV growth as land appreciates.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">No Holder Fee</span> — No periodic fee is charged on shares you hold.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Cash Reserve Rule</span> — The ETF always keeps ≥ 20 % of NAV as liquid cash. Land purchases stop if buying would push cash below this floor.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Land Buying</span> — Every 60 ticks (5 min) the ETF buys up to 5 of the cheapest available listings if cash exceeds 20 % of NAV.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Land Selling</span> — Every 360 ticks (30 min) the ETF lists up to 3 plots for sale at 110 % of estimated value when land > 90 % of NAV.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Land Valuation</span> — Each plot is valued at the higher of: (a) the most recent recorded sale price, or (b) monthly property tax × 120 (a 10-year capitalisation multiple).</div>
+                <div><span style="color:#f59e0b;font-weight:600;">Share Price Updates</span> — Price recalculated every 30 ticks (2.5 min) as NAV / 420B shares.</div>
+                </div>
+                </details>""",
+        }
+
         for bank in bank_entities:
             # Fetch the player's specific share data from the appropriate bank module
             if bank.bank_id == "apple_seeds_etf":
@@ -3806,6 +3854,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             holding = get_player_shareholding(player.id)
             
             # Build the display using metrics from the BankEntity model
+            etf_explanation = ETF_EXPLANATIONS.get(bank.bank_id, "")
             bank_html += f'''
             <div class="card">
                 <h3>{bank.bank_id.replace("_", " ").title()}</h3>
@@ -3818,6 +3867,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     <div><b>Ownership:</b> {holding["ownership_percentage"]:.4f}%</div>
                     <div><b>NAV:</b> {fmt_usd((bank.cash_reserves + bank.asset_value), disp)}</div>
                 </div>
+                {etf_explanation}
                 <div style="margin-top: 15px; display: flex; gap: 10px;">
                     <a href="{detail_url}" class="btn-blue">View Details</a>
                     <a href="/brokerage/trading?mode=etf" class="btn-orange">Trade Shares</a>
