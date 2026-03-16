@@ -311,6 +311,11 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         is_bank_ipo = True
         bank_id = "energy_etf"
 
+    # WBC-50 Index Fund IPO detection
+    elif sell_order.player_id == -7 and sell_order.item_type == "wbc50_index_fund_shares":
+        is_bank_ipo = True
+        bank_id = "wbc50_index_fund"
+
     # City Bank sell detection (IDs are -(1000 + city_id), so <= -1001)
     elif sell_order.player_id <= -1001:
         is_bank_ipo = True  # Reuse the IPO logic (money goes to bank reserves)

@@ -3798,12 +3798,13 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
 
     # ── ETF Banks ───────────────────────────────────────────
     from banks import BankEntity as _BE
-    ETF_IDS = {"city_nav_etf", "energy_etf", "apple_seeds_etf"}
+    ETF_IDS = {"city_nav_etf", "energy_etf", "apple_seeds_etf", "wbc50_index_fund"}
     etf_entities = db.query(_BE).filter(_BE.bank_id.in_(list(ETF_IDS))).all()
     ETF_META = {
-        "city_nav_etf":     ("🏙️ City NAV ETF", "Tracks net asset value across all city economies"),
+        "city_nav_etf":     ("🏙️ City NAV ETF",        "Tracks net asset value across all city economies"),
         "energy_etf":       ("⚡ Wadsworth Energy ETF", "Tracks the in-game energy commodity market"),
-        "apple_seeds_etf":  ("🍎 Apple Seeds ETF", "Tracks the apple seeds commodity market"),
+        "apple_seeds_etf":  ("🍎 Apple Seeds ETF",      "Tracks the apple seeds commodity market"),
+        "wbc50_index_fund": ("📈 WBC-50 Index Fund",    "Full-replication index fund tracking the Wadsworth Blue-Chip 50"),
     }
     etf_html = ""
     for e in etf_entities:

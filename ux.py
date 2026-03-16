@@ -4978,10 +4978,11 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         # ── ETF mode ─────────────────────────────────────────────────────────────
         if mode == "etf":
             etf_configs = [
-                ("apple_seeds_etf", "Apple Seeds ETF", "apple_seeds_etf_shares", "🍎"),
-                ("energy_etf",      "Energy ETF",      "energy_etf_shares",      "⚡"),
-                ("city_nav_etf",    "City NAV ETF",    "city_nav_etf_shares",    "🏙️"),
-                ("land_bank",       "Land Bank",        "land_bank_shares",       "🏦"),
+                ("apple_seeds_etf",   "Apple Seeds ETF",      "apple_seeds_etf_shares",   "🍎"),
+                ("energy_etf",        "Energy ETF",           "energy_etf_shares",         "⚡"),
+                ("city_nav_etf",      "City NAV ETF",         "city_nav_etf_shares",       "🏙️"),
+                ("land_bank",         "Land Bank",            "land_bank_shares",           "🏦"),
+                ("wbc50_index_fund",  "WBC-50 Index Fund",    "wbc50_index_fund_shares",   "📈"),
             ]
             import banks as _banks_mod
             import inventory as _inv_mod
