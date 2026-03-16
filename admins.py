@@ -820,10 +820,32 @@ def get_chat_rooms_overview() -> list:
 def get_chat_room_messages(room_id: str, limit: int = 50) -> list:
     """Get messages for a specific room."""
     try:
-        from chat import get_room_messages
+        from chat import get_room_messages, get_patch_notes
+        if room_id == "updates":
+            return get_patch_notes()
         return get_room_messages(room_id, limit=limit)
     except Exception:
         return []
+
+
+def admin_delete_chat_message(admin_id: int, message_id: int) -> dict:
+    """Delete a chat message as an admin action."""
+    try:
+        from chat import delete_chat_message, get_db as chat_get_db, ChatMessage
+        db = chat_get_db()
+        msg = db.query(ChatMessage).filter(ChatMessage.id == message_id).first()
+        if not msg:
+            db.close()
+            return {"ok": False, "error": "Message not found"}
+        room_id = msg.room_id
+        snippet = msg.content[:100]
+        db.close()
+        success = delete_chat_message(message_id)
+        if success:
+            log_action(admin_id, "delete_chat_message", details=f"room={room_id} msg_id={message_id}: {snippet}")
+        return {"ok": success}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 # ==========================

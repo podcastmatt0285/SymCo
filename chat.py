@@ -207,6 +207,15 @@ def upsert_message(
     return result
 
 
+def delete_chat_message(message_id: int) -> bool:
+    """Delete a chat message by ID. Returns True if deleted."""
+    db = get_db()
+    deleted = db.query(ChatMessage).filter(ChatMessage.id == message_id).delete()
+    db.commit()
+    db.close()
+    return deleted > 0
+
+
 def get_patch_notes() -> list:
     """Return ALL patch notes from the updates room in chronological order.
 

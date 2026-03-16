@@ -29,7 +29,7 @@ from admins import (
     get_player_land, admin_delete_land_plot, admin_create_land_plot,
     get_player_districts, get_player_businesses,
     get_land_bank_entries, admin_add_to_land_bank, admin_remove_from_land_bank,
-    get_chat_rooms_overview, get_chat_room_messages,
+    get_chat_rooms_overview, get_chat_room_messages, admin_delete_chat_message,
     ban_player, timeout_player, kick_player, revoke_ban, get_active_ban,
     post_update, get_p2p_overview, get_admin_logs, log_action,
     get_dm_threads_overview, get_dm_thread_messages,
@@ -1808,7 +1808,21 @@ def admin_chat(session_token: Optional[str] = Cookie(None), room: Optional[str] 
         msg_items = ""
         for m in messages:
             ts = _ts(m.get("timestamp"))
-            msg_items += f'<div class="chat-msg-row"><span class="cm-name">{m["sender_name"]}</span><span class="cm-time">{ts}</span><div class="cm-text">{m["content"]}</div></div>'
+            msg_id = m.get("id", "")
+            msg_items += (
+                f'<div class="chat-msg-row" style="display:flex;align-items:flex-start;gap:6px;">'
+                f'<div style="flex:1;min-width:0;">'
+                f'<span class="cm-name">{m["sender_name"]}</span>'
+                f'<span class="cm-time">{ts}</span>'
+                f'<div class="cm-text">{m["content"]}</div>'
+                f'</div>'
+                f'<form method="post" action="/admin/chat/delete-message" style="flex-shrink:0;" onsubmit="return confirm(\'Delete this message?\')">'
+                f'<input type="hidden" name="message_id" value="{msg_id}">'
+                f'<input type="hidden" name="room" value="{room}">'
+                f'<button type="submit" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.85rem;padding:2px 4px;" title="Delete message">✕</button>'
+                f'</form>'
+                f'</div>'
+            )
 
         messages_html = f"""
         <div class="card">
@@ -1878,6 +1892,21 @@ def admin_chat_dm(session_token: Optional[str] = Cookie(None), a: int = Query(..
     </div>
     """
     return HTMLResponse(admin_shell("DM Thread", body, player.business_name, "/admin/chat"))
+
+
+@router.post("/admin/chat/delete-message")
+def admin_chat_delete_message(
+    session_token: Optional[str] = Cookie(None),
+    message_id: int = Form(...),
+    room: Optional[str] = Form(None),
+):
+    """Admin deletes a chat message."""
+    player, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    admin_delete_chat_message(player.id, message_id)
+    dest = f"/admin/chat?room={room}" if room else "/admin/chat"
+    return RedirectResponse(dest, status_code=303)
 
 
 # ==========================

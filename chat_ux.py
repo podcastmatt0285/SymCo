@@ -906,7 +906,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         document.getElementById('messages').innerHTML = '';
         document.getElementById('typing-indicator').textContent = '';
 
-        const isReadOnly = room && room.read_only && !ADMIN_IDS.includes(PLAYER_ID);
+        const isReadOnly = room && room.read_only;
         document.getElementById('input-section').style.display = isReadOnly ? 'none' : '';
         document.getElementById('readonly-section').style.display = isReadOnly ? '' : 'none';
 
