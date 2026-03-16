@@ -2233,6 +2233,13 @@ _ETF_CONFIGS = [
         "bank_player_id": -2,
         "ipo_shares": 1_000_000_000_000,
     },
+    {
+        "bank_id": "wbc50_index_fund",
+        "name": "WBC-50 Index Fund",
+        "share_item_type": "wbc50_index_fund_shares",
+        "bank_player_id": -7,
+        "ipo_shares": 500_000_000,
+    },
 ]
 
 
