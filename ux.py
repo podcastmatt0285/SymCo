@@ -1409,7 +1409,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
         import json as _json
         import inventory as _inv_mod
         land_db = get_land_db()
-        player_businesses = land_db.query(Business).filter(Business.owner_id == player.id).all()
+        player_businesses = land_db.query(Business).filter(Business.owner_id == player.id).order_by(Business.id).all()
         inv = _inv_mod.get_player_inventory(player.id)  # {item_type: qty}
 
         if not player_businesses:
@@ -1534,7 +1534,7 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                     lines_html += f'''<div class="line-row{' paused' if lp else ''}" id="line-{biz.id}-{li}">
                         {dot}
                         <span style="font-size:0.78rem;color:#94a3b8;flex:1;">{inp_str} → {out_str}</span>
-                        <form action="/api/business/toggle-line" method="post" style="flex-shrink:0;display:inline;">
+                        <form action="/api/business/toggle-line?sort={sort}&biz_filter={biz_filter}" method="post" style="flex-shrink:0;display:inline;">
                             <input type="hidden" name="business_id" value="{biz.id}">
                             <input type="hidden" name="line_index" value="{li}">
                             <button type="submit" class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}">{'Resume' if lp else 'Pause'}</button>
@@ -1561,12 +1561,12 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                         <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span> {dot}</span>
                         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
                             <span style="color:#38bdf8;font-size:0.82rem;font-weight:bold;">{cur_p}</span>
-                            <form action="/api/retail/set-price" method="post" style="display:flex;gap:4px;align-items:center;">
+                            <form action="/api/retail/set-price?sort={sort}&biz_filter={biz_filter}" method="post" style="display:flex;gap:4px;align-items:center;">
                                 <input type="hidden" name="item_type" value="{item}">
                                 <input type="number" name="price" step="0.01" min="0.01" placeholder="{disp["code"]}" style="width:90px;padding:3px 5px;font-size:0.78rem;">
                                 <button type="submit" class="btn-sm btn-sm-blue">Set</button>
                             </form>
-                            <form action="/api/business/toggle-retail" method="post" style="display:inline;">
+                            <form action="/api/business/toggle-retail?sort={sort}&biz_filter={biz_filter}" method="post" style="display:inline;">
                                 <input type="hidden" name="business_id" value="{biz.id}">
                                 <input type="hidden" name="item_type" value="{item}">
                                 <button type="submit" class="btn-sm {'btn-sm-green' if ip else 'btn-sm-orange'}">{'Resume' if ip else 'Pause'}</button>
@@ -1589,11 +1589,11 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                         <div style="font-size:0.75rem;color:#64748b;margin-top:3px;">{plot_info} · ID #{biz.id} · Start {fmt_usd(startup_cost, disp)} · Wage {fmt_usd(wage_cost, disp)}/cycle</div>
                     </div>
                     <div class="biz-actions">
-                        <form action="/api/business/toggle" method="post" style="display:inline;">
+                        <form action="/api/business/toggle?sort={sort}&biz_filter={biz_filter}" method="post" style="display:inline;">
                             <input type="hidden" name="business_id" value="{biz.id}">
                             <button type="submit" class="btn-sm {toggle_cls}">{toggle_lbl}</button>
                         </form>
-                        <form action="/api/business/dismantle" method="post" style="display:inline;" onsubmit="return confirm('Dismantle this business? You receive 50% of startup cost paid over 100 ticks.')">
+                        <form action="/api/business/dismantle?sort={sort}&biz_filter={biz_filter}" method="post" style="display:inline;" onsubmit="return confirm('Dismantle this business? You receive 50% of startup cost paid over 100 ticks.')">
                             <input type="hidden" name="business_id" value="{biz.id}">
                             <button type="submit" class="btn-sm btn-sm-red">Dismantle</button>
                         </form>
@@ -1609,7 +1609,29 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
                 {detail_html}
             </div>'''
 
-        cards_html = "".join(make_card(d) for d in biz_data)
+        # Apply filter
+        if biz_filter == "active":
+            filtered = [d for d in biz_data if d["biz"].is_active and not d["dismantle"]]
+        elif biz_filter == "paused":
+            filtered = [d for d in biz_data if not d["biz"].is_active and not d["dismantle"]]
+        elif biz_filter == "production":
+            filtered = [d for d in biz_data if d["cls"] == "production"]
+        elif biz_filter == "retail":
+            filtered = [d for d in biz_data if d["cls"] == "retail"]
+        elif biz_filter == "dismantling":
+            filtered = [d for d in biz_data if d["dismantle"]]
+        else:
+            filtered = list(biz_data)
+
+        # Apply sort
+        if sort == "status":
+            filtered.sort(key=lambda d: (0 if d["dismantle"] else (1 if d["biz"].is_active else 2), d["name"].lower()))
+        elif sort == "progress":
+            filtered.sort(key=lambda d: -d["progress_pct"])
+        else:  # name
+            filtered.sort(key=lambda d: d["name"].lower())
+
+        cards_html = "".join(make_card(d) for d in filtered)
         land_db.close()
 
         # Filter/sort button helpers (href-based, no JS required)
@@ -7856,60 +7878,52 @@ async def create_business_endpoint(land_plot_id: int = Form(...), business_type:
     return RedirectResponse(url="/land?error=failed", status_code=303)
 
 @router.post("/api/business/toggle")
-async def toggle_business_endpoint(business_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
+async def toggle_business_endpoint(business_id: int = Form(...), sort: str = "name", biz_filter: str = "all", session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
     from business import toggle_business
     toggle_business(player.id, business_id)
-    return RedirectResponse(url="/businesses", status_code=303)
+    return RedirectResponse(url=f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
 
 @router.post("/api/business/toggle-line")
-async def toggle_line_endpoint(business_id: int = Form(...), line_index: int = Form(...), session_token: Optional[str] = Cookie(None)):
+async def toggle_line_endpoint(business_id: int = Form(...), line_index: int = Form(...), sort: str = "name", biz_filter: str = "all", session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
     from business import toggle_production_line
     toggle_production_line(player.id, business_id, line_index)
-    return RedirectResponse(url="/businesses", status_code=303)
+    return RedirectResponse(url=f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
 
 @router.post("/api/business/toggle-retail")
-async def toggle_retail_endpoint(business_id: int = Form(...), item_type: str = Form(...), session_token: Optional[str] = Cookie(None)):
+async def toggle_retail_endpoint(business_id: int = Form(...), item_type: str = Form(...), sort: str = "name", biz_filter: str = "all", session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
     from business import toggle_retail_item
     toggle_retail_item(player.id, business_id, item_type)
-    return RedirectResponse(url="/businesses", status_code=303)
+    return RedirectResponse(url=f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
 
 @router.post("/api/business/dismantle")
-async def dismantle_business_endpoint(business_id: int = Form(...), session_token: Optional[str] = Cookie(None)):
+async def dismantle_business_endpoint(business_id: int = Form(...), sort: str = "name", biz_filter: str = "all", session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(player.id)
     from business import start_business_dismantling
     start_business_dismantling(player.id, business_id)
-    return RedirectResponse(url="/businesses", status_code=303)
+    return RedirectResponse(url=f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
 
 @router.post("/api/retail/set-price")
-async def set_retail_price_endpoint(item_type: str = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
+async def set_retail_price_endpoint(item_type: str = Form(...), price: float = Form(...), sort: str = "name", biz_filter: str = "all", session_token: Optional[str] = Cookie(None)):
     """Retail Pricing Patch Endpoint."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
-    from reserve_banks import get_player_display_currency, fmt_usd
+    from reserve_banks import get_player_display_currency
     disp = get_player_display_currency(player.id)
     try:
         from business import set_retail_price
         price_usd = price * disp["usd_per_unit"]
         set_retail_price(player.id, item_type, price_usd)
-        return RedirectResponse(url="/businesses", status_code=303)
+        return RedirectResponse(url=f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
     except Exception as e:
         print(f"[UX] Retail price error: {e}")
-        return RedirectResponse(url="/businesses?error=price_update_failed", status_code=303)
+        return RedirectResponse(url=f"/businesses?sort={sort}&biz_filter={biz_filter}&error=price_update_failed", status_code=303)
 
 # ==========================
 # AJAX JSON endpoints for /businesses dashboard (no page reload)
