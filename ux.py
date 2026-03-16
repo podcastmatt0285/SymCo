@@ -3843,6 +3843,22 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 <div><span style="color:#f59e0b;font-weight:600;">Quantitative Easing</span> — When share price drops below −$49.99 the bank creates emergency discounted land auctions every 60 ticks. Auction starting price has no markup (vs the normal 1.5× multiplier); floor is set at 75 % of the base terrain price. Stops when the land bank reaches capacity.</div>
                 </div>
                 </details>""",
+            "wbc50_index_fund": """
+                <details style="margin-top:14px;">
+                <summary style="cursor:pointer;color:#38bdf8;font-size:0.78rem;font-weight:600;letter-spacing:.04em;">HOW THIS ETF WORKS ▾</summary>
+                <div style="margin-top:10px;font-size:0.75rem;color:#cbd5e1;line-height:1.7;border-top:1px solid #1e293b;padding-top:10px;">
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Backing</span> — Backed by equity positions in every company in the Wadsworth Blue-Chip 50 (top 50 public companies by market cap). NAV = cash buffer + sum of (shares held × current price) for all 50 constituents.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Full Replication Strategy</span> — The fund targets holding 19.5 % of each constituent's outstanding shares. A position is only rebalanced when it drifts outside the 18–21 % band, avoiding constant churn. Weights are proportional to each company's share of the total WBC-50 market cap.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Index Changes</span> — When a company enters the WBC-50 the fund buys to 19.5 % of its outstanding shares. When a company exits the WBC-50 the fund sells its entire position and recycles the proceeds into the cash buffer.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Rebalancing</span> — Portfolio is checked every 720 ticks (~60 min). Buy and sell orders are executed at current market price directly against the fund's cash reserves.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Brokerage Firm Funding</span> — Seeded at launch with $50,000,000 from the Brokerage Firm. During each rebalance cycle the Firm may top up the fund's cash by up to $5,000,000 to cover new buy requirements, up to a lifetime cap of $500,000,000.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Cash Buffer</span> — The fund always keeps ≥ 2 % of NAV as liquid cash to cover redemptions and fees.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">No Dividends</span> — Dividends received from constituent stocks accumulate into NAV rather than being paid out. All returns are reflected in the share price.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">No Splits or Buybacks</span> — Share supply is fixed at 500 million. Share price floats freely with NAV.</div>
+                <div style="margin-bottom:8px;"><span style="color:#f59e0b;font-weight:600;">Expense Ratio</span> — 0.5 % annual management fee deducted from NAV every 3,600 ticks (~5 h) and transferred to the Brokerage Firm.</div>
+                <div><span style="color:#f59e0b;font-weight:600;">Asset Valuation</span> — Portfolio value is recalculated every 30 ticks (2.5 min) at live market prices.</div>
+                </div>
+                </details>""",
         }
 
         for bank in bank_entities:
@@ -3859,6 +3875,10 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                 from banks.city_nav_etf import get_player_shareholding
                 market_item = "city_nav_etf_shares"
                 detail_url = "/banks/city-nav-etf"
+            elif bank.bank_id == "wbc50_index_fund":
+                from banks.wbc50_index_fund import get_player_shareholding
+                market_item = "wbc50_index_fund_shares"
+                detail_url = "/banks/wbc50-index-fund"
             else:
                 from banks.land_bank import get_player_shareholding
                 market_item = "land_bank_shares"
@@ -4273,6 +4293,148 @@ def city_nav_etf_dashboard(session_token: Optional[str] = Cookie(None)):
         import traceback
         traceback.print_exc()
         return shell("ETF Error", f"Error loading City NAV ETF: {e}", player.cash_balance, player.id)
+
+
+@router.get("/banks/wbc50-index-fund", response_class=HTMLResponse)
+def wbc50_index_fund_dashboard(session_token: Optional[str] = Cookie(None)):
+    """WBC-50 Index Fund detail page."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        import banks
+        from banks.wbc50_index_fund import (
+            get_player_shareholding, BANK_ID, BANK_NAME, BANK_DESCRIPTION,
+            TARGET_HOLDING_MIN, TARGET_HOLDING_MAX, TARGET_HOLDING,
+            EXPENSE_RATIO_ANNUAL, SEED_CAPITAL, IPO_SHARES,
+            BROKERAGE_TOPUP_PER_CYCLE, BROKERAGE_TOTAL_FUNDING_CAP,
+            CASH_RESERVE_RATIO, REBALANCE_INTERVAL,
+            get_wbc50_constituents, IndexFundHolding, get_db as fund_db,
+            total_firm_funding,
+        )
+
+        entity       = banks.get_bank_entity(BANK_ID)
+        player_pos   = get_player_shareholding(player.id)
+        nav          = (entity.cash_reserves + entity.asset_value) if entity else 0.0
+        share_price  = entity.share_price if entity else 0.0
+        total_shares = entity.total_shares_issued if entity else IPO_SHARES
+
+        # Build holdings table
+        constituents = get_wbc50_constituents()
+        const_map    = {c.id: c for c in constituents}
+        db           = fund_db()
+        try:
+            holdings = db.query(IndexFundHolding).filter(
+                IndexFundHolding.in_index == True,
+                IndexFundHolding.shares_held > 0,
+            ).order_by(IndexFundHolding.ticker).all()
+        finally:
+            db.close()
+
+        holding_rows = ""
+        for h in holdings:
+            co = const_map.get(h.company_id)
+            if co:
+                mkt_val   = h.shares_held * co.current_price
+                pct_held  = h.shares_held / co.shares_outstanding * 100 if co.shares_outstanding else 0
+                port_wt   = mkt_val / entity.asset_value * 100 if entity.asset_value else 0
+                holding_rows += (
+                    f'<tr>'
+                    f'<td style="font-weight:600;">{h.ticker}</td>'
+                    f'<td style="color:#94a3b8;">{co.company_name}</td>'
+                    f'<td>{fmt_usd(co.current_price, disp, precision=4)}</td>'
+                    f'<td>{h.shares_held:,}</td>'
+                    f'<td>{pct_held:.2f}%</td>'
+                    f'<td>{fmt_usd(mkt_val, disp)}</td>'
+                    f'<td>{port_wt:.2f}%</td>'
+                    f'</tr>'
+                )
+
+        holdings_section = f"""
+        <div class="card">
+            <h3>Portfolio Holdings ({len(holdings)}/50 constituents)</h3>
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>Ticker</th><th>Company</th><th>Price</th>
+                        <th>Shares Held</th><th>% of Co.</th>
+                        <th>Market Value</th><th>Portfolio Wt.</th>
+                    </tr>
+                    {holding_rows if holding_rows else '<tr><td colspan="7" style="color:#64748b;">No positions yet — awaiting first rebalance.</td></tr>'}
+                </table>
+            </div>
+        </div>
+        """ if True else ""
+
+        body = f"""
+        <a href="/banks" style="color:#38bdf8;">← Banks</a>
+        <h1>{BANK_NAME}</h1>
+        <p style="color:#64748b;">{BANK_DESCRIPTION}</p>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:18px 0;">
+            <div class="card" style="padding:14px;">
+                <div style="color:#64748b;font-size:0.7rem;">SHARE PRICE</div>
+                <div style="font-size:1.3rem;font-weight:700;">{fmt_usd(share_price, disp, precision=6)}</div>
+            </div>
+            <div class="card" style="padding:14px;">
+                <div style="color:#64748b;font-size:0.7rem;">NAV</div>
+                <div style="font-size:1.3rem;font-weight:700;">{fmt_usd(nav, disp)}</div>
+            </div>
+            <div class="card" style="padding:14px;">
+                <div style="color:#64748b;font-size:0.7rem;">EQUITY VALUE</div>
+                <div style="font-size:1.3rem;font-weight:700;">{fmt_usd(entity.asset_value if entity else 0, disp)}</div>
+            </div>
+            <div class="card" style="padding:14px;">
+                <div style="color:#64748b;font-size:0.7rem;">CASH BUFFER</div>
+                <div style="font-size:1.3rem;font-weight:700;">{fmt_usd(entity.cash_reserves if entity else 0, disp)}</div>
+            </div>
+            <div class="card" style="padding:14px;">
+                <div style="color:#64748b;font-size:0.7rem;">TOTAL SHARES</div>
+                <div style="font-size:1.3rem;font-weight:700;">{total_shares:,}</div>
+            </div>
+            <div class="card" style="padding:14px;">
+                <div style="color:#64748b;font-size:0.7rem;">FIRM FUNDED</div>
+                <div style="font-size:1.3rem;font-weight:700;">{fmt_usd(total_firm_funding, disp)}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Your Position</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div><b>Shares Owned:</b> {player_pos["shares_owned"]:,}</div>
+                <div><b>Position Value:</b> {fmt_usd(player_pos["current_value"], disp)}</div>
+                <div><b>Ownership:</b> {player_pos["ownership_percentage"]:.6f}%</div>
+                <div><b>Avg Share Price:</b> {fmt_usd(share_price, disp, precision=6)}</div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:10px;">
+                <a href="/brokerage/trading?mode=etf" class="btn-blue">Trade Shares</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Fund Strategy</h3>
+            <div style="font-size:0.8rem;color:#cbd5e1;line-height:1.8;">
+                <div>• <b>Replication target:</b> {TARGET_HOLDING_MIN*100:.0f}–{TARGET_HOLDING_MAX*100:.0f}% of each WBC-50 constituent's outstanding shares (midpoint {TARGET_HOLDING*100:.1f}%)</div>
+                <div>• <b>Weighting:</b> Market-cap proportional within the WBC-50</div>
+                <div>• <b>Rebalance frequency:</b> Every {REBALANCE_INTERVAL} ticks (~60 min)</div>
+                <div>• <b>Cash buffer:</b> ≥ {CASH_RESERVE_RATIO*100:.0f}% of NAV held liquid at all times</div>
+                <div>• <b>Expense ratio:</b> {EXPENSE_RATIO_ANNUAL*100:.2f}% annual, collected every 3,600 ticks and paid to the Brokerage Firm</div>
+                <div>• <b>Seed capital:</b> {fmt_usd(SEED_CAPITAL, disp)} from Brokerage Firm at launch</div>
+                <div>• <b>Firm top-up:</b> Up to {fmt_usd(BROKERAGE_TOPUP_PER_CYCLE, disp)} per rebalance cycle, lifetime cap {fmt_usd(BROKERAGE_TOTAL_FUNDING_CAP, disp)}</div>
+                <div>• <b>No dividends, no splits, no buybacks</b> — all returns flow through NAV</div>
+            </div>
+        </div>
+
+        {holdings_section}
+        """
+        return shell(BANK_NAME, body, player.cash_balance, player.id)
+
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return shell("ETF Error", f"Error loading WBC-50 Index Fund: {e}", player.cash_balance, player.id)
 
 
 @router.get("/banks/brokerage-firm", response_class=HTMLResponse)
