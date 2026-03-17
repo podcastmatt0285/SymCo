@@ -1093,20 +1093,37 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }}, 150);
           }}
 
-          // Show on clicks to known-slow pages
+          function _isSlowPath(pathname) {{
+            for (var i=0; i<SLOW_PATHS.length; i++) {{
+              if (pathname.startsWith(SLOW_PATHS[i])) return true;
+            }}
+            return false;
+          }}
+
+          // Show on <a> clicks to known-slow pages
           document.addEventListener('click', function(e) {{
             var a = e.target.closest('a');
             if (!a || !a.href) return;
             try {{
               var url = new URL(a.href);
               if (url.origin !== location.origin) return;
-              for (var i=0; i<SLOW_PATHS.length; i++) {{
-                if (url.pathname.startsWith(SLOW_PATHS[i])) {{
-                  startLoader(); return;
-                }}
-              }}
+              if (_isSlowPath(url.pathname)) startLoader();
             }} catch(ex) {{}}
           }});
+
+          // Show on form submits to known-slow pages (e.g. search box)
+          document.addEventListener('submit', function(e) {{
+            var form = e.target;
+            if (!form || !form.action) return;
+            try {{
+              var url = new URL(form.action);
+              if (url.origin !== location.origin) return;
+              if (_isSlowPath(url.pathname)) startLoader();
+            }} catch(ex) {{}}
+          }});
+
+          // Expose so inline onclick handlers can trigger it: window.startLoader()
+          window.startLoader = startLoader;
 
           // Hide if user hits back/forward into this page (bfcache)
           window.addEventListener('pageshow', function(e) {{
@@ -7888,7 +7905,7 @@ def production_costs_page(
                     biz_label = item.get("business", "-") or '<span style="color:#ef4444;">No recipe</span>'
                     rows += (
                         f'<tr style="border-bottom:1px solid #1e293b;cursor:pointer;"'
-                        f' onclick="window.location=\'/stats/production-costs/{item["item_key"]}\'">'
+                        f' onclick="if(window.startLoader)window.startLoader();window.location=\'/stats/production-costs/{item["item_key"]}\'">'
                         f'<td style="padding:12px 8px;"><strong>{item["name"]}</strong><br>'
                         f'<span style="color:#64748b;font-size:0.8rem;">{item["item_key"]}</span></td>'
                         f'<td style="padding:12px 8px;">'
