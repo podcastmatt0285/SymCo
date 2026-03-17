@@ -185,9 +185,15 @@ CREDIT_MODIFIERS = {
     "margin_call_triggered": -15,
     "margin_call_resolved": +5,
     "forced_liquidation": -25,
+    "short_closed_profit": +3,       # voluntary close, profitable
+    "short_closed_loss": -1,         # voluntary close, small loss (market moved against you)
+    "short_force_closed": -20,       # collateral exhausted — lender reclaimed position
+    # Legacy names kept for any existing credit records that reference them
     "short_returned_on_time": +2,
     "short_returned_late": -5,
     "short_defaulted": -20,
+    "short_position_profitable": +2,
+    "short_position_loss": -1,
     "commodity_returned_on_time": +3,
     "commodity_returned_late": -5,
     "commodity_defaulted": -20,
@@ -196,8 +202,6 @@ CREDIT_MODIFIERS = {
     "dividend_missed": -5,
     "lien_created": -15,
     "lien_paid_off": +10,
-    "short_position_profitable": +2,
-    "short_position_loss": -1,
     "margin_trade_profitable": +2,
     "margin_trade_loss": -1,
     "multi_account_detected": -30,
@@ -2632,7 +2636,15 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
         db.close()
 
 
-def close_short_position(loan_id: int) -> bool:
+def close_short_position(loan_id: int, forced: bool = False) -> bool:
+    """Close a short position voluntarily or via force-close (collateral exhaustion).
+
+    Args:
+        loan_id: The ShareLoan to close.
+        forced: True when triggered by the system (collateral exhausted).  Applies
+                the more severe 'short_force_closed' credit penalty instead of the
+                normal voluntary-close modifiers.
+    """
     try:
         from banks.brokerage_order_book import place_market_order, OrderSide
     except ImportError:
@@ -2724,10 +2736,13 @@ def close_short_position(loan_id: int) -> bool:
         
         db.commit()
         
-        if pnl > 0:
-            modify_credit_score(loan.borrower_player_id, "short_position_profitable")
+        if forced:
+            # Collateral exhausted — treat as a default regardless of P&L sign
+            modify_credit_score(loan.borrower_player_id, "short_force_closed")
+        elif pnl > 0:
+            modify_credit_score(loan.borrower_player_id, "short_closed_profit")
         else:
-            modify_credit_score(loan.borrower_player_id, "short_position_loss")
+            modify_credit_score(loan.borrower_player_id, "short_closed_loss")
         
         return True
     
@@ -2807,7 +2822,7 @@ def process_share_loan_interest():
     # Force-close positions with exhausted/near-exhausted collateral (separate transactions)
     for loan_id in force_close_ids:
         try:
-            close_short_position(loan_id)
+            close_short_position(loan_id, forced=True)
             print(f"[{BANK_NAME}] Force-closed short loan #{loan_id} — collateral exhausted")
         except Exception as e:
             print(f"[{BANK_NAME}] Error force-closing short loan #{loan_id}: {e}")

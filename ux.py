@@ -6430,17 +6430,26 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
     try:
         from banks.brokerage_firm import (
             CompanyShares, ShareholderPosition, ShareLoan, ShareLoanStatus,
-            get_player_credit, SHORT_COLLATERAL_REQUIREMENT,
+            get_player_credit, get_credit_tier, get_short_borrow_rate,
+            SHORT_COLLATERAL_REQUIREMENT, CREDIT_TIERS,
             get_db as get_firm_db
         )
-        
+
+        # Credit tier info for this player
+        credit_rating = get_player_credit(player.id)
+        credit_tier = get_credit_tier(credit_rating.credit_score)
+        borrow_rate_annual = get_short_borrow_rate(player.id)
+        credit_tier_name = credit_tier.value.upper()
+        # Find next tier requirements
+        tier_rows = sorted(CREDIT_TIERS.values(), key=lambda x: x[0])  # sort by min_score
+
         db = get_firm_db()
         try:
             # Get all public companies
             companies = db.query(CompanyShares).filter(
                 CompanyShares.is_delisted == False
             ).order_by(CompanyShares.ticker_symbol).all()
-            
+
             # Get player's active shorts
             active_shorts = db.query(ShareLoan).filter(
                 ShareLoan.borrower_player_id == player.id,
@@ -6567,11 +6576,35 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                     </p>
                 </div>'''
 
+        tier_color = {"prime": "#22c55e", "good": "#38bdf8", "fair": "#f59e0b", "poor": "#f97316", "restricted": "#ef4444"}.get(credit_tier.value, "#94a3b8")
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>Short Selling</h1>
         <p style="color: #64748b;">Borrow shares, sell them now, buy back later at (hopefully) a lower price.</p>
-        
+
+        <!-- Credit Tier Banner -->
+        <div class="card" style="margin-bottom: 20px; padding: 15px; background: #0f172a; border-left: 4px solid {tier_color};">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <span style="color: #64748b; font-size: 0.85rem;">YOUR CREDIT TIER</span><br>
+                    <strong style="color: {tier_color}; font-size: 1.2rem;">{credit_tier_name}</strong>
+                    <span style="color: #64748b; margin-left: 8px;">Score: {credit_rating.credit_score}/100</span>
+                </div>
+                <div style="text-align: center;">
+                    <span style="color: #64748b; font-size: 0.85rem;">BORROW RATE</span><br>
+                    <strong style="color: #f59e0b;">{borrow_rate_annual*100:.1f}% p.a.</strong>
+                </div>
+                <div style="text-align: center;">
+                    <span style="color: #64748b; font-size: 0.85rem;">DAILY FEE (per $1,000 short)</span><br>
+                    <strong style="color: #94a3b8;">{fmt_usd(1000 * borrow_rate_annual / 365, disp, precision=4)}</strong>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b; max-width: 300px;">
+                    Improve your credit score by closing profitable positions, paying dividends, and repaying loans on time.
+                    Higher tiers unlock lower borrow rates and greater leverage.
+                </div>
+            </div>
+        </div>
+
         <!-- Open New Short -->
         <div class="card">
             <h3>Open Short Position</h3>
@@ -6618,11 +6651,45 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                 <li>You can now hold the proceeds while waiting for the price to fall.</li>
                 <li>When you close, you buy back the shares at the current market price.</li>
                 <li>Your locked collateral (minus fees) is returned. Profit = original sale price − buyback price − borrow fees.</li>
-                <li>Daily borrow fees are deducted from your locked collateral. If collateral runs below ~3 days of fees, the position is <strong>automatically force-closed</strong>.</li>
+                <li>Daily borrow fees are deducted from your locked collateral. If collateral runs below ~3 days of fees, the position is <strong>automatically force-closed</strong> and your credit score takes a major hit (−20 pts).</li>
             </ol>
             <p style="color: #ef4444; margin-top: 15px;">
                 <strong>Risk Warning:</strong> If the stock price rises, your buyback cost increases and losses are theoretically unlimited.
                 Monitor your collateral balance — if it drains to zero the position is liquidated without warning.
+            </p>
+
+            <!-- Credit Tier Table -->
+            <h4 style="color: #94a3b8; margin-top: 20px; margin-bottom: 10px;">Borrow Rate by Credit Tier</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1e293b; text-align: left; color: #64748b;">
+                        <th style="padding: 6px 8px;">Tier</th>
+                        <th style="padding: 6px 8px;">Score Range</th>
+                        <th style="padding: 6px 8px;">Annual Borrow Rate</th>
+                        <th style="padding: 6px 8px;">Credit Impact (voluntary close)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #22c55e;">
+                        <td style="padding: 6px 8px;">PRIME</td><td style="padding: 6px 8px;">80–100</td><td style="padding: 6px 8px;">3% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #38bdf8;">
+                        <td style="padding: 6px 8px;">GOOD</td><td style="padding: 6px 8px;">60–79</td><td style="padding: 6px 8px;">5% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #f59e0b;">
+                        <td style="padding: 6px 8px;">FAIR</td><td style="padding: 6px 8px;">40–59</td><td style="padding: 6px 8px;">8% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #f97316;">
+                        <td style="padding: 6px 8px;">POOR</td><td style="padding: 6px 8px;">20–39</td><td style="padding: 6px 8px;">12% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="color: #ef4444;">
+                        <td style="padding: 6px 8px;">RESTRICTED</td><td style="padding: 6px 8px;">0–19</td><td style="padding: 6px 8px;">15% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="color: #64748b; font-size: 0.8rem; margin-top: 8px;">
+                Force-close (collateral exhausted): −20 pts regardless of P&L.
+                Borrow rate is locked at the rate of your tier when you open the position.
             </p>
         </div>
         '''
