@@ -9197,11 +9197,17 @@ async def brokerage_buy_shares(
             db.close()
         
         # Execute Order
+        # Convert limit_price from the player's display currency back to USD before
+        # storing — the order book always works in USD internally, and fmt_usd() on
+        # the display side will convert back out again.  Without this step a player
+        # whose display currency is JPY (usd_per_unit ≈ 0.0067) would store ¥150
+        # as $150, causing the displayed price to be ~22× higher than intended.
+        limit_price_usd = (limit_price * disp["usd_per_unit"]) if limit_price is not None else None
         result = player_place_buy_order(
             player_id=player.id,
             company_shares_id=company_id,
             quantity=quantity,
-            limit_price=limit_price, # None = Market Order
+            limit_price=limit_price_usd,  # None = Market Order
             use_margin=use_margin
         )
         
@@ -9239,11 +9245,13 @@ async def brokerage_sell_shares(
         finally:
             db.close()
         
+        # Same currency conversion as the buy endpoint — see comment there.
+        limit_price_usd = (limit_price * disp["usd_per_unit"]) if limit_price is not None else None
         result = player_place_sell_order(
             player_id=player.id,
             company_shares_id=company_id,
             quantity=quantity,
-            limit_price=limit_price
+            limit_price=limit_price_usd
         )
         
         status = "success" if result else "error"
