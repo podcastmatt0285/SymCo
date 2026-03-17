@@ -34,8 +34,8 @@ Base = declarative_base()
 # ==========================
 ORDER_EXPIRY_TICKS = 86400  # 24 hours in ticks (at 1 second per tick)
 MAX_PRICE_IMPACT = 0.10  # Market orders can't move price more than 10% per trade
-MIN_ORDER_SIZE = 1  # Minimum 1 share
-MAX_ORDER_SIZE = 1000000  # Max 1M shares per order
+MIN_ORDER_SIZE = 1          # Minimum 1 share
+MAX_ORDER_SIZE = 1_000_000_000  # 1 billion shares — matches max IPO size
 
 # ==========================
 # ENUMS

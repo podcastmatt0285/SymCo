@@ -4700,7 +4700,8 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
 
 
 @router.get("/brokerage/trading", response_class=HTMLResponse)
-def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: str = None, mode: str = "equity"):
+def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: str = None, mode: str = "equity",
+                           success: Optional[str] = None, error: Optional[str] = None):
     """WPE equity and ETF trading page."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
@@ -4789,7 +4790,9 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         
         # Get player's position in selected company
         player_position = player_positions.get(selected_company.id)
-        player_shares = player_position.shares_owned if player_position else 0
+        # shares_lent_out are locked as collateral for active short loans — they
+        # cannot be sold until recalled/returned, matching get_player_shares() logic.
+        player_shares = max(0, (player_position.shares_owned or 0) - (player_position.shares_lent_out or 0)) if player_position else 0
         player_cost_basis = player_position.average_cost_basis if player_position else 0
         
         # Calculate margin multiplier for this stock
@@ -5094,11 +5097,29 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         # ─────────────────────────────────────────────────────────────────────────
 
         # Assemble the full dashboard body
+        from html import escape as html_escape
+        _alert_banner = ""
+        _TRADING_MSGS = {
+            "buy_order_placed":  ("Order placed.", True),
+            "sell_order_placed": ("Order placed.", True),
+            "buy_failed":        ("Buy order failed. Check your balance and order size.", False),
+            "sell_failed":       ("Sell order failed. You may have exceeded the quantity available to sell, or the order was rejected by the exchange.", False),
+        }
+        if success and success in _TRADING_MSGS:
+            _txt, _ = _TRADING_MSGS[success]
+            _alert_banner = f'<div style="background:#14532d;color:#86efac;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">{_txt}</div>'
+        elif error and error in _TRADING_MSGS:
+            _txt, _ = _TRADING_MSGS[error]
+            _alert_banner = f'<div style="background:#7f1d1d;color:#fca5a5;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">{_txt}</div>'
+        elif error:
+            _alert_banner = f'<div style="background:#7f1d1d;color:#fca5a5;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">{html_escape(error)}</div>'
+
         body = td_css + f'''
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
             <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:0.8rem;">&larr; Brokerage Firm</a>
             <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">WPE Trading Floor</span>
         </div>
+        {_alert_banner}
         <!-- Mode tabs -->
         <div style="display:flex;gap:8px;margin-bottom:12px;">
             <a href="/brokerage/trading"
