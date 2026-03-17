@@ -8010,8 +8010,9 @@ def production_costs_page(
         else:
             from wma import get_player_cost_basis_items, get_all_wma
 
-            raw_items = get_player_cost_basis_items(player.id)
+            all_raw   = get_player_cost_basis_items(player.id)
             wma_data  = get_all_wma(player.id)
+            raw_items = list(all_raw)  # copy; filters below will reassign this
 
             # Apply filters
             if search:
@@ -8119,7 +8120,6 @@ def production_costs_page(
 
             # Category set for filter tabs
             all_cats = sorted({i["category"] for i in raw_items})
-            all_raw  = get_player_cost_basis_items(player.id)  # unfiltered for counts
             cat_tabs = (
                 f'<a href="/stats/production-costs?mode=cost_basis&category=all'
                 f'&sort={sort}&order={order}" '

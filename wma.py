@@ -159,7 +159,8 @@ def get_all_wma(player_id: int) -> dict:
 
 def compute_production_cost_basis(player_id: int,
                                   biz_config: dict,
-                                  line: dict) -> dict:
+                                  line: dict,
+                                  wma_cache: dict | None = None) -> dict:
     """
     Compute the WMA-based cost basis for one production line.
 
@@ -238,7 +239,7 @@ def compute_production_cost_basis(player_id: int,
         # ── Step 2: Gross batch cost — WMA prices with theoretical fallback ──
         # Priority: player's WMA record → theoretical (vertical integration) → 0
         # Only flag an input as "missing" if there is truly no price source at all.
-        wma_data = get_all_wma(player_id)
+        wma_data = wma_cache if wma_cache is not None else get_all_wma(player_id)
         try:
             from production_costs import get_calculator
             _calc = get_calculator()
@@ -370,6 +371,9 @@ def get_player_cost_basis_items(player_id: int) -> list:
     except FileNotFoundError:
         pass
 
+    # Fetch WMA data once for all items rather than once per item inside the loop.
+    wma_cache = get_all_wma(player_id)
+
     results = []
     seen: set = set()
 
@@ -384,7 +388,7 @@ def get_player_cost_basis_items(player_id: int) -> list:
                 continue
             seen.add(output)
 
-            cb       = compute_production_cost_basis(player_id, biz_data, line)
+            cb       = compute_production_cost_basis(player_id, biz_data, line, wma_cache=wma_cache)
             meta     = item_types.get(output, {})
             name     = (meta.get("name") if isinstance(meta, dict) else None) \
                        or output.replace("_", " ").title()
