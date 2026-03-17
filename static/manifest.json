@@ -21,7 +21,7 @@
     { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "Businesses",       "url": "/business",       "description": "Businesses Terminal" },
+    { "name": "Businesses",       "url": "/businesses",     "description": "Businesses Terminal" },
     { "name": "Inventory",        "url": "/inventory",      "description": "Inventory Management" },
     { "name": "Land",             "url": "/land",           "description": "Land Holdings" },
     { "name": "Market",           "url": "/market",         "description": "Commodities Market" },
