@@ -5089,7 +5089,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             </div>
             <h2 style="margin:0 0 4px;">ETF Fund Trading</h2>
             <p style="color:#64748b;font-size:.85rem;margin:0 0 16px;">
-                Place limit orders on ETF fund shares via the Wadsworth commodity market.
+                Place limit orders on ETF fund shares via the ETF Trading Floor.
             </p>
             {fund_cards}
             '''
@@ -6871,9 +6871,11 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
         # Get player inventory for listing
         player_inv = inv_mod.get_player_inventory(player.id)
         
-        # Build available listings table
+        # Build available listings table — exclude fund/ETF shares which belong
+        # on the ETF Trading Floor, not the commodity lending market.
         listings_html = ""
-        if listings:
+        commodity_listings = [l for l in listings if not l.item_type.endswith("_shares")]
+        if commodity_listings:
             listings_html = '''
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
@@ -6886,8 +6888,8 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
                     </tr>
                 </thead>
                 <tbody>'''
-            
-            for listing in listings:
+
+            for listing in commodity_listings:
                 available = listing.quantity_available - listing.quantity_lent_out
                 is_own = listing.lender_player_id == player.id
 
@@ -6913,7 +6915,7 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
                 </tr>'''
             
             listings_html += '</tbody></table>'
-        else:
+        elif not commodity_listings:
             listings_html = '<p style="color: #64748b;">No commodities available for borrowing.</p>'
         
         # Build player's loans table
@@ -6960,10 +6962,11 @@ def brokerage_commodities_page(session_token: Optional[str] = Cookie(None)):
         else:
             loans_html = '<p style="color: #64748b;">You have no active commodity loans.</p>'
         
-        # Build inventory for listing
+        # Build inventory for listing — fund/ETF shares (item_type ending in
+        # "_shares") belong on the ETF Trading Floor, not the commodity market.
         inv_options = ""
         for item, qty in player_inv.items():
-            if qty > 0:
+            if qty > 0 and not item.endswith("_shares"):
                 inv_options += f'<option value="{item}">{item.replace("_", " ").title()} ({qty:,.0f} available)</option>'
         
         body = f'''
@@ -8567,7 +8570,7 @@ async def brokerage_etf_order(
     price:      float = Form(...),
     session_token: Optional[str] = Cookie(None),
 ):
-    """Place a limit order for an ETF fund share via the commodity market, then return to ETF trading view."""
+    """Place a limit order for an ETF fund share via the ETF Trading Floor, then return to ETF trading view."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -8798,11 +8801,15 @@ async def brokerage_list_commodity(
     disp = get_player_display_currency(player.id)
     
     try:
+        # Fund/ETF shares belong on the ETF Trading Floor, not the commodity market.
+        if item_type.endswith("_shares"):
+            return RedirectResponse(url="/brokerage/commodities?error=list_failed", status_code=303)
+
         from banks.brokerage_firm import list_commodity_for_lending
-        
+
         # Convert percentage to decimal
         rate_decimal = weekly_rate / 100.0
-        
+
         result = list_commodity_for_lending(
             lender_id=player.id,
             item_type=item_type,
