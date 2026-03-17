@@ -6362,6 +6362,15 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                 lent_out          = pos.shares_lent_out or 0
                 opt_out_fee       = LEND_OPT_OUT_BASE_FEE + item["market_value"] * LEND_OPT_OUT_PCT
                 if available_to_lend > 0 or lent_out > 0:
+                    recall_btn = ""
+                    if lent_out > 0:
+                        recall_btn = f'''<br><form action="/api/brokerage/recall-shares" method="post" style="display:inline;"
+                              onsubmit="return confirm('Recall all {lent_out:,} lent shares of {company.ticker_symbol}? This force-closes the borrower\\'s short positions immediately.');">
+                            <input type="hidden" name="company_shares_id" value="{company.id}">
+                            <button type="submit" style="font-size:0.75rem;background:#7c2d12;color:#fdba74;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
+                                Recall {lent_out:,} shares
+                            </button>
+                        </form>'''
                     lending_cell = f'''
                         <span style="color:#22c55e;font-size:0.8rem;">&#10003; Lending</span><br>
                         <span style="font-size:0.75rem;color:#94a3b8;">
@@ -6381,7 +6390,7 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                             <button type="submit" style="font-size:0.75rem;background:#7f1d1d;color:#fca5a5;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">
                                 Opt-Out ({fmt_usd(opt_out_fee, disp, precision=0)})
                             </button>
-                        </form>'''
+                        </form>{recall_btn}'''
                 else:
                     lending_cell = f'''
                         <span style="color:#ef4444;font-size:0.8rem;">&#10007; Not Lending</span><br>
@@ -6545,15 +6554,29 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                     CompanyShares.ticker_symbol == ticker.upper()
                 ).first()
             
+            short_interest_pct = 0.0
+            si_multiplier = 1.0
+            float_remaining_pct = 1.0
             if selected_company:
-                # Find shares available to borrow
+                # Find shares available to borrow (firm first, then others)
                 available_positions = db.query(ShareholderPosition).filter(
                     ShareholderPosition.company_shares_id == selected_company.id,
                     ShareholderPosition.shares_available_to_lend > 0,
                     ShareholderPosition.player_id != player.id
                 ).all()
                 available_to_short = sum(p.shares_available_to_lend for p in available_positions)
-            
+                # Short interest stats
+                from sqlalchemy import func as _func
+                from banks.brokerage_firm import ShareLoan as _SL, ShareLoanStatus as _SLS, MAX_SHORT_FLOAT_PCT, get_short_interest_multiplier
+                total_shorted = db.query(_func.sum(_SL.shares_borrowed)).filter(
+                    _SL.company_shares_id == selected_company.id,
+                    _SL.status == _SLS.ACTIVE.value,
+                ).scalar() or 0
+                if selected_company.shares_in_float:
+                    short_interest_pct = total_shorted / selected_company.shares_in_float * 100
+                    float_remaining_pct = max(0.0, (selected_company.shares_in_float * MAX_SHORT_FLOAT_PCT - total_shorted) / selected_company.shares_in_float * 100)
+                si_multiplier = get_short_interest_multiplier(selected_company.id)
+
             player_credit = get_player_credit(player.id)
             
         finally:
@@ -6626,16 +6649,29 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
         # Pre-build short info to avoid nested f-string syntax issues
         short_info_html = ""
         if selected_company:
+            si_color = "#22c55e" if short_interest_pct < 25 else ("#f59e0b" if short_interest_pct < 50 else "#ef4444")
+            adjusted_rate_pct = borrow_rate_annual * si_multiplier * 100
+            si_warning = ""
+            if si_multiplier > 1.0:
+                si_warning = f'<p style="color:#ef4444;font-size:0.85rem;margin-top:6px;">⚠ High short interest ({short_interest_pct:.1f}% of float) — borrow rate elevated {si_multiplier:.1f}×</p>'
+            cap_warning = ""
+            if float_remaining_pct < 10:
+                cap_warning = f'<p style="color:#ef4444;font-size:0.85rem;">⚠ Near float cap — only {float_remaining_pct:.1f}% of shortable float remaining</p>'
             short_info_html = f'''
                 <div style="margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 4px;">
                     <p><strong>Selected:</strong> {selected_company.ticker_symbol} @ {fmt_usd(selected_company.current_price, disp, precision=4)}</p>
                     <p><strong>Available to borrow:</strong> {available_to_short:,} shares</p>
-                    <p><strong>Collateral locked (150%):</strong> {fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp, precision=4)}/share</p>
+                    <p><strong>Short Interest:</strong> <span style="color:{si_color};">{short_interest_pct:.1f}% of float</span>
+                       &nbsp;(max {MAX_SHORT_FLOAT_PCT*100:.0f}% — {float_remaining_pct:.1f}% remaining capacity)</p>
+                    <p><strong>Effective borrow rate:</strong> {adjusted_rate_pct:.1f}% p.a.
+                       {f"({borrow_rate_annual*100:.1f}% base × {si_multiplier:.1f}×)" if si_multiplier > 1 else "(base rate)"}</p>
+                    {si_warning}{cap_warning}
+                    <p style="margin-top:8px;"><strong>Collateral locked (150%):</strong> {fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp, precision=4)}/share</p>
                     <p><strong>Short-sale proceeds credited (100%):</strong> {fmt_usd(selected_company.current_price, disp, precision=4)}/share</p>
                     <p><strong>Net out-of-pocket (50% additional margin):</strong> {fmt_usd(selected_company.current_price * (SHORT_COLLATERAL_REQUIREMENT - 1.0), disp, precision=4)}/share</p>
-                    <p style="color: #f59e0b; font-size: 0.9rem; margin-top: 10px;">
-                        Short selling is risky. If the price rises, your losses are theoretically unlimited.
-                        Daily borrow fees drain your locked collateral — if it runs low the position is force-closed.
+                    <p style="color: #f59e0b; font-size: 0.85rem; margin-top: 10px;">
+                        Short sellers owe dividends to the lender — dividend payments are deducted from your collateral.
+                        If the price rises, your losses are theoretically unlimited. Lenders may recall shares at any time.
                     </p>
                 </div>'''
 
@@ -8696,6 +8732,34 @@ async def brokerage_close_short(
         import traceback
         traceback.print_exc()
         return RedirectResponse(url="/brokerage/shorts?error=exception", status_code=303)
+
+
+@router.post("/api/brokerage/recall-shares")
+async def brokerage_recall_shares(
+    company_shares_id: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Recall all active share loans where the current player is the lender."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from urllib.parse import quote
+    try:
+        from banks.brokerage_firm import recall_shares
+        count, err = recall_shares(player.id, company_shares_id)
+        if err:
+            return RedirectResponse(
+                url=f"/brokerage/portfolio?error={quote(err)}", status_code=303
+            )
+        return RedirectResponse(
+            url=f"/brokerage/portfolio?success={quote(f'Recalled {count} loan(s) successfully.')}",
+            status_code=303
+        )
+    except Exception as e:
+        from urllib.parse import quote
+        return RedirectResponse(
+            url=f"/brokerage/portfolio?error={quote(str(e))}", status_code=303
+        )
 
 
 @router.post("/api/brokerage/list-commodity")
