@@ -7767,15 +7767,16 @@ Copy everything below into your ux.py file.
 # PRODUCTION COSTS PAGES
 # ==========================
 
-def _production_costs_compute(
-    session_token,
+@router.get("/stats/production-costs", response_class=HTMLResponse)
+def production_costs_page(
+    session_token: Optional[str] = Cookie(None),
     mode: str = "vertical",
     category: str = "all",
     sort: str = "cost",
     order: str = "asc",
     search: str = ""
 ):
-    """Compute and return the full Production Costs page HTML (used by streaming wrapper)."""
+    """Interactive production cost explorer (vertical integration + WMA cost basis)."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -8269,34 +8270,10 @@ def _production_costs_compute(
         return shell("Production Costs", f"Error: {e}", player.cash_balance, player.id)
 
 
-@router.get("/stats/production-costs")
-def production_costs_page(
-    session_token: Optional[str] = Cookie(None),
-    mode: str = "vertical",
-    category: str = "all",
-    sort: str = "cost",
-    order: str = "asc",
-    search: str = ""
-):
-    """Streaming wrapper: sends loader immediately, then the full page once computed."""
-    player = require_auth(session_token)
-    if isinstance(player, RedirectResponse):
-        return player
-
-    def _gen():
-        yield _STREAM_LOADER
-        html = _production_costs_compute(session_token, mode, category, sort, order, search)
-        if isinstance(html, str):
-            yield "<script>document.open();document.write(" + _json.dumps(html) + ");document.close();</script></body></html>"
-        else:
-            yield "<script>window.location.reload();</script></body></html>"
-
-    return StreamingResponse(_gen(), media_type="text/html")
-
-
-def _production_cost_detail_compute(
+@router.get("/stats/production-costs/{item_key}", response_class=HTMLResponse)
+def production_cost_detail_page(
     item_key: str,
-    session_token=None
+    session_token: Optional[str] = Cookie(None)
 ):
     """Detailed cost breakdown for a specific item."""
     player = require_auth(session_token)
@@ -8486,27 +8463,6 @@ def _production_cost_detail_compute(
         import traceback
         traceback.print_exc()
         return shell("Production Costs", f"Error: {e}", player.cash_balance, player.id)
-
-
-@router.get("/stats/production-costs/{item_key}")
-def production_cost_detail_page(
-    item_key: str,
-    session_token: Optional[str] = Cookie(None)
-):
-    """Streaming wrapper: sends loader immediately, then the full detail page once computed."""
-    player = require_auth(session_token)
-    if isinstance(player, RedirectResponse):
-        return player
-
-    def _gen():
-        yield _STREAM_LOADER
-        html = _production_cost_detail_compute(item_key, session_token)
-        if isinstance(html, str):
-            yield "<script>document.open();document.write(" + _json.dumps(html) + ");document.close();</script></body></html>"
-        else:
-            yield "<script>window.location.reload();</script></body></html>"
-
-    return StreamingResponse(_gen(), media_type="text/html")
 
 
 # ==========================
