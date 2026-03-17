@@ -39,7 +39,7 @@ from typing import Optional, List, Dict, Any
 from enum import Enum
 import math
 
-from sqlalchemy import Column, String, Float, DateTime, Integer, BigInteger, Boolean, JSON, ForeignKey, text
+from sqlalchemy import Column, String, Float, DateTime, Integer, BigInteger, Boolean, JSON, ForeignKey, text, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -74,6 +74,8 @@ MAX_MARGIN_MULTIPLIER = 10.0
 SHORT_COLLATERAL_REQUIREMENT = 1.50
 SHORT_BORROW_FEE_BASE = 0.05
 SHORT_FEE_FIRM_SPLIT = 0.40
+# Maximum fraction of a company's float that may be shorted simultaneously
+MAX_SHORT_FLOAT_PCT = 0.80
 
 COMMODITY_COLLATERAL_REQUIREMENT = 1.05
 COMMODITY_LENDING_FEE_SPLIT = 0.50
@@ -142,6 +144,7 @@ class ShareLoanStatus(str, Enum):
     RETURNED = "returned"
     DEFAULTED = "defaulted"
     FORCE_CLOSED = "force_closed"
+    RECALLED = "recalled"   # lender-initiated force-close
 
 
 class CommodityLoanStatus(str, Enum):
@@ -857,11 +860,47 @@ def get_max_leverage_for_player(player_id: int) -> float:
 def get_short_borrow_rate(player_id: int) -> float:
     rating = get_player_credit(player_id)
     tier = get_credit_tier(rating.credit_score)
-    
+
     for t, (_, _, _, _, borrow_rate) in CREDIT_TIERS.items():
         if t == tier:
             return borrow_rate
     return 0.15
+
+
+def get_short_interest_multiplier(company_shares_id: int) -> float:
+    """Return a borrow-rate multiplier based on short interest as a fraction of float.
+
+    As more of the float is shorted, borrowing becomes progressively more
+    expensive — this is what drives short-squeeze dynamics.
+
+    SI %    Multiplier
+    <25%    1.0×  (base rate)
+    25-50%  1.5×
+    50-65%  2.5×
+    65-80%  4.0×  (approaching float cap)
+    """
+    db = get_db()
+    try:
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == company_shares_id
+        ).first()
+        if not company or not company.shares_in_float:
+            return 1.0
+        total_shorted = db.query(func.sum(ShareLoan.shares_borrowed)).filter(
+            ShareLoan.company_shares_id == company_shares_id,
+            ShareLoan.status == ShareLoanStatus.ACTIVE.value,
+        ).scalar() or 0
+        si_pct = total_shorted / company.shares_in_float
+        if si_pct < 0.25:
+            return 1.0
+        elif si_pct < 0.50:
+            return 1.5
+        elif si_pct < 0.65:
+            return 2.5
+        else:
+            return 4.0
+    finally:
+        db.close()
 
 
 # ==========================
@@ -2629,31 +2668,53 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
         firm = get_firm_entity()
         if not firm.is_accepting_shorts:
             return None
-        
+
         company = db.query(CompanyShares).filter(
             CompanyShares.id == company_shares_id,
             CompanyShares.is_delisted == False
         ).first()
-        
+
         if not company or company.trading_halted:
             return None
-        
-        lenders = db.query(ShareholderPosition).filter(
-            ShareholderPosition.company_shares_id == company_shares_id,
-            ShareholderPosition.shares_available_to_lend >= quantity,
-            ShareholderPosition.player_id != borrower_id
-        ).all()
-        
-        if not lenders:
+
+        # Class A shares are super-shares (non-lendable, non-shortable)
+        if company.share_class_label == "class_a":
             return None
-        
-        lender_position = lenders[0]
-        
+
+        # Float utilisation cap: refuse if this short would push SI over MAX_SHORT_FLOAT_PCT
+        if company.shares_in_float:
+            total_shorted = db.query(func.sum(ShareLoan.shares_borrowed)).filter(
+                ShareLoan.company_shares_id == company_shares_id,
+                ShareLoan.status == ShareLoanStatus.ACTIVE.value,
+            ).scalar() or 0
+            if total_shorted + quantity > company.shares_in_float * MAX_SHORT_FLOAT_PCT:
+                return None
+
+        # Lender selection: always prefer the brokerage firm first, then fall
+        # back to other shareholders.  This ensures the firm bears the inventory
+        # risk on its own underwritten positions before third-party lenders are
+        # exposed.
+        lender_position = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company_shares_id,
+            ShareholderPosition.player_id == BANK_PLAYER_ID,
+            ShareholderPosition.shares_available_to_lend >= quantity,
+        ).first()
+        if lender_position is None:
+            lender_position = db.query(ShareholderPosition).filter(
+                ShareholderPosition.company_shares_id == company_shares_id,
+                ShareholderPosition.shares_available_to_lend >= quantity,
+                ShareholderPosition.player_id != borrower_id,
+                ShareholderPosition.player_id != BANK_PLAYER_ID,
+            ).first()
+        if lender_position is None:
+            return None
+
         borrow_value = quantity * company.current_price
         # Lock 150% collateral from the player, then immediately credit back the
         # 100% short-sale proceeds.  Net out-of-pocket = 50% additional margin.
         collateral_required = borrow_value * SHORT_COLLATERAL_REQUIREMENT
-        annual_rate = get_short_borrow_rate(borrower_id)
+        # Base rate from credit tier, then scaled up by short-interest multiplier
+        annual_rate = get_short_borrow_rate(borrower_id) * get_short_interest_multiplier(company_shares_id)
         weekly_rate = annual_rate / 52
 
         from auth import Player, get_db as get_auth_db
@@ -2814,6 +2875,50 @@ def close_short_position(loan_id: int, forced: bool = False) -> bool:
         return False
     finally:
         db.close()
+
+
+def recall_shares(lender_id: int, company_shares_id: int) -> tuple:
+    """Recall all active share loans for a given lender + company pair.
+
+    Force-closes each qualifying short position immediately (same mechanics as
+    collateral-exhaustion force-close).  Loan status is set to RECALLED so the
+    history distinguishes lender-initiated closures from system force-closes.
+
+    Returns (count_recalled, error_str | None).
+    """
+    db = get_db()
+    try:
+        loan_ids = [
+            row.id for row in db.query(ShareLoan.id).filter(
+                ShareLoan.lender_player_id == lender_id,
+                ShareLoan.company_shares_id == company_shares_id,
+                ShareLoan.status == ShareLoanStatus.ACTIVE.value,
+            ).all()
+        ]
+    finally:
+        db.close()
+
+    if not loan_ids:
+        return 0, "No active loans to recall for this position."
+
+    count = 0
+    for loan_id in loan_ids:
+        ok = close_short_position(loan_id, forced=True)
+        if ok:
+            count += 1
+            # Upgrade the status from RETURNED → RECALLED so history is clear
+            db2 = get_db()
+            try:
+                loan = db2.query(ShareLoan).filter(ShareLoan.id == loan_id).first()
+                if loan and loan.status == ShareLoanStatus.RETURNED.value:
+                    loan.status = ShareLoanStatus.RECALLED.value
+                    db2.commit()
+            finally:
+                db2.close()
+
+    if count == 0:
+        return 0, "Could not recall any loans (market orders may have failed)."
+    return count, None
 
 
 def process_share_loan_interest():
@@ -3479,8 +3584,57 @@ def _process_cash_dividend(company, config, db):
     company.consecutive_dividend_payouts += 1
     company.last_dividend_date = datetime.utcnow()
     company.dividend_warning_active = False
-    
+
     modify_credit_score(company.founder_id, "dividend_paid")
+
+    # Short sellers owe the dividend to the lender for every share they borrowed.
+    # Deduct from their locked collateral first; if that runs dry, charge cash.
+    active_loans = db.query(ShareLoan).filter(
+        ShareLoan.company_shares_id == company.id,
+        ShareLoan.status == ShareLoanStatus.ACTIVE.value,
+    ).all()
+
+    if active_loans:
+        from reserve_banks import spend_player_funds, credit_usd
+        auth_db = get_auth_db()
+        try:
+            for loan in active_loans:
+                div_owed = loan.shares_borrowed * amount_per_share
+                if div_owed < 0.01:
+                    continue
+
+                paid = 0.0
+                if loan.collateral_locked >= div_owed:
+                    loan.collateral_locked -= div_owed
+                    paid = div_owed
+                else:
+                    # Drain whatever collateral remains, then hit cash
+                    paid = loan.collateral_locked
+                    remaining = div_owed - paid
+                    loan.collateral_locked = 0.0
+                    borrower = auth_db.query(Player).filter(
+                        Player.id == loan.borrower_player_id
+                    ).first()
+                    if borrower and borrower.cash_balance >= remaining:
+                        borrower.cash_balance -= remaining
+                        paid += remaining
+                    # If borrower can't pay the remainder, they absorb the shortfall
+                    # (lender still gets what was available; position likely force-closes soon)
+                loan.total_fees_paid += paid
+
+                # Pay the lender
+                if paid > 0:
+                    if loan.lender_player_id == BANK_PLAYER_ID:
+                        firm_add_cash(paid, "short_dividend",
+                                      f"Short div: {company.ticker_symbol}", loan.borrower_player_id)
+                    else:
+                        lender = auth_db.query(Player).filter(
+                            Player.id == loan.lender_player_id
+                        ).first()
+                        if lender:
+                            lender.cash_balance += paid
+        finally:
+            auth_db.close()
 
 
 def _process_commodity_dividend(company, config, db):
@@ -3674,7 +3828,8 @@ __all__ = [
     'CALL_PREMIUM', 'CLASS_A_VOTE_MULTIPLIER', 'PROPOSAL_DURATION_HOURS',
     'calculate_margin_multiplier', 'record_price',
     'calculate_stock_volatility', 'calculate_commodity_volatility',
-    'short_sell_shares', 'close_short_position',
+    'short_sell_shares', 'close_short_position', 'recall_shares',
+    'MAX_SHORT_FLOAT_PCT', 'get_short_interest_multiplier',
     'list_commodity_for_lending', 'borrow_commodity', 'return_commodity',
     'extend_commodity_loan', 'calculate_commodity_due_date',
     'CompanyShares', 'ShareholderPosition', 'ShareLoan', 'CompanyProposal', 'CompanyVote',
