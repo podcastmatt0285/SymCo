@@ -91,6 +91,14 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         <title>{title} · Wadsworth</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- PWA -->
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#38bdf8">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Wadsworth">
+        <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
         <style>
             * {{ box-sizing: border-box; }}
             body {{
@@ -892,6 +900,13 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             window.addEventListener('pagehide', saveSt);
             window.addEventListener('beforeunload', saveSt);
         }})();
+        </script>
+        <script>
+        if ('serviceWorker' in navigator) {{
+            window.addEventListener('load', () => {{
+                navigator.serviceWorker.register('/sw.js').catch(() => {{}});
+            }});
+        }}
         </script>
     </body>
     </html>

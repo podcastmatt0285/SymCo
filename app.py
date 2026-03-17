@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import FastAPI, Cookie
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 
 # ==========================
@@ -134,6 +135,16 @@ app = FastAPI(
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# PWA — these must be served from the root so the service worker scope covers
+# the whole app and browsers can discover the manifest automatically.
+@app.get("/manifest.json", include_in_schema=False)
+async def pwa_manifest():
+    return FileResponse("static/manifest.json", media_type="application/manifest+json")
+
+@app.get("/sw.js", include_in_schema=False)
+async def pwa_service_worker():
+    return FileResponse("static/sw.js", media_type="application/javascript")
 
 # ==========================
 # SYSTEM ENDPOINTS (PATCHED)
