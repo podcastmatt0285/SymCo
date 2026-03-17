@@ -2376,6 +2376,16 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                         Zero Bank Inventory ({a["bank_inventory"]:,})
                     </button>
                 </form>
+                <form method="post" action="/admin/etf/reconcile">
+                    <input type="hidden" name="bank_id" value="{a["bank_id"]}">
+                    <input type="hidden" name="share_item_type" value="{a["share_item_type"]}">
+                    <input type="hidden" name="bank_player_id" value="{a["bank_player_id"]}">
+                    <input type="hidden" name="ipo_shares" value="{expected}">
+                    <button class="btn btn-green" type="submit"
+                        onclick="return confirm('Reconcile {a["name"]}? This cancels all active bank orders and sets bank inventory to IPO_SUPPLY − PLAYER_HOLDINGS, restoring the correct total supply.')">
+                        ✦ Reconcile to IPO Supply
+                    </button>
+                </form>
             </div>
 
             <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -2474,6 +2484,103 @@ def admin_etf_zero_inventory(
         return RedirectResponse(url=f"/admin/etf?msg=Zeroed+{removed}+bank+shares+for+{bank_id}", status_code=303)
     except Exception as ex:
         return RedirectResponse(url=f"/admin/etf?err={str(ex)[:80]}", status_code=303)
+
+
+@router.post("/admin/etf/reconcile")
+def admin_etf_reconcile(
+    session_token: Optional[str] = Cookie(None),
+    bank_id: str = Form(...),
+    share_item_type: str = Form(...),
+    bank_player_id: int = Form(...),
+    ipo_shares: int = Form(...),
+):
+    """Restore the bank's share inventory to exactly (ipo_shares − player_holdings).
+
+    Steps executed atomically:
+      1. Cancel every active market order the bank has placed for this share type
+         (orders are cancelled, not returned to inventory — the bank never "receives"
+         shares from a cancelled sell order; it just stops offering them).
+      2. Calculate the correct bank inventory = ipo_shares − sum(all player holdings).
+      3. Set the bank's InventoryItem to that exact quantity, eliminating any orphan
+         shares or shortfalls in one operation.
+
+    Player holdings are never touched.
+    """
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    try:
+        import inventory
+        import market
+        from urllib.parse import quote_plus
+
+        # ── Step 1: cancel all active bank sell orders ───────────────────────
+        mkt_db = market.get_db()
+        try:
+            orders = mkt_db.query(market.MarketOrder).filter(
+                market.MarketOrder.player_id == bank_player_id,
+                market.MarketOrder.item_type == share_item_type,
+                market.MarketOrder.status    == market.OrderStatus.ACTIVE,
+            ).all()
+            cancelled = len(orders)
+            for o in orders:
+                o.status = market.OrderStatus.CANCELLED
+            mkt_db.commit()
+        finally:
+            mkt_db.close()
+
+        # ── Step 2: sum legitimate player holdings (exclude the bank itself) ─
+        inv_db = inventory.get_db()
+        try:
+            player_holdings = inv_db.query(inventory.InventoryItem).filter(
+                inventory.InventoryItem.item_type  == share_item_type,
+                inventory.InventoryItem.quantity   > 0,
+                inventory.InventoryItem.player_id  != bank_player_id,
+            ).all()
+            player_total = sum(int(h.quantity) for h in player_holdings)
+        finally:
+            inv_db.close()
+
+        # ── Step 3: set bank inventory to correct amount ─────────────────────
+        correct_qty = max(0, ipo_shares - player_total)
+
+        inv_db2 = inventory.get_db()
+        try:
+            bank_item = inv_db2.query(inventory.InventoryItem).filter(
+                inventory.InventoryItem.player_id == bank_player_id,
+                inventory.InventoryItem.item_type == share_item_type,
+            ).first()
+            if bank_item:
+                old_qty = int(bank_item.quantity)
+                bank_item.quantity = correct_qty
+            else:
+                old_qty = 0
+                bank_item = inventory.InventoryItem(
+                    player_id=bank_player_id,
+                    item_type=share_item_type,
+                    quantity=correct_qty,
+                )
+                inv_db2.add(bank_item)
+            inv_db2.commit()
+        finally:
+            inv_db2.close()
+
+        log_action(
+            admin.id, "etf_reconcile", None,
+            f"Reconciled {bank_id}: bank inventory {old_qty:,} → {correct_qty:,}; "
+            f"{cancelled} orders cancelled; player total {player_total:,}",
+        )
+        msg = (
+            f"Reconciled {bank_id}: bank inventory set to {correct_qty:,} "
+            f"(IPO {ipo_shares:,} \u2212 {player_total:,} player shares). "
+            f"{cancelled} bank order(s) cancelled."
+        )
+        return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
+
+    except Exception as ex:
+        from urllib.parse import quote_plus
+        return RedirectResponse(url=f"/admin/etf?err={quote_plus(str(ex)[:120])}", status_code=303)
 
 
 # ============================================================
