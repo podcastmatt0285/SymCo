@@ -462,6 +462,12 @@ class CompanyProposal(Base):
     # "dividend_change" | "secondary_offering" | "trading_halt" | "custom"
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
+    # Structured parameter for executable proposals. Stored as a JSON dict.
+    # dividend_change:     {"new_rate": 0.08}   (annual rate as decimal)
+    # secondary_offering:  {"shares": 50000}    (new shares to add to float)
+    # trading_halt:        {"hours": 24}        (duration)
+    # custom:              {}
+    proposal_param = Column(JSON, nullable=True, default=dict)
 
     yes_votes = Column(Float, default=0.0)   # weighted vote tally
     no_votes = Column(Float, default=0.0)
@@ -1132,10 +1138,15 @@ def calculate_player_total_net_worth(player_id: int) -> dict:
 
 
 def calculate_player_company_valuation(player_id: int) -> dict:
-    """Calculate valuation for IPO purposes based on total net worth."""
+    """Calculate valuation for IPO purposes based on total net worth.
+
+    Applies a 0.4× discount to prevent inflated IPO prices — a player's
+    full liquid net worth (cash, stocks, inventory) should not translate
+    directly into company valuation.
+    """
     net_worth = calculate_player_total_net_worth(player_id)
-    
-    total_valuation = net_worth["total_net_worth"]
+
+    total_valuation = net_worth["total_net_worth"] * 0.4
     
     if total_valuation < 50000:
         suggested_shares = 10000
@@ -2065,6 +2076,7 @@ def create_proposal(
     proposal_type: str,
     title: str,
     description: str,
+    proposal_param: dict = None,
 ):
     """Create a governance proposal for a company.
 
@@ -2104,6 +2116,7 @@ def create_proposal(
             proposal_type=proposal_type,
             title=title,
             description=description,
+            proposal_param=proposal_param or {},
             voting_ends_at=datetime.utcnow() + timedelta(hours=PROPOSAL_DURATION_HOURS),
         )
         db.add(proposal)
@@ -2180,12 +2193,57 @@ def cast_vote(proposal_id: int, voter_id: int, vote: bool):
         db.close()
 
 
-def resolve_proposals():
-    """Close expired proposals and record their outcome.
+def _apply_proposal_effect(db, proposal: "CompanyProposal", company: "CompanyShares"):
+    """Apply the real-world effect of a passed governance proposal.
 
-    Called from the hourly tick. Does NOT auto-apply proposal effects —
-    the founder is expected to act on passed proposals manually.
+    Modifies the company record in-place; caller must commit.
+    Returns a human-readable description of what changed (or None for custom).
     """
+    ptype = proposal.proposal_type
+    param = proposal.proposal_param or {}
+
+    if ptype == "dividend_change":
+        new_rate = param.get("new_rate")
+        if new_rate is None:
+            return None
+        new_rate = float(new_rate)
+        # Update fixed rate; also patch the live dividend_config quarterly amounts
+        company.fixed_dividend_rate = new_rate
+        if company.dividend_config:
+            configs = company.dividend_config
+            if company.ipo_price and company.ipo_price > 0:
+                quarterly_amount = company.ipo_price * new_rate / 4
+                for cfg in configs:
+                    cfg["amount"] = quarterly_amount
+            company.dividend_config = configs
+        return f"Dividend rate changed to {new_rate*100:.2f}%/year"
+
+    elif ptype == "secondary_offering":
+        new_shares = param.get("shares")
+        if not new_shares:
+            return None
+        new_shares = int(new_shares)
+        company.shares_outstanding = (company.shares_outstanding or 0) + new_shares
+        company.shares_in_float = (company.shares_in_float or 0) + new_shares
+        # Dilute the price proportionally
+        if company.shares_outstanding > new_shares and company.current_price:
+            old_total = company.shares_outstanding - new_shares
+            company.current_price = company.current_price * old_total / company.shares_outstanding
+        return f"Issued {new_shares:,} new shares into public float"
+
+    elif ptype == "trading_halt":
+        hours = int(param.get("hours", 24))
+        hours = max(1, min(hours, 168))  # cap at 1 week
+        company.trading_halted = True
+        company.trading_halted_until = datetime.utcnow() + timedelta(hours=hours)
+        return f"Trading halted for {hours} hours"
+
+    # custom or unknown: no automatic effect
+    return None
+
+
+def resolve_proposals():
+    """Close expired proposals, record their outcome, and apply effects for passed proposals."""
     db = get_db()
     try:
         expired = db.query(CompanyProposal).filter(
@@ -2200,6 +2258,11 @@ def resolve_proposals():
             ticker = company.ticker_symbol if company else f"id={p.company_shares_id}"
             print(f"[{BANK_NAME}] 🗳  Proposal #{p.id} '{p.title}' ({ticker}): "
                   f"{p.status.upper()} ({p.yes_votes:.0f}Y / {p.no_votes:.0f}N)")
+            if p.status == "passed" and company and not p.result_applied:
+                effect = _apply_proposal_effect(db, p, company)
+                p.result_applied = True
+                if effect:
+                    print(f"[{BANK_NAME}]    ↳ Effect applied: {effect}")
         if expired:
             db.commit()
     finally:
@@ -3501,6 +3564,8 @@ def initialize():
         # Governance tables (created by Base.metadata above, DDL guard for safety)
         "CREATE INDEX IF NOT EXISTS ix_company_proposals_company ON company_proposals (company_shares_id)",
         "CREATE INDEX IF NOT EXISTS ix_company_votes_proposal ON company_votes (proposal_id)",
+        # Structured parameter for executable governance proposals
+        "ALTER TABLE company_proposals ADD COLUMN IF NOT EXISTS proposal_param JSON",
         # Short loans: remove artificial expiry — positions are open-ended
         "ALTER TABLE share_loans ALTER COLUMN due_date DROP NOT NULL",
     ])

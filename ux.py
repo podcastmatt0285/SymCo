@@ -5143,6 +5143,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <div style="font-size:1.1rem;font-weight:700;color:#e5e7eb;">{selected_company.company_name}</div>
                             <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">
                                 {selected_company.ticker_symbol} &middot; Class {selected_company.share_class}{" &middot; TBTF" if selected_company.is_tbtf else ""}
+                                &nbsp;&middot;&nbsp; <a href="/brokerage/governance?company_id={selected_company.id}" style="color:#a78bfa;font-size:0.75rem;">🗳 Governance</a>
                             </div>
                         </div>
                         <div style="text-align:right;">
@@ -6059,12 +6060,32 @@ def brokerage_governance_page(
                     <input type="hidden" name="company_id" value="{company.id}">
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Proposal Type</label>
-                        <select name="proposal_type" style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
-                            <option value="dividend_change">Dividend Change</option>
-                            <option value="secondary_offering">Secondary Offering</option>
-                            <option value="trading_halt">Trading Halt Request</option>
-                            <option value="custom">Custom / Other</option>
+                        <select name="proposal_type" id="gov-proposal-type" onchange="govParamToggle(this.value)"
+                                style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                            <option value="dividend_change">Dividend Change — set a new annual dividend rate</option>
+                            <option value="secondary_offering">Secondary Offering — issue new shares into the float</option>
+                            <option value="trading_halt">Trading Halt — pause all trading temporarily</option>
+                            <option value="custom">Custom / Other — advisory, no automatic effect</option>
                         </select>
+                    </div>
+                    <!-- Dynamic parameter field (shown per type) -->
+                    <div id="gov-param-dividend" style="margin-bottom:12px;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">New Annual Dividend Rate (%)</label>
+                        <input type="number" name="param_dividend_rate" min="0" max="100" step="0.1" placeholder="e.g. 8 for 8%"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, the company's dividend rate is updated immediately. Leave 0 to remove dividends.</p>
+                    </div>
+                    <div id="gov-param-offering" style="margin-bottom:12px;display:none;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">New Shares to Issue</label>
+                        <input type="number" name="param_shares" min="1000" step="1000" placeholder="e.g. 50000"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, these shares are added to the public float. This dilutes existing shareholders.</p>
+                    </div>
+                    <div id="gov-param-halt" style="margin-bottom:12px;display:none;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Halt Duration (hours)</label>
+                        <input type="number" name="param_halt_hours" min="1" max="168" step="1" value="24"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, all trading in this company is suspended for the chosen duration (max 168h / 1 week).</p>
                     </div>
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Title</label>
@@ -6074,12 +6095,19 @@ def brokerage_governance_page(
                     </div>
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Description</label>
-                        <textarea name="description" required rows="4"
+                        <textarea name="description" required rows="3"
                                   style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;resize:vertical;"
                                   placeholder="Full details of the proposal..."></textarea>
                     </div>
                     <button type="submit" class="btn-blue">Submit Proposal (voting open {PROPOSAL_DURATION_HOURS}h)</button>
                 </form>
+                <script>
+                function govParamToggle(type) {{
+                    document.getElementById('gov-param-dividend').style.display = type === 'dividend_change' ? '' : 'none';
+                    document.getElementById('gov-param-offering').style.display = type === 'secondary_offering' ? '' : 'none';
+                    document.getElementById('gov-param-halt').style.display = type === 'trading_halt' ? '' : 'none';
+                }}
+                </script>
             </div>'''
 
         # Proposals list
@@ -6103,11 +6131,16 @@ def brokerage_governance_page(
                 elif already_voted:
                     vote_form = '<span style="color:#64748b;font-size:0.85rem;">✓ You voted</span>'
                 ends = p.voting_ends_at.strftime("%b %d %H:%M UTC") if p.voting_ends_at else "—"
+                applied_badge = ""
+                if p.result_applied:
+                    applied_badge = '<span style="color:#22c55e;font-size:0.75rem;margin-left:8px;">✓ Effect applied</span>'
+                elif p.status == "passed":
+                    applied_badge = '<span style="color:#f59e0b;font-size:0.75rem;margin-left:8px;">Pending effect</span>'
                 proposals_html += f'''
                 <div class="card" style="margin-bottom:12px;border-left:3px solid {status_color};">
                     <div style="display:flex;justify-content:space-between;align-items:start;">
                         <div>
-                            <span style="color:{status_color};font-size:0.75rem;text-transform:uppercase;">{p.status}</span>
+                            <span style="color:{status_color};font-size:0.75rem;text-transform:uppercase;">{p.status}</span>{applied_badge}
                             <h4 style="margin:4px 0;">{p.title}</h4>
                             <p style="color:#94a3b8;font-size:0.9rem;margin:4px 0;">{p.description}</p>
                             <p style="color:#64748b;font-size:0.8rem;">Type: {p.proposal_type.replace("_"," ").title()} &nbsp;|&nbsp; Closes: {ends} &nbsp;|&nbsp; Voters: {p.total_voters}</p>
@@ -6152,6 +6185,9 @@ async def create_proposal_endpoint(
     proposal_type: str = Form(...),
     title: str = Form(...),
     description: str = Form(...),
+    param_dividend_rate: Optional[str] = Form(None),
+    param_shares: Optional[str] = Form(None),
+    param_halt_hours: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None)
 ):
     player = require_auth(session_token)
@@ -6160,7 +6196,24 @@ async def create_proposal_endpoint(
     from urllib.parse import quote
     try:
         from banks.brokerage_firm import create_proposal
-        proposal, err = create_proposal(company_id, player.id, proposal_type, title, description)
+        # Build the structured param dict based on proposal type
+        proposal_param: dict = {}
+        if proposal_type == "dividend_change" and param_dividend_rate:
+            try:
+                proposal_param["new_rate"] = float(param_dividend_rate) / 100.0
+            except ValueError:
+                pass
+        elif proposal_type == "secondary_offering" and param_shares:
+            try:
+                proposal_param["shares"] = int(param_shares)
+            except ValueError:
+                pass
+        elif proposal_type == "trading_halt" and param_halt_hours:
+            try:
+                proposal_param["hours"] = int(param_halt_hours)
+            except ValueError:
+                proposal_param["hours"] = 24
+        proposal, err = create_proposal(company_id, player.id, proposal_type, title, description, proposal_param)
         if proposal:
             return RedirectResponse(
                 url=f"/brokerage/governance?company_id={company_id}&success=Proposal+submitted.",
