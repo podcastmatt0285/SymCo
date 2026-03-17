@@ -309,6 +309,23 @@ DEBT_PENALTY_NORMALI    = 1000.0
 
 Base.metadata.create_all(engine)
 
+# ── Column migrations ─────────────────────────────────────────────────────────
+# create_all only adds missing *tables*, not missing columns in existing tables.
+# Run safe ALTER TABLE … ADD COLUMN IF NOT EXISTS for any columns added after
+# initial deployment so the app doesn't crash on startup after a code update.
+def _run_column_migrations():
+    with engine.connect() as _conn:
+        _conn.execute(text(
+            "ALTER TABLE reserve_bank_bonds "
+            "ADD COLUMN IF NOT EXISTS purchase_fx_rate DOUBLE PRECISION DEFAULT NULL"
+        ))
+        _conn.commit()
+
+try:
+    _run_column_migrations()
+except Exception as _mig_err:
+    print(f"[ReserveBanks] Column migration warning: {_mig_err}")
+
 
 # ==========================
 # DB HELPER
