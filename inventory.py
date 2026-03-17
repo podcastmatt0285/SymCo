@@ -6,7 +6,7 @@ Inventory management module for the economic simulation.
 
 import json
 from typing import Dict, Optional
-from sqlalchemy import Column, String, Float, Integer
+from sqlalchemy import Column, String, Float, Integer, update as sa_update
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -91,16 +91,31 @@ def add_item(player_id: int, item_type: str, quantity: float):
     db.close()
 
 def remove_item(player_id: int, item_type: str, quantity: float) -> bool:
-    if quantity <= 0: return True
+    """Atomically deduct quantity from inventory.
+
+    Uses a single SQL UPDATE … WHERE quantity >= quantity so concurrent
+    requests cannot both pass a Python-level balance check and double-spend
+    the same items (the classic lost-update / infinite-money race condition).
+    Returns True only if a row was actually updated (sufficient balance found).
+    """
+    if quantity <= 0:
+        return True
     db = get_db()
-    item = db.query(InventoryItem).filter(InventoryItem.player_id == player_id, InventoryItem.item_type == item_type).first()
-    if not item or item.quantity < quantity:
-        db.close()
+    try:
+        result = db.execute(
+            sa_update(InventoryItem)
+            .where(InventoryItem.player_id == player_id)
+            .where(InventoryItem.item_type == item_type)
+            .where(InventoryItem.quantity >= quantity)
+            .values(quantity=InventoryItem.quantity - quantity)
+        )
+        db.commit()
+        return result.rowcount > 0
+    except Exception:
+        db.rollback()
         return False
-    item.quantity -= quantity
-    db.commit()
-    db.close()
-    return True
+    finally:
+        db.close()
 
 def transfer_item(from_player_id: int, to_player_id: int, item_type: str, quantity: float) -> bool:
     db = get_db()

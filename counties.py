@@ -1167,17 +1167,16 @@ def deposit_to_mining_node(player_id: int, county_id: int, quantity: float) -> T
         if not city or not city.currency_type:
             return False, "Your city has no currency set"
 
-        # Check player has enough currency
-        player_qty = inventory.get_item_quantity(player_id, city.currency_type)
-        if player_qty < quantity:
-            return False, f"Insufficient {city.currency_type} (have {player_qty:.2f})"
-
         # Get market value of deposit
         market_price = market.get_market_price(city.currency_type) or 1.0
         cash_value = quantity * market_price
 
-        # Remove currency from player
-        inventory.remove_item(player_id, city.currency_type, quantity)
+        # Atomically remove currency from player.  remove_item() uses a single
+        # SQL UPDATE … WHERE quantity >= amount so two simultaneous deposits
+        # cannot both pass a balance check and each credit a full energy pool
+        # contribution while only one deduction actually commits (the glitch).
+        if not inventory.remove_item(player_id, city.currency_type, quantity):
+            return False, f"Insufficient {city.currency_type}"
 
         # Record deposit
         deposit = MiningDeposit(
@@ -1190,8 +1189,10 @@ def deposit_to_mining_node(player_id: int, county_id: int, quantity: float) -> T
         )
         db.add(deposit)
 
-        # Add to mining energy pool
-        county = db.query(County).filter(County.id == county_id).first()
+        # Add to mining energy pool — lock the row so concurrent deposits from
+        # the same county cannot both read the same pool value and produce a
+        # double-credit without a corresponding double-deduction.
+        county = db.query(County).filter(County.id == county_id).with_for_update().first()
         if county:
             county.mining_energy_pool += cash_value
 
@@ -1246,7 +1247,10 @@ def process_mining_payouts(current_tick: int):
     """
     db = get_db()
     try:
-        counties = db.query(County).filter(County.mining_energy_pool > 0).all()
+        # with_for_update() locks each county row for the duration of this
+        # transaction so a concurrent scheduler or manual trigger cannot run
+        # two payouts simultaneously against the same energy pool.
+        counties = db.query(County).filter(County.mining_energy_pool > 0).with_for_update().all()
 
         for county in counties:
             energy_to_consume = county.mining_energy_pool * MINING_ENERGY_CONSUMPTION_RATE
@@ -1541,6 +1545,15 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         if net_crypto <= 0:
             db.rollback()
             return False, f"Transaction too small to cover gas fee ({gas_fee:.6f} {crypto_symbol})"
+
+        # Supply check and minted-counter update BEFORE crediting the wallet so
+        # that an early return cannot leave tokens in a player's wallet without
+        # the corresponding supply counter increment being committed.
+        remaining = get_remaining_supply(county)
+        if crypto_amount > remaining:
+            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})"
+        county.total_crypto_minted += crypto_amount
+
         county.mining_energy_pool = (county.mining_energy_pool or 0.0) + gas_fee
         county.gas_price = min(
             max(county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE) * (1.0 + GAS_SURGE_MULTIPLIER),
@@ -1549,12 +1562,6 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         county.recent_tx_count = (county.recent_tx_count or 0) + 1
         wallet.balance += net_crypto
         wallet.total_bought += net_crypto
-
-        # Buying on exchange mints tokens (increases supply, but capped)
-        remaining = get_remaining_supply(county)
-        if crypto_amount > remaining:
-            return False, f"Not enough supply remaining. Only {remaining:,.6f} {crypto_symbol} left to mint (max supply: {(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})"
-        county.total_crypto_minted += crypto_amount
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
@@ -1623,12 +1630,19 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
             CryptoWallet.crypto_symbol == sell_symbol,
         ).first()
 
+        # Validate balance BEFORE applying gas so we don't mutate the wallet
+        # object and then reject the transaction — the early return would be
+        # correct (nothing committed) but leaves confusing in-memory state and
+        # gives a misleading error message.
+        sell_gas_price = max(sell_county.gas_price or BASE_GAS_PRICE, BASE_GAS_PRICE)
+        sell_gas_preview = sell_gas_price * GAS_UNITS_EXCHANGE
+        if not sell_wallet or sell_wallet.balance < sell_amount + sell_gas_preview:
+            return False, f"Insufficient {sell_symbol} balance (need {sell_amount + sell_gas_preview:.6f}: {sell_amount:.6f} swap + {sell_gas_preview:.6f} gas)"
+
         # Gas on the sell-side chain (paid from sell wallet, on top of the swap amount)
         sell_gas_fee, sell_gas_err = _apply_gas(sell_county, sell_wallet, GAS_UNITS_EXCHANGE)
         if sell_gas_err:
             return False, sell_gas_err
-        if not sell_wallet or sell_wallet.balance < sell_amount:
-            return False, f"Insufficient {sell_symbol} balance (after gas fee)"
 
         sell_price = get_crypto_price_by_symbol(sell_symbol)
         buy_price = get_crypto_price_by_symbol(buy_symbol)
