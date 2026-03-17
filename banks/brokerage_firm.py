@@ -3001,10 +3001,15 @@ def process_share_loan_interest():
 # ==========================
 
 def list_commodity_for_lending(lender_id: int, item_type: str, quantity: float, weekly_rate: float) -> Optional[CommodityListing]:
+    # Fund/ETF shares (item types ending in "_shares") belong on the ETF
+    # Trading Floor — they must not be listed as lendable commodities here.
+    if item_type.endswith("_shares"):
+        return None
+
     try:
         import inventory
         available = inventory.get_item_quantity(lender_id, item_type)
-        
+
         if available < quantity:
             return None
     except Exception as e:
