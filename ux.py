@@ -908,6 +908,140 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             }});
         }}
         </script>
+
+        <!-- ═══════════════════════════════════════════════════
+             NAVIGATION LOADER — shown on slow server pages
+             (production costs calculator, etc.)
+             Triggers on click, disappears when new page arrives.
+        ═══════════════════════════════════════════════════ -->
+        <div id="nav-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0806;color:#F5F5DC;font-family:Georgia,serif;align-items:center;justify-content:center;">
+          <div style="position:relative;width:100%;max-width:420px;padding:40px;background:#1A0F0A;border:4px solid #2D1810;box-shadow:0 25px 50px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;box-sizing:border-box;">
+            <!-- brass corners -->
+            <div style="position:absolute;top:8px;left:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
+            <div style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
+            <div style="position:absolute;bottom:8px;left:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
+            <div style="position:absolute;bottom:8px;right:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
+            <!-- apple SVG -->
+            <div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 201.5 207.54" style="width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(229,0,0,0.4));" class="nl-pulse">
+                <defs>
+                  <linearGradient id="nl-lg"><stop style="stop-color:#e50000" offset="0"/><stop style="stop-color:#ff5555;stop-opacity:0" offset="1"/></linearGradient>
+                  <radialGradient id="nl-rg" cy="172.36" cx="342.86" gradientTransform="matrix(1 0 0 1.0417 0 -7.1934)" r="193.09" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#e50000"/><stop offset="1" style="stop-color:#ff5555;stop-opacity:0"/></radialGradient>
+                </defs>
+                <g transform="matrix(.15791 0 0 .15791 16.376 41.416)">
+                  <path style="fill-rule:evenodd;fill:#008000" d="m470.03 168.72c-34.81 0.55-75.98 25.14-120.23 80.45 287.24-187.49 318.09 308.34-234.97 802.83h105.53c11.37-10.2 22.06-19.9 30.58-28.8 404.11-366.71 376.62-856.94 219.09-854.48z"/>
+                  <path style="fill-rule:evenodd;fill:#008000" d="m834.13 625.57c77.98-166.27-189.49-144.42-409.81 189.81l-7.81-53.51c195.76-321.73 564.68-292.21 417.62-136.3z"/>
+                  <path style="fill-rule:evenodd;fill:#008000" d="m44.425 533.84c57.285-180.94 245.14 23.08 178.28 431.36l43.44-35.18c76.75-381.56-224.17-617.67-221.72-396.18z"/>
+                  <g transform="translate(17.143 -148.57)">
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(219.15 -163.07)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(27.721 -188.78)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-86.565 -45.925)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(256.29 14.075)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(150.58 151.22)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-12.279 128.36)"/>
+                    <path style="fill-rule:evenodd;fill:url(#nl-rg)" d="m500 300.93c-39.84 48.69-62.4-55.86-121.24-33.61s-6.6 115.57-68.68 105.42c-62.08-10.16 17.18-81.97-31.51-121.81-48.69-39.83-103.38 52.08-125.63-6.76-22.25-58.85 79.57-26.11 89.73-88.2 10.15-62.077-96.79-63.492-56.96-112.18 39.84-48.687 62.4 55.86 121.25 33.613 58.84-22.247 6.59-115.57 68.67-105.42 62.08 10.158-17.17 81.973 31.51 121.81 48.69 39.837 103.39-52.077 125.63 6.767 22.25 58.84-79.57 26.11-89.73 88.19-10.15 62.08 96.8 63.5 56.96 112.18z" transform="matrix(1.2126 0 0 1.2126 -107.6 -19.596)"/>
+                    <path style="fill-rule:evenodd;fill:#ffd5d5" d="m514.29 249.39c0.01 44.19-33.25 80.02-74.29 80.02s-74.3-35.83-74.29-80.02c-0.01-44.2 33.25-80.03 74.29-80.03s74.3 35.83 74.29 80.03z" transform="translate(-131.87 -59.983)"/>
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <!-- title + messages -->
+            <div style="margin-top:28px;width:100%;text-align:center;">
+              <p style="font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:#B08D57;font-weight:900;opacity:.4;margin:0 0 14px;">Wadsworth Executive Terminal</p>
+              <div id="nl-msgs" style="height:88px;display:flex;flex-direction:column-reverse;align-items:center;gap:4px;overflow:hidden;"></div>
+            </div>
+            <!-- progress bar -->
+            <div style="margin-top:20px;width:100%;height:3px;background:rgba(0,0,0,.6);border:1px solid rgba(176,141,87,.1);border-radius:9999px;overflow:hidden;">
+              <div id="nl-bar" style="height:100%;width:0%;background:linear-gradient(to right,#8B4513,#B08D57,#F5F5DC);box-shadow:0 0 10px rgba(176,141,87,.5);transition:width .15s linear;"></div>
+            </div>
+            <!-- footer -->
+            <div style="margin-top:12px;width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+              <div style="display:flex;gap:14px;opacity:.2;font-size:13px;">&#9646; &#9632; &#9650;</div>
+              <span id="nl-pct" style="font-size:9px;font-family:monospace;opacity:.4;color:#B08D57;">0% SECURED</span>
+            </div>
+            <div style="position:absolute;bottom:-52px;font-size:9px;letter-spacing:.6em;text-transform:uppercase;opacity:.2;color:#B08D57;" class="nl-pulse">Handshake in Progress</div>
+          </div>
+        </div>
+        <style>
+          @keyframes nl-pulse-anim {{ 0%,100%{{opacity:.3}} 50%{{opacity:.7}} }}
+          .nl-pulse {{ animation: nl-pulse-anim 2s ease-in-out infinite; }}
+        </style>
+        <script>
+        (function() {{
+          var SLOW_PATHS = ['/stats/production-costs'];
+          var STEPS = [
+            "Initializing Secure Terminal...",
+            "Authenticating Executive Credentials...",
+            "Decrypting Asset Valuation Data...",
+            "Syncing Broadcast Signal...",
+            "Verifying Market Volatility...",
+            "Establishing Brass Inlay Connection...",
+            "Buffering Liquidity Pools...",
+            "Optimizing Yield Curves...",
+            "Parsing Capitol Schematics...",
+            "Engaging Stealth Protocols...",
+            "Allocating Surplus Capital...",
+            "Calibrating Brass Resonance...",
+            "Updating Ledger Entries...",
+            "Deploying Asset Containers...",
+            "Finalizing Handshake..."
+          ];
+          var overlay = document.getElementById('nav-loader');
+          var bar     = document.getElementById('nl-bar');
+          var pct     = document.getElementById('nl-pct');
+          var msgs    = document.getElementById('nl-msgs');
+          var prog    = 0;
+          var timer   = null;
+          var msgList = ["Initializing Secure Terminal..."];
+
+          function renderMsgs() {{
+            msgs.innerHTML = msgList.slice(0,4).map(function(m,i) {{
+              var opacity = i === 0 ? '1' : '0.3';
+              var scale   = i === 0 ? '1' : '0.95';
+              var prefix  = i === 0 ? '&gt; ' : '';
+              return '<p style="font-size:11px;font-style:italic;letter-spacing:-.01em;color:#B08D57;margin:0;transition:all .3s;opacity:'+opacity+';transform:scale('+scale+')">'
+                     + prefix + m + '</p>';
+            }}).join('');
+          }}
+
+          function startLoader() {{
+            prog = 0; msgList = ["Initializing Secure Terminal..."];
+            overlay.style.display = 'flex';
+            renderMsgs();
+            timer = setInterval(function() {{
+              prog += 5;
+              if (prog >= 100) prog = 0;
+              if (Math.floor(prog/15) > Math.floor((prog-5)/15)) {{
+                var next = STEPS[Math.floor(Math.random()*STEPS.length)];
+                msgList = [next].concat(msgList).slice(0,4);
+                renderMsgs();
+              }}
+              bar.style.width = prog + '%';
+              pct.textContent = prog + '% SECURED';
+            }}, 150);
+          }}
+
+          // Show on clicks to known-slow pages
+          document.addEventListener('click', function(e) {{
+            var a = e.target.closest('a');
+            if (!a || !a.href) return;
+            try {{
+              var url = new URL(a.href);
+              if (url.origin !== location.origin) return;
+              for (var i=0; i<SLOW_PATHS.length; i++) {{
+                if (url.pathname.startsWith(SLOW_PATHS[i])) {{
+                  startLoader(); return;
+                }}
+              }}
+            }} catch(ex) {{}}
+          }});
+
+          // Hide if user hits back/forward into this page (bfcache)
+          window.addEventListener('pageshow', function(e) {{
+            if (e.persisted) {{ overlay.style.display='none'; clearInterval(timer); }}
+          }});
+        }})();
+        </script>
     </body>
     </html>
     """
