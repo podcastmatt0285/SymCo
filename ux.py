@@ -2752,10 +2752,14 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
+    # ETF/fund shares have their own trading floor — redirect away from /market.
+    if item.endswith("_shares"):
+        return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
+
     try:
         import market as market_mod
         import inventory as inv_mod
-        
+
         items = list(inv_mod.ITEM_RECIPES.keys())
         stats = market_mod.get_market_stats()
         order_book = market_mod.get_order_book(item)
@@ -2785,7 +2789,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
             _active_rows = mkt_db.query(MarketOrder.item_type).filter(
                 MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).distinct().all()
-            active_items = sorted({r[0] for r in _active_rows})
+            active_items = sorted({r[0] for r in _active_rows if not r[0].endswith("_shares")})
         finally:
             mkt_db.close()
         
@@ -8450,6 +8454,9 @@ async def list_to_market(item_type: str = Form(...), quantity: float = Form(...)
 async def place_order(item_type: str = Form(...), order_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    # ETF/fund shares trade on the ETF Trading Floor, not the commodity market.
+    if item_type.endswith("_shares"):
+        return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     import market
