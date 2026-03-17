@@ -176,13 +176,14 @@ class ReserveBankBond(Base):
     bank_id          = Column(Integer, index=True,  nullable=False)
     holder_player_id = Column(Integer, index=True,  nullable=False)
     face_value_wsc   = Column(Float,   nullable=False)   # WSC paid at purchase
-    purchase_yield   = Column(Float,   nullable=False)   # yield at time of purchase
+    purchase_yield   = Column(Float,   nullable=False)   # yield locked at issuance
+    purchase_fx_rate = Column(Float,   default=None)     # bank.usd_per_unit locked at purchase
     maturity_days    = Column(Integer, nullable=False)   # 30 / 90 / 180 / 365
     purchased_at     = Column(DateTime, default=datetime.utcnow)
     matures_at       = Column(DateTime, nullable=False)
     interest_accrued = Column(Float,   default=0.0)      # in the bank's own currency
     total_interest_paid = Column(Float, default=0.0)
-    status           = Column(String,  default="active") # active / matured / sold
+    status           = Column(String,  default="active") # active / matured / sold / called
 
 
 class PlayerLegalTender(Base):
@@ -403,20 +404,30 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
 
         # Hourly interest in the bank's own currency:
         #   face_value_wsc / usd_per_unit  → face value in bank currency (1 WSC = $1)
-        #   × yield_rate / TICKS_PER_YEAR  → one hour's slice of the annual rate
-        # Negative yield accrues negative interest (reduces balance).
-        hourly = bond.face_value_wsc / bank.usd_per_unit * bank.yield_rate / TICKS_PER_YEAR
-        bond.interest_accrued += hourly
+        #   × purchase_yield / TICKS_PER_YEAR → one hour's slice of the LOCKED annual rate
+        #
+        # FIX: use bond.purchase_yield (rate locked at issuance) NOT bank.yield_rate.
+        # The coupon on a fixed-rate bond never changes after it is issued.
+        hourly = bond.face_value_wsc / bank.usd_per_unit * bond.purchase_yield / TICKS_PER_YEAR
 
         # Credit (or debit) the player's currency balance.
-        # Negative interest is clamped at zero so yields can never push a
-        # player's balance below zero, preventing effective negative balances.
+        # Negative-yield bonds are unusual but legal; clamp the balance at zero so
+        # a player can never owe currency back to the bank.
+        actual_credit = hourly
+        if hourly < 0:
+            # Find out how much will actually be deducted (balance may already be 0)
+            actual_credit = _get_clamp_amount(db, bond.holder_player_id, bank.currency_code, hourly)
+
         _adjust_currency_balance(
             db, bond.holder_player_id, bank.currency_code, hourly,
             floor=0.0 if hourly < 0 else None,
         )
 
-        bank.total_interest_paid += abs(hourly)
+        # FIX: only book the amount actually credited so interest_accrued stays in
+        # sync with the player's real balance (previously negative hours were tracked
+        # even when the floor prevented any deduction).
+        bond.interest_accrued   += actual_credit
+        bank.total_interest_paid += abs(actual_credit)
 
 
 def _call_bonds_if_needed(db, bank: StateReserveBank):
@@ -437,12 +448,19 @@ def _call_bonds_if_needed(db, bank: StateReserveBank):
         if bond.holder_player_id <= 0:
             continue  # never call interbank bonds
         if bond.purchase_yield <= 0:
+            # Negative- or zero-yield bonds are never callable: there is no
+            # interest-rate benefit for the bank to call a bond it is already
+            # paying nothing (or receiving) for.
             continue
         # Only call when current yield is well below purchase yield
         if bank.yield_rate > bond.purchase_yield * BOND_CALL_YIELD_THRESHOLD:
             continue
 
-        call_value     = bond.face_value_wsc * (1.0 + BOND_CALL_PREMIUM) / bank.usd_per_unit
+        # FIX: call value uses purchase FX rate so the player is made whole on the
+        # principal — same logic as maturity redemption.  The 3% premium is their
+        # compensation for losing a high-yield position ahead of schedule.
+        fx_at_purchase = bond.purchase_fx_rate or bank.usd_per_unit
+        call_value     = bond.face_value_wsc * (1.0 + BOND_CALL_PREMIUM) / fx_at_purchase
         bond.status    = "called"
         bank.total_face_value_wsc = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
         bank.wsc_holdings         = max(0.0, bank.wsc_holdings         - bond.face_value_wsc)
@@ -521,8 +539,14 @@ def _mature_bonds(db, bank: StateReserveBank, now: datetime):
         if bond.holder_player_id <= 0:
             continue
 
-        # Return face value in the bank's own currency (1 WSC = $1 → convert at current FX)
-        foreign_return = bond.face_value_wsc / bank.usd_per_unit
+        # Return face value in the bank's own currency using the FX rate that was
+        # locked at purchase time.  This guarantees the player receives exactly the
+        # same number of foreign-currency units they originally exchanged for the
+        # bond — they bear no FX risk on the principal at maturity.
+        # FIX: was using current bank.usd_per_unit, which silently exposed players
+        # to principal loss/gain from FX moves they had no visibility into.
+        fx_at_purchase = bond.purchase_fx_rate or bank.usd_per_unit  # fallback for old rows
+        foreign_return = bond.face_value_wsc / fx_at_purchase
         _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, foreign_return)
         try:
             from stats_ux import log_transaction as _lt
@@ -565,6 +589,16 @@ def _get_or_create_currency_balance(db, player_id: int, currency_code: str) -> P
         db.add(bal)
         db.flush()
     return bal
+
+
+def _get_clamp_amount(db, player_id: int, currency_code: str, amount: float) -> float:
+    """Return how much of `amount` will actually be applied given a floor=0 clamp.
+
+    Used by _accrue_interest to keep bond.interest_accrued in sync with what was
+    really credited/debited — prevents bookkeeping drift on negative-yield bonds.
+    """
+    bal = _get_or_create_currency_balance(db, player_id, currency_code)
+    return max(-bal.balance, amount)   # amount is negative; clamp at -balance
 
 
 def _adjust_currency_balance(
@@ -1130,6 +1164,7 @@ def purchase_bond(
                 holder_player_id = player_id,
                 face_value_wsc   = face_value_usd,   # stored as USD-equiv for interest calc
                 purchase_yield   = bank.yield_rate,
+                purchase_fx_rate = bank.usd_per_unit,  # FX rate locked at issuance
                 maturity_days    = maturity_days,
                 matures_at       = datetime.utcnow() + timedelta(days=maturity_days),
             )
@@ -1223,16 +1258,22 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         price_factor = max(0.50, min(2.0, price_factor))   # cap to ±50 % of face value
         wsc_equiv    = bond.face_value_wsc * price_factor
 
-        # Convert WSC equivalent to bank's own currency (1 WSC = $1)
+        # Convert WSC equivalent to bank's own currency.
+        # Secondary-market sale uses current FX — you bear FX risk if you sell early,
+        # just as in real foreign-currency bond markets.
         foreign_return = wsc_equiv / bank.usd_per_unit
         currency_sym   = bank.currency_symbol
         currency_code  = bank.currency_code
 
         # Early-redemption penalty: charged if sold within BOND_EARLY_REDEMPTION_DAYS.
+        # FIX: penalty is expressed as a % of face value, which the player paid at the
+        # purchase FX rate — so compute the penalty at that locked rate, not the
+        # current rate (otherwise a weaker currency inflates the penalty arbitrarily).
         early_penalty = 0.0
         days_held     = (now - bond.purchased_at).total_seconds() / 86400
         if days_held < BOND_EARLY_REDEMPTION_DAYS:
-            early_penalty  = bond.face_value_wsc * BOND_EARLY_REDEMPTION_FEE / bank.usd_per_unit
+            fx_at_purchase = bond.purchase_fx_rate or bank.usd_per_unit
+            early_penalty  = bond.face_value_wsc * BOND_EARLY_REDEMPTION_FEE / fx_at_purchase
             foreign_return = max(0.0, foreign_return - early_penalty)
 
         bond.status                = "sold"
