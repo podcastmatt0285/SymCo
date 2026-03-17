@@ -4663,6 +4663,16 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
                 <p style="color: #64748b; font-size: 0.9rem;">Automate buybacks, splits, offerings</p>
                 <a href="/corporate-actions/dashboard" class="btn-blue" style="display: inline-block; margin-top: 10px;">Manage Actions</a>
             </div>
+            <div class="card">
+                <h3>🏛 My Public Companies</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Manage companies you've taken public</p>
+                <a href="/brokerage/my-companies" class="btn-blue" style="display: inline-block; margin-top: 10px;">My Companies</a>
+            </div>
+            <div class="card">
+                <h3>🗳 Governance</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Propose and vote on company decisions</p>
+                <a href="/brokerage/governance" class="btn-blue" style="display: inline-block; margin-top: 10px; background:#4c1d95;">Vote / Propose</a>
+            </div>
         </div>
         
         <!-- Active Positions Summary -->
@@ -5143,6 +5153,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             <div style="font-size:1.1rem;font-weight:700;color:#e5e7eb;">{selected_company.company_name}</div>
                             <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">
                                 {selected_company.ticker_symbol} &middot; Class {selected_company.share_class}{" &middot; TBTF" if selected_company.is_tbtf else ""}
+                                &nbsp;&middot;&nbsp; <a href="/brokerage/governance?company_id={selected_company.id}" style="color:#a78bfa;font-size:0.75rem;">🗳 Governance</a>
                             </div>
                         </div>
                         <div style="text-align:right;">
@@ -6059,12 +6070,32 @@ def brokerage_governance_page(
                     <input type="hidden" name="company_id" value="{company.id}">
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Proposal Type</label>
-                        <select name="proposal_type" style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
-                            <option value="dividend_change">Dividend Change</option>
-                            <option value="secondary_offering">Secondary Offering</option>
-                            <option value="trading_halt">Trading Halt Request</option>
-                            <option value="custom">Custom / Other</option>
+                        <select name="proposal_type" id="gov-proposal-type" onchange="govParamToggle(this.value)"
+                                style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                            <option value="dividend_change">Dividend Change — set a new annual dividend rate</option>
+                            <option value="secondary_offering">Secondary Offering — issue new shares into the float</option>
+                            <option value="trading_halt">Trading Halt — pause all trading temporarily</option>
+                            <option value="custom">Custom / Other — advisory, no automatic effect</option>
                         </select>
+                    </div>
+                    <!-- Dynamic parameter field (shown per type) -->
+                    <div id="gov-param-dividend" style="margin-bottom:12px;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">New Annual Dividend Rate (%)</label>
+                        <input type="number" name="param_dividend_rate" min="0" max="100" step="0.1" placeholder="e.g. 8 for 8%"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, the company's dividend rate is updated immediately. Leave 0 to remove dividends.</p>
+                    </div>
+                    <div id="gov-param-offering" style="margin-bottom:12px;display:none;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">New Shares to Issue</label>
+                        <input type="number" name="param_shares" min="1000" step="1000" placeholder="e.g. 50000"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, these shares are added to the public float. This dilutes existing shareholders.</p>
+                    </div>
+                    <div id="gov-param-halt" style="margin-bottom:12px;display:none;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Halt Duration (hours)</label>
+                        <input type="number" name="param_halt_hours" min="1" max="168" step="1" value="24"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, all trading in this company is suspended for the chosen duration (max 168h / 1 week).</p>
                     </div>
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Title</label>
@@ -6074,12 +6105,19 @@ def brokerage_governance_page(
                     </div>
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Description</label>
-                        <textarea name="description" required rows="4"
+                        <textarea name="description" required rows="3"
                                   style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;resize:vertical;"
                                   placeholder="Full details of the proposal..."></textarea>
                     </div>
                     <button type="submit" class="btn-blue">Submit Proposal (voting open {PROPOSAL_DURATION_HOURS}h)</button>
                 </form>
+                <script>
+                function govParamToggle(type) {{
+                    document.getElementById('gov-param-dividend').style.display = type === 'dividend_change' ? '' : 'none';
+                    document.getElementById('gov-param-offering').style.display = type === 'secondary_offering' ? '' : 'none';
+                    document.getElementById('gov-param-halt').style.display = type === 'trading_halt' ? '' : 'none';
+                }}
+                </script>
             </div>'''
 
         # Proposals list
@@ -6103,11 +6141,16 @@ def brokerage_governance_page(
                 elif already_voted:
                     vote_form = '<span style="color:#64748b;font-size:0.85rem;">✓ You voted</span>'
                 ends = p.voting_ends_at.strftime("%b %d %H:%M UTC") if p.voting_ends_at else "—"
+                applied_badge = ""
+                if p.result_applied:
+                    applied_badge = '<span style="color:#22c55e;font-size:0.75rem;margin-left:8px;">✓ Effect applied</span>'
+                elif p.status == "passed":
+                    applied_badge = '<span style="color:#f59e0b;font-size:0.75rem;margin-left:8px;">Pending effect</span>'
                 proposals_html += f'''
                 <div class="card" style="margin-bottom:12px;border-left:3px solid {status_color};">
                     <div style="display:flex;justify-content:space-between;align-items:start;">
                         <div>
-                            <span style="color:{status_color};font-size:0.75rem;text-transform:uppercase;">{p.status}</span>
+                            <span style="color:{status_color};font-size:0.75rem;text-transform:uppercase;">{p.status}</span>{applied_badge}
                             <h4 style="margin:4px 0;">{p.title}</h4>
                             <p style="color:#94a3b8;font-size:0.9rem;margin:4px 0;">{p.description}</p>
                             <p style="color:#64748b;font-size:0.8rem;">Type: {p.proposal_type.replace("_"," ").title()} &nbsp;|&nbsp; Closes: {ends} &nbsp;|&nbsp; Voters: {p.total_voters}</p>
@@ -6152,6 +6195,9 @@ async def create_proposal_endpoint(
     proposal_type: str = Form(...),
     title: str = Form(...),
     description: str = Form(...),
+    param_dividend_rate: Optional[str] = Form(None),
+    param_shares: Optional[str] = Form(None),
+    param_halt_hours: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None)
 ):
     player = require_auth(session_token)
@@ -6160,7 +6206,24 @@ async def create_proposal_endpoint(
     from urllib.parse import quote
     try:
         from banks.brokerage_firm import create_proposal
-        proposal, err = create_proposal(company_id, player.id, proposal_type, title, description)
+        # Build the structured param dict based on proposal type
+        proposal_param: dict = {}
+        if proposal_type == "dividend_change" and param_dividend_rate:
+            try:
+                proposal_param["new_rate"] = float(param_dividend_rate) / 100.0
+            except ValueError:
+                pass
+        elif proposal_type == "secondary_offering" and param_shares:
+            try:
+                proposal_param["shares"] = int(param_shares)
+            except ValueError:
+                pass
+        elif proposal_type == "trading_halt" and param_halt_hours:
+            try:
+                proposal_param["hours"] = int(param_halt_hours)
+            except ValueError:
+                proposal_param["hours"] = 24
+        proposal, err = create_proposal(company_id, player.id, proposal_type, title, description, proposal_param)
         if proposal:
             return RedirectResponse(
                 url=f"/brokerage/governance?company_id={company_id}&success=Proposal+submitted.",
@@ -6430,17 +6493,26 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
     try:
         from banks.brokerage_firm import (
             CompanyShares, ShareholderPosition, ShareLoan, ShareLoanStatus,
-            get_player_credit, SHORT_COLLATERAL_REQUIREMENT,
+            get_player_credit, get_credit_tier, get_short_borrow_rate,
+            SHORT_COLLATERAL_REQUIREMENT, CREDIT_TIERS,
             get_db as get_firm_db
         )
-        
+
+        # Credit tier info for this player
+        credit_rating = get_player_credit(player.id)
+        credit_tier = get_credit_tier(credit_rating.credit_score)
+        borrow_rate_annual = get_short_borrow_rate(player.id)
+        credit_tier_name = credit_tier.value.upper()
+        # Find next tier requirements
+        tier_rows = sorted(CREDIT_TIERS.values(), key=lambda x: x[0])  # sort by min_score
+
         db = get_firm_db()
         try:
             # Get all public companies
             companies = db.query(CompanyShares).filter(
                 CompanyShares.is_delisted == False
             ).order_by(CompanyShares.ticker_symbol).all()
-            
+
             # Get player's active shorts
             active_shorts = db.query(ShareLoan).filter(
                 ShareLoan.borrower_player_id == player.id,
@@ -6567,11 +6639,35 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                     </p>
                 </div>'''
 
+        tier_color = {"prime": "#22c55e", "good": "#38bdf8", "fair": "#f59e0b", "poor": "#f97316", "restricted": "#ef4444"}.get(credit_tier.value, "#94a3b8")
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
         <h1>Short Selling</h1>
         <p style="color: #64748b;">Borrow shares, sell them now, buy back later at (hopefully) a lower price.</p>
-        
+
+        <!-- Credit Tier Banner -->
+        <div class="card" style="margin-bottom: 20px; padding: 15px; background: #0f172a; border-left: 4px solid {tier_color};">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <span style="color: #64748b; font-size: 0.85rem;">YOUR CREDIT TIER</span><br>
+                    <strong style="color: {tier_color}; font-size: 1.2rem;">{credit_tier_name}</strong>
+                    <span style="color: #64748b; margin-left: 8px;">Score: {credit_rating.credit_score}/100</span>
+                </div>
+                <div style="text-align: center;">
+                    <span style="color: #64748b; font-size: 0.85rem;">BORROW RATE</span><br>
+                    <strong style="color: #f59e0b;">{borrow_rate_annual*100:.1f}% p.a.</strong>
+                </div>
+                <div style="text-align: center;">
+                    <span style="color: #64748b; font-size: 0.85rem;">DAILY FEE (per $1,000 short)</span><br>
+                    <strong style="color: #94a3b8;">{fmt_usd(1000 * borrow_rate_annual / 365, disp, precision=4)}</strong>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b; max-width: 300px;">
+                    Improve your credit score by closing profitable positions, paying dividends, and repaying loans on time.
+                    Higher tiers unlock lower borrow rates and greater leverage.
+                </div>
+            </div>
+        </div>
+
         <!-- Open New Short -->
         <div class="card">
             <h3>Open Short Position</h3>
@@ -6618,11 +6714,45 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                 <li>You can now hold the proceeds while waiting for the price to fall.</li>
                 <li>When you close, you buy back the shares at the current market price.</li>
                 <li>Your locked collateral (minus fees) is returned. Profit = original sale price − buyback price − borrow fees.</li>
-                <li>Daily borrow fees are deducted from your locked collateral. If collateral runs below ~3 days of fees, the position is <strong>automatically force-closed</strong>.</li>
+                <li>Daily borrow fees are deducted from your locked collateral. If collateral runs below ~3 days of fees, the position is <strong>automatically force-closed</strong> and your credit score takes a major hit (−20 pts).</li>
             </ol>
             <p style="color: #ef4444; margin-top: 15px;">
                 <strong>Risk Warning:</strong> If the stock price rises, your buyback cost increases and losses are theoretically unlimited.
                 Monitor your collateral balance — if it drains to zero the position is liquidated without warning.
+            </p>
+
+            <!-- Credit Tier Table -->
+            <h4 style="color: #94a3b8; margin-top: 20px; margin-bottom: 10px;">Borrow Rate by Credit Tier</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1e293b; text-align: left; color: #64748b;">
+                        <th style="padding: 6px 8px;">Tier</th>
+                        <th style="padding: 6px 8px;">Score Range</th>
+                        <th style="padding: 6px 8px;">Annual Borrow Rate</th>
+                        <th style="padding: 6px 8px;">Credit Impact (voluntary close)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #22c55e;">
+                        <td style="padding: 6px 8px;">PRIME</td><td style="padding: 6px 8px;">80–100</td><td style="padding: 6px 8px;">3% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #38bdf8;">
+                        <td style="padding: 6px 8px;">GOOD</td><td style="padding: 6px 8px;">60–79</td><td style="padding: 6px 8px;">5% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #f59e0b;">
+                        <td style="padding: 6px 8px;">FAIR</td><td style="padding: 6px 8px;">40–59</td><td style="padding: 6px 8px;">8% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #1e293b; color: #f97316;">
+                        <td style="padding: 6px 8px;">POOR</td><td style="padding: 6px 8px;">20–39</td><td style="padding: 6px 8px;">12% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                    <tr style="color: #ef4444;">
+                        <td style="padding: 6px 8px;">RESTRICTED</td><td style="padding: 6px 8px;">0–19</td><td style="padding: 6px 8px;">15% p.a.</td><td style="padding: 6px 8px;">+3 (profit) / −1 (loss)</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="color: #64748b; font-size: 0.8rem; margin-top: 8px;">
+                Force-close (collateral exhausted): −20 pts regardless of P&L.
+                Borrow rate is locked at the rate of your tier when you open the position.
             </p>
         </div>
         '''
