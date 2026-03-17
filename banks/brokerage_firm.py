@@ -497,14 +497,14 @@ class ShareLoan(Base):
     borrow_rate_weekly = Column(Float, nullable=False)
     
     borrowed_at = Column(DateTime, default=datetime.utcnow)
-    due_date = Column(DateTime, nullable=False)
+    due_date = Column(DateTime, nullable=True)   # None = no fixed expiry (open-ended)
     returned_at = Column(DateTime, nullable=True)
-    
+
     total_fees_paid = Column(Float, default=0.0)
     last_interest_charge = Column(DateTime, default=datetime.utcnow)
     fees_to_lender = Column(Float, default=0.0)
     fees_to_firm = Column(Float, default=0.0)
-    
+
     status = Column(String, default=ShareLoanStatus.ACTIVE.value)
 
 
@@ -2490,14 +2490,15 @@ def trigger_liquidation(player_id: int, source: str):
     try:
         positions = db.query(ShareholderPosition).filter(
             ShareholderPosition.player_id == player_id,
+            ShareholderPosition.margin_debt > 0,
             ShareholderPosition.shares_owned > 0
         ).all()
-        
+
         for position in positions:
             company = db.query(CompanyShares).filter(
                 CompanyShares.id == position.company_shares_id
             ).first()
-            
+
             if company and position.shares_owned > 0:
                 place_market_order(
                     player_id=player_id,
@@ -2582,22 +2583,14 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
         lender_position = lenders[0]
         
         borrow_value = quantity * company.current_price
+        # Lock 150% collateral from the player, then immediately credit back the
+        # 100% short-sale proceeds.  Net out-of-pocket = 50% additional margin.
         collateral_required = borrow_value * SHORT_COLLATERAL_REQUIREMENT
         annual_rate = get_short_borrow_rate(borrower_id)
         weekly_rate = annual_rate / 52
-        
-        volatility = calculate_stock_volatility(company_shares_id)
-        if volatility > 0.20:
-            due_days = 7
-        elif volatility > 0.10:
-            due_days = 14
-        else:
-            due_days = 30
-        
-        due_date = datetime.utcnow() + timedelta(days=due_days)
-        
+
         from auth import Player, get_db as get_auth_db
-        from reserve_banks import spend_player_funds
+        from reserve_banks import spend_player_funds, credit_usd
         auth_db = get_auth_db()
         try:
             borrower = auth_db.query(Player).filter(Player.id == borrower_id).first()
@@ -2610,9 +2603,12 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
         finally:
             auth_db.close()
 
+        # Credit the short-sale proceeds (shares were "sold" at borrow_price)
+        credit_usd(borrower_id, borrow_value)
+
         lender_position.shares_available_to_lend -= quantity
         lender_position.shares_lent_out += quantity
-        
+
         loan = ShareLoan(
             lender_player_id=lender_position.player_id,
             borrower_player_id=borrower_id,
@@ -2621,7 +2617,7 @@ def short_sell_shares(borrower_id: int, company_shares_id: int, quantity: int) -
             borrow_price=company.current_price,
             collateral_locked=collateral_required,
             borrow_rate_weekly=weekly_rate,
-            due_date=due_date
+            due_date=None  # Open-ended — closed by borrower or collateral exhaustion
         )
         db.add(loan)
         db.commit()
@@ -2744,33 +2740,34 @@ def close_short_position(loan_id: int) -> bool:
 
 def process_share_loan_interest():
     db = get_db()
+    force_close_ids = []
     try:
         loans = db.query(ShareLoan).filter(
             ShareLoan.status == ShareLoanStatus.ACTIVE.value
         ).all()
-        
+
         now = datetime.utcnow()
-        
+
         for loan in loans:
             days = (now - loan.last_interest_charge).total_seconds() / (24 * 3600)
             if days < 1:
                 continue
-            
+
             weekly_fee = loan.shares_borrowed * loan.borrow_price * loan.borrow_rate_weekly
             daily_fee = weekly_fee / 7
             fee = daily_fee * days
-            
+
             if loan.collateral_locked >= fee:
                 loan.collateral_locked -= fee
                 loan.total_fees_paid += fee
-                
+
                 fee_to_lender = fee * (1 - SHORT_FEE_FIRM_SPLIT)
                 fee_to_firm = fee * SHORT_FEE_FIRM_SPLIT
-                
+
                 loan.fees_to_lender += fee_to_lender
                 loan.fees_to_firm += fee_to_firm
                 loan.last_interest_charge = now
-                
+
                 from auth import Player, get_db as get_auth_db
                 auth_db = get_auth_db()
                 try:
@@ -2787,11 +2784,33 @@ def process_share_loan_interest():
                 finally:
                     auth_db.close()
 
-                firm_add_cash(fee_to_firm, "short_borrow_fee", f"Borrow fee", loan.borrower_player_id)
-        
+                firm_add_cash(fee_to_firm, "short_borrow_fee", "Borrow fee", loan.borrower_player_id)
+
+                # Queue for force-close if collateral will run out within 3 days
+                three_day_fee = daily_fee * 3
+                if loan.collateral_locked < three_day_fee:
+                    force_close_ids.append(loan.id)
+            else:
+                # Collateral fully exhausted — drain remainder and force-close
+                remaining = max(loan.collateral_locked, 0.0)
+                if remaining > 0:
+                    loan.total_fees_paid += remaining
+                    loan.fees_to_firm += remaining
+                    loan.collateral_locked = 0.0
+                    firm_add_cash(remaining, "short_borrow_fee", "Collateral exhausted", loan.borrower_player_id)
+                force_close_ids.append(loan.id)
+
         db.commit()
     finally:
         db.close()
+
+    # Force-close positions with exhausted/near-exhausted collateral (separate transactions)
+    for loan_id in force_close_ids:
+        try:
+            close_short_position(loan_id)
+            print(f"[{BANK_NAME}] Force-closed short loan #{loan_id} — collateral exhausted")
+        except Exception as e:
+            print(f"[{BANK_NAME}] Error force-closing short loan #{loan_id}: {e}")
 
 
 # ==========================
@@ -3467,6 +3486,8 @@ def initialize():
         # Governance tables (created by Base.metadata above, DDL guard for safety)
         "CREATE INDEX IF NOT EXISTS ix_company_proposals_company ON company_proposals (company_shares_id)",
         "CREATE INDEX IF NOT EXISTS ix_company_votes_proposal ON company_votes (proposal_id)",
+        # Short loans: remove artificial expiry — positions are open-ended
+        "ALTER TABLE share_loans ALTER COLUMN due_date DROP NOT NULL",
     ])
 
     try:
