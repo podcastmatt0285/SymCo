@@ -6505,8 +6505,8 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                         <th style="padding: 10px 8px;">Borrow Price</th>
                         <th style="padding: 10px 8px;">Current Price</th>
                         <th style="padding: 10px 8px;">P/L</th>
-                        <th style="padding: 10px 8px;">Collateral</th>
-                        <th style="padding: 10px 8px;">Due Date</th>
+                        <th style="padding: 10px 8px;">Collateral Left</th>
+                        <th style="padding: 10px 8px;">Borrow Rate</th>
                         <th style="padding: 10px 8px;">Action</th>
                     </tr>
                 </thead>
@@ -6516,7 +6516,20 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                 loan = item["loan"]
                 company = item["company"]
                 pnl_color = "#22c55e" if item["pnl"] >= 0 else "#ef4444"
-                
+                # Collateral health: estimate days remaining based on daily borrow fee
+                daily_fee = loan.shares_borrowed * loan.borrow_price * loan.borrow_rate_weekly / 7
+                days_left = (loan.collateral_locked / daily_fee) if daily_fee > 0 else 9999
+                if days_left < 3:
+                    coll_color = "#ef4444"
+                    coll_label = f"⚠ {fmt_usd(loan.collateral_locked, disp)} (~{days_left:.0f}d)"
+                elif days_left < 7:
+                    coll_color = "#f59e0b"
+                    coll_label = f"{fmt_usd(loan.collateral_locked, disp)} (~{days_left:.0f}d)"
+                else:
+                    coll_color = "#94a3b8"
+                    coll_label = fmt_usd(loan.collateral_locked, disp)
+                annual_rate_pct = loan.borrow_rate_weekly * 52 * 100
+
                 shorts_html += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 10px 8px;"><strong>{company.ticker_symbol}</strong></td>
@@ -6524,8 +6537,8 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                     <td style="padding: 10px 8px;">{fmt_usd(loan.borrow_price, disp, precision=4)}</td>
                     <td style="padding: 10px 8px;">{fmt_usd(company.current_price, disp, precision=4)}</td>
                     <td style="padding: 10px 8px; color: {pnl_color};">{fmt_usd(item["pnl"], disp)}</td>
-                    <td style="padding: 10px 8px;">{fmt_usd(loan.collateral_locked, disp)}</td>
-                    <td style="padding: 10px 8px;">{loan.due_date.strftime("%m/%d %H:%M")}</td>
+                    <td style="padding: 10px 8px; color: {coll_color};">{coll_label}</td>
+                    <td style="padding: 10px 8px; color: #64748b;">{annual_rate_pct:.1f}% p.a.</td>
                     <td style="padding: 10px 8px;">
                         <form action="/api/brokerage/close-short" method="post" style="display: inline;">
                             <input type="hidden" name="loan_id" value="{loan.id}">
@@ -6545,9 +6558,12 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                 <div style="margin-top: 15px; padding: 15px; background: #0f172a; border-radius: 4px;">
                     <p><strong>Selected:</strong> {selected_company.ticker_symbol} @ {fmt_usd(selected_company.current_price, disp, precision=4)}</p>
                     <p><strong>Available to borrow:</strong> {available_to_short:,} shares</p>
-                    <p><strong>Collateral requirement:</strong> {SHORT_COLLATERAL_REQUIREMENT*100:.0f}% ({fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp, precision=4)}/share)</p>
+                    <p><strong>Collateral locked (150%):</strong> {fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp, precision=4)}/share</p>
+                    <p><strong>Short-sale proceeds credited (100%):</strong> {fmt_usd(selected_company.current_price, disp, precision=4)}/share</p>
+                    <p><strong>Net out-of-pocket (50% additional margin):</strong> {fmt_usd(selected_company.current_price * (SHORT_COLLATERAL_REQUIREMENT - 1.0), disp, precision=4)}/share</p>
                     <p style="color: #f59e0b; font-size: 0.9rem; margin-top: 10px;">
                         Short selling is risky. If the price rises, your losses are theoretically unlimited.
+                        Daily borrow fees drain your locked collateral — if it runs low the position is force-closed.
                     </p>
                 </div>'''
 
@@ -6574,9 +6590,9 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
                                style="width: 100%; padding: 10px;" placeholder="{"Max: " + str(available_to_short) if selected_company else "Select stock first"}">
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Collateral Required</label>
+                        <label style="display: block; margin-bottom: 5px; color: #94a3b8;">Net Out-of-Pocket (50%)</label>
                         <div style="padding: 10px; background: #020617; border: 1px solid #1e293b; border-radius: 4px;">
-                            {f"{fmt_usd(selected_company.current_price * SHORT_COLLATERAL_REQUIREMENT, disp)}/share" if selected_company else "N/A"}
+                            {f"{fmt_usd(selected_company.current_price * (SHORT_COLLATERAL_REQUIREMENT - 1.0), disp)}/share" if selected_company else "N/A"}
                         </div>
                     </div>
                     <button type="submit" class="btn-red" style="padding: 10px 20px;" {"disabled" if not selected_company or available_to_short == 0 else ""}>
@@ -6598,15 +6614,15 @@ def brokerage_shorts_page(session_token: Optional[str] = Cookie(None), ticker: s
         <div class="card" style="margin-top: 20px;">
             <h3>How Short Selling Works</h3>
             <ol style="color: #94a3b8; line-height: 2;">
-                <li>You borrow shares from another player and lock {SHORT_COLLATERAL_REQUIREMENT*100:.0f}% collateral</li>
-                <li>You sell the borrowed shares at the current price</li>
-                <li>Later, you buy shares back (hopefully at a lower price)</li>
-                <li>Return the shares and get your collateral back</li>
-                <li>Your profit = Original sale price - Buyback price - Fees</li>
+                <li>You borrow shares from another player. <strong>{SHORT_COLLATERAL_REQUIREMENT*100:.0f}% collateral</strong> is locked from your account and the 100% short-sale proceeds are immediately credited back — your net out-of-pocket is <strong>50% additional margin</strong>.</li>
+                <li>You can now hold the proceeds while waiting for the price to fall.</li>
+                <li>When you close, you buy back the shares at the current market price.</li>
+                <li>Your locked collateral (minus fees) is returned. Profit = original sale price − buyback price − borrow fees.</li>
+                <li>Daily borrow fees are deducted from your locked collateral. If collateral runs below ~3 days of fees, the position is <strong>automatically force-closed</strong>.</li>
             </ol>
             <p style="color: #ef4444; margin-top: 15px;">
-                <strong>Risk Warning:</strong> If the stock price rises, you must still buy back shares to return them. 
-                Your potential loss is unlimited.
+                <strong>Risk Warning:</strong> If the stock price rises, your buyback cost increases and losses are theoretically unlimited.
+                Monitor your collateral balance — if it drains to zero the position is liquidated without warning.
             </p>
         </div>
         '''
