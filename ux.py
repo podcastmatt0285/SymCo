@@ -4663,6 +4663,16 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
                 <p style="color: #64748b; font-size: 0.9rem;">Automate buybacks, splits, offerings</p>
                 <a href="/corporate-actions/dashboard" class="btn-blue" style="display: inline-block; margin-top: 10px;">Manage Actions</a>
             </div>
+            <div class="card">
+                <h3>🏛 My Public Companies</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Manage companies you've taken public</p>
+                <a href="/brokerage/my-companies" class="btn-blue" style="display: inline-block; margin-top: 10px;">My Companies</a>
+            </div>
+            <div class="card">
+                <h3>🗳 Governance</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Propose and vote on company decisions</p>
+                <a href="/brokerage/governance" class="btn-blue" style="display: inline-block; margin-top: 10px; background:#4c1d95;">Vote / Propose</a>
+            </div>
         </div>
         
         <!-- Active Positions Summary -->
