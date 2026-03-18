@@ -2429,9 +2429,9 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
         ) or '<tr><td colspan="2" style="color:#64748b;">None</td></tr>'
 
         zombie_rows = "".join(
-            f'<tr><td>{d["ticker"]}</td><td>#{d["founder_id"]}</td></tr>'
+            f'<tr><td>{d["ticker"]}</td><td>#{d["founder_id"]}</td><td>{d["reason"]}</td></tr>'
             for d in scan["zombie_companies"]
-        ) or '<tr><td colspan="2" style="color:#64748b;">None</td></tr>'
+        ) or '<tr><td colspan="3" style="color:#64748b;">None</td></tr>'
 
         orphan_section = f"""
         <div class="card">
@@ -2440,7 +2440,7 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                 Records left behind by the old estate liquidation code.
                 Government-held brokerage positions are deleted and shares returned to float.
                 Government-held bank shares are retired. Zero-share ghost records are deleted.
-                Zombie companies (founder deceased, still listed) are force-delisted.
+                Zombie companies (founder deceased or permanently banned, still listed) are force-delisted.
             </p>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:0.75rem;">
                 <span>Gov broker positions: <b>{scan["gov_broker_positions"]}</b></span>
@@ -2465,9 +2465,9 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                     </table></div>
                 </div>
                 <div style="flex:1;min-width:200px;">
-                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Zombie Companies (still listed, founder deceased)</div>
+                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Zombie Companies (still listed, founder inactive)</div>
                     <div class="table-wrap"><table>
-                        <tr><th>Ticker</th><th>Founder</th></tr>
+                        <tr><th>Ticker</th><th>Founder</th><th>Reason</th></tr>
                         {zombie_rows}
                     </table></div>
                 </div>

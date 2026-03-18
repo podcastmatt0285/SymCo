@@ -1754,7 +1754,7 @@ def scan_orphan_shares(db=None) -> dict:
         for h in gov_bank:
             gov_bank_detail.append({"bank_id": h.bank_id, "shares": h.shares_owned})
 
-        # Zombie companies: not delisted but founder is deceased
+        # Zombie companies: not delisted but founder is deceased or permanently banned
         from estate import get_db as get_estate_db, DeceasedPlayer
         estate_db = get_estate_db()
         try:
@@ -1766,15 +1766,27 @@ def scan_orphan_shares(db=None) -> dict:
                 row.player_id
                 for row in estate_db.query(DeceasedPlayer.player_id).all()
             }
-            for c in live_companies:
-                if c.founder_id in deceased_ids:
-                    zombie_companies.append({
-                        "ticker": c.ticker_symbol,
-                        "founder_id": c.founder_id,
-                        "company_id": c.id,
-                    })
         finally:
             estate_db.close()
+
+        banned_ids = {
+            row.player_id
+            for row in db.query(PlayerBan.player_id).filter(
+                PlayerBan.ban_type == "ban",
+                PlayerBan.revoked == False,
+            ).all()
+        }
+        inactive_ids = deceased_ids | banned_ids
+
+        for c in live_companies:
+            if c.founder_id in inactive_ids:
+                reason = "deceased" if c.founder_id in deceased_ids else "banned"
+                zombie_companies.append({
+                    "ticker": c.ticker_symbol,
+                    "founder_id": c.founder_id,
+                    "company_id": c.id,
+                    "reason": reason,
+                })
 
         return {
             "gov_broker_positions": len(gov_broker),
@@ -1834,7 +1846,7 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
             BankShareholding.shares_owned <= 0,
         ).delete(synchronize_session=False)
 
-        # Delist zombie companies whose founders are deceased
+        # Delist zombie companies whose founders are deceased or permanently banned
         from datetime import datetime as _dt
         from estate import get_db as get_estate_db, DeceasedPlayer
         estate_db = get_estate_db()
@@ -1847,12 +1859,21 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
         finally:
             estate_db.close()
 
+        banned_ids = {
+            row.player_id
+            for row in db.query(PlayerBan.player_id).filter(
+                PlayerBan.ban_type == "ban",
+                PlayerBan.revoked == False,
+            ).all()
+        }
+        inactive_ids = deceased_ids | banned_ids
+
         live_companies = db.query(CompanyShares).filter(
             CompanyShares.is_delisted == False
         ).all()
         zombie_company_ids = []
         for c in live_companies:
-            if c.founder_id in deceased_ids:
+            if c.founder_id in inactive_ids:
                 c.is_delisted = True
                 c.delisted_at = _dt.utcnow()
                 zombie_company_ids.append(c.id)
