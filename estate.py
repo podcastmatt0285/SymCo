@@ -613,7 +613,7 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                             shareholder = db.query(Player).filter(Player.id == sh_pos.player_id).first()
                             if shareholder:
                                 shareholder.cash_balance += payout
-                    sh_pos.shares_owned = 0
+                    db.delete(sh_pos)  # delete position outright; company is being delisted
                     print(f"[Estate] Delist {company.ticker_symbol}: paid ${payout:,.2f} to player {sh_pos.player_id}")
                 # Mark company as delisted
                 company.is_delisted = True
@@ -1234,6 +1234,27 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
             )
         except:
             pass
+
+        # Purge any remaining zero-share brokerage positions owned by this player so that
+        # deleting the player record below doesn't leave orphan rows with a dead player_id.
+        # (Positions with shares_owned > 0 were already transferred to the government above.)
+        try:
+            from banks.brokerage_firm import ShareholderPosition as _SHP
+            db.query(_SHP).filter(
+                _SHP.player_id == player_id,
+                _SHP.shares_owned <= 0,
+            ).delete(synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Brokerage position cleanup error: {e}")
+
+        try:
+            from banks import BankShareholding as _BSH
+            db.query(_BSH).filter(
+                _BSH.player_id == player_id,
+                _BSH.shares_owned <= 0,
+            ).delete(synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Bank shareholding cleanup error: {e}")
 
         # Finally, delete the player record
         db.delete(player)
