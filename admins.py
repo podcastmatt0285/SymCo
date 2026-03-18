@@ -1880,8 +1880,44 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
                 zombie_delisted += 1
 
         # Remove stale WBC50 holdings for newly-delisted zombie companies
+        # and cancel all active orders for those companies
         wbc50_cleared = 0
+        orders_cancelled = 0
         if zombie_company_ids:
+            # Cancel active orders and refund reserved cash to buy-order holders
+            try:
+                from banks.brokerage_order_book import (
+                    OrderBook, OrderStatus, OrderSide, get_db as get_ob_db
+                )
+                from auth import Player, get_db as get_auth_db
+                ob_db = get_ob_db()
+                auth_db = get_auth_db()
+                try:
+                    active = ob_db.query(OrderBook).filter(
+                        OrderBook.company_shares_id.in_(zombie_company_ids),
+                        OrderBook.status.in_([
+                            OrderStatus.PENDING.value, OrderStatus.PARTIAL.value
+                        ]),
+                    ).all()
+                    for order in active:
+                        if order.order_side == OrderSide.BUY.value and order.reserved_cash > 0:
+                            unfilled = order.quantity - order.filled_quantity
+                            cash_to_release = (order.reserved_cash / order.quantity) * unfilled
+                            buyer = auth_db.query(Player).filter(
+                                Player.id == order.player_id
+                            ).first()
+                            if buyer:
+                                buyer.cash_balance += cash_to_release
+                        order.status = OrderStatus.CANCELLED.value
+                        orders_cancelled += 1
+                    ob_db.commit()
+                    auth_db.commit()
+                finally:
+                    ob_db.close()
+                    auth_db.close()
+            except Exception as ob_e:
+                print(f"[cleanup_orphan_shares] Order cancel error: {ob_e}")
+
             try:
                 from banks.wbc50_index_fund import IndexFundHolding, get_db as get_fund_db
                 import banks
@@ -1897,9 +1933,7 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
                     ).all()
                     for h in stale:
                         if fund_entity and h.shares_held > 0:
-                            # Credit fund cash at last known price to avoid phantom value loss
-                            from banks.brokerage_firm import CompanyShares as CS2
-                            co = db.query(CS2).filter(CS2.id == h.company_id).first()
+                            co = db.query(CompanyShares).filter(CompanyShares.id == h.company_id).first()
                             if co and co.current_price:
                                 fund_entity.cash_reserves += h.shares_held * co.current_price
                         h.shares_held = 0
@@ -1923,6 +1957,7 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
             f"{len(gov_broker)} gov broker pos, {len(gov_bank)} gov bank holdings, "
             f"{zero_broker} zero-share broker, {zero_bank} zero-share bank, "
             f"{zombie_delisted} zombie companies delisted, "
+            f"{orders_cancelled} open orders cancelled, "
             f"{wbc50_cleared} WBC50 holdings zeroed",
         )
         return {
@@ -1933,6 +1968,7 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
             "zero_broker": zero_broker,
             "zero_bank": zero_bank,
             "zombie_delisted": zombie_delisted,
+            "orders_cancelled": orders_cancelled,
             "wbc50_cleared": wbc50_cleared,
         }
     except Exception as e:
