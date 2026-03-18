@@ -1709,6 +1709,133 @@ def admin_construct_project(admin_id: int, city_id: int, project_type: str) -> d
 
 
 # ==========================
+# SHARE CLEANUP
+# ==========================
+
+def scan_orphan_shares(db=None) -> dict:
+    """Return counts of orphaned/government-accumulated share records without modifying anything."""
+    close_db = db is None
+    if db is None:
+        db = get_db()
+    try:
+        from banks import BankShareholding, BankEntity
+        from banks.brokerage_firm import ShareholderPosition, CompanyShares
+
+        GOVERNMENT_PLAYER_ID = 0
+
+        gov_broker = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == GOVERNMENT_PLAYER_ID,
+            ShareholderPosition.shares_owned > 0,
+        ).all()
+
+        gov_bank = db.query(BankShareholding).filter(
+            BankShareholding.player_id == GOVERNMENT_PLAYER_ID,
+            BankShareholding.shares_owned > 0,
+        ).all()
+
+        zero_broker = db.query(ShareholderPosition).filter(
+            ShareholderPosition.shares_owned <= 0,
+        ).count()
+
+        zero_bank = db.query(BankShareholding).filter(
+            BankShareholding.shares_owned <= 0,
+        ).count()
+
+        gov_broker_detail = []
+        for pos in gov_broker:
+            company = db.query(CompanyShares).filter(CompanyShares.id == pos.company_shares_id).first()
+            gov_broker_detail.append({
+                "ticker": company.ticker_symbol if company else f"id={pos.company_shares_id}",
+                "shares": pos.shares_owned,
+                "delisted": company.is_delisted if company else True,
+            })
+
+        gov_bank_detail = []
+        for h in gov_bank:
+            gov_bank_detail.append({"bank_id": h.bank_id, "shares": h.shares_owned})
+
+        return {
+            "gov_broker_positions": len(gov_broker),
+            "gov_broker_detail": gov_broker_detail,
+            "gov_bank_holdings": len(gov_bank),
+            "gov_bank_detail": gov_bank_detail,
+            "zero_broker_positions": zero_broker,
+            "zero_bank_holdings": zero_bank,
+            "total": len(gov_broker) + len(gov_bank) + zero_broker + zero_bank,
+        }
+    finally:
+        if close_db:
+            db.close()
+
+
+def cleanup_orphan_shares(admin_id: int) -> dict:
+    """
+    Delete government-accumulated share positions and zero-share ghost records.
+
+    Government brokerage positions: deleted, shares returned to company.shares_in_float.
+    Government bank shareholdings: deleted, shares retired from bank.total_shares_issued.
+    Zero-share positions/holdings: deleted outright.
+    """
+    db = get_db()
+    try:
+        from banks import BankShareholding, BankEntity
+        from banks.brokerage_firm import ShareholderPosition, CompanyShares
+
+        GOVERNMENT_PLAYER_ID = 0
+
+        gov_broker = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == GOVERNMENT_PLAYER_ID,
+            ShareholderPosition.shares_owned > 0,
+        ).all()
+        for pos in gov_broker:
+            company = db.query(CompanyShares).filter(CompanyShares.id == pos.company_shares_id).first()
+            if company and not company.is_delisted:
+                company.shares_in_float += pos.shares_owned
+            db.delete(pos)
+
+        gov_bank = db.query(BankShareholding).filter(
+            BankShareholding.player_id == GOVERNMENT_PLAYER_ID,
+            BankShareholding.shares_owned > 0,
+        ).all()
+        for h in gov_bank:
+            bank = db.query(BankEntity).filter(BankEntity.bank_id == h.bank_id).first()
+            if bank:
+                bank.total_shares_issued -= h.shares_owned
+            db.delete(h)
+
+        zero_broker = db.query(ShareholderPosition).filter(
+            ShareholderPosition.shares_owned <= 0,
+        ).delete(synchronize_session=False)
+
+        zero_bank = db.query(BankShareholding).filter(
+            BankShareholding.shares_owned <= 0,
+        ).delete(synchronize_session=False)
+
+        db.commit()
+
+        total = len(gov_broker) + len(gov_bank) + zero_broker + zero_bank
+        log_action(
+            admin_id, "cleanup_orphan_shares", None,
+            f"Deleted {total} orphan records: "
+            f"{len(gov_broker)} gov broker pos, {len(gov_bank)} gov bank holdings, "
+            f"{zero_broker} zero-share broker, {zero_bank} zero-share bank",
+        )
+        return {
+            "ok": True,
+            "total": total,
+            "gov_broker": len(gov_broker),
+            "gov_bank": len(gov_bank),
+            "zero_broker": zero_broker,
+            "zero_bank": zero_bank,
+        }
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+# ==========================
 # TICK
 # ==========================
 
