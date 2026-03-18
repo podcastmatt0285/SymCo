@@ -2407,10 +2407,73 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
         </div>
         """
 
+    # ── Orphan share scan ────────────────────────────────────────────────────
+    from admins import scan_orphan_shares
+    try:
+        scan = scan_orphan_shares()
+        scan_badge = (
+            f'<span class="badge badge-red" style="margin-left:6px;">{scan["total"]:,} ORPHAN RECORDS</span>'
+            if scan["total"] > 0 else
+            '<span class="badge badge-green" style="margin-left:6px;">Clean</span>'
+        )
+
+        gov_broker_rows = "".join(
+            f'<tr><td>{d["ticker"]}</td><td>{d["shares"]:,}</td>'
+            f'<td>{"yes" if d["delisted"] else "no"}</td></tr>'
+            for d in scan["gov_broker_detail"]
+        ) or '<tr><td colspan="3" style="color:#64748b;">None</td></tr>'
+
+        gov_bank_rows = "".join(
+            f'<tr><td>{d["bank_id"]}</td><td>{d["shares"]:,}</td></tr>'
+            for d in scan["gov_bank_detail"]
+        ) or '<tr><td colspan="2" style="color:#64748b;">None</td></tr>'
+
+        orphan_section = f"""
+        <div class="card">
+            <h3>Brokerage &amp; Bank Share Cleanup {scan_badge}</h3>
+            <p style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">
+                Records left behind by the old estate liquidation code.
+                Government-held brokerage positions are deleted and shares returned to float.
+                Government-held bank shares are retired. Zero-share ghost records are deleted.
+            </p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:0.75rem;">
+                <span>Gov broker positions: <b>{scan["gov_broker_positions"]}</b></span>
+                <span>Gov bank holdings: <b>{scan["gov_bank_holdings"]}</b></span>
+                <span>Zero-share broker: <b>{scan["zero_broker_positions"]}</b></span>
+                <span>Zero-share bank: <b>{scan["zero_bank_holdings"]}</b></span>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                <div style="flex:1;min-width:200px;">
+                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Gov Brokerage Positions</div>
+                    <div class="table-wrap"><table>
+                        <tr><th>Ticker</th><th>Shares</th><th>Delisted</th></tr>
+                        {gov_broker_rows}
+                    </table></div>
+                </div>
+                <div style="flex:1;min-width:200px;">
+                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Gov Bank Holdings</div>
+                    <div class="table-wrap"><table>
+                        <tr><th>Bank</th><th>Shares</th></tr>
+                        {gov_bank_rows}
+                    </table></div>
+                </div>
+            </div>
+            <form method="post" action="/admin/etf/cleanup-orphan-shares">
+                <button class="btn btn-red" type="submit"
+                    onclick="return confirm('Delete all {scan["total"]:,} orphan share records? Government brokerage positions will have their shares returned to each company float. Government bank holdings will be retired. This cannot be undone.')">
+                    ✦ Clean Up {scan["total"]:,} Orphan Records
+                </button>
+            </form>
+        </div>
+        """
+    except Exception as scan_ex:
+        orphan_section = f'<div class="card"><h3>Brokerage &amp; Bank Share Cleanup</h3><p style="color:#ef4444;">Scan error: {scan_ex}</p></div>'
+
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">ETF Bank Management</h2>
     {alert}
     {cards_html}
+    {orphan_section}
     """
     return HTMLResponse(admin_shell("ETF Banks", body, admin.business_name, "/admin/etf"))
 
@@ -2581,6 +2644,26 @@ def admin_etf_reconcile(
     except Exception as ex:
         from urllib.parse import quote_plus
         return RedirectResponse(url=f"/admin/etf?err={quote_plus(str(ex)[:120])}", status_code=303)
+
+
+@router.post("/admin/etf/cleanup-orphan-shares")
+def admin_cleanup_orphan_shares(session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from admins import cleanup_orphan_shares
+    from urllib.parse import quote_plus
+    result = cleanup_orphan_shares(admin.id)
+    if result["ok"]:
+        msg = (
+            f"Cleaned up {result['total']} orphan records: "
+            f"{result['gov_broker']} gov broker positions (shares returned to float), "
+            f"{result['gov_bank']} gov bank holdings (shares retired), "
+            f"{result['zero_broker']} zero-share broker, "
+            f"{result['zero_bank']} zero-share bank."
+        )
+        return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
+    return RedirectResponse(url=f"/admin/etf?err={quote_plus(result['error'][:120])}", status_code=303)
 
 
 # ============================================================
