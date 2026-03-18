@@ -261,7 +261,11 @@ async def admin_wcpr_upload(
             status_code=303,
         )
 
+    await file.seek(0)
     data = await file.read()
+    if not data:
+        from urllib.parse import quote
+        return RedirectResponse("/admin/wcpr?err=No+file+data+received.+Please+try+again.", status_code=303)
     if len(data) > MAX_FILE_MB * 1024 * 1024:
         from urllib.parse import quote
         return RedirectResponse(
@@ -269,23 +273,29 @@ async def admin_wcpr_upload(
             status_code=303,
         )
 
-    from wcpr import WCPR_DIR, add_track
-    os.makedirs(WCPR_DIR, exist_ok=True)
-    safe_name = _safe_filename(file.filename or f"episode{ext}")
-    dest = os.path.join(WCPR_DIR, safe_name)
-    if os.path.exists(dest):
-        import time
-        base, e = os.path.splitext(safe_name)
-        safe_name = f"{base}_{int(time.time())}{e}"
+    try:
+        from wcpr import WCPR_DIR, add_track
+        os.makedirs(WCPR_DIR, exist_ok=True)
+        safe_name = _safe_filename(file.filename or f"episode{ext}")
         dest = os.path.join(WCPR_DIR, safe_name)
+        if os.path.exists(dest):
+            import time
+            base, e = os.path.splitext(safe_name)
+            safe_name = f"{base}_{int(time.time())}{e}"
+            dest = os.path.join(WCPR_DIR, safe_name)
 
-    with open(dest, "wb") as f_out:
-        f_out.write(data)
+        with open(dest, "wb") as f_out:
+            f_out.write(data)
 
-    track = add_track(safe_name, title.strip()[:120])
-    from urllib.parse import quote
-    t_title = track["title"]
-    return RedirectResponse(f"/admin/wcpr?msg={quote(f'Uploaded: {t_title}')}", status_code=303)
+        track = add_track(safe_name, title.strip()[:120])
+        from urllib.parse import quote
+        t_title = track["title"]
+        return RedirectResponse(f"/admin/wcpr?msg={quote(f'Uploaded: {t_title}')}", status_code=303)
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        from urllib.parse import quote
+        return RedirectResponse(f"/admin/wcpr?err={quote(f'Upload failed: {exc}')}", status_code=303)
 
 
 @router.post("/admin/wcpr/bulk_upload")
@@ -301,7 +311,11 @@ async def admin_wcpr_bulk_upload(
     import time as _time
     from urllib.parse import quote
 
-    os.makedirs(WCPR_DIR, exist_ok=True)
+    try:
+        os.makedirs(WCPR_DIR, exist_ok=True)
+    except Exception as exc:
+        return RedirectResponse(f"/admin/wcpr?err={quote(f'Cannot create upload dir: {exc}')}", status_code=303)
+
     uploaded, skipped = [], []
 
     for file in files:
@@ -316,19 +330,24 @@ async def admin_wcpr_bulk_upload(
             skipped.append(f"{file.filename} (too large)")
             continue
 
-        safe_name = _safe_filename(file.filename or f"episode{ext}")
-        dest = os.path.join(WCPR_DIR, safe_name)
-        if os.path.exists(dest):
-            base, e = os.path.splitext(safe_name)
-            safe_name = f"{base}_{int(_time.time())}{e}"
+        try:
+            safe_name = _safe_filename(file.filename or f"episode{ext}")
             dest = os.path.join(WCPR_DIR, safe_name)
+            if os.path.exists(dest):
+                base, e = os.path.splitext(safe_name)
+                safe_name = f"{base}_{int(_time.time())}{e}"
+                dest = os.path.join(WCPR_DIR, safe_name)
 
-        with open(dest, "wb") as f_out:
-            f_out.write(data)
+            with open(dest, "wb") as f_out:
+                f_out.write(data)
 
-        title = _title_from_filename(file.filename or safe_name)
-        add_track(safe_name, title)
-        uploaded.append(title)
+            title = _title_from_filename(file.filename or safe_name)
+            add_track(safe_name, title)
+            uploaded.append(title)
+        except Exception as exc:
+            import traceback
+            traceback.print_exc()
+            skipped.append(f"{file.filename} (error: {exc})")
 
     parts = []
     if uploaded:
