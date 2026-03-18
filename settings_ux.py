@@ -16,7 +16,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 router = APIRouter()
 
 _TABS = [
-    ("audio", "🎵 Audio"),
+    ("audio",   "🎵 Audio"),
+    ("account", "👤 Account"),
 ]
 
 
@@ -807,6 +808,78 @@ def _audio_tab() -> str:
     """
 
 
+def _account_tab(player) -> str:
+    try:
+        from corporate_actions import is_player_bankrupt
+        _bankrupt = is_player_bankrupt(player.id)
+    except Exception:
+        _bankrupt = False
+
+    try:
+        from ux import fmt_usd
+        _restart_amt = fmt_usd(20000, "usd")
+    except Exception:
+        _restart_amt = "$20,000"
+
+    if _bankrupt:
+        bankruptcy_html = """
+        <div style="background:#1e293b;border:1px solid #ef4444;border-radius:10px;padding:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="font-size:1.4rem;">🔴</span>
+                <strong style="color:#ef4444;">Bankruptcy — Active</strong>
+            </div>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:0;">
+                You are currently in a bankruptcy period. A red Q marker is shown next to your
+                name on the stock market for the duration of the period.
+            </p>
+        </div>"""
+    else:
+        bankruptcy_html = f"""
+        <div style="background:#1e293b;border:1px solid #ef4444;border-radius:10px;padding:20px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="font-size:1.4rem;">💀</span>
+                <strong style="color:#ef4444;">Declare Bankruptcy</strong>
+            </div>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 16px;">
+                <strong style="color:#ef4444;">Irreversible.</strong>
+                Liquidates all assets — businesses, land, districts, inventory, stocks, crypto,
+                executives, and ETF positions. Restarts account with {_restart_amt} + one prairie plot.
+                Red Q marker for 30 days.
+            </p>
+            <form action="/api/corporate-actions/bankruptcy/declare" method="post"
+                  onsubmit="return confirm('FINAL WARNING: This permanently liquidates ALL your assets and restarts your account with {_restart_amt}. This CANNOT be undone.') && prompt('Type BANKRUPT to confirm') === 'BANKRUPT'">
+                <button type="submit"
+                        style="background:#ef4444;color:#fff;border:none;padding:7px 16px;border-radius:6px;
+                               font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;">
+                    💀 Declare Bankruptcy
+                </button>
+            </form>
+        </div>"""
+
+    return f"""
+<div style="max-width:600px;">
+
+    <h3 style="margin:0 0 6px;color:#94a3b8;">Estate &amp; Succession</h3>
+    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px;">
+        Manage heirs, succession planning, and the deceased player registry.
+    </p>
+    <a href="/estate"
+       style="display:inline-block;padding:8px 20px;background:#1e293b;border:1px solid #94a3b8;
+              color:#94a3b8;border-radius:6px;font-size:0.82rem;font-weight:700;text-decoration:none;">
+        ⚖️ Open Estate Office
+    </a>
+
+    <hr style="border:none;border-top:1px solid #1e293b;margin:28px 0;">
+
+    <h3 style="margin:0 0 6px;color:#ef4444;">Bankruptcy</h3>
+    <p style="color:#64748b;font-size:0.82rem;margin:0 0 12px;">
+        Nuclear option — permanently liquidates all assets and restarts your account.
+    </p>
+    {bankruptcy_html}
+</div>
+"""
+
+
 @router.get("/settings", response_class=HTMLResponse)
 def settings_page(
     session_token: Optional[str] = Cookie(None),
@@ -823,6 +896,8 @@ def settings_page(
 
     if tab == "audio":
         content = _audio_tab()
+    elif tab == "account":
+        content = _account_tab(player)
     else:
         content = '<p style="color:#64748b;">Coming soon.</p>'
 

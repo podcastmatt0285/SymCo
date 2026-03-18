@@ -1487,38 +1487,6 @@ def home(session_token: Optional[str] = Cookie(None)):
     if crypto_inherit_banners:
         dashboard_top = dashboard_top + crypto_inherit_banners
 
-    # Bankruptcy card (inserted into dashboard grid before Estate card)
-    bankruptcy_card_html = ""
-    try:
-        from corporate_actions import is_player_bankrupt
-        _bankrupt = is_player_bankrupt(player.id)
-        _restart_amt = fmt_usd(20000, disp)
-        if _bankrupt:
-            bankruptcy_card_html = """
-            <div class="dc" style="--c:#ef4444;--g:linear-gradient(90deg,#7f1d1d,#ef4444);--glow:rgba(239,68,68,0.12);--btn:#7f1d1d;--fg:#fca5a5;cursor:default;">
-                <span class="dc-ico">🔴</span>
-                <div class="dc-t">Bankruptcy — Active</div>
-                <div class="dc-d">You are currently in a bankruptcy period. A red Q marker is shown next to your name on the stock market for the duration of the period.</div>
-                <span class="dc-btn" style="background:#7f1d1d;color:#fca5a5;">Active Period</span>
-            </div>"""
-        else:
-            bankruptcy_card_html = f"""
-            <div class="dc" style="--c:#ef4444;--g:linear-gradient(90deg,#7f1d1d,#ef4444);--glow:rgba(239,68,68,0.12);--btn:#ef4444;cursor:default;">
-                <span class="dc-ico">💀</span>
-                <div class="dc-t" style="color:#ef4444;">Declare Bankruptcy</div>
-                <div class="dc-d"><strong style="color:#ef4444;">Irreversible.</strong> Liquidates all assets — businesses, land, districts, inventory, stocks, crypto, executives, and ETF positions. Restarts account with {_restart_amt} + one prairie plot. Red Q marker for 30 days.</div>
-                <form action="/api/corporate-actions/bankruptcy/declare" method="post"
-                      onsubmit="return confirm('FINAL WARNING: This permanently liquidates ALL your assets and restarts your account with {_restart_amt}. This CANNOT be undone.') && prompt('Type BANKRUPT to confirm') === 'BANKRUPT'">
-                    <button type="submit"
-                            style="background:#ef4444;color:#fff;border:none;padding:7px 16px;border-radius:6px;
-                                   font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit;">
-                        💀 Declare Bankruptcy
-                    </button>
-                </form>
-            </div>"""
-    except Exception:
-        pass
-
     return shell(
         "Dashboard",
         f"""
@@ -1598,27 +1566,11 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Wiki</span>
             </a>
 
-            {bankruptcy_card_html}
-
-            <a href="/estate" class="dc" style="--c:#94a3b8;--g:linear-gradient(90deg,#475569,#94a3b8);--glow:rgba(148,163,184,0.08);--btn:#1e293b;--fg:#94a3b8;">
-                <span class="dc-ico">⚖️</span>
-                <div class="dc-t">Estate & Succession</div>
-                <div class="dc-d">Manage heirs, succession planning, and the deceased player registry</div>
-                <span class="dc-btn">Estate Office</span>
-            </a>
-
             <a href="/world-map" class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12);--btn:#4ade80;">
                 <span class="dc-ico">🗺️</span>
                 <div class="dc-t">World Map</div>
                 <div class="dc-d">Visualize your economic empire on an interactive grid map of Wadsworth</div>
                 <span class="dc-btn">Open Map</span>
-            </a>
-
-            <a href="/stats/production-costs" class="dc" style="--c:#f87171;--g:linear-gradient(90deg,#f87171,#fca5a5);--glow:rgba(248,113,113,0.12);--btn:#f87171;">
-                <span class="dc-ico">🏭</span>
-                <div class="dc-t">Cost Calculator</div>
-                <div class="dc-d">Vertical integration cost breakdowns and your personal WMA cost basis for every item</div>
-                <span class="dc-btn">Open Calculator</span>
             </a>
 
             <a href="/settings" class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);--btn:#818cf8;">
