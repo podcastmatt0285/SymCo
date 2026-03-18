@@ -565,9 +565,10 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 if bank and bank.share_price:
                     value = h.shares_owned * bank.share_price * LIQUIDATION_DISCOUNT
                     liquidation_value += value
-                    # Transfer shares to government
-                    h.player_id = GOVERNMENT_PLAYER_ID
-                    print(f"[Estate] Seized {h.shares_owned} {h.bank_id} shares (${value:,.2f})")
+                    # Retire shares rather than parking them on the government
+                    bank.total_shares_issued -= h.shares_owned
+                    print(f"[Estate] Liquidated {h.shares_owned} {h.bank_id} shares (${value:,.2f})")
+                db.delete(h)
         except Exception as e:
             print(f"[Estate] Bank share liquidation error: {e}")
 
@@ -585,9 +586,10 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
                 if company and company.current_price:
                     value = pos.shares_owned * company.current_price * LIQUIDATION_DISCOUNT
                     liquidation_value += value
-                    # Transfer shares to government
-                    pos.player_id = GOVERNMENT_PLAYER_ID
-                    print(f"[Estate] Seized {pos.shares_owned} {company.ticker_symbol} shares (${value:,.2f})")
+                    # Return shares to the float so other players can buy them
+                    company.shares_in_float += pos.shares_owned
+                    print(f"[Estate] Liquidated {pos.shares_owned} {company.ticker_symbol} shares (${value:,.2f})")
+                db.delete(pos)
         except Exception as e:
             print(f"[Estate] Brokerage liquidation error: {e}")
 
