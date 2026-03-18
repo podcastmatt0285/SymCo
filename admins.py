@@ -1850,11 +1850,48 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
         live_companies = db.query(CompanyShares).filter(
             CompanyShares.is_delisted == False
         ).all()
+        zombie_company_ids = []
         for c in live_companies:
             if c.founder_id in deceased_ids:
                 c.is_delisted = True
                 c.delisted_at = _dt.utcnow()
+                zombie_company_ids.append(c.id)
                 zombie_delisted += 1
+
+        # Remove stale WBC50 holdings for newly-delisted zombie companies
+        wbc50_cleared = 0
+        if zombie_company_ids:
+            try:
+                from banks.wbc50_index_fund import IndexFundHolding, get_db as get_fund_db
+                import banks
+                fund_db = get_fund_db()
+                bank_db = banks.get_db()
+                try:
+                    fund_entity = bank_db.query(banks.BankEntity).filter(
+                        banks.BankEntity.bank_id == "wbc50_index_fund"
+                    ).first()
+                    stale = fund_db.query(IndexFundHolding).filter(
+                        IndexFundHolding.company_id.in_(zombie_company_ids),
+                        IndexFundHolding.shares_held > 0,
+                    ).all()
+                    for h in stale:
+                        if fund_entity and h.shares_held > 0:
+                            # Credit fund cash at last known price to avoid phantom value loss
+                            from banks.brokerage_firm import CompanyShares as CS2
+                            co = db.query(CS2).filter(CS2.id == h.company_id).first()
+                            if co and co.current_price:
+                                fund_entity.cash_reserves += h.shares_held * co.current_price
+                        h.shares_held = 0
+                        h.in_index = False
+                        wbc50_cleared += 1
+                    fund_db.commit()
+                    if fund_entity:
+                        bank_db.commit()
+                finally:
+                    fund_db.close()
+                    bank_db.close()
+            except Exception as wbc_e:
+                print(f"[cleanup_orphan_shares] WBC50 holding cleanup error: {wbc_e}")
 
         db.commit()
 
@@ -1864,7 +1901,8 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
             f"Deleted {total} orphan records: "
             f"{len(gov_broker)} gov broker pos, {len(gov_bank)} gov bank holdings, "
             f"{zero_broker} zero-share broker, {zero_bank} zero-share bank, "
-            f"{zombie_delisted} zombie companies delisted",
+            f"{zombie_delisted} zombie companies delisted, "
+            f"{wbc50_cleared} WBC50 holdings zeroed",
         )
         return {
             "ok": True,
@@ -1874,6 +1912,7 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
             "zero_broker": zero_broker,
             "zero_bank": zero_bank,
             "zombie_delisted": zombie_delisted,
+            "wbc50_cleared": wbc50_cleared,
         }
     except Exception as e:
         db.rollback()

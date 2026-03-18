@@ -2675,7 +2675,8 @@ def admin_cleanup_orphan_shares(session_token: Optional[str] = Cookie(None)):
             f"{result['gov_bank']} gov bank holdings (shares retired), "
             f"{result['zero_broker']} zero-share broker, "
             f"{result['zero_bank']} zero-share bank, "
-            f"{result['zombie_delisted']} zombie companies force-delisted."
+            f"{result['zombie_delisted']} zombie companies force-delisted, "
+            f"{result['wbc50_cleared']} WBC50 holdings zeroed."
         )
         return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
     return RedirectResponse(url=f"/admin/etf?err={quote_plus(result['error'][:120])}", status_code=303)
