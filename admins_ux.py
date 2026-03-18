@@ -2428,6 +2428,11 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
             for d in scan["gov_bank_detail"]
         ) or '<tr><td colspan="2" style="color:#64748b;">None</td></tr>'
 
+        zombie_rows = "".join(
+            f'<tr><td>{d["ticker"]}</td><td>#{d["founder_id"]}</td></tr>'
+            for d in scan["zombie_companies"]
+        ) or '<tr><td colspan="2" style="color:#64748b;">None</td></tr>'
+
         orphan_section = f"""
         <div class="card">
             <h3>Brokerage &amp; Bank Share Cleanup {scan_badge}</h3>
@@ -2435,12 +2440,14 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                 Records left behind by the old estate liquidation code.
                 Government-held brokerage positions are deleted and shares returned to float.
                 Government-held bank shares are retired. Zero-share ghost records are deleted.
+                Zombie companies (founder deceased, still listed) are force-delisted.
             </p>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:0.75rem;">
                 <span>Gov broker positions: <b>{scan["gov_broker_positions"]}</b></span>
                 <span>Gov bank holdings: <b>{scan["gov_bank_holdings"]}</b></span>
                 <span>Zero-share broker: <b>{scan["zero_broker_positions"]}</b></span>
                 <span>Zero-share bank: <b>{scan["zero_bank_holdings"]}</b></span>
+                <span style="color:#f97316;">Zombie companies: <b>{len(scan["zombie_companies"])}</b></span>
             </div>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
                 <div style="flex:1;min-width:200px;">
@@ -2457,10 +2464,17 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                         {gov_bank_rows}
                     </table></div>
                 </div>
+                <div style="flex:1;min-width:200px;">
+                    <div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Zombie Companies (still listed, founder deceased)</div>
+                    <div class="table-wrap"><table>
+                        <tr><th>Ticker</th><th>Founder</th></tr>
+                        {zombie_rows}
+                    </table></div>
+                </div>
             </div>
             <form method="post" action="/admin/etf/cleanup-orphan-shares">
                 <button class="btn btn-red" type="submit"
-                    onclick="return confirm('Delete all {scan["total"]:,} orphan share records? Government brokerage positions will have their shares returned to each company float. Government bank holdings will be retired. This cannot be undone.')">
+                    onclick="return confirm('Delete all {scan["total"]:,} orphan records and force-delist {len(scan["zombie_companies"])} zombie companies? This cannot be undone.')">
                     ✦ Clean Up {scan["total"]:,} Orphan Records
                 </button>
             </form>
@@ -2660,7 +2674,8 @@ def admin_cleanup_orphan_shares(session_token: Optional[str] = Cookie(None)):
             f"{result['gov_broker']} gov broker positions (shares returned to float), "
             f"{result['gov_bank']} gov bank holdings (shares retired), "
             f"{result['zero_broker']} zero-share broker, "
-            f"{result['zero_bank']} zero-share bank."
+            f"{result['zero_bank']} zero-share bank, "
+            f"{result['zombie_delisted']} zombie companies force-delisted."
         )
         return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
     return RedirectResponse(url=f"/admin/etf?err={quote_plus(result['error'][:120])}", status_code=303)
