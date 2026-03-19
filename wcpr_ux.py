@@ -269,8 +269,14 @@ def admin_wcpr_page(
 
             xhr.addEventListener('load', function() {{
                 bar.style.width = '100%';
-                statusTxt.textContent = 'Processing\u2026';
-                window.location.href = xhr.responseURL || '/admin/wcpr';
+                var resp;
+                try {{ resp = JSON.parse(xhr.responseText); }} catch(e) {{}}
+                if (resp && resp.ok) {{
+                    window.location.href = '/admin/wcpr?msg=' + encodeURIComponent('Uploaded: ' + resp.title);
+                }} else {{
+                    var err = (resp && resp.error) || ('Server error ' + xhr.status);
+                    window.location.href = '/admin/wcpr?err=' + encodeURIComponent(err);
+                }}
             }});
 
             xhr.addEventListener('error', function() {{
@@ -315,23 +321,14 @@ async def admin_wcpr_upload(
     _, ext = os.path.splitext(file.filename or "")
     ext = ext.lower()
     if ext not in ALLOWED_AUDIO_EXTS:
-        from urllib.parse import quote
-        return RedirectResponse(
-            f"/admin/wcpr?err={quote(f'Unsupported file type: {ext}. Use MP3, OGG, WAV, FLAC, M4A, or AAC.')}",
-            status_code=303,
-        )
+        return JSONResponse({"ok": False, "error": f"Unsupported file type: {ext}. Use MP3, OGG, WAV, FLAC, M4A, or AAC."}, status_code=400)
 
     await file.seek(0)
     data = await file.read()
     if not data:
-        from urllib.parse import quote
-        return RedirectResponse("/admin/wcpr?err=No+file+data+received.+Please+try+again.", status_code=303)
+        return JSONResponse({"ok": False, "error": "No file data received. Please try again."}, status_code=400)
     if len(data) > MAX_FILE_MB * 1024 * 1024:
-        from urllib.parse import quote
-        return RedirectResponse(
-            f"/admin/wcpr?err={quote(f'File too large (max {MAX_FILE_MB} MB).')}",
-            status_code=303,
-        )
+        return JSONResponse({"ok": False, "error": f"File too large (max {MAX_FILE_MB} MB)."}, status_code=400)
 
     try:
         from wcpr import WCPR_DIR, add_track
@@ -348,14 +345,11 @@ async def admin_wcpr_upload(
             f_out.write(data)
 
         track = add_track(safe_name, title.strip()[:120])
-        from urllib.parse import quote
-        t_title = track["title"]
-        return RedirectResponse(f"/admin/wcpr?msg={quote(f'Uploaded: {t_title}')}", status_code=303)
+        return JSONResponse({"ok": True, "title": track["title"]})
     except Exception as exc:
         import traceback
         traceback.print_exc()
-        from urllib.parse import quote
-        return RedirectResponse(f"/admin/wcpr?err={quote(f'Upload failed: {exc}')}", status_code=303)
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 
 
 @router.post("/admin/wcpr/bulk_upload")
