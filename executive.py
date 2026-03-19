@@ -1387,7 +1387,7 @@ def apply_school_upgrade(db, player_id: int, executive_id: int, bonus_key: str) 
 # TICK PROCESSING
 # ==========================
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     db = get_db()
     try:
         _process_aging(db, current_tick)

@@ -142,7 +142,7 @@ def initialize():
     load_item_config()
     print("[Inventory] Module initialized")
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     pass
 
 __all__ = [

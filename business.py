@@ -75,7 +75,7 @@ def initialize():
     load_business_config()
     print("[Business] Module initialized with production patches and dismantling system")
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     db = SessionLocal()
     try:
         process_business_tick(db)

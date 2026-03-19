@@ -953,7 +953,7 @@ def initialize():
     print("[LandMarket] Module initialized")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Land market tick handler.
     - Updates auction prices (Dutch auction)

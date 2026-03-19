@@ -312,7 +312,7 @@ dm_manager = DMConnectionManager()
 
 _tick_counter = 0
 
-async def tick(current_tick, now):
+def tick(current_tick, now):
     global _tick_counter
     _tick_counter += 1
     # Cleanup expired conversations every 720 ticks (~60 minutes)

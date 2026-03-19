@@ -902,7 +902,7 @@ def initialize():
     migrate_ip_tables()
     print("[Auth] Module initialized")
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """Clean up expired sessions every 5 minutes."""
     if current_tick % 300 == 0:
         db = get_db()

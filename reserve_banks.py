@@ -380,7 +380,7 @@ def initialize():
 # TICK (called hourly by app)
 # ==========================
 
-async def tick(app_tick: int, now: datetime):
+def tick(app_tick: int, now: datetime):
     """Hourly housekeeping: accrue bond interest, adjust yields + FX rates, snapshot history."""
     if app_tick % RESERVE_BANKS_TICK_INTERVAL != 0:
         return

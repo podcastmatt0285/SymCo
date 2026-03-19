@@ -1997,7 +1997,7 @@ def process_corporate_actions():
     process_diffuse_deadlines()
 
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     global _last_ca_tick, _last_acq_tick
     if current_tick - _last_ca_tick >= CORPORATE_ACTIONS_TICK_INTERVAL:
         _last_ca_tick = current_tick

@@ -1391,7 +1391,7 @@ def deconstruct_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[
 # TICK
 # ──────────────────────────────────────────────────────────────
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     db = get_db()
     try:
         # ── 1. Advance construction / upgrade ticks ────────────

@@ -548,7 +548,7 @@ def initialize():
     load_district_items()
     print("[DistrictMarket] Module initialized")
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """Tick handler - match pending orders."""
     db = get_db()
     active_orders = db.query(DistrictMarketOrder).filter(

@@ -779,7 +779,7 @@ def initialize():
     print("[Land] Module initialized")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Land module tick handler.
 

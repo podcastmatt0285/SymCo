@@ -1982,5 +1982,5 @@ def cleanup_orphan_shares(admin_id: int) -> dict:
 # TICK
 # ==========================
 
-async def tick(current_tick, now):
+def tick(current_tick, now):
     pass

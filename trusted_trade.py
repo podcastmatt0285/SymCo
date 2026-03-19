@@ -553,7 +553,7 @@ def initialize():
     print("[TrustedTrade] Tables ensured.")
 
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """Expire pending swaps that have passed their TTL."""
     db = get_db()
     try:

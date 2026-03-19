@@ -4460,7 +4460,7 @@ def initialize():
     print("[Stats] Analytics dashboard initialized")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """Stats tick handler."""
     # Update rankings every 10 minutes
     if current_tick % 600 == 0:
