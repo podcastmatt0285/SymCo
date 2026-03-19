@@ -69,7 +69,11 @@ async def tick_loop():
         for name, module in modules.items():
             if hasattr(module, 'tick'):
                 try:
-                    await run_in_threadpool(module.tick, current_tick, now)
+                    tick_fn = module.tick
+                    if asyncio.iscoroutinefunction(tick_fn):
+                        await tick_fn(current_tick, now)
+                    else:
+                        await run_in_threadpool(tick_fn, current_tick, now)
                 except Exception as e:
                     print(f"[Tick {current_tick}] ERROR in {name}: {e}")
 
