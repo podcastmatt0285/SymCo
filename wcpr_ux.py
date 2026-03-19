@@ -165,7 +165,7 @@ def admin_wcpr_page(
     <!-- Upload Form -->
     <div class="card" style="margin-bottom:20px;">
         <h3 style="margin:0 0 14px 0;">Upload Episode</h3>
-        <form action="/admin/wcpr/upload" method="post" enctype="multipart/form-data"
+        <form id="wcpr-upload-form" action="/admin/wcpr/upload" method="post" enctype="multipart/form-data"
               style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
             <div style="flex:1;min-width:200px;">
                 <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:4px;">Episode Title *</label>
@@ -174,13 +174,19 @@ def admin_wcpr_page(
             </div>
             <div style="flex:1;min-width:200px;">
                 <label style="font-size:0.75rem;color:#64748b;display:block;margin-bottom:4px;">Audio File * (MP3/OGG/WAV/FLAC/M4A/AAC)</label>
-                <input type="file" name="file" required accept="audio/*"
+                <input type="file" name="file" required accept="audio/*" id="wcpr-file-input"
                        style="width:100%;background:#020617;border:1px solid #334155;color:#e5e7eb;padding:7px;box-sizing:border-box;">
             </div>
             <div style="flex-shrink:0;">
-                <button type="submit" class="btn-blue" style="padding:9px 20px;">Upload Episode</button>
+                <button type="submit" id="wcpr-upload-btn" class="btn-blue" style="padding:9px 20px;">Upload Episode</button>
             </div>
         </form>
+        <div id="wcpr-upload-status" style="display:none;margin-top:12px;">
+            <div id="wcpr-upload-text" style="font-size:0.8rem;color:#94a3b8;margin-bottom:6px;">Starting upload...</div>
+            <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;height:8px;overflow:hidden;">
+                <div id="wcpr-upload-bar" style="background:#38bdf8;height:100%;width:0%;transition:width 0.15s;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Bulk Upload -->
@@ -205,6 +211,7 @@ def admin_wcpr_page(
         </form>
     </div>
     <script>
+    // ── Bulk upload file preview ──────────────────────────────────────────
     document.getElementById('wcpr-bulk-input').addEventListener('change', function() {{
         var list = document.getElementById('wcpr-bulk-list');
         var preview = document.getElementById('wcpr-bulk-preview');
@@ -220,10 +227,63 @@ def admin_wcpr_page(
             preview.style.display = 'none';
         }}
     }});
+
+    // ── Rename toggle ─────────────────────────────────────────────────────
     function wcprRename(id) {{
         var form = document.getElementById('wrf-' + id);
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
     }}
+
+    // ── Single upload with XHR progress bar ──────────────────────────────
+    (function() {{
+        var form = document.getElementById('wcpr-upload-form');
+        var btn  = document.getElementById('wcpr-upload-btn');
+        var statusDiv = document.getElementById('wcpr-upload-status');
+        var statusTxt = document.getElementById('wcpr-upload-text');
+        var bar       = document.getElementById('wcpr-upload-bar');
+
+        form.addEventListener('submit', function(e) {{
+            e.preventDefault();
+
+            var titleInput = form.querySelector('input[name="title"]');
+            var fileInput  = document.getElementById('wcpr-file-input');
+            if (!titleInput.value.trim()) {{ titleInput.focus(); return; }}
+            if (!fileInput.files.length)  {{ fileInput.focus();  return; }}
+
+            var xhr = new XMLHttpRequest();
+            btn.disabled = true;
+            btn.textContent = 'Uploading\u2026';
+            statusDiv.style.display = 'block';
+            bar.style.width = '0%';
+            statusTxt.textContent = 'Starting upload\u2026';
+
+            xhr.upload.addEventListener('progress', function(e) {{
+                if (e.lengthComputable) {{
+                    var pct    = Math.round(e.loaded / e.total * 100);
+                    var loaded = (e.loaded / 1048576).toFixed(1);
+                    var total  = (e.total  / 1048576).toFixed(1);
+                    bar.style.width = pct + '%';
+                    statusTxt.textContent = 'Uploading\u2026 ' + pct + '% (' + loaded + ' / ' + total + ' MB)';
+                }}
+            }});
+
+            xhr.addEventListener('load', function() {{
+                bar.style.width = '100%';
+                statusTxt.textContent = 'Processing\u2026';
+                window.location.href = xhr.responseURL || '/admin/wcpr';
+            }});
+
+            xhr.addEventListener('error', function() {{
+                btn.disabled = false;
+                btn.textContent = 'Upload Episode';
+                statusDiv.style.display = 'none';
+                alert('Upload failed \u2014 please check your connection and try again.');
+            }});
+
+            xhr.open('POST', '/admin/wcpr/upload');
+            xhr.send(new FormData(form));
+        }});
+    }})();
     </script>
 
     <!-- Track List -->
