@@ -305,8 +305,8 @@ def admin_wcpr_page(
     </p>
     '''
 
-    from ux import shell
-    return HTMLResponse(shell("WCPR Manager", html, 0, player.id))
+    from admins_ux import admin_shell
+    return HTMLResponse(admin_shell("WCPR Manager", html, player.business_name))
 
 
 @router.post("/admin/wcpr/upload")
