@@ -799,7 +799,7 @@ def get_city_faucet_status(player_id: int, city_id: int) -> dict:
 # TICK
 # ──────────────────────────────────────────────────────────────────────────────
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """Called every app tick. Runs yield + airdrop for all active city coins."""
     from cities import CityBank, get_db as cities_get_db
 

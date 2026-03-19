@@ -877,7 +877,7 @@ def initialize():
     print("[P2P] Module initialized")
 
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """
     Tick handler for P2P module.
     - Resolve expired listings

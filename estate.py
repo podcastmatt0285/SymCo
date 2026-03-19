@@ -1472,7 +1472,7 @@ def _retroactive_deceased_cleanup():
         db.close()
 
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """Estate system tick handler."""
     # Process death tax installments every 60 ticks (5 minutes)
     if current_tick % 60 == 0:

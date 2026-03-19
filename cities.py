@@ -2690,7 +2690,7 @@ def tick_government_bond_investing(current_tick: int):
         rb_db.close()
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Cities module tick handler.
 

@@ -9587,7 +9587,7 @@ def initialize():
     """Initialize UX module."""
     print("[UX] Module initialized")
 
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """UX tick handler (no-op)."""
     pass
 

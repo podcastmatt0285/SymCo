@@ -2657,7 +2657,7 @@ def initialize():
     print("[Counties] Module initialized")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Counties module tick handler.
 

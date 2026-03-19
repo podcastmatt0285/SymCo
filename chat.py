@@ -733,7 +733,7 @@ def get_dm_thread_admin(player_a: int, player_b: int, limit: int = 100) -> list:
 
 _tick_counter = 0
 
-async def tick(current_tick, now):
+def tick(current_tick, now):
     global _tick_counter
     _tick_counter += 1
     # Cleanup stale avatars every 720 ticks (60 minutes)

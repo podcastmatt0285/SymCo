@@ -6,6 +6,7 @@ from fastapi import FastAPI, Cookie
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
+from starlette.concurrency import run_in_threadpool
 
 # ==========================
 # GLOBAL TICK STATE
@@ -68,7 +69,7 @@ async def tick_loop():
         for name, module in modules.items():
             if hasattr(module, 'tick'):
                 try:
-                    await module.tick(current_tick, now)
+                    await run_in_threadpool(module.tick, current_tick, now)
                 except Exception as e:
                     print(f"[Tick {current_tick}] ERROR in {name}: {e}")
 

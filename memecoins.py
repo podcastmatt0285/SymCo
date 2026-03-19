@@ -1865,7 +1865,7 @@ def initialize():
     print(f"[MemeCoin] {count} meme coins active. Module initialized.")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Meme coin tick handler.
     - Mining payouts every hour

@@ -1094,7 +1094,7 @@ def get_recent_swaps(player_id: int, limit: int = 10) -> List[dict]:
 # ==========================
 # APP TICK
 # ==========================
-async def tick(current_tick: int, now):
+def tick(current_tick: int, now):
     """Called every app tick. Handles yield payouts and airdrops."""
     wallet_db = get_db()
     try:

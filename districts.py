@@ -618,7 +618,7 @@ def initialize():
     print("[Districts] Module initialized")
 
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     """
     Districts module tick handler.
     Handles monthly tax collection.

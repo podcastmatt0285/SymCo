@@ -681,7 +681,7 @@ def initialize():
     Base.metadata.create_all(bind=engine)
     print("[Market] Module initialized")
 
-async def tick(current_tick: int, now: datetime):
+def tick(current_tick: int, now: datetime):
     db = get_db()
     active_orders = db.query(MarketOrder).filter(MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])).order_by(MarketOrder.created_at.asc()).all()
     for order in active_orders:
