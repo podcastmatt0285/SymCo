@@ -19,6 +19,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Cookie, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 router = APIRouter()
 
@@ -232,8 +233,8 @@ def admin_soundtrack_page(
     </p>
     '''
 
-    from ux import shell
-    return HTMLResponse(shell("WLOL Music Manager", html, 0, player.id))
+    from admins_ux import admin_shell
+    return HTMLResponse(admin_shell("WLOL Music Manager", html, player.business_name))
 
 
 @router.post("/admin/soundtrack/upload")
@@ -242,7 +243,7 @@ async def admin_soundtrack_upload(
     title: str = Form(...),
     file: UploadFile = File(...),
 ):
-    player, redirect = _admin_guard(session_token)
+    player, redirect = await run_in_threadpool(_admin_guard, session_token)
     if redirect:
         return redirect
 
@@ -265,22 +266,26 @@ async def admin_soundtrack_upload(
             status_code=303,
         )
 
-    # Save file
+    # Save file (blocking I/O offloaded to thread)
     from soundtrack import SOUNDTRACK_DIR, add_track
-    os.makedirs(SOUNDTRACK_DIR, exist_ok=True)
-    safe_name = _safe_filename(file.filename or f"track{ext}")
-    # Make unique if collision
-    dest = os.path.join(SOUNDTRACK_DIR, safe_name)
-    if os.path.exists(dest):
-        base, e = os.path.splitext(safe_name)
+    clean_title = title.strip()[:120]
+    _fname = file.filename or f"track{ext}"
+    _data = data
+
+    def _write_and_register():
         import time
-        safe_name = f"{base}_{int(time.time())}{e}"
-        dest = os.path.join(SOUNDTRACK_DIR, safe_name)
+        os.makedirs(SOUNDTRACK_DIR, exist_ok=True)
+        sname = _safe_filename(_fname)
+        dest = os.path.join(SOUNDTRACK_DIR, sname)
+        if os.path.exists(dest):
+            base, e = os.path.splitext(sname)
+            sname = f"{base}_{int(time.time())}{e}"
+            dest = os.path.join(SOUNDTRACK_DIR, sname)
+        with open(dest, "wb") as f_out:
+            f_out.write(_data)
+        return add_track(sname, clean_title)
 
-    with open(dest, "wb") as f_out:
-        f_out.write(data)
-
-    track = add_track(safe_name, title.strip()[:120])
+    track = await run_in_threadpool(_write_and_register)
     from urllib.parse import quote
     msg = quote(f"Uploaded: {track['title']}")
     return RedirectResponse(f"/admin/soundtrack?msg={msg}", status_code=303)
