@@ -19,6 +19,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Cookie, Form, File, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 router = APIRouter()
 
@@ -314,7 +315,7 @@ async def admin_wcpr_upload(
     title: str = Form(...),
     file: UploadFile = File(...),
 ):
-    player, redirect = _admin_guard(session_token)
+    player, redirect = await run_in_threadpool(_admin_guard, session_token)
     if redirect:
         return redirect
 
@@ -332,19 +333,24 @@ async def admin_wcpr_upload(
 
     try:
         from wcpr import WCPR_DIR, add_track
-        os.makedirs(WCPR_DIR, exist_ok=True)
+        import time
+
         safe_name = _safe_filename(file.filename or f"episode{ext}")
-        dest = os.path.join(WCPR_DIR, safe_name)
-        if os.path.exists(dest):
-            import time
-            base, e = os.path.splitext(safe_name)
-            safe_name = f"{base}_{int(time.time())}{e}"
-            dest = os.path.join(WCPR_DIR, safe_name)
+        clean_title = title.strip()[:120]
 
-        with open(dest, "wb") as f_out:
-            f_out.write(data)
+        def _write_and_register():
+            os.makedirs(WCPR_DIR, exist_ok=True)
+            dest_name = safe_name
+            dest = os.path.join(WCPR_DIR, dest_name)
+            if os.path.exists(dest):
+                base, e = os.path.splitext(dest_name)
+                dest_name = f"{base}_{int(time.time())}{e}"
+                dest = os.path.join(WCPR_DIR, dest_name)
+            with open(dest, "wb") as f_out:
+                f_out.write(data)
+            return add_track(dest_name, clean_title)
 
-        track = add_track(safe_name, title.strip()[:120])
+        track = await run_in_threadpool(_write_and_register)
         return JSONResponse({"ok": True, "title": track["title"]})
     except Exception as exc:
         import traceback
@@ -357,7 +363,7 @@ async def admin_wcpr_bulk_upload(
     session_token: Optional[str] = Cookie(None),
     files: List[UploadFile] = File(...),
 ):
-    player, redirect = _admin_guard(session_token)
+    player, redirect = await run_in_threadpool(_admin_guard, session_token)
     if redirect:
         return redirect
 
@@ -385,18 +391,23 @@ async def admin_wcpr_bulk_upload(
             continue
 
         try:
-            safe_name = _safe_filename(file.filename or f"episode{ext}")
-            dest = os.path.join(WCPR_DIR, safe_name)
-            if os.path.exists(dest):
-                base, e = os.path.splitext(safe_name)
-                safe_name = f"{base}_{int(_time.time())}{e}"
-                dest = os.path.join(WCPR_DIR, safe_name)
+            _fname = file.filename or f"episode{ext}"
+            _data = data
 
-            with open(dest, "wb") as f_out:
-                f_out.write(data)
+            def _write_one():
+                sname = _safe_filename(_fname)
+                dest = os.path.join(WCPR_DIR, sname)
+                if os.path.exists(dest):
+                    base, e = os.path.splitext(sname)
+                    sname = f"{base}_{int(_time.time())}{e}"
+                    dest = os.path.join(WCPR_DIR, sname)
+                with open(dest, "wb") as f_out:
+                    f_out.write(_data)
+                t = _title_from_filename(_fname)
+                add_track(sname, t)
+                return t
 
-            title = _title_from_filename(file.filename or safe_name)
-            add_track(safe_name, title)
+            title = await run_in_threadpool(_write_one)
             uploaded.append(title)
         except Exception as exc:
             import traceback
