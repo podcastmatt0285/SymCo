@@ -26,6 +26,9 @@ router = APIRouter()
 ALLOWED_AUDIO_EXTS = {".mp3", ".ogg", ".wav", ".flac", ".m4a", ".aac"}
 MAX_FILE_MB = 200  # talk radio episodes can be larger
 
+# Temp directory for assembling chunked uploads
+_CHUNK_DIR = os.path.join(os.path.dirname(__file__), "_upload_chunks")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # HELPERS
@@ -235,60 +238,89 @@ def admin_wcpr_page(
         form.style.display = form.style.display === 'none' ? 'block' : 'none';
     }}
 
-    // ── Single upload with XHR progress bar ──────────────────────────────
+    // ── Single upload — chunked to avoid Cloudflare 524 timeouts ─────────
     (function() {{
-        var form = document.getElementById('wcpr-upload-form');
-        var btn  = document.getElementById('wcpr-upload-btn');
+        var CHUNK_SIZE = 5 * 1024 * 1024; // 5 MB per chunk
+        var form      = document.getElementById('wcpr-upload-form');
+        var btn       = document.getElementById('wcpr-upload-btn');
         var statusDiv = document.getElementById('wcpr-upload-status');
         var statusTxt = document.getElementById('wcpr-upload-text');
         var bar       = document.getElementById('wcpr-upload-bar');
 
+        function randomId() {{
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {{
+                var r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            }});
+        }}
+
         form.addEventListener('submit', function(e) {{
             e.preventDefault();
-
             var titleInput = form.querySelector('input[name="title"]');
             var fileInput  = document.getElementById('wcpr-file-input');
             if (!titleInput.value.trim()) {{ titleInput.focus(); return; }}
             if (!fileInput.files.length)  {{ fileInput.focus();  return; }}
 
-            var xhr = new XMLHttpRequest();
+            var file        = fileInput.files[0];
+            var title       = titleInput.value.trim();
+            var totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+            var uploadId    = randomId();
+
             btn.disabled = true;
             btn.textContent = 'Uploading\u2026';
             statusDiv.style.display = 'block';
             bar.style.width = '0%';
             statusTxt.textContent = 'Starting upload\u2026';
 
-            xhr.upload.addEventListener('progress', function(e) {{
-                if (e.lengthComputable) {{
-                    var pct    = Math.round(e.loaded / e.total * 100);
-                    var loaded = (e.loaded / 1048576).toFixed(1);
-                    var total  = (e.total  / 1048576).toFixed(1);
-                    bar.style.width = pct + '%';
-                    statusTxt.textContent = 'Uploading\u2026 ' + pct + '% (' + loaded + ' / ' + total + ' MB)';
-                }}
-            }});
+            function sendChunk(index) {{
+                var start = index * CHUNK_SIZE;
+                var slice = file.slice(start, start + CHUNK_SIZE);
+                var fd    = new FormData();
+                fd.append('upload_id',    uploadId);
+                fd.append('chunk_index',  index);
+                fd.append('total_chunks', totalChunks);
+                fd.append('total_size',   file.size);
+                fd.append('filename',     file.name);
+                fd.append('title',        title);
+                fd.append('chunk',        slice, file.name);
 
-            xhr.addEventListener('load', function() {{
-                bar.style.width = '100%';
-                var resp;
-                try {{ resp = JSON.parse(xhr.responseText); }} catch(e) {{}}
-                if (resp && resp.ok) {{
-                    window.location.href = '/admin/wcpr?msg=' + encodeURIComponent('Uploaded: ' + resp.title);
-                }} else {{
-                    var err = (resp && resp.error) || ('Server error ' + xhr.status);
-                    window.location.href = '/admin/wcpr?err=' + encodeURIComponent(err);
-                }}
-            }});
+                var xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(ev) {{
+                    if (ev.lengthComputable) {{
+                        var overall  = ((index + ev.loaded / ev.total) / totalChunks * 100).toFixed(0);
+                        var doneMB   = ((index * CHUNK_SIZE + ev.loaded) / 1048576).toFixed(1);
+                        var totalMB  = (file.size / 1048576).toFixed(1);
+                        bar.style.width = overall + '%';
+                        statusTxt.textContent = 'Uploading\u2026 ' + overall + '% (' + doneMB + '\u202f/\u202f' + totalMB + ' MB)';
+                    }}
+                }});
+                xhr.addEventListener('load', function() {{
+                    var resp;
+                    try {{ resp = JSON.parse(xhr.responseText); }} catch(ex) {{}}
+                    if (!resp || !resp.ok) {{
+                        var err = (resp && resp.error) || ('Server error ' + xhr.status);
+                        window.location.href = '/admin/wcpr?err=' + encodeURIComponent(err);
+                        return;
+                    }}
+                    if (resp.done) {{
+                        bar.style.width = '100%';
+                        window.location.href = '/admin/wcpr?msg=' + encodeURIComponent('Uploaded: ' + resp.title);
+                    }} else {{
+                        sendChunk(index + 1);
+                    }}
+                }});
+                xhr.addEventListener('error', function() {{
+                    btn.disabled = false;
+                    btn.textContent = 'Upload Episode';
+                    statusDiv.style.display = 'none';
+                    alert('Upload failed \u2014 please check your connection and try again.');
+                }});
+                xhr.open('POST', '/admin/wcpr/upload/chunk');
+                xhr.send(fd);
+            }}
 
-            xhr.addEventListener('error', function() {{
-                btn.disabled = false;
-                btn.textContent = 'Upload Episode';
-                statusDiv.style.display = 'none';
-                alert('Upload failed \u2014 please check your connection and try again.');
-            }});
-
-            xhr.open('POST', '/admin/wcpr/upload');
-            xhr.send(new FormData(form));
+            sendChunk(0);
         }});
     }})();
     </script>
@@ -356,6 +388,80 @@ async def admin_wcpr_upload(
         import traceback
         traceback.print_exc()
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+
+@router.post("/admin/wcpr/upload/chunk")
+async def admin_wcpr_upload_chunk(
+    session_token: Optional[str] = Cookie(None),
+    upload_id: str = Form(...),
+    chunk_index: int = Form(...),
+    total_chunks: int = Form(...),
+    total_size: int = Form(...),
+    filename: str = Form(...),
+    title: str = Form(...),
+    chunk: UploadFile = File(...),
+):
+    player, redirect = await run_in_threadpool(_admin_guard, session_token)
+    if redirect:
+        return JSONResponse({"ok": False, "error": "Not authorized"}, status_code=401)
+
+    # Prevent path traversal in upload_id
+    if not re.match(r'^[a-f0-9\-]{36}$', upload_id):
+        return JSONResponse({"ok": False, "error": "Invalid upload ID"}, status_code=400)
+
+    _, ext = os.path.splitext(filename or "")
+    ext = ext.lower()
+    if ext not in ALLOWED_AUDIO_EXTS:
+        return JSONResponse({"ok": False, "error": f"Unsupported file type: {ext}"}, status_code=400)
+
+    if total_size > MAX_FILE_MB * 1024 * 1024:
+        return JSONResponse({"ok": False, "error": f"File too large (max {MAX_FILE_MB} MB)."}, status_code=400)
+
+    if not (0 <= chunk_index < total_chunks >= 1):
+        return JSONResponse({"ok": False, "error": "Invalid chunk parameters"}, status_code=400)
+
+    chunk_data = await chunk.read()
+
+    def _process_chunk():
+        import shutil, time
+        chunk_dir = os.path.join(_CHUNK_DIR, upload_id)
+        os.makedirs(chunk_dir, exist_ok=True)
+        with open(os.path.join(chunk_dir, f"{chunk_index:06d}"), "wb") as f:
+            f.write(chunk_data)
+
+        present = os.listdir(chunk_dir)
+        if len(present) < total_chunks:
+            return None  # still waiting for remaining chunks
+
+        # All chunks present — assemble
+        from wcpr import WCPR_DIR, add_track
+        os.makedirs(WCPR_DIR, exist_ok=True)
+        safe_name = _safe_filename(filename)
+        dest = os.path.join(WCPR_DIR, safe_name)
+        if os.path.exists(dest):
+            base, e = os.path.splitext(safe_name)
+            safe_name = f"{base}_{int(time.time())}{e}"
+            dest = os.path.join(WCPR_DIR, safe_name)
+
+        with open(dest, "wb") as f_out:
+            for c in sorted(present):
+                with open(os.path.join(chunk_dir, c), "rb") as f_in:
+                    f_out.write(f_in.read())
+
+        shutil.rmtree(chunk_dir, ignore_errors=True)
+        clean_title = title.strip()[:120] or _title_from_filename(filename)
+        return add_track(safe_name, clean_title)
+
+    try:
+        track = await run_in_threadpool(_process_chunk)
+    except Exception as exc:
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+    if track is None:
+        return JSONResponse({"ok": True, "done": False})
+    return JSONResponse({"ok": True, "done": True, "title": track["title"]})
 
 
 @router.post("/admin/wcpr/bulk_upload")
