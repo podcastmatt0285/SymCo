@@ -1,7 +1,7 @@
 {
   "player_id": -2001,
   "business_name": "Bee Cause",
-  "description": "Produces and sells pollen and honey on the open market.",
+  "description": "Produces and sells pollen, honey, and sugar on the open market.",
 
   "cash_caps": {
     "hard_high": 25000000,
@@ -13,7 +13,8 @@
   "seed": {
     "starting_cash": 5000,
     "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "savanna", "proximity_features": ["remote"], "size": 1 }
     ]
   },
 
@@ -22,6 +23,11 @@
       "business_type": "apiary",
       "district_id": null,
       "active_lines": ["pollen", "honey"]
+    },
+    {
+      "business_type": "cane_plantation",
+      "district_id": null,
+      "active_lines": ["sugar"]
     }
   ],
 
@@ -38,9 +44,15 @@
       "max_price_multiplier": 1.05,
       "market": "regular"
     },
-    "sugar": {
-      "target_inventory": 500,
-      "reorder_at": 50,
+    "cane": {
+      "target_inventory": 2000,
+      "reorder_at": 500,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 1000,
+      "reorder_at": 100,
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
@@ -61,6 +73,11 @@
     "honey": {
       "min_inventory_to_keep": 0,
       "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "sugar": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
       "market": "regular"
     }
   }

@@ -776,7 +776,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
             my_orders = dm_db.query(DistrictMarketOrder).filter(
                 DistrictMarketOrder.player_id == player.id,
                 DistrictMarketOrder.item_type == item,
-                DistrictMarketOrder.status == OrderStatus.ACTIVE
+                DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).order_by(DistrictMarketOrder.created_at.desc()).all()
             _active_rows = dm_db.query(DistrictMarketOrder.item_type).filter(
                 DistrictMarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
