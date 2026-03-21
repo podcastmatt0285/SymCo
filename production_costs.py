@@ -369,25 +369,46 @@ class ProductionCostCalculator:
 # ==========================
 
 _calculator: Optional[ProductionCostCalculator] = None
+_calculator_mtime: float = 0.0
+
+
+def _config_mtime(config_dir: Optional[Path] = None) -> float:
+    """Return the latest mtime across all config files so stale caches are detected."""
+    d = config_dir or Path.cwd()
+    files = [
+        DEFAULT_BUSINESS_TYPES, DEFAULT_DISTRICT_BUSINESSES,
+        DEFAULT_ITEM_TYPES, DEFAULT_DISTRICT_ITEMS,
+    ]
+    t = 0.0
+    for fname in files:
+        try:
+            t = max(t, (d / fname).stat().st_mtime)
+        except FileNotFoundError:
+            pass
+    return t
 
 
 def get_calculator(config_dir: Optional[Path] = None) -> ProductionCostCalculator:
     """
     Get or create singleton calculator instance.
-    
+    Auto-reloads when any config file is newer than the cached instance.
+
     Args:
         config_dir: Directory containing config files. Only used on first call.
     """
-    global _calculator
-    if _calculator is None:
+    global _calculator, _calculator_mtime
+    current_mtime = _config_mtime(config_dir)
+    if _calculator is None or current_mtime > _calculator_mtime:
         _calculator = ProductionCostCalculator(config_dir)
+        _calculator_mtime = current_mtime
     return _calculator
 
 
 def reset_calculator():
     """Reset calculator (call after config file changes)."""
-    global _calculator
+    global _calculator, _calculator_mtime
     _calculator = None
+    _calculator_mtime = 0.0
 
 
 # ==========================
