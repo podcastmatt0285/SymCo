@@ -1495,6 +1495,11 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             backing_pct   = sc["backing_ratio"] * 100
             backing_color = "#22c55e" if backing_pct >= 100 else ("#f59e0b" if backing_pct >= 50 else "#ef4444")
 
+            # Player's own balance for this coin
+            all_sc_bals = get_player_stable_coin_balances(player.id)
+            my_sc = next((b for b in all_sc_bals if b["symbol"] == sym), None)
+            my_sc_balance = my_sc["balance"] if my_sc else 0.0
+
             mayor_controls_sc = ""
             if is_city_mayor:
                 mayor_controls_sc = f"""
@@ -1514,13 +1519,29 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
                 </div>"""
 
             stable_coin_section = f"""
-            <div class="card" style="border-color:#7c3aed44;">
-                <h2 style="color:#a78bfa;">🪙 {sc['display_name']}</h2>
-                <p style="color:#64748b;font-size:0.8rem;margin-bottom:12px;">
-                    Issued by the Office of the Comptroller (level 12).
-                    Pegged 1:1 to the mayor's legal tender: <strong style="color:#e2e8f0;">{sc.get('peg_label', sym)}</strong>.
-                    Manage your balance in your <a href="/wallet" style="color:#a78bfa;">Wallet</a>.
-                </p>
+            <div class="card" style="border-color:#7c3aed;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+                    <div>
+                        <h2 style="color:#a78bfa;margin:0 0 4px 0;">🪙 {sc['display_name']}</h2>
+                        <div style="color:#64748b;font-size:0.8rem;">
+                            Issued by the Office of the Comptroller (level 12) &bull;
+                            Pegged to <strong style="color:#e2e8f0;">{sc.get('peg_label', sym)}</strong>
+                        </div>
+                    </div>
+                    <a href="/wallet?coin={sym}"
+                       style="background:#7c3aed;color:#e9d5ff;padding:8px 16px;border-radius:4px;
+                              font-size:0.85rem;font-weight:bold;text-decoration:none;white-space:nowrap;">
+                        Open {sym} Dashboard →
+                    </a>
+                </div>
+                <div style="background:#1e1040;border:1px solid #7c3aed44;border-radius:6px;padding:12px;margin-bottom:14px;">
+                    <div style="color:#94a3b8;font-size:0.7rem;margin-bottom:4px;">YOUR BALANCE</div>
+                    <div style="color:#a78bfa;font-size:1.4rem;font-weight:bold;">{my_sc_balance:,.4f} {sym}</div>
+                    <div style="color:#64748b;font-size:0.75rem;">
+                        Swap, farm yield, claim faucet &amp; buy bonds at
+                        <a href="/wallet?coin={sym}" style="color:#a78bfa;">/wallet?coin={sym}</a>
+                    </div>
+                </div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px;">
                     <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:12px;">
                         <div style="color:#94a3b8;font-size:0.7rem;">Total Supply (treasury)</div>
