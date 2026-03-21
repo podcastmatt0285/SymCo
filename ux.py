@@ -126,30 +126,11 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
 </svg>'''
 
 
-def _jb_section(label):
-    """Journey bar section header."""
-    return f'<div class="jb-section">{label}</div>'
-
-
-def _jb_node(label, href, count=None, sub=False, locked=False, hint=None, dot=False):
-    """Journey bar navigation item. Pure function — no closure state."""
-    if locked:
-        hint_html = f'<div class="jb-hint">{hint}</div>' if hint else ''
-        return f'<div class="jb-item jb-locked"><span class="jb-item-lbl">{label}</span>{hint_html}</div>'
-    badge = f'<span class="jb-badge">{count}</span>' if count is not None else ''
-    marker = '<span class="jb-dot">&#9679;</span>' if dot else ''
-    sc = ' jb-sub' if sub else ''
-    return (
-        f'<div class="jb-item{sc}" data-href="{href}">'
-        f'<a href="{href}"><span class="jb-item-lbl">{label}</span>{marker}{badge}</a>'
-        f'</div>'
-    )
-
-
 def build_journey_bar(player_id: int) -> str:
-    """Build the contextual journey sidebar HTML.
+    """Build the contextual journey sidebar as a deeply nested collapsible tree.
 
-    Shown only on district / city / county / crypto pages (JS URL-gated).
+    Visual design matches the SideNav.tsx template (Playfair Display, radio-box style).
+    Shown only on land/district/city/county/crypto pages (JS URL-gated).
     Returns an empty string when no player is logged in.
     """
     if not player_id:
@@ -188,9 +169,6 @@ def build_journey_bar(player_id: int) -> str:
     has_county = player_county is not None
     county_id  = player_county.id if has_county else None
 
-    def _trunc(s, n=16):
-        return (s[:n] + "\u2026") if s and len(s) > n else (s or "")
-
     # Next Step CTA
     if land_count == 0:
         next_label, next_href = "Buy your first plot", "/land-market"
@@ -199,91 +177,209 @@ def build_journey_bar(player_id: int) -> str:
     elif not has_city:
         next_label, next_href = "Join or found a city", "/cities"
     elif not has_county:
-        next_label, next_href = "Your city needs a county", "/counties"
+        next_label, next_href = "Form a county", "/counties"
     else:
         next_label, next_href = "Mine crypto", f"/county/{county_id}/mining"
 
-    # ── Build nav nodes ───────────────────────────────────────────────
-    nodes = []
+    # ── Inline Lucide-style SVG icons ─────────────────────────────────
+    _ico = {
+        "map":    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
+        "bag":    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+        "grid":   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+        "store":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+        "city":   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><path d="M12 12v.01"/><path d="M8 11v10"/><path d="M16 11v10"/><path d="M4 11v10"/><path d="M20 11v10"/></svg>',
+        "pin":    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+        "coins":  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><line x1="16.71" y1="13.88" x2="17.71" y2="14.88"/></svg>',
+        "pick":   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 21 6.5-6.5"/><path d="m9 9-6 6 3 3 6-6"/><path d="M17.5 3 21 6.5l-11 11L6.5 14z"/><path d="M14 4l6 6"/></svg>',
+        "wallet": '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>',
+        "trend":  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+        "chevR":  '<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+        "chevD":  '<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+    }
 
-    # TERRITORY
-    nodes.append(_jb_section("Territory"))
-    nodes.append(_jb_node("Land Portfolio",    "/land",               count=land_count     or None))
-    nodes.append(_jb_node("Districts",         "/districts",          count=district_count or None))
-    nodes.append(_jb_node("Create District",   "/districts/create",   sub=True))
-    nodes.append(_jb_node("District Market",   "/district-market",    sub=True))
+    def _trunc(s, n=14):
+        return (s[:n] + "\u2026") if s and len(s) > n else (s or "")
 
-    # CITIES
-    nodes.append(_jb_section("Cities"))
-    if has_city:
-        nodes.append(_jb_node(_trunc(player_city.name), f"/city/{player_city.id}", dot=True))
-        nodes.append(_jb_node("All Cities", "/cities", sub=True))
-    else:
-        nodes.append(_jb_node("Browse Cities",      "/cities"))
+    def _row(label, icon_key, level, href=None, locked=False,
+             expandable=False, badge=None, dot=False, open_default=False):
+        """Render one nav row — button (expandable/locked) or anchor (leaf)."""
+        pl = level * 16 + 24
+        icon = _ico[icon_key]
+        sz = "jb-lv0" if level == 0 else "jb-lv1"
+        badge_html = f'<span class="jb-badge">{badge}</span>' if badge is not None else ''
+        dot_html   = '<span class="jb-activedot"></span>' if dot else ''
 
-    # COUNTY
-    nodes.append(_jb_section("County"))
-    nodes.append(_jb_node("Browse Counties", "/counties"))
+        if locked:
+            return (
+                f'<div class="jb-row jb-locked" style="padding-left:{pl}px">'
+                f'<span class="jb-icon">{icon}</span>'
+                f'<span class="jb-label {sz}">{label}</span>'
+                f'</div>'
+            )
+        if expandable:
+            chev = _ico["chevD"] if open_default else _ico["chevR"]
+            d_open = "1" if open_default else "0"
+            return (
+                f'<button class="jb-row" onclick="wadsJBToggle(this)"'
+                f' data-open="{d_open}" data-href="{href or ""}"'
+                f' style="padding-left:{pl}px">'
+                f'<span class="jb-icon">{icon}</span>'
+                f'<span class="jb-label {sz}">{label}</span>'
+                f'{badge_html}'
+                f'<span class="jb-chev">{chev}</span>'
+                f'</button>'
+            )
+        # leaf link
+        return (
+            f'<a class="jb-row" href="{href or "#"}" style="padding-left:{pl}px">'
+            f'<span class="jb-icon">{icon}</span>'
+            f'<span class="jb-label {sz}">{label}</span>'
+            f'{dot_html}{badge_html}'
+            f'</a>'
+        )
+
+    def _group(inner, open_default=False):
+        disp = "block" if open_default else "none"
+        return f'<div class="jb-group" style="display:{disp}">{inner}</div>'
+
+    # ── Wallet / Mining / Exchange subtree ────────────────────────────
     if has_county:
-        nodes.append(_jb_node(_trunc(player_county.name), f"/county/{county_id}", dot=True))
-        nodes.append(_jb_node("Governance", f"/county/{county_id}/governance", sub=True))
+        wallet_subtree = _group(
+            _row("Wallet", "wallet", 6, href="/wallet"),
+            open_default=False,
+        )
+        mining_subtree = _group(
+            _row("Mining", "pick", 5, expandable=True, open_default=False)
+            + wallet_subtree
+            + _row("Exchange",    "coins", 5, href="/exchange")
+            + _row("Gas Tracker", "pin",   5, href="/gas-tracker"),
+            open_default=False,
+        )
+        county_name = _trunc(player_county.name)
+        counties_inner = (
+            _row(county_name, "pin", 4, href=f"/county/{county_id}", dot=True)
+            + _row("Crypto Exchange", "coins", 4, expandable=True, open_default=False)
+            + mining_subtree
+        )
     elif has_city:
-        nodes.append(_jb_node("Form a County", "/county/petition/new",  sub=True))
-        nodes.append(_jb_node("Join a County", "/county/petition/join", sub=True))
+        counties_inner = (
+            _row("Browse Counties", "pin", 4, href="/counties")
+            + _row("Form a County",  "pin", 4, href="/county/petition/new")
+            + _row("Join a County",  "pin", 4, href="/county/petition/join")
+        )
     else:
-        nodes.append(_jb_node("Need a city first", "#", locked=True))
+        counties_inner = _row("Need a city first", "pin", 4, locked=True)
 
-    # CRYPTO
-    nodes.append(_jb_section("Crypto"))
-    if has_county:
-        nodes.append(_jb_node("Mining Node",  f"/county/{county_id}/mining"))
-        nodes.append(_jb_node("Exchange",     "/exchange"))
-        nodes.append(_jb_node("Gas Tracker",  "/gas-tracker"))
+    # ── Cities subtree ────────────────────────────────────────────────
+    if has_city:
+        city_name = _trunc(player_city.name)
+        cities_inner = (
+            _row(city_name, "city", 3, href=f"/city/{player_city.id}", dot=True)
+            + _row("All Cities", "store", 3, href="/cities")
+            + _row("Counties", "pin", 3, expandable=True, open_default=False)
+            + _group(counties_inner, open_default=False)
+        )
     else:
-        nodes.append(_jb_node("Mining · Exchange · Gas", "#",
-                               locked=True, hint="Join a county to unlock"))
+        cities_inner = (
+            _row("Browse Cities", "city", 3, href="/cities")
+            + _row("Counties", "pin", 3, expandable=True, open_default=False)
+            + _group(counties_inner, open_default=False)
+        )
 
-    nav_html = "".join(nodes)
+    # ── Districts subtree ─────────────────────────────────────────────
+    dist_badge = district_count if district_count else None
+    districts_inner = (
+        _row("District Market",  "store", 2, href="/district-market")
+        + _row("Create District", "grid",  2, href="/districts/create")
+        + _row("Cities", "city", 2, expandable=True, open_default=False)
+        + _group(cities_inner, open_default=False)
+    )
 
-    # JS: show bar only on journey-relevant pages; handle collapse pref & active link
+    # ── Land root ─────────────────────────────────────────────────────
+    land_badge = land_count if land_count else None
+    nav_html = (
+        _row("Land", "map", 0, href="/land", expandable=True,
+             badge=land_badge, open_default=True)
+        + _group(
+            _row("Land Market", "bag", 1, href="/land-market")
+            + _row("Districts", "grid", 1, href="/districts",
+                   expandable=True, badge=dist_badge, open_default=True)
+            + _group(districts_inner, open_default=True),
+            open_default=True,
+        )
+    )
+
+    # ── Balance footer ────────────────────────────────────────────────
+    balance_footer = (
+        f'<div id="jb-balance">'
+        f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+        f'<div>'
+        f'<div class="jb-bal-lbl">Total Assets</div>'
+        f'<div class="jb-bal-val">{land_count + district_count} plots</div>'
+        f'</div>'
+        f'<div class="jb-bal-icon">{_ico["trend"]}</div>'
+        f'</div>'
+        f'<div class="jb-bar-wrap"><div class="jb-bar-fill" style="width:{min(100, (land_count + district_count) * 5)}%"></div></div>'
+        f'</div>'
+    )
+
+    # ── Next Step footer ──────────────────────────────────────────────
+    next_html = (
+        f'<div id="jb-next">'
+        f'<div id="jb-next-lbl">Next Step</div>'
+        f'<a href="{next_href}">{next_label} &#8250;</a>'
+        f'</div>'
+    )
+
+    # ── JS: URL gate + active highlight + collapse toggle ─────────────
     js = (
         '<script>(function(){'
-        'var PATHS=["/districts","/district-market","/cities","/city/","/counties","/county/","/exchange","/token/","/gas-tracker"];'
+        'var PATHS=["/land","/land-market","/districts","/district-market","/districts/create",'
+        '"/cities","/city/","/counties","/county/","/exchange","/token/","/gas-tracker","/wallet","/memecoins"];'
         'var p=location.pathname;'
         'if(!PATHS.some(function(r){return p===r||p.startsWith(r);}))return;'
         'var bar=document.getElementById("journey-bar");'
         'var body=document.getElementById("jb-body");'
         'if(!bar)return;'
-        'if(localStorage.getItem("wadsJB")!=="closed"){'
-        'bar.style.display="flex";'
-        'body.classList.add("jb-on");'
-        '}'
+        'if(localStorage.getItem("wadsJB")!=="closed"){bar.style.display="flex";body.classList.add("jb-on");}'
         'document.getElementById("jb-close").onclick=function(){'
         'var vis=bar.style.display!=="none";'
         'bar.style.display=vis?"none":"flex";'
         'body.classList.toggle("jb-on",!vis);'
         'localStorage.setItem("wadsJB",vis?"closed":"open");'
         '};'
-        'document.querySelectorAll(".jb-item[data-href]").forEach(function(el){'
-        'var h=el.getAttribute("data-href");'
+        'document.querySelectorAll(".jb-row[href]").forEach(function(el){'
+        'var h=el.getAttribute("href");'
         'if(!h||h==="#")return;'
         'if(p===h||(h.length>1&&p.startsWith(h)))el.classList.add("jb-active");'
         '});'
-        '})();</script>'
+        '})();\n'
+        'function wadsJBToggle(btn){'
+        'var grp=btn.nextElementSibling;'
+        'if(!grp||!grp.classList.contains("jb-group"))return;'
+        'var nowOpen=grp.style.display!=="none";'
+        'grp.style.display=nowOpen?"none":"block";'
+        'btn.setAttribute("data-open",nowOpen?"0":"1");'
+        'var chev=btn.querySelector(".jb-chev");'
+        'if(chev)chev.innerHTML=nowOpen'
+        '?\'<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>\''
+        ':\'<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>\';'
+        'var href=btn.getAttribute("data-href");'
+        'if(href)location.href=href;'
+        '}'
+        '</script>'
     )
 
     return (
         f'<div id="journey-bar">'
         f'<div id="jb-head">'
-        f'{_JOURNEY_PIE_SVG}'
-        f'<div id="jb-wordmark">Empire<br>Navigation</div>'
-        f'<button id="jb-close" aria-label="Close sidebar" title="Close">&#215;</button>'
+        f'<h1 id="jb-wordmark">ESTATE<span style="opacity:0.2">.</span>MGR</h1>'
+        f'<p id="jb-submark">Wadsworth Land Dashboard</p>'
+        f'<button id="jb-close" aria-label="Close sidebar">&#215;</button>'
         f'</div>'
         f'<nav id="jb-nav">{nav_html}</nav>'
-        f'<div id="jb-next">'
-        f'<div id="jb-next-lbl">Next Step</div>'
-        f'<a href="{next_href}">{next_label} &#8250;</a>'
-        f'</div>'
+        f'{balance_footer}'
+        f'{next_html}'
         f'</div>'
         + js
     )
@@ -383,6 +479,9 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="apple-mobile-web-app-title" content="Wadsworth">
         <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
         <style>
             * {{ box-sizing: border-box; }}
             body {{
@@ -605,121 +704,216 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 }}
             }}
 
-            /* ── Journey Bar (shown only on district/city/county/crypto pages via JS) ── */
+            /* ── Journey Bar — radio-box design matching SideNav.tsx template ── */
             #journey-bar {{
-                display: none;         /* JS reveals on relevant pages */
+                display: none;             /* JS reveals on relevant pages */
                 position: fixed;
                 left: 0;
                 top: 0;
-                bottom: 34px;          /* sit above market ticker */
-                width: 204px;
-                background: #130C07;
-                border-right: 1px solid rgba(176,141,87,0.45);
-                box-shadow: 3px 0 18px rgba(0,0,0,0.6);
+                bottom: 34px;              /* sit above market ticker */
+                width: 272px;
+                background: #1A0F0A;
+                border-right: 8px solid #2D1810;
+                outline: 1px solid rgba(176,141,87,0.3);
+                outline-offset: -12px;
+                box-shadow: 0 0 30px rgba(0,0,0,0.8), 3px 0 10px rgba(176,141,87,0.08);
                 z-index: 95;
                 flex-direction: column;
-                font-family: Georgia, serif;
+                font-family: 'Playfair Display', Georgia, serif;
             }}
-            /* Header row — mirrors page header height */
+            /* ── Header ── */
             #jb-head {{
-                height: 54px;
-                padding: 0 10px 0 8px;
-                border-bottom: 1px solid rgba(176,141,87,0.2);
-                background: #1A0F0A;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                padding: 20px 16px 14px;
+                border-bottom: 1px solid rgba(176,141,87,0.3);
+                background: #241812;
+                text-align: center;
+                position: relative;
                 flex-shrink: 0;
             }}
             #jb-wordmark {{
-                flex: 1;
-                font-size: 7.5px;
-                letter-spacing: 0.18em;
+                font-family: 'Playfair Display', Georgia, serif;
+                font-size: 20px;
+                font-weight: 900;
+                font-style: italic;
                 text-transform: uppercase;
+                letter-spacing: 0.1em;
                 color: #B08D57;
-                opacity: 0.75;
-                line-height: 1.55;
+                margin: 0 0 4px;
+                line-height: 1;
+            }}
+            #jb-submark {{
+                font-size: 9px;
+                letter-spacing: 0.3em;
+                text-transform: uppercase;
+                color: #F5F5DC;
+                opacity: 0.4;
+                font-style: italic;
+                margin: 0;
             }}
             #jb-close {{
+                position: absolute;
+                top: 10px;
+                right: 12px;
                 background: none;
                 border: none;
                 color: rgba(176,141,87,0.45);
                 cursor: pointer;
-                font-size: 15px;
-                padding: 4px 2px;
+                font-size: 18px;
+                padding: 4px;
                 line-height: 1;
-                font-family: Georgia, serif;
                 flex-shrink: 0;
             }}
             #jb-close:hover {{ color: #B08D57; }}
-            /* Scrollable nav */
+            /* ── Scrollable nav ── */
             #jb-nav {{
                 flex: 1;
                 overflow-y: auto;
-                padding: 4px 0 6px;
+                padding: 8px 0;
                 scrollbar-width: thin;
                 scrollbar-color: rgba(176,141,87,0.12) transparent;
             }}
-            /* Section headers */
-            .jb-section {{
-                font-size: 8px;
-                letter-spacing: 0.24em;
-                text-transform: uppercase;
-                color: #B08D57;
-                opacity: 0.5;
-                padding: 10px 12px 3px;
-            }}
-            .jb-section + .jb-section {{ padding-top: 4px; }}
-            /* Nav items */
-            .jb-item {{
-                border-left: 2px solid transparent;
-                overflow: hidden;
-            }}
-            .jb-item a {{
+            /* ── Nav rows (buttons + links) ── */
+            .jb-row {{
+                width: 100%;
                 display: flex;
                 align-items: center;
-                padding: 5px 12px;
-                font-size: 11.5px;
-                color: #D8CEBB;
+                gap: 10px;
+                padding: 8px 24px;
+                border: none;
+                border-bottom: 1px solid rgba(176,141,87,0.05);
+                background: transparent;
+                color: rgba(245,245,220,0.5);
                 text-decoration: none;
-                transition: color 0.12s, background 0.12s;
-                gap: 4px;
+                cursor: pointer;
+                text-align: left;
+                transition: color 0.2s, background 0.2s, transform 0.15s;
+                box-sizing: border-box;
             }}
-            .jb-item a:hover {{ color: #F5F5DC; background: rgba(176,141,87,0.07); text-decoration: none; }}
-            .jb-item.jb-sub a {{ padding-left: 22px; font-size: 11px; color: #A89880; }}
-            .jb-item.jb-sub a:hover {{ color: #D8CEBB; }}
-            .jb-item.jb-active {{ border-left-color: #B08D57; background: rgba(176,141,87,0.1); }}
-            .jb-item.jb-active a {{ color: #F5F5DC; }}
-            .jb-item.jb-locked {{
-                padding: 5px 12px;
-                font-size: 11px;
-                color: #3E2810;
+            .jb-row:hover {{
+                color: #F5F5DC;
+                background: rgba(176,141,87,0.05);
+                text-decoration: none;
+                transform: translateX(4px);
+            }}
+            .jb-row.jb-active {{
+                background: rgba(176,141,87,0.1);
+                color: #ffffff;
+            }}
+            .jb-row.jb-locked {{
+                color: rgba(176,141,87,0.2);
+                cursor: default;
                 pointer-events: none;
             }}
-            .jb-item-lbl {{ flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+            .jb-row.jb-locked:hover {{ transform: none; background: transparent; }}
+            /* ── Icons ── */
+            .jb-icon {{
+                display: flex;
+                align-items: center;
+                flex-shrink: 0;
+                color: inherit;
+                transition: color 0.2s;
+            }}
+            .jb-row:hover .jb-icon,
+            .jb-row.jb-active .jb-icon {{ color: #B08D57; }}
+            /* ── Labels ── */
+            .jb-label {{
+                flex: 1;
+                font-family: 'Playfair Display', Georgia, serif;
+                font-style: italic;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }}
+            .jb-lv0 {{ font-size: 14px; }}
+            .jb-lv1 {{ font-size: 11px; }}
+            /* ── Active dot ── */
+            .jb-activedot {{
+                width: 4px;
+                height: 4px;
+                border-radius: 50%;
+                background: #B08D57;
+                box-shadow: 0 0 8px #B08D57;
+                flex-shrink: 0;
+            }}
+            /* ── Badge ── */
             .jb-badge {{
                 font-size: 9px;
+                font-family: 'JetBrains Mono', monospace;
+                font-style: normal;
                 background: rgba(176,141,87,0.16);
                 color: #B08D57;
                 border-radius: 3px;
                 padding: 1px 5px;
                 flex-shrink: 0;
             }}
-            .jb-dot {{
-                font-size: 5px;
-                color: #B08D57;
-                opacity: 0.9;
+            /* ── Chevron ── */
+            .jb-chev {{
+                color: rgba(176,141,87,0.3);
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                transition: color 0.2s;
+            }}
+            .jb-row:hover .jb-chev {{ color: #B08D57; }}
+            /* ── Collapsible group ── */
+            .jb-group {{
+                background: rgba(0,0,0,0.1);
+            }}
+            /* ── Balance widget ── */
+            #jb-balance {{
+                padding: 14px 16px;
+                background: #241812;
+                border-top: 1px solid rgba(176,141,87,0.3);
                 flex-shrink: 0;
             }}
-            .jb-hint {{
-                font-size: 9.5px;
-                color: #6B4220;
-                margin-top: 1px;
-                line-height: 1.3;
+            .jb-bal-lbl {{
+                font-size: 8px;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                color: #B08D57;
+                font-weight: 700;
+                font-family: 'JetBrains Mono', monospace;
+                font-style: normal;
             }}
-            /* Next Step footer */
+            .jb-bal-val {{
+                font-family: 'Playfair Display', Georgia, serif;
+                font-size: 15px;
+                font-weight: 900;
+                font-style: italic;
+                text-transform: uppercase;
+                color: #F5F5DC;
+                letter-spacing: -0.02em;
+                margin-top: 2px;
+            }}
+            .jb-bal-icon {{
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                border: 1px solid rgba(176,141,87,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #B08D57;
+                background: rgba(0,0,0,0.4);
+            }}
+            .jb-bar-wrap {{
+                margin-top: 8px;
+                height: 4px;
+                background: rgba(0,0,0,0.6);
+                border: 1px solid rgba(176,141,87,0.1);
+                border-radius: 9999px;
+                overflow: hidden;
+            }}
+            .jb-bar-fill {{
+                height: 100%;
+                background: linear-gradient(to right, rgba(176,141,87,0.5), #B08D57);
+            }}
+            /* ── Next Step footer ── */
             #jb-next {{
-                padding: 7px 12px 9px;
+                padding: 10px 16px 12px;
                 border-top: 1px solid rgba(176,141,87,0.18);
                 background: rgba(245,158,11,0.05);
                 flex-shrink: 0;
@@ -730,18 +924,23 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 text-transform: uppercase;
                 color: #f59e0b;
                 opacity: 0.65;
-                margin-bottom: 3px;
+                margin-bottom: 4px;
+                font-family: 'JetBrains Mono', monospace;
             }}
             #jb-next a {{
-                font-size: 11.5px;
+                font-family: 'Playfair Display', Georgia, serif;
+                font-size: 12px;
+                font-style: italic;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
                 color: #f59e0b;
                 text-decoration: none;
                 display: block;
-                white-space: normal;
-                line-height: 1.45;
+                line-height: 1.4;
             }}
             #jb-next a:hover {{ color: #fbbf24; text-decoration: underline; }}
-            /* Breadcrumb strip */
+            /* ── Breadcrumb strip ── */
             .jb-breadcrumbs {{
                 padding: 5px 16px;
                 font-size: 11px;
@@ -753,8 +952,8 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 flex-wrap: wrap;
                 gap: 2px;
             }}
-            /* Body shift when bar is open (desktop only) */
-            #jb-body.jb-on {{ padding-left: 204px; }}
+            /* ── Body shift when bar is open (desktop only) ── */
+            #jb-body.jb-on {{ padding-left: 272px; }}
             @media (max-width: 768px) {{
                 #jb-body.jb-on {{ padding-left: 0; }}
                 #journey-bar {{ z-index: 200; }}
