@@ -597,7 +597,7 @@ def _seed_npc(cfg: dict):
     from auth import Player
     from reserve_banks import credit_usd
     from business import Business
-    from land import LandPlot
+    from land import LandPlot  # still needed for partial-seed recovery query
 
     player_id = cfg["player_id"]
     db = SessionLocal()
@@ -656,15 +656,14 @@ def _seed_npc(cfg: dict):
         # Land plots
         plot_ids = []
         for plot_cfg in seed.get("land_plots", []):
-            plot = LandPlot(
-                owner_id     = player_id,
-                terrain_type = plot_cfg["terrain_type"],
-                size         = plot_cfg.get("size", 1),
-                efficiency   = plot_cfg.get("efficiency", 100),
+            from land import create_land_plot
+            proximity = plot_cfg.get("proximity_features", [])
+            plot = create_land_plot(
+                owner_id          = player_id,
+                terrain_type      = plot_cfg["terrain_type"],
+                proximity_features= proximity,
+                size              = plot_cfg.get("size", 1.0),
             )
-            db.add(plot)
-            db.commit()
-            db.refresh(plot)
             plot_ids.append(plot.id)
             print(f"[NPC]   Land plot {plot.id} ({plot_cfg['terrain_type']})")
 

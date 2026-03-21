@@ -1,0 +1,67 @@
+{
+  "player_id": -2001,
+  "business_name": "Bee Cause",
+  "description": "Produces and sells pollen and honey on the open market.",
+
+  "cash_caps": {
+    "hard_high": 25000000,
+    "soft_high": 10000000,
+    "soft_low":   5000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 5000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "apiary",
+      "district_id": null,
+      "active_lines": ["pollen", "honey"]
+    }
+  ],
+
+  "buy_items": {
+    "bees": {
+      "target_inventory": 500,
+      "reorder_at": 50,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 1000,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 500,
+      "reorder_at": 50,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 200,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "pollen": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500000,
+      "market": "regular"
+    },
+    "honey": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    }
+  }
+}
