@@ -11295,6 +11295,96 @@
             "quantity": 100
           }
         ]
+      },
+      {
+        "output_item": "kitchen_package",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 500
+          },
+          {
+            "item": "aluminum",
+            "quantity": 300
+          },
+          {
+            "item": "plastic",
+            "quantity": 400
+          },
+          {
+            "item": "iron",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ]
+      },
+      {
+        "output_item": "living_room_set",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "lumber",
+            "quantity": 800
+          },
+          {
+            "item": "cotton",
+            "quantity": 600
+          },
+          {
+            "item": "leather",
+            "quantity": 300
+          },
+          {
+            "item": "iron",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ]
+      },
+      {
+        "output_item": "office_furniture",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "lumber",
+            "quantity": 600
+          },
+          {
+            "item": "steel",
+            "quantity": 400
+          },
+          {
+            "item": "plastic",
+            "quantity": 300
+          },
+          {
+            "item": "iron",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 18000
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ]
       }
     ]
   },
@@ -11555,6 +11645,112 @@
           {
             "item": "livestock_product_supply",
             "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "uniform_kit",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "military_uniform",
+            "quantity": 100
+          },
+          {
+            "item": "leather",
+            "quantity": 200
+          },
+          {
+            "item": "cotton",
+            "quantity": 300
+          },
+          {
+            "item": "thread",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "cardboard_box",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ]
+      },
+      {
+        "output_item": "field_gear_set",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "body_armor",
+            "quantity": 50
+          },
+          {
+            "item": "combat_helmet",
+            "quantity": 50
+          },
+          {
+            "item": "military_radio",
+            "quantity": 50
+          },
+          {
+            "item": "aluminum",
+            "quantity": 200
+          },
+          {
+            "item": "leather",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "cardboard_box",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 100
+          }
+        ]
+      },
+      {
+        "output_item": "medical_supply_kit",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "medicine",
+            "quantity": 200
+          },
+          {
+            "item": "bandage",
+            "quantity": 300
+          },
+          {
+            "item": "antiseptic",
+            "quantity": 200
+          },
+          {
+            "item": "painkillers",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "cardboard_box",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 100
           }
         ]
       }

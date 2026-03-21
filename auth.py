@@ -17,7 +17,7 @@ import secrets
 import hashlib
 from fastapi import APIRouter, Form, Cookie, Response, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import Column, String, DateTime, Integer
+from sqlalchemy import Column, String, DateTime, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -40,6 +40,8 @@ class Player(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
     tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
+    is_npc = Column(Boolean, default=False)           # True for NPC accounts
+    npc_config_key = Column(String, nullable=True)    # Links to npc_configs/<key>.json
 
     @property
     def cash_balance(self) -> float:
@@ -131,10 +133,11 @@ def get_db():
 def migrate_player_table():
     """Apply incremental schema migrations for the players table."""
     from database import run_ddl_migration
-    run_ddl_migration(
-        engine,
+    run_ddl_migration(engine, [
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0",
-    )
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS npc_config_key VARCHAR(128)",
+    ])
 
 
 def migrate_ip_tables():

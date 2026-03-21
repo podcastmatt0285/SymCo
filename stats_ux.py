@@ -333,6 +333,8 @@ def update_all_rankings():
         ranked = []
 
         for p in players:
+            if getattr(p, "is_npc", False):
+                continue
             stats = calculate_player_stats(p.id)
             if stats:
                 ranked.append((p.id, stats))
@@ -832,7 +834,9 @@ async def get_economy_stats_api():
     from auth import Player
     
     stats = {
-        "total_players": db.query(Player).count(),
+        "total_players": db.query(Player).filter(
+            (Player.is_npc == False) | (Player.is_npc == None)
+        ).count(),
         "total_cash": db.query(func.sum(Player.cash_balance)).scalar() or 0.0,
         "total_plots": 0,
         "occupied_plots": 0,
@@ -1050,7 +1054,9 @@ async def stats_economy(session_token: Optional[str] = Cookie(None)):
     from auth import Player
     
     # Gather economy stats
-    total_players = db.query(Player).count()
+    total_players = db.query(Player).filter(
+        (Player.is_npc == False) | (Player.is_npc == None)
+    ).count()
     # cash_balance is a @property backed by reserve_banks — query that DB directly
     try:
         from reserve_banks import PlayerCurrencyBalance, get_db as get_rb_db

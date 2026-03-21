@@ -1572,6 +1572,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 3000
           }
         ]
       },
@@ -1594,6 +1598,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 2000
           }
         ]
       },
@@ -2221,6 +2229,10 @@
           {
             "item": "cotton_seeds",
             "quantity": 24
+          },
+          {
+            "item": "pollen",
+            "quantity": 4000
           }
         ]
       },
@@ -3621,6 +3633,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -3747,6 +3763,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -3773,6 +3793,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -3832,6 +3856,10 @@
           {
             "item": "paper",
             "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 15000
           }
         ]
       },
@@ -3895,6 +3923,10 @@
           {
             "item": "burlap",
             "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -3955,6 +3987,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -4014,6 +4050,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 7000
           }
         ]
       },
@@ -4069,6 +4109,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 6000
           }
         ]
       },
@@ -4087,6 +4131,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 4000
           }
         ]
       },
@@ -4105,6 +4153,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 5000
           }
         ]
       }
@@ -4142,6 +4194,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 5000
           }
         ]
       },
@@ -4197,6 +4253,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 5000
           }
         ]
       }
@@ -4395,7 +4455,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 200
+            "quantity": 2000
           },
           {
             "item": "water",

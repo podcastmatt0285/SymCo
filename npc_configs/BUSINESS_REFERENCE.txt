@@ -1,0 +1,1199 @@
+REGULAR BUSINESSES (142 total)
+================================================================================
+agave_plantation  |  Agave Plantation  |  production
+  startup=$16,000  wage=$40.0/cycle  cycles=300  terrain=['desert', 'savanna']
+  PROD: 60x agave  from {'water': 15, 'energy': 8, 'paper': 1}
+
+apiary  |  Apiary & Honey Farm  |  production
+  startup=$6,000  wage=$30.0/cycle  cycles=80  terrain=['prairie', 'forest', 'hills', 'savanna']
+  PROD: 1x queen_bee  from {'royal_jelly': 2000, 'bees': 1, 'energy': 20}
+  PROD: 500000x bees  from {'bees': 1, 'pollen': 200, 'water': 100, 'queen_bee': 1, 'energy': 5}
+  PROD: 50000x pollen  from {'bees': 1}
+  PROD: 60x honey  from {'bees': 5, 'water': 20, 'sugar': 10, 'paper': 1}
+  PROD: 30x beeswax  from {'bees': 3, 'water': 15, 'energy': 10, 'paper': 1}
+  PROD: 5x royal_jelly  from {'bees': 1000, 'paper': 1}
+
+apparel_factory  |  Apparel Factory  |  production
+  startup=$9,000  wage=$90.0/cycle  cycles=420  terrain=['prairie', 'hills', 'savanna']
+  PROD: 10x blouse  from {'silk': 3, 'energy': 20, 'paper': 1, 'thread': 2}
+  PROD: 15x bra  from {'silk': 2, 'polyester': 1, 'energy': 15, 'paper': 1, 'thread': 1}
+  PROD: 15x panties  from {'silk': 1, 'polyester': 2, 'energy': 15, 'paper': 1, 'thread': 1}
+  PROD: 8x dress  from {'cotton': 5, 'polyester': 3, 'energy': 25, 'paper': 1, 'thread': 3}
+  PROD: 12x leggings  from {'polyester': 4, 'energy': 18, 'paper': 1, 'thread': 2}
+  PROD: 5x bomber_jacket  from {'leather': 3, 'silk': 2, 'zippers': 2, 'energy': 35, 'polyester': 8, 'paper': 1, 'thread': 4}
+  PROD: 6x suit_jacket  from {'leather': 2, 'silk': 3, 'buttons': 8, 'energy': 30, 'polyester': 3, 'paper': 1, 'thread': 4}
+  PROD: 10x trousers  from {'polyester': 4, 'energy': 22, 'paper': 1, 'thread': 3}
+
+aquaculture_farm  |  Aquaculture Fish Farm  |  production
+  startup=$200,000  wage=$500.0/cycle  cycles=86400  terrain=['coastal', 'lake']
+  PROD: 400x salmon  from {'fish_meal': 200, 'energy': 100, 'water': 500, 'aquaculture_raft': 1}
+  PROD: 600x tilapia  from {'fish_meal': 150, 'energy': 80, 'water': 400, 'aquaculture_raft': 1}
+  PROD: 600x pangasius  from {'fish_meal': 150, 'energy': 80, 'water': 400, 'aquaculture_raft': 1}
+  PROD: 300x seabass  from {'fish_meal': 180, 'energy': 90, 'water': 450, 'aquaculture_raft': 1}
+  PROD: 350x barramundi  from {'fish_meal': 180, 'energy': 90, 'water': 450, 'aquaculture_raft': 1}
+  PROD: 350x trout  from {'fish_meal': 160, 'energy': 85, 'water': 420, 'aquaculture_raft': 1}
+  PROD: 550x salmon  from {'fish_meal': 200, 'barnacles': 25, 'mussels': 15, 'energy': 100, 'water': 400, 'aquaculture_raft': 1}
+  PROD: 750x tilapia  from {'fish_meal': 150, 'barnacles': 20, 'mussels': 10, 'energy': 80, 'water': 350, 'aquaculture_raft': 1}
+
+arts_and_crafts_store  |  Arts & Crafts Store  |  retail
+  startup=$8,000  wage=$140.0/cycle  cycles=60  terrain=['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island']
+  RETAIL: ['yarn', 'thread']
+
+auto_assembly  |  Automobile Assembly Plant  |  production
+  startup=$400,000  wage=$950.0/cycle  cycles=300  terrain=['prairie', 'desert']
+  PROD: 4x car  from {'chassis': 4, 'engine': 4, 'transmission': 4, 'tires': 16, 'windshield': 4, 'headlights': 8, 'car_battery': 4, 'radiator': 4, 'exhaust': 4, 'fuel_tank': 4, 'brake_pads': 16, 'car_seat': 16, 'steering_wheel': 4, 'glass': 20, 'polyester': 30, 'energy': 300, 'paper': 4, 'gasoline': 4}
+  PROD: 3x truck  from {'chassis': 3, 'engine': 3, 'transmission': 3, 'tires': 12, 'windshield': 3, 'headlights': 6, 'car_battery': 3, 'radiator': 3, 'exhaust': 3, 'fuel_tank': 3, 'brake_pads': 12, 'car_seat': 6, 'steering_wheel': 3, 'iron': 80, 'energy': 350, 'paper': 4, 'diesel': 8}
+  PROD: 6x motorcycle  from {'engine': 6, 'transmission': 6, 'tires': 12, 'headlights': 6, 'car_battery': 6, 'fuel_tank': 6, 'brake_pads': 12, 'leather': 20, 'iron': 60, 'rubber': 25, 'energy': 200, 'paper': 3, 'gasoline': 2}
+
+auto_dealership  |  Auto Dealership  |  retail
+  startup=$180,000  wage=$550.0/cycle  cycles=150  terrain=['urban', 'prairie']
+  RETAIL: ['car', 'truck', 'motorcycle']
+
+auto_parts_factory  |  Auto Parts Factory  |  production
+  startup=$150,000  wage=$380.0/cycle  cycles=140  terrain=['prairie', 'desert']
+  PROD: 24x tires  from {'rubber': 60, 'iron': 15, 'energy': 80, 'paper': 2}
+  PROD: 20x windshield  from {'glass': 50, 'rubber': 10, 'energy': 60, 'paper': 1}
+  PROD: 30x headlights  from {'glass': 25, 'copper': 15, 'energy': 45, 'paper': 1}
+  PROD: 20x car_battery  from {'lead': 30, 'copper': 15, 'rubber': 8, 'energy': 55, 'paper': 1}
+  PROD: 40x brake_pads  from {'iron': 35, 'rubber': 15, 'copper': 8, 'energy': 50, 'paper': 1}
+  PROD: 15x radiator  from {'copper': 30, 'iron': 20, 'rubber': 5, 'energy': 55, 'paper': 1}
+  PROD: 60x spark_plugs  from {'copper': 20, 'iron': 15, 'ceramic': 10, 'energy': 40, 'paper': 1}
+  PROD: 12x exhaust  from {'iron': 50, 'copper': 10, 'energy': 60, 'paper': 1}
+  PROD: 15x fuel_tank  from {'iron': 40, 'rubber': 12, 'energy': 55, 'paper': 1}
+
+bag_and_luggage  |  Bag & Luggage Manufacturer  |  production
+  startup=$6,500  wage=$70.0/cycle  cycles=100  terrain=['prairie', 'hills', 'savanna']
+  PROD: 20x potato_sack  from {'burlap': 5, 'energy': 10, 'paper': 1}
+  PROD: 20x carrot_sack  from {'burlap': 5, 'energy': 10, 'paper': 1}
+  PROD: 8x purse  from {'leather': 2, 'silk': 1, 'polyester': 1, 'cotton': 1, 'zippers': 2, 'buttons': 4, 'energy': 30, 'paper': 1, 'thread': 3}
+  PROD: 12x wallet  from {'leather': 1, 'silk': 1, 'polyester': 1, 'cotton': 1, 'zippers': 1, 'buttons': 2, 'energy': 20, 'paper': 1, 'thread': 1}
+  PROD: 6x cheap_luggage  from {'polyester': 8, 'zippers': 4, 'energy': 35, 'paper': 1}
+
+bakery_retail  |  Neighborhood Bakery  |  retail
+  startup=$14,000  wage=$90.0/cycle  cycles=35  terrain=['urban', 'prairie']
+  RETAIL: ['bread', 'baguette', 'croissant', 'donut', 'muffin', 'cinnamon_roll', 'pretzel', 'cookie', 'brownie', 'cherry_pie', 'apple_pie', 'chocolate_cake', 'cheesecake', 'peanut_butter_cookie', 'jam', 'jelly']
+
+bedding_factory  |  Bedding & Pillow Factory  |  production
+  startup=$11,000  wage=$60.0/cycle  cycles=70  terrain=['prairie', 'urban', 'hills']
+  PROD: 40x pillow  from {'feathers': 50, 'cotton': 20, 'energy': 20, 'paper': 1}
+  PROD: 20x comforter  from {'feathers': 100, 'cotton': 40, 'polyester': 20, 'energy': 35, 'paper': 1}
+
+bistro  |  Bistro  |  retail
+  startup=$4,000  wage=$300.0/cycle  cycles=70  terrain=['prairie', 'hills', 'island']
+  RETAIL: ['stew', 'cider_soup', 'apple_sauce', 'yogurt']
+
+boat_yard  |  Boat Yard  |  production
+  startup=$200,000  wage=$450.0/cycle  cycles=250  terrain=['marsh', 'island']
+  PROD: 3x boat  from {'hull': 3, 'outboard_motor': 3, 'propeller': 3, 'glass': 15, 'leather': 20, 'fuel_tank': 3, 'car_battery': 3, 'energy': 150, 'paper': 3}
+  PROD: 2x trawler  from {'hull': 8, 'outboard_motor': 4, 'propeller': 4, 'iron': 120, 'rope': 80, 'rubber': 30, 'fuel_tank': 6, 'car_battery': 4, 'energy': 320, 'paper': 5}
+  PROD: 2x purse_seiner  from {'hull': 7, 'outboard_motor': 5, 'propeller': 5, 'iron': 70, 'rope': 160, 'copper': 40, 'fuel_tank': 6, 'car_battery': 5, 'energy': 280, 'paper': 5}
+  PROD: 1x longliner  from {'hull': 10, 'outboard_motor': 6, 'propeller': 6, 'iron': 90, 'rope': 200, 'lead': 50, 'brass': 30, 'fuel_tank': 8, 'car_battery': 6, 'energy': 420, 'paper': 6}
+  PROD: 3x lobster_boat  from {'hull': 4, 'outboard_motor': 3, 'propeller': 3, 'iron': 35, 'rope': 50, 'lumber': 20, 'rubber': 15, 'fuel_tank': 3, 'car_battery': 3, 'energy': 160, 'paper': 3}
+  PROD: 2x shrimp_trawler  from {'hull': 5, 'outboard_motor': 4, 'propeller': 4, 'iron': 55, 'rope': 70, 'rubber': 35, 'salt': 40, 'fuel_tank': 5, 'car_battery': 4, 'energy': 220, 'paper': 4}
+  PROD: 2x dredger  from {'hull': 6, 'outboard_motor': 3, 'propeller': 3, 'iron': 200, 'rope': 30, 'brass': 20, 'fuel_tank': 4, 'car_battery': 3, 'energy': 250, 'paper': 4}
+  PROD: 3x dive_vessel  from {'hull': 4, 'outboard_motor': 4, 'propeller': 4, 'iron': 25, 'rubber': 60, 'copper': 35, 'glass': 25, 'fuel_tank': 4, 'car_battery': 6, 'energy': 190, 'paper': 3}
+  PROD: 3x aquaculture_raft  from {'lumber': 100, 'rope': 80, 'rubber': 40, 'iron': 60, 'fiberglass': 30, 'car_battery': 4, 'energy': 160, 'paper': 3}
+  PROD: 4x freshwater_boat  from {'hull': 3, 'outboard_motor': 2, 'propeller': 2, 'lumber': 30, 'rope': 20, 'rubber': 12, 'iron': 20, 'fuel_tank': 2, 'car_battery': 2, 'energy': 110, 'paper': 2}
+  PROD: 1x yacht  from {'hull': 2, 'outboard_motor': 2, 'propeller': 2, 'glass': 40, 'leather': 60, 'silk': 15, 'lumber': 50, 'brass': 30, 'fuel_tank': 2, 'car_battery': 2, 'energy': 300, 'paper': 5}
+
+bookbindery  |  Book Bindery  |  production
+  startup=$28,750  wage=$1500/cycle  cycles=3600  terrain=['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island']
+  PROD: 50x religious_book  from {'paper': 2050, 'leather': 15, 'glue': 10, 'energy': 50, 'ink': 4000}
+  PROD: 64x law_book  from {'paper': 5750, 'leather': 5, 'glue': 10, 'energy': 50, 'ink': 4000}
+  PROD: 68x art_book  from {'paper': 5750, 'leather': 5, 'glue': 10, 'energy': 50, 'ink': 4000}
+  PROD: 8x encyclopedia  from {'paper': 50750, 'leather': 5, 'glue': 10, 'energy': 50, 'ink': 5000}
+  PROD: 100x notebook  from {'paper': 1000, 'glue': 5, 'ink': 200, 'energy': 20}
+  PROD: 150x postcard  from {'paper': 300, 'ink': 1000, 'energy': 15}
+  PROD: 150x envelope  from {'paper': 800, 'glue': 5, 'energy': 15}
+
+bookstore  |  Bookstore & Newsstand  |  retail
+  startup=$10,000  wage=$70.0/cycle  cycles=40  terrain=['marsh', 'mountain', 'prairie']
+  RETAIL: ['newspaper', 'magazine', 'novel', 'textbook', 'religious_book', 'notebook', 'postcard', 'envelope', 'encyclopedia']
+
+bottling_plant  |  Bottling Plant  |  production
+  startup=$65,000  wage=$320/cycle  cycles=100  terrain=['urban', 'prairie']
+  PROD: 60x soda  from {'water': 50, 'sugar': 20, 'corn_syrup': 15, 'bottle': 60, 'energy': 20, 'paper': 3}
+  PROD: 80x bottled_water  from {'water': 80, 'bottle': 80, 'energy': 15, 'paper': 2}
+
+brewery  |  Craft Brewery  |  production
+  startup=$38,000  wage=$120.0/cycle  cycles=100  terrain=['urban', 'prairie', 'hills']
+  PROD: 80x beer  from {'malt': 50, 'hops': 40, 'water': 70, 'bottle': 80, 'energy': 45, 'paper': 2, 'isinglass': 1}
+  PROD: 100x lager  from {'malt': 60, 'hops': 25, 'water': 80, 'bottle': 100, 'energy': 50, 'paper': 2, 'isinglass': 1}
+  PROD: 60x stout  from {'malt': 70, 'hops': 35, 'water': 60, 'bottle': 60, 'energy': 48, 'paper': 2}
+  PROD: 70x cider  from {'apples': 100, 'sugar': 20, 'water': 40, 'bottle': 70, 'energy': 35, 'paper': 2}
+  PROD: 40x apple_cider_vinegar  from {'cider': 30, 'energy': 15, 'paper': 1}
+
+burley_tobacco_farm  |  Burley Tobacco Farm  |  production
+  startup=$9,500  wage=$90.0/cycle  cycles=420  terrain=['hills', 'mountain', 'prairie']
+  PROD: 140x burley_leaf  from {'tobacco_seeds': 8, 'water': 45, 'energy': 10, 'paper': 1}
+  PROD: 80x golden_burley_leaf  from {'tobacco_seeds': 5, 'water': 40, 'energy': 8, 'paper': 1}
+  PROD: 15x tobacco_seeds  from {'burley_leaf': 10, 'water': 3, 'paper': 1}
+
+burrito_truck  |  Burrito Truck  |  retail
+  startup=$300  wage=$0/cycle  cycles=10  terrain=['coastal', 'island', 'urban', 'desert', 'lake']
+  RETAIL: ['burrito', 'bottled_water', 'soda']
+
+butcher_shop  |  Butcher Shop & Deli  |  retail
+  startup=$15,000  wage=$110.0/cycle  cycles=45  terrain=['urban', 'prairie']
+  RETAIL: ['beef', 'pork', 'duck_meat', 'sausage', 'bacon', 'lamb_meat']
+
+candle_maker  |  Candle Maker  |  production
+  startup=$18,000  wage=$110.0/cycle  cycles=120  terrain=['urban', 'prairie', 'hills']
+  PROD: 100x tea_light  from {'beeswax': 80, 'cotton': 20, 'energy': 8000, 'paper': 3}
+  PROD: 200x birthday_candle  from {'beeswax': 60, 'dye': 10, 'cotton': 20, 'energy': 5000, 'paper': 2}
+  PROD: 60x ornamental_candle  from {'beeswax': 100, 'dye': 20, 'cinnamon': 10, 'jar': 60, 'energy': 10000, 'paper': 3}
+  PROD: 10x religious_candle  from {'beeswax': 200, 'golden_pearl': 5, 'cinnamon': 30, 'silk': 20, 'rope_wick': 10, 'cardboard_box': 10, 'dye': 30, 'energy': 20000, 'paper': 5}
+  PROD: 200x tea_light  from {'paraffin_wax': 80, 'cotton': 15, 'energy': 6000, 'paper': 3}
+  PROD: 350x birthday_candle  from {'paraffin_wax': 60, 'dye': 8, 'cotton': 15, 'energy': 4000, 'paper': 2}
+  PROD: 80x ornamental_candle  from {'paraffin_wax': 100, 'dye': 20, 'cinnamon': 8, 'jar': 80, 'energy': 8000, 'paper': 3}
+
+candy_factory  |  Candy Factory  |  production
+  startup=$35,000  wage=$105.0/cycle  cycles=70  terrain=['urban', 'prairie']
+  PROD: 120x hard_candy  from {'sugar': 50, 'corn_syrup': 30, 'energy': 30, 'paper': 1}
+  PROD: 150x lollipop  from {'sugar': 40, 'corn_syrup': 25, 'energy': 25, 'paper': 2}
+  PROD: 100x gummy_bears  from {'gelatin': 25, 'sugar': 40, 'corn_syrup': 20, 'energy': 28, 'paper': 1}
+  PROD: 90x taffy  from {'sugar': 45, 'corn_syrup': 30, 'butter': 15, 'salt': 5, 'energy': 35, 'paper': 1}
+  PROD: 110x marshmallow  from {'gelatin': 20, 'sugar': 50, 'corn_syrup': 25, 'energy': 25, 'paper': 1}
+  PROD: 80x licorice  from {'flour': 20, 'blackstrap_molasses': 25, 'sugar': 30, 'energy': 25, 'paper': 1}
+  PROD: 100x peppermint  from {'sugar': 40, 'mint': 30, 'energy': 20, 'paper': 1}
+
+candy_store  |  Sweet Tooth Candy Shop  |  retail
+  startup=$12,000  wage=$75.0/cycle  cycles=35  terrain=['urban', 'prairie', 'island']
+  RETAIL: ['chocolate', 'candy_bar', 'lollipop', 'gummy_bears', 'hard_candy', 'taffy', 'fudge', 'truffles', 'toffee', 'licorice', 'marshmallow', 'peppermint', 'caramel', 'ice_cream', 'cookie', 'brownie']
+
+cane_plantation  |  Sugar Cane Plantation  |  production
+  startup=$8,500  wage=$65.0/cycle  cycles=140  terrain=['jungle', 'savanna', 'marsh']
+  PROD: 1000x cane  from {'water': 80, 'energy': 40, 'paper': 1}
+  PROD: 50x sugar  from {'cane': 100, 'energy': 60, 'paper': 1}
+  PROD: 25x bio_fuel  from {'cane': 20, 'energy': 50, 'sugar': 10, 'grass': 75, 'paper': 1, 'apple_seeds': 100, 'orange_seeds': 100}
+  PROD: 1.7x blackstrap_molasses  from {'water': 200, 'energy': 500, 'sugar': 100, 'paper': 1}
+  PROD: 17x rum_molasses  from {'water': 200, 'energy': 500, 'sugar': 100, 'paper': 1}
+  PROD: 1700x caramel  from {'water': 20, 'energy': 50, 'sugar': 10, 'paper': 1}
+
+cannery  |  Cannery  |  production
+  startup=$120,000  wage=$400.0/cycle  cycles=7200  terrain=['coastal', 'urban', 'prairie']
+  PROD: 300x canned_tuna  from {'yellowfin_tuna': 200, 'salt': 20, 'energy': 40}
+  PROD: 500x canned_sardines  from {'sardines': 400, 'salt': 25, 'energy': 35}
+  PROD: 300x canned_salmon  from {'salmon': 220, 'salt': 15, 'energy': 35}
+  PROD: 350x canned_mackerel  from {'mackerel': 280, 'salt': 20, 'energy': 35}
+  PROD: 400x canned_clams  from {'clams': 350, 'salt': 20, 'energy': 35}
+  PROD: 200x canned_crab  from {'blue_crab': 200, 'salt': 15, 'energy': 30}
+  PROD: 300x canned_oysters  from {'oysters': 300, 'salt': 15, 'energy': 30}
+  PROD: 400x canned_anchovies  from {'anchovies': 350, 'salt': 25, 'energy': 30}
+
+ceramics_factory  |  Ceramics Factory  |  production
+  startup=$18,000  wage=$70.0/cycle  cycles=80  terrain=['prairie', 'desert', 'hills']
+  PROD: 60x ceramic  from {'sand': 40, 'water': 30, 'energy': 50, 'paper': 1}
+
+chassis_factory  |  Chassis & Interior Factory  |  production
+  startup=$180,000  wage=$480.0/cycle  cycles=160  terrain=['prairie', 'desert']
+  PROD: 8x chassis  from {'iron': 150, 'rubber': 20, 'energy': 140, 'paper': 2}
+  PROD: 20x car_seat  from {'leather': 25, 'polyester': 20, 'iron': 15, 'feathers': 30, 'energy': 60, 'paper': 1}
+  PROD: 15x steering_wheel  from {'leather': 12, 'iron': 8, 'copper': 8, 'energy': 40, 'paper': 1}
+
+chocolate_confectioner  |  Chocolatier  |  production
+  startup=$28,000  wage=$120.0/cycle  cycles=80  terrain=['urban']
+  PROD: 100x candy_bar  from {'chocolate': 40, 'sugar': 25, 'cream': 10, 'energy': 25, 'paper': 2}
+  PROD: 50x truffles  from {'chocolate': 40, 'cream': 20, 'cocoa_powder': 15, 'butter': 10, 'energy': 30, 'paper': 1}
+  PROD: 60x fudge  from {'chocolate': 35, 'sugar': 40, 'butter': 20, 'cream': 15, 'energy': 28, 'paper': 1}
+  PROD: 55x toffee  from {'sugar': 40, 'butter': 30, 'chocolate': 20, 'energy': 30, 'paper': 1}
+
+chocolate_factory  |  Chocolate Factory  |  production
+  startup=$40,000  wage=$130.0/cycle  cycles=90  terrain=['urban', 'prairie']
+  PROD: 50x cocoa_powder  from {'cocoa_beans': 60, 'energy': 40, 'paper': 1}
+  PROD: 30x cocoa_butter  from {'cocoa_beans': 50, 'energy': 35, 'paper': 1}
+  PROD: 80x chocolate  from {'cocoa_powder': 30, 'cocoa_butter': 20, 'sugar': 40, 'cream': 10, 'energy': 50, 'paper': 2}
+
+cigar_workshop  |  Cigar Workshop  |  production
+  startup=$50,000  wage=$320.0/cycle  cycles=180  terrain=['urban', 'hills', 'island']
+  PROD: 150x corona_cigar  from {'habano_leaf': 80, 'criollo_leaf': 60, 'flue_cured_tobacco': 100, 'energy': 12000, 'paper': 20}
+  PROD: 120x robusto_cigar  from {'corojo_leaf': 60, 'criollo_leaf': 50, 'air_cured_tobacco': 100, 'energy': 10000, 'paper': 15}
+  PROD: 80x churchill_cigar  from {'connecticut_shade_leaf': 50, 'habano_leaf': 40, 'flue_cured_tobacco': 120, 'air_cured_tobacco': 40, 'energy': 9000, 'paper': 10}
+  PROD: 60x premium_cigar  from {'connecticut_shade_leaf': 40, 'corojo_leaf': 40, 'habano_leaf': 30, 'air_cured_tobacco': 100, 'cavendish_tobacco': 20, 'energy': 10000, 'paper': 8}
+  PROD: 30x cuban_style_cigar  from {'connecticut_shade_leaf': 25, 'corojo_leaf': 30, 'habano_leaf': 25, 'criollo_leaf': 20, 'air_cured_tobacco': 80, 'energy': 12000, 'paper': 5}
+  PROD: 60x premium_cigar  from {'cameroon_leaf': 30, 'habano_leaf': 25, 'air_cured_tobacco': 80, 'energy': 10000, 'paper': 8}
+  PROD: 50x premium_cigar  from {'sumatra_leaf': 30, 'corojo_leaf': 20, 'air_cured_tobacco': 80, 'energy': 10000, 'paper': 8}
+
+cigar_wrapper_farm  |  Cigar Wrapper Farm  |  production
+  startup=$20,000  wage=$130.0/cycle  cycles=480  terrain=['jungle', 'island', 'marsh']
+  PROD: 60x corojo_leaf  from {'tobacco_seeds': 6, 'water': 60, 'energy': 12, 'paper': 1}
+  PROD: 50x habano_leaf  from {'tobacco_seeds': 5, 'water': 60, 'energy': 12, 'paper': 1}
+  PROD: 70x criollo_leaf  from {'tobacco_seeds': 6, 'water': 55, 'energy': 11, 'paper': 1}
+  PROD: 80x connecticut_shade_leaf  from {'tobacco_seeds': 8, 'water': 70, 'energy': 15, 'paper': 2}
+  PROD: 100x connecticut_broadleaf  from {'tobacco_seeds': 10, 'water': 50, 'energy': 12, 'paper': 1}
+  PROD: 55x cameroon_leaf  from {'tobacco_seeds': 5, 'water': 55, 'energy': 10, 'paper': 1}
+  PROD: 65x sumatra_leaf  from {'tobacco_seeds': 6, 'water': 60, 'energy': 11, 'paper': 1}
+  PROD: 10x tobacco_seeds  from {'corojo_leaf': 8, 'water': 3, 'paper': 1}
+
+cigarette_factory  |  Cigarette Factory  |  production
+  startup=$90,000  wage=$380.0/cycle  cycles=90  terrain=['urban', 'prairie']
+  PROD: 500x cigarette  from {'flue_cured_tobacco': 120, 'air_cured_tobacco': 60, 'cotton': 30, 'paper': 500, 'energy': 35000}
+  PROD: 400x virginia_cigarette  from {'flue_cured_tobacco': 200, 'cotton': 25, 'paper': 400, 'energy': 28000}
+  PROD: 400x menthol_cigarette  from {'flue_cured_tobacco': 120, 'mint': 30, 'cotton': 25, 'paper': 400, 'energy': 28000}
+  PROD: 300x turkish_cigarette  from {'sun_cured_tobacco': 150, 'greek_basma_leaf': 50, 'cotton': 20, 'paper': 300, 'energy': 22000}
+  PROD: 300x clove_cigarette  from {'flue_cured_tobacco': 100, 'air_cured_tobacco': 50, 'cinnamon': 30, 'cotton': 20, 'paper': 300, 'energy': 22000}
+  PROD: 200x cigarillo  from {'connecticut_broadleaf': 50, 'air_cured_tobacco': 80, 'paper': 50, 'energy': 15000}
+
+coal_mine  |  Coal Mine  |  production
+  startup=$75,000  wage=$400/cycle  cycles=180  terrain=['mountain', 'hills']
+  PROD: 50x coal  from {'energy': 30, 'water': 20, 'paper': 1}
+
+cocoa_plantation  |  Cocoa Plantation  |  production
+  startup=$22,000  wage=$65.0/cycle  cycles=180  terrain=['jungle', 'island', 'marsh']
+  PROD: 90x cocoa_beans  from {'cocoa_seeds': 5, 'water': 40, 'energy': 15, 'paper': 1}
+  PROD: 12x cocoa_seeds  from {'cocoa_beans': 12, 'water': 5, 'paper': 1}
+
+coffee_plantation  |  Highland Coffee Plantation  |  production
+  startup=$18,000  wage=$60.0/cycle  cycles=160  terrain=['hills', 'mountain', 'jungle']
+  PROD: 100x coffee_beans  from {'coffee_seeds': 8, 'water': 35, 'energy': 12, 'paper': 1, 'burlap': 2}
+  PROD: 18x coffee_seeds  from {'coffee_beans': 15, 'water': 5, 'paper': 1}
+
+coffee_roastery  |  Coffee Roastery  |  production
+  startup=$14,000  wage=$65.0/cycle  cycles=50  terrain=['urban', 'prairie', 'hills']
+  PROD: 80x roasted_coffee  from {'coffee_beans': 100, 'energy': 40, 'paper': 2}
+  PROD: 60x ground_coffee  from {'roasted_coffee': 70, 'energy': 20, 'paper': 5}
+
+coffeehouse  |  Artisan Coffeehouse  |  retail
+  startup=$16,000  wage=$100.0/cycle  cycles=30  terrain=['urban', 'hills', 'island']
+  RETAIL: ['espresso', 'latte', 'cappuccino', 'hot_chocolate', 'tea', 'iced_tea', 'croissant', 'donut', 'muffin', 'cookie', 'cinnamon_roll']
+
+coffeehouse_production  |  Coffee & Tea Production  |  production
+  startup=$12,000  wage=$70.0/cycle  cycles=30  terrain=['urban', 'hills']
+  PROD: 100x espresso  from {'ground_coffee': 30, 'water': 40, 'energy': 25, 'paper': 1}
+  PROD: 80x latte  from {'espresso': 40, 'milk': 60, 'energy': 20, 'paper': 1}
+  PROD: 70x cappuccino  from {'espresso': 35, 'milk': 40, 'energy': 18, 'paper': 1}
+  PROD: 60x hot_chocolate  from {'chocolate': 20, 'milk': 50, 'sugar': 15, 'energy': 18, 'paper': 1}
+  PROD: 120x tea  from {'tea_leaves': 40, 'water': 80, 'energy': 15, 'paper': 1}
+  PROD: 100x iced_tea  from {'tea_leaves': 35, 'water': 70, 'sugar': 20, 'energy': 20, 'paper': 1}
+
+cookie_factory  |  Cookie & Brownie Factory  |  production
+  startup=$16,000  wage=$75.0/cycle  cycles=45  terrain=['urban', 'prairie']
+  PROD: 150x cookie  from {'flour': 30, 'butter': 20, 'sugar': 25, 'chocolate': 15, 'eggs': 10, 'energy': 25, 'paper': 1}
+  PROD: 80x brownie  from {'flour': 20, 'chocolate': 35, 'butter': 15, 'eggs': 12, 'sugar': 20, 'energy': 28, 'paper': 1}
+
+cooperage  |  Cooperage & Barrel Works  |  production
+  startup=$16,000  wage=$70.0/cycle  cycles=120  terrain=['forest', 'hills', 'prairie']
+  PROD: 20x wine_barrel  from {'lumber': 60, 'iron': 10, 'energy': 40, 'paper': 1}
+
+cotton_fields  |  Cotton Fields  |  production
+  startup=$4,500  wage=$45.0/cycle  cycles=60  terrain=['prairie', 'savanna', 'hills']
+  PROD: 42x cotton  from {'water': 13, 'energy': 5, 'paper': 1, 'cotton_seeds': 24}
+  PROD: 2.5x cotton_seeds  from {'water': 3.5, 'energy': 5, 'paper': 1}
+
+creamery  |  Creamery  |  production
+  startup=$45,000  wage=$250/cycle  cycles=120  terrain=['prairie', 'hills']
+  PROD: 30x cheese  from {'milk': 60, 'salt': 5, 'energy': 15, 'paper': 2}
+
+crustacean_trappers  |  Crustacean Trappers  |  production
+  startup=$80,000  wage=$200.0/cycle  cycles=7200  terrain=['coastal', 'ocean', 'marsh']
+  PROD: 60x lobster  from {'bio_fuel': 60, 'energy': 15}
+  PROD: 120x blue_crab  from {'bio_fuel': 50, 'energy': 10}
+  PROD: 100x dungeness_crab  from {'bio_fuel': 60, 'energy': 12}
+  PROD: 80x langoustine  from {'bio_fuel': 55, 'energy': 12}
+
+dairy_and_fermentation  |  Dairy and Fermentation  |  production
+  startup=$59,750  wage=$350/cycle  cycles=600  terrain=['prairie', 'forest', 'desert', 'mountain']
+  PROD: 500x milk  from {'paper': 10, 'cow': 0.1, 'grass': 5000, 'energy': 500}
+  PROD: 100x cream  from {'milk': 10, 'paper': 1, 'energy': 500}
+  PROD: 5x ice_cream  from {'cream': 2, 'paper': 1, 'energy': 500, 'sugar': 40}
+  PROD: 500x butter  from {'cream': 4, 'paper': 1, 'energy': 1550}
+  PROD: 60x yogurt  from {'milk': 80, 'sugar': 20, 'energy': 25, 'paper': 1}
+  PROD: 50x condensed_milk  from {'milk': 100, 'sugar': 40, 'energy': 30, 'paper': 1}
+  PROD: 30x sheep_milk  from {'fries_melkschaap': 3, 'water': 20, 'energy': 10, 'paper': 1}
+  PROD: 30x sheep_milk  from {'lacaune_sheep': 3, 'water': 20, 'energy': 10, 'paper': 1}
+  PROD: 30x sheep_milk  from {'icelandic_sheep': 3, 'water': 20, 'energy': 10, 'paper': 1}
+
+deep_sea_fleet  |  Deep Sea Long-liner Fleet  |  production
+  startup=$380,000  wage=$600.0/cycle  cycles=14400  terrain=['coastal', 'ocean']
+  PROD: 80x swordfish  from {'bio_fuel': 200, 'energy': 40, 'longliner': 1}
+  PROD: 120x mahi_mahi  from {'bio_fuel': 180, 'energy': 35, 'longliner': 1}
+  PROD: 150x snapper  from {'bio_fuel': 160, 'energy': 30, 'longliner': 1}
+  PROD: 40x bluefin_tuna  from {'bio_fuel': 250, 'energy': 50, 'longliner': 1}
+  PROD: 100x barracuda  from {'bio_fuel': 150, 'energy': 30, 'longliner': 1}
+  PROD: 90x monkfish  from {'bio_fuel': 160, 'energy': 30, 'longliner': 1}
+  PROD: 90x tilefish  from {'bio_fuel': 160, 'energy': 30, 'longliner': 1}
+  PROD: 120x sea_trout  from {'bio_fuel': 140, 'energy': 25, 'longliner': 1}
+  PROD: 100x seabass  from {'bio_fuel': 150, 'energy': 30, 'longliner': 1}
+
+distillery  |  Spirit Distillery  |  production
+  startup=$55,000  wage=$160.0/cycle  cycles=200  terrain=['prairie', 'hills', 'mountain']
+  PROD: 40x vodka  from {'potatoes': 100, 'water': 60, 'energy': 70, 'bottle': 40, 'paper': 2}
+  PROD: 30x whiskey  from {'malt': 80, 'water': 50, 'wine_barrel': 3, 'energy': 80, 'bottle': 30, 'paper': 2}
+  PROD: 35x rum  from {'rum_molasses': 60, 'water': 45, 'wine_barrel': 2, 'energy': 65, 'bottle': 35, 'paper': 2}
+  PROD: 45x moonshine  from {'corn': 120, 'water': 50, 'energy': 55, 'bottle': 45, 'paper': 1}
+
+dive_operations  |  Commercial Dive Operations  |  production
+  startup=$60,000  wage=$150.0/cycle  cycles=3600  terrain=['coastal', 'ocean', 'island']
+  PROD: 150x urchin  from {'bio_fuel': 40, 'energy': 10, 'dive_vessel': 1}
+  PROD: 100x conch  from {'bio_fuel': 35, 'energy': 10, 'dive_vessel': 1}
+  PROD: 300x squid  from {'bio_fuel': 40, 'energy': 10, 'dive_vessel': 1}
+  PROD: 80x octopus  from {'bio_fuel': 40, 'energy': 10, 'dive_vessel': 1}
+  PROD: 120x eel  from {'bio_fuel': 35, 'energy': 10, 'dive_vessel': 1}
+
+engine_plant  |  Engine Manufacturing Plant  |  production
+  startup=$220,000  wage=$600.0/cycle  cycles=200  terrain=['prairie', 'desert']
+  PROD: 10x engine_block  from {'iron': 100, 'copper': 20, 'energy': 150, 'paper': 2}
+  PROD: 8x engine  from {'engine_block': 8, 'spark_plugs': 32, 'copper': 25, 'rubber': 15, 'energy': 180, 'paper': 2}
+  PROD: 10x transmission  from {'iron': 80, 'copper': 15, 'oil': 10, 'energy': 120, 'paper': 2}
+
+essential_oil_distillery  |  Essential Oil Press  |  production
+  startup=$95,000  wage=$500.0/cycle  cycles=60  terrain=['prairie', 'forest', 'hills']
+  PROD: 20x orange_essential_oil  from {'orange_seeds': 1200, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 20x cotton_essential_oil  from {'cotton_seeds': 5000, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 15x apple_essential_oil  from {'apple_seeds': 1000, 'water': 30, 'energy': 30, 'paper': 1}
+  PROD: 20x barley_essential_oil  from {'barley_seeds': 2000, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 12x cherry_essential_oil  from {'cherry_seeds': 800, 'water': 25, 'energy': 30, 'paper': 1}
+  PROD: 12x cocoa_essential_oil  from {'cocoa_seeds': 600, 'water': 25, 'energy': 30, 'paper': 1}
+  PROD: 10x coffee_essential_oil  from {'coffee_seeds': 400, 'water': 20, 'energy': 30, 'paper': 1}
+  PROD: 20x corn_essential_oil  from {'corn_seeds': 1500, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 15x grape_essential_oil  from {'grape_seeds': 1000, 'water': 30, 'energy': 28, 'paper': 1}
+  PROD: 20x onion_essential_oil  from {'onion_seeds': 3000, 'water': 35, 'energy': 25, 'paper': 1}
+  PROD: 20x rice_essential_oil  from {'rice_seeds': 2000, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 12x tea_essential_oil  from {'tea_seeds': 800, 'water': 25, 'energy': 28, 'paper': 1}
+  PROD: 20x tobacco_essential_oil  from {'tobacco_seeds': 5000, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 20x tomato_essential_oil  from {'tomato_seeds': 2500, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 20x wheat_essential_oil  from {'wheat_seeds': 2000, 'water': 30, 'energy': 25, 'paper': 1}
+
+farmers_market  |  Farmers Market  |  retail
+  startup=$8,000  wage=$60.0/cycle  cycles=30  terrain=['prairie', 'hills', 'savanna']
+  RETAIL: ['eggs', 'honey', 'milk', 'butter', 'cream', 'cherries', 'apples', 'grapes', 'peanut_butter', 'jam', 'jelly', 'yogurt', 'crawfish', 'mussels', 'sheep_milk']
+
+fashion_outlet  |  Fashion Outlet  |  retail
+  startup=$75,000  wage=$320.0/cycle  cycles=110  terrain=['prairie', 'hills', 'island']
+  RETAIL: ['blouse', 'bra', 'panties', 'dress', 'leggings', 'bomber_jacket', 'suit_jacket', 'trousers', 'purse', 'wallet', 'cheap_luggage']
+
+fastener_factory  |  Fastener Factory  |  production
+  startup=$7,000  wage=$75.0/cycle  cycles=90  terrain=['prairie', 'hills', 'urban']
+  PROD: 100x zippers  from {'brass': 20, 'copper': 10, 'energy': 40, 'paper': 1}
+  PROD: 150x buttons  from {'sawdust': 15, 'glue': 5, 'energy': 25, 'paper': 1}
+  PROD: 200x nails  from {'iron': 50, 'energy': 30, 'paper': 1}
+
+fish_cart  |  Fish Cart  |  retail
+  startup=$200  wage=$0/cycle  cycles=10  terrain=['coastal', 'island', 'urban', 'desert', 'lake']
+  RETAIL: ['dried_anchovies', 'dried_squid', 'smoked_eel', 'octopus_cleaned', 'bottled_water', 'soda']
+
+fish_market  |  Fish Market  |  retail
+  startup=$20,000  wage=$100.0/cycle  cycles=60  terrain=['coastal', 'urban', 'marsh']
+  RETAIL: ['cod', 'haddock', 'salmon', 'salmon_fillet', 'fish_fillet', 'tuna_steak', 'bluefin_tuna_sashimi', 'halibut_steak', 'swordfish_steak', 'shrimp_peeled', 'lobster_meat', 'crab_meat', 'scallop_meat', 'calamari', 'smoked_salmon', 'smoked_mackerel', 'canned_tuna', 'canned_sardines', 'canned_salmon', 'fish_sauce', 'oyster_sauce', 'omega_3_capsule', 'fish_emulsion', 'barracuda', 'barramundi', 'bass', 'bluefish', 'coley', 'crawfish', 'dab', 'flounder', 'gurnard', 'langoustine', 'mahi_mahi', 'monkfish', 'mussels', 'pangasius', 'perch', 'pickled_herring', 'red_mullet', 'salt_cod', 'sea_trout', 'seabass', 'skate', 'snapper', 'sole', 'tilefish', 'trout', 'turbot']
+
+fish_processing_plant  |  Fish Processing Plant  |  production
+  startup=$75,000  wage=$250.0/cycle  cycles=3600  terrain=['coastal', 'urban', 'prairie']
+  PROD: 150x fish_fillet  from {'cod': 200, 'salt': 10, 'energy': 30}
+  PROD: 150x fish_fillet  from {'haddock': 200, 'salt': 10, 'energy': 30}
+  PROD: 200x fish_fillet  from {'pollock': 250, 'salt': 10, 'energy': 30}
+  PROD: 120x fish_fillet  from {'tilapia': 160, 'salt': 8, 'energy': 25}
+  PROD: 100x fish_fillet  from {'catfish': 140, 'salt': 8, 'energy': 25}
+  PROD: 120x salmon_fillet  from {'salmon': 160, 'salt': 8, 'energy': 30}
+  PROD: 100x tuna_steak  from {'yellowfin_tuna': 130, 'salt': 6, 'energy': 25}
+  PROD: 40x bluefin_tuna_sashimi  from {'bluefin_tuna': 50, 'energy': 20}
+  PROD: 60x swordfish_steak  from {'swordfish': 80, 'salt': 5, 'energy': 20}
+  PROD: 60x halibut_steak  from {'halibut': 80, 'salt': 5, 'energy': 20}
+  PROD: 400x shrimp_peeled  from {'shrimp': 500, 'salt': 15, 'energy': 25}
+  PROD: 80x crab_meat  from {'blue_crab': 120, 'energy': 20}
+  PROD: 80x crab_meat  from {'dungeness_crab': 100, 'energy': 20}
+  PROD: 40x lobster_meat  from {'lobster': 60, 'energy': 15}
+  PROD: 200x scallop_meat  from {'scallops': 300, 'energy': 15}
+  PROD: 200x calamari  from {'squid': 300, 'salt': 10, 'energy': 20}
+  PROD: 60x octopus_cleaned  from {'octopus': 80, 'salt': 5, 'energy': 15}
+  PROD: 300x fish_fingers  from {'pollock': 200, 'flour': 50, 'energy': 30}
+  PROD: 300x fish_fingers  from {'cod': 200, 'flour': 50, 'energy': 30}
+  PROD: 400x surimi  from {'pollock': 500, 'salt': 20, 'energy': 40}
+  PROD: 350x imitation_crab  from {'surimi': 300, 'energy': 20}
+  PROD: 500x fish_meal  from {'sardines': 800, 'energy': 40}
+  PROD: 500x fish_meal  from {'anchovies': 800, 'energy': 40}
+  PROD: 200x fish_oil  from {'sardines': 600, 'energy': 30}
+  PROD: 200x fish_oil  from {'mackerel': 500, 'energy': 30}
+  PROD: 200x fish_oil  from {'salmon': 400, 'energy': 30}
+  PROD: 150x chitin  from {'shrimp': 400, 'energy': 25}
+  PROD: 120x chitin  from {'blue_crab': 300, 'energy': 20}
+  PROD: 100x collagen_powder  from {'fish_fillet': 200, 'energy': 30}
+  PROD: 300x fish_emulsion  from {'sardines': 500, 'energy': 20}
+  PROD: 50x salmon_roe  from {'salmon': 100, 'salt': 5, 'energy': 15}
+  PROD: 400x omega_3_capsule  from {'fish_oil': 100, 'energy': 20}
+  PROD: 30x collagen_powder  from {'barramundi': 80, 'pangasius': 60, 'energy': 40, 'paper': 2}
+
+flour_mill  |  Flour Mill  |  production
+  startup=$12,000  wage=$55.0/cycle  cycles=60  terrain=['prairie', 'hills', 'urban']
+  PROD: 100x flour  from {'wheat': 120, 'energy': 30, 'water': 15, 'paper': 1}
+  PROD: 40x corn_syrup  from {'corn': 80, 'water': 30, 'energy': 40, 'paper': 1}
+  PROD: 30x yeast  from {'flour': 10, 'sugar': 15, 'water': 20, 'paper': 1}
+  PROD: 80x peanut_flour  from {'peanut': 100, 'energy': 25, 'water': 10, 'paper': 1}
+  PROD: 90x rice_flour  from {'rice': 110, 'energy': 25, 'water': 10, 'paper': 1}
+  PROD: 60x rice_paper  from {'rice_flour': 80, 'water': 30, 'energy': 20, 'paper': 1}
+
+free_range_pasture  |  Animal Pasture  |  production
+  startup=$7,500  wage=$30.0/cycle  cycles=120  terrain=['prairie', 'savanna']
+  PROD: 901x grass  from {'water': 1050}
+  PROD: 2x horse  from {'water': 500, 'apples': 100}
+  PROD: 5x silk_worm  from {'water': 75, 'paper': 10}
+  PROD: 3x cow  from {'water': 600, 'grass': 300}
+  PROD: 4x cow  from {'water': 600, 'fish_meal': 200}
+
+freshwater_fishing  |  Freshwater Fishing Operation  |  production
+  startup=$15,000  wage=$80.0/cycle  cycles=3600  terrain=['lake', 'marsh']
+  PROD: 200x catfish  from {'energy': 20, 'freshwater_boat': 1}
+  PROD: 250x perch  from {'energy': 20, 'freshwater_boat': 1}
+  PROD: 200x bass  from {'energy': 20, 'freshwater_boat': 1}
+  PROD: 180x trout  from {'energy': 20, 'freshwater_boat': 1}
+  PROD: 400x crawfish  from {'energy': 15, 'freshwater_boat': 1}
+
+gas_station  |  Gas Station  |  retail
+  startup=$85,000  wage=$180.0/cycle  cycles=80  terrain=['urban', 'prairie', 'desert', 'highway']
+  RETAIL: ['gasoline', 'diesel']
+
+gelatin_plant  |  Gelatin Processing Plant  |  production
+  startup=$20,000  wage=$75.0/cycle  cycles=70  terrain=['prairie', 'hills']
+  PROD: 60x gelatin  from {'beef': 30, 'water': 60, 'energy': 40, 'paper': 1}
+  PROD: 150x pill_bottle  from {'glass': 20, 'energy': 25, 'paper': 1}
+
+gin_distillery  |  Botanical Gin Distillery  |  production
+  startup=$42,000  wage=$130.0/cycle  cycles=160  terrain=['hills', 'urban', 'prairie']
+  PROD: 40x gin  from {'malt': 50, 'juniper_berries': 40, 'water': 40, 'energy': 60, 'bottle': 40, 'paper': 2}
+  PROD: 30x brandy  from {'grapes': 120, 'water': 35, 'wine_barrel': 3, 'energy': 70, 'bottle': 30, 'paper': 2}
+
+glass_works  |  Glass Works  |  production
+  startup=$35,000  wage=$120.0/cycle  cycles=100  terrain=['desert', 'prairie', 'hills']
+  PROD: 80x glass  from {'sand': 150, 'energy': 200, 'paper': 2}
+  PROD: 100x bottle  from {'glass': 30, 'energy': 50, 'paper': 1}
+  PROD: 80x jar  from {'glass': 25, 'energy': 40, 'paper': 1}
+
+gourmet_kitchen  |  Gourmet Kitchen  |  production
+  startup=$25,000  wage=$140.0/cycle  cycles=90  terrain=['urban', 'hills']
+  PROD: 30x duck_confit  from {'duck_meat': 25, 'lard': 15, 'salt': 10, 'onions': 10, 'energy': 40, 'paper': 1}
+  PROD: 25x pate  from {'duck_meat': 20, 'pork': 15, 'butter': 10, 'onions': 8, 'cream': 5, 'energy': 35, 'jar': 25, 'paper': 1}
+  PROD: 25x satay  from {'pork': 20, 'peanut_butter': 15, 'peanut_oil': 10, 'onions': 8, 'energy': 35, 'paper': 1}
+  PROD: 8x seafood_tower  from {'lobster_meat': 5, 'shrimp_peeled': 10, 'crab_meat': 5, 'calamari': 8, 'mussels': 10, 'urchin': 5, 'langoustine': 3, 'energy': 50, 'paper': 1}
+  PROD: 8x premium_sashimi  from {'bluefin_tuna_sashimi': 5, 'salmon_roe': 3, 'urchin': 2, 'sake': 2, 'rice': 5, 'energy': 30, 'paper': 1}
+  PROD: 20x lobster_bisque  from {'crawfish': 60, 'cream': 10, 'butter': 8, 'onions': 8, 'tomato_sauce': 8, 'energy': 35, 'paper': 1}
+  PROD: 20x prawn_cocktail  from {'langoustine': 50, 'cream': 8, 'butter': 5, 'energy': 25, 'paper': 1}
+
+gourmet_restaurant  |  Fine Dining Restaurant  |  retail
+  startup=$35,000  wage=$200.0/cycle  cycles=60  terrain=['urban', 'hills', 'island']
+  RETAIL: ['stew', 'cider_soup', 'duck_confit', 'pate', 'cheesecake', 'red_wine', 'champagne', 'grilled_salmon', 'lobster_bisque', 'tuna_steak', 'seafood_chowder', 'prawn_cocktail', 'satay', 'caviar', 'langoustine', 'monkfish', 'seafood_tower', 'smoked_eel', 'tobacco_cured_fish']
+
+grain_farm  |  Grain & Cereal Farm  |  production
+  startup=$8,500  wage=$55.0/cycle  cycles=100  terrain=['prairie', 'savanna', 'hills']
+  PROD: 150x wheat  from {'wheat_seeds': 10, 'water': 40, 'energy': 15, 'paper': 1}
+  PROD: 25x wheat_seeds  from {'wheat': 20, 'water': 5, 'paper': 1}
+  PROD: 120x barley  from {'barley_seeds': 8, 'water': 35, 'energy': 12, 'paper': 1}
+  PROD: 20x barley_seeds  from {'barley': 15, 'water': 5, 'paper': 1}
+  PROD: 200x corn  from {'corn_seeds': 12, 'water': 50, 'energy': 20, 'paper': 1}
+  PROD: 30x corn_seeds  from {'corn': 25, 'water': 5, 'paper': 1}
+  PROD: 200x wheat  from {'wheat_seeds': 10, 'fish_emulsion': 8, 'water': 40, 'energy': 15, 'paper': 1}
+  PROD: 160x barley  from {'barley_seeds': 8, 'fish_emulsion': 6, 'water': 35, 'energy': 12, 'paper': 1}
+  PROD: 270x corn  from {'corn_seeds': 12, 'fish_emulsion': 10, 'water': 50, 'energy': 20, 'paper': 1}
+
+grocery_store  |  Grocery Store  |  retail
+  startup=$2,500  wage=$140.0/cycle  cycles=90  terrain=['prairie', 'hills', 'island']
+  RETAIL: ['apples', 'oranges', 'potatoes', 'lettuce', 'carrots', 'peanut_butter', 'peanut_oil', 'peanut_flour', 'jam', 'jelly', 'yogurt', 'condensed_milk', 'vinegar', 'apple_cider_vinegar', 'pasta', 'spaghetti', 'noodles', 'envelope', 'anchovy_paste', 'canned_anchovies', 'canned_clams', 'canned_crab', 'canned_mackerel', 'canned_oysters', 'crawfish', 'fish_fingers', 'ketchup', 'mussels', 'pickled_herring', 'rice_sack', 'salsa', 'salt_cod', 'sheep_milk', 'shrimp_paste', 'tomato_sauce', 'worcestershire_sauce']
+
+home_goods_store  |  Home & Bedding Store  |  retail
+  startup=$20,000  wage=$100.0/cycle  cycles=55  terrain=['urban', 'prairie']
+  RETAIL: ['pillow', 'comforter', 'nails', 'cardboard_box', 'tea_light', 'birthday_candle', 'ornamental_candle', 'religious_candle']
+
+hop_farm  |  Hop & Herb Farm  |  production
+  startup=$12,000  wage=$45.0/cycle  cycles=110  terrain=['prairie', 'hills', 'forest']
+  PROD: 80x hops  from {'water': 30, 'energy': 10, 'paper': 1}
+  PROD: 50x juniper_berries  from {'water': 20, 'energy': 8, 'paper': 1}
+  PROD: 70x mint  from {'water': 15, 'energy': 5, 'paper': 1}
+
+hot_dog_cart  |  Hot Dog Cart  |  retail
+  startup=$200  wage=$0/cycle  cycles=10  terrain=['coastal', 'island', 'urban', 'desert', 'lake']
+  RETAIL: ['hot_dog', 'bottled_water', 'soda']
+
+industrial_bakery  |  Industrial Bakery  |  production
+  startup=$28,000  wage=$95.0/cycle  cycles=55  terrain=['urban', 'prairie']
+  PROD: 120x dough  from {'flour': 60, 'water': 30, 'yeast': 8, 'salt': 5, 'energy': 20, 'paper': 1}
+  PROD: 100x bread  from {'dough': 80, 'energy': 35, 'paper': 2}
+  PROD: 80x baguette  from {'dough': 60, 'energy': 30, 'paper': 1}
+  PROD: 70x pretzel  from {'dough': 50, 'salt': 10, 'energy': 25, 'paper': 1}
+  PROD: 100x pasta  from {'flour': 60, 'eggs': 20, 'water': 20, 'energy': 30, 'paper': 1}
+  PROD: 100x spaghetti  from {'flour': 60, 'eggs': 20, 'water': 20, 'energy': 30, 'paper': 1}
+  PROD: 100x noodles  from {'flour': 55, 'eggs': 15, 'water': 25, 'energy': 28, 'paper': 1}
+
+ink_factory  |  Ink & Dye Factory  |  production
+  startup=$10,000  wage=$55.0/cycle  cycles=50  terrain=['prairie', 'urban', 'hills']
+  PROD: 80x ink  from {'oil': 10, 'water': 30, 'energy': 25, 'paper': 1}
+  PROD: 35x paint  from {'oil': 10, 'water': 30, 'orange_seeds': 25, 'apple_seeds': 25, 'grass': 25, 'cotton_seeds': 25, 'paper': 1}
+
+jeweler  |  Jeweler Workshop  |  production
+  startup=$60,000  wage=$350/cycle  cycles=200  terrain=['urban', 'prairie']
+  PROD: 10x jewelry  from {'brass': 15, 'glass': 5, 'energy': 20, 'paper': 2}
+  PROD: 8x jewelry  from {'white_pearl': 5, 'brass': 10, 'glass': 3, 'energy': 25, 'paper': 2}
+  PROD: 6x jewelry  from {'black_pearl': 3, 'brass': 12, 'glass': 2, 'energy': 25, 'paper': 2}
+  PROD: 5x jewelry  from {'pink_pearl': 4, 'brass': 10, 'glass': 3, 'energy': 25, 'paper': 2}
+  PROD: 5x jewelry  from {'conch_shell': 3, 'mother_of_pearl': 2, 'brass': 8, 'energy': 20, 'paper': 2}
+  PROD: 4x jewelry  from {'rams_horn': 2, 'brass': 10, 'energy': 18, 'paper': 2}
+
+lead_mine  |  Lead Mine  |  production
+  startup=$90,000  wage=$400.0/cycle  cycles=180  terrain=['mountain', 'hills', 'desert']
+  PROD: 80x lead_ore  from {'energy': 150, 'bio_fuel': 40, 'water': 60, 'paper': 2}
+  PROD: 50x lead  from {'lead_ore': 80, 'energy': 120, 'water': 40, 'paper': 2}
+
+lumber_mill  |  Lumber Mill  |  production
+  startup=$5,500  wage=$60.0/cycle  cycles=80  terrain=['forest', 'jungle', 'mountain']
+  PROD: 5x timber  from {'water': 20, 'paper': 1}
+  PROD: 42x lumber  from {'timber': 48, 'energy': 30, 'water': 10, 'paper': 1}
+  PROD: 150x sawdust  from {'timber': 2, 'energy': 75, 'water': 5, 'paper': 10}
+
+luxury_auto_plant  |  Luxury Automobile Plant  |  production
+  startup=$550,000  wage=$1300.0/cycle  cycles=400  terrain=['urban', 'prairie']
+  PROD: 2x luxury_car  from {'chassis': 2, 'engine': 4, 'transmission': 2, 'tires': 8, 'windshield': 2, 'headlights': 4, 'car_battery': 2, 'radiator': 4, 'exhaust': 2, 'fuel_tank': 2, 'brake_pads': 8, 'car_seat': 8, 'steering_wheel': 2, 'leather': 80, 'silk': 10, 'glass': 40, 'copper': 30, 'energy': 450, 'paper': 5, 'gasoline': 2}
+
+luxury_showroom  |  Luxury Auto Showroom  |  retail
+  startup=$450,000  wage=$900.0/cycle  cycles=200  terrain=['urban']
+  RETAIL: ['luxury_car', 'blessed_sheep']
+
+malting_house  |  Malting House  |  production
+  startup=$18,000  wage=$60.0/cycle  cycles=80  terrain=['prairie', 'hills', 'urban']
+  PROD: 100x malt  from {'barley': 120, 'water': 50, 'energy': 30, 'paper': 1}
+
+marina  |  Marina & Boat Sales  |  retail
+  startup=$250,000  wage=$500.0/cycle  cycles=180  terrain=['marsh', 'island']
+  RETAIL: ['boat', 'yacht', 'trawler', 'purse_seiner', 'longliner', 'lobster_boat', 'shrimp_trawler', 'dredger', 'dive_vessel', 'aquaculture_raft', 'freshwater_boat']
+
+marine_factory  |  Marine Manufacturing  |  production
+  startup=$120,000  wage=$320.0/cycle  cycles=150  terrain=['marsh', 'island']
+  PROD: 8x hull  from {'fiberglass': 50, 'lumber': 30, 'energy': 100, 'paper': 2}
+  PROD: 10x outboard_motor  from {'engine_block': 5, 'copper': 20, 'iron': 30, 'rubber': 15, 'energy': 90, 'paper': 2}
+  PROD: 15x propeller  from {'brass': 40, 'iron': 20, 'energy': 60, 'paper': 1}
+
+meat_processing  |  Meat Processing Plant  |  production
+  startup=$15,000  wage=$90.0/cycle  cycles=60  terrain=['prairie', 'hills', 'mountain']
+  PROD: 60x pork  from {'pig': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 40x duck_meat  from {'duck': 12, 'energy': 25, 'water': 15, 'paper': 1}
+  PROD: 100x feathers  from {'duck': 10, 'energy': 15, 'paper': 1}
+  PROD: 80x sausage  from {'pork': 40, 'salt': 10, 'onions': 15, 'energy': 25, 'paper': 1}
+  PROD: 50x bacon  from {'pork': 35, 'salt': 15, 'sugar': 5, 'energy': 30, 'paper': 1}
+  PROD: 50x lamb_meat  from {'merino': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'corriedale': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'shetland_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'bluefaced_leicester': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'border_leicester_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'romney_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'suffolk_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'dorset_horn_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'black_welsh_mountain_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'finnsheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'lincoln_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'southdown_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'alpaca': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'angora_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'cheviot_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'mohair_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'rambouillet_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'targhee_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'cashmere_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'columbia_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'polwarth_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'polypay_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'jacob_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'cotswold_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'leicester_longwool': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'soay_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'welsh_mountain_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'lincoln_longwool': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'oxford_down_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'barbados_black_belly': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'american_tunis': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'shropshire_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'fries_melkschaap': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'st_croix_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'australian_white_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'charollais_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'icelandic_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'karakul_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'romanov_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'clun_forest_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'royal_white_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'south_african_meat_merino': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'lacaune_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'north_country_cheviot': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'poll_dorset': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'rideau_arcott': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'gulf_coast_native_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'ile_de_france_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'cameroon_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'damara_sheep': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'badger_face_welsh_mountain': 5, 'energy': 30, 'water': 20, 'paper': 1}
+  PROD: 50x lamb_meat  from {'berrichon_du_cher': 5, 'energy': 30, 'water': 20, 'paper': 1}
+
+mineral_mine  |  Mineral Mine  |  production
+  startup=$150,000  wage=$550.0/cycle  cycles=200  terrain=['mountain', 'hills', 'desert']
+  PROD: 100x copper_ore  from {'energy': 200, 'bio_fuel': 50, 'water': 100, 'paper': 2}
+  PROD: 120x iron_ore  from {'energy': 75, 'bio_fuel': 15, 'water': 30, 'paper': 2}
+  PROD: 80x zinc_ore  from {'energy': 180, 'bio_fuel': 45, 'water': 90, 'paper': 2}
+
+oil_refinery  |  Oil Refinery  |  production
+  startup=$280,000  wage=$700.0/cycle  cycles=200  terrain=['urban', 'prairie', 'desert', 'coastal']
+  PROD: 200x gasoline  from {'oil': 500, 'energy': 3000, 'water': 200, 'paper': 5}
+  PROD: 180x diesel  from {'oil': 500, 'energy': 3000, 'water': 200, 'paper': 5}
+  PROD: 120x paraffin_wax  from {'oil': 300, 'energy': 1500, 'water': 100, 'paper': 3}
+  PROD: 80x plastic  from {'oil': 400, 'energy': 2000, 'water': 150, 'paper': 4}
+
+oil_rig  |  Offshore & Desert Oil Rig  |  production
+  startup=$15,000  wage=$120.0/cycle  cycles=150  terrain=['desert', 'marsh', 'ocean']
+  PROD: 40x oil  from {'energy': 200, 'paper': 1}
+
+orchard  |  Stone Fruit Orchard  |  production
+  startup=$7,500  wage=$45.0/cycle  cycles=120  terrain=['prairie', 'hills', 'forest']
+  PROD: 80x cherries  from {'cherry_seeds': 3, 'water': 25, 'energy': 10, 'paper': 1}
+  PROD: 15x cherry_seeds  from {'cherries': 1, 'water': 3, 'paper': 1}
+
+oriental_tobacco_farm  |  Oriental Tobacco Farm  |  production
+  startup=$10,000  wage=$95.0/cycle  cycles=360  terrain=['hills', 'mountain', 'savanna']
+  PROD: 120x oriental_leaf  from {'tobacco_seeds': 8, 'water': 30, 'energy': 8, 'paper': 1}
+  PROD: 90x greek_basma_leaf  from {'tobacco_seeds': 6, 'water': 25, 'energy': 6, 'paper': 1}
+  PROD: 50x dokha_leaf  from {'tobacco_seeds': 4, 'water': 20, 'energy': 5, 'paper': 1}
+  PROD: 12x tobacco_seeds  from {'oriental_leaf': 10, 'water': 2, 'paper': 1}
+
+paddock  |  Sheep Paddock  |  production
+  startup=$12,000  wage=$55.0/cycle  cycles=180  terrain=['prairie', 'hills', 'savanna', 'mountain']
+  PROD: 4x merino  from {'grass': 300, 'water': 250, 'lettuce': 50, 'border_collie': 1, 'paper': 1}
+  PROD: 4x corriedale  from {'grass': 300, 'water': 250, 'lettuce': 50, 'border_collie': 1, 'paper': 1}
+  PROD: 4x suffolk_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'border_collie': 1, 'paper': 1}
+  PROD: 4x australian_white_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'australian_kelpie': 1, 'paper': 1}
+  PROD: 4x south_african_meat_merino  from {'grass': 300, 'water': 250, 'lettuce': 50, 'australian_kelpie': 1, 'paper': 1}
+  PROD: 3x poll_dorset  from {'grass': 300, 'water': 250, 'lettuce': 50, 'australian_kelpie': 1, 'paper': 1}
+  PROD: 3x charollais_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'german_shepherd': 1, 'paper': 1}
+  PROD: 3x oxford_down_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'german_shepherd': 1, 'paper': 1}
+  PROD: 3x columbia_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'german_shepherd': 1, 'paper': 1}
+  PROD: 3x ile_de_france_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'belgian_shepherd': 1, 'paper': 1}
+  PROD: 2x berrichon_du_cher  from {'grass': 300, 'water': 250, 'lettuce': 50, 'belgian_shepherd': 1, 'paper': 1}
+  PROD: 3x bluefaced_leicester  from {'grass': 300, 'water': 250, 'lettuce': 50, 'old_english_sheepdog': 1, 'paper': 1}
+  PROD: 3x border_leicester_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'old_english_sheepdog': 1, 'paper': 1}
+  PROD: 3x welsh_mountain_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'pembroke_welsh_corgi': 1, 'paper': 1}
+  PROD: 3x cheviot_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'pembroke_welsh_corgi': 1, 'paper': 1}
+  PROD: 3x badger_face_welsh_mountain  from {'grass': 300, 'water': 250, 'lettuce': 50, 'cardigan_welsh_corgi': 1, 'paper': 1}
+  PROD: 3x black_welsh_mountain_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'cardigan_welsh_corgi': 1, 'paper': 1}
+  PROD: 3x shetland_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'scotch_collie': 1, 'paper': 1}
+  PROD: 3x romney_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'scotch_collie': 1, 'paper': 1}
+  PROD: 2x lincoln_longwool  from {'grass': 300, 'water': 250, 'lettuce': 50, 'scotch_collie': 1, 'paper': 1}
+  PROD: 3x soay_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'bearded_collie': 1, 'paper': 1}
+  PROD: 3x north_country_cheviot  from {'grass': 300, 'water': 250, 'lettuce': 50, 'bearded_collie': 1, 'paper': 1}
+  PROD: 2x dorset_horn_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'bearded_collie': 1, 'paper': 1}
+  PROD: 3x american_tunis  from {'grass': 300, 'water': 250, 'lettuce': 50, 'english_shepherd': 1, 'paper': 1}
+  PROD: 3x shropshire_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'english_shepherd': 1, 'paper': 1}
+  PROD: 3x gulf_coast_native_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'english_shepherd': 1, 'paper': 1}
+  PROD: 3x rambouillet_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'white_swiss_shepherd': 1, 'paper': 1}
+  PROD: 3x barbados_black_belly  from {'grass': 300, 'water': 250, 'lettuce': 50, 'belgian_malinois': 1, 'paper': 1}
+  PROD: 3x st_croix_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'belgian_malinois': 1, 'paper': 1}
+  PROD: 2x icelandic_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'icelandic_sheepdog': 1, 'paper': 1}
+  PROD: 2x finnsheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'icelandic_sheepdog': 1, 'paper': 1}
+  PROD: 3x romanov_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'samoyed': 1, 'paper': 1}
+  PROD: 2x leicester_longwool  from {'grass': 300, 'water': 250, 'lettuce': 50, 'samoyed': 1, 'paper': 1}
+  PROD: 2x clun_forest_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'lapponian_herder': 1, 'paper': 1}
+  PROD: 2x lacaune_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'pyrenean_sheepdog': 1, 'paper': 1}
+  PROD: 2x lincoln_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'pyrenean_sheepdog': 1, 'paper': 1}
+  PROD: 2x soay_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'finnish_lapphund': 1, 'paper': 1}
+  PROD: 2x polypay_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'belgian_tervuren': 1, 'paper': 1}
+  PROD: 2x polwarth_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'polish_lowland_sheepdog': 1, 'paper': 1}
+  PROD: 2x rideau_arcott  from {'grass': 300, 'water': 250, 'lettuce': 50, 'carpathian_shepherd': 1, 'paper': 1}
+  PROD: 2x karakul_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'catalan_sheepdog': 1, 'paper': 1}
+  PROD: 2x damara_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'catalan_sheepdog': 1, 'paper': 1}
+  PROD: 2x gulf_coast_native_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'catahoula_leopard_dog': 1, 'paper': 1}
+  PROD: 2x cameroon_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'miniature_american_shepherd': 1, 'paper': 1}
+  PROD: 2x ile_de_france_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'beauceron': 1, 'paper': 1}
+  PROD: 2x jacob_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'croatian_sheepdog': 1, 'paper': 1}
+  PROD: 2x fries_melkschaap  from {'grass': 300, 'water': 250, 'lettuce': 50, 'bouvier_des_flandres': 1, 'paper': 1}
+  PROD: 2x royal_white_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'rottweiler': 1, 'paper': 1}
+  PROD: 2x southdown_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'rottweiler': 1, 'paper': 1}
+  PROD: 1x cotswold_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'bergamasco_shepherd': 1, 'paper': 1}
+  PROD: 1x angora_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'bergamasco_shepherd': 1, 'paper': 1}
+  PROD: 1x alpaca  from {'grass': 300, 'water': 250, 'lettuce': 50, 'schipperke': 1, 'paper': 1}
+  PROD: 1x mohair_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'appenzeller_sennenhund': 1, 'paper': 1}
+  PROD: 1x cameroon_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'belgian_laekenois': 1, 'paper': 1}
+  PROD: 1x cashmere_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'tibetan_terrier': 1, 'paper': 1}
+  PROD: 2x targhee_sheep  from {'grass': 300, 'water': 250, 'lettuce': 50, 'basque_shepherd': 1, 'paper': 1}
+
+paint_factory  |  Paint Factory  |  production
+  startup=$48,000  wage=$260/cycle  cycles=130  terrain=['urban', 'prairie']
+  PROD: 35x paint  from {'oil': 20, 'water': 15, 'jar': 35, 'energy': 12, 'paper': 2}
+  PROD: 50x dye  from {'oil': 15, 'water': 20, 'copper_ore': 10, 'energy': 15, 'jar': 50, 'paper': 2}
+
+paper_mill  |  Paper Mill  |  production
+  startup=$4,500  wage=$30.0/cycle  cycles=140  terrain=['prairie', 'forest', 'jungle']
+  PROD: 2500x paper  from {'cotton_seeds': 250, 'cotton': 375, 'water': 10, 'glue': 15}
+  PROD: 250x paper  from {'grass': 3750, 'water': 1, 'glue': 1}
+  PROD: 4750x paper  from {'sawdust': 60, 'water': 375, 'glue': 2.5}
+  PROD: 80x cardboard  from {'paper': 200, 'glue': 20, 'energy': 40}
+  PROD: 40x cardboard_box  from {'cardboard': 50, 'glue': 10, 'energy': 15, 'paper': 1}
+
+pastry_kitchen  |  Pastry Kitchen  |  production
+  startup=$22,000  wage=$100.0/cycle  cycles=65  terrain=['urban', 'hills']
+  PROD: 50x pastry_dough  from {'flour': 30, 'butter': 25, 'water': 15, 'energy': 25, 'paper': 1}
+  PROD: 60x croissant  from {'pastry_dough': 40, 'butter': 15, 'energy': 30, 'paper': 1, 'jam': 5}
+  PROD: 100x donut  from {'dough': 50, 'sugar': 30, 'lard': 20, 'energy': 35, 'paper': 1}
+  PROD: 50x cinnamon_roll  from {'dough': 40, 'cinnamon': 10, 'sugar': 20, 'butter': 10, 'energy': 28, 'paper': 1}
+  PROD: 80x muffin  from {'flour': 25, 'sugar': 20, 'eggs': 15, 'butter': 12, 'energy': 25, 'paper': 1}
+  PROD: 60x peanut_butter_cookie  from {'peanut_butter': 15, 'peanut_flour': 10, 'sugar': 20, 'eggs': 8, 'energy': 25, 'paper': 1}
+
+peanut_farm  |  Peanut Farm  |  production
+  startup=$25,000  wage=$150/cycle  cycles=200  terrain=['prairie', 'savanna']
+  PROD: 50x peanut  from {'water': 30, 'energy': 5, 'paper': 1}
+  PROD: 20x peanut_butter  from {'peanut': 30, 'salt': 5, 'energy': 10, 'jar': 20, 'paper': 1}
+
+pearl_oyster_farm  |  Pearl Oyster Farm  |  production
+  startup=$350,000  wage=$400.0/cycle  cycles=86400  terrain=['coastal', 'island']
+  PROD: 5x white_pearl  from {'oysters': 200, 'salt': 20, 'energy': 40}
+  PROD: 3x black_pearl  from {'oysters': 300, 'salt': 25, 'energy': 50}
+  PROD: 4x pink_pearl  from {'oysters': 250, 'salt': 22, 'energy': 45}
+  PROD: 2x golden_pearl  from {'oysters': 400, 'salt': 30, 'energy': 60}
+  PROD: 80x mother_of_pearl  from {'oysters': 150, 'energy': 25}
+  PROD: 60x mother_of_pearl  from {'clams': 150, 'energy': 25}
+
+personal_care_factory  |  Personal Care Factory  |  production
+  startup=$55,000  wage=$300/cycle  cycles=150  terrain=['urban', 'prairie']
+  PROD: 40x soap  from {'lard': 20, 'water': 15, 'energy': 10, 'paper': 2}
+  PROD: 35x shampoo  from {'water': 25, 'oil': 10, 'bottle': 35, 'energy': 12, 'paper': 2}
+  PROD: 30x lotion  from {'water': 20, 'oil': 15, 'bottle': 30, 'energy': 10, 'paper': 2}
+  PROD: 40x toothpaste  from {'water': 15, 'salt': 10, 'plastic': 20, 'energy': 8, 'paper': 2}
+  PROD: 15x perfume  from {'water': 10, 'oil': 8, 'bottle': 15, 'energy': 12, 'paper': 3}
+  PROD: 50x lotion  from {'collagen_powder': 25, 'fish_oil': 20, 'water': 40, 'bottle': 50, 'energy': 20, 'paper': 2}
+  PROD: 60x soap  from {'fish_oil': 50, 'water': 30, 'energy': 20, 'paper': 2}
+  PROD: 40x lotion  from {'beeswax': 30, 'water': 20, 'oil': 10, 'bottle': 40, 'energy': 12, 'paper': 2}
+  PROD: 50x lotion  from {'paraffin_wax': 30, 'water': 25, 'oil': 10, 'bottle': 50, 'energy': 15, 'paper': 2}
+  PROD: 18x perfume  from {'orange_essential_oil': 8, 'water': 10, 'bottle': 18, 'energy': 12, 'paper': 3}
+  PROD: 15x perfume  from {'grape_essential_oil': 6, 'water': 10, 'bottle': 15, 'energy': 12, 'paper': 3}
+  PROD: 12x perfume  from {'cherry_essential_oil': 6, 'water': 10, 'bottle': 12, 'energy': 12, 'paper': 3}
+  PROD: 15x perfume  from {'tobacco_essential_oil': 5, 'water': 10, 'bottle': 15, 'energy': 12, 'paper': 3}
+  PROD: 35x shampoo  from {'tea_essential_oil': 5, 'water': 25, 'bottle': 35, 'energy': 12, 'paper': 2}
+  PROD: 30x shampoo  from {'coffee_essential_oil': 4, 'water': 25, 'bottle': 30, 'energy': 12, 'paper': 2}
+  PROD: 35x shampoo  from {'barley_essential_oil': 8, 'water': 25, 'bottle': 35, 'energy': 12, 'paper': 2}
+  PROD: 30x lotion  from {'cocoa_essential_oil': 8, 'water': 20, 'bottle': 30, 'energy': 10, 'paper': 2}
+  PROD: 35x lotion  from {'rice_essential_oil': 10, 'water': 20, 'bottle': 35, 'energy': 10, 'paper': 2}
+  PROD: 30x lotion  from {'tomato_essential_oil': 10, 'water': 20, 'bottle': 30, 'energy': 10, 'paper': 2}
+  PROD: 35x lotion  from {'apple_essential_oil': 8, 'water': 20, 'bottle': 35, 'energy': 10, 'paper': 2}
+  PROD: 45x soap  from {'cotton_essential_oil': 8, 'water': 15, 'energy': 10, 'paper': 2}
+  PROD: 40x soap  from {'corn_essential_oil': 10, 'water': 15, 'energy': 10, 'paper': 2}
+  PROD: 40x soap  from {'wheat_essential_oil': 8, 'water': 15, 'energy': 10, 'paper': 2}
+  PROD: 40x toothpaste  from {'apple_essential_oil': 5, 'water': 15, 'salt': 10, 'plastic': 20, 'energy': 8, 'paper': 2}
+
+pet_store  |  Pet Store  |  retail
+  startup=$4,500  wage=$160.0/cycle  cycles=80  terrain=['prairie', 'forest', 'desert', 'marsh', 'mountain', 'tundra', 'jungle', 'savanna', 'hills', 'island']
+  RETAIL: ['canary', 'tropical_fish', 'parrot', 'old_english_sheepdog', 'border_collie', 'german_shepherd', 'belgian_shepherd', 'white_swiss_shepherd', 'belgian_malinois', 'icelandic_sheepdog', 'pembroke_welsh_corgi', 'rottweiler', 'catalan_sheepdog', 'miniature_american_shepherd', 'lapponian_herder', 'english_shepherd', 'pyrenean_sheepdog', 'samoyed', 'australian_kelpie', 'beauceron', 'scotch_collie', 'bergamasco_shepherd', 'finnish_lapphund', 'belgian_tervuren', 'polish_lowland_sheepdog', 'carpathian_shepherd', 'bearded_collie', 'schipperke', 'catahoula_leopard_dog', 'cardigan_welsh_corgi', 'appenzeller_sennenhund', 'belgian_laekenois', 'bouvier_des_flandres', 'tibetan_terrier', 'basque_shepherd', 'croatian_sheepdog']
+
+pharmaceutical_lab  |  Pharmaceutical Laboratory  |  production
+  startup=$120,000  wage=$500.0/cycle  cycles=120  terrain=['urban']
+  PROD: 50x active_ingredient  from {'bio_fuel': 15, 'water': 40, 'energy': 60, 'paper': 2}
+  PROD: 80x medicine  from {'active_ingredient': 30, 'gelatin': 15, 'pill_bottle': 40, 'energy': 35, 'paper': 3}
+  PROD: 100x painkillers  from {'active_ingredient': 25, 'gelatin': 20, 'pill_bottle': 50, 'energy': 30, 'paper': 3}
+  PROD: 120x vitamins  from {'oranges': 40, 'carrots': 30, 'gelatin': 25, 'pill_bottle': 60, 'energy': 28, 'paper': 3}
+  PROD: 70x cough_syrup  from {'caramel': 25, 'honey': 20, 'water': 40, 'bottle': 70, 'energy': 25, 'paper': 2}
+  PROD: 90x antiseptic  from {'bio_fuel': 20, 'water': 50, 'bottle': 90, 'energy': 25, 'paper': 2}
+  PROD: 150x bandage  from {'cotton': 50, 'antiseptic': 20, 'energy': 20, 'paper': 3}
+  PROD: 60x ointment  from {'lard': 25, 'active_ingredient': 15, 'jar': 60, 'energy': 22, 'paper': 2}
+  PROD: 300x omega_3_capsule  from {'fish_oil': 80, 'pill_bottle': 150, 'energy': 20, 'paper': 2}
+  PROD: 120x bandage  from {'chitin': 40, 'cotton': 30, 'energy': 15, 'paper': 2}
+  PROD: 60x ointment  from {'collagen_powder': 30, 'fish_oil': 15, 'jar': 60, 'energy': 22, 'paper': 2}
+  PROD: 100x vitamins  from {'collagen_powder': 20, 'omega_3_capsule': 15, 'pill_bottle': 50, 'energy': 15, 'paper': 2}
+  PROD: 25x active_ingredient  from {'urchin': 60, 'water': 40, 'energy': 60, 'paper': 2}
+  PROD: 90x antiseptic  from {'tea_essential_oil': 12, 'water': 50, 'bottle': 90, 'energy': 25, 'paper': 2}
+  PROD: 60x ointment  from {'cocoa_essential_oil': 15, 'lard': 20, 'jar': 60, 'energy': 22, 'paper': 2}
+  PROD: 60x ointment  from {'cotton_essential_oil': 12, 'active_ingredient': 10, 'jar': 60, 'energy': 22, 'paper': 2}
+  PROD: 100x vitamins  from {'cherry_essential_oil': 10, 'gelatin': 25, 'pill_bottle': 60, 'energy': 28, 'paper': 3}
+  PROD: 120x vitamins  from {'apple_essential_oil': 10, 'oranges': 30, 'gelatin': 20, 'pill_bottle': 60, 'energy': 28, 'paper': 3}
+  PROD: 70x cough_syrup  from {'onion_essential_oil': 8, 'honey': 20, 'water': 40, 'bottle': 70, 'energy': 25, 'paper': 2}
+  PROD: 80x medicine  from {'biotech_compound': 15, 'gelatin': 15, 'pill_bottle': 50, 'energy': 30, 'paper': 3}
+  PROD: 60x active_ingredient  from {'research_enzyme': 8, 'water': 40, 'energy': 60, 'paper': 2}
+
+pharmacy  |  Community Pharmacy  |  retail
+  startup=$22,000  wage=$180.0/cycle  cycles=50  terrain=['urban']
+  RETAIL: ['medicine', 'bandage', 'painkillers', 'vitamins', 'cough_syrup', 'antiseptic', 'ointment', 'apple_cider_vinegar', 'orange_essential_oil', 'cotton_essential_oil']
+
+pie_bakery  |  Pie & Cake Bakery  |  production
+  startup=$20,000  wage=$90.0/cycle  cycles=75  terrain=['urban', 'prairie']
+  PROD: 40x pie_crust  from {'flour': 25, 'butter': 20, 'salt': 3, 'energy': 15, 'paper': 1}
+  PROD: 35x fruit_filling  from {'cherries': 50, 'sugar': 25, 'energy': 15, 'paper': 1}
+  PROD: 25x cherry_pie  from {'pie_crust': 25, 'fruit_filling': 30, 'energy': 20, 'paper': 1}
+  PROD: 25x apple_pie  from {'pie_crust': 25, 'apples': 50, 'sugar': 20, 'cinnamon': 5, 'energy': 20, 'paper': 1}
+  PROD: 30x frosting  from {'butter': 15, 'sugar': 30, 'cream': 8, 'vanilla_beans': 3, 'energy': 12, 'paper': 1}
+  PROD: 15x chocolate_cake  from {'flour': 15, 'chocolate': 25, 'eggs': 12, 'frosting': 15, 'energy': 30, 'paper': 1}
+  PROD: 12x cheesecake  from {'cream': 15, 'eggs': 15, 'sugar': 25, 'vanilla_beans': 3, 'energy': 28, 'paper': 1, 'condensed_milk': 15}
+
+pipe_tobacco_house  |  Pipe Tobacco House  |  production
+  startup=$32,000  wage=$210.0/cycle  cycles=150  terrain=['urban', 'prairie', 'hills']
+  PROD: 80x aromatic_pipe_tobacco  from {'cavendish_tobacco': 100, 'sugar': 30, 'jar': 80, 'paper': 3}
+  PROD: 60x english_blend_pipe_tobacco  from {'latakia_leaf': 80, 'sun_cured_tobacco': 60, 'air_cured_tobacco': 40, 'jar': 60, 'paper': 3}
+  PROD: 80x virginia_pipe_tobacco  from {'flue_cured_tobacco': 120, 'jar': 80, 'paper': 3}
+  PROD: 70x flake_pipe_tobacco  from {'virginia_leaf': 120, 'cavendish_tobacco': 40, 'energy': 8000, 'jar': 70, 'paper': 3}
+  PROD: 40x tobacco_rope  from {'fire_cured_tobacco': 100, 'air_cured_tobacco': 60, 'energy': 5000, 'paper': 2}
+  PROD: 50x dokha  from {'dokha_leaf': 80, 'sun_cured_tobacco': 20, 'jar': 50, 'paper': 2}
+  PROD: 70x virginia_pipe_tobacco  from {'golden_burley_leaf': 100, 'cavendish_tobacco': 20, 'jar': 70, 'paper': 3}
+
+plantation  |  Mixed Fruit & Vegetable Plantation  |  production
+  startup=$3,000  wage=$12.25/cycle  cycles=60  terrain=['prairie', 'savanna', 'forest']
+  PROD: 25x apples  from {'apple_seeds': 1, 'water': 5, 'paper': 1}
+  PROD: 15x oranges  from {'orange_seeds': 1, 'water': 5, 'energy': 15, 'paper': 1}
+  PROD: 50x potatoes  from {'potato_sack': 1, 'water': 10, 'energy': 10, 'paper': 1}
+  PROD: 45x carrots  from {'carrot_sack': 1, 'water': 8, 'energy': 10, 'paper': 1}
+  PROD: 80x apple_seeds  from {'apples': 1, 'water': 2.5, 'paper': 1}
+  PROD: 60x orange_seeds  from {'oranges': 1, 'water': 5, 'paper': 1}
+  PROD: 12x lettuce  from {'water': 9.5, 'paper': 1}
+
+poultry_farm  |  Poultry & Swine Farm  |  production
+  startup=$9,500  wage=$50.0/cycle  cycles=90  terrain=['prairie', 'savanna', 'hills']
+  PROD: 8x pig  from {'water': 100, 'corn': 80, 'paper': 1}
+  PROD: 15x duck  from {'water': 60, 'corn': 40, 'paper': 1}
+  PROD: 5x chicken  from {'water': 30, 'silk_worm': 60, 'paper': 1}
+  PROD: 8500x eggs  from {'energy': 30, 'chicken': 2, 'paper': 1}
+  PROD: 10x pig  from {'water': 100, 'fish_meal': 60, 'paper': 2}
+  PROD: 12x duck  from {'water': 80, 'fish_meal': 50, 'paper': 2}
+  PROD: 18x chicken  from {'water': 60, 'fish_meal': 40, 'paper': 2}
+
+pub  |  Neighborhood Pub  |  retail
+  startup=$18,000  wage=$95.0/cycle  cycles=40  terrain=['urban', 'prairie']
+  RETAIL: ['beer', 'lager', 'stout', 'cider', 'whiskey', 'vodka', 'rum', 'moonshine']
+
+publishing_house  |  Publishing House  |  production
+  startup=$45,000  wage=$180.0/cycle  cycles=80  terrain=['urban', 'prairie']
+  PROD: 50x newspaper  from {'paper': 20, 'ink': 30, 'energy': 40}
+  PROD: 150x magazine  from {'paper': 1500, 'ink': 40, 'glue': 10, 'energy': 45}
+  PROD: 2x novel  from {'paper': 200, 'ink': 25, 'glue': 15, 'energy': 35}
+  PROD: 5x textbook  from {'paper': 2500, 'ink': 35, 'glue': 20, 'energy': 40}
+
+purse_seine_fleet  |  Purse Seine Fleet  |  production
+  startup=$200,000  wage=$350.0/cycle  cycles=7200  terrain=['coastal', 'ocean']
+  PROD: 600x sardines  from {'bio_fuel': 100, 'energy': 20, 'purse_seiner': 1}
+  PROD: 500x anchovies  from {'bio_fuel': 100, 'energy': 20, 'purse_seiner': 1}
+  PROD: 550x herring  from {'bio_fuel': 90, 'energy': 20, 'purse_seiner': 1}
+  PROD: 450x mackerel  from {'bio_fuel': 90, 'energy': 20, 'purse_seiner': 1}
+  PROD: 150x yellowfin_tuna  from {'bio_fuel': 120, 'energy': 25, 'purse_seiner': 1}
+  PROD: 300x bluefish  from {'bio_fuel': 80, 'energy': 15, 'purse_seiner': 1}
+
+refinery  |  Metal Refinery  |  production
+  startup=$12,000  wage=$120.0/cycle  cycles=150  terrain=['mountain', 'hills', 'prairie', 'desert']
+  PROD: 40x copper  from {'copper_ore': 150, 'energy': 150, 'water': 50, 'paper': 2}
+  PROD: 34x iron  from {'iron_ore': 160, 'energy': 200, 'water': 60, 'paper': 2}
+  PROD: 125x brass  from {'copper': 65, 'zinc_ore': 30, 'energy': 100, 'polyester': 30, 'paper': 2}
+
+rendering_plant  |  Industrial Rendering Plant  |  production
+  startup=$6,000  wage=$80.0/cycle  cycles=40  terrain=['mountain', 'prairie', 'hills']
+  PROD: 30x glue  from {'horse': 1, 'energy': 25, 'water': 25, 'paper': 1}
+  PROD: 5x lard  from {'cow': 1, 'energy': 25, 'paper': 1}
+  PROD: 50x beef  from {'cow': 1, 'energy': 25, 'paper': 1}
+  PROD: 40x glue  from {'fish_meal': 80, 'water': 20, 'energy': 12, 'paper': 1}
+  PROD: 20x lard  from {'fish_oil': 60, 'energy': 10, 'paper': 1}
+  PROD: 20x peanut_oil  from {'peanut': 80, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'merino': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'corriedale': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'suffolk_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'dorset_horn_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'oxford_down_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'columbia_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'romney_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'charollais_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'poll_dorset': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'south_african_meat_merino': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'royal_white_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 6x lard  from {'north_country_cheviot': 1, 'energy': 20, 'paper': 1}
+
+rice_paddy  |  Rice Paddy  |  production
+  startup=$14,000  wage=$120.0/cycle  cycles=480  terrain=['marsh', 'jungle', 'savanna', 'prairie']
+  PROD: 150x rice  from {'rice_seeds': 8, 'water': 60, 'energy': 10, 'paper': 1}
+  PROD: 15x rice_seeds  from {'rice': 10, 'water': 5, 'paper': 1}
+
+ritual_grounds  |  Sacred Ritual Grounds  |  production
+  startup=$50,000  wage=$200.0/cycle  cycles=300  terrain=['prairie', 'hills', 'mountain', 'desert', 'savanna']
+  PROD: 1x blessed_sheep  from {'merino': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x blessed_sheep  from {'corriedale': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x blessed_sheep  from {'suffolk_sheep': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x blessed_sheep  from {'dorset_horn_sheep': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x blessed_sheep  from {'romney_sheep': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x blessed_sheep  from {'oxford_down_sheep': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x blessed_sheep  from {'columbia_sheep': 3, 'beeswax': 10, 'water': 30, 'energy': 20, 'paper': 1}
+  PROD: 1x rams_horn  from {'merino': 200, 'rambouillet_sheep': 150, 'suffolk_sheep': 150, 'salt': 100, 'beeswax': 50, 'energy': 1000, 'water': 200, 'paper': 10}
+
+rope_works  |  Rope Works  |  production
+  startup=$30,000  wage=$180/cycle  cycles=90  terrain=['prairie', 'forest', 'hills']
+  PROD: 40x rope  from {'cotton': 30, 'energy': 8, 'paper': 1}
+  PROD: 30x rice_sack  from {'rice': 120, 'burlap': 30, 'energy': 5, 'paper': 1}
+  PROD: 40x rope_wick  from {'cotton': 30, 'apple_seeds': 5, 'energy': 500, 'paper': 1}
+
+rubber_plant  |  Rubber Factory  |  production
+  startup=$45,000  wage=$150.0/cycle  cycles=120  terrain=['prairie', 'desert', 'marsh']
+  PROD: 60x rubber  from {'oil': 30, 'energy': 150, 'water': 50, 'paper': 2}
+  PROD: 40x fiberglass  from {'glass': 20, 'oil': 15, 'energy': 80, 'paper': 1}
+
+sake_brewery  |  Sake Brewery  |  production
+  startup=$42,000  wage=$140.0/cycle  cycles=240  terrain=['urban', 'prairie', 'hills']
+  PROD: 40x sake  from {'rice': 120, 'water': 80, 'yeast': 5, 'energy': 50, 'bottle': 40, 'paper': 2}
+  PROD: 50x rice_wine  from {'rice': 100, 'water': 60, 'yeast': 3, 'energy': 35, 'bottle': 50, 'paper': 2}
+
+salt_works  |  Salt Works  |  production
+  startup=$8,000  wage=$40.0/cycle  cycles=100  terrain=['desert', 'marsh', 'island']
+  PROD: 150x salt  from {'water': 100, 'energy': 50, 'paper': 1}
+
+sand_quarry  |  Sand & Gravel Quarry  |  production
+  startup=$25,000  wage=$80.0/cycle  cycles=120  terrain=['desert', 'prairie', 'hills']
+  PROD: 200x sand  from {'energy': 80, 'water': 40, 'paper': 2}
+
+seafood_condiment_factory  |  Seafood Condiment Factory  |  production
+  startup=$55,000  wage=$250.0/cycle  cycles=7200  terrain=['coastal', 'urban', 'prairie']
+  PROD: 300x fish_sauce  from {'anchovies': 400, 'salt': 80, 'energy': 30}
+  PROD: 300x fish_sauce  from {'sardines': 400, 'salt': 80, 'energy': 30}
+  PROD: 250x oyster_sauce  from {'oysters': 300, 'salt': 30, 'energy': 25}
+  PROD: 200x shrimp_paste  from {'shrimp': 350, 'salt': 60, 'energy': 25}
+  PROD: 200x worcestershire_sauce  from {'anchovies': 200, 'salt': 30, 'energy': 20}
+  PROD: 250x anchovy_paste  from {'anchovies': 350, 'salt': 50, 'energy': 20}
+  PROD: 50x conch_shell  from {'conch': 100, 'energy': 10}
+
+seafood_restaurant  |  Seafood Restaurant  |  retail
+  startup=$45,000  wage=$500.0/cycle  cycles=90  terrain=['coastal', 'urban', 'island']
+  PROD: 60x fish_and_chips  from {'fish_fillet': 50, 'potatoes': 60, 'energy': 20}
+  PROD: 50x seafood_chowder  from {'clams': 80, 'shrimp_peeled': 40, 'cream': 30, 'potatoes': 40, 'energy': 15}
+  PROD: 40x lobster_bisque  from {'lobster_meat': 30, 'cream': 40, 'butter': 15, 'energy': 15}
+  PROD: 60x grilled_salmon  from {'salmon_fillet': 50, 'energy': 12}
+  PROD: 80x prawn_cocktail  from {'shrimp_peeled': 80, 'energy': 10}
+  RETAIL: ['fish_and_chips', 'seafood_chowder', 'lobster_bisque', 'grilled_salmon', 'prawn_cocktail', 'calamari', 'lobster_meat', 'crawfish', 'langoustine', 'mussels', 'octopus_cleaned']
+
+seafood_smokehouse  |  Seafood Smokehouse  |  production
+  startup=$45,000  wage=$200.0/cycle  cycles=5400  terrain=['coastal', 'forest', 'hills']
+  PROD: 100x smoked_salmon  from {'salmon': 150, 'lumber': 30, 'salt': 15, 'energy': 25}
+  PROD: 150x smoked_mackerel  from {'mackerel': 200, 'lumber': 25, 'salt': 12, 'energy': 20}
+  PROD: 80x smoked_eel  from {'eel': 120, 'lumber': 20, 'salt': 10, 'energy': 20}
+  PROD: 200x salt_cod  from {'cod': 300, 'salt': 60, 'energy': 15}
+  PROD: 250x pickled_herring  from {'herring': 300, 'salt': 40, 'energy': 20}
+  PROD: 200x dried_anchovies  from {'anchovies': 300, 'salt': 40, 'energy': 15}
+  PROD: 150x dried_squid  from {'squid': 250, 'salt': 30, 'energy': 20}
+  PROD: 80x unagi_kabayaki  from {'eel': 120, 'sugar': 20, 'energy': 25}
+  PROD: 50x isinglass  from {'cod': 100, 'energy': 15}
+  PROD: 50x isinglass  from {'haddock': 100, 'energy': 15}
+  PROD: 5x tobacco_cured_fish  from {'bluefin_tuna': 3, 'swordfish': 2, 'lobster': 2, 'caviar': 1, 'latakia_leaf': 10, 'perique_leaf': 5, 'sumatra_leaf': 8, 'cameroon_leaf': 8, 'tomato': 15, 'onions': 10, 'carrots': 10, 'lettuce': 5, 'salt': 15, 'lumber': 20, 'energy': 300}
+
+sheep_dog_kennel  |  Sheep Dog Kennel & Training  |  production
+  startup=$25,000  wage=$150.0/cycle  cycles=960  terrain=['prairie', 'hills', 'forest', 'mountain']
+  PROD: 3x border_collie  from {'water': 12, 'beef': 2, 'chicken': 2, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 3x german_shepherd  from {'water': 15, 'beef': 3, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 3x australian_kelpie  from {'water': 12, 'beef': 2, 'chicken': 2, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x old_english_sheepdog  from {'water': 15, 'beef': 2, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x belgian_shepherd  from {'water': 12, 'beef': 2, 'pork': 1, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x white_swiss_shepherd  from {'water': 12, 'chicken': 3, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x belgian_malinois  from {'water': 14, 'beef': 3, 'chicken': 1, 'corn': 2, 'energy': 30, 'paper': 1}
+  PROD: 2x pembroke_welsh_corgi  from {'water': 10, 'beef': 1, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 2x english_shepherd  from {'water': 12, 'beef': 2, 'pork': 1, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x scotch_collie  from {'water': 12, 'beef': 2, 'corn': 3, 'eggs': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x bearded_collie  from {'water': 12, 'chicken': 2, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 2x samoyed  from {'water': 15, 'beef': 2, 'corn': 2, 'eggs': 4, 'energy': 30, 'paper': 1}
+  PROD: 2x icelandic_sheepdog  from {'water': 10, 'chicken': 2, 'corn': 2, 'eggs': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x cardigan_welsh_corgi  from {'water': 10, 'beef': 1, 'corn': 4, 'eggs': 2, 'energy': 30, 'paper': 1}
+  PROD: 2x catalan_sheepdog  from {'water': 12, 'pork': 2, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x miniature_american_shepherd  from {'water': 10, 'chicken': 1, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x lapponian_herder  from {'water': 12, 'beef': 2, 'corn': 2, 'eggs': 2, 'energy': 30, 'paper': 1}
+  PROD: 2x pyrenean_sheepdog  from {'water': 10, 'chicken': 1, 'corn': 3, 'eggs': 2, 'energy': 30, 'paper': 1}
+  PROD: 2x finnish_lapphund  from {'water': 10, 'beef': 1, 'corn': 3, 'eggs': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x belgian_tervuren  from {'water': 12, 'beef': 2, 'chicken': 1, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x polish_lowland_sheepdog  from {'water': 12, 'pork': 2, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 2x beauceron  from {'water': 14, 'beef': 3, 'pork': 1, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 2x catahoula_leopard_dog  from {'water': 14, 'beef': 1, 'pork': 3, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 2x croatian_sheepdog  from {'water': 12, 'beef': 2, 'corn': 3, 'eggs': 2, 'energy': 30, 'paper': 1}
+  PROD: 2x bouvier_des_flandres  from {'water': 14, 'beef': 3, 'pork': 2, 'corn': 5, 'energy': 30, 'paper': 1}
+  PROD: 2x rottweiler  from {'water': 15, 'beef': 4, 'corn': 5, 'energy': 30, 'paper': 1}
+  PROD: 2x basque_shepherd  from {'water': 12, 'beef': 2, 'pork': 1, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 2x carpathian_shepherd  from {'water': 15, 'beef': 4, 'pork': 2, 'corn': 4, 'energy': 30, 'paper': 1}
+  PROD: 1x bergamasco_shepherd  from {'water': 12, 'pork': 2, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 1x schipperke  from {'water': 8, 'pork': 1, 'corn': 2, 'eggs': 2, 'energy': 30, 'paper': 1}
+  PROD: 1x appenzeller_sennenhund  from {'water': 12, 'beef': 2, 'pork': 2, 'corn': 3, 'energy': 30, 'paper': 1}
+  PROD: 1x belgian_laekenois  from {'water': 12, 'beef': 2, 'chicken': 1, 'corn': 3, 'eggs': 1, 'energy': 30, 'paper': 1}
+  PROD: 1x tibetan_terrier  from {'water': 10, 'chicken': 2, 'corn': 2, 'eggs': 4, 'energy': 30, 'paper': 1}
+
+shellfish_beds  |  Shellfish Beds  |  production
+  startup=$35,000  wage=$80.0/cycle  cycles=5400  terrain=['coastal', 'marsh', 'island']
+  PROD: 300x scallops  from {'bio_fuel': 30, 'energy': 10, 'dredger': 1}
+  PROD: 400x clams  from {'bio_fuel': 25, 'energy': 8, 'dredger': 1}
+  PROD: 350x oysters  from {'bio_fuel': 25, 'energy': 8, 'dredger': 1}
+  PROD: 500x mussels  from {'bio_fuel': 20, 'energy': 8, 'dredger': 1}
+  PROD: 200x barnacles  from {'bio_fuel': 20, 'energy': 8, 'dredger': 1}
+
+shoe_factory  |  Shoe Factory  |  production
+  startup=$50,000  wage=$280/cycle  cycles=160  terrain=['urban', 'prairie', 'hills']
+  PROD: 25x shoes  from {'leather': 30, 'rubber': 15, 'glue': 10, 'energy': 15, 'paper': 2}
+
+shrimp_fleet  |  Shrimp Fleet  |  production
+  startup=$120,000  wage=$250.0/cycle  cycles=7200  terrain=['coastal', 'ocean', 'marsh']
+  PROD: 600x shrimp  from {'bio_fuel': 100, 'energy': 20, 'shrimp_trawler': 1}
+
+snuff_and_chew_factory  |  Snuff and Chew Factory  |  production
+  startup=$26,000  wage=$185.0/cycle  cycles=120  terrain=['urban', 'prairie']
+  PROD: 80x snuff  from {'fire_cured_tobacco': 100, 'energy': 5000, 'jar': 80, 'paper': 2}
+  PROD: 100x chewing_tobacco  from {'fire_cured_tobacco': 120, 'air_cured_tobacco': 60, 'sugar': 20, 'energy': 8000, 'paper': 2}
+  PROD: 70x hookah_tobacco  from {'air_cured_tobacco': 80, 'cavendish_tobacco': 40, 'sugar': 50, 'jar': 70, 'paper': 3}
+  PROD: 30x sacred_tobacco  from {'perique_tobacco': 40, 'fire_cured_tobacco': 30, 'sun_cured_tobacco': 20, 'jar': 30, 'paper': 2}
+
+solar_plant  |  Solar Power Station  |  production
+  startup=$5,000  wage=$10.0/cycle  cycles=100  terrain=['desert', 'prairie', 'savanna', 'hills', 'tundra']
+  PROD: 625x energy  from {}
+
+soup_kitchen  |  Soup Kitchen  |  production
+  startup=$5,000  wage=$50.0/cycle  cycles=60  terrain=['prairie', 'hills', 'savanna']
+  PROD: 20x stew  from {'carrots': 10, 'potatoes': 2, 'water': 128, 'beef': 15, 'energy': 25, 'paper': 1, 'lard': 5, 'cream': 1, 'vinegar': 3}
+  PROD: 15x cider_soup  from {'apples': 15, 'water': 20, 'beef': 3, 'energy': 20, 'paper': 1, 'sugar': 1, 'noodles': 10}
+  PROD: 15x apple_sauce  from {'apples': 60, 'sugar': 15, 'water': 150, 'energy': 180, 'paper': 1}
+  PROD: 20x jam  from {'cherries': 40, 'sugar': 30, 'jar': 20, 'energy': 20, 'paper': 1}
+  PROD: 20x jelly  from {'grapes': 50, 'sugar': 35, 'jar': 20, 'energy': 20, 'paper': 1}
+
+specialty_tobacco_farm  |  Specialty Tobacco Farm  |  production
+  startup=$13,000  wage=$110.0/cycle  cycles=450  terrain=['marsh', 'forest', 'hills']
+  PROD: 80x latakia_leaf  from {'tobacco_seeds': 8, 'water': 40, 'energy': 12, 'paper': 1}
+  PROD: 50x perique_leaf  from {'tobacco_seeds': 4, 'water': 50, 'energy': 10, 'paper': 1}
+  PROD: 100x cavendish_leaf  from {'tobacco_seeds': 8, 'water': 45, 'energy': 10, 'paper': 1}
+  PROD: 12x tobacco_seeds  from {'latakia_leaf': 10, 'water': 3, 'paper': 1}
+
+spice_plantation  |  Spice & Vanilla Plantation  |  production
+  startup=$20,000  wage=$55.0/cycle  cycles=200  terrain=['jungle', 'island', 'marsh']
+  PROD: 30x vanilla_beans  from {'water': 25, 'energy': 12, 'paper': 1}
+  PROD: 50x cinnamon  from {'water': 20, 'energy': 10, 'paper': 1}
+
+stationery_store  |  Stationery & Office  |  retail
+  startup=$2,000  wage=$145.0/cycle  cycles=3200  terrain=['prairie', 'hills']
+  RETAIL: ['paper', 'religious_book', 'art_book', 'ink', 'paint', 'notebook', 'postcard', 'envelope']
+
+sushi_bar  |  Sushi Bar  |  retail
+  startup=$55,000  wage=$600.0/cycle  cycles=90  terrain=['coastal', 'urban', 'island']
+  RETAIL: ['salmon_fillet', 'tuna_steak', 'bluefin_tuna_sashimi', 'unagi_kabayaki', 'imitation_crab', 'salmon_roe', 'calamari', 'rice', 'sake', 'urchin', 'premium_sashimi']
+
+tea_plantation  |  Tea Plantation  |  production
+  startup=$15,000  wage=$50.0/cycle  cycles=140  terrain=['hills', 'mountain', 'jungle']
+  PROD: 120x tea_leaves  from {'tea_seeds': 6, 'water': 30, 'energy': 10, 'paper': 1}
+  PROD: 15x tea_seeds  from {'tea_leaves': 20, 'water': 5, 'paper': 1}
+
+tequila_distillery  |  Tequila Distillery  |  production
+  startup=$48,000  wage=$140.0/cycle  cycles=220  terrain=['desert', 'savanna']
+  PROD: 35x tequila  from {'agave': 60, 'water': 40, 'energy': 65, 'bottle': 35, 'paper': 2}
+
+textile_and_tannery  |  Textile Mill & Tannery  |  production
+  startup=$8,000  wage=$15.0/cycle  cycles=720  terrain=['forest', 'savanna', 'mountain', 'jungle', 'hills']
+  PROD: 3.5x leather  from {'cow': 1, 'energy': 20, 'paper': 1}
+  PROD: 15x burlap  from {'cotton': 10, 'energy': 10, 'paper': 1}
+  PROD: 60x polyester  from {'bio_fuel': 25, 'paper': 1, 'oil': 1}
+  PROD: 1x silk  from {'water': 15, 'energy': 20, 'silk_worm': 20, 'paper': 1}
+  PROD: 2x leather  from {'merino': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'corriedale': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'suffolk_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'lincoln_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'border_leicester_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'romney_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'columbia_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'karakul_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'icelandic_sheep': 1, 'energy': 20, 'paper': 1}
+  PROD: 2x leather  from {'poll_dorset': 1, 'energy': 20, 'paper': 1}
+
+thread_mill  |  Thread Mill  |  production
+  startup=$6,000  wage=$45.0/cycle  cycles=100  terrain=['prairie', 'hills', 'savanna', 'forest']
+  PROD: 60x thread  from {'yarn': 25, 'energy': 20, 'paper': 1}
+
+tobacco_curing_house  |  Tobacco Curing House  |  production
+  startup=$38,000  wage=$160.0/cycle  cycles=200  terrain=['prairie', 'hills', 'forest']
+  PROD: 100x flue_cured_tobacco  from {'virginia_leaf': 150, 'energy': 60, 'paper': 2}
+  PROD: 120x air_cured_tobacco  from {'burley_leaf': 150, 'energy': 20, 'paper': 2}
+  PROD: 80x fire_cured_tobacco  from {'latakia_leaf': 120, 'lumber': 30, 'energy': 80, 'paper': 2}
+  PROD: 90x sun_cured_tobacco  from {'oriental_leaf': 130, 'energy': 10, 'paper': 2}
+  PROD: 60x cavendish_tobacco  from {'cavendish_leaf': 100, 'sugar': 20, 'energy': 40, 'paper': 2}
+  PROD: 40x perique_tobacco  from {'perique_leaf': 80, 'energy': 50, 'paper': 2}
+
+tobacco_shop  |  Tobacco Shop  |  retail
+  startup=$24,000  wage=$200.0/cycle  cycles=60  terrain=['urban', 'prairie', 'hills', 'island']
+  RETAIL: ['cigarette', 'virginia_cigarette', 'menthol_cigarette', 'turkish_cigarette', 'clove_cigarette', 'cigarillo', 'corona_cigar', 'robusto_cigar', 'churchill_cigar', 'premium_cigar', 'cuban_style_cigar', 'aromatic_pipe_tobacco', 'english_blend_pipe_tobacco', 'virginia_pipe_tobacco', 'flake_pipe_tobacco', 'tobacco_rope', 'dokha', 'snuff', 'chewing_tobacco', 'hookah_tobacco', 'sacred_tobacco']
+
+tomato_cannery  |  Tomato Cannery  |  production
+  startup=$28,000  wage=$110.0/cycle  cycles=120  terrain=['prairie', 'savanna', 'urban']
+  PROD: 80x tomato_sauce  from {'tomato': 200, 'onions': 30, 'energy': 20, 'jar': 80, 'paper': 2}
+  PROD: 80x pizza_sauce  from {'tomato': 200, 'onions': 20, 'energy': 20, 'jar': 80, 'paper': 2}
+  PROD: 60x ketchup  from {'tomato': 180, 'sugar': 40, 'vinegar': 20, 'energy': 20, 'jar': 60, 'paper': 2}
+  PROD: 60x salsa  from {'tomato': 150, 'onions': 40, 'vinegar': 10, 'energy': 15, 'jar': 60, 'paper': 2}
+
+towel_mill  |  Towel Mill  |  production
+  startup=$35,000  wage=$200/cycle  cycles=110  terrain=['prairie', 'hills']
+  PROD: 30x towel  from {'cotton': 40, 'energy': 10, 'paper': 2}
+
+trawler_fleet  |  Trawler Fleet  |  production
+  startup=$150,000  wage=$300.0/cycle  cycles=7200  terrain=['coastal', 'ocean']
+  PROD: 200x cod  from {'bio_fuel': 80, 'energy': 20, 'trawler': 1}
+  PROD: 180x haddock  from {'bio_fuel': 80, 'energy': 20, 'trawler': 1}
+  PROD: 250x pollock  from {'bio_fuel': 80, 'energy': 20, 'trawler': 1}
+  PROD: 150x flounder  from {'bio_fuel': 80, 'energy': 20, 'trawler': 1}
+  PROD: 100x sole  from {'bio_fuel': 80, 'energy': 20, 'trawler': 1}
+  PROD: 200x dab  from {'bio_fuel': 60, 'energy': 15, 'trawler': 1}
+  PROD: 200x coley  from {'bio_fuel': 60, 'energy': 15, 'trawler': 1}
+  PROD: 150x gurnard  from {'bio_fuel': 60, 'energy': 15, 'trawler': 1}
+  PROD: 150x red_mullet  from {'bio_fuel': 60, 'energy': 15, 'trawler': 1}
+  PROD: 80x halibut  from {'bio_fuel': 100, 'energy': 20, 'trawler': 1}
+  PROD: 60x turbot  from {'bio_fuel': 100, 'energy': 20, 'trawler': 1}
+  PROD: 120x skate  from {'bio_fuel': 70, 'energy': 15, 'trawler': 1}
+
+vegetable_farm  |  Root Vegetable Farm  |  production
+  startup=$4,500  wage=$35.0/cycle  cycles=70  terrain=['prairie', 'savanna', 'marsh']
+  PROD: 100x onions  from {'onion_seeds': 5, 'water': 20, 'energy': 8, 'paper': 1}
+  PROD: 12x onion_seeds  from {'onions': 8, 'water': 3, 'paper': 1}
+  PROD: 140x onions  from {'onion_seeds': 5, 'fish_emulsion': 5, 'water': 20, 'energy': 8, 'paper': 1}
+  PROD: 120x tomato  from {'tomato_seeds': 6, 'water': 25, 'energy': 8, 'paper': 1}
+  PROD: 160x tomato  from {'tomato_seeds': 6, 'fish_emulsion': 5, 'water': 25, 'energy': 8, 'paper': 1}
+  PROD: 12x tomato_seeds  from {'tomato': 8, 'water': 3, 'paper': 1}
+
+vineyard_estate  |  Vineyard Estate  |  production
+  startup=$25,000  wage=$75.0/cycle  cycles=200  terrain=['hills', 'mountain']
+  PROD: 150x grapes  from {'grape_seeds': 5, 'water': 40, 'energy': 15, 'paper': 2}
+  PROD: 12x grape_seeds  from {'grapes': 20, 'water': 5, 'paper': 1}
+
+virginia_tobacco_farm  |  Virginia Tobacco Farm  |  production
+  startup=$9,000  wage=$90.0/cycle  cycles=400  terrain=['prairie', 'hills', 'savanna']
+  PROD: 150x virginia_leaf  from {'tobacco_seeds': 8, 'water': 50, 'energy': 10, 'paper': 1}
+  PROD: 200x virginia_leaf  from {'tobacco_seeds': 8, 'fish_emulsion': 5, 'water': 50, 'energy': 10, 'paper': 1}
+  PROD: 15x tobacco_seeds  from {'virginia_leaf': 10, 'water': 3, 'paper': 1}
+
+water_facility  |  Water Treatment Facility  |  production
+  startup=$3,500  wage=$4.0/cycle  cycles=115  terrain=['marsh', 'prairie', 'jungle']
+  PROD: 150x water  from {'energy': 5, 'paper': 1}
+
+wine_bar  |  Wine & Spirits Bar  |  retail
+  startup=$30,000  wage=$140.0/cycle  cycles=45  terrain=['urban', 'hills']
+  RETAIL: ['red_wine', 'white_wine', 'rose_wine', 'champagne', 'whiskey', 'vodka', 'gin', 'rum', 'brandy', 'tequila']
+
+winery  |  Estate Winery  |  production
+  startup=$65,000  wage=$170.0/cycle  cycles=280  terrain=['hills', 'mountain']
+  PROD: 50x red_wine  from {'grapes': 120, 'wine_barrel': 4, 'bottle': 50, 'energy': 40, 'paper': 2, 'isinglass': 2}
+  PROD: 50x white_wine  from {'grapes': 120, 'bottle': 50, 'energy': 35, 'paper': 2, 'isinglass': 2}
+  PROD: 45x rose_wine  from {'grapes': 110, 'bottle': 45, 'energy': 35, 'paper': 2}
+  PROD: 30x champagne  from {'grapes': 100, 'sugar': 15, 'bottle': 30, 'energy': 50, 'paper': 2}
+  PROD: 40x vinegar  from {'red_wine': 30, 'energy': 15, 'paper': 1}
+
+wool_mill  |  Wool Scouring & Processing Mill  |  production
+  startup=$9,000  wage=$60.0/cycle  cycles=90  terrain=['prairie', 'hills', 'savanna', 'mountain']
+  PROD: 12x wool  from {'merino': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'corriedale': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'shetland_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'bluefaced_leicester': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'border_leicester_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'romney_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'suffolk_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'dorset_horn_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'black_welsh_mountain_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'finnsheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'lincoln_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'southdown_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'alpaca': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'angora_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'cheviot_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'mohair_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'rambouillet_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'targhee_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'cashmere_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'columbia_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'polwarth_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'polypay_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'jacob_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'cotswold_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'leicester_longwool': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'soay_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'welsh_mountain_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 12x wool  from {'lincoln_longwool': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'oxford_down_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'icelandic_sheep': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'american_tunis': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'north_country_cheviot': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'poll_dorset': 1, 'water': 10, 'energy': 15, 'paper': 1}
+  PROD: 8x wool  from {'south_african_meat_merino': 1, 'water': 10, 'energy': 15, 'paper': 1}
+
+yarn_mill  |  Yarn Spinning Mill  |  production
+  startup=$7,500  wage=$50.0/cycle  cycles=120  terrain=['prairie', 'hills', 'savanna', 'forest']
+  PROD: 40x yarn  from {'wool': 30, 'water': 20, 'energy': 25, 'paper': 1}
