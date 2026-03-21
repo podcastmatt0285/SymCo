@@ -605,26 +605,64 @@ def _seed_npc(cfg: dict):
         existing = db.query(Player).filter(Player.id == player_id).first()
 
         if existing:
-            has_businesses = (
-                db.query(Business).filter(Business.owner_id == player_id).count() > 0
+            cfg_businesses = cfg.get("businesses", [])
+            existing_biz_count = (
+                db.query(Business).filter(Business.owner_id == player_id).count()
             )
-            if has_businesses or not cfg.get("businesses"):
+
+            if existing_biz_count >= len(cfg_businesses):
                 _NPC_PLAYERS[player_id] = cfg
                 print(f"[NPC] {cfg['business_name']} already seeded (id={player_id})")
                 return
 
-            # Partial seed: player exists but businesses are missing — recover
-            print(f"[NPC] {cfg['business_name']} partially seeded, recovering businesses…")
-            plot_ids = [
+            # Config has more businesses than exist in DB — seed the remainder.
+            # This covers both the "partial first-boot" case and "new business added
+            # to config after NPC was already running" case.
+            missing_biz_cfgs = cfg_businesses[existing_biz_count:]
+            print(f"[NPC] {cfg['business_name']}: {existing_biz_count}/{len(cfg_businesses)} "
+                  f"businesses present, seeding {len(missing_biz_cfgs)} more…")
+
+            # Vacant plots already owned by this NPC (e.g. given via admin dashboard)
+            vacant_ids = [
                 p.id for p in
                 db.query(LandPlot)
-                .filter(LandPlot.owner_id == player_id)
+                .filter(LandPlot.owner_id == player_id,
+                        LandPlot.occupied_by_business_id == None)
                 .order_by(LandPlot.id.asc())
                 .all()
             ]
-            _seed_businesses(player_id, cfg, db, plot_ids)
+
+            # Build the plot_id list for the missing land-based businesses,
+            # creating new plots from seed config when no vacant plot is available.
+            seed_plots = cfg.get("seed", {}).get("land_plots", [])
+            seed_plot_idx = existing_biz_count
+            plot_ids_for_missing = []
+
+            for biz_cfg in missing_biz_cfgs:
+                if biz_cfg.get("district_id"):
+                    continue  # district business — consumes no land plot
+                if vacant_ids:
+                    plot_ids_for_missing.append(vacant_ids.pop(0))
+                elif seed_plot_idx < len(seed_plots):
+                    from land import create_land_plot
+                    plot_cfg = seed_plots[seed_plot_idx]
+                    plot = create_land_plot(
+                        owner_id          = player_id,
+                        terrain_type      = plot_cfg["terrain_type"],
+                        proximity_features= plot_cfg.get("proximity_features", []),
+                        size              = plot_cfg.get("size", 1.0),
+                    )
+                    plot_ids_for_missing.append(plot.id)
+                    print(f"[NPC]   Land plot {plot.id} ({plot_cfg['terrain_type']})")
+                else:
+                    print(f"[NPC]   WARNING: no plot available for business at config "
+                          f"index {seed_plot_idx} — will skip")
+                seed_plot_idx += 1
+
+            _seed_businesses(player_id, {**cfg, "businesses": missing_biz_cfgs},
+                             db, plot_ids_for_missing)
             _NPC_PLAYERS[player_id] = cfg
-            print(f"[NPC] Recovery complete: {cfg['business_name']}")
+            print(f"[NPC] Update complete: {cfg['business_name']}")
             return
 
         # ---- Full seed from scratch ----
