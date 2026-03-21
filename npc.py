@@ -18,11 +18,11 @@ Cash state tiers (per NPC config):
   high       → between soft_high and hard_high: spend more freely
   comfortable→ between soft_low and soft_high: normal operation
   low        → between hard_low and soft_low: tighten sell margins
-  hard_low   → cash below floor: emergency sell at market price
+  hard_low   → cash below floor: emergency sell at market price, no cost floor
 
 Pricing rule (normal):  sell_price = max(market_price * 1.02, unit_cost * 1.02)
 Pricing rule (low):     sell_price = max(market_price * 1.01, unit_cost * 1.01)
-Pricing rule (hard_low):sell_price = market_price  (no markup, move inventory)
+Pricing rule (hard_low):sell_price = market_price  (cost floor bypassed entirely)
 
 Order dedup: always check quantity already listed before placing a new order.
 Order cancel: evaluate each open order individually — never bulk-nuke.
@@ -31,7 +31,7 @@ Order cancel: evaluate each open order individually — never bulk-nuke.
 import json
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple, Type
 
 from database import engine, SessionLocal
 
@@ -39,7 +39,7 @@ from database import engine, SessionLocal
 # CONSTANTS
 # ===========================
 
-NPC_TICK_INTERVAL   = 12    # run NPC logic every N game ticks
+NPC_TICK_INTERVAL    = 12   # run NPC logic every N game ticks
 PRICE_ROLLING_WINDOW = 20   # number of recent trades for the rolling average
 
 # Sell markup rates by cash state
@@ -48,12 +48,12 @@ _MARKUP = {
     "high":        0.02,
     "comfortable": 0.02,
     "low":         0.01,
-    "hard_low":    0.00,   # list at market price, no profit margin
+    "hard_low":    0.00,   # list at market price, cost floor is bypassed
 }
 
-# Cancel a sell order if market has risen this much above our listed price
-# (means we're leaving money on the table — relist higher)
-_SELL_CANCEL_ROSE_THRESHOLD  = 0.10   # market > listed * 1.10
+# Cancel a sell order when market has risen this much above the listed price
+# (we're leaving money on the table — relist higher)
+_SELL_CANCEL_ROSE_THRESHOLD = 0.10   # market > listed * 1.10
 
 # ===========================
 # IN-MEMORY STATE
@@ -87,20 +87,48 @@ def _load_configs():
 
 
 # ===========================
+# MARKET CLASS HELPERS
+# ===========================
+
+def _order_classes(market_key: str) -> Tuple[Type, Type, Type, Type]:
+    """
+    Return (MarketOrderClass, OrderType, OrderStatus, OrderMode) for the
+    requested market.
+
+    district_market exports DistrictMarketOrder / DistrictTrade (not the
+    generic names), so we alias them here to keep the rest of the code uniform.
+    """
+    if market_key == "district":
+        from district_market import (
+            DistrictMarketOrder as MarketOrder,
+            OrderType, OrderStatus, OrderMode,
+        )
+    else:
+        from market import MarketOrder, OrderType, OrderStatus, OrderMode
+    return MarketOrder, OrderType, OrderStatus, OrderMode
+
+
+def _trade_class(market_key: str) -> Type:
+    """Return the Trade model for the requested market."""
+    if market_key == "district":
+        from district_market import DistrictTrade as Trade
+    else:
+        from market import Trade
+    return Trade
+
+
+# ===========================
 # ROLLING AVERAGE PRICE
 # ===========================
 
-def _rolling_avg(item_type: str, market: str = "regular") -> Optional[float]:
+def _rolling_avg(item_type: str, market_key: str = "regular") -> Optional[float]:
     """
     Return the rolling average price of the last PRICE_ROLLING_WINDOW trades
     for item_type on either the regular or district market.
     Returns None if no trades exist yet.
     """
     try:
-        if market == "district":
-            from district_market import Trade
-        else:
-            from market import Trade
+        Trade = _trade_class(market_key)
         db = SessionLocal()
         try:
             recent = (
@@ -119,10 +147,10 @@ def _rolling_avg(item_type: str, market: str = "regular") -> Optional[float]:
         return None
 
 
-def _get_market_price(item_type: str, market: str = "regular") -> Optional[float]:
+def _get_market_price(item_type: str, market_key: str = "regular") -> Optional[float]:
     """Get current last-trade/midpoint price from the appropriate market."""
     try:
-        if market == "district":
+        if market_key == "district":
             from district_market import get_market_price
         else:
             from market import get_market_price
@@ -142,8 +170,8 @@ def _calculate_unit_cost(business_type: str, output_item: str) -> Optional[float
     Cost = (sum of each input's rolling_avg_price * input_qty  +  base_wage_cost)
            / output_quantity
 
-    Returns None only if the config can't be found; uses 0.0 for missing prices
-    so that the market-price floor still applies.
+    Returns None if the business config can't be found.
+    Uses 0.0 for missing prices so the market-price floor still applies.
     """
     try:
         from business import BUSINESS_TYPES, get_district_business_types
@@ -168,9 +196,7 @@ def _calculate_unit_cost(business_type: str, output_item: str) -> Optional[float
                 avg = _rolling_avg(input_item, "regular")
                 if avg is None:
                     avg = _rolling_avg(input_item, "district")
-                if avg is None:
-                    avg = 0.0   # no trades yet; cost floor still applies via market price
-                input_cost += avg * input_qty
+                input_cost += (avg or 0.0) * input_qty
 
             return (input_cost + wage) / output_qty
 
@@ -205,9 +231,9 @@ def _cash_state(cash: float, caps: dict) -> str:
 def _manage_sell_orders(player_id: int, cfg: dict, state: str):
     """
     For each item in sell_items:
-    1. Evaluate and individually cancel stale orders where appropriate.
-    2. Calculate the delta between what's already listed and what should be listed.
-    3. Place a new order only for that delta.
+    1. Evaluate each open order individually; cancel where warranted.
+    2. Sum remaining listed quantity after cancellations.
+    3. Place a new order only for the delta still needed.
     """
     import inventory as inv
 
@@ -215,25 +241,21 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
 
     for item_type, sell_cfg in cfg.get("sell_items", {}).items():
         try:
-            market_key  = sell_cfg.get("market", "regular")
-            min_keep    = sell_cfg.get("min_inventory_to_keep", 0)
-            max_order   = sell_cfg.get("max_order_quantity", 10_000)
+            market_key = sell_cfg.get("market", "regular")
+            min_keep   = sell_cfg.get("min_inventory_to_keep", 0)
+            max_order  = sell_cfg.get("max_order_quantity", 10_000)
 
-            current_inv = inv.get_item_quantity(player_id, item_type)
+            current_inv  = inv.get_item_quantity(player_id, item_type)
             want_to_sell = current_inv - min_keep
             if want_to_sell <= 0:
                 continue
 
             market_price = _get_market_price(item_type, market_key)
+            MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
 
             # --- Step 1: evaluate existing orders, cancel where warranted ---
             db = SessionLocal()
             try:
-                if market_key == "district":
-                    from district_market import MarketOrder, OrderType, OrderStatus
-                else:
-                    from market import MarketOrder, OrderType, OrderStatus
-
                 active = (
                     db.query(MarketOrder)
                     .filter(
@@ -249,16 +271,16 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
                 for order in active:
                     cancel = False
                     if market_price and order.price:
-                        # Market rose >10% above our listing → relist higher
+                        # Market rose >10% above our listing — relist higher
                         if market_price > order.price * (1 + _SELL_CANCEL_ROSE_THRESHOLD):
                             cancel = True
                             print(f"[NPC] Cancel sell #{order.id} {item_type}: "
                                   f"market ${market_price:.4f} > listed ${order.price:.4f} +10%")
-                        # Hard-low cash emergency: cancel and relist at no-markup market price
+                        # Hard-low emergency: cancel and relist at bare market price
                         elif state == "hard_low" and order.price > market_price * 1.005:
                             cancel = True
                             print(f"[NPC] Cancel sell #{order.id} {item_type}: "
-                                  f"hard_low cash emergency, relisting at market")
+                                  f"hard_low emergency, relisting at market")
                     if cancel:
                         order.status = OrderStatus.CANCELLED
 
@@ -266,14 +288,9 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
             finally:
                 db.close()
 
-            # --- Step 2: compute how much is already listed after cancellations ---
+            # --- Step 2: sum remaining listed quantity after cancellations ---
             db = SessionLocal()
             try:
-                if market_key == "district":
-                    from district_market import MarketOrder, OrderType, OrderStatus
-                else:
-                    from market import MarketOrder, OrderType, OrderStatus
-
                 still_active = (
                     db.query(MarketOrder)
                     .filter(
@@ -293,7 +310,7 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
 
             need_to_list = want_to_sell - already_listed
             if need_to_list <= 0:
-                continue   # already fully covered by open orders
+                continue   # fully covered by open orders
 
             # --- Step 3: calculate target sell price ---
             unit_cost = None
@@ -305,7 +322,9 @@ def _manage_sell_orders(player_id: int, cfg: dict, state: str):
 
             base = market_price if market_price else (unit_cost or 1.0)
             sell_price = base * (1 + markup)
-            if unit_cost and unit_cost > 0:
+
+            # Apply cost floor except in hard_low emergency (must move inventory)
+            if state != "hard_low" and unit_cost and unit_cost > 0:
                 sell_price = max(sell_price, unit_cost * (1 + markup))
 
             qty = min(need_to_list, max_order)
@@ -347,22 +366,18 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
 
     for item_type, buy_cfg in cfg.get("buy_items", {}).items():
         try:
-            market_key   = buy_cfg.get("market", "regular")
-            reorder_at   = buy_cfg.get("reorder_at", 0)
-            target_inv   = buy_cfg.get("target_inventory", 0)
-            max_mult     = buy_cfg.get("max_price_multiplier", 1.10)
+            market_key = buy_cfg.get("market", "regular")
+            reorder_at = buy_cfg.get("reorder_at", 0)
+            target_inv = buy_cfg.get("target_inventory", 0)
+            max_mult   = buy_cfg.get("max_price_multiplier", 1.10)
 
-            current_inv   = inv.get_item_quantity(player_id, item_type)
-            market_price  = _get_market_price(item_type, market_key)
+            current_inv  = inv.get_item_quantity(player_id, item_type)
+            market_price = _get_market_price(item_type, market_key)
+            MarketOrder, OrderType, OrderStatus, _ = _order_classes(market_key)
 
             # --- Step 1: evaluate and cancel stale buy orders ---
             db = SessionLocal()
             try:
-                if market_key == "district":
-                    from district_market import MarketOrder, OrderType, OrderStatus
-                else:
-                    from market import MarketOrder, OrderType, OrderStatus
-
                 active = (
                     db.query(MarketOrder)
                     .filter(
@@ -377,16 +392,16 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
 
                 for order in active:
                     cancel = False
-                    # Inventory target already met — no longer need this
+                    # Inventory target already met — no longer need more
                     if current_inv >= target_inv:
                         cancel = True
                         print(f"[NPC] Cancel buy #{order.id} {item_type}: "
                               f"inventory target met ({current_inv:.0f}/{target_inv})")
-                    # Cash emergency: stop spending
+                    # Cash emergency: stop all spending
                     elif state == "hard_low":
                         cancel = True
                         print(f"[NPC] Cancel buy #{order.id} {item_type}: hard_low cash")
-                    # Our bid is now too low to ever fill (market moved up >30%)
+                    # Bid is now >30% below market — will never fill
                     elif (market_price and order.price
                           and order.price < market_price * 0.70):
                         cancel = True
@@ -403,7 +418,7 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
             if state == "hard_low":
                 continue   # no spending in emergency cash state
 
-            # Buy if below reorder threshold OR cash is above soft_high (deploy excess cash)
+            # Buy if below reorder threshold OR deploying excess cash
             should_buy = (
                 current_inv < reorder_at
                 or state in ("hard_high", "high")
@@ -417,11 +432,6 @@ def _manage_buy_orders(player_id: int, cfg: dict, state: str):
             # --- Step 3: calculate order delta ---
             db = SessionLocal()
             try:
-                if market_key == "district":
-                    from district_market import MarketOrder, OrderType, OrderStatus
-                else:
-                    from market import MarketOrder, OrderType, OrderStatus
-
                 pending = (
                     db.query(MarketOrder)
                     .filter(
@@ -488,26 +498,136 @@ def _run_npc_cycle(player_id: int, cfg: dict):
 
 
 # ===========================
+# SEEDING HELPERS
+# ===========================
+
+def _build_paused_lines(business_type: str, active_lines: list) -> str:
+    """
+    Given a business type and the list of output-item names that should be
+    ACTIVE, return a JSON string of line indices to pause (all others).
+
+    If active_lines is empty or None, all lines run (returns "[]").
+    """
+    if not active_lines:
+        return "[]"
+
+    try:
+        from business import BUSINESS_TYPES, get_district_business_types
+        all_types = {**BUSINESS_TYPES, **get_district_business_types()}
+        config = all_types.get(business_type, {})
+        lines  = config.get("production_lines", [])
+
+        paused = []
+        for idx, line in enumerate(lines):
+            outputs = line.get("outputs", {})
+            # Pause this line if none of its outputs are in active_lines
+            if not any(out in active_lines for out in outputs):
+                paused.append(idx)
+
+        return json.dumps(paused)
+    except Exception as e:
+        print(f"[NPC] Could not build paused_lines for {business_type}: {e}")
+        return "[]"
+
+
+def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list):
+    """
+    Create Business rows for the NPC and mark land plots as occupied.
+    Called both on first-time seed and on partial-seed recovery.
+    """
+    from business import Business, BUSINESS_TYPES, get_district_business_types
+    from land import LandPlot
+
+    all_types = {**BUSINESS_TYPES, **get_district_business_types()}
+    plot_iter = iter(plot_ids)
+
+    for biz_cfg in cfg.get("businesses", []):
+        btype = biz_cfg["business_type"]
+        if btype not in all_types:
+            print(f"[NPC]   WARNING: unknown business_type {btype!r} — skipping")
+            continue
+
+        district_id = biz_cfg.get("district_id")
+        plot_id     = None
+
+        if not district_id:
+            plot_id = next(plot_iter, None)
+            if plot_id is None:
+                print(f"[NPC]   WARNING: no land plot available for {btype} — skipping")
+                continue
+
+        paused_lines = _build_paused_lines(btype, biz_cfg.get("active_lines", []))
+
+        biz = Business(
+            owner_id     = player_id,
+            land_plot_id = plot_id,
+            district_id  = district_id,
+            business_type= btype,
+            is_active    = True,
+            paused_lines = paused_lines,
+        )
+        db.add(biz)
+        db.commit()
+        db.refresh(biz)
+
+        if plot_id:
+            plot = db.query(LandPlot).filter(LandPlot.id == plot_id).first()
+            if plot:
+                plot.occupied_by_business_id = biz.id
+                db.commit()
+
+        print(f"[NPC]   Business {biz.id} ({btype}) — paused lines: {paused_lines} — on "
+              f"{'district ' + str(district_id) if district_id else 'plot ' + str(plot_id)}")
+
+
+# ===========================
 # SEEDING
 # ===========================
 
 def _seed_npc(cfg: dict):
     """
     Create the NPC Player row and all starting assets if they don't already exist.
-    Idempotent: safe to call on every startup; exits immediately if the row exists.
+
+    Idempotent and recovery-aware:
+      - If the Player row exists AND has at least one business → fully seeded, skip.
+      - If the Player row exists but has NO businesses → partial seed from a prior
+        failed run; land plots are re-queried and business creation is completed.
+      - If the Player row doesn't exist → full seed from scratch.
     """
     from auth import Player
     from reserve_banks import credit_usd
+    from business import Business
+    from land import LandPlot
 
     player_id = cfg["player_id"]
     db = SessionLocal()
     try:
         existing = db.query(Player).filter(Player.id == player_id).first()
+
         if existing:
+            has_businesses = (
+                db.query(Business).filter(Business.owner_id == player_id).count() > 0
+            )
+            if has_businesses or not cfg.get("businesses"):
+                _NPC_PLAYERS[player_id] = cfg
+                print(f"[NPC] {cfg['business_name']} already seeded (id={player_id})")
+                return
+
+            # Partial seed: player exists but businesses are missing — recover
+            print(f"[NPC] {cfg['business_name']} partially seeded, recovering businesses…")
+            plot_ids = [
+                p.id for p in
+                db.query(LandPlot)
+                .filter(LandPlot.owner_id == player_id)
+                .order_by(LandPlot.id.asc())
+                .all()
+            ]
+            _seed_businesses(player_id, cfg, db, plot_ids)
             _NPC_PLAYERS[player_id] = cfg
-            print(f"[NPC] {cfg['business_name']} already exists (id={player_id}), skipping seed")
+            print(f"[NPC] Recovery complete: {cfg['business_name']}")
             return
 
+        # ---- Full seed from scratch ----
         print(f"[NPC] Seeding: {cfg['business_name']} (player_id={player_id})")
 
         npc = Player(
@@ -533,15 +653,14 @@ def _seed_npc(cfg: dict):
                 inv.add_item(player_id, item, qty)
             print(f"[NPC]   Inventory: {seed['starting_inventory']}")
 
-        # Land plots (created in config order; assigned to businesses in the same order)
-        from land import LandPlot
+        # Land plots
         plot_ids = []
         for plot_cfg in seed.get("land_plots", []):
             plot = LandPlot(
-                owner_id    = player_id,
-                terrain_type= plot_cfg["terrain_type"],
-                size        = plot_cfg.get("size", 1),
-                efficiency  = plot_cfg.get("efficiency", 100),
+                owner_id     = player_id,
+                terrain_type = plot_cfg["terrain_type"],
+                size         = plot_cfg.get("size", 1),
+                efficiency   = plot_cfg.get("efficiency", 100),
             )
             db.add(plot)
             db.commit()
@@ -549,45 +668,8 @@ def _seed_npc(cfg: dict):
             plot_ids.append(plot.id)
             print(f"[NPC]   Land plot {plot.id} ({plot_cfg['terrain_type']})")
 
-        # Businesses
-        from business import Business, BUSINESS_TYPES, get_district_business_types
-        all_types = {**BUSINESS_TYPES, **get_district_business_types()}
-        plot_iter = iter(plot_ids)
-
-        for biz_cfg in cfg.get("businesses", []):
-            btype = biz_cfg["business_type"]
-            if btype not in all_types:
-                print(f"[NPC]   WARNING: unknown business_type {btype!r} — skipping")
-                continue
-
-            district_id = biz_cfg.get("district_id")
-            plot_id     = None
-
-            if not district_id:
-                plot_id = next(plot_iter, None)
-                if plot_id is None:
-                    print(f"[NPC]   WARNING: no land plot available for {btype} — skipping")
-                    continue
-
-            biz = Business(
-                owner_id     = player_id,
-                land_plot_id = plot_id,
-                district_id  = district_id,
-                business_type= btype,
-                is_active    = True,
-            )
-            db.add(biz)
-            db.commit()
-            db.refresh(biz)
-
-            if plot_id:
-                plot = db.query(LandPlot).filter(LandPlot.id == plot_id).first()
-                if plot:
-                    plot.occupied_by_business_id = biz.id
-                    db.commit()
-
-            print(f"[NPC]   Business {biz.id} ({btype}) on "
-                  f"{'district ' + str(district_id) if district_id else 'plot ' + str(plot_id)}")
+        # Businesses (with active_lines respected)
+        _seed_businesses(player_id, cfg, db, plot_ids)
 
         _NPC_PLAYERS[player_id] = cfg
         print(f"[NPC] Seeding complete: {cfg['business_name']}")
@@ -609,8 +691,8 @@ def initialize():
     """Load configs, run DB migrations, seed NPC accounts."""
     from database import run_ddl_migration
 
-    # These columns are also added by auth.migrate_player_table(), but we add
-    # them here as well so npc.py is independently safe to initialize first.
+    # These columns are also added by auth.migrate_player_table(), but adding
+    # them here makes npc.py independently safe even if initialised first.
     run_ddl_migration(engine, [
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS npc_config_key VARCHAR(128)",
