@@ -183,20 +183,21 @@ def _calculate_unit_cost(business_type: str, output_item: str) -> Optional[float
         wage = config.get("base_wage_cost", 0.0)
 
         for line in config.get("production_lines", []):
-            outputs = line.get("outputs", {})
-            if output_item not in outputs:
+            if line.get("output_item") != output_item:
                 continue
-            output_qty = outputs[output_item]
+            output_qty = line.get("output_qty", 0)
             if output_qty <= 0:
                 continue
 
             input_cost = 0.0
-            for input_item, input_qty in line.get("inputs", {}).items():
+            for inp in line.get("inputs", []):
+                inp_item = inp["item"]
+                inp_qty  = inp["quantity"]
                 # Try regular market first, then district
-                avg = _rolling_avg(input_item, "regular")
+                avg = _rolling_avg(inp_item, "regular")
                 if avg is None:
-                    avg = _rolling_avg(input_item, "district")
-                input_cost += (avg or 0.0) * input_qty
+                    avg = _rolling_avg(inp_item, "district")
+                input_cost += (avg or 0.0) * inp_qty
 
             return (input_cost + wage) / output_qty
 
@@ -519,9 +520,8 @@ def _build_paused_lines(business_type: str, active_lines: list) -> str:
 
         paused = []
         for idx, line in enumerate(lines):
-            outputs = line.get("outputs", {})
-            # Pause this line if none of its outputs are in active_lines
-            if not any(out in active_lines for out in outputs):
+            # Pause this line if its output item is not in active_lines
+            if line.get("output_item") not in active_lines:
                 paused.append(idx)
 
         return json.dumps(paused)
