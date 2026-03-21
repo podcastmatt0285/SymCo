@@ -335,25 +335,32 @@ def build_journey_bar(player_id: int) -> str:
     js = (
         '<script>(function(){'
         'var PATHS=["/land","/land-market","/districts","/district-market","/districts/create",'
-        '"/cities","/city/","/counties","/county/","/exchange","/token/","/gas-tracker","/wallet","/memecoins"];'
+        '"/cities","/city/","/counties","/county/","/exchange","/token/","/gas-tracker",'
+        '"/wallet","/memecoins"];'
         'var p=location.pathname;'
-        'if(!PATHS.some(function(r){return p===r||p.startsWith(r);}))return;'
+        'if(!PATHS.some(function(r){return p===r||p.startsWith(r.endsWith("/")?r:r+"/");}))return;'
         'var bar=document.getElementById("journey-bar");'
+        'var tab=document.getElementById("jb-tab");'
         'var body=document.getElementById("jb-body");'
         'if(!bar)return;'
-        'if(localStorage.getItem("wadsJB")!=="closed"){'
+        'function showBar(){'
         'bar.style.display="flex";'
-        'setTimeout(function(){bar.classList.add("jb-visible");},10);'  # delay so display:flex settles first
+        'setTimeout(function(){bar.classList.add("jb-visible");},10);'
         'body.classList.add("jb-on");'
+        'if(tab)tab.style.display="none";'
+        'localStorage.setItem("wadsJB","open");'
         '}'
-        'document.getElementById("jb-close").onclick=function(){'
-        'var vis=bar.style.display!=="none";'
-        'bar.style.display=vis?"none":"flex";'
-        'if(!vis)setTimeout(function(){bar.classList.add("jb-visible");},10);'
-        'else bar.classList.remove("jb-visible");'
-        'body.classList.toggle("jb-on",!vis);'
-        'localStorage.setItem("wadsJB",vis?"closed":"open");'
-        '};'
+        'function hideBar(){'
+        'bar.style.display="none";'
+        'bar.classList.remove("jb-visible");'
+        'body.classList.remove("jb-on");'
+        'if(tab)tab.style.display="flex";'
+        'localStorage.setItem("wadsJB","closed");'
+        '}'
+        'if(localStorage.getItem("wadsJB")!=="closed"){showBar();}'
+        'else{if(tab)tab.style.display="flex";}'
+        'document.getElementById("jb-close").onclick=hideBar;'
+        'if(tab)tab.onclick=showBar;'
         'document.querySelectorAll(".jb-row[href]").forEach(function(el){'
         'var h=el.getAttribute("href");'
         'if(!h||h==="#")return;'
@@ -380,6 +387,9 @@ def build_journey_bar(player_id: int) -> str:
     )
 
     return (
+        f'<button id="jb-tab" aria-label="Open navigation" title="Open navigation">'
+        f'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+        f'</button>'
         f'<div id="journey-bar">'
         f'<div id="jb-head">'
         f'<h1 id="jb-wordmark">ESTATE<span style="opacity:0.2">.</span>MGR</h1>'
@@ -1075,6 +1085,34 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 gap: 2px;
             }}
 
+            /* ── Reopen tab (visible when bar is closed) ── */
+            #jb-tab {{
+                display: none;          /* shown by JS on journey pages when bar closed */
+                position: fixed;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 96;
+                align-items: center;
+                justify-content: center;
+                width: 22px;
+                padding: 14px 0;
+                background: #241812;
+                border: 2px solid rgba(176,141,87,0.55);
+                border-left: none;
+                border-radius: 0 6px 6px 0;
+                color: rgba(176,141,87,0.6);
+                cursor: pointer;
+                transition: background 0.2s, color 0.2s, border-color 0.2s,
+                            box-shadow 0.2s;
+                box-shadow: 3px 0 12px rgba(0,0,0,0.6);
+            }}
+            #jb-tab:hover {{
+                background: rgba(176,141,87,0.12);
+                color: #B08D57;
+                border-color: #B08D57;
+                box-shadow: 3px 0 18px rgba(176,141,87,0.2);
+            }}
             /* ── Body shift when bar is open ── */
             #jb-body.jb-on {{ padding-left: 248px; }}
             @media (max-width: 768px) {{
