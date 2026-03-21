@@ -519,6 +519,11 @@
     "description": "Dense chocolate square",
     "name": "Fudge Brownie"
   },
+  "bulk_grocery_pallet": {
+    "category": "retail_shopping",
+    "description": "A wholesale pallet of assorted grocery goods sold in bulk to retailers and institutions.",
+    "name": "Bulk Grocery Pallet"
+  },
   "bunker_fuel": {
     "category": "fuel",
     "description": "High-energy bunker fuel, used to power vehicles, machinery, and industrial operations.",
@@ -718,6 +723,11 @@
     "category": "components",
     "description": "A high-tech casino chips, used in electronics, computing, and advanced manufacturing.",
     "name": "Casino Chips"
+  },
+  "casino_floor_credit": {
+    "category": "retail_entertainment",
+    "description": "Prepaid casino floor credits redeemable for table games, slots, and entertainment.",
+    "name": "Casino Floor Credit"
   },
   "cast_material": {
     "category": "industrial",
@@ -1079,6 +1089,11 @@
     "description": "Sweetened concentrated milk reduced by slow cooking",
     "name": "Condensed Milk"
   },
+  "conference_pass": {
+    "category": "retail_entertainment",
+    "description": "Full-access pass to a hosted convention or conference event including sessions and exhibits.",
+    "name": "Conference Pass"
+  },
   "connecticut_broadleaf": {
     "category": "crops",
     "description": "Dark, oily, naturally sweet binder leaf grown in the Connecticut valley",
@@ -1088,6 +1103,16 @@
     "category": "crops",
     "description": "Delicate light wrapper leaf grown under shade cloth in the Connecticut River valley",
     "name": "Connecticut Shade Leaf"
+  },
+  "consulting_contract": {
+    "category": "retail_service",
+    "description": "A professional consulting engagement providing expert advisory services to clients.",
+    "name": "Consulting Contract"
+  },
+  "consumer_electronics_bundle": {
+    "category": "retail_shopping",
+    "description": "A curated bundle of consumer electronics including devices, accessories, and warranties.",
+    "name": "Consumer Electronics Bundle"
   },
   "cookie": {
     "category": "baked_goods",
@@ -1179,6 +1204,11 @@
     "description": "Livestock for meat, leather, and dairy products",
     "name": "Cow"
   },
+  "coworking_membership": {
+    "category": "retail_service",
+    "description": "A monthly membership granting access to a shared coworking office space and amenities.",
+    "name": "Coworking Membership"
+  },
   "crab_meat": {
     "category": "seafood_product",
     "description": "Picked crab meat from shells ready to use in dishes",
@@ -1234,6 +1264,11 @@
     "description": "An industrial curriculum package, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Curriculum Package"
   },
+  "customs_clearance_service": {
+    "category": "retail_service",
+    "description": "Professional customs brokerage service handling import/export documentation and clearance.",
+    "name": "Customs Clearance Service"
+  },
   "dab": {
     "category": "seafood",
     "description": "Small flatfish similar to plaice with sweet, mild flavor",
@@ -1243,6 +1278,11 @@
     "category": "livestock",
     "description": "Ancient Namibian fat-tailed breed thriving in extreme arid desert conditions.",
     "name": "Damara Sheep"
+  },
+  "day_pass": {
+    "category": "retail_entertainment",
+    "description": "A single-day admission ticket granting full access to all theme park rides and attractions.",
+    "name": "Theme Park Day Pass"
   },
   "defibrillator": {
     "category": "industrial",
@@ -1373,6 +1413,11 @@
     "category": "shellfish",
     "description": "Pacific coast crab prized for its sweet, tender meat",
     "name": "Dungeness Crab"
+  },
+  "duty_free_spirits": {
+    "category": "retail_shopping",
+    "description": "Premium imported spirits sold duty-free at port-of-entry retail locations.",
+    "name": "Duty-Free Spirits"
   },
   "dye": {
     "category": "ingredients",
@@ -1923,6 +1968,11 @@
     "category": "seafood_product",
     "description": "Crab-flavored seafood sticks made from surimi popular in sushi rolls",
     "name": "Imitation Crab Sticks"
+  },
+  "incarceration_contract": {
+    "category": "retail_prison",
+    "description": "A government-issued contract for housing and processing inmates at a detention facility.",
+    "name": "Incarceration Contract"
   },
   "industrial_robot": {
     "category": "components",
@@ -2809,6 +2859,11 @@
     "description": "Luxury handrolled cigar using the finest aged wrapper, binder, and filler \u2014 Holt's-quality",
     "name": "Premium Cigar"
   },
+  "premium_cocktail": {
+    "category": "retail_food",
+    "description": "A premium mixed drink crafted with top-shelf spirits, fresh ingredients, and garnishes.",
+    "name": "Premium Cocktail"
+  },
   "premium_sashimi": {
     "category": "prepared_food",
     "description": "A ready-to-eat premium sashimi, prepared and sold through food service establishments.",
@@ -3483,6 +3538,11 @@
     "category": "accessories",
     "description": "A stadium seat, used in sports, recreation, or specialty retail.",
     "name": "Stadium Seat"
+  },
+  "standard_room_night": {
+    "category": "retail_service",
+    "description": "One night's accommodation in a standard hotel room including housekeeping and amenities.",
+    "name": "Standard Room Night"
   },
   "standardized_test": {
     "category": "industrial",
