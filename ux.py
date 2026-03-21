@@ -3703,7 +3703,7 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
             my_orders = mkt_db.query(MarketOrder).filter(
                 MarketOrder.player_id == player.id,
                 MarketOrder.item_type == item,
-                MarketOrder.status == OrderStatus.ACTIVE
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).order_by(MarketOrder.created_at.desc()).all()
             _active_rows = mkt_db.query(MarketOrder.item_type).filter(
                 MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
