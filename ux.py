@@ -126,11 +126,34 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
 </svg>'''
 
 
-def build_journey_bar(player_id: int, breadcrumbs: list = None):
-    """Build the fixed journey sidebar and optional breadcrumb strip.
-    Returns (journey_bar_html, breadcrumb_html)."""
+def _jb_section(label):
+    """Journey bar section header."""
+    return f'<div class="jb-section">{label}</div>'
+
+
+def _jb_node(label, href, count=None, sub=False, locked=False, hint=None, dot=False):
+    """Journey bar navigation item. Pure function — no closure state."""
+    if locked:
+        hint_html = f'<div class="jb-hint">{hint}</div>' if hint else ''
+        return f'<div class="jb-item jb-locked"><span class="jb-item-lbl">{label}</span>{hint_html}</div>'
+    badge = f'<span class="jb-badge">{count}</span>' if count is not None else ''
+    marker = '<span class="jb-dot">&#9679;</span>' if dot else ''
+    sc = ' jb-sub' if sub else ''
+    return (
+        f'<div class="jb-item{sc}" data-href="{href}">'
+        f'<a href="{href}"><span class="jb-item-lbl">{label}</span>{marker}{badge}</a>'
+        f'</div>'
+    )
+
+
+def build_journey_bar(player_id: int) -> str:
+    """Build the contextual journey sidebar HTML.
+
+    Shown only on district / city / county / crypto pages (JS URL-gated).
+    Returns an empty string when no player is logged in.
+    """
     if not player_id:
-        return "", ""
+        return ""
 
     land_count = 0
     district_count = 0
@@ -139,13 +162,13 @@ def build_journey_bar(player_id: int, breadcrumbs: list = None):
 
     try:
         import land as _land
-        land_count = len(_land.get_player_land(player_id))
+        land_count = _land.count_player_land(player_id)
     except Exception:
         pass
 
     try:
         import districts as _dist
-        district_count = len(_dist.get_player_districts(player_id))
+        district_count = _dist.count_player_districts(player_id)
     except Exception:
         pass
 
@@ -161,113 +184,109 @@ def build_journey_bar(player_id: int, breadcrumbs: list = None):
     except Exception:
         pass
 
-    # Determine next step CTA
+    has_city   = player_city   is not None
+    has_county = player_county is not None
+    county_id  = player_county.id if has_county else None
+
+    def _trunc(s, n=16):
+        return (s[:n] + "\u2026") if s and len(s) > n else (s or "")
+
+    # Next Step CTA
     if land_count == 0:
         next_label, next_href = "Buy your first plot", "/land-market"
     elif district_count == 0:
         next_label, next_href = "Create a district", "/districts/create"
-    elif not player_city:
+    elif not has_city:
         next_label, next_href = "Join or found a city", "/cities"
-    elif not player_county:
+    elif not has_county:
         next_label, next_href = "Your city needs a county", "/counties"
     else:
-        next_label = "Mine crypto"
-        next_href = f"/county/{player_county.id}/mining"
+        next_label, next_href = "Mine crypto", f"/county/{county_id}/mining"
 
-    def _trunc(s, n=15):
-        return (s[:n] + "\u2026") if s and len(s) > n else (s or "")
+    # ── Build nav nodes ───────────────────────────────────────────────
+    nodes = []
 
-    def _node(icon, label, href, count=None, locked=False, hint=None):
-        count_html = f'<span class="jb-count">{count}</span>' if count is not None else ""
-        if locked:
-            hint_html = f'<div class="jb-hint">{hint}</div>' if hint else ""
-            return (
-                f'<div class="jb-node jb-locked">'
-                f'<div style="display:flex;align-items:center;gap:6px;">'
-                f'<span style="font-size:0.82rem;line-height:1;">{icon}</span>'
-                f'<span>{label}</span>'
-                f'<span style="margin-left:auto;font-size:0.6rem;opacity:0.5;">&#x1F512;</span>'
-                f'</div>{hint_html}</div>'
-            )
-        return (
-            f'<div class="jb-node" data-href="{href}">'
-            f'<a href="{href}" style="display:flex;align-items:center;gap:6px;">'
-            f'<span style="font-size:0.82rem;line-height:1;">{icon}</span>'
-            f'<span>{label}</span>'
-            f'{count_html}'
-            f'</a></div>'
-        )
+    # TERRITORY
+    nodes.append(_jb_section("Territory"))
+    nodes.append(_jb_node("Land Portfolio",    "/land",               count=land_count     or None))
+    nodes.append(_jb_node("Districts",         "/districts",          count=district_count or None))
+    nodes.append(_jb_node("Create District",   "/districts/create",   sub=True))
+    nodes.append(_jb_node("District Market",   "/district-market",    sub=True))
 
-    city_label = _trunc(player_city.name) if player_city else "Cities"
-    city_href = f"/city/{player_city.id}" if player_city else "/cities"
-    county_id = player_county.id if player_county else None
-    county_label = _trunc(player_county.name) if player_county else "Counties"
-
-    nodes = ""
-    nodes += _node("\U0001f33f", "Land", "/land", count=land_count or None)
-    nodes += _node("\U0001f3ed", "Districts", "/districts", count=district_count or None)
-    nodes += _node("\U0001f3d9\ufe0f", city_label, city_href)
-    if player_county:
-        nodes += _node("\U0001f3db\ufe0f", county_label, f"/county/{county_id}")
-        nodes += _node("\u26cf\ufe0f", "Mining", f"/county/{county_id}/mining")
-        nodes += _node("\U0001f4b1", "Exchange", "/exchange")
+    # CITIES
+    nodes.append(_jb_section("Cities"))
+    if has_city:
+        nodes.append(_jb_node(_trunc(player_city.name), f"/city/{player_city.id}", dot=True))
+        nodes.append(_jb_node("All Cities", "/cities", sub=True))
     else:
-        nodes += _node("\U0001f3db\ufe0f", county_label, "/counties",
-                       locked=not bool(player_city),
-                       hint="Join a city first" if not player_city else None)
-        nodes += _node("\u26cf\ufe0f", "Mining", "#", locked=True, hint="Need a county")
-        nodes += _node("\U0001f4b1", "Exchange", "#", locked=True, hint="Need a county")
+        nodes.append(_jb_node("Browse Cities",      "/cities"))
 
-    # Breadcrumbs
-    breadcrumb_html = ""
-    if breadcrumbs:
-        parts = []
-        sep = '<span style="color:#B08D57;opacity:0.4;margin:0 4px;">\u203a</span>'
-        for i, c in enumerate(breadcrumbs):
-            label, url = (c if isinstance(c, (list, tuple)) and len(c) == 2 else (str(c), None))
-            is_last = (i == len(breadcrumbs) - 1)
-            if url and not is_last:
-                parts.append(f'<a href="{url}" style="color:#B08D57;text-decoration:none;">{label}</a>')
-            else:
-                parts.append(f'<span style="color:#F5F5DC;opacity:0.85;">{label}</span>')
-        breadcrumb_html = f'<div class="jb-breadcrumbs">{sep.join(parts)}</div>'
+    # COUNTY
+    nodes.append(_jb_section("County"))
+    nodes.append(_jb_node("Browse Counties", "/counties"))
+    if has_county:
+        nodes.append(_jb_node(_trunc(player_county.name), f"/county/{county_id}", dot=True))
+        nodes.append(_jb_node("Governance", f"/county/{county_id}/governance", sub=True))
+    elif has_city:
+        nodes.append(_jb_node("Form a County", "/county/petition/new",  sub=True))
+        nodes.append(_jb_node("Join a County", "/county/petition/join", sub=True))
+    else:
+        nodes.append(_jb_node("Need a city first", "#", locked=True))
 
-    # JS as a plain string (no f-string so braces are literal)
+    # CRYPTO
+    nodes.append(_jb_section("Crypto"))
+    if has_county:
+        nodes.append(_jb_node("Mining Node",  f"/county/{county_id}/mining"))
+        nodes.append(_jb_node("Exchange",     "/exchange"))
+        nodes.append(_jb_node("Gas Tracker",  "/gas-tracker"))
+    else:
+        nodes.append(_jb_node("Mining · Exchange · Gas", "#",
+                               locked=True, hint="Join a county to unlock"))
+
+    nav_html = "".join(nodes)
+
+    # JS: show bar only on journey-relevant pages; handle collapse pref & active link
     js = (
         '<script>(function(){'
+        'var PATHS=["/districts","/district-market","/cities","/city/","/counties","/county/","/exchange","/token/","/gas-tracker"];'
+        'var p=location.pathname;'
+        'if(!PATHS.some(function(r){return p===r||p.startsWith(r);}))return;'
         'var bar=document.getElementById("journey-bar");'
         'var body=document.getElementById("jb-body");'
-        'var toggle=document.getElementById("jb-toggle");'
-        'if(!bar||!body)return;'
-        'var open=localStorage.getItem("wadsJB")!=="closed";'
-        'function apply(){'
-        'if(open){bar.classList.add("jb-open");body.classList.add("jb-open");toggle.innerHTML="&#8249;";}'
-        'else{bar.classList.remove("jb-open");body.classList.remove("jb-open");toggle.innerHTML="&#8250;";}'
+        'if(!bar)return;'
+        'if(localStorage.getItem("wadsJB")!=="closed"){'
+        'bar.style.display="flex";'
+        'body.classList.add("jb-on");'
         '}'
-        'window.jbToggle=function(){open=!open;localStorage.setItem("wadsJB",open?"open":"closed");apply();};'
-        'var path=window.location.pathname;'
-        'document.querySelectorAll("#jb-nav .jb-node[data-href]").forEach(function(n){'
-        'var h=n.getAttribute("data-href");'
+        'document.getElementById("jb-close").onclick=function(){'
+        'var vis=bar.style.display!=="none";'
+        'bar.style.display=vis?"none":"flex";'
+        'body.classList.toggle("jb-on",!vis);'
+        'localStorage.setItem("wadsJB",vis?"closed":"open");'
+        '};'
+        'document.querySelectorAll(".jb-item[data-href]").forEach(function(el){'
+        'var h=el.getAttribute("data-href");'
         'if(!h||h==="#")return;'
-        'if(path===h||(h.length>1&&path.startsWith(h))){n.classList.add("jb-active");}'
+        'if(p===h||(h.length>1&&p.startsWith(h)))el.classList.add("jb-active");'
         '});'
-        'apply();'
         '})();</script>'
     )
 
-    bar_html = (
+    return (
         f'<div id="journey-bar">'
-        f'<button id="jb-toggle" onclick="jbToggle()" aria-label="Toggle sidebar" title="Toggle journey bar">&#8250;</button>'
-        f'<div id="jb-inner">'
-        f'<div id="jb-head">{_JOURNEY_PIE_SVG}<div><div id="jb-title">Journey</div></div></div>'
-        f'<nav id="jb-nav">{nodes}</nav>'
-        f'<div id="jb-next"><div id="jb-next-label">Next Step</div>'
-        f'<a href="{next_href}">{next_label} &#8250;</a></div>'
-        f'</div></div>'
+        f'<div id="jb-head">'
+        f'{_JOURNEY_PIE_SVG}'
+        f'<div id="jb-wordmark">Empire<br>Navigation</div>'
+        f'<button id="jb-close" aria-label="Close sidebar" title="Close">&#215;</button>'
+        f'</div>'
+        f'<nav id="jb-nav">{nav_html}</nav>'
+        f'<div id="jb-next">'
+        f'<div id="jb-next-lbl">Next Step</div>'
+        f'<a href="{next_href}">{next_label} &#8250;</a>'
+        f'</div>'
+        f'</div>'
         + js
     )
-
-    return bar_html, breadcrumb_html
 
 
 # ==========================
@@ -275,6 +294,7 @@ def build_journey_bar(player_id: int, breadcrumbs: list = None):
 # ==========================
 
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, breadcrumbs: list = None) -> str:
+    # breadcrumbs: list of (label, url) tuples or plain strings; last item is current page
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
     # Resolve display balance using player's legal tender so the header always
@@ -334,7 +354,19 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
     except:
         ticker_html = "MARKET FEED OFFLINE"
 
-    journey_bar_html, breadcrumb_html = build_journey_bar(player_id, breadcrumbs)
+    journey_bar_html = build_journey_bar(player_id)
+
+    breadcrumb_html = ""
+    if breadcrumbs:
+        sep = '<span style="color:#B08D57;opacity:0.4;margin:0 4px;">&#8250;</span>'
+        parts = []
+        for i, c in enumerate(breadcrumbs):
+            lbl, url = (c if isinstance(c, (list, tuple)) and len(c) == 2 else (str(c), None))
+            if url and i < len(breadcrumbs) - 1:
+                parts.append(f'<a href="{url}" style="color:#B08D57;text-decoration:none;">{lbl}</a>')
+            else:
+                parts.append(f'<span style="color:#E0D5C5;opacity:0.9;">{lbl}</span>')
+        breadcrumb_html = f'<div class="jb-breadcrumbs">{sep.join(parts)}</div>'
 
     return f"""
     <!DOCTYPE html>
@@ -573,154 +605,159 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 }}
             }}
 
-            /* ── Journey Bar ──────────────────────────────── */
+            /* ── Journey Bar (shown only on district/city/county/crypto pages via JS) ── */
             #journey-bar {{
+                display: none;         /* JS reveals on relevant pages */
                 position: fixed;
                 left: 0;
-                top: 54px;
-                bottom: 34px;
-                width: 192px;
-                background: #1A0F0A;
-                border-right: 1px solid #B08D57;
-                z-index: 90;
-                display: flex;
+                top: 0;
+                bottom: 34px;          /* sit above market ticker */
+                width: 204px;
+                background: #130C07;
+                border-right: 1px solid rgba(176,141,87,0.45);
+                box-shadow: 3px 0 18px rgba(0,0,0,0.6);
+                z-index: 95;
                 flex-direction: column;
                 font-family: Georgia, serif;
-                transform: translateX(-172px);
-                transition: transform 0.25s ease;
-                overflow: visible;
             }}
-            #journey-bar.jb-open {{ transform: translateX(0); }}
-            #jb-toggle {{
-                position: absolute;
-                right: -20px;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 20px;
-                height: 44px;
-                background: #1A0F0A;
-                border: 1px solid #B08D57;
-                border-left: none;
-                border-radius: 0 4px 4px 0;
-                cursor: pointer;
-                color: #B08D57;
-                font-size: 0.85rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                font-family: Georgia, serif;
-                line-height: 1;
-            }}
-            #jb-toggle:hover {{ color: #F5F5DC; }}
-            #jb-inner {{
-                width: 192px;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }}
+            /* Header row — mirrors page header height */
             #jb-head {{
-                padding: 10px 8px 8px;
-                border-bottom: 1px solid rgba(176,141,87,0.3);
+                height: 54px;
+                padding: 0 10px 0 8px;
+                border-bottom: 1px solid rgba(176,141,87,0.2);
+                background: #1A0F0A;
                 display: flex;
                 align-items: center;
                 gap: 8px;
                 flex-shrink: 0;
             }}
-            #jb-title {{
-                font-size: 0.58rem;
-                letter-spacing: 0.14em;
+            #jb-wordmark {{
+                flex: 1;
+                font-size: 7.5px;
+                letter-spacing: 0.18em;
                 text-transform: uppercase;
                 color: #B08D57;
-                font-weight: bold;
-                opacity: 0.8;
+                opacity: 0.75;
+                line-height: 1.55;
             }}
+            #jb-close {{
+                background: none;
+                border: none;
+                color: rgba(176,141,87,0.45);
+                cursor: pointer;
+                font-size: 15px;
+                padding: 4px 2px;
+                line-height: 1;
+                font-family: Georgia, serif;
+                flex-shrink: 0;
+            }}
+            #jb-close:hover {{ color: #B08D57; }}
+            /* Scrollable nav */
             #jb-nav {{
                 flex: 1;
                 overflow-y: auto;
-                padding: 4px 0;
+                padding: 4px 0 6px;
                 scrollbar-width: thin;
-                scrollbar-color: rgba(176,141,87,0.2) transparent;
+                scrollbar-color: rgba(176,141,87,0.12) transparent;
             }}
-            .jb-node {{
-                padding: 7px 10px;
+            /* Section headers */
+            .jb-section {{
+                font-size: 8px;
+                letter-spacing: 0.24em;
+                text-transform: uppercase;
+                color: #B08D57;
+                opacity: 0.5;
+                padding: 10px 12px 3px;
+            }}
+            .jb-section + .jb-section {{ padding-top: 4px; }}
+            /* Nav items */
+            .jb-item {{
                 border-left: 2px solid transparent;
-                font-size: 0.7rem;
-                color: #F5F5DC;
-                white-space: nowrap;
                 overflow: hidden;
-                font-family: Georgia, serif;
             }}
-            .jb-node.jb-locked {{
-                opacity: 0.35;
+            .jb-item a {{
+                display: flex;
+                align-items: center;
+                padding: 5px 12px;
+                font-size: 11.5px;
+                color: #D8CEBB;
+                text-decoration: none;
+                transition: color 0.12s, background 0.12s;
+                gap: 4px;
+            }}
+            .jb-item a:hover {{ color: #F5F5DC; background: rgba(176,141,87,0.07); text-decoration: none; }}
+            .jb-item.jb-sub a {{ padding-left: 22px; font-size: 11px; color: #A89880; }}
+            .jb-item.jb-sub a:hover {{ color: #D8CEBB; }}
+            .jb-item.jb-active {{ border-left-color: #B08D57; background: rgba(176,141,87,0.1); }}
+            .jb-item.jb-active a {{ color: #F5F5DC; }}
+            .jb-item.jb-locked {{
+                padding: 5px 12px;
+                font-size: 11px;
+                color: #3E2810;
                 pointer-events: none;
             }}
-            .jb-node.jb-active {{
-                border-left-color: #B08D57;
-                background: rgba(176,141,87,0.1);
-            }}
-            .jb-node a {{ color: #F5F5DC; text-decoration: none; display: flex; align-items: center; gap: 6px; }}
-            .jb-node a:hover {{ color: #B08D57; text-decoration: none; }}
-            .jb-count {{
-                font-size: 0.6rem;
-                background: rgba(176,141,87,0.2);
+            .jb-item-lbl {{ flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+            .jb-badge {{
+                font-size: 9px;
+                background: rgba(176,141,87,0.16);
                 color: #B08D57;
                 border-radius: 3px;
                 padding: 1px 5px;
-                margin-left: auto;
+                flex-shrink: 0;
+            }}
+            .jb-dot {{
+                font-size: 5px;
+                color: #B08D57;
+                opacity: 0.9;
                 flex-shrink: 0;
             }}
             .jb-hint {{
-                font-size: 0.58rem;
-                color: #B08D57;
-                opacity: 0.5;
-                margin-top: 2px;
-                padding-left: 20px;
-                white-space: normal;
+                font-size: 9.5px;
+                color: #6B4220;
+                margin-top: 1px;
                 line-height: 1.3;
-                pointer-events: none;
             }}
+            /* Next Step footer */
             #jb-next {{
-                padding: 8px 10px;
-                border-top: 1px solid rgba(176,141,87,0.3);
+                padding: 7px 12px 9px;
+                border-top: 1px solid rgba(176,141,87,0.18);
+                background: rgba(245,158,11,0.05);
                 flex-shrink: 0;
             }}
-            #jb-next-label {{
-                font-size: 0.52rem;
+            #jb-next-lbl {{
+                font-size: 8px;
+                letter-spacing: 0.18em;
                 text-transform: uppercase;
-                letter-spacing: 0.1em;
-                color: #B08D57;
-                opacity: 0.6;
-                margin-bottom: 4px;
-                font-family: Georgia, serif;
+                color: #f59e0b;
+                opacity: 0.65;
+                margin-bottom: 3px;
             }}
             #jb-next a {{
+                font-size: 11.5px;
                 color: #f59e0b;
-                font-size: 0.65rem;
+                text-decoration: none;
                 display: block;
                 white-space: normal;
-                line-height: 1.4;
-                font-family: Georgia, serif;
-                text-decoration: none;
+                line-height: 1.45;
             }}
             #jb-next a:hover {{ color: #fbbf24; text-decoration: underline; }}
+            /* Breadcrumb strip */
             .jb-breadcrumbs {{
-                padding: 6px 16px;
-                font-size: 0.68rem;
+                padding: 5px 16px;
+                font-size: 11px;
                 font-family: Georgia, serif;
-                border-bottom: 1px solid rgba(176,141,87,0.15);
-                background: rgba(26,15,10,0.5);
+                border-bottom: 1px solid rgba(176,141,87,0.12);
+                background: rgba(19,12,7,0.55);
                 display: flex;
                 align-items: center;
                 flex-wrap: wrap;
                 gap: 2px;
-                flex-shrink: 0;
             }}
-            #jb-body.jb-open {{ padding-left: 192px; transition: padding-left 0.25s ease; }}
+            /* Body shift when bar is open (desktop only) */
+            #jb-body.jb-on {{ padding-left: 204px; }}
             @media (max-width: 768px) {{
-                #jb-body.jb-open {{ padding-left: 0; }}
-                #journey-bar.jb-open {{ z-index: 200; }}
+                #jb-body.jb-on {{ padding-left: 0; }}
+                #journey-bar {{ z-index: 200; }}
             }}
         </style>
     </head>

@@ -473,6 +473,14 @@ def get_player_districts(player_id: int) -> List[District]:
     return districts
 
 
+def count_player_districts(player_id: int) -> int:
+    """Return the number of districts owned by a player (COUNT query, no row fetch)."""
+    db = get_db()
+    n = db.query(District).filter(District.owner_id == player_id).count()
+    db.close()
+    return n
+
+
 def get_vacant_districts(player_id: int) -> List[District]:
     """Get all vacant districts owned by a player."""
     db = get_db()
