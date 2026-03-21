@@ -1575,7 +1575,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 300
+            "quantity": 3000
           }
         ]
       },
@@ -1601,7 +1601,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 200
+            "quantity": 2000
           }
         ]
       },
@@ -2232,7 +2232,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 400
+            "quantity": 4000
           }
         ]
       },
@@ -3636,7 +3636,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 800
+            "quantity": 8000
           }
         ]
       },
@@ -3766,7 +3766,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 1000
+            "quantity": 10000
           }
         ]
       },
@@ -3796,7 +3796,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 1000
+            "quantity": 10000
           }
         ]
       },
@@ -3859,7 +3859,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 1500
+            "quantity": 15000
           }
         ]
       },
@@ -3926,7 +3926,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 800
+            "quantity": 8000
           }
         ]
       },
@@ -3990,7 +3990,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 800
+            "quantity": 8000
           }
         ]
       },
@@ -4053,7 +4053,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 700
+            "quantity": 7000
           }
         ]
       },
@@ -4112,7 +4112,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 600
+            "quantity": 6000
           }
         ]
       },
@@ -4134,7 +4134,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 400
+            "quantity": 4000
           }
         ]
       },
@@ -4156,7 +4156,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 500
+            "quantity": 5000
           }
         ]
       }
@@ -4197,7 +4197,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 500
+            "quantity": 5000
           }
         ]
       },
@@ -4256,7 +4256,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 500
+            "quantity": 5000
           }
         ]
       }
@@ -4455,7 +4455,7 @@
           },
           {
             "item": "pollen",
-            "quantity": 200
+            "quantity": 2000
           },
           {
             "item": "water",
