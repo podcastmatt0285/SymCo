@@ -851,7 +851,42 @@ def _player_businesses_tab(pid):
         status = '<span style="color:#22c55e;">Active</span>' if b["is_active"] else '<span style="color:#64748b;">Paused</span>'
         rows += f'<tr><td>#{b["id"]}</td><td>{b["business_type"].replace("_"," ").title()}</td><td>{location}</td><td>{status}</td><td>{b["progress_ticks"]}</td></tr>'
 
+    # Build vacant plot options
+    vacant_plots = [p for p in get_player_land(pid) if not p["occupied_by_business_id"]]
+    plot_opts = "".join(
+        f'<option value="{p["id"]}">#{p["id"]} — {p["terrain_type"].title()} ({p["proximity_features"] or "no proximity"})</option>'
+        for p in vacant_plots
+    )
+
+    # Build business type options
+    try:
+        from business import BUSINESS_TYPES
+        biz_opts = "".join(
+            f'<option value="{k}">{v.get("name", k.replace("_"," ").title())}</option>'
+            for k, v in sorted(BUSINESS_TYPES.items(), key=lambda x: x[1].get("name", x[0]))
+        )
+    except Exception:
+        biz_opts = ""
+
+    create_form = ""
+    if vacant_plots and biz_opts:
+        create_form = f"""
+    <div class="card">
+        <h3>Place Business on Plot</h3>
+        <form method="post" action="/admin/player/{pid}/create-business">
+            <input type="hidden" name="tab" value="businesses">
+            <div class="form-row">
+                <div style="flex:1;"><div class="form-label">Vacant Plot</div><select name="plot_id">{plot_opts}</select></div>
+                <div style="flex:2;"><div class="form-label">Business Type</div><select name="business_type">{biz_opts}</select></div>
+                <button type="submit" class="btn btn-green">Place</button>
+            </div>
+        </form>
+    </div>"""
+    elif not vacant_plots:
+        create_form = '<div class="card"><p style="color:#64748b;font-size:0.75rem;">No vacant land plots — create a land plot first.</p></div>'
+
     return f"""
+    {create_form}
     <div class="card">
         <h3>Businesses ({len(businesses)})</h3>
         {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Location</th><th>Status</th><th>Ticks</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No businesses.</p>'}
@@ -1033,6 +1068,18 @@ def post_delete_land(pid: int, session_token: Optional[str] = Cookie(None), plot
     result = admin_delete_land_plot(admin.id, plot_id)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Deleted+plot+%23{plot_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/create-business")
+def post_create_business(pid: int, session_token: Optional[str] = Cookie(None), plot_id: int = Form(...), business_type: str = Form(...), tab: str = Form("businesses")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from admins import admin_create_business
+    result = admin_create_business(admin.id, pid, plot_id, business_type)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Created+{business_type}+%28biz+%23{result['business_id']}%29+on+plot+%23{plot_id}", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
 
 

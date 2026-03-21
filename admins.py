@@ -717,6 +717,48 @@ def get_player_businesses(player_id: int) -> list:
         return []
 
 
+def admin_create_business(admin_id: int, owner_id: int, plot_id: int, business_type_key: str) -> dict:
+    """Create a business on a vacant land plot without charging the owner."""
+    try:
+        from business import SessionLocal as BizSession, Business, BUSINESS_TYPES
+        from land import get_db as land_db_fn, LandPlot
+        if business_type_key not in BUSINESS_TYPES:
+            return {"ok": False, "error": f"Unknown business type: {business_type_key}"}
+        config = BUSINESS_TYPES[business_type_key]
+        db = BizSession()
+        ldb = land_db_fn()
+        try:
+            plot = ldb.query(LandPlot).filter(LandPlot.id == plot_id).first()
+            if not plot:
+                return {"ok": False, "error": f"Plot #{plot_id} not found"}
+            if plot.owner_id != owner_id:
+                return {"ok": False, "error": f"Plot #{plot_id} not owned by player #{owner_id}"}
+            if plot.occupied_by_business_id is not None:
+                return {"ok": False, "error": f"Plot #{plot_id} already occupied by business #{plot.occupied_by_business_id}"}
+            allowed = config.get("allowed_terrain")
+            if allowed and plot.terrain_type not in allowed:
+                return {"ok": False, "error": f"Terrain '{plot.terrain_type}' not allowed for {business_type_key} (needs: {', '.join(allowed)})"}
+            business = Business(
+                owner_id=owner_id,
+                land_plot_id=plot_id,
+                business_type=business_type_key,
+                progress_ticks=0,
+                is_active=True,
+            )
+            db.add(business)
+            db.commit()
+            db.refresh(business)
+            plot.occupied_by_business_id = business.id
+            ldb.commit()
+            log_action(admin_id, "create_business", owner_id, f"Created {business_type_key} on plot #{plot_id} (biz #{business.id})")
+            return {"ok": True, "business_id": business.id}
+        finally:
+            db.close()
+            ldb.close()
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ==========================
 # LAND BANK MANAGEMENT
 # ==========================
