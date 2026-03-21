@@ -194,7 +194,6 @@ def build_journey_bar(player_id: int) -> str:
         "wallet": '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>',
         "trend":  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
         "chevR":  '<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
-        "chevD":  '<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
     }
 
     def _trunc(s, n=14):
@@ -217,7 +216,8 @@ def build_journey_bar(player_id: int) -> str:
                 f'</div>'
             )
         if expandable:
-            chev = _ico["chevD"] if open_default else _ico["chevR"]
+            # Always use chevR; CSS rotate(90deg) on [data-open="1"] shows the open state
+            chev = _ico["chevR"]
             d_open = "1" if open_default else "0"
             return (
                 f'<button class="jb-row" onclick="wadsJBToggle(this)"'
@@ -331,7 +331,7 @@ def build_journey_bar(player_id: int) -> str:
         f'</div>'
     )
 
-    # ── JS: URL gate + active highlight + collapse toggle ─────────────
+    # ── JS: URL gate + slide-in animation + active highlight + collapse toggle ──
     js = (
         '<script>(function(){'
         'var PATHS=["/land","/land-market","/districts","/district-market","/districts/create",'
@@ -341,10 +341,16 @@ def build_journey_bar(player_id: int) -> str:
         'var bar=document.getElementById("journey-bar");'
         'var body=document.getElementById("jb-body");'
         'if(!bar)return;'
-        'if(localStorage.getItem("wadsJB")!=="closed"){bar.style.display="flex";body.classList.add("jb-on");}'
+        'if(localStorage.getItem("wadsJB")!=="closed"){'
+        'bar.style.display="flex";'
+        'setTimeout(function(){bar.classList.add("jb-visible");},10);'  # delay so display:flex settles first
+        'body.classList.add("jb-on");'
+        '}'
         'document.getElementById("jb-close").onclick=function(){'
         'var vis=bar.style.display!=="none";'
         'bar.style.display=vis?"none":"flex";'
+        'if(!vis)setTimeout(function(){bar.classList.add("jb-visible");},10);'
+        'else bar.classList.remove("jb-visible");'
         'body.classList.toggle("jb-on",!vis);'
         'localStorage.setItem("wadsJB",vis?"closed":"open");'
         '};'
@@ -353,6 +359,13 @@ def build_journey_bar(player_id: int) -> str:
         'if(!h||h==="#")return;'
         'if(p===h||(h.length>1&&p.startsWith(h)))el.classList.add("jb-active");'
         '});'
+        'document.querySelectorAll(".jb-group").forEach(function(grp){'
+        'if(grp.querySelector(".jb-active")){'
+        'grp.style.display="block";'
+        'var prev=grp.previousElementSibling;'
+        'if(prev)prev.setAttribute("data-open","1");'
+        '}'
+        '});'
         '})();\n'
         'function wadsJBToggle(btn){'
         'var grp=btn.nextElementSibling;'
@@ -360,12 +373,8 @@ def build_journey_bar(player_id: int) -> str:
         'var nowOpen=grp.style.display!=="none";'
         'grp.style.display=nowOpen?"none":"block";'
         'btn.setAttribute("data-open",nowOpen?"0":"1");'
-        'var chev=btn.querySelector(".jb-chev");'
-        'if(chev)chev.innerHTML=nowOpen'
-        '?\'<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>\''
-        ':\'<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>\';'
         'var href=btn.getAttribute("data-href");'
-        'if(href)location.href=href;'
+        'if(href&&!nowOpen)location.href=href;'
         '}'
         '</script>'
     )
@@ -481,7 +490,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
         <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
         <style>
             * {{ box-sizing: border-box; }}
             body {{
@@ -704,259 +713,373 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 }}
             }}
 
-            /* ── Journey Bar — radio-box design matching SideNav.tsx template ── */
+            /* ══════════════════════════════════════════════════════
+               JOURNEY BAR — Cinzel, brass, mahogany, 3-D depth
+               ══════════════════════════════════════════════════════ */
+
+            /* Keyframes */
+            @keyframes jb-slide-in {{
+                from {{ transform: translateX(-100%) rotateY(-8deg); opacity: 0; }}
+                to   {{ transform: translateX(0)    rotateY(0deg);  opacity: 1; }}
+            }}
+            @keyframes jb-shimmer {{
+                0%   {{ background-position: -300% center; }}
+                100% {{ background-position:  300% center; }}
+            }}
+            @keyframes jb-edge-pulse {{
+                0%,100% {{ opacity: 0.35; box-shadow: 4px 0 14px rgba(176,141,87,0.12); }}
+                50%     {{ opacity: 0.8;  box-shadow: 4px 0 28px rgba(176,141,87,0.30); }}
+            }}
+            @keyframes jb-activedot-glow {{
+                0%,100% {{ box-shadow: 0 0 4px #B08D57, 0 0 8px rgba(176,141,87,0.4); }}
+                50%     {{ box-shadow: 0 0 8px #B08D57, 0 0 20px rgba(176,141,87,0.7); }}
+            }}
+            @keyframes jb-coin-flip {{
+                0%   {{ transform: rotateY(0deg); }}
+                50%  {{ transform: rotateY(90deg) scale(0.85); }}
+                100% {{ transform: rotateY(360deg); }}
+            }}
+            @keyframes jb-scanline {{
+                0%   {{ transform: translateY(-120%); opacity: 0; }}
+                10%  {{ opacity: 0.6; }}
+                90%  {{ opacity: 0.6; }}
+                100% {{ transform: translateY(120%); opacity: 0; }}
+            }}
+
             #journey-bar {{
-                display: none;             /* JS reveals on relevant pages */
+                display: none;
                 position: fixed;
                 left: 0;
                 top: 0;
-                bottom: 34px;              /* sit above market ticker */
-                width: 272px;
-                background: #1A0F0A;
-                border-right: 8px solid #2D1810;
-                outline: 1px solid rgba(176,141,87,0.3);
-                outline-offset: -12px;
-                box-shadow: 0 0 30px rgba(0,0,0,0.8), 3px 0 10px rgba(176,141,87,0.08);
+                bottom: 34px;
+                width: 248px;
+                background: linear-gradient(170deg, #1E1409 0%, #1A0F0A 40%, #140C07 100%);
+                border-right: 6px solid #2D1810;
+                outline: 2px solid rgba(176,141,87,0.28);
+                outline-offset: -10px;
                 z-index: 95;
                 flex-direction: column;
-                font-family: 'Playfair Display', Georgia, serif;
+                font-family: 'Cinzel', Georgia, serif;
+                perspective: 900px;
+                /* right-edge glow */
+                animation: jb-edge-pulse 4s ease-in-out infinite;
             }}
+            #journey-bar.jb-visible {{
+                animation: jb-slide-in 0.38s cubic-bezier(0.16,1,0.3,1) both,
+                           jb-edge-pulse 4s ease-in-out 0.4s infinite;
+            }}
+            /* scanline sweep every 8 s */
+            #journey-bar::before {{
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to bottom,
+                    transparent 0%, rgba(176,141,87,0.06) 50%, transparent 100%);
+                height: 60px;
+                width: 100%;
+                animation: jb-scanline 8s linear infinite;
+                pointer-events: none;
+                z-index: 1;
+            }}
+
             /* ── Header ── */
             #jb-head {{
-                padding: 20px 16px 14px;
-                border-bottom: 1px solid rgba(176,141,87,0.3);
-                background: #241812;
+                padding: 18px 14px 13px;
+                border-bottom: 3px solid rgba(176,141,87,0.35);
+                background: linear-gradient(160deg, #2A1A0D 0%, #1E1208 100%);
                 text-align: center;
                 position: relative;
                 flex-shrink: 0;
+                overflow: hidden;
+            }}
+            /* shimmer sweep over header */
+            #jb-head::after {{
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(105deg,
+                    transparent 30%, rgba(176,141,87,0.12) 50%, transparent 70%);
+                background-size: 300% 100%;
+                animation: jb-shimmer 5s ease-in-out infinite;
+                pointer-events: none;
             }}
             #jb-wordmark {{
-                font-family: 'Playfair Display', Georgia, serif;
-                font-size: 20px;
+                font-family: 'Cinzel', Georgia, serif;
+                font-size: 17px;
                 font-weight: 900;
-                font-style: italic;
                 text-transform: uppercase;
-                letter-spacing: 0.1em;
+                letter-spacing: 0.18em;
                 color: #B08D57;
-                margin: 0 0 4px;
+                margin: 0 0 3px;
                 line-height: 1;
+                text-shadow: 0 0 14px rgba(176,141,87,0.5), 0 1px 3px rgba(0,0,0,0.8);
+                position: relative; z-index: 2;
             }}
             #jb-submark {{
-                font-size: 9px;
-                letter-spacing: 0.3em;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 8px;
+                letter-spacing: 0.28em;
                 text-transform: uppercase;
                 color: #F5F5DC;
-                opacity: 0.4;
-                font-style: italic;
+                opacity: 0.35;
                 margin: 0;
+                position: relative; z-index: 2;
             }}
             #jb-close {{
                 position: absolute;
-                top: 10px;
-                right: 12px;
+                top: 9px; right: 11px;
                 background: none;
-                border: none;
+                border: 2px solid rgba(176,141,87,0.25);
+                border-radius: 3px;
                 color: rgba(176,141,87,0.45);
                 cursor: pointer;
-                font-size: 18px;
-                padding: 4px;
+                font-size: 14px;
+                padding: 2px 5px;
                 line-height: 1;
-                flex-shrink: 0;
+                transition: color 0.2s, border-color 0.2s;
+                z-index: 2;
             }}
-            #jb-close:hover {{ color: #B08D57; }}
+            #jb-close:hover {{ color: #B08D57; border-color: rgba(176,141,87,0.7); }}
+
             /* ── Scrollable nav ── */
             #jb-nav {{
                 flex: 1;
                 overflow-y: auto;
-                padding: 8px 0;
+                padding: 6px 0;
                 scrollbar-width: thin;
-                scrollbar-color: rgba(176,141,87,0.12) transparent;
+                scrollbar-color: rgba(176,141,87,0.18) transparent;
             }}
-            /* ── Nav rows (buttons + links) ── */
+
+            /* ── Nav rows ── */
             .jb-row {{
                 width: 100%;
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                padding: 8px 24px;
+                gap: 9px;
+                padding: 8px 20px;
                 border: none;
-                border-bottom: 1px solid rgba(176,141,87,0.05);
+                border-bottom: 2px solid rgba(176,141,87,0.08);
+                border-left: 3px solid transparent;
                 background: transparent;
-                color: rgba(245,245,220,0.5);
+                color: rgba(245,245,220,0.45);
                 text-decoration: none;
                 cursor: pointer;
                 text-align: left;
-                transition: color 0.2s, background 0.2s, transform 0.15s;
+                transition: color 0.18s, background 0.18s, transform 0.18s,
+                            border-left-color 0.18s, box-shadow 0.18s;
                 box-sizing: border-box;
+                position: relative;
             }}
             .jb-row:hover {{
                 color: #F5F5DC;
-                background: rgba(176,141,87,0.05);
+                background: rgba(176,141,87,0.07);
                 text-decoration: none;
-                transform: translateX(4px);
+                transform: translateX(5px);
+                border-left-color: rgba(176,141,87,0.4);
+                box-shadow: -3px 0 0 rgba(0,0,0,0.4),
+                             4px 2px 12px rgba(0,0,0,0.5),
+                             inset 0 1px 0 rgba(176,141,87,0.08);
             }}
             .jb-row.jb-active {{
-                background: rgba(176,141,87,0.1);
+                background: rgba(176,141,87,0.13);
                 color: #ffffff;
+                border-left-color: #B08D57;
+                transform: translateX(3px);
+                box-shadow: inset 0 1px 0 rgba(176,141,87,0.2),
+                             inset 0 -1px 0 rgba(0,0,0,0.4),
+                             4px 0 16px rgba(176,141,87,0.14);
             }}
             .jb-row.jb-locked {{
-                color: rgba(176,141,87,0.2);
+                color: rgba(176,141,87,0.18);
                 cursor: default;
                 pointer-events: none;
+                font-style: italic;
             }}
-            .jb-row.jb-locked:hover {{ transform: none; background: transparent; }}
+            .jb-row.jb-locked:hover {{ transform: none; box-shadow: none; }}
+
             /* ── Icons ── */
             .jb-icon {{
                 display: flex;
                 align-items: center;
                 flex-shrink: 0;
                 color: inherit;
-                transition: color 0.2s;
+                transition: color 0.18s, filter 0.18s;
             }}
-            .jb-row:hover .jb-icon,
-            .jb-row.jb-active .jb-icon {{ color: #B08D57; }}
+            .jb-row:hover .jb-icon {{
+                color: #B08D57;
+                filter: drop-shadow(0 0 4px rgba(176,141,87,0.6));
+            }}
+            .jb-row.jb-active .jb-icon {{
+                color: #B08D57;
+                filter: drop-shadow(0 0 6px rgba(176,141,87,0.8));
+            }}
+
             /* ── Labels ── */
             .jb-label {{
                 flex: 1;
-                font-family: 'Playfair Display', Georgia, serif;
-                font-style: italic;
-                font-weight: 900;
+                font-family: 'Cinzel', Georgia, serif;
+                font-weight: 700;
                 text-transform: uppercase;
-                letter-spacing: 0.12em;
+                letter-spacing: 0.1em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }}
-            .jb-lv0 {{ font-size: 14px; }}
-            .jb-lv1 {{ font-size: 11px; }}
+            .jb-lv0 {{ font-size: 13px; }}
+            .jb-lv1 {{ font-size: 10.5px; }}
+
             /* ── Active dot ── */
             .jb-activedot {{
-                width: 4px;
-                height: 4px;
+                width: 5px;
+                height: 5px;
                 border-radius: 50%;
                 background: #B08D57;
-                box-shadow: 0 0 8px #B08D57;
                 flex-shrink: 0;
+                animation: jb-activedot-glow 2s ease-in-out infinite;
             }}
+
             /* ── Badge ── */
             .jb-badge {{
                 font-size: 9px;
                 font-family: 'JetBrains Mono', monospace;
-                font-style: normal;
-                background: rgba(176,141,87,0.16);
+                background: rgba(176,141,87,0.18);
                 color: #B08D57;
-                border-radius: 3px;
-                padding: 1px 5px;
+                border: 1px solid rgba(176,141,87,0.3);
+                border-radius: 2px;
+                padding: 0 5px;
                 flex-shrink: 0;
+                letter-spacing: 0;
             }}
+
             /* ── Chevron ── */
             .jb-chev {{
                 color: rgba(176,141,87,0.3);
                 flex-shrink: 0;
                 display: flex;
                 align-items: center;
-                transition: color 0.2s;
+                transition: color 0.18s, transform 0.25s;
             }}
             .jb-row:hover .jb-chev {{ color: #B08D57; }}
+            .jb-row[data-open="1"] .jb-chev {{ transform: rotate(90deg); }}
+
             /* ── Collapsible group ── */
             .jb-group {{
-                background: rgba(0,0,0,0.1);
+                background: rgba(0,0,0,0.15);
+                border-left: 2px solid rgba(176,141,87,0.12);
+                margin-left: 12px;
+                transition: all 0.25s ease;
             }}
+
             /* ── Balance widget ── */
             #jb-balance {{
-                padding: 14px 16px;
-                background: #241812;
-                border-top: 1px solid rgba(176,141,87,0.3);
+                padding: 12px 14px;
+                background: linear-gradient(135deg, #241812 0%, #1A0F0A 100%);
+                border-top: 3px solid rgba(176,141,87,0.3);
                 flex-shrink: 0;
             }}
             .jb-bal-lbl {{
+                font-family: 'JetBrains Mono', monospace;
                 font-size: 8px;
-                letter-spacing: 0.2em;
+                letter-spacing: 0.22em;
                 text-transform: uppercase;
                 color: #B08D57;
                 font-weight: 700;
-                font-family: 'JetBrains Mono', monospace;
-                font-style: normal;
             }}
             .jb-bal-val {{
-                font-family: 'Playfair Display', Georgia, serif;
-                font-size: 15px;
+                font-family: 'Cinzel', Georgia, serif;
+                font-size: 14px;
                 font-weight: 900;
-                font-style: italic;
                 text-transform: uppercase;
                 color: #F5F5DC;
-                letter-spacing: -0.02em;
-                margin-top: 2px;
+                letter-spacing: 0.04em;
+                margin-top: 1px;
+                text-shadow: 0 0 10px rgba(176,141,87,0.3);
             }}
             .jb-bal-icon {{
-                width: 36px;
-                height: 36px;
+                width: 34px;
+                height: 34px;
                 border-radius: 50%;
-                border: 1px solid rgba(176,141,87,0.3);
+                border: 2px solid rgba(176,141,87,0.35);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 color: #B08D57;
-                background: rgba(0,0,0,0.4);
+                background: rgba(0,0,0,0.5);
+                transition: transform 0.6s ease, box-shadow 0.3s;
+                transform-style: preserve-3d;
+                cursor: default;
+            }}
+            .jb-bal-icon:hover {{
+                animation: jb-coin-flip 0.8s ease-in-out;
+                box-shadow: 0 0 14px rgba(176,141,87,0.5);
             }}
             .jb-bar-wrap {{
                 margin-top: 8px;
-                height: 4px;
-                background: rgba(0,0,0,0.6);
-                border: 1px solid rgba(176,141,87,0.1);
+                height: 5px;
+                background: rgba(0,0,0,0.7);
+                border: 2px solid rgba(176,141,87,0.15);
                 border-radius: 9999px;
                 overflow: hidden;
             }}
             .jb-bar-fill {{
                 height: 100%;
-                background: linear-gradient(to right, rgba(176,141,87,0.5), #B08D57);
+                background: linear-gradient(to right, #5C3D1A, #B08D57, #D4AF6E);
+                box-shadow: 0 0 8px rgba(176,141,87,0.5);
+                transition: width 1s ease;
             }}
+
             /* ── Next Step footer ── */
             #jb-next {{
-                padding: 10px 16px 12px;
-                border-top: 1px solid rgba(176,141,87,0.18);
-                background: rgba(245,158,11,0.05);
+                padding: 9px 14px 11px;
+                border-top: 3px solid rgba(176,141,87,0.22);
+                background: linear-gradient(135deg, rgba(176,141,87,0.07) 0%, rgba(0,0,0,0.2) 100%);
                 flex-shrink: 0;
             }}
             #jb-next-lbl {{
+                font-family: 'JetBrains Mono', monospace;
                 font-size: 8px;
-                letter-spacing: 0.18em;
+                letter-spacing: 0.2em;
                 text-transform: uppercase;
                 color: #f59e0b;
-                opacity: 0.65;
+                opacity: 0.6;
                 margin-bottom: 4px;
-                font-family: 'JetBrains Mono', monospace;
             }}
             #jb-next a {{
-                font-family: 'Playfair Display', Georgia, serif;
-                font-size: 12px;
-                font-style: italic;
-                font-weight: 900;
+                font-family: 'Cinzel', Georgia, serif;
+                font-size: 11px;
+                font-weight: 700;
                 text-transform: uppercase;
-                letter-spacing: 0.05em;
+                letter-spacing: 0.08em;
                 color: #f59e0b;
                 text-decoration: none;
                 display: block;
-                line-height: 1.4;
+                line-height: 1.45;
+                transition: color 0.2s, text-shadow 0.2s;
             }}
-            #jb-next a:hover {{ color: #fbbf24; text-decoration: underline; }}
+            #jb-next a:hover {{
+                color: #fbbf24;
+                text-shadow: 0 0 10px rgba(251,191,36,0.5);
+                text-decoration: none;
+            }}
+
             /* ── Breadcrumb strip ── */
             .jb-breadcrumbs {{
                 padding: 5px 16px;
                 font-size: 11px;
                 font-family: Georgia, serif;
-                border-bottom: 1px solid rgba(176,141,87,0.12);
-                background: rgba(19,12,7,0.55);
+                border-bottom: 2px solid rgba(176,141,87,0.15);
+                background: rgba(19,12,7,0.6);
                 display: flex;
                 align-items: center;
                 flex-wrap: wrap;
                 gap: 2px;
             }}
-            /* ── Body shift when bar is open (desktop only) ── */
-            #jb-body.jb-on {{ padding-left: 272px; }}
+
+            /* ── Body shift when bar is open ── */
+            #jb-body.jb-on {{ padding-left: 248px; }}
             @media (max-width: 768px) {{
                 #jb-body.jb-on {{ padding-left: 0; }}
-                #journey-bar {{ z-index: 200; }}
+                #journey-bar {{ z-index: 200; width: 100%; max-width: 280px; }}
             }}
         </style>
     </head>
