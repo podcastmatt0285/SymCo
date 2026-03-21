@@ -1,0 +1,658 @@
+DISTRICT BUSINESSES
+================================================================================
+steel_mill  |  Steel Mill
+  startup=$5,000,000  wage=$25000/cycle  cycles=28800  terrain=['district_industrial']
+  PROD: 500x steel  from {'iron_ore': 2000, 'coal': 1000, 'energy': 50000, 'water': 5000, 'paper': 50}
+  PROD: 200x rebar  from {'iron_ore': 800, 'coal': 400, 'energy': 20000, 'paper': 25}
+
+aluminum_foundry  |  Aluminum Foundry
+  startup=$4,500,000  wage=$22000/cycle  cycles=28800  terrain=['district_industrial']
+  PROD: 400x aluminum  from {'iron_ore': 1500, 'energy': 80000, 'water': 3000, 'paper': 40}
+
+plastics_factory  |  Plastics Factory
+  startup=$3,500,000  wage=$18000/cycle  cycles=21600  terrain=['district_industrial']
+  PROD: 600x plastic  from {'oil': 2000, 'energy': 30000, 'water': 2000, 'paper': 30}
+
+wire_plant  |  Wire & Cable Plant
+  startup=$2,800,000  wage=$15000/cycle  cycles=21600  terrain=['district_industrial']
+  PROD: 500x copper_wire  from {'copper': 800, 'rubber': 200, 'energy': 25000, 'paper': 25}
+
+water_treatment  |  Water Treatment Plant
+  startup=$4,000,000  wage=$20000/cycle  cycles=14400  terrain=['district_utilities']
+  PROD: 1000x drinking_water  from {'water': 5000, 'energy': 20000, 'paper': 50}
+  PROD: 500x wastewater_service  from {'water': 2000, 'energy': 15000, 'paper': 30}
+
+power_company  |  Power Utility Company
+  startup=$6,000,000  wage=$25000/cycle  cycles=14400  terrain=['district_utilities']
+  PROD: 800x residential_electricity  from {'energy': 50000, 'copper_wire': 100, 'paper': 100}
+
+gas_refinery  |  Gas & Fuel Refinery
+  startup=$8,000,000  wage=$30000/cycle  cycles=28800  terrain=['district_industrial']
+  PROD: 400x natural_gas  from {'oil': 1500, 'energy': 20000, 'paper': 40}
+  PROD: 300x heating_oil  from {'oil': 1200, 'energy': 15000, 'paper': 30}
+  PROD: 200x jet_fuel  from {'oil': 2000, 'energy': 25000, 'paper': 50}
+  PROD: 350x diesel  from {'oil': 1400, 'energy': 18000, 'paper': 35}
+
+concrete_plant  |  Concrete & Cement Plant
+  startup=$3,000,000  wage=$16000/cycle  cycles=21600  terrain=['district_industrial']
+  PROD: 400x cement  from {'sand': 1000, 'coal': 500, 'energy': 30000, 'paper': 20}
+  PROD: 300x concrete  from {'cement': 200, 'sand': 500, 'water': 1000, 'rebar': 50, 'energy': 15000, 'paper': 15}
+
+semiconductor_fab  |  Semiconductor Fabrication Plant
+  startup=$15,000,000  wage=$50000/cycle  cycles=43200  terrain=['district_tech']
+  PROD: 200x microchip  from {'sand': 500, 'copper': 300, 'energy': 100000, 'water': 5000, 'paper': 100}
+  PROD: 100x processor  from {'microchip': 50, 'copper': 200, 'energy': 80000, 'paper': 80}
+  PROD: 150x memory_module  from {'microchip': 75, 'copper': 100, 'energy': 50000, 'paper': 50}
+  PROD: 250x circuit_board  from {'copper': 400, 'plastic': 200, 'energy': 40000, 'paper': 40}
+  PROD: 100x lcd_panel  from {'glass': 500, 'microchip': 25, 'copper_wire': 100, 'energy': 60000, 'paper': 60}
+  PROD: 200x battery_cell  from {'copper': 300, 'lead': 200, 'plastic': 150, 'energy': 35000, 'paper': 35}
+
+electronics_factory  |  Electronics Assembly Plant
+  startup=$10,000,000  wage=$35000/cycle  cycles=43200  terrain=['district_tech']
+  PROD: 100x smartphone  from {'processor': 100, 'memory_module': 100, 'lcd_panel': 100, 'battery_cell': 100, 'circuit_board': 100, 'glass': 200, 'aluminum': 50, 'energy': 50000, 'paper': 100}
+  PROD: 50x laptop  from {'processor': 50, 'memory_module': 100, 'lcd_panel': 50, 'battery_cell': 50, 'circuit_board': 75, 'plastic': 100, 'aluminum': 75, 'copper_wire': 50, 'energy': 40000, 'paper': 75}
+  PROD: 75x tablet  from {'processor': 75, 'memory_module': 75, 'lcd_panel': 75, 'battery_cell': 75, 'circuit_board': 75, 'glass': 150, 'aluminum': 40, 'energy': 35000, 'paper': 60}
+  PROD: 40x television  from {'lcd_panel': 80, 'circuit_board': 40, 'processor': 20, 'plastic': 200, 'copper_wire': 80, 'energy': 30000, 'paper': 50}
+  PROD: 30x desktop_computer  from {'processor': 30, 'memory_module': 60, 'circuit_board': 45, 'steel': 30, 'copper_wire': 60, 'plastic': 60, 'energy': 25000, 'paper': 45}
+  PROD: 20x server  from {'processor': 80, 'memory_module': 200, 'circuit_board': 60, 'steel': 100, 'copper_wire': 150, 'energy': 60000, 'paper': 80}
+  PROD: 100x router  from {'circuit_board': 100, 'microchip': 50, 'copper_wire': 100, 'plastic': 100, 'energy': 20000, 'paper': 40}
+
+appliance_factory  |  Home Appliance Factory
+  startup=$6,000,000  wage=$25000/cycle  cycles=43200  terrain=['district_industrial']
+  PROD: 25x hvac_unit  from {'steel': 200, 'copper_wire': 150, 'copper': 100, 'circuit_board': 25, 'plastic': 50, 'energy': 40000, 'paper': 50}
+  PROD: 40x water_heater  from {'steel': 160, 'copper_wire': 80, 'glass': 40, 'energy': 25000, 'paper': 30}
+  PROD: 30x washer_dryer  from {'steel': 180, 'copper_wire': 90, 'circuit_board': 30, 'rubber': 60, 'plastic': 90, 'energy': 30000, 'paper': 40}
+  PROD: 35x refrigerator  from {'steel': 175, 'copper_wire': 70, 'circuit_board': 35, 'plastic': 105, 'glass': 35, 'energy': 28000, 'paper': 35}
+  PROD: 40x stove  from {'steel': 200, 'copper_wire': 60, 'glass': 80, 'energy': 22000, 'paper': 25}
+
+medical_equipment_factory  |  Medical Equipment Factory
+  startup=$12,000,000  wage=$45000/cycle  cycles=57600  terrain=['district_medical']
+  PROD: 5x medical_scanner  from {'steel': 500, 'copper_wire': 300, 'processor': 25, 'circuit_board': 50, 'lcd_panel': 10, 'plastic': 100, 'energy': 100000, 'paper': 200}
+  PROD: 50x surgical_tools  from {'steel': 100, 'rubber': 25, 'plastic': 50, 'energy': 20000, 'paper': 50}
+  PROD: 20x hospital_bed  from {'steel': 200, 'cotton': 100, 'circuit_board': 20, 'copper_wire': 40, 'energy': 25000, 'paper': 40}
+  PROD: 30x defibrillator  from {'circuit_board': 30, 'battery_cell': 60, 'copper_wire': 45, 'plastic': 45, 'energy': 18000, 'paper': 30}
+  PROD: 15x ventilator  from {'circuit_board': 30, 'processor': 15, 'plastic': 75, 'rubber': 45, 'copper_wire': 30, 'energy': 30000, 'paper': 45}
+  PROD: 40x iv_pump  from {'circuit_board': 40, 'plastic': 80, 'copper_wire': 40, 'energy': 15000, 'paper': 25}
+  PROD: 50x wheelchair  from {'steel': 150, 'rubber': 100, 'cotton': 50, 'energy': 12000, 'paper': 20}
+  PROD: 100x crutches  from {'aluminum': 100, 'rubber': 50, 'energy': 8000, 'paper': 15}
+  PROD: 20x prosthetic  from {'aluminum': 60, 'plastic': 40, 'circuit_board': 20, 'rubber': 30, 'energy': 25000, 'paper': 40}
+
+security_equipment_factory  |  Security Equipment Factory
+  startup=$4,000,000  wage=$20000/cycle  cycles=28800  terrain=['district_tech']
+  PROD: 100x security_camera  from {'circuit_board': 100, 'lcd_panel': 50, 'plastic': 150, 'copper_wire': 100, 'energy': 25000, 'paper': 40}
+  PROD: 75x alarm_system  from {'circuit_board': 75, 'copper_wire': 150, 'plastic': 75, 'energy': 20000, 'paper': 30}
+  PROD: 25x surveillance_system  from {'security_camera': 100, 'server': 5, 'router': 25, 'copper_wire': 200, 'energy': 40000, 'paper': 60}
+  PROD: 10x body_scanner  from {'steel': 200, 'circuit_board': 50, 'processor': 20, 'copper_wire': 100, 'energy': 50000, 'paper': 80}
+
+scientific_equipment_factory  |  Scientific Equipment Laboratory
+  startup=$5,000,000  wage=$22000/cycle  cycles=28800  terrain=['district_tech']
+  PROD: 50x microscope  from {'glass': 200, 'steel': 100, 'brass': 50, 'circuit_board': 25, 'energy': 20000, 'paper': 40}
+  PROD: 30x lab_equipment  from {'glass': 300, 'steel': 150, 'plastic': 100, 'rubber': 50, 'energy': 25000, 'paper': 50}
+  PROD: 5x lab_equipment  from {'barnacles': 50, 'glass': 10, 'energy': 30, 'paper': 3}
+
+bus_parts_factory  |  Bus Components Factory
+  startup=$7,000,000  wage=$28000/cycle  cycles=43200  terrain=['district_industrial']
+  PROD: 20x bus_chassis  from {'steel': 400, 'aluminum': 100, 'rubber': 80, 'energy': 40000, 'paper': 60}
+  PROD: 20x bus_engine  from {'steel': 200, 'iron': 100, 'copper_wire': 80, 'rubber': 40, 'energy': 50000, 'paper': 50}
+  PROD: 200x bus_seats  from {'steel': 100, 'cotton': 200, 'polyester': 150, 'leather': 50, 'energy': 15000, 'paper': 30}
+
+marine_parts_factory  |  Marine Components Factory
+  startup=$12,000,000  wage=$40000/cycle  cycles=57600  terrain=['district_shipyard']
+  PROD: 5x ship_hull  from {'steel': 2000, 'fiberglass': 500, 'aluminum': 300, 'energy': 100000, 'paper': 150}
+  PROD: 10x marine_engine  from {'steel': 500, 'iron': 300, 'copper_wire': 200, 'rubber': 100, 'energy': 80000, 'paper': 100}
+
+aircraft_parts_factory  |  Aircraft Components Factory
+  startup=$20,000,000  wage=$60000/cycle  cycles=72000  terrain=['district_aerospace']
+  PROD: 4x aircraft_engine  from {'steel': 400, 'aluminum': 600, 'copper_wire': 200, 'circuit_board': 50, 'rubber': 100, 'energy': 150000, 'paper': 200}
+  PROD: 2x aircraft_fuselage  from {'aluminum': 2000, 'steel': 500, 'fiberglass': 300, 'copper_wire': 400, 'energy': 200000, 'paper': 250}
+  PROD: 4x aircraft_wing  from {'aluminum': 1000, 'steel': 200, 'fiberglass': 200, 'energy': 100000, 'paper': 150}
+
+train_parts_factory  |  Railway Components Factory
+  startup=$10,000,000  wage=$35000/cycle  cycles=57600  terrain=['district_industrial']
+  PROD: 10x train_car_frame  from {'steel': 800, 'aluminum': 200, 'energy': 60000, 'paper': 80}
+  PROD: 5x locomotive_engine  from {'steel': 600, 'iron': 400, 'copper_wire': 300, 'circuit_board': 30, 'energy': 100000, 'paper': 120}
+
+bus_factory  |  Bus Assembly Plant
+  startup=$8,000,000  wage=$32000/cycle  cycles=57600  terrain=['district_industrial']
+  PROD: 10x school_bus  from {'bus_chassis': 10, 'bus_engine': 10, 'bus_seats': 400, 'glass': 200, 'rubber': 80, 'paint': 50, 'copper_wire': 100, 'energy': 60000, 'paper': 100}
+  PROD: 8x city_bus  from {'bus_chassis': 8, 'bus_engine': 8, 'bus_seats': 240, 'glass': 160, 'rubber': 64, 'circuit_board': 24, 'copper_wire': 80, 'energy': 50000, 'paper': 80}
+  PROD: 5x charter_bus  from {'bus_chassis': 5, 'bus_engine': 5, 'bus_seats': 275, 'glass': 100, 'rubber': 40, 'leather': 50, 'television': 10, 'copper_wire': 75, 'energy': 45000, 'paper': 70}
+  PROD: 4x prison_bus  from {'bus_chassis': 4, 'bus_engine': 4, 'bus_seats': 120, 'steel': 200, 'glass': 40, 'handcuffs': 40, 'copper_wire': 60, 'energy': 40000, 'paper': 60}
+
+emergency_vehicle_factory  |  Emergency Vehicle Factory
+  startup=$6,000,000  wage=$28000/cycle  cycles=43200  terrain=['district_industrial']
+  PROD: 10x ambulance  from {'chassis': 10, 'engine': 10, 'hospital_bed': 10, 'defibrillator': 10, 'iv_pump': 10, 'glass': 50, 'copper_wire': 100, 'energy': 50000, 'paper': 80}
+  PROD: 5x fire_truck  from {'bus_chassis': 5, 'bus_engine': 5, 'steel': 300, 'rubber': 100, 'aluminum': 100, 'copper_wire': 75, 'energy': 60000, 'paper': 90}
+  PROD: 8x garbage_truck  from {'bus_chassis': 8, 'bus_engine': 8, 'steel': 400, 'rubber': 64, 'copper_wire': 80, 'energy': 45000, 'paper': 60}
+
+truck_factory  |  Commercial Truck Factory
+  startup=$7,000,000  wage=$26000/cycle  cycles=43200  terrain=['district_industrial']
+  PROD: 15x delivery_truck  from {'chassis': 15, 'engine': 15, 'steel': 150, 'glass': 60, 'rubber': 90, 'copper_wire': 75, 'energy': 40000, 'paper': 60}
+  PROD: 8x semi_truck  from {'bus_chassis': 8, 'bus_engine': 8, 'steel': 320, 'glass': 40, 'rubber': 64, 'diesel': 160, 'copper_wire': 80, 'energy': 55000, 'paper': 80}
+
+shipyard  |  Commercial Shipyard
+  startup=$25,000,000  wage=$80000/cycle  cycles=86400  terrain=['district_shipyard']
+  PROD: 1x cruise_ship  from {'ship_hull': 3, 'marine_engine': 6, 'steel': 3000, 'aluminum': 500, 'glass': 1000, 'copper_wire': 2000, 'circuit_board': 200, 'hvac_unit': 50, 'refrigerator': 100, 'hospital_bed': 20, 'energy': 500000, 'paper': 500}
+  PROD: 2x cargo_freighter  from {'ship_hull': 4, 'marine_engine': 8, 'steel': 4000, 'copper_wire': 1000, 'circuit_board': 100, 'energy': 400000, 'paper': 400}
+  PROD: 3x ferry  from {'ship_hull': 3, 'marine_engine': 6, 'steel': 1500, 'glass': 300, 'copper_wire': 450, 'bus_seats': 600, 'energy': 200000, 'paper': 250}
+  PROD: 5x tugboat  from {'ship_hull': 5, 'marine_engine': 10, 'steel': 500, 'copper_wire': 250, 'energy': 100000, 'paper': 100}
+
+aircraft_assembly  |  Aircraft Assembly Plant
+  startup=$50,000,000  wage=$100000/cycle  cycles=86400  terrain=['district_aerospace']
+  PROD: 1x passenger_jet  from {'aircraft_fuselage': 1, 'aircraft_wing': 2, 'aircraft_engine': 4, 'aluminum': 1000, 'copper_wire': 1000, 'circuit_board': 200, 'processor': 50, 'lcd_panel': 100, 'glass': 300, 'rubber': 200, 'bus_seats': 300, 'energy': 600000, 'paper': 600}
+  PROD: 1x cargo_plane  from {'aircraft_fuselage': 1, 'aircraft_wing': 2, 'aircraft_engine': 4, 'aluminum': 800, 'steel': 200, 'copper_wire': 800, 'circuit_board': 150, 'energy': 500000, 'paper': 500}
+  PROD: 2x private_jet  from {'aircraft_fuselage': 1, 'aircraft_wing': 2, 'aircraft_engine': 2, 'aluminum': 400, 'copper_wire': 400, 'circuit_board': 100, 'leather': 200, 'glass': 100, 'energy': 300000, 'paper': 300}
+  PROD: 4x helicopter  from {'aircraft_engine': 4, 'aluminum': 400, 'steel': 200, 'copper_wire': 200, 'circuit_board': 80, 'glass': 80, 'energy': 200000, 'paper': 200}
+
+rail_factory  |  Railway Vehicle Factory
+  startup=$15,000,000  wage=$50000/cycle  cycles=72000  terrain=['district_industrial']
+  PROD: 5x passenger_train  from {'train_car_frame': 5, 'steel': 500, 'bus_seats': 400, 'glass': 200, 'copper_wire': 250, 'hvac_unit': 10, 'energy': 150000, 'paper': 150}
+  PROD: 10x freight_car  from {'train_car_frame': 10, 'steel': 800, 'copper_wire': 100, 'energy': 100000, 'paper': 100}
+  PROD: 3x locomotive  from {'locomotive_engine': 3, 'train_car_frame': 3, 'steel': 600, 'copper_wire': 450, 'circuit_board': 60, 'diesel': 300, 'energy': 200000, 'paper': 200}
+
+pharmaceutical_plant  |  Pharmaceutical Manufacturing Plant
+  startup=$18,000,000  wage=$55000/cycle  cycles=57600  terrain=['district_medical']
+  PROD: 200x antibiotic  from {'active_ingredient': 100, 'water': 500, 'pill_bottle': 200, 'paper': 100, 'energy': 40000}
+  PROD: 300x painkiller  from {'active_ingredient': 150, 'water': 300, 'pill_bottle': 300, 'paper': 150, 'energy': 35000}
+  PROD: 100x insulin  from {'active_ingredient': 200, 'water': 200, 'glass': 100, 'rubber': 50, 'paper': 80, 'energy': 50000}
+  PROD: 500x vaccine  from {'active_ingredient': 250, 'water': 1000, 'glass': 500, 'rubber': 250, 'paper': 200, 'energy': 80000}
+  PROD: 50x anesthesia  from {'active_ingredient': 100, 'water': 100, 'glass': 50, 'paper': 50, 'energy': 45000}
+  PROD: 25x chemotherapy_drug  from {'active_ingredient': 200, 'water': 50, 'glass': 25, 'paper': 100, 'energy': 100000}
+  PROD: 250x antidepressant  from {'active_ingredient': 125, 'water': 250, 'pill_bottle': 250, 'paper': 125, 'energy': 30000}
+  PROD: 300x blood_pressure_med  from {'active_ingredient': 150, 'water': 300, 'pill_bottle': 300, 'paper': 150, 'energy': 28000}
+
+medical_supplies_factory  |  Medical Supplies Factory
+  startup=$5,000,000  wage=$22000/cycle  cycles=28800  terrain=['district_medical']
+  PROD: 1000x surgical_gloves  from {'rubber': 200, 'paper': 50, 'energy': 15000}
+  PROD: 2000x surgical_mask  from {'cotton': 200, 'polyester': 100, 'paper': 40, 'energy': 12000}
+  PROD: 500x syringe  from {'plastic': 100, 'steel': 25, 'paper': 30, 'energy': 18000}
+  PROD: 300x iv_bag  from {'plastic': 150, 'water': 600, 'salt': 30, 'paper': 45, 'energy': 20000}
+  PROD: 200x blood_bag  from {'plastic': 100, 'rubber': 40, 'paper': 40, 'energy': 16000}
+  PROD: 800x gauze  from {'cotton': 400, 'paper': 25, 'energy': 10000}
+  PROD: 400x sutures  from {'silk': 100, 'steel': 20, 'paper': 35, 'energy': 14000}
+  PROD: 150x cast_material  from {'cotton': 150, 'cement': 75, 'water': 150, 'paper': 30, 'energy': 12000}
+
+weapons_factory  |  Weapons Manufacturing Plant
+  startup=$25,000,000  wage=$65000/cycle  cycles=57600  terrain=['district_military']
+  PROD: 100x rifle  from {'steel': 200, 'lumber': 50, 'plastic': 50, 'copper': 30, 'paper': 50, 'energy': 40000}
+  PROD: 5000x ammunition  from {'brass': 500, 'lead': 300, 'copper': 200, 'paper': 30, 'energy': 35000}
+  PROD: 200x grenade  from {'steel': 100, 'iron': 100, 'copper_wire': 50, 'paper': 40, 'energy': 45000}
+  PROD: 10x missile  from {'steel': 200, 'aluminum': 150, 'circuit_board': 50, 'processor': 20, 'copper_wire': 100, 'jet_fuel': 50, 'paper': 100, 'energy': 150000}
+
+tactical_gear_factory  |  Tactical Gear Factory
+  startup=$8,000,000  wage=$35000/cycle  cycles=43200  terrain=['district_military']
+  PROD: 50x body_armor  from {'steel': 100, 'polyester': 150, 'cotton': 50, 'paper': 40, 'energy': 30000}
+  PROD: 100x combat_helmet  from {'steel': 100, 'plastic': 50, 'cotton': 30, 'paper': 30, 'energy': 20000}
+  PROD: 75x tactical_vest  from {'polyester': 150, 'cotton': 75, 'plastic': 75, 'paper': 35, 'energy': 18000}
+  PROD: 30x night_vision  from {'glass': 60, 'circuit_board': 60, 'processor': 30, 'battery_cell': 60, 'plastic': 45, 'paper': 45, 'energy': 50000}
+  PROD: 50x military_radio  from {'circuit_board': 50, 'copper_wire': 100, 'battery_cell': 50, 'plastic': 50, 'paper': 40, 'energy': 35000}
+  PROD: 25x encryption_device  from {'circuit_board': 50, 'processor': 50, 'memory_module': 50, 'copper_wire': 50, 'paper': 60, 'energy': 60000}
+  PROD: 5x radar_array  from {'steel': 200, 'circuit_board': 100, 'processor': 25, 'copper_wire': 300, 'paper': 80, 'energy': 100000}
+  PROD: 5x satellite_uplink  from {'steel': 150, 'aluminum': 100, 'circuit_board': 75, 'processor': 25, 'copper_wire': 200, 'paper': 75, 'energy': 120000}
+
+military_vehicle_plant  |  Military Vehicle Plant
+  startup=$35,000,000  wage=$75000/cycle  cycles=72000  terrain=['district_military']
+  PROD: 3x tank  from {'steel': 1500, 'aluminum': 300, 'bus_engine': 3, 'circuit_board': 60, 'copper_wire': 300, 'rubber': 150, 'paper': 150, 'energy': 300000}
+  PROD: 10x humvee  from {'steel': 400, 'chassis': 10, 'engine': 10, 'rubber': 80, 'glass': 40, 'copper_wire': 100, 'paper': 80, 'energy': 100000}
+  PROD: 5x apc  from {'steel': 800, 'bus_chassis': 5, 'bus_engine': 5, 'circuit_board': 40, 'rubber': 60, 'copper_wire': 150, 'paper': 100, 'energy': 180000}
+  PROD: 20x drone  from {'aluminum': 200, 'circuit_board': 100, 'processor': 40, 'security_camera': 40, 'battery_cell': 80, 'copper_wire': 100, 'paper': 60, 'energy': 80000}
+
+military_aircraft_plant  |  Military Aircraft Plant
+  startup=$60,000,000  wage=$120000/cycle  cycles=86400  terrain=['district_military']
+  PROD: 2x fighter_jet  from {'aircraft_fuselage': 2, 'aircraft_wing': 4, 'aircraft_engine': 4, 'aluminum': 800, 'steel': 400, 'circuit_board': 200, 'processor': 100, 'radar_array': 2, 'missile': 8, 'copper_wire': 600, 'paper': 400, 'energy': 800000}
+  PROD: 5x military_helicopter  from {'aircraft_engine': 10, 'aluminum': 500, 'steel': 250, 'circuit_board': 100, 'processor': 50, 'copper_wire': 250, 'missile': 10, 'paper': 200, 'energy': 400000}
+
+naval_shipyard  |  Naval Shipyard
+  startup=$80,000,000  wage=$150000/cycle  cycles=86400  terrain=['district_military']
+  PROD: 1x destroyer  from {'ship_hull': 4, 'marine_engine': 8, 'steel': 5000, 'aluminum': 1000, 'circuit_board': 300, 'processor': 100, 'radar_array': 4, 'missile': 50, 'copper_wire': 2000, 'paper': 600, 'energy': 1000000}
+  PROD: 1x submarine  from {'ship_hull': 3, 'marine_engine': 4, 'steel': 4000, 'circuit_board': 400, 'processor': 150, 'copper_wire': 2500, 'missile': 24, 'paper': 500, 'energy': 900000}
+
+military_support_facility  |  Military Support Facility
+  startup=$6,000,000  wage=$25000/cycle  cycles=28800  terrain=['district_military']
+  PROD: 1000x mre  from {'beef': 200, 'bread': 300, 'carrots': 150, 'potatoes': 150, 'plastic': 200, 'paper': 100, 'energy': 25000}
+  PROD: 200x military_uniform  from {'cotton': 400, 'polyester': 200, 'leather': 50, 'paper': 50, 'energy': 20000}
+  PROD: 500x dog_tags  from {'steel': 25, 'paper': 25, 'energy': 8000}
+  PROD: 50x barracks_bunk  from {'steel': 100, 'lumber': 50, 'cotton': 100, 'paper': 30, 'energy': 15000}
+
+military_training_center  |  Military Training Center
+  startup=$10,000,000  wage=$40000/cycle  cycles=43200  terrain=['district_military']
+  PROD: 5x obstacle_course  from {'lumber': 500, 'steel': 200, 'concrete': 100, 'rope': 100, 'paper': 50, 'energy': 30000}
+  PROD: 5x firing_range  from {'concrete': 200, 'steel': 300, 'sand': 500, 'lumber': 100, 'paper': 60, 'energy': 40000}
+  PROD: 10x combat_simulator  from {'desktop_computer': 20, 'lcd_panel': 30, 'server': 5, 'circuit_board': 50, 'copper_wire': 100, 'paper': 80, 'energy': 80000}
+
+african_wildlife_preserve  |  African Wildlife Preserve
+  startup=$15,000,000  wage=$45000/cycle  cycles=86400  terrain=['district_zoo']
+  PROD: 3x lion  from {'beef': 500, 'water': 1000, 'veterinary_supplies': 10, 'animal_feed': 100, 'paper': 50, 'energy': 30000}
+  PROD: 2x elephant  from {'grass': 2000, 'water': 3000, 'veterinary_supplies': 20, 'animal_feed': 200, 'paper': 60, 'energy': 40000}
+  PROD: 3x giraffe  from {'grass': 1000, 'timber': 200, 'water': 1500, 'veterinary_supplies': 15, 'paper': 45, 'energy': 25000}
+  PROD: 5x zebra  from {'grass': 800, 'water': 1000, 'veterinary_supplies': 10, 'paper': 35, 'energy': 20000}
+  PROD: 2x rhino  from {'grass': 1500, 'water': 2000, 'veterinary_supplies': 25, 'tranquilizer': 10, 'paper': 55, 'energy': 35000}
+  PROD: 2x hippo  from {'grass': 1200, 'water': 5000, 'veterinary_supplies': 15, 'paper': 45, 'energy': 30000}
+
+primate_conservation  |  Primate Conservation Center
+  startup=$12,000,000  wage=$40000/cycle  cycles=86400  terrain=['district_zoo']
+  PROD: 2x gorilla  from {'grass': 800, 'apples': 300, 'water': 1000, 'veterinary_supplies': 20, 'lumber': 100, 'paper': 50, 'energy': 35000}
+  PROD: 4x chimpanzee  from {'apples': 400, 'grass': 400, 'water': 800, 'veterinary_supplies': 15, 'paper': 40, 'energy': 28000}
+  PROD: 3x orangutan  from {'apples': 350, 'timber': 150, 'water': 600, 'veterinary_supplies': 12, 'paper': 38, 'energy': 26000}
+
+arctic_habitat_center  |  Arctic Habitat Center
+  startup=$18,000,000  wage=$50000/cycle  cycles=86400  terrain=['district_zoo']
+  PROD: 2x polar_bear  from {'beef': 400, 'water': 3000, 'veterinary_supplies': 20, 'hvac_unit': 2, 'paper': 55, 'energy': 100000}
+  PROD: 20x penguin  from {'beef': 200, 'water': 2000, 'veterinary_supplies': 10, 'hvac_unit': 1, 'paper': 40, 'energy': 80000}
+  PROD: 5x seal  from {'beef': 250, 'water': 2500, 'veterinary_supplies': 12, 'paper': 42, 'energy': 60000}
+
+marine_life_aquarium  |  Marine Life Aquarium
+  startup=$20,000,000  wage=$55000/cycle  cycles=86400  terrain=['district_zoo']
+  PROD: 4x dolphin  from {'beef': 400, 'water': 10000, 'veterinary_supplies': 20, 'aquarium_tank': 1, 'paper': 60, 'energy': 80000}
+  PROD: 3x shark  from {'beef': 500, 'water': 15000, 'veterinary_supplies': 25, 'aquarium_tank': 1, 'paper': 70, 'energy': 90000}
+  PROD: 5x sea_turtle  from {'grass': 200, 'water': 5000, 'veterinary_supplies': 10, 'paper': 35, 'energy': 40000}
+  PROD: 50x jellyfish  from {'water': 3000, 'salt': 100, 'paper': 20, 'energy': 30000}
+  PROD: 3x octopus  from {'beef': 150, 'water': 2000, 'veterinary_supplies': 8, 'paper': 30, 'energy': 35000}
+  PROD: 200x tropical_fish  from {'water': 2000, 'salt': 50, 'animal_feed': 50, 'paper': 25, 'energy': 25000}
+  PROD: 2x manta_ray  from {'beef': 300, 'water': 12000, 'veterinary_supplies': 20, 'aquarium_tank': 1, 'paper': 50, 'energy': 70000}
+  PROD: 20x seahorse  from {'water': 2000, 'salt': 60, 'animal_feed': 30, 'paper': 20, 'energy': 20000}
+  PROD: 3x sea_lion  from {'beef': 400, 'water': 8000, 'veterinary_supplies': 25, 'paper': 45, 'energy': 60000}
+  PROD: 30x puffer_fish  from {'water': 3000, 'salt': 80, 'animal_feed': 40, 'paper': 25, 'energy': 28000}
+  PROD: 100x clownfish  from {'water': 2500, 'salt': 60, 'animal_feed': 35, 'paper': 20, 'energy': 22000}
+  PROD: 4x stingray  from {'beef': 200, 'water': 6000, 'veterinary_supplies': 12, 'aquarium_tank': 1, 'paper': 35, 'energy': 45000}
+
+exotic_animal_facility  |  Exotic Animal Facility
+  startup=$14,000,000  wage=$42000/cycle  cycles=86400  terrain=['district_zoo']
+  PROD: 2x tiger  from {'beef': 400, 'water': 800, 'veterinary_supplies': 15, 'tranquilizer': 10, 'paper': 48, 'energy': 32000}
+  PROD: 2x panda  from {'grass': 2000, 'timber': 300, 'water': 1000, 'veterinary_supplies': 25, 'paper': 65, 'energy': 45000}
+  PROD: 5x koala  from {'timber': 400, 'water': 500, 'veterinary_supplies': 10, 'paper': 35, 'energy': 28000}
+  PROD: 6x kangaroo  from {'grass': 600, 'water': 800, 'veterinary_supplies': 12, 'paper': 38, 'energy': 24000}
+  PROD: 5x python  from {'beef': 100, 'water': 200, 'veterinary_supplies': 5, 'paper': 22, 'energy': 18000}
+  PROD: 3x crocodile  from {'beef': 300, 'water': 2000, 'veterinary_supplies': 10, 'paper': 32, 'energy': 26000}
+  PROD: 8x tortoise  from {'grass': 300, 'water': 400, 'veterinary_supplies': 6, 'paper': 25, 'energy': 15000}
+
+aviary_sanctuary  |  Aviary Sanctuary
+  startup=$8,000,000  wage=$30000/cycle  cycles=57600  terrain=['district_zoo']
+  PROD: 20x parrot  from {'apples': 100, 'corn': 100, 'water': 200, 'veterinary_supplies': 8, 'paper': 28, 'energy': 20000}
+  PROD: 15x flamingo  from {'beef': 75, 'water': 500, 'veterinary_supplies': 6, 'paper': 24, 'energy': 18000}
+  PROD: 450x canary  from {'apple_seeds': 750, 'orange_seeds': 750, 'water': 50, 'veterinary_supplies': 1, 'paper': 750, 'energy': 18}
+  PROD: 5x eagle  from {'beef': 150, 'water': 100, 'veterinary_supplies': 10, 'paper': 32, 'energy': 22000}
+
+zoo_infrastructure_factory  |  Zoo Infrastructure Factory
+  startup=$6,000,000  wage=$25000/cycle  cycles=43200  terrain=['district_zoo']
+  PROD: 10x animal_enclosure  from {'steel': 500, 'concrete': 300, 'glass': 200, 'lumber': 200, 'paper': 60, 'energy': 40000}
+  PROD: 5x aquarium_tank  from {'glass': 500, 'steel': 200, 'plastic': 150, 'copper_wire': 100, 'circuit_board': 25, 'paper': 50, 'energy': 60000}
+  PROD: 8x habitat_landscape  from {'grass': 500, 'timber': 300, 'sand': 200, 'water': 1000, 'concrete': 100, 'paper': 45, 'energy': 30000}
+  PROD: 15x viewing_platform  from {'steel': 150, 'lumber': 200, 'glass': 100, 'concrete': 150, 'paper': 35, 'energy': 25000}
+  PROD: 20x feeding_station  from {'steel': 100, 'plastic': 100, 'lumber': 80, 'paper': 30, 'energy': 18000}
+
+zoo_supplies_factory  |  Zoo Supplies Factory
+  startup=$4,000,000  wage=$18000/cycle  cycles=28800  terrain=['district_zoo']
+  PROD: 500x animal_feed  from {'corn': 300, 'wheat': 200, 'beef': 100, 'water': 200, 'paper': 30, 'energy': 15000}
+  PROD: 100x veterinary_supplies  from {'medicine': 50, 'bandage': 100, 'syringe': 50, 'surgical_gloves': 100, 'paper': 40, 'energy': 20000}
+  PROD: 50x tranquilizer  from {'active_ingredient': 50, 'syringe': 50, 'paper': 35, 'energy': 25000}
+  PROD: 200x animal_microchip  from {'microchip': 200, 'plastic': 50, 'paper': 25, 'energy': 18000}
+
+prison_supply_factory  |  Prison Supply Factory
+  startup=$4,000,000  wage=$18000/cycle  cycles=28800  terrain=['district_prison']
+  PROD: 200x inmate_jumpsuit  from {'cotton': 300, 'polyester': 100, 'paper': 30, 'energy': 15000}
+  PROD: 150x prison_bedding  from {'cotton': 300, 'polyester': 150, 'paper': 25, 'energy': 12000}
+  PROD: 300x hygiene_kit  from {'soap': 300, 'toothpaste': 300, 'shampoo': 300, 'towel': 150, 'plastic': 100, 'paper': 40, 'energy': 18000}
+  PROD: 500x commissary_snacks  from {'candy_bar': 200, 'lollipop': 200, 'soda': 100, 'paper': 35, 'energy': 10000}
+  PROD: 500x phone_card  from {'plastic': 50, 'paper': 50, 'energy': 12000}
+
+prison_food_service  |  Prison Food Service
+  startup=$3,000,000  wage=$15000/cycle  cycles=21600  terrain=['district_prison']
+  PROD: 1000x prison_meal  from {'bread': 500, 'beef': 300, 'carrots': 400, 'potatoes': 500, 'milk': 300, 'water': 1000, 'paper': 50, 'energy': 25000, 'pasta': 300, 'vinegar': 30}
+
+prison_security_factory  |  Prison Security Factory
+  startup=$5,000,000  wage=$22000/cycle  cycles=28800  terrain=['district_prison']
+  PROD: 50x cell_door  from {'steel': 250, 'copper_wire': 50, 'circuit_board': 25, 'paper': 35, 'energy': 30000}
+  PROD: 200x razor_wire  from {'steel': 200, 'paper': 20, 'energy': 15000}
+  PROD: 200x handcuffs  from {'steel': 100, 'paper': 25, 'energy': 12000}
+  PROD: 50x taser  from {'plastic': 50, 'circuit_board': 50, 'battery_cell': 50, 'copper_wire': 50, 'paper': 35, 'energy': 25000}
+
+prison_rehabilitation_center  |  Prison Rehabilitation Center
+  startup=$4,000,000  wage=$20000/cycle  cycles=28800  terrain=['district_prison']
+  PROD: 100x ged_materials  from {'textbook': 200, 'paper': 500, 'ink': 50, 'energy': 15000}
+  PROD: 100x counseling_materials  from {'paper': 300, 'textbook': 100, 'ink': 30, 'energy': 12000}
+  PROD: 50x vocational_kit  from {'steel': 50, 'lumber': 100, 'textbook': 50, 'paper': 100, 'energy': 20000}
+
+fast_food_kitchen  |  Fast Food Kitchen
+  startup=$3,000,000  wage=$15000/cycle  cycles=14400  terrain=['district_food']
+  PROD: 500x burger  from {'beef': 250, 'bread': 500, 'onions': 100, 'lettuce': 100, 'paper': 50, 'energy': 20000}
+  PROD: 400x hot_dog  from {'sausage': 400, 'bread': 400, 'onions': 80, 'paper': 40, 'energy': 15000, 'ketchup': 50}
+  PROD: 600x fries  from {'potatoes': 600, 'oil': 100, 'salt': 30, 'paper': 35, 'energy': 18000}
+  PROD: 500x chicken_nuggets  from {'chicken': 300, 'flour': 100, 'oil': 80, 'paper': 40, 'energy': 22000}
+  PROD: 400x pizza_slice  from {'flour': 200, 'cheese': 200, 'pizza_sauce': 120, 'pork': 100, 'onions': 50, 'paper': 45, 'energy': 20000}
+  PROD: 400x taco  from {'corn': 200, 'beef': 200, 'cheese': 100, 'onions': 50, 'paper': 40, 'energy': 18000, 'salsa': 30}
+  PROD: 300x burrito  from {'flour': 150, 'beef': 150, 'cheese': 75, 'onions': 40, 'paper': 35, 'energy': 16000, 'salsa': 40}
+
+international_cuisine_kitchen  |  International Cuisine Kitchen
+  startup=$4,000,000  wage=$20000/cycle  cycles=21600  terrain=['district_food']
+  PROD: 300x sushi_roll  from {'salmon_fillet': 100, 'tuna_steak': 80, 'rice': 200, 'rice_paper': 60, 'rice_wine': 20, 'paper': 50, 'energy': 25000}
+  PROD: 250x ramen_bowl  from {'flour': 50, 'pork': 125, 'eggs': 125, 'onions': 60, 'water': 500, 'paper': 45, 'energy': 22000, 'noodles': 150}
+  PROD: 350x fried_rice  from {'rice': 250, 'eggs': 175, 'carrots': 100, 'pork': 100, 'oil': 50, 'paper': 40, 'energy': 20000, 'shrimp_paste': 15}
+  PROD: 200x pad_thai  from {'flour': 30, 'eggs': 100, 'chicken': 80, 'peanut': 50, 'paper': 38, 'energy': 18000, 'noodles': 120, 'vinegar': 20, 'shrimp_paste': 20}
+  PROD: 250x gyro  from {'pork': 200, 'flour': 125, 'onions': 60, 'paper': 42, 'energy': 19000, 'yogurt': 40}
+
+beverage_production  |  Beverage Production Facility
+  startup=$2,500,000  wage=$12000/cycle  cycles=14400  terrain=['district_food']
+  PROD: 800x soda_cup  from {'soda': 400, 'plastic': 100, 'water': 400, 'paper': 30, 'energy': 12000}
+  PROD: 300x milkshake  from {'milk': 300, 'ice_cream': 150, 'sugar': 50, 'plastic': 75, 'paper': 35, 'energy': 15000}
+  PROD: 350x smoothie  from {'apples': 200, 'milk': 175, 'sugar': 50, 'plastic': 90, 'paper': 38, 'energy': 14000}
+  PROD: 400x soft_serve  from {'ice_cream': 400, 'sugar': 80, 'paper': 40, 'energy': 18000}
+
+food_packaging_factory  |  Food Packaging Factory
+  startup=$2,000,000  wage=$10000/cycle  cycles=14400  terrain=['district_food']
+  PROD: 1000x food_tray  from {'plastic': 200, 'paper': 100, 'energy': 10000}
+  PROD: 800x takeout_container  from {'plastic': 200, 'paper': 150, 'energy': 12000}
+  PROD: 2000x disposable_utensils  from {'plastic': 150, 'paper': 50, 'energy': 8000}
+  PROD: 600x cardboard_box  from {'cardboard': 300, 'glue': 50, 'energy': 10000}
+
+stadium_construction  |  Stadium Construction Company
+  startup=$20,000,000  wage=$60000/cycle  cycles=86400  terrain=['district_entertainment']
+  PROD: 500x stadium_seat  from {'steel': 250, 'plastic': 500, 'cotton': 250, 'paper': 60, 'energy': 40000}
+  PROD: 10x scoreboard  from {'steel': 200, 'lcd_panel': 50, 'circuit_board': 30, 'copper_wire': 100, 'paper': 50, 'energy': 60000}
+  PROD: 5x jumbotron  from {'steel': 500, 'lcd_panel': 200, 'circuit_board': 100, 'processor': 25, 'copper_wire': 300, 'paper': 80, 'energy': 100000}
+  PROD: 20x goal_post  from {'steel': 200, 'paint': 40, 'concrete': 100, 'paper': 30, 'energy': 25000}
+  PROD: 30x basketball_hoop  from {'steel': 90, 'glass': 60, 'rubber': 30, 'paper': 25, 'energy': 20000}
+  PROD: 50x artificial_turf  from {'plastic': 500, 'rubber': 250, 'sand': 200, 'paper': 40, 'energy': 35000}
+
+sports_team_operations  |  Sports Team Operations
+  startup=$15,000,000  wage=$50000/cycle  cycles=57600  terrain=['district_entertainment']
+  PROD: 25x athlete_contract  from {'paper': 500, 'ink': 50, 'laptop': 10, 'energy': 30000}
+  PROD: 500x team_jersey  from {'polyester': 500, 'cotton': 250, 'ink': 100, 'paper': 50, 'energy': 25000}
+  PROD: 200x sports_ball  from {'leather': 200, 'rubber': 100, 'paper': 30, 'energy': 15000}
+  PROD: 5x championship_trophy  from {'brass': 50, 'lumber': 25, 'glass': 10, 'paper': 40, 'energy': 20000}
+
+concert_production  |  Concert Production Company
+  startup=$10,000,000  wage=$40000/cycle  cycles=43200  terrain=['district_entertainment']
+  PROD: 5x concert_stage  from {'steel': 500, 'aluminum': 200, 'lumber': 300, 'paper': 60, 'energy': 50000}
+  PROD: 20x sound_system  from {'circuit_board': 100, 'copper_wire': 200, 'plastic': 100, 'steel': 60, 'paper': 50, 'energy': 40000}
+  PROD: 15x lighting_rig  from {'steel': 150, 'aluminum': 75, 'circuit_board': 75, 'copper_wire': 150, 'glass': 100, 'paper': 45, 'energy': 35000}
+  PROD: 100x pyrotechnics  from {'iron': 100, 'copper': 50, 'paper': 60, 'energy': 30000}
+  PROD: 500x band_merchandise  from {'cotton': 300, 'polyester': 150, 'ink': 100, 'paper': 75, 'energy': 20000}
+
+cinema_production  |  Cinema Production Studio
+  startup=$8,000,000  wage=$35000/cycle  cycles=43200  terrain=['district_entertainment']
+  PROD: 20x movie_screen  from {'cotton': 200, 'plastic': 100, 'aluminum': 100, 'paper': 40, 'energy': 25000}
+  PROD: 200x theater_seat  from {'steel': 100, 'cotton': 200, 'leather': 100, 'paper': 35, 'energy': 20000}
+  PROD: 30x popcorn_machine  from {'steel': 60, 'glass': 30, 'copper_wire': 30, 'circuit_board': 15, 'paper': 25, 'energy': 18000}
+  PROD: 50x film_reel  from {'plastic': 100, 'paper': 200, 'ink': 50, 'energy': 30000}
+
+casino_equipment_factory  |  Casino Equipment Factory
+  startup=$12,000,000  wage=$45000/cycle  cycles=43200  terrain=['district_entertainment']
+  PROD: 50x slot_machine  from {'steel': 150, 'circuit_board': 100, 'lcd_panel': 50, 'processor': 25, 'copper_wire': 100, 'plastic': 100, 'paper': 60, 'energy': 50000}
+  PROD: 30x poker_table  from {'lumber': 150, 'cotton': 90, 'leather': 60, 'brass': 30, 'paper': 40, 'energy': 25000}
+  PROD: 15x roulette_wheel  from {'lumber': 75, 'brass': 45, 'steel': 30, 'paint': 15, 'paper': 35, 'energy': 20000}
+  PROD: 5000x casino_chips  from {'plastic': 200, 'paint': 50, 'paper': 30, 'energy': 15000}
+  PROD: 500x playing_cards  from {'paper': 200, 'ink': 50, 'plastic': 25, 'energy': 10000}
+
+educational_publishing  |  Educational Publishing House
+  startup=$5,000,000  wage=$25000/cycle  cycles=28800  terrain=['district_education']
+  PROD: 50x curriculum_package  from {'textbook': 200, 'paper': 1000, 'ink': 100, 'energy': 25000}
+  PROD: 500x standardized_test  from {'paper': 2000, 'ink': 200, 'energy': 15000}
+  PROD: 200x diploma_certificate  from {'paper': 200, 'ink': 50, 'leather': 50, 'energy': 10000}
+
+school_supplies_factory  |  School Supplies Factory
+  startup=$4,000,000  wage=$20000/cycle  cycles=28800  terrain=['district_education']
+  PROD: 100x lab_kit  from {'glass': 200, 'plastic': 150, 'rubber': 50, 'paper': 100, 'energy': 20000}
+  PROD: 150x dissection_kit  from {'steel': 75, 'plastic': 75, 'rubber': 30, 'paper': 60, 'energy': 15000}
+  PROD: 200x art_supplies  from {'paper': 500, 'paint': 100, 'lumber': 50, 'cotton': 50, 'energy': 12000}
+  PROD: 100x sports_equipment  from {'rubber': 100, 'leather': 50, 'steel': 50, 'paper': 40, 'energy': 18000}
+  PROD: 50x band_instruments  from {'brass': 100, 'lumber': 75, 'steel': 25, 'paper': 50, 'energy': 25000}
+  PROD: 500x notebook  from {'paper': 5000, 'glue': 25, 'ink': 1000, 'energy': 15000}
+
+school_cafeteria  |  School Cafeteria Service
+  startup=$2,000,000  wage=$12000/cycle  cycles=14400  terrain=['district_education']
+  PROD: 500x school_lunch  from {'bread': 150, 'beef': 150, 'carrots': 150, 'milk': 250, 'apples': 150, 'paper': 50, 'energy': 18000, 'pasta': 150, 'jam': 50}
+
+school_uniform_factory  |  School Uniform Factory
+  startup=$3,000,000  wage=$15000/cycle  cycles=21600  terrain=['district_education']
+  PROD: 200x school_uniform  from {'cotton': 300, 'polyester': 150, 'buttons': 200, 'paper': 40, 'energy': 16000}
+
+classroom_furniture_factory  |  Classroom Furniture Factory
+  startup=$4,000,000  wage=$18000/cycle  cycles=28800  terrain=['district_education']
+  PROD: 100x student_desk  from {'steel': 150, 'lumber': 200, 'plastic': 100, 'paper': 30, 'energy': 20000}
+  PROD: 25x smartboard  from {'lcd_panel': 50, 'circuit_board': 50, 'processor': 25, 'aluminum': 50, 'copper_wire': 75, 'paper': 50, 'energy': 40000}
+  PROD: 40x projector  from {'lcd_panel': 40, 'circuit_board': 40, 'glass': 40, 'plastic': 60, 'paper': 40, 'energy': 30000}
+
+food_court_district  |  Food Court District
+  startup=$8,000,000  wage=$35000/cycle  cycles=43200  terrain=['district_food_court']
+  PROD: 100x fast_food_combo  from {'burger': 100, 'fries': 100, 'soda_cup': 100, 'food_tray': 100, 'disposable_utensils': 100, 'paper': 50, 'energy': 10000, 'hot_dog': 50, 'pizza_slice': 50, 'burrito': 50}
+  PROD: 50x international_platter  from {'sushi_roll': 50, 'ramen_bowl': 25, 'taco': 50, 'fried_rice': 50, 'food_tray': 50, 'paper': 40, 'energy': 12000, 'pad_thai': 25, 'gyro': 25}
+  PROD: 75x dessert_sampler  from {'soft_serve': 75, 'cheesecake': 40, 'donut': 75, 'food_tray': 75, 'paper': 35, 'energy': 8000}
+  PROD: 100x beverage_package  from {'soda_cup': 50, 'milkshake': 25, 'smoothie': 25, 'paper': 30, 'energy': 6000}
+  PROD: 80x kids_meal  from {'chicken_nuggets': 80, 'fries': 40, 'soda_cup': 80, 'takeout_container': 80, 'paper': 40, 'energy': 8000}
+
+neighborhood_district  |  Neighborhood District
+  startup=$12,000,000  wage=$45000/cycle  cycles=57600  terrain=['district_neighborhood']
+  PROD: 100x monthly_utility_bill  from {'residential_electricity': 200, 'drinking_water': 300, 'natural_gas': 100, 'wastewater_service': 150, 'paper': 100, 'energy': 15000, 'heating_oil': 50}
+  PROD: 30x home_maintenance_package  from {'hvac_unit': 10, 'water_heater': 10, 'copper_wire': 60, 'lumber': 100, 'paint': 30, 'paper': 60, 'energy': 20000, 'fire_truck': 1}
+  PROD: 50x lawn_service  from {'grass': 200, 'water': 500, 'diesel': 25, 'paper': 40, 'energy': 12000}
+  PROD: 75x waste_service  from {'garbage_truck': 1, 'diesel': 50, 'plastic': 100, 'paper': 50, 'energy': 18000}
+  PROD: 60x internet_bundle  from {'router': 60, 'copper_wire': 180, 'server': 3, 'paper': 60, 'energy': 25000}
+  PROD: 40x security_package  from {'alarm_system': 40, 'security_camera': 80, 'copper_wire': 120, 'paper': 50, 'energy': 20000}
+
+shopping_mall_district  |  Shopping Mall District
+  startup=$15,000,000  wage=$50000/cycle  cycles=57600  terrain=['district_mall']
+  PROD: 50x fashion_bundle  from {'blouse': 100, 'trousers': 100, 'dress': 50, 'shoes': 100, 'purse': 50, 'jewelry': 25, 'paper': 75, 'energy': 20000}
+  PROD: 30x electronics_package  from {'smartphone': 30, 'laptop': 15, 'tablet': 15, 'television': 10, 'paper': 60, 'energy': 25000}
+  PROD: 20x furnishing_set  from {'pillow': 80, 'comforter': 40, 'refrigerator': 10, 'stove': 10, 'washer_dryer': 10, 'paper': 50, 'energy': 22000}
+  PROD: 60x beauty_kit  from {'perfume': 60, 'soap': 120, 'shampoo': 120, 'lotion': 60, 'paper': 45, 'energy': 15000}
+  PROD: 40x sporting_goods  from {'sports_equipment': 40, 'sports_ball': 40, 'team_jersey': 80, 'shoes': 40, 'paper': 50, 'energy': 18000}
+  PROD: 50x toy_bundle  from {'plastic': 200, 'cotton': 100, 'battery_cell': 50, 'paper': 100, 'energy': 16000}
+
+hospital_district  |  Hospital District
+  startup=$25,000,000  wage=$80000/cycle  cycles=72000  terrain=['district_hospital']
+  PROD: 50x emergency_room_visit  from {'hospital_bed': 10, 'defibrillator': 5, 'iv_bag': 100, 'gauze': 200, 'surgical_gloves': 200, 'antibiotic': 50, 'painkiller': 100, 'paper': 100, 'energy': 50000, 'ambulance': 1}
+  PROD: 20x surgery_package  from {'medical_scanner': 2, 'surgical_tools': 20, 'anesthesia': 20, 'surgical_gloves': 200, 'surgical_mask': 200, 'sutures': 100, 'blood_bag': 40, 'hospital_bed': 20, 'paper': 150, 'energy': 100000, 'chemotherapy_drug': 5, 'ventilator': 2}
+  PROD: 40x diagnostic_panel  from {'medical_scanner': 1, 'syringe': 80, 'blood_bag': 40, 'surgical_gloves': 80, 'microscope': 5, 'lab_equipment': 5, 'paper': 120, 'energy': 60000}
+  PROD: 30x therapy_program  from {'wheelchair': 15, 'crutches': 30, 'prosthetic': 5, 'cast_material': 30, 'paper': 90, 'energy': 30000}
+  PROD: 25x maternity_package  from {'hospital_bed': 25, 'iv_pump': 25, 'iv_bag': 75, 'surgical_gloves': 150, 'gauze': 100, 'paper': 100, 'energy': 45000, 'vaccine': 25}
+  PROD: 100x prescription_bundle  from {'antibiotic': 50, 'painkiller': 100, 'insulin': 25, 'blood_pressure_med': 75, 'antidepressant': 50, 'paper': 80, 'energy': 20000, 'vaccine': 20}
+  PROD: 50x emergency_room_visit  from {'hospital_bed': 10, 'helicopter': 1, 'defibrillator': 5, 'iv_bag': 100, 'gauze': 200, 'surgical_gloves': 200, 'antibiotic': 50, 'painkiller': 100, 'paper': 100, 'energy': 60000}
+
+education_district  |  High School & University District
+  startup=$18,000,000  wage=$60000/cycle  cycles=86400  terrain=['district_education']
+  PROD: 100x high_school_diploma  from {'school_bus': 5, 'curriculum_package': 10, 'standardized_test': 200, 'student_desk': 50, 'school_lunch': 400, 'school_uniform': 100, 'textbook': 500, 'diploma_certificate': 100, 'paper': 500, 'energy': 80000, 'band_instruments': 10, 'artificial_turf': 1, 'basketball_hoop': 5, 'encyclopedia': 100}
+  PROD: 50x bachelors_degree  from {'curriculum_package': 20, 'laptop': 50, 'textbook': 500, 'lab_kit': 25, 'smartboard': 10, 'projector': 20, 'diploma_certificate': 50, 'paper': 1000, 'energy': 120000, 'art_supplies': 10, 'dissection_kit': 15, 'encyclopedia': 50}
+  PROD: 25x masters_degree  from {'curriculum_package': 15, 'laptop': 25, 'textbook': 300, 'lab_equipment': 10, 'microscope': 10, 'diploma_certificate': 25, 'paper': 800, 'energy': 100000}
+  PROD: 75x vocational_certificate  from {'curriculum_package': 8, 'vocational_kit': 75, 'textbook': 150, 'diploma_certificate': 75, 'paper': 300, 'energy': 50000}
+  PROD: 10x research_grant  from {'lab_equipment': 20, 'microscope': 15, 'desktop_computer': 10, 'server': 3, 'textbook': 100, 'paper': 500, 'energy': 150000}
+  PROD: 20x study_abroad  from {'airline_ticket': 20, 'curriculum_package': 5, 'laptop': 20, 'textbook': 100, 'paper': 200, 'energy': 60000}
+
+entertainment_district  |  Sports & Entertainment District
+  startup=$30,000,000  wage=$75000/cycle  cycles=72000  terrain=['district_entertainment']
+  PROD: 50x concert_package  from {'concert_stage': 1, 'sound_system': 5, 'lighting_rig': 3, 'pyrotechnics': 50, 'stadium_seat': 250, 'band_merchandise': 250, 'paper': 100, 'energy': 80000}
+  PROD: 100x sports_package  from {'stadium_seat': 500, 'scoreboard': 2, 'jumbotron': 1, 'athlete_contract': 10, 'team_jersey': 200, 'sports_ball': 50, 'burger': 200, 'soda_cup': 200, 'paper': 150, 'energy': 100000, 'artificial_turf': 1, 'basketball_hoop': 5, 'goal_post': 4, 'championship_trophy': 2}
+  PROD: 40x casino_night  from {'slot_machine': 20, 'poker_table': 10, 'roulette_wheel': 5, 'casino_chips': 2000, 'playing_cards': 100, 'champagne': 100, 'paper': 80, 'energy': 60000}
+  PROD: 60x movie_premier  from {'movie_screen': 5, 'theater_seat': 150, 'popcorn_machine': 10, 'projector': 5, 'film_reel': 10, 'corn': 100, 'soda_cup': 120, 'paper': 80, 'energy': 50000}
+  PROD: 80x theme_park_pass  from {'steel': 500, 'concrete': 300, 'circuit_board': 100, 'rubber': 200, 'fast_food_combo': 80, 'paper': 120, 'energy': 120000}
+  PROD: 50x nightclub_vip  from {'sound_system': 3, 'lighting_rig': 2, 'champagne': 150, 'beer': 200, 'red_wine': 100, 'paper': 60, 'energy': 40000}
+
+transportation_district  |  Transportation District
+  startup=$40,000,000  wage=$90000/cycle  cycles=86400  terrain=['district_transport']
+  PROD: 200x airline_ticket  from {'passenger_jet': 1, 'jet_fuel': 100, 'fast_food_combo': 200, 'paper': 200, 'energy': 150000}
+  PROD: 50x cruise_package  from {'cruise_ship': 1, 'diesel': 500, 'international_platter': 100, 'beverage_package': 100, 'paper': 150, 'energy': 200000}
+  PROD: 100x rail_pass  from {'passenger_train': 2, 'locomotive': 1, 'diesel': 100, 'paper': 100, 'energy': 80000}
+  PROD: 25x freight_contract  from {'cargo_freighter': 1, 'cargo_plane': 1, 'freight_car': 5, 'semi_truck': 5, 'diesel': 300, 'paper': 200, 'energy': 180000, 'delivery_truck': 5, 'tugboat': 1, 'ferry': 1}
+  PROD: 50x rental_car  from {'car': 50, 'diesel': 100, 'paper': 100, 'energy': 30000}
+  PROD: 30x charter_service  from {'charter_bus': 10, 'diesel': 150, 'paper': 80, 'energy': 40000, 'helicopter': 5, 'private_jet': 2}
+
+zoo_district  |  Zoo District
+  startup=$35,000,000  wage=$70000/cycle  cycles=86400  terrain=['district_zoo']
+  PROD: 200x zoo_pass  from {'lion': 1, 'elephant': 1, 'giraffe': 1, 'gorilla': 1, 'dolphin': 2, 'penguin': 10, 'animal_enclosure': 5, 'viewing_platform': 10, 'fast_food_combo': 200, 'paper': 200, 'energy': 100000, 'barracuda': 2, 'mahi_mahi': 2}
+  PROD: 50x safari_tour  from {'lion': 2, 'elephant': 2, 'zebra': 5, 'rhino': 1, 'hippo': 1, 'city_bus': 2, 'habitat_landscape': 3, 'paper': 100, 'energy': 80000, 'crocodile': 2, 'flamingo': 10, 'kangaroo': 5}
+  PROD: 100x animal_adoption  from {'panda': 1, 'tiger': 1, 'polar_bear': 1, 'diploma_certificate': 100, 'paper': 150, 'energy': 40000, 'koala': 2}
+  PROD: 75x conservation_membership  from {'gorilla': 1, 'orangutan': 1, 'chimpanzee': 2, 'animal_microchip': 50, 'veterinary_supplies': 30, 'paper': 120, 'energy': 50000, 'sea_turtle': 2, 'seal': 2}
+  PROD: 40x behind_scenes_tour  from {'shark': 1, 'dolphin': 2, 'aquarium_tank': 2, 'feeding_station': 5, 'veterinary_supplies': 20, 'paper': 80, 'energy': 60000, 'clownfish': 10, 'jellyfish': 5, 'manta_ray': 1, 'puffer_fish': 5, 'sea_lion': 2, 'seahorse': 10, 'stingray': 2, 'barracuda': 1, 'mahi_mahi': 1}
+  PROD: 30x wildlife_program  from {'school_bus': 2, 'parrot': 5, 'tortoise': 3, 'tropical_fish': 50, 'curriculum_package': 5, 'textbook': 100, 'paper': 150, 'energy': 45000, 'eagle': 3, 'python': 5, 'flamingo': 5, 'kangaroo': 3, 'crocodile': 1, 'koala': 2}
+
+prison_district  |  Prison District
+  startup=$20,000,000  wage=$55000/cycle  cycles=72000  terrain=['district_prison']
+  PROD: 100x inmate_housing  from {'cell_door': 100, 'prison_bedding': 200, 'inmate_jumpsuit': 200, 'surveillance_system': 10, 'razor_wire': 100, 'prison_meal': 1000, 'concrete': 200, 'paper': 150, 'energy': 80000}
+  PROD: 50x rehabilitation_program  from {'ged_materials': 50, 'counseling_materials': 50, 'vocational_kit': 25, 'textbook': 150, 'laptop': 20, 'paper': 200, 'energy': 40000}
+  PROD: 200x commissary_package  from {'commissary_snacks': 400, 'hygiene_kit': 200, 'phone_card': 200, 'paper': 100, 'energy': 20000}
+  PROD: 40x work_release  from {'prison_bus': 2, 'inmate_jumpsuit': 80, 'handcuffs': 40, 'taser': 10, 'paper': 80, 'energy': 30000}
+  PROD: 30x legal_aid  from {'law_book': 60, 'laptop': 15, 'paper': 300, 'ink': 30, 'energy': 25000}
+  PROD: 40x reentry_package  from {'vocational_kit': 20, 'diploma_certificate': 40, 'counseling_materials': 40, 'paper': 120, 'energy': 22000}
+
+military_base_district  |  Military Base District
+  startup=$50,000,000  wage=$100000/cycle  cycles=86400  terrain=['district_military']
+  PROD: 5x defense_contract  from {'tank': 3, 'fighter_jet': 2, 'destroyer': 1, 'missile': 50, 'rifle': 500, 'ammunition': 10000, 'radar_array': 5, 'paper': 500, 'energy': 500000, 'submarine': 1, 'military_helicopter': 1, 'apc': 5, 'drone': 10}
+  PROD: 100x military_training  from {'obstacle_course': 3, 'firing_range': 3, 'combat_simulator': 5, 'rifle': 100, 'ammunition': 5000, 'body_armor': 100, 'combat_helmet': 100, 'military_uniform': 200, 'mre': 500, 'paper': 300, 'energy': 150000, 'grenade': 200, 'night_vision': 50, 'tactical_vest': 100}
+  PROD: 50x base_housing  from {'barracks_bunk': 100, 'hvac_unit': 25, 'refrigerator': 25, 'stove': 25, 'concrete': 150, 'lumber': 200, 'paper': 150, 'energy': 80000}
+  PROD: 75x veterans_package  from {'prescription_bundle': 50, 'therapy_program': 25, 'vocational_certificate': 25, 'dog_tags': 75, 'paper': 200, 'energy': 50000}
+  PROD: 50x security_clearance  from {'desktop_computer': 10, 'server': 3, 'encryption_device': 10, 'body_scanner': 5, 'paper': 250, 'energy': 60000}
+  PROD: 25x logistics_contract  from {'semi_truck': 10, 'cargo_plane': 1, 'humvee': 10, 'diesel': 500, 'satellite_uplink': 3, 'military_radio': 50, 'paper': 200, 'energy': 120000, 'delivery_truck': 5, 'tugboat': 1}
+
+sturgeon_farm  |  Sturgeon Farm
+  startup=$8,000,000  wage=$40000/cycle  cycles=86400  terrain=['district_coastal']
+  PROD: 8x sturgeon  from {'water': 10000, 'animal_feed': 200, 'veterinary_supplies': 15, 'energy': 50000, 'paper': 40}
+  PROD: 5x caviar  from {'sturgeon': 10, 'salt': 10, 'water': 1000, 'energy': 20000, 'paper': 20}
+
+cargo_hub  |  Cargo Hub
+  startup=$12,000,000  wage=$45000/cycle  cycles=57600  terrain=['district_airport']
+  PROD: 50x freight_container  from {'iron': 2000, 'lumber': 500, 'rubber': 200, 'energy': 80000, 'paper': 100, 'aircraft_service_report': 5}
+  PROD: 200x cargo_manifest  from {'paper': 500, 'energy': 5000}
+
+aircraft_maintenance_facility  |  Aircraft Maintenance Facility
+  startup=$25,000,000  wage=$65000/cycle  cycles=72000  terrain=['district_airport']
+  PROD: 10x aircraft_service_report  from {'iron': 1000, 'copper': 500, 'rubber': 300, 'oil': 2000, 'energy': 100000, 'paper': 200, 'aviation_fuel': 500, 'jet_fuel_additive': 10, 'industrial_robot': 1}
+
+duty_free_shop  |  Duty Free Shop
+  startup=$8,000,000  wage=$30000/cycle  cycles=43200  terrain=['district_airport']
+  PROD: 100x duty_free_spirits  from {'whiskey': 200, 'gin': 100, 'rum': 100, 'vodka': 100, 'energy': 5000, 'paper': 50}
+
+airport_fuel_depot  |  Airport Fuel Depot
+  startup=$18,000,000  wage=$50000/cycle  cycles=57600  terrain=['district_airport']
+  PROD: 5000x aviation_fuel  from {'oil': 12000, 'energy': 200000, 'water': 5000}
+  PROD: 100x jet_fuel_additive  from {'oil': 500, 'energy': 20000, 'copper': 50}
+
+convention_center  |  Convention Center
+  startup=$20,000,000  wage=$60000/cycle  cycles=57600  terrain=['district_convention_center']
+  PROD: 200x conference_pass  from {'energy': 30000, 'paper': 500, 'plastic': 200, 'event_supply_kit': 20}
+
+event_catering_service  |  Event Catering Service
+  startup=$8,000,000  wage=$30000/cycle  cycles=43200  terrain=['district_convention_center']
+  PROD: 100x catered_banquet_service  from {'flour': 2000, 'eggs': 500, 'butter': 300, 'sugar': 500, 'milk': 1000, 'energy': 30000, 'water': 5000, 'paper': 200}
+  PROD: 100x cocktail_service  from {'whiskey': 100, 'gin': 100, 'white_wine': 100, 'beer': 200, 'energy': 10000, 'paper': 100}
+
+hospitality_supply_factory  |  Hospitality Supply Factory
+  startup=$7,000,000  wage=$28000/cycle  cycles=43200  terrain=['district_convention_center']
+  PROD: 200x hospitality_linen_set  from {'cotton': 1000, 'energy': 20000, 'water': 2000, 'paper': 50}
+  PROD: 100x event_supply_kit  from {'paper': 1000, 'plastic': 500, 'lumber': 200, 'energy': 15000}
+
+casino  |  Casino
+  startup=$35,000,000  wage=$90000/cycle  cycles=57600  terrain=['district_entertainment_district']
+  PROD: 500x casino_floor_credit  from {'energy': 50000, 'paper': 1000, 'plastic': 500, 'whiskey': 100, 'champagne': 50}
+
+nightclub  |  Nightclub
+  startup=$12,000,000  wage=$45000/cycle  cycles=43200  terrain=['district_entertainment_district']
+  PROD: 200x premium_cocktail  from {'gin': 100, 'rum': 100, 'whiskey': 100, 'vodka': 100, 'energy': 10000, 'paper': 100}
+
+theme_park  |  Theme Park
+  startup=$45,000,000  wage=$100000/cycle  cycles=86400  terrain=['district_entertainment_district']
+  PROD: 500x day_pass  from {'energy': 100000, 'water': 10000, 'paper': 1000, 'plastic': 500}
+
+hotel  |  Hotel
+  startup=$25,000,000  wage=$70000/cycle  cycles=57600  terrain=['district_entertainment_district']
+  PROD: 200x standard_room_night  from {'energy': 50000, 'water': 10000, 'cotton': 200, 'milk': 100, 'eggs': 50, 'paper': 200, 'hospitality_linen_set': 50, 'prison_produce_crate': 20}
+
+wholesale_warehouse  |  Wholesale Warehouse
+  startup=$18,000,000  wage=$45000/cycle  cycles=57600  terrain=['district_mega_mall']
+  PROD: 200x bulk_grocery_pallet  from {'flour': 2000, 'sugar': 1000, 'salt': 500, 'oil': 1000, 'energy': 20000, 'paper': 300, 'cardboard_box': 500}
+
+furniture_megastore  |  Furniture Megastore
+  startup=$14,000,000  wage=$40000/cycle  cycles=57600  terrain=['district_mega_mall']
+  PROD: 50x bedroom_set  from {'lumber': 1000, 'cotton': 500, 'plastic': 300, 'iron': 200, 'energy': 20000, 'paper': 100}
+  PROD: 30x kitchen_package  from {'steel': 500, 'aluminum': 300, 'plastic': 400, 'iron': 200, 'energy': 25000, 'paper': 100}
+  PROD: 40x living_room_set  from {'lumber': 800, 'cotton': 600, 'leather': 300, 'iron': 200, 'energy': 20000, 'paper': 100}
+  PROD: 40x office_furniture  from {'lumber': 600, 'steel': 400, 'plastic': 300, 'iron': 150, 'energy': 18000, 'paper': 100}
+
+electronics_superstore  |  Electronics Superstore
+  startup=$12,000,000  wage=$35000/cycle  cycles=43200  terrain=['district_mega_mall']
+  PROD: 100x consumer_electronics_bundle  from {'copper': 500, 'plastic': 500, 'glass': 200, 'energy': 30000, 'paper': 200}
+
+munitions_depot  |  Munitions Depot
+  startup=$22,000,000  wage=$55000/cycle  cycles=57600  terrain=['district_military_base']
+  PROD: 100x ammunition_crate  from {'lead': 2000, 'copper': 1000, 'iron': 500, 'energy': 50000, 'paper': 100}
+  PROD: 20x explosive_ordnance  from {'lead': 500, 'coal': 1000, 'iron': 500, 'copper': 200, 'energy': 80000, 'paper': 100}
+
+armored_vehicle_depot  |  Armored Vehicle Depot
+  startup=$40,000,000  wage=$80000/cycle  cycles=72000  terrain=['district_military_base']
+  PROD: 5x armored_personnel_carrier  from {'iron': 5000, 'rubber': 500, 'glass': 200, 'plastic': 1000, 'copper': 500, 'energy': 200000, 'paper': 100, 'license_plate_batch': 5}
+
+military_commissary  |  Military Commissary
+  startup=$6,000,000  wage=$22000/cycle  cycles=28800  terrain=['district_military_base']
+  PROD: 500x ration_pack  from {'beef': 500, 'flour': 500, 'salt': 200, 'sugar': 200, 'energy': 10000, 'paper': 200, 'cardboard_box': 300, 'livestock_product_supply': 20}
+  PROD: 100x uniform_kit  from {'military_uniform': 100, 'leather': 200, 'cotton': 300, 'thread': 100, 'energy': 10000, 'cardboard_box': 100, 'paper': 100}
+  PROD: 50x field_gear_set  from {'body_armor': 50, 'combat_helmet': 50, 'military_radio': 50, 'aluminum': 200, 'leather': 150, 'energy': 15000, 'cardboard_box': 50, 'paper': 100}
+  PROD: 100x medical_supply_kit  from {'medicine': 200, 'bandage': 300, 'antiseptic': 200, 'painkillers': 200, 'energy': 5000, 'cardboard_box': 100, 'paper': 100}
+
+maximum_security_facility  |  Maximum Security Facility
+  startup=$18,000,000  wage=$55000/cycle  cycles=57600  terrain=['district_prison_complex']
+  PROD: 100x incarceration_contract  from {'energy': 50000, 'water': 10000, 'paper': 500, 'ammunition_crate': 10, 'armored_personnel_carrier': 1, 'ration_pack': 100, 'institutional_furniture_set': 1, 'threat_intelligence_report': 5}
+
+prison_farm_operations  |  Prison Farm Operations
+  startup=$5,000,000  wage=$18000/cycle  cycles=57600  terrain=['district_prison_complex']
+  PROD: 100x prison_produce_crate  from {'corn_seeds': 200, 'water': 5000, 'energy': 20000, 'paper': 50}
+  PROD: 50x livestock_product_supply  from {'grass': 1000, 'water': 2000, 'energy': 10000, 'paper': 30}
+
+prison_workshop  |  Prison Workshop
+  startup=$6,000,000  wage=$18000/cycle  cycles=43200  terrain=['district_prison_complex']
+  PROD: 500x license_plate_batch  from {'iron': 1000, 'paint': 200, 'energy': 30000, 'paper': 100}
+  PROD: 20x institutional_furniture_set  from {'lumber': 500, 'iron': 200, 'plastic': 300, 'energy': 15000, 'paint': 50}
+
+biotech_lab  |  Biotech Lab
+  startup=$30,000,000  wage=$85000/cycle  cycles=57600  terrain=['district_research_campus']
+  PROD: 50x biotech_compound  from {'active_ingredient': 100, 'water': 5000, 'energy': 150000, 'glass': 100, 'paper': 200}
+  PROD: 20x research_enzyme  from {'active_ingredient': 50, 'water': 2000, 'energy': 50000, 'paper': 100}
+
+robotics_lab  |  Robotics Lab
+  startup=$28,000,000  wage=$80000/cycle  cycles=57600  terrain=['district_research_campus']
+  PROD: 5x industrial_robot  from {'iron': 2000, 'copper': 1000, 'plastic': 500, 'glass': 100, 'energy': 200000, 'paper': 100, 'robotic_arm_assembly': 3, 'composite_alloy': 200, 'polymer_compound': 200}
+  PROD: 20x robotic_arm_assembly  from {'iron': 1000, 'copper': 500, 'plastic': 200, 'energy': 80000, 'paper': 50, 'composite_alloy': 100, 'polymer_compound': 100}
+
+advanced_materials_lab  |  Advanced Materials Lab
+  startup=$22,000,000  wage=$70000/cycle  cycles=57600  terrain=['district_research_campus']
+  PROD: 100x composite_alloy  from {'iron': 1000, 'copper': 500, 'zinc_ore': 200, 'energy': 100000, 'paper': 50}
+  PROD: 200x polymer_compound  from {'rubber': 500, 'plastic': 1000, 'energy': 50000, 'paper': 50}
+
+research_campus_hub  |  Research Campus Hub
+  startup=$15,000,000  wage=$55000/cycle  cycles=57600  terrain=['district_research_campus']
+  PROD: 100x consulting_contract  from {'energy': 20000, 'paper': 1000, 'plastic': 100}
+
+container_terminal  |  Container Terminal
+  startup=$32,000,000  wage=$85000/cycle  cycles=72000  terrain=['district_seaport']
+  PROD: 100x shipping_container  from {'iron': 3000, 'rubber': 200, 'lumber': 500, 'energy': 100000, 'paper': 200, 'bunker_fuel': 500, 'freight_container': 5}
+  PROD: 500x freight_manifest  from {'paper': 1000, 'energy': 10000}
+
+port_fuel_depot  |  Port Fuel Depot
+  startup=$20,000,000  wage=$55000/cycle  cycles=57600  terrain=['district_seaport']
+  PROD: 5000x marine_fuel  from {'oil': 12000, 'energy': 200000, 'water': 5000}
+  PROD: 2000x bunker_fuel  from {'oil': 6000, 'coal': 500, 'energy': 80000}
+
+cold_storage_warehouse  |  Cold Storage Warehouse
+  startup=$14,000,000  wage=$42000/cycle  cycles=57600  terrain=['district_seaport']
+  PROD: 50x refrigerated_container  from {'energy': 200000, 'water': 2000, 'plastic': 500, 'salt': 500, 'paper': 100}
+
+seaport_operations_hub  |  Seaport Operations Hub
+  startup=$16,000,000  wage=$50000/cycle  cycles=57600  terrain=['district_seaport']
+  PROD: 200x customs_clearance_service  from {'energy': 15000, 'paper': 1000, 'marine_fuel': 1000, 'shipping_container': 10, 'freight_manifest': 50, 'refrigerated_container': 5}
+
+software_company  |  Software Company
+  startup=$10,000,000  wage=$42000/cycle  cycles=43200  terrain=['district_tech_park']
+  PROD: 500x software_license  from {'copper': 100, 'energy': 50000, 'paper': 1000}
+  PROD: 50x enterprise_software_suite  from {'copper': 500, 'energy': 200000, 'paper': 2000}
+
+cybersecurity_firm  |  Cybersecurity Firm
+  startup=$12,000,000  wage=$48000/cycle  cycles=43200  terrain=['district_tech_park']
+  PROD: 200x security_contract  from {'copper': 200, 'energy': 80000, 'paper': 500}
+  PROD: 100x threat_intelligence_report  from {'energy': 30000, 'paper': 1000}
+
+data_center  |  Data Center
+  startup=$22,000,000  wage=$65000/cycle  cycles=43200  terrain=['district_tech_park']
+  PROD: 10000x compute_credit  from {'energy': 500000, 'water': 10000, 'copper': 200, 'plastic': 100}
+  PROD: 5000x cloud_storage_unit  from {'energy': 200000, 'water': 5000, 'copper': 100}
+
+tech_startup_hub  |  Tech Startup Hub
+  startup=$9,000,000  wage=$32000/cycle  cycles=43200  terrain=['district_tech_park']
+  PROD: 200x coworking_membership  from {'energy': 30000, 'paper': 500, 'plastic': 100}
