@@ -1,0 +1,55 @@
+{
+  "player_id": -2002,
+  "business_name": "Oxon Run P&W",
+  "description": "Produces and sells water and energy on the open market.",
+
+  "cash_caps": {
+    "hard_high": 25000000,
+    "soft_high": 10000000,
+    "soft_low":   5000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 5000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "water_facility",
+      "district_id": null,
+      "active_lines": ["water"]
+    }
+  ],
+
+  "buy_items": {
+    "paper": {
+      "target_inventory": 200,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "water": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "energy": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    }
+  }
+}
