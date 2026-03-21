@@ -434,6 +434,14 @@ def get_player_land(player_id: int) -> List[LandPlot]:
     return plots
 
 
+def count_player_land(player_id: int) -> int:
+    """Return the number of land plots owned by a player (COUNT query, no row fetch)."""
+    db = get_db()
+    n = db.query(LandPlot).filter(LandPlot.owner_id == player_id).count()
+    db.close()
+    return n
+
+
 def get_vacant_land(player_id: int) -> List[LandPlot]:
     """Get all vacant land plots owned by a player."""
     db = get_db()
