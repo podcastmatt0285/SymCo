@@ -93,10 +93,188 @@ _STREAM_LOADER = """<!DOCTYPE html>
 </script>"""
 
 # ==========================
+# JOURNEY BAR
+# ==========================
+
+_JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000" viewBox="0 0 64 64" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;width:40px;height:40px;flex-shrink:0;" xml:space="preserve">
+  <g transform="matrix(1,0,0,1,-192,-288)">
+    <path d="M206.275,343.594L206.275,343.761C206.275,344.861 206.712,345.917 207.49,346.695C208.268,347.473 209.323,347.91 210.424,347.91C216.812,347.91 231.227,347.91 237.615,347.91C238.715,347.91 239.77,347.473 240.548,346.695C241.327,345.917 241.764,344.861 241.764,343.761L241.764,343.594C241.764,343.042 241.316,342.594 240.764,342.594L207.275,342.594C206.723,342.594 206.275,343.042 206.275,343.594Z" style="fill:rgb(181,129,49);"/>
+    <path d="M238.479,342.594C238.489,342.651 238.494,342.709 238.494,342.769L238.494,342.937C238.494,344.037 238.057,345.092 237.279,345.87C236.501,346.649 235.446,347.086 234.345,347.086L207.942,347.086C208.654,347.618 209.524,347.91 210.424,347.91C216.812,347.91 231.227,347.91 237.615,347.91C238.715,347.91 239.77,347.473 240.548,346.695C241.327,345.917 241.764,344.861 241.764,343.761L241.764,343.594C241.764,343.042 241.316,342.594 240.764,342.594L238.479,342.594Z" style="fill:rgb(154,110,42);"/>
+    <path d="M248.583,334.818L248.583,334.776C248.566,334.24 248.128,333.809 247.587,333.807L200.459,333.628C200.188,333.627 199.928,333.735 199.739,333.93C199.55,334.124 199.447,334.386 199.455,334.657C199.455,334.657 199.471,335.208 199.496,336.037C199.635,340.803 203.538,344.594 208.306,344.594C216.956,344.594 231.026,344.594 239.769,344.594C244.637,344.594 248.583,340.648 248.583,335.78C248.583,335.243 248.583,334.885 248.583,334.818Z" style="fill:rgb(245,240,229);"/>
+    <path d="M247.587,333.807L243.247,333.807C243.788,333.809 244.227,334.24 244.243,334.776L244.244,334.818C244.244,334.885 244.244,335.243 244.244,335.78C244.244,340.648 240.297,344.594 235.43,344.594L239.769,344.594C244.637,344.594 248.583,340.648 248.583,335.78C248.583,335.243 248.583,334.885 248.583,334.818L248.583,334.776C248.566,334.24 248.128,333.809 247.587,333.807Z" style="fill:rgb(234,222,199);"/>
+    <path d="M201.046,321.538C198.187,323.022 196.3,325.752 196.3,328.848C196.3,333.486 200.579,337.327 205.93,337.327C208.237,337.327 210.352,336.611 212.003,335.428C213.655,336.611 215.77,337.327 218.077,337.327C220.384,337.327 222.499,336.611 224.15,335.428C225.802,336.611 227.917,337.327 230.224,337.327C232.531,337.327 234.646,336.611 236.297,335.428C237.949,336.611 240.064,337.327 242.371,337.327C247.722,337.327 252,333.486 252,328.848C252,325.747 250.106,323.012 247.24,321.531C243.3,314.219 234.753,309.12 224.824,309.12L223.466,309.12C213.534,309.12 204.986,314.221 201.046,321.538Z" style="fill:rgb(248,172,58);"/>
+    <path d="M223.828,309.12C230.776,310.836 236.474,315.13 239.484,320.716C242.35,322.197 244.244,324.932 244.244,328.033C244.244,331.814 241.401,335.065 237.45,336.138C238.887,336.891 240.571,337.327 242.371,337.327C247.722,337.327 252,333.486 252,328.848C252,325.747 250.106,323.012 247.24,321.531C243.3,314.219 234.753,309.12 224.824,309.12L223.828,309.12Z" style="fill:rgb(243,148,4);"/>
+    <g transform="matrix(-1.02196,0,0,-1.34718,248.058,323.528)">
+      <path d="M31.042,15.081L31.7,16.397C31.898,16.795 31.898,17.205 31.7,17.603L30.383,20.235C30.131,20.74 30.131,21.26 30.383,21.765C30.673,22.344 31.042,23.081 31.042,23.081C31.15,23.299 31.668,23.439 32.197,23.394C32.726,23.35 33.067,23.137 32.958,22.919L32.3,21.603C32.102,21.205 32.102,20.795 32.3,20.397L33.617,17.765C33.869,17.26 33.869,16.74 33.617,16.235C33.327,15.656 32.958,14.919 32.958,14.919C32.85,14.701 32.332,14.561 31.803,14.606C31.274,14.65 30.933,14.863 31.042,15.081Z" style="fill:rgb(245,240,229);">
+        <animateTransform attributeName="transform" type="translate" values="0,0; -1,5; 0,10; 1,15" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.7;0" dur="3s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    <g transform="matrix(-1.02196,0,0,-1.34718,256.697,323.528)">
+      <path d="M31.042,15.081L31.7,16.397C31.898,16.795 31.898,17.205 31.7,17.603L30.383,20.235C30.131,20.74 30.131,21.26 30.383,21.765C30.673,22.344 31.042,23.081 31.042,23.081C31.15,23.299 31.668,23.439 32.197,23.394C32.726,23.35 33.067,23.137 32.958,22.919L32.3,21.603C32.102,21.205 32.102,20.795 32.3,20.397L33.617,17.765C33.869,17.26 33.869,16.74 33.617,16.235C33.327,15.656 32.958,14.919 32.958,14.919C32.85,14.701 32.332,14.561 31.803,14.606C31.274,14.65 30.933,14.863 31.042,15.081Z" style="fill:rgb(245,240,229);">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 1,5; 0,10; -1,15" dur="3s" begin="1s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.7;0" dur="3s" begin="1s" repeatCount="indefinite"/>
+      </path>
+    </g>
+    <g transform="matrix(-1.02196,0,0,-1.34718,265.647,323.528)">
+      <path d="M31.042,15.081L31.7,16.397C31.898,16.795 31.898,17.205 31.7,17.603L30.383,20.235C30.131,20.74 30.131,21.26 30.383,21.765C30.673,22.344 31.042,23.081 31.042,23.081C31.15,23.299 31.668,23.439 32.197,23.394C32.726,23.35 33.067,23.137 32.958,22.919L32.3,21.603C32.102,21.205 32.102,20.795 32.3,20.397L33.617,17.765C33.869,17.26 33.869,16.74 33.617,16.235C33.327,15.656 32.958,14.919 32.958,14.919C32.85,14.701 32.332,14.561 31.803,14.606C31.274,14.65 30.933,14.863 31.042,15.081Z" style="fill:rgb(245,240,229);">
+        <animateTransform attributeName="transform" type="translate" values="0,0; -0.5,4; 0.5,8; 0,12" dur="3.5s" begin="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.7;0" dur="3.5s" begin="2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+</svg>'''
+
+
+def build_journey_bar(player_id: int, breadcrumbs: list = None):
+    """Build the fixed journey sidebar and optional breadcrumb strip.
+    Returns (journey_bar_html, breadcrumb_html)."""
+    if not player_id:
+        return "", ""
+
+    land_count = 0
+    district_count = 0
+    player_city = None
+    player_county = None
+
+    try:
+        import land as _land
+        land_count = len(_land.get_player_land(player_id))
+    except Exception:
+        pass
+
+    try:
+        import districts as _dist
+        district_count = len(_dist.get_player_districts(player_id))
+    except Exception:
+        pass
+
+    try:
+        from cities import get_player_city as _gpc
+        player_city = _gpc(player_id)
+    except Exception:
+        pass
+
+    try:
+        from counties import get_player_county as _gpco
+        player_county = _gpco(player_id)
+    except Exception:
+        pass
+
+    # Determine next step CTA
+    if land_count == 0:
+        next_label, next_href = "Buy your first plot", "/land-market"
+    elif district_count == 0:
+        next_label, next_href = "Create a district", "/districts/create"
+    elif not player_city:
+        next_label, next_href = "Join or found a city", "/cities"
+    elif not player_county:
+        next_label, next_href = "Your city needs a county", "/counties"
+    else:
+        next_label = "Mine crypto"
+        next_href = f"/county/{player_county.id}/mining"
+
+    def _trunc(s, n=15):
+        return (s[:n] + "\u2026") if s and len(s) > n else (s or "")
+
+    def _node(icon, label, href, count=None, locked=False, hint=None):
+        count_html = f'<span class="jb-count">{count}</span>' if count is not None else ""
+        if locked:
+            hint_html = f'<div class="jb-hint">{hint}</div>' if hint else ""
+            return (
+                f'<div class="jb-node jb-locked">'
+                f'<div style="display:flex;align-items:center;gap:6px;">'
+                f'<span style="font-size:0.82rem;line-height:1;">{icon}</span>'
+                f'<span>{label}</span>'
+                f'<span style="margin-left:auto;font-size:0.6rem;opacity:0.5;">&#x1F512;</span>'
+                f'</div>{hint_html}</div>'
+            )
+        return (
+            f'<div class="jb-node" data-href="{href}">'
+            f'<a href="{href}" style="display:flex;align-items:center;gap:6px;">'
+            f'<span style="font-size:0.82rem;line-height:1;">{icon}</span>'
+            f'<span>{label}</span>'
+            f'{count_html}'
+            f'</a></div>'
+        )
+
+    city_label = _trunc(player_city.name) if player_city else "Cities"
+    city_href = f"/city/{player_city.id}" if player_city else "/cities"
+    county_id = player_county.id if player_county else None
+    county_label = _trunc(player_county.name) if player_county else "Counties"
+
+    nodes = ""
+    nodes += _node("\U0001f33f", "Land", "/land", count=land_count or None)
+    nodes += _node("\U0001f3ed", "Districts", "/districts", count=district_count or None)
+    nodes += _node("\U0001f3d9\ufe0f", city_label, city_href)
+    if player_county:
+        nodes += _node("\U0001f3db\ufe0f", county_label, f"/county/{county_id}")
+        nodes += _node("\u26cf\ufe0f", "Mining", f"/county/{county_id}/mining")
+        nodes += _node("\U0001f4b1", "Exchange", "/exchange")
+    else:
+        nodes += _node("\U0001f3db\ufe0f", county_label, "/counties",
+                       locked=not bool(player_city),
+                       hint="Join a city first" if not player_city else None)
+        nodes += _node("\u26cf\ufe0f", "Mining", "#", locked=True, hint="Need a county")
+        nodes += _node("\U0001f4b1", "Exchange", "#", locked=True, hint="Need a county")
+
+    # Breadcrumbs
+    breadcrumb_html = ""
+    if breadcrumbs:
+        parts = []
+        sep = '<span style="color:#B08D57;opacity:0.4;margin:0 4px;">\u203a</span>'
+        for i, c in enumerate(breadcrumbs):
+            label, url = (c if isinstance(c, (list, tuple)) and len(c) == 2 else (str(c), None))
+            is_last = (i == len(breadcrumbs) - 1)
+            if url and not is_last:
+                parts.append(f'<a href="{url}" style="color:#B08D57;text-decoration:none;">{label}</a>')
+            else:
+                parts.append(f'<span style="color:#F5F5DC;opacity:0.85;">{label}</span>')
+        breadcrumb_html = f'<div class="jb-breadcrumbs">{sep.join(parts)}</div>'
+
+    # JS as a plain string (no f-string so braces are literal)
+    js = (
+        '<script>(function(){'
+        'var bar=document.getElementById("journey-bar");'
+        'var body=document.getElementById("jb-body");'
+        'var toggle=document.getElementById("jb-toggle");'
+        'if(!bar||!body)return;'
+        'var open=localStorage.getItem("wadsJB")!=="closed";'
+        'function apply(){'
+        'if(open){bar.classList.add("jb-open");body.classList.add("jb-open");toggle.innerHTML="&#8249;";}'
+        'else{bar.classList.remove("jb-open");body.classList.remove("jb-open");toggle.innerHTML="&#8250;";}'
+        '}'
+        'window.jbToggle=function(){open=!open;localStorage.setItem("wadsJB",open?"open":"closed");apply();};'
+        'var path=window.location.pathname;'
+        'document.querySelectorAll("#jb-nav .jb-node[data-href]").forEach(function(n){'
+        'var h=n.getAttribute("data-href");'
+        'if(!h||h==="#")return;'
+        'if(path===h||(h.length>1&&path.startsWith(h))){n.classList.add("jb-active");}'
+        '});'
+        'apply();'
+        '})();</script>'
+    )
+
+    bar_html = (
+        f'<div id="journey-bar">'
+        f'<button id="jb-toggle" onclick="jbToggle()" aria-label="Toggle sidebar" title="Toggle journey bar">&#8250;</button>'
+        f'<div id="jb-inner">'
+        f'<div id="jb-head">{_JOURNEY_PIE_SVG}<div><div id="jb-title">Journey</div></div></div>'
+        f'<nav id="jb-nav">{nodes}</nav>'
+        f'<div id="jb-next"><div id="jb-next-label">Next Step</div>'
+        f'<a href="{next_href}">{next_label} &#8250;</a></div>'
+        f'</div></div>'
+        + js
+    )
+
+    return bar_html, breadcrumb_html
+
+
+# ==========================
 # HTML SHELL
 # ==========================
 
-def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
+def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, breadcrumbs: list = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
     # Resolve display balance using player's legal tender so the header always
@@ -155,7 +333,9 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         ticker_html = " | ".join(ticker_items) if ticker_items else "MARKET OPENING..."
     except:
         ticker_html = "MARKET FEED OFFLINE"
-    
+
+    journey_bar_html, breadcrumb_html = build_journey_bar(player_id, breadcrumbs)
+
     return f"""
     <!DOCTYPE html>
     <html>
@@ -355,25 +535,25 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 .container {{ padding: 16px 12px; }}
                 .card {{ padding: 16px; }}
                 input, select {{ font-size: 16px; }}
-                
+
                 /* Stack grids on mobile */
                 div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {{
                     display: flex !important;
                     flex-direction: column !important;
                 }}
-                
+
                 /* Make flex containers wrap */
                 div[style*="display: flex"]:not(.header-right) {{
                     flex-wrap: wrap !important;
                 }}
-                
+
                 /* Stack forms vertically */
                 form[style*="grid-template-columns"] {{
                     display: flex !important;
                     flex-direction: column !important;
                     gap: 8px !important;
                 }}
-                
+
                 /* Wrap filter tabs */
                 div[style*="overflow-x: auto"][style*="white-space: nowrap"] {{
                     white-space: normal !important;
@@ -382,7 +562,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                     flex-wrap: wrap !important;
                     gap: 8px !important;
                 }}
-                
+
                 /* Make tab links inline-block for wrapping */
                 div[style*="overflow-x: auto"] a {{
                     display: inline-block;
@@ -392,9 +572,160 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                     border-radius: 3px !important;
                 }}
             }}
+
+            /* ── Journey Bar ──────────────────────────────── */
+            #journey-bar {{
+                position: fixed;
+                left: 0;
+                top: 54px;
+                bottom: 34px;
+                width: 192px;
+                background: #1A0F0A;
+                border-right: 1px solid #B08D57;
+                z-index: 90;
+                display: flex;
+                flex-direction: column;
+                font-family: Georgia, serif;
+                transform: translateX(-172px);
+                transition: transform 0.25s ease;
+                overflow: visible;
+            }}
+            #journey-bar.jb-open {{ transform: translateX(0); }}
+            #jb-toggle {{
+                position: absolute;
+                right: -20px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 20px;
+                height: 44px;
+                background: #1A0F0A;
+                border: 1px solid #B08D57;
+                border-left: none;
+                border-radius: 0 4px 4px 0;
+                cursor: pointer;
+                color: #B08D57;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                font-family: Georgia, serif;
+                line-height: 1;
+            }}
+            #jb-toggle:hover {{ color: #F5F5DC; }}
+            #jb-inner {{
+                width: 192px;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }}
+            #jb-head {{
+                padding: 10px 8px 8px;
+                border-bottom: 1px solid rgba(176,141,87,0.3);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+            }}
+            #jb-title {{
+                font-size: 0.58rem;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: #B08D57;
+                font-weight: bold;
+                opacity: 0.8;
+            }}
+            #jb-nav {{
+                flex: 1;
+                overflow-y: auto;
+                padding: 4px 0;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(176,141,87,0.2) transparent;
+            }}
+            .jb-node {{
+                padding: 7px 10px;
+                border-left: 2px solid transparent;
+                font-size: 0.7rem;
+                color: #F5F5DC;
+                white-space: nowrap;
+                overflow: hidden;
+                font-family: Georgia, serif;
+            }}
+            .jb-node.jb-locked {{
+                opacity: 0.35;
+                pointer-events: none;
+            }}
+            .jb-node.jb-active {{
+                border-left-color: #B08D57;
+                background: rgba(176,141,87,0.1);
+            }}
+            .jb-node a {{ color: #F5F5DC; text-decoration: none; display: flex; align-items: center; gap: 6px; }}
+            .jb-node a:hover {{ color: #B08D57; text-decoration: none; }}
+            .jb-count {{
+                font-size: 0.6rem;
+                background: rgba(176,141,87,0.2);
+                color: #B08D57;
+                border-radius: 3px;
+                padding: 1px 5px;
+                margin-left: auto;
+                flex-shrink: 0;
+            }}
+            .jb-hint {{
+                font-size: 0.58rem;
+                color: #B08D57;
+                opacity: 0.5;
+                margin-top: 2px;
+                padding-left: 20px;
+                white-space: normal;
+                line-height: 1.3;
+                pointer-events: none;
+            }}
+            #jb-next {{
+                padding: 8px 10px;
+                border-top: 1px solid rgba(176,141,87,0.3);
+                flex-shrink: 0;
+            }}
+            #jb-next-label {{
+                font-size: 0.52rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                color: #B08D57;
+                opacity: 0.6;
+                margin-bottom: 4px;
+                font-family: Georgia, serif;
+            }}
+            #jb-next a {{
+                color: #f59e0b;
+                font-size: 0.65rem;
+                display: block;
+                white-space: normal;
+                line-height: 1.4;
+                font-family: Georgia, serif;
+                text-decoration: none;
+            }}
+            #jb-next a:hover {{ color: #fbbf24; text-decoration: underline; }}
+            .jb-breadcrumbs {{
+                padding: 6px 16px;
+                font-size: 0.68rem;
+                font-family: Georgia, serif;
+                border-bottom: 1px solid rgba(176,141,87,0.15);
+                background: rgba(26,15,10,0.5);
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 2px;
+                flex-shrink: 0;
+            }}
+            #jb-body.jb-open {{ padding-left: 192px; transition: padding-left 0.25s ease; }}
+            @media (max-width: 768px) {{
+                #jb-body.jb-open {{ padding-left: 0; }}
+                #journey-bar.jb-open {{ z-index: 200; }}
+            }}
         </style>
     </head>
-    <body>
+    <body id="jb-body">
+        {journey_bar_html}
         <div class="header">
             <div class="brand"><img src="/static/logo.png" alt="Wadsworth"> Wadsworth</div>
             <div class="header-right">
@@ -403,6 +734,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
+        {breadcrumb_html}
 
         <div class="container">
             {body}
