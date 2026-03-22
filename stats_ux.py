@@ -2888,6 +2888,7 @@ def wiki_shell(title: str, body: str, player_name: str = "", active: str = "") -
         ("banks",         "/stats/wiki/banks",         "🏦 Banks"),
         ("counties",      "/stats/wiki/counties",      "🗺️ Counties"),
         ("crypto",        "/stats/wiki/crypto",        "🪙 Crypto"),
+        ("item-routes",   "/stats/wiki/item-routes",   "🔗 Item Routes"),
     ]
     nav = "".join(
         f'<a href="{hr}" class="{"active" if active == k else ""}">{lb}</a>'
@@ -4453,6 +4454,318 @@ async def wiki_crypto(session_token: Optional[str] = Cookie(None)):
 </div>
 """
     return HTMLResponse(wiki_shell("Crypto", body, player.business_name, "crypto"))
+
+
+# ── Wiki: Item Routes ─────────────────────────────────────────
+@router.get("/stats/wiki/item-routes", response_class=HTMLResponse)
+async def wiki_item_routes(
+    session_token: Optional[str] = Cookie(None),
+    category: str = Query("all"),
+    item_set: str = Query("all"),
+):
+    """Downloadable production & consumption routes for every item."""
+    from auth import get_player_from_session
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    db.close()
+    if not player:
+        return HTMLResponse('<meta http-equiv="refresh" content="0;url=/login">')
+
+    # ── Load item catalogues ──────────────────────────────────
+    regular_items: dict = {}
+    district_items: dict = {}
+    try:
+        with open("item_types.json") as f:
+            regular_items = json.load(f)
+    except Exception:
+        pass
+    try:
+        with open("district_items.json") as f:
+            district_items = json.load(f)
+    except Exception:
+        pass
+
+    # ── Load business catalogues ──────────────────────────────
+    biz_regular: dict = {}
+    biz_district: dict = {}
+    try:
+        with open("business_types.json") as f:
+            biz_regular = json.load(f)
+    except Exception:
+        pass
+    try:
+        with open("district_businesses.json") as f:
+            biz_district = json.load(f)
+    except Exception:
+        pass
+
+    all_items: dict = {}
+    for k, v in regular_items.items():
+        all_items[k] = dict(v, _set="regular")
+    for k, v in district_items.items():
+        all_items[k] = dict(v, _set="district")
+
+    # ── Build routes index ────────────────────────────────────
+    # produced_by[item] = list of {biz_key, biz_name, output_qty, inputs, biz_set}
+    # consumed_by[item] = list of {biz_key, biz_name, qty_needed, biz_set}
+    produced_by: Dict[str, list] = {k: [] for k in all_items}
+    consumed_by: Dict[str, list] = {k: [] for k in all_items}
+
+    for biz_set_label, biz_dict in (("regular", biz_regular), ("district", biz_district)):
+        for biz_key, biz in biz_dict.items():
+            if not isinstance(biz, dict):
+                continue
+            biz_name = biz.get("name", biz_key.replace("_", " ").title())
+            for line in biz.get("production_lines", []):
+                out_item = line.get("output_item", "")
+                out_qty = line.get("output_qty", 0)
+                inputs = line.get("inputs", [])
+                if out_item in produced_by:
+                    produced_by[out_item].append({
+                        "biz_key": biz_key,
+                        "biz_name": biz_name,
+                        "output_qty": out_qty,
+                        "inputs": inputs,
+                        "biz_set": biz_set_label,
+                    })
+                for inp in inputs:
+                    inp_item = inp.get("item", "")
+                    inp_qty = inp.get("quantity", 0)
+                    if inp_item in consumed_by:
+                        consumed_by[inp_item].append({
+                            "biz_key": biz_key,
+                            "biz_name": biz_name,
+                            "qty_needed": inp_qty,
+                            "biz_set": biz_set_label,
+                        })
+
+    # ── Filter pool ───────────────────────────────────────────
+    cats = sorted({v.get("category", "misc") for v in all_items.values() if isinstance(v, dict)})
+
+    if item_set == "regular":
+        pool = {k: v for k, v in all_items.items() if v.get("_set") == "regular"}
+    elif item_set == "district":
+        pool = {k: v for k, v in all_items.items() if v.get("_set") == "district"}
+    else:
+        pool = all_items
+
+    if category != "all":
+        pool = {k: v for k, v in pool.items() if v.get("category") == category}
+
+    # ── Build CSV data embedded in page ───────────────────────
+    csv_rows: list = []
+    csv_rows.append("item_key,item_name,item_set,category,produced_by_business,producer_biz_set,output_qty,consumed_by_business,consumer_biz_set,qty_needed_as_input")
+
+    for key in sorted(all_items.keys()):
+        item = all_items[key]
+        name = item.get("name", key.replace("_", " ").title())
+        iset = item.get("_set", "regular")
+        cat  = item.get("category", "misc")
+        producers = produced_by.get(key, [])
+        consumers = consumed_by.get(key, [])
+        max_rows = max(len(producers), len(consumers), 1)
+        for i in range(max_rows):
+            p = producers[i] if i < len(producers) else {}
+            c = consumers[i] if i < len(consumers) else {}
+            p_name = p.get("biz_name", "").replace(",", ";") if p else ""
+            p_set  = p.get("biz_set", "") if p else ""
+            p_qty  = str(p.get("output_qty", "")) if p else ""
+            c_name = c.get("biz_name", "").replace(",", ";") if c else ""
+            c_set  = c.get("biz_set", "") if c else ""
+            c_qty  = str(c.get("qty_needed", "")) if c else ""
+            if i == 0:
+                csv_rows.append(f'"{key}","{name}",{iset},{cat},{p_name},{p_set},{p_qty},{c_name},{c_set},{c_qty}')
+            else:
+                csv_rows.append(f'"","","","",{p_name},{p_set},{p_qty},{c_name},{c_set},{c_qty}')
+
+    csv_data_js = json.dumps("\n".join(csv_rows))
+
+    # ── Build filter tabs ─────────────────────────────────────
+    set_tabs = ""
+    for s_val, s_label in [("all", f"All ({len(all_items)})"),
+                            ("regular", f"Regular ({len(regular_items)})"),
+                            ("district", f"District ({len(district_items)})")]:
+        act = " active" if item_set == s_val else ""
+        set_tabs += (
+            f'<a href="/stats/wiki/item-routes?item_set={s_val}&category={category}" '
+            f'class="wft{act}">{s_label}</a>'
+        )
+
+    cat_filters = ""
+    cur_set_param = f"item_set={item_set}" if item_set != "all" else "item_set=all"
+    act = " active" if category == "all" else ""
+    cat_filters += f'<a href="/stats/wiki/item-routes?{cur_set_param}&category=all" class="wft{act}">All Categories</a>'
+    for cat in cats:
+        cnt = sum(1 for v in pool.items() if v[1].get("category") == cat)
+        if cnt == 0 and category != cat:
+            continue
+        act = " active" if category == cat else ""
+        cat_filters += (
+            f'<a href="/stats/wiki/item-routes?{cur_set_param}&category={cat}" class="wft{act}">'
+            f'{cat.replace("_"," ").title()}</a>'
+        )
+
+    # ── Build item rows ───────────────────────────────────────
+    def _inp_badges(inputs: list) -> str:
+        parts = []
+        for inp in inputs[:6]:
+            nm = inp.get("item", "").replace("_", " ").title()
+            qty = inp.get("quantity", 0)
+            parts.append(f'<span class="ir-inp">{nm} ×{qty:g}</span>')
+        if len(inputs) > 6:
+            parts.append(f'<span class="ir-inp ir-more">+{len(inputs)-6} more</span>')
+        return "".join(parts)
+
+    def _biz_badge(biz_set: str) -> str:
+        if biz_set == "district":
+            return '<span class="wb wb-b" style="font-size:0.62rem;margin-left:4px;">district</span>'
+        return '<span class="wb wb-g" style="font-size:0.62rem;margin-left:4px;">regular</span>'
+
+    rows_html = ""
+    for key, item in sorted(pool.items(), key=lambda x: x[1].get("name", x[0])):
+        name  = item.get("name", key.replace("_", " ").title())
+        cat   = item.get("category", "misc")
+        iset  = item.get("_set", "regular")
+        producers = produced_by.get(key, [])
+        consumers = consumed_by.get(key, [])
+
+        iset_badge = ('<span class="wb wb-b">District</span>' if iset == "district"
+                      else '<span class="wb wb-g">Regular</span>')
+        cat_badge = f'<span class="wb wb-o">{cat.replace("_"," ").title()}</span>'
+
+        if producers:
+            prod_html = ""
+            for p in producers:
+                prod_html += (
+                    f'<div class="ir-biz-row">'
+                    f'<span class="ir-biz-name">{p["biz_name"]}</span>'
+                    f'{_biz_badge(p["biz_set"])}'
+                    f'<span class="ir-qty">→ {p["output_qty"]:g} units</span>'
+                    f'<div class="ir-inps">{_inp_badges(p["inputs"])}</div>'
+                    f'</div>'
+                )
+        else:
+            prod_html = '<span class="ir-none">Not produced in any business</span>'
+
+        if consumers:
+            cons_html = ""
+            for c in consumers:
+                cons_html += (
+                    f'<div class="ir-biz-row">'
+                    f'<span class="ir-biz-name">{c["biz_name"]}</span>'
+                    f'{_biz_badge(c["biz_set"])}'
+                    f'<span class="ir-qty">← {c["qty_needed"]:g} units consumed</span>'
+                    f'</div>'
+                )
+        else:
+            cons_html = '<span class="ir-none">Not consumed by any business</span>'
+
+        safe_name = name.lower().replace('"', '')
+        rows_html += f"""
+<div class="ir-card" data-n="{safe_name}" data-c="{cat}" data-s="{iset}">
+  <div class="ir-card-header">
+    <div>
+      <div class="ir-item-name">{name}</div>
+      <div style="color:#607098;font-size:0.72rem;font-family:monospace">{key}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">{iset_badge}{cat_badge}</div>
+  </div>
+  <div class="ir-body">
+    <div class="ir-col">
+      <div class="ir-col-hdr ir-prod-hdr">⚙ Produced By</div>
+      {prod_html}
+    </div>
+    <div class="ir-col">
+      <div class="ir-col-hdr ir-cons-hdr">⬇ Consumed By</div>
+      {cons_html}
+    </div>
+  </div>
+</div>"""
+
+    total_shown = len(pool)
+
+    body = f"""
+<style>
+.ir-toolbar{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:24px;}}
+.ir-dl-btn{{padding:9px 20px;background:linear-gradient(135deg,rgba(245,168,85,0.18),rgba(245,215,110,0.1));border:1px solid rgba(245,168,85,0.5);border-radius:8px;color:#f5a855;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.03em;}}
+.ir-dl-btn:hover{{background:rgba(245,168,85,0.25);box-shadow:0 0 12px rgba(245,168,85,0.2);}}
+.ir-stat{{color:#607098;font-size:0.82rem;margin-left:auto;}}
+.ir-card{{background:#111c35;border:1px solid #1d2f55;border-radius:12px;margin-bottom:14px;overflow:hidden;}}
+.ir-card-header{{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px 12px;border-bottom:1px solid #0f1a30;}}
+.ir-item-name{{font-size:0.98rem;font-weight:700;color:#dde8ff;}}
+.ir-body{{display:grid;grid-template-columns:1fr 1fr;gap:0;}}
+@media(max-width:700px){{.ir-body{{grid-template-columns:1fr;}}}}
+.ir-col{{padding:14px 20px;}}
+.ir-col:first-child{{border-right:1px solid #0f1a30;}}
+.ir-col-hdr{{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #0f1a30;}}
+.ir-prod-hdr{{color:#86efac;}}
+.ir-cons-hdr{{color:#fca5a5;}}
+.ir-biz-row{{margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #080e1d;}}
+.ir-biz-row:last-child{{border-bottom:none;margin-bottom:0;}}
+.ir-biz-name{{font-size:0.82rem;font-weight:600;color:#dde8ff;}}
+.ir-qty{{font-size:0.76rem;color:#607098;margin-left:8px;}}
+.ir-inps{{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}}
+.ir-inp{{padding:2px 6px;background:#0c1528;border:1px solid #1d2f55;border-radius:4px;font-size:0.65rem;color:#90a0c8;}}
+.ir-more{{color:#f5a855;border-color:rgba(245,168,85,0.3);}}
+.ir-none{{font-size:0.78rem;color:#3a4a6a;font-style:italic;}}
+</style>
+
+<h1 class="wpt">🔗 Item Production & Consumption Routes</h1>
+<p class="wpd">Every regular and district item — which businesses produce it and which businesses consume it as an input.
+Use the filters to narrow by item type or category, then download the full dataset as CSV.</p>
+
+<div class="ir-toolbar">
+  <button class="ir-dl-btn" onclick="downloadCSV()">⬇ Download CSV</button>
+  <span class="ir-stat" id="ir-count">Showing {total_shown} items</span>
+</div>
+
+<div style="margin-bottom:12px;">
+  <div style="font-size:0.72rem;color:#607098;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Item Set</div>
+  <div class="wfilters">{set_tabs}</div>
+</div>
+
+<div style="margin-bottom:16px;">
+  <div style="font-size:0.72rem;color:#607098;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Category</div>
+  <div class="wfilters" style="max-height:120px;overflow-y:auto;">{cat_filters}</div>
+</div>
+
+<div class="wsw" style="margin-bottom:20px;">
+  <span class="wsw-ico">🔍</span>
+  <input class="wsbox" id="ir-search" placeholder="Search items by name or key…" oninput="filterCards()">
+</div>
+
+<div id="ir-list">
+{rows_html if rows_html else '<div class="wnone">No items found.</div>'}
+</div>
+
+<script>
+var CSV_DATA = {csv_data_js};
+
+function downloadCSV() {{
+  var blob = new Blob([CSV_DATA], {{type: 'text/csv;charset=utf-8;'}});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'item_routes.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}}
+
+function filterCards() {{
+  var q = document.getElementById('ir-search').value.toLowerCase().trim();
+  var cards = document.querySelectorAll('#ir-list .ir-card');
+  var shown = 0;
+  cards.forEach(function(c) {{
+    var ok = !q || c.dataset.n.includes(q);
+    c.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  }});
+  document.getElementById('ir-count').textContent = 'Showing ' + shown + ' items';
+}}
+</script>
+"""
+    return HTMLResponse(wiki_shell("Item Routes", body, player.business_name, "item-routes"))
 
 
 # ==========================
