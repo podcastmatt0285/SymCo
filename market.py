@@ -512,12 +512,12 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 f"[Market] Inventory transfer failed! Seller {sell_order.player_id} has "
                 f"{actual_qty:.4f} {buy_order.item_type}, needed {quantity:.4f}"
             )
-            # Refund foreign-currency buyers whose payment was already committed
+            # Refund buyer whose payment was already committed
             if not is_bank_ipo and not is_bank_buyer:
                 try:
                     from reserve_banks import (
                         get_player_legal_tender, get_db as _rb_get_db,
-                        StateReserveBank, _adjust_currency_balance,
+                        StateReserveBank, _adjust_currency_balance, credit_usd,
                     )
                     _tender = get_player_legal_tender(buy_order.player_id)
                     if _tender != "USD":
@@ -534,6 +534,9 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                                       f"{_tender} to player {buy_order.player_id}")
                         finally:
                             _rb.close()
+                    else:
+                        credit_usd(buy_order.player_id, total_cost)
+                        print(f"[Market] Refunded ${total_cost:.4f} USD to player {buy_order.player_id}")
                 except Exception as _ref_e:
                     print(f"[Market] Refund error (manual reconciliation needed): {_ref_e}")
             # Rollback first (reverts quantity_filled increments and trade record),
