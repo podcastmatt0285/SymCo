@@ -380,8 +380,18 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
                 transfer_cash(sell_order.player_id, buy_order.player_id, total_cost)
             except Exception as _rev_e:
                 print(f"[DistrictMarket] Payment reversal error (manual reconciliation needed): {_rev_e}")
-            sell_order.status = "cancelled"
+            # Rollback first (reverts quantity_filled increments and trade record),
+            # then cancel the sell order in a fresh transaction.
+            sell_order_id = sell_order.id
             db.rollback()
+            try:
+                stale = db.query(DistrictMarketOrder).filter(DistrictMarketOrder.id == sell_order_id).first()
+                if stale:
+                    stale.status = "cancelled"
+                    db.commit()
+                    print(f"[DistrictMarket] Sell order {sell_order_id} cancelled after failed inventory transfer")
+            except Exception as _ce:
+                print(f"[DistrictMarket] Failed to cancel stale order {sell_order_id}: {_ce}")
             return
     except Exception as e:
         print(f"[DistrictMarket] Inventory error: {e}")

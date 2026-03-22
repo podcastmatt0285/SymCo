@@ -536,8 +536,19 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                             _rb.close()
                 except Exception as _ref_e:
                     print(f"[Market] Refund error (manual reconciliation needed): {_ref_e}")
-            sell_order.status = "cancelled"
+            # Rollback first (reverts quantity_filled increments and trade record),
+            # then cancel the sell order in a fresh transaction so it doesn't keep
+            # getting matched on every future tick.
+            sell_order_id = sell_order.id
             db.rollback()
+            try:
+                stale = db.query(MarketOrder).filter(MarketOrder.id == sell_order_id).first()
+                if stale:
+                    stale.status = "cancelled"
+                    db.commit()
+                    print(f"[Market] Sell order {sell_order_id} cancelled after failed inventory transfer")
+            except Exception as _ce:
+                print(f"[Market] Failed to cancel stale order {sell_order_id}: {_ce}")
             return
     except Exception as e:
         print(f"[Market] Inventory Transfer Error: {e}")
