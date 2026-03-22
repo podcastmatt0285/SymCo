@@ -558,13 +558,17 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list):
 
         paused_lines = _build_paused_lines(btype, biz_cfg.get("active_lines", []))
 
+        # Seed NPC businesses as already-built — no build phase delay.
+        cycles_to_complete = all_types[btype].get("cycles_to_complete", 1)
+
         biz = Business(
-            owner_id     = player_id,
-            land_plot_id = plot_id,
-            district_id  = district_id,
-            business_type= btype,
-            is_active    = True,
-            paused_lines = paused_lines,
+            owner_id        = player_id,
+            land_plot_id    = plot_id,
+            district_id     = district_id,
+            business_type   = btype,
+            is_active       = True,
+            paused_lines    = paused_lines,
+            progress_ticks  = cycles_to_complete,
         )
         db.add(biz)
         db.commit()
