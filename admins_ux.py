@@ -72,6 +72,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/etf", "ETF Banks"),
         ("/admin/logs", "Logs"),
         ("/admin/wiki", "Wiki Media"),
+        ("/admin/item-routes", "Item Routes"),
     ]
     nav_html = ""
     for href, label in nav_items:
@@ -2937,3 +2938,317 @@ def admin_wiki_delete(
         log_action(admin.id, "wiki_media_delete", None, f"{kind}: {removed.get('title','?')}")
         return RedirectResponse(url="/admin/wiki?msg=Entry+deleted", status_code=303)
     return RedirectResponse(url="/admin/wiki?err=Invalid+index", status_code=303)
+
+
+# ── Admin: Item Routes ────────────────────────────────────────
+@router.get("/admin/item-routes", response_class=HTMLResponse)
+def admin_item_routes(
+    session_token: Optional[str] = Cookie(None),
+    category: str = Query("all"),
+    item_set: str = Query("all"),
+):
+    """Production & consumption routes for every regular and district item."""
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    # ── Load item catalogues ──────────────────────────────────
+    regular_items: dict = {}
+    district_items: dict = {}
+    try:
+        with open("item_types.json") as f:
+            regular_items = json.load(f)
+    except Exception:
+        pass
+    try:
+        with open("district_items.json") as f:
+            district_items = json.load(f)
+    except Exception:
+        pass
+
+    # ── Load business catalogues ──────────────────────────────
+    biz_regular: dict = {}
+    biz_district: dict = {}
+    try:
+        with open("business_types.json") as f:
+            biz_regular = json.load(f)
+    except Exception:
+        pass
+    try:
+        with open("district_businesses.json") as f:
+            biz_district = json.load(f)
+    except Exception:
+        pass
+
+    all_items: dict = {}
+    for k, v in regular_items.items():
+        all_items[k] = dict(v, _set="regular")
+    for k, v in district_items.items():
+        all_items[k] = dict(v, _set="district")
+
+    # ── Build routes index ────────────────────────────────────
+    produced_by: dict = {k: [] for k in all_items}
+    consumed_by: dict = {k: [] for k in all_items}
+
+    for biz_set_label, biz_dict in (("regular", biz_regular), ("district", biz_district)):
+        for biz_key, biz in biz_dict.items():
+            if not isinstance(biz, dict):
+                continue
+            biz_name = biz.get("name", biz_key.replace("_", " ").title())
+            for line in biz.get("production_lines", []):
+                out_item = line.get("output_item", "")
+                out_qty  = line.get("output_qty", 0)
+                inputs   = line.get("inputs", [])
+                if out_item in produced_by:
+                    produced_by[out_item].append({
+                        "biz_key":  biz_key,
+                        "biz_name": biz_name,
+                        "output_qty": out_qty,
+                        "inputs": inputs,
+                        "biz_set": biz_set_label,
+                    })
+                for inp in inputs:
+                    inp_item = inp.get("item", "")
+                    inp_qty  = inp.get("quantity", 0)
+                    if inp_item in consumed_by:
+                        consumed_by[inp_item].append({
+                            "biz_key":  biz_key,
+                            "biz_name": biz_name,
+                            "qty_needed": inp_qty,
+                            "biz_set": biz_set_label,
+                        })
+
+    # ── Filter pool ───────────────────────────────────────────
+    cats = sorted({v.get("category", "misc") for v in all_items.values() if isinstance(v, dict)})
+
+    if item_set == "regular":
+        pool = {k: v for k, v in all_items.items() if v.get("_set") == "regular"}
+    elif item_set == "district":
+        pool = {k: v for k, v in all_items.items() if v.get("_set") == "district"}
+    else:
+        pool = all_items
+
+    if category != "all":
+        pool = {k: v for k, v in pool.items() if v.get("category") == category}
+
+    # ── CSV data ──────────────────────────────────────────────
+    csv_rows = ["item_key,item_name,item_set,category,produced_by_business,producer_biz_set,output_qty,consumed_by_business,consumer_biz_set,qty_needed_as_input"]
+    for key in sorted(all_items.keys()):
+        item = all_items[key]
+        name = item.get("name", key.replace("_", " ").title())
+        iset = item.get("_set", "regular")
+        cat  = item.get("category", "misc")
+        producers = produced_by.get(key, [])
+        consumers = consumed_by.get(key, [])
+        max_rows = max(len(producers), len(consumers), 1)
+        for i in range(max_rows):
+            p = producers[i] if i < len(producers) else {}
+            c = consumers[i] if i < len(consumers) else {}
+            p_name = p.get("biz_name", "").replace(",", ";") if p else ""
+            p_set  = p.get("biz_set", "") if p else ""
+            p_qty  = str(p.get("output_qty", "")) if p else ""
+            c_name = c.get("biz_name", "").replace(",", ";") if c else ""
+            c_set  = c.get("biz_set", "") if c else ""
+            c_qty  = str(c.get("qty_needed", "")) if c else ""
+            if i == 0:
+                csv_rows.append(f'"{key}","{name}",{iset},{cat},{p_name},{p_set},{p_qty},{c_name},{c_set},{c_qty}')
+            else:
+                csv_rows.append(f'"","","","",{p_name},{p_set},{p_qty},{c_name},{c_set},{c_qty}')
+    csv_data_js = json.dumps("\n".join(csv_rows))
+
+    # ── Filter tabs ───────────────────────────────────────────
+    set_tabs = ""
+    for s_val, s_label in [("all", f"All ({len(all_items)})"),
+                            ("regular", f"Regular ({len(regular_items)})"),
+                            ("district", f"District ({len(district_items)})")]:
+        act = " active" if item_set == s_val else ""
+        set_tabs += (
+            f'<a href="/admin/item-routes?item_set={s_val}&category={category}" '
+            f'class="ir-ft{act}">{s_label}</a>'
+        )
+
+    cur_set_param = f"item_set={item_set}"
+    cat_filters = ""
+    act = " active" if category == "all" else ""
+    cat_filters += f'<a href="/admin/item-routes?{cur_set_param}&category=all" class="ir-ft{act}">All Categories</a>'
+    for cat in cats:
+        cnt = sum(1 for v in pool.values() if v.get("category") == cat)
+        if cnt == 0 and category != cat:
+            continue
+        act = " active" if category == cat else ""
+        cat_filters += (
+            f'<a href="/admin/item-routes?{cur_set_param}&category={cat}" class="ir-ft{act}">'
+            f'{cat.replace("_"," ").title()}</a>'
+        )
+
+    # ── Build cards ───────────────────────────────────────────
+    def _inp_badges(inputs: list) -> str:
+        parts = []
+        for inp in inputs[:6]:
+            nm  = inp.get("item", "").replace("_", " ").title()
+            qty = inp.get("quantity", 0)
+            parts.append(f'<span class="ir-inp">{nm} ×{qty:g}</span>')
+        if len(inputs) > 6:
+            parts.append(f'<span class="ir-inp ir-more">+{len(inputs)-6} more</span>')
+        return "".join(parts)
+
+    def _biz_pill(biz_set: str) -> str:
+        if biz_set == "district":
+            return '<span class="ir-pill ir-pill-d">district</span>'
+        return '<span class="ir-pill ir-pill-r">regular</span>'
+
+    cards_html = ""
+    for key, item in sorted(pool.items(), key=lambda x: x[1].get("name", x[0])):
+        name  = item.get("name", key.replace("_", " ").title())
+        cat   = item.get("category", "misc")
+        iset  = item.get("_set", "regular")
+        producers = produced_by.get(key, [])
+        consumers = consumed_by.get(key, [])
+
+        iset_pill = ('<span class="ir-pill ir-pill-d">District</span>' if iset == "district"
+                     else '<span class="ir-pill ir-pill-r">Regular</span>')
+        cat_pill  = f'<span class="ir-pill ir-pill-c">{cat.replace("_"," ").title()}</span>'
+
+        if producers:
+            prod_html = ""
+            for p in producers:
+                prod_html += (
+                    f'<div class="ir-biz-row">'
+                    f'<span class="ir-biz-name">{p["biz_name"]}</span>'
+                    f'{_biz_pill(p["biz_set"])}'
+                    f'<span class="ir-qty">→ {p["output_qty"]:g} units/cycle</span>'
+                    f'<div class="ir-inps">{_inp_badges(p["inputs"])}</div>'
+                    f'</div>'
+                )
+        else:
+            prod_html = '<span class="ir-none">Not produced in any business</span>'
+
+        if consumers:
+            cons_html = ""
+            for c in consumers:
+                cons_html += (
+                    f'<div class="ir-biz-row">'
+                    f'<span class="ir-biz-name">{c["biz_name"]}</span>'
+                    f'{_biz_pill(c["biz_set"])}'
+                    f'<span class="ir-qty">← {c["qty_needed"]:g} units consumed</span>'
+                    f'</div>'
+                )
+        else:
+            cons_html = '<span class="ir-none">Not consumed by any business</span>'
+
+        safe_name = name.lower().replace('"', '')
+        cards_html += f"""
+<div class="ir-card" data-n="{safe_name}" data-c="{cat}" data-s="{iset}">
+  <div class="ir-card-hdr">
+    <div>
+      <div class="ir-item-name">{name}</div>
+      <div class="ir-item-key">{key}</div>
+    </div>
+    <div class="ir-pills">{iset_pill}{cat_pill}</div>
+  </div>
+  <div class="ir-body">
+    <div class="ir-col">
+      <div class="ir-col-hdr ir-prod-hdr">⚙ Produced By</div>
+      {prod_html}
+    </div>
+    <div class="ir-col">
+      <div class="ir-col-hdr ir-cons-hdr">⬇ Consumed By</div>
+      {cons_html}
+    </div>
+  </div>
+</div>"""
+
+    total_shown = len(pool)
+
+    body = f"""
+<style>
+.ir-toolbar{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px;}}
+.ir-dl-btn{{padding:8px 18px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.5);border-radius:6px;color:#ef4444;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}}
+.ir-dl-btn:hover{{background:rgba(239,68,68,0.25);box-shadow:0 0 10px rgba(239,68,68,0.2);}}
+.ir-stat{{color:#4b5563;font-size:0.8rem;margin-left:auto;}}
+.ir-filters{{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}}
+.ir-ft{{padding:5px 12px;border-radius:4px;font-size:0.75rem;font-weight:500;color:#6b7280;background:#0f172a;border:1px solid #1e3a5f;text-decoration:none;transition:all .15s;}}
+.ir-ft:hover{{color:#38bdf8;border-color:#38bdf8;}}
+.ir-ft.active{{color:#38bdf8;background:rgba(56,189,248,0.08);border-color:#38bdf8;}}
+.ir-search-wrap{{position:relative;margin-bottom:16px;}}
+.ir-search-ico{{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#4b5563;pointer-events:none;font-size:0.9rem;}}
+.ir-search{{width:100%;padding:10px 14px 10px 36px;background:#0f172a;border:1px solid #1e3a5f;border-radius:6px;color:#e5e7eb;font-size:0.85rem;outline:none;font-family:inherit;transition:border-color .15s;}}
+.ir-search:focus{{border-color:#38bdf8;}}
+.ir-card{{background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;margin-bottom:12px;overflow:hidden;}}
+.ir-card-hdr{{display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px 10px;border-bottom:1px solid #0f1a30;}}
+.ir-item-name{{font-size:0.92rem;font-weight:700;color:#e5e7eb;}}
+.ir-item-key{{color:#4b5563;font-size:0.68rem;font-family:monospace;margin-top:2px;}}
+.ir-pills{{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}}
+.ir-pill{{display:inline-block;padding:2px 7px;border-radius:3px;font-size:0.63rem;font-weight:600;letter-spacing:.03em;}}
+.ir-pill-d{{background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);}}
+.ir-pill-r{{background:rgba(75,85,99,0.2);color:#9ca3af;border:1px solid rgba(75,85,99,0.35);}}
+.ir-pill-c{{background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.25);}}
+.ir-body{{display:grid;grid-template-columns:1fr 1fr;}}
+@media(max-width:640px){{.ir-body{{grid-template-columns:1fr;}}}}
+.ir-col{{padding:12px 16px;}}
+.ir-col:first-child{{border-right:1px solid #0f1a30;}}
+.ir-col-hdr{{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #0f1a30;}}
+.ir-prod-hdr{{color:#86efac;}}
+.ir-cons-hdr{{color:#fca5a5;}}
+.ir-biz-row{{margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid #080e1d;}}
+.ir-biz-row:last-child{{border-bottom:none;margin-bottom:0;}}
+.ir-biz-name{{font-size:0.78rem;font-weight:600;color:#e5e7eb;}}
+.ir-qty{{font-size:0.72rem;color:#4b5563;margin-left:6px;}}
+.ir-inps{{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}}
+.ir-inp{{padding:2px 6px;background:#0c1528;border:1px solid #1e293b;border-radius:3px;font-size:0.63rem;color:#6b7280;}}
+.ir-more{{color:#ef4444;border-color:rgba(239,68,68,0.3);}}
+.ir-none{{font-size:0.75rem;color:#374151;font-style:italic;}}
+.ir-section-lbl{{font-size:0.68rem;color:#4b5563;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}}
+</style>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+  <h2 style="color:#ef4444;font-size:1.1rem;font-weight:700;">🔗 Item Production &amp; Consumption Routes</h2>
+</div>
+<p style="color:#4b5563;font-size:0.8rem;margin-bottom:18px;">Every regular and district item — which businesses produce it and which consume it as an input. Download the full dataset as CSV for offline reference.</p>
+
+<div class="ir-toolbar">
+  <button class="ir-dl-btn" onclick="downloadCSV()">⬇ Download CSV</button>
+  <span class="ir-stat" id="ir-count">Showing {total_shown} items</span>
+</div>
+
+<div class="ir-section-lbl">Item Set</div>
+<div class="ir-filters" style="margin-bottom:14px;">{set_tabs}</div>
+
+<div class="ir-section-lbl">Category</div>
+<div class="ir-filters" style="max-height:110px;overflow-y:auto;margin-bottom:14px;">{cat_filters}</div>
+
+<div class="ir-search-wrap">
+  <span class="ir-search-ico">🔍</span>
+  <input class="ir-search" id="ir-search" placeholder="Search items by name or key…" oninput="filterCards()">
+</div>
+
+<div id="ir-list">
+{cards_html if cards_html else '<p style="color:#4b5563;font-style:italic;">No items found.</p>'}
+</div>
+
+<script>
+var CSV_DATA = {csv_data_js};
+function downloadCSV() {{
+  var blob = new Blob([CSV_DATA], {{type: 'text/csv;charset=utf-8;'}});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'item_routes.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}}
+function filterCards() {{
+  var q = document.getElementById('ir-search').value.toLowerCase().trim();
+  var cards = document.querySelectorAll('#ir-list .ir-card');
+  var shown = 0;
+  cards.forEach(function(c) {{
+    var ok = !q || c.dataset.n.includes(q);
+    c.style.display = ok ? '' : 'none';
+    if (ok) shown++;
+  }});
+  document.getElementById('ir-count').textContent = 'Showing ' + shown + ' items';
+}}
+</script>
+"""
+    return HTMLResponse(admin_shell("Item Routes", body, admin.business_name, "/admin/item-routes"))
