@@ -25,6 +25,21 @@
       "active_lines": ["energy"]
     },
     {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "solar_plant",
+      "district_id": null,
+      "active_lines": ["energy"]
+    },
+    {
+      "business_type": "water_facility",
+      "district_id": null,
+      "active_lines": ["water"]
+    },
+    {
       "business_type": "water_facility",
       "district_id": null,
       "active_lines": ["water"]
@@ -33,8 +48,8 @@
 
   "buy_items": {
     "paper": {
-      "target_inventory": 200,
-      "reorder_at": 20,
+      "target_inventory": 500,
+      "reorder_at": 100,
       "max_price_multiplier": 1.10,
       "market": "regular"
     }
@@ -43,12 +58,12 @@
   "sell_items": {
     "water": {
       "min_inventory_to_keep": 0,
-      "max_order_quantity": 5000,
+      "max_order_quantity": 20000,
       "market": "regular"
     },
     "energy": {
-      "min_inventory_to_keep": 500,
-      "max_order_quantity": 10000,
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 30000,
       "market": "regular"
     }
   }
