@@ -19,10 +19,14 @@ workbox.routing.registerRoute(
   new workbox.strategies.NetworkOnly()
 );
 
-// Navigation requests (HTML pages): always fetch live — pages are server-rendered with live state
+// Navigation requests (HTML pages): network-first with 3s timeout — fresh data when server is fast,
+// cached page shown immediately if server is slow, cache updated in background either way
 workbox.routing.registerRoute(
   ({ request }) => request.mode === 'navigate',
-  new workbox.strategies.NetworkOnly()
+  new workbox.strategies.NetworkFirst({
+    cacheName: 'wadsworth-pages-v1',
+    networkTimeoutSeconds: 3
+  })
 );
 
 // Static assets only: JS, CSS, images, fonts — safe to cache with stale-while-revalidate
