@@ -617,6 +617,21 @@ def _seed_npc(cfg: dict):
             if existing_biz_count >= len(cfg_businesses):
                 _NPC_PLAYERS[player_id] = cfg
                 print(f"[NPC] {cfg['business_name']} already seeded (id={player_id})")
+
+                # Cash rescue: if the NPC's balance has fallen below hard_low
+                # (e.g. due to a prior routing bug), top it up to soft_low so
+                # the NPC can immediately resume buying inputs.
+                from reserve_banks import get_usd_balance, credit_usd
+                current_cash = get_usd_balance(player_id)
+                caps = cfg.get("cash_caps", {})
+                hard_low_cap = caps.get("hard_low", 0)
+                soft_low_cap = caps.get("soft_low", 0)
+                if current_cash < hard_low_cap and soft_low_cap > current_cash:
+                    shortfall = soft_low_cap - current_cash
+                    credit_usd(player_id, shortfall)
+                    print(f"[NPC] {cfg['business_name']}: cash rescue "
+                          f"${current_cash:,.0f} → ${soft_low_cap:,.0f}")
+
                 return
 
             # Config has more businesses than exist in DB — seed the remainder.

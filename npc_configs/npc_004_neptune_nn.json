@@ -11,7 +11,7 @@
   },
 
   "seed": {
-    "starting_cash": 75000,
+    "starting_cash": 600000,
     "land_plots": [
       { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 }
     ]

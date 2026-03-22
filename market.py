@@ -316,6 +316,11 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         is_bank_ipo = True
         bank_id = "wbc50_index_fund"
 
+    # City NAV ETF IPO detection
+    elif sell_order.player_id == -6 and sell_order.item_type == "city_nav_etf_shares":
+        is_bank_ipo = True
+        bank_id = "city_nav_etf"
+
     # City Bank sell detection (IDs are -(1000 + city_id), range -1001 to -1999)
     # NPC players use -2001 and below — must exclude them from this check.
     elif -1999 <= sell_order.player_id <= -1001:
