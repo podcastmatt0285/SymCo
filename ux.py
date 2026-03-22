@@ -1769,7 +1769,8 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
         </style>
         <script>
         (function() {{
-          var SLOW_PATHS = ['/stats/production-costs'];
+          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory'];
+          var SLOW_EXACT = ['/'];
           var STEPS = [
             "Initializing Secure Terminal...",
             "Authenticating Executive Credentials...",
@@ -1823,6 +1824,9 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
           }}
 
           function _isSlowPath(pathname) {{
+            for (var i=0; i<SLOW_EXACT.length; i++) {{
+              if (pathname === SLOW_EXACT[i]) return true;
+            }}
             for (var i=0; i<SLOW_PATHS.length; i++) {{
               if (pathname.startsWith(SLOW_PATHS[i])) return true;
             }}
