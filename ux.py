@@ -1769,7 +1769,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
         </style>
         <script>
         (function() {{
-          var SLOW_PATHS = ['/stats/production-costs'];
+          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory'];
           var STEPS = [
             "Initializing Secure Terminal...",
             "Authenticating Executive Credentials...",
