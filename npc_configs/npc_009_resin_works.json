@@ -1,0 +1,58 @@
+{
+  "player_id": -2009,
+  "business_name": "Resin Works",
+  "description": "Oil refinery running exclusively the plastic production line, supplying manufacturers with plastic.",
+
+  "cash_caps": {
+    "hard_high": 25000000,
+    "soft_high": 10000000,
+    "soft_low":   4000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 5000000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "oil_refinery",
+      "district_id": null,
+      "active_lines": ["plastic"]
+    }
+  ],
+
+  "buy_items": {
+    "oil": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 8000,
+      "reorder_at": 1600,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 800,
+      "reorder_at": 150,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "plastic": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" }
+  }
+}
