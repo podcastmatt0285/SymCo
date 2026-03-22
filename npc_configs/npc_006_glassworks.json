@@ -1,0 +1,60 @@
+{
+  "player_id": -2006,
+  "business_name": "Glassworks",
+  "description": "Quarries its own sand and processes it into glass and bottles, supplying the market with surplus.",
+
+  "cash_caps": {
+    "hard_high": 20000000,
+    "soft_high":  8000000,
+    "soft_low":   3000000,
+    "hard_low":    750000
+  },
+
+  "seed": {
+    "starting_cash": 3000000,
+    "land_plots": [
+      { "terrain_type": "hills", "proximity_features": ["remote"], "size": 1 },
+      { "terrain_type": "hills", "proximity_features": ["remote"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "sand_quarry",
+      "district_id": null,
+      "active_lines": ["sand"]
+    },
+    {
+      "business_type": "glass_factory",
+      "district_id": null,
+      "active_lines": ["glass", "bottle"]
+    }
+  ],
+
+  "buy_items": {
+    "energy": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 600,
+      "reorder_at": 120,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "bottle": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "glass":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "sand":   { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
+  }
+}
