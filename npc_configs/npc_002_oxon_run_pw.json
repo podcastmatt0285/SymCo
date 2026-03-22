@@ -14,7 +14,7 @@
     "starting_cash": 5000,
     "land_plots": [
       { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
+      { "terrain_type": "prairie", "proximity_features": ["riverside"], "size": 1 }
     ]
   },
 
