@@ -1770,7 +1770,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
         <script>
         (function() {{
           var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory'];
-          var SLOW_EXACT = ['/'];
+          var SLOW_EXACT = ['/', '/api/inventory/list', '/api/market/order'];
           var STEPS = [
             "Initializing Secure Terminal...",
             "Authenticating Executive Credentials...",
