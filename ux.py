@@ -3705,6 +3705,10 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 MarketOrder.item_type == item,
                 MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).order_by(MarketOrder.created_at.desc()).all()
+            all_my_orders = mkt_db.query(MarketOrder).filter(
+                MarketOrder.player_id == player.id,
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+            ).order_by(MarketOrder.item_type.asc(), MarketOrder.created_at.desc()).all()
             _active_rows = mkt_db.query(MarketOrder.item_type).filter(
                 MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
             ).distinct().all()
@@ -3847,9 +3851,50 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         item_desc = item_info.get("description", "") if item_info else ""
         item_cat = item_info.get("category", "other") if item_info else "other"
         
+        # Build "All My Open Orders" panel (across all items)
+        all_orders_html = ""
+        if all_my_orders:
+            all_rows = ""
+            for o in all_my_orders:
+                side_color = "#22c55e" if o.order_type == "buy" else "#ef4444"
+                rem = o.quantity - o.quantity_filled
+                price_str = fmt_usd(o.price, disp) if o.price else "MKT"
+                item_label = o.item_type.replace("_", " ").title()
+                all_rows += f'''<tr style="border-bottom:1px solid #1e293b;">
+                    <td style="padding:6px 8px;"><a href="/market?item={o.item_type}" style="color:#38bdf8;text-decoration:none;">{item_label}</a></td>
+                    <td style="padding:6px 8px;color:{side_color};font-weight:bold;">{o.order_type.upper()}</td>
+                    <td style="padding:6px 8px;">{price_str}</td>
+                    <td style="padding:6px 8px;">{o.quantity:,.2f}</td>
+                    <td style="padding:6px 8px;color:#f59e0b;">{rem:,.2f}</td>
+                    <td style="padding:6px 8px;">
+                        <form action="/api/market/cancel-order" method="post" style="display:inline;">
+                            <input type="hidden" name="order_id" value="{o.id}">
+                            <input type="hidden" name="item_type" value="{o.item_type}">
+                            <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:0.75rem;">Cancel</button>
+                        </form>
+                    </td>
+                </tr>'''
+            all_orders_html = f'''<div class="card" style="margin-bottom:20px;">
+                <h3 style="margin-top:0;">All My Open Orders ({len(all_my_orders)})</h3>
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+                    <thead><tr style="border-bottom:1px solid #334155;color:#64748b;text-align:left;">
+                        <th style="padding:6px 8px;">Item</th>
+                        <th style="padding:6px 8px;">Side</th>
+                        <th style="padding:6px 8px;">Price</th>
+                        <th style="padding:6px 8px;">Qty</th>
+                        <th style="padding:6px 8px;">Remaining</th>
+                        <th style="padding:6px 8px;">Action</th>
+                    </tr></thead>
+                    <tbody>{all_rows}</tbody>
+                </table>
+                </div>
+            </div>'''
+
         # Build market HTML
         market_html = f'''
         <a href="/" style="color: #38bdf8;"><- Dashboard</a>
+        {all_orders_html}
         <div style="display: flex; gap: 20px; max-width: 100%;">
             <div style="flex: 2; min-width: 0;">
                 <h1>📈 Market</h1>
