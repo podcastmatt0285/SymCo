@@ -223,7 +223,7 @@ def match_order(db, order: MarketOrder) -> bool:
             if order.order_type == OrderType.SELL and (match.price is None or match.price < order.price): continue
 
         # Anti-arbitrage: city members cannot buy from their own city's bank market listing
-        if order.order_type == OrderType.BUY and match.player_id <= -1001:
+        if order.order_type == OrderType.BUY and -1999 <= match.player_id <= -1001:
             city_id_for_check = -match.player_id - 1000
             try:
                 from cities import CityMember
@@ -316,20 +316,21 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         is_bank_ipo = True
         bank_id = "wbc50_index_fund"
 
-    # City Bank sell detection (IDs are -(1000 + city_id), so <= -1001)
-    elif sell_order.player_id <= -1001:
+    # City Bank sell detection (IDs are -(1000 + city_id), range -1001 to -1999)
+    # NPC players use -2001 and below — must exclude them from this check.
+    elif -1999 <= sell_order.player_id <= -1001:
         is_bank_ipo = True  # Reuse the IPO logic (money goes to bank reserves)
         bank_id = f"city_bank_{-sell_order.player_id - 1000}"  # Extract city_id
 
     # City Bank buy detection (bank acquiring currency from market)
-    elif buy_order.player_id <= -1001:
+    elif -1999 <= buy_order.player_id <= -1001:
         is_bank_buyer = True
         bank_buyer_city_id = -buy_order.player_id - 1000
 
     # 4b. Pre-flight: verify seller has the items before taking payment.
     # This catches stale sell orders (items consumed/transferred after the order was placed).
     # Prevents deducting buyer's foreign-currency payment when the transfer would fail.
-    if sell_order.player_id > 0:  # skip for bank virtual sellers (id <= -1)
+    if sell_order.player_id > 0 or sell_order.player_id <= -2000:  # skip only city/ETF/land banks (-1 to -1999)
         import inventory as _inv
         current_qty = _inv.get_item_quantity(sell_order.player_id, buy_order.item_type)
         if current_qty < quantity:
