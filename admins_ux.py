@@ -538,9 +538,6 @@ def admin_player_detail(
     admin, is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
-    from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(admin.id)
-
     # Moderators can only access the moderation tab
     if not is_full:
         tab = "moderation"
@@ -581,7 +578,7 @@ def admin_player_detail(
     # Tab content
     tab_body = ""
     if tab == "info" and is_full:
-        tab_body = _player_info_tab(pid, detail, disp)
+        tab_body = _player_info_tab(pid, detail)
     elif tab == "inventory" and is_full:
         tab_body = _player_inventory_tab(pid)
     elif tab == "land" and is_full:
@@ -612,28 +609,56 @@ def admin_player_detail(
 
 
 def _player_info_tab(pid, detail, disp=None):
-    from reserve_banks import get_player_display_currency, fmt_usd
-    if disp is None:
-        disp = get_player_display_currency(pid)
+    from reserve_banks import get_player_currency_balances, get_player_legal_tender
+
+    # Fetch all actual currency balances (raw, never converted to admin's currency)
+    all_balances = get_player_currency_balances(pid)
+    legal_tender = get_player_legal_tender(pid)
+
+    # Build per-currency rows with individual set forms
+    balance_rows = ""
+    for b in all_balances:
+        code = b["currency_code"]
+        sym  = b["currency_symbol"] or ""
+        flag = b["flag"] or ""
+        bal  = b["balance"]
+        usd  = b["usd_value"]
+        is_lt = " ★" if code == legal_tender else ""
+        usd_str = f" (≈ ${usd:,.2f} USD)" if code != "USD" else ""
+        balance_rows += f"""
+        <div style="border:1px solid #1e3a5f;border-radius:6px;padding:10px 12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-weight:600;color:#e5e7eb;">{flag} {code}{is_lt}</span>
+            <span style="color:#22c55e;font-weight:700;">{sym}{bal:,.4f}{usd_str}</span>
+          </div>
+          <form method="post" action="/admin/player/{pid}/set-currency" style="display:flex;gap:6px;align-items:center;">
+            <input type="hidden" name="currency_code" value="{code}">
+            <input type="hidden" name="tab" value="info">
+            <input type="number" name="new_balance" step="0.0001" value="{bal:.4f}" style="flex:1;font-size:0.8rem;">
+            <button type="submit" class="btn btn-blue" style="font-size:0.75rem;padding:4px 10px;">Set</button>
+          </form>
+        </div>"""
+
+    if not balance_rows:
+        balance_rows = '<p style="color:#4b5563;font-size:0.75rem;font-style:italic;">No currency balances on record.</p>'
+
     return f"""
     <div class="card">
         <h3>Player Info</h3>
         <div class="detail-row"><span class="label">ID</span><span class="value">#{detail["id"]}</span></div>
         <div class="detail-row"><span class="label">Name</span><span class="value">{detail["business_name"]}</span></div>
-        <div class="detail-row"><span class="label">Cash</span><span class="value" style="color:#22c55e;">{fmt_usd(detail["cash_balance"], disp)}</span></div>
+        <div class="detail-row"><span class="label">Legal Tender</span><span class="value">{legal_tender}</span></div>
         <div class="detail-row"><span class="label">City</span><span class="value">{detail["city"] or "None"}</span></div>
         <div class="detail-row"><span class="label">Registered</span><span class="value">{_ts(detail["created_at"])}</span></div>
         <div class="detail-row"><span class="label">Last Login</span><span class="value">{_ts(detail["last_login"])}</span></div>
     </div>
     <div class="card">
-        <h3>Set Cash Balance</h3>
-        <form method="post" action="/admin/player/{pid}/balance">
-            <div class="form-row">
-                <div><div class="form-label">Amount</div><input type="number" name="new_balance" step="0.01" value="{detail['cash_balance']:.2f}"></div>
-                <button type="submit" class="btn btn-blue">Set</button>
-            </div>
-        </form>
-        <div style="margin-top:24px;border-top:1px solid #7f1d1d;padding-top:16px;">
+        <h3>Currency Balances</h3>
+        <p style="color:#4b5563;font-size:0.75rem;margin-bottom:10px;">★ = player's legal tender. Amounts shown in native units — no conversion.</p>
+        {balance_rows}
+    </div>
+    <div class="card">
+        <div style="border-top:1px solid #7f1d1d;padding-top:16px;">
           <p style="color:#ef4444;font-size:0.85rem;margin:0 0 10px 0;">⚠️ Delete permanently triggers the estate/death liquidation for this player.</p>
           <form method="post" action="/admin/player/{pid}/delete" onsubmit="return confirm('Permanently trigger death/estate for player {pid}? This cannot be undone.')">
             <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;padding:8px 18px;border-radius:4px;cursor:pointer;font-weight:bold;">💀 Delete Player (Trigger Death)</button>
@@ -1018,6 +1043,30 @@ def post_balance(pid: int, session_token: Optional[str] = Cookie(None), new_bala
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=info&msg=Balance+set+to+{fmt_usd(new_balance, disp)}", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab=info&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/set-currency")
+def post_set_currency(
+    pid: int,
+    session_token: Optional[str] = Cookie(None),
+    currency_code: str = Form(...),
+    new_balance: float = Form(...),
+    tab: str = Form("info"),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from admins import admin_set_currency_balance
+    result = admin_set_currency_balance(admin.id, pid, currency_code, new_balance)
+    if result["ok"]:
+        return RedirectResponse(
+            url=f"/admin/player/{pid}?tab={tab}&msg={currency_code}+set+to+{new_balance:.4f}",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url=f"/admin/player/{pid}?tab={tab}&err={result['error']}",
+        status_code=303,
+    )
 
 
 @router.post("/admin/player/{pid}/add-item")
