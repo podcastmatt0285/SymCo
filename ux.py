@@ -1076,7 +1076,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         </style>
         <script>
         (function() {{
-          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory'];
+          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market'];
           var SLOW_EXACT = ['/', '/api/inventory/list', '/api/market/order'];
           var STEPS = [
             "Initializing Secure Terminal...",
@@ -1138,6 +1138,16 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
               if (pathname.startsWith(SLOW_PATHS[i])) return true;
             }}
             return false;
+          }}
+
+          // Show immediately on direct load / refresh of a slow page,
+          // then hide once the browser has finished rendering the DOM.
+          if (_isSlowPath(location.pathname)) {{
+            startLoader();
+            document.addEventListener('DOMContentLoaded', function() {{
+              overlay.style.display = 'none';
+              clearInterval(timer);
+            }});
           }}
 
           // Show on <a> clicks to known-slow pages
@@ -1626,8 +1636,19 @@ def home(session_token: Optional[str] = Cookie(None)):
         player.id
     )
 
-@router.get("/businesses", response_class=HTMLResponse)
-def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", biz_filter: str = "all"):
+@router.get("/businesses")
+async def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", biz_filter: str = "all"):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_businesses_impl, session_token, sort, biz_filter)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", biz_filter: str = "all"):
     """Business operations view with live progress and retail pricing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -1934,8 +1955,19 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
         traceback.print_exc()
         return shell("Businesses", f"Error loading terminal: {e}", player.cash_balance, player.id)
 
-@router.get("/inventory", response_class=HTMLResponse)
-def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc"):
+@router.get("/inventory")
+async def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc"):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_inventory_page_impl, session_token, filter, sort, dir)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all", sort: str = "name", dir: str = "asc"):
     """Inventory management view."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -2390,8 +2422,19 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
     except Exception as e:
         return shell("Inventory", f"Error: {e}", player.cash_balance, player.id)
 
-@router.get("/land", response_class=HTMLResponse)
-def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
+@router.get("/land")
+async def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_land_impl, session_token, sort, order, success, error)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
     """Land management view with organized layout, sorting, and explanatory info."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -2702,8 +2745,19 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
         traceback.print_exc()
         return shell("Land", f"Error: {e}", player.cash_balance, player.id)
 
-@router.get("/land-market", response_class=HTMLResponse)
-def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
+@router.get("/land-market")
+async def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_land_market_page_impl, session_token, sort, order, terrain, tab, success, error)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
     """Land market view - government auctions and player listings with search, sort, and filter."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -3295,8 +3349,19 @@ def _build_active_items_panel(active_items: list, current_item: str, base_url: s
     return f'<div class="card" style="margin-top:16px;"><h3 style="margin-bottom:10px;">Active Markets <span style="font-size:0.75rem;color:#64748b;font-weight:normal;">({len(active_items)})</span></h3>{links}</div>'
 
 
-@router.get("/market", response_class=HTMLResponse)
-def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
+@router.get("/market")
+async def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_market_page_impl, session_token, item)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_seeds"):
     """Market view with full order book including player names."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
