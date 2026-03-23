@@ -420,7 +420,7 @@ async def world_map_territory(session_token: Optional[str] = Cookie(None)):
     Includes ALL counties, their cities, city members' districts, and businesses.
     Used by the D3.js Voronoi territory visualization.
     """
-    from auth import get_db, get_player_from_session
+    from auth import get_db, get_player_from_session, Player
     from counties import County, CountyCity
     from cities import City, CityMember
     from districts import District
@@ -468,6 +468,13 @@ async def world_map_territory(session_token: Optional[str] = Cookie(None)):
                             ).all():
                                 biz_map[b.id] = b
 
+                        # Build player name lookup for tooltip display
+                        player_name_map = {}
+                        for p in db.query(Player).filter(
+                            Player.id.in_(member_player_ids)
+                        ).all():
+                            player_name_map[p.id] = p.business_name
+
                         for dist in city_districts:
                             biz = biz_map.get(dist.occupied_by_business_id)
                             biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
@@ -486,6 +493,7 @@ async def world_map_territory(session_token: Optional[str] = Cookie(None)):
                                 ),
                                 "type": dist.district_type,
                                 "is_mine": dist.owner_id == player.id,
+                                "owner_name": player_name_map.get(dist.owner_id, "Unknown"),
                                 "businesses": businesses_out,
                                 "url": f"/district/{dist.id}",
                             })
@@ -816,12 +824,15 @@ function renderTerritories(data) {
 
     const defs = _svg.append('defs');
 
-    // --- Background grid pattern ---
+    // --- Background dot grid pattern ---
     const grid = defs.append('pattern')
-        .attr('id','bg-grid').attr('width',40).attr('height',40)
+        .attr('id','bg-grid').attr('width',32).attr('height',32)
         .attr('patternUnits','userSpaceOnUse');
-    grid.append('path').attr('d','M 40 0 L 0 0 0 40')
-        .attr('fill','none').attr('stroke','#0d1a2d').attr('stroke-width','0.7');
+    // Dots at every grid intersection — subtle deep-blue on black
+    [[0,0],[32,0],[0,32],[32,32],[16,16]].forEach(([cx,cy]) => {
+        grid.append('circle').attr('cx',cx).attr('cy',cy).attr('r',0.85)
+            .attr('fill','#1e3a5f');
+    });
 
     // --- Glow filters ---
     function mkGlow(id, sd) {
@@ -901,9 +912,12 @@ function renderTerritories(data) {
         const cG = fillsG.append('g').attr('clip-path', 'url(#' + cClip + ')');
 
         // County fill — clearly visible dark-tinted region
+        const cFillNorm = alpha(cColor, 90), cFillHov = alpha(cColor, 130);
         cG.append('polygon').attr('points', polyPts(cPts))
-          .attr('fill', alpha(cColor, 90))   // ~35%
+          .attr('fill', cFillNorm)
           .style('cursor','pointer')
+          .on('mouseover', function() { d3.select(this).attr('fill', cFillHov); })
+          .on('mouseout',  function() { d3.select(this).attr('fill', cFillNorm); })
           .on('mousemove', evt => showTip(
               '🏛️ <b style="color:' + cColor + '">' + county.name + '</b>' +
               (county.crypto_symbol ? '&nbsp;<span style="color:#f59e0b;font-size:10px">[' + county.crypto_symbol + ']</span>' : '') +
@@ -925,7 +939,8 @@ function renderTerritories(data) {
                 const cityPoly = cityVor.cellPolygon(j);
                 if (!cityPoly || cityPoly.length < 4) return;
                 const cityPts   = cityPoly.slice(0, -1);
-                const cityColor = lighten(cColor, 0.42);
+                // Vary lightness per city index so siblings look distinct (0.30→0.55)
+                const cityColor = lighten(cColor, 0.30 + (j % 6) * 0.05);
                 const cityClip  = 'city-clip-' + city.id;
                 const [dsbx0,dsby0,dsbx1,dsby1] = bbox(cityPts);
 
@@ -935,9 +950,12 @@ function renderTerritories(data) {
                 const cityG = cG.append('g').attr('clip-path', 'url(#' + cityClip + ')');
 
                 // City fill
+                const cyFillNorm = alpha(cityColor, 100), cyFillHov = alpha(cityColor, 145);
                 cityG.append('polygon').attr('points', polyPts(cityPts))
-                     .attr('fill', alpha(cityColor, 100))   // ~39%
+                     .attr('fill', cyFillNorm)
                      .style('cursor','pointer')
+                     .on('mouseover', function() { d3.select(this).attr('fill', cyFillHov); })
+                     .on('mouseout',  function() { d3.select(this).attr('fill', cyFillNorm); })
                      .on('mousemove', evt => showTip(
                          '🏙️ <b style="color:' + cityColor + '">' + city.name + '</b>' +
                          '<br>Members: <b>' + city.member_count + '</b>' +
@@ -980,6 +998,7 @@ function renderTerritories(data) {
                                      (isMine ? '<b style="color:#fbbf24">\u2605 MINE</b> &mdash; ' : '') +
                                      '<b style="color:' + dColor + '">' + dist.name + '</b>' +
                                      '<br>Type: <span style="color:#94a3b8">' + dist.type.replace(/_/g,' ') + '</span>' +
+                                     '<br>Owner: <span style="color:' + (isMine ? '#fbbf24' : '#cbd5e1') + '">' + (dist.owner_name || '?') + '</span>' +
                                      (biz ? '<br>🏢 <b>' + biz.name + '</b>' +
                                          (biz.active
                                              ? ' <span style="color:#22c55e">\u25cf active</span>'
@@ -987,6 +1006,13 @@ function renderTerritories(data) {
                                      '<br><a href="' + dist.url + '" style="color:#38bdf8">\u2192 Manage district</a>', evt);
                              })
                              .on('click', () => { window.location.href = dist.url; });
+
+                        // Mine: gold tint overlay so owned districts are unmistakable
+                        if (isMine) {
+                            distG.append('polygon').attr('points', polyPts(distPts))
+                                 .attr('fill', 'rgba(251,191,36,0.18)')
+                                 .attr('pointer-events','none');
+                        }
 
                         // Business innermost shading — white shimmer indicates active vs idle
                         if (biz) {
