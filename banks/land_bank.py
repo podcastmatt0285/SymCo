@@ -132,10 +132,10 @@ def initialize():
     if not bank_entity:
         print(f"[{BANK_NAME}] Creating new bank entity...")
         bank_entity = banks.register_bank_entity(BANK_ID, BANK_NAME, BANK_DESCRIPTION)
-        
+
         # Seed initial capital
         banks.add_bank_revenue(BANK_ID, SEED_CAPITAL, "Initial seed funding")
-        
+
         # Set initial share structure
         bank_db = banks.get_db()
         try:
@@ -146,9 +146,9 @@ def initialize():
                 bank_db.commit()
         finally:
             bank_db.close()
-    
-    # Execute IPO
-    execute_ipo()
+
+        # Execute IPO only on first creation — never on restart
+        execute_ipo()
     
     print(f"[{BANK_NAME}] Enhanced Module initialized")
     print(f"  → Insolvency System: Active")
@@ -163,24 +163,22 @@ def initialize():
 def execute_ipo():
     """Execute Initial Public Offering."""
     try:
+        import inventory
         import market
-        
-        db = market.get_db()
+
+        # Abort if shares already exist anywhere in inventory (same guard as other ETF banks)
+        inv_db = inventory.get_db()
         try:
-            existing = db.query(market.MarketOrder).filter(
-                market.MarketOrder.player_id == BANK_PLAYER_ID,
-                market.MarketOrder.item_type == SHARE_ITEM_TYPE,
-                market.MarketOrder.status == market.OrderStatus.ACTIVE
+            any_holder = inv_db.query(inventory.InventoryItem).filter(
+                inventory.InventoryItem.item_type == SHARE_ITEM_TYPE,
+                inventory.InventoryItem.quantity > 0
             ).first()
-            
-            if existing:
-                print(f"[{BANK_NAME}] IPO already exists (Order #{existing.id})")
+            if any_holder:
+                print(f"[{BANK_NAME}] IPO already executed — shares in circulation. Skipping.")
                 return
         finally:
-            db.close()
-        
-        import inventory
-        
+            inv_db.close()
+
         if SHARE_ITEM_TYPE not in inventory.ITEM_RECIPES:
             inventory.ITEM_RECIPES[SHARE_ITEM_TYPE] = {
                 "name": "Land Bank Shares",
