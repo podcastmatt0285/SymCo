@@ -1953,7 +1953,8 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
         if not ok:
             return False, f"Payment failed: {_err}"
         bank.cash_reserves += trade_value
-        db.commit()  # Commit the cash transfer first
+        # NOTE: do NOT commit here — payment and currency delivery must be atomic.
+        # A single db.commit() at the end ensures both succeed or both roll back.
         
         # ---- STEP 4: Bank buys currency from market ----
         # Use a special bank player ID for market orders
@@ -1986,10 +1987,13 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             if cash_spent >= cash_for_currency:
                 break
             
+            if not sell_order.price or sell_order.price <= 0:
+                continue
             available_in_order = sell_order.quantity - sell_order.quantity_filled
             still_need = currency_needed - currency_acquired
-            can_afford = (cash_for_currency - cash_spent) / sell_order.price
-            
+            budget_left = cash_for_currency - cash_spent
+            can_afford = budget_left / sell_order.price
+
             buy_qty = min(available_in_order, still_need, can_afford)
             
             if buy_qty <= 0:
@@ -2031,7 +2035,19 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             bank.currency_quantity -= from_reserves
             currency_acquired += from_reserves
             print(f"[Cities] Bank used {from_reserves:.2f} {city.currency_type} from reserves")
-        
+
+        # If still short, refund the outsider and abort — never deliver partial value silently
+        SHORTFALL_TOLERANCE = 0.01  # allow rounding dust
+        if currency_acquired < currency_needed - SHORTFALL_TOLERANCE:
+            shortfall = currency_needed - currency_acquired
+            print(f"[Cities] Insufficient {city.currency_type} after market + reserves "
+                  f"(needed={currency_needed:.4f}, acquired={currency_acquired:.4f}, "
+                  f"shortfall={shortfall:.4f}). Aborting and refunding outsider.")
+            # Queue a bank buy order so supply grows for the next attempt
+            _place_bank_currency_buy_order(db, bank, city, shortfall, currency_price)
+            db.rollback()
+            return False, f"Trade pending: bank acquiring {city.currency_type} — retry when filled"
+
         # ---- STEP 5: Deposit currency to seller ----
         if currency_acquired > 0:
             inventory.add_item(seller_id, city.currency_type, currency_acquired)
