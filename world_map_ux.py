@@ -546,28 +546,30 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 </div>
 
 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-    <h1 style="margin: 0; font-size: 1.4rem;">World Map</h1>
+    <div style="display:flex; align-items:center; gap:12px;">
+        <h1 style="margin: 0; font-size: 1.4rem;">World Map</h1>
+        <span id="zoom-crumb" style="color:#64748b; font-size:0.8rem; font-family:monospace;"></span>
+    </div>
     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-        <button onclick="loadTerritoryData()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">Refresh</button>
+        <button id="btn-back" onclick="zoomBack()" style="display:none; padding: 6px 12px; background: #334155; color: #e2e8f0; border: 1px solid #475569; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">&#8592; Back</button>
+        <button id="btn-world" onclick="zoomWorld()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">&#127758; World View</button>
+        <button onclick="loadTerritoryData()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">&#8635; Refresh</button>
     </div>
 </div>
 
 <!-- Legend -->
-<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; font-size:0.72rem; color:#94a3b8; align-items:center;">
-    <span style="display:inline-flex;align-items:center;gap:5px;">
-        <span style="width:14px;height:14px;background:#7c3aed33;border:2px solid #7c3aed;display:inline-block;border-radius:2px;"></span>County
-    </span>
-    <span style="display:inline-flex;align-items:center;gap:5px;">
-        <span style="width:14px;height:14px;background:#b07aff33;border:1.5px solid #b07affcc;display:inline-block;border-radius:2px;"></span>City
-    </span>
-    <span style="display:inline-flex;align-items:center;gap:5px;">
-        <span style="width:14px;height:14px;background:#2563eb55;border:1px solid #2563ebaa;display:inline-block;border-radius:2px;"></span>District / Company
-    </span>
-    <span style="display:inline-flex;align-items:center;gap:5px;">
-        <span style="width:14px;height:14px;background:#2563eb88;border:0.5px solid #2563eb;display:inline-block;border-radius:2px;"></span>Business
-    </span>
-    <span style="color:#475569;">|</span>
-    <span style="color:#94a3b8;">Hover for details &bull; Click to navigate</span>
+<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; font-size:0.75rem; color:#94a3b8; align-items:center; background:#0a0f1a; border:1px solid #1e293b; border-radius:4px; padding:8px 12px;">
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span style="font-size:15px">&#127963;</span><b style="color:#7c3aed">County</b> &mdash; click to zoom in</span>
+    <span style="color:#1e293b;">|</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span style="font-size:15px">&#127961;</span><b style="color:#7ec8f0">City</b> &mdash; click to zoom in</span>
+    <span style="color:#1e293b;">|</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span style="font-size:15px">&#127981;</span><b style="color:#2563eb">District / Company</b> &mdash; click to manage</span>
+    <span style="color:#1e293b;">|</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span style="font-size:11px;background:#2563ebcc;width:12px;height:12px;display:inline-block;border-radius:2px;vertical-align:middle;"></span>Active business inside district</span>
+    <span style="color:#1e293b;">|</span>
+    <span><b style="color:#fbbf24">&#9733;</b> = your entity</span>
+    <span style="color:#1e293b;">|</span>
+    <span style="color:#475569; font-style:italic;">Counties and cities shown for all players &bull; Nesting: county &#8594; city &#8594; district &#8594; business</span>
 </div>
 
 <!-- Map container -->
@@ -602,7 +604,7 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 // ============================================================
 
 // ============================================================
-// COLOUR PALETTES
+// COLOUR PALETTES & ICONS
 // ============================================================
 
 // Distinct bright colours for county cells (rendered on black)
@@ -614,7 +616,7 @@ const COUNTY_PALETTE = [
     '#f472b6','#60a5fa','#a3e635','#e879f9',
 ];
 
-// District-type colours (same as backend TERRAIN_COLORS for districts)
+// District-type colours
 const DIST_COLORS = {
     aerospace:'#6366f1', airport:'#38bdf8', convention_center:'#7c3aed',
     education:'#8b5cf6', entertainment:'#ec4899', entertainment_district:'#db2777',
@@ -626,6 +628,20 @@ const DIST_COLORS = {
     tech:'#2563eb', tech_park:'#2563eb', transport:'#d97706',
     utilities:'#0284c7', zoo:'#4ade80',
 };
+
+// District-type icons (emoji — embedded directly as UTF-8 characters)
+const DIST_ICONS = {
+    aerospace:'🚀', airport:'✈️', convention_center:'🎭',
+    education:'🎓', entertainment:'🎪', entertainment_district:'🎠',
+    food:'🍽️', food_court:'🍔', hospital:'🏥',
+    industrial:'🏭', mall:'🛒', mega_mall:'🏬',
+    medical:'💊', military:'⚔️', military_base:'🛡️',
+    neighborhood:'🏘️', prison:'🔒', prison_complex:'🔐',
+    research_campus:'🔬', seaport:'⚓', shipyard:'🚢',
+    tech:'💻', tech_park:'🖥️', transport:'🚉',
+    utilities:'⚡', zoo:'🦁',
+};
+function distIcon(t) { return DIST_ICONS[t] || '🏢'; }
 
 // ============================================================
 // GEOMETRY UTILITIES
@@ -713,71 +729,139 @@ function countySeeds(counties, W, H) {
 function polyPts(pts) { return pts.map(p => p.join(',')).join(' '); }
 
 // ============================================================
-// TERRITORY RENDERING
+// ZOOM STATE
 // ============================================================
 let _lastData = null;
+let _svg = null;
+let _W = 0, _H = 0;
+let _zoomStack = [];  // stack of previous viewBox strings
 
+function _setViewBox(vb, animate) {
+    if (!_svg) return;
+    if (animate) _svg.transition().duration(450).attr('viewBox', vb);
+    else         _svg.attr('viewBox', vb);
+    document.getElementById('btn-back').style.display =
+        _zoomStack.length > 0 ? 'inline-block' : 'none';
+}
+
+function zoomToRegion(x0, y0, x1, y1, crumb) {
+    const pad = 24;
+    const vb = (x0-pad) + ' ' + (y0-pad) + ' ' + (x1-x0+pad*2) + ' ' + (y1-y0+pad*2);
+    _zoomStack.push(_svg.attr('viewBox'));
+    _setViewBox(vb, true);
+    document.getElementById('zoom-crumb').textContent = crumb ? '> ' + crumb : '';
+}
+
+function zoomBack() {
+    if (_zoomStack.length === 0) return;
+    const prev = _zoomStack.pop();
+    _setViewBox(prev, true);
+    document.getElementById('zoom-crumb').textContent =
+        _zoomStack.length > 0 ? '(zoomed)' : '';
+    document.getElementById('btn-back').style.display =
+        _zoomStack.length > 0 ? 'inline-block' : 'none';
+}
+
+function zoomWorld() {
+    _zoomStack = [];
+    _setViewBox('0 0 ' + _W + ' ' + _H, true);
+    document.getElementById('zoom-crumb').textContent = '';
+    document.getElementById('btn-back').style.display = 'none';
+}
+
+// ============================================================
+// LABEL HELPER — text with dark backing rectangle
+// ============================================================
+function labelWithBg(g, x, y, text, color, fontSize, bold) {
+    const fsize = fontSize || 12;
+    const approxW = text.length * fsize * 0.62 + 12;
+    const approxH = fsize + 6;
+    g.append('rect')
+     .attr('x', x - approxW/2).attr('y', y - approxH/2)
+     .attr('width', approxW).attr('height', approxH)
+     .attr('rx', 3).attr('fill', 'rgba(0,0,0,0.72)')
+     .attr('pointer-events','none');
+    g.append('text')
+     .attr('x', x).attr('y', y + 1)
+     .attr('text-anchor','middle').attr('dominant-baseline','middle')
+     .attr('fill', color).attr('font-size', fsize + 'px')
+     .attr('font-family','monospace').attr('pointer-events','none')
+     .attr('font-weight', bold ? 'bold' : 'normal')
+     .text(text);
+}
+
+// ============================================================
+// TERRITORY RENDERING
+// ============================================================
 function renderTerritories(data) {
     _lastData = data;
     const counties = data.counties || [];
 
     const container = document.getElementById('map-container');
-    const W = container.clientWidth  || 1200;
-    const H = container.clientHeight || 700;
+    _W = container.clientWidth  || 1200;
+    _H = container.clientHeight || 700;
 
-    // Check D3 loaded
     if (typeof d3 === 'undefined') {
         document.getElementById('map-loading').textContent =
             'D3.js failed to load. Check network connection and reload.';
         return;
     }
 
-    const svg = d3.select('#territory-svg').attr('width', W).attr('height', H)
-                  .attr('viewBox', '0 0 ' + W + ' ' + H);
-    svg.selectAll('*').remove();
+    _svg = d3.select('#territory-svg').attr('width', _W).attr('height', _H)
+             .attr('viewBox', '0 0 ' + _W + ' ' + _H);
+    _svg.selectAll('*').remove();
+    _zoomStack = [];
+    document.getElementById('btn-back').style.display = 'none';
+    document.getElementById('zoom-crumb').textContent = '';
 
-    const defs = svg.append('defs');
+    const defs = _svg.append('defs');
 
-    // County-border glow filter
-    const gf = defs.append('filter').attr('id', 'glow')
-                   .attr('x','-50%').attr('y','-50%')
-                   .attr('width','200%').attr('height','200%');
-    gf.append('feGaussianBlur').attr('stdDeviation','4').attr('result','blur');
-    const fm = gf.append('feMerge');
-    fm.append('feMergeNode').attr('in','blur');
-    fm.append('feMergeNode').attr('in','SourceGraphic');
+    // --- Background grid pattern ---
+    const grid = defs.append('pattern')
+        .attr('id','bg-grid').attr('width',40).attr('height',40)
+        .attr('patternUnits','userSpaceOnUse');
+    grid.append('path').attr('d','M 40 0 L 0 0 0 40')
+        .attr('fill','none').attr('stroke','#0d1a2d').attr('stroke-width','0.7');
 
-    // Subtle glow for labels
-    const lf = defs.append('filter').attr('id', 'lglow')
-                   .attr('x','-50%').attr('y','-50%')
-                   .attr('width','200%').attr('height','200%');
-    lf.append('feGaussianBlur').attr('stdDeviation','2').attr('result','blur');
-    const lm = lf.append('feMerge');
-    lm.append('feMergeNode').attr('in','blur');
-    lm.append('feMergeNode').attr('in','SourceGraphic');
+    // --- Glow filters ---
+    function mkGlow(id, sd) {
+        const f = defs.append('filter').attr('id',id)
+                      .attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
+        f.append('feGaussianBlur').attr('stdDeviation', sd).attr('result','b');
+        const m = f.append('feMerge');
+        m.append('feMergeNode').attr('in','b');
+        m.append('feMergeNode').attr('in','SourceGraphic');
+    }
+    mkGlow('glow-lg', 7);   // county borders
+    mkGlow('glow-md', 3.5); // city borders
+    mkGlow('glow-sm', 1.8); // labels
 
-    // Black background
-    svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#000');
+    // --- Black + grid background ---
+    _svg.append('rect').attr('width',_W).attr('height',_H).attr('fill','#000');
+    _svg.append('rect').attr('width',_W).attr('height',_H).attr('fill','url(#bg-grid)');
 
     if (!counties.length) {
-        svg.append('text').attr('x', W/2).attr('y', H/2)
-           .attr('text-anchor','middle').attr('dominant-baseline','middle')
-           .attr('fill','#475569').attr('font-size',16).attr('font-family','monospace')
-           .text('No counties found. Create or join a county to see the territory map.');
+        _svg.append('text').attr('x',_W/2).attr('y',_H/2 - 20)
+            .attr('text-anchor','middle').attr('dominant-baseline','middle')
+            .attr('fill','#475569').attr('font-size',18).attr('font-family','monospace')
+            .text('No counties found in the world yet.');
+        _svg.append('text').attr('x',_W/2).attr('y',_H/2 + 10)
+            .attr('text-anchor','middle').attr('dominant-baseline','middle')
+            .attr('fill','#334155').attr('font-size',13).attr('font-family','monospace')
+            .text('Create or join a county to appear on the map.');
         document.getElementById('map-loading').style.display = 'none';
         document.getElementById('map-status').textContent = 'No territory data';
         return;
     }
 
     // ---- COUNTY VORONOI ----
-    const cSeeds = countySeeds(counties, W, H);
+    const cSeeds = countySeeds(counties, _W, _H);
     const cDel   = d3.Delaunay.from(cSeeds);
-    const cVor   = cDel.voronoi([0, 0, W, H]);
+    const cVor   = cDel.voronoi([0, 0, _W, _H]);
 
-    // Draw order: fills group → borders group → labels group
-    const fillsG   = svg.append('g');
-    const bordersG = svg.append('g');
-    const labelsG  = svg.append('g');
+    const fillsG   = _svg.append('g');
+    const bordersG = _svg.append('g');
+    const labelsG  = _svg.append('g');
 
     const tooltip = document.getElementById('wm-tooltip');
 
@@ -787,38 +871,39 @@ function renderTerritories(data) {
         const rect = container.getBoundingClientRect();
         let x = evt.clientX - rect.left + 14;
         let y = evt.clientY - rect.top  + 14;
-        const tw = tooltip.offsetWidth  || 200;
-        const th = tooltip.offsetHeight || 80;
-        if (x + tw > W - 8) x = evt.clientX - rect.left - tw - 14;
-        if (y + th > H - 8) y = evt.clientY - rect.top  - th - 14;
+        const tw = tooltip.offsetWidth  || 220;
+        const th = tooltip.offsetHeight || 90;
+        if (x + tw > _W - 8) x = evt.clientX - rect.left - tw - 14;
+        if (y + th > _H - 8) y = evt.clientY - rect.top  - th - 14;
         tooltip.style.left = x + 'px';
         tooltip.style.top  = y + 'px';
     }
-    svg.on('mouseleave', () => { tooltip.style.display = 'none'; });
+    _svg.on('mouseleave', () => { tooltip.style.display = 'none'; });
 
     counties.forEach((county, ci) => {
         const cPoly = cVor.cellPolygon(ci);
         if (!cPoly || cPoly.length < 4) return;
-        const cPts  = cPoly.slice(0, -1);   // drop closing duplicate
+        const cPts   = cPoly.slice(0, -1);
         const cColor = COUNTY_PALETTE[ci % COUNTY_PALETTE.length];
         const cClip  = 'county-clip-' + county.id;
+        const [cbx0,cby0,cbx1,cby1] = bbox(cPts);
 
         defs.append('clipPath').attr('id', cClip)
             .append('polygon').attr('points', polyPts(cPts));
 
-        // County group (everything inside is clipped to county polygon)
         const cG = fillsG.append('g').attr('clip-path', 'url(#' + cClip + ')');
 
-        // County fill — subtle tinted background
+        // County fill — clearly visible dark-tinted region
         cG.append('polygon').attr('points', polyPts(cPts))
-          .attr('fill', alpha(cColor, 22))   // ~8% opacity
+          .attr('fill', alpha(cColor, 55))   // ~22%
           .style('cursor','pointer')
           .on('mousemove', evt => showTip(
-              '<b style="color:' + cColor + '">' + county.name + '</b>' +
-              (county.crypto_symbol ? '<br>Token: <span style="color:#f59e0b">' + county.crypto_symbol + '</span>' : '') +
-              '<br>Cities: ' + (county.city_count || 0) +
-              '<br><span style="color:#38bdf8;font-size:11px">click to visit county</span>', evt))
-          .on('click', () => { window.location.href = county.url; });
+              '🏛️ <b style="color:' + cColor + '">' + county.name + '</b>' +
+              (county.crypto_symbol ? '&nbsp;<span style="color:#f59e0b;font-size:10px">[' + county.crypto_symbol + ']</span>' : '') +
+              '<br>Cities: <b>' + (county.city_count || 0) + '</b>' +
+              '<br><span style="color:#64748b;font-size:10px">Click to zoom in \u2022 or visit county hub below</span>' +
+              '<br><a href="' + county.url + '" style="color:#38bdf8">\u2192 County hub</a>', evt))
+          .on('click', () => zoomToRegion(cbx0, cby0, cbx1, cby1, county.name));
 
         // ---- CITY LEVEL ----
         const cities = county.cities || [];
@@ -826,32 +911,33 @@ function renderTerritories(data) {
             const citySeeds = cities.map((city, j) =>
                 sampleInPoly(cPts, city.id * 997 + county.id * 31 + j));
 
-            const [bx0,by0,bx1,by1] = bbox(cPts);
             const cityDel = d3.Delaunay.from(citySeeds);
-            const cityVor = cityDel.voronoi([bx0-1, by0-1, bx1+1, by1+1]);
+            const cityVor = cityDel.voronoi([cbx0-1, cby0-1, cbx1+1, cby1+1]);
 
             cities.forEach((city, j) => {
                 const cityPoly = cityVor.cellPolygon(j);
                 if (!cityPoly || cityPoly.length < 4) return;
-                const cityPts  = cityPoly.slice(0, -1);
-                const cityColor = lighten(cColor, 0.38);
+                const cityPts   = cityPoly.slice(0, -1);
+                const cityColor = lighten(cColor, 0.42);
                 const cityClip  = 'city-clip-' + city.id;
+                const [dsbx0,dsby0,dsbx1,dsby1] = bbox(cityPts);
 
                 defs.append('clipPath').attr('id', cityClip)
                     .append('polygon').attr('points', polyPts(cityPts));
 
-                // City group (clipped to city polygon; parent cG clips to county)
                 const cityG = cG.append('g').attr('clip-path', 'url(#' + cityClip + ')');
 
+                // City fill
                 cityG.append('polygon').attr('points', polyPts(cityPts))
-                     .attr('fill', alpha(cityColor, 35))  // ~14% opacity
+                     .attr('fill', alpha(cityColor, 65))   // ~25%
                      .style('cursor','pointer')
                      .on('mousemove', evt => showTip(
-                         '<b style="color:' + cityColor + '">' + city.name + '</b>' +
-                         '<br>Members: ' + city.member_count +
-                         '<br>Districts: ' + (city.districts ? city.districts.length : 0) +
-                         '<br><span style="color:#38bdf8;font-size:11px">click to visit city</span>', evt))
-                     .on('click', () => { window.location.href = city.url; });
+                         '🏙️ <b style="color:' + cityColor + '">' + city.name + '</b>' +
+                         '<br>Members: <b>' + city.member_count + '</b>' +
+                         '&nbsp;&nbsp;Districts: <b>' + (city.districts ? city.districts.length : 0) + '</b>' +
+                         '<br><span style="color:#64748b;font-size:10px">Click to zoom in \u2022 or visit city hub</span>' +
+                         '<br><a href="' + city.url + '" style="color:#38bdf8">\u2192 City hub</a>', evt))
+                     .on('click', () => zoomToRegion(dsbx0, dsby0, dsbx1, dsby1, county.name + ' > ' + city.name));
 
                 // ---- DISTRICT (COMPANY) LEVEL ----
                 const districts = city.districts || [];
@@ -859,9 +945,8 @@ function renderTerritories(data) {
                     const distSeeds = districts.map((dist, k) =>
                         sampleInPoly(cityPts, dist.id * 1009 + city.id * 37 + k));
 
-                    const [dx0,dy0,dx1,dy1] = bbox(cityPts);
                     const distDel = d3.Delaunay.from(distSeeds);
-                    const distVor = distDel.voronoi([dx0-1, dy0-1, dx1+1, dy1+1]);
+                    const distVor = distDel.voronoi([dsbx0-1, dsby0-1, dsbx1+1, dsby1+1]);
 
                     districts.forEach((dist, k) => {
                         const distPoly = distVor.cellPolygon(k);
@@ -870,114 +955,121 @@ function renderTerritories(data) {
                         const dColor   = DIST_COLORS[dist.type] || '#475569';
                         const distClip = 'dist-clip-' + dist.id;
                         const isMine   = dist.is_mine;
+                        const biz      = dist.businesses && dist.businesses[0];
 
                         defs.append('clipPath').attr('id', distClip)
                             .append('polygon').attr('points', polyPts(distPts));
 
-                        // District group (clipped to district; parents clip to city × county)
                         const distG = cityG.append('g')
                                           .attr('clip-path', 'url(#' + distClip + ')');
 
-                        // District fill
+                        // District base fill
                         distG.append('polygon').attr('points', polyPts(distPts))
-                             .attr('fill', alpha(dColor, 70))   // ~27% opacity
+                             .attr('fill', alpha(dColor, 110))   // ~43%
                              .style('cursor','pointer')
                              .on('mousemove', evt => {
-                                 const biz = dist.businesses && dist.businesses[0];
                                  showTip(
-                                     (isMine ? '<span style="color:#fbbf24">&#9733; MINE</span><br>' : '') +
+                                     distIcon(dist.type) + ' ' +
+                                     (isMine ? '<b style="color:#fbbf24">\u2605 MINE</b> &mdash; ' : '') +
                                      '<b style="color:' + dColor + '">' + dist.name + '</b>' +
-                                     '<br>Type: ' + dist.type.replace(/_/g,' ') +
-                                     (biz ? '<br>&#127981; ' + biz.name + (biz.active ? ' <span style="color:#22c55e">(active)</span>' : ' <span style="color:#ef4444">(inactive)</span>') : '') +
-                                     '<br><span style="color:#38bdf8;font-size:11px">click to manage</span>', evt);
+                                     '<br>Type: <span style="color:#94a3b8">' + dist.type.replace(/_/g,' ') + '</span>' +
+                                     (biz ? '<br>🏢 <b>' + biz.name + '</b>' +
+                                         (biz.active
+                                             ? ' <span style="color:#22c55e">\u25cf active</span>'
+                                             : ' <span style="color:#ef4444">\u25cf idle</span>') : '') +
+                                     '<br><a href="' + dist.url + '" style="color:#38bdf8">\u2192 Manage district</a>', evt);
                              })
                              .on('click', () => { window.location.href = dist.url; });
 
-                        // ---- BUSINESS LEVEL (innermost fill) ----
-                        const bizList = dist.businesses || [];
-                        if (bizList.length > 0) {
-                            // Single business per district: shade the whole cell slightly darker
+                        // Business innermost shading
+                        if (biz) {
                             distG.append('polygon').attr('points', polyPts(distPts))
-                                 .attr('fill', alpha(dColor, 50))
+                                 .attr('fill', alpha(dColor, 100))
                                  .attr('pointer-events','none');
                         }
 
-                        // District border (inside cityG so clipped to city × county)
+                        // District border
                         cityG.append('polygon').attr('points', polyPts(distPts))
                              .attr('fill','none')
-                             .attr('stroke', alpha(dColor, isMine ? 255 : 170))
-                             .attr('stroke-width', isMine ? 1.8 : 0.9)
+                             .attr('stroke', isMine ? '#fbbf24' : alpha(dColor, 200))
+                             .attr('stroke-width', isMine ? 2.2 : 1.1)
                              .attr('pointer-events','none');
 
-                        // District label — tiny, centred
+                        // District icon + name label
                         const [dlx, dly] = centroid(distPts);
+                        // emoji icon
                         cityG.append('text')
-                             .attr('x', dlx).attr('y', dly)
+                             .attr('x', dlx).attr('y', dly - 9)
                              .attr('text-anchor','middle').attr('dominant-baseline','middle')
-                             .attr('fill', alpha(dColor, 230))
-                             .attr('font-size','7px').attr('font-family','monospace')
-                             .attr('pointer-events','none')
-                             .text(dist.name.length > 14 ? dist.name.slice(0,12)+'…' : dist.name);
+                             .attr('font-size','13px').attr('pointer-events','none')
+                             .text(distIcon(dist.type));
+                        // name with background
+                        const shortName = dist.name.length > 13 ? dist.name.slice(0,11) + '\u2026' : dist.name;
+                        labelWithBg(cityG, dlx, dly + 7, shortName, alpha(dColor, 230), 7, false);
                     });
                 }
 
-                // City border (inside cG so clipped to county)
+                // City border
                 cG.append('polygon').attr('points', polyPts(cityPts))
                   .attr('fill','none')
-                  .attr('stroke', alpha(cityColor, 200))
-                  .attr('stroke-width', 1.5)
+                  .attr('stroke', alpha(cityColor, 210))
+                  .attr('stroke-width', 1.8)
+                  .attr('filter','url(#glow-md)')
                   .attr('pointer-events','none');
 
-                // City label
+                // City icon + label
                 const [clx, cly] = centroid(cityPts);
                 cG.append('text')
-                  .attr('x', clx).attr('y', cly)
+                  .attr('x', clx).attr('y', cly - 12)
                   .attr('text-anchor','middle').attr('dominant-baseline','middle')
-                  .attr('fill', cityColor)
-                  .attr('font-size','11px').attr('font-weight','bold')
-                  .attr('font-family','monospace').attr('pointer-events','none')
-                  .attr('filter','url(#lglow)')
-                  .text(city.name);
+                  .attr('font-size','18px').attr('pointer-events','none')
+                  .text('🏙️');
+                labelWithBg(cG, clx, cly + 8, city.name, cityColor, 11, true);
             });
         }
 
-        // County border — drawn on top of all fills (in bordersG, not inside cG)
+        // County border — thick, glowing, on top of all fills
         bordersG.append('polygon').attr('points', polyPts(cPts))
                 .attr('fill','none')
                 .attr('stroke', cColor)
-                .attr('stroke-width', 3)
-                .attr('filter','url(#glow)')
+                .attr('stroke-width', 3.5)
+                .attr('filter','url(#glow-lg)')
                 .attr('pointer-events','none');
 
-        // County label — topmost layer
+        // County icon + label (topmost layer, with background for readability)
         const [clx, cly] = centroid(cPts);
-        const yOff = cities.length > 0 ? -22 : 0;
+        const hasCities = cities.length > 0;
         labelsG.append('text')
-               .attr('x', clx).attr('y', cly + yOff)
+               .attr('x', clx).attr('y', cly - (hasCities ? 30 : 10))
                .attr('text-anchor','middle').attr('dominant-baseline','middle')
-               .attr('fill', cColor)
-               .attr('font-size','15px').attr('font-weight','bold')
-               .attr('font-family','monospace').attr('pointer-events','none')
-               .attr('filter','url(#glow)')
-               .text(county.name);
-
+               .attr('font-size','26px').attr('pointer-events','none')
+               .text('🏛️');  // 🏛️
+        labelWithBg(labelsG, clx, cly - (hasCities ? 8 : 10) + 14,
+            county.name, cColor, 15, true);
         if (county.crypto_symbol) {
             labelsG.append('text')
-                   .attr('x', clx).attr('y', cly + yOff + 16)
+                   .attr('x', clx).attr('y', cly - (hasCities ? 8 : 10) + 31)
                    .attr('text-anchor','middle').attr('dominant-baseline','middle')
-                   .attr('fill', alpha(cColor, 170))
+                   .attr('fill', alpha(cColor, 180))
                    .attr('font-size','10px').attr('font-family','monospace')
                    .attr('pointer-events','none')
                    .text('[' + county.crypto_symbol + ']');
         }
     });
 
-    // Status bar
+    // Status bar counts
     const totalCities    = counties.reduce((s,c) => s + (c.cities ? c.cities.length : 0), 0);
     const totalDistricts = counties.reduce((s,c) =>
-        s + (c.cities ? c.cities.reduce((s2,city) => s2 + (city.districts ? city.districts.length : 0), 0) : 0), 0);
+        s + (c.cities ? c.cities.reduce((s2,cy) => s2 + (cy.districts ? cy.districts.length : 0), 0) : 0), 0);
+    const totalBiz = counties.reduce((s,c) =>
+        s + (c.cities ? c.cities.reduce((s2,cy) =>
+            s2 + (cy.districts ? cy.districts.reduce((s3,d) => s3 + (d.businesses ? d.businesses.length : 0), 0) : 0), 0) : 0), 0);
     document.getElementById('map-status').textContent =
-        counties.length + ' counties  \u2022  ' + totalCities + ' cities  \u2022  ' + totalDistricts + ' districts/companies';
+        '🏛️ ' + counties.length + ' counties' +
+        '  •  🏙️ ' + totalCities + ' cities' +
+        '  •  🏭 ' + totalDistricts + ' districts' +
+        '  •  🏢 ' + totalBiz + ' businesses' +
+        '  \u2022  Click county or city to zoom in';
 
     document.getElementById('map-loading').style.display = 'none';
 }
