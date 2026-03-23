@@ -314,9 +314,9 @@ except ModuleNotFoundError:
     pass
 
 try:
-    from world_map_ux import router as world_map_router
-    app.include_router(world_map_router)
-    print("World Map routes registered")
+    pass  # World map feature disabled — routes not registered
+    # from world_map_ux import router as world_map_router
+    # app.include_router(world_map_router)
 except ModuleNotFoundError:
     pass
 
