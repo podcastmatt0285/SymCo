@@ -786,16 +786,67 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         finally:
             dm_db.close()
         
-        # Group items by category
+        # Map JSON category → one of the 11 filter groups (mirrors inventory page)
+        _mkt_json_to_filter = {
+            "crops": "agriculture", "seeds": "agriculture", "produce": "agriculture",
+            "livestock": "livestock", "seafood": "livestock", "shellfish": "livestock",
+            "animals": "livestock", "zoo_supplies": "livestock",
+            "dairy": "food_bev", "meat": "food_bev", "seafood_product": "food_bev",
+            "prepared_food": "food_bev", "baked_goods": "food_bev", "confectionery": "food_bev",
+            "food": "food_bev", "canned_goods": "food_bev", "condiments": "food_bev",
+            "sweeteners": "food_bev", "beverages": "food_bev", "alcohol": "food_bev",
+            "ingredients": "food_bev", "fast_food": "food_bev", "retail_food": "food_bev",
+            "food_service": "food_bev",
+            "industrial": "industrial", "components": "industrial", "metals": "industrial",
+            "ore": "industrial", "packaging": "industrial", "fuel": "industrial",
+            "energy": "industrial", "liquids": "industrial", "electronics": "industrial",
+            "utilities": "industrial", "logistics": "industrial", "lab_equipment": "industrial",
+            "robotics": "industrial", "medical_equipment": "industrial",
+            "minerals": "industrial", "chemicals": "industrial", "aerospace": "industrial",
+            "construction": "construction", "materials": "construction",
+            "prison_infrastructure": "construction", "zoo_infrastructure": "construction",
+            "wood": "luxury",
+            "vehicle": "vehicles", "vehicles": "vehicles", "vehicle_parts": "vehicles",
+            "auto_parts": "vehicles", "marine_parts": "vehicles",
+            "apparel": "consumer", "textiles": "consumer", "accessories": "consumer",
+            "home_goods": "consumer", "health": "consumer", "media": "consumer",
+            "tobacco": "consumer", "cured_tobacco": "consumer", "personal_care": "consumer",
+            "essential_oils": "consumer", "appliances": "consumer", "pharmaceuticals": "consumer",
+            "medical_supplies": "consumer", "education": "consumer", "prison": "consumer",
+            "retail_shopping": "consumer", "entertainment": "consumer",
+            "military": "weaponry", "retail_military": "weaponry", "intelligence": "weaponry",
+            "luxury": "luxury",
+            "services": "services", "retail_service": "services", "retail_transport": "services",
+            "retail_medical": "services", "retail_education": "services",
+            "retail_entertainment": "services", "retail_zoo": "services",
+            "retail_prison": "services", "hospitality": "services",
+            "financial": "finance",
+        }
+        _filter_meta = [
+            ("agriculture",  "#22c55e", "🌾 Agriculture"),
+            ("livestock",    "#f59e0b", "🐄 Livestock"),
+            ("food_bev",     "#f97316", "🍽️ Food & Bev"),
+            ("industrial",   "#64748b", "🏭 Industrial"),
+            ("construction", "#8b5cf6", "🏗️ Construction"),
+            ("vehicles",     "#60a5fa", "🚗 Vehicles & Parts"),
+            ("consumer",     "#ec4899", "🛍️ Consumer Goods"),
+            ("weaponry",     "#dc2626", "⚔️ Weaponry"),
+            ("luxury",       "#d97706", "💎 Luxury"),
+            ("services",     "#a78bfa", "🤝 Services"),
+            ("finance",      "#6366f1", "📊 Finance"),
+        ]
+
+        # Group items by the 11 filter categories
         categories = {}
         for i in items:
             info = dm.get_district_item_info(i)
-            cat = info.get("category", "other") if info else "other"
-            if cat not in categories:
-                categories[cat] = []
-            categories[cat].append(i)
-        
-        # Category colors — keyed to district_items.json category values
+            json_cat = info.get("category", "other") if info else "other"
+            filter_cat = _mkt_json_to_filter.get(json_cat, "consumer")
+            if filter_cat not in categories:
+                categories[filter_cat] = []
+            categories[filter_cat].append(i)
+
+        # Per-item color lookup (granular JSON category → color)
         cat_colors = {
             "seeds": "#22c55e", "crops": "#22c55e", "produce": "#84cc16",
             "livestock": "#f59e0b", "animals": "#f59e0b",
@@ -851,15 +902,16 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         </div>
         '''
         
-        # Build category tabs
+        # Build category tabs — ordered by the 11-category scheme
         filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; max-width: 100%;">'
-        
-        for cat_name, cat_items in sorted(categories.items()):
-            cat_color = cat_colors.get(cat_name, "#64748b")
+        for filter_cat, cat_color, cat_label in _filter_meta:
+            cat_items = categories.get(filter_cat)
+            if not cat_items:
+                continue
             filter_tabs += f'''
             <div style="margin-bottom: 12px;">
-                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">
-                    {cat_name.replace("_", " ")}
+                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px;">
+                    {cat_label}
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
             '''
@@ -869,18 +921,16 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                 text_color = "#020617" if is_selected else cat_color
                 border = f"1px solid {cat_color}"
                 display_name = i.replace("_", " ").title()
-                
                 filter_tabs += f'''
-                <a href="/district-market?item={i}" 
-                   class="item-tab" 
-                   data-item="{i}" 
+                <a href="/district-market?item={i}"
+                   class="item-tab"
+                   data-item="{i}"
                    data-display="{display_name}"
-                   style="padding: 4px 10px; font-size: 0.8rem; background: {bg_color}; color: {text_color}; 
+                   style="padding: 4px 10px; font-size: 0.8rem; background: {bg_color}; color: {text_color};
                           border: {border}; border-radius: 3px; text-decoration: none; display: inline-block;">
                     {display_name}
                 </a>'''
             filter_tabs += '</div></div>'
-        
         filter_tabs += '</div>'
         
         # Search script
