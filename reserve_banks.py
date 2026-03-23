@@ -1765,6 +1765,25 @@ def set_usd_balance(player_id: int, value: float):
         db.close()
 
 
+def set_currency_balance(player_id: int, currency_code: str, value: float):
+    """Set a player's balance in any currency to an exact value. Admin use only. Auto-commits."""
+    if currency_code == "USD":
+        set_usd_balance(player_id, value)
+        return
+    db = get_db()
+    try:
+        current = get_player_currency_balance(player_id, currency_code)
+        diff = value - current
+        if diff != 0:
+            _adjust_currency_balance(db, player_id, currency_code, diff)
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[ReserveBanks] set_currency_balance error (player {player_id}, {currency_code}, value={value}): {e}")
+    finally:
+        db.close()
+
+
 def spend_player_funds(player_id: int, usd_cost: float) -> Tuple[bool, str]:
     """
     Deduct a USD-denominated cost from the player using their preferred legal tender.

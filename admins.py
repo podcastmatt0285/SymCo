@@ -503,6 +503,19 @@ def edit_player_balance(admin_id: int, player_id: int, new_balance: float) -> di
     return {"ok": True, "old_balance": old_balance, "new_balance": new_balance}
 
 
+def admin_set_currency_balance(admin_id: int, player_id: int, currency_code: str, new_balance: float) -> dict:
+    """Set a player's balance in any currency to an exact value."""
+    from reserve_banks import get_player_currency_balance, set_currency_balance
+    try:
+        old = get_player_currency_balance(player_id, currency_code)
+        set_currency_balance(player_id, currency_code, new_balance)
+        log_action(admin_id, "edit_currency_balance", player_id,
+                   f"{currency_code}: {old:,.4f} -> {new_balance:,.4f}")
+        return {"ok": True, "currency_code": currency_code, "old_balance": old, "new_balance": new_balance}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ==========================
 # UPDATES CHANNEL POSTING
 # ==========================
