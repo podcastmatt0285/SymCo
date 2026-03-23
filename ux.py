@@ -3058,6 +3058,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
 
         inv_body = (
             page_assets
+            + '<a href="/" style="color:#38bdf8;font-size:0.85rem;">← Dashboard</a>'
             + '<div class="inv-page-header">'
             + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
             + '<h1>Inventory</h1>'
@@ -4159,17 +4160,29 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         '''
         
         # Build category tabs — ordered by the 11-category scheme
+        # Determine which filter category the current item belongs to (for auto-expand)
+        _cur_item_info = inv_mod.get_item_info(item)
+        _cur_json_cat = _cur_item_info.get("category", "other") if _cur_item_info else "other"
+        _cur_filter_cat = _mkt_json_to_filter.get(_cur_json_cat, "consumer")
+
         filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; max-width: 100%;">'
         for filter_cat, cat_color, cat_label in _filter_meta:
             cat_items = categories.get(filter_cat)
             if not cat_items:
                 continue
+            is_open = filter_cat == _cur_filter_cat
+            section_id = f"mkt-sec-{filter_cat}"
+            chevron_open = "▾" if is_open else "▸"
+            items_display = "flex" if is_open else "none"
             filter_tabs += f'''
-            <div style="margin-bottom: 12px;">
-                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px;">
-                    {cat_label}
+            <div style="margin-bottom: 8px;">
+                <div onclick="mktToggle('{section_id}', this)"
+                     style="color: {cat_color}; font-size: 0.75rem; font-weight: bold;
+                            margin-bottom: 4px; cursor: pointer; user-select: none;
+                            display: flex; align-items: center; gap: 5px;">
+                    <span class="mkt-chevron">{chevron_open}</span>{cat_label}
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <div id="{section_id}" style="display: {items_display}; flex-wrap: wrap; gap: 6px; padding-left: 4px;">
             '''
             for i in sorted(cat_items):
                 is_selected = i == item
@@ -4187,7 +4200,16 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                     {display_name}
                 </a>'''
             filter_tabs += '</div></div>'
-        filter_tabs += '</div>'
+        filter_tabs += '''</div>
+        <script>
+        function mktToggle(sectionId, header) {
+            var sec = document.getElementById(sectionId);
+            var chevron = header.querySelector(".mkt-chevron");
+            var open = sec.style.display === "none" || sec.style.display === "";
+            sec.style.display = open ? "flex" : "none";
+            if (chevron) chevron.textContent = open ? "▾" : "▸";
+        }
+        </script>'''
         
         # Search script
         search_script = '''

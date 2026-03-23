@@ -902,18 +902,30 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         </div>
         '''
         
-        # Build category tabs — ordered by the 11-category scheme
+        # Determine which filter category the current item belongs to (for auto-expand)
+        _cur_item_info = dm.get_district_item_info(item)
+        _cur_json_cat = _cur_item_info.get("category", "other") if _cur_item_info else "other"
+        _cur_filter_cat = _mkt_json_to_filter.get(_cur_json_cat, "consumer")
+
+        # Build category tabs — ordered by the 11-category scheme, collapsible
         filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; max-width: 100%;">'
         for filter_cat, cat_color, cat_label in _filter_meta:
             cat_items = categories.get(filter_cat)
             if not cat_items:
                 continue
+            is_open = filter_cat == _cur_filter_cat
+            section_id = f"dm-sec-{filter_cat}"
+            chevron_open = "▾" if is_open else "▸"
+            items_display = "flex" if is_open else "none"
             filter_tabs += f'''
-            <div style="margin-bottom: 12px;">
-                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px;">
-                    {cat_label}
+            <div style="margin-bottom: 8px;">
+                <div onclick="mktToggle('{section_id}', this)"
+                     style="color: {cat_color}; font-size: 0.75rem; font-weight: bold;
+                            margin-bottom: 4px; cursor: pointer; user-select: none;
+                            display: flex; align-items: center; gap: 5px;">
+                    <span class="mkt-chevron">{chevron_open}</span>{cat_label}
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <div id="{section_id}" style="display: {items_display}; flex-wrap: wrap; gap: 6px; padding-left: 4px;">
             '''
             for i in sorted(cat_items):
                 is_selected = i == item
@@ -931,7 +943,16 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
                     {display_name}
                 </a>'''
             filter_tabs += '</div></div>'
-        filter_tabs += '</div>'
+        filter_tabs += '''</div>
+        <script>
+        function mktToggle(sectionId, header) {
+            var sec = document.getElementById(sectionId);
+            var chevron = header.querySelector(".mkt-chevron");
+            var open = sec.style.display === "none" || sec.style.display === "";
+            sec.style.display = open ? "flex" : "none";
+            if (chevron) chevron.textContent = open ? "▾" : "▸";
+        }
+        </script>'''
         
         # Search script
         search_script = '''
