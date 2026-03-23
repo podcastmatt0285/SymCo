@@ -42,7 +42,7 @@ STEP_REDIRECT = {
     3: "/inventory", # See water
     4: "/land",      # Build plantation + grocery store
     5: "/inventory", # Resource overview
-    6: "/stats/production-costs?category=fruits",  # Apple costs
+    6: "/stats/production-costs?category=produce",  # Apple costs
     7: "/market?item=apples",  # List apple for sale
     8: "/stats/business/free_range_pasture",  # Production chain demo
     9: "/",          # Reward (dashboard) — player claims via form
