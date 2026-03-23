@@ -2706,6 +2706,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
             if any(item.startswith(f) or item.endswith(f) for f in financial_list): return "financial"
             return "other"
 
+        import market as market_mod
         # Filter items
         filtered = []
         for item, qty in inv.items():
@@ -2713,7 +2714,10 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                 if _item_category(item) != filter:
                     continue
             item_info = inv_mod.get_item_info(item) or {}
-            unit_price = item_info.get("base_price") or item_info.get("value") or 0
+            try:
+                unit_price = market_mod.get_market_price(item) or 0
+            except Exception:
+                unit_price = 0
             filtered.append((item, qty, item_info, unit_price))
 
         # Sort items
@@ -2763,6 +2767,49 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         </div>'''
 
         # Build item cards
+        # Rich emoji map keyed to item_types.json category values
+        _json_cat_emoji = {
+            "accessories": "👜", "alcohol": "🍺", "apparel": "👕",
+            "baked_goods": "🍞", "beverages": "🥤", "canned_goods": "🥫",
+            "components": "⚙️", "condiments": "🫙", "confectionery": "🍬",
+            "crops": "🌾", "cured_tobacco": "🚬", "dairy": "🥛",
+            "energy": "⚡", "essential_oils": "🧴", "financial": "📊",
+            "food": "🍽️", "fuel": "⛽", "health": "💊",
+            "home_goods": "🏠", "industrial": "🏭", "ingredients": "🧂",
+            "liquids": "💧", "livestock": "🐄", "luxury": "💎",
+            "materials": "🪵", "meat": "🥩", "media": "📺",
+            "metals": "🔩", "military": "🎖️", "ore": "⛏️",
+            "packaging": "📦", "personal_care": "🧼", "prepared_food": "🍲",
+            "produce": "🥬", "retail_entertainment": "🎮", "retail_food": "🛒",
+            "retail_prison": "🔒", "retail_service": "🏪", "retail_shopping": "🛍️",
+            "seafood": "🐟", "seafood_product": "🦐", "seeds": "🌱",
+            "services": "🤝", "shellfish": "🦪", "sweeteners": "🍯",
+            "textiles": "🧵", "tobacco": "🌿", "vehicle": "🚗",
+            "vehicle_parts": "🔧", "vehicles": "🚛", "wood": "🌲",
+        }
+        _json_cat_color = {
+            "seeds": "#22c55e", "crops": "#22c55e", "produce": "#84cc16", "food": "#f97316",
+            "baked_goods": "#f97316", "confectionery": "#fb923c", "prepared_food": "#f97316",
+            "canned_goods": "#f97316", "condiments": "#fbbf24", "sweeteners": "#fbbf24",
+            "livestock": "#f59e0b", "meat": "#ef4444", "seafood": "#06b6d4",
+            "seafood_product": "#06b6d4", "shellfish": "#06b6d4",
+            "dairy": "#cbd5e1", "beverages": "#38bdf8", "liquids": "#06b6d4",
+            "alcohol": "#f97316", "tobacco": "#a78bfa", "cured_tobacco": "#a78bfa",
+            "energy": "#eab308", "fuel": "#eab308",
+            "metals": "#94a3b8", "ore": "#78716c", "materials": "#94a3b8",
+            "wood": "#a16207", "components": "#64748b", "industrial": "#64748b",
+            "packaging": "#64748b", "vehicle_parts": "#64748b",
+            "vehicle": "#60a5fa", "vehicles": "#60a5fa",
+            "luxury": "#d97706", "financial": "#6366f1",
+            "apparel": "#ec4899", "textiles": "#ec4899", "accessories": "#ec4899",
+            "health": "#22c55e", "personal_care": "#a78bfa", "essential_oils": "#a78bfa",
+            "home_goods": "#94a3b8", "ingredients": "#fbbf24",
+            "military": "#dc2626", "media": "#8b5cf6",
+            "retail_entertainment": "#8b5cf6", "retail_food": "#f97316",
+            "retail_shopping": "#ec4899", "retail_service": "#38bdf8",
+            "retail_prison": "#64748b", "services": "#38bdf8",
+        }
+
         cards_html = ""
         if not filtered:
             cards_html = '''
@@ -2772,10 +2819,15 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
             </div>'''
         else:
             for item, qty, item_info, unit_price in filtered:
-                cat = _item_category(item)
-                cat_color = cat_colors.get(cat, "#38bdf8")
-                emoji = cat_emoji.get(cat, "📦")
-                display_name = item.replace("_", " ").title()
+                filter_cat = _item_category(item)
+                bar_color = cat_colors.get(filter_cat, "#64748b")
+                # Use the rich JSON category for the pill
+                json_cat = item_info.get("category", "other")
+                pill_emoji = _json_cat_emoji.get(json_cat, "📦")
+                pill_label = json_cat.replace("_", " ").title()
+                pill_color = _json_cat_color.get(json_cat, "#64748b")
+
+                display_name = item_info.get("name") or item.replace("_", " ").title()
                 description = item_info.get("description", "No description available.")
                 desc_short = description[:82] + "…" if len(description) > 82 else description
 
@@ -2784,7 +2836,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
 
                 if unit_price:
                     val_html = f'<div class="inv-card-value">💰 {fmt_usd(item_value, disp)} <span class="inv-unit-price">· {fmt_usd(unit_price, disp)}/unit</span></div>'
-                    bar_html = f'<div class="inv-value-bar"><div class="inv-value-fill" style="width:{val_pct}%;background:{cat_color}33;border-right:2px solid {cat_color};"></div></div>'
+                    bar_html = f'<div class="inv-value-bar"><div class="inv-value-fill" style="width:{val_pct}%;background:{bar_color}33;border-right:2px solid {bar_color};"></div></div>'
                 else:
                     val_html = '<div class="inv-card-value inv-card-value--none">No market price</div>'
                     bar_html = '<div class="inv-value-bar"></div>'
@@ -2793,7 +2845,7 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
                 cards_html += f'''
                 <div class="inv-card" data-name="{display_name.lower()} {item.lower()}">
                     <div class="inv-card-top">
-                        <span class="inv-cat-pill" style="color:{cat_color};border-color:{cat_color}40;background:{cat_color}10;">{emoji} {cat.title()}</span>
+                        <span class="inv-cat-pill" style="color:{pill_color};border-color:{pill_color}40;background:{pill_color}12;">{pill_emoji} {pill_label}</span>
                         <span class="inv-qty-badge">{qty:,.0f}</span>
                     </div>
                     <div class="inv-card-name">{display_name}</div>
@@ -2883,10 +2935,10 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         .inv-qty-badge { font-size:1.15rem; font-weight:800; color:#38bdf8; letter-spacing:-0.03em; }
 
         .inv-card-name { font-size:0.92rem; font-weight:700; color:#f1f5f9; margin-bottom:4px; }
-        .inv-card-desc { font-size:0.72rem; color:#475569; margin-bottom:9px; line-height:1.45; min-height:2em; }
+        .inv-card-desc { font-size:0.72rem; color:#94a3b8; margin-bottom:9px; line-height:1.45; min-height:2em; }
         .inv-card-value { font-size:0.76rem; color:#22c55e; margin-bottom:6px; }
-        .inv-card-value--none { color:#334155; }
-        .inv-unit-price { color:#475569; }
+        .inv-card-value--none { color:#64748b; }
+        .inv-unit-price { color:#64748b; }
 
         .inv-value-bar { height:3px; background:#0d1b2a; border-radius:2px; margin-bottom:11px; overflow:hidden; }
         .inv-value-fill { height:100%; border-radius:2px; }
