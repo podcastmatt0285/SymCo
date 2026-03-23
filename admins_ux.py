@@ -609,20 +609,45 @@ def admin_player_detail(
 
 
 def _player_info_tab(pid, detail, disp=None):
-    from reserve_banks import get_player_currency_balances, get_player_legal_tender
+    from reserve_banks import (
+        get_player_currency_balances, get_player_legal_tender,
+        get_usd_balance,
+    )
 
-    # Fetch all actual currency balances (raw, never converted to admin's currency)
-    all_balances = get_player_currency_balances(pid)
     legal_tender = get_player_legal_tender(pid)
 
-    # Build per-currency rows with individual set forms
+    # get_usd_balance has the legacy cash_balance rescue path — always call it
+    # so stale legacy money is migrated before we display.
+    usd_balance = get_usd_balance(pid)
+
+    # get_player_currency_balances filters out zero rows, so USD may be absent.
+    # Build a merged dict keyed by currency_code, ensuring USD is always present.
+    pcb_list = get_player_currency_balances(pid)
+    balances_by_code = {b["currency_code"]: b for b in pcb_list}
+    if "USD" not in balances_by_code:
+        balances_by_code["USD"] = {
+            "currency_code": "USD",
+            "currency_symbol": "$",
+            "flag": "🇺🇸",
+            "balance": usd_balance,
+            "usd_value": usd_balance,
+        }
+    else:
+        # Use the rescue-accurate value rather than whatever PCB cached
+        balances_by_code["USD"]["balance"] = usd_balance
+        balances_by_code["USD"]["usd_value"] = usd_balance
+
+    # Sort: legal tender first, then alphabetical
+    def _sort_key(code):
+        return (0 if code == legal_tender else 1, code)
+
     balance_rows = ""
-    for b in all_balances:
-        code = b["currency_code"]
-        sym  = b["currency_symbol"] or ""
-        flag = b["flag"] or ""
-        bal  = b["balance"]
-        usd  = b["usd_value"]
+    for code in sorted(balances_by_code.keys(), key=_sort_key):
+        b    = balances_by_code[code]
+        sym  = b.get("currency_symbol") or ""
+        flag = b.get("flag") or ""
+        bal  = b.get("balance", 0.0)
+        usd  = b.get("usd_value", 0.0)
         is_lt = " ★" if code == legal_tender else ""
         usd_str = f" (≈ ${usd:,.2f} USD)" if code != "USD" else ""
         balance_rows += f"""
@@ -639,8 +664,17 @@ def _player_info_tab(pid, detail, disp=None):
           </form>
         </div>"""
 
-    if not balance_rows:
-        balance_rows = '<p style="color:#4b5563;font-size:0.75rem;font-style:italic;">No currency balances on record.</p>'
+    # Always provide a freeform "set any currency" form for currencies with no existing row
+    set_any_form = f"""
+    <div style="border:1px solid #374151;border-radius:6px;padding:10px 12px;margin-top:12px;">
+      <div style="color:#6b7280;font-size:0.72rem;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Set Other Currency</div>
+      <form method="post" action="/admin/player/{pid}/set-currency" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <input type="hidden" name="tab" value="info">
+        <input type="text"   name="currency_code" placeholder="e.g. JPY, USD" style="flex:1;min-width:80px;font-size:0.8rem;">
+        <input type="number" name="new_balance" step="0.0001" value="0" style="flex:1;min-width:80px;font-size:0.8rem;">
+        <button type="submit" class="btn btn-blue" style="font-size:0.75rem;padding:4px 10px;">Set</button>
+      </form>
+    </div>"""
 
     return f"""
     <div class="card">
@@ -654,8 +688,9 @@ def _player_info_tab(pid, detail, disp=None):
     </div>
     <div class="card">
         <h3>Currency Balances</h3>
-        <p style="color:#4b5563;font-size:0.75rem;margin-bottom:10px;">★ = player's legal tender. Amounts shown in native units — no conversion.</p>
+        <p style="color:#4b5563;font-size:0.75rem;margin-bottom:10px;">★ = legal tender. Amounts in native units — no conversion applied.</p>
         {balance_rows}
+        {set_any_form}
     </div>
     <div class="card">
         <div style="border-top:1px solid #7f1d1d;padding-top:16px;">
