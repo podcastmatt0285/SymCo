@@ -12,10 +12,6 @@ extensions = (".py", ".txt", ".md", "json")
 
 for root, dirs, files in os.walk(source_dir):
 
-    # Exclude Leaflet-Wadsworth directory
-    if "Leaflet-Wadsworth" in dirs:
-        dirs.remove("Leaflet-Wadsworth")
-
     # Exclude venv directory
     if "venv" in dirs:
         dirs.remove("venv")
