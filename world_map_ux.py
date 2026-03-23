@@ -1008,7 +1008,7 @@ function renderTerritories(data) {
 
         // County fill — clearly visible dark-tinted region
         const cFillNorm = alpha(cColor, 90), cFillHov = alpha(cColor, 130);
-        const cIcon = county.id === -1 ? '\uD83C\uDF10' : '\uD83C\uDFDB\uFE0F'; // 🌐 or 🏛️
+        const cIcon = county.id === -1 ? '🌐' : '🏛️';
         cG.append('path').attr('d', jigsawPathD(cPts, 1.0))
           .attr('fill', cFillNorm)
           .style('cursor','pointer')
@@ -1048,7 +1048,7 @@ function renderTerritories(data) {
 
                 // City fill
                 const cyFillNorm = alpha(cityColor, 100), cyFillHov = alpha(cityColor, 145);
-                const cityIcon = city.id === -1 ? '\uD83C\uDFD7\uFE0F' : '\uD83C\uDFD9\uFE0F'; // 🏗️ or 🏙️
+                const cityIcon = city.id === -1 ? '🏗️' : '🏙️';
                 cityG.append('path').attr('d', jigsawPathD(cityPts, 0.65))
                      .attr('fill', cyFillNorm)
                      .style('cursor','pointer')
@@ -1098,7 +1098,7 @@ function renderTerritories(data) {
                                      '<b style="color:' + dColor + '">' + dist.name + '</b>' +
                                      '<br>Type: <span style="color:#94a3b8">' + dist.type.replace(/_/g,' ') + '</span>' +
                                      '<br>Owner: <span style="color:' + (isMine ? '#fbbf24' : '#cbd5e1') + '">' + (dist.owner_name || '?') + '</span>' +
-                                     (biz ? '<br>\uD83C\uDFE2 <b>' + biz.name + '</b>' +
+                                     (biz ? '<br>🏢 <b>' + biz.name + '</b>' +
                                          (biz.active
                                              ? ' <span style="color:#22c55e">\u25cf active</span>'
                                              : ' <span style="color:#ef4444">\u25cf idle</span>') : '') +
