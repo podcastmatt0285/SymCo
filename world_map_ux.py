@@ -747,17 +747,17 @@ function _setViewBox(vb, animate) {
 function zoomToRegion(x0, y0, x1, y1, crumb) {
     const pad = 24;
     const vb = (x0-pad) + ' ' + (y0-pad) + ' ' + (x1-x0+pad*2) + ' ' + (y1-y0+pad*2);
-    _zoomStack.push(_svg.attr('viewBox'));
+    const crumbEl = document.getElementById('zoom-crumb');
+    _zoomStack.push({ vb: _svg.attr('viewBox'), crumb: crumbEl.textContent });
     _setViewBox(vb, true);
-    document.getElementById('zoom-crumb').textContent = crumb ? '> ' + crumb : '';
+    crumbEl.textContent = crumb ? '> ' + crumb : '';
 }
 
 function zoomBack() {
     if (_zoomStack.length === 0) return;
     const prev = _zoomStack.pop();
-    _setViewBox(prev, true);
-    document.getElementById('zoom-crumb').textContent =
-        _zoomStack.length > 0 ? '(zoomed)' : '';
+    _setViewBox(prev.vb, true);
+    document.getElementById('zoom-crumb').textContent = prev.crumb || '';
     document.getElementById('btn-back').style.display =
         _zoomStack.length > 0 ? 'inline-block' : 'none';
 }
@@ -836,6 +836,13 @@ function renderTerritories(data) {
     mkGlow('glow-md', 3.5); // city borders
     mkGlow('glow-sm', 1.8); // labels
 
+    // --- Radial vignette gradient (dark edges → transparent centre) ---
+    const vig = defs.append('radialGradient')
+        .attr('id','vignette').attr('gradientUnits','userSpaceOnUse')
+        .attr('cx', _W/2).attr('cy', _H/2).attr('r', Math.max(_W, _H) * 0.72);
+    vig.append('stop').attr('offset','0%').attr('stop-color','#000').attr('stop-opacity','0');
+    vig.append('stop').attr('offset','100%').attr('stop-color','#000').attr('stop-opacity','0.65');
+
     // --- Black + grid background ---
     _svg.append('rect').attr('width',_W).attr('height',_H).attr('fill','#000');
     _svg.append('rect').attr('width',_W).attr('height',_H).attr('fill','url(#bg-grid)');
@@ -895,7 +902,7 @@ function renderTerritories(data) {
 
         // County fill — clearly visible dark-tinted region
         cG.append('polygon').attr('points', polyPts(cPts))
-          .attr('fill', alpha(cColor, 55))   // ~22%
+          .attr('fill', alpha(cColor, 90))   // ~35%
           .style('cursor','pointer')
           .on('mousemove', evt => showTip(
               '🏛️ <b style="color:' + cColor + '">' + county.name + '</b>' +
@@ -929,7 +936,7 @@ function renderTerritories(data) {
 
                 // City fill
                 cityG.append('polygon').attr('points', polyPts(cityPts))
-                     .attr('fill', alpha(cityColor, 65))   // ~25%
+                     .attr('fill', alpha(cityColor, 100))   // ~39%
                      .style('cursor','pointer')
                      .on('mousemove', evt => showTip(
                          '🏙️ <b style="color:' + cityColor + '">' + city.name + '</b>' +
@@ -965,7 +972,7 @@ function renderTerritories(data) {
 
                         // District base fill
                         distG.append('polygon').attr('points', polyPts(distPts))
-                             .attr('fill', alpha(dColor, 110))   // ~43%
+                             .attr('fill', alpha(dColor, 155))   // ~61%
                              .style('cursor','pointer')
                              .on('mousemove', evt => {
                                  showTip(
@@ -981,10 +988,10 @@ function renderTerritories(data) {
                              })
                              .on('click', () => { window.location.href = dist.url; });
 
-                        // Business innermost shading
+                        // Business innermost shading — white shimmer indicates active vs idle
                         if (biz) {
                             distG.append('polygon').attr('points', polyPts(distPts))
-                                 .attr('fill', alpha(dColor, 100))
+                                 .attr('fill', biz.active ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.04)')
                                  .attr('pointer-events','none');
                         }
 
@@ -992,20 +999,27 @@ function renderTerritories(data) {
                         cityG.append('polygon').attr('points', polyPts(distPts))
                              .attr('fill','none')
                              .attr('stroke', isMine ? '#fbbf24' : alpha(dColor, 200))
-                             .attr('stroke-width', isMine ? 2.2 : 1.1)
+                             .attr('stroke-width', isMine ? 2.5 : 1.3)
+                             .attr('filter', 'url(#glow-sm)')
                              .attr('pointer-events','none');
 
-                        // District icon + name label
+                        // District icon + name label (skip if cell too small)
                         const [dlx, dly] = centroid(distPts);
-                        // emoji icon
-                        cityG.append('text')
-                             .attr('x', dlx).attr('y', dly - 9)
-                             .attr('text-anchor','middle').attr('dominant-baseline','middle')
-                             .attr('font-size','13px').attr('pointer-events','none')
-                             .text(distIcon(dist.type));
-                        // name with background
-                        const shortName = dist.name.length > 13 ? dist.name.slice(0,11) + '\u2026' : dist.name;
-                        labelWithBg(cityG, dlx, dly + 7, shortName, alpha(dColor, 230), 7, false);
+                        const [distBx0, distBy0, distBx1, distBy1] = bbox(distPts);
+                        const distCellW = distBx1 - distBx0, distCellH = distBy1 - distBy0;
+                        if (distCellW >= 32 && distCellH >= 22) {
+                            // emoji icon
+                            cityG.append('text')
+                                 .attr('x', dlx).attr('y', dly - 9)
+                                 .attr('text-anchor','middle').attr('dominant-baseline','middle')
+                                 .attr('font-size','13px').attr('pointer-events','none')
+                                 .text(distIcon(dist.type));
+                            // name with background (only if cell tall enough for both)
+                            if (distCellH >= 36) {
+                                const shortName = dist.name.length > 13 ? dist.name.slice(0,11) + '\u2026' : dist.name;
+                                labelWithBg(cityG, dlx, dly + 8, shortName, alpha(dColor, 230), 9, false);
+                            }
+                        }
                     });
                 }
 
@@ -1056,6 +1070,10 @@ function renderTerritories(data) {
                    .text('[' + county.crypto_symbol + ']');
         }
     });
+
+    // Vignette overlay — darkens edges for depth without obscuring labels
+    _svg.append('rect').attr('width',_W).attr('height',_H)
+        .attr('fill','url(#vignette)').attr('pointer-events','none');
 
     // Status bar counts
     const totalCities    = counties.reduce((s,c) => s + (c.cities ? c.cities.length : 0), 0);
