@@ -2639,27 +2639,70 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         inv = inv_mod.get_player_inventory(player.id)
 
         categories = {
-            "all":        ("🗃️",  "All"),
-            "seeds":      ("🌱",  "Seeds"),
-            "fruits":     ("🍎",  "Fruits"),
-            "vegetables": ("🥦",  "Vegetables"),
-            "liquids":    ("💧",  "Liquids"),
-            "energy":     ("⚡",  "Energy"),
-            "animals":    ("🐄",  "Animals"),
-            "materials":  ("🪵",  "Materials"),
-            "luxury":     ("💎",  "Luxury"),
-            "financial":  ("📊",  "Financial"),
+            "all":          ("🗃️",  "All"),
+            "agriculture":  ("🌾",  "Agriculture"),
+            "livestock":    ("🐄",  "Livestock"),
+            "food_bev":     ("🍽️",  "Food & Bev"),
+            "industrial":   ("🏭",  "Industrial"),
+            "construction": ("🏗️",  "Construction"),
+            "vehicles":     ("🚗",  "Vehicles & Parts"),
+            "consumer":     ("🛍️",  "Consumer Goods"),
+            "weaponry":     ("⚔️",  "Weaponry"),
+            "luxury":       ("💎",  "Luxury"),
+            "services":     ("🤝",  "Services"),
+            "finance":      ("📊",  "Finance"),
         }
         cat_colors = {
-            "all": "#38bdf8", "seeds": "#22c55e", "fruits": "#f97316",
-            "vegetables": "#84cc16", "liquids": "#06b6d4", "energy": "#eab308",
-            "animals": "#f59e0b", "materials": "#94a3b8", "luxury": "#d97706",
-            "financial": "#6366f1", "other": "#64748b",
+            "all": "#38bdf8", "agriculture": "#22c55e", "livestock": "#f59e0b",
+            "food_bev": "#f97316", "industrial": "#94a3b8", "construction": "#78716c",
+            "vehicles": "#60a5fa", "consumer": "#ec4899", "weaponry": "#ef4444",
+            "luxury": "#d97706", "services": "#a78bfa", "finance": "#6366f1",
         }
-        cat_emoji = {
-            "seeds": "🌱", "fruits": "🍎", "vegetables": "🥦", "liquids": "💧",
-            "energy": "⚡", "animals": "🐄", "materials": "🪵", "luxury": "💎",
-            "financial": "📊", "other": "📦",
+
+        # Maps item_types.json / district_items.json category → filter tab key
+        _json_to_filter = {
+            # Agriculture
+            "crops": "agriculture", "seeds": "agriculture", "produce": "agriculture",
+            # Livestock (live/raw animal products)
+            "livestock": "livestock", "seafood": "livestock", "shellfish": "livestock",
+            "animals": "livestock", "zoo_supplies": "livestock",
+            # Food & Bev (processed/consumed)
+            "dairy": "food_bev", "meat": "food_bev", "seafood_product": "food_bev",
+            "prepared_food": "food_bev", "baked_goods": "food_bev", "confectionery": "food_bev",
+            "food": "food_bev", "canned_goods": "food_bev", "condiments": "food_bev",
+            "sweeteners": "food_bev", "beverages": "food_bev", "alcohol": "food_bev",
+            "ingredients": "food_bev", "fast_food": "food_bev", "retail_food": "food_bev",
+            "food_service": "food_bev",
+            # Industrial
+            "industrial": "industrial", "components": "industrial", "metals": "industrial",
+            "ore": "industrial", "packaging": "industrial", "fuel": "industrial",
+            "energy": "industrial", "liquids": "industrial", "electronics": "industrial",
+            "utilities": "industrial", "logistics": "industrial", "lab_equipment": "industrial",
+            "robotics": "industrial", "medical_equipment": "industrial",
+            # Construction
+            "construction": "construction", "materials": "construction",
+            "prison_infrastructure": "construction", "zoo_infrastructure": "construction",
+            "wood": "luxury",  # Scoreboard & Smartboard — miscategorised in data, treated as luxury
+            # Vehicles & Parts
+            "vehicle": "vehicles", "vehicles": "vehicles", "vehicle_parts": "vehicles",
+            # Consumer Goods
+            "apparel": "consumer", "textiles": "consumer", "accessories": "consumer",
+            "home_goods": "consumer", "health": "consumer", "media": "consumer",
+            "tobacco": "consumer", "cured_tobacco": "consumer", "personal_care": "consumer",
+            "essential_oils": "consumer", "appliances": "consumer", "pharmaceuticals": "consumer",
+            "medical_supplies": "consumer", "education": "consumer", "prison": "consumer",
+            "retail_shopping": "consumer", "entertainment": "consumer",
+            # Weaponry
+            "military": "weaponry", "retail_military": "weaponry", "intelligence": "weaponry",
+            # Luxury
+            "luxury": "luxury",
+            # Services
+            "services": "services", "retail_service": "services", "retail_transport": "services",
+            "retail_medical": "services", "retail_education": "services",
+            "retail_entertainment": "services", "retail_zoo": "services",
+            "retail_prison": "services", "hospitality": "services",
+            # Finance
+            "financial": "finance",
         }
 
         # Filter tabs — pill style with emoji
@@ -2686,34 +2729,15 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
             sort_controls += f'<a href="/inventory?filter={filter}&sort={s_key}&dir={new_dir}" class="inv-sort-link" style="{link_style}">{s_label}{arrow}</a>'
         sort_controls += '</div>'
 
-        # Categorisation helpers
-        fruits_list = ["apples", "oranges", "bananas", "grapes", "strawberries", "blueberries", "peaches", "pears", "mangoes", "pineapples"]
-        vegetables_list = ["potatoes", "carrots", "tomatoes", "onions", "lettuce", "broccoli", "spinach", "peppers", "cucumbers", "corn"]
-        animals_list = ["horses", "cows", "chickens", "pigs", "sheep", "goats", "ducks", "rabbits", "fish", "cattle"]
-        materials_list = ["lumber", "steel", "brick", "glass", "coal", "iron", "copper", "stone", "cement", "wood", "ore", "clay", "sand", "gravel"]
-        luxury_list = ["diamonds", "gold", "wine", "perfume", "silk", "ivory", "platinum", "jewelry", "fur", "truffles"]
-        financial_list = ["shares", "bonds", "certificates", "notes", "tokens", "deeds"]
-
-        def _item_category(item):
-            if item.endswith("_seeds"): return "seeds"
-            if item in fruits_list: return "fruits"
-            if item in vegetables_list: return "vegetables"
-            if "water" in item or item.endswith("_juice") or item.endswith("_milk"): return "liquids"
-            if item == "energy": return "energy"
-            if item in animals_list: return "animals"
-            if item in materials_list: return "materials"
-            if item in luxury_list: return "luxury"
-            if any(item.startswith(f) or item.endswith(f) for f in financial_list): return "financial"
-            return "other"
-
         import market as market_mod
-        # Filter items
+        # Filter items — look up item_info first so we can use its category field
         filtered = []
         for item, qty in inv.items():
-            if filter != "all":
-                if _item_category(item) != filter:
-                    continue
             item_info = inv_mod.get_item_info(item) or {}
+            if filter != "all":
+                json_cat = item_info.get("category", "")
+                if _json_to_filter.get(json_cat, "consumer") != filter:
+                    continue
             try:
                 unit_price = market_mod.get_market_price(item) or 0
             except Exception:
@@ -2819,7 +2843,8 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
             </div>'''
         else:
             for item, qty, item_info, unit_price in filtered:
-                filter_cat = _item_category(item)
+                json_cat_key = item_info.get("category", "")
+                filter_cat = _json_to_filter.get(json_cat_key, "consumer")
                 bar_color = cat_colors.get(filter_cat, "#64748b")
                 # Use the rich JSON category for the pill
                 json_cat = item_info.get("category", "other")
