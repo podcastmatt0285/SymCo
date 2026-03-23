@@ -417,10 +417,11 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
 async def world_map_territory(session_token: Optional[str] = Cookie(None)):
     """
     Return the full nested territory hierarchy for the world map.
-    Includes ALL counties, their cities, city members' districts, and businesses.
-    Used by the D3.js Voronoi territory visualization.
+    Includes ALL counties/cities/districts/businesses from every player.
+    Orphan cities (no county) and solo districts (no city membership) are
+    bundled into a synthetic 'Unaffiliated' county so nothing is hidden.
     """
-    from auth import get_db, get_player_from_session
+    from auth import get_db, get_player_from_session, Player
     from counties import County, CountyCity
     from cities import City, CityMember
     from districts import District
@@ -432,71 +433,78 @@ async def world_map_territory(session_token: Optional[str] = Cookie(None)):
         if not player:
             return JSONResponse({"error": "Not authenticated"}, status_code=401)
 
+        # ---- shared helper: build districts list for a set of player IDs ----
+        def build_districts(owner_ids):
+            if not owner_ids:
+                return []
+            dists = db.query(District).filter(
+                District.owner_id.in_(list(owner_ids))
+            ).all()
+            if not dists:
+                return []
+            biz_ids = [d.occupied_by_business_id for d in dists if d.occupied_by_business_id]
+            biz_map = {}
+            if biz_ids:
+                for b in db.query(Business).filter(Business.id.in_(biz_ids)).all():
+                    biz_map[b.id] = b
+            pname_map = {}
+            for p in db.query(Player).filter(Player.id.in_(list(owner_ids))).all():
+                pname_map[p.id] = p.business_name
+            out = []
+            for dist in dists:
+                biz = biz_map.get(dist.occupied_by_business_id)
+                biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
+                businesses_out = []
+                if biz:
+                    businesses_out.append({
+                        "id": biz.id,
+                        "name": biz_cfg.get("name", biz.business_type),
+                        "type": biz.business_type,
+                        "active": biz.is_active,
+                    })
+                out.append({
+                    "id": dist.id,
+                    "name": DISTRICT_NAMES.get(dist.district_type, dist.district_type),
+                    "type": dist.district_type,
+                    "is_mine": dist.owner_id == player.id,
+                    "owner_name": pname_map.get(dist.owner_id, "Unknown"),
+                    "businesses": businesses_out,
+                    "url": f"/district/{dist.id}",
+                })
+            return out
+
+        # ---- shared helper: build a city entry ----
+        def build_city(city, member_player_ids):
+            return {
+                "id": city.id,
+                "name": city.name,
+                "member_count": len(member_player_ids),
+                "districts": build_districts(member_player_ids),
+                "url": f"/city/{city.id}",
+            }
+
+        # ---- main pass: all counties → their cities ----
         all_counties = db.query(County).all()
         territory = []
+        seen_city_ids: set = set()
+        all_city_member_ids: set = set()
 
         for county in all_counties:
             city_links = db.query(CountyCity).filter(
                 CountyCity.county_id == county.id
             ).all()
             city_ids = [cl.city_id for cl in city_links]
+            seen_city_ids.update(city_ids)
 
             cities_out = []
             if city_ids:
-                cities = db.query(City).filter(City.id.in_(city_ids)).all()
-                for city in cities:
+                for city in db.query(City).filter(City.id.in_(city_ids)).all():
                     members = db.query(CityMember).filter(
                         CityMember.city_id == city.id
                     ).all()
-                    member_player_ids = [m.player_id for m in members]
-
-                    districts_out = []
-                    if member_player_ids:
-                        city_districts = db.query(District).filter(
-                            District.owner_id.in_(member_player_ids)
-                        ).all()
-
-                        biz_ids = [
-                            d.occupied_by_business_id
-                            for d in city_districts
-                            if d.occupied_by_business_id
-                        ]
-                        biz_map = {}
-                        if biz_ids:
-                            for b in db.query(Business).filter(
-                                Business.id.in_(biz_ids)
-                            ).all():
-                                biz_map[b.id] = b
-
-                        for dist in city_districts:
-                            biz = biz_map.get(dist.occupied_by_business_id)
-                            biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
-                            businesses_out = []
-                            if biz:
-                                businesses_out.append({
-                                    "id": biz.id,
-                                    "name": biz_cfg.get("name", biz.business_type),
-                                    "type": biz.business_type,
-                                    "active": biz.is_active,
-                                })
-                            districts_out.append({
-                                "id": dist.id,
-                                "name": DISTRICT_NAMES.get(
-                                    dist.district_type, dist.district_type
-                                ),
-                                "type": dist.district_type,
-                                "is_mine": dist.owner_id == player.id,
-                                "businesses": businesses_out,
-                                "url": f"/district/{dist.id}",
-                            })
-
-                    cities_out.append({
-                        "id": city.id,
-                        "name": city.name,
-                        "member_count": len(members),
-                        "districts": districts_out,
-                        "url": f"/city/{city.id}",
-                    })
+                    member_ids = [m.player_id for m in members]
+                    all_city_member_ids.update(member_ids)
+                    cities_out.append(build_city(city, member_ids))
 
             territory.append({
                 "id": county.id,
@@ -505,6 +513,46 @@ async def world_map_territory(session_token: Optional[str] = Cookie(None)):
                 "city_count": len(cities_out),
                 "cities": cities_out,
                 "url": f"/county/{county.id}",
+            })
+
+        # ---- orphan cities (exist but not linked to any county) ----
+        unaffiliated_cities: list = []
+        for city in db.query(City).all():
+            if city.id in seen_city_ids:
+                continue
+            members = db.query(CityMember).filter(
+                CityMember.city_id == city.id
+            ).all()
+            member_ids = [m.player_id for m in members]
+            all_city_member_ids.update(member_ids)
+            unaffiliated_cities.append(build_city(city, member_ids))
+
+        # ---- solo districts (owner is not a member of any city at all) ----
+        if all_city_member_ids:
+            solo_dists = db.query(District).filter(
+                ~District.owner_id.in_(list(all_city_member_ids))
+            ).all()
+        else:
+            solo_dists = db.query(District).all()
+
+        if solo_dists:
+            solo_owner_ids = list({d.owner_id for d in solo_dists})
+            unaffiliated_cities.append({
+                "id": -1,
+                "name": "Independent Districts",
+                "member_count": len(solo_owner_ids),
+                "districts": build_districts(solo_owner_ids),
+                "url": None,
+            })
+
+        if unaffiliated_cities:
+            territory.append({
+                "id": -1,
+                "name": "Unaffiliated",
+                "crypto_symbol": None,
+                "city_count": len(unaffiliated_cities),
+                "cities": unaffiliated_cities,
+                "url": None,
             })
 
         return JSONResponse({
@@ -725,8 +773,63 @@ function countySeeds(counties, W, H) {
     });
 }
 
-// Build SVG polygon points attribute string
+// Build SVG polygon points attribute string (used only for clip paths)
 function polyPts(pts) { return pts.map(p => p.join(',')).join(' '); }
+
+// ============================================================
+// JIGSAW EDGE RENDERER
+// Each shared Voronoi edge gets a consistent tab/blank bezier so that
+// adjacent cells interlock like real puzzle pieces.
+// ============================================================
+
+// Single jigsaw edge: returns an SVG path command string for A→B.
+// `scale` controls tab size relative to edge length (1.0 = county, smaller for deeper levels).
+function jigsawEdge(A, B, scale) {
+    const s   = scale === undefined ? 1.0 : scale;
+    const dx  = B[0]-A[0], dy = B[1]-A[1];
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 14) return 'L' + B[0] + ' ' + B[1];
+
+    const ux = dx/len, uy = dy/len;
+
+    // Consistent perpendicular regardless of traversal direction:
+    // sort endpoints so the perpendicular always points the same way.
+    const flip = A[0] > B[0] || (A[0] === B[0] && A[1] > B[1]);
+    const px = flip ?  dy/len : -dy/len;
+    const py = flip ? -dx/len :  dx/len;
+
+    // Deterministic per-edge direction from midpoint hash
+    const mx = (A[0]+B[0])*0.5, my = (A[1]+B[1])*0.5;
+    const dir = (Math.floor(mx * 0.17 + my * 0.31) & 1) ? 1 : -1;
+
+    const h  = len * 0.22 * s;   // tab height
+    const t1 = 0.33, t2 = 0.67;  // tab spans middle third of edge
+
+    // Key geometry
+    const b1x = A[0]+dx*t1, b1y = A[1]+dy*t1;   // tab base start
+    const b2x = A[0]+dx*t2, b2y = A[1]+dy*t2;   // tab base end
+    const ax  = mx + px*h*dir, ay = my + py*h*dir; // tab apex
+
+    // Cubic bezier control points
+    const c1x = b1x + px*h*0.78*dir, c1y = b1y + py*h*0.78*dir;
+    const c2x = ax  - ux*len*0.14,   c2y = ay  - uy*len*0.14;
+    const c3x = ax  + ux*len*0.14,   c3y = ay  + uy*len*0.14;
+    const c4x = b2x + px*h*0.78*dir, c4y = b2y + py*h*0.78*dir;
+
+    return 'L' + b1x + ' ' + b1y +
+           ' C' + c1x + ',' + c1y + ' ' + c2x + ',' + c2y + ' ' + ax + ',' + ay +
+           ' C' + c3x + ',' + c3y + ' ' + c4x + ',' + c4y + ' ' + b2x + ',' + b2y +
+           ' L' + B[0] + ' ' + B[1];
+}
+
+// Full polygon → SVG path 'd' string with jigsaw edges
+function jigsawPathD(pts, scale) {
+    if (!pts || pts.length < 3) return '';
+    const n = pts.length;
+    let d = 'M' + pts[0][0] + ' ' + pts[0][1];
+    for (let i = 0; i < n; i++) d += jigsawEdge(pts[i], pts[(i+1) % n], scale);
+    return d + 'Z';
+}
 
 // ============================================================
 // ZOOM STATE
@@ -816,12 +919,15 @@ function renderTerritories(data) {
 
     const defs = _svg.append('defs');
 
-    // --- Background grid pattern ---
+    // --- Background dot grid pattern ---
     const grid = defs.append('pattern')
-        .attr('id','bg-grid').attr('width',40).attr('height',40)
+        .attr('id','bg-grid').attr('width',32).attr('height',32)
         .attr('patternUnits','userSpaceOnUse');
-    grid.append('path').attr('d','M 40 0 L 0 0 0 40')
-        .attr('fill','none').attr('stroke','#0d1a2d').attr('stroke-width','0.7');
+    // Dots at every grid intersection — subtle deep-blue on black
+    [[0,0],[32,0],[0,32],[32,32],[16,16]].forEach(([cx,cy]) => {
+        grid.append('circle').attr('cx',cx).attr('cy',cy).attr('r',0.85)
+            .attr('fill','#1e3a5f');
+    });
 
     // --- Glow filters ---
     function mkGlow(id, sd) {
@@ -896,20 +1002,25 @@ function renderTerritories(data) {
         const [cbx0,cby0,cbx1,cby1] = bbox(cPts);
 
         defs.append('clipPath').attr('id', cClip)
-            .append('polygon').attr('points', polyPts(cPts));
+            .append('path').attr('d', jigsawPathD(cPts, 1.0));
 
         const cG = fillsG.append('g').attr('clip-path', 'url(#' + cClip + ')');
 
         // County fill — clearly visible dark-tinted region
-        cG.append('polygon').attr('points', polyPts(cPts))
-          .attr('fill', alpha(cColor, 90))   // ~35%
+        const cFillNorm = alpha(cColor, 90), cFillHov = alpha(cColor, 130);
+        const cIcon = county.id === -1 ? '\uD83C\uDF10' : '\uD83C\uDFDB\uFE0F'; // 🌐 or 🏛️
+        cG.append('path').attr('d', jigsawPathD(cPts, 1.0))
+          .attr('fill', cFillNorm)
           .style('cursor','pointer')
+          .on('mouseover', function() { d3.select(this).attr('fill', cFillHov); })
+          .on('mouseout',  function() { d3.select(this).attr('fill', cFillNorm); })
           .on('mousemove', evt => showTip(
-              '🏛️ <b style="color:' + cColor + '">' + county.name + '</b>' +
+              cIcon + ' <b style="color:' + cColor + '">' + county.name + '</b>' +
               (county.crypto_symbol ? '&nbsp;<span style="color:#f59e0b;font-size:10px">[' + county.crypto_symbol + ']</span>' : '') +
               '<br>Cities: <b>' + (county.city_count || 0) + '</b>' +
-              '<br><span style="color:#64748b;font-size:10px">Click to zoom in \u2022 or visit county hub below</span>' +
-              '<br><a href="' + county.url + '" style="color:#38bdf8">\u2192 County hub</a>', evt))
+              '<br><span style="color:#64748b;font-size:10px">Click to zoom in' +
+              (county.url ? ' \u2022 or visit county hub below' : '') + '</span>' +
+              (county.url ? '<br><a href="' + county.url + '" style="color:#38bdf8">\u2192 County hub</a>' : ''), evt))
           .on('click', () => zoomToRegion(cbx0, cby0, cbx1, cby1, county.name));
 
         // ---- CITY LEVEL ----
@@ -925,25 +1036,31 @@ function renderTerritories(data) {
                 const cityPoly = cityVor.cellPolygon(j);
                 if (!cityPoly || cityPoly.length < 4) return;
                 const cityPts   = cityPoly.slice(0, -1);
-                const cityColor = lighten(cColor, 0.42);
+                // Vary lightness per city index so siblings look distinct (0.30→0.55)
+                const cityColor = lighten(cColor, 0.30 + (j % 6) * 0.05);
                 const cityClip  = 'city-clip-' + city.id;
                 const [dsbx0,dsby0,dsbx1,dsby1] = bbox(cityPts);
 
                 defs.append('clipPath').attr('id', cityClip)
-                    .append('polygon').attr('points', polyPts(cityPts));
+                    .append('path').attr('d', jigsawPathD(cityPts, 0.65));
 
                 const cityG = cG.append('g').attr('clip-path', 'url(#' + cityClip + ')');
 
                 // City fill
-                cityG.append('polygon').attr('points', polyPts(cityPts))
-                     .attr('fill', alpha(cityColor, 100))   // ~39%
+                const cyFillNorm = alpha(cityColor, 100), cyFillHov = alpha(cityColor, 145);
+                const cityIcon = city.id === -1 ? '\uD83C\uDFD7\uFE0F' : '\uD83C\uDFD9\uFE0F'; // 🏗️ or 🏙️
+                cityG.append('path').attr('d', jigsawPathD(cityPts, 0.65))
+                     .attr('fill', cyFillNorm)
                      .style('cursor','pointer')
+                     .on('mouseover', function() { d3.select(this).attr('fill', cyFillHov); })
+                     .on('mouseout',  function() { d3.select(this).attr('fill', cyFillNorm); })
                      .on('mousemove', evt => showTip(
-                         '🏙️ <b style="color:' + cityColor + '">' + city.name + '</b>' +
+                         cityIcon + ' <b style="color:' + cityColor + '">' + city.name + '</b>' +
                          '<br>Members: <b>' + city.member_count + '</b>' +
                          '&nbsp;&nbsp;Districts: <b>' + (city.districts ? city.districts.length : 0) + '</b>' +
-                         '<br><span style="color:#64748b;font-size:10px">Click to zoom in \u2022 or visit city hub</span>' +
-                         '<br><a href="' + city.url + '" style="color:#38bdf8">\u2192 City hub</a>', evt))
+                         '<br><span style="color:#64748b;font-size:10px">Click to zoom in' +
+                         (city.url ? ' \u2022 or visit city hub' : '') + '</span>' +
+                         (city.url ? '<br><a href="' + city.url + '" style="color:#38bdf8">\u2192 City hub</a>' : ''), evt))
                      .on('click', () => zoomToRegion(dsbx0, dsby0, dsbx1, dsby1, county.name + ' > ' + city.name));
 
                 // ---- DISTRICT (COMPANY) LEVEL ----
@@ -965,14 +1082,14 @@ function renderTerritories(data) {
                         const biz      = dist.businesses && dist.businesses[0];
 
                         defs.append('clipPath').attr('id', distClip)
-                            .append('polygon').attr('points', polyPts(distPts));
+                            .append('path').attr('d', jigsawPathD(distPts, 0.4));
 
                         const distG = cityG.append('g')
                                           .attr('clip-path', 'url(#' + distClip + ')');
 
                         // District base fill
-                        distG.append('polygon').attr('points', polyPts(distPts))
-                             .attr('fill', alpha(dColor, 155))   // ~61%
+                        distG.append('path').attr('d', jigsawPathD(distPts, 0.4))
+                             .attr('fill', alpha(dColor, 155))
                              .style('cursor','pointer')
                              .on('mousemove', evt => {
                                  showTip(
@@ -980,7 +1097,8 @@ function renderTerritories(data) {
                                      (isMine ? '<b style="color:#fbbf24">\u2605 MINE</b> &mdash; ' : '') +
                                      '<b style="color:' + dColor + '">' + dist.name + '</b>' +
                                      '<br>Type: <span style="color:#94a3b8">' + dist.type.replace(/_/g,' ') + '</span>' +
-                                     (biz ? '<br>🏢 <b>' + biz.name + '</b>' +
+                                     '<br>Owner: <span style="color:' + (isMine ? '#fbbf24' : '#cbd5e1') + '">' + (dist.owner_name || '?') + '</span>' +
+                                     (biz ? '<br>\uD83C\uDFE2 <b>' + biz.name + '</b>' +
                                          (biz.active
                                              ? ' <span style="color:#22c55e">\u25cf active</span>'
                                              : ' <span style="color:#ef4444">\u25cf idle</span>') : '') +
@@ -988,15 +1106,22 @@ function renderTerritories(data) {
                              })
                              .on('click', () => { window.location.href = dist.url; });
 
+                        // Mine: gold tint overlay so owned districts are unmistakable
+                        if (isMine) {
+                            distG.append('path').attr('d', jigsawPathD(distPts, 0.4))
+                                 .attr('fill', 'rgba(251,191,36,0.18)')
+                                 .attr('pointer-events','none');
+                        }
+
                         // Business innermost shading — white shimmer indicates active vs idle
                         if (biz) {
-                            distG.append('polygon').attr('points', polyPts(distPts))
+                            distG.append('path').attr('d', jigsawPathD(distPts, 0.4))
                                  .attr('fill', biz.active ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.04)')
                                  .attr('pointer-events','none');
                         }
 
                         // District border
-                        cityG.append('polygon').attr('points', polyPts(distPts))
+                        cityG.append('path').attr('d', jigsawPathD(distPts, 0.4))
                              .attr('fill','none')
                              .attr('stroke', isMine ? '#fbbf24' : alpha(dColor, 200))
                              .attr('stroke-width', isMine ? 2.5 : 1.3)
@@ -1024,7 +1149,7 @@ function renderTerritories(data) {
                 }
 
                 // City border
-                cG.append('polygon').attr('points', polyPts(cityPts))
+                cG.append('path').attr('d', jigsawPathD(cityPts, 0.65))
                   .attr('fill','none')
                   .attr('stroke', alpha(cityColor, 210))
                   .attr('stroke-width', 1.8)
@@ -1037,13 +1162,13 @@ function renderTerritories(data) {
                   .attr('x', clx).attr('y', cly - 12)
                   .attr('text-anchor','middle').attr('dominant-baseline','middle')
                   .attr('font-size','18px').attr('pointer-events','none')
-                  .text('🏙️');
+                  .text(cityIcon);
                 labelWithBg(cG, clx, cly + 8, city.name, cityColor, 11, true);
             });
         }
 
         // County border — thick, glowing, on top of all fills
-        bordersG.append('polygon').attr('points', polyPts(cPts))
+        bordersG.append('path').attr('d', jigsawPathD(cPts, 1.0))
                 .attr('fill','none')
                 .attr('stroke', cColor)
                 .attr('stroke-width', 3.5)
@@ -1057,7 +1182,7 @@ function renderTerritories(data) {
                .attr('x', clx).attr('y', cly - (hasCities ? 30 : 10))
                .attr('text-anchor','middle').attr('dominant-baseline','middle')
                .attr('font-size','26px').attr('pointer-events','none')
-               .text('🏛️');  // 🏛️
+               .text(cIcon);
         labelWithBg(labelsG, clx, cly - (hasCities ? 8 : 10) + 14,
             county.name, cColor, 15, true);
         if (county.crypto_symbol) {
