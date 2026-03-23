@@ -552,11 +552,35 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
 
     elif step == 9:
         title = "Level 1 Complete — Claim Your Reward!"
-        terrain_options_html = "\n".join(
-            f'<option value="{k}">{label}</option>'
-            for k, label in TERRAIN_OPTIONS
-        )
-        content = f"""
+        already_has_plot = _has_tutorial_reward_plot(player.id)
+        if already_has_plot:
+            content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            You've replayed Tutorial 1 — great job going through it again!
+        </p>
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);
+                    border-radius:6px;padding:12px 16px;margin-bottom:16px;">
+            <strong style="color:#4ade80;">&#10003; Reward already claimed</strong>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;">
+                Your tax-free land plot is already in your portfolio.
+                Replaying a tutorial doesn't grant a second reward.
+            </p>
+        </div>
+        <form action="/api/tutorial/claim-reward" method="post"
+              style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <input type="hidden" name="terrain_type" value="prairie">
+            <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue to Tutorial 2 →
+            </button>
+        </form>
+        """
+        else:
+            terrain_options_html = "\n".join(
+                f'<option value="{k}">{label}</option>'
+                for k, label in TERRAIN_OPTIONS
+            )
+            content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             Congratulations on completing Level 1 of the Wadsworth Tutorial!
             As a reward, you'll receive <strong style="color:#d4af37;">one free land plot</strong> with these special properties:
@@ -644,8 +668,32 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 </div>
             </label>"""
 
+        already_has_fl = _has_first_lady(player.id)
         title = "Bonus Step — Executive Hiring"
-        content = f"""
+        if already_has_fl:
+            content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            You've replayed Tutorial 2 — welcome back!
+        </p>
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);
+                    border-radius:6px;padding:12px 16px;margin-bottom:16px;">
+            <strong style="color:#4ade80;">&#10003; Reward already claimed</strong>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;">
+                Your First Lady executive is already on your team.
+                Replaying a tutorial doesn't grant a second reward.
+            </p>
+        </div>
+        <form action="/api/tutorial/claim-executive" method="post"
+              style="display:inline;">
+            <input type="hidden" name="first_lady" value="martha_washington">
+            <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Finish Tutorial 2 →
+            </button>
+        </form>
+        """
+        else:
+            content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             Every great company needs great <strong style="color:#e5e7eb;">Executives</strong>.
             In Wadsworth, executives are living characters — they age, level up through school,
@@ -837,12 +885,65 @@ def check_apple(session_token: Optional[str] = Cookie(None)):
     return JSONResponse({"has_apple": player_has_apple_in_inventory(player.id)})
 
 
+def _has_tutorial_reward_plot(player_id: int) -> bool:
+    """Return True if the player has already claimed the Tutorial 1 land-plot reward."""
+    try:
+        from land import LandPlot, get_db as get_land_db
+        db = get_land_db()
+        found = db.query(LandPlot).filter(
+            LandPlot.owner_id == player_id,
+            LandPlot.is_tutorial_reward == True,
+        ).first() is not None
+        db.close()
+        return found
+    except Exception:
+        return False
+
+
+def _has_first_lady(player_id: int) -> bool:
+    """Return True if the player already has a First Lady executive."""
+    try:
+        from executive import Executive, SessionLocal as ExecSessionLocal
+        db = ExecSessionLocal()
+        found = db.query(Executive).filter(
+            Executive.player_id == player_id,
+            Executive.is_first_lady == True,
+        ).first() is not None
+        db.close()
+        return found
+    except Exception:
+        return False
+
+
+@router.post("/api/tutorial/restart")
+def restart_tutorial(
+    session_token: Optional[str] = Cookie(None),
+    tutorial_number: int = Form(...),
+):
+    """Restart a tutorial from its first step. No reward is given again."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    current = get_tutorial_step(player.id)
+
+    if tutorial_number == 1 and current > 0:
+        set_tutorial_step(player.id, 1)
+        return RedirectResponse(url="/", status_code=303)
+
+    if tutorial_number == 2 and current >= 10:
+        set_tutorial_step(player.id, 10)
+        return RedirectResponse(url="/land-market", status_code=303)
+
+    return RedirectResponse(url="/settings?tab=tutorials", status_code=303)
+
+
 @router.post("/api/tutorial/claim-reward")
 def claim_tutorial_reward(
     session_token: Optional[str] = Cookie(None),
     terrain_type: str = Form(...)
 ):
-    """Step 9: Create the tutorial reward plot and advance to step 10."""
+    """Step 9: Create the tutorial reward plot (if not already claimed) and advance to step 10."""
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
@@ -855,11 +956,14 @@ def claim_tutorial_reward(
     if terrain_type not in valid_terrains:
         terrain_type = "prairie"
 
-    try:
-        create_tutorial_reward_plot(player.id, terrain_type)
-    except Exception as e:
-        print(f"[Tutorial] Error creating reward plot: {e}")
-        return RedirectResponse(url="/?tutorial_error=reward_failed", status_code=303)
+    if not _has_tutorial_reward_plot(player.id):
+        try:
+            create_tutorial_reward_plot(player.id, terrain_type)
+        except Exception as e:
+            print(f"[Tutorial] Error creating reward plot: {e}")
+            return RedirectResponse(url="/?tutorial_error=reward_failed", status_code=303)
+    else:
+        print(f"[Tutorial] Player {player.id} already has reward plot — skipping duplicate creation")
 
     set_tutorial_step(player.id, 10)
     return RedirectResponse(url="/land-market", status_code=303)
@@ -920,47 +1024,50 @@ def claim_first_lady(
     if fl_data is None:
         return RedirectResponse(url="/?tutorial_error=invalid_first_lady", status_code=303)
 
-    try:
-        db = ExecSessionLocal()
-
-        # Split name into first / last
-        name_parts = fl_data["name"].split(" ", 1)
-        first_name = name_parts[0]
-        last_name  = name_parts[1] if len(name_parts) > 1 else ""
-
-        exec_obj = Executive(
-            first_name       = first_name,
-            last_name        = last_name,
-            player_id        = player.id,
-            level            = 1,
-            job              = "first_lady",
-            wage             = 0.0,         # free forever
-            pay_cycle        = "hour",
-            current_age      = 18,
-            retirement_age   = 110,
-            max_age          = 120,
-            is_retired       = False,
-            is_dead          = False,
-            is_special       = False,
-            is_first_lady    = True,
-            max_level        = 18,
-            abilities        = fl_data["ability"],
-            bonuses          = "",
-            on_marketplace   = False,
-            marketplace_reason = "tutorial",
-            hired_at         = __import__("datetime").datetime.utcnow(),
-        )
-        db.add(exec_obj)
-        db.commit()
-        db.close()
-        print(f"[Tutorial] Created First Lady executive '{fl_data['name']}' for player {player.id}")
-    except Exception as e:
-        print(f"[Tutorial] Error creating First Lady executive: {e}")
+    if not _has_first_lady(player.id):
         try:
+            db = ExecSessionLocal()
+
+            # Split name into first / last
+            name_parts = fl_data["name"].split(" ", 1)
+            first_name = name_parts[0]
+            last_name  = name_parts[1] if len(name_parts) > 1 else ""
+
+            exec_obj = Executive(
+                first_name       = first_name,
+                last_name        = last_name,
+                player_id        = player.id,
+                level            = 1,
+                job              = "first_lady",
+                wage             = 0.0,         # free forever
+                pay_cycle        = "hour",
+                current_age      = 18,
+                retirement_age   = 110,
+                max_age          = 120,
+                is_retired       = False,
+                is_dead          = False,
+                is_special       = False,
+                is_first_lady    = True,
+                max_level        = 18,
+                abilities        = fl_data["ability"],
+                bonuses          = "",
+                on_marketplace   = False,
+                marketplace_reason = "tutorial",
+                hired_at         = __import__("datetime").datetime.utcnow(),
+            )
+            db.add(exec_obj)
+            db.commit()
             db.close()
-        except Exception:
-            pass
-        return RedirectResponse(url="/?tutorial_error=exec_failed", status_code=303)
+            print(f"[Tutorial] Created First Lady executive '{fl_data['name']}' for player {player.id}")
+        except Exception as e:
+            print(f"[Tutorial] Error creating First Lady executive: {e}")
+            try:
+                db.close()
+            except Exception:
+                pass
+            return RedirectResponse(url="/?tutorial_error=exec_failed", status_code=303)
+    else:
+        print(f"[Tutorial] Player {player.id} already has a First Lady — skipping duplicate creation")
 
     set_tutorial_step(player.id, 12)
     return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)

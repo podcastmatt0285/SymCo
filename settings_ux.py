@@ -827,6 +827,7 @@ def _tutorials_tab(player) -> str:
         current_step,      # step label shown when in-progress ("3 of 9"), or None
         status,            # "not_started" | "in_progress" | "complete" | "locked"
         reward_html,       # inner HTML for the reward area
+        can_restart=False, # show a Restart button
     ):
         STATUS_CFG = {
             "not_started": ("#64748b", "#64748b", "Not Started"),
@@ -877,6 +878,17 @@ def _tutorials_tab(player) -> str:
                 letter-spacing:.06em;margin-bottom:10px;">Reward</div>
     {reward_html}
   </div>
+  {f'''<div style="border-top:1px solid #1e293b;padding-top:12px;margin-top:14px;">
+    <form method="post" action="/api/tutorial/restart" style="display:inline;">
+      <input type="hidden" name="tutorial_number" value="{number}">
+      <button type="submit"
+              onclick="return confirm('Restart Tutorial {number} from the beginning? Your reward will not be given again.')"
+              style="padding:6px 14px;background:transparent;border:1px solid #334155;border-radius:4px;
+                     color:#64748b;font-size:0.75rem;cursor:pointer;">
+        ↺ Restart Tutorial {number}
+      </button>
+    </form>
+  </div>''' if can_restart else ''}
 </div>"""
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -948,6 +960,7 @@ def _tutorials_tab(player) -> str:
         current_step=t1_current,
         status=t1_status,
         reward_html=t1_reward,
+        can_restart=(step > 0),
     )
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -1015,6 +1028,7 @@ def _tutorials_tab(player) -> str:
         current_step=t2_current,
         status=t2_status,
         reward_html=t2_reward,
+        can_restart=(step >= 10),
     )
 
     # ── CTA if nothing started ────────────────────────────────────────────────
