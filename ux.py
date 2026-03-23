@@ -92,9 +92,6 @@ _STREAM_LOADER = """<!DOCTYPE html>
 })();
 </script>"""
 
-# ==========================
-# JOURNEY BAR
-# ==========================
 
 _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000" viewBox="0 0 64 64" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;width:40px;height:40px;flex-shrink:0;" xml:space="preserve">
   <g transform="matrix(1,0,0,1,-192,-288)">
@@ -126,290 +123,11 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
 </svg>'''
 
 
-def build_journey_bar(player_id: int) -> str:
-    """Build the contextual journey sidebar as a deeply nested collapsible tree.
-
-    Visual design matches the SideNav.tsx template (Playfair Display, radio-box style).
-    Shown only on land/district/city/county/crypto pages (JS URL-gated).
-    Returns an empty string when no player is logged in.
-    """
-    if not player_id:
-        return ""
-
-    land_count = 0
-    district_count = 0
-    player_city = None
-    player_county = None
-
-    try:
-        import land as _land
-        land_count = _land.count_player_land(player_id)
-    except Exception:
-        pass
-
-    try:
-        import districts as _dist
-        district_count = _dist.count_player_districts(player_id)
-    except Exception:
-        pass
-
-    try:
-        from cities import get_player_city as _gpc
-        player_city = _gpc(player_id)
-    except Exception:
-        pass
-
-    try:
-        from counties import get_player_county as _gpco
-        player_county = _gpco(player_id)
-    except Exception:
-        pass
-
-    has_city   = player_city   is not None
-    has_county = player_county is not None
-    county_id  = player_county.id if has_county else None
-
-    # Next Step CTA
-    if land_count == 0:
-        next_label, next_href = "Buy your first plot", "/land-market"
-    elif district_count == 0:
-        next_label, next_href = "Create a district", "/districts/create"
-    elif not has_city:
-        next_label, next_href = "Join or found a city", "/cities"
-    elif not has_county:
-        next_label, next_href = "Form a county", "/counties"
-    else:
-        next_label, next_href = "Mine crypto", f"/county/{county_id}/mining"
-
-    # ── Inline Lucide-style SVG icons ─────────────────────────────────
-    _ico = {
-        "map":    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
-        "bag":    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
-        "grid":   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
-        "store":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
-        "city":   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><path d="M12 12v.01"/><path d="M8 11v10"/><path d="M16 11v10"/><path d="M4 11v10"/><path d="M20 11v10"/></svg>',
-        "pin":    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-        "coins":  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><line x1="16.71" y1="13.88" x2="17.71" y2="14.88"/></svg>',
-        "pick":   '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 21 6.5-6.5"/><path d="m9 9-6 6 3 3 6-6"/><path d="M17.5 3 21 6.5l-11 11L6.5 14z"/><path d="M14 4l6 6"/></svg>',
-        "wallet": '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>',
-        "trend":  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
-        "chevR":  '<svg class="jb-chev-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
-    }
-
-    def _trunc(s, n=14):
-        return (s[:n] + "\u2026") if s and len(s) > n else (s or "")
-
-    def _row(label, icon_key, level, href=None, locked=False,
-             expandable=False, badge=None, dot=False, open_default=False):
-        """Render one nav row — button (expandable/locked) or anchor (leaf)."""
-        pl = level * 16 + 24
-        icon = _ico[icon_key]
-        sz = "jb-lv0" if level == 0 else "jb-lv1"
-        badge_html = f'<span class="jb-badge">{badge}</span>' if badge is not None else ''
-        dot_html   = '<span class="jb-activedot"></span>' if dot else ''
-
-        if locked:
-            return (
-                f'<div class="jb-row jb-locked" style="padding-left:{pl}px">'
-                f'<span class="jb-icon">{icon}</span>'
-                f'<span class="jb-label {sz}">{label}</span>'
-                f'</div>'
-            )
-        if expandable:
-            # Always use chevR; CSS rotate(90deg) on [data-open="1"] shows the open state
-            chev = _ico["chevR"]
-            d_open = "1" if open_default else "0"
-            return (
-                f'<button class="jb-row" onclick="wadsJBToggle(this)"'
-                f' data-open="{d_open}" data-href="{href or ""}"'
-                f' style="padding-left:{pl}px">'
-                f'<span class="jb-icon">{icon}</span>'
-                f'<span class="jb-label {sz}">{label}</span>'
-                f'{badge_html}'
-                f'<span class="jb-chev">{chev}</span>'
-                f'</button>'
-            )
-        # leaf link
-        return (
-            f'<a class="jb-row" href="{href or "#"}" style="padding-left:{pl}px">'
-            f'<span class="jb-icon">{icon}</span>'
-            f'<span class="jb-label {sz}">{label}</span>'
-            f'{dot_html}{badge_html}'
-            f'</a>'
-        )
-
-    def _group(inner, open_default=False):
-        disp = "block" if open_default else "none"
-        return f'<div class="jb-group" style="display:{disp}">{inner}</div>'
-
-    # ── Wallet / Mining / Exchange subtree ────────────────────────────
-    if has_county:
-        wallet_subtree = _group(
-            _row("Wallet", "wallet", 6, href="/wallet"),
-            open_default=False,
-        )
-        mining_subtree = _group(
-            _row("Mining", "pick", 5, expandable=True, open_default=False)
-            + wallet_subtree
-            + _row("Exchange",    "coins", 5, href="/exchange")
-            + _row("Gas Tracker", "pin",   5, href="/gas-tracker"),
-            open_default=False,
-        )
-        county_name = _trunc(player_county.name)
-        counties_inner = (
-            _row(county_name, "pin", 4, href=f"/county/{county_id}", dot=True)
-            + _row("Crypto Exchange", "coins", 4, expandable=True, open_default=False)
-            + mining_subtree
-        )
-    elif has_city:
-        counties_inner = (
-            _row("Browse Counties", "pin", 4, href="/counties")
-            + _row("Form a County",  "pin", 4, href="/county/petition/new")
-            + _row("Join a County",  "pin", 4, href="/county/petition/join")
-        )
-    else:
-        counties_inner = _row("Need a city first", "pin", 4, locked=True)
-
-    # ── Cities subtree ────────────────────────────────────────────────
-    if has_city:
-        city_name = _trunc(player_city.name)
-        cities_inner = (
-            _row(city_name, "city", 3, href=f"/city/{player_city.id}", dot=True)
-            + _row("All Cities", "store", 3, href="/cities")
-            + _row("Counties", "pin", 3, expandable=True, open_default=False)
-            + _group(counties_inner, open_default=False)
-        )
-    else:
-        cities_inner = (
-            _row("Browse Cities", "city", 3, href="/cities")
-            + _row("Counties", "pin", 3, expandable=True, open_default=False)
-            + _group(counties_inner, open_default=False)
-        )
-
-    # ── Districts subtree ─────────────────────────────────────────────
-    dist_badge = district_count if district_count else None
-    districts_inner = (
-        _row("District Market",  "store", 2, href="/district-market")
-        + _row("Create District", "grid",  2, href="/districts/create")
-        + _row("Cities", "city", 2, expandable=True, open_default=False)
-        + _group(cities_inner, open_default=False)
-    )
-
-    # ── Land root ─────────────────────────────────────────────────────
-    land_badge = land_count if land_count else None
-    nav_html = (
-        _row("Land", "map", 0, href="/land", expandable=True,
-             badge=land_badge, open_default=True)
-        + _group(
-            _row("Land Market", "bag", 1, href="/land-market")
-            + _row("Districts", "grid", 1, href="/districts",
-                   expandable=True, badge=dist_badge, open_default=True)
-            + _group(districts_inner, open_default=True),
-            open_default=True,
-        )
-    )
-
-    # ── Balance footer ────────────────────────────────────────────────
-    balance_footer = (
-        f'<div id="jb-balance">'
-        f'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-        f'<div>'
-        f'<div class="jb-bal-lbl">Total Assets</div>'
-        f'<div class="jb-bal-val">{land_count + district_count} plots</div>'
-        f'</div>'
-        f'<div class="jb-bal-icon">{_ico["trend"]}</div>'
-        f'</div>'
-        f'<div class="jb-bar-wrap"><div class="jb-bar-fill" style="width:{min(100, (land_count + district_count) * 5)}%"></div></div>'
-        f'</div>'
-    )
-
-    # ── Next Step footer ──────────────────────────────────────────────
-    next_html = (
-        f'<div id="jb-next">'
-        f'<div id="jb-next-lbl">Next Step</div>'
-        f'<a href="{next_href}">{next_label} &#8250;</a>'
-        f'</div>'
-    )
-
-    # ── JS: URL gate + slide-in animation + active highlight + collapse toggle ──
-    js = (
-        '<script>(function(){'
-        'var PATHS=["/land","/land-market","/districts","/district-market","/districts/create",'
-        '"/cities","/city/","/counties","/county/","/exchange","/token/","/gas-tracker",'
-        '"/wallet","/memecoins"];'
-        'var p=location.pathname;'
-        'if(!PATHS.some(function(r){return p===r||p.startsWith(r.endsWith("/")?r:r+"/");}))return;'
-        'var bar=document.getElementById("journey-bar");'
-        'var tab=document.getElementById("jb-tab");'
-        'var body=document.getElementById("jb-body");'
-        'if(!bar)return;'
-        'function showBar(){'
-        'bar.style.display="flex";'
-        'setTimeout(function(){bar.classList.add("jb-visible");},10);'
-        'body.classList.add("jb-on");'
-        'if(tab)tab.style.display="none";'
-        'localStorage.setItem("wadsJB","open");'
-        '}'
-        'function hideBar(){'
-        'bar.style.display="none";'
-        'bar.classList.remove("jb-visible");'
-        'body.classList.remove("jb-on");'
-        'if(tab)tab.style.display="flex";'
-        'localStorage.setItem("wadsJB","closed");'
-        '}'
-        'if(localStorage.getItem("wadsJB")!=="closed"){showBar();}'
-        'else{if(tab)tab.style.display="flex";}'
-        'document.getElementById("jb-close").onclick=hideBar;'
-        'if(tab)tab.onclick=showBar;'
-        'document.querySelectorAll(".jb-row[href]").forEach(function(el){'
-        'var h=el.getAttribute("href");'
-        'if(!h||h==="#")return;'
-        'if(p===h||(h.length>1&&p.startsWith(h)))el.classList.add("jb-active");'
-        '});'
-        'document.querySelectorAll(".jb-group").forEach(function(grp){'
-        'if(grp.querySelector(".jb-active")){'
-        'grp.style.display="block";'
-        'var prev=grp.previousElementSibling;'
-        'if(prev)prev.setAttribute("data-open","1");'
-        '}'
-        '});'
-        '})();\n'
-        'function wadsJBToggle(btn){'
-        'var grp=btn.nextElementSibling;'
-        'if(!grp||!grp.classList.contains("jb-group"))return;'
-        'var nowOpen=grp.style.display!=="none";'
-        'grp.style.display=nowOpen?"none":"block";'
-        'btn.setAttribute("data-open",nowOpen?"0":"1");'
-        'var href=btn.getAttribute("data-href");'
-        'if(href&&!nowOpen)location.href=href;'
-        '}'
-        '</script>'
-    )
-
-    return (
-        f'<button id="jb-tab" aria-label="Open navigation" title="Open navigation">'
-        f'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
-        f'</button>'
-        f'<div id="journey-bar">'
-        f'<div id="jb-head">'
-        f'<h1 id="jb-wordmark">ESTATE<span style="opacity:0.2">.</span>MGR</h1>'
-        f'<p id="jb-submark">Wadsworth Land Dashboard</p>'
-        f'<button id="jb-close" aria-label="Close sidebar">&#215;</button>'
-        f'</div>'
-        f'<nav id="jb-nav">{nav_html}</nav>'
-        f'{balance_footer}'
-        f'{next_html}'
-        f'</div>'
-        + js
-    )
-
-
 # ==========================
 # HTML SHELL
 # ==========================
 
-def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, breadcrumbs: list = None) -> str:
-    # breadcrumbs: list of (label, url) tuples or plain strings; last item is current page
+def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
     # Resolve display balance using player's legal tender so the header always
@@ -469,19 +187,6 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
     except:
         ticker_html = "MARKET FEED OFFLINE"
 
-    journey_bar_html = build_journey_bar(player_id)
-
-    breadcrumb_html = ""
-    if breadcrumbs:
-        sep = '<span style="color:#B08D57;opacity:0.4;margin:0 4px;">&#8250;</span>'
-        parts = []
-        for i, c in enumerate(breadcrumbs):
-            lbl, url = (c if isinstance(c, (list, tuple)) and len(c) == 2 else (str(c), None))
-            if url and i < len(breadcrumbs) - 1:
-                parts.append(f'<a href="{url}" style="color:#B08D57;text-decoration:none;">{lbl}</a>')
-            else:
-                parts.append(f'<span style="color:#E0D5C5;opacity:0.9;">{lbl}</span>')
-        breadcrumb_html = f'<div class="jb-breadcrumbs">{sep.join(parts)}</div>'
 
     return f"""
     <!DOCTYPE html>
@@ -723,406 +428,9 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 }}
             }}
 
-            /* ══════════════════════════════════════════════════════
-               JOURNEY BAR — Cinzel, brass, mahogany, 3-D depth
-               ══════════════════════════════════════════════════════ */
-
-            /* Keyframes */
-            @keyframes jb-slide-in {{
-                from {{ transform: translateX(-100%) rotateY(-8deg); opacity: 0; }}
-                to   {{ transform: translateX(0)    rotateY(0deg);  opacity: 1; }}
-            }}
-            @keyframes jb-shimmer {{
-                0%   {{ background-position: -300% center; }}
-                100% {{ background-position:  300% center; }}
-            }}
-            @keyframes jb-edge-pulse {{
-                0%,100% {{ opacity: 0.35; box-shadow: 4px 0 14px rgba(176,141,87,0.12); }}
-                50%     {{ opacity: 0.8;  box-shadow: 4px 0 28px rgba(176,141,87,0.30); }}
-            }}
-            @keyframes jb-activedot-glow {{
-                0%,100% {{ box-shadow: 0 0 4px #B08D57, 0 0 8px rgba(176,141,87,0.4); }}
-                50%     {{ box-shadow: 0 0 8px #B08D57, 0 0 20px rgba(176,141,87,0.7); }}
-            }}
-            @keyframes jb-coin-flip {{
-                0%   {{ transform: rotateY(0deg); }}
-                50%  {{ transform: rotateY(90deg) scale(0.85); }}
-                100% {{ transform: rotateY(360deg); }}
-            }}
-            @keyframes jb-scanline {{
-                0%   {{ transform: translateY(-120%); opacity: 0; }}
-                10%  {{ opacity: 0.6; }}
-                90%  {{ opacity: 0.6; }}
-                100% {{ transform: translateY(120%); opacity: 0; }}
-            }}
-
-            #journey-bar {{
-                display: none;
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 34px;
-                width: 248px;
-                background: linear-gradient(170deg, #1E1409 0%, #1A0F0A 40%, #140C07 100%);
-                border-right: 6px solid #2D1810;
-                outline: 2px solid rgba(176,141,87,0.28);
-                outline-offset: -10px;
-                z-index: 95;
-                flex-direction: column;
-                font-family: 'Cinzel', Georgia, serif;
-                perspective: 900px;
-                /* right-edge glow */
-                animation: jb-edge-pulse 4s ease-in-out infinite;
-            }}
-            #journey-bar.jb-visible {{
-                animation: jb-slide-in 0.38s cubic-bezier(0.16,1,0.3,1) both,
-                           jb-edge-pulse 4s ease-in-out 0.4s infinite;
-            }}
-            /* scanline sweep every 8 s */
-            #journey-bar::before {{
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(to bottom,
-                    transparent 0%, rgba(176,141,87,0.06) 50%, transparent 100%);
-                height: 60px;
-                width: 100%;
-                animation: jb-scanline 8s linear infinite;
-                pointer-events: none;
-                z-index: 1;
-            }}
-
-            /* ── Header ── */
-            #jb-head {{
-                padding: 18px 14px 13px;
-                border-bottom: 3px solid rgba(176,141,87,0.35);
-                background: linear-gradient(160deg, #2A1A0D 0%, #1E1208 100%);
-                text-align: center;
-                position: relative;
-                flex-shrink: 0;
-                overflow: hidden;
-            }}
-            /* shimmer sweep over header */
-            #jb-head::after {{
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: linear-gradient(105deg,
-                    transparent 30%, rgba(176,141,87,0.12) 50%, transparent 70%);
-                background-size: 300% 100%;
-                animation: jb-shimmer 5s ease-in-out infinite;
-                pointer-events: none;
-            }}
-            #jb-wordmark {{
-                font-family: 'Cinzel', Georgia, serif;
-                font-size: 17px;
-                font-weight: 900;
-                text-transform: uppercase;
-                letter-spacing: 0.18em;
-                color: #B08D57;
-                margin: 0 0 3px;
-                line-height: 1;
-                text-shadow: 0 0 14px rgba(176,141,87,0.5), 0 1px 3px rgba(0,0,0,0.8);
-                position: relative; z-index: 2;
-            }}
-            #jb-submark {{
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 8px;
-                letter-spacing: 0.28em;
-                text-transform: uppercase;
-                color: #F5F5DC;
-                opacity: 0.35;
-                margin: 0;
-                position: relative; z-index: 2;
-            }}
-            #jb-close {{
-                position: absolute;
-                top: 9px; right: 11px;
-                background: none;
-                border: 2px solid rgba(176,141,87,0.25);
-                border-radius: 3px;
-                color: rgba(176,141,87,0.45);
-                cursor: pointer;
-                font-size: 14px;
-                padding: 2px 5px;
-                line-height: 1;
-                transition: color 0.2s, border-color 0.2s;
-                z-index: 2;
-            }}
-            #jb-close:hover {{ color: #B08D57; border-color: rgba(176,141,87,0.7); }}
-
-            /* ── Scrollable nav ── */
-            #jb-nav {{
-                flex: 1;
-                overflow-y: auto;
-                padding: 6px 0;
-                scrollbar-width: thin;
-                scrollbar-color: rgba(176,141,87,0.18) transparent;
-            }}
-
-            /* ── Nav rows ── */
-            .jb-row {{
-                width: 100%;
-                display: flex;
-                align-items: center;
-                gap: 9px;
-                padding: 8px 20px;
-                border: none;
-                border-bottom: 2px solid rgba(176,141,87,0.08);
-                border-left: 3px solid transparent;
-                background: transparent;
-                color: rgba(245,245,220,0.45);
-                text-decoration: none;
-                cursor: pointer;
-                text-align: left;
-                transition: color 0.18s, background 0.18s, transform 0.18s,
-                            border-left-color 0.18s, box-shadow 0.18s;
-                box-sizing: border-box;
-                position: relative;
-            }}
-            .jb-row:hover {{
-                color: #F5F5DC;
-                background: rgba(176,141,87,0.07);
-                text-decoration: none;
-                transform: translateX(5px);
-                border-left-color: rgba(176,141,87,0.4);
-                box-shadow: -3px 0 0 rgba(0,0,0,0.4),
-                             4px 2px 12px rgba(0,0,0,0.5),
-                             inset 0 1px 0 rgba(176,141,87,0.08);
-            }}
-            .jb-row.jb-active {{
-                background: rgba(176,141,87,0.13);
-                color: #ffffff;
-                border-left-color: #B08D57;
-                transform: translateX(3px);
-                box-shadow: inset 0 1px 0 rgba(176,141,87,0.2),
-                             inset 0 -1px 0 rgba(0,0,0,0.4),
-                             4px 0 16px rgba(176,141,87,0.14);
-            }}
-            .jb-row.jb-locked {{
-                color: rgba(176,141,87,0.18);
-                cursor: default;
-                pointer-events: none;
-                font-style: italic;
-            }}
-            .jb-row.jb-locked:hover {{ transform: none; box-shadow: none; }}
-
-            /* ── Icons ── */
-            .jb-icon {{
-                display: flex;
-                align-items: center;
-                flex-shrink: 0;
-                color: inherit;
-                transition: color 0.18s, filter 0.18s;
-            }}
-            .jb-row:hover .jb-icon {{
-                color: #B08D57;
-                filter: drop-shadow(0 0 4px rgba(176,141,87,0.6));
-            }}
-            .jb-row.jb-active .jb-icon {{
-                color: #B08D57;
-                filter: drop-shadow(0 0 6px rgba(176,141,87,0.8));
-            }}
-
-            /* ── Labels ── */
-            .jb-label {{
-                flex: 1;
-                font-family: 'Cinzel', Georgia, serif;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.1em;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }}
-            .jb-lv0 {{ font-size: 13px; }}
-            .jb-lv1 {{ font-size: 10.5px; }}
-
-            /* ── Active dot ── */
-            .jb-activedot {{
-                width: 5px;
-                height: 5px;
-                border-radius: 50%;
-                background: #B08D57;
-                flex-shrink: 0;
-                animation: jb-activedot-glow 2s ease-in-out infinite;
-            }}
-
-            /* ── Badge ── */
-            .jb-badge {{
-                font-size: 9px;
-                font-family: 'JetBrains Mono', monospace;
-                background: rgba(176,141,87,0.18);
-                color: #B08D57;
-                border: 1px solid rgba(176,141,87,0.3);
-                border-radius: 2px;
-                padding: 0 5px;
-                flex-shrink: 0;
-                letter-spacing: 0;
-            }}
-
-            /* ── Chevron ── */
-            .jb-chev {{
-                color: rgba(176,141,87,0.3);
-                flex-shrink: 0;
-                display: flex;
-                align-items: center;
-                transition: color 0.18s, transform 0.25s;
-            }}
-            .jb-row:hover .jb-chev {{ color: #B08D57; }}
-            .jb-row[data-open="1"] .jb-chev {{ transform: rotate(90deg); }}
-
-            /* ── Collapsible group ── */
-            .jb-group {{
-                background: rgba(0,0,0,0.15);
-                border-left: 2px solid rgba(176,141,87,0.12);
-                margin-left: 12px;
-                transition: all 0.25s ease;
-            }}
-
-            /* ── Balance widget ── */
-            #jb-balance {{
-                padding: 12px 14px;
-                background: linear-gradient(135deg, #241812 0%, #1A0F0A 100%);
-                border-top: 3px solid rgba(176,141,87,0.3);
-                flex-shrink: 0;
-            }}
-            .jb-bal-lbl {{
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 8px;
-                letter-spacing: 0.22em;
-                text-transform: uppercase;
-                color: #B08D57;
-                font-weight: 700;
-            }}
-            .jb-bal-val {{
-                font-family: 'Cinzel', Georgia, serif;
-                font-size: 14px;
-                font-weight: 900;
-                text-transform: uppercase;
-                color: #F5F5DC;
-                letter-spacing: 0.04em;
-                margin-top: 1px;
-                text-shadow: 0 0 10px rgba(176,141,87,0.3);
-            }}
-            .jb-bal-icon {{
-                width: 34px;
-                height: 34px;
-                border-radius: 50%;
-                border: 2px solid rgba(176,141,87,0.35);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #B08D57;
-                background: rgba(0,0,0,0.5);
-                transition: transform 0.6s ease, box-shadow 0.3s;
-                transform-style: preserve-3d;
-                cursor: default;
-            }}
-            .jb-bal-icon:hover {{
-                animation: jb-coin-flip 0.8s ease-in-out;
-                box-shadow: 0 0 14px rgba(176,141,87,0.5);
-            }}
-            .jb-bar-wrap {{
-                margin-top: 8px;
-                height: 5px;
-                background: rgba(0,0,0,0.7);
-                border: 2px solid rgba(176,141,87,0.15);
-                border-radius: 9999px;
-                overflow: hidden;
-            }}
-            .jb-bar-fill {{
-                height: 100%;
-                background: linear-gradient(to right, #5C3D1A, #B08D57, #D4AF6E);
-                box-shadow: 0 0 8px rgba(176,141,87,0.5);
-                transition: width 1s ease;
-            }}
-
-            /* ── Next Step footer ── */
-            #jb-next {{
-                padding: 9px 14px 11px;
-                border-top: 3px solid rgba(176,141,87,0.22);
-                background: linear-gradient(135deg, rgba(176,141,87,0.07) 0%, rgba(0,0,0,0.2) 100%);
-                flex-shrink: 0;
-            }}
-            #jb-next-lbl {{
-                font-family: 'JetBrains Mono', monospace;
-                font-size: 8px;
-                letter-spacing: 0.2em;
-                text-transform: uppercase;
-                color: #f59e0b;
-                opacity: 0.6;
-                margin-bottom: 4px;
-            }}
-            #jb-next a {{
-                font-family: 'Cinzel', Georgia, serif;
-                font-size: 11px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-                color: #f59e0b;
-                text-decoration: none;
-                display: block;
-                line-height: 1.45;
-                transition: color 0.2s, text-shadow 0.2s;
-            }}
-            #jb-next a:hover {{
-                color: #fbbf24;
-                text-shadow: 0 0 10px rgba(251,191,36,0.5);
-                text-decoration: none;
-            }}
-
-            /* ── Breadcrumb strip ── */
-            .jb-breadcrumbs {{
-                padding: 5px 16px;
-                font-size: 11px;
-                font-family: Georgia, serif;
-                border-bottom: 2px solid rgba(176,141,87,0.15);
-                background: rgba(19,12,7,0.6);
-                display: flex;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 2px;
-            }}
-
-            /* ── Reopen tab (visible when bar is closed) ── */
-            #jb-tab {{
-                display: none;          /* shown by JS on journey pages when bar closed */
-                position: fixed;
-                left: 0;
-                top: 50%;
-                transform: translateY(-50%);
-                z-index: 96;
-                align-items: center;
-                justify-content: center;
-                width: 22px;
-                padding: 14px 0;
-                background: #241812;
-                border: 2px solid rgba(176,141,87,0.55);
-                border-left: none;
-                border-radius: 0 6px 6px 0;
-                color: rgba(176,141,87,0.6);
-                cursor: pointer;
-                transition: background 0.2s, color 0.2s, border-color 0.2s,
-                            box-shadow 0.2s;
-                box-shadow: 3px 0 12px rgba(0,0,0,0.6);
-            }}
-            #jb-tab:hover {{
-                background: rgba(176,141,87,0.12);
-                color: #B08D57;
-                border-color: #B08D57;
-                box-shadow: 3px 0 18px rgba(176,141,87,0.2);
-            }}
-            /* ── Body shift when bar is open ── */
-            #jb-body.jb-on {{ padding-left: 248px; }}
-            @media (max-width: 768px) {{
-                #jb-body.jb-on {{ padding-left: 0; }}
-                #journey-bar {{ z-index: 200; width: 100%; max-width: 280px; }}
-            }}
         </style>
     </head>
-    <body id="jb-body">
-        {journey_bar_html}
+    <body>
         <div class="header">
             <div class="brand"><img src="/static/logo.png" alt="Wadsworth"> Wadsworth</div>
             <div class="header-right">
@@ -1131,7 +439,6 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>
         </div>
-        {breadcrumb_html}
 
         <div class="container">
             {body}
@@ -1769,7 +1076,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
         </style>
         <script>
         (function() {{
-          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory'];
+          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market'];
           var SLOW_EXACT = ['/', '/api/inventory/list', '/api/market/order'];
           var STEPS = [
             "Initializing Secure Terminal...",
@@ -1831,6 +1138,16 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None, br
               if (pathname.startsWith(SLOW_PATHS[i])) return true;
             }}
             return false;
+          }}
+
+          // Show immediately on direct load / refresh of a slow page,
+          // then hide once the browser has finished rendering the DOM.
+          if (_isSlowPath(location.pathname)) {{
+            startLoader();
+            document.addEventListener('DOMContentLoaded', function() {{
+              overlay.style.display = 'none';
+              clearInterval(timer);
+            }});
           }}
 
           // Show on <a> clicks to known-slow pages
@@ -2299,12 +1616,12 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Wiki</span>
             </a>
 
-            <a href="/world-map" class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12);--btn:#4ade80;">
+            <div class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12); opacity:0.5; cursor:default; pointer-events:none;">
                 <span class="dc-ico">🗺️</span>
                 <div class="dc-t">World Map</div>
                 <div class="dc-d">Visualize your economic empire on an interactive grid map of Wadsworth</div>
-                <span class="dc-btn">Open Map</span>
-            </a>
+                <span class="dc-btn" style="background:#334155;color:#64748b;">Coming Soon</span>
+            </div>
 
             <a href="/settings" class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);--btn:#818cf8;">
                 <span class="dc-ico">⚙️</span>
@@ -2319,8 +1636,19 @@ def home(session_token: Optional[str] = Cookie(None)):
         player.id
     )
 
-@router.get("/businesses", response_class=HTMLResponse)
-def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", biz_filter: str = "all"):
+@router.get("/businesses")
+async def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", biz_filter: str = "all"):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_businesses_impl, session_token, sort, biz_filter)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", biz_filter: str = "all"):
     """Business operations view with live progress and retail pricing."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -2627,8 +1955,19 @@ def businesses(session_token: Optional[str] = Cookie(None), sort: str = "name", 
         traceback.print_exc()
         return shell("Businesses", f"Error loading terminal: {e}", player.cash_balance, player.id)
 
-@router.get("/inventory", response_class=HTMLResponse)
-def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc"):
+@router.get("/inventory")
+async def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "all", sort: str = "name", dir: str = "asc"):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_inventory_page_impl, session_token, filter, sort, dir)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all", sort: str = "name", dir: str = "asc"):
     """Inventory management view."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -3083,8 +2422,19 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
     except Exception as e:
         return shell("Inventory", f"Error: {e}", player.cash_balance, player.id)
 
-@router.get("/land", response_class=HTMLResponse)
-def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
+@router.get("/land")
+async def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_land_impl, session_token, sort, order, success, error)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
     """Land management view with organized layout, sorting, and explanatory info."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -3395,8 +2745,19 @@ def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: s
         traceback.print_exc()
         return shell("Land", f"Error: {e}", player.cash_balance, player.id)
 
-@router.get("/land-market", response_class=HTMLResponse)
-def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
+@router.get("/land-market")
+async def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_land_market_page_impl, session_token, sort, order, terrain, tab, success, error)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
     """Land market view - government auctions and player listings with search, sort, and filter."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -3988,8 +3349,19 @@ def _build_active_items_panel(active_items: list, current_item: str, base_url: s
     return f'<div class="card" style="margin-top:16px;"><h3 style="margin-bottom:10px;">Active Markets <span style="font-size:0.75rem;color:#64748b;font-weight:normal;">({len(active_items)})</span></h3>{links}</div>'
 
 
-@router.get("/market", response_class=HTMLResponse)
-def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
+@router.get("/market")
+async def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
+    _auth = require_auth(session_token)
+    if isinstance(_auth, RedirectResponse): return _auth
+    async def _gen():
+        yield _STREAM_LOADER
+        import asyncio, json as _j
+        html = await asyncio.to_thread(_market_page_impl, session_token, item)
+        if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+    return StreamingResponse(_gen(), media_type="text/html")
+
+def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_seeds"):
     """Market view with full order book including player names."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):

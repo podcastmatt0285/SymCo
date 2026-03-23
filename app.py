@@ -313,12 +313,6 @@ try:
 except ModuleNotFoundError:
     pass
 
-try:
-    from world_map_ux import router as world_map_router
-    app.include_router(world_map_router)
-    print("World Map routes registered")
-except ModuleNotFoundError:
-    pass
 
 try:
     from tutorial_ux import router as tutorial_router
