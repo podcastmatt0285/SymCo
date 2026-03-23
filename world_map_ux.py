@@ -2,17 +2,13 @@
 world_map_ux.py
 
 World Map feature for the Wadsworth Economic Simulation.
-Provides a Leaflet.js-powered interactive visualization of the player's
-entire economic empire: land plots, districts, cities, and counties.
+Provides a D3.js Voronoi-powered nested territory visualization on a black
+background, showing the full county → city → district (company) → business
+hierarchy as interlocking puzzle-shaped cells.
 
-Coordinate System:
-  - Uses real geographic coordinates (WGS-84 lat/lng) rendered on OpenStreetMap tiles
-  - Game plot grid is mapped to a ~15km × 33km area in central Maryland
-  - Cities are pinned to curated real Maryland city positions
-  - Counties are pinned to real Maryland county seat positions
-  - Zoom in from state level → county → city → individual 111m × 115m land plots
-
-Terrain colours match the game's established hex palette.
+The /api/world-map/data endpoint (legacy) returns individual player assets
+with geographic coordinates. The /api/world-map/territory endpoint returns
+the complete nested world hierarchy used by the new SVG visualization.
 """
 
 from typing import Optional
@@ -414,15 +410,128 @@ async def world_map_data(session_token: Optional[str] = Cookie(None)):
 
 
 # ==========================
+# API: TERRITORY HIERARCHY
+# ==========================
+
+@router.get("/api/world-map/territory")
+async def world_map_territory(session_token: Optional[str] = Cookie(None)):
+    """
+    Return the full nested territory hierarchy for the world map.
+    Includes ALL counties, their cities, city members' districts, and businesses.
+    Used by the D3.js Voronoi territory visualization.
+    """
+    from auth import get_db, get_player_from_session
+    from counties import County, CountyCity
+    from cities import City, CityMember
+    from districts import District
+    from business import Business, BUSINESS_TYPES
+
+    db = get_db()
+    try:
+        player = get_player_from_session(db, session_token)
+        if not player:
+            return JSONResponse({"error": "Not authenticated"}, status_code=401)
+
+        all_counties = db.query(County).all()
+        territory = []
+
+        for county in all_counties:
+            city_links = db.query(CountyCity).filter(
+                CountyCity.county_id == county.id
+            ).all()
+            city_ids = [cl.city_id for cl in city_links]
+
+            cities_out = []
+            if city_ids:
+                cities = db.query(City).filter(City.id.in_(city_ids)).all()
+                for city in cities:
+                    members = db.query(CityMember).filter(
+                        CityMember.city_id == city.id
+                    ).all()
+                    member_player_ids = [m.player_id for m in members]
+
+                    districts_out = []
+                    if member_player_ids:
+                        city_districts = db.query(District).filter(
+                            District.owner_id.in_(member_player_ids)
+                        ).all()
+
+                        biz_ids = [
+                            d.occupied_by_business_id
+                            for d in city_districts
+                            if d.occupied_by_business_id
+                        ]
+                        biz_map = {}
+                        if biz_ids:
+                            for b in db.query(Business).filter(
+                                Business.id.in_(biz_ids)
+                            ).all():
+                                biz_map[b.id] = b
+
+                        for dist in city_districts:
+                            biz = biz_map.get(dist.occupied_by_business_id)
+                            biz_cfg = BUSINESS_TYPES.get(biz.business_type, {}) if biz else {}
+                            businesses_out = []
+                            if biz:
+                                businesses_out.append({
+                                    "id": biz.id,
+                                    "name": biz_cfg.get("name", biz.business_type),
+                                    "type": biz.business_type,
+                                    "active": biz.is_active,
+                                })
+                            districts_out.append({
+                                "id": dist.id,
+                                "name": DISTRICT_NAMES.get(
+                                    dist.district_type, dist.district_type
+                                ),
+                                "type": dist.district_type,
+                                "is_mine": dist.owner_id == player.id,
+                                "businesses": businesses_out,
+                                "url": f"/district/{dist.id}",
+                            })
+
+                    cities_out.append({
+                        "id": city.id,
+                        "name": city.name,
+                        "member_count": len(members),
+                        "districts": districts_out,
+                        "url": f"/city/{city.id}",
+                    })
+
+            territory.append({
+                "id": county.id,
+                "name": county.name,
+                "crypto_symbol": county.crypto_symbol,
+                "city_count": len(cities_out),
+                "cities": cities_out,
+                "url": f"/county/{county.id}",
+            })
+
+        return JSONResponse({
+            "player_id": player.id,
+            "player_name": player.business_name,
+            "counties": territory,
+        })
+
+    except Exception as exc:
+        import traceback
+        print("[world-map] territory error:", traceback.format_exc())
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+    finally:
+        db.close()
+
+
+# ==========================
 # PAGE: WORLD MAP
 # ==========================
 
 @router.get("/world-map", response_class=HTMLResponse)
 def world_map_page(session_token: Optional[str] = Cookie(None)):
     """
-    Renders the interactive World Map page for the authenticated player.
-    The map uses Leaflet.js with L.CRS.Simple to display the player's empire
-    on a flat game-grid coordinate system.
+    Renders the interactive World Map page.
+    Uses D3.js Voronoi tessellation on a black canvas to show the nested
+    territory hierarchy: counties → cities → districts/companies → businesses.
     """
     from fastapi.responses import RedirectResponse
     player = require_auth(session_token)
@@ -433,178 +542,456 @@ def world_map_page(session_token: Optional[str] = Cookie(None)):
 <div style="margin-bottom: 12px;">
     <a href="/" style="color: #38bdf8; font-size: 0.85rem;">&larr; Dashboard</a>
     <span style="color: #64748b; font-size: 0.85rem; margin-left: 12px;">|</span>
-    <span style="color: #94a3b8; font-size: 0.85rem; margin-left: 12px;">World Map &mdash; Your Economic Empire</span>
+    <span style="color: #94a3b8; font-size: 0.85rem; margin-left: 12px;">World Map &mdash; Territory Overview</span>
 </div>
 
 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
     <h1 style="margin: 0; font-size: 1.4rem;">World Map</h1>
     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-        <button id="btn-world" onclick="fitWorld()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">World View</button>
-        <button id="btn-fit" onclick="fitAll()" style="padding: 6px 12px; background: #38bdf8; color: #020617; border: none; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">My Assets</button>
-        <button id="btn-refresh" onclick="loadMapData()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">Refresh</button>
+        <button onclick="loadTerritoryData()" style="padding: 6px 12px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; font-size: 0.8rem; border-radius: 3px;">Refresh</button>
     </div>
 </div>
 
 <!-- Legend -->
-<div id="map-legend" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; font-size: 0.72rem; color: #94a3b8;">
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#22c55e;display:inline-block;border-radius:2px;"></span>Prairie</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#f59e0b;display:inline-block;border-radius:2px;"></span>Desert</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#3b82f6;display:inline-block;border-radius:2px;"></span>Island</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#78716c;display:inline-block;border-radius:2px;"></span>Mountain</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#16a34a;display:inline-block;border-radius:2px;"></span>Forest</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#0891b2;display:inline-block;border-radius:2px;"></span>Marsh</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#94a3b8;display:inline-block;border-radius:2px;"></span>Tundra</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#ca8a04;display:inline-block;border-radius:2px;"></span>Savanna</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#a16207;display:inline-block;border-radius:2px;"></span>Hills</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#15803d;display:inline-block;border-radius:2px;"></span>Jungle</span>
-    <span style="color:#64748b;">|</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#334155;border:2px solid #64748b;display:inline-block;border-radius:2px;"></span>District</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;">&#127981; Business</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#0c2340;border:2px solid #38bdf8;display:inline-block;border-radius:50%;"></span>&#127963; City</span>
-    <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#78350f;border:2px dashed #d4af37;display:inline-block;border-radius:50%;"></span>&#128506; County</span>
-    <span style="color:#64748b;">|</span>
-    <span style="color:#94a3b8;">Zoom in to see land plots &bull; Opacity = Efficiency</span>
+<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; font-size:0.72rem; color:#94a3b8; align-items:center;">
+    <span style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:14px;height:14px;background:#7c3aed33;border:2px solid #7c3aed;display:inline-block;border-radius:2px;"></span>County
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:14px;height:14px;background:#b07aff33;border:1.5px solid #b07affcc;display:inline-block;border-radius:2px;"></span>City
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:14px;height:14px;background:#2563eb55;border:1px solid #2563ebaa;display:inline-block;border-radius:2px;"></span>District / Company
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:5px;">
+        <span style="width:14px;height:14px;background:#2563eb88;border:0.5px solid #2563eb;display:inline-block;border-radius:2px;"></span>Business
+    </span>
+    <span style="color:#475569;">|</span>
+    <span style="color:#94a3b8;">Hover for details &bull; Click to navigate</span>
 </div>
 
 <!-- Map container -->
-<div id="map"
-     style="width: 100%; height: 70vh; min-height: 480px; background: #c8d8e4;
-            border: 1px solid #1e293b; border-radius: 4px; position: relative;">
+<div id="map-container"
+     style="width:100%; height:70vh; min-height:500px; position:relative;
+            background:#000; border:1px solid #1e293b; border-radius:4px; overflow:hidden;">
     <div id="map-loading"
          style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-                color:#64748b;font-size:0.9rem;z-index:999;">
-        Loading map data&hellip;
+                color:#64748b;font-size:0.9rem;z-index:20;pointer-events:none;">
+        Loading territory data&hellip;
+    </div>
+    <svg id="territory-svg" style="width:100%;height:100%;display:block;"></svg>
+    <div id="wm-tooltip"
+         style="position:absolute;display:none;background:#0f172a;border:1px solid #334155;
+                border-radius:4px;padding:8px 12px;font-family:monospace;font-size:12px;
+                color:#e5e7eb;pointer-events:none;z-index:30;max-width:230px;
+                box-shadow:0 4px 24px rgba(0,0,0,0.8);line-height:1.5;">
     </div>
 </div>
 
-<div id="map-status" style="margin-top: 8px; font-size: 0.75rem; color: #64748b; text-align: right;">
-    Click any element to open info &bull; Double-click to navigate &bull; Scroll to zoom &bull; Zoom in (~zoom 15) to see land plots
+<div id="map-status" style="margin-top:8px; font-size:0.75rem; color:#64748b; text-align:right;">
+    Loading&hellip;
 </div>
 
-<!-- Leaflet CSS (served locally) -->
-<link rel="stylesheet" href="/static/leaflet.css"/>
-
-<!-- Leaflet JS (served locally) -->
-<script src="/static/leaflet.js"></script>
+<!-- D3.js for Voronoi tessellation -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 
 <script>
 // ============================================================
-// MARYLAND GEO CONSTANTS  (mirror Python server values)
+// WORLD MAP — NESTED VORONOI TERRITORY VISUALIZATION
+// Counties → Cities → Districts (Companies) → Businesses
 // ============================================================
-const PLOT_ORIGIN_LAT = """ + str(PLOT_ORIGIN_LAT) + """;
-const PLOT_ORIGIN_LNG = """ + str(PLOT_ORIGIN_LNG) + """;
-const PLOT_DLAT       = """ + str(PLOT_DLAT)       + """;
-const PLOT_DLNG       = """ + str(PLOT_DLNG)       + """;
-const GRID_WIDTH      = """ + str(int(GRID_WIDTH)) + """;
-// Maryland bounding box for "World View" button
-const MD_SW = [37.88, -79.53];
-const MD_NE = [39.72, -74.95];
 
 // ============================================================
-// TERRAIN / DISTRICT COLOUR PALETTE  (mirrors Python dict)
+// COLOUR PALETTES
 // ============================================================
-const TERRAIN_COLORS = {
-    prairie:  '#22c55e', forest:   '#16a34a', desert:   '#f59e0b',
-    marsh:    '#0891b2', mountain: '#78716c', tundra:   '#94a3b8',
-    jungle:   '#15803d', savanna:  '#ca8a04', hills:    '#a16207',
-    island:   '#3b82f6',
-    district_aerospace:              '#6366f1',
-    district_airport:                '#38bdf8',
-    district_convention_center:      '#7c3aed',
-    district_education:              '#8b5cf6',
-    district_entertainment:          '#ec4899',
-    district_entertainment_district: '#db2777',
-    district_food:                   '#f97316',
-    district_food_court:             '#fb923c',
-    district_hospital:               '#14b8a6',
-    district_industrial:             '#64748b',
-    district_mall:                   '#a855f7',
-    district_mega_mall:              '#c026d3',
-    district_medical:                '#06b6d4',
-    district_military:               '#dc2626',
-    district_military_base:          '#dc2626',
-    district_neighborhood:           '#84cc16',
-    district_prison:                 '#475569',
-    district_prison_complex:         '#475569',
-    district_research_campus:        '#7c3aed',
-    district_seaport:                '#0891b2',
-    district_shipyard:               '#0369a1',
-    district_tech:                   '#2563eb',
-    district_tech_park:              '#2563eb',
-    district_transport:              '#d97706',
-    district_utilities:              '#0284c7',
-    district_zoo:                    '#4ade80',
+
+// Distinct bright colours for county cells (rendered on black)
+const COUNTY_PALETTE = [
+    '#7c3aed','#0ea5e9','#22c55e','#f59e0b','#ec4899',
+    '#14b8a6','#f97316','#a855f7','#06b6d4','#84cc16',
+    '#fb7185','#38bdf8','#4ade80','#facc15','#c084fc',
+    '#2dd4bf','#fb923c','#818cf8','#34d399','#fbbf24',
+    '#f472b6','#60a5fa','#a3e635','#e879f9',
+];
+
+// District-type colours (same as backend TERRAIN_COLORS for districts)
+const DIST_COLORS = {
+    aerospace:'#6366f1', airport:'#38bdf8', convention_center:'#7c3aed',
+    education:'#8b5cf6', entertainment:'#ec4899', entertainment_district:'#db2777',
+    food:'#f97316', food_court:'#fb923c', hospital:'#14b8a6',
+    industrial:'#64748b', mall:'#a855f7', mega_mall:'#c026d3',
+    medical:'#06b6d4', military:'#dc2626', military_base:'#dc2626',
+    neighborhood:'#84cc16', prison:'#475569', prison_complex:'#475569',
+    research_campus:'#7c3aed', seaport:'#0891b2', shipyard:'#0369a1',
+    tech:'#2563eb', tech_park:'#2563eb', transport:'#d97706',
+    utilities:'#0284c7', zoo:'#4ade80',
 };
 
-function terrainColor(t) {
-    return TERRAIN_COLORS[t] || '#334155';
+// ============================================================
+// GEOMETRY UTILITIES
+// ============================================================
+
+// Seeded LCG random number generator (deterministic, fast)
+function mkRng(seed) {
+    let s = ((Math.abs(seed | 0)) % 2147483647) || 1;
+    return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
 }
 
-// ============================================================
-// MAP INITIALISATION
-// ============================================================
-
-// Declare layer variables at module scope so function declarations
-// that reference them never hit the temporal dead zone even if Leaflet
-// fails to load.
-let map = null;
-let layerPlots = null, layerDistricts = null,
-    layerCities = null, layerCounties = null;
-let allBoundsPoints = [];
-
-if (typeof L === 'undefined') {
-    // Leaflet failed to load (served locally so this means a file error)
-    document.getElementById('map-loading').textContent =
-        'Map library failed to load. Check your connection and reload.';
-} else {
-    try {
-        map = L.map('map', {
-            minZoom: 5,
-            maxZoom: 19,
-            zoomSnap: 0.5,
-            attributionControl: false,
-        });
-
-        // Start centered on Maryland while data loads
-        map.setView([39.0, -76.8], 9);
-
-        // OpenStreetMap tile layer — gives the real-world map feel
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            subdomains: 'abc',
-        }).addTo(map);
-
-        // Layer groups for toggling
-        layerPlots     = L.layerGroup().addTo(map);
-        layerDistricts = L.layerGroup().addTo(map);
-        layerCities    = L.layerGroup().addTo(map);
-        layerCounties  = L.layerGroup().addTo(map);
-    } catch(initErr) {
-        document.getElementById('map-loading').textContent =
-            'Map init error: ' + initErr.message;
-        console.error('[world-map] init', initErr);
+// Point-in-polygon (ray casting)
+function pip(pt, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+        if (((yi > pt[1]) !== (yj > pt[1])) &&
+            (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi))
+            inside = !inside;
     }
+    return inside;
 }
 
+// Sample a deterministic point inside a polygon
+function sampleInPoly(poly, seed) {
+    const rng = mkRng(seed);
+    const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs);
+    const y0 = Math.min(...ys), y1 = Math.max(...ys);
+    for (let i = 0; i < 400; i++) {
+        const pt = [x0 + rng() * (x1 - x0), y0 + rng() * (y1 - y0)];
+        if (pip(pt, poly)) return pt;
+    }
+    return [(x0 + x1) / 2, (y0 + y1) / 2]; // fallback to bbox centre
+}
+
+// Polygon centroid (signed-area formula)
+function centroid(poly) {
+    let area = 0, cx = 0, cy = 0;
+    const n = poly.length;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+        const a = poly[j][0] * poly[i][1] - poly[i][0] * poly[j][1];
+        area += a; cx += (poly[j][0] + poly[i][0]) * a; cy += (poly[j][1] + poly[i][1]) * a;
+    }
+    area /= 2;
+    if (Math.abs(area) < 0.01) {
+        const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+        return [(Math.min(...xs)+Math.max(...xs))/2, (Math.min(...ys)+Math.max(...ys))/2];
+    }
+    return [cx / (6 * area), cy / (6 * area)];
+}
+
+// Bounding box [x0, y0, x1, y1]
+function bbox(poly) {
+    const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+    return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+}
+
+// Lighten a hex colour toward white by factor t (0–1)
+function lighten(hex, t) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    const m = c => Math.min(255, Math.round(c + (255-c)*t)).toString(16).padStart(2,'0');
+    return '#' + m(r) + m(g) + m(b);
+}
+
+// Hex-encode an alpha byte (0–255) as 2-char hex suffix
+function alpha(hex, a) { return hex + Math.round(a).toString(16).padStart(2,'0'); }
+
+// Distribute county seed points as a jittered grid across the canvas
+function countySeeds(counties, W, H) {
+    const n = counties.length;
+    if (!n) return [];
+    if (n === 1) return [[W/2, H/2]];
+    const cols = Math.max(2, Math.ceil(Math.sqrt(n * (W / H))));
+    const rows = Math.ceil(n / cols);
+    const cw = W / cols, ch = H / rows;
+    return counties.map((c, i) => {
+        const rng = mkRng(c.id * 31337 + i * 9901);
+        const col = i % cols, row = Math.floor(i / cols);
+        return [col * cw + cw * (0.2 + rng() * 0.6), row * ch + ch * (0.2 + rng() * 0.6)];
+    });
+}
+
+// Build SVG polygon points attribute string
+function polyPts(pts) { return pts.map(p => p.join(',')).join(' '); }
+
 // ============================================================
-// LOAD & RENDER
+// TERRITORY RENDERING
 // ============================================================
-function loadMapData() {
-    if (!map) {
+let _lastData = null;
+
+function renderTerritories(data) {
+    _lastData = data;
+    const counties = data.counties || [];
+
+    const container = document.getElementById('map-container');
+    const W = container.clientWidth  || 1200;
+    const H = container.clientHeight || 700;
+
+    // Check D3 loaded
+    if (typeof d3 === 'undefined') {
         document.getElementById('map-loading').textContent =
-            'Map not initialized. Reload the page.';
+            'D3.js failed to load. Check network connection and reload.';
         return;
     }
+
+    const svg = d3.select('#territory-svg').attr('width', W).attr('height', H)
+                  .attr('viewBox', '0 0 ' + W + ' ' + H);
+    svg.selectAll('*').remove();
+
+    const defs = svg.append('defs');
+
+    // County-border glow filter
+    const gf = defs.append('filter').attr('id', 'glow')
+                   .attr('x','-50%').attr('y','-50%')
+                   .attr('width','200%').attr('height','200%');
+    gf.append('feGaussianBlur').attr('stdDeviation','4').attr('result','blur');
+    const fm = gf.append('feMerge');
+    fm.append('feMergeNode').attr('in','blur');
+    fm.append('feMergeNode').attr('in','SourceGraphic');
+
+    // Subtle glow for labels
+    const lf = defs.append('filter').attr('id', 'lglow')
+                   .attr('x','-50%').attr('y','-50%')
+                   .attr('width','200%').attr('height','200%');
+    lf.append('feGaussianBlur').attr('stdDeviation','2').attr('result','blur');
+    const lm = lf.append('feMerge');
+    lm.append('feMergeNode').attr('in','blur');
+    lm.append('feMergeNode').attr('in','SourceGraphic');
+
+    // Black background
+    svg.append('rect').attr('width', W).attr('height', H).attr('fill', '#000');
+
+    if (!counties.length) {
+        svg.append('text').attr('x', W/2).attr('y', H/2)
+           .attr('text-anchor','middle').attr('dominant-baseline','middle')
+           .attr('fill','#475569').attr('font-size',16).attr('font-family','monospace')
+           .text('No counties found. Create or join a county to see the territory map.');
+        document.getElementById('map-loading').style.display = 'none';
+        document.getElementById('map-status').textContent = 'No territory data';
+        return;
+    }
+
+    // ---- COUNTY VORONOI ----
+    const cSeeds = countySeeds(counties, W, H);
+    const cDel   = d3.Delaunay.from(cSeeds);
+    const cVor   = cDel.voronoi([0, 0, W, H]);
+
+    // Draw order: fills group → borders group → labels group
+    const fillsG   = svg.append('g');
+    const bordersG = svg.append('g');
+    const labelsG  = svg.append('g');
+
+    const tooltip = document.getElementById('wm-tooltip');
+
+    function showTip(html, evt) {
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        const rect = container.getBoundingClientRect();
+        let x = evt.clientX - rect.left + 14;
+        let y = evt.clientY - rect.top  + 14;
+        const tw = tooltip.offsetWidth  || 200;
+        const th = tooltip.offsetHeight || 80;
+        if (x + tw > W - 8) x = evt.clientX - rect.left - tw - 14;
+        if (y + th > H - 8) y = evt.clientY - rect.top  - th - 14;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top  = y + 'px';
+    }
+    svg.on('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    counties.forEach((county, ci) => {
+        const cPoly = cVor.cellPolygon(ci);
+        if (!cPoly || cPoly.length < 4) return;
+        const cPts  = cPoly.slice(0, -1);   // drop closing duplicate
+        const cColor = COUNTY_PALETTE[ci % COUNTY_PALETTE.length];
+        const cClip  = 'county-clip-' + county.id;
+
+        defs.append('clipPath').attr('id', cClip)
+            .append('polygon').attr('points', polyPts(cPts));
+
+        // County group (everything inside is clipped to county polygon)
+        const cG = fillsG.append('g').attr('clip-path', 'url(#' + cClip + ')');
+
+        // County fill — subtle tinted background
+        cG.append('polygon').attr('points', polyPts(cPts))
+          .attr('fill', alpha(cColor, 22))   // ~8% opacity
+          .style('cursor','pointer')
+          .on('mousemove', evt => showTip(
+              '<b style="color:' + cColor + '">' + county.name + '</b>' +
+              (county.crypto_symbol ? '<br>Token: <span style="color:#f59e0b">' + county.crypto_symbol + '</span>' : '') +
+              '<br>Cities: ' + (county.city_count || 0) +
+              '<br><span style="color:#38bdf8;font-size:11px">click to visit county</span>', evt))
+          .on('click', () => { window.location.href = county.url; });
+
+        // ---- CITY LEVEL ----
+        const cities = county.cities || [];
+        if (cities.length > 0) {
+            const citySeeds = cities.map((city, j) =>
+                sampleInPoly(cPts, city.id * 997 + county.id * 31 + j));
+
+            const [bx0,by0,bx1,by1] = bbox(cPts);
+            const cityDel = d3.Delaunay.from(citySeeds);
+            const cityVor = cityDel.voronoi([bx0-1, by0-1, bx1+1, by1+1]);
+
+            cities.forEach((city, j) => {
+                const cityPoly = cityVor.cellPolygon(j);
+                if (!cityPoly || cityPoly.length < 4) return;
+                const cityPts  = cityPoly.slice(0, -1);
+                const cityColor = lighten(cColor, 0.38);
+                const cityClip  = 'city-clip-' + city.id;
+
+                defs.append('clipPath').attr('id', cityClip)
+                    .append('polygon').attr('points', polyPts(cityPts));
+
+                // City group (clipped to city polygon; parent cG clips to county)
+                const cityG = cG.append('g').attr('clip-path', 'url(#' + cityClip + ')');
+
+                cityG.append('polygon').attr('points', polyPts(cityPts))
+                     .attr('fill', alpha(cityColor, 35))  // ~14% opacity
+                     .style('cursor','pointer')
+                     .on('mousemove', evt => showTip(
+                         '<b style="color:' + cityColor + '">' + city.name + '</b>' +
+                         '<br>Members: ' + city.member_count +
+                         '<br>Districts: ' + (city.districts ? city.districts.length : 0) +
+                         '<br><span style="color:#38bdf8;font-size:11px">click to visit city</span>', evt))
+                     .on('click', () => { window.location.href = city.url; });
+
+                // ---- DISTRICT (COMPANY) LEVEL ----
+                const districts = city.districts || [];
+                if (districts.length > 0) {
+                    const distSeeds = districts.map((dist, k) =>
+                        sampleInPoly(cityPts, dist.id * 1009 + city.id * 37 + k));
+
+                    const [dx0,dy0,dx1,dy1] = bbox(cityPts);
+                    const distDel = d3.Delaunay.from(distSeeds);
+                    const distVor = distDel.voronoi([dx0-1, dy0-1, dx1+1, dy1+1]);
+
+                    districts.forEach((dist, k) => {
+                        const distPoly = distVor.cellPolygon(k);
+                        if (!distPoly || distPoly.length < 4) return;
+                        const distPts  = distPoly.slice(0, -1);
+                        const dColor   = DIST_COLORS[dist.type] || '#475569';
+                        const distClip = 'dist-clip-' + dist.id;
+                        const isMine   = dist.is_mine;
+
+                        defs.append('clipPath').attr('id', distClip)
+                            .append('polygon').attr('points', polyPts(distPts));
+
+                        // District group (clipped to district; parents clip to city × county)
+                        const distG = cityG.append('g')
+                                          .attr('clip-path', 'url(#' + distClip + ')');
+
+                        // District fill
+                        distG.append('polygon').attr('points', polyPts(distPts))
+                             .attr('fill', alpha(dColor, 70))   // ~27% opacity
+                             .style('cursor','pointer')
+                             .on('mousemove', evt => {
+                                 const biz = dist.businesses && dist.businesses[0];
+                                 showTip(
+                                     (isMine ? '<span style="color:#fbbf24">&#9733; MINE</span><br>' : '') +
+                                     '<b style="color:' + dColor + '">' + dist.name + '</b>' +
+                                     '<br>Type: ' + dist.type.replace(/_/g,' ') +
+                                     (biz ? '<br>&#127981; ' + biz.name + (biz.active ? ' <span style="color:#22c55e">(active)</span>' : ' <span style="color:#ef4444">(inactive)</span>') : '') +
+                                     '<br><span style="color:#38bdf8;font-size:11px">click to manage</span>', evt);
+                             })
+                             .on('click', () => { window.location.href = dist.url; });
+
+                        // ---- BUSINESS LEVEL (innermost fill) ----
+                        const bizList = dist.businesses || [];
+                        if (bizList.length > 0) {
+                            // Single business per district: shade the whole cell slightly darker
+                            distG.append('polygon').attr('points', polyPts(distPts))
+                                 .attr('fill', alpha(dColor, 50))
+                                 .attr('pointer-events','none');
+                        }
+
+                        // District border (inside cityG so clipped to city × county)
+                        cityG.append('polygon').attr('points', polyPts(distPts))
+                             .attr('fill','none')
+                             .attr('stroke', alpha(dColor, isMine ? 255 : 170))
+                             .attr('stroke-width', isMine ? 1.8 : 0.9)
+                             .attr('pointer-events','none');
+
+                        // District label — tiny, centred
+                        const [dlx, dly] = centroid(distPts);
+                        cityG.append('text')
+                             .attr('x', dlx).attr('y', dly)
+                             .attr('text-anchor','middle').attr('dominant-baseline','middle')
+                             .attr('fill', alpha(dColor, 230))
+                             .attr('font-size','7px').attr('font-family','monospace')
+                             .attr('pointer-events','none')
+                             .text(dist.name.length > 14 ? dist.name.slice(0,12)+'…' : dist.name);
+                    });
+                }
+
+                // City border (inside cG so clipped to county)
+                cG.append('polygon').attr('points', polyPts(cityPts))
+                  .attr('fill','none')
+                  .attr('stroke', alpha(cityColor, 200))
+                  .attr('stroke-width', 1.5)
+                  .attr('pointer-events','none');
+
+                // City label
+                const [clx, cly] = centroid(cityPts);
+                cG.append('text')
+                  .attr('x', clx).attr('y', cly)
+                  .attr('text-anchor','middle').attr('dominant-baseline','middle')
+                  .attr('fill', cityColor)
+                  .attr('font-size','11px').attr('font-weight','bold')
+                  .attr('font-family','monospace').attr('pointer-events','none')
+                  .attr('filter','url(#lglow)')
+                  .text(city.name);
+            });
+        }
+
+        // County border — drawn on top of all fills (in bordersG, not inside cG)
+        bordersG.append('polygon').attr('points', polyPts(cPts))
+                .attr('fill','none')
+                .attr('stroke', cColor)
+                .attr('stroke-width', 3)
+                .attr('filter','url(#glow)')
+                .attr('pointer-events','none');
+
+        // County label — topmost layer
+        const [clx, cly] = centroid(cPts);
+        const yOff = cities.length > 0 ? -22 : 0;
+        labelsG.append('text')
+               .attr('x', clx).attr('y', cly + yOff)
+               .attr('text-anchor','middle').attr('dominant-baseline','middle')
+               .attr('fill', cColor)
+               .attr('font-size','15px').attr('font-weight','bold')
+               .attr('font-family','monospace').attr('pointer-events','none')
+               .attr('filter','url(#glow)')
+               .text(county.name);
+
+        if (county.crypto_symbol) {
+            labelsG.append('text')
+                   .attr('x', clx).attr('y', cly + yOff + 16)
+                   .attr('text-anchor','middle').attr('dominant-baseline','middle')
+                   .attr('fill', alpha(cColor, 170))
+                   .attr('font-size','10px').attr('font-family','monospace')
+                   .attr('pointer-events','none')
+                   .text('[' + county.crypto_symbol + ']');
+        }
+    });
+
+    // Status bar
+    const totalCities    = counties.reduce((s,c) => s + (c.cities ? c.cities.length : 0), 0);
+    const totalDistricts = counties.reduce((s,c) =>
+        s + (c.cities ? c.cities.reduce((s2,city) => s2 + (city.districts ? city.districts.length : 0), 0) : 0), 0);
+    document.getElementById('map-status').textContent =
+        counties.length + ' counties  \u2022  ' + totalCities + ' cities  \u2022  ' + totalDistricts + ' districts/companies';
+
+    document.getElementById('map-loading').style.display = 'none';
+}
+
+// ============================================================
+// DATA FETCH
+// ============================================================
+function loadTerritoryData() {
     document.getElementById('map-loading').style.display = 'block';
     document.getElementById('map-status').textContent = 'Loading\u2026';
 
-    fetch('/api/world-map/data')
+    fetch('/api/world-map/territory')
         .then(r => {
-            if (!r.ok) {
-                return r.text().then(t => {
-                    throw new Error('HTTP ' + r.status + ' \u2014 ' + t.substring(0, 300));
-                });
-            }
+            if (!r.ok) return r.text().then(t => { throw new Error('HTTP ' + r.status + ': ' + t.slice(0,200)); });
             return r.json();
         })
         .then(data => {
@@ -612,325 +999,22 @@ function loadMapData() {
                 document.getElementById('map-loading').textContent = 'Error: ' + data.error;
                 return;
             }
-            renderMap(data);
+            renderTerritories(data);
         })
         .catch(err => {
-            document.getElementById('map-loading').textContent = 'Failed to load map data: ' + err.message;
+            document.getElementById('map-loading').textContent = 'Failed: ' + err.message;
             console.error('[world-map]', err);
         });
 }
 
-function renderMap(data) {
-    // Clear previous layers
-    layerPlots.clearLayers();
-    layerDistricts.clearLayers();
-    layerCities.clearLayers();
-    layerCounties.clearLayers();
-    allBoundsPoints = [];
-
-    // ---- LAND PLOTS ------------------------------------------------
-    // Each plot is a ~111m × 115m rectangle on the real map.
-    // The API returns the NW corner (lat, lng); we derive SE from PLOT_D*.
-    (data.land_plots || []).forEach(plot => {
-        // NW corner lat/lng
-        const nwLat = plot.lat, nwLng = plot.lng;
-        // SW and NE corners (PLOT_DLAT is negative so nwLat + PLOT_DLAT < nwLat)
-        const sw = [nwLat + PLOT_DLAT, nwLng];
-        const ne = [nwLat, nwLng + PLOT_DLNG];
-        const center = [(sw[0] + ne[0]) / 2, (sw[1] + ne[1]) / 2];
-
-        // Efficiency drives fill opacity (0.6–0.95)
-        const fillOpacity = 0.6 + (plot.efficiency / 100) * 0.35;
-        const color = terrainColor(plot.terrain_type);
-        const borderColor = plot.occupied_by_business_id ? '#f8fafc' : '#334155';
-        const weight      = plot.occupied_by_business_id ? 1.5 : 0.8;
-
-        const rect = L.rectangle([sw, ne], {
-            color: borderColor, weight,
-            fillColor: color, fillOpacity,
-        });
-
-        let bizLine = '';
-        if (plot.business_type) {
-            const icon   = plot.business_active ? '&#127981;' : '&#9208;&#65039;';
-            const status = plot.business_active ? 'Active' : 'Inactive';
-            bizLine = `<br>${icon} <b>${plot.business_name || plot.business_type}</b> &mdash; ${status}`;
-        }
-        const proxLine = plot.proximity_features.length
-            ? `<br><span style="color:#94a3b8">+${plot.proximity_features.join(', ')}</span>`
-            : '';
-        const effColor = plot.efficiency >= 75 ? '#22c55e'
-                       : plot.efficiency >= 40 ? '#f59e0b' : '#ef4444';
-
-        const popupHtml = `
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>Plot #${plot.id}</b> &mdash;
-                <span style="color:${color}">${plot.terrain_type}</span>${proxLine}${bizLine}
-                <br>Efficiency: <span style="color:${effColor}">${plot.efficiency}%</span>
-                <br>Tax: <span style="color:#94a3b8">$${plot.monthly_tax.toLocaleString()}/mo</span>
-                <br><a href="${plot.url}" style="color:#38bdf8">&#8594; Manage Land</a>
-            </div>`;
-
-        rect.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        rect.on('dblclick', () => { window.location.href = plot.url; });
-        rect.addTo(layerPlots);
-
-        // Business icon centred on the plot cell (visible from zoom ~15)
-        if (plot.occupied_by_business_id) {
-            const bIcon = L.divIcon({
-                html: `<div style="font-size:12px;line-height:1;filter:drop-shadow(0 0 3px #000);` +
-                      `transform:translate(-50%,-50%);">` +
-                      (plot.business_active ? '&#127981;' : '&#9208;&#65039;') + `</div>`,
-                className: '', iconAnchor: [0, 0],
-            });
-            L.marker(center, { icon: bIcon, interactive: false }).addTo(layerPlots);
-        }
-
-        allBoundsPoints.push(sw);
-        allBoundsPoints.push(ne);
-    });
-
-    // ---- DISTRICTS -------------------------------------------------
-    (data.districts || []).forEach(dist => {
-        const color = terrainColor(dist.terrain_type);
-        const bSW = dist.bounds_sw, bNE = dist.bounds_ne;
-
-        let bizLine = '';
-        if (dist.business_type) {
-            const icon   = dist.business_active ? '&#127981;' : '&#9208;&#65039;';
-            const status = dist.business_active ? 'Active' : 'Inactive';
-            bizLine = `<br>${icon} <b>${dist.business_name || dist.business_type}</b> &mdash; ${status}`;
-        }
-
-        const popupHtml = `
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>&#127959;&#65039; ${dist.district_name}</b>
-                <br><span style="color:${color}">${dist.district_type}</span> district
-                <br>${dist.plots_merged} plots merged &mdash; size ${dist.size}${bizLine}
-                <br>Tax: <span style="color:#94a3b8">$${dist.monthly_tax.toLocaleString()}/mo</span>
-                <br><a href="${dist.url}" style="color:#38bdf8">&#8594; Manage District</a>
-            </div>`;
-
-        // Each source_position is the NW corner [lat, lng] of a 1×1 plot cell
-        const srcPositions = dist.source_positions || [];
-        if (srcPositions.length > 0) {
-            srcPositions.forEach(([nwLat, nwLng]) => {
-                const csw = [nwLat + PLOT_DLAT, nwLng];
-                const cne = [nwLat, nwLng + PLOT_DLNG];
-                const cell = L.rectangle([csw, cne],
-                    { color, weight: 1, fillColor: color, fillOpacity: 0.55 });
-                cell.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-                cell.on('dblclick', () => { window.location.href = dist.url; });
-                cell.addTo(layerDistricts);
-            });
-            // Dashed bounding-box outline ties the footprint together
-            L.rectangle([bSW, bNE],
-                { color, weight: 2, fillOpacity: 0, dashArray: '7 4', interactive: false }
-            ).addTo(layerDistricts);
-        } else {
-            const rect = L.rectangle([bSW, bNE],
-                { color, weight: 2.5, fillColor: color, fillOpacity: 0.4, dashArray: '6 3' });
-            rect.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-            rect.on('dblclick', () => { window.location.href = dist.url; });
-            rect.addTo(layerDistricts);
-        }
-
-        // Centroid label
-        const labelIcon = L.divIcon({
-            html: `<span style="font-size:9px;color:${color};font-family:monospace;white-space:nowrap;` +
-                  `background:rgba(2,6,23,0.82);padding:1px 4px;border-radius:2px;">` +
-                  `&#127959; ${dist.district_name}</span>`,
-            className: '', iconAnchor: [0, 0],
-        });
-        L.marker([dist.lat, dist.lng], { icon: labelIcon, interactive: false }).addTo(layerDistricts);
-
-        if (dist.occupied_by_business_id) {
-            const bIcon = L.divIcon({
-                html: `<div style="font-size:14px;line-height:1;filter:drop-shadow(0 0 3px #000);` +
-                      `transform:translate(-50%,-50%);">` +
-                      (dist.business_active ? '&#127981;' : '&#9208;&#65039;') + `</div>`,
-                className: '', iconAnchor: [0, 0],
-            });
-            L.marker([dist.lat, dist.lng], { icon: bIcon, interactive: false }).addTo(layerDistricts);
-        }
-
-        allBoundsPoints.push(bSW);
-        allBoundsPoints.push(bNE);
-    });
-
-    // ---- CITIES ----------------------------------------------------
-    // Cities are pinned to real Maryland city positions.
-    // A semi-transparent circle shows approximate city territory;
-    // radius scales with member count so larger cities look bigger.
-    (data.cities || []).forEach(city => {
-        const clat = city.lat, clng = city.lng;
-
-        const mayorStar = city.is_mayor ? ' &#9733;' : '';
-        const icon = L.divIcon({
-            html: `<div style="display:inline-flex;align-items:center;gap:5px;` +
-                  `background:rgba(2,6,23,0.88);border:1.5px solid #38bdf8;` +
-                  `border-radius:5px;padding:4px 9px;font-family:monospace;` +
-                  `font-size:12px;color:#e2e8f0;white-space:nowrap;` +
-                  `filter:drop-shadow(0 0 8px #0ea5e9);transform:translate(-50%,-50%);` +
-                  `cursor:pointer;">` +
-                  `<span style="font-size:17px">&#127961;</span>` +
-                  ` <strong>${city.name}</strong>${mayorStar}</div>`,
-            className: '',
-            iconAnchor: [0, 0],
-        });
-
-        const mayorBadge = city.is_mayor
-            ? '<br><span style="color:#d4af37">&#9733; Mayor</span>' : '';
-        const currLine = city.currency_type
-            ? `<br>Currency: <span style="color:#f59e0b">${city.currency_type.replace(/_/g,' ')}</span>`
-            : '';
-
-        const popupHtml = `
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>&#127961;&#65039; ${city.name}</b>${mayorBadge}${currLine}
-                <br>Members: <span style="color:#38bdf8">${city.member_count || 1}</span>
-                <br><a href="${city.url}" style="color:#38bdf8">&#8594; City Hub</a>
-            </div>`;
-
-        // Semi-transparent circle showing city territory.
-        // Radius grows with member count: 1.5 km base + 500 m per member.
-        const cityRadius = 1500 + Math.min((city.member_count || 1) - 1, 20) * 500;
-        const cityCircle = L.circle([clat, clng], {
-            radius: cityRadius,
-            color: '#0ea5e9', weight: 2,
-            fillColor: '#0c2340', fillOpacity: 0.18,
-        });
-        cityCircle.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        cityCircle.on('dblclick', () => { window.location.href = city.url; });
-        cityCircle.addTo(layerCities);
-
-        const marker = L.marker([clat, clng], { icon });
-        marker.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        marker.on('dblclick', () => { window.location.href = city.url; });
-        marker.addTo(layerCities);
-
-        // Rough lat/lng extent of the city circle (1° lat ≈ 111 km)
-        const degR = cityRadius / 111000;
-        allBoundsPoints.push([clat - degR, clng - degR]);
-        allBoundsPoints.push([clat + degR, clng + degR]);
-    });
-
-    // ---- COUNTIES --------------------------------------------------
-    // Counties are pinned to real Maryland county seat positions.
-    // A dashed amber circle shows county territory extent.
-    (data.counties || []).forEach(county => {
-        const clat = county.lat, clng = county.lng;
-
-        const icon = L.divIcon({
-            html: `<div style="display:inline-flex;align-items:center;gap:5px;` +
-                  `background:rgba(2,6,23,0.88);border:1.5px solid #d4af37;` +
-                  `border-radius:5px;padding:4px 9px;font-family:monospace;` +
-                  `font-size:13px;color:#fde68a;white-space:nowrap;` +
-                  `filter:drop-shadow(0 0 8px #d4af37);transform:translate(-50%,-50%);` +
-                  `cursor:pointer;">` +
-                  `<span style="font-size:19px">&#128506;</span>` +
-                  ` <strong>${county.name}</strong></div>`,
-            className: '', iconAnchor: [0, 0],
-        });
-
-        const popupHtml = `
-            <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5e7eb;min-width:160px">
-                <b>&#128506;&#65039; ${county.name}</b>
-                <br>Token: <span style="color:#d4af37">${county.crypto_symbol}</span>
-                <br>Member cities: <span style="color:#d4af37">${county.member_city_count || 1}</span>
-                <br><a href="${county.url}" style="color:#38bdf8">&#8594; County Hub</a>
-            </div>`;
-
-        // Dashed circle for county territory.
-        // Radius: 10 km base + 3 km per member city (up to 10 cities).
-        const countyRadius = 10000 + Math.min((county.member_city_count || 1) - 1, 10) * 3000;
-        const countyCircle = L.circle([clat, clng], {
-            radius: countyRadius,
-            color: '#d4af37', weight: 2,
-            fillColor: '#78350f', fillOpacity: 0.08,
-            dashArray: '8 6',
-        });
-        countyCircle.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        countyCircle.on('dblclick', () => { window.location.href = county.url; });
-        countyCircle.addTo(layerCounties);
-
-        const marker = L.marker([clat, clng], { icon });
-        marker.bindPopup(popupHtml, { className: 'wad-popup', maxWidth: 260 });
-        marker.on('dblclick', () => { window.location.href = county.url; });
-        marker.addTo(layerCounties);
-
-        const degR = countyRadius / 111000;
-        allBoundsPoints.push([clat - degR, clng - degR]);
-        allBoundsPoints.push([clat + degR, clng + degR]);
-    });
-
-    // ---- FIT VIEWPORT ----------------------------------------------
-    if (allBoundsPoints.length > 0) {
-        // Fit to the player's assets with comfortable padding
-        map.fitBounds(allBoundsPoints, { padding: [60, 60], maxZoom: 16 });
-    } else {
-        // No assets yet — show all of Maryland
-        map.fitBounds([MD_SW, MD_NE], { padding: [20, 20] });
-    }
-
-    document.getElementById('map-loading').style.display = 'none';
-
-    const plotCount    = (data.land_plots    || []).length;
-    const distCount    = (data.districts     || []).length;
-    const cityCount    = (data.cities        || []).length;
-    const countyCount  = (data.counties      || []).length;
-    document.getElementById('map-status').textContent =
-        `${plotCount} plots  \u2022  ${distCount} districts  \u2022  ${cityCount} cities  \u2022  ${countyCount} counties`;
-}
-
-// "My Assets" button — zoom tightly to the player's economic empire
-function fitAll() {
-    if (!map) return;
-    if (allBoundsPoints.length > 0) {
-        map.fitBounds(allBoundsPoints, { padding: [60, 60], maxZoom: 16 });
-    } else {
-        fitWorld();
-    }
-}
-
-// "World View" button — zoom out to show all of Maryland
-function fitWorld() {
-    if (!map) return;
-    map.fitBounds([MD_SW, MD_NE], { padding: [10, 10] });
-}
-
-// ============================================================
-// POPUP DARK STYLING  (injected once)
-// ============================================================
-(function injectPopupStyle() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .wad-popup .leaflet-popup-content-wrapper {
-            background: #0f172a !important;
-            border: 1px solid #1e293b !important;
-            border-radius: 4px !important;
-            color: #e5e7eb !important;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
-        }
-        .wad-popup .leaflet-popup-tip {
-            background: #0f172a !important;
-        }
-        .wad-popup .leaflet-popup-close-button {
-            color: #64748b !important;
-        }
-        .wad-popup .leaflet-popup-close-button:hover {
-            color: #e5e7eb !important;
-        }
-    `;
-    document.head.appendChild(style);
-})();
+// Rerender on window resize
+window.addEventListener('resize', () => { if (_lastData) renderTerritories(_lastData); });
 
 // ============================================================
 // BOOT
 // ============================================================
-if (map) {
-    loadMapData();
-}
+loadTerritoryData();
+
 </script>
 """
 
