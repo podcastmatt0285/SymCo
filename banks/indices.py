@@ -56,7 +56,7 @@ INDICES: dict[str, dict] = {
     "WBC50": {
         "name": "Wadsworth Blue-Chip 50",
         "code": "WBC-50",
-        "desc": "Top 50 player-created public companies by market capitalisation.",
+        "desc": "Top 50 companies by market capitalisation — public players and NPC businesses.",
         "unit": "USD", "icon": "📈", "color": "#38bdf8",
     },
     "GLVI": {
@@ -216,7 +216,7 @@ def _clamp(v: float, lo: float, hi: float) -> float:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def calc_WBC50() -> tuple[float, dict]:
-    """Top-50 market cap sum."""
+    """Top-50 market cap sum — public companies + NPC private enterprises."""
     try:
         from banks.brokerage_firm import CompanyShares, get_db as firm_db
         db = firm_db()
@@ -229,12 +229,37 @@ def calc_WBC50() -> tuple[float, dict]:
                     .all())
         finally:
             db.close()
-        caps = sorted(
-            [{"label": r.ticker_symbol, "name": r.company_name,
-              "value": r.shares_outstanding * r.current_price}
-             for r in rows if r.shares_outstanding and r.current_price],
-            key=lambda x: x["value"], reverse=True
-        )
+        caps = [{"label": r.ticker_symbol, "name": r.company_name,
+                 "value": r.shares_outstanding * r.current_price}
+                for r in rows if r.shares_outstanding and r.current_price]
+
+        # Add NPC players as private enterprise entries (cash + land value)
+        try:
+            from auth import Player
+            from land import LandPlot
+            from reserve_banks import get_usd_balance
+            db_main = _get_db()
+            try:
+                npc_players = db_main.query(Player).filter(Player.is_npc == True).all()
+                if npc_players:
+                    npc_ids = [p.id for p in npc_players]
+                    land_rows = (db_main.query(LandPlot.owner_id,
+                                               func.sum(LandPlot.monthly_tax * 120))
+                                 .filter(LandPlot.owner_id.in_(npc_ids))
+                                 .group_by(LandPlot.owner_id).all())
+                    land_by_id = {row[0]: float(row[1] or 0.0) for row in land_rows}
+                    for npc in npc_players:
+                        npc_val = get_usd_balance(npc.id) + land_by_id.get(npc.id, 0.0)
+                        if npc_val > 0:
+                            caps.append({"label": npc.business_name,
+                                         "name": npc.business_name,
+                                         "value": npc_val})
+            finally:
+                db_main.close()
+        except Exception as e:
+            print(f"[Indices] WBC50 NPC valuation error: {e}")
+
+        caps.sort(key=lambda x: x["value"], reverse=True)
         top50 = caps[:50]
         total = sum(c["value"] for c in top50)
         breakdown = [{"label": c["label"], "value": round(c["value"], 2)} for c in top50[:15]]
