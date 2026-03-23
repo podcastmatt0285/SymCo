@@ -516,6 +516,46 @@ def admin_set_currency_balance(admin_id: int, player_id: int, currency_code: str
         return {"ok": False, "error": str(e)}
 
 
+def admin_set_etf_cash(admin_id: int, bank_id: str, new_balance: float) -> dict:
+    """Set an ETF bank's cash_reserves to an exact value."""
+    try:
+        from banks import get_db, BankEntity
+        db = get_db()
+        entity = db.query(BankEntity).filter(BankEntity.bank_id == bank_id).first()
+        if not entity:
+            db.close()
+            return {"ok": False, "error": f"Bank '{bank_id}' not found"}
+        old = entity.cash_reserves
+        entity.cash_reserves = new_balance
+        db.commit()
+        db.close()
+        log_action(admin_id, "edit_etf_cash", None,
+                   f"{bank_id}: ${old:,.2f} -> ${new_balance:,.2f}")
+        return {"ok": True, "bank_id": bank_id, "old_balance": old, "new_balance": new_balance}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_set_brokerage_cash(admin_id: int, new_balance: float) -> dict:
+    """Set the Brokerage Firm's cash_reserves to an exact value."""
+    try:
+        from banks.brokerage_firm import get_db, FirmEntity
+        db = get_db()
+        firm = db.query(FirmEntity).first()
+        if not firm:
+            db.close()
+            return {"ok": False, "error": "Brokerage Firm entity not found"}
+        old = firm.cash_reserves
+        firm.cash_reserves = new_balance
+        db.commit()
+        db.close()
+        log_action(admin_id, "edit_brokerage_cash", None,
+                   f"Brokerage Firm: ${old:,.2f} -> ${new_balance:,.2f}")
+        return {"ok": True, "old_balance": old, "new_balance": new_balance}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 # ==========================
 # UPDATES CHANNEL POSTING
 # ==========================

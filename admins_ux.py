@@ -2416,6 +2416,15 @@ def _audit_etf(cfg: dict) -> dict:
     total_issued = int(bank_entity.total_shares_issued) if bank_entity else 0
     share_price = bank_entity.share_price if bank_entity else 0.0
 
+    # Cash reserves
+    cash_reserves = 0.0
+    try:
+        bank_entity = banks.get_bank_entity(cfg["bank_id"])
+        if bank_entity:
+            cash_reserves = bank_entity.cash_reserves
+    except Exception:
+        pass
+
     return {
         "bank_id": cfg["bank_id"],
         "name": cfg["name"],
@@ -2430,6 +2439,7 @@ def _audit_etf(cfg: dict) -> dict:
         "share_price": share_price,
         "holders": holders,
         "active_orders": orders_data,
+        "cash_reserves": cash_reserves,
     }
 
 
@@ -2487,6 +2497,17 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
                 <span style="color:#22c55e;">Players hold: <b>{a["player_inventory"]:,}</b></span>
                 <span style="color:#a78bfa;">In orders: <b>{a["shares_in_orders"]:,}</b></span>
                 <span>Price: <b>{fmt_usd(a["share_price"], disp, precision=8)}</b></span>
+                <span style="color:#f5a855;">Cash reserves: <b>${a["cash_reserves"]:,.2f}</b></span>
+            </div>
+            <div style="margin-bottom:12px;">
+                <form method="post" action="/admin/etf/set-cash" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                    <input type="hidden" name="bank_id" value="{a["bank_id"]}">
+                    <span style="font-size:0.72rem;color:#9ca3af;white-space:nowrap;">Set cash reserves:</span>
+                    <input type="number" name="new_balance" step="0.01" value="{a["cash_reserves"]:.2f}"
+                           style="flex:1;min-width:160px;font-size:0.8rem;">
+                    <button class="btn btn-blue" type="submit"
+                            onclick="return confirm('Set {a["name"]} cash reserves?')">Set Cash</button>
+                </form>
             </div>
 
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
@@ -2615,10 +2636,41 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
     except Exception as scan_ex:
         orphan_section = f'<div class="card"><h3>Brokerage &amp; Bank Share Cleanup</h3><p style="color:#ef4444;">Scan error: {scan_ex}</p></div>'
 
+    # ── Brokerage Firm cash card ─────────────────────────────────────────────
+    brokerage_html = ""
+    try:
+        from banks.brokerage_firm import get_db as firm_db_fn, FirmEntity, MINIMUM_OPERATING_RESERVE
+        fdb = firm_db_fn()
+        firm = fdb.query(FirmEntity).first()
+        fdb.close()
+        if firm:
+            status_color = "#22c55e" if firm.cash_reserves >= MINIMUM_OPERATING_RESERVE else "#ef4444"
+            status_label = "Solvent" if firm.cash_reserves >= MINIMUM_OPERATING_RESERVE else "INSOLVENT"
+            brokerage_html = f"""
+            <div class="card">
+                <h3>Wadsworth Brokerage Firm</h3>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;font-size:0.75rem;">
+                    <span style="color:{status_color};">Status: <b>{status_label}</b></span>
+                    <span style="color:#f5a855;">Cash reserves: <b>${firm.cash_reserves:,.2f}</b></span>
+                    <span style="color:#9ca3af;">Min. reserve: <b>${MINIMUM_OPERATING_RESERVE:,.2f}</b></span>
+                </div>
+                <form method="post" action="/admin/etf/set-brokerage-cash"
+                      style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                    <span style="font-size:0.72rem;color:#9ca3af;white-space:nowrap;">Set cash reserves:</span>
+                    <input type="number" name="new_balance" step="0.01" value="{firm.cash_reserves:.2f}"
+                           style="flex:1;min-width:160px;font-size:0.8rem;">
+                    <button class="btn btn-blue" type="submit"
+                            onclick="return confirm('Set Brokerage Firm cash reserves?')">Set Cash</button>
+                </form>
+            </div>"""
+    except Exception as brk_ex:
+        brokerage_html = f'<div class="card"><h3>Wadsworth Brokerage Firm</h3><p style="color:#ef4444;">Error: {brk_ex}</p></div>'
+
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">ETF Bank Management</h2>
     {alert}
     {cards_html}
+    {brokerage_html}
     {orphan_section}
     """
     return HTMLResponse(admin_shell("ETF Banks", body, admin.business_name, "/admin/etf"))
@@ -2811,6 +2863,41 @@ def admin_cleanup_orphan_shares(session_token: Optional[str] = Cookie(None)):
             f"{result['orders_cancelled']} open orders cancelled, "
             f"{result['wbc50_cleared']} WBC50 holdings zeroed."
         )
+        return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
+    return RedirectResponse(url=f"/admin/etf?err={quote_plus(result['error'][:120])}", status_code=303)
+
+
+@router.post("/admin/etf/set-cash")
+def admin_etf_set_cash(
+    session_token: Optional[str] = Cookie(None),
+    bank_id: str = Form(...),
+    new_balance: float = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from admins import admin_set_etf_cash
+    from urllib.parse import quote_plus
+    result = admin_set_etf_cash(admin.id, bank_id, new_balance)
+    if result["ok"]:
+        msg = f"{bank_id} cash set to ${new_balance:,.2f}"
+        return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
+    return RedirectResponse(url=f"/admin/etf?err={quote_plus(result['error'][:120])}", status_code=303)
+
+
+@router.post("/admin/etf/set-brokerage-cash")
+def admin_etf_set_brokerage_cash(
+    session_token: Optional[str] = Cookie(None),
+    new_balance: float = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from admins import admin_set_brokerage_cash
+    from urllib.parse import quote_plus
+    result = admin_set_brokerage_cash(admin.id, new_balance)
+    if result["ok"]:
+        msg = f"Brokerage Firm cash set to ${new_balance:,.2f}"
         return RedirectResponse(url=f"/admin/etf?msg={quote_plus(msg)}", status_code=303)
     return RedirectResponse(url=f"/admin/etf?err={quote_plus(result['error'][:120])}", status_code=303)
 
