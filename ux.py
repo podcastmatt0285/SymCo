@@ -1616,12 +1616,12 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Wiki</span>
             </a>
 
-            <div class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12); opacity:0.5; cursor:default; pointer-events:none;">
+            <a href="/world-map" class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12);--btn:#4ade80;">
                 <span class="dc-ico">🗺️</span>
                 <div class="dc-t">World Map</div>
-                <div class="dc-d">Visualize your economic empire on an interactive grid map of Wadsworth</div>
-                <span class="dc-btn" style="background:#334155;color:#64748b;">Coming Soon</span>
-            </div>
+                <div class="dc-d">Live political atlas — counties, cities, districts, and terrain across Wadsworth</div>
+                <span class="dc-btn">Open Map</span>
+            </a>
 
             <a href="/settings" class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);--btn:#818cf8;">
                 <span class="dc-ico">⚙️</span>

@@ -17,8 +17,8 @@ router = APIRouter()
 
 _TABS = [
     ("audio",     "🎵 Audio"),
-    ("account",   "👤 Account"),
     ("tutorials", "📖 Tutorials"),
+    ("account",   "👤 Account"),
 ]
 
 
@@ -810,215 +810,225 @@ def _audio_tab() -> str:
 
 
 def _tutorials_tab(player) -> str:
-    from tutorial_ux import get_tutorial_step, TOTAL_STEPS, TERRAIN_OPTIONS
+    from tutorial_ux import get_tutorial_step, TERRAIN_OPTIONS
     from executive import FIRST_LADY_EXECUTIVES
 
     step = get_tutorial_step(player.id)
-    complete = step >= 12
-    not_started = step == 0
 
-    completed_count = min(step, TOTAL_STEPS)
-    pct = int(completed_count / TOTAL_STEPS * 100)
+    # ─────────────────────────────────────────────────────────────────────────
+    # Helper: render one tutorial card
+    # ─────────────────────────────────────────────────────────────────────────
+    def _tutorial_card(
+        number,        # 1, 2, 3 …
+        title,
+        description,
+        total_steps,
+        completed_steps,   # how many steps finished
+        current_step,      # step label shown when in-progress ("3 of 9"), or None
+        status,            # "not_started" | "in_progress" | "complete" | "locked"
+        reward_html,       # inner HTML for the reward area
+    ):
+        STATUS_CFG = {
+            "not_started": ("#64748b", "#64748b", "Not Started"),
+            "in_progress": ("#818cf8", "#818cf8", "In Progress"),
+            "complete":    ("#4ade80", "#4ade80", "Complete ✓"),
+            "locked":      ("#334155", "#475569", "Locked"),
+        }
+        bar_color, badge_color, badge_label = STATUS_CFG[status]
+        pct = int(completed_steps / total_steps * 100) if total_steps else 0
 
-    # ── Progress header ───────────────────────────────────────────────────────
-    if complete:
-        status_text  = "All 11 steps complete!"
-        status_color = "#4ade80"
-        bar_color    = "#4ade80"
-    elif not_started:
-        status_text  = "Not started yet"
-        status_color = "#64748b"
-        bar_color    = "#818cf8"
+        step_label = ""
+        if status == "in_progress" and current_step is not None:
+            step_label = f'<span style="font-size:0.72rem;color:#64748b;">Step {current_step} of {total_steps}</span>'
+        elif status == "complete":
+            step_label = f'<span style="font-size:0.72rem;color:#4ade80;">{total_steps} of {total_steps} steps</span>'
+        elif status == "not_started":
+            step_label = f'<span style="font-size:0.72rem;color:#64748b;">0 of {total_steps} steps</span>'
+        elif status == "locked":
+            step_label = f'<span style="font-size:0.72rem;color:#334155;">Complete tutorial {number - 1} to unlock</span>'
+
+        border = "1px solid #4ade80" if status == "complete" else ("1px solid #818cf8" if status == "in_progress" else "1px solid #1e293b")
+        opacity = "opacity:0.5;" if status == "locked" else ""
+
+        return f"""
+<div style="background:#0f172a;{border};border-radius:8px;padding:20px 24px;margin-bottom:16px;{opacity}">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <span style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
+                     letter-spacing:.06em;">Tutorial {number}</span>
+        <span style="font-size:0.72rem;font-weight:bold;color:{badge_color};padding:2px 8px;
+                     background:rgba(255,255,255,0.04);border-radius:99px;border:1px solid {badge_color}22;">
+          {badge_label}
+        </span>
+      </div>
+      <div style="font-size:1rem;font-weight:bold;color:#f1f5f9;">{title}</div>
+      <div style="font-size:0.78rem;color:#64748b;margin-top:4px;">{description}</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <div style="flex:1;background:#1e293b;border-radius:4px;height:6px;overflow:hidden;">
+      <div style="background:{bar_color};height:100%;width:{pct}%;border-radius:4px;transition:width .4s;"></div>
+    </div>
+    {step_label}
+  </div>
+  <div style="border-top:1px solid #1e293b;padding-top:14px;">
+    <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
+                letter-spacing:.06em;margin-bottom:10px;">Reward</div>
+    {reward_html}
+  </div>
+</div>"""
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Tutorial 1 — Start a Business  (tutorial_step 1–9, complete at step ≥ 10)
+    # ─────────────────────────────────────────────────────────────────────────
+    T1_STEPS = 9
+
+    if step == 0:
+        t1_status  = "not_started"
+        t1_done    = 0
+        t1_current = None
+    elif step >= 10:
+        t1_status  = "complete"
+        t1_done    = T1_STEPS
+        t1_current = None
     else:
-        status_text  = f"Step {step} of {TOTAL_STEPS}"
-        status_color = "#d4af37"
-        bar_color    = "#818cf8"
+        t1_status  = "in_progress"
+        t1_done    = step - 1  # steps before the current one are done
+        t1_current = step
 
-    progress_html = f"""
-<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:20px 24px;margin-bottom:24px;">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
-    <span style="font-size:1rem;font-weight:bold;color:#f1f5f9;">Tutorial Progress</span>
-    <span style="font-size:0.85rem;color:{status_color};font-weight:bold;">{status_text}</span>
-  </div>
-  <div style="background:#1e293b;border-radius:4px;height:8px;overflow:hidden;margin-bottom:8px;">
-    <div style="background:{bar_color};height:100%;width:{pct}%;transition:width .4s;border-radius:4px;"></div>
-  </div>
-  <div style="font-size:0.75rem;color:#64748b;">{completed_count} of {TOTAL_STEPS} steps completed</div>
-</div>"""
-
-    # ── Step list ─────────────────────────────────────────────────────────────
-    STEP_LABELS = [
-        (1,  "Welcome to Wadsworth"),
-        (2,  "Land — build a Water Treatment Facility"),
-        (3,  "Inventory — see your first water supply"),
-        (4,  "Land — build a Plantation &amp; Grocery Store"),
-        (5,  "Inventory — full resource overview"),
-        (6,  "Production Costs — apple costs explained"),
-        (7,  "Market — list your first apple for sale"),
-        (8,  "Stats — explore production chains"),
-        (9,  "Reward — claim your free tax-exempt land plot"),
-        (10, "Land Market — locations &amp; proximities"),
-        (11, "Executives — claim your free First Lady"),
-    ]
-
-    rows = ""
-    for num, label in STEP_LABELS:
-        if step > num or complete:
-            icon  = "&#10003;"
-            color = "#4ade80"
-            bg    = "rgba(74,222,128,0.06)"
-            fw    = "normal"
-        elif step == num:
-            icon  = "&#9654;"
-            color = "#d4af37"
-            bg    = "rgba(212,175,55,0.08)"
-            fw    = "bold"
-        else:
-            icon  = "&#9675;"
-            color = "#334155"
-            bg    = "transparent"
-            fw    = "normal"
-        rows += (
-            f'<div style="display:flex;align-items:center;gap:12px;padding:8px 12px;'
-            f'background:{bg};border-radius:4px;">'
-            f'<span style="width:18px;text-align:center;color:{color};font-size:0.85rem;">{icon}</span>'
-            f'<span style="font-size:0.8rem;color:{"#f1f5f9" if step >= num else "#475569"};'
-            f'font-weight:{fw};">{num}. {label}</span>'
-            f'</div>'
-        )
-
-    steps_html = f"""
-<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
-  <div style="font-size:0.85rem;font-weight:bold;color:#94a3b8;text-transform:uppercase;
-              letter-spacing:0.05em;margin-bottom:12px;">Steps</div>
-  <div style="display:flex;flex-direction:column;gap:2px;">
-    {rows}
-  </div>
-</div>"""
-
-    # ── Prizes ────────────────────────────────────────────────────────────────
-    # Prize 1: tax-free land plot (claimed when step goes from 9→10)
-    if complete or step >= 10:
-        prize1_html = """
-<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;
-            background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:6px;">
-  <span style="font-size:1.3rem;">&#10003;</span>
+    # Reward: tax-free land plot
+    if step >= 10:
+        t1_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#4ade80;font-size:1rem;">&#10003;</span>
   <div>
-    <div style="font-size:0.9rem;font-weight:bold;color:#4ade80;">Tax-Free Land Plot — Claimed</div>
-    <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">
-      Your free plot with all proximity features and zero tax has been added to your land.
-      You can view it on <a href="/land" style="color:#38bdf8;">Land</a> or sell it on the
+    <span style="font-size:0.85rem;font-weight:bold;color:#4ade80;">Tax-Free Land Plot — Claimed</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      Permanent plot, all proximity features, zero monthly tax.
+      View on <a href="/land" style="color:#38bdf8;">Land</a> or
       <a href="/land-market" style="color:#38bdf8;">Land Market</a>.
     </div>
   </div>
 </div>"""
     elif step == 9:
-        terrain_options = "".join(
+        terrain_opts = "".join(
             f'<option value="{k}">{k.title()} — {desc}</option>'
             for k, desc in TERRAIN_OPTIONS
         )
-        prize1_html = f"""
-<div style="padding:16px;background:#0f172a;border:1px solid #d4af37;border-radius:6px;">
-  <div style="font-size:0.9rem;font-weight:bold;color:#d4af37;margin-bottom:4px;">
-    &#127381; Tax-Free Land Plot — Ready to Claim!
-  </div>
-  <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:14px;">
-    A permanent, tax-free plot with all proximity features. Choose your terrain:
-  </div>
-  <form method="post" action="/api/tutorial/claim-reward" style="display:flex;flex-direction:column;gap:10px;">
-    <select name="terrain_type" style="padding:8px 10px;background:#1e293b;border:1px solid #334155;
-            border-radius:4px;color:#f1f5f9;font-size:0.8rem;cursor:pointer;">
-      {terrain_options}
-    </select>
-    <button type="submit" style="padding:10px 20px;background:#d4af37;color:#0f172a;border:none;
-            border-radius:4px;font-weight:bold;font-size:0.85rem;cursor:pointer;align-self:flex-start;">
-      Claim Land Plot
-    </button>
-  </form>
-</div>"""
+        t1_reward = f"""
+<div style="font-size:0.82rem;font-weight:bold;color:#d4af37;margin-bottom:10px;">
+  &#127381; Ready to claim — choose your terrain:
+</div>
+<form method="post" action="/api/tutorial/claim-reward"
+      style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+  <select name="terrain_type" style="flex:1;min-width:180px;padding:7px 10px;background:#1e293b;
+          border:1px solid #334155;border-radius:4px;color:#f1f5f9;font-size:0.78rem;cursor:pointer;">
+    {terrain_opts}
+  </select>
+  <button type="submit" style="padding:8px 18px;background:#d4af37;color:#0f172a;border:none;
+          border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+    Claim Land Plot
+  </button>
+</form>"""
     else:
-        steps_needed = 9 - step if step > 0 else "the"
-        prize1_html = f"""
-<div style="padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;
-            opacity:0.6;">
-  <div style="font-size:0.9rem;font-weight:bold;color:#64748b;">&#128274; Tax-Free Land Plot</div>
-  <div style="font-size:0.75rem;color:#475569;margin-top:4px;">
-    Unlocks at step 9{"" if not_started else f" — {9-step} step{'s' if 9-step!=1 else ''} away"}.
-    A permanent plot with all proximity features and zero monthly tax.
-  </div>
+        remaining = (9 - step) if step > 0 else 9
+        t1_reward = f"""
+<div style="font-size:0.82rem;color:#475569;">
+  &#128274; Tax-Free Land Plot &mdash;
+  {"complete the tutorial to unlock" if step == 0 else f"{remaining} step{'s' if remaining != 1 else ''} away"}
 </div>"""
 
-    # Prize 2: First Lady executive (claimed when step goes from 11→12)
-    if complete or step >= 12:
-        prize2_html = """
-<div style="display:flex;align-items:center;gap:10px;padding:14px 16px;
-            background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:6px;">
-  <span style="font-size:1.3rem;">&#10003;</span>
+    card1 = _tutorial_card(
+        number=1,
+        title="Start a Business",
+        description="Learn how to build land, manage inventory, trade on the market, and earn your first profits.",
+        total_steps=T1_STEPS,
+        completed_steps=t1_done,
+        current_step=t1_current,
+        status=t1_status,
+        reward_html=t1_reward,
+    )
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Tutorial 2 — Executives  (tutorial_step 10–11, complete at step ≥ 12)
+    # ─────────────────────────────────────────────────────────────────────────
+    T2_STEPS = 2  # step 10 (land market) + step 11 (executives video)
+
+    if step < 10:
+        t2_status  = "locked"
+        t2_done    = 0
+        t2_current = None
+    elif step >= 12:
+        t2_status  = "complete"
+        t2_done    = T2_STEPS
+        t2_current = None
+    else:
+        t2_status  = "in_progress"
+        t2_done    = step - 10       # step 10 → 0 done, step 11 → 1 done
+        t2_current = step - 9        # step 10 → "1 of 2", step 11 → "2 of 2"
+
+    # Reward: First Lady executive
+    if step >= 12:
+        t2_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#4ade80;font-size:1rem;">&#10003;</span>
   <div>
-    <div style="font-size:0.9rem;font-weight:bold;color:#4ade80;">First Lady Executive — Claimed</div>
-    <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">
-      Your free First Lady executive is active. View her on your
-      <a href="/executives" style="color:#38bdf8;">Executives</a> page.
+    <span style="font-size:0.85rem;font-weight:bold;color:#4ade80;">First Lady Executive — Claimed</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      Permanent executive, wage $0 forever, max level 18.
+      View on <a href="/executives" style="color:#38bdf8;">Executives</a>.
     </div>
   </div>
 </div>"""
     elif step == 11:
-        fl_options = "".join(
+        fl_opts = "".join(
             f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
             for fl in FIRST_LADY_EXECUTIVES
         )
-        prize2_html = f"""
-<div style="padding:16px;background:#0f172a;border:1px solid #d4af37;border-radius:6px;">
-  <div style="font-size:0.9rem;font-weight:bold;color:#d4af37;margin-bottom:4px;">
-    &#127381; First Lady Executive — Ready to Claim!
-  </div>
-  <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:14px;">
-    A free, permanent executive with wage $0 forever and max level 18. Choose your First Lady:
-  </div>
-  <form method="post" action="/api/tutorial/claim-executive" style="display:flex;flex-direction:column;gap:10px;">
-    <select name="first_lady" style="padding:8px 10px;background:#1e293b;border:1px solid #334155;
-            border-radius:4px;color:#f1f5f9;font-size:0.8rem;cursor:pointer;">
-      {fl_options}
-    </select>
-    <button type="submit" style="padding:10px 20px;background:#d4af37;color:#0f172a;border:none;
-            border-radius:4px;font-weight:bold;font-size:0.85rem;cursor:pointer;align-self:flex-start;">
-      Claim First Lady
-    </button>
-  </form>
-</div>"""
+        t2_reward = f"""
+<div style="font-size:0.82rem;font-weight:bold;color:#d4af37;margin-bottom:10px;">
+  &#127381; Ready to claim — choose your First Lady:
+</div>
+<form method="post" action="/api/tutorial/claim-executive"
+      style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+  <select name="first_lady" style="flex:1;min-width:220px;padding:7px 10px;background:#1e293b;
+          border:1px solid #334155;border-radius:4px;color:#f1f5f9;font-size:0.78rem;cursor:pointer;">
+    {fl_opts}
+  </select>
+  <button type="submit" style="padding:8px 18px;background:#d4af37;color:#0f172a;border:none;
+          border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+    Claim First Lady
+  </button>
+</form>"""
+    elif step < 10:
+        t2_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; First Lady Executive — complete Tutorial 1 to unlock</div>'
     else:
-        prize2_html = f"""
-<div style="padding:14px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;
-            opacity:0.6;">
-  <div style="font-size:0.9rem;font-weight:bold;color:#64748b;">&#128274; First Lady Executive</div>
-  <div style="font-size:0.75rem;color:#475569;margin-top:4px;">
-    Unlocks at step 11{"" if not_started else f" — {11-step} step{'s' if 11-step!=1 else ''} away"}.
-    A free, permanent executive (wage $0, max level 18) chosen from historical First Ladies.
-  </div>
-</div>"""
+        t2_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; First Lady Executive — finish this tutorial to claim</div>'
 
-    prizes_html = f"""
-<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
-  <div style="font-size:0.85rem;font-weight:bold;color:#94a3b8;text-transform:uppercase;
-              letter-spacing:0.05em;margin-bottom:14px;">Prizes</div>
-  <div style="display:flex;flex-direction:column;gap:12px;">
-    {prize1_html}
-    {prize2_html}
-  </div>
-</div>"""
+    card2 = _tutorial_card(
+        number=2,
+        title="Executives",
+        description="Watch the Executives overview, learn how the Land Market works, and hire your first C-suite executive for free.",
+        total_steps=T2_STEPS,
+        completed_steps=t2_done,
+        current_step=t2_current,
+        status=t2_status,
+        reward_html=t2_reward,
+    )
 
-    # ── CTA if not started ─────────────────────────────────────────────────────
+    # ── CTA if nothing started ────────────────────────────────────────────────
     cta = ""
-    if not_started:
+    if step == 0:
         cta = """
-<div style="text-align:center;padding:16px;">
-  <a href="/" style="display:inline-block;padding:12px 28px;background:#818cf8;color:#fff;
-     border-radius:6px;text-decoration:none;font-weight:bold;font-size:0.9rem;">
-    Start Tutorial on Dashboard
+<div style="text-align:center;padding:8px 0 4px;">
+  <a href="/" style="display:inline-block;padding:11px 28px;background:#818cf8;color:#fff;
+     border-radius:6px;text-decoration:none;font-weight:bold;font-size:0.88rem;">
+    Start Tutorial 1 on Dashboard
   </a>
 </div>"""
 
-    return progress_html + steps_html + prizes_html + cta
+    return card1 + card2 + cta
 
 
 def _account_tab(player) -> str:
