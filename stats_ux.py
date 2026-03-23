@@ -2320,7 +2320,7 @@ async def stats_items(
         <a href="/stats/item/{key}" class="card" style="text-decoration: none;">
             <div class="card-header">
                 <span class="card-title">{name}</span>
-                <span class="badge badge-gray">{cat}</span>
+                <span class="badge badge-gray">{cat.replace("_", " ").title()}</span>
             </div>
             <div class="card-subtitle">{desc}</div>
             <div class="stat-row" style="margin-top: 8px;">
@@ -2493,7 +2493,7 @@ async def stats_item_detail(
         <div class="card" style="cursor: default;">
             <div class="card-header">
                 <span class="card-title">Market Data</span>
-                <span class="badge badge-gray">{cat}</span>
+                <span class="badge badge-gray">{cat.replace("_", " ").title()}</span>
             </div>
             <div class="card-value">{price_str}</div>
             {avg_html}

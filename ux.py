@@ -2793,45 +2793,79 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         # Build item cards
         # Rich emoji map keyed to item_types.json category values
         _json_cat_emoji = {
-            "accessories": "👜", "alcohol": "🍺", "apparel": "👕",
-            "baked_goods": "🍞", "beverages": "🥤", "canned_goods": "🥫",
-            "components": "⚙️", "condiments": "🫙", "confectionery": "🍬",
+            "accessories": "👜", "alcohol": "🍺", "animals": "🐾",
+            "apparel": "👕", "appliances": "🏠", "baked_goods": "🍞",
+            "beverages": "🥤", "canned_goods": "🥫", "components": "⚙️",
+            "condiments": "🫙", "confectionery": "🍬", "construction": "🏗️",
             "crops": "🌾", "cured_tobacco": "🚬", "dairy": "🥛",
-            "energy": "⚡", "essential_oils": "🧴", "financial": "📊",
-            "food": "🍽️", "fuel": "⛽", "health": "💊",
-            "home_goods": "🏠", "industrial": "🏭", "ingredients": "🧂",
-            "liquids": "💧", "livestock": "🐄", "luxury": "💎",
-            "materials": "🪵", "meat": "🥩", "media": "📺",
-            "metals": "🔩", "military": "🎖️", "ore": "⛏️",
-            "packaging": "📦", "personal_care": "🧼", "prepared_food": "🍲",
-            "produce": "🥬", "retail_entertainment": "🎮", "retail_food": "🛒",
-            "retail_prison": "🔒", "retail_service": "🏪", "retail_shopping": "🛍️",
-            "seafood": "🐟", "seafood_product": "🦐", "seeds": "🌱",
-            "services": "🤝", "shellfish": "🦪", "sweeteners": "🍯",
-            "textiles": "🧵", "tobacco": "🌿", "vehicle": "🚗",
-            "vehicle_parts": "🔧", "vehicles": "🚛", "wood": "🌲",
+            "education": "📚", "electronics": "💡", "energy": "⚡",
+            "entertainment": "🎭", "essential_oils": "🧴", "financial": "📊",
+            "food": "🍽️", "food_service": "🍽️", "fuel": "⛽",
+            "health": "💊", "home_goods": "🏠", "hospitality": "🏨",
+            "industrial": "🏭", "ingredients": "🧂", "intelligence": "🕵️",
+            "lab_equipment": "🔬", "liquids": "💧", "livestock": "🐄",
+            "logistics": "🚚", "luxury": "💎", "materials": "🪵",
+            "meat": "🥩", "media": "📺", "medical_equipment": "🩺",
+            "medical_supplies": "🩹", "metals": "🔩", "military": "🎖️",
+            "ore": "⛏️", "packaging": "📦", "personal_care": "🧼",
+            "pharmaceuticals": "💊", "prepared_food": "🍲", "prison": "🔒",
+            "prison_infrastructure": "🏛️", "produce": "🥬", "retail_education": "📚",
+            "retail_entertainment": "🎮", "retail_food": "🛒", "retail_medical": "🏥",
+            "retail_military": "⚔️", "retail_prison": "🔒", "retail_service": "🏪",
+            "retail_shopping": "🛍️", "retail_transport": "🚌", "retail_zoo": "🦁",
+            "robotics": "🤖", "seafood": "🐟", "seafood_product": "🦐",
+            "seeds": "🌱", "services": "🤝", "shellfish": "🦪",
+            "sweeteners": "🍯", "textiles": "🧵", "tobacco": "🌿",
+            "utilities": "🔌", "vehicle": "🚗", "vehicle_parts": "🔧",
+            "vehicles": "🚛", "wood": "🌲", "zoo_infrastructure": "🏛️",
+            "zoo_supplies": "🦁",
         }
         _json_cat_color = {
-            "seeds": "#22c55e", "crops": "#22c55e", "produce": "#84cc16", "food": "#f97316",
-            "baked_goods": "#f97316", "confectionery": "#fb923c", "prepared_food": "#f97316",
-            "canned_goods": "#f97316", "condiments": "#fbbf24", "sweeteners": "#fbbf24",
-            "livestock": "#f59e0b", "meat": "#ef4444", "seafood": "#06b6d4",
-            "seafood_product": "#06b6d4", "shellfish": "#06b6d4",
-            "dairy": "#cbd5e1", "beverages": "#38bdf8", "liquids": "#06b6d4",
-            "alcohol": "#f97316", "tobacco": "#a78bfa", "cured_tobacco": "#a78bfa",
-            "energy": "#eab308", "fuel": "#eab308",
-            "metals": "#94a3b8", "ore": "#78716c", "materials": "#94a3b8",
-            "wood": "#a16207", "components": "#64748b", "industrial": "#64748b",
-            "packaging": "#64748b", "vehicle_parts": "#64748b",
-            "vehicle": "#60a5fa", "vehicles": "#60a5fa",
-            "luxury": "#d97706", "financial": "#6366f1",
-            "apparel": "#ec4899", "textiles": "#ec4899", "accessories": "#ec4899",
+            # Agriculture
+            "seeds": "#22c55e", "crops": "#22c55e", "produce": "#84cc16",
+            # Livestock
+            "livestock": "#f59e0b", "animals": "#f59e0b",
+            "seafood": "#06b6d4", "shellfish": "#06b6d4", "zoo_supplies": "#f59e0b",
+            # Food & Bev
+            "food": "#f97316", "baked_goods": "#fb923c", "confectionery": "#fb923c",
+            "prepared_food": "#f97316", "canned_goods": "#f97316",
+            "condiments": "#fbbf24", "sweeteners": "#fbbf24",
+            "meat": "#ef4444", "seafood_product": "#06b6d4",
+            "dairy": "#cbd5e1", "beverages": "#38bdf8", "alcohol": "#a855f7",
+            "ingredients": "#fbbf24", "food_service": "#f97316",
+            # Industrial
+            "industrial": "#64748b", "energy": "#eab308", "fuel": "#dc2626",
+            "liquids": "#06b6d4", "electronics": "#38bdf8", "components": "#6366f1",
+            "metals": "#94a3b8", "ore": "#78716c", "packaging": "#64748b",
+            "utilities": "#0891b2", "logistics": "#60a5fa", "lab_equipment": "#64748b",
+            "robotics": "#6366f1", "medical_equipment": "#10b981",
+            # Construction
+            "materials": "#94a3b8", "construction": "#8b5cf6",
+            "prison_infrastructure": "#78716c", "zoo_infrastructure": "#f59e0b",
+            "wood": "#a16207",
+            # Vehicles
+            "vehicle": "#60a5fa", "vehicles": "#60a5fa", "vehicle_parts": "#60a5fa",
+            # Consumer Goods
+            "apparel": "#ec4899", "textiles": "#ec4899", "accessories": "#e879f9",
+            "home_goods": "#14b8a6", "appliances": "#14b8a6",
             "health": "#22c55e", "personal_care": "#a78bfa", "essential_oils": "#a78bfa",
-            "home_goods": "#94a3b8", "ingredients": "#fbbf24",
-            "military": "#dc2626", "media": "#8b5cf6",
-            "retail_entertainment": "#8b5cf6", "retail_food": "#f97316",
-            "retail_shopping": "#ec4899", "retail_service": "#38bdf8",
-            "retail_prison": "#64748b", "services": "#38bdf8",
+            "pharmaceuticals": "#22c55e", "medical_supplies": "#22c55e",
+            "tobacco": "#a78bfa", "cured_tobacco": "#a78bfa",
+            "media": "#8b5cf6", "education": "#38bdf8", "prison": "#64748b",
+            "entertainment": "#8b5cf6",
+            # Weaponry
+            "military": "#dc2626", "retail_military": "#dc2626", "intelligence": "#ef4444",
+            # Luxury
+            "luxury": "#d97706",
+            # Services
+            "services": "#a78bfa", "hospitality": "#a78bfa",
+            "retail_service": "#a78bfa", "retail_food": "#f97316",
+            "retail_shopping": "#ec4899", "retail_entertainment": "#8b5cf6",
+            "retail_medical": "#22c55e", "retail_education": "#38bdf8",
+            "retail_transport": "#60a5fa", "retail_zoo": "#f59e0b",
+            "retail_prison": "#64748b",
+            # Finance
+            "financial": "#6366f1",
         }
 
         cards_html = ""
@@ -4007,52 +4041,106 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         finally:
             mkt_db.close()
         
-        # Group items by category
+        # Map JSON category → one of the 11 filter groups (mirrors inventory page)
+        _mkt_json_to_filter = {
+            "crops": "agriculture", "seeds": "agriculture", "produce": "agriculture",
+            "livestock": "livestock", "seafood": "livestock", "shellfish": "livestock",
+            "animals": "livestock", "zoo_supplies": "livestock",
+            "dairy": "food_bev", "meat": "food_bev", "seafood_product": "food_bev",
+            "prepared_food": "food_bev", "baked_goods": "food_bev", "confectionery": "food_bev",
+            "food": "food_bev", "canned_goods": "food_bev", "condiments": "food_bev",
+            "sweeteners": "food_bev", "beverages": "food_bev", "alcohol": "food_bev",
+            "ingredients": "food_bev", "fast_food": "food_bev", "retail_food": "food_bev",
+            "food_service": "food_bev",
+            "industrial": "industrial", "components": "industrial", "metals": "industrial",
+            "ore": "industrial", "packaging": "industrial", "fuel": "industrial",
+            "energy": "industrial", "liquids": "industrial", "electronics": "industrial",
+            "utilities": "industrial", "logistics": "industrial", "lab_equipment": "industrial",
+            "robotics": "industrial", "medical_equipment": "industrial",
+            "minerals": "industrial", "chemicals": "industrial", "aerospace": "industrial",
+            "construction": "construction", "materials": "construction",
+            "prison_infrastructure": "construction", "zoo_infrastructure": "construction",
+            "wood": "luxury",
+            "vehicle": "vehicles", "vehicles": "vehicles", "vehicle_parts": "vehicles",
+            "auto_parts": "vehicles", "marine_parts": "vehicles",
+            "apparel": "consumer", "textiles": "consumer", "accessories": "consumer",
+            "home_goods": "consumer", "health": "consumer", "media": "consumer",
+            "tobacco": "consumer", "cured_tobacco": "consumer", "personal_care": "consumer",
+            "essential_oils": "consumer", "appliances": "consumer", "pharmaceuticals": "consumer",
+            "medical_supplies": "consumer", "education": "consumer", "prison": "consumer",
+            "retail_shopping": "consumer", "entertainment": "consumer",
+            "military": "weaponry", "retail_military": "weaponry", "intelligence": "weaponry",
+            "luxury": "luxury",
+            "services": "services", "retail_service": "services", "retail_transport": "services",
+            "retail_medical": "services", "retail_education": "services",
+            "retail_entertainment": "services", "retail_zoo": "services",
+            "retail_prison": "services", "hospitality": "services",
+            "financial": "finance",
+        }
+        # Ordered display metadata for the 11 filter groups
+        _filter_meta = [
+            ("agriculture",  "#22c55e", "🌾 Agriculture"),
+            ("livestock",    "#f59e0b", "🐄 Livestock"),
+            ("food_bev",     "#f97316", "🍽️ Food & Bev"),
+            ("industrial",   "#64748b", "🏭 Industrial"),
+            ("construction", "#8b5cf6", "🏗️ Construction"),
+            ("vehicles",     "#60a5fa", "🚗 Vehicles & Parts"),
+            ("consumer",     "#ec4899", "🛍️ Consumer Goods"),
+            ("weaponry",     "#dc2626", "⚔️ Weaponry"),
+            ("luxury",       "#d97706", "💎 Luxury"),
+            ("services",     "#a78bfa", "🤝 Services"),
+            ("finance",      "#6366f1", "📊 Finance"),
+        ]
+
+        # Group items by the 11 filter categories
         categories = {}
         for i in items:
             info = inv_mod.get_item_info(i)
-            cat = info.get("category", "other") if info else "other"
-            if cat not in categories:
-                categories[cat] = []
-            categories[cat].append(i)
-        
-        # Category colors
-        # Category colors
+            json_cat = info.get("category", "other") if info else "other"
+            filter_cat = _mkt_json_to_filter.get(json_cat, "consumer")
+            if filter_cat not in categories:
+                categories[filter_cat] = []
+            categories[filter_cat].append(i)
+
+        # Per-item color lookup (granular JSON category → color, for item pills if needed)
         cat_colors = {
-            "seeds": "#22c55e",
-            "fruits": "#84cc16",
-            "vegetables": "#16a34a",
-            "crops": "#eab308",
-            "food": "#f97316",
-            "prepared_food": "#fb923c",
-            "beverage": "#06b6d4",
-            "alcohol": "#a855f7",
-            "ingredients": "#ec4899",
-            "livestock": "#92400e",
-            "feed": "#a3e635",
-            "health": "#ef4444",
-            "personal_care": "#f472b6",
-            "industrial": "#64748b",
-            "materials": "#78716c",
-            "textiles": "#c084fc",
+            "seeds": "#22c55e", "crops": "#22c55e", "produce": "#84cc16",
+            "livestock": "#f59e0b", "animals": "#f59e0b",
+            "seafood": "#06b6d4", "shellfish": "#06b6d4", "zoo_supplies": "#f59e0b",
+            "food": "#f97316", "baked_goods": "#fb923c", "confectionery": "#fb923c",
+            "prepared_food": "#f97316", "canned_goods": "#f97316",
+            "condiments": "#fbbf24", "sweeteners": "#fbbf24",
+            "meat": "#ef4444", "seafood_product": "#06b6d4",
+            "dairy": "#cbd5e1", "beverages": "#38bdf8", "beverage": "#38bdf8",
+            "alcohol": "#a855f7", "ingredients": "#fbbf24", "food_service": "#f97316",
+            "industrial": "#64748b", "energy": "#eab308", "fuel": "#dc2626",
+            "liquids": "#06b6d4", "electronics": "#38bdf8", "components": "#6366f1",
+            "metals": "#94a3b8", "ore": "#78716c", "packaging": "#64748b",
+            "utilities": "#0891b2", "logistics": "#60a5fa", "lab_equipment": "#64748b",
+            "robotics": "#6366f1", "medical_equipment": "#10b981",
+            "minerals": "#a8a29e", "chemicals": "#ec4899", "aerospace": "#06b6d4",
+            "materials": "#94a3b8", "construction": "#8b5cf6",
+            "prison_infrastructure": "#78716c", "zoo_infrastructure": "#f59e0b",
             "wood": "#a16207",
-            "ore": "#71717a",
-            "metals": "#94a3b8",
-            "components": "#6366f1",
-            "auto_parts": "#3b82f6",
-            "marine_parts": "#0ea5e9",
-            "vehicle": "#2563eb",
-            "apparel": "#d946ef",
-            "accessories": "#e879f9",
-            "home_goods": "#14b8a6",
-            "packaging": "#737373",
-            "media": "#facc15",
-            "liquids": "#38bdf8",
-            "energy": "#f59e0b",
-            "financial": "#10b981",
+            "vehicle": "#60a5fa", "vehicles": "#60a5fa",
+            "vehicle_parts": "#60a5fa", "auto_parts": "#3b82f6", "marine_parts": "#0ea5e9",
+            "apparel": "#ec4899", "textiles": "#c084fc", "accessories": "#e879f9",
+            "home_goods": "#14b8a6", "appliances": "#14b8a6",
+            "health": "#22c55e", "personal_care": "#f472b6", "essential_oils": "#a78bfa",
+            "pharmaceuticals": "#22c55e", "medical_supplies": "#22c55e",
+            "tobacco": "#a78bfa", "cured_tobacco": "#a78bfa",
+            "media": "#facc15", "education": "#38bdf8", "prison": "#64748b",
+            "entertainment": "#8b5cf6",
+            "military": "#dc2626", "retail_military": "#dc2626", "intelligence": "#ef4444",
             "luxury": "#d4af37",
-            "minerals": "#a8a29e",
-            "other": "#94a3b8"
+            "services": "#a78bfa", "hospitality": "#a78bfa",
+            "retail_service": "#a78bfa", "retail_food": "#f97316",
+            "retail_shopping": "#ec4899", "retail_entertainment": "#8b5cf6",
+            "retail_medical": "#22c55e", "retail_education": "#38bdf8",
+            "retail_transport": "#60a5fa", "retail_zoo": "#f59e0b",
+            "retail_prison": "#64748b",
+            "financial": "#10b981",
+            "other": "#94a3b8",
         }
         
         # Search bar
@@ -4070,15 +4158,16 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
         </div>
         '''
         
-        # Build category tabs
+        # Build category tabs — ordered by the 11-category scheme
         filter_tabs = '<div id="itemTabs" style="margin-bottom: 20px; max-width: 100%;">'
-        
-        for cat_name, cat_items in sorted(categories.items()):
-            cat_color = cat_colors.get(cat_name, "#64748b")
+        for filter_cat, cat_color, cat_label in _filter_meta:
+            cat_items = categories.get(filter_cat)
+            if not cat_items:
+                continue
             filter_tabs += f'''
             <div style="margin-bottom: 12px;">
-                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">
-                    {cat_name.replace("_", " ")}
+                <div style="color: {cat_color}; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px;">
+                    {cat_label}
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 6px;">
             '''
@@ -4088,18 +4177,16 @@ def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_
                 text_color = "#020617" if is_selected else cat_color
                 border = f"1px solid {cat_color}"
                 display_name = i.replace("_", " ").title()
-                
                 filter_tabs += f'''
-                <a href="/market?item={i}" 
-                   class="item-tab" 
-                   data-item="{i}" 
+                <a href="/market?item={i}"
+                   class="item-tab"
+                   data-item="{i}"
                    data-display="{display_name}"
-                   style="padding: 4px 10px; font-size: 0.8rem; background: {bg_color}; color: {text_color}; 
+                   style="padding: 4px 10px; font-size: 0.8rem; background: {bg_color}; color: {text_color};
                           border: {border}; border-radius: 3px; text-decoration: none; display: inline-block;">
                     {display_name}
                 </a>'''
             filter_tabs += '</div></div>'
-        
         filter_tabs += '</div>'
         
         # Search script
@@ -8821,20 +8908,45 @@ def production_costs_page(
     if mode not in ("vertical", "cost_basis"):
         mode = "vertical"
 
-    # ── shared palette ───────────────────────────────────────────────────────
+    # ── shared palette — keyed to item_types.json category values ────────────
     cat_colors = {
-        "seeds": "#22c55e", "fruits": "#84cc16", "vegetables": "#16a34a",
-        "crops": "#eab308", "food": "#f97316", "prepared_food": "#fb923c",
-        "beverage": "#06b6d4", "alcohol": "#a855f7", "ingredients": "#ec4899",
-        "livestock": "#92400e", "feed": "#a3e635", "health": "#ef4444",
-        "personal_care": "#f472b6", "industrial": "#64748b", "materials": "#78716c",
-        "textiles": "#c084fc", "wood": "#a16207", "ore": "#71717a",
-        "metals": "#94a3b8", "components": "#6366f1", "auto_parts": "#3b82f6",
-        "marine_parts": "#0ea5e9", "vehicle": "#2563eb", "apparel": "#d946ef",
-        "accessories": "#e879f9", "home_goods": "#14b8a6", "packaging": "#737373",
-        "media": "#facc15", "liquids": "#38bdf8", "energy": "#f59e0b",
-        "financial": "#10b981", "luxury": "#d4af37", "minerals": "#a8a29e",
-        "utilities": "#0891b2", "fuel": "#dc2626", "unknown": "#64748b"
+        "seeds": "#22c55e", "crops": "#22c55e", "produce": "#84cc16",
+        "livestock": "#f59e0b", "animals": "#f59e0b",
+        "seafood": "#06b6d4", "shellfish": "#06b6d4", "zoo_supplies": "#f59e0b",
+        "food": "#f97316", "baked_goods": "#fb923c", "confectionery": "#fb923c",
+        "prepared_food": "#f97316", "canned_goods": "#f97316",
+        "condiments": "#fbbf24", "sweeteners": "#fbbf24",
+        "meat": "#ef4444", "seafood_product": "#06b6d4",
+        "dairy": "#cbd5e1", "beverages": "#38bdf8", "beverage": "#38bdf8",
+        "alcohol": "#a855f7", "ingredients": "#fbbf24", "food_service": "#f97316",
+        "industrial": "#64748b", "energy": "#eab308", "fuel": "#dc2626",
+        "liquids": "#06b6d4", "electronics": "#38bdf8", "components": "#6366f1",
+        "metals": "#94a3b8", "ore": "#78716c", "packaging": "#64748b",
+        "utilities": "#0891b2", "logistics": "#60a5fa", "lab_equipment": "#64748b",
+        "robotics": "#6366f1", "medical_equipment": "#10b981",
+        "minerals": "#a8a29e", "chemicals": "#ec4899", "aerospace": "#06b6d4",
+        "materials": "#94a3b8", "construction": "#8b5cf6",
+        "prison_infrastructure": "#78716c", "zoo_infrastructure": "#f59e0b",
+        "wood": "#a16207",
+        "vehicle": "#60a5fa", "vehicles": "#60a5fa",
+        "vehicle_parts": "#60a5fa", "auto_parts": "#3b82f6", "marine_parts": "#0ea5e9",
+        "apparel": "#ec4899", "textiles": "#c084fc", "accessories": "#e879f9",
+        "home_goods": "#14b8a6", "appliances": "#14b8a6",
+        "health": "#22c55e", "personal_care": "#f472b6", "essential_oils": "#a78bfa",
+        "pharmaceuticals": "#22c55e", "medical_supplies": "#22c55e",
+        "tobacco": "#a78bfa", "cured_tobacco": "#a78bfa",
+        "media": "#facc15", "education": "#38bdf8", "prison": "#64748b",
+        "entertainment": "#8b5cf6",
+        "military": "#dc2626", "retail_military": "#dc2626", "intelligence": "#ef4444",
+        "luxury": "#d4af37",
+        "services": "#a78bfa", "hospitality": "#a78bfa",
+        "retail_service": "#a78bfa", "retail_food": "#f97316",
+        "retail_shopping": "#ec4899", "retail_entertainment": "#8b5cf6",
+        "retail_medical": "#22c55e", "retail_education": "#38bdf8",
+        "retail_transport": "#60a5fa", "retail_zoo": "#f59e0b",
+        "retail_prison": "#64748b",
+        "financial": "#10b981",
+        "unknown": "#64748b",
     }
 
     def _cost_color(cost):
