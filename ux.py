@@ -2638,27 +2638,52 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         import inventory as inv_mod
         inv = inv_mod.get_player_inventory(player.id)
 
-        categories = {"all": "All", "seeds": "Seeds", "fruits": "Fruits", "vegetables": "Vegetables", "liquids": "Liquids", "energy": "Energy", "animals": "Animals", "materials": "Materials", "luxury": "Luxury", "financial": "Financial"}
-        filter_tabs = '<div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px;">'
-        for k, v in categories.items():
-            color = "#38bdf8" if k == filter else "#64748b"
-            border = "1px solid #38bdf8" if k == filter else "1px solid #1e293b"
-            filter_tabs += f'<a href="/inventory?filter={k}&sort={sort}&dir={dir}" style="color: {color}; border: {border}; padding: 4px 12px; border-radius: 4px; text-decoration: none; font-size: 0.85rem;">{v}</a>'
+        categories = {
+            "all":        ("🗃️",  "All"),
+            "seeds":      ("🌱",  "Seeds"),
+            "fruits":     ("🍎",  "Fruits"),
+            "vegetables": ("🥦",  "Vegetables"),
+            "liquids":    ("💧",  "Liquids"),
+            "energy":     ("⚡",  "Energy"),
+            "animals":    ("🐄",  "Animals"),
+            "materials":  ("🪵",  "Materials"),
+            "luxury":     ("💎",  "Luxury"),
+            "financial":  ("📊",  "Financial"),
+        }
+        cat_colors = {
+            "all": "#38bdf8", "seeds": "#22c55e", "fruits": "#f97316",
+            "vegetables": "#84cc16", "liquids": "#06b6d4", "energy": "#eab308",
+            "animals": "#f59e0b", "materials": "#94a3b8", "luxury": "#d97706",
+            "financial": "#6366f1", "other": "#64748b",
+        }
+        cat_emoji = {
+            "seeds": "🌱", "fruits": "🍎", "vegetables": "🥦", "liquids": "💧",
+            "energy": "⚡", "animals": "🐄", "materials": "🪵", "luxury": "💎",
+            "financial": "📊", "other": "📦",
+        }
+
+        # Filter tabs — pill style with emoji
+        filter_tabs = '<div class="inv-filter-tabs">'
+        for k, (emoji, label) in categories.items():
+            color = cat_colors.get(k, "#38bdf8")
+            if k == filter:
+                style = f"background:{color}20;border:1px solid {color};color:{color};"
+            else:
+                style = "background:transparent;border:1px solid #1e293b;color:#64748b;"
+            filter_tabs += f'<a href="/inventory?filter={k}&sort={sort}&dir={dir}" class="inv-filter-tab" style="{style}">{emoji} {label}</a>'
         filter_tabs += '</div>'
 
         # Sort controls
-        sort_controls = '<div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;"><span style="color: #64748b; font-size: 0.85rem;">Sort:</span>'
-        sort_options = [("name", "Name"), ("qty", "Quantity"), ("value", "Value")]
-        for s_key, s_label in sort_options:
+        sort_controls = '<div class="inv-sort-bar"><span class="inv-sort-label">Sort:</span>'
+        for s_key, s_label in [("name", "Name"), ("qty", "Quantity"), ("value", "Value")]:
             if s_key == sort:
                 new_dir = "desc" if dir == "asc" else "asc"
                 arrow = " ↑" if dir == "asc" else " ↓"
-                color = "#38bdf8"
+                link_style = "color:#38bdf8;border-bottom:1px solid #38bdf8;"
             else:
-                new_dir = "asc"
-                arrow = ""
-                color = "#64748b"
-            sort_controls += f'<a href="/inventory?filter={filter}&sort={s_key}&dir={new_dir}" style="color: {color}; text-decoration: none; font-size: 0.85rem;">{s_label}{arrow}</a>'
+                new_dir, arrow = "asc", ""
+                link_style = "color:#64748b;"
+            sort_controls += f'<a href="/inventory?filter={filter}&sort={s_key}&dir={new_dir}" class="inv-sort-link" style="{link_style}">{s_label}{arrow}</a>'
         sort_controls += '</div>'
 
         # Categorisation helpers
@@ -2670,32 +2695,22 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         financial_list = ["shares", "bonds", "certificates", "notes", "tokens", "deeds"]
 
         def _item_category(item):
-            if item.endswith("_seeds"):
-                return "seeds"
-            if item in fruits_list:
-                return "fruits"
-            if item in vegetables_list:
-                return "vegetables"
-            if "water" in item or item.endswith("_juice") or item.endswith("_milk"):
-                return "liquids"
-            if item == "energy":
-                return "energy"
-            if item in animals_list:
-                return "animals"
-            if item in materials_list:
-                return "materials"
-            if item in luxury_list:
-                return "luxury"
-            if any(item.startswith(f) or item.endswith(f) for f in financial_list):
-                return "financial"
+            if item.endswith("_seeds"): return "seeds"
+            if item in fruits_list: return "fruits"
+            if item in vegetables_list: return "vegetables"
+            if "water" in item or item.endswith("_juice") or item.endswith("_milk"): return "liquids"
+            if item == "energy": return "energy"
+            if item in animals_list: return "animals"
+            if item in materials_list: return "materials"
+            if item in luxury_list: return "luxury"
+            if any(item.startswith(f) or item.endswith(f) for f in financial_list): return "financial"
             return "other"
 
         # Filter items
         filtered = []
         for item, qty in inv.items():
             if filter != "all":
-                cat = _item_category(item)
-                if cat != filter:
+                if _item_category(item) != filter:
                     continue
             item_info = inv_mod.get_item_info(item) or {}
             unit_price = item_info.get("base_price") or item_info.get("value") or 0
@@ -2707,45 +2722,240 @@ def inventory_page(session_token: Optional[str] = Cookie(None), filter: str = "a
         elif sort == "value":
             filtered.sort(key=lambda x: x[1] * x[3], reverse=True)
         else:
-            # name sort
-            if dir == "desc":
-                filtered.sort(key=lambda x: x[0], reverse=True)
-            else:
-                filtered.sort(key=lambda x: x[0])
+            filtered.sort(key=lambda x: x[0], reverse=(dir == "desc"))
 
-        items_html = ""
-        for item, qty, item_info, unit_price in filtered:
-            est_value_line = ""
-            if unit_price:
-                est_val = qty * unit_price
-                est_value_line = f'<br><small style="color: #22c55e;">Est. Value: {fmt_usd(est_val, disp)} ({fmt_usd(unit_price, disp)}/unit)</small>'
-            items_html += f'''
-            <div class="card">
-                <div style="display: flex; justify-content: space-between;">
-                    <div>
-                        <strong>{item.replace("_", " ").title()}</strong><br>
-                        <small style="color: #64748b;">{item_info.get("description", "No description")}</small>{est_value_line}
+        # Summary stats
+        total_items = len(filtered)
+        total_value = sum(qty * up for _, qty, _, up in filtered)
+        max_value = max((qty * up for _, qty, _, up in filtered), default=1) or 1
+        total_val_display = fmt_usd(total_value, disp) if total_value else "—"
+
+        summary_bar = f'''
+        <div class="inv-summary-bar">
+            <div class="inv-summary-stats">
+                <div class="inv-stat">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    <span class="inv-stat-val">{total_items}</span>
+                    <span class="inv-stat-lbl">items</span>
+                </div>
+                <div class="inv-stat">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    <span class="inv-stat-val" style="color:#22c55e;">{total_val_display}</span>
+                    <span class="inv-stat-lbl">est. value</span>
+                </div>
+            </div>
+            <div class="inv-search-wrap">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="inv-search" class="inv-search-input" placeholder="Search items..." oninput="filterItems(this.value)">
+            </div>
+        </div>'''
+
+        quick_access = '''
+        <div class="inv-quick-access">
+            <a href="/inventory/trusted-list" class="inv-quick-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Trusted Traders
+            </a>
+            <a href="/inventory/swaps" class="inv-quick-btn inv-quick-btn--swap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                Item Swaps
+            </a>
+        </div>'''
+
+        # Build item cards
+        cards_html = ""
+        if not filtered:
+            cards_html = '''
+            <div class="inv-empty">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#1e293b" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <p>No items in this category</p>
+            </div>'''
+        else:
+            for item, qty, item_info, unit_price in filtered:
+                cat = _item_category(item)
+                cat_color = cat_colors.get(cat, "#38bdf8")
+                emoji = cat_emoji.get(cat, "📦")
+                display_name = item.replace("_", " ").title()
+                description = item_info.get("description", "No description available.")
+                desc_short = description[:82] + "…" if len(description) > 82 else description
+
+                item_value = qty * unit_price
+                val_pct = min(100, int((item_value / max_value) * 100)) if max_value else 0
+
+                if unit_price:
+                    val_html = f'<div class="inv-card-value">💰 {fmt_usd(item_value, disp)} <span class="inv-unit-price">· {fmt_usd(unit_price, disp)}/unit</span></div>'
+                    bar_html = f'<div class="inv-value-bar"><div class="inv-value-fill" style="width:{val_pct}%;background:{cat_color}33;border-right:2px solid {cat_color};"></div></div>'
+                else:
+                    val_html = '<div class="inv-card-value inv-card-value--none">No market price</div>'
+                    bar_html = '<div class="inv-value-bar"></div>'
+
+                form_id = f"invform-{item}"
+                cards_html += f'''
+                <div class="inv-card" data-name="{display_name.lower()} {item.lower()}">
+                    <div class="inv-card-top">
+                        <span class="inv-cat-pill" style="color:{cat_color};border-color:{cat_color}40;background:{cat_color}10;">{emoji} {cat.title()}</span>
+                        <span class="inv-qty-badge">{qty:,.0f}</span>
                     </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 1.2rem; color: #38bdf8;">{qty:.0f} units</span>
-                        <form action="/api/inventory/list" method="post" style="margin-top: 10px;">
+                    <div class="inv-card-name">{display_name}</div>
+                    <div class="inv-card-desc">{desc_short}</div>
+                    {val_html}
+                    {bar_html}
+                    <button class="inv-list-toggle" onclick="invToggleForm('{form_id}', this)" type="button">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        List on Market
+                    </button>
+                    <div class="inv-list-form" id="{form_id}">
+                        <form action="/api/inventory/list" method="post" class="inv-list-inner">
                             <input type="hidden" name="item_type" value="{item}">
-                            <input type="number" name="quantity" placeholder="Qty" style="width: 60px;" required>
-                            <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" style="width: 80px;" required>
-                            <button type="submit" class="btn-blue">List</button>
+                            <div class="inv-list-fields">
+                                <input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>
+                                <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" class="inv-input" required>
+                                <button type="submit" class="btn-blue inv-submit-btn">List →</button>
+                            </div>
                         </form>
                     </div>
-                </div>
-            </div>'''
+                </div>'''
+
+        page_assets = '''<style>
+        .inv-page-header { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+        .inv-page-header h1 { margin:0; font-size:1.25rem; color:#f1f5f9; font-weight:700; letter-spacing:-0.01em; }
+
+        .inv-summary-bar {
+            display:flex; justify-content:space-between; align-items:center;
+            background:#0f172a; border:1px solid #1e293b; border-radius:6px;
+            padding:12px 16px; margin-bottom:16px; gap:12px; flex-wrap:wrap;
+        }
+        .inv-summary-stats { display:flex; gap:24px; align-items:center; }
+        .inv-stat { display:flex; align-items:center; gap:6px; }
+        .inv-stat-val { font-size:0.95rem; font-weight:700; color:#e2e8f0; }
+        .inv-stat-lbl { font-size:0.68rem; color:#64748b; text-transform:uppercase; letter-spacing:0.06em; }
+        .inv-search-wrap {
+            display:flex; align-items:center; gap:8px;
+            background:#020617; border:1px solid #1e293b; border-radius:4px; padding:6px 10px;
+        }
+        .inv-search-input {
+            background:transparent; border:none; color:#e2e8f0; outline:none;
+            font-family:inherit; font-size:0.82rem; width:180px;
+        }
+        .inv-search-input::placeholder { color:#475569; }
+        .inv-search-wrap:focus-within { border-color:#38bdf8; }
+
+        .inv-quick-access { display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; }
+        .inv-quick-btn {
+            display:inline-flex; align-items:center; gap:7px;
+            background:#1e1b4b; border:1px solid #4c1d95; color:#a78bfa;
+            padding:7px 14px; border-radius:5px; text-decoration:none;
+            font-size:0.8rem; font-weight:500; transition:background 0.15s, border-color 0.15s;
+        }
+        .inv-quick-btn:hover { background:#2d1f6e; border-color:#7c3aed; text-decoration:none; }
+        .inv-quick-btn--swap { border-color:#5b21b6; color:#c4b5fd; }
+        .inv-quick-btn--swap:hover { border-color:#8b5cf6; }
+
+        .inv-filter-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+        .inv-filter-tab {
+            display:inline-flex; align-items:center; gap:4px;
+            padding:5px 12px; border-radius:20px; text-decoration:none;
+            font-size:0.78rem; font-weight:600; transition:opacity 0.15s; white-space:nowrap;
+        }
+        .inv-filter-tab:hover { text-decoration:none; opacity:0.8; }
+
+        .inv-sort-bar { display:flex; gap:16px; align-items:center; margin-bottom:18px; }
+        .inv-sort-label { color:#475569; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.07em; }
+        .inv-sort-link { text-decoration:none; font-size:0.8rem; padding-bottom:1px; }
+        .inv-sort-link:hover { opacity:0.8; text-decoration:none; }
+
+        .inv-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill, minmax(268px, 1fr));
+            gap:10px;
+        }
+        .inv-card {
+            background:#0f172a; border:1px solid #1e293b; border-radius:7px;
+            padding:14px 15px; transition:border-color 0.18s, box-shadow 0.18s;
+        }
+        .inv-card:hover { border-color:#334155; box-shadow:0 4px 18px #00000038; }
+
+        .inv-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:9px; }
+        .inv-cat-pill {
+            font-size:0.67rem; padding:2px 8px; border-radius:10px;
+            border:1px solid; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+        }
+        .inv-qty-badge { font-size:1.15rem; font-weight:800; color:#38bdf8; letter-spacing:-0.03em; }
+
+        .inv-card-name { font-size:0.92rem; font-weight:700; color:#f1f5f9; margin-bottom:4px; }
+        .inv-card-desc { font-size:0.72rem; color:#475569; margin-bottom:9px; line-height:1.45; min-height:2em; }
+        .inv-card-value { font-size:0.76rem; color:#22c55e; margin-bottom:6px; }
+        .inv-card-value--none { color:#334155; }
+        .inv-unit-price { color:#475569; }
+
+        .inv-value-bar { height:3px; background:#0d1b2a; border-radius:2px; margin-bottom:11px; overflow:hidden; }
+        .inv-value-fill { height:100%; border-radius:2px; }
+
+        .inv-list-toggle {
+            display:flex; align-items:center; justify-content:center; gap:6px; width:100%;
+            background:transparent; border:1px solid #1e293b; color:#475569;
+            padding:5px 10px; border-radius:4px; cursor:pointer; font-family:inherit;
+            font-size:0.74rem; font-weight:500; transition:all 0.15s; margin-top:2px;
+        }
+        .inv-list-toggle:hover { border-color:#38bdf8; color:#38bdf8; }
+        .inv-list-toggle.open { border-color:#38bdf840; color:#38bdf8; background:#38bdf808; }
+
+        .inv-list-form { display:none; margin-top:10px; padding-top:10px; border-top:1px solid #1e293b; }
+        .inv-list-inner { display:flex; flex-direction:column; gap:0; }
+        .inv-list-fields { display:flex; gap:5px; align-items:center; }
+        .inv-input {
+            flex:1; min-width:0; background:#020617; border:1px solid #1e293b;
+            color:#e2e8f0; padding:5px 7px; border-radius:3px;
+            font-size:0.78rem; font-family:inherit;
+        }
+        .inv-input:focus { outline:none; border-color:#38bdf8; }
+        .inv-submit-btn { font-family:inherit; white-space:nowrap; font-size:0.78rem; }
+
+        .inv-empty {
+            grid-column:1 / -1; display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            padding:56px 20px; color:#334155; gap:14px;
+        }
+        .inv-empty p { font-size:0.85rem; margin:0; }
+
+        @media (max-width:600px) {
+            .inv-grid { grid-template-columns:1fr; }
+            .inv-search-input { width:130px; }
+            .inv-summary-bar { flex-direction:column; align-items:flex-start; }
+            .inv-summary-stats { gap:16px; }
+        }
+        </style>
+        <script>
+        function filterItems(q) {
+            q = q.toLowerCase().trim();
+            document.querySelectorAll("#inv-grid .inv-card").forEach(function(c) {
+                c.style.display = (!q || (c.dataset.name || "").includes(q)) ? "" : "none";
+            });
+        }
+        function invToggleForm(id, btn) {
+            var form = document.getElementById(id);
+            var opening = form.style.display === "none" || form.style.display === "";
+            form.style.display = opening ? "block" : "none";
+            btn.classList.toggle("open", opening);
+            if (opening) {
+                btn.innerHTML = \'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg> Cancel\';
+            } else {
+                btn.innerHTML = \'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> List on Market\';
+            }
+        }
+        </script>'''
 
         inv_body = (
-            f'<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
-            f'<h1>Your Inventory</h1>'
-            f'<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">'
-            f'<a href="/inventory/trusted-list" style="background:#1e1b4b;border:1px solid #6d28d9;color:#a78bfa;padding:6px 14px;border-radius:4px;text-decoration:none;font-size:0.85rem;">&#128274; Trusted Trader List</a>'
-            f'<a href="/inventory/swaps" style="background:#1e1b4b;border:1px solid #7c3aed;color:#c4b5fd;padding:6px 14px;border-radius:4px;text-decoration:none;font-size:0.85rem;">&#8646; Item Swaps</a>'
-            f'</div>'
-            f'{filter_tabs}{sort_controls}{items_html}'
+            page_assets
+            + '<div class="inv-page-header">'
+            + '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'
+            + '<h1>Inventory</h1>'
+            + '</div>'
+            + summary_bar
+            + quick_access
+            + filter_tabs
+            + sort_controls
+            + f'<div class="inv-grid" id="inv-grid">{cards_html}</div>'
         )
 
         # Inject tutorial overlay for inventory-relevant steps
