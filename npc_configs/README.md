@@ -54,6 +54,32 @@ is the NPC's `config_key`. Files are loaded alphabetically on startup.
 }
 ```
 
+## District Businesses
+
+To run a district business, add a `seed.districts` array and reference it by index in the business entry:
+
+```json
+{
+  "seed": {
+    "starting_cash": 25000000,
+    "districts": [
+      { "district_type": "food_court", "size": 3, "plots_merged": 3 }
+    ]
+  },
+  "businesses": [
+    {
+      "business_type": "tagine_house",
+      "district_seed_index": 0
+    }
+  ]
+}
+```
+
+- `district_type` must be a valid key from `DISTRICT_TYPES` in `districts.py` (e.g. `food_court`, `entertainment`, `food`, `mall`, etc.)
+- `district_seed_index` references the 0-based position in `seed.districts`
+- Districts are seeded directly with no merge cost — NPCs skip the normal player merge flow
+- Businesses in a district use `"market": "district"` for sell items
+
 ## Notes
 - `player_id` must be a unique negative integer. Use -2001, -2002, -2003, etc.
 - `market` field on buy/sell items: `"regular"` (default) or `"district"`
