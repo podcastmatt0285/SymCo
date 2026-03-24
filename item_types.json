@@ -4143,5 +4143,25 @@
     "name": "Live Lake Scrolls",
     "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
     "category": "luxury"
+  },
+  "lamb_stew": {
+    "name": "Lamb Stew",
+    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
+    "category": "food"
+  },
+  "tallow_candle": {
+    "name": "Tallow Candle",
+    "description": "A hand-dipped candle rendered from lamb tallow \u2014 the working person's light, practical and long-burning, produced for centuries before beeswax became affordable.",
+    "category": "home_goods"
+  },
+  "canned_lamb": {
+    "name": "Canned Lamb",
+    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
+    "category": "food"
+  },
+  "sacred_lamb_offering": {
+    "name": "Sacred Lamb Offering",
+    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
+    "category": "luxury"
   }
 }
