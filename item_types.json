@@ -4123,5 +4123,25 @@
     "category": "textiles",
     "description": "Metal fasteners for clothing and bags",
     "name": "Zippers"
+  },
+  "clay": {
+    "name": "Clay",
+    "description": "Raw mineral clay extracted from riverbeds and hillsides; used in ceramics, sealing, and as a binding agent in religious artefacts.",
+    "category": "industrial"
+  },
+  "vellum": {
+    "name": "Vellum",
+    "description": "Premium lambskin parchment, limed and scraped smooth on a stretching frame \u2014 the finest writing surface for sacred manuscripts and legal instruments, prized over all ordinary paper.",
+    "category": "luxury"
+  },
+  "liturgical_lamb_light": {
+    "name": "Liturgical Lamb Light",
+    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
+    "category": "luxury"
+  },
+  "live_lake_scrolls": {
+    "name": "Live Lake Scrolls",
+    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
+    "category": "luxury"
   }
 }

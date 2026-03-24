@@ -183,6 +183,68 @@
             "quantity": 15
           }
         ]
+      },
+      {
+        "output_item": "live_lake_scrolls",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "vellum",
+            "quantity": 8
+          },
+          {
+            "item": "golden_pearl",
+            "quantity": 6
+          },
+          {
+            "item": "clay",
+            "quantity": 60
+          },
+          {
+            "item": "ink",
+            "quantity": 500
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 60
+          },
+          {
+            "item": "vanilla_beans",
+            "quantity": 40
+          },
+          {
+            "item": "apple_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "tea_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "beeswax",
+            "quantity": 80
+          },
+          {
+            "item": "salt",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "leather",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
       }
     ]
   },
@@ -2189,6 +2251,36 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "vellum",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 40
+          },
+          {
+            "item": "salt",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "lard",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 12000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ]
   },
@@ -2413,6 +2505,24 @@
           {
             "item": "paper",
             "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "clay",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
           }
         ]
       }
@@ -17668,6 +17778,56 @@
           {
             "item": "paper",
             "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "liturgical_lamb_light",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 150
+          },
+          {
+            "item": "lard",
+            "quantity": 80
+          },
+          {
+            "item": "beeswax",
+            "quantity": 60
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 25
+          },
+          {
+            "item": "vanilla_beans",
+            "quantity": 15
+          },
+          {
+            "item": "rope_wick",
+            "quantity": 5
+          },
+          {
+            "item": "golden_pearl",
+            "quantity": 2
+          },
+          {
+            "item": "dye",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
           }
         ]
       }
