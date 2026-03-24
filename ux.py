@@ -1671,7 +1671,8 @@ async def businesses(session_token: Optional[str] = Cookie(None), sort: str = "n
         import asyncio, json as _j
         html = await asyncio.to_thread(_businesses_impl, session_token, sort, biz_filter)
         if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
-        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+        _safe = _j.dumps(html).replace('</', '<\\/')
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_safe});document.close();}})();</script>"
     return StreamingResponse(_gen(), media_type="text/html")
 
 def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", biz_filter: str = "all"):
@@ -1990,7 +1991,8 @@ async def inventory_page(session_token: Optional[str] = Cookie(None), filter: st
         import asyncio, json as _j
         html = await asyncio.to_thread(_inventory_page_impl, session_token, filter, sort, dir)
         if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
-        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+        _safe = _j.dumps(html).replace('</', '<\\/')
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_safe});document.close();}})();</script>"
     return StreamingResponse(_gen(), media_type="text/html")
 
 def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all", sort: str = "name", dir: str = "asc"):
@@ -2457,7 +2459,8 @@ async def land(session_token: Optional[str] = Cookie(None), sort: str = "id", or
         import asyncio, json as _j
         html = await asyncio.to_thread(_land_impl, session_token, sort, order, success, error)
         if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
-        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+        _safe = _j.dumps(html).replace('</', '<\\/')
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_safe});document.close();}})();</script>"
     return StreamingResponse(_gen(), media_type="text/html")
 
 def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
@@ -2780,7 +2783,8 @@ async def land_market_page(session_token: Optional[str] = Cookie(None), sort: st
         import asyncio, json as _j
         html = await asyncio.to_thread(_land_market_page_impl, session_token, sort, order, terrain, tab, success, error)
         if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
-        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+        _safe = _j.dumps(html).replace('</', '<\\/')
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_safe});document.close();}})();</script>"
     return StreamingResponse(_gen(), media_type="text/html")
 
 def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
@@ -3384,7 +3388,8 @@ async def market_page(session_token: Optional[str] = Cookie(None), item: str = "
         import asyncio, json as _j
         html = await asyncio.to_thread(_market_page_impl, session_token, item)
         if isinstance(html, RedirectResponse): yield "<script>location.href='/';</script>"; return
-        yield f"<script>(function(){{document.open('text/html','replace');document.write({_j.dumps(html)});document.close();}})();</script>"
+        _safe = _j.dumps(html).replace('</', '<\\/')
+        yield f"<script>(function(){{document.open('text/html','replace');document.write({_safe});document.close();}})();</script>"
     return StreamingResponse(_gen(), media_type="text/html")
 
 def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_seeds"):
