@@ -1031,6 +1031,69 @@ def _tutorials_tab(player) -> str:
         can_restart=(step >= 10),
     )
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Tutorial 3 — IPO & Banking  (tutorial_3_step 1–6 active, 7=reward, 8=complete)
+    # ─────────────────────────────────────────────────────────────────────────
+    from tutorial_ux import get_tutorial3_step
+    step3 = get_tutorial3_step(player.id)
+    T3_STEPS = 6
+
+    if step < 12:
+        t3_status  = "locked"
+        t3_done    = 0
+        t3_current = None
+    elif step3 >= 8:
+        t3_status  = "complete"
+        t3_done    = T3_STEPS
+        t3_current = None
+    elif step3 == 0:
+        t3_status  = "not_started"
+        t3_done    = 0
+        t3_current = None
+    else:
+        t3_status  = "in_progress"
+        t3_done    = min(step3 - 1, T3_STEPS)
+        t3_current = min(step3, T3_STEPS)
+
+    if step3 >= 8:
+        t3_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#4ade80;font-size:1rem;">&#10003;</span>
+  <div>
+    <span style="font-size:0.85rem;font-weight:bold;color:#4ade80;">Margin Lending — Unlocked</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      Borrow up to 50% of your portfolio value to amplify positions.
+      Available on <a href="/brokerage/trading" style="color:#38bdf8;">Brokerage Trading</a>.
+    </div>
+  </div>
+</div>"""
+    elif step3 == 7:
+        t3_reward = """
+<div style="font-size:0.82rem;font-weight:bold;color:#d4af37;margin-bottom:8px;">
+  &#127381; Ready to claim — visit the trading page:
+</div>
+<a href="/brokerage/trading"
+   style="display:inline-block;padding:8px 18px;background:#d4af37;color:#020617;
+          border-radius:4px;font-weight:bold;font-size:0.82rem;text-decoration:none;">
+  Go Claim Reward →
+</a>"""
+    elif step < 12:
+        t3_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; Margin Lending — complete Tutorial 2 to unlock</div>'
+    else:
+        t3_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; Margin Lending — finish this tutorial to claim</div>'
+
+    card3 = _tutorial_card(
+        number=3,
+        title="IPO &amp; Banking",
+        description="Explore the Banking System and Brokerage Firm, then take your company public on the Wadsworth Public Exchange.",
+        total_steps=T3_STEPS,
+        completed_steps=t3_done,
+        current_step=t3_current,
+        status=t3_status,
+        reward_html=t3_reward,
+        can_restart=(step3 > 0),
+    )
+
     # ── CTA if nothing started ────────────────────────────────────────────────
     cta = ""
     if step == 0:
@@ -1042,7 +1105,7 @@ def _tutorials_tab(player) -> str:
   </a>
 </div>"""
 
-    return card1 + card2 + cta
+    return card1 + card2 + card3 + cta
 
 
 def _account_tab(player) -> str:
