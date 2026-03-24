@@ -18,7 +18,8 @@
       { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
       { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
       { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 }
+      { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": [],            "size": 1 }
     ]
   },
 
