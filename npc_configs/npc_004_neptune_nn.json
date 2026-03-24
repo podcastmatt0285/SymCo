@@ -59,6 +59,11 @@
         "taffy", "fudge", "truffles", "toffee", "licorice",
         "marshmallow", "peppermint", "caramel"
       ]
+    },
+    {
+      "business_type": "farmers_market",
+      "district_id": null,
+      "active_lines": ["honey"]
     }
   ],
 
@@ -120,6 +125,12 @@
     "salt": {
       "target_inventory": 100,
       "reorder_at": 20,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "honey": {
+      "target_inventory": 400,
+      "reorder_at": 80,
       "max_price_multiplier": 1.15,
       "market": "regular"
     },
