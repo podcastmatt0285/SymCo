@@ -1550,7 +1550,14 @@ def home(session_token: Optional[str] = Cookie(None)):
     except Exception:
         crypto_inherit_banners = ""
 
-    dashboard_top = tutorial_overlay or tutorial_banner
+    tutorial3_banner = ""
+    try:
+        from tutorial_ux import get_tutorial3_banner_html
+        tutorial3_banner = get_tutorial3_banner_html(player)
+    except Exception:
+        pass
+
+    dashboard_top = tutorial_overlay or tutorial_banner or tutorial3_banner
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
     if crypto_inherit_banners:
@@ -4667,7 +4674,13 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             </div>
             '''
         
-        return shell("Banks", bank_html, player.cash_balance, player.id)
+        tut3 = ""
+        try:
+            from tutorial_ux import get_tutorial3_overlay_html
+            tut3 = get_tutorial3_overlay_html(player, "banks")
+        except Exception:
+            pass
+        return shell("Banks", tut3 + bank_html, player.cash_balance, player.id)
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -5450,8 +5463,14 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
         </div>
         '''
         
-        return shell(BANK_NAME, body, player.cash_balance, player.id)
-        
+        tut3 = ""
+        try:
+            from tutorial_ux import get_tutorial3_overlay_html
+            tut3 = get_tutorial3_overlay_html(player, "brokerage_firm")
+        except Exception:
+            pass
+        return shell(BANK_NAME, tut3 + body, player.cash_balance, player.id)
+
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -5863,7 +5882,17 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             "sell_order_placed": ("Order placed.", True),
             "buy_failed":        ("Buy order failed. Check your balance and order size.", False),
             "sell_failed":       ("Sell order failed. You may have exceeded the quantity available to sell, or the order was rejected by the exchange.", False),
+            "ipo_created":       ("Your IPO has been listed on the WPE! Your shares are now publicly tradeable.", True),
         }
+
+        # Tutorial 3 — advance to reward step when IPO just completed
+        if success == "ipo_created":
+            try:
+                from tutorial_ux import get_tutorial3_step, set_tutorial3_step, player_has_public_company
+                if get_tutorial3_step(player.id) == 6 and player_has_public_company(player.id):
+                    set_tutorial3_step(player.id, 7)
+            except Exception:
+                pass
         if success and success in _TRADING_MSGS:
             _txt, _ = _TRADING_MSGS[success]
             _alert_banner = f'<div style="background:#14532d;color:#86efac;padding:8px 12px;border-radius:4px;margin-bottom:10px;font-size:0.8rem;">{_txt}</div>'
@@ -6059,8 +6088,14 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         </div>
         '''
 
-        return shell(f"Trade {selected_company.ticker_symbol}", body, player.cash_balance, player.id)
-        
+        tut3 = ""
+        try:
+            from tutorial_ux import get_tutorial3_overlay_html
+            tut3 = get_tutorial3_overlay_html(player, "brokerage_trading")
+        except Exception:
+            pass
+        return shell(f"Trade {selected_company.ticker_symbol}", tut3 + body, player.cash_balance, player.id)
+
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -6595,7 +6630,13 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
         </script>
         '''
 
-        return shell("IPO Center", body, player.cash_balance, player.id)
+        tut3 = ""
+        try:
+            from tutorial_ux import get_tutorial3_overlay_html
+            tut3 = get_tutorial3_overlay_html(player, "brokerage_ipo")
+        except Exception:
+            pass
+        return shell("IPO Center", tut3 + body, player.cash_balance, player.id)
 
     except Exception as e:
         import traceback

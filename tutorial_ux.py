@@ -1071,3 +1071,557 @@ def claim_first_lady(
 
     set_tutorial_step(player.id, 12)
     return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
+
+
+# ============================================================
+# TUTORIAL 3 — IPO & Banking
+# ============================================================
+#
+# Steps:
+#   0  - Not started (banner shown on dashboard after T1 complete)
+#   1  - Banking System overview  (/banks)
+#   2  - Brokerage Firm intro      (/banks/brokerage-firm)
+#   3  - What is an IPO?           (/brokerage/ipo)
+#   4  - IPO Types deep-dive       (/brokerage/ipo)
+#   5  - Valuation & prerequisites (/brokerage/ipo)
+#   6  - Launch Your IPO           (/brokerage/ipo — prereq check)
+#   7  - Reward overlay            (/brokerage/trading after IPO created)
+#   8  - Complete
+# ============================================================
+
+T3_TOTAL_STEPS = 6
+
+
+def get_tutorial3_step(player_id: int) -> int:
+    """Return the player's current Tutorial 3 step (0–8)."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        db.close()
+        if player is None:
+            return 0
+        step = getattr(player, "tutorial_3_step", 0)
+        return step if step is not None else 0
+    except Exception as e:
+        print(f"[Tutorial3] get_tutorial3_step error: {e}")
+        return 0
+
+
+def set_tutorial3_step(player_id: int, step: int):
+    """Set the player's Tutorial 3 step."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        if player:
+            player.tutorial_3_step = step
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial3] set_tutorial3_step error: {e}")
+
+
+def should_show_tutorial3_banner(player) -> bool:
+    """Show the T3 start banner only after Tutorial 1 is complete and T3 not yet started."""
+    t1 = getattr(player, "tutorial_step", 0) or 0
+    t3 = getattr(player, "tutorial_3_step", 0) or 0
+    return t1 >= 12 and t3 == 0
+
+
+def player_has_public_company(player_id: int) -> bool:
+    """Return True if the player already has an active public company."""
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
+        db = get_firm_db()
+        count = db.query(CompanyShares).filter(
+            CompanyShares.founder_id == player_id,
+            CompanyShares.is_delisted == False,
+        ).count()
+        db.close()
+        return count > 0
+    except Exception as e:
+        print(f"[Tutorial3] player_has_public_company error: {e}")
+        return False
+
+
+def get_player_estimated_valuation(player_id: int) -> float:
+    """Estimate player company valuation for prerequisite check."""
+    try:
+        from banks.brokerage_firm import calculate_player_company_valuation
+        val, _ = calculate_player_company_valuation(player_id)
+        return val or 0.0
+    except Exception:
+        return 0.0
+
+
+# ── Tutorial 3 overlay HTML generator ─────────────────────────────────────────
+
+def get_tutorial3_overlay_html(player, current_page: str) -> str:
+    """
+    Return the Tutorial 3 overlay panel HTML for the given page.
+    `current_page` is one of: 'banks', 'brokerage_firm', 'brokerage_ipo', 'brokerage_trading'.
+    Returns empty string if T3 is not active or wrong page.
+    """
+    step = get_tutorial3_step(player.id)
+    if step == 0 or step >= 8:
+        return ""
+
+    T3_STEP_PAGE = {
+        1: "banks",
+        2: "brokerage_firm",
+        3: "brokerage_ipo",
+        4: "brokerage_ipo",
+        5: "brokerage_ipo",
+        6: "brokerage_ipo",
+        7: "brokerage_trading",
+    }
+    if T3_STEP_PAGE.get(step, "") != current_page:
+        return ""
+
+    # ── per-step content ───────────────────────────────────────────────────────
+
+    if step == 1:
+        title = "The Banking System"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Wadsworth has a fully functioning <strong style="color:#e5e7eb;">banking system</strong>
+            made up of independent <em style="color:#38bdf8;">Reserve Banks</em>. Each bank issues
+            its own currency, backed by commodities and economic activity in its region.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Players hold legal tender with the reserve bank that serves their home region.
+            You can buy <strong style="color:#e5e7eb;">government bonds</strong> from a reserve bank
+            to earn interest, or take out loans to fund expansion. Banks charge competitive rates
+            and adjust them based on inflation and credit risk.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            The <strong style="color:#d4af37;">Brokerage Firm</strong> — shown below — is a private
+            financial institution separate from the reserve banks. It runs the stock exchange,
+            manages IPOs, and lets you trade equity in other player companies.
+            Let's visit it next.
+        </p>
+        <a href="/banks/brokerage-firm"
+           onclick="fetch('/api/tutorial3/advance',{method:'POST'}).catch(()=>{})"
+           style="display:inline-block;background:#d4af37;color:#020617;padding:10px 24px;
+                  border-radius:4px;font-size:0.9rem;font-weight:bold;text-decoration:none;">
+            Visit the Brokerage Firm →
+        </a>
+        """
+
+    elif step == 2:
+        title = "The Wadsworth Brokerage Firm"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            The <strong style="color:#e5e7eb;">Brokerage Firm</strong> is the financial backbone
+            of the Wadsworth exchange. It acts as underwriter, market-maker, and lender for
+            publicly traded player companies.
+        </p>
+        <ul style="color:#94a3b8;line-height:1.9;margin:0 0 14px 24px;padding:0;">
+            <li><strong style="color:#e5e7eb;">Equity trading</strong> — buy and sell shares in player companies</li>
+            <li><strong style="color:#e5e7eb;">IPO underwriting</strong> — take your company public on the WPE</li>
+            <li><strong style="color:#e5e7eb;">Short selling</strong> — borrow and short shares you don't own</li>
+            <li><strong style="color:#e5e7eb;">Margin lending</strong> — borrow against your portfolio to amplify positions</li>
+            <li><strong style="color:#e5e7eb;">ETF funds</strong> — invest in themed commodity-backed funds</li>
+            <li><strong style="color:#e5e7eb;">Governance</strong> — vote on corporate proposals as a shareholder</li>
+        </ul>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            When you're ready to take your company public, the Firm handles everything from
+            pricing to share distribution. Let's learn how an IPO works.
+        </p>
+        <a href="/brokerage/ipo"
+           onclick="fetch('/api/tutorial3/advance',{method:'POST'}).catch(()=>{})"
+           style="display:inline-block;background:#d4af37;color:#020617;padding:10px 24px;
+                  border-radius:4px;font-size:0.9rem;font-weight:bold;text-decoration:none;">
+            Learn About IPOs →
+        </a>
+        """
+
+    elif step == 3:
+        title = "What is an IPO?"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            An <strong style="color:#e5e7eb;">Initial Public Offering (IPO)</strong> is when you
+            sell a portion of your company to outside investors by listing shares on the
+            Wadsworth Public Exchange (WPE).
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Here's how it works:
+        </p>
+        <ol style="color:#94a3b8;line-height:1.9;margin:0 0 14px 24px;padding:0;">
+            <li>You choose an <strong style="color:#e5e7eb;">IPO type</strong> and set how many
+                shares to issue and what percentage of the company goes public.</li>
+            <li>The Brokerage Firm either buys the shares from you upfront
+                (<em style="color:#38bdf8;">underwritten</em>) or lists them for the market to
+                absorb (<em style="color:#38bdf8;">direct listing</em>).</li>
+            <li>Proceeds land in your account. Public shareholders now own a stake in your
+                holding company — entitled to dividends if you issue them, and voting rights
+                on proposals you create.</li>
+            <li>Your company's share price fluctuates with demand, earnings, and market sentiment.</li>
+        </ol>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Next, let's look at the different IPO structures available to you.
+        </p>
+        <form action="/api/tutorial3/advance" method="post">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                See IPO Types →
+            </button>
+        </form>
+        """
+
+    elif step == 4:
+        title = "IPO Types — Choose Your Structure"
+        content = """
+        <p style="color:#94a3b8;margin:0 0 14px 0;">
+            Wadsworth offers <strong style="color:#e5e7eb;">7 IPO structures</strong>.
+            Each trades off price, risk, control, and capital differently:
+        </p>
+        <div style="display:grid;gap:8px;margin-bottom:16px;">
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #38bdf8;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Direct Listing</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              Flat $5,000 fee · No underwriter · Market-priced · Up to 80% float · Min valuation $25k
+            </div>
+          </div>
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #6366f1;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Underwritten IPO</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              7% discount · Guaranteed capital · Up to 60% float · Min valuation $50k
+            </div>
+          </div>
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #22c55e;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Income Shares IPO</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              3% discount (best price) · 10% annual dividend quarterly · Up to 40% float · Min valuation $75k
+            </div>
+          </div>
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #f59e0b;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Dual-Class IPO</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              8% discount · Class B public + Class A founder · Up to 49% float · Min valuation $100k · You keep >51% votes
+            </div>
+          </div>
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #ec4899;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Preferred Share Offering</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              5% discount · Guaranteed quarterly dividends · 1.5× liquidation priority · Callable · Up to 40% float · Min valuation $50k
+            </div>
+          </div>
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #a855f7;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7em;font-weight:bold;font-size:0.9rem;">Series A Growth Round</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              12% discount · +20% growth capital bonus · Up to 30% float · Min valuation $150k
+            </div>
+          </div>
+
+          <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #d4af37;
+                      padding:10px 14px;border-radius:4px;">
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Quad-Class IPO</div>
+            <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
+              10% discount · 4 share classes · +15% growth bonus · 10% fixed dividend · 1.2× liquidation priority · Up to 60% float · Min valuation $200k
+            </div>
+          </div>
+
+        </div>
+        <form action="/api/tutorial3/advance" method="post">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Next — Valuation & Requirements →
+            </button>
+        </form>
+        """
+
+    elif step == 5:
+        val = get_player_estimated_valuation(player.id)
+        val_color = "#4ade80" if val >= 25000 else "#f87171"
+        val_note = (
+            f'<span style="color:{val_color};font-weight:bold;">'
+            f'${val:,.0f}</span>'
+        )
+        min_note = (
+            '<span style="color:#4ade80;">✓ You qualify for at least a Direct Listing!</span>'
+            if val >= 25000
+            else '<span style="color:#f87171;">⚠ Grow your businesses further to reach the $25,000 minimum.</span>'
+        )
+        title = "Valuation & Requirements"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Your company's <strong style="color:#e5e7eb;">estimated valuation</strong> is
+            based on your businesses, land, inventory, and cash.
+            The Brokerage Firm calculates it automatically at the time of your IPO.
+        </p>
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;
+                    padding:14px 18px;margin-bottom:14px;">
+            <div style="font-size:0.75rem;color:#64748b;text-transform:uppercase;
+                        letter-spacing:0.08em;margin-bottom:4px;">Your Estimated Valuation</div>
+            <div style="font-size:1.4rem;font-weight:bold;">{val_note}</div>
+            <div style="margin-top:8px;font-size:0.82rem;">{min_note}</div>
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            <strong style="color:#e5e7eb;">Other requirements before launching:</strong>
+        </p>
+        <ul style="color:#94a3b8;line-height:1.9;margin:0 0 16px 24px;padding:0;">
+            <li>You cannot already have a public company listed on the WPE</li>
+            <li>You must meet the minimum valuation for your chosen IPO type</li>
+            <li>You must have enough cash to cover the listing fee (Direct Listing: $5,000 flat)</li>
+        </ul>
+        <form action="/api/tutorial3/advance" method="post">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                I'm Ready — Show Me How to Launch →
+            </button>
+        </form>
+        """
+
+    elif step == 6:
+        already_public = player_has_public_company(player.id)
+        val = get_player_estimated_valuation(player.id)
+        can_ipo = not already_public and val >= 25000
+
+        if already_public:
+            status_block = """
+            <div style="background:#052e16;border:1px solid #16a34a;border-radius:4px;
+                        padding:12px 16px;margin-bottom:14px;color:#4ade80;">
+                ✓ Your company is already listed on the WPE! You're a public company.
+                Head to <a href="/brokerage/my-companies" style="color:#4ade80;font-weight:bold;">My Companies</a>
+                to manage your shares.
+            </div>
+            """
+            cta = """
+            <form action="/api/tutorial3/advance" method="post">
+                <button type="submit"
+                        style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                               border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                    Continue →
+                </button>
+            </form>
+            """
+        elif val < 25000:
+            status_block = f"""
+            <div style="background:#1c0a0a;border:1px solid #ef4444;border-radius:4px;
+                        padding:12px 16px;margin-bottom:14px;color:#f87171;">
+                ⚠ Estimated valuation ${val:,.0f} — you need at least $25,000 for a Direct Listing.
+                Keep building your businesses and return here when you're ready.
+            </div>
+            """
+            cta = """
+            <a href="/land"
+               style="display:inline-block;background:#38bdf8;color:#020617;padding:10px 24px;
+                      border-radius:4px;font-size:0.9rem;font-weight:bold;text-decoration:none;">
+                ← Go Build More Businesses
+            </a>
+            """
+        else:
+            status_block = f"""
+            <div style="background:#052e16;border:1px solid #16a34a;border-radius:4px;
+                        padding:12px 16px;margin-bottom:14px;color:#4ade80;">
+                ✓ Estimated valuation ${val:,.0f} — you qualify! Scroll down and use the IPO form below.
+            </div>
+            """
+            cta = """
+            <p style="color:#94a3b8;font-size:0.85rem;line-height:1.7;margin:0 0 14px 0;">
+                <strong style="color:#e5e7eb;">How to launch:</strong> scroll past this tutorial panel
+                to the IPO form. Pick your IPO type, choose a ticker symbol and company name, set your
+                share count and float percentage, then click <em>Launch IPO</em>. Once confirmed,
+                your shares will appear on the WPE and your reward will unlock.
+            </p>
+            <p style="color:#64748b;font-size:0.8rem;margin:0;">
+                After your IPO completes, visit
+                <a href="/brokerage/trading" style="color:#38bdf8;">/brokerage/trading</a>
+                to claim your Tutorial 3 reward.
+            </p>
+            """
+
+        title = "Launch Your IPO"
+        content = f"""
+        {status_block}
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Taking your company public is one of the most powerful moves in Wadsworth.
+            It gives you instant capital, real shareholders, and a market-priced valuation.
+        </p>
+        {cta}
+        """
+
+    elif step == 7:
+        title = "IPO Complete — Congratulations!"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Your company is now publicly traded on the <strong style="color:#e5e7eb;">Wadsworth
+            Public Exchange</strong>. Shareholders hold real stakes in your holding company,
+            and your share price will reflect how well you run it.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            <strong style="color:#d4af37;">Tutorial 3 Reward:</strong> you've unlocked the ability
+            to access <strong style="color:#e5e7eb;">margin lending</strong> on your portfolio —
+            borrow up to 50% of your equity value to amplify positions. Use it wisely.
+        </p>
+        <form action="/api/tutorial3/advance" method="post">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Claim Reward & Complete Tutorial →
+            </button>
+        </form>
+        """
+
+    else:
+        return ""
+
+    # ── display step counter (steps 1-6, not the reward step 7) ───────────────
+    display_step = min(step, T3_TOTAL_STEPS)
+
+    return f"""
+    <div id="tutorial3-panel" style="
+        background: linear-gradient(135deg, #0a1628, #0f172a);
+        border: 2px solid #d4af37;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#d4af37;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                TUTORIAL 3 — STEP {display_step}/{T3_TOTAL_STEPS}
+            </span>
+            <span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">Level 3 · IPO &amp; Banking</span>
+            <div style="flex:1;background:#1e293b;height:4px;border-radius:2px;min-width:80px;">
+                <div style="background:#d4af37;height:4px;border-radius:2px;
+                            width:{int(display_step / T3_TOTAL_STEPS * 100)}%;"></div>
+            </div>
+        </div>
+        <h3 style="color:#d4af37;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
+        {content}
+        <a href="/api/tutorial3/dismiss"
+           onclick="return confirm('Skip Tutorial 3? You can restart it from Settings.');"
+           style="position:absolute;top:12px;right:16px;color:#475569;font-size:0.72rem;text-decoration:none;">
+            Skip
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 3 banner (shown on dashboard when T1 done and T3 not started) ────
+
+def get_tutorial3_banner_html(player) -> str:
+    """Return the T3 start banner HTML, or empty string if not applicable."""
+    if not should_show_tutorial3_banner(player):
+        return ""
+    return f"""
+    <div style="
+        background: linear-gradient(135deg, #0a1628, #0f172a);
+        border: 2px solid #d4af37;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#d4af37;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                NEW TUTORIAL AVAILABLE
+            </span>
+            <span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">Level 3 · IPO &amp; Banking</span>
+        </div>
+        <h3 style="color:#d4af37;margin:0 0 10px 0;font-size:1.05rem;">
+            Ready to Go Public?
+        </h3>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Tutorial 3 walks you through the <strong style="color:#e5e7eb;">Banking System</strong>,
+            the <strong style="color:#e5e7eb;">Brokerage Firm</strong>, and how to launch your
+            company's <strong style="color:#e5e7eb;">Initial Public Offering</strong> on the
+            Wadsworth Public Exchange.
+        </p>
+        <form action="/api/tutorial3/start" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Start Tutorial 3 →
+            </button>
+        </form>
+        <a href="/api/tutorial3/dismiss"
+           style="margin-left:16px;color:#475569;font-size:0.82rem;">
+            Dismiss
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 3 API routes ──────────────────────────────────────────────────────
+
+@router.post("/api/tutorial3/start")
+def tutorial3_start(session_token: Optional[str] = Cookie(None)):
+    """Start Tutorial 3 (step 0 → 1)."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial3_step(player.id) == 0:
+        set_tutorial3_step(player.id, 1)
+    return RedirectResponse(url="/banks", status_code=303)
+
+
+@router.post("/api/tutorial3/advance")
+def tutorial3_advance(session_token: Optional[str] = Cookie(None)):
+    """Advance Tutorial 3 to the next step."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial3_step(player.id)
+
+    NEXT_REDIRECT = {
+        1: "/banks/brokerage-firm",
+        2: "/brokerage/ipo",
+        3: "/brokerage/ipo",
+        4: "/brokerage/ipo",
+        5: "/brokerage/ipo",
+        6: "/brokerage/trading",
+        7: "/brokerage/trading",
+    }
+
+    if step == 0 or step >= 8:
+        return RedirectResponse(url="/", status_code=303)
+
+    set_tutorial3_step(player.id, step + 1)
+    redirect_url = NEXT_REDIRECT.get(step, "/")
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+
+@router.get("/api/tutorial3/dismiss")
+def tutorial3_dismiss(session_token: Optional[str] = Cookie(None)):
+    """Dismiss / skip Tutorial 3."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_tutorial3_step(player.id, 8)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@router.post("/api/tutorial3/check-ipo-done")
+def tutorial3_check_ipo_done(session_token: Optional[str] = Cookie(None)):
+    """
+    Called after an IPO is created.  If T3 is on step 6, advance to step 7
+    (reward) and redirect to the trading page.
+    """
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    step = get_tutorial3_step(player.id)
+    if step == 6 and player_has_public_company(player.id):
+        set_tutorial3_step(player.id, 7)
+    return RedirectResponse(url="/brokerage/trading?success=ipo_created", status_code=303)
