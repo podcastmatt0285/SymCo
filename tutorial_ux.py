@@ -1155,8 +1155,8 @@ def get_player_estimated_valuation(player_id: int) -> float:
     """Estimate player company valuation for prerequisite check."""
     try:
         from banks.brokerage_firm import calculate_player_company_valuation
-        val, _ = calculate_player_company_valuation(player_id)
-        return val or 0.0
+        result = calculate_player_company_valuation(player_id)
+        return float(result.get("total_valuation", 0.0))
     except Exception:
         return 0.0
 
