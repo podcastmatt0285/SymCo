@@ -486,7 +486,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 
             try {{
                 var saved = JSON.parse(localStorage.getItem(STORE) || '{{}}');
-                if (typeof saved.paused === 'boolean') state.paused = saved.paused;
+                /* Never restore paused=true — always start animating on page load */
                 if (typeof saved.speedIdx === 'number' && saved.speedIdx >= 0 && saved.speedIdx < SPEEDS.length) state.speedIdx = saved.speedIdx;
                 if (typeof saved.direction === 'number') state.direction = saved.direction;
                 if (typeof saved.offset === 'number') state.offset = saved.offset;
