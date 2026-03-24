@@ -935,6 +935,12 @@ def restart_tutorial(
         set_tutorial_step(player.id, 10)
         return RedirectResponse(url="/land-market", status_code=303)
 
+    if tutorial_number == 3:
+        step3 = get_tutorial3_step(player.id)
+        if step3 > 0:
+            set_tutorial3_step(player.id, 1)
+            return RedirectResponse(url="/banks", status_code=303)
+
     return RedirectResponse(url="/settings?tab=tutorials", status_code=303)
 
 
@@ -1201,12 +1207,13 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             manages IPOs, and lets you trade equity in other player companies.
             Let's visit it next.
         </p>
-        <a href="/banks/brokerage-firm"
-           onclick="fetch('/api/tutorial3/advance',{method:'POST'}).catch(()=>{})"
-           style="display:inline-block;background:#d4af37;color:#020617;padding:10px 24px;
-                  border-radius:4px;font-size:0.9rem;font-weight:bold;text-decoration:none;">
-            Visit the Brokerage Firm →
-        </a>
+        <form action="/api/tutorial3/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Visit the Brokerage Firm →
+            </button>
+        </form>
         """
 
     elif step == 2:
@@ -1229,12 +1236,13 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             When you're ready to take your company public, the Firm handles everything from
             pricing to share distribution. Let's learn how an IPO works.
         </p>
-        <a href="/brokerage/ipo"
-           onclick="fetch('/api/tutorial3/advance',{method:'POST'}).catch(()=>{})"
-           style="display:inline-block;background:#d4af37;color:#020617;padding:10px 24px;
-                  border-radius:4px;font-size:0.9rem;font-weight:bold;text-decoration:none;">
-            Learn About IPOs →
-        </a>
+        <form action="/api/tutorial3/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Learn About IPOs →
+            </button>
+        </form>
         """
 
     elif step == 3:
@@ -1322,7 +1330,7 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
 
           <div style="background:#0f172a;border:1px solid #1e293b;border-left:3px solid #a855f7;
                       padding:10px 14px;border-radius:4px;">
-            <div style="color:#e5e7em;font-weight:bold;font-size:0.9rem;">Series A Growth Round</div>
+            <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Series A Growth Round</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
               12% discount · +20% growth capital bonus · Up to 30% float · Min valuation $150k
             </div>
