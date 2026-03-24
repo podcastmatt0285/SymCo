@@ -16,6 +16,7 @@
       { "terrain_type": "prairie", "proximity_features": ["remote"],    "size": 1 },
       { "terrain_type": "prairie", "proximity_features": ["riverside"], "size": 1 },
       { "terrain_type": "marsh",   "proximity_features": ["riverside"], "size": 1 },
+      { "terrain_type": "marsh",   "proximity_features": ["riverside"], "size": 1 },
       { "terrain_type": "marsh",   "proximity_features": ["riverside"], "size": 1 }
     ]
   },
