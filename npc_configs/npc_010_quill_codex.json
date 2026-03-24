@@ -14,6 +14,7 @@
     "starting_cash": 2000000,
     "land_plots": [
       { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 },
       { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 }
     ]
   },

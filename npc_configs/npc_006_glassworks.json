@@ -25,7 +25,7 @@
       "active_lines": ["sand"]
     },
     {
-      "business_type": "glass_factory",
+      "business_type": "glass_works",
       "district_id": null,
       "active_lines": ["glass", "bottle"]
     }
