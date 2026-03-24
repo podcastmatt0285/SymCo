@@ -26,7 +26,7 @@
     {
       "business_type": "cane_plantation",
       "district_id": null,
-      "active_lines": ["cane", "sugar", "caramel"]
+      "active_lines": ["sugar", "caramel"]
     },
     {
       "business_type": "water_facility",
