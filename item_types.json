@@ -304,6 +304,11 @@
     "description": "Popular freshwater game fish with firm, mild white flesh",
     "name": "Bass"
   },
+  "bastilla": {
+    "category": "baked_goods",
+    "description": "Flaky Moroccan pastry: slow-braised spiced lamb layered with egg and drizzled with honey and cinnamon beneath a buttery warka crust — the cornerstone of celebratory Moroccan cuisine",
+    "name": "Bastilla"
+  },
   "battery_cell": {
     "category": "components",
     "description": "A high-tech battery cell, used in electronics, computing, and advanced manufacturing.",

@@ -11165,6 +11165,58 @@
       }
     }
   },
+  "bastilla_kitchen": {
+    "name": "Bastilla Kitchen",
+    "class": "production",
+    "description": "Specialist Moroccan pastry kitchen that slow-braises spiced lamb with eggs, cinnamon, and honey, folding the filling into flaky bastilla — the cornerstone ingredient for the Tagine House district business.",
+    "startup_cost": 24000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 130.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "production_lines": [
+      {
+        "output_item": "bastilla",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 40
+          },
+          {
+            "item": "eggs",
+            "quantity": 30
+          },
+          {
+            "item": "flour",
+            "quantity": 25
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 12
+          },
+          {
+            "item": "honey",
+            "quantity": 10
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          }
+        ]
+      }
+    ]
+  },
   "wine_bar": {
     "name": "Wine & Spirits Bar",
     "class": "retail",
