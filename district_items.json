@@ -1159,6 +1159,26 @@
     "description": "Child-sized meal with toy",
     "category": "retail_food"
   },
+  "moroccan_evening": {
+    "name": "Moroccan Evening",
+    "description": "Tagine dinner for two with aromatic lamb, fresh bread, mint tea, and candlelit ambiance",
+    "category": "retail_food"
+  },
+  "medina_feast": {
+    "name": "Medina Feast",
+    "description": "Lavish group spread: bastilla pastry starter, slow-cooked lamb tagine, honey-drizzled pastries, and full table service on premium linens",
+    "category": "retail_food"
+  },
+  "mint_tea_ceremony": {
+    "name": "Mint Tea Ceremony",
+    "description": "Traditional Moroccan tea service — fresh mint, sugar, and the theatrical three-pour presentation in ornate glass",
+    "category": "retail_food"
+  },
+  "casbah_private_dining": {
+    "name": "Casbah Private Dining",
+    "description": "Exclusive candlelit private room experience with curated multi-course Moroccan feast, premium linen, and bespoke service",
+    "category": "retail_food"
+  },
   "monthly_utility_bill": {
     "name": "Monthly Utility Bill",
     "description": "Electric, water, gas service",

@@ -12671,5 +12671,234 @@
         ]
       }
     ]
+  },
+  "tagine_house": {
+    "name": "Tagine House",
+    "description": "Immersive Moroccan dining destination spanning four experiences — an intimate candlelit tagine dinner, a lavish medina feast anchored by bastilla pastry, a traditional mint tea ceremony, and an exclusive casbah private dining room.",
+    "startup_cost": 18000000,
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 60000,
+    "allowed_terrain": [
+      "district_entertainment_district",
+      "district_food_court",
+      "district_food"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "retail",
+    "products": {
+      "moroccan_evening": {
+        "elasticity": 1.0,
+        "base_sale_chance": 0.0004
+      },
+      "medina_feast": {
+        "elasticity": 1.8,
+        "base_sale_chance": 0.0002
+      },
+      "mint_tea_ceremony": {
+        "elasticity": 0.6,
+        "base_sale_chance": 0.0008
+      },
+      "casbah_private_dining": {
+        "elasticity": 2.5,
+        "base_sale_chance": 0.0001
+      }
+    },
+    "production_lines": [
+      {
+        "output_item": "moroccan_evening",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 50
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 15
+          },
+          {
+            "item": "mint",
+            "quantity": 30
+          },
+          {
+            "item": "honey",
+            "quantity": 15
+          },
+          {
+            "item": "sugar",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "bread",
+            "quantity": 30
+          },
+          {
+            "item": "cotton",
+            "quantity": 15
+          },
+          {
+            "item": "religious_candle",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "water",
+            "quantity": 5000
+          }
+        ]
+      },
+      {
+        "output_item": "medina_feast",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 80
+          },
+          {
+            "item": "bastilla",
+            "quantity": 20
+          },
+          {
+            "item": "eggs",
+            "quantity": 20
+          },
+          {
+            "item": "flour",
+            "quantity": 15
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 25
+          },
+          {
+            "item": "honey",
+            "quantity": 20
+          },
+          {
+            "item": "mint",
+            "quantity": 40
+          },
+          {
+            "item": "sugar",
+            "quantity": 25
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "ornamental_candle",
+            "quantity": 15
+          },
+          {
+            "item": "hospitality_linen_set",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 22000
+          },
+          {
+            "item": "water",
+            "quantity": 8000
+          }
+        ]
+      },
+      {
+        "output_item": "mint_tea_ceremony",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "mint",
+            "quantity": 100
+          },
+          {
+            "item": "sugar",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 10000
+          },
+          {
+            "item": "energy",
+            "quantity": 4000
+          },
+          {
+            "item": "glass",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "casbah_private_dining",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 30
+          },
+          {
+            "item": "bastilla",
+            "quantity": 10
+          },
+          {
+            "item": "eggs",
+            "quantity": 15
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 20
+          },
+          {
+            "item": "honey",
+            "quantity": 15
+          },
+          {
+            "item": "mint",
+            "quantity": 20
+          },
+          {
+            "item": "sugar",
+            "quantity": 15
+          },
+          {
+            "item": "bread",
+            "quantity": 20
+          },
+          {
+            "item": "religious_candle",
+            "quantity": 20
+          },
+          {
+            "item": "hospitality_linen_set",
+            "quantity": 10
+          },
+          {
+            "item": "glass",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "water",
+            "quantity": 6000
+          }
+        ]
+      }
+    ]
   }
 }

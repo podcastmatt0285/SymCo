@@ -530,16 +530,21 @@ def _build_paused_lines(business_type: str, active_lines: list) -> str:
         return "[]"
 
 
-def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list):
+def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
+                     seeded_district_ids: list = None):
     """
-    Create Business rows for the NPC and mark land plots as occupied.
+    Create Business rows for the NPC and mark land plots/districts as occupied.
     Called both on first-time seed and on partial-seed recovery.
+
+    seeded_district_ids: list of district DB IDs created during this seed run,
+    referenced by businesses via the ``district_seed_index`` config field.
     """
     from business import Business, BUSINESS_TYPES, get_district_business_types
     from land import LandPlot
 
     all_types = {**BUSINESS_TYPES, **get_district_business_types()}
     plot_iter = iter(plot_ids)
+    seeded_district_ids = seeded_district_ids or []
 
     for biz_cfg in cfg.get("businesses", []):
         btype = biz_cfg["business_type"]
@@ -549,6 +554,15 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list):
 
         district_id = biz_cfg.get("district_id")
         plot_id     = None
+
+        # Resolve district_seed_index → actual district DB id
+        seed_idx = biz_cfg.get("district_seed_index")
+        if seed_idx is not None:
+            if seed_idx < len(seeded_district_ids):
+                district_id = seeded_district_ids[seed_idx]
+            else:
+                print(f"[NPC]   WARNING: district_seed_index {seed_idx} out of range — skipping {btype}")
+                continue
 
         if not district_id:
             plot_id = next(plot_iter, None)
@@ -578,6 +592,13 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list):
             plot = db.query(LandPlot).filter(LandPlot.id == plot_id).first()
             if plot:
                 plot.occupied_by_business_id = biz.id
+                db.commit()
+
+        if district_id:
+            from districts import District
+            dist = db.query(District).filter(District.id == district_id).first()
+            if dist:
+                dist.occupied_by_business_id = biz.id
                 db.commit()
 
         print(f"[NPC]   Business {biz.id} ({btype}) — paused lines: {paused_lines} — on "
@@ -658,7 +679,7 @@ def _seed_npc(cfg: dict):
             plot_ids_for_missing = []
 
             for biz_cfg in missing_biz_cfgs:
-                if biz_cfg.get("district_id"):
+                if biz_cfg.get("district_id") or biz_cfg.get("district_seed_index") is not None:
                     continue  # district business — consumes no land plot
                 if vacant_ids:
                     plot_ids_for_missing.append(vacant_ids.pop(0))
@@ -678,8 +699,19 @@ def _seed_npc(cfg: dict):
                           f"index {seed_plot_idx} — will skip")
                 seed_plot_idx += 1
 
+            # Re-query existing districts owned by this NPC (ordered by id)
+            from districts import District as DistrictModel
+            existing_district_ids = [
+                d.id for d in
+                db.query(DistrictModel)
+                .filter(DistrictModel.owner_id == player_id)
+                .order_by(DistrictModel.id.asc())
+                .all()
+            ]
+
             _seed_businesses(player_id, {**cfg, "businesses": missing_biz_cfgs},
-                             db, plot_ids_for_missing)
+                             db, plot_ids_for_missing,
+                             seeded_district_ids=existing_district_ids)
             _NPC_PLAYERS[player_id] = cfg
             print(f"[NPC] Update complete: {cfg['business_name']}")
             return
@@ -724,8 +756,32 @@ def _seed_npc(cfg: dict):
             plot_ids.append(plot.id)
             print(f"[NPC]   Land plot {plot.id} ({plot_cfg['terrain_type']})")
 
+        # Districts (seeded directly — no merge cost for NPCs)
+        seeded_district_ids = []
+        for dist_cfg in seed.get("districts", []):
+            from districts import District, DISTRICT_TYPES
+            dtype = dist_cfg["district_type"]
+            if dtype not in DISTRICT_TYPES:
+                print(f"[NPC]   WARNING: unknown district_type {dtype!r} — skipping")
+                continue
+            dt_info = DISTRICT_TYPES[dtype]
+            district = District(
+                owner_id      = player_id,
+                district_type = dtype,
+                terrain_type  = dt_info["district_terrain"],
+                size          = dist_cfg.get("size", 3.0),
+                plots_merged  = dist_cfg.get("plots_merged", 3),
+                monthly_tax   = dt_info["base_tax"],
+            )
+            db.add(district)
+            db.commit()
+            db.refresh(district)
+            seeded_district_ids.append(district.id)
+            print(f"[NPC]   District {district.id} ({dtype} → {dt_info['district_terrain']})")
+
         # Businesses (with active_lines respected)
-        _seed_businesses(player_id, cfg, db, plot_ids)
+        _seed_businesses(player_id, cfg, db, plot_ids,
+                         seeded_district_ids=seeded_district_ids)
 
         _NPC_PLAYERS[player_id] = cfg
         print(f"[NPC] Seeding complete: {cfg['business_name']}")

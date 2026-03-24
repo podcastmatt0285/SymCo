@@ -304,6 +304,11 @@
     "description": "Popular freshwater game fish with firm, mild white flesh",
     "name": "Bass"
   },
+  "bastilla": {
+    "category": "baked_goods",
+    "description": "Flaky Moroccan pastry: slow-braised spiced lamb layered with egg and drizzled with honey and cinnamon beneath a buttery warka crust — the cornerstone of celebratory Moroccan cuisine",
+    "name": "Bastilla"
+  },
   "battery_cell": {
     "category": "components",
     "description": "A high-tech battery cell, used in electronics, computing, and advanced manufacturing.",
@@ -4123,5 +4128,45 @@
     "category": "textiles",
     "description": "Metal fasteners for clothing and bags",
     "name": "Zippers"
+  },
+  "clay": {
+    "name": "Clay",
+    "description": "Raw mineral clay extracted from riverbeds and hillsides; used in ceramics, sealing, and as a binding agent in religious artefacts.",
+    "category": "industrial"
+  },
+  "vellum": {
+    "name": "Vellum",
+    "description": "Premium lambskin parchment, limed and scraped smooth on a stretching frame \u2014 the finest writing surface for sacred manuscripts and legal instruments, prized over all ordinary paper.",
+    "category": "luxury"
+  },
+  "liturgical_lamb_light": {
+    "name": "Liturgical Lamb Light",
+    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
+    "category": "luxury"
+  },
+  "live_lake_scrolls": {
+    "name": "Live Lake Scrolls",
+    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
+    "category": "luxury"
+  },
+  "lamb_stew": {
+    "name": "Lamb Stew",
+    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
+    "category": "food"
+  },
+  "tallow_candle": {
+    "name": "Tallow Candle",
+    "description": "A hand-dipped candle rendered from lamb tallow \u2014 the working person's light, practical and long-burning, produced for centuries before beeswax became affordable.",
+    "category": "home_goods"
+  },
+  "canned_lamb": {
+    "name": "Canned Lamb",
+    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
+    "category": "food"
+  },
+  "sacred_lamb_offering": {
+    "name": "Sacred Lamb Offering",
+    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
+    "category": "luxury"
   }
 }

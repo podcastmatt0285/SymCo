@@ -183,6 +183,68 @@
             "quantity": 15
           }
         ]
+      },
+      {
+        "output_item": "live_lake_scrolls",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "vellum",
+            "quantity": 8
+          },
+          {
+            "item": "golden_pearl",
+            "quantity": 6
+          },
+          {
+            "item": "clay",
+            "quantity": 60
+          },
+          {
+            "item": "ink",
+            "quantity": 500
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 60
+          },
+          {
+            "item": "vanilla_beans",
+            "quantity": 40
+          },
+          {
+            "item": "apple_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "tea_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "beeswax",
+            "quantity": 80
+          },
+          {
+            "item": "salt",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "leather",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
       }
     ]
   },
@@ -2189,6 +2251,36 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "vellum",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 40
+          },
+          {
+            "item": "salt",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "lard",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 12000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ]
   },
@@ -2413,6 +2505,24 @@
           {
             "item": "paper",
             "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "clay",
+        "output_qty": 150,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
           }
         ]
       }
@@ -3340,6 +3450,48 @@
           {
             "item": "paper",
             "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "lamb_stew",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 60
+          },
+          {
+            "item": "carrots",
+            "quantity": 40
+          },
+          {
+            "item": "potatoes",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "lard",
+            "quantity": 10
+          },
+          {
+            "item": "cream",
+            "quantity": 8
+          },
+          {
+            "item": "vinegar",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ]
       }
@@ -5138,6 +5290,28 @@
           {
             "item": "paper",
             "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "gelatin",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 60
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ]
       }
@@ -10991,6 +11165,58 @@
       }
     }
   },
+  "bastilla_kitchen": {
+    "name": "Bastilla Kitchen",
+    "class": "production",
+    "description": "Specialist Moroccan pastry kitchen that slow-braises spiced lamb with eggs, cinnamon, and honey, folding the filling into flaky bastilla — the cornerstone ingredient for the Tagine House district business.",
+    "startup_cost": 24000,
+    "cycles_to_complete": 90,
+    "base_wage_cost": 130.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "production_lines": [
+      {
+        "output_item": "bastilla",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 40
+          },
+          {
+            "item": "eggs",
+            "quantity": 30
+          },
+          {
+            "item": "flour",
+            "quantity": 25
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 12
+          },
+          {
+            "item": "honey",
+            "quantity": 10
+          },
+          {
+            "item": "salt",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          }
+        ]
+      }
+    ]
+  },
   "wine_bar": {
     "name": "Wine & Spirits Bar",
     "class": "retail",
@@ -14725,6 +14951,28 @@
             "quantity": 30
           }
         ]
+      },
+      {
+        "output_item": "canned_lamb",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 80
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ]
   },
@@ -17670,6 +17918,82 @@
             "quantity": 3
           }
         ]
+      },
+      {
+        "output_item": "liturgical_lamb_light",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 150
+          },
+          {
+            "item": "lard",
+            "quantity": 80
+          },
+          {
+            "item": "beeswax",
+            "quantity": 60
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 25
+          },
+          {
+            "item": "vanilla_beans",
+            "quantity": 15
+          },
+          {
+            "item": "rope_wick",
+            "quantity": 5
+          },
+          {
+            "item": "golden_pearl",
+            "quantity": 2
+          },
+          {
+            "item": "dye",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "tallow_candle",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "lard",
+            "quantity": 80
+          },
+          {
+            "item": "rope_wick",
+            "quantity": 12
+          },
+          {
+            "item": "salt",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 6000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ]
   },
@@ -20258,6 +20582,140 @@
             "quantity": 1
           }
         ]
+      },
+      {
+        "output_item": "border_collie",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 12
+          },
+          {
+            "item": "lamb_meat",
+            "quantity": 4
+          },
+          {
+            "item": "corn",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "pyrenean_sheepdog",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "lamb_meat",
+            "quantity": 1
+          },
+          {
+            "item": "corn",
+            "quantity": 3
+          },
+          {
+            "item": "eggs",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "bergamasco_shepherd",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 12
+          },
+          {
+            "item": "lamb_meat",
+            "quantity": 2
+          },
+          {
+            "item": "corn",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "catalan_sheepdog",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 12
+          },
+          {
+            "item": "lamb_meat",
+            "quantity": 2
+          },
+          {
+            "item": "corn",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "carpathian_shepherd",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "lamb_meat",
+            "quantity": 6
+          },
+          {
+            "item": "corn",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ]
   },
@@ -21388,6 +21846,40 @@
             "quantity": 10
           }
         ]
+      },
+      {
+        "output_item": "sacred_lamb_offering",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 30
+          },
+          {
+            "item": "beeswax",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "cinnamon",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 3000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ]
   },
@@ -21507,5 +21999,50 @@
         "base_sale_chance": 0.2
       }
     }
+  },
+  "tallow_works": {
+    "name": "Tallow Works",
+    "description": "Renders lamb carcass fat into lard through low-temperature boiling and straining. The primary industrial consumer of lamb_meat and the upstream supplier for tallow candles and baking fats.",
+    "startup_cost": 12000,
+    "cycles_to_complete": 180,
+    "base_wage_cost": 80.0,
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "class": "production",
+    "production_lines": [
+      {
+        "output_item": "lard",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "lamb_meat",
+            "quantity": 30
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
   }
 }
