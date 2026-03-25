@@ -3483,7 +3483,7 @@ def admin_bonds(
             summary[c]["interbank"] += 1
 
     currency_opts = "".join(
-        f'<option value="{b["currency_code"]}" {"selected" if b["currency_code"] == currency_filter else ""}>{b["flag"]} {b["currency_code"]}</option>'
+        f'<option value="{b["code"]}" {"selected" if b["code"] == currency_filter else ""}>{b["flag"]} {b["code"]}</option>'
         for b in banks
     )
 
