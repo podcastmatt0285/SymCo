@@ -1,3 +1,14 @@
+import subprocess
+import sys
+
+# Ensure all dependencies are installed before anything else imports them.
+# Uses the same interpreter that's running this file so it targets the
+# correct venv / site-packages regardless of how the server was launched.
+subprocess.run(
+    [sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--quiet"],
+    check=False,
+)
+
 import asyncio
 import os
 from datetime import datetime
@@ -159,6 +170,10 @@ async def pwa_manifest():
 @app.get("/sw.js", include_in_schema=False)
 async def pwa_service_worker():
     return FileResponse("static/sw.js", media_type="application/javascript")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("static/icons/icon-48.png", media_type="image/png")
 
 # ==========================
 # SYSTEM ENDPOINTS (PATCHED)
