@@ -1119,8 +1119,9 @@ def _notifications_tab(player) -> str:
         _edb = _exec_db()
         has_cco = player_has_ability(_edb, player.id, "p2p_notification")
         _edb.close()
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).exception("has_cco check failed for player %s: %s", getattr(player, 'id', '?'), e)
 
     sounds   = getattr(player, "notif_sounds",         True)
     badge    = getattr(player, "notif_badge",          True)
