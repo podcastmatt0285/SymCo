@@ -12,7 +12,7 @@ import base64
 from typing import Optional
 from datetime import datetime
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Cookie, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Cookie, Query, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from dm import (
@@ -1219,6 +1219,61 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
 
 # ==========================
+# PUSH NOTIFICATION REPLY
+# ==========================
+
+@router.post("/api/dm/reply")
+async def api_dm_reply(
+    session_token: Optional[str] = Cookie(None),
+    other_id: int = Form(...),
+    content: str = Form(...),
+):
+    """
+    HTTP endpoint for inline notification replies (service worker notificationclick
+    reply action).  Saves the message and fires a push to the recipient.
+    """
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    content = content.strip()[:MAX_DM_LENGTH]
+    if not content:
+        return JSONResponse({"error": "empty message"}, status_code=400)
+
+    try:
+        conv    = get_or_create_conversation(player.id, other_id)
+        conv_id = conv["id"]
+        player_name = get_player_name(player.id)
+        saved = save_dm(conv_id, player.id, player_name, content)
+
+        # Deliver via WebSocket if recipient is connected
+        await dm_manager.send_to_user(other_id, {
+            **saved,
+            "other_id":   player.id,
+            "other_name": player_name,
+        })
+
+        # Push notification to recipient
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(
+                other_id,
+                f"New DM from {player_name}",
+                content[:80],
+                url=f"/p2p/dms?with={player.id}",
+                notif_type="dm",
+                tag=f"dm-{conv_id}",
+                icon=f"/api/avatar/{player.id}",
+            )
+        except Exception:
+            pass
+
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ==========================
 # SEARCH API (HTTP fallback)
 # ==========================
 
@@ -1376,6 +1431,7 @@ async def dm_websocket(websocket: WebSocket):
                             url=f"/p2p/dms?with={player_id}",
                             notif_type="dm",
                             tag=f"dm-{conv_id}",
+                            icon=f"/api/avatar/{player_id}",
                         )
                     except Exception:
                         pass

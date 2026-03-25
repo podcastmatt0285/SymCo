@@ -335,6 +335,35 @@ async def api_push_unsubscribe(
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@router.get("/api/avatar/{player_id}")
+def api_player_avatar(player_id: int):
+    """
+    Serve a player's DM avatar as an image response so it can be used
+    as a URL in Web Push notification `icon` fields (data URIs are not
+    allowed there).  Falls back to a 1×1 transparent PNG if no avatar.
+    """
+    from chat import get_avatar
+    import base64, re
+    from fastapi.responses import Response
+
+    data_uri = get_avatar(player_id)
+    if data_uri:
+        # data:[<mime>];base64,<data>
+        m = re.match(r"data:([^;]+);base64,(.+)", data_uri, re.DOTALL)
+        if m:
+            mime   = m.group(1)
+            raw    = base64.b64decode(m.group(2))
+            return Response(content=raw, media_type=mime,
+                            headers={"Cache-Control": "public, max-age=300"})
+    # 1×1 transparent PNG fallback
+    fallback = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhf"
+        "DwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    )
+    return Response(content=fallback, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=60"})
+
+
 @router.get("/api/notifications/unread-count")
 def api_unread_count(session_token: Optional[str] = Cookie(None)):
     from auth import get_player_from_session, get_db
@@ -361,11 +390,14 @@ def send_push_notification(
     url: str = "/",
     notif_type: str = "general",
     tag: str = "wadsworth-notif",
+    icon: Optional[str] = None,
 ):
     """
     Send an encrypted web push notification to all subscriptions for player_id.
     notif_type: 'dm' | 'contract' | 'general'
     tag: unique per notification group so each conversation/event gets its own card.
+    icon: absolute URL for the notification icon (e.g. sender avatar). Falls back
+          to /static/icons/icon-192.png in the service worker if omitted.
     """
     try:
         from auth import get_db, PushSubscription, Player
@@ -391,7 +423,10 @@ def send_push_notification(
             db.close()
             return
 
-        payload  = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
+        payload_data: dict = {"title": title, "body": body, "url": url, "tag": tag}
+        if icon:
+            payload_data["icon"] = icon
+        payload  = json.dumps(payload_data)
         to_purge = []
 
         for sub in subs:
