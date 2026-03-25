@@ -1225,7 +1225,8 @@ def _notifications_tab(player) -> str:
     form_start = '<form method="post" action="/api/settings/notifications" id="notif-form">'
     form_end   = '</form>'
 
-    toggle_js = """
+    # Always rendered: toggle animation + push status indicator
+    base_js = """
 <script>
 // Animate toggle knob on click without waiting for server round-trip
 document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
@@ -1240,7 +1241,7 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   });
 });
 
-// Push permission status
+// Push permission status (always shown so label never stays "Checking…")
 (function() {
   var dot   = document.getElementById('push-status-dot');
   var lbl   = document.getElementById('push-status-label');
@@ -1264,7 +1265,7 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
     } else {
       dot.style.background = '#f59e0b';
       lbl.textContent = 'Push not enabled';
-      enBtn.style.display = 'inline-block';
+      enBtn.style.display = 'none';
       mgBtn.style.display = 'none';
       if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
     }
@@ -1276,6 +1277,15 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
     return;
   }
   setStatus(Notification.permission);
+})();
+</script>"""
+
+    # CCO-gated: subscribe/enable button logic
+    subscribe_js = """
+<script>
+(function() {
+  var lbl = document.getElementById('push-status-label');
+  var enBtn = document.getElementById('push-enable-btn');
 
   function _urlB64ToUint8(b64) {
     var pad = '='.repeat((4 - b64.length % 4) % 4);
@@ -1287,7 +1297,7 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   }
 
   function _subscribePush() {
-    lbl.textContent = 'Subscribing…';
+    lbl.textContent = 'Subscribing\u2026';
     fetch('/api/push/public-key')
       .then(function(r) { return r.text(); })
       .then(function(pubKey) {
@@ -1309,7 +1319,18 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
       })
       .then(function(r) { return r.json(); })
       .then(function(d) {
-        lbl.textContent = d.ok ? 'Push enabled and subscribed!' : 'Subscription error: ' + (d.error || '?');
+        if (d.ok) {
+          lbl.textContent = 'Push enabled';
+          var dot = document.getElementById('push-status-dot');
+          if (dot) dot.style.background = '#4ade80';
+          var mgBtn = document.getElementById('push-revoke-hint');
+          if (mgBtn) mgBtn.style.display = 'inline-block';
+          if (enBtn) enBtn.style.display = 'none';
+          var togs = document.getElementById('push-toggles');
+          if (togs) togs.style.opacity = '1';
+        } else {
+          lbl.textContent = 'Subscription error: ' + (d.error || '?');
+        }
       })
       .catch(function(err) {
         lbl.textContent = 'Subscription failed: ' + err.message;
@@ -1317,8 +1338,13 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
       });
   }
 
-  // Auto-subscribe if permission already granted (page reload after allowing)
-  if (Notification.permission === 'granted') {
+  // Show enable button now that CCO is unlocked
+  if ('Notification' in window && Notification.permission === 'default') {
+    if (enBtn) enBtn.style.display = 'inline-block';
+  }
+
+  // Auto-subscribe if permission already granted
+  if ('Notification' in window && Notification.permission === 'granted') {
     navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg) {
       reg.pushManager.getSubscription().then(function(existing) {
         if (!existing) _subscribePush();
@@ -1327,10 +1353,15 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   }
 
   window.requestPushPermission = function() {
-    lbl.textContent = 'Check your browser — a permission prompt may have appeared…';
+    lbl.textContent = 'Check your browser \u2014 a permission prompt may have appeared\u2026';
     Notification.requestPermission().then(function(p) {
-      setStatus(p);
       if (p === 'granted') _subscribePush();
+      else if (p === 'denied') {
+        lbl.textContent = 'Push blocked \u2014 allow it in browser site settings';
+        var dot = document.getElementById('push-status-dot');
+        if (dot) dot.style.background = '#ef4444';
+        if (enBtn) enBtn.style.display = 'none';
+      }
     }).catch(function(err) {
       lbl.textContent = 'Error: ' + err.message;
       console.error('[Push]', err);
@@ -1346,7 +1377,8 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
         + _section("In-App Sounds", sounds_body)
         + _section("App Icon Badge", badge_body)
         + form_end
-        + (toggle_js if has_cco else "")
+        + base_js
+        + (subscribe_js if has_cco else "")
     )
 
 
