@@ -680,6 +680,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     let currentOtherName = null;
     let reconnectDelay = 1000;
     let reconnectTimer = null;
+    let pingInterval = null;
     let typingTimeout = null;
     let isTyping = false;
     let unreadCounts = {{}};
@@ -707,6 +708,12 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             if (currentConvId) {{
                 ws.send(JSON.stringify({{type: 'join', conversation_id: currentConvId, other_id: currentOtherId}}));
             }}
+            // Heartbeat: keep connection alive when the tab is backgrounded
+            // (browsers freeze tabs more aggressively with a service worker registered)
+            clearInterval(pingInterval);
+            pingInterval = setInterval(() => {{
+                if (ws && ws.readyState === 1) ws.send(JSON.stringify({{type: 'ping'}}));
+            }}, 25000);
         }};
 
         ws.onmessage = (e) => {{
@@ -715,6 +722,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         }};
 
         ws.onclose = () => {{
+            clearInterval(pingInterval);
             clearTimeout(reconnectTimer);
             reconnectTimer = setTimeout(() => {{
                 reconnectDelay = Math.min(reconnectDelay * 2, 30000);
@@ -1175,6 +1183,17 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             if (e.key === 'Enter') {{ e.preventDefault(); addBanWordFromInput(); }}
         }});
 
+        // Reconnect immediately when the tab becomes visible again —
+        // browsers freeze backgrounded tabs with a service worker registered,
+        // which silently kills idle WebSocket connections.
+        document.addEventListener('visibilitychange', () => {{
+            if (!document.hidden && (!ws || ws.readyState !== 1)) {{
+                clearTimeout(reconnectTimer);
+                reconnectDelay = 1000;
+                connect();
+            }}
+        }});
+
         window.addEventListener('beforeunload', () => {{
             if (ws && ws.readyState === 1) {{
                 ws.send(JSON.stringify({{type: 'leave'}}));
@@ -1521,6 +1540,9 @@ async def dm_websocket(websocket: WebSocket):
                     "type": "search_results",
                     "results": results,
                 })
+
+            elif msg_type == "ping":
+                pass  # heartbeat — just keep the connection alive
 
             elif msg_type == "leave":
                 break
