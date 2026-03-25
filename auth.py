@@ -164,18 +164,22 @@ def migrate_player_table():
 
 
 def migrate_push_subscriptions():
-    """Create the push_subscriptions table if it doesn't exist."""
+    """Create the push_subscriptions and system_config tables if they don't exist."""
     from database import run_ddl_migration
-    run_ddl_migration(engine, """
-        CREATE TABLE IF NOT EXISTS push_subscriptions (
+    run_ddl_migration(engine, [
+        """CREATE TABLE IF NOT EXISTS push_subscriptions (
             id         SERIAL PRIMARY KEY,
             player_id  INTEGER NOT NULL,
             endpoint   TEXT    NOT NULL,
             auth       TEXT    NOT NULL,
             p256dh     TEXT    NOT NULL,
             created_at TIMESTAMP DEFAULT NOW()
-        )
-    """)
+        )""",
+        """CREATE TABLE IF NOT EXISTS system_config (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )""",
+    ])
 
 
 def migrate_ip_tables():

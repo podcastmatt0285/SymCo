@@ -3693,3 +3693,51 @@ def admin_notif_sound_delete(session_token: Optional[str] = Cookie(None)):
         url="/admin/notification-sound?msg=Sound+deleted",
         status_code=303,
     )
+
+
+# ── VAPID key viewer (admin only) ─────────────────────────────────────────────
+
+@router.get("/admin/push-keys", response_class=HTMLResponse)
+def admin_push_keys(session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    from push_ux import get_vapid_keys
+    keys    = get_vapid_keys()
+    pub     = keys["public_key"]  if keys else "— not generated —"
+    priv    = keys["private_key"] if keys else "— not generated —"
+    env_set = bool(os.environ.get("VAPID_PUBLIC_KEY"))
+
+    env_status = (
+        '<span style="color:#4ade80;">✓ VAPID_PUBLIC_KEY env var is set — keys pinned</span>'
+        if env_set else
+        '<span style="color:#f59e0b;">⚠ Env vars not set — keys stored in DB (will regenerate if DB is wiped)</span>'
+    )
+
+    body = f"""
+<h2 style="margin:0 0 20px;color:#e5e7eb;">🔑 VAPID Push Keys</h2>
+<p style="color:#64748b;font-size:0.82rem;margin-bottom:16px;">
+  To pin keys permanently (recommended for production), set these as Railway environment variables.
+  Without env vars, keys are stored in the DB and regenerate if the DB is wiped —
+  which invalidates all existing push subscriptions.
+</p>
+<div style="margin-bottom:8px;">{env_status}</div>
+
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:20px;margin-top:16px;">
+  <div style="margin-bottom:16px;">
+    <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">VAPID_PUBLIC_KEY</div>
+    <code style="display:block;background:#020617;padding:10px 14px;border-radius:4px;
+                 color:#a5f3fc;font-size:0.75rem;word-break:break-all;border:1px solid #1e293b;">{pub}</code>
+  </div>
+  <div>
+    <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">VAPID_PRIVATE_KEY</div>
+    <code style="display:block;background:#020617;padding:10px 14px;border-radius:4px;
+                 color:#fca5a5;font-size:0.75rem;word-break:break-all;border:1px solid #1e293b;">{priv}</code>
+  </div>
+</div>
+<p style="color:#475569;font-size:0.72rem;margin-top:12px;">
+  Set both as environment variables on Railway → redeploy → the 503 on /api/push/public-key will be gone.
+</p>
+"""
+    return HTMLResponse(admin_shell("VAPID Keys", body, admin.business_name, "/admin/notification-sound"))

@@ -43,6 +43,55 @@ def _b64e(b: bytes) -> str:
     return base64.urlsafe_b64encode(b).rstrip(b'=').decode()
 
 
+def _generate_keys() -> Optional[dict]:
+    """Generate a fresh VAPID key pair using py_vapid + cryptography."""
+    try:
+        from py_vapid import Vapid
+        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+        v = Vapid()
+        v.generate_keys()
+        pub_bytes = v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+        return {
+            "private_key": v.private_pem().decode(),
+            "public_key":  _b64e(pub_bytes),
+        }
+    except Exception as e:
+        print(f"[Push] VAPID key generation failed: {e}")
+        return None
+
+
+def _db_get_vapid_keys() -> Optional[dict]:
+    """Load VAPID keys from the system_config table in the DB."""
+    try:
+        from database import engine
+        from sqlalchemy import text
+        with engine.connect() as c:
+            row = c.execute(text(
+                "SELECT value FROM system_config WHERE key = 'vapid_keys' LIMIT 1"
+            )).fetchone()
+        if row:
+            return json.loads(row[0])
+    except Exception:
+        pass
+    return None
+
+
+def _db_save_vapid_keys(keys: dict) -> None:
+    """Persist VAPID keys to the system_config table."""
+    try:
+        from database import engine
+        from sqlalchemy import text
+        val = json.dumps(keys)
+        with engine.connect() as c:
+            c.execute(text(
+                "INSERT INTO system_config (key, value) VALUES ('vapid_keys', :v) "
+                "ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+            ), {"v": val})
+            c.commit()
+    except Exception as e:
+        print(f"[Push] Could not persist VAPID keys to DB: {e}")
+
+
 def _load_or_create_vapid_keys() -> Optional[dict]:
     # 1. Prefer env vars (Railway / production)
     priv = os.environ.get("VAPID_PRIVATE_KEY")
@@ -50,32 +99,34 @@ def _load_or_create_vapid_keys() -> Optional[dict]:
     if priv and pub:
         return {"private_key": priv, "public_key": pub}
 
-    # 2. Load from local file
+    # 2. Load from DB (survives Railway deploys)
+    keys = _db_get_vapid_keys()
+    if keys:
+        return keys
+
+    # 3. Load from local file (dev fallback)
     if os.path.exists(_KEYS_FILE):
         try:
             with open(_KEYS_FILE) as f:
-                return json.load(f)
+                keys = json.load(f)
+            _db_save_vapid_keys(keys)   # migrate file → DB
+            return keys
         except Exception:
             pass
 
-    # 3. Generate new keys via py_vapid
-    try:
-        from py_vapid import Vapid
-        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-        v = Vapid()
-        v.generate_keys()
-        pub_bytes = v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
-        keys = {
-            "private_key": v.private_pem().decode(),
-            "public_key":  _b64e(pub_bytes),
-        }
-        with open(_KEYS_FILE, "w") as f:
-            json.dump(keys, f, indent=2)
-        print("[Push] Generated new VAPID key pair → .vapid_keys.json")
-        return keys
-    except Exception as e:
-        print(f"[Push] VAPID key generation failed: {e}")
-        return None
+    # 4. Generate new keys and store in DB + file
+    keys = _generate_keys()
+    if keys:
+        _db_save_vapid_keys(keys)
+        try:
+            with open(_KEYS_FILE, "w") as f:
+                json.dump(keys, f, indent=2)
+        except Exception:
+            pass
+        print("[Push] Generated new VAPID key pair and stored in DB.")
+        print(f"[Push] VAPID_PUBLIC_KEY={keys['public_key']}")
+        print("[Push] Add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to env vars to pin these keys.")
+    return keys
 
 
 def get_vapid_keys() -> Optional[dict]:
