@@ -13,7 +13,7 @@ Provides:
 
 from typing import Optional
 from fastapi import APIRouter, Cookie, Form, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from datetime import datetime
 
 router = APIRouter()
@@ -446,7 +446,59 @@ def dm_send(other_id: int, session_token: Optional[str] = Cookie(None), content:
     if not result:
         return RedirectResponse(url=f"/p2p/dms/{other_id}?msg=Failed+to+send", status_code=303)
 
+    # Push notification to recipient
+    try:
+        from push_ux import send_push_notification
+        send_push_notification(
+            other_id,
+            f"New DM from {player.business_name}",
+            content[:80],
+            url=f"/p2p/dms/{player.id}",
+            notif_type="dm",
+            tag=f"dm-{min(player.id, other_id)}-{max(player.id, other_id)}",
+            icon=f"/api/avatar/{player.id}",
+        )
+    except Exception:
+        pass
+
     return RedirectResponse(url=f"/p2p/dms/{other_id}", status_code=303)
+
+
+@router.post("/api/dm/reply")
+def api_dm_reply(
+    session_token: Optional[str] = Cookie(None),
+    other_id: int = Form(...),
+    content: str = Form(...),
+):
+    """HTTP endpoint for inline push notification replies (service worker)."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    content = content.strip()[:500]
+    if not content:
+        return JSONResponse({"error": "empty"}, status_code=400)
+
+    from chat import send_dm
+    result = send_dm(player.id, player.business_name, other_id, content)
+    if not result:
+        return JSONResponse({"error": "send failed"}, status_code=500)
+
+    try:
+        from push_ux import send_push_notification
+        send_push_notification(
+            other_id,
+            f"New DM from {player.business_name}",
+            content[:80],
+            url=f"/p2p/dms/{player.id}",
+            notif_type="dm",
+            tag=f"dm-{min(player.id, other_id)}-{max(player.id, other_id)}",
+            icon=f"/api/avatar/{player.id}",
+        )
+    except Exception:
+        pass
+
+    return JSONResponse({"ok": True})
 
 
 # ==========================

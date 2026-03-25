@@ -47,8 +47,8 @@ self.addEventListener("notificationclick", (event) => {
   const replyText = event.reply;  // populated when the user uses the inline reply action
 
   if (replyText && replyText.trim()) {
-    // Extract other_id from the URL: /p2p/dms?with=<id>
-    const withMatch = targetUrl.match(/[?&]with=(\d+)/);
+    // Extract other_id from the URL: /p2p/dms/<id>
+    const withMatch = targetUrl.match(/\/p2p\/dms\/(\d+)/);
     const otherId   = withMatch ? withMatch[1] : null;
     if (otherId) {
       event.waitUntil(
