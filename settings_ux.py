@@ -1112,6 +1112,16 @@ def _tutorials_tab(player) -> str:
 # ── Notifications tab ─────────────────────────────────────────────────────────
 
 def _notifications_tab(player) -> str:
+    # All notification features require the Chief Communications Officer
+    has_cco = False
+    try:
+        from executive import player_has_ability, get_db as _exec_db
+        _edb = _exec_db()
+        has_cco = player_has_ability(_edb, player.id, "p2p_notification")
+        _edb.close()
+    except Exception:
+        pass
+
     sounds   = getattr(player, "notif_sounds",         True)
     badge    = getattr(player, "notif_badge",          True)
     push_dms = getattr(player, "notif_push_dms",       True)
@@ -1153,6 +1163,25 @@ def _notifications_tab(player) -> str:
   {body}
 </div>"""
 
+    # ── CCO locked banner ─────────────────────────────────────────────────────
+    cco_banner = "" if has_cco else """
+<div style="background:#1e1a2e;border:1px solid #4c1d95;border-radius:8px;
+            padding:14px 18px;margin-bottom:20px;max-width:640px;
+            display:flex;align-items:flex-start;gap:12px;">
+  <span style="font-size:1.3rem;flex-shrink:0;">🔒</span>
+  <div>
+    <div style="font-size:0.88rem;font-weight:600;color:#c4b5fd;margin-bottom:4px;">
+      Chief Communications Officer required
+    </div>
+    <div style="font-size:0.78rem;color:#7c3aed;line-height:1.5;">
+      Hire a <strong style="color:#a78bfa;">CCO</strong> to unlock push notifications,
+      in-app sounds, and app icon badges. Your CCO manages all communication channels —
+      including the infrastructure that delivers alerts to your device.
+      Find one on the <a href="/executives" style="color:#a78bfa;">Executives</a> page.
+    </div>
+  </div>
+</div>"""
+
     # ── Push Notifications ────────────────────────────────────────────────────
     push_body = f"""
 <p style="font-size:0.78rem;color:#64748b;margin:8px 0 16px;">
@@ -1175,8 +1204,8 @@ def _notifications_tab(player) -> str:
   </button>
 </div>
 <div id="push-toggles">
-  {_toggle("notif_push_dms",       push_dms, "Direct Messages",    "Get notified when someone sends you a DM")}
-  {_toggle("notif_push_contracts", push_con, "Contract Updates",   "Offers, acceptances, breaches, and completions")}
+  {_toggle("notif_push_dms",       push_dms, "Direct Messages",    "Get notified when someone sends you a DM",       disabled=not has_cco)}
+  {_toggle("notif_push_contracts", push_con, "Contract Updates",   "Offers, acceptances, breaches, and completions", disabled=not has_cco)}
 </div>"""
 
     # ── Sounds ────────────────────────────────────────────────────────────────
@@ -1184,14 +1213,14 @@ def _notifications_tab(player) -> str:
 <p style="font-size:0.78rem;color:#64748b;margin:8px 0 16px;">
   Play a sound when an in-game notification arrives while you have the app open.
 </p>
-{_toggle("notif_sounds", sounds, "Notification Sounds", "Short audio cue for incoming alerts")}"""
+{_toggle("notif_sounds", sounds, "Notification Sounds", "Short audio cue for incoming alerts", disabled=not has_cco)}"""
 
     # ── Badging ───────────────────────────────────────────────────────────────
     badge_body = f"""
 <p style="font-size:0.78rem;color:#64748b;margin:8px 0 16px;">
   Show your total unread count on the Wadsworth app icon (installed PWA only).
 </p>
-{_toggle("notif_badge", badge, "App Icon Badge", "Displays unread count on home screen / taskbar icon")}"""
+{_toggle("notif_badge", badge, "App Icon Badge", "Displays unread count on home screen / taskbar icon", disabled=not has_cco)}"""
 
     form_start = '<form method="post" action="/api/settings/notifications" id="notif-form">'
     form_end   = '</form>'
@@ -1311,12 +1340,13 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
 </script>"""
 
     return (
-        form_start
+        cco_banner
+        + form_start
         + _section("Push Notifications", push_body)
         + _section("In-App Sounds", sounds_body)
         + _section("App Icon Badge", badge_body)
         + form_end
-        + toggle_js
+        + (toggle_js if has_cco else "")
     )
 
 
@@ -1333,17 +1363,25 @@ def api_save_notifications(
     if isinstance(player, RedirectResponse):
         return player
     try:
-        db = _auth.get_db()
-        p  = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
-        if p:
-            p.notif_push_dms       = notif_push_dms       == "on"
-            p.notif_push_contracts = notif_push_contracts == "on"
-            p.notif_sounds         = notif_sounds         == "on"
-            p.notif_badge          = notif_badge          == "on"
-            db.commit()
-        db.close()
-    except Exception as e:
-        print(f"[Settings] notif save error: {e}")
+        from executive import player_has_ability, get_db as _exec_db
+        _edb = _exec_db()
+        _has_cco = player_has_ability(_edb, player.id, "p2p_notification")
+        _edb.close()
+    except Exception:
+        _has_cco = False
+    if _has_cco:
+        try:
+            db = _auth.get_db()
+            p  = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
+            if p:
+                p.notif_push_dms       = notif_push_dms       == "on"
+                p.notif_push_contracts = notif_push_contracts == "on"
+                p.notif_sounds         = notif_sounds         == "on"
+                p.notif_badge          = notif_badge          == "on"
+                db.commit()
+            db.close()
+        except Exception as e:
+            print(f"[Settings] notif save error: {e}")
     return RedirectResponse(url="/settings?tab=notifications", status_code=303)
 
 

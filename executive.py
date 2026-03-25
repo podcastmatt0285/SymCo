@@ -262,7 +262,7 @@ EXECUTIVE_JOBS = {
     "chief_comms": {
         "title": "Chief Communications Officer", "abbr": "CCO",
         "category": "p2p",
-        "description": "Manages DMs, contract notifications, and P2P deal flow",
+        "description": "Manages DMs, contract notifications, and P2P deal flow. Unlocks push notifications, in-app sounds, and app icon badges.",
         "effect": "p2p",
     },
     # ── SPECIAL: FIRST LADY (tutorial reward) ─────────────────────────────────
