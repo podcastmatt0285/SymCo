@@ -1249,7 +1249,13 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   setStatus(Notification.permission);
 
   window.requestPushPermission = function() {
-    Notification.requestPermission().then(function(p) { setStatus(p); });
+    lbl.textContent = 'Check your browser — a permission prompt may have appeared…';
+    Notification.requestPermission().then(function(p) {
+      setStatus(p);
+    }).catch(function(err) {
+      lbl.textContent = 'Error: ' + err.message;
+      console.error('[Push]', err);
+    });
   };
 })();
 </script>"""
