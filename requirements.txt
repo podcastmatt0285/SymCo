@@ -5,3 +5,5 @@ psycopg2-binary
 python-multipart
 python-dotenv
 pycryptodome
+Pillow
+requests
