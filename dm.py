@@ -265,7 +265,10 @@ class DMConnectionManager:
         from chat import get_avatar
         self.avatar_cache[player_id] = get_avatar(player_id)
 
-    async def disconnect(self, player_id: int):
+    async def disconnect(self, player_id: int, websocket=None):
+        # Guard: only evict if this is still the active connection.
+        if websocket is not None and self.connections.get(player_id) is not websocket:
+            return
         self.connections.pop(player_id, None)
         self.player_names.pop(player_id, None)
         self.avatar_cache.pop(player_id, None)

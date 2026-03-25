@@ -681,6 +681,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     let reconnectDelay = 1000;
     let reconnectTimer = null;
     let pingInterval = null;
+    let lastPong = Date.now();
     let typingTimeout = null;
     let isTyping = false;
     let unreadCounts = {{}};
@@ -708,16 +709,22 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             if (currentConvId) {{
                 ws.send(JSON.stringify({{type: 'join', conversation_id: currentConvId, other_id: currentOtherId}}));
             }}
-            // Heartbeat: keep connection alive when the tab is backgrounded
-            // (browsers freeze tabs more aggressively with a service worker registered)
+            // Heartbeat: keep connection alive and detect dead server→client paths.
+            lastPong = Date.now();
             clearInterval(pingInterval);
             pingInterval = setInterval(() => {{
-                if (ws && ws.readyState === 1) ws.send(JSON.stringify({{type: 'ping'}}));
+                if (!ws || ws.readyState !== 1) return;
+                if (Date.now() - lastPong > 35000) {{
+                    ws.close();  // server→client path dead — trigger reconnect
+                    return;
+                }}
+                ws.send(JSON.stringify({{type: 'ping'}}));
             }}, 25000);
         }};
 
         ws.onmessage = (e) => {{
             const data = JSON.parse(e.data);
+            if (data.type === 'pong') {{ lastPong = Date.now(); return; }}
             handleWSMessage(data);
         }};
 
@@ -1544,7 +1551,7 @@ async def dm_websocket(websocket: WebSocket):
                 })
 
             elif msg_type == "ping":
-                pass  # heartbeat — just keep the connection alive
+                await dm_manager.send_to_user(player_id, {"type": "pong"})
 
             elif msg_type == "leave":
                 break
@@ -1554,4 +1561,4 @@ async def dm_websocket(websocket: WebSocket):
     except Exception as e:
         print(f"[DM WS] Error: {e}")
     finally:
-        await dm_manager.disconnect(player_id)
+        await dm_manager.disconnect(player_id, websocket)
