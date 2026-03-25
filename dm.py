@@ -264,6 +264,7 @@ class DMConnectionManager:
         # Load avatar into cache
         from chat import get_avatar
         self.avatar_cache[player_id] = get_avatar(player_id)
+        print(f"[DM] Player {player_id} ({player_name}) connected. Total: {len(self.connections)}")
 
     async def disconnect(self, player_id: int, websocket=None):
         # Guard: only evict if this is still the active connection.
@@ -274,14 +275,18 @@ class DMConnectionManager:
         self.avatar_cache.pop(player_id, None)
         for conv_id in list(self.typing_users.keys()):
             self.typing_users[conv_id].discard(player_id)
+        print(f"[DM] Player {player_id} disconnected. Total: {len(self.connections)}")
 
     async def send_to_user(self, player_id: int, message: dict):
         ws = self.connections.get(player_id)
         if ws:
             try:
                 await ws.send_text(json.dumps(message))
-            except Exception:
+            except Exception as e:
+                print(f"[DM] send_to_user failed for player {player_id}: {e}")
                 await self.disconnect(player_id)
+        else:
+            print(f"[DM] send_to_user: player {player_id} not connected, message not delivered")
 
     def set_typing(self, conv_id: str, player_id: int):
         if conv_id not in self.typing_users:
