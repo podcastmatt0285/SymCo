@@ -48,7 +48,7 @@ class Player(Base):
     notif_badge  = Column(Boolean, default=True)       # Show unread badge on app icon (Badging API)
     notif_push_dms       = Column(Boolean, default=True)  # Push: new DMs
     notif_push_contracts = Column(Boolean, default=True)  # Push: contract updates
-    # FCC rental — NULL means no active rental; datetime = expiry (UTC)
+    # Federal Communications Commission (FCC) licence — NULL = none active; datetime = expiry (UTC)
     cco_rental_expires = Column(DateTime, nullable=True, default=None)
 
     @property

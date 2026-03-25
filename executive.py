@@ -1081,7 +1081,7 @@ def player_has_ability(db, player_id: int, ability_key: str) -> bool:
 
 
 def player_has_cco(db, player_id: int) -> bool:
-    """True if player has p2p_notification from an active exec OR an active FCC rental."""
+    """True if player has p2p_notification from an active exec OR an active FCC licence."""
     if player_has_ability(db, player_id, "p2p_notification"):
         return True
     try:

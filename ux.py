@@ -130,7 +130,7 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
-    # Notification prefs (badge + sounds) — only active if player has CCO exec or FCC rental
+    # Notification prefs (badge + sounds) — only active if player has CCO exec or FCC licence
     _notif_badge  = "false"
     _notif_sounds = "false"
     if player_id:
