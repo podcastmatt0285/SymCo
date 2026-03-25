@@ -89,6 +89,11 @@ FX_YIELD_LINK      = 0.02          # usd_per_unit fractional change per 1 % yiel
 # e.g. 0.00001 → a $10 000 bond purchase appreciates the currency by ~0.1%.
 FX_DIRECT_BOND_LINK = 0.00001      # fractional usd_per_unit change per $1 of bond face value
 
+# Yield mean-reversion: when net demand is zero, yield drifts toward the ceiling each tick.
+# At 0.002 the yield closes ~0.2% of the gap to max_yield per hour — idle currencies
+# slowly become more attractive, encouraging new bond purchases.
+YIELD_REVERSION_RATE = 0.002       # fraction of (max_yield - current_yield) added per tick
+
 FOREX_FEE_RATE     = 0.002         # 0.2 % fee on each forex conversion
 BOND_MATURITIES             = [7, 14, 30]  # calendar days available to players
 INTERBANK_BOND_MATURITY_DAYS = 3           # interbank swap bonds mature after 3 days
@@ -533,6 +538,12 @@ def _adjust_yield_and_fx(db, bank: StateReserveBank):
     # Yield change proportional to net demand
     delta_yield = -demand * YIELD_SENSITIVITY
     new_yield   = old_yield + delta_yield
+
+    # When demand is zero, drift yield toward the ceiling so idle currencies
+    # gradually become more attractive and invite new bond purchases.
+    if demand == 0.0:
+        new_yield += (bank.max_yield - new_yield) * YIELD_REVERSION_RATE
+
     new_yield   = max(bank.min_yield, min(bank.max_yield, new_yield))
     bank.yield_rate     = new_yield
     bank.net_demand_wsc = 0.0   # reset for next period
