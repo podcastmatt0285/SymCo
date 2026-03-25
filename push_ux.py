@@ -44,17 +44,16 @@ def _b64e(b: bytes) -> str:
 
 
 def _generate_keys() -> Optional[dict]:
-    """Generate a fresh VAPID key pair using py_vapid + cryptography."""
+    """Generate a fresh VAPID key pair using only the cryptography library."""
     try:
-        from py_vapid import Vapid
-        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-        v = Vapid()
-        v.generate_keys()
-        pub_bytes = v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
-        return {
-            "private_key": v.private_pem().decode(),
-            "public_key":  _b64e(pub_bytes),
-        }
+        from cryptography.hazmat.primitives.asymmetric.ec import generate_private_key, SECP256R1
+        from cryptography.hazmat.primitives.serialization import (
+            Encoding, PublicFormat, PrivateFormat, NoEncryption,
+        )
+        priv = generate_private_key(SECP256R1())
+        pub_bytes = priv.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+        priv_pem  = priv.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()).decode()
+        return {"private_key": priv_pem, "public_key": _b64e(pub_bytes)}
     except Exception as e:
         print(f"[Push] VAPID key generation failed: {e}")
         return None
@@ -199,21 +198,43 @@ def _encrypt_push(plaintext: str, auth_b64: str, p256dh_b64: str) -> bytes:
     return header + ct
 
 
-def _send_web_push(endpoint: str, payload_bytes: bytes, vapid_private_pem: str) -> int:
-    """POST an encrypted push message and return the HTTP status code."""
-    import requests as _req
-    from py_vapid import Vapid
+def _vapid_auth_header(private_pem: str, public_key_b64: str, endpoint: str) -> str:
+    """
+    Build a VAPID Authorization header using only the cryptography library.
+    Returns the full header value: 'vapid t=<JWT>,k=<pubkey>'
+    """
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.hashes import SHA256
+    from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 
     aud = urlparse(endpoint).scheme + "://" + urlparse(endpoint).netloc
-    v   = Vapid.from_pem(vapid_private_pem.encode())
-    auth_headers = v.sign({
-        "sub": "mailto:admin@wadsworth.game",
+
+    hdr    = _b64e(json.dumps({"typ": "JWT", "alg": "ES256"}, separators=(',', ':')).encode())
+    claims = _b64e(json.dumps({
         "aud": aud,
         "exp": int(time.time()) + 12 * 3600,
-    })
+        "sub": "mailto:admin@wadsworth.game",
+    }, separators=(',', ':')).encode())
 
+    signing_input = f"{hdr}.{claims}".encode()
+    priv    = load_pem_private_key(private_pem.encode(), password=None)
+    sig_der = priv.sign(signing_input, ec.ECDSA(SHA256()))
+    r, s    = decode_dss_signature(sig_der)
+    sig     = _b64e(r.to_bytes(32, 'big') + s.to_bytes(32, 'big'))
+
+    return f"vapid t={hdr}.{claims}.{sig},k={public_key_b64}"
+
+
+def _send_web_push(
+    endpoint: str, payload_bytes: bytes, vapid_private_pem: str, public_key_b64: str
+) -> int:
+    """POST an encrypted push message and return the HTTP status code."""
+    import requests as _req
+
+    auth = _vapid_auth_header(vapid_private_pem, public_key_b64, endpoint)
     headers = {
-        **auth_headers,
+        "Authorization":    auth,
         "Content-Type":     "application/octet-stream",
         "Content-Encoding": "aes128gcm",
         "TTL":              "86400",
@@ -357,7 +378,7 @@ def send_push_notification(
         for sub in subs:
             try:
                 enc   = _encrypt_push(payload, sub.auth, sub.p256dh)
-                code  = _send_web_push(sub.endpoint, enc, keys["private_key"])
+                code  = _send_web_push(sub.endpoint, enc, keys["private_key"], keys["public_key"])
                 if code in (404, 410):
                     to_purge.append(sub.id)
                 elif code >= 400:

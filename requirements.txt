@@ -4,4 +4,3 @@ sqlalchemy
 psycopg2-binary
 python-multipart
 python-dotenv
-py-vapid
