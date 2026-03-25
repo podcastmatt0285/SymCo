@@ -21,6 +21,32 @@ from sqlalchemy.orm import sessionmaker
 # DATABASE SETUP
 # ==========================
 from database import engine, SessionLocal
+
+
+def _push_contract(player_id: int, title: str, body: str, contract_id: int):
+    """Fire a contract push notification; silently swallows all errors."""
+    try:
+        from push_ux import send_push_notification
+        send_push_notification(
+            player_id,
+            title,
+            body,
+            url="/p2p/contracts?tab=my_contracts",
+            notif_type="contract",
+            tag=f"contract-{contract_id}",
+        )
+    except Exception:
+        pass
+
+
+def _player_name(player_id: int) -> str:
+    try:
+        from auth import get_db as _adb, Player as _P
+        db = _adb(); p = db.query(_P).filter_by(id=player_id).first()
+        name = p.business_name if p else f"Player {player_id}"
+        db.close(); return name
+    except Exception:
+        return f"Player {player_id}"
 Base = declarative_base()
 
 # ==========================
@@ -567,7 +593,40 @@ def resolve_listing(contract_id: int) -> bool:
     contract.next_delivery_tick = app_mod.current_tick + interval_ticks
 
     db.commit()
+
+    # Push notifications — resolve after commit so IDs are stable
+    _winner_id = winner_bid.bidder_id
+    _buyer_id  = contract.buyer_id
+    _cid       = contract.id
     db.close()
+
+    if not is_relist:
+        # Notify winner they won the bid
+        _buyer_name = _player_name(_buyer_id)
+        _push_contract(
+            _winner_id,
+            f"📄 Contract #{_cid} — You won the bid!",
+            f"You are now the supplier for {_buyer_name}. "
+            f"First delivery due in {contract.delivery_interval}.",
+            _cid,
+        )
+        # Notify buyer their contract is now active
+        _winner_name = _player_name(_winner_id)
+        _push_contract(
+            _buyer_id,
+            f"📄 Contract #{_cid} — Supplier confirmed",
+            f"{_winner_name} won your contract bid and will begin deliveries.",
+            _cid,
+        )
+    else:
+        # Relist winner: notify they acquired the contract
+        _push_contract(
+            _winner_id,
+            f"📄 Contract #{_cid} — Acquired",
+            "You are now the supplier on this contract.",
+            _cid,
+        )
+
     return True
 
 
@@ -748,7 +807,8 @@ def process_delivery(contract_id: int, current_tick: int) -> Optional[str]:
     db.add(delivery_record)
 
     # Check if contract is complete
-    if contract.deliveries_completed >= contract.total_deliveries:
+    _is_complete = contract.deliveries_completed >= contract.total_deliveries
+    if _is_complete:
         contract.status = ContractStatus.COMPLETED
         contract.completed_at = datetime.utcnow()
         contract.next_delivery_tick = None
@@ -757,8 +817,60 @@ def process_delivery(contract_id: int, current_tick: int) -> Optional[str]:
         interval_ticks = DELIVERY_INTERVALS[contract.delivery_interval]["ticks"]
         contract.next_delivery_tick = current_tick + interval_ticks
 
+    # Capture push data before close
+    _cid         = contract.id
+    _holder_id   = holder_id
+    _buyer_id    = buyer_id
+    _price       = contract.price_per_delivery
+    _done        = contract.deliveries_completed
+    _total       = contract.total_deliveries
+    _interval    = contract.delivery_interval
+
     db.commit()
     db.close()
+
+    # Summarise items for the notification body
+    try:
+        _idb   = get_db()
+        _citems = _idb.query(ContractItem).filter_by(contract_id=_cid).all()
+        _item_summary = ", ".join(
+            f"{it.quantity_per_delivery:.0f}x {it.item_type}" for it in _citems
+        ) or "goods"
+        _idb.close()
+    except Exception:
+        _item_summary = "goods"
+
+    _holder_name = _player_name(_holder_id)
+    _buyer_name  = _player_name(_buyer_id)
+
+    if _is_complete:
+        _push_contract(
+            _buyer_id,
+            f"✅ Contract #{_cid} complete!",
+            f"All {_total} deliveries fulfilled by {_holder_name}.",
+            _cid,
+        )
+        _push_contract(
+            _holder_id,
+            f"✅ Contract #{_cid} complete!",
+            f"Final delivery to {_buyer_name} accepted. Contract closed.",
+            _cid,
+        )
+    else:
+        _push_contract(
+            _buyer_id,
+            f"📦 Delivery #{_done}/{_total} received",
+            f"{_holder_name} delivered {_item_summary} — ${_price:,.0f} paid. "
+            f"Next delivery in {_interval}.",
+            _cid,
+        )
+        _push_contract(
+            _holder_id,
+            f"💰 Payment received — Contract #{_cid}",
+            f"${_price:,.0f} from {_buyer_name} for delivery #{_done}/{_total}.",
+            _cid,
+        )
+
     return None
 
 
@@ -825,6 +937,26 @@ def _handle_breach(db, contract, breacher_id: int, reason: str):
     contract.breach_reason = reason
     contract.next_delivery_tick = None
     db.commit()
+
+    # Push notifications
+    _cid        = contract.id
+    _damaged_id = damaged_id
+    _breacher_name = _player_name(breacher_id)
+    _damaged_name  = _player_name(_damaged_id)
+    _penalty_str   = f"${damaged_penalty:,.0f}" if damaged_penalty else "penalties applied"
+
+    _push_contract(
+        _damaged_id,
+        f"⚠️ Contract #{_cid} — Breach by {_breacher_name}",
+        f"{_breacher_name} breached the contract. You received {_penalty_str} in damages.",
+        _cid,
+    )
+    _push_contract(
+        breacher_id,
+        f"⚠️ Contract #{_cid} — You breached",
+        f"You failed to fulfil Contract #{_cid}. Penalty: ${total_value * (BREACH_PENALTY_GOV_PCT + BREACH_PENALTY_DAMAGED_PCT):,.0f}.",
+        _cid,
+    )
 
 
 def get_contract_details(contract_id: int) -> Optional[dict]:

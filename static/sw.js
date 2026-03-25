@@ -27,18 +27,42 @@ self.addEventListener("push", (event) => {
   const title   = data.title || "Wadsworth";
   const options = {
     body:      data.body  || "",
-    icon:      "/static/icons/icon-192.png",
+    icon:      data.icon  || "/static/icons/icon-192.png",
     badge:     "/static/icons/icon-72.png",
     tag:       data.tag   || "wadsworth-notif",
     renotify:  true,
     data:      { url: data.url || "/" },
   };
+  // DM notifications support inline reply on Android Chrome
+  if (data.tag && data.tag.startsWith("dm-")) {
+    options.actions = [{ action: "reply", type: "text", title: "Reply",
+                         placeholder: "Type a reply…" }];
+  }
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+  const replyText = event.reply;  // populated when the user uses the inline reply action
+
+  if (replyText && replyText.trim()) {
+    // Extract other_id from the URL: /p2p/dms?with=<id>
+    const withMatch = targetUrl.match(/[?&]with=(\d+)/);
+    const otherId   = withMatch ? withMatch[1] : null;
+    if (otherId) {
+      event.waitUntil(
+        fetch("/api/dm/reply", {
+          method:      "POST",
+          credentials: "include",
+          headers:     { "Content-Type": "application/x-www-form-urlencoded" },
+          body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
+        }).catch(() => {})
+      );
+      return;  // don't open the app for silent replies
+    }
+  }
+
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
       // Navigate any existing open window to the target URL
