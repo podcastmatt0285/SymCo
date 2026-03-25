@@ -1281,10 +1281,13 @@ async def api_dm_reply(
             "other_name": player_name,
         })
 
-        # Push notification to recipient
+        # Push notification to recipient — run in thread pool so the
+        # synchronous requests.post() inside doesn't block the event loop.
         try:
+            import asyncio as _aio
             from push_ux import send_push_notification
-            send_push_notification(
+            _aio.create_task(_aio.to_thread(
+                send_push_notification,
                 other_id,
                 f"New DM from {player_name}",
                 content[:80],
@@ -1292,7 +1295,7 @@ async def api_dm_reply(
                 notif_type="dm",
                 tag=f"dm-{conv_id}",
                 icon=f"/api/avatar/{player.id}",
-            )
+            ))
         except Exception:
             pass
 
@@ -1448,11 +1451,14 @@ async def dm_websocket(websocket: WebSocket):
                     recipient_msg["other_name"] = player_name
                     await dm_manager.send_to_user(other_id, recipient_msg)
 
-                    # Fire push notification to recipient
+                    # Fire push notification to recipient — run in thread pool so the
+                    # synchronous requests.post() inside doesn't block the event loop.
                     try:
+                        import asyncio as _aio
                         from push_ux import send_push_notification
                         _preview = str(saved.get("content", ""))[:80]
-                        send_push_notification(
+                        _aio.create_task(_aio.to_thread(
+                            send_push_notification,
                             other_id,
                             f"New DM from {player_name}",
                             _preview,
@@ -1460,7 +1466,7 @@ async def dm_websocket(websocket: WebSocket):
                             notif_type="dm",
                             tag=f"dm-{conv_id}",
                             icon=f"/api/avatar/{player_id}",
-                        )
+                        ))
                     except Exception:
                         pass
 
