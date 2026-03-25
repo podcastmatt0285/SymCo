@@ -452,6 +452,7 @@ class ConnectionManager:
         self.player_rooms[player_id] = set(r["id"] for r in rooms)
         # Load avatar into cache
         self.avatar_cache[player_id] = get_avatar(player_id)
+        print(f"[Chat] Player {player_id} ({player_name}) connected. Total: {len(self.connections)}")
 
     async def disconnect(self, player_id: int, websocket=None):
         # Guard: if a newer connection has already replaced this one, don't
@@ -469,16 +470,21 @@ class ConnectionManager:
             self.typing_users[room_id].discard(player_id)
         # Delete avatar from DB
         delete_avatar(player_id)
+        print(f"[Chat] Player {player_id} disconnected. Total: {len(self.connections)}")
 
     async def broadcast_to_room(self, room_id: str, message: dict):
         """Send a message to all users subscribed to a room."""
         msg_text = json.dumps(message)
         disconnected = []
-        for pid, ws in list(self.connections.items()):
-            if room_id in self.player_rooms.get(pid, set()):
+        recipients = [pid for pid, _ in self.connections.items() if room_id in self.player_rooms.get(pid, set())]
+        print(f"[Chat] Broadcasting to room '{room_id}': {len(recipients)} recipient(s) {recipients}")
+        for pid in recipients:
+            ws = self.connections.get(pid)
+            if ws:
                 try:
                     await ws.send_text(msg_text)
-                except Exception:
+                except Exception as e:
+                    print(f"[Chat] Send failed for player {pid}: {e}")
                     disconnected.append(pid)
         for pid in disconnected:
             await self.disconnect(pid)
@@ -488,7 +494,8 @@ class ConnectionManager:
         if ws:
             try:
                 await ws.send_text(json.dumps(message))
-            except Exception:
+            except Exception as e:
+                print(f"[Chat] send_to_user failed for player {player_id}: {e}")
                 await self.disconnect(player_id)
 
     def get_online_count(self, room_id: str = None) -> int:

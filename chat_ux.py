@@ -1746,7 +1746,7 @@ async def chat_websocket(websocket: WebSocket):
 
     except WebSocketDisconnect:
         pass
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[Chat WS] Unhandled error for player {player_id}: {e}")
     finally:
         await manager.disconnect(player_id, websocket)
