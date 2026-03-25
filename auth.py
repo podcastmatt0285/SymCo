@@ -48,6 +48,8 @@ class Player(Base):
     notif_badge  = Column(Boolean, default=True)       # Show unread badge on app icon (Badging API)
     notif_push_dms       = Column(Boolean, default=True)  # Push: new DMs
     notif_push_contracts = Column(Boolean, default=True)  # Push: contract updates
+    # FCC rental — NULL means no active rental; datetime = expiry (UTC)
+    cco_rental_expires = Column(DateTime, nullable=True, default=None)
 
     @property
     def cash_balance(self) -> float:
@@ -160,6 +162,7 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_badge BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_dms BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_contracts BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS cco_rental_expires TIMESTAMP",
     ])
 
 

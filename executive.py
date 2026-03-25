@@ -1080,6 +1080,23 @@ def player_has_ability(db, player_id: int, ability_key: str) -> bool:
     return False
 
 
+def player_has_cco(db, player_id: int) -> bool:
+    """True if player has p2p_notification from an active exec OR an active FCC rental."""
+    if player_has_ability(db, player_id, "p2p_notification"):
+        return True
+    try:
+        from auth import get_db as _adb_fn, Player as _Player
+        _adb = _adb_fn()
+        p = _adb.query(_Player).filter_by(id=player_id).first()
+        expires = getattr(p, "cco_rental_expires", None) if p else None
+        _adb.close()
+        if expires and expires > datetime.utcnow():
+            return True
+    except Exception:
+        pass
+    return False
+
+
 def get_school_discount(db, player_id: int) -> float:
     """Combined school cost/time discount from process_reeng + retention_bonus abilities."""
     d = (get_specific_ability_bonus(db, player_id, "process_reeng") +

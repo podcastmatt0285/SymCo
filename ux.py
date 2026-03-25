@@ -130,14 +130,14 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
-    # Notification prefs (badge + sounds) — only active if player has CCO
+    # Notification prefs (badge + sounds) — only active if player has CCO exec or FCC rental
     _notif_badge  = "false"
     _notif_sounds = "false"
     if player_id:
         try:
-            from executive import player_has_ability, get_db as _exec_db_fn
+            from executive import player_has_cco, get_db as _exec_db_fn
             _edb = _exec_db_fn()
-            _has_cco = player_has_ability(_edb, player_id, "p2p_notification")
+            _has_cco = player_has_cco(_edb, player_id)
             _edb.close()
             if _has_cco:
                 import auth as _auth_mod

@@ -1112,13 +1112,20 @@ def _tutorials_tab(player) -> str:
 # ── Notifications tab ─────────────────────────────────────────────────────────
 
 def _notifications_tab(player) -> str:
-    # All notification features require the Chief Communications Officer
+    # Notification features require either a CCO exec with p2p_notification OR an active FCC rental
     has_cco = False
+    rental_expires = None   # datetime (UTC) if rental is active
     try:
-        from executive import player_has_ability, get_db as _exec_db
+        from executive import player_has_cco, get_db as _exec_db
         _edb = _exec_db()
-        has_cco = player_has_ability(_edb, player.id, "p2p_notification")
+        has_cco = player_has_cco(_edb, player.id)
         _edb.close()
+        # Separately check rental expiry for display
+        expires_raw = getattr(player, "cco_rental_expires", None)
+        if expires_raw:
+            from datetime import datetime
+            if expires_raw > datetime.utcnow():
+                rental_expires = expires_raw
     except Exception as e:
         import logging
         logging.getLogger(__name__).exception("has_cco check failed for player %s: %s", getattr(player, 'id', '?'), e)
@@ -1164,24 +1171,105 @@ def _notifications_tab(player) -> str:
   {body}
 </div>"""
 
-    # ── CCO locked banner ─────────────────────────────────────────────────────
-    cco_banner = "" if has_cco else """
-<div style="background:#1e1a2e;border:1px solid #4c1d95;border-radius:8px;
+    # ── CCO / FCC rental banner ────────────────────────────────────────────────
+    if has_cco and rental_expires:
+        # Has exec CCO — show rental expiry as informational only (exec takes priority)
+        _exp_str = rental_expires.strftime("%b %d, %Y %H:%M UTC")
+        cco_banner = f"""
+<div style="background:#0f2a1a;border:1px solid #166534;border-radius:8px;
             padding:14px 18px;margin-bottom:20px;max-width:640px;
             display:flex;align-items:flex-start;gap:12px;">
-  <span style="font-size:1.3rem;flex-shrink:0;">🔒</span>
+  <span style="font-size:1.3rem;flex-shrink:0;">✅</span>
   <div>
-    <div style="font-size:0.88rem;font-weight:600;color:#c4b5fd;margin-bottom:4px;">
-      Chief Communications Officer required
+    <div style="font-size:0.88rem;font-weight:600;color:#86efac;margin-bottom:4px;">
+      Notifications unlocked via CCO executive
     </div>
-    <div style="font-size:0.78rem;color:#7c3aed;line-height:1.5;">
-      Hire a <strong style="color:#a78bfa;">CCO</strong> to unlock push notifications,
-      in-app sounds, and app icon badges. Your CCO manages all communication channels —
-      including the infrastructure that delivers alerts to your device.
-      Find one on the <a href="/executives" style="color:#a78bfa;">Executives</a> page.
+    <div style="font-size:0.78rem;color:#4ade80;line-height:1.5;">
+      You also have an FCC rental active until <strong>{_exp_str}</strong>.
     </div>
   </div>
 </div>"""
+    elif has_cco:
+        # Exec CCO only — clean confirmation, no rental needed
+        cco_banner = """
+<div style="background:#0f2a1a;border:1px solid #166534;border-radius:8px;
+            padding:14px 18px;margin-bottom:20px;max-width:640px;
+            display:flex;align-items:flex-start;gap:12px;">
+  <span style="font-size:1.3rem;flex-shrink:0;">✅</span>
+  <div style="font-size:0.88rem;font-weight:600;color:#86efac;">
+    Notifications unlocked via CCO executive
+  </div>
+</div>"""
+    elif rental_expires:
+        # Rental only (no exec CCO) — show expiry + extend options
+        _exp_str = rental_expires.strftime("%b %d, %Y %H:%M UTC")
+        cco_banner = f"""
+<div style="background:#1a1a0f;border:1px solid #854d0e;border-radius:8px;
+            padding:14px 18px;margin-bottom:20px;max-width:640px;">
+  <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;">
+    <span style="font-size:1.3rem;flex-shrink:0;">📡</span>
+    <div>
+      <div style="font-size:0.88rem;font-weight:600;color:#fde68a;margin-bottom:4px;">
+        FCC Rental active — expires {_exp_str}
+      </div>
+      <div style="font-size:0.78rem;color:#92400e;line-height:1.5;">
+        Extend your rental below, or hire a
+        <a href="/executives" style="color:#fbbf24;">CCO executive</a>
+        for permanent access at lower long-term cost.
+      </div>
+    </div>
+  </div>
+  <form method="post" action="/api/settings/cco-rental">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <button name="tier" value="6h"  type="submit" class="fcc-btn">+6 Hours<br><span style="font-size:0.7rem;color:#94a3b8;">$500</span></button>
+      <button name="tier" value="1d"  type="submit" class="fcc-btn">+1 Day<br><span style="font-size:0.7rem;color:#94a3b8;">$1,500</span></button>
+      <button name="tier" value="3d"  type="submit" class="fcc-btn">+3 Days<br><span style="font-size:0.7rem;color:#94a3b8;">$3,500</span></button>
+      <button name="tier" value="1w"  type="submit" class="fcc-btn">+1 Week<br><span style="font-size:0.7rem;color:#94a3b8;">$7,000</span></button>
+      <button name="tier" value="2w"  type="submit" class="fcc-btn">+2 Weeks<br><span style="font-size:0.7rem;color:#94a3b8;">$12,000</span></button>
+      <button name="tier" value="1mo" type="submit" class="fcc-btn">+1 Month<br><span style="font-size:0.7rem;color:#94a3b8;">$20,000</span></button>
+    </div>
+  </form>
+</div>"""
+    else:
+        # No CCO, no rental — full locked state with purchase UI
+        cco_banner = """
+<div style="background:#1e1a2e;border:1px solid #4c1d95;border-radius:8px;
+            padding:14px 18px;margin-bottom:20px;max-width:640px;">
+  <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+    <span style="font-size:1.3rem;flex-shrink:0;">🔒</span>
+    <div>
+      <div style="font-size:0.88rem;font-weight:600;color:#c4b5fd;margin-bottom:4px;">
+        Chief Communications Officer required
+      </div>
+      <div style="font-size:0.78rem;color:#7c3aed;line-height:1.5;">
+        Hire a <a href="/executives" style="color:#a78bfa;">CCO executive</a> for
+        permanent access, or lease FCC bandwidth below for a fixed duration.
+        Leasing is convenient but costs more over time than keeping a CCO on payroll.
+      </div>
+    </div>
+  </div>
+  <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
+              letter-spacing:.08em;margin-bottom:8px;">Lease FCC Bandwidth — Government Service</div>
+  <form method="post" action="/api/settings/cco-rental">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <button name="tier" value="6h"  type="submit" class="fcc-btn">6 Hours<br><span style="font-size:0.7rem;color:#94a3b8;">$500</span></button>
+      <button name="tier" value="1d"  type="submit" class="fcc-btn">1 Day<br><span style="font-size:0.7rem;color:#94a3b8;">$1,500</span></button>
+      <button name="tier" value="3d"  type="submit" class="fcc-btn">3 Days<br><span style="font-size:0.7rem;color:#94a3b8;">$3,500</span></button>
+      <button name="tier" value="1w"  type="submit" class="fcc-btn">1 Week<br><span style="font-size:0.7rem;color:#94a3b8;">$7,000</span></button>
+      <button name="tier" value="2w"  type="submit" class="fcc-btn">2 Weeks<br><span style="font-size:0.7rem;color:#94a3b8;">$12,000</span></button>
+      <button name="tier" value="1mo" type="submit" class="fcc-btn">1 Month<br><span style="font-size:0.7rem;color:#94a3b8;">$20,000</span></button>
+    </div>
+  </form>
+</div>
+<style>
+.fcc-btn {
+  background:#1e293b;border:1px solid #334155;border-radius:6px;
+  color:#e2e8f0;font-family:inherit;font-size:0.8rem;font-weight:600;
+  padding:10px 6px;cursor:pointer;text-align:center;line-height:1.4;
+  transition:background .15s,border-color .15s;
+}
+.fcc-btn:hover { background:#334155;border-color:#6366f1; }
+</style>"""
 
     # ── Push Notifications ────────────────────────────────────────────────────
     push_body = f"""
@@ -1396,9 +1484,9 @@ def api_save_notifications(
     if isinstance(player, RedirectResponse):
         return player
     try:
-        from executive import player_has_ability, get_db as _exec_db
+        from executive import player_has_cco, get_db as _exec_db
         _edb = _exec_db()
-        _has_cco = player_has_ability(_edb, player.id, "p2p_notification")
+        _has_cco = player_has_cco(_edb, player.id)
         _edb.close()
     except Exception:
         _has_cco = False
@@ -1415,6 +1503,66 @@ def api_save_notifications(
             db.close()
         except Exception as e:
             print(f"[Settings] notif save error: {e}")
+    return RedirectResponse(url="/settings?tab=notifications", status_code=303)
+
+
+# FCC rental tiers: key → {label, hours, price}
+_CCO_RENTAL_TIERS = {
+    "6h":  {"label": "6 Hours",  "hours": 6,   "price": 500},
+    "1d":  {"label": "1 Day",    "hours": 24,  "price": 1_500},
+    "3d":  {"label": "3 Days",   "hours": 72,  "price": 3_500},
+    "1w":  {"label": "1 Week",   "hours": 168, "price": 7_000},
+    "2w":  {"label": "2 Weeks",  "hours": 336, "price": 12_000},
+    "1mo": {"label": "1 Month",  "hours": 720, "price": 20_000},
+}
+
+
+@router.post("/api/settings/cco-rental")
+def api_cco_rental(
+    session_token: Optional[str] = Cookie(None),
+    tier: str = Form(...),
+):
+    """Purchase or extend an FCC bandwidth rental. Payment goes to the government."""
+    player = _require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    tier_data = _CCO_RENTAL_TIERS.get(tier)
+    if not tier_data:
+        return RedirectResponse(url="/settings?tab=notifications&msg=invalid_tier", status_code=303)
+
+    price = tier_data["price"]
+    hours = tier_data["hours"]
+
+    # Deduct from player (respects legal tender)
+    from reserve_banks import debit_usd, credit_usd
+    if not debit_usd(player.id, price):
+        return RedirectResponse(url="/settings?tab=notifications&msg=insufficient_funds", status_code=303)
+
+    # Credit government treasury
+    GOVERNMENT_PLAYER_ID = 0
+    credit_usd(GOVERNMENT_PLAYER_ID, price)
+
+    # Set / extend rental expiry
+    from datetime import datetime, timedelta
+    import auth as _auth
+    db = _auth.get_db()
+    try:
+        p = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
+        if p:
+            now = datetime.utcnow()
+            current = getattr(p, "cco_rental_expires", None)
+            if current and current > now:
+                p.cco_rental_expires = current + timedelta(hours=hours)
+            else:
+                p.cco_rental_expires = now + timedelta(hours=hours)
+            db.commit()
+    except Exception as e:
+        print(f"[Settings] cco_rental update error: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
     return RedirectResponse(url="/settings?tab=notifications", status_code=303)
 
 
