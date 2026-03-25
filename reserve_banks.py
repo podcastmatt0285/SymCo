@@ -82,7 +82,12 @@ TICKS_PER_YEAR              = 8760  # 365 days × 24 hourly ticks
 YIELD_SENSITIVITY  = 0.00001       # yield change per $1 of net demand per tick
 
 # FX dynamics: each 1 % yield change causes a proportional FX movement.
-FX_YIELD_LINK      = 0.005         # usd_per_unit fractional change per 1 % yield Δ (inverse)
+FX_YIELD_LINK      = 0.02          # usd_per_unit fractional change per 1 % yield Δ (4× more sensitive)
+
+# Direct FX impact from bond market actions (buys, sells, calls).
+# Each $1 of bond activity moves usd_per_unit by this fraction of the current rate, immediately.
+# e.g. 0.00001 → a $10 000 bond purchase appreciates the currency by ~0.1%.
+FX_DIRECT_BOND_LINK = 0.00001      # fractional usd_per_unit change per $1 of bond face value
 
 FOREX_FEE_RATE     = 0.002         # 0.2 % fee on each forex conversion
 BOND_MATURITIES             = [7, 14, 30]  # calendar days available to players
@@ -108,20 +113,20 @@ DAILY_SWAP_URGENCY_PREMIUM = 1.005  # 0.5 % premium paid by a bank urgently need
 DEFAULT_BANKS = [
     # code, name, symbol, flag, initial_yield, usd_per_unit, min_yield, max_yield
     ("USD", "Federal Reserve of Wadsworth",      "$",  "🇺🇸", 0.053,  1.000,  -0.005, 0.25),
-    ("JPY", "Bank of Wadsworth Japan",           "¥",  "🇯🇵", 0.001,  0.0067, -0.005, 0.15),
-    ("MXP", "Banco de Reserva Wadsworth",        "M$", "🇲🇽", 0.080,  0.058,   0.020, 0.50),
-    ("GBP", "Wadsworth Bank of England",         "£",  "🇬🇧", 0.045,  1.270,  -0.010, 0.20),
-    ("CHF", "Wadsworth National Bank",           "Fr", "🇨🇭", 0.015,  1.120,  -0.020, 0.10),
-    ("CNY", "People's Reserve Bank of Wadsworth","¥",  "🇨🇳", 0.025,  0.138,   0.005, 0.25),
-    ("EUR", "Wadsworth Central Bank",            "€",  "🇪🇺", 0.030,  1.080,  -0.010, 0.20),
-    ("INR", "Reserve Bank of Wadsworth India",   "₹",  "🇮🇳", 0.065,  0.012,   0.030, 0.35),
-    ("RUB", "Wadsworth Central Reserve Bank",    "₽",  "🇷🇺", 0.160,  0.011,   0.050, 0.99),
-    ("KRW", "Bank of Wadsworth Korea",           "₩",  "🇰🇷", 0.035,  0.00073, 0.010, 0.25),
-    ("ZAR", "Wadsworth South African Reserve Bank","R", "🇿🇦", 0.085,  0.055,   0.030, 0.45),
-    ("BRL", "Central Bank of Wadsworth Brazil",  "R$", "🇧🇷", 0.105,  0.180,   0.040, 0.60),
-    ("TRY", "Central Bank of the Wadsworth Republic","₺","🇹🇷",0.400,  0.029,   0.100, 0.99),
-    ("SAR", "Wadsworth Saudi Central Bank",      "﷼",  "🇸🇦", 0.050,  0.267,   0.045, 0.06),
-    ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,   0.030, 0.06),
+    ("JPY", "Bank of Wadsworth Japan",           "¥",  "🇯🇵", 0.001,  0.0067, -0.030, 0.30),
+    ("MXP", "Banco de Reserva Wadsworth",        "M$", "🇲🇽", 0.080,  0.058,  -0.020, 0.80),
+    ("GBP", "Wadsworth Bank of England",         "£",  "🇬🇧", 0.045,  1.270,  -0.030, 0.40),
+    ("CHF", "Wadsworth National Bank",           "Fr", "🇨🇭", 0.015,  1.120,  -0.050, 0.30),
+    ("CNY", "People's Reserve Bank of Wadsworth","¥",  "🇨🇳", 0.025,  0.138,  -0.010, 0.45),
+    ("EUR", "Wadsworth Central Bank",            "€",  "🇪🇺", 0.030,  1.080,  -0.030, 0.40),
+    ("INR", "Reserve Bank of Wadsworth India",   "₹",  "🇮🇳", 0.065,  0.012,  -0.010, 0.60),
+    ("RUB", "Wadsworth Central Reserve Bank",    "₽",  "🇷🇺", 0.160,  0.011,   0.010, 0.99),
+    ("KRW", "Bank of Wadsworth Korea",           "₩",  "🇰🇷", 0.035,  0.00073,-0.020, 0.45),
+    ("ZAR", "Wadsworth South African Reserve Bank","R", "🇿🇦", 0.085,  0.055,  -0.010, 0.70),
+    ("BRL", "Central Bank of Wadsworth Brazil",  "R$", "🇧🇷", 0.105,  0.180,  -0.010, 0.85),
+    ("TRY", "Central Bank of the Wadsworth Republic","₺","🇹🇷",0.400,  0.029,   0.030, 0.99),
+    ("SAR", "Wadsworth Saudi Central Bank",      "﷼",  "🇸🇦", 0.050,  0.267,  -0.010, 0.25),
+    ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,  -0.010, 0.25),
     ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "{J}", "🌿", 4.20,  10.00, -1.12, 4.20),
 ]
 
@@ -367,8 +372,16 @@ def initialize():
                     max_yield       = max_y,
                 )
                 db.add(bank)
+            else:
+                # Always sync yield bands from DEFAULT_BANKS so widened limits take
+                # effect on existing databases without a manual SQL migration.
+                exists.min_yield = min_y
+                exists.max_yield = max_y
+                # Clamp yield_rate into the new band in case it was already at an
+                # old boundary that falls outside the new range.
+                exists.yield_rate = max(min_y, min(max_y, exists.yield_rate))
         db.commit()
-        print(f"[ReserveBanks] {len(DEFAULT_BANKS)} banks seeded/verified.")
+        print(f"[ReserveBanks] {len(DEFAULT_BANKS)} banks seeded/verified (yield bands synced).")
     except Exception as e:
         db.rollback()
         print(f"[ReserveBanks] Initialize error: {e}")
@@ -483,6 +496,12 @@ def _call_bonds_if_needed(db, bank: StateReserveBank):
         bank.wsc_holdings         = max(0.0, bank.wsc_holdings         - bond.face_value_wsc)
         # Negative demand: bank is effectively buying back the bond
         bank.net_demand_wsc -= bond.face_value_wsc
+        # Immediate FX depreciation: forced redemption signals reduced demand for this currency.
+        if bank.currency_code != "USD":
+            bank.usd_per_unit = max(
+                0.000001,
+                bank.usd_per_unit - bond.face_value_wsc * FX_DIRECT_BOND_LINK * bank.usd_per_unit,
+            )
 
         # Credit player: face value + call premium + accumulated interest
         total_call_payout = call_value + bond.interest_accrued
@@ -1191,6 +1210,12 @@ def purchase_bond(
             bank.total_face_value_wsc += face_value_usd
             bank.net_demand_wsc       += face_value_usd
             bank.wsc_holdings         += face_value_usd
+            # Immediate FX appreciation: bond purchase = capital inflow = stronger currency.
+            if bank.currency_code != "USD":
+                bank.usd_per_unit = max(
+                    0.000001,
+                    bank.usd_per_unit + face_value_usd * FX_DIRECT_BOND_LINK * bank.usd_per_unit,
+                )
 
             db.commit()
         except Exception as bond_err:
@@ -1297,6 +1322,12 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         bank.net_demand_wsc       -= bond.face_value_wsc   # selling = negative demand
         bank.total_face_value_wsc  = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
         bank.wsc_holdings          = max(0.0, bank.wsc_holdings - bond.face_value_wsc)
+        # Immediate FX depreciation: selling a bond = capital outflow = weaker currency.
+        if bank.currency_code != "USD":
+            bank.usd_per_unit = max(
+                0.000001,
+                bank.usd_per_unit - bond.face_value_wsc * FX_DIRECT_BOND_LINK * bank.usd_per_unit,
+            )
 
         # Credit foreign currency to player
         _adjust_currency_balance(db, player_id, currency_code, foreign_return)
