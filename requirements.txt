@@ -4,4 +4,4 @@ sqlalchemy
 psycopg2-binary
 python-multipart
 python-dotenv
-cryptography
+pycryptodome

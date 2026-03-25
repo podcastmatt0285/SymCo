@@ -10,12 +10,14 @@ Routes:
 Helper (called from other modules):
   send_push_notification(player_id, title, body, url, notif_type)
 
-VAPID keys are auto-generated on first startup and stored in .vapid_keys.json.
-Encryption is implemented per RFC 8291 + RFC 8188 (aes128gcm) using the
-cryptography package — no pywebpush dependency needed.
+VAPID keys are auto-generated on first startup and stored in the system_config DB table.
+Encryption is implemented per RFC 8291 + RFC 8188 (aes128gcm) using pycryptodome
+for ECC / AES-GCM and stdlib hmac/hashlib for HKDF — no Rust-based dependencies needed.
 """
 
 import base64
+import hashlib
+import hmac as _hmac
 import json
 import os
 import struct
@@ -32,7 +34,7 @@ _KEYS_FILE = os.path.join(os.path.dirname(__file__), ".vapid_keys.json")
 _VAPID_KEYS: Optional[dict] = None
 
 
-# ── VAPID key management ───────────────────────────────────────────────────────
+# ── Base64url helpers ──────────────────────────────────────────────────────────
 
 def _b64d(s: str) -> bytes:
     s = s + '=' * (4 - len(s) % 4)
@@ -43,16 +45,41 @@ def _b64e(b: bytes) -> str:
     return base64.urlsafe_b64encode(b).rstrip(b'=').decode()
 
 
+# ── HKDF (RFC 5869) via stdlib ─────────────────────────────────────────────────
+
+def _hkdf_extract(salt: bytes, ikm: bytes) -> bytes:
+    return _hmac.new(salt, ikm, hashlib.sha256).digest()
+
+
+def _hkdf_expand(prk: bytes, info: bytes, length: int) -> bytes:
+    t = b''
+    okm = b''
+    counter = 1
+    while len(okm) < length:
+        t = _hmac.new(prk, t + info + bytes([counter]), hashlib.sha256).digest()
+        okm += t
+        counter += 1
+    return okm[:length]
+
+
+def _hkdf(salt: bytes, ikm: bytes, info: bytes, length: int) -> bytes:
+    return _hkdf_expand(_hkdf_extract(salt, ikm), info, length)
+
+
+# ── VAPID key management ───────────────────────────────────────────────────────
+
 def _generate_keys() -> Optional[dict]:
-    """Generate a fresh VAPID key pair using only the cryptography library."""
+    """Generate a fresh VAPID key pair using pycryptodome."""
     try:
-        from cryptography.hazmat.primitives.asymmetric.ec import generate_private_key, SECP256R1
-        from cryptography.hazmat.primitives.serialization import (
-            Encoding, PublicFormat, PrivateFormat, NoEncryption,
-        )
-        priv = generate_private_key(SECP256R1())
-        pub_bytes = priv.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
-        priv_pem  = priv.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()).decode()
+        from Crypto.PublicKey import ECC
+        priv = ECC.generate(curve='P-256')
+        pub_point = priv.public_key().pointQ
+        x_bytes = int(pub_point.x).to_bytes(32, 'big')
+        y_bytes = int(pub_point.y).to_bytes(32, 'big')
+        pub_bytes = b'\x04' + x_bytes + y_bytes
+        priv_pem = priv.export_key(format='PEM', use_pkcs8=True)
+        if isinstance(priv_pem, bytes):
+            priv_pem = priv_pem.decode()
         return {"private_key": priv_pem, "public_key": _b64e(pub_bytes)}
     except Exception as e:
         print(f"[Push] VAPID key generation failed: {e}")
@@ -140,73 +167,61 @@ def get_vapid_keys() -> Optional[dict]:
 def _encrypt_push(plaintext: str, auth_b64: str, p256dh_b64: str) -> bytes:
     """
     Encrypt a push payload per RFC 8291 (WebPush) + RFC 8188 (aes128gcm).
+    Uses pycryptodome for ECC/AES-GCM and stdlib hmac/hashlib for HKDF.
     Returns the raw encrypted body bytes to POST.
     """
-    from cryptography.hazmat.primitives.asymmetric.ec import (
-        generate_private_key, ECDH, SECP256R1, EllipticCurvePublicKey,
-    )
-    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-    from cryptography.hazmat.primitives.hashes import SHA256
-    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-    from cryptography.hazmat.backends import default_backend
-
-    backend = default_backend()
+    from Crypto.PublicKey import ECC
+    from Crypto.Cipher import AES
 
     auth_secret    = _b64d(auth_b64)
     recv_pub_bytes = _b64d(p256dh_b64)
 
-    # Load recipient public key (uncompressed EC point)
-    recv_pub = EllipticCurvePublicKey.from_encoded_point(SECP256R1(), recv_pub_bytes)
+    # Load recipient public key from uncompressed EC point (0x04 || x || y)
+    rx = int.from_bytes(recv_pub_bytes[1:33], 'big')
+    ry = int.from_bytes(recv_pub_bytes[33:65], 'big')
+    recv_pub = ECC.construct(curve='P-256', point_x=rx, point_y=ry)
 
     # Ephemeral sender key pair
-    sender_priv      = generate_private_key(SECP256R1(), backend)
-    sender_pub       = sender_priv.public_key()
-    sender_pub_bytes = sender_pub.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+    sender_priv = ECC.generate(curve='P-256')
+    sp = sender_priv.public_key().pointQ
+    sender_pub_bytes = b'\x04' + int(sp.x).to_bytes(32, 'big') + int(sp.y).to_bytes(32, 'big')
 
-    # ECDH shared secret
-    ecdh_secret = sender_priv.exchange(ECDH(), recv_pub)
+    # ECDH shared secret — x-coordinate of scalar multiplication
+    shared_point = sender_priv.d * recv_pub.pointQ
+    ecdh_secret  = int(shared_point.x).to_bytes(32, 'big')
 
     # Random 16-byte salt for content encryption
     salt = os.urandom(16)
 
     # IKM derivation — RFC 8291 §3.3
-    ikm = HKDF(
-        algorithm=SHA256(), length=32,
+    ikm = _hkdf(
         salt=auth_secret,
+        ikm=ecdh_secret,
         info=b"WebPush: info\x00" + recv_pub_bytes + sender_pub_bytes,
-        backend=backend,
-    ).derive(ecdh_secret)
+        length=32,
+    )
 
     # CEK + nonce — RFC 8188 §2.3
-    cek = HKDF(
-        algorithm=SHA256(), length=16, salt=salt,
-        info=b"Content-Encoding: aes128gcm\x00\x01",
-        backend=backend,
-    ).derive(ikm)
-    nonce = HKDF(
-        algorithm=SHA256(), length=12, salt=salt,
-        info=b"Content-Encoding: nonce\x00\x01",
-        backend=backend,
-    ).derive(ikm)
+    cek   = _hkdf(salt=salt, ikm=ikm, info=b"Content-Encoding: aes128gcm\x00\x01", length=16)
+    nonce = _hkdf(salt=salt, ikm=ikm, info=b"Content-Encoding: nonce\x00\x01",     length=12)
 
-    # Encrypt: plaintext + 0x02 padding delimiter
-    ct = AESGCM(cek).encrypt(nonce, plaintext.encode('utf-8') + b'\x02', None)
+    # Encrypt with AES-128-GCM; append 0x02 padding delimiter
+    cipher = AES.new(cek, AES.MODE_GCM, nonce=nonce)
+    ct, tag = cipher.encrypt_and_digest(plaintext.encode('utf-8') + b'\x02')
 
-    # aes128gcm content: salt(16) + rs(uint32be) + idlen(uint8) + key_id + ciphertext
+    # aes128gcm content: salt(16) + rs(uint32be) + idlen(uint8) + key_id + ciphertext+tag
     header = salt + struct.pack('>I', 4096) + bytes([len(sender_pub_bytes)]) + sender_pub_bytes
-    return header + ct
+    return header + ct + tag
 
 
 def _vapid_auth_header(private_pem: str, public_key_b64: str, endpoint: str) -> str:
     """
-    Build a VAPID Authorization header using only the cryptography library.
+    Build a VAPID Authorization header using pycryptodome (ES256 JWT).
     Returns the full header value: 'vapid t=<JWT>,k=<pubkey>'
     """
-    from cryptography.hazmat.primitives.serialization import load_pem_private_key
-    from cryptography.hazmat.primitives.asymmetric import ec
-    from cryptography.hazmat.primitives.hashes import SHA256
-    from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+    from Crypto.PublicKey import ECC
+    from Crypto.Signature import DSS
+    from Crypto.Hash import SHA256
 
     aud = urlparse(endpoint).scheme + "://" + urlparse(endpoint).netloc
 
@@ -217,11 +232,12 @@ def _vapid_auth_header(private_pem: str, public_key_b64: str, endpoint: str) -> 
         "sub": "mailto:admin@wadsworth.game",
     }, separators=(',', ':')).encode())
 
-    signing_input = f"{hdr}.{claims}".encode()
-    priv    = load_pem_private_key(private_pem.encode(), password=None)
-    sig_der = priv.sign(signing_input, ec.ECDSA(SHA256()))
-    r, s    = decode_dss_signature(sig_der)
-    sig     = _b64e(r.to_bytes(32, 'big') + s.to_bytes(32, 'big'))
+    signing_input = (hdr + "." + claims).encode()
+    priv    = ECC.import_key(private_pem)
+    signer  = DSS.new(priv, 'fips-186-3')
+    h       = SHA256.new(signing_input)
+    sig_raw = signer.sign(h)   # raw r||s (64 bytes for P-256)
+    sig     = _b64e(sig_raw)
 
     return f"vapid t={hdr}.{claims}.{sig},k={public_key_b64}"
 
@@ -377,8 +393,8 @@ def send_push_notification(
 
         for sub in subs:
             try:
-                enc   = _encrypt_push(payload, sub.auth, sub.p256dh)
-                code  = _send_web_push(sub.endpoint, enc, keys["private_key"], keys["public_key"])
+                enc  = _encrypt_push(payload, sub.auth, sub.p256dh)
+                code = _send_web_push(sub.endpoint, enc, keys["private_key"], keys["public_key"])
                 if code in (404, 410):
                     to_purge.append(sub.id)
                 elif code >= 400:
