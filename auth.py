@@ -164,7 +164,8 @@ def migrate_player_table():
 
 
 def migrate_push_subscriptions():
-    """Create the push_subscriptions and system_config tables if they don't exist."""
+    """Create the push_subscriptions and system_config tables if they don't exist,
+    and seed default VAPID keys so the server never needs to generate them at runtime."""
     from database import run_ddl_migration
     run_ddl_migration(engine, [
         """CREATE TABLE IF NOT EXISTS push_subscriptions (
@@ -179,6 +180,11 @@ def migrate_push_subscriptions():
             key   TEXT PRIMARY KEY,
             value TEXT NOT NULL
         )""",
+        # Seed pre-generated VAPID keys so the server never needs pycryptodome at startup.
+        # Override by setting VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY env vars (takes priority).
+        """INSERT INTO system_config (key, value)
+           VALUES ('vapid_keys', '{"private_key": "-----BEGIN PRIVATE KEY-----\\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgLpELWaFlOCv7djyF\\nQEMVsSqA7Iaok/xU43IH4/ocbBahRANCAASy4lHt6mu/IWf/UhGLPSZ1XTC521Le\\nns+V/JCQD7HTL1c13Y6HQ4MJsTSchVhFtFSbVAHXPHvYV6ERnWwAfilV\\n-----END PRIVATE KEY-----", "public_key": "BLLiUe3qa78hZ_9SEYs9JnVdMLnbUt6ez5X8kJAPsdMvVzXdjodDgwmxNJyFWEW0VJtUAdc8e9hXoRGdbAB-KVU"}')
+           ON CONFLICT (key) DO NOTHING""",
     ])
 
 
