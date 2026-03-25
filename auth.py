@@ -43,6 +43,11 @@ class Player(Base):
     tutorial_3_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=reward pending, 8=complete
     is_npc = Column(Boolean, default=False)           # True for NPC accounts
     npc_config_key = Column(String, nullable=True)    # Links to npc_configs/<key>.json
+    # Notification preferences
+    notif_sounds = Column(Boolean, default=True)       # Play sounds for in-game notifications
+    notif_badge  = Column(Boolean, default=True)       # Show unread badge on app icon (Badging API)
+    notif_push_dms       = Column(Boolean, default=True)  # Push: new DMs
+    notif_push_contracts = Column(Boolean, default=True)  # Push: contract updates
 
     @property
     def cash_balance(self) -> float:
@@ -139,6 +144,10 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_3_step INTEGER DEFAULT 0",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS npc_config_key VARCHAR(128)",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_sounds BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_badge BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_dms BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_contracts BOOLEAN DEFAULT TRUE",
     ])
 
 

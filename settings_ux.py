@@ -10,15 +10,16 @@ GET /api/deep-dives       — JSON list of audio deep dive entries from wiki_med
 import json
 import os
 from typing import Optional
-from fastapi import APIRouter, Cookie, Query
+from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 router = APIRouter()
 
 _TABS = [
-    ("audio",     "🎵 Audio"),
-    ("tutorials", "📖 Tutorials"),
-    ("account",   "👤 Account"),
+    ("audio",         "🎵 Audio"),
+    ("tutorials",     "📖 Tutorials"),
+    ("notifications", "🔔 Notifications"),
+    ("account",       "👤 Account"),
 ]
 
 
@@ -1108,6 +1109,188 @@ def _tutorials_tab(player) -> str:
     return card1 + card2 + card3 + cta
 
 
+# ── Notifications tab ─────────────────────────────────────────────────────────
+
+def _notifications_tab(player) -> str:
+    sounds   = getattr(player, "notif_sounds",         True)
+    badge    = getattr(player, "notif_badge",          True)
+    push_dms = getattr(player, "notif_push_dms",       True)
+    push_con = getattr(player, "notif_push_contracts", True)
+
+    def _toggle(name: str, checked: bool, label: str, sub: str = "", disabled: bool = False) -> str:
+        chk   = "checked" if checked else ""
+        dis   = "disabled" if disabled else ""
+        opcty = "opacity:0.4;" if disabled else ""
+        return f"""
+<label style="display:flex;align-items:flex-start;gap:14px;padding:14px 0;
+              border-bottom:1px solid #1e293b;cursor:{'default' if disabled else 'pointer'};{opcty}">
+  <div style="position:relative;flex-shrink:0;width:44px;height:24px;margin-top:2px;">
+    <input type="checkbox" name="{name}" id="{name}" {chk} {dis}
+           style="position:absolute;opacity:0;width:0;height:0;"
+           onchange="this.form.submit()">
+    <div class="ntog" data-for="{name}" style="
+      position:absolute;inset:0;border-radius:12px;
+      background:{'#6366f1' if checked and not disabled else '#1e293b'};
+      border:1px solid {'#6366f1' if checked and not disabled else '#334155'};
+      transition:background .2s,border-color .2s;cursor:{'default' if disabled else 'pointer'};">
+      <div style="position:absolute;top:2px;left:{'22px' if checked else '2px'};
+                  width:18px;height:18px;border-radius:50%;background:white;
+                  transition:left .2s;"></div>
+    </div>
+  </div>
+  <div>
+    <div style="font-size:0.9rem;color:#f1f5f9;font-weight:500;">{label}</div>
+    {'<div style="font-size:0.75rem;color:#64748b;margin-top:2px;">'+sub+'</div>' if sub else ''}
+  </div>
+</label>"""
+
+    def _section(title: str, body: str) -> str:
+        return f"""
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;
+            padding:20px 24px;margin-bottom:20px;max-width:640px;">
+  <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
+              letter-spacing:.08em;margin-bottom:4px;">{title}</div>
+  {body}
+</div>"""
+
+    # ── Push Notifications ────────────────────────────────────────────────────
+    push_body = f"""
+<p style="font-size:0.78rem;color:#64748b;margin:8px 0 16px;">
+  Push notifications appear even when the app is closed. Requires browser permission.
+</p>
+<div id="push-status-row" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+  <span id="push-status-dot" style="width:8px;height:8px;border-radius:50%;
+        background:#334155;flex-shrink:0;"></span>
+  <span id="push-status-label" style="font-size:0.78rem;color:#64748b;">Checking…</span>
+  <button id="push-enable-btn" onclick="requestPushPermission()"
+          style="display:none;margin-left:auto;padding:6px 16px;background:#6366f1;
+                 border:none;border-radius:5px;color:white;font-size:0.78rem;cursor:pointer;">
+    Enable Push
+  </button>
+  <button id="push-revoke-hint" onclick="alert('To disable push, revoke permission in your browser\\'s site settings.')"
+          style="display:none;margin-left:auto;padding:6px 16px;background:transparent;
+                 border:1px solid #334155;border-radius:5px;color:#64748b;
+                 font-size:0.78rem;cursor:pointer;">
+    Manage in Browser
+  </button>
+</div>
+<div id="push-toggles">
+  {_toggle("notif_push_dms",       push_dms, "Direct Messages",    "Get notified when someone sends you a DM")}
+  {_toggle("notif_push_contracts", push_con, "Contract Updates",   "Offers, acceptances, breaches, and completions")}
+</div>"""
+
+    # ── Sounds ────────────────────────────────────────────────────────────────
+    sounds_body = f"""
+<p style="font-size:0.78rem;color:#64748b;margin:8px 0 16px;">
+  Play a sound when an in-game notification arrives while you have the app open.
+</p>
+{_toggle("notif_sounds", sounds, "Notification Sounds", "Short audio cue for incoming alerts")}"""
+
+    # ── Badging ───────────────────────────────────────────────────────────────
+    badge_body = f"""
+<p style="font-size:0.78rem;color:#64748b;margin:8px 0 16px;">
+  Show your total unread count on the Wadsworth app icon (installed PWA only).
+</p>
+{_toggle("notif_badge", badge, "App Icon Badge", "Displays unread count on home screen / taskbar icon")}"""
+
+    form_start = '<form method="post" action="/api/settings/notifications" id="notif-form">'
+    form_end   = '</form>'
+
+    toggle_js = """
+<script>
+// Animate toggle knob on click without waiting for server round-trip
+document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
+  cb.addEventListener('change', function() {
+    var track = document.querySelector('.ntog[data-for="' + this.id + '"]');
+    var knob  = track && track.querySelector('div');
+    if (!track || !knob) return;
+    var on = this.checked;
+    track.style.background    = on ? '#6366f1' : '#1e293b';
+    track.style.borderColor   = on ? '#6366f1' : '#334155';
+    knob.style.left           = on ? '22px'    : '2px';
+  });
+});
+
+// Push permission status
+(function() {
+  var dot   = document.getElementById('push-status-dot');
+  var lbl   = document.getElementById('push-status-label');
+  var enBtn = document.getElementById('push-enable-btn');
+  var mgBtn = document.getElementById('push-revoke-hint');
+  var togs  = document.getElementById('push-toggles');
+
+  function setStatus(perm) {
+    if (perm === 'granted') {
+      dot.style.background = '#4ade80';
+      lbl.textContent = 'Push enabled';
+      mgBtn.style.display = 'inline-block';
+      enBtn.style.display = 'none';
+      if (togs) togs.style.opacity = '1';
+    } else if (perm === 'denied') {
+      dot.style.background = '#ef4444';
+      lbl.textContent = 'Push blocked — allow it in browser site settings';
+      enBtn.style.display = 'none';
+      mgBtn.style.display = 'none';
+      if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
+    } else {
+      dot.style.background = '#f59e0b';
+      lbl.textContent = 'Push not enabled';
+      enBtn.style.display = 'inline-block';
+      mgBtn.style.display = 'none';
+      if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
+    }
+  }
+
+  if (!('Notification' in window)) {
+    lbl.textContent = 'Push not supported in this browser';
+    if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
+    return;
+  }
+  setStatus(Notification.permission);
+
+  window.requestPushPermission = function() {
+    Notification.requestPermission().then(function(p) { setStatus(p); });
+  };
+})();
+</script>"""
+
+    return (
+        form_start
+        + _section("Push Notifications", push_body)
+        + _section("In-App Sounds", sounds_body)
+        + _section("App Icon Badge", badge_body)
+        + form_end
+        + toggle_js
+    )
+
+
+@router.post("/api/settings/notifications")
+def api_save_notifications(
+    session_token:        Optional[str] = Cookie(None),
+    notif_push_dms:       Optional[str] = Form(None),
+    notif_push_contracts: Optional[str] = Form(None),
+    notif_sounds:         Optional[str] = Form(None),
+    notif_badge:          Optional[str] = Form(None),
+):
+    import auth as _auth
+    player = _require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    try:
+        db = _auth.get_db()
+        p  = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
+        if p:
+            p.notif_push_dms       = notif_push_dms       == "on"
+            p.notif_push_contracts = notif_push_contracts == "on"
+            p.notif_sounds         = notif_sounds         == "on"
+            p.notif_badge          = notif_badge          == "on"
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Settings] notif save error: {e}")
+    return RedirectResponse(url="/settings?tab=notifications", status_code=303)
+
+
 def _account_tab(player) -> str:
     try:
         from corporate_actions import is_player_bankrupt
@@ -1196,10 +1379,12 @@ def settings_page(
 
     if tab == "audio":
         content = _audio_tab()
-    elif tab == "account":
-        content = _account_tab(player)
     elif tab == "tutorials":
         content = _tutorials_tab(player)
+    elif tab == "notifications":
+        content = _notifications_tab(player)
+    elif tab == "account":
+        content = _account_tab(player)
     else:
         content = '<p style="color:#64748b;">Coming soon.</p>'
 
