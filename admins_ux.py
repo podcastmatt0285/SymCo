@@ -70,6 +70,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/p2p", "P2P"),
         ("/admin/landbank", "Land Bank"),
         ("/admin/etf", "ETF Banks"),
+        ("/admin/bonds", "Bonds"),
         ("/admin/logs", "Logs"),
         ("/admin/wiki", "Wiki Media"),
         ("/admin/item-routes", "Item Routes"),
@@ -3423,3 +3424,150 @@ function filterCards() {{
 </script>
 """
     return HTMLResponse(admin_shell("Item Routes", body, admin.business_name, "/admin/item-routes"))
+
+
+# ==========================
+# BONDS ADMIN
+# ==========================
+
+@router.get("/admin/bonds", response_class=HTMLResponse)
+def admin_bonds(
+    session_token: Optional[str] = Cookie(None),
+    currency: Optional[str] = Query(None),
+    player: Optional[str] = Query(None),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    from reserve_banks import get_all_active_bonds, get_all_banks
+    from auth import SessionLocal as AuthSession, Player
+
+    all_bonds = get_all_active_bonds()
+    banks     = get_all_banks()
+
+    # Build player-name lookup from the auth DB for all holder IDs
+    player_ids = {b["holder_player_id"] for b in all_bonds if not b["is_interbank"]}
+    auth_db = AuthSession()
+    try:
+        players_map = {
+            p.id: p.business_name
+            for p in auth_db.query(Player).filter(Player.id.in_(player_ids)).all()
+        } if player_ids else {}
+    finally:
+        auth_db.close()
+
+    # Filter controls
+    currency_filter = (currency or "").upper().strip()
+    player_filter   = (player or "").strip().lower()
+
+    filtered = all_bonds
+    if currency_filter:
+        filtered = [b for b in filtered if b["currency_code"] == currency_filter]
+    if player_filter:
+        filtered = [
+            b for b in filtered
+            if player_filter in str(b["holder_player_id"])
+            or player_filter in players_map.get(b["holder_player_id"], "").lower()
+        ]
+
+    # Summary stats per currency
+    summary: dict = {}
+    for b in all_bonds:
+        c = b["currency_code"]
+        if c not in summary:
+            summary[c] = {"flag": b["flag"], "count": 0, "face_wsc": 0.0, "interbank": 0}
+        summary[c]["count"]    += 1
+        summary[c]["face_wsc"] += b["face_value_wsc"]
+        if b["is_interbank"]:
+            summary[c]["interbank"] += 1
+
+    currency_opts = "".join(
+        f'<option value="{b["currency_code"]}" {"selected" if b["currency_code"] == currency_filter else ""}>{b["flag"]} {b["currency_code"]}</option>'
+        for b in banks
+    )
+
+    summary_rows = "".join(
+        f'<tr>'
+        f'<td>{v["flag"]} {c}</td>'
+        f'<td>{v["count"]}</td>'
+        f'<td style="color:#94a3b8;">{v["interbank"]}</td>'
+        f'<td>${v["face_wsc"]:,.2f}</td>'
+        f'</tr>'
+        for c, v in sorted(summary.items())
+    )
+
+    bond_rows = ""
+    for b in filtered:
+        if b["is_interbank"]:
+            holder_cell = '<span style="color:#64748b;font-size:0.7rem;">INTERBANK</span>'
+        else:
+            name = players_map.get(b["holder_player_id"], "?")
+            holder_cell = f'<a href="/admin/player/{b["holder_player_id"]}" style="color:#38bdf8;">#{b["holder_player_id"]} {name}</a>'
+
+        # Highlight if yield is stuck at floor
+        at_floor = abs(b["current_yield_pct"] - b["min_yield_pct"]) < 0.0001
+        yield_style = ' style="color:#f87171;font-weight:bold;"' if at_floor else ""
+        floor_note  = ' ⚠ floor' if at_floor else ""
+
+        bond_rows += (
+            f'<tr>'
+            f'<td>#{b["id"]}</td>'
+            f'<td>{b["flag"]} {b["currency_code"]}</td>'
+            f'<td>{holder_cell}</td>'
+            f'<td>${b["face_value_wsc"]:,.2f}</td>'
+            f'<td>{b["purchase_yield_pct"]:.4f}%</td>'
+            f'<td{yield_style}>{b["current_yield_pct"]:.4f}%{floor_note}</td>'
+            f'<td style="color:#64748b;font-size:0.7rem;">[{b["min_yield_pct"]:.3f}%, {b["max_yield_pct"]:.3f}%]</td>'
+            f'<td>{b["interest_accrued"]:.6f} {b["currency_code"]}</td>'
+            f'<td>{b["remaining_days"]}d</td>'
+            f'<td style="color:#64748b;font-size:0.7rem;">{b["matures_at"]}</td>'
+            f'</tr>'
+        )
+
+    body = f"""
+<h2 style="font-size:0.9rem;margin-bottom:10px;">Bond Holdings — {len(all_bonds)} active bonds</h2>
+
+<div class="card">
+    <h3>By Currency</h3>
+    <div class="table-wrap">
+        <table>
+            <tr><th>Currency</th><th>Bonds</th><th>Interbank</th><th>Face Value (WSC)</th></tr>
+            {summary_rows}
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Filter</h3>
+    <form method="get" action="/admin/bonds" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div>
+            <div class="form-label">Currency</div>
+            <select name="currency">
+                <option value="">All</option>
+                {currency_opts}
+            </select>
+        </div>
+        <div>
+            <div class="form-label">Player ID or name</div>
+            <input type="text" name="player" value="{player_filter}" placeholder="ID or name fragment">
+        </div>
+        <button type="submit" class="btn btn-gray">Filter</button>
+        <a href="/admin/bonds" class="btn btn-gray">Clear</a>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Active Bonds ({len(filtered)} shown)</h3>
+    {'<div class="table-wrap"><table>'
+     '<tr><th>#</th><th>Currency</th><th>Holder</th><th>Face WSC</th>'
+     '<th>Buy Yield</th><th>Cur Yield</th><th>Band</th>'
+     '<th>Accrued Interest</th><th>Remaining</th><th>Matures</th></tr>'
+     + bond_rows + '</table></div>'
+     if bond_rows else '<p style="color:#64748b;font-size:0.75rem;">No bonds match the filter.</p>'}
+    <p style="font-size:0.65rem;color:#475569;margin-top:8px;">
+        ⚠ <span style="color:#f87171;">Red yield</span> = bond is at its floor. Interbank bonds (holder=0) are system instruments — no interest, no payout.
+    </p>
+</div>
+"""
+    return HTMLResponse(admin_shell("Bonds", body, admin.business_name, "/admin/bonds"))

@@ -1956,6 +1956,53 @@ def get_player_bonds(player_id: int) -> List[dict]:
         db.close()
 
 
+def get_all_active_bonds() -> List[dict]:
+    """Return every active player bond across all banks, for the admin dashboard.
+
+    Interbank bonds (holder_player_id <= 0) are included but flagged separately.
+    Rows are sorted by currency then holder.
+    """
+    db = get_db()
+    try:
+        rows = (
+            db.query(ReserveBankBond, StateReserveBank)
+            .join(StateReserveBank, ReserveBankBond.bank_id == StateReserveBank.id)
+            .filter(ReserveBankBond.status == "active")
+            .order_by(StateReserveBank.currency_code, ReserveBankBond.holder_player_id)
+            .all()
+        )
+        now = datetime.utcnow()
+        result = []
+        for bond, bank in rows:
+            remaining_days = max((bond.matures_at - now).days, 0)
+            remaining_years = max((bond.matures_at - now).total_seconds() / (365 * 86400), 0.0)
+            price_factor = 1.0 + (bond.purchase_yield - bank.yield_rate) * remaining_years
+            price_factor = max(0.50, min(2.0, price_factor))
+            result.append({
+                "id":                bond.id,
+                "holder_player_id":  bond.holder_player_id,
+                "is_interbank":      bond.holder_player_id <= 0,
+                "currency_code":     bank.currency_code,
+                "currency_symbol":   bank.currency_symbol,
+                "flag":              bank.flag_emoji,
+                "face_value_wsc":    round(bond.face_value_wsc, 4),
+                "purchase_yield_pct":round(bond.purchase_yield * 100, 4),
+                "current_yield_pct": round(bank.yield_rate * 100, 4),
+                "min_yield_pct":     round(bank.min_yield * 100, 4),
+                "max_yield_pct":     round(bank.max_yield * 100, 4),
+                "interest_accrued":  round(bond.interest_accrued, 6),
+                "maturity_days":     bond.maturity_days,
+                "purchased_at":      bond.purchased_at.strftime("%Y-%m-%d %H:%M") if bond.purchased_at else "",
+                "matures_at":        bond.matures_at.strftime("%Y-%m-%d %H:%M"),
+                "remaining_days":    remaining_days,
+                "price_factor":      round(price_factor, 4),
+                "usd_per_unit":      bank.usd_per_unit,
+            })
+        return result
+    finally:
+        db.close()
+
+
 def get_player_currency_balance(player_id: int, currency_code: str) -> float:
     """Return a player's balance in any currency (including USD) from PlayerCurrencyBalance."""
     db = get_db()
@@ -2130,7 +2177,7 @@ __all__ = [
     "spend_player_funds", "can_afford_usd", "get_player_display_currency",
     "get_usd_balance", "credit_usd", "debit_usd", "set_usd_balance",
     "get_player_currency_balance", "get_player_currency_balances",
-    "get_all_banks", "get_player_bonds",
+    "get_all_banks", "get_player_bonds", "get_all_active_bonds",
     "get_recent_forex_trades", "get_yield_history",
     "get_bank_reserves", "get_all_bank_reserves", "get_interbank_trades",
     "StateReserveBank", "ReserveBankBond", "PlayerLegalTender",
