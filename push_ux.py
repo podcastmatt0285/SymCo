@@ -360,10 +360,12 @@ def send_push_notification(
     body: str,
     url: str = "/",
     notif_type: str = "general",
+    tag: str = "wadsworth-notif",
 ):
     """
     Send an encrypted web push notification to all subscriptions for player_id.
     notif_type: 'dm' | 'contract' | 'general'
+    tag: unique per notification group so each conversation/event gets its own card.
     """
     try:
         from auth import get_db, PushSubscription, Player
@@ -389,7 +391,7 @@ def send_push_notification(
             db.close()
             return
 
-        payload  = json.dumps({"title": title, "body": body, "url": url})
+        payload  = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
         to_purge = []
 
         for sub in subs:

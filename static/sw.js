@@ -26,11 +26,12 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch(e) {}
   const title   = data.title || "Wadsworth";
   const options = {
-    body:   data.body  || "",
-    icon:   "/static/icons/icon-192.png",
-    badge:  "/static/icons/icon-72.png",
-    tag:    data.tag   || "wadsworth-notif",
-    data:   { url: data.url || "/" },
+    body:      data.body  || "",
+    icon:      "/static/icons/icon-192.png",
+    badge:     "/static/icons/icon-72.png",
+    tag:       data.tag   || "wadsworth-notif",
+    renotify:  true,
+    data:      { url: data.url || "/" },
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });
@@ -40,8 +41,10 @@ self.addEventListener("notificationclick", (event) => {
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
+      // Navigate any existing open window to the target URL
       for (const c of cs) {
-        if (c.url === targetUrl && "focus" in c) return c.focus();
+        if ("navigate" in c) { return c.focus().then(() => c.navigate(targetUrl)); }
+        if ("focus" in c)    { return c.focus(); }
       }
       return clients.openWindow(targetUrl);
     })

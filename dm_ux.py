@@ -1183,6 +1183,32 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         }});
 
         connect();
+
+        // Deep-link: if ?with=<player_id> is in the URL, open that conversation
+        // once the WS connects and conversation list is loaded.
+        (function() {{
+            const params = new URLSearchParams(window.location.search);
+            const withId = parseInt(params.get('with'), 10);
+            if (!withId) return;
+            // Remove the query param from the URL bar without a reload
+            history.replaceState(null, '', '/p2p/dms');
+            // Wait for conversations to be rendered then open the matching one
+            function tryOpen(attempts) {{
+                const match = conversations.find(c => c.other_id === withId);
+                if (match) {{
+                    openConversation(match.id, match.other_id, match.other_name);
+                    return;
+                }}
+                // If not yet in list (first-ever DM), start a new conversation
+                if (attempts <= 0) {{
+                    startConversation(withId, 'Player ' + withId);
+                    return;
+                }}
+                setTimeout(() => tryOpen(attempts - 1), 200);
+            }}
+            // Give the WS a moment to deliver the conversation list
+            setTimeout(() => tryOpen(15), 400);
+        }})();
     }}
 
     init();
@@ -1347,8 +1373,9 @@ async def dm_websocket(websocket: WebSocket):
                             other_id,
                             f"New DM from {player_name}",
                             _preview,
-                            url="/p2p/dms",
+                            url=f"/p2p/dms?with={player_id}",
                             notif_type="dm",
+                            tag=f"dm-{conv_id}",
                         )
                     except Exception:
                         pass
