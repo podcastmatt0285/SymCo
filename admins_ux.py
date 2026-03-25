@@ -3596,15 +3596,17 @@ def admin_notif_sound(
     has_sound = os.path.exists(_NOTIF_SOUND_PATH)
     size_kb   = round(os.path.getsize(_NOTIF_SOUND_PATH) / 1024, 1) if has_sound else 0
 
+    _audio_tag  = '<audio controls src="/static/sounds/notification.mp3" style="width:100%;margin-bottom:8px;"></audio>' if has_sound else '<p style="color:#64748b;font-size:0.82rem;">No sound file uploaded yet.</p>'
+    _size_tag   = f'<p style="font-size:0.72rem;color:#64748b;">notification.mp3 &nbsp;·&nbsp; {size_kb} KB</p>' if has_sound else ''
     current_html = f"""
 <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:16px 20px;margin-bottom:20px;">
   <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
               letter-spacing:.08em;margin-bottom:10px;">Current Sound File</div>
-  {'<audio controls src="/static/sounds/notification.mp3" style="width:100%;margin-bottom:8px;"></audio>' if has_sound else
-   '<p style="color:#64748b;font-size:0.82rem;">No sound file uploaded yet.</p>'}
-  {'<p style="font-size:0.72rem;color:#64748b;">notification.mp3 &nbsp;·&nbsp; '+str(size_kb)+' KB</p>' if has_sound else ''}
-</div>""" if True else ""
+  {_audio_tag}
+  {_size_tag}
+</div>"""
 
+    _delete_form = '<form method="post" action="/admin/notification-sound/delete" style="margin-top:12px;"><button type="submit" onclick="return confirm(\'Delete the current notification sound?\')" style="padding:5px 14px;background:transparent;border:1px solid #7f1d1d;border-radius:5px;color:#ef4444;font-size:0.75rem;cursor:pointer;">Delete Current Sound</button></form>' if has_sound else ''
     msg_html = f'<div style="background:#14532d;border:1px solid #4ade80;color:#4ade80;padding:8px 14px;border-radius:5px;margin-bottom:16px;font-size:0.82rem;">{msg}</div>' if msg else ""
     err_html = f'<div style="background:#450a0a;border:1px solid #ef4444;color:#ef4444;padding:8px 14px;border-radius:5px;margin-bottom:16px;font-size:0.82rem;">{err}</div>' if err else ""
 
@@ -3630,7 +3632,7 @@ def admin_notif_sound(
       Upload &amp; Replace
     </button>
   </form>
-  {'<form method="post" action="/admin/notification-sound/delete" style="margin-top:12px;"><button type="submit" onclick="return confirm(\'Delete the current notification sound?\')" style="padding:5px 14px;background:transparent;border:1px solid #7f1d1d;border-radius:5px;color:#ef4444;font-size:0.75rem;cursor:pointer;">Delete Current Sound</button></form>' if has_sound else ''}
+  {_delete_form}
 </div>
 """
     return HTMLResponse(admin_shell("Notification Sound", body, admin.business_name, "/admin/notification-sound"))
