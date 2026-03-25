@@ -1183,16 +1183,18 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             if (e.key === 'Enter') {{ e.preventDefault(); addBanWordFromInput(); }}
         }});
 
-        // Reconnect immediately when the tab becomes visible again —
-        // browsers freeze backgrounded tabs with a service worker registered,
-        // which silently kills idle WebSocket connections.
-        document.addEventListener('visibilitychange', () => {{
-            if (!document.hidden && (!ws || ws.readyState !== 1)) {{
+        // Reconnect immediately when the tab becomes visible or the device comes
+        // back online — browsers freeze backgrounded tabs with a service worker
+        // registered, silently killing idle WebSocket connections.
+        function reconnectIfDead() {{
+            if (!ws || ws.readyState !== 1) {{
                 clearTimeout(reconnectTimer);
                 reconnectDelay = 1000;
                 connect();
             }}
-        }});
+        }}
+        document.addEventListener('visibilitychange', () => {{ if (!document.hidden) reconnectIfDead(); }});
+        window.addEventListener('online', reconnectIfDead);
 
         window.addEventListener('beforeunload', () => {{
             if (ws && ws.readyState === 1) {{
