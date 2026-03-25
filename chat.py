@@ -453,7 +453,13 @@ class ConnectionManager:
         # Load avatar into cache
         self.avatar_cache[player_id] = get_avatar(player_id)
 
-    async def disconnect(self, player_id: int):
+    async def disconnect(self, player_id: int, websocket=None):
+        # Guard: if a newer connection has already replaced this one, don't
+        # evict it.  This prevents a stale WS closing after a reconnect
+        # (e.g. service-worker activation, double-tab) from silently removing
+        # the active connection from the manager.
+        if websocket is not None and self.connections.get(player_id) is not websocket:
+            return
         self.connections.pop(player_id, None)
         self.player_names.pop(player_id, None)
         self.player_rooms.pop(player_id, None)

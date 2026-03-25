@@ -794,6 +794,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     let reconnectDelay = 1000;
     let reconnectTimer = null;
     let pingInterval = null;
+    let lastPong = Date.now();
     let typingTimeout = null;
     let isTyping = false;
     let unreadCounts = {{}};
@@ -817,16 +818,24 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         ws.onopen = () => {{
             reconnectDelay = 1000;
             ws.send(JSON.stringify({{type: 'join', room: currentRoom}}));
-            // Heartbeat: keep the connection alive so browsers don't kill it
-            // when the tab is backgrounded (Page Lifecycle / service worker freeze)
+            // Heartbeat: keep the connection alive and detect dead server→client
+            // paths.  Server responds to each ping with a pong; if no pong
+            // arrives within 35 s we force-reconnect.
+            lastPong = Date.now();
             clearInterval(pingInterval);
             pingInterval = setInterval(() => {{
-                if (ws && ws.readyState === 1) ws.send(JSON.stringify({{type: 'ping'}}));
+                if (!ws || ws.readyState !== 1) return;
+                if (Date.now() - lastPong > 35000) {{
+                    ws.close();  // server→client path dead — trigger reconnect
+                    return;
+                }}
+                ws.send(JSON.stringify({{type: 'ping'}}));
             }}, 25000);
         }};
 
         ws.onmessage = (e) => {{
             const data = JSON.parse(e.data);
+            if (data.type === 'pong') {{ lastPong = Date.now(); return; }}
             handleWSMessage(data);
         }};
 
@@ -1730,7 +1739,7 @@ async def chat_websocket(websocket: WebSocket):
                     })
 
             elif msg_type == "ping":
-                pass  # heartbeat — just keep the connection alive
+                await manager.send_to_user(player_id, {"type": "pong"})
 
             elif msg_type == "leave":
                 break
@@ -1740,4 +1749,4 @@ async def chat_websocket(websocket: WebSocket):
     except Exception:
         pass
     finally:
-        await manager.disconnect(player_id)
+        await manager.disconnect(player_id, websocket)
