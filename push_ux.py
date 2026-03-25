@@ -10,9 +10,10 @@ Routes:
 Helper (called from other modules):
   send_push_notification(player_id, title, body, url, notif_type)
 
-VAPID keys are auto-generated on first startup and stored in the system_config DB table.
+VAPID keys are auto-generated on first startup and stored in the system_config DB table,
+or loaded from VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY environment variables if set.
 Encryption is implemented per RFC 8291 + RFC 8188 (aes128gcm) using pycryptodome
-for ECC / AES-GCM and stdlib hmac/hashlib for HKDF — no Rust-based dependencies needed.
+for ECC / AES-GCM and stdlib hmac/hashlib for HKDF.
 """
 
 import base64
@@ -119,13 +120,13 @@ def _db_save_vapid_keys(keys: dict) -> None:
 
 
 def _load_or_create_vapid_keys() -> Optional[dict]:
-    # 1. Prefer env vars (Railway / production)
+    # 1. Prefer env vars (highest priority — pin keys across deploys)
     priv = os.environ.get("VAPID_PRIVATE_KEY")
     pub  = os.environ.get("VAPID_PUBLIC_KEY")
     if priv and pub:
         return {"private_key": priv, "public_key": pub}
 
-    # 2. Load from DB (survives Railway deploys)
+    # 2. Load from DB (persists across restarts)
     keys = _db_get_vapid_keys()
     if keys:
         return keys

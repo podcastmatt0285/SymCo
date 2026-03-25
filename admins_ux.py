@@ -3718,7 +3718,7 @@ def admin_push_keys(session_token: Optional[str] = Cookie(None)):
     body = f"""
 <h2 style="margin:0 0 20px;color:#e5e7eb;">🔑 VAPID Push Keys</h2>
 <p style="color:#64748b;font-size:0.82rem;margin-bottom:16px;">
-  To pin keys permanently (recommended for production), set these as Railway environment variables.
+  To pin keys permanently, set these as environment variables on your server.
   Without env vars, keys are stored in the DB and regenerate if the DB is wiped —
   which invalidates all existing push subscriptions.
 </p>
@@ -3737,7 +3737,7 @@ def admin_push_keys(session_token: Optional[str] = Cookie(None)):
   </div>
 </div>
 <p style="color:#475569;font-size:0.72rem;margin-top:12px;">
-  Set both as environment variables on Railway → redeploy → the 503 on /api/push/public-key will be gone.
+  Set both as environment variables on your server and restart — the 503 on /api/push/public-key will be gone.
 </p>
 """
     return HTMLResponse(admin_shell("VAPID Keys", body, admin.business_name, "/admin/notification-sound"))
