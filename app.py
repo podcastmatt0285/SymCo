@@ -289,6 +289,13 @@ except ModuleNotFoundError:
     pass
 
 try:
+    from dm_ux import router as dm_ux_router
+    app.include_router(dm_ux_router)
+    print("DM UX routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
     from p2p_ux import router as p2p_ux_router
     app.include_router(p2p_ux_router)
     print("P2P UX routes registered")
