@@ -130,6 +130,21 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
 def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) -> str:
     lien_info = get_player_lien_info(player_id) if player_id else {"has_lien": False, "total_owed": 0.0, "status": "ok"}
 
+    # Notification prefs (badge + sounds) for this player
+    _notif_badge  = "true"
+    _notif_sounds = "true"
+    if player_id:
+        try:
+            import auth as _auth_mod
+            _ndb = _auth_mod.get_db()
+            _np  = _ndb.query(_auth_mod.Player).filter_by(id=player_id).first()
+            if _np:
+                _notif_badge  = "true" if getattr(_np, "notif_badge",  True) else "false"
+                _notif_sounds = "true" if getattr(_np, "notif_sounds", True) else "false"
+            _ndb.close()
+        except Exception:
+            pass
+
     # Resolve display balance using player's legal tender so the header always
     # shows the currency the player actually works in (not hardcoded USD).
     disp_sym      = "$"
@@ -1198,6 +1213,58 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
           window.addEventListener('pageshow', function(e) {{
             if (e.persisted) {{ overlay.style.display='none'; clearInterval(timer); }}
           }});
+        }})();
+        </script>
+        <script>
+        // ── Notification Badge & In-App Sound ─────────────────────────────────
+        (function() {{
+          var BADGE  = {_notif_badge};
+          var SOUND  = {_notif_sounds};
+          var _last  = -1;
+          var _audio = null;
+
+          function _getAudio() {{
+            if (!_audio) {{
+              _audio = new Audio('/static/sounds/notification.mp3');
+              _audio.volume = 0.7;
+            }}
+            return _audio;
+          }}
+
+          function _badge(n) {{
+            if (!BADGE) return;
+            try {{
+              if (n > 0) navigator.setAppBadge && navigator.setAppBadge(n);
+              else       navigator.clearAppBadge && navigator.clearAppBadge();
+            }} catch(e) {{}}
+            // Also update via SW for when the page isn't focused
+            try {{
+              if (navigator.serviceWorker && navigator.serviceWorker.controller) {{
+                navigator.serviceWorker.controller.postMessage({{type:'SET_BADGE', count:n}});
+              }}
+            }} catch(e) {{}}
+          }}
+
+          function _sound() {{
+            if (!SOUND) return;
+            try {{ _getAudio().currentTime = 0; _getAudio().play().catch(function(){{}}); }} catch(e) {{}}
+          }}
+
+          function _poll() {{
+            fetch('/api/notifications/unread-count', {{credentials:'same-origin'}})
+              .then(function(r) {{ return r.json(); }})
+              .then(function(d) {{
+                var n = d.count || 0;
+                _badge(n);
+                if (_last >= 0 && n > _last) _sound();
+                _last = n;
+              }}).catch(function() {{}});
+          }}
+
+          _poll();
+          setInterval(_poll, 60000);
+          // Expose so WebSocket handlers on other pages can trigger an immediate refresh
+          window.wadsworthRefreshNotifs = _poll;
         }})();
         </script>
     </body>

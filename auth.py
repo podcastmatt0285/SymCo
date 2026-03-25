@@ -83,6 +83,18 @@ class PlayerRegistrationIP(Base):
     registered_at = Column(DateTime, default=datetime.utcnow)
 
 
+class PushSubscription(Base):
+    """Stores browser push subscriptions for web push notifications."""
+    __tablename__ = "push_subscriptions"
+
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    player_id  = Column(Integer, index=True, nullable=False)
+    endpoint   = Column(String, nullable=False)
+    auth       = Column(String, nullable=False)
+    p256dh     = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class PlayerLoginIP(Base):
     """
     Records the IP address and user-agent on every successful login.
@@ -149,6 +161,21 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_dms BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_contracts BOOLEAN DEFAULT TRUE",
     ])
+
+
+def migrate_push_subscriptions():
+    """Create the push_subscriptions table if it doesn't exist."""
+    from database import run_ddl_migration
+    run_ddl_migration(engine, """
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+            id         SERIAL PRIMARY KEY,
+            player_id  INTEGER NOT NULL,
+            endpoint   TEXT    NOT NULL,
+            auth       TEXT    NOT NULL,
+            p256dh     TEXT    NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
 
 
 def migrate_ip_tables():
