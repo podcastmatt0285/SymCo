@@ -1339,6 +1339,20 @@ async def dm_websocket(websocket: WebSocket):
                     recipient_msg["other_name"] = player_name
                     await dm_manager.send_to_user(other_id, recipient_msg)
 
+                    # Fire push notification to recipient
+                    try:
+                        from push_ux import send_push_notification
+                        _preview = str(saved.get("content", ""))[:80]
+                        send_push_notification(
+                            other_id,
+                            f"New DM from {player_name}",
+                            _preview,
+                            url="/p2p/dms",
+                            notif_type="dm",
+                        )
+                    except Exception:
+                        pass
+
                 dm_manager.clear_typing(conv_id, player_id)
                 typing_names = dm_manager.get_typing_names(conv_id)
                 # Notify other player about typing update

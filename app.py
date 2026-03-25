@@ -113,6 +113,15 @@ async def lifespan(app: FastAPI):
     current_tick = _load_tick_state()
     print(f"Tick counter restored: {current_tick}")
     tick_start_time = datetime.utcnow()
+    # DB migrations
+    try:
+        from auth import migrate_player_table, migrate_ip_tables, migrate_push_subscriptions
+        migrate_player_table()
+        migrate_ip_tables()
+        migrate_push_subscriptions()
+        print("DB migrations applied")
+    except Exception as _me:
+        print(f"DB migration error: {_me}")
     load_modules()
     initialize_modules()
     tick_task = asyncio.create_task(tick_loop())
@@ -368,6 +377,13 @@ try:
     from settings_ux import router as settings_router
     app.include_router(settings_router)
     print("Settings routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from push_ux import router as push_router
+    app.include_router(push_router)
+    print("Push notification routes registered")
 except ModuleNotFoundError:
     pass
 

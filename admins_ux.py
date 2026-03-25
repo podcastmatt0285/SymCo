@@ -18,7 +18,7 @@ import os
 from typing import Optional
 from datetime import datetime
 
-from fastapi import APIRouter, Cookie, Form, Query
+from fastapi import APIRouter, Cookie, File, Form, Query, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from admins import (
@@ -65,6 +65,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/players", "Players"),
         ("/admin/cities", "Cities"),
         ("/admin/moderators", "Moderators"),
+        ("/admin/notification-sound", "Notif Sound"),
         ("/admin/updates", "Updates"),
         ("/admin/chat", "Chat"),
         ("/admin/p2p", "P2P"),
@@ -3571,3 +3572,122 @@ def admin_bonds(
 </div>
 """
     return HTMLResponse(admin_shell("Bonds", body, admin.business_name, "/admin/bonds"))
+
+
+# ── Notification Sound Admin ───────────────────────────────────────────────────
+
+import shutil as _shutil
+
+_SOUNDS_DIR = os.path.join(os.path.dirname(__file__), "static", "sounds")
+_NOTIF_SOUND_PATH = os.path.join(_SOUNDS_DIR, "notification.mp3")
+_ALLOWED_SOUND_EXTS = {".mp3", ".ogg", ".wav", ".m4a", ".aac"}
+
+
+@router.get("/admin/notification-sound", response_class=HTMLResponse)
+def admin_notif_sound(
+    session_token: Optional[str] = Cookie(None),
+    msg: Optional[str] = Query(None),
+    err: Optional[str] = Query(None),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    has_sound = os.path.exists(_NOTIF_SOUND_PATH)
+    size_kb   = round(os.path.getsize(_NOTIF_SOUND_PATH) / 1024, 1) if has_sound else 0
+
+    current_html = f"""
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:16px 20px;margin-bottom:20px;">
+  <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
+              letter-spacing:.08em;margin-bottom:10px;">Current Sound File</div>
+  {'<audio controls src="/static/sounds/notification.mp3" style="width:100%;margin-bottom:8px;"></audio>' if has_sound else
+   '<p style="color:#64748b;font-size:0.82rem;">No sound file uploaded yet.</p>'}
+  {'<p style="font-size:0.72rem;color:#64748b;">notification.mp3 &nbsp;·&nbsp; '+str(size_kb)+' KB</p>' if has_sound else ''}
+</div>""" if True else ""
+
+    msg_html = f'<div style="background:#14532d;border:1px solid #4ade80;color:#4ade80;padding:8px 14px;border-radius:5px;margin-bottom:16px;font-size:0.82rem;">{msg}</div>' if msg else ""
+    err_html = f'<div style="background:#450a0a;border:1px solid #ef4444;color:#ef4444;padding:8px 14px;border-radius:5px;margin-bottom:16px;font-size:0.82rem;">{err}</div>' if err else ""
+
+    body = f"""
+<h2 style="margin:0 0 20px;color:#e5e7eb;">🔔 Notification Sound</h2>
+{msg_html}{err_html}
+{current_html}
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:16px 20px;">
+  <div style="font-size:0.72rem;font-weight:bold;color:#475569;text-transform:uppercase;
+              letter-spacing:.08em;margin-bottom:10px;">Upload New Sound</div>
+  <p style="font-size:0.78rem;color:#64748b;margin:0 0 14px;">
+    Accepted formats: mp3, ogg, wav, m4a, aac. The file is saved as
+    <code style="color:#94a3b8;">notification.mp3</code> and played to all players when
+    a new in-app notification arrives (if they have sounds enabled).
+  </p>
+  <form method="post" action="/admin/notification-sound/upload"
+        enctype="multipart/form-data" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <input type="file" name="sound_file" accept=".mp3,.ogg,.wav,.m4a,.aac"
+           required style="font-size:0.82rem;color:#e5e7eb;">
+    <button type="submit"
+            style="padding:7px 18px;background:#6366f1;border:none;border-radius:5px;
+                   color:white;font-size:0.82rem;cursor:pointer;font-weight:bold;">
+      Upload &amp; Replace
+    </button>
+  </form>
+  {'<form method="post" action="/admin/notification-sound/delete" style="margin-top:12px;"><button type="submit" onclick="return confirm(\'Delete the current notification sound?\')" style="padding:5px 14px;background:transparent;border:1px solid #7f1d1d;border-radius:5px;color:#ef4444;font-size:0.75rem;cursor:pointer;">Delete Current Sound</button></form>' if has_sound else ''}
+</div>
+"""
+    return HTMLResponse(admin_shell("Notification Sound", body, admin.business_name, "/admin/notification-sound"))
+
+
+@router.post("/admin/notification-sound/upload", response_class=HTMLResponse)
+async def admin_notif_sound_upload(
+    session_token: Optional[str] = Cookie(None),
+    sound_file: UploadFile = File(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+
+    ext = os.path.splitext(sound_file.filename or "")[1].lower()
+    if ext not in _ALLOWED_SOUND_EXTS:
+        return RedirectResponse(
+            url=f"/admin/notification-sound?err=Invalid+file+type+{ext}",
+            status_code=303,
+        )
+
+    os.makedirs(_SOUNDS_DIR, exist_ok=True)
+    try:
+        content = await sound_file.read()
+        if len(content) > 10 * 1024 * 1024:  # 10 MB limit
+            return RedirectResponse(
+                url="/admin/notification-sound?err=File+too+large+(max+10+MB)",
+                status_code=303,
+            )
+        with open(_NOTIF_SOUND_PATH, "wb") as f:
+            f.write(content)
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/admin/notification-sound?err=Upload+failed:+{str(e)[:60]}",
+            status_code=303,
+        )
+
+    return RedirectResponse(
+        url="/admin/notification-sound?msg=Sound+uploaded+successfully",
+        status_code=303,
+    )
+
+
+@router.post("/admin/notification-sound/delete", response_class=HTMLResponse)
+def admin_notif_sound_delete(session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    try:
+        if os.path.exists(_NOTIF_SOUND_PATH):
+            os.remove(_NOTIF_SOUND_PATH)
+    except Exception as e:
+        return RedirectResponse(
+            url=f"/admin/notification-sound?err=Delete+failed:+{str(e)[:60]}",
+            status_code=303,
+        )
+    return RedirectResponse(
+        url="/admin/notification-sound?msg=Sound+deleted",
+        status_code=303,
+    )

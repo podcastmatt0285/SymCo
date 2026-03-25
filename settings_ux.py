@@ -1248,10 +1248,60 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   }
   setStatus(Notification.permission);
 
+  function _urlB64ToUint8(b64) {
+    var pad = '='.repeat((4 - b64.length % 4) % 4);
+    var b   = (b64 + pad).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(b);
+    var arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; ++i) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+
+  function _subscribePush() {
+    lbl.textContent = 'Subscribing…';
+    fetch('/api/push/public-key')
+      .then(function(r) { return r.text(); })
+      .then(function(pubKey) {
+        if (!pubKey) throw new Error('No VAPID key from server');
+        return navigator.serviceWorker.ready.then(function(reg) {
+          return reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: _urlB64ToUint8(pubKey),
+          });
+        });
+      })
+      .then(function(sub) {
+        return fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(sub),
+          credentials: 'same-origin',
+        });
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        lbl.textContent = d.ok ? 'Push enabled and subscribed!' : 'Subscription error: ' + (d.error || '?');
+      })
+      .catch(function(err) {
+        lbl.textContent = 'Subscription failed: ' + err.message;
+        console.error('[Push subscribe]', err);
+      });
+  }
+
+  // Auto-subscribe if permission already granted (page reload after allowing)
+  if (Notification.permission === 'granted') {
+    navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg) {
+      reg.pushManager.getSubscription().then(function(existing) {
+        if (!existing) _subscribePush();
+      });
+    });
+  }
+
   window.requestPushPermission = function() {
     lbl.textContent = 'Check your browser — a permission prompt may have appeared…';
     Notification.requestPermission().then(function(p) {
       setStatus(p);
+      if (p === 'granted') _subscribePush();
     }).catch(function(err) {
       lbl.textContent = 'Error: ' + err.message;
       console.error('[Push]', err);
