@@ -404,22 +404,27 @@ def send_push_notification(
         db = get_db()
         player = db.query(Player).filter_by(id=player_id).first()
         if not player:
+            print(f"[Push] player {player_id} not found — skipping")
             db.close()
             return
-        if notif_type == "dm"       and not getattr(player, "notif_push_dms",       True):
+        if notif_type == "dm" and not getattr(player, "notif_push_dms", True):
+            print(f"[Push] DM notifications disabled for player {player_id} — skipping")
             db.close()
             return
         if notif_type == "contract" and not getattr(player, "notif_push_contracts", True):
+            print(f"[Push] contract notifications disabled for player {player_id} — skipping")
             db.close()
             return
 
         subs = db.query(PushSubscription).filter_by(player_id=player_id).all()
         if not subs:
+            print(f"[Push] no subscriptions for player {player_id} — they need to enable push in Settings")
             db.close()
             return
 
         keys = get_vapid_keys()
         if not keys:
+            print(f"[Push] no VAPID keys — skipping")
             db.close()
             return
 
