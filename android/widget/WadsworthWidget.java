@@ -1,5 +1,6 @@
 package PACKAGE_NAME;
 
+import PACKAGE_NAME.R;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
