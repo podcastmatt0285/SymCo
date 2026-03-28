@@ -14,6 +14,19 @@ Handles:
 from datetime import datetime, timedelta
 from typing import Optional, List
 import random
+import threading
+
+def _fire_land_push(player_id: int, tag: str, title: str, body: str) -> None:
+    if player_id <= 0:
+        return
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url="/landmarket", notif_type="land", tag=tag)
+        except Exception as e:
+            print(f"[LandMarket] Push error for player {player_id}: {e}")
+    threading.Thread(target=_send, daemon=True).start()
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -354,7 +367,10 @@ def buy_listed_land(buyer_id: int, listing_id: int) -> bool:
         )
         
         print(f"[LandMarket] Plot {listing.land_plot_id} sold for ${listing.asking_price:,.2f}")
-        return True 
+        _fire_land_push(listing.seller_id, f"land-sold-{listing.land_plot_id}",
+            "Plot Sold",
+            f"Plot #{listing.land_plot_id} ({terrain}) sold for ${listing.asking_price:,.0f}")
+        return True
     finally:
         db.close()
 
@@ -420,9 +436,14 @@ def place_land_buy_order(buyer_id: int, max_price: float,
             matching = candidates[0]
 
         if matching:
+            _match_price    = matching.asking_price
+            _match_plot_id  = matching.land_plot_id
             db.close()
             ok = buy_listed_land(buyer_id, matching.id)
             if ok:
+                _fire_land_push(buyer_id, f"land-order-{_match_plot_id}",
+                    "Buy Order Filled",
+                    f"Plot #{_match_plot_id} acquired for ${_match_price:,.0f}")
                 return None  # executed immediately, no standing order needed
             db = get_db()  # reopen for the standing order insert below
 

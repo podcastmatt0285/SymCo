@@ -13,9 +13,36 @@ Handles:
 
 from datetime import datetime
 from typing import Optional, List
+import threading
+import time
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
+# Efficiency floor notification — rate-limited per plot
+_eff_floor_notified: dict = {}   # plot_id → timestamp
+_EFF_FLOOR_COOLDOWN  = 86400     # re-notify at most once per day
+_EFF_FLOOR_THRESHOLD = 50.0      # below this, business efficiency multiplier is capped
+
+def _fire_eff_floor_push(owner_id: int, plot_id: int, terrain: str, efficiency: float) -> None:
+    if owner_id <= 0:
+        return
+    now = time.time()
+    if now - _eff_floor_notified.get(plot_id, 0) < _EFF_FLOOR_COOLDOWN:
+        return
+    _eff_floor_notified[plot_id] = now
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(
+                owner_id,
+                "Plot Efficiency Floor Reached",
+                f"Plot #{plot_id} ({terrain}) is at {efficiency:.0f}% — business productivity is now capped",
+                url="/land", notif_type="land", tag=f"eff-floor-{plot_id}",
+            )
+        except Exception as e:
+            print(f"[Land] Push error for player {owner_id}: {e}")
+    threading.Thread(target=_send, daemon=True).start()
 
 # ==========================
 # DATABASE SETUP
@@ -563,8 +590,17 @@ def degrade_efficiency(current_tick: int):
     )
 
     db.commit()
-    db.close()
 
+    # Notify owners whose plots just crossed the efficiency floor
+    floor_plots = db.query(LandPlot).filter(
+        LandPlot.owner_id > 0,
+        LandPlot.efficiency <= _EFF_FLOOR_THRESHOLD,
+        LandPlot.efficiency > 0,
+    ).all()
+    for p in floor_plots:
+        _fire_eff_floor_push(p.owner_id, p.id, p.terrain_type or "unknown", p.efficiency)
+
+    db.close()
     last_efficiency_update_tick = current_tick
 
 
