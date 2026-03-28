@@ -25,7 +25,8 @@ self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch(e) {}
 
-  const isDM = data.tag && data.tag.startsWith("dm-");
+  const isDM     = data.tag && data.tag.startsWith("dm-");
+  const soundsOn = data.silent !== true;   // server sets silent:true when user mutes sounds
   const options = {
     body:               data.body  || "",
     icon:               data.icon  || "/static/icons/icon-192.png",
@@ -33,15 +34,24 @@ self.addEventListener("push", (event) => {
     badge:              "/static/icons/icon-72.png",
     tag:                data.tag   || "wadsworth-notif",
     renotify:           true,
+    silent:             !soundsOn,          // suppress OS sound when player mutes
     timestamp:          Date.now(),
     requireInteraction: isDM,
-    vibrate:            [100, 50, 100, 50, 100],
+    vibrate:            soundsOn ? [100, 50, 100, 50, 100] : [],
     data:               { url: data.url || "/" },
   };
   if (isDM) {
     options.actions = [{ action: "reply", type: "text", title: "Reply",
                          placeholder: "Type a reply…" }];
   }
+
+  // Notify any open page tabs so they can play the in-app sound
+  if (soundsOn) {
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      clientList.forEach((c) => c.postMessage({ type: "PLAY_NOTIFICATION_SOUND" }));
+    });
+  }
+
   event.waitUntil(self.registration.showNotification(data.title || "Wadsworth", options));
 });
 

@@ -417,7 +417,14 @@ def send_push_notification(
             db.close()
             return
 
-        payload_data: dict = {"title": title, "body": body, "url": url, "tag": tag}
+        sounds_on = getattr(player, "notif_sounds", True)
+        payload_data: dict = {
+            "title":  title,
+            "body":   body,
+            "url":    url,
+            "tag":    tag,
+            "silent": not sounds_on,   # sw.js sets silent flag; also triggers foreground MP3
+        }
         if icon:
             payload_data["icon"] = icon
         payload  = json.dumps(payload_data)

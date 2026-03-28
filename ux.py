@@ -1053,6 +1053,16 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             window.addEventListener('load', () => {{
                 navigator.serviceWorker.register('/sw.js').catch(() => {{}});
             }});
+            // Play in-app notification sound when a push arrives while the page is open
+            navigator.serviceWorker.addEventListener('message', (event) => {{
+                if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {{
+                    try {{
+                        const snd = new Audio('/static/sounds/notification.mp3');
+                        snd.volume = 0.6;
+                        snd.play().catch(() => {{}});  // ignore autoplay policy rejections
+                    }} catch(e) {{}}
+                }}
+            }});
         }}
         </script>
 
