@@ -17,7 +17,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
             android:text="WADSWORTH"
             android:textColor="#7dd3fc"
             android:textSize="10sp"
@@ -27,13 +26,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="● LIVE"
+            android:text="&#9679; LIVE"
             android:textColor="#4ade80"
             android:textSize="9sp" />
     </RelativeLayout>
 
-    <!-- Cash balance — large and prominent -->
+    <!-- Cash balance -->
     <TextView
         android:id="@+id/widget_balance"
         android:layout_width="match_parent"
@@ -41,9 +39,7 @@
         android:text="&#8212;"
         android:textColor="#f8fafc"
         android:textSize="26sp"
-        android:textStyle="bold"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="2dp" />
+        android:textStyle="bold" />
 
     <!-- Last alert text -->
     <TextView
@@ -63,19 +59,17 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#64748b"
-        android:textSize="9sp"
-        android:layout_marginBottom="8dp" />
+        android:textSize="9sp" />
 
-    <!-- Divider: ImageView is safe in RemoteViews and supports background color -->
-    <ImageView
+    <!-- Spacer before ticker -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="6dp"
-        android:scaleType="fitXY"
-        android:src="@android:color/transparent"
         android:background="#334155" />
 
-    <!-- Scrolling ticker: marquee activated via setSelected(true) in Java -->
+    <!-- Market ticker: marquee scroll activated via setSelected(true) in Java -->
     <TextView
         android:id="@+id/widget_tickers"
         android:layout_width="match_parent"
@@ -83,7 +77,7 @@
         android:text=""
         android:textColor="#94a3b8"
         android:textSize="10sp"
-        android:singleLine="true"
+        android:maxLines="1"
         android:ellipsize="marquee" />
 
 </LinearLayout>
