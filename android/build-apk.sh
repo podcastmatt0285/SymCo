@@ -50,6 +50,11 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthWidget.java" \
     > "${JAVA_DIR}/WadsworthWidget.java"
 echo "  Copied WadsworthWidget.java → ${JAVA_DIR}/"
 
+# Resource directories (Bubblewrap doesn't create layout/xml/drawable)
+mkdir -p app/src/main/res/layout
+mkdir -p app/src/main/res/xml
+mkdir -p app/src/main/res/drawable
+
 # Resource files
 cp "${WIDGET_DIR}/res/layout/widget_layout.xml"        app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"   app/src/main/res/xml/
