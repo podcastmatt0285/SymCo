@@ -1,5 +1,5 @@
 // Wadsworth PWA Service Worker — static assets cached, live API/pages always network
-const CACHE_VERSION = "wadsworth-v5";
+const CACHE_VERSION = "wadsworth-v6";
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
@@ -114,6 +114,38 @@ self.addEventListener("notificationclick", (event) => {
       return clients.openWindow(targetUrl);
     })
   );
+});
+
+// ── PWA Widgets (Windows 11) ──────────────────────────────────────────────────
+
+async function _updateWidget(widget) {
+  try {
+    const r    = await fetch("/api/widget/data", { credentials: "include" });
+    const data = await r.json();
+    if (self.registration.widgets) {
+      await self.registration.widgets.updateByTag(widget.definition.tag, {
+        data: JSON.stringify(data),
+      });
+    }
+  } catch (e) {
+    console.warn("[Widget] update failed:", e);
+  }
+}
+
+self.addEventListener("widgetinstall", (event) => {
+  event.waitUntil(_updateWidget(event.widget));
+});
+
+self.addEventListener("widgetuninstall", () => {});
+
+self.addEventListener("widgetresume", (event) => {
+  event.waitUntil(Promise.all((event.widgets || []).map(_updateWidget)));
+});
+
+self.addEventListener("widgetclick", (event) => {
+  if (event.action === "open") {
+    event.waitUntil(clients.openWindow("/"));
+  }
 });
 
 // ── Routing ───────────────────────────────────────────────────────────────────

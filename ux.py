@@ -1282,6 +1282,58 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
           window.wadsworthRefreshNotifs = _poll;
         }})();
         </script>
+        <!-- ── Live Market Ticker Bar ──────────────────────────────────────── -->
+        <style>
+          #ticker-bar{{position:fixed;bottom:0;left:0;right:0;height:26px;background:#080f1e;border-top:1px solid #1e293b;z-index:9998;display:flex;align-items:center;overflow:hidden;}}
+          #ticker-label{{flex-shrink:0;font-size:8px;letter-spacing:.18em;color:#475569;padding:0 8px;font-family:monospace;text-transform:uppercase;border-right:1px solid #1e293b;white-space:nowrap;}}
+          #ticker-viewport{{flex:1;overflow:hidden;position:relative;}}
+          #ticker-track{{display:inline-flex;white-space:nowrap;animation:ticker-scroll 90s linear infinite;will-change:transform;}}
+          #ticker-track:hover{{animation-play-state:paused;}}
+          @keyframes ticker-scroll{{from{{transform:translateX(0)}}to{{transform:translateX(-50%)}}}}
+          .tk-item{{display:inline-flex;align-items:center;gap:4px;padding:0 14px;border-right:1px solid #1e293b;font-family:monospace;font-size:10px;cursor:default;}}
+          .tk-label{{font-weight:700;font-size:9px;}}
+          .tk-val{{color:#e2e8f0;}}
+          .tk-chg{{font-size:9px;}}
+          .tk-up{{color:#22c55e;}}.tk-down{{color:#ef4444;}}.tk-flat{{color:#64748b;}}
+          .tk-index{{color:#38bdf8;}}.tk-stock{{color:#a78bfa;}}.tk-bond{{color:#fbbf24;}}.tk-meme{{color:#f472b6;}}
+          body{{padding-bottom:26px;}}
+        </style>
+        <div id="ticker-bar">
+          <div id="ticker-label">&#9679; LIVE</div>
+          <div id="ticker-viewport">
+            <div id="ticker-track"><span id="ticker-a"></span><span id="ticker-b" aria-hidden="true"></span></div>
+          </div>
+        </div>
+        <script>
+        (function(){{
+          var a=document.getElementById('ticker-a'), b=document.getElementById('ticker-b'), track=document.getElementById('ticker-track');
+          var TYPE_CLS={{index:'tk-index',stock:'tk-stock',bond:'tk-bond',meme:'tk-meme'}};
+
+          function buildItem(t){{
+            var lc = TYPE_CLS[t.type]||'tk-flat';
+            var chgCls = t.up===true?'tk-up':t.up===false?'tk-down':'tk-flat';
+            var chg = t.change ? '<span class="tk-chg '+chgCls+'">'+t.change+'</span>' : '';
+            return '<span class="tk-item"><span class="tk-label '+lc+'">'+t.label+'</span><span class="tk-val">'+t.value+'</span>'+chg+'</span>';
+          }}
+
+          function render(data){{
+            var html=(data.tickers||[]).map(buildItem).join('');
+            if(!html)return;
+            a.innerHTML=html; b.innerHTML=html;
+            var w=a.scrollWidth;
+            if(w>0)track.style.animationDuration=Math.max(30,Math.round(w/80))+'s';
+          }}
+
+          function load(){{
+            fetch('/api/widget/data',{{credentials:'same-origin'}})
+              .then(function(r){{return r.json();}})
+              .then(render).catch(function(){{}});
+          }}
+
+          load();
+          setInterval(load,60000);
+        }})();
+        </script>
     </body>
     </html>
     """
@@ -9105,6 +9157,134 @@ def production_cost_detail_page(
         import traceback
         traceback.print_exc()
         return shell("Production Costs", f"Error: {e}", player.cash_balance, player.id)
+
+
+# ==========================
+# WIDGET / TICKER DATA API
+# ==========================
+
+@router.get("/api/widget/data")
+def api_widget_data(session_token: Optional[str] = Cookie(None)):
+    """
+    Returns live market data for the PWA widget and the in-page ticker bar.
+    Shape:
+      { balance, last_alert, last_alert_time,
+        tickers: [...],  indices: [...], stocks: [...], bonds: [...], memes: [...] }
+    Each ticker item: { label, value, change, up, type }
+    """
+    from datetime import datetime as _dt
+
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    def _ago(dt):
+        if not dt:
+            return ""
+        s = (_dt.utcnow() - dt).total_seconds()
+        if s < 60:   return "just now"
+        if s < 3600: return f"{int(s/60)}m ago"
+        if s < 86400:return f"{int(s/3600)}h ago"
+        return f"{int(s/86400)}d ago"
+
+    result = {
+        "balance": f"${player.cash_balance:,.0f}",
+        "last_alert": "No recent activity",
+        "last_alert_time": "",
+        "tickers": [], "indices": [], "stocks": [], "bonds": [], "memes": [],
+    }
+
+    try:
+        from database import SessionLocal, ReserveSessionLocal
+        from stats_ux import TransactionLog
+        from banks.indices import IndexSnapshot
+        from banks.brokerage_firm import CompanyShares
+        from memecoins import MemeCoin
+        from reserve_banks import StateReserveBank
+
+        db = SessionLocal()
+        try:
+            # ── Last transaction as "last alert" ──────────────────────────────
+            tx = (db.query(TransactionLog)
+                    .filter(TransactionLog.player_id == player.id)
+                    .order_by(TransactionLog.timestamp.desc())
+                    .first())
+            if tx:
+                result["last_alert"] = (tx.description or tx.transaction_type or "")[:80]
+                result["last_alert_time"] = _ago(tx.timestamp)
+
+            # ── Indices ───────────────────────────────────────────────────────
+            INDEX_CODES = ["WBC50","GLVI","CCC","EPI","CDI","REGI","BEE","WEI","GPI","SEED"]
+            for code in INDEX_CODES:
+                snap = (db.query(IndexSnapshot)
+                          .filter(IndexSnapshot.index_code == code)
+                          .order_by(IndexSnapshot.timestamp.desc())
+                          .first())
+                if not snap:
+                    continue
+                prev = (db.query(IndexSnapshot)
+                          .filter(IndexSnapshot.index_code == code,
+                                  IndexSnapshot.timestamp < snap.timestamp)
+                          .order_by(IndexSnapshot.timestamp.desc())
+                          .first())
+                change, up = "", None
+                if prev and prev.value:
+                    pct   = (snap.value - prev.value) / prev.value * 100
+                    change = f"{'+'if pct>=0 else ''}{pct:.2f}%"
+                    up     = pct >= 0
+                entry = {"label": code.replace("WBC50","WBC-50"),
+                         "value": f"{snap.value:,.2f}",
+                         "change": change, "up": up, "type": "index"}
+                result["indices"].append(entry)
+                result["tickers"].append(entry)
+
+            # ── Stocks — top 10 by today's volume ────────────────────────────
+            for s in (db.query(CompanyShares)
+                        .filter(CompanyShares.current_price > 0)
+                        .order_by(CompanyShares.volume_today.desc())
+                        .limit(10).all()):
+                ref = s.ipo_price or s.current_price
+                pct = (s.current_price - ref) / ref * 100 if ref else 0
+                entry = {"label": s.ticker_symbol,
+                         "value": f"${s.current_price:,.2f}",
+                         "change": f"{'+'if pct>=0 else ''}{pct:.2f}%",
+                         "up": pct >= 0, "type": "stock"}
+                result["stocks"].append(entry)
+                result["tickers"].append(entry)
+
+            # ── Memecoins ─────────────────────────────────────────────────────
+            for m in (db.query(MemeCoin)
+                        .filter(MemeCoin.is_active == True, MemeCoin.last_price > 0)
+                        .order_by(MemeCoin.total_volume_native.desc())
+                        .all()):
+                entry = {"label": m.symbol,
+                         "value": f"{m.last_price:.6g}",
+                         "change": "", "up": None, "type": "meme"}
+                result["memes"].append(entry)
+                result["tickers"].append(entry)
+
+        finally:
+            db.close()
+
+        # ── Bond yields (reserve DB) ──────────────────────────────────────────
+        r_db = ReserveSessionLocal()
+        try:
+            for b in (r_db.query(StateReserveBank)
+                         .filter(StateReserveBank.currency_code.in_(
+                             ["USD","EUR","GBP","JPY","CNY","BRL","INR"]))
+                         .all()):
+                entry = {"label": b.currency_code,
+                         "value": f"{b.yield_rate*100:.2f}%",
+                         "change": "", "up": None, "type": "bond"}
+                result["bonds"].append(entry)
+                result["tickers"].append(entry)
+        finally:
+            r_db.close()
+
+    except Exception as _e:
+        print(f"[widget/data] error: {_e}")
+
+    return JSONResponse(result)
 
 
 # ==========================

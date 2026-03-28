@@ -43,6 +43,27 @@
       "label": "Wadsworth Economic Tycoon Simulator"
     }
   ],
+  "widgets": [
+    {
+      "name": "Wadsworth Dashboard",
+      "short_name": "Wadsworth",
+      "description": "Live balance, recent alert, and market tickers — indices, stocks, bonds, memecoins",
+      "tag": "wadsworth-dashboard",
+      "template": "/static/widgets/dashboard-template.json",
+      "ms_ac_template": "/static/widgets/dashboard-template.json",
+      "data": "/api/widget/data",
+      "type": "application/json",
+      "auth": true,
+      "update": 300,
+      "multiple": false,
+      "icons": [
+        { "src": "/static/icons/icon-144.png", "sizes": "144x144", "type": "image/png" }
+      ],
+      "screenshots": [
+        { "src": "/static/icons/icon-512.png", "sizes": "512x512", "label": "Wadsworth Dashboard Widget" }
+      ]
+    }
+  ],
   "shortcuts": [
     { "name": "Businesses",   "url": "/businesses",     "description": "Businesses Terminal" },
     { "name": "Inventory",    "url": "/inventory",      "description": "Inventory Management" },
