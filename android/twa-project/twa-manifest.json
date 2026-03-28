@@ -1,0 +1,83 @@
+{
+  "packageId": "cc.notifly.wadsworth.twa",
+  "host": "wadsworth.notifly.cc",
+  "name": "Wadsworth Economic Tycoon Simulator",
+  "launcherName": "Wadsworth",
+  "display": "fullscreen-sticky",
+  "themeColor": "#38BDF8",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#000000",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://wadsworth.notifly.cc/static/icons/icon-512.png",
+  "maskableIconUrl": "https://wadsworth.notifly.cc/static/icons/android/launchericon-512x512.png",
+  "monochromeIconUrl": "https://wadsworth.notifly.cc/static/icons/android/launchericon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "/home/maphematics/SymCo/android/twa-project/android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Businesses",
+      "shortName": "Biz",
+      "url": "https://wadsworth.notifly.cc/businesses",
+      "chosenIconUrl": "https://wadsworth.notifly.cc/static/icons/icon-192.png"
+    },
+    {
+      "name": "Inventory",
+      "shortName": "Inventory",
+      "url": "https://wadsworth.notifly.cc/inventory",
+      "chosenIconUrl": "https://wadsworth.notifly.cc/static/icons/icon-192.png"
+    },
+    {
+      "name": "Land",
+      "shortName": "Land",
+      "url": "https://wadsworth.notifly.cc/land",
+      "chosenIconUrl": "https://wadsworth.notifly.cc/static/icons/icon-192.png"
+    },
+    {
+      "name": "Market",
+      "shortName": "Market",
+      "url": "https://wadsworth.notifly.cc/market",
+      "chosenIconUrl": "https://wadsworth.notifly.cc/static/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://wadsworth.notifly.cc/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "playBilling": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://wadsworth.notifly.cc/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": [
+    "focus-existing",
+    "auto"
+  ],
+  "displayOverride": [
+    "window-controls-overlay",
+    "fullscreen"
+  ],
+  "appVersion": "1"
+}
