@@ -21,6 +21,19 @@ from sqlalchemy.orm import sessionmaker
 
 # Efficiency floor notification — rate-limited per plot
 _eff_floor_notified: dict = {}   # plot_id → timestamp
+
+
+def _fire_govt_push(player_id: int, title: str, body: str, url: str = "/land"):
+    """Send a government push notification (non-blocking)."""
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body, url,
+                                   notif_type="govt",
+                                   tag=f"govt-{player_id}-{title[:20]}")
+        except Exception as e:
+            print(f"[Land] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
 _EFF_FLOOR_COOLDOWN  = 86400     # re-notify at most once per day
 _EFF_FLOOR_THRESHOLD = 50.0      # below this, business efficiency multiplier is capped
 
@@ -776,6 +789,12 @@ def collect_hoarding_taxes():
         if actual_payment > 0:
             debit_usd(owner_id, actual_payment)
             total_collected += actual_payment
+            if actual_payment >= 100:
+                _fire_govt_push(
+                    owner_id,
+                    "Land Hoard Tax Charged",
+                    f"${actual_payment:,.0f} hoard tax collected — you hold {plot_count} plots (>{HOARDING_FREE_PLOTS} free)",
+                )
 
             log_transaction(
                 player_id=owner_id,

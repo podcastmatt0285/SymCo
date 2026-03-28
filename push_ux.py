@@ -348,6 +348,10 @@ def send_push_notification(
             print(f"[Push] business notifications disabled for player {player_id} — skipping")
             db.close()
             return
+        if notif_type == "govt" and not getattr(player, "notif_push_govt", True):
+            print(f"[Push] govt notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
 
         subs = db.query(PushSubscription).filter_by(player_id=player_id).all()
         if not subs:

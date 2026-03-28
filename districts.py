@@ -13,6 +13,7 @@ Handles:
 - Database models for districts
 """
 
+import threading
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Text
@@ -24,6 +25,18 @@ from stats_ux import log_transaction
 # ==========================
 from database import engine, SessionLocal
 Base = declarative_base()
+
+
+def _fire_govt_push(player_id: int, title: str, body: str):
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body, url="/districts",
+                                   notif_type="govt",
+                                   tag=f"govt-{player_id}-{title[:20]}")
+        except Exception as e:
+            print(f"[Districts] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
 
 # ==========================
 # CONSTANTS
@@ -568,8 +581,18 @@ def collect_district_taxes(current_month: int):
                 reference_id=f"district_{district.id}"
             )
             print(f"[Districts] Player {owner.id} paid ${district.monthly_tax:,.2f} tax for district {district.id}")
+            _fire_govt_push(
+                owner.id,
+                "District Tax Collected",
+                f"${district.monthly_tax:,.0f} monthly tax charged for your {district.district_type.replace('_',' ').title()} district",
+            )
         else:
             print(f"[Districts] WARNING: Player {owner.id} cannot afford tax for district {district.id}")
+            _fire_govt_push(
+                owner.id,
+                "District Tax Payment Failed",
+                f"Insufficient funds for ${district.monthly_tax:,.0f} district tax — fund your account to avoid penalties",
+            )
 
     db.commit()
     db.close()

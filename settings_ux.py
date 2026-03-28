@@ -1144,6 +1144,7 @@ def _notifications_tab(player) -> str:
     push_exec = getattr(player, "notif_push_execs",     True)
     push_trd  = getattr(player, "notif_push_trades",    True)
     push_corp = getattr(player, "notif_push_corporate", True)
+    push_govt = getattr(player, "notif_push_govt",      True)
 
     def _toggle(name: str, checked: bool, label: str, sub: str = "", disabled: bool = False) -> str:
         chk   = "checked" if checked else ""
@@ -1301,6 +1302,7 @@ def _notifications_tab(player) -> str:
   {_toggle("notif_push_execs",     push_exec, "Executive Alerts",  "Hired, fired, quit, salary missed, retired, school sent and complete",    disabled=not has_cco)}
   {_toggle("notif_push_trades",    push_trd,  "Trade Alerts",      "Trusted swap proposed, executed, rejected, or expired",                   disabled=not has_cco)}
   {_toggle("notif_push_corporate", push_corp, "Corporate Alerts",  "Acquisition offers received/accepted/rejected and monthly income sweeps", disabled=not has_cco)}
+  {_toggle("notif_push_govt",      push_govt, "Government Alerts", "Hoard tax, district tax failure, liens, city membership changes",         disabled=not has_cco)}
 </div>"""
 
     # ── Sounds ────────────────────────────────────────────────────────────────
@@ -1513,6 +1515,7 @@ def api_save_notifications(
     notif_push_execs:     Optional[str] = Form(None),
     notif_push_trades:    Optional[str] = Form(None),
     notif_push_corporate: Optional[str] = Form(None),
+    notif_push_govt:      Optional[str] = Form(None),
     notif_sounds:         Optional[str] = Form(None),
     notif_badge:          Optional[str] = Form(None),
 ):
@@ -1539,6 +1542,7 @@ def api_save_notifications(
                 p.notif_push_execs     = notif_push_execs     == "on"
                 p.notif_push_trades    = notif_push_trades    == "on"
                 p.notif_push_corporate = notif_push_corporate == "on"
+                p.notif_push_govt      = notif_push_govt      == "on"
                 p.notif_sounds         = notif_sounds         == "on"
                 p.notif_badge          = notif_badge          == "on"
                 db.commit()

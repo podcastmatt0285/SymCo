@@ -16,6 +16,7 @@ Handles:
 - Poll tax system
 """
 
+import threading
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Text, Enum as SQLEnum, UniqueConstraint
@@ -29,6 +30,19 @@ from stats_ux import log_transaction
 # ==========================
 from database import engine, SessionLocal
 Base = declarative_base()
+
+
+def _fire_govt_push(player_id: int, title: str, body: str):
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body, url="/cities",
+                                   notif_type="govt",
+                                   tag=f"govt-{player_id}-{title[:20]}")
+        except Exception as e:
+            print(f"[Cities] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
 
 # ==========================
 # CONSTANTS
@@ -689,18 +703,23 @@ def process_application_approval(application_id: int) -> Tuple[bool, str]:
         
         application.status = "approved"
         db.commit()
-        
-        print(f"[Cities] Application approved: Player {application.applicant_id} joined City {application.city_id}")
-        print(f"[Cities] Fee ${application.calculated_fee:,.2f} paid to Mayor {city.mayor_id}")
-        
-        return True, "Welcome to the city!"
-        
+
+        _applicant_id = application.applicant_id
+        _city_name    = city.name
+        _fee          = application.calculated_fee
+        print(f"[Cities] Application approved: Player {_applicant_id} joined City {application.city_id}")
+        print(f"[Cities] Fee ${_fee:,.2f} paid to Mayor {city.mayor_id}")
+
     except Exception as e:
         db.rollback()
         print(f"[Cities] Error processing application: {e}")
         return False, str(e)
     finally:
         db.close()
+
+    _fire_govt_push(_applicant_id, f"Welcome to {_city_name}!",
+                    f"Your application was approved — ${_fee:,.0f} membership fee paid")
+    return True, "Welcome to the city!"
 
 
 def leave_city(player_id: int) -> Tuple[bool, str]:
@@ -883,16 +902,24 @@ def process_banishment(city_id: int, player_id: int) -> Tuple[bool, str]:
         db.delete(membership)
         db.commit()
 
+        _city_name     = city.name
+        _reimbursement = reimbursement
         print(f"[Cities] Player {player_id} banished from City {city_id}, reimbursed ${reimbursement:,.2f}")
-        
-        return True, "Player has been banished"
-        
+
     except Exception as e:
         db.rollback()
         print(f"[Cities] Error processing banishment: {e}")
         return False, str(e)
     finally:
         db.close()
+
+    reimbursement_str = f" — ${_reimbursement:,.0f} entry fee reimbursed" if _reimbursement > 0 else " — no reimbursement available"
+    _fire_govt_push(
+        player_id,
+        f"Banished from {_city_name}",
+        f"The community voted to remove you from {_city_name}{reimbursement_str}",
+    )
+    return True, "Player has been banished"
 
 
 # ==========================
@@ -1034,6 +1061,12 @@ def close_poll(poll_id: int) -> Tuple[bool, str]:
                     app.status = "rejected"
                     db2.commit()
                 db2.close()
+                if poll_target_player_id:
+                    _fire_govt_push(
+                        poll_target_player_id,
+                        "City Application Rejected",
+                        "The community voted against your membership application",
+                    )
 
         print(f"[Cities] Poll {poll_id} closed: {poll_status_str} (YES: {yes_votes}, NO: {no_votes})")
         
