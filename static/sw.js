@@ -52,10 +52,12 @@ self.addEventListener("notificationclick", (event) => {
   // Inline reply action (Android Chrome)
   if (event.action === "reply") {
     const replyText = event.reply;
+    console.log("[SW] reply action fired, replyText:", replyText, "targetUrl:", targetUrl);
     if (replyText && replyText.trim()) {
       // URL format is /p2p/dms?with=<id>
       const withMatch = targetUrl.match(/[?&]with=(\d+)/);
       const otherId   = withMatch ? withMatch[1] : null;
+      console.log("[SW] otherId:", otherId);
       if (otherId) {
         event.waitUntil(
           fetch("/api/dm/reply", {
@@ -63,9 +65,14 @@ self.addEventListener("notificationclick", (event) => {
             credentials: "include",
             headers:     { "Content-Type": "application/x-www-form-urlencoded" },
             body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
-          }).catch(() => {})
+          }).then((r) => {
+            console.log("[SW] reply fetch status:", r.status);
+            return r.json().then((d) => console.log("[SW] reply response:", JSON.stringify(d)));
+          }).catch((err) => console.error("[SW] reply fetch failed:", err))
         );
-        return;  // silent reply — don't open the app
+        return;  // don't open the app for silent replies
+      } else {
+        console.warn("[SW] could not extract otherId from URL:", targetUrl);
       }
     }
   }
