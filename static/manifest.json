@@ -36,9 +36,9 @@
     { "name": "Executives",       "url": "/executives",     "description": "Executive Boardroom" },
     { "name": "Peer to Peer",     "url": "/p2p",            "description": "Contracts and Social Network" },
     { "name": "Wiki",             "url": "/stats/wiki",     "description": "Wadsworth Wiki" },
-    { "name": "Settings",         "url": "/stats/settings", "description": "Settings" },
+    { "name": "Settings",         "url": "/settings",       "description": "Settings" },
     { "name": "Districts",        "url": "/stats/districts","description": "District Mergers" },
-    { "name": "Cities",           "url": "/stats/cities",   "description": "City Management Dashboard" },
-    { "name": "Counties",         "url": "/stats/counties", "description": "County Management Dashboard" }
+    { "name": "Cities",           "url": "/cities",         "description": "City Management Dashboard" },
+    { "name": "Counties",         "url": "/counties",       "description": "County Management Dashboard" }
   ]
 }
