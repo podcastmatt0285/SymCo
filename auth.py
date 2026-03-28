@@ -722,6 +722,11 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
         })();
     </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
 </body>
 </html>
 """
