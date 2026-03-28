@@ -7,3 +7,5 @@ python-dotenv
 pycryptodome
 Pillow
 requests
+wheel
+pywebpush

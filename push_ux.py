@@ -17,14 +17,9 @@ for ECC / AES-GCM and stdlib hmac/hashlib for HKDF.
 """
 
 import base64
-import hashlib
-import hmac as _hmac
 import json
 import os
-import struct
-import time
 from typing import Optional
-from urllib.parse import urlparse
 
 from fastapi import APIRouter, Cookie, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -45,26 +40,6 @@ def _b64d(s: str) -> bytes:
 def _b64e(b: bytes) -> str:
     return base64.urlsafe_b64encode(b).rstrip(b'=').decode()
 
-
-# ── HKDF (RFC 5869) via stdlib ─────────────────────────────────────────────────
-
-def _hkdf_extract(salt: bytes, ikm: bytes) -> bytes:
-    return _hmac.new(salt, ikm, hashlib.sha256).digest()
-
-
-def _hkdf_expand(prk: bytes, info: bytes, length: int) -> bytes:
-    t = b''
-    okm = b''
-    counter = 1
-    while len(okm) < length:
-        t = _hmac.new(prk, t + info + bytes([counter]), hashlib.sha256).digest()
-        okm += t
-        counter += 1
-    return okm[:length]
-
-
-def _hkdf(salt: bytes, ikm: bytes, info: bytes, length: int) -> bytes:
-    return _hkdf_expand(_hkdf_extract(salt, ikm), info, length)
 
 
 # ── VAPID key management ───────────────────────────────────────────────────────
@@ -163,101 +138,34 @@ def get_vapid_keys() -> Optional[dict]:
     return _VAPID_KEYS
 
 
-# ── RFC 8291 payload encryption ────────────────────────────────────────────────
+# ── Push delivery via pywebpush ────────────────────────────────────────────────
 
-def _encrypt_push(plaintext: str, auth_b64: str, p256dh_b64: str) -> bytes:
-    """
-    Encrypt a push payload per RFC 8291 (WebPush) + RFC 8188 (aes128gcm).
-    Uses pycryptodome for ECC/AES-GCM and stdlib hmac/hashlib for HKDF.
-    Returns the raw encrypted body bytes to POST.
-    """
+def _send_web_push(endpoint: str, auth: str, p256dh: str, payload: str, private_pem: str) -> int:
+    """Send an encrypted push notification via pywebpush. Returns HTTP status code."""
+    from pywebpush import webpush, WebPushException
     from Crypto.PublicKey import ECC
-    from Crypto.Cipher import AES
 
-    auth_secret    = _b64d(auth_b64)
-    recv_pub_bytes = _b64d(p256dh_b64)
+    # pywebpush expects the raw base64url-encoded private scalar, not a PEM string
+    priv = ECC.import_key(private_pem)
+    raw_key = _b64e(int(priv.d).to_bytes(32, 'big'))
 
-    # Load recipient public key from uncompressed EC point (0x04 || x || y)
-    rx = int.from_bytes(recv_pub_bytes[1:33], 'big')
-    ry = int.from_bytes(recv_pub_bytes[33:65], 'big')
-    recv_pub = ECC.construct(curve='P-256', point_x=rx, point_y=ry)
-
-    # Ephemeral sender key pair
-    sender_priv = ECC.generate(curve='P-256')
-    sp = sender_priv.public_key().pointQ
-    sender_pub_bytes = b'\x04' + int(sp.x).to_bytes(32, 'big') + int(sp.y).to_bytes(32, 'big')
-
-    # ECDH shared secret — x-coordinate of scalar multiplication
-    shared_point = sender_priv.d * recv_pub.pointQ
-    ecdh_secret  = int(shared_point.x).to_bytes(32, 'big')
-
-    # Random 16-byte salt for content encryption
-    salt = os.urandom(16)
-
-    # IKM derivation — RFC 8291 §3.3
-    ikm = _hkdf(
-        salt=auth_secret,
-        ikm=ecdh_secret,
-        info=b"WebPush: info\x00" + recv_pub_bytes + sender_pub_bytes,
-        length=32,
-    )
-
-    # CEK + nonce — RFC 8188 §2.3
-    cek   = _hkdf(salt=salt, ikm=ikm, info=b"Content-Encoding: aes128gcm\x00\x01", length=16)
-    nonce = _hkdf(salt=salt, ikm=ikm, info=b"Content-Encoding: nonce\x00\x01",     length=12)
-
-    # Encrypt with AES-128-GCM; append 0x02 padding delimiter
-    cipher = AES.new(cek, AES.MODE_GCM, nonce=nonce)
-    ct, tag = cipher.encrypt_and_digest(plaintext.encode('utf-8') + b'\x02')
-
-    # aes128gcm content: salt(16) + rs(uint32be) + idlen(uint8) + key_id + ciphertext+tag
-    header = salt + struct.pack('>I', 4096) + bytes([len(sender_pub_bytes)]) + sender_pub_bytes
-    return header + ct + tag
-
-
-def _vapid_auth_header(private_pem: str, public_key_b64: str, endpoint: str) -> str:
-    """
-    Build a VAPID Authorization header using pycryptodome (ES256 JWT).
-    Returns the full header value: 'vapid t=<JWT>,k=<pubkey>'
-    """
-    from Crypto.PublicKey import ECC
-    from Crypto.Signature import DSS
-    from Crypto.Hash import SHA256
-
-    aud = urlparse(endpoint).scheme + "://" + urlparse(endpoint).netloc
-
-    hdr    = _b64e(json.dumps({"typ": "JWT", "alg": "ES256"}, separators=(',', ':')).encode())
-    claims = _b64e(json.dumps({
-        "aud": aud,
-        "exp": int(time.time()) + 12 * 3600,
-        "sub": "mailto:admin@wadsworth.game",
-    }, separators=(',', ':')).encode())
-
-    signing_input = (hdr + "." + claims).encode()
-    priv    = ECC.import_key(private_pem)
-    signer  = DSS.new(priv, 'fips-186-3')
-    h       = SHA256.new(signing_input)
-    sig_raw = signer.sign(h)   # raw r||s (64 bytes for P-256)
-    sig     = _b64e(sig_raw)
-
-    return f"vapid t={hdr}.{claims}.{sig},k={public_key_b64}"
-
-
-def _send_web_push(
-    endpoint: str, payload_bytes: bytes, vapid_private_pem: str, public_key_b64: str
-) -> int:
-    """POST an encrypted push message and return the HTTP status code."""
-    import requests as _req
-
-    auth = _vapid_auth_header(vapid_private_pem, public_key_b64, endpoint)
-    headers = {
-        "Authorization":    auth,
-        "Content-Type":     "application/octet-stream",
-        "Content-Encoding": "aes128gcm",
-        "TTL":              "86400",
+    subscription_info = {
+        "endpoint": endpoint,
+        "keys": {"auth": auth, "p256dh": p256dh},
     }
-    r = _req.post(endpoint, data=payload_bytes, headers=headers, timeout=10)
-    return r.status_code
+    try:
+        resp = webpush(
+            subscription_info=subscription_info,
+            data=payload,
+            vapid_private_key=raw_key,
+            vapid_claims={"sub": "mailto:admin@wadsworth.game"},
+            timeout=10,
+        )
+        return resp.status_code if resp else 201
+    except WebPushException as e:
+        if e.response is not None:
+            return e.response.status_code
+        raise
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
@@ -437,14 +345,17 @@ def send_push_notification(
         payload  = json.dumps(payload_data)
         to_purge = []
 
+        print(f"[Push] Sending to player {player_id} ({len(subs)} sub(s))…")
         for sub in subs:
             try:
-                enc  = _encrypt_push(payload, sub.auth, sub.p256dh)
-                code = _send_web_push(sub.endpoint, enc, keys["private_key"], keys["public_key"])
+                code = _send_web_push(sub.endpoint, sub.auth, sub.p256dh, payload, keys["private_key"])
                 if code in (404, 410):
                     to_purge.append(sub.id)
+                    print(f"[Push] Sub {sub.id} expired (HTTP {code}), purging")
                 elif code >= 400:
                     print(f"[Push] HTTP {code} for player {player_id} sub {sub.id}")
+                else:
+                    print(f"[Push] Delivered to player {player_id} (HTTP {code})")
             except Exception as e:
                 print(f"[Push] Error sending to player {player_id}: {e}")
 
