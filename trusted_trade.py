@@ -459,13 +459,6 @@ def _try_execute_swap(swap_id: int) -> bool:
                     swap_id)
     return True
 
-    except Exception as e:
-        db.rollback()
-        print(f"[TrustedTrade] Execute swap {swap_id} error: {e}")
-        return False
-    finally:
-        db.close()
-
 
 def respond_to_swap(swap_id: int, player_id: int, accept: bool) -> Tuple[bool, str]:
     """Accept or reject a pending swap. Executes the swap if all parties accept."""
