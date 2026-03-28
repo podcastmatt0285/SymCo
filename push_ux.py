@@ -311,6 +311,8 @@ def send_push_notification(
           to /static/icons/icon-192.png in the service worker if omitted.
     """
     try:
+        if player_id <= 0:
+            return  # NPCs and government player have no push subscriptions
         from auth import get_db, PushSubscription, Player
         db = get_db()
         player = db.query(Player).filter_by(id=player_id).first()
@@ -324,6 +326,10 @@ def send_push_notification(
             return
         if notif_type == "contract" and not getattr(player, "notif_push_contracts", True):
             print(f"[Push] contract notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
+        if notif_type == "land" and not getattr(player, "notif_push_land", True):
+            print(f"[Push] land notifications disabled for player {player_id} — skipping")
             db.close()
             return
         if notif_type == "business" and not getattr(player, "notif_push_business", True):
