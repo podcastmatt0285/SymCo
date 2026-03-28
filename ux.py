@@ -1299,8 +1299,12 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 .then(function(r){{return r.json();}})
                 .then(function(d){{
                     if (!d.token) return;
+                    // S.browser_fallback_url prevents Chrome from opening Play Store
+                    // when the intent can't be resolved (e.g. old APK without WadsworthTokenActivity).
+                    var fallback = encodeURIComponent(window.location.origin + '/');
                     window.location.href = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
-                             '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;end';
+                             '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;' +
+                             'S.browser_fallback_url=' + fallback + ';end';
                 }}).catch(function(){{}});
         }})();
         </script>
