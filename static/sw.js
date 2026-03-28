@@ -1,5 +1,5 @@
 // Wadsworth PWA Service Worker — static assets cached, live API/pages always network
-const CACHE_VERSION = "wadsworth-v4";
+const CACHE_VERSION = "wadsworth-v5";
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
@@ -45,10 +45,16 @@ self.addEventListener("push", (event) => {
                          placeholder: "Type a reply…" }];
   }
 
-  // Notify any open page tabs so they can play the in-app sound
+  // Notify visible page tabs so they can play the in-app sound.
+  // Only post to VISIBLE clients — posting to backgrounded/hidden tabs can wake
+  // them and trigger visibilitychange events, which causes WebSocket reconnect storms.
   if (soundsOn) {
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      clientList.forEach((c) => c.postMessage({ type: "PLAY_NOTIFICATION_SOUND" }));
+      clientList.forEach((c) => {
+        if (c.visibilityState === "visible") {
+          c.postMessage({ type: "PLAY_NOTIFICATION_SOUND" });
+        }
+      });
     });
   }
 
