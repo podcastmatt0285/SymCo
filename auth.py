@@ -48,6 +48,7 @@ class Player(Base):
     notif_badge  = Column(Boolean, default=True)       # Show unread badge on app icon (Badging API)
     notif_push_dms       = Column(Boolean, default=True)  # Push: new DMs
     notif_push_contracts = Column(Boolean, default=True)  # Push: contract updates
+    notif_push_business  = Column(Boolean, default=True)  # Push: business alerts (wages, stock, inputs)
     # Federal Communications Commission (FCC) licence — NULL = none active; datetime = expiry (UTC)
     cco_rental_expires = Column(DateTime, nullable=True, default=None)
 
@@ -162,6 +163,7 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_badge BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_dms BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_contracts BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_business  BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS cco_rental_expires TIMESTAMP",
     ])
 
