@@ -1,6 +1,8 @@
 # business.py (Full Version with Dismantling System and Retail Pricing Patch)
 import json
 import random
+import threading
+import time
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Float
 from sqlalchemy.orm import sessionmaker
@@ -11,6 +13,35 @@ from supplydemand import SupplyDemandEngine
 
 from database import engine, SessionLocal
 Base = declarative_base()
+
+# ── Business push-notification helpers ────────────────────────────────────────
+_biz_push_sent: dict = {}          # (biz_id, issue_key) → last sent timestamp
+_BIZ_PUSH_COOLDOWN = 3600          # only notify once per hour per issue
+
+def _fire_business_push(player_id: int, biz_id: int, issue_key: str,
+                         title: str, body: str) -> None:
+    """Send a push notification for a business issue, rate-limited to once/hour."""
+    cache_key = (biz_id, issue_key)
+    now = time.time()
+    if now - _biz_push_sent.get(cache_key, 0) < _BIZ_PUSH_COOLDOWN:
+        return
+    _biz_push_sent[cache_key] = now
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(
+                player_id, title, body,
+                url="/businesses",
+                notif_type="business",
+                tag=f"biz-{biz_id}-{issue_key}",
+            )
+        except Exception as e:
+            print(f"[Business] Push error for player {player_id}: {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+def _fmt_item(item: str) -> str:
+    """'raw_leather' → 'Raw Leather'"""
+    return item.replace("_", " ").title()
 
 # ==========================
 # DATABASE MODELS
@@ -112,6 +143,14 @@ def process_dismantling_tick(db):
             # Delete the business
             biz = db.query(Business).filter(Business.id == sale.business_id).first()
             if biz:
+                # Notify owner before deleting
+                try:
+                    _cfg = BUSINESS_TYPES.get(biz.business_type, {})
+                    _biz_name = _cfg.get("name", biz.business_type)
+                    _fire_business_push(sale.owner_id, biz.id, "dismantled",
+                        _biz_name, f"Dismantling complete — full refund of ${sale.total_refund:,.0f} has been paid")
+                except Exception:
+                    pass
                 # Free up the land
                 plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
                 if plot:
@@ -271,6 +310,9 @@ def process_business_tick(db):
 
         from reserve_banks import can_afford_usd
         if not can_afford_usd(player.id, wage_cost):
+            biz_name = config.get("name", biz.business_type)
+            _fire_business_push(player.id, biz.id, "wages",
+                biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
             continue
 
         player_inv = get_player_inventory(player.id)
@@ -290,6 +332,9 @@ def process_business_tick(db):
                     continue
                 qty = player_inv.get(item, 0)
                 if qty <= 0:
+                    biz_name = config.get("name", biz.business_type)
+                    _fire_business_push(player.id, biz.id, f"stock-{item}",
+                        biz_name, f"{_fmt_item(item)} is out of stock — restock to keep selling")
                     continue
 
                 price_entry = db.query(RetailPrice).filter(
@@ -334,6 +379,10 @@ def process_business_tick(db):
             for req in effective_inputs:
                 if player_inv.get(req["item"], 0) < req["quantity"]:
                     line_can_run = False
+                    biz_name = config.get("name", biz.business_type)
+                    _fire_business_push(player.id, biz.id, f"input-{req['item']}",
+                        biz_name,
+                        f"Out of {_fmt_item(req['item'])} — need {req['quantity']} to produce")
                     break
 
             if line_can_run:
