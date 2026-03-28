@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="display_override">
+    
+      
+        <item>window-controls-overlay</item>
+      
+    
+      
+        <item>immersive</item>
+      
+    
+    </string-array>
+    <bool name="enableNotification">true</bool>
+    <bool name="enableSiteSettingsShortcut">true</bool>
+    <color name="backgroundColor">#000000</color>
+    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="navigationColor">#000000</color>
+    <color name="navigationColorDark">#000000</color>
+    <color name="navigationDividerColor">#000000</color>
+    <color name="navigationDividerColorDark">#000000</color>
+    <color name="shortcut_background">#F5F5F5</color>
+    <integer name="splashScreenFadeOutDuration">300</integer>
+    <string name="appName" translatable="false">Wadsworth Economic Tycoon Simulator</string>
+    <string name="assetStatements">
+    [{
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://wadsworth.notifly.cc\"
+        }
+    }]
+    
+  </string>
+    <string name="fallbackType" translatable="false">customtabs</string>
+    <string name="fullScopeUrl" translatable="false">https://wadsworth.notifly.cc/</string>
+    <string name="generatorApp" translatable="false">bubblewrap-cli</string>
+    <string name="hostName" translatable="false">wadsworth.notifly.cc</string>
+    <string name="launchHandlerClientMode" translatable="false">focus-existing,auto</string>
+    <string name="launchUrl" translatable="false">https://wadsworth.notifly.cc/</string>
+    <string name="launcherName" translatable="false">Wadsworth</string>
+    <string name="orientation" translatable="false">any</string>
+    <string name="providerAuthority" translatable="false">cc.notifly.wadsworth.twa.fileprovider</string>
+    <string name="shortcut_name_0" translatable="false">Businesses</string>
+    <string name="shortcut_name_1" translatable="false">Inventory</string>
+    <string name="shortcut_name_2" translatable="false">Land</string>
+    <string name="shortcut_name_3" translatable="false">Market</string>
+    <string name="shortcut_short_name_0" translatable="false">Biz</string>
+    <string name="shortcut_short_name_1" translatable="false">Inventory</string>
+    <string name="shortcut_short_name_2" translatable="false">Land</string>
+    <string name="shortcut_short_name_3" translatable="false">Market</string>
+    <string name="webManifestUrl" translatable="false">https://wadsworth.notifly.cc/manifest.json</string>
+    <string name="widget_description">Live balance, alerts, and market tickers</string>
+</resources>

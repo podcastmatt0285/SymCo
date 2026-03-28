@@ -51,4 +51,5 @@
     }]
     
   </string>  
+    <string name="widget_description">Live balance, alerts, and market tickers</string>
 </resources>
