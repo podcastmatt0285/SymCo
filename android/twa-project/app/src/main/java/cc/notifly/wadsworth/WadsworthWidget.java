@@ -1,5 +1,6 @@
 package cc.notifly.wadsworth;
 
+import cc.notifly.wadsworth.R;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
