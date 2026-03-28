@@ -1287,38 +1287,20 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         }})();
         </script>
         <script>
-        // Android widget token bridge — shows a one-tap banner on first load in TWA/standalone.
-        // Chrome blocks script-initiated intent:// navigation (requires user gesture), so we
-        // show a banner the user taps once; that click provides the gesture Chrome needs.
+        // Android widget device-link: LauncherActivity appends ?_wdid=sha256(ANDROID_ID)
+        // to every launch URL. We silently POST it to the server so it can map this device
+        // to the current player session. No user interaction required.
         (function(){{
-            if (!/android/i.test(navigator.userAgent)) return;
-            if (sessionStorage.getItem('_wt_sent3')) return;
-            fetch('/api/widget/token', {{credentials:'same-origin'}})
-                .then(function(r){{return r.json();}})
-                .then(function(d){{
-                    if (!d.token) return;
-                    var fallback = encodeURIComponent(window.location.origin + '/');
-                    var intentUrl = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
-                        '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;' +
-                        'S.browser_fallback_url=' + fallback + ';end';
-                    var banner = document.createElement('div');
-                    banner.id = '_wt_banner';
-                    banner.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
-                        'background:#1e3a5f;color:#e2e8f0;padding:13px 22px;border-radius:10px;' +
-                        'font-size:14px;font-family:sans-serif;z-index:99999;cursor:pointer;' +
-                        'box-shadow:0 3px 12px rgba(0,0,0,0.5);white-space:nowrap;';
-                    banner.textContent = '\U0001F4F2 Tap to link your home-screen widget';
-                    banner.onclick = function(){{
-                        sessionStorage.setItem('_wt_sent3', '1');
-                        banner.remove();
-                        window.location.href = intentUrl;
-                    }};
-                    document.body.appendChild(banner);
-                    setTimeout(function(){{
-                        var b = document.getElementById('_wt_banner');
-                        if (b) b.remove();
-                    }}, 15000);
-                }}).catch(function(){{}});
+            var params = new URLSearchParams(window.location.search);
+            var wdid = params.get('_wdid');
+            if (!wdid) return;
+            fetch('/api/widget/link?device_id=' + encodeURIComponent(wdid),
+                  {{credentials:'same-origin'}}).catch(function(){{}});
+            // Remove _wdid from the visible URL without reloading
+            var clean = window.location.pathname +
+                (window.location.search.replace(/[?&]_wdid=[^&]*/g, '').replace(/^\?$/, '') || '') +
+                window.location.hash;
+            history.replaceState(null, '', clean);
         }})();
         </script>
     </body>
@@ -9183,8 +9165,43 @@ def api_widget_token(session_token: Optional[str] = Cookie(None)):
         return JSONResponse({"error": "not authenticated"}, status_code=401)
     return JSONResponse({"token": _make_widget_token(player.id), "player_id": player.id})
 
+_WIDGET_DEVICE_MAP: dict = {}  # device_hash → player_id, in-memory (survives restarts via file)
+_WIDGET_DEVICE_FILE = "widget_devices.json"
+
+def _load_device_map():
+    global _WIDGET_DEVICE_MAP
+    import json as _json, os as _os
+    if _os.path.exists(_WIDGET_DEVICE_FILE):
+        try:
+            with open(_WIDGET_DEVICE_FILE) as _f:
+                _WIDGET_DEVICE_MAP = _json.load(_f)
+        except Exception:
+            pass
+
+def _save_device_map():
+    import json as _json
+    try:
+        with open(_WIDGET_DEVICE_FILE, 'w') as _f:
+            _json.dump(_WIDGET_DEVICE_MAP, _f)
+    except Exception:
+        pass
+
+_load_device_map()
+
+@router.get("/api/widget/link")
+def api_widget_link(device_id: str, session_token: Optional[str] = Cookie(None)):
+    """Called by the web app with the device hash appended by LauncherActivity."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    _WIDGET_DEVICE_MAP[device_id] = player.id
+    _save_device_map()
+    return JSONResponse({"ok": True})
+
 @router.get("/api/widget/data")
-def api_widget_data(session_token: Optional[str] = Cookie(None), wt: Optional[str] = None):
+def api_widget_data(session_token: Optional[str] = Cookie(None),
+                    wt: Optional[str] = None,
+                    device_id: Optional[str] = None):
     """
     Returns live market data for the PWA widget and the in-page ticker bar.
     Shape:
@@ -9194,8 +9211,20 @@ def api_widget_data(session_token: Optional[str] = Cookie(None), wt: Optional[st
     """
     from datetime import datetime as _dt
 
-    # Accept either a session cookie (browser/PWA) or a widget token (Android widget)
-    if wt:
+    # Auth: device_id (Android widget) > wt (legacy HMAC token) > session cookie
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+        import auth as _auth
+        db = _auth.get_db()
+        try:
+            player = db.query(_auth.Player).filter(_auth.Player.id == pid).first()
+        finally:
+            db.close()
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    elif wt:
         player = _verify_widget_token(wt)
         if not player:
             return JSONResponse({"error": "not authenticated"}, status_code=401)

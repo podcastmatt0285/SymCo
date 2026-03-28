@@ -19,6 +19,8 @@ import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
+import java.security.MessageDigest;
 
 
 
@@ -44,11 +46,18 @@ public class LauncherActivity
 
     @Override
     protected Uri getLaunchingUrl() {
-        // Get the original launch Url.
         Uri uri = super.getLaunchingUrl();
-
-        
-
+        try {
+            String androidId = Settings.Secure.getString(
+                    getContentResolver(), Settings.Secure.ANDROID_ID);
+            if (androidId != null && !androidId.isEmpty()) {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                byte[] hash = md.digest((androidId + "wadsworth-device-v1").getBytes("UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                for (byte b : hash) sb.append(String.format("%02x", b));
+                uri = uri.buildUpon().appendQueryParameter("_wdid", sb.toString()).build();
+            }
+        } catch (Exception ignored) {}
         return uri;
     }
 }

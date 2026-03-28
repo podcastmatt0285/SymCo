@@ -5,10 +5,11 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
 import android.widget.RemoteViews;
+import java.security.MessageDigest;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -36,11 +37,21 @@ public class WadsworthWidget extends AppWidgetProvider {
     static final String BASE_URL    = "https://wadsworth.notifly.cc";
     static final String WIDGET_DATA = BASE_URL + "/api/widget/data";
 
-    /** Read the widget auth token stored by WadsworthTokenActivity. */
-    private static String getWidgetToken(Context ctx) {
-        SharedPreferences prefs = ctx.getSharedPreferences(
-                WadsworthTokenActivity.PREFS, Context.MODE_PRIVATE);
-        return prefs.getString(WadsworthTokenActivity.KEY_TOKEN, null);
+    /** Compute SHA-256(ANDROID_ID + salt) — same value that LauncherActivity
+     *  appends to the launch URL so the server can link device → player. */
+    private static String getDeviceHash(Context ctx) {
+        try {
+            String androidId = Settings.Secure.getString(
+                    ctx.getContentResolver(), Settings.Secure.ANDROID_ID);
+            if (androidId == null || androidId.isEmpty()) return null;
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest((androidId + "wadsworth-device-v1").getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -81,17 +92,14 @@ public class WadsworthWidget extends AppWidgetProvider {
         views.setTextViewText(id(ctx, "widget_tickers"),  "");
         mgr.updateAppWidget(widgetId, views);
 
-        // Read widget token from SharedPreferences (set by WadsworthTokenActivity
-        // when the web app fires an intent:// URL on first Android app launch).
-        final String widgetToken = getWidgetToken(ctx);
+        final String deviceHash = getDeviceHash(ctx);
 
         // Fetch data on a background thread
         new Thread(() -> {
             try {
-                // Build URL — append widget token as query param if available
                 String dataUrl = WIDGET_DATA;
-                if (widgetToken != null) {
-                    dataUrl = WIDGET_DATA + "?wt=" + Uri.encode(widgetToken);
+                if (deviceHash != null) {
+                    dataUrl = WIDGET_DATA + "?device_id=" + Uri.encode(deviceHash);
                 }
 
                 URL url = new URL(dataUrl);
