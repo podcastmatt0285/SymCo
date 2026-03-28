@@ -52,29 +52,35 @@ self.addEventListener("notificationclick", (event) => {
   // Inline reply action (Android Chrome)
   if (event.action === "reply") {
     const replyText = event.reply;
-    console.log("[SW] reply action fired, replyText:", replyText, "targetUrl:", targetUrl);
-    if (replyText && replyText.trim()) {
-      // URL format is /p2p/dms?with=<id>
-      const withMatch = targetUrl.match(/[?&]with=(\d+)/);
-      const otherId   = withMatch ? withMatch[1] : null;
-      console.log("[SW] otherId:", otherId);
-      if (otherId) {
-        event.waitUntil(
-          fetch("/api/dm/reply", {
-            method:      "POST",
-            credentials: "include",
-            headers:     { "Content-Type": "application/x-www-form-urlencoded" },
-            body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
-          }).then((r) => {
-            console.log("[SW] reply fetch status:", r.status);
-            return r.json().then((d) => console.log("[SW] reply response:", JSON.stringify(d)));
-          }).catch((err) => console.error("[SW] reply fetch failed:", err))
-        );
-        return;  // don't open the app for silent replies
-      } else {
-        console.warn("[SW] could not extract otherId from URL:", targetUrl);
-      }
+    const withMatch = targetUrl.match(/[?&]with=(\d+)/);
+    const otherId   = withMatch ? withMatch[1] : null;
+
+    if (!replyText || !replyText.trim()) {
+      event.waitUntil(self.registration.showNotification("Reply failed", { body: "No reply text captured — browser may not support inline reply.", tag: "reply-debug" }));
+      return;
     }
+    if (!otherId) {
+      event.waitUntil(self.registration.showNotification("Reply failed", { body: "Could not find recipient ID in URL: " + targetUrl, tag: "reply-debug" }));
+      return;
+    }
+
+    event.waitUntil(
+      fetch("/api/dm/reply", {
+        method:      "POST",
+        credentials: "include",
+        headers:     { "Content-Type": "application/x-www-form-urlencoded" },
+        body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
+      }).then((r) => {
+        return r.json().then((d) => {
+          if (!d.ok) {
+            return self.registration.showNotification("Reply failed", { body: "Server error: " + (d.error || r.status), tag: "reply-debug" });
+          }
+        });
+      }).catch((err) => {
+        return self.registration.showNotification("Reply failed", { body: "Fetch error: " + err.message, tag: "reply-debug" });
+      })
+    );
+    return;
   }
 
   // Regular tap — open/focus the app at the target URL
