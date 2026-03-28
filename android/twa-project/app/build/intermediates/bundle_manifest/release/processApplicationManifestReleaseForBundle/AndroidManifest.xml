@@ -23,8 +23,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cc.notifly.wadsworth.twa"
-    android:versionCode="1"
-    android:versionName="1" >
+    android:versionCode="8"
+    android:versionName="8" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -143,7 +143,7 @@
                 android:value="@string/fallbackType" />
             <meta-data
                 android:name="android.support.customtabs.trusted.DISPLAY_MODE"
-                android:value="sticky-immersive" />
+                android:value="minimal-ui" />
             <meta-data
                 android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
                 android:value="@string/orientation" />
@@ -232,6 +232,22 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/wadsworth_widget_info" />
         </receiver>
+
+        <activity
+            android:name="cc.notifly.wadsworth.WadsworthTokenActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="widget-auth"
+                    android:scheme="wadsworth" />
+            </intent-filter>
+        </activity>
 
         <meta-data
             android:name="com.google.android.play.billingclient.version"
