@@ -23,18 +23,14 @@
             android:text="WADSWORTH"
             android:textColor="#38bdf8"
             android:textSize="9sp"
-            android:letterSpacing="0.15"
-            android:textStyle="bold"
-            android:fontFamily="monospace" />
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="● LIVE"
+            android:text="LIVE"
             android:textColor="#22c55e"
-            android:textSize="8sp"
-            android:letterSpacing="0.1"
-            android:fontFamily="monospace" />
+            android:textSize="8sp" />
     </LinearLayout>
 
     <!-- Cash balance -->
@@ -42,11 +38,10 @@
         android:id="@+id/widget_balance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="—"
+        android:text="&#8212;"
         android:textColor="#f1f5f9"
         android:textSize="22sp"
         android:textStyle="bold"
-        android:fontFamily="monospace"
         android:layout_marginBottom="4dp" />
 
     <!-- Divider -->
@@ -65,8 +60,7 @@
         android:textColor="#cbd5e1"
         android:textSize="10sp"
         android:maxLines="2"
-        android:ellipsize="end"
-        android:fontFamily="monospace" />
+        android:ellipsize="end" />
 
     <TextView
         android:id="@+id/widget_time"
@@ -75,7 +69,6 @@
         android:text=""
         android:textColor="#475569"
         android:textSize="9sp"
-        android:fontFamily="monospace"
         android:layout_marginBottom="6dp" />
 
     <!-- Divider -->
@@ -92,8 +85,6 @@
         android:text="MARKETS"
         android:textColor="#475569"
         android:textSize="8sp"
-        android:letterSpacing="0.12"
-        android:fontFamily="monospace"
         android:layout_marginBottom="3dp" />
 
     <TextView
@@ -103,7 +94,6 @@
         android:text=""
         android:textColor="#94a3b8"
         android:textSize="9sp"
-        android:fontFamily="monospace"
         android:maxLines="3"
         android:ellipsize="end" />
 
