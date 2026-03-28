@@ -16,6 +16,7 @@ Handles:
 
 import json
 import random
+import threading
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, Text, text
@@ -1192,6 +1193,18 @@ def generate_executive(force_special: bool = False) -> dict:
     }
 
 
+def _fire_exec_push(player_id: int, title: str, body: str, url: str = "/executives"):
+    """Send a push notification for executive events (non-blocking)."""
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body, url, notif_type="execs",
+                                   tag=f"exec-{player_id}-{title[:20]}")
+        except Exception as e:
+            print(f"[Executive] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+
 def create_executive(db, force_special: bool = False) -> Executive:
     attrs    = generate_executive(force_special=force_special)
     exec_obj = Executive(**attrs)
@@ -1244,9 +1257,15 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
     db.commit()
 
     job_info = EXECUTIVE_JOBS.get(exec_obj.job, {})
+    title_str = job_info.get('title', exec_obj.job)
+    _fire_exec_push(
+        player_id,
+        f"{exec_obj.first_name} {exec_obj.last_name} Hired",
+        f"{title_str} — hiring fee ${hiring_fee:,.0f} paid",
+    )
     return {
         "success": True,
-        "message": f"Hired {exec_obj.first_name} {exec_obj.last_name} as {job_info.get('title', exec_obj.job)}",
+        "message": f"Hired {exec_obj.first_name} {exec_obj.last_name} as {title_str}",
         "fee": hiring_fee
     }
 
@@ -1295,6 +1314,11 @@ def fire_executive(db, player_id: int, executive_id: int) -> dict:
     db.commit()
 
     total_exit = monthly_wages + severance
+    _fire_exec_push(
+        player_id,
+        f"{exec_obj.first_name} {exec_obj.last_name} Fired",
+        f"Severance ${severance:,.0f} paid, pension ${monthly_wages:,.0f} owed (total ${total_exit:,.0f})",
+    )
     return {
         "success":  True,
         "message":  (f"Fired {exec_obj.first_name} {exec_obj.last_name}. "
@@ -1349,6 +1373,11 @@ def send_to_school(db, player_id: int, executive_id: int) -> dict:
     exec_obj.school_cost_remaining   = 0.0
     db.commit()
 
+    _fire_exec_push(
+        player_id,
+        f"{exec_obj.first_name} {exec_obj.last_name} Enrolled",
+        f"Sent to school — graduates in {ticks} ticks, cost ${cost:,.0f}",
+    )
     return {
         "success": True,
         "message": f"Enrolled {exec_obj.first_name} {exec_obj.last_name}. Graduation in {ticks} ticks.",
@@ -1393,6 +1422,11 @@ def apply_school_upgrade(db, player_id: int, executive_id: int, bonus_key: str) 
 
     db.commit()
 
+    _fire_exec_push(
+        player_id,
+        f"{exec_obj.first_name} {exec_obj.last_name} Graduated",
+        f"Now level {exec_obj.level} — {upgrade['name']} unlocked",
+    )
     return {
         "success": True,
         "message": (f"{exec_obj.first_name} {exec_obj.last_name} graduated to level {exec_obj.level}! "
@@ -1478,6 +1512,11 @@ def _retire_executive(db, ex: Executive):
     ex.pending_upgrade           = False
     print(f"[Executive] {ex.first_name} {ex.last_name} retired at age {ex.current_age}. "
           f"Pension: ${monthly_wages:,.2f}")
+    _fire_exec_push(
+        retiring_from,
+        f"{ex.first_name} {ex.last_name} Retired",
+        f"Reached retirement age {ex.current_age} — pension ${monthly_wages:,.0f} owed",
+    )
 
 
 def _quit_for_nonpayment(db, ex: Executive, player):
@@ -1514,6 +1553,11 @@ def _quit_for_nonpayment(db, ex: Executive, player):
 
     print(f"[Executive] {ex.first_name} {ex.last_name} QUIT due to non-payment! "
           f"Severance ${severance:,.2f} deducted, pension ${pension:,.2f} owed.")
+    _fire_exec_push(
+        quitting_from,
+        f"{ex.first_name} {ex.last_name} Quit",
+        f"Resigned due to non-payment — severance ${severance:,.0f} deducted, pension ${pension:,.0f} owed",
+    )
 
 
 def _process_wages(db, current_tick: int):
@@ -1561,6 +1605,11 @@ def _process_wages(db, current_tick: int):
                 ex.missed_payments += 1
                 print(f"[Executive] {ex.first_name} {ex.last_name} (Iron Will) issues formal "
                       f"warning #{ex.missed_payments} — payment missed but will not quit.")
+                _fire_exec_push(
+                    player.id,
+                    f"Salary Warning — {ex.first_name} {ex.last_name}",
+                    f"Missed payment #{ex.missed_payments} (${wage:,.0f} owed) — they won't quit yet, but pay soon",
+                )
             elif ex.player_id in crisis_managed_players and ex.missed_payments == 0:
                 # Crisis Manager grants all co-workers a one-cycle grace on first miss
                 ex.missed_payments += 1
@@ -1620,6 +1669,12 @@ def _process_school(db, current_tick: int):
         if ex.school_ticks_remaining <= 0:
             ex.is_in_school   = False
             ex.pending_upgrade = True
+            if ex.player_id:
+                _fire_exec_push(
+                    ex.player_id,
+                    f"{ex.first_name} {ex.last_name} Graduated",
+                    "School complete — choose an upgrade in the Executives panel",
+                )
 
 
 def _process_marketplace_spawn(db, current_tick: int):
