@@ -1282,6 +1282,28 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
           window.wadsworthRefreshNotifs = _poll;
         }})();
         </script>
+        <script>
+        // Android widget token bridge — fires once per session on Android devices.
+        // Fetches a stable HMAC token from the server and passes it to the native
+        // WadsworthTokenActivity via an intent:// URL so the widget can authenticate
+        // without needing access to Chrome's cookie store.
+        (function(){{
+            if (!/android/i.test(navigator.userAgent)) return;
+            if (sessionStorage.getItem('_wt_sent')) return;
+            sessionStorage.setItem('_wt_sent', '1');
+            fetch('/api/widget/token', {{credentials:'same-origin'}})
+                .then(function(r){{return r.json();}})
+                .then(function(d){{
+                    if (!d.token) return;
+                    var a = document.createElement('a');
+                    a.href = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
+                             '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;end';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }}).catch(function(){{}});
+        }})();
+        </script>
     </body>
     </html>
     """
@@ -9111,8 +9133,41 @@ def production_cost_detail_page(
 # WIDGET / TICKER DATA API
 # ==========================
 
+_WIDGET_SALT = "wadsworth-widget-v1"
+
+def _make_widget_token(player_id: int) -> str:
+    import hmac as _hmac, hashlib as _hl
+    mac = _hmac.new(_WIDGET_SALT.encode(), str(player_id).encode(), _hl.sha256).hexdigest()
+    return f"{player_id}:{mac}"
+
+def _verify_widget_token(token: str):
+    """Return Player for a valid widget token, None otherwise."""
+    try:
+        import hmac as _hmac, hashlib as _hl
+        pid_str, mac = token.split(":", 1)
+        pid = int(pid_str)
+        expected = _hmac.new(_WIDGET_SALT.encode(), str(pid).encode(), _hl.sha256).hexdigest()
+        if not _hmac.compare_digest(mac, expected):
+            return None
+        import auth as _auth
+        from auth import Player as _Player
+        db = _auth.get_db()
+        player = db.query(_Player).filter_by(id=pid).first()
+        db.close()
+        return player
+    except Exception:
+        return None
+
+@router.get("/api/widget/token")
+def api_widget_token(session_token: Optional[str] = Cookie(None)):
+    """Return a stable HMAC widget token for the authenticated player."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    return JSONResponse({"token": _make_widget_token(player.id), "player_id": player.id})
+
 @router.get("/api/widget/data")
-def api_widget_data(session_token: Optional[str] = Cookie(None)):
+def api_widget_data(session_token: Optional[str] = Cookie(None), wt: Optional[str] = None):
     """
     Returns live market data for the PWA widget and the in-page ticker bar.
     Shape:
@@ -9122,9 +9177,15 @@ def api_widget_data(session_token: Optional[str] = Cookie(None)):
     """
     from datetime import datetime as _dt
 
-    player = require_auth(session_token)
-    if isinstance(player, RedirectResponse):
-        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    # Accept either a session cookie (browser/PWA) or a widget token (Android widget)
+    if wt:
+        player = _verify_widget_token(wt)
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
 
     def _ago(dt):
         if not dt:

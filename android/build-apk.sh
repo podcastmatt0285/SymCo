@@ -58,6 +58,12 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthApplication.java" \
     > "${JAVA_DIR}/WadsworthApplication.java"
 echo "  Copied WadsworthApplication.java → ${JAVA_DIR}/"
 
+# Token activity — receives widget auth token from web app via intent:// URL
+# and stores it in SharedPreferences for the widget to read.
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthTokenActivity.java" \
+    > "${JAVA_DIR}/WadsworthTokenActivity.java"
+echo "  Copied WadsworthTokenActivity.java → ${JAVA_DIR}/"
+
 # Resource directories (Bubblewrap doesn't create these)
 mkdir -p app/src/main/res/layout
 mkdir -p app/src/main/res/xml
@@ -119,6 +125,17 @@ else
     echo "  Injected WadsworthWidget receiver into AndroidManifest.xml"
 fi
 
+# 3. Inject token activity — handles wadsworth://widget-auth?token=... intents
+#    fired by the web app JS to pass auth tokens into SharedPreferences.
+TOKEN_ACTIVITY="        <activity android:name=\"${PACKAGE}.WadsworthTokenActivity\" android:exported=\"true\" android:theme=\"@android:style/Theme.NoDisplay\"><intent-filter><action android:name=\"android.intent.action.VIEW\"/><category android:name=\"android.intent.category.DEFAULT\"/><category android:name=\"android.intent.category.BROWSABLE\"/><data android:scheme=\"wadsworth\" android:host=\"widget-auth\"/></intent-filter></activity>"
+
+if grep -q "WadsworthTokenActivity" "$MANIFEST"; then
+    echo "  WadsworthTokenActivity already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${TOKEN_ACTIVITY}\n    </application>|" "$MANIFEST"
+    echo "  Injected WadsworthTokenActivity into AndroidManifest.xml"
+fi
+
 # ProGuard/R8 keep rules — prevent shrinking of our injected classes
 PROGUARD_RULES="app/proguard-rules.pro"
 if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
@@ -126,9 +143,10 @@ if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
 else
     cat >> "$PROGUARD_RULES" << 'EOF'
 
-# Keep widget + application classes (referenced by manifest, not by Java)
+# Keep widget + token classes (referenced by manifest, not by Java)
 -keep class PACKAGE_PLACEHOLDER.WadsworthWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.WadsworthApplication { *; }
+-keep class PACKAGE_PLACEHOLDER.WadsworthTokenActivity { *; }
 EOF
     sed -i "s/PACKAGE_PLACEHOLDER/${PACKAGE}/g" "$PROGUARD_RULES"
     echo "  Added ProGuard keep rules"

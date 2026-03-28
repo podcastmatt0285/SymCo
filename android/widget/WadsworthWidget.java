@@ -5,10 +5,9 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
-import android.webkit.CookieManager;
 import android.widget.RemoteViews;
 
 import org.json.JSONArray;
@@ -36,6 +35,13 @@ public class WadsworthWidget extends AppWidgetProvider {
 
     static final String BASE_URL    = "https://wadsworth.notifly.cc";
     static final String WIDGET_DATA = BASE_URL + "/api/widget/data";
+
+    /** Read the widget auth token stored by WadsworthTokenActivity. */
+    private static String getWidgetToken(Context ctx) {
+        SharedPreferences prefs = ctx.getSharedPreferences(
+                WadsworthTokenActivity.PREFS, Context.MODE_PRIVATE);
+        return prefs.getString(WadsworthTokenActivity.KEY_TOKEN, null);
+    }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -75,30 +81,25 @@ public class WadsworthWidget extends AppWidgetProvider {
         views.setTextViewText(id(ctx, "widget_tickers"),  "");
         mgr.updateAppWidget(widgetId, views);
 
-        // Read cookie on the MAIN THREAD before spawning the background thread.
-        // CookieManager.getInstance() must be called from the main thread on
-        // Android 9+; calling it from a background thread returns null silently.
-        String cookieHeader = null;
-        try {
-            String raw = CookieManager.getInstance().getCookie(BASE_URL);
-            if (raw != null && !raw.isEmpty()) cookieHeader = raw;
-        } catch (Exception ignored) {}
-        final String finalCookie = cookieHeader;
+        // Read widget token from SharedPreferences (set by WadsworthTokenActivity
+        // when the web app fires an intent:// URL on first Android app launch).
+        final String widgetToken = getWidgetToken(ctx);
 
         // Fetch data on a background thread
         new Thread(() -> {
             try {
-                String cookie = finalCookie;
+                // Build URL — append widget token as query param if available
+                String dataUrl = WIDGET_DATA;
+                if (widgetToken != null) {
+                    dataUrl = WIDGET_DATA + "?wt=" + Uri.encode(widgetToken);
+                }
 
-                URL url = new URL(WIDGET_DATA);
+                URL url = new URL(dataUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(8000);
                 conn.setRequestProperty("Accept", "application/json");
-                if (cookie != null) {
-                    conn.setRequestProperty("Cookie", cookie);
-                }
                 conn.connect();
 
                 if (conn.getResponseCode() != 200) {
