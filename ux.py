@@ -1056,6 +1056,10 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             // Play in-app notification sound when a push arrives while the page is open
             navigator.serviceWorker.addEventListener('message', (event) => {{
                 if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {{
+                    // On Android in standalone/TWA the native notification channel
+                    // already plays the sound — skip web audio to avoid double-play.
+                    if (/android/i.test(navigator.userAgent) &&
+                        window.matchMedia('(display-mode: standalone)').matches) return;
                     try {{
                         const snd = new Audio('/static/sounds/notification.mp3');
                         snd.volume = 0.6;
@@ -1295,12 +1299,8 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 .then(function(r){{return r.json();}})
                 .then(function(d){{
                     if (!d.token) return;
-                    var a = document.createElement('a');
-                    a.href = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
+                    window.location.href = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
                              '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;end';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
                 }}).catch(function(){{}});
         }})();
         </script>
