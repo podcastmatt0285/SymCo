@@ -1292,7 +1292,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         // show a banner the user taps once; that click provides the gesture Chrome needs.
         (function(){{
             if (!/android/i.test(navigator.userAgent)) return;
-            if (sessionStorage.getItem('_wt_sent')) return;
+            if (sessionStorage.getItem('_wt_sent3')) return;
             fetch('/api/widget/token', {{credentials:'same-origin'}})
                 .then(function(r){{return r.json();}})
                 .then(function(d){{
@@ -1309,7 +1309,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                         'box-shadow:0 3px 12px rgba(0,0,0,0.5);white-space:nowrap;';
                     banner.textContent = '\U0001F4F2 Tap to link your home-screen widget';
                     banner.onclick = function(){{
-                        sessionStorage.setItem('_wt_sent', '1');
+                        sessionStorage.setItem('_wt_sent3', '1');
                         banner.remove();
                         window.location.href = intentUrl;
                     }};
