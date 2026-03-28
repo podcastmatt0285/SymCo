@@ -321,7 +321,10 @@ async def api_push_unsubscribe(
         db.close()
         return JSONResponse({"error": "not authenticated"}, status_code=401)
     try:
-        data     = await request.json()
+        try:
+            data = await request.json()
+        except Exception:
+            data = {}
         endpoint = data.get("endpoint")
         q = db.query(PushSubscription).filter_by(player_id=player.id)
         if endpoint:

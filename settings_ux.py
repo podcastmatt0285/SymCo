@@ -1281,11 +1281,11 @@ def _notifications_tab(player) -> str:
                  border:none;border-radius:5px;color:white;font-size:0.78rem;cursor:pointer;">
     Enable Push
   </button>
-  <button id="push-revoke-hint" onclick="alert('To disable push, revoke permission in your browser\\'s site settings.')"
+  <button id="push-disable-btn" onclick="disablePush()"
           style="display:none;margin-left:auto;padding:6px 16px;background:transparent;
                  border:1px solid #334155;border-radius:5px;color:#64748b;
                  font-size:0.78rem;cursor:pointer;">
-    Manage in Browser
+    Disable Push
   </button>
 </div>
 <div id="push-toggles">
@@ -1331,27 +1331,27 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
   var dot   = document.getElementById('push-status-dot');
   var lbl   = document.getElementById('push-status-label');
   var enBtn = document.getElementById('push-enable-btn');
-  var mgBtn = document.getElementById('push-revoke-hint');
+  var disBtn = document.getElementById('push-disable-btn');
   var togs  = document.getElementById('push-toggles');
 
   function setStatus(perm) {
     if (perm === 'granted') {
       dot.style.background = '#4ade80';
       lbl.textContent = 'Push enabled';
-      mgBtn.style.display = 'inline-block';
+      if (disBtn) disBtn.style.display = 'inline-block';
       enBtn.style.display = 'none';
       if (togs) togs.style.opacity = '1';
     } else if (perm === 'denied') {
       dot.style.background = '#ef4444';
       lbl.textContent = 'Push blocked — allow it in browser site settings';
       enBtn.style.display = 'none';
-      mgBtn.style.display = 'none';
+      if (disBtn) disBtn.style.display = 'none';
       if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
     } else {
       dot.style.background = '#f59e0b';
       lbl.textContent = 'Push not enabled';
       enBtn.style.display = 'none';
-      mgBtn.style.display = 'none';
+      if (disBtn) disBtn.style.display = 'none';
       if (togs) { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
     }
   }
@@ -1408,8 +1408,8 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
           lbl.textContent = 'Push enabled';
           var dot = document.getElementById('push-status-dot');
           if (dot) dot.style.background = '#4ade80';
-          var mgBtn = document.getElementById('push-revoke-hint');
-          if (mgBtn) mgBtn.style.display = 'inline-block';
+          var disBtn = document.getElementById('push-disable-btn');
+          if (disBtn) disBtn.style.display = 'inline-block';
           if (enBtn) enBtn.style.display = 'none';
           var togs = document.getElementById('push-toggles');
           if (togs) togs.style.opacity = '1';
@@ -1436,6 +1436,32 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
       });
     });
   }
+
+  window.disablePush = function() {
+    navigator.serviceWorker && navigator.serviceWorker.ready.then(function(reg) {
+      reg.pushManager.getSubscription().then(function(sub) {
+        var unsub = sub ? sub.unsubscribe() : Promise.resolve();
+        return unsub.then(function() {
+          return fetch('/api/push/unsubscribe', {
+            method: 'POST', credentials: 'same-origin',
+          });
+        });
+      }).then(function() {
+        var lbl   = document.getElementById('push-status-label');
+        var dot   = document.getElementById('push-status-dot');
+        var enBtn = document.getElementById('push-enable-btn');
+        var disBtn = document.getElementById('push-disable-btn');
+        var togs  = document.getElementById('push-toggles');
+        if (lbl)   lbl.textContent = 'Push not enabled';
+        if (dot)   dot.style.background = '#f59e0b';
+        if (enBtn) enBtn.style.display = 'inline-block';
+        if (disBtn) disBtn.style.display = 'none';
+        if (togs)  { togs.style.opacity = '0.4'; togs.style.pointerEvents = 'none'; }
+      }).catch(function(err) {
+        console.error('[Push disable]', err);
+      });
+    });
+  };
 
   window.requestPushPermission = function() {
     lbl.textContent = 'Check your browser \u2014 a permission prompt may have appeared\u2026';
