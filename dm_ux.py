@@ -1286,7 +1286,11 @@ async def api_dm_reply(
         try:
             import asyncio as _aio
             from push_ux import send_push_notification
-            _aio.create_task(_aio.to_thread(
+            def _log_push_exc(t):
+                exc = t.exception()
+                if exc:
+                    print(f"[Push] task error (api_dm_reply → player {other_id}): {exc}")
+            _t = _aio.create_task(_aio.to_thread(
                 send_push_notification,
                 other_id,
                 f"New DM from {player_name}",
@@ -1296,8 +1300,9 @@ async def api_dm_reply(
                 tag=f"dm-{conv_id}",
                 icon=f"/api/avatar/{player.id}",
             ))
-        except Exception:
-            pass
+            _t.add_done_callback(_log_push_exc)
+        except Exception as _e:
+            print(f"[Push] create_task failed (api_dm_reply → player {other_id}): {_e}")
 
         return JSONResponse({"ok": True})
     except Exception as e:
@@ -1457,7 +1462,11 @@ async def dm_websocket(websocket: WebSocket):
                         import asyncio as _aio
                         from push_ux import send_push_notification
                         _preview = str(saved.get("content", ""))[:80]
-                        _aio.create_task(_aio.to_thread(
+                        def _log_push_exc_ws(t):
+                            exc = t.exception()
+                            if exc:
+                                print(f"[Push] task error (dm_websocket → player {other_id}): {exc}")
+                        _t = _aio.create_task(_aio.to_thread(
                             send_push_notification,
                             other_id,
                             f"New DM from {player_name}",
@@ -1467,8 +1476,9 @@ async def dm_websocket(websocket: WebSocket):
                             tag=f"dm-{conv_id}",
                             icon=f"/api/avatar/{player_id}",
                         ))
-                    except Exception:
-                        pass
+                        _t.add_done_callback(_log_push_exc_ws)
+                    except Exception as _e:
+                        print(f"[Push] create_task failed (dm_websocket → player {other_id}): {_e}")
 
                 dm_manager.clear_typing(conv_id, player_id)
                 typing_names = dm_manager.get_typing_names(conv_id)
