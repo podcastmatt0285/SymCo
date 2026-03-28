@@ -311,6 +311,8 @@ def send_push_notification(
           to /static/icons/icon-192.png in the service worker if omitted.
     """
     try:
+        if player_id <= 0:
+            return  # NPCs and government player have no push subscriptions
         from auth import get_db, PushSubscription, Player
         db = get_db()
         player = db.query(Player).filter_by(id=player_id).first()
