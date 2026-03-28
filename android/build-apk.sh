@@ -81,6 +81,17 @@ else
     echo "  Injected WadsworthWidget receiver into AndroidManifest.xml"
 fi
 
+# Add ProGuard/R8 keep rule so the widget class isn't stripped at release
+PROGUARD_RULES="app/proguard-rules.pro"
+if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
+    echo "  ProGuard rule already present — skipping"
+else
+    echo "" >> "$PROGUARD_RULES"
+    echo "# Keep widget class — referenced by manifest, must survive R8 shrinking" >> "$PROGUARD_RULES"
+    echo "-keep class ${PACKAGE}.WadsworthWidget { *; }" >> "$PROGUARD_RULES"
+    echo "  Added ProGuard keep rule for WadsworthWidget"
+fi
+
 echo "=== Step 4: Generate signing key (skip if reusing) ==="
 cd ..
 if [ ! -f "${SIGNING_KEY}" ]; then
