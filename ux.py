@@ -1308,7 +1308,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                         'background:#1e3a5f;color:#e2e8f0;padding:13px 22px;border-radius:10px;' +
                         'font-size:14px;font-family:sans-serif;z-index:99999;cursor:pointer;' +
                         'box-shadow:0 3px 12px rgba(0,0,0,0.5);white-space:nowrap;';
-                    banner.textContent = '\u{1F4F2} Tap to link your home-screen widget';
+                    banner.textContent = '\U0001F4F2 Tap to link your home-screen widget';
                     banner.onclick = function(){{
                         sessionStorage.setItem('_wt_sent', '1');
                         banner.remove();
