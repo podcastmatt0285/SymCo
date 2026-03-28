@@ -1282,58 +1282,6 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
           window.wadsworthRefreshNotifs = _poll;
         }})();
         </script>
-        <!-- ── Live Market Ticker Bar ──────────────────────────────────────── -->
-        <style>
-          #ticker-bar{{position:fixed;bottom:0;left:0;right:0;height:26px;background:#080f1e;border-top:1px solid #1e293b;z-index:9998;display:flex;align-items:center;overflow:hidden;}}
-          #ticker-label{{flex-shrink:0;font-size:8px;letter-spacing:.18em;color:#475569;padding:0 8px;font-family:monospace;text-transform:uppercase;border-right:1px solid #1e293b;white-space:nowrap;}}
-          #ticker-viewport{{flex:1;overflow:hidden;position:relative;}}
-          #ticker-track{{display:inline-flex;white-space:nowrap;animation:ticker-scroll 90s linear infinite;will-change:transform;}}
-          #ticker-track:hover{{animation-play-state:paused;}}
-          @keyframes ticker-scroll{{from{{transform:translateX(0)}}to{{transform:translateX(-50%)}}}}
-          .tk-item{{display:inline-flex;align-items:center;gap:4px;padding:0 14px;border-right:1px solid #1e293b;font-family:monospace;font-size:10px;cursor:default;}}
-          .tk-label{{font-weight:700;font-size:9px;}}
-          .tk-val{{color:#e2e8f0;}}
-          .tk-chg{{font-size:9px;}}
-          .tk-up{{color:#22c55e;}}.tk-down{{color:#ef4444;}}.tk-flat{{color:#64748b;}}
-          .tk-index{{color:#38bdf8;}}.tk-stock{{color:#a78bfa;}}.tk-bond{{color:#fbbf24;}}.tk-meme{{color:#f472b6;}}
-          body{{padding-bottom:26px;}}
-        </style>
-        <div id="ticker-bar">
-          <div id="ticker-label">&#9679; LIVE</div>
-          <div id="ticker-viewport">
-            <div id="ticker-track"><span id="ticker-a"></span><span id="ticker-b" aria-hidden="true"></span></div>
-          </div>
-        </div>
-        <script>
-        (function(){{
-          var a=document.getElementById('ticker-a'), b=document.getElementById('ticker-b'), track=document.getElementById('ticker-track');
-          var TYPE_CLS={{index:'tk-index',stock:'tk-stock',bond:'tk-bond',meme:'tk-meme'}};
-
-          function buildItem(t){{
-            var lc = TYPE_CLS[t.type]||'tk-flat';
-            var chgCls = t.up===true?'tk-up':t.up===false?'tk-down':'tk-flat';
-            var chg = t.change ? '<span class="tk-chg '+chgCls+'">'+t.change+'</span>' : '';
-            return '<span class="tk-item"><span class="tk-label '+lc+'">'+t.label+'</span><span class="tk-val">'+t.value+'</span>'+chg+'</span>';
-          }}
-
-          function render(data){{
-            var html=(data.tickers||[]).map(buildItem).join('');
-            if(!html)return;
-            a.innerHTML=html; b.innerHTML=html;
-            var w=a.scrollWidth;
-            if(w>0)track.style.animationDuration=Math.max(30,Math.round(w/80))+'s';
-          }}
-
-          function load(){{
-            fetch('/api/widget/data',{{credentials:'same-origin'}})
-              .then(function(r){{return r.json();}})
-              .then(render).catch(function(){{}});
-          }}
-
-          load();
-          setInterval(load,60000);
-        }})();
-        </script>
     </body>
     </html>
     """
