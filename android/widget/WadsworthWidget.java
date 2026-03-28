@@ -75,10 +75,20 @@ public class WadsworthWidget extends AppWidgetProvider {
         views.setTextViewText(id(ctx, "widget_tickers"),  "");
         mgr.updateAppWidget(widgetId, views);
 
+        // Read cookie on the MAIN THREAD before spawning the background thread.
+        // CookieManager.getInstance() must be called from the main thread on
+        // Android 9+; calling it from a background thread returns null silently.
+        String cookieHeader = null;
+        try {
+            String raw = CookieManager.getInstance().getCookie(BASE_URL);
+            if (raw != null && !raw.isEmpty()) cookieHeader = raw;
+        } catch (Exception ignored) {}
+        final String finalCookie = cookieHeader;
+
         // Fetch data on a background thread
         new Thread(() -> {
             try {
-                String cookie = CookieManager.getInstance().getCookie(BASE_URL);
+                String cookie = finalCookie;
 
                 URL url = new URL(WIDGET_DATA);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -86,7 +96,7 @@ public class WadsworthWidget extends AppWidgetProvider {
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(8000);
                 conn.setRequestProperty("Accept", "application/json");
-                if (cookie != null && !cookie.isEmpty()) {
+                if (cookie != null) {
                     conn.setRequestProperty("Cookie", cookie);
                 }
                 conn.connect();

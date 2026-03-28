@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
+import android.webkit.CookieManager;
 
 /**
  * Custom Application class that pre-seeds notification channels with the
@@ -20,6 +21,14 @@ public class WadsworthApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        // Pre-initialize CookieManager on the main thread.
+        // On Android 9+, CookieManager.getInstance() must be called from the
+        // main thread at least once before background threads can use it.
+        // Without this the widget's background thread gets null cookies.
+        try {
+            CookieManager.getInstance().setAcceptCookie(true);
+        } catch (Exception ignored) {}
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             seedNotificationChannels();
         }
