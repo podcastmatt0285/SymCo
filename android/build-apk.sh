@@ -64,6 +64,14 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthTokenActivity.java" \
     > "${JAVA_DIR}/WadsworthTokenActivity.java"
 echo "  Copied WadsworthTokenActivity.java → ${JAVA_DIR}/"
 
+# LauncherActivity — overrides getLaunchingUrl() to append ?_wdid=sha256(ANDROID_ID)
+# so the web app can silently link this device to the player session for widget auth.
+# Must be copied AFTER bubblewrap init since init regenerates twa-project from scratch.
+mkdir -p "${JAVA_DIR}/twa"
+sed "s/PACKAGE_NAME/${PACKAGE}.twa/g" "${WIDGET_DIR}/LauncherActivity.java" \
+    > "${JAVA_DIR}/twa/LauncherActivity.java"
+echo "  Patched LauncherActivity.java → ${JAVA_DIR}/twa/"
+
 # Resource directories (Bubblewrap doesn't create these)
 mkdir -p app/src/main/res/layout
 mkdir -p app/src/main/res/xml
