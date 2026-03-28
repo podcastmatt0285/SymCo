@@ -1,11 +1,11 @@
 package PACKAGE_NAME;
 
-import PACKAGE_NAME.R;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Build;
 import android.webkit.CookieManager;
@@ -28,6 +28,9 @@ import java.net.URL;
  * Authentication piggy-backs on the TWA WebView cookie store: Chrome
  * shares cookies with the host app via CookieManager, so the session_token
  * cookie is available as long as the user is logged in inside the app.
+ *
+ * All resource IDs are resolved at runtime via getIdentifier() so this
+ * file compiles regardless of the AGP namespace configuration.
  */
 public class WadsworthWidget extends AppWidgetProvider {
 
@@ -43,23 +46,33 @@ public class WadsworthWidget extends AppWidgetProvider {
         }
     }
 
+    // ── Resource ID helpers ───────────────────────────────────────────────────
+
+    private static int layoutId(Context ctx) {
+        return ctx.getResources().getIdentifier("widget_layout", "layout", ctx.getPackageName());
+    }
+
+    private static int id(Context ctx, String name) {
+        return ctx.getResources().getIdentifier(name, "id", ctx.getPackageName());
+    }
+
     // ── Core update logic ─────────────────────────────────────────────────────
 
     static void updateWidget(Context ctx, AppWidgetManager mgr, int widgetId) {
-        RemoteViews views = new RemoteViews(ctx.getPackageName(), R.layout.widget_layout);
+        RemoteViews views = new RemoteViews(ctx.getPackageName(), layoutId(ctx));
 
         // Tap anywhere → open the app
         Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL));
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         int flags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
         PendingIntent pi = PendingIntent.getActivity(ctx, 0, launch, flags);
-        views.setOnClickPendingIntent(R.id.widget_root, pi);
+        views.setOnClickPendingIntent(id(ctx, "widget_root"), pi);
 
         // Show loading state immediately, then update with real data
-        views.setTextViewText(R.id.widget_balance,  "Loading…");
-        views.setTextViewText(R.id.widget_alert,    "");
-        views.setTextViewText(R.id.widget_time,     "");
-        views.setTextViewText(R.id.widget_tickers,  "");
+        views.setTextViewText(id(ctx, "widget_balance"),  "Loading…");
+        views.setTextViewText(id(ctx, "widget_alert"),    "");
+        views.setTextViewText(id(ctx, "widget_time"),     "");
+        views.setTextViewText(id(ctx, "widget_tickers"),  "");
         mgr.updateAppWidget(widgetId, views);
 
         // Fetch data on a background thread
@@ -79,7 +92,7 @@ public class WadsworthWidget extends AppWidgetProvider {
                 conn.connect();
 
                 if (conn.getResponseCode() != 200) {
-                    setError(views, "Open app to log in");
+                    setError(ctx, views, "Open app to log in");
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
@@ -94,14 +107,14 @@ public class WadsworthWidget extends AppWidgetProvider {
                 JSONObject data = new JSONObject(sb.toString());
 
                 // Balance
-                views.setTextViewText(R.id.widget_balance,
+                views.setTextViewText(id(ctx, "widget_balance"),
                     data.optString("balance", "—"));
 
                 // Last alert
                 String alert = data.optString("last_alert", "");
                 String time  = data.optString("last_alert_time", "");
-                views.setTextViewText(R.id.widget_alert, alert);
-                views.setTextViewText(R.id.widget_time,  time);
+                views.setTextViewText(id(ctx, "widget_alert"), alert);
+                views.setTextViewText(id(ctx, "widget_time"),  time);
 
                 // Tickers — build a compact single-line string
                 JSONArray tickers = data.optJSONArray("tickers");
@@ -117,22 +130,22 @@ public class WadsworthWidget extends AppWidgetProvider {
                         if (!change.isEmpty()) ticker.append(" ").append(change);
                         if (i < max - 1) ticker.append("  ·  ");
                     }
-                    views.setTextViewText(R.id.widget_tickers, ticker.toString());
+                    views.setTextViewText(id(ctx, "widget_tickers"), ticker.toString());
                 }
 
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
-                setError(views, "Tap to refresh");
+                setError(ctx, views, "Tap to refresh");
                 mgr.updateAppWidget(widgetId, views);
             }
         }).start();
     }
 
-    private static void setError(RemoteViews views, String msg) {
-        views.setTextViewText(R.id.widget_balance, msg);
-        views.setTextViewText(R.id.widget_alert,   "");
-        views.setTextViewText(R.id.widget_time,    "");
-        views.setTextViewText(R.id.widget_tickers, "");
+    private static void setError(Context ctx, RemoteViews views, String msg) {
+        views.setTextViewText(id(ctx, "widget_balance"), msg);
+        views.setTextViewText(id(ctx, "widget_alert"),   "");
+        views.setTextViewText(id(ctx, "widget_time"),    "");
+        views.setTextViewText(id(ctx, "widget_tickers"), "");
     }
 }
