@@ -65,18 +65,18 @@
     }
   ],
   "shortcuts": [
-    { "name": "Businesses",   "url": "/businesses",     "description": "Businesses Terminal" },
-    { "name": "Inventory",    "url": "/inventory",      "description": "Inventory Management" },
-    { "name": "Land",         "url": "/land",           "description": "Land Holdings" },
-    { "name": "Market",       "url": "/market",         "description": "Commodities Market" },
-    { "name": "Real Estate",  "url": "/land-market",    "description": "Real Estate Marketplace" },
-    { "name": "Banks",        "url": "/banks",          "description": "Banking Dashboard" },
-    { "name": "Executives",   "url": "/executives",     "description": "Executive Boardroom" },
-    { "name": "Peer to Peer", "url": "/p2p",            "description": "Contracts and Social Network" },
-    { "name": "Wiki",         "url": "/stats/wiki",     "description": "Wadsworth Wiki" },
-    { "name": "Settings",     "url": "/settings",       "description": "Settings" },
-    { "name": "Districts",    "url": "/stats/districts","description": "District Mergers" },
-    { "name": "Cities",       "url": "/cities",         "description": "City Management Dashboard" },
-    { "name": "Counties",     "url": "/counties",       "description": "County Management Dashboard" }
+    { "name": "Businesses",   "url": "/businesses",     "description": "Businesses Terminal",            "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Inventory",    "url": "/inventory",      "description": "Inventory Management",           "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Land",         "url": "/land",           "description": "Land Holdings",                  "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Market",       "url": "/market",         "description": "Commodities Market",             "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Real Estate",  "url": "/land-market",    "description": "Real Estate Marketplace",        "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Banks",        "url": "/banks",          "description": "Banking Dashboard",              "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Executives",   "url": "/executives",     "description": "Executive Boardroom",            "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Peer to Peer", "url": "/p2p",            "description": "Contracts and Social Network",   "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Wiki",         "url": "/stats/wiki",     "description": "Wadsworth Wiki",                 "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Settings",     "url": "/settings",       "description": "Settings",                       "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Districts",    "url": "/stats/districts","description": "District Mergers",               "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Cities",       "url": "/cities",         "description": "City Management Dashboard",      "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Counties",     "url": "/counties",       "description": "County Management Dashboard",    "icons": [{ "src": "/static/icons/icon-96.png", "sizes": "96x96", "type": "image/png" }] }
   ]
 }
