@@ -27,6 +27,22 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
 from database import engine, SessionLocal
+import threading
+
+
+def _push_trade(player_id: int, title: str, body: str, swap_id: int):
+    """Fire a trusted-trade push notification (non-blocking)."""
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url="/p2p/trusted-trades",
+                                   notif_type="trades",
+                                   tag=f"trade-{swap_id}")
+        except Exception as e:
+            print(f"[TrustedTrade] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
 
 Base = declarative_base()
 
@@ -376,6 +392,13 @@ def create_swap(
     finally:
         db.close()
 
+    # Notify non-initiator participants that a swap was proposed
+    for pid in participants:
+        if pid != initiator_id:
+            _push_trade(pid, "Swap Proposed",
+                        f"A trusted trade swap #{swap_id} requires your acceptance.",
+                        swap_id)
+
     _try_execute_swap(swap_id)
     return swap_id, ""
 
@@ -422,7 +445,19 @@ def _try_execute_swap(swap_id: int) -> bool:
         swap.status = "executed"
         db.commit()
         print(f"[TrustedTrade] Swap {swap_id} executed successfully.")
-        return True
+        _participant_ids = [a.player_id for a in acceptances]
+    except Exception as e:
+        db.rollback()
+        print(f"[TrustedTrade] Execute swap {swap_id} error: {e}")
+        return False
+    finally:
+        db.close()
+
+    for pid in _participant_ids:
+        _push_trade(pid, f"Swap #{swap_id} Executed",
+                    "All parties accepted — the trade has been completed.",
+                    swap_id)
+    return True
 
     except Exception as e:
         db.rollback()
@@ -460,6 +495,11 @@ def respond_to_swap(swap_id: int, player_id: int, accept: bool) -> Tuple[bool, s
         acceptance.accepted     = accept
         acceptance.responded_at = datetime.utcnow()
 
+        _swap_id = swap.id
+        _all_participant_ids = [
+            a.player_id for a in
+            db.query(SwapOfferAcceptance).filter(SwapOfferAcceptance.swap_id == swap_id).all()
+        ]
         if not accept:
             swap.status = "rejected"
 
@@ -473,6 +513,12 @@ def respond_to_swap(swap_id: int, player_id: int, accept: bool) -> Tuple[bool, s
     if accept:
         _try_execute_swap(swap_id)
         return True, "Accepted. The swap will execute once all parties agree."
+
+    # Notify all participants the swap was rejected
+    for pid in _all_participant_ids:
+        _push_trade(pid, f"Swap #{_swap_id} Rejected",
+                    "A participant rejected this trusted trade swap.",
+                    _swap_id)
     return True, "Swap rejected."
 
 
@@ -565,13 +611,24 @@ def tick(current_tick: int, now):
             )
             .all()
         )
+        expired_info = []  # [(swap_id, [participant_ids])]
         for s in expired:
             s.status = "cancelled"
             print(f"[TrustedTrade] Swap {s.id} expired.")
+            pids = [a.player_id for a in
+                    db.query(SwapOfferAcceptance).filter(SwapOfferAcceptance.swap_id == s.id).all()]
+            expired_info.append((s.id, pids))
         if expired:
             db.commit()
     except Exception as e:
         db.rollback()
         print(f"[TrustedTrade] Tick error: {e}")
+        return
     finally:
         db.close()
+
+    for sid, pids in expired_info:
+        for pid in pids:
+            _push_trade(pid, f"Swap #{sid} Expired",
+                        "This trusted trade offer expired without all parties accepting.",
+                        sid)

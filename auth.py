@@ -50,6 +50,9 @@ class Player(Base):
     notif_push_contracts = Column(Boolean, default=True)  # Push: contract updates
     notif_push_business  = Column(Boolean, default=True)  # Push: business alerts (wages, stock, inputs)
     notif_push_land      = Column(Boolean, default=True)  # Push: land sales and efficiency floor
+    notif_push_execs     = Column(Boolean, default=True)  # Push: executive hired/fired/quit/retired/school
+    notif_push_trades    = Column(Boolean, default=True)  # Push: trusted trade swap events
+    notif_push_corporate = Column(Boolean, default=True)  # Push: acquisition offers and income sweeps
     # Federal Communications Commission (FCC) licence — NULL = none active; datetime = expiry (UTC)
     cco_rental_expires = Column(DateTime, nullable=True, default=None)
 
@@ -166,6 +169,9 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_contracts BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_business  BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_land      BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_execs     BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_trades    BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_corporate BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS cco_rental_expires TIMESTAMP",
     ])
 

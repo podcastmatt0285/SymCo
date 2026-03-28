@@ -11,6 +11,7 @@ Each action is configured with triggers and limits during IPO creation,
 then executed automatically by the Firm's tick handler.
 """
 
+import threading
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from enum import Enum
@@ -1219,6 +1220,20 @@ def redeem_tax_vouchers(player_id: int, amount: float) -> dict:
         db.close()
 
 
+def _push_corp(player_id: int, title: str, body: str):
+    """Fire a corporate push notification (non-blocking)."""
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url="/corporate",
+                                   notif_type="corporate",
+                                   tag=f"corp-{player_id}-{title[:20]}")
+        except Exception as e:
+            print(f"[Corporate] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+
 # ==========================
 # ACQUISITION
 # ==========================
@@ -1263,14 +1278,19 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
         db.add(offer)
         db.commit()
         db.refresh(offer)
-        return {"ok": True, "offer_id": offer.id,
-                "share_value": company.current_price * shares_offered,
-                "expires_at": expires_at.isoformat()}
+        _share_value = company.current_price * shares_offered
+        _offer_id = offer.id
     except Exception as e:
         db.rollback()
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
+
+    _push_corp(target_player_id, "Acquisition Offer Received",
+               f"You received an offer: {shares_offered} shares for {stake_pct*100:.1f}% of your income (offer #{_offer_id})")
+    return {"ok": True, "offer_id": _offer_id,
+            "share_value": _share_value,
+            "expires_at": expires_at.isoformat()}
 
 
 def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
@@ -1286,7 +1306,11 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
             return {"ok": False, "error": "Offer not found or already responded to"}
         if datetime.utcnow() > offer.expires_at:
             offer.status = "expired"
+            _exp_offeror_id = offer.offeror_id
+            _exp_stake_pct = offer.stake_pct
             db.commit()
+            _push_corp(_exp_offeror_id, "Acquisition Offer Expired",
+                       f"Your offer for a {_exp_stake_pct*100:.1f}% income stake expired without a response.")
             return {"ok": False, "error": "Offer expired"}
 
         offeror_pos = db.query(ShareholderPosition).filter(
@@ -1328,12 +1352,20 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
                         f"Acquisition accepted: sold {offer.stake_pct*100:.1f}% income stake for {offer.shares_offered} shares")
         log_transaction(offer.offeror_id, "corporate", "money", 0,
                         f"Acquisition accepted: acquired {offer.stake_pct*100:.1f}% of player {target_player_id} income")
-        return {"ok": True, "stake_id": stake.id}
+        _offeror_id = offer.offeror_id
+        _stake_pct = offer.stake_pct
+        _shares = offer.shares_offered
+        _stake_id = stake.id
+        _result = {"ok": True, "stake_id": _stake_id}
     except Exception as e:
         db.rollback()
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
+
+    _push_corp(_offeror_id, "Acquisition Offer Accepted",
+               f"Your offer was accepted — you now hold {_stake_pct*100:.1f}% income stake for {_shares} shares")
+    return _result
 
 
 def reject_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
@@ -1349,13 +1381,18 @@ def reject_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
         offer.status = "rejected"
         offer.responded_at = datetime.utcnow()
         offer.notification_seen_offeror = False
+        _offeror_id = offer.offeror_id
+        _stake_pct = offer.stake_pct
         db.commit()
-        return {"ok": True}
     except Exception as e:
         db.rollback()
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
+
+    _push_corp(_offeror_id, "Acquisition Offer Rejected",
+               f"Your offer for a {_stake_pct*100:.1f}% income stake was rejected.")
+    return {"ok": True}
 
 
 def get_acquisition_notifications(player_id: int) -> dict:
@@ -1475,6 +1512,11 @@ def process_acquisition_income(current_tick: int):
                                             f"Acquisition income ({stake.stake_pct*100:.1f}% of player {stake.target_player_id})")
                             log_transaction(stake.target_player_id, "corporate", "money", -net,
                                             f"Acquisition deduction ({stake.stake_pct*100:.1f}% to player {stake.acquirer_id})")
+                            _acq_id = stake.acquirer_id
+                            _net = net
+                            _pct = stake.stake_pct
+                            _push_corp(_acq_id, "Income Sweep Received",
+                                       f"${_net:,.0f} income sweep ({_pct*100:.1f}% stake) deposited")
                     finally:
                         auth_db.close()
                 stake.last_income_sweep = datetime.utcnow()

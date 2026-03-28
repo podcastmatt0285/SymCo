@@ -551,8 +551,11 @@ def resolve_listing(contract_id: int) -> bool:
         return False
 
     # Mark all bids
+    _losing_bidder_ids = []
     for bid in bids:
         bid.status = BidStatus.WON if bid.id == winner_bid.id else BidStatus.LOST
+        if bid.id != winner_bid.id:
+            _losing_bidder_ids.append(bid.bidder_id)
 
     # Apply the winning bid
     if is_relist:
@@ -624,6 +627,15 @@ def resolve_listing(contract_id: int) -> bool:
             _winner_id,
             f"📄 Contract #{_cid} — Acquired",
             "You are now the supplier on this contract.",
+            _cid,
+        )
+
+    # Notify all losing bidders they were outbid
+    for _loser_id in _losing_bidder_ids:
+        _push_contract(
+            _loser_id,
+            f"📄 Contract #{_cid} — Outbid",
+            "Another bidder won this contract.",
             _cid,
         )
 
@@ -742,6 +754,12 @@ def process_delivery(contract_id: int, current_tick: int) -> Optional[str]:
             _handle_breach(db, contract, holder_id, "Holder failed to deliver items within grace period")
             db.close()
             return "breach_holder"
+        _push_contract(
+            holder_id,
+            f"⚠️ Contract #{contract_id} — Delivery overdue",
+            "You're missing items for delivery — breach will occur if not resolved.",
+            contract_id,
+        )
         db.close()
         return "holder_missing_items"
 
@@ -756,6 +774,12 @@ def process_delivery(contract_id: int, current_tick: int) -> Optional[str]:
             _handle_breach(db, contract, buyer_id, "Buyer failed to pay within grace period")
             db.close()
             return "breach_buyer"
+        _push_contract(
+            buyer_id,
+            f"⚠️ Contract #{contract_id} — Payment overdue",
+            f"Insufficient funds for delivery payment — breach will occur if not resolved.",
+            contract_id,
+        )
         db.close()
         return "buyer_insufficient_funds"
     auth_db.close()

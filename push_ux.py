@@ -332,6 +332,18 @@ def send_push_notification(
             print(f"[Push] land notifications disabled for player {player_id} — skipping")
             db.close()
             return
+        if notif_type == "execs" and not getattr(player, "notif_push_execs", True):
+            print(f"[Push] exec notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
+        if notif_type == "trades" and not getattr(player, "notif_push_trades", True):
+            print(f"[Push] trade notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
+        if notif_type == "corporate" and not getattr(player, "notif_push_corporate", True):
+            print(f"[Push] corporate notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
         if notif_type == "business" and not getattr(player, "notif_push_business", True):
             print(f"[Push] business notifications disabled for player {player_id} — skipping")
             db.close()

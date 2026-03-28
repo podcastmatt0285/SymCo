@@ -1140,7 +1140,10 @@ def _notifications_tab(player) -> str:
     push_dms = getattr(player, "notif_push_dms",       True)
     push_con = getattr(player, "notif_push_contracts", True)
     push_biz = getattr(player, "notif_push_business",  True)
-    push_land = getattr(player, "notif_push_land",     True)
+    push_land = getattr(player, "notif_push_land",      True)
+    push_exec = getattr(player, "notif_push_execs",     True)
+    push_trd  = getattr(player, "notif_push_trades",    True)
+    push_corp = getattr(player, "notif_push_corporate", True)
 
     def _toggle(name: str, checked: bool, label: str, sub: str = "", disabled: bool = False) -> str:
         chk   = "checked" if checked else ""
@@ -1294,7 +1297,10 @@ def _notifications_tab(player) -> str:
   {_toggle("notif_push_dms",       push_dms, "Direct Messages",    "Get notified when someone sends you a DM",                              disabled=not has_cco)}
   {_toggle("notif_push_contracts", push_con, "Contract Updates",   "Offers, acceptances, breaches, and completions",                        disabled=not has_cco)}
   {_toggle("notif_push_business",  push_biz,  "Business Alerts",  "Can't afford wages, missing inputs, out of stock, dismantling complete", disabled=not has_cco)}
-  {_toggle("notif_push_land",      push_land, "Land Alerts",      "Plot sold, buy order filled, efficiency floor reached",                  disabled=not has_cco)}
+  {_toggle("notif_push_land",      push_land, "Land Alerts",       "Plot sold, buy order filled, efficiency floor reached",                   disabled=not has_cco)}
+  {_toggle("notif_push_execs",     push_exec, "Executive Alerts",  "Hired, fired, quit, salary missed, retired, school sent and complete",    disabled=not has_cco)}
+  {_toggle("notif_push_trades",    push_trd,  "Trade Alerts",      "Trusted swap proposed, executed, rejected, or expired",                   disabled=not has_cco)}
+  {_toggle("notif_push_corporate", push_corp, "Corporate Alerts",  "Acquisition offers received/accepted/rejected and monthly income sweeps", disabled=not has_cco)}
 </div>"""
 
     # ── Sounds ────────────────────────────────────────────────────────────────
@@ -1504,6 +1510,9 @@ def api_save_notifications(
     notif_push_contracts: Optional[str] = Form(None),
     notif_push_business:  Optional[str] = Form(None),
     notif_push_land:      Optional[str] = Form(None),
+    notif_push_execs:     Optional[str] = Form(None),
+    notif_push_trades:    Optional[str] = Form(None),
+    notif_push_corporate: Optional[str] = Form(None),
     notif_sounds:         Optional[str] = Form(None),
     notif_badge:          Optional[str] = Form(None),
 ):
@@ -1527,6 +1536,9 @@ def api_save_notifications(
                 p.notif_push_contracts = notif_push_contracts == "on"
                 p.notif_push_business  = notif_push_business  == "on"
                 p.notif_push_land      = notif_push_land      == "on"
+                p.notif_push_execs     = notif_push_execs     == "on"
+                p.notif_push_trades    = notif_push_trades    == "on"
+                p.notif_push_corporate = notif_push_corporate == "on"
                 p.notif_sounds         = notif_sounds         == "on"
                 p.notif_badge          = notif_badge          == "on"
                 db.commit()
