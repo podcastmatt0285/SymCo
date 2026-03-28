@@ -1274,12 +1274,12 @@ async def api_dm_reply(
         player_name = get_player_name(player.id)
         saved = save_dm(conv_id, player.id, player_name, content)
 
-        # Deliver via WebSocket if recipient is connected
-        await dm_manager.send_to_user(other_id, {
-            **saved,
-            "other_id":   player.id,
-            "other_name": player_name,
-        })
+        # Deliver via WebSocket — must include type:"message" so handleWSMessage renders it
+        other_name = dm_manager.player_names.get(other_id) or get_player_name(other_id)
+        recipient_msg = {**saved, "type": "message", "other_id": player.id,  "other_name": player_name}
+        sender_msg    = {**saved, "type": "message", "other_id": other_id,   "other_name": other_name}
+        await dm_manager.send_to_user(other_id, recipient_msg)
+        await dm_manager.send_to_user(player.id, sender_msg)
 
         # Push notification to recipient — run in thread pool so the
         # synchronous requests.post() inside doesn't block the event loop.
