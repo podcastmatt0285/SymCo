@@ -1,5 +1,5 @@
 // Wadsworth PWA Service Worker — static assets cached, live API/pages always network
-const CACHE_VERSION = "wadsworth-v3";
+const CACHE_VERSION = "wadsworth-v4";
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
@@ -24,48 +24,55 @@ self.addEventListener("message", (event) => {
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch(e) {}
-  const title   = data.title || "Wadsworth";
+
+  const isDM = data.tag && data.tag.startsWith("dm-");
   const options = {
-    body:      data.body  || "",
-    icon:      data.icon  || "/static/icons/icon-192.png",
-    badge:     "/static/icons/icon-72.png",
-    tag:       data.tag   || "wadsworth-notif",
-    renotify:  true,
-    data:      { url: data.url || "/" },
+    body:               data.body  || "",
+    icon:               data.icon  || "/static/icons/icon-192.png",
+    image:              data.icon  || "/static/icons/icon-192.png",
+    badge:              "/static/icons/icon-72.png",
+    tag:                data.tag   || "wadsworth-notif",
+    renotify:           true,
+    timestamp:          Date.now(),
+    requireInteraction: isDM,
+    vibrate:            [100, 50, 100, 50, 100],
+    data:               { url: data.url || "/" },
   };
-  // DM notifications support inline reply on Android Chrome
-  if (data.tag && data.tag.startsWith("dm-")) {
+  if (isDM) {
     options.actions = [{ action: "reply", type: "text", title: "Reply",
                          placeholder: "Type a reply…" }];
   }
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(self.registration.showNotification(data.title || "Wadsworth", options));
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
-  const replyText = event.reply;  // populated when the user uses the inline reply action
 
-  if (replyText && replyText.trim()) {
-    // Extract other_id from the URL: /p2p/dms/<id>
-    const withMatch = targetUrl.match(/\/p2p\/dms\/(\d+)/);
-    const otherId   = withMatch ? withMatch[1] : null;
-    if (otherId) {
-      event.waitUntil(
-        fetch("/api/dm/reply", {
-          method:      "POST",
-          credentials: "include",
-          headers:     { "Content-Type": "application/x-www-form-urlencoded" },
-          body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
-        }).catch(() => {})
-      );
-      return;  // don't open the app for silent replies
+  // Inline reply action (Android Chrome)
+  if (event.action === "reply") {
+    const replyText = event.reply;
+    if (replyText && replyText.trim()) {
+      // URL format is /p2p/dms?with=<id>
+      const withMatch = targetUrl.match(/[?&]with=(\d+)/);
+      const otherId   = withMatch ? withMatch[1] : null;
+      if (otherId) {
+        event.waitUntil(
+          fetch("/api/dm/reply", {
+            method:      "POST",
+            credentials: "include",
+            headers:     { "Content-Type": "application/x-www-form-urlencoded" },
+            body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
+          }).catch(() => {})
+        );
+        return;  // silent reply — don't open the app
+      }
     }
   }
 
+  // Regular tap — open/focus the app at the target URL
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
-      // Navigate any existing open window to the target URL
       for (const c of cs) {
         if ("navigate" in c) { return c.focus().then(() => c.navigate(targetUrl)); }
         if ("focus" in c)    { return c.focus(); }

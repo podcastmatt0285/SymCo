@@ -1293,7 +1293,7 @@ async def api_dm_reply(
             _t = _aio.create_task(_aio.to_thread(
                 send_push_notification,
                 other_id,
-                f"New DM from {player_name}",
+                player_name,
                 content[:80],
                 url=f"/p2p/dms?with={player.id}",
                 notif_type="dm",
@@ -1469,7 +1469,7 @@ async def dm_websocket(websocket: WebSocket):
                         _t = _aio.create_task(_aio.to_thread(
                             send_push_notification,
                             other_id,
-                            f"New DM from {player_name}",
+                            player_name,
                             _preview,
                             url=f"/p2p/dms?with={player_id}",
                             notif_type="dm",
