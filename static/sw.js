@@ -49,38 +49,40 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
 
-  // Inline reply action (Android Chrome)
+  // Inline reply action
   if (event.action === "reply") {
     const replyText = event.reply;
-    const withMatch = targetUrl.match(/[?&]with=(\d+)/);
-    const otherId   = withMatch ? withMatch[1] : null;
 
-    if (!replyText || !replyText.trim()) {
-      event.waitUntil(self.registration.showNotification("Reply failed", { body: "No reply text captured — browser may not support inline reply.", tag: "reply-debug" }));
-      return;
+    // Android Chrome supports inline text reply; desktop Chrome does not
+    // (event.reply will be empty on desktop) — fall through to open the DM page
+    if (replyText && replyText.trim()) {
+      const withMatch = targetUrl.match(/[?&]with=(\d+)/);
+      const otherId   = withMatch ? withMatch[1] : null;
+      if (otherId) {
+        event.waitUntil(
+          fetch("/api/dm/reply", {
+            method:      "POST",
+            credentials: "include",
+            headers:     { "Content-Type": "application/x-www-form-urlencoded" },
+            body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
+          }).then((r) => {
+            return r.json().then((d) => {
+              if (!d.ok) {
+                return self.registration.showNotification("Reply failed", {
+                  body: "Server error: " + (d.error || r.status), tag: "reply-debug"
+                });
+              }
+            });
+          }).catch((err) => {
+            return self.registration.showNotification("Reply failed", {
+              body: "Fetch error: " + err.message, tag: "reply-debug"
+            });
+          })
+        );
+        return;
+      }
     }
-    if (!otherId) {
-      event.waitUntil(self.registration.showNotification("Reply failed", { body: "Could not find recipient ID in URL: " + targetUrl, tag: "reply-debug" }));
-      return;
-    }
-
-    event.waitUntil(
-      fetch("/api/dm/reply", {
-        method:      "POST",
-        credentials: "include",
-        headers:     { "Content-Type": "application/x-www-form-urlencoded" },
-        body:        `other_id=${otherId}&content=${encodeURIComponent(replyText.trim())}`,
-      }).then((r) => {
-        return r.json().then((d) => {
-          if (!d.ok) {
-            return self.registration.showNotification("Reply failed", { body: "Server error: " + (d.error || r.status), tag: "reply-debug" });
-          }
-        });
-      }).catch((err) => {
-        return self.registration.showNotification("Reply failed", { body: "Fetch error: " + err.message, tag: "reply-debug" });
-      })
-    );
-    return;
+    // Desktop fallback: no text input support — open the DM conversation instead
   }
 
   // Regular tap — open/focus the app at the target URL
