@@ -14,13 +14,12 @@ Handles:
 from datetime import datetime
 from typing import Optional, List
 import threading
-import time
 from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean, func, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Efficiency floor notification — rate-limited per plot
-_eff_floor_notified: dict = {}   # plot_id → timestamp
+_EFF_FLOOR_COOLDOWN  = 86400     # re-notify at most once per day
+_EFF_FLOOR_THRESHOLD = 50.0      # below this, business efficiency multiplier is capped
 
 
 def _fire_govt_push(player_id: int, title: str, body: str, url: str = "/land"):
@@ -34,16 +33,16 @@ def _fire_govt_push(player_id: int, title: str, body: str, url: str = "/land"):
         except Exception as e:
             print(f"[Land] Push error: {e}")
     threading.Thread(target=_send, daemon=True).start()
-_EFF_FLOOR_COOLDOWN  = 86400     # re-notify at most once per day
-_EFF_FLOOR_THRESHOLD = 50.0      # below this, business efficiency multiplier is capped
+
 
 def _fire_eff_floor_push(owner_id: int, plot_id: int, terrain: str, efficiency: float) -> None:
     if owner_id <= 0:
         return
-    now = time.time()
-    if now - _eff_floor_notified.get(plot_id, 0) < _EFF_FLOOR_COOLDOWN:
+    from push_ux import push_rate_ok, push_rate_mark
+    db_key = f"land-eff-floor-{plot_id}"
+    if not push_rate_ok(db_key, _EFF_FLOOR_COOLDOWN):
         return
-    _eff_floor_notified[plot_id] = now
+    push_rate_mark(db_key)
     def _send():
         try:
             from push_ux import send_push_notification

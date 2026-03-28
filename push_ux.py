@@ -94,8 +94,59 @@ def _db_save_vapid_keys(keys: dict) -> None:
         print(f"[Push] Could not persist VAPID keys to DB: {e}")
 
 
+# ── Persistent push rate-limiting ─────────────────────────────────────────────
+# Stored in the push_rate_limit table (key TEXT PK, last_sent REAL).
+# Survives server restarts unlike in-memory dicts.
+
+import time as _time
+
+def _ensure_rate_limit_table() -> None:
+    try:
+        from database import engine
+        from sqlalchemy import text
+        with engine.connect() as c:
+            c.execute(text(
+                "CREATE TABLE IF NOT EXISTS push_rate_limit "
+                "(key TEXT PRIMARY KEY, last_sent REAL NOT NULL)"
+            ))
+            c.commit()
+    except Exception as e:
+        print(f"[Push] Could not create push_rate_limit table: {e}")
+
+
+def push_rate_ok(key: str, cooldown_secs: float) -> bool:
+    """Return True if the notification identified by key is allowed (cooldown elapsed)."""
+    try:
+        from database import engine
+        from sqlalchemy import text
+        with engine.connect() as c:
+            row = c.execute(
+                text("SELECT last_sent FROM push_rate_limit WHERE key = :k"),
+                {"k": key}
+            ).fetchone()
+        if row is None:
+            return True
+        return (_time.time() - row[0]) >= cooldown_secs
+    except Exception:
+        return True  # fail open — better to over-notify than silently drop
+
+
+def push_rate_mark(key: str) -> None:
+    """Record that a notification with key was just sent."""
+    try:
+        from database import engine
+        from sqlalchemy import text
+        with engine.connect() as c:
+            c.execute(text(
+                "INSERT INTO push_rate_limit (key, last_sent) VALUES (:k, :t) "
+                "ON CONFLICT (key) DO UPDATE SET last_sent = EXCLUDED.last_sent"
+            ), {"k": key, "t": _time.time()})
+            c.commit()
+    except Exception as e:
+        print(f"[Push] Could not write rate limit for {key!r}: {e}")
+
+
 def _load_or_create_vapid_keys() -> Optional[dict]:
-    # 1. Prefer env vars (highest priority — pin keys across deploys)
     priv = os.environ.get("VAPID_PRIVATE_KEY")
     pub  = os.environ.get("VAPID_PUBLIC_KEY")
     if priv and pub:
@@ -134,6 +185,7 @@ def _load_or_create_vapid_keys() -> Optional[dict]:
 def get_vapid_keys() -> Optional[dict]:
     global _VAPID_KEYS
     if _VAPID_KEYS is None:
+        _ensure_rate_limit_table()
         _VAPID_KEYS = _load_or_create_vapid_keys()
     return _VAPID_KEYS
 

@@ -2,7 +2,6 @@
 import json
 import random
 import threading
-import time
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Float
 from sqlalchemy.orm import sessionmaker
@@ -15,17 +14,17 @@ from database import engine, SessionLocal
 Base = declarative_base()
 
 # ── Business push-notification helpers ────────────────────────────────────────
-_biz_push_sent: dict = {}          # (biz_id, issue_key) → last sent timestamp
-_BIZ_PUSH_COOLDOWN = 3600          # only notify once per hour per issue
+_BIZ_PUSH_COOLDOWN = 21600         # notify at most once per 6 hours per issue
 
 def _fire_business_push(player_id: int, biz_id: int, issue_key: str,
                          title: str, body: str) -> None:
-    """Send a push notification for a business issue, rate-limited to once/hour."""
-    cache_key = (biz_id, issue_key)
-    now = time.time()
-    if now - _biz_push_sent.get(cache_key, 0) < _BIZ_PUSH_COOLDOWN:
+    """Send a push notification for a business issue, rate-limited to once per 6 hours.
+    Rate limit is persisted in DB so it survives server restarts."""
+    from push_ux import push_rate_ok, push_rate_mark
+    db_key = f"biz-{biz_id}-{issue_key}"
+    if not push_rate_ok(db_key, _BIZ_PUSH_COOLDOWN):
         return
-    _biz_push_sent[cache_key] = now
+    push_rate_mark(db_key)
     def _send():
         try:
             from push_ux import send_push_notification
