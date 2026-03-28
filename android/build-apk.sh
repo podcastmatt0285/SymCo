@@ -52,12 +52,11 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthWidget.java" \
     > "${JAVA_DIR}/WadsworthWidget.java"
 echo "  Copied WadsworthWidget.java → ${JAVA_DIR}/"
 
-# Custom TrustedWebActivityService — intercepts Chrome's channel creation to
-# lock in our notification sound before Chrome can create the channel with a
-# default sound (Android never overwrites an existing NotificationChannel).
-sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthTwaService.java" \
-    > "${JAVA_DIR}/WadsworthTwaService.java"
-echo "  Copied WadsworthTwaService.java → ${JAVA_DIR}/"
+# Custom Application subclass — pre-seeds notification channels with our
+# sound at startup before Chrome/TWA can create them with the system default.
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthApplication.java" \
+    > "${JAVA_DIR}/WadsworthApplication.java"
+echo "  Copied WadsworthApplication.java → ${JAVA_DIR}/"
 
 # Resource directories (Bubblewrap doesn't create these)
 mkdir -p app/src/main/res/layout
@@ -93,14 +92,13 @@ fi
 # AndroidManifest.xml patches
 MANIFEST="app/src/main/AndroidManifest.xml"
 
-# 1. Replace Bubblewrap's default TrustedWebActivityService with our subclass
-#    so Chrome calls into WadsworthTwaService.onAreNotificationsEnabled() where
-#    we pre-seed the notification channel with the custom sound.
-if grep -q "WadsworthTwaService" "$MANIFEST"; then
-    echo "  WadsworthTwaService already in AndroidManifest.xml — skipping"
+# 1. Point <application> at our custom Application subclass so channels are
+#    seeded with the custom notification sound on every app launch.
+if grep -q "WadsworthApplication" "$MANIFEST"; then
+    echo "  WadsworthApplication already in AndroidManifest.xml — skipping"
 else
-    sed -i "s|com.google.androidbrowserhelper.trusted.TrustedWebActivityService|${PACKAGE}.WadsworthTwaService|g" "$MANIFEST"
-    echo "  Patched TrustedWebActivityService → WadsworthTwaService"
+    sed -i "s|<application |<application android:name=\"${PACKAGE}.WadsworthApplication\" |" "$MANIFEST"
+    echo "  Set android:name=WadsworthApplication on <application>"
 fi
 
 # 2. Inject AppWidget receiver
@@ -120,9 +118,9 @@ if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
 else
     cat >> "$PROGUARD_RULES" << 'EOF'
 
-# Keep widget + notification-service classes (referenced by manifest, not by Java)
+# Keep widget + application classes (referenced by manifest, not by Java)
 -keep class PACKAGE_PLACEHOLDER.WadsworthWidget { *; }
--keep class PACKAGE_PLACEHOLDER.WadsworthTwaService { *; }
+-keep class PACKAGE_PLACEHOLDER.WadsworthApplication { *; }
 EOF
     sed -i "s/PACKAGE_PLACEHOLDER/${PACKAGE}/g" "$PROGUARD_RULES"
     echo "  Added ProGuard keep rules"
