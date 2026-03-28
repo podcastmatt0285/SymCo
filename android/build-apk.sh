@@ -41,25 +41,45 @@ bubblewrap init \
   --appVersionCode "${VERSION_CODE}" \
   --appVersionName "${VERSION_NAME}"
 
-echo "=== Step 3: Inject widget files ==="
+echo "=== Step 3: Inject widget + notification-sound files ==="
 
-# Java source
+# Java source directory
 JAVA_DIR="app/src/main/java/$(echo "$PACKAGE" | tr '.' '/')"
 mkdir -p "$JAVA_DIR"
+
+# AppWidget provider
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthWidget.java" \
     > "${JAVA_DIR}/WadsworthWidget.java"
 echo "  Copied WadsworthWidget.java → ${JAVA_DIR}/"
 
-# Resource directories (Bubblewrap doesn't create layout/xml/drawable)
+# Custom TrustedWebActivityService — intercepts Chrome's channel creation to
+# lock in our notification sound before Chrome can create the channel with a
+# default sound (Android never overwrites an existing NotificationChannel).
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthTwaService.java" \
+    > "${JAVA_DIR}/WadsworthTwaService.java"
+echo "  Copied WadsworthTwaService.java → ${JAVA_DIR}/"
+
+# Resource directories (Bubblewrap doesn't create these)
 mkdir -p app/src/main/res/layout
 mkdir -p app/src/main/res/xml
 mkdir -p app/src/main/res/drawable
+mkdir -p app/src/main/res/raw
 
-# Resource files
+# Widget layout + metadata
 cp "${WIDGET_DIR}/res/layout/widget_layout.xml"        app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"   app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/drawable/widget_background.xml"  app/src/main/res/drawable/
-echo "  Copied layout, xml, drawable resources"
+echo "  Copied widget layout, xml, drawable resources"
+
+# Notification sound — copy from the live static directory so it matches
+# whatever sound the admin uploaded via the dashboard.
+SOUND_SRC="$(cd "$(dirname "$0")/.." && pwd)/static/sounds/notification.mp3"
+if [ -f "$SOUND_SRC" ]; then
+    cp "$SOUND_SRC" app/src/main/res/raw/notification.mp3
+    echo "  Copied notification.mp3 → res/raw/"
+else
+    echo "  WARNING: static/sounds/notification.mp3 not found — push sound will use system default"
+fi
 
 # Merge strings — append widget_description before </resources>
 STRINGS_FILE="app/src/main/res/values/strings.xml"
@@ -70,8 +90,20 @@ else
     echo "  Added widget_description to strings.xml"
 fi
 
-# Inject receiver into AndroidManifest.xml before </application>
+# AndroidManifest.xml patches
 MANIFEST="app/src/main/AndroidManifest.xml"
+
+# 1. Replace Bubblewrap's default TrustedWebActivityService with our subclass
+#    so Chrome calls into WadsworthTwaService.onAreNotificationsEnabled() where
+#    we pre-seed the notification channel with the custom sound.
+if grep -q "WadsworthTwaService" "$MANIFEST"; then
+    echo "  WadsworthTwaService already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|com.google.androidbrowserhelper.trusted.TrustedWebActivityService|${PACKAGE}.WadsworthTwaService|g" "$MANIFEST"
+    echo "  Patched TrustedWebActivityService → WadsworthTwaService"
+fi
+
+# 2. Inject AppWidget receiver
 RECEIVER_BLOCK="        <receiver android:name=\"${PACKAGE}.WadsworthWidget\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/wadsworth_widget_info\"/></receiver>"
 
 if grep -q "WadsworthWidget" "$MANIFEST"; then
@@ -81,15 +113,19 @@ else
     echo "  Injected WadsworthWidget receiver into AndroidManifest.xml"
 fi
 
-# Add ProGuard/R8 keep rule so the widget class isn't stripped at release
+# ProGuard/R8 keep rules — prevent shrinking of our injected classes
 PROGUARD_RULES="app/proguard-rules.pro"
 if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
-    echo "  ProGuard rule already present — skipping"
+    echo "  ProGuard rules already present — skipping"
 else
-    echo "" >> "$PROGUARD_RULES"
-    echo "# Keep widget class — referenced by manifest, must survive R8 shrinking" >> "$PROGUARD_RULES"
-    echo "-keep class ${PACKAGE}.WadsworthWidget { *; }" >> "$PROGUARD_RULES"
-    echo "  Added ProGuard keep rule for WadsworthWidget"
+    cat >> "$PROGUARD_RULES" << 'EOF'
+
+# Keep widget + notification-service classes (referenced by manifest, not by Java)
+-keep class PACKAGE_PLACEHOLDER.WadsworthWidget { *; }
+-keep class PACKAGE_PLACEHOLDER.WadsworthTwaService { *; }
+EOF
+    sed -i "s/PACKAGE_PLACEHOLDER/${PACKAGE}/g" "$PROGUARD_RULES"
+    echo "  Added ProGuard keep rules"
 fi
 
 echo "=== Step 4: Generate signing key (skip if reusing) ==="
