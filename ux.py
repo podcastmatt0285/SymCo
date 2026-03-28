@@ -1292,7 +1292,6 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         // show a banner the user taps once; that click provides the gesture Chrome needs.
         (function(){{
             if (!/android/i.test(navigator.userAgent)) return;
-            if (!window.matchMedia('(display-mode: standalone)').matches) return;
             if (sessionStorage.getItem('_wt_sent')) return;
             fetch('/api/widget/token', {{credentials:'same-origin'}})
                 .then(function(r){{return r.json();}})

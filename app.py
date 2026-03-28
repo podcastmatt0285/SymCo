@@ -192,6 +192,21 @@ async def root_head():
 async def favicon():
     return FileResponse("static/icons/icon-48.png", media_type="image/png")
 
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+async def assetlinks():
+    """Required for Android TWA verification and App Links."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse([{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "cc.notifly.wadsworth",
+            "sha256_cert_fingerprints": [
+                "4D:39:74:05:A7:E1:A5:EB:9B:7D:B9:51:80:0F:25:92:6C:89:64:2D:C7:50:AD:97:3B:BB:C9:C2:45:8C:30:6E"
+            ]
+        }
+    }])
+
 # ==========================
 # SYSTEM ENDPOINTS (PATCHED)
 # ==========================
