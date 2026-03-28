@@ -1287,24 +1287,38 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         }})();
         </script>
         <script>
-        // Android widget token bridge — fires once per session on Android devices.
-        // Fetches a stable HMAC token from the server and passes it to the native
-        // WadsworthTokenActivity via an intent:// URL so the widget can authenticate
-        // without needing access to Chrome's cookie store.
+        // Android widget token bridge — shows a one-tap banner on first load in TWA/standalone.
+        // Chrome blocks script-initiated intent:// navigation (requires user gesture), so we
+        // show a banner the user taps once; that click provides the gesture Chrome needs.
         (function(){{
             if (!/android/i.test(navigator.userAgent)) return;
+            if (!window.matchMedia('(display-mode: standalone)').matches) return;
             if (sessionStorage.getItem('_wt_sent')) return;
-            sessionStorage.setItem('_wt_sent', '1');
             fetch('/api/widget/token', {{credentials:'same-origin'}})
                 .then(function(r){{return r.json();}})
                 .then(function(d){{
                     if (!d.token) return;
-                    // S.browser_fallback_url prevents Chrome from opening Play Store
-                    // when the intent can't be resolved (e.g. old APK without WadsworthTokenActivity).
                     var fallback = encodeURIComponent(window.location.origin + '/');
-                    window.location.href = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
-                             '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;' +
-                             'S.browser_fallback_url=' + fallback + ';end';
+                    var intentUrl = 'intent://widget-auth?token=' + encodeURIComponent(d.token) +
+                        '#Intent;scheme=wadsworth;package=cc.notifly.wadsworth;' +
+                        'S.browser_fallback_url=' + fallback + ';end';
+                    var banner = document.createElement('div');
+                    banner.id = '_wt_banner';
+                    banner.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
+                        'background:#1e3a5f;color:#e2e8f0;padding:13px 22px;border-radius:10px;' +
+                        'font-size:14px;font-family:sans-serif;z-index:99999;cursor:pointer;' +
+                        'box-shadow:0 3px 12px rgba(0,0,0,0.5);white-space:nowrap;';
+                    banner.textContent = '\u{1F4F2} Tap to link your home-screen widget';
+                    banner.onclick = function(){{
+                        sessionStorage.setItem('_wt_sent', '1');
+                        banner.remove();
+                        window.location.href = intentUrl;
+                    }};
+                    document.body.appendChild(banner);
+                    setTimeout(function(){{
+                        var b = document.getElementById('_wt_banner');
+                        if (b) b.remove();
+                    }}, 15000);
                 }}).catch(function(){{}});
         }})();
         </script>
