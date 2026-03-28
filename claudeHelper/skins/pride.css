@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700&display=swap');
+
+/* GLOBAL RESET - Flux Architecture */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    --bg-color: #1a1a1a; /* Neutral Dark Grey to let colors pop */
+    --card: rgba(0, 0, 0, 0.6); /* Darker Glass */
+    --text: #ffffff;
+    
+    /* Classic Pride Palette */
+    --p-red: #E40303;
+    --p-orange: #FF8C00;
+    --p-yellow: #FFED00;
+    --p-green: #008026;
+    --p-blue: #004DFF;
+    --p-purple: #750787;
+    
+    --accent: var(--p-yellow); 
+    --border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px;
+    padding-bottom: max(60px, env(safe-area-inset-bottom));
+
+    /* TRUE PRIDE SVG
+       Mapped the bands to: Red (#E40303), Yellow (#FFED00), Green (#008026), Blue (#004DFF)
+       This covers the spectrum best with the 4 available slots in the geometry.
+    */
+    background-image: url("data:image/svg+xml,%3Csvg version='1.1' id='Layer_1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' xml:space='preserve'%3E%3Cpath style='fill:%23008026;' d='M0.003,152.104c97.186,0,176.109,78.785,176.109,175.97v55.991l0,0 c-15.364,15.364-23.996,36.203-23.996,57.932v30.054c0,13.252-10.744,23.996-23.996,23.996l0,0V328.075 c0-70.681-57.44-128.037-128.12-128.037L0.003,152.104z'/%3E%3Cpath style='fill:%23FFFFFF;' d='M152.116,448.055l0.225-0.225c0,31.047-25.168,56.215-56.215,56.215H64.131h295.951 c54.252,0,97.991-45.01,95.913-99.723c-1.877-49.41-42.763-90.297-92.173-92.173c-54.714-2.078-99.723,41.661-99.723,95.913v23.996 c0-30.923-25.068-55.991-55.991-55.991s-55.991,25.068-55.991,55.991v15.997H152.116z'/%3E%3Cpath style='fill:%23FFED00;' d='M0.003,104.112c123.297,0,224.652,100.272,224.652,223.962v47.992l-48.065,7.999v-55.99 c0-97.185-78.367-175.97-176.587-175.97C0.003,152.104,0.003,104.112,0.003,104.112z'/%3E%3Cpath style='fill:%23E40303;' d='M0.003,56.121c150.464,0,271.672,121.758,271.672,271.955v39.993l-7.513,39.993l-39.507-31.995 v-47.992c0-123.691-101.354-223.962-224.652-223.962C0.003,104.113,0.003,56.121,0.003,56.121z'/%3E%3Cpath style='fill:%23004DFF;' d='M0.003,56.121c150.464,0,271.672,121.758,271.672,271.955v39.993l48.036-47.994 C315.464,147.069,173.455,8.129,0.003,8.129V56.121z'/%3E%3Cpath style='fill:%23CCCCCC;' d='M363.822,312.148c-7.608-0.289-14.996,0.391-22.134,1.778c42.727,8.382,76.116,49.854,77.808,94.371 c2.077,54.715-41.661,103.7-95.913,103.7h36.5c54.252,0,97.991-48.986,95.913-103.7 C454.118,358.888,413.232,314.025,363.822,312.148z'/%3E%3Cpath style='fill:%23FFFFFF;' d='M423.909,408.554h-15.673c0-27.167-21.622-48.646-47.744-48.646v-15.673C394.972,344.234,423.909,373.028,423.909,408.554z'/%3E%3Crect x='408.553' y='425.27' width='15.673' height='14.628' style='fill:%23FFFFFF;'%3E%3C/rect%3E%3Cpath style='fill:%23FFFFFF;' d='M463.825,404.025c-0.982-25.878-11.832-50.437-30.551-69.156c-18.718-18.719-43.278-29.568-69.156-30.552 c-12.687-0.481-25.077,1.295-36.732,5.147c-4.576-81.886-39.212-158.194-98.246-215.846C167.515,33.436,86.139,0.291,0.003,0.291 v15.673c82.019,0,159.505,31.56,218.187,88.866c57.565,56.217,90.763,131.062,93.809,211.159 c-8.634,4.525-16.681,10.307-23.915,17.272c-2.869,2.763-5.546,5.666-8.049,8.682v-13.869 c0-154.277-125.622-279.792-280.031-279.792v15.673c145.768,0,264.358,118.483,264.358,264.118v39.591 c-3.234,7.663-5.531,15.721-6.834,24.042c-6.75-8.251-15.529-14.774-25.558-18.832v-44.801 c0-127.814-104.06-231.799-231.966-231.799v15.673c119.265,0,216.293,96.953,216.293,216.125v40.696 c-2.683-0.346-5.413-0.541-8.189-0.541c-8.564,0-16.734,1.706-24.203,4.779v-44.935c0-101.351-82.497-183.807-183.901-183.807 v15.673c92.76,0,168.228,75.424,168.228,168.133v54.199c-14.587,11.708-23.951,29.669-23.951,49.785v20.453 c-0.816,8.46-3.822,16.289-8.441,22.915V328.075c0-74.812-60.604-135.676-135.836-135.676v15.673 c65.828,0,120.163,53.833,120.163,120.003v161.72c-7.086,4.076-15.294,6.415-24.04,6.415H64.132v15.673h295.95 c28.48,0,55.045-11.302,74.801-31.824C454.63,459.547,464.909,432.544,463.825,404.025z'/%3E%3C/svg%3E");
+    
+    background-size: 100px 100px;
+    background-repeat: repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.box {
+    width: min(440px, 92vw);
+    background: var(--card);
+    padding: 40px;
+    
+    /* Strong Glass Effect */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    
+    /* Rainbow Shadow Glow */
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 2.2rem;
+    color: var(--text);
+    margin-bottom: 25px;
+    text-align: center;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+/* FLUX UNIFIED ELEMENTS */
+input, textarea, button, select, .link-btn {
+    width: 100%;
+    min-height: 56px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    
+    /* Dark semi-transparent inputs */
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    
+    transition: all 0.3s ease;
+    display: block;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--p-yellow);
+    background: rgba(0,0,0,0.8);
+    box-shadow: 0 0 15px rgba(255, 237, 0, 0.3);
+}
+
+button {
+    /* Full Rainbow Gradient Background */
+    background: linear-gradient(90deg, var(--p-red), var(--p-orange), var(--p-yellow), var(--p-green), var(--p-blue), var(--p-purple));
+    border: none;
+    color: white;
+    cursor: pointer;
+    text-transform: uppercase;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    /* Rainbow Border using Conic Gradient */
+    border: 4px solid transparent;
+    background: linear-gradient(#1a1a1a, #1a1a1a) padding-box,
+                conic-gradient(var(--p-red), var(--p-orange), var(--p-yellow), var(--p-green), var(--p-blue), var(--p-purple), var(--p-red)) border-box;
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 30px;
+    border-top: 1px dashed var(--border);
+    padding-top: 20px;
+}
+
+.link-btn {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+}
+
+.link-btn:hover {
+    background: white;
+    color: black;
+    /* Rainbow border on hover */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    box-shadow: 0 5px 15px rgba(255,255,255,0.2);
+}
+
+/* Admin UI */
+.link-item {
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.embed-label {
+    color: #ccc !important;
+    font-size: 11px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 15px;
+}

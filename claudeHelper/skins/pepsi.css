@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --bg: #004B93;       /* Pepsi Blue */
+    --card: #ffffff;
+    --text: #004B93;
+    --red: #C9002B;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Wave pattern */
+    background: linear-gradient(135deg, #004B93 50%, #C9002B 50%);
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    border-radius: 50px 0 50px 0; /* Dynamic shape */
+}
+
+h1 {
+    font-family: 'Audiowide', cursive;
+    text-transform: uppercase;
+    color: black;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 1px solid #ddd;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 25px;
+}
+
+input, textarea, select {
+    background: #f4f4f4;
+    color: black;
+}
+
+button {
+    background: var(--bg);
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--red);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: white;
+    border: 2px solid var(--red);
+    color: var(--red);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 25px;
+}
+
+.link-btn:hover { background: var(--red); color: white; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

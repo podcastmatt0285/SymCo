@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
+
+:root {
+    --bg: #efefef;
+    --card: #ffffff;
+    --text: #333333;
+    --primary: #E60023;
+    --input: #efefef;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 0 0 2px rgba(0,0,0,0.1);
+    text-align: center;
+    border-radius: 16px;
+}
+
+h1 {
+    font-weight: 700;
+    font-size: 32px;
+    color: #111;
+    margin-bottom: 10px;
+}
+
+/* STRUCTURAL FIX: Added width: 100% and display: block */
+input, textarea, button, select {
+    border: none;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 24px;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: #333;
+    border: 2px solid transparent;
+}
+
+input:focus { border: 2px solid #0074e8; }
+
+button {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: #efefef;
+    border: none;
+    color: #111;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: 600;
+    transition: 0.2s;
+    border-radius: 24px;
+}
+
+.link-btn:hover { background: #e2e2e2; }
+
+.link-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; border-top: 1px solid #efefef; padding-top: 20px; }
+.link-item { display: flex; gap: 8px; margin-bottom: 5px; align-items: center; font-weight: 600; font-size: 14px; }

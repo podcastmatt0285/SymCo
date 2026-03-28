@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;800&display=swap');
+
+:root {
+    --bg: #008B47;       /* Sprite Green */
+    --card: #F8CD24;     /* Sprite Yellow */
+    --text: #008B47;
+    --accent: #ffffff;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Raleway', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Bubbles */
+    background-image: radial-gradient(rgba(255,255,255,0.2) 15%, transparent 16%);
+    background-size: 30px 30px;
+}
+
+.box {
+    background: white;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 4px solid var(--card);
+    box-shadow: 0 10px 0 var(--bg);
+    text-align: center;
+    border-radius: 0;
+    transform: rotate(-1deg);
+}
+
+h1 {
+    font-weight: 800;
+    font-style: italic;
+    color: var(--bg);
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--bg);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: #f0fff4;
+    color: var(--bg);
+}
+
+button {
+    background: var(--bg);
+    color: var(--card);
+    font-weight: 800;
+    font-style: italic;
+    border: none;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--card);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: var(--card);
+    border: none;
+    color: var(--bg);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: 800;
+    transition: 0.2s;
+    border-radius: 0;
+}
+
+.link-btn:hover { background: #ffe066; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid var(--bg); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-weight: bold; }

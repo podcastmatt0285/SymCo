@@ -1,0 +1,137 @@
+:root {
+    --bg: #f0f2f5;       /* Classic FB Light Gray */
+    --card: #ffffff;     /* White Card */
+    --text: #050505;     /* Near Black */
+    --primary: #1877f2;  /* Facebook Blue */
+    --input: #f5f6f7;    /* Light Gray Input Background */
+    --border: #dddfe2;   /* Soft Grey Border */
+    --shadow: 0 2px 4px rgba(0, 0, 0, .1), 0 8px 16px rgba(0, 0, 0, .1);
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Helvetica, Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    border: none;
+    box-shadow: var(--shadow);
+    text-align: center;
+    border-radius: 8px;
+}
+
+h1 {
+    text-transform: none; /* FB headers are usually standard case */
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-shadow: none;
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    margin: 6px 0;
+    box-sizing: border-box;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+input, textarea, select {
+    background: #ffffff;
+    color: #1d2129;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px #e7f3ff;
+}
+
+button {
+    background: var(--primary);
+    color: white;
+    font-weight: bold;
+    text-transform: none; /* FB buttons are usually sentence case or capitalized */
+    letter-spacing: normal;
+    font-size: 20px;
+    line-height: 48px;
+    padding: 0 16px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background: #166fe5;
+}
+
+/* AVATAR FIX - MUST MAINTAIN DIMENSIONS */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%; /* Circle Avatar */
+    border: 1px solid rgba(0, 0, 0, .1);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: #42b72a; /* classic "Create New Account" green or transparent */
+    border: none;
+    color: #fff;
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 6px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.link-btn:hover {
+    background: #36a420;
+    color: #fff;
+    box-shadow: none;
+}
+
+/* Alternative style for secondary links if needed, usually FB uses blue text links */
+a.link-btn-secondary {
+    background: none;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: normal;
+}
+
+/* STACK SPACING */
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+
+.link-item {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+    align-items: center;
+    color: #606770;
+    font-size: 12px;
+}

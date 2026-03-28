@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Playball&family=Poppins:wght@400;700&display=swap');
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+    --bg-color: #000000;
+    --card: rgba(40, 0, 0, 0.85);
+    --text: #ffffff;
+    --accent: #ff0000;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px;
+    
+    /* RUFFLE FAN SVG PATTERN */
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 60 C 15 60 0 45 0 30 C 0 15 15 0 30 0 C 45 0 60 15 60 30 C 60 45 45 60 30 60 Z M 30 55 C 44 55 55 44 55 30 C 55 16 44 5 30 5 C 16 5 5 16 5 30 C 5 44 16 55 30 55 Z' fill='%23ff0000' fill-opacity='0.2'/%3E%3C/svg%3E");
+    background-size: 60px 60px;
+    
+    /* Heartbeat Animation */
+    animation: pulseBg 4s ease-in-out infinite alternate;
+}
+
+@keyframes pulseBg {
+    0% { background-size: 60px 60px; }
+    100% { background-size: 65px 65px; }
+}
+
+.box {
+    width: min(440px, 92vw);
+    background: var(--card);
+    padding: 40px;
+    border-top: 5px solid var(--accent);
+    border-bottom: 5px solid var(--accent);
+    box-shadow: 0 0 30px rgba(255,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    border-radius: 50px 0 50px 0;
+    backdrop-filter: blur(5px);
+}
+
+h1 {
+    font-family: 'Playball', cursive;
+    font-size: 3.5rem;
+    color: var(--accent);
+    margin-bottom: 25px;
+    text-align: center;
+    transform: rotate(-5deg);
+    text-shadow: 3px 3px 0 #000;
+}
+
+input, textarea, button, select, .link-btn {
+    width: 100%;
+    min-height: 56px;
+    padding: 16px;
+    margin-bottom: 15px;
+    border: 1px solid #500;
+    border-radius: 50px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    display: block;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+input:focus { border-color: var(--accent); background: #000; outline: none; box-shadow: 0 0 15px var(--accent); }
+
+button {
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+    border: none;
+    font-size: 1.2rem;
+}
+
+button:hover {
+    transform: scale(1.05) rotate(1deg);
+    box-shadow: 0 0 25px var(--accent);
+}
+
+.av-prev {
+    width: 100px; height: 100px; object-fit: cover;
+    border-radius: 50%; border: 3px solid var(--accent);
+    margin: 0 auto 20px auto; display: block;
+}
+
+.link-stack { display: flex; flex-direction: column; margin-top: 30px; }
+.link-btn:hover { background: #fff; color: #000; transform: translateX(5px); }
+.embed-label { color: #888 !important; text-align: center; font-size: 11px; }
+.link-item { background: #222; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; border-radius: 10px; }

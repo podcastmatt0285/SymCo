@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap');
+
+:root {
+    --bg: #282a36;
+    --card: #44475a;
+    --text: #f8f8f2;
+    --purple: #bd93f9;
+    --pink: #ff79c6;
+    --green: #50fa7b;
+    --input: #282a36;
+    --border: #6272a4;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Fira Code", monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 2px solid var(--border);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 8px;
+}
+
+h1 {
+    color: var(--purple);
+    text-shadow: 2px 2px 0px #000;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--border);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+    font-family: "Fira Code", monospace;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: var(--text);
+}
+
+input:focus {
+    border-color: var(--pink);
+    outline: none;
+}
+
+button {
+    background: var(--pink);
+    color: #282a36;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+}
+
+button:hover { background: #ff92d0; }
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--green);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px solid var(--purple);
+    color: var(--purple);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 4px;
+}
+
+.link-btn:hover {
+    background: var(--purple);
+    color: var(--bg);
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; color: var(--text); }

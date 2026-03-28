@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+:root {
+    --bg: #18181b;
+    --card: #1f1f23;
+    --text: #efeff1;
+    --primary: #9146FF;
+    --input: #0e0e10;
+    --border: #000000;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 2px solid #000;
+    box-shadow: 10px 10px 0px #9146FF; /* Hard shadow */
+    text-align: center;
+}
+
+h1 {
+    text-transform: uppercase;
+    font-style: italic;
+    font-weight: 900;
+    text-shadow: 2px 2px 0 #000;
+}
+
+/* STRUCTURAL FIX: Added width: 100% and display: block */
+input, textarea, button, select {
+    border: 2px solid var(--input);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: var(--text);
+}
+
+input:focus {
+    border: 2px solid var(--primary);
+    background: #000;
+}
+
+button {
+    background: var(--primary);
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--primary);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: #392e5c;
+    border: none;
+    color: #bf94ff;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 4px;
+}
+
+.link-btn:hover { background: #453770; color: white; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid #303032; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

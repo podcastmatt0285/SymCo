@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+
+:root {
+    --bg: #fff0f5;       /* Lavender Blush */
+    --card: #ffffff;     /* White */
+    --text: #5c3a41;     /* Deep brownish pink/grey for readability */
+    --primary: #d84358;  /* Romantic Rose */
+    --input: #fffafa;    /* Very pale pink/white */
+    --accent: #f8c3cd;   /* Soft pink border */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Lora", serif; /* Classy serif for body text */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px; /* Increased padding for breathing room */
+    border: 1px solid var(--accent);
+    box-shadow: 0 10px 30px rgba(216, 67, 88, 0.15); /* Soft rose shadow */
+    text-align: center;
+    border-radius: 12px; /* Soft rounded corners */
+}
+
+h1 {
+    font-family: "Playfair Display", serif; /* Elegant display font */
+    text-transform: capitalize;
+    font-style: italic;
+    color: var(--primary);
+    margin-bottom: 20px;
+    text-shadow: none; /* Removed harsh cyberpunk shadow */
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--accent);
+    padding: 14px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    border-radius: 6px;
+    font-family: "Lora", serif;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 8px rgba(216, 67, 88, 0.2);
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: var(--text);
+}
+
+button {
+    background: var(--primary);
+    color: white;
+    font-weight: normal;
+    font-family: "Playfair Display", serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(216, 67, 88, 0.3);
+}
+
+button:hover {
+    background: #b93246;
+    transform: translateY(-2px);
+}
+
+/* AVATAR FIX - MUST MAINTAIN DIMENSIONS */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%; /* Circle shape for romantic feel */
+    border: 3px solid var(--accent);
+    padding: 3px; /* Creates a double-border frame effect */
+    margin: 20px auto;
+    display: block;
+    background-color: white;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 15px;
+    font-weight: bold;
+    transition: 0.3s;
+    border-radius: 6px;
+    font-family: "Playfair Display", serif;
+    letter-spacing: 1px;
+}
+
+.link-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 5px 15px rgba(216, 67, 88, 0.25);
+}
+
+/* STACK SPACING */
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 25px;
+    border-top: 1px solid var(--accent);
+    padding-top: 25px;
+}
+
+.link-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+    align-items: center;
+    color: var(--text);
+    font-size: 0.9em;
+}

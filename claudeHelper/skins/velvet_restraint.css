@@ -1,0 +1,105 @@
+/* Theme: Velvet Restraint */
+:root {
+  --blood: #660000;
+  --velvet: #2a0000;
+  --gold: #d4af37;
+  --steel: #silver;
+}
+
+@keyframes tensionPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); box-shadow: inset 0 0 20px rgba(0,0,0,1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes chainMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 60px; }
+}
+
+body {
+  background-color: #050000;
+  /* WILD SVG: Chain Links */
+  background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='15' cy='15' r='10' stroke='%23331111' stroke-width='2' fill='none' opacity='0.5'/%3E%3Cpath d='M15 5v20M5 15h20' stroke='%23331111' stroke-width='1'/%3E%3C/svg%3E");
+  animation: chainMove 5s linear infinite;
+  color: #ddd;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-family: 'Times New Roman', serif;
+}
+
+.box {
+  /* Rich Velvet Gradient */
+  background: radial-gradient(circle, var(--velvet) 0%, #000 100%);
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 30px;
+  text-align: center;
+  position: relative;
+  
+  /* Double Border: Gold and Steel */
+  border: 4px double var(--gold);
+  box-shadow: 0 0 50px rgba(100, 0, 0, 0.4);
+}
+
+h1 {
+  font-style: italic;
+  font-size: 2.2rem;
+  color: var(--gold);
+  border-bottom: 1px solid var(--blood);
+  padding-bottom: 15px;
+  text-shadow: 0 2px 5px #000;
+}
+
+.av-prev {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 20px auto;
+  display: block;
+  border: 4px solid var(--gold);
+  /* Pulsing Shadow */
+  box-shadow: 0 0 15px var(--blood);
+  animation: tensionPulse 3s infinite ease-in-out;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 25px; }
+
+.link-btn {
+  display: block;
+  background: #111;
+  color: var(--gold);
+  text-decoration: none;
+  padding: 20px;
+  border: 1px solid var(--gold);
+  font-family: sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 12px;
+  transition: 0.3s;
+  
+  /* The "Tight" Look */
+  border-left: 5px solid var(--blood);
+  border-right: 5px solid var(--blood);
+  box-shadow: inset 0 0 10px #000;
+}
+
+.link-btn:hover {
+  background: var(--blood);
+  color: white;
+  letter-spacing: 4px; /* Text stretches under tension */
+  border-color: #fff;
+  cursor: pointer;
+}
+
+input, button, select, textarea { 
+  width: 100%; padding: 12px; margin: 8px 0; background: #1a0000; border: 1px solid var(--blood); color: var(--gold); 
+}
+button { 
+  background: var(--gold); color: #000; font-weight: bold; text-transform: uppercase; box-shadow: 0 0 10px var(--gold); 
+}
+button:hover { background: #fff; }

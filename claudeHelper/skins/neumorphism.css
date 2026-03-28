@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+:root {
+    --bg: #e0e5ec;
+    --text: #4a4a4a;
+    --highlight: #ffffff;
+    --shadow: #a3b1c6;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Nunito", sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--bg);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    /* The classic Neumorphism double shadow */
+    box-shadow: 9px 9px 16px var(--shadow), -9px -9px 16px var(--highlight);
+    text-align: center;
+    border-radius: 20px;
+}
+
+h1 {
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+}
+
+input, textarea, button, select {
+    border: none;
+    padding: 15px;
+    margin: 15px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 50px; /* Pill shape is standard for neumorphism */
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Nunito", sans-serif;
+    font-weight: 600;
+}
+
+/* Inset shadow for inputs looks like they are pressed in */
+input, textarea, select {
+    box-shadow: inset 6px 6px 10px var(--shadow), inset -6px -6px 10px var(--highlight);
+}
+
+input:focus { outline: none; color: #000; }
+
+/* Outset shadow for buttons looks like they pop out */
+button {
+    box-shadow: 6px 6px 10px var(--shadow), -6px -6px 10px var(--highlight);
+    color: #007bff;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:active {
+    box-shadow: inset 4px 4px 8px var(--shadow), inset -4px -4px 8px var(--highlight);
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid var(--bg);
+    box-shadow: 6px 6px 10px var(--shadow), -6px -6px 10px var(--highlight);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: var(--bg);
+    border: none;
+    color: var(--text);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 15px;
+    font-weight: bold;
+    border-radius: 20px;
+    box-shadow: 6px 6px 10px var(--shadow), -6px -6px 10px var(--highlight);
+    transition: 0.2s;
+}
+
+.link-btn:active {
+    box-shadow: inset 4px 4px 8px var(--shadow), inset -4px -4px 8px var(--highlight);
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

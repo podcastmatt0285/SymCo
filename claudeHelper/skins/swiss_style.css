@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
+
+:root {
+    --bg: #eaeaea;
+    --card: #ffffff;
+    --text: #000000;
+    --primary: #FF0000; /* Swiss Red */
+    --border: #000000;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    /* Helvetica is king in Swiss design */
+    font-family: "Helvetica Neue", Helvetica, "Roboto", Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    border: none;
+    box-shadow: none;
+    text-align: left; /* Swiss style prefers left align usually */
+}
+
+h1 {
+    font-weight: 900;
+    font-size: 3rem;
+    line-height: 0.9;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    letter-spacing: -1px;
+    border-top: 5px solid var(--primary);
+    padding-top: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--text);
+    padding: 15px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0; /* No rounded corners */
+    font-family: inherit;
+    font-weight: 700;
+}
+
+input, textarea, select {
+    background: white;
+    color: black;
+}
+
+input:focus {
+    background: var(--primary);
+    color: white;
+    border-color: black;
+    outline: none;
+}
+
+/* Specific placeholder style for focus */
+input:focus::placeholder { color: rgba(255,255,255,0.7); }
+
+button {
+    background: var(--text);
+    color: white;
+    text-transform: lowercase; /* Or uppercase, bold */
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--primary);
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+    margin: 20px 0 20px auto; /* Right align avatar for asymmetry? or stick to center */
+    display: block;
+    filter: grayscale(100%); /* B&W photography suits Swiss style */
+}
+
+.link-btn {
+    background: white;
+    border: 2px solid var(--text);
+    color: var(--text);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: 900;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+.link-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; border-top: 2px solid var(--text); padding-top: 20px; }
+.link-item { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; font-weight: 700; }

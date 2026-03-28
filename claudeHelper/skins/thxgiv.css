@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+    --bg: #3E2723;       /* Dark Brown */
+    --card: #FFF3E0;     /* Cream */
+    --text: #3E2723;
+    --orange: #D84315;   /* Burnt Orange */
+    --gold: #FBC02D;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Lora', serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 6px double var(--orange);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    border-radius: 4px;
+}
+
+h1 {
+    font-style: italic;
+    color: var(--orange);
+    margin-bottom: 20px;
+    text-decoration: underline var(--gold);
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--text);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+}
+
+input, textarea, select {
+    background: #ffffff;
+    color: var(--text);
+}
+
+button {
+    background: var(--orange);
+    color: white;
+    font-weight: bold;
+    border: none;
+    text-transform: uppercase;
+}
+
+button:hover { background: var(--text); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--gold);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px solid var(--text);
+    color: var(--text);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 4px;
+}
+
+.link-btn:hover { background: var(--gold); border-color: var(--gold); color: var(--text); }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid var(--text); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

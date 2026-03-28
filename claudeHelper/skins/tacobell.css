@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Open+Sans&display=swap');
+
+:root {
+    --bg: #702082;       /* Taco Bell Purple */
+    --card: #1c1c1c;     /* Dark Grey */
+    --text: #ffffff;
+    --primary: #e11383;  /* Pink */
+    --secondary: #fdb913;/* Bell Yellow */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Open Sans', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 5px 5px 0 var(--secondary);
+    text-align: center;
+    border-radius: 0; /* Angular/Modern */
+}
+
+h1 {
+    font-family: 'Archivo Black', sans-serif;
+    text-transform: uppercase;
+    color: white;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--bg);
+    padding: 14px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: #333;
+    color: white;
+}
+
+input:focus { border-color: var(--secondary); outline: none; }
+
+button {
+    background: var(--secondary);
+    color: black;
+    font-family: 'Archivo Black', sans-serif;
+    text-transform: uppercase;
+    border: none;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--primary);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    font-family: 'Archivo Black', sans-serif;
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+.link-btn:hover { background: var(--primary); color: white; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

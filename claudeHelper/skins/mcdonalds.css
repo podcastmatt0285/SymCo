@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap');
+
+:root {
+    --bg: #DA291C;       /* McDonald's Red */
+    --card: #ffffff;
+    --text: #DA291C;
+    --primary: #FFC72C;  /* Golden Arches Yellow */
+    --input: #f2f2f2;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Ubuntu', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    text-align: center;
+    border-radius: 15px;
+}
+
+h1 {
+    color: var(--text);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid #e0e0e0;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    font-family: 'Ubuntu', sans-serif;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: #333;
+}
+
+input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+button {
+    background: var(--primary);
+    color: #DA291C;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 4px 0 #dba922; /* 3D effect */
+}
+
+button:active { box-shadow: none; transform: translateY(4px); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--primary);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: #DA291C;
+    border: none;
+    color: white;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.link-btn:hover { background: #b01b1b; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid var(--primary); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

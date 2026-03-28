@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Shrikhand&family=Quicksand:wght@500;700&display=swap');
+
+/* COPYING THE HOUDINI LOGIC DIRECTLY FROM SOUL EYES */
+@property --x { syntax: '<length-percentage>'; initial-value: 50%; inherits: false; }
+@property --y { syntax: '<length-percentage>'; initial-value: 50%; inherits: false; }
+
+:root {
+    --bg-dark: #1a0b1c;
+    --neon-purple: #d500f9;
+    --hot-pink: #ff4081;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: #fce4ec;
+    font-family: 'Quicksand', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* THE ANIMATION LAYER */
+body::before {
+    content: "";
+    position: fixed;
+    top: -50px; left: -50px; right: -50px; bottom: -50px;
+    z-index: 0;
+    
+    /* FIX: High Contrast Gradient 
+       We alternate between Dark, Hot Pink, and Neon Purple.
+       The high contrast is required for the filter to work.
+    */
+    --pattern: repeating-radial-gradient(
+        circle at var(--x, 50%) var(--y, 50%), 
+        var(--bg-dark), 
+        var(--hot-pink) 10%, 
+        var(--bg-dark) 20%
+    );
+    
+    --map: linear-gradient(90deg, var(--neon-purple), #4a0072);
+    
+    background: var(--pattern), var(--map);
+    background-blend-mode: lighten;
+    
+    /* The Gooey Effect */
+    filter: contrast(20) blur(2px);
+    
+    /* Soul Eyes Animation Speed */
+    animation: soulWander 15s ease-in-out infinite alternate;
+}
+
+@keyframes soulWander {
+    0% { --x: 10%; --y: 10%; }
+    25% { --x: 80%; --y: 20%; }
+    50% { --x: 30%; --y: 80%; }
+    75% { --x: 90%; --y: 60%; }
+    100% { --x: 0%; --y: 90%; }
+}
+
+.box {
+    position: relative;
+    z-index: 10;
+    background: rgba(26, 11, 28, 0.8); /* See-through to catch the animation */
+    width: min(440px, 92vw);
+    padding: 40px;
+    border: 3px solid var(--neon-purple);
+    box-shadow: 10px 10px 0 var(--hot-pink);
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+}
+
+h1 {
+    font-family: 'Shrikhand', cursive;
+    font-size: 3rem;
+    color: var(--hot-pink);
+    text-shadow: 3px 3px 0 var(--neon-purple);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+input, textarea, button, select, .link-btn {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 12px;
+    border: 2px solid var(--neon-purple);
+    background: #000;
+    color: #fff;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    border-radius: 12px;
+    text-align: center;
+}
+
+button {
+    background: var(--neon-purple);
+    color: white;
+    font-family: 'Shrikhand', cursive;
+    font-size: 1.5rem;
+    border: none;
+    box-shadow: 5px 5px 0 var(--hot-pink);
+    cursor: pointer;
+}
+
+button:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 var(--hot-pink);
+}
+
+.av-prev {
+    width: 100px; height: 100px;
+    border-radius: 50%; object-fit: cover;
+    margin: 0 auto 20px auto;
+    border: 3px solid var(--hot-pink);
+    box-shadow: 0 0 15px var(--neon-purple);
+}
+
+.link-btn {
+    text-decoration: none;
+    background: transparent;
+    transition: 0.2s;
+}
+.link-btn:hover { background: var(--hot-pink); border-color: var(--hot-pink); }
+.embed-label { color: var(--hot-pink) !important; font-weight: bold; text-align: center; }
+.link-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid var(--neon-purple); }

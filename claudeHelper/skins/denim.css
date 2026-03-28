@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
+
+:root {
+    --bg: #2b3d5c;       /* Denim Blue */
+    --card: #f0f4f8;     /* Pocket Liner White */
+    --stitch: #d48325;   /* Stitching Orange */
+    --rivet: #b8b8b8;    /* Silver */
+    --text: #2b3d5c;
+}
+
+body {
+    background-color: var(--bg);
+    /* Fabric texture */
+    background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 4px);
+    color: var(--text);
+    font-family: 'Roboto Slab', serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 3px dashed var(--stitch); /* Stitching effect */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    border-radius: 15px;
+    position: relative;
+}
+
+h1 {
+    color: var(--bg);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--stitch);
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--bg);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+}
+
+input, textarea, select {
+    background: #fff;
+    color: var(--text);
+}
+
+button {
+    background: var(--bg);
+    color: white;
+    font-weight: bold;
+    border: 2px dashed var(--stitch);
+}
+
+button:hover { background: var(--stitch); border-color: white; }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--stitch);
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 0 0 4px var(--bg); /* Double border */
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px solid var(--stitch);
+    color: var(--stitch);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 4px;
+}
+
+.link-btn:hover {
+    background: var(--stitch);
+    color: white;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px dashed var(--stitch); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

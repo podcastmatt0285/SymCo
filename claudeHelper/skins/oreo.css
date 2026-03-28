@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Varela+Round&display=swap');
+
+:root {
+    --bg: #363a43; /* Cookie Black */
+    --card: #232323;
+    --text: #ffffff;
+    --primary: #ffffff; /* Cream */
+    --accent: #0055A6; /* Oreo Blue */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Varela Round', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Cookie texture pattern */
+    background-image: radial-gradient(#232323 15%, transparent 16%), radial-gradient(#232323 15%, transparent 16%);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 4px solid var(--primary);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 50px; /* Cookie shape */
+}
+
+h1 {
+    color: var(--primary);
+    font-weight: 700;
+    text-shadow: 2px 2px 0 var(--accent);
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: none;
+    padding: 14px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 25px;
+}
+
+input, textarea, select {
+    background: #fff;
+    color: #333;
+    border: 2px solid var(--accent);
+}
+
+button {
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+    border: 2px solid white;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid white;
+    margin: 20px auto;
+    display: block;
+    background: #000;
+}
+
+.link-btn {
+    background: white;
+    border: none;
+    color: #363a43;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 25px;
+}
+
+.link-btn:hover { background: #e6e6e6; transform: scale(1.02); }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px dashed white; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

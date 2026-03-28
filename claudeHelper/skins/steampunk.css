@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Rye&family=Courier+Prime:wght@400;700&display=swap');
+
+:root {
+    --bg: #2b1d0e;       /* Dark Leather */
+    --card: #f5deb3;     /* Parchment */
+    --text: #4b3621;     /* Deep Brown */
+    --copper: #b87333;   /* Copper */
+    --brass: #d4af37;    /* Brass */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier Prime', monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Gear pattern hint */
+    background-image: radial-gradient(var(--copper) 15%, transparent 16%), radial-gradient(var(--copper) 15%, transparent 16%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+    background-color: #1a1108;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 8px ridge var(--copper);
+    box-shadow: inset 0 0 20px rgba(75, 54, 33, 0.4), 0 10px 20px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 4px;
+    position: relative;
+}
+
+/* Screw heads in corners */
+.box::after {
+    content: "+";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-family: sans-serif;
+    color: var(--text);
+    font-size: 20px;
+    font-weight: bold;
+}
+.box::before {
+    content: "+";
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-family: sans-serif;
+    color: var(--text);
+    font-size: 20px;
+    font-weight: bold;
+}
+
+h1 {
+    font-family: 'Rye', serif;
+    color: var(--text);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    border-bottom: 2px dashed var(--text);
+    padding-bottom: 10px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--text);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 2px;
+    font-family: 'Courier Prime', monospace;
+}
+
+input, textarea, select {
+    background: #fff8e7;
+    color: var(--text);
+}
+
+button {
+    background: var(--copper);
+    background: linear-gradient(to bottom, var(--copper), #8a5322);
+    color: #fff;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 2px solid #5c3817;
+    text-shadow: 1px 1px 0 #333;
+}
+
+button:hover { background: var(--brass); color: var(--text); text-shadow: none; }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--brass);
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 0 0 4px var(--text); /* Double border */
+    sepia: 0.6;
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px dashed var(--text); /* Stitching look */
+    color: var(--text);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.link-btn:hover { background: rgba(184, 115, 51, 0.2); }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid var(--text); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

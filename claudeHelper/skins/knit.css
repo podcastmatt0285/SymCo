@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Pacifico&display=swap');
+
+:root {
+    --bg: #f5ece3;       /* Oatmeal */
+    --card: #ffffff;
+    --text: #8d7b68;     /* Taupe */
+    --accent: #c6b2a2;   /* Yarn Grey */
+    --warm: #d78a76;     /* Soft Clay */
+}
+
+body {
+    background-color: var(--bg);
+    /* Knit texture hint */
+    background-image:
+        radial-gradient(circle at 100% 50%, transparent 20%, rgba(0,0,0,0.03) 21%, rgba(0,0,0,0.03) 34%, transparent 35%, transparent),
+        radial-gradient(circle at 0% 50%, transparent 20%, rgba(0,0,0,0.03) 21%, rgba(0,0,0,0.03) 34%, transparent 35%, transparent) center center;
+    background-size: 20px 20px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(141, 123, 104, 0.1);
+    text-align: center;
+    border-radius: 30px; /* Very soft corners */
+}
+
+h1 {
+    font-family: 'Pacifico', cursive;
+    color: var(--warm);
+    font-weight: 400;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--bg);
+    padding: 14px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 20px;
+}
+
+input, textarea, select {
+    background: #faf7f5;
+    color: var(--text);
+}
+
+input:focus { border-color: var(--warm); outline: none; }
+
+button {
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+    border: none;
+}
+
+button:hover { background: var(--warm); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 6px solid var(--bg);
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.link-btn {
+    background: white;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 20px;
+}
+
+.link-btn:hover {
+    border-color: var(--warm);
+    color: var(--warm);
+    background: #fffafa;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px dotted var(--accent); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

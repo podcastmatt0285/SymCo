@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+:root {
+    --bg: #000000;       /* Pure Black */
+    --card: #000000;     /* Pure Black */
+    --text: #e7e9ea;     /* High contrast off-white */
+    --primary: #eff3f4;  /* White (X button style) */
+    --secondary: #1d9bf0;/* Twitter Blue accent */
+    --input: #000000;    /* Black input */
+    --border: #333639;   /* Dark Grey borders */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid var(--border);
+    box-shadow: none; /* Flat design */
+    text-align: center;
+}
+
+h1 {
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: -1px; /* Tight tracking */
+    margin-bottom: 20px;
+    text-shadow: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 15px;
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--border);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border-radius: 0; /* Sharp edges requested */
+    font-family: 'Inter', sans-serif;
+    outline: none;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--secondary);
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: var(--text);
+}
+
+button {
+    background: var(--primary);
+    color: #000000;
+    font-weight: 700;
+    text-transform: capitalize;
+    letter-spacing: normal;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background: #d7dbdc; /* Slightly darker white */
+}
+
+/* AVATAR FIX - MUST MAINTAIN DIMENSIONS */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%; /* X uses circular avatars */
+    border: 2px solid #000000; /* Black border to merge with bg */
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 0; /* Sharp edges */
+}
+
+.link-btn:hover {
+    background: rgba(239, 243, 244, 0.1);
+    border-color: var(--text);
+    box-shadow: none;
+}
+
+/* STACK SPACING */
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+}
+
+.link-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 5px;
+    align-items: center;
+    color: #71767b; /* Muted text for secondary info */
+    font-size: 14px;
+}

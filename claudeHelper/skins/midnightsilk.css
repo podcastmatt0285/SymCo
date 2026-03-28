@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+    --bg: #050505;
+    --card: #0f0f12;
+    --text: #e0e0e0;
+    --accent: #5D4C85; /* Muted Silk Purple */
+    --highlight: #a8a8ff;
+}
+
+body {
+    background: var(--bg);
+    /* Silky gradient sheen */
+    background-image: linear-gradient(135deg, #050505 0%, #1a1a2e 50%, #050505 100%);
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    height: 100vh;
+}
+
+.box {
+    background: rgba(15, 15, 18, 0.9);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid #333;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    text-align: center;
+    border-radius: 2px;
+}
+
+h1 {
+    font-style: italic;
+    color: var(--highlight);
+    margin-bottom: 20px;
+    font-weight: 400;
+    letter-spacing: 1px;
+}
+
+input, textarea, button, select {
+    border: 1px solid #333;
+    padding: 12px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+    font-family: 'Playfair Display', serif;
+}
+
+input, textarea, select {
+    background: #0a0a0a;
+    color: white;
+    border-bottom: 1px solid var(--accent);
+}
+
+input:focus { border-color: var(--highlight); outline: none; }
+
+button {
+    background: linear-gradient(to right, #000, var(--accent), #000);
+    color: white;
+    font-weight: normal;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border: none;
+    transition: 0.5s;
+}
+
+button:hover { background-position: right center; color: var(--highlight); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid var(--highlight);
+    padding: 4px;
+    margin: 20px auto;
+    display: block;
+    opacity: 0.9;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid #333;
+    color: #bbb;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-style: italic;
+    transition: 0.2s;
+    border-radius: 0;
+}
+
+.link-btn:hover {
+    border-color: var(--highlight);
+    color: var(--highlight);
+    background: rgba(255,255,255,0.02);
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; border-top: 1px solid #222; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

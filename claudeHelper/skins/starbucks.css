@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+:root {
+    --bg: #f7f7f7;
+    --card: #ffffff;
+    --text: #1e1e1e; /* Espresso */
+    --primary: #00704A; /* Starbucks Green */
+    --input: #f9f9f9;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid #e6e6e6;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+    border-radius: 4px;
+}
+
+h1 {
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 1px solid #ccc;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 20px; /* Rounded like their cups/buttons */
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: var(--text);
+}
+
+input:focus { border-color: var(--primary); outline: none; }
+
+button {
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    border: 1px solid var(--primary);
+}
+
+button:hover { background: #005c3c; }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--primary);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: white;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: 600;
+    transition: 0.2s;
+    border-radius: 20px;
+}
+
+.link-btn:hover { background: #f0fdf4; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-size: 0.9em; }

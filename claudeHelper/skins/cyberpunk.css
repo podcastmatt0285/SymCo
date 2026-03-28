@@ -1,0 +1,24 @@
+:root{--bg:#050510;--card:#0a0a1f;--text:#0ff;--primary:#f0f;--input:#12123a}
+body{background:var(--bg);color:var(--text);font-family:"Courier New", monospace;margin:0;display:flex;justify-content:center;padding:20px;}
+.box{background:var(--card);width:100%;max-width:400px;padding:30px;border: 1px solid #0ff; box-shadow: 0 0 15px #f0f; text-align:center}
+h1{text-transform:uppercase; text-shadow: 2px 2px #f0f;}
+input,textarea,button,select{border:1px solid #0ff; padding:12px;margin:8px 0;box-sizing:border-box}
+input,textarea,select{background:var(--input);color:#0ff}
+button{background:#f0f;color:white;font-weight:bold;text-transform:uppercase;letter-spacing:2px;}
+
+/* FIXED SECTION BELOW */
+.av-prev{
+    width: 100px;             /* Enforce width */
+    height: 100px;            /* Enforce height */
+    object-fit: cover;        /* Crop image to fit box, don't stretch */
+    border-radius: 0;         /* Square edges for cyberpunk look */
+    border: 2px solid #0ff;   /* Neon border */
+    margin: 20px auto;        /* Center it */
+    display: block;
+}
+
+.link-btn{background:transparent; border:1px solid #f0f; color:#f0f; display:block; padding:15px; text-decoration:none; margin-top:10px; font-weight:bold; transition:0.2s;}
+.link-btn:hover{background:#f0f; color:#fff; box-shadow: 0 0 10px #f0f;}
+/* Add basic link stack spacing */
+.link-stack{display:flex;flex-direction:column;gap:10px;margin-top:20px;border-top:1px solid #0ff;padding-top:20px}
+.link-item{display:flex;gap:5px;margin-bottom:5px;align-items:center}

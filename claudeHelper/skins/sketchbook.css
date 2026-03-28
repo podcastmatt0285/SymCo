@@ -1,0 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+:root {
+    --bg: #e0e0e0;       /* Neutral Grey Desk */
+    --card: #ffffff;     /* Bright White Paper */
+    --text: #424242;     /* Charcoal / Pencil */
+    --accent: #FF6B6B;   /* Red Marker */
+}
+
+body {
+    background: var(--bg);
+    /* Subtle texture pattern */
+    background-image: radial-gradient(#ccc 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--text);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 18px; /* Handwriting needs to be a bit bigger */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    border-radius: 5px;
+    /* Rough edge look */
+    border: 1px solid #ddd;
+    transform: rotate(-1deg); /* Slight organic tilt */
+}
+
+h1 {
+    font-size: 2.8rem;
+    color: var(--accent);
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 0px #eee;
+}
+
+input, textarea, button, select {
+    border: 2px dashed #999; /* Dashed "Cutout" look */
+    padding: 12px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 10px;
+    background: #fafafa;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.2rem;
+    color: var(--text);
+    transition: 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    border-style: solid; /* Becomes solid when focused */
+    outline: none;
+    transform: scale(1.02);
+}
+
+button {
+    background: var(--text);
+    color: white;
+    border-style: solid;
+    border-color: var(--text);
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    transform: rotate(2deg); /* Playful interaction */
+}
+
+.av-prev {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 50%;
+    /* Scribble border */
+    border: 5px solid #eee;
+    outline: 2px dashed var(--text);
+    margin: 20px auto;
+    display: block;
+    background: white;
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 25px;
+    border-top: 2px dashed #ccc;
+    padding-top: 25px;
+}
+
+.link-btn {
+    display: block;
+    background: white;
+    color: var(--text);
+    text-decoration: none;
+    padding: 15px;
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; /* Organic/Blob shape */
+    border: 2px solid var(--text);
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.link-item {
+    display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
+    font-size: 0.9rem;
+}

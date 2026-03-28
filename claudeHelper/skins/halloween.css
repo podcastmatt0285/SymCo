@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Montserrat:wght@400;700&display=swap');
+
+:root {
+    --bg: #1a1a1a;
+    --card: #2d2d2d;
+    --orange: #ff7518;   /* Pumpkin Orange */
+    --purple: #663399;   /* Witch Purple */
+    --text: #f0f0f0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid var(--purple);
+    box-shadow: 0 0 15px rgba(102, 51, 153, 0.5);
+    text-align: center;
+    border-radius: 12px;
+}
+
+h1 {
+    font-family: 'Creepster', cursive;
+    font-size: 3rem;
+    color: var(--orange);
+    text-shadow: 2px 2px 0 black;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid #444;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+}
+
+input, textarea, select {
+    background: #111;
+    color: var(--orange);
+}
+
+input:focus { border-color: var(--orange); outline: none; }
+
+button {
+    background: var(--orange);
+    color: black;
+    font-family: 'Creepster', cursive;
+    font-size: 1.5rem;
+    border: none;
+    letter-spacing: 1px;
+}
+
+button:hover { background: var(--purple); color: white; }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--purple);
+    margin: 20px auto;
+    display: block;
+    filter: sepia(100%) hue-rotate(320deg); /* Ghostly effect */
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px solid var(--purple);
+    color: var(--purple);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 8px;
+}
+
+.link-btn:hover { background: var(--purple); color: white; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #444; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; color: #888; }

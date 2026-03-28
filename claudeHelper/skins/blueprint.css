@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+:root {
+    --bg: #1a3c6e;       /* Deep Blueprint Blue */
+    --card: #224a85;     /* Lighter Blue Area */
+    --text: #ffffff;     /* White Chalk/Line */
+    --grid: rgba(255,255,255,0.1);
+}
+
+body {
+    background: var(--bg);
+    /* Blueprint Grid Pattern */
+    background-image: 
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: var(--text);
+    font-family: 'Roboto Mono', monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--card); /* Solid backing so text is readable */
+    width: 100%;
+    max-width: 420px;
+    padding: 30px;
+    /* Precise technical border */
+    border: 2px solid white;
+    outline: 4px solid rgba(255,255,255,0.2); /* Double line effect */
+    text-align: center;
+    box-shadow: 0 0 0 10px var(--bg); /* Spacing hack */
+}
+
+h1 {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 2px solid white;
+    display: inline-block;
+    padding-bottom: 5px;
+    margin-bottom: 25px;
+}
+
+input, textarea, button, select {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.5);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    color: white;
+    font-family: 'Roboto Mono', monospace;
+    border-radius: 0; /* No round corners in architecture */
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: 2px solid white;
+    background: rgba(255,255,255,0.1);
+    border-color: white;
+}
+
+button {
+    background: white;
+    color: var(--bg);
+    font-weight: bold;
+    border: 2px solid white;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background: var(--bg);
+    color: white;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px dashed white; /* Construction line style */
+    padding: 5px;
+    margin: 20px auto;
+    display: block;
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    padding-top: 20px;
+    position: relative;
+}
+
+/* Add "Measurement" markers on the side */
+.link-stack::before {
+    content: "LINKS_REF_01";
+    position: absolute;
+    top: 5px;
+    right: 0;
+    font-size: 9px;
+    opacity: 0.5;
+}
+
+.link-btn {
+    display: block;
+    background: transparent;
+    color: white;
+    text-decoration: none;
+    padding: 15px;
+    border: 1px solid white;
+    font-size: 14px;
+    transition: 0.2s;
+    position: relative;
+}
+
+.link-btn:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Technical crosshair on hover */
+.link-btn:hover::after {
+    content: "+";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.link-item {
+    display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 5px;
+}
+.embed-label { font-size: 10px; color: #ccc; text-transform:uppercase;}

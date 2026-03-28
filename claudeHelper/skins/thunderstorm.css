@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@400;500&display=swap');
+
+:root {
+    --bg: #1a202c;       /* Dark Slate */
+    --card: #2d3748;     /* Lighter Slate */
+    --text: #e2e8f0;     /* Light Grey */
+    --primary: #f6e05e;  /* Lightning Yellow */
+    --input: #171923;    /* Very Dark */
+}
+
+body {
+    background: var(--bg);
+    /* subtle gradient to simulate a stormy sky */
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); 
+    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border-top: 4px solid var(--primary); /* The lightning strike top border */
+    border-radius: 4px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    text-align: center;
+}
+
+h1 {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0 0 15px 0;
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(246, 224, 94, 0.3);
+}
+
+input, textarea, button, select {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border-radius: 2px; /* Sharper edges for storm theme */
+    border: 1px solid #4a5568;
+    box-sizing: border-box;
+    display: block;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: white;
+    font-family: 'Roboto', sans-serif;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 5px rgba(246, 224, 94, 0.2);
+}
+
+button {
+    background: var(--primary);
+    color: #1a202c;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+button:hover {
+    filter: brightness(110%);
+}
+
+.av-prev {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin: 20px auto;
+    border: 3px solid var(--primary);
+    box-shadow: 0 0 15px rgba(246, 224, 94, 0.4);
+}
+
+/* Link Stack */
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+    border-top: 1px dashed #4a5568;
+    padding-top: 20px;
+}
+
+.link-btn {
+    display: block;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    text-decoration: none;
+    padding: 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    border-left: 3px solid transparent; /* Hidden indicator */
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-left: 3px solid var(--primary); /* Reveal indicator on hover */
+    transform: translateX(5px);
+}
+
+/* Fix embed label readability in dark mode */
+.embed-label { color: #a0aec0 !important; }
+
+/* Admin list items */
+.link-item {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+    align-items: center;
+    background: #171923;
+    padding: 8px;
+    border-radius: 4px;
+}

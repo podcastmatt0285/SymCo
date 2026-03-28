@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster&family=PT+Serif:wght@400;700&display=swap');
+
+:root {
+    --bg: #F40009;       /* Coke Red */
+    --card: #F40009;
+    --text: #ffffff;
+    --input: #ffffff;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'PT Serif', serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 2px solid white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    text-align: center;
+    border-radius: 8px;
+}
+
+h1 {
+    font-family: 'Lobster', cursive; /* Script style */
+    font-size: 3rem;
+    font-weight: 400;
+    margin-bottom: 10px;
+}
+
+input, textarea, button, select {
+    border: none;
+    padding: 14px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 30px; /* Bottle curves */
+}
+
+input, textarea, select {
+    background: rgba(255,255,255,0.9);
+    color: #F40009;
+    font-family: 'PT Serif', serif;
+}
+
+button {
+    background: white;
+    color: #F40009;
+    font-weight: bold;
+    font-family: 'Lobster', cursive;
+    font-size: 1.2rem;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid white;
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid white;
+    color: white;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 30px;
+}
+
+.link-btn:hover { background: white; color: #F40009; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.4); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

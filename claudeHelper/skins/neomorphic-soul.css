@@ -1,0 +1,190 @@
+@import url('https://fonts.googleapis.com/css2?family=Chonburi&family=Outfit:wght@400;700&display=swap');
+
+:root {
+    /* MERGED PALETTE */
+    /* We need a mid-tone base for Neumorphism to work (cannot be pure black or white) */
+    /* Using a "Latte" color derived from Soul's cream */
+    --bg: #EAE0D5;       
+    --card: #EAE0D5;
+    
+    /* Soul Colors for text/accents */
+    --text: #3e2723;     /* Dark Espresso */
+    --accent: #d84315;   /* Burnt Orange */
+    --gold: #f9a825;     /* Goldenrod */
+
+    /* Neumorphism Shadow Calculations based on --bg */
+    /* Darker shadow color */
+    --shadow-dark: #cbbdc1; 
+    /* Lighter highlight color */
+    --shadow-light: #ffffff; 
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--bg);
+    width: 100%;
+    max-width: 420px;
+    padding: 40px 30px;
+    
+    /* THE MERGE: Soft Extruded Box */
+    border-radius: 30px; /* Rounder, softer */
+    border: none;
+    box-shadow: 
+        20px 20px 60px var(--shadow-dark), 
+        -20px -20px 60px var(--shadow-light);
+    
+    text-align: center;
+    color: var(--text);
+}
+
+h1 {
+    /* SOUL TYPOGRAPHY */
+    font-family: 'Chonburi', serif;
+    font-size: 2.5rem;
+    color: var(--accent);
+    margin-bottom: 25px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1); /* Subtle depth */
+}
+
+input, textarea, button, select {
+    width: 100%;
+    padding: 18px;
+    margin: 15px 0;
+    box-sizing: border-box;
+    display: block;
+    
+    /* NEUMORPHIC SHAPE */
+    border-radius: 15px; /* Soft rectangles */
+    border: none;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    transition: 0.3s ease;
+}
+
+/* INPUTS: Pressed In (Inset) */
+input, textarea, select {
+    box-shadow: 
+        inset 6px 6px 12px var(--shadow-dark), 
+        inset -6px -6px 12px var(--shadow-light);
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    color: var(--accent);
+    /* Slightly deeper press on focus */
+    box-shadow: 
+        inset 8px 8px 16px var(--shadow-dark), 
+        inset -8px -8px 16px var(--shadow-light);
+}
+
+/* BUTTONS: Popping Out (Outset) */
+button {
+    font-family: 'Chonburi', serif; /* Retro font on button */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    cursor: pointer;
+    
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark), 
+        -8px -8px 16px var(--shadow-light);
+}
+
+button:hover {
+    color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 
+        10px 10px 20px var(--shadow-dark), 
+        -10px -10px 20px var(--shadow-light);
+}
+
+button:active {
+    transform: translateY(0);
+    /* Press effect */
+    box-shadow: 
+        inset 4px 4px 8px var(--shadow-dark), 
+        inset -4px -4px 8px var(--shadow-light);
+}
+
+.av-prev {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 50%;
+    
+    /* THE MERGE: Neumorphic Ring with Soul Colors */
+    border: 4px solid var(--bg);
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark), 
+        -8px -8px 16px var(--shadow-light);
+        
+    margin: 10px auto 30px auto;
+    display: block;
+}
+
+/* LINK STACK */
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 30px;
+    /* Soft divider line */
+    border-top: 2px solid rgba(62, 39, 35, 0.05); 
+    padding-top: 30px;
+}
+
+.link-btn {
+    display: block;
+    background: var(--bg);
+    color: var(--text);
+    text-decoration: none;
+    padding: 18px;
+    border-radius: 15px;
+    font-weight: 700;
+    transition: 0.2s;
+    
+    /* Soft Pop-out */
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark), 
+        -8px -8px 16px var(--shadow-light);
+}
+
+.link-btn:hover {
+    color: var(--accent);
+    /* "Press" effect on hover for tactile feel */
+    box-shadow: 
+        inset 4px 4px 8px var(--shadow-dark), 
+        inset -4px -4px 8px var(--shadow-light);
+}
+
+/* Admin Elements */
+.link-item {
+    display: flex; gap: 8px; margin-bottom: 12px; align-items: center;
+    padding: 10px;
+    border-radius: 10px;
+    /* Shallow inset for list items */
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark), 
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+.embed-label {
+    color: var(--accent) !important;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    margin-top: 10px;
+    opacity: 0.7;
+}

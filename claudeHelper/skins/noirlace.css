@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap');
+
+:root {
+    --bg: #111;
+    --card: #1a1a1a;
+    --text: #ddd;
+    --accent: #333;
+}
+
+body {
+    background-color: var(--bg);
+    /* Abstract Lace Pattern */
+    background-image:
+        radial-gradient(circle at 50% 50%, #222 10%, transparent 10%),
+        radial-gradient(circle at 0 0, #222 10%, transparent 10%),
+        radial-gradient(circle at 100% 0, #222 10%, transparent 10%),
+        radial-gradient(circle at 100% 100%, #222 10%, transparent 10%),
+        radial-gradient(circle at 0 100%, #222 10%, transparent 10%);
+    background-size: 20px 20px;
+    color: var(--text);
+    font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: rgba(26, 26, 26, 0.95);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid #333;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    text-align: center;
+    border-radius: 4px;
+}
+
+h1 {
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--accent);
+    padding: 12px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: #000;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+}
+
+input:focus { border-color: #666; outline: none; }
+
+button {
+    background: #000;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border: 1px solid white;
+}
+
+button:hover { background: white; color: black; }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid #444;
+    padding: 5px;
+    background: radial-gradient(#333, #000);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #999;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: 300;
+    transition: 0.2s;
+    letter-spacing: 1px;
+}
+
+.link-btn:hover {
+    border-color: white;
+    color: white;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; color: #666; }

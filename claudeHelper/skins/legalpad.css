@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+:root {
+    --bg: #5D4037;       /* Dark Wood Desk */
+    --card: #fff9c4;     /* Yellow Paper */
+    --text: #2c3e50;     /* Blue Ink */
+    --line: #b2ebf2;     /* Cyan Rule Lines */
+    --red-line: #ffcdd2; /* Margin Line */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier Prime', monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px 30px 50px 30px; /* Extra bottom padding */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    text-align: center;
+    border-radius: 2px;
+    position: relative;
+    /* Top binding simulation */
+    border-top: 15px solid #333; 
+}
+
+h1 {
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-decoration: underline;
+    text-decoration-color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: -1px;
+}
+
+input, textarea, button, select {
+    border: none;
+    padding: 10px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    background: transparent;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1rem;
+    color: var(--text);
+    /* The ruled line effect for inputs */
+    border-bottom: 2px solid var(--line);
+    border-radius: 0;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-bottom: 2px solid var(--text);
+    background: rgba(255,255,255,0.2);
+}
+
+button {
+    background: transparent;
+    border: 2px solid var(--text);
+    color: var(--text);
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: var(--text);
+    color: var(--card);
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    /* Ink stamp look */
+    border: 4px solid var(--text);
+    margin: 20px auto;
+    display: block;
+    filter: sepia(0.5); /* Slight vintage photo look */
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 25px;
+    border-top: 2px solid var(--text); /* Thick ink line */
+    padding-top: 25px;
+}
+
+.link-btn {
+    display: block;
+    background: transparent;
+    color: var(--text);
+    text-decoration: none;
+    padding: 12px;
+    font-weight: bold;
+    border: 1px solid var(--text);
+    transition: 0.1s;
+    box-shadow: 3px 3px 0 rgba(44, 62, 80, 0.2);
+}
+
+.link-btn:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 rgba(44, 62, 80, 0.2);
+    background: rgba(44, 62, 80, 0.05);
+}
+
+.link-item {
+    display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 5px;
+}
+.embed-label { font-size: 10px; opacity: 0.7; }

@@ -1,0 +1,113 @@
+/* Theme: The Iron Maiden */
+:root {
+  --velvet-deep: #220000;
+  --blood: #8a0000;
+  --gold: #c5a059;
+  --steel: #444;
+}
+
+@keyframes tension-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
+  50% { transform: scale(0.98); box-shadow: inset 0 0 20px #000; }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); }
+}
+
+@keyframes chain-scroll {
+  from { background-position: 0 0; }
+  to { background-position: 0 40px; }
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #050505;
+  perspective: 1200px; /* Strong 3D space */
+  
+  /* SVG CHAIN LINKS */
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='40' viewBox='0 0 20 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0 C15 0 18 5 18 10 C18 15 15 20 10 20 C5 20 2 15 2 10 C2 5 5 0 10 0 M10 20 L10 40' stroke='%23222' fill='none' stroke-width='2'/%3E%3C/svg%3E");
+  animation: chain-scroll 4s linear infinite;
+}
+
+.box {
+  width: 100%;
+  max-width: 400px;
+  /* Gradient simulating velvet lighting */
+  background: radial-gradient(circle at 50% 30%, var(--blood), var(--velvet-deep));
+  padding: 50px 30px;
+  text-align: center;
+  
+  /* MONOLITH 3D EFFECT */
+  transform: rotateX(10deg);
+  transform-style: preserve-3d;
+  box-shadow: 0 50px 100px rgba(0,0,0,1);
+  
+  /* The Steel Cage Border */
+  border: 12px solid #1a1a1a;
+  outline: 2px solid var(--steel);
+}
+
+/* Corner Rivets (Pseudo-elements) */
+.box::after {
+  content: '';
+  position: absolute;
+  top: -20px; left: -20px; right: -20px; bottom: -20px;
+  border: 2px dashed var(--gold);
+  pointer-events: none;
+  opacity: 0.3;
+  transform: translateZ(20px); /* Floating border */
+}
+
+h1 {
+  font-family: 'Times New Roman', serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  text-shadow: 0 2px 5px #000;
+  border-bottom: 1px solid var(--gold);
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.av-prev {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 0 auto 30px;
+  display: block;
+  border: 4px solid var(--gold);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  transform: translateZ(30px); /* Floats above the card */
+}
+
+.link-btn {
+  display: block;
+  background: #110000;
+  color: #aaa;
+  text-decoration: none;
+  padding: 20px;
+  margin-bottom: 15px;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: 1px solid #330000;
+  transition: 0.3s;
+  
+  /* 3D Pressed Look */
+  box-shadow: 
+    inset 0 0 10px #000,
+    0 5px 10px rgba(0,0,0,0.5);
+    
+  animation: tension-pulse 3s infinite ease-in-out;
+}
+
+.link-btn:hover {
+  background: var(--blood);
+  color: #fff;
+  border-color: var(--gold);
+  transform: scale(1.05) translateZ(10px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+  cursor: pointer;
+}

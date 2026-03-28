@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Shrikhand&family=Quicksand:wght@500;700&display=swap');
+
+/* 1. HOUDINI PROPERTIES */
+@property --x {
+	syntax: '<length-percentage>';
+	initial-value: 50%;
+	inherits: false;
+}
+
+@property --y {
+	syntax: '<length-percentage>';
+	initial-value: 50%;
+	inherits: false;
+}
+
+:root {
+    --bg: #3E2723;       /* Dark Chocolate */
+    --card: #FFF3E0;     /* Cream */
+    --orange: #FF7043;   /* Burnt Orange */
+    --yellow: #FBC02D;   /* Mustard */
+    --brown: #5D4037;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    background: var(--bg);
+    color: var(--brown);
+    font-family: 'Quicksand', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px; /* Added padding to ensure space at top/bottom */
+    position: relative;
+    overflow-x: hidden; /* FIXED: Allows vertical scroll, hides horizontal overflow */
+}
+
+/* 2. THE TRIPPY BACKGROUND LAYER */
+body::before {
+    content: "";
+    position: fixed; /* FIXED: Background stays put while you scroll */
+    top: -50px; left: -50px; right: -50px; bottom: -50px;
+    z-index: 0;
+    
+    /* The Trippy Logic adapted for Soul Colors */
+    --pattern: repeating-radial-gradient(
+        circle at var(--x, 50%) var(--y, 50%), 
+        var(--bg), 
+        var(--card), 
+        var(--bg) 3em
+    );
+    
+    --map: linear-gradient(90deg, var(--brown), var(--orange));
+    
+    background: var(--pattern), var(--map);
+    background-blend-mode: hard-light;
+    filter: contrast(15) blur(1px); 
+    
+    /* The Automatic Movement Animation */
+    animation: soulWander 15s ease-in-out infinite alternate;
+    pointer-events: none; /* Ensures clicks pass through to the box */
+}
+
+@keyframes soulWander {
+    0% { --x: 20%; --y: 20%; }
+    25% { --x: 80%; --y: 30%; }
+    50% { --x: 40%; --y: 80%; }
+    75% { --x: 90%; --y: 60%; }
+    100% { --x: 10%; --y: 90%; }
+}
+
+/* 3. THE SOUL BOX */
+.box {
+    position: relative;
+    z-index: 10;
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    
+    /* Deep retro shadow */
+    box-shadow: 10px 10px 0px var(--orange), -5px -5px 20px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 20px;
+    border: 3px solid var(--brown);
+    margin-bottom: 40px; /* Space at the bottom for scrolling */
+}
+
+h1 {
+    font-family: 'Shrikhand', cursive;
+    font-size: 3rem;
+    color: var(--orange);
+    margin-bottom: 10px;
+    text-shadow: 3px 3px 0px var(--yellow);
+    transform: rotate(-2deg);
+}
+
+input, textarea, button, select, .link-btn {
+    border: 2px solid var(--brown);
+    padding: 12px;
+    margin: 10px 0;
+    width: 100%;
+    display: block;
+    border-radius: 30px;
+    background: white;
+    font-weight: 700;
+    font-family: 'Quicksand', sans-serif;
+    color: var(--brown);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+}
+
+input:focus, textarea:focus {
+    border-color: var(--orange);
+    outline: none;
+    background: #fff8e1;
+    transform: scale(1.02);
+}
+
+button {
+    background: var(--brown);
+    color: var(--yellow);
+    font-family: 'Shrikhand', cursive;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+    transition: 0.2s;
+}
+
+button:hover {
+    background: var(--orange);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.2);
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid var(--yellow);
+    outline: 3px solid var(--orange);
+    margin: 20px auto;
+    display: block;
+    background: #fff;
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+    border-top: 3px dashed var(--brown);
+    padding-top: 20px;
+}
+
+.link-btn {
+    text-decoration: none;
+    background: var(--yellow);
+    color: var(--brown);
+    font-weight: 700;
+    transition: 0.2s;
+    text-align: center;
+}
+
+.link-btn:hover {
+    background: var(--orange);
+    color: white;
+    transform: scale(1.02);
+}
+
+.embed-label { color: var(--brown) !important; font-weight: bold; }
+.link-item { background: rgba(255,255,255,0.5); padding: 5px; border-radius: 10px; border: 1px solid var(--brown); }

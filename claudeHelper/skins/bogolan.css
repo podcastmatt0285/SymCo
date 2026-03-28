@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Cutive+Mono&family=Work+Sans:wght@400;700&display=swap');
+
+* { box-sizing: border-box; }
+
+:root {
+    --bg-color: #2c241b; /* Mud Dark Brown */
+    --card: #1a1510;
+    --text: #e8dbc3;     /* Raw Cotton */
+    --accent: #d4a373;   /* Clay */
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    font-family: 'Work Sans', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px;
+
+    /* MUD CLOTH PATTERN - Dashes and dots */
+    background-image: 
+        radial-gradient(var(--text) 2px, transparent 2px),
+        linear-gradient(45deg, transparent 48%, var(--text) 48%, var(--text) 52%, transparent 52%);
+    background-size: 30px 30px, 40px 40px;
+    background-position: 0 0, 0 0;
+}
+
+.box {
+    width: min(440px, 92vw);
+    background: var(--card);
+    padding: 40px;
+    border: 2px dashed var(--text); /* Stitched look */
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    font-family: 'Cutive Mono', monospace;
+    font-size: 2.2rem;
+    color: var(--accent);
+    margin-bottom: 25px;
+    text-align: center;
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 10px;
+}
+
+input, textarea, button, select, .link-btn {
+    width: 100%;
+    min-height: 56px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--text);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font-family: 'Cutive Mono', monospace;
+    font-weight: 700;
+    text-align: center;
+    display: block;
+    transition: 0.3s;
+}
+
+input:focus { border-color: var(--accent); background: rgba(255,255,255,0.05); outline: none; }
+
+button {
+    background: var(--text);
+    color: var(--bg-color);
+}
+
+button:hover { background: var(--accent); }
+
+.av-prev {
+    width: 100px; height: 100px; object-fit: cover;
+    border-radius: 50%; border: 2px dashed var(--accent);
+    margin: 0 auto 20px auto; display: block;
+}
+
+.link-stack { display: flex; flex-direction: column; margin-top: 30px; }
+.link-btn:hover { background: rgba(255,255,255,0.1); letter-spacing: 2px; }
+.embed-label { color: #888 !important; text-align: center; font-size: 11px; }
+.link-item { border: 1px solid #444; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }

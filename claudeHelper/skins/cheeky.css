@@ -1,0 +1,153 @@
+@import url('https://fonts.googleapis.com/css2?family=Cookie&family=Quicksand:wght@400;700&display=swap');
+
+:root {
+    /* Dusty Rose / Nude Background */
+    --bg-color: #c58c85; 
+    
+    /* VERY Transparent Black Box (50%) */
+    --card: rgba(0, 0, 0, 0.5);
+    
+    --text: #ffffff;
+    --accent: #ffdbd4; /* Light peach accent */
+    --input-bg: rgba(0, 0, 0, 0.3);
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text);
+    font-family: 'Quicksand', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    /* Big padding to frame the content with the pattern */
+    padding: 50px 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+
+    /* --- THE BOOTY PATTERN --- */
+    background-image: url("data:image/svg+xml,%3Csvg fill='%23000000' width='64px' height='64px' version='1.1' viewBox='144 144 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Cpath d='m572.21 256.27c-9.1641-22.781-18.656-46.328-27.234-72.941-3.2852-10.148-12.633-16.977-23.293-16.977h-243.4c-10.66 0-20.008 6.8281-23.293 16.977-8.5781 26.613-18.035 50.16-27.234 72.941-35.922 89.188-66.957 166.22-10.914 359.64 3.0312 10.441 12.703 17.742 23.547 17.742h127.7c6.5703 0 12.742-2.5547 17.379-7.2305 4.6367-4.6367 7.1172-10.844 7.082-17.414-0.25391-31.359-0.875-91.488-2.3008-141.76 0-0.62109-0.25391-1.168-0.54688-1.6445 4.3828-7.3008 7.7773-15.223 10.148-23.695 2.2617 8.7617 5.6211 16.977 10.078 24.496-0.074219 0.25391-0.18359 0.51172-0.18359 0.80469-2.2617 52.207-2.5547 111.39-2.5195 142.02 0 13.473 10.988 24.422 24.496 24.422h127.89c10.844 0 20.516-7.3008 23.547-17.742 56.004-193.41 25.012-270.44-10.949-359.63zm-60.859 254.79c-73.965-5.8398-102.88-42.68-107.92-88.422 0.98437-9.5664 0.91406-19.566-0.21875-29.789 2.082-24.715 9.1641-50.562 18.582-74.586-10.004 18.766-17.23 38.152-21.43 57.098-4.125-19.02-11.574-38.406-22.16-57.098 10.734 27.855 17.121 53.668 18.875 76.812-1.0234 9.6367-1.1328 19.02-0.36328 28.039-5.6602 49.688-39.574 82.145-108.06 87.949 45.086 1.4961 76.117-12.812 94.594-36.07 1.0938 41.438 1.6797 88.094 1.9727 119.42-6.2812 6.9727-19.641 12.922-27.16 12.922h-127.86c-3.1758 0-6.1328-0.73047-8.8359-1.9727-51.949-184.73-21.797-259.79 13.07-346.42 9.1992-22.891 18.766-46.547 27.383-73.418 2.3008-7.1562 8.9062-11.973 16.43-11.973h243.43c7.5195 0 14.129 4.8203 16.43 11.973 8.6523 26.871 18.18 50.527 27.383 73.418 8.8359 21.941 17.379 43.117 24.352 65.496 15.625 63.195 16.793 139.42-20.371 267.75-2.5938 8.9453-10.77 15.152-20.078 15.152l-127.89-0.003906c-2.5195 0-4.8906-0.47266-7.1172-1.2773 0-29.57 0.29297-81.812 2.1914-129.97 18.145 22.523 48.957 36.359 94.773 34.973z'/%3E%3Cpath d='m497.44 188.54c-7.9219-0.62109-15.844-0.83984-23.805-0.94922-7.9219 0-15.883 0.10938-23.805 0.62109-7.9219 0.47266-15.883 1.2031-23.805 2.6289 7.9219 1.5352 15.844 2.3711 23.766 2.957 7.9219 0.62109 15.844 0.83984 23.766 0.98438 7.9219 0 15.844-0.10938 23.805-0.62109 7.9219-0.47266 15.883-1.2031 23.805-2.6289-7.8828-1.5664-15.805-2.4062-23.727-2.9922z'/%3E%3Cpath d='m214.65 456.07c-0.4375-14.312-0.10938-28.66 0.54687-43.043 0.69531-14.348 1.8633-28.73 3.0312-43.227-4.0898 13.945-6.8633 28.293-8.6172 42.75-1.7891 14.457-2.4453 29.098-2.1172 43.664 0.4375 14.602 1.8242 29.168 4.5273 43.516 2.6641 14.348 6.5352 28.477 12.012 41.949-2.6289-14.312-4.8906-28.512-6.4609-42.789-1.6094-14.199-2.6289-28.473-2.9219-42.82z'/%3E%3C/g%3E%3C/svg%3E");
+    
+    background-size: 80px 80px;
+    background-repeat: repeat;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.box {
+    background: var(--card); /* Heavy Transparency */
+    width: 100%;
+    max-width: 350px; /* Slimmer */
+    padding: 30px;
+    
+    /* Subtle Border */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 30px rgba(0,0,0,0.2);
+    
+    text-align: center;
+    border-radius: 15px;
+    
+    /* Blur to keep text legible over the butt pattern */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+h1 {
+    font-family: 'Cookie', cursive; /* Playful, curvy font */
+    font-size: 3.5rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+    line-height: 1;
+}
+
+input, textarea, button, select {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 8px;
+    
+    /* Dark semi-transparent background */
+    background: var(--input-bg);
+    color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+button {
+    background: var(--accent);
+    color: #4e2e2a; /* Dark text on button */
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.3s;
+    border-radius: 50px;
+}
+
+button:hover {
+    background: white;
+    transform: scale(1.05);
+}
+
+.av-prev {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    background: transparent;
+    margin: 20px auto;
+    display: block;
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 35px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.3);
+    padding-top: 25px;
+}
+
+.link-btn {
+    display: block;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text);
+    text-decoration: none;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+.link-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,0,0,0.6);
+}
+
+.embed-label {
+    color: var(--accent) !important;
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.link-item {
+    display: flex; gap: 8px; margin-bottom: 5px; align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 0;
+    background: rgba(0,0,0,0.2);
+}

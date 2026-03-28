@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --bg: #000000;
+    --card: #111111;
+    --text: #ffffff;
+    --neon: #97D700;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid #333;
+    box-shadow: 0 0 15px rgba(151, 215, 0, 0.2);
+    text-align: center;
+    border-radius: 4px;
+}
+
+h1 {
+    font-family: 'Creepster', cursive;
+    color: var(--neon);
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px var(--neon);
+}
+
+input, textarea, button, select {
+    border: 1px solid #333;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: black;
+    color: white;
+}
+
+input:focus { border-color: var(--neon); outline: none; }
+
+button {
+    background: black;
+    color: var(--neon);
+    border: 1px solid var(--neon);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+button:hover { background: var(--neon); color: black; box-shadow: 0 0 20px var(--neon); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--neon);
+    margin: 20px auto;
+    display: block;
+    filter: grayscale(100%);
+}
+
+.link-btn {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: var(--neon);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 0;
+}
+
+.link-btn:hover { background: #222; border-color: var(--neon); }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; color: #888; }

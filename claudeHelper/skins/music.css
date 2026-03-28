@@ -1,0 +1,101 @@
+/* FIVE-SIGILS ANIMATED SKIN */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+    --bg: #0a0013;
+    --card: rgba(0,0,0,0.55);
+    --text: #ffffff;
+    --accent: #ff5fe4;
+}
+
+/* ===========================
+   BACKGROUND ANIMATION
+   =========================== */
+
+@keyframes float1 { from {background-position: 0 0;} to {background-position: 200px 300px;} }
+@keyframes float2 { from {background-position: 200px 0;} to {background-position: -150px 300px;} }
+@keyframes float3 { from {background-position: 0 200px;} to {background-position: 200px -200px;} }
+@keyframes float4 { from {background-position: -100px -100px;} to {background-position: 300px 200px;} }
+@keyframes float5 { from {background-position: 80px 120px;} to {background-position: -200px 400px;} }
+
+/* ===========================
+   FIVE SVG LAYERS
+   =========================== */
+
+body {
+    margin: 0;
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+
+    background-color: var(--bg);
+
+    background-image:
+        /* 1 — original */
+        url("data:image/svg+xml;utf8,<svg viewBox='-29.12 -29.12 90.24 90.24' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M12.8 22.4V4.8C12.8 2.149 14.949 0 17.6 0H27.2V3.2C27.2 5.851 25.051 8 22.4 8H19.2V22.4H12.8Z' fill='url(%23a1)'/><path d='M9.6 32c5.302 0 9.6-4.298 9.6-9.6s-4.298-9.6-9.6-9.6S0 17.098 0 22.4 4.298 32 9.6 32z' fill='url(%23a2)'/><defs><linearGradient id='a1' x1='13.6' y1='0' x2='13.6' y2='21.8'><stop stop-color='%23FF5FE4'/><stop offset='1' stop-color='%23E91E63'/></linearGradient><radialGradient id='a2' cx='0' cy='0' r='1' gradientTransform='translate(4.6 19.3) rotate(40) scale(15)'><stop stop-color='%23FF7CE9'/><stop offset='1' stop-color='%23F50057'/></radialGradient></defs></svg>"),
+
+        /* 2 — emerald */
+        url("data:image/svg+xml;utf8,<svg viewBox='-29.12 -29.12 90.24 90.24' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M12.8 22.4V4.8C12.8 2.149 14.949 0 17.6 0H27.2V3.2C27.2 5.851 25.051 8 22.4 8H19.2V22.4H12.8Z' fill='url(%23b1)'/><path d='M9.6 32c5.302 0 9.6-4.298 9.6-9.6s-4.298-9.6-9.6-9.6S0 17.098 0 22.4 4.298 32 9.6 32z' fill='url(%23b2)'/><defs><linearGradient id='b1' x1='13.6' y1='0' x2='13.6' y2='21.8'><stop stop-color='%2318FF74'/><stop offset='1' stop-color='%23009B45'/></linearGradient><radialGradient id='b2' cx='0' cy='0' r='1' gradientTransform='translate(5 20) rotate(40) scale(15)'><stop stop-color='%2359FF9F'/><stop offset='1' stop-color='%23007A34'/></radialGradient></defs></svg>"),
+
+        /* 3 — ocean */
+        url("data:image/svg+xml;utf8,<svg viewBox='-29.12 -29.12 90.24 90.24' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M12.8 22.4V4.8C12.8 2.149 14.949 0 17.6 0H27.2V3.2C27.2 5.851 25.051 8 22.4 8H19.2V22.4H12.8Z' fill='url(%23c1)'/><path d='M9.6 32c5.302 0 9.6-4.298 9.6-9.6s-4.298-9.6-9.6-9.6S0 17.098 0 22.4 4.298 32 9.6 32z' fill='url(%23c2)'/><defs><linearGradient id='c1' x1='13.6' y1='0' x2='13.6' y2='21.8'><stop stop-color='%235AD7FF'/><stop offset='1' stop-color='%23005CDE'/></linearGradient><radialGradient id='c2' cx='0' cy='0' r='1' gradientTransform='translate(5 20) rotate(40) scale(15)'><stop stop-color='%237CE3FF'/><stop offset='1' stop-color='%23003EA9'/></radialGradient></defs></svg>"),
+
+        /* 4 — solar */
+        url("data:image/svg+xml;utf8,<svg viewBox='-29.12 -29.12 90.24 90.24' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M12.8 22.4V4.8C12.8 2.149 14.949 0 17.6 0H27.2V3.2C27.2 5.851 25.051 8 22.4 8H19.2V22.4H12.8Z' fill='url(%23d1)'/><path d='M9.6 32c5.302 0 9.6-4.298 9.6-9.6s-4.298-9.6-9.6-9.6S0 17.098 0 22.4 4.298 32 9.6 32z' fill='url(%23d2)'/><defs><linearGradient id='d1' x1='13.6' y1='0' x2='13.6' y2='21.8'><stop stop-color='%23FFE177'/><stop offset='1' stop-color='%23FF8A00'/></linearGradient><radialGradient id='d2' cx='0' cy='0' r='1' gradientTransform='translate(5 20) rotate(40) scale(15)'><stop stop-color='%23FFE9A0'/><stop offset='1' stop-color='%23FF6F00'/></radialGradient></defs></svg>"),
+
+        /* 5 — neon purple */
+        url("data:image/svg+xml;utf8,<svg viewBox='-29.12 -29.12 90.24 90.24' xmlns='http://www.w3.org/2000/svg'><path fill-rule='evenodd' clip-rule='evenodd' d='M12.8 22.4V4.8C12.8 2.149 14.949 0 17.6 0H27.2V3.2C27.2 5.851 25.051 8 22.4 8H19.2V22.4H12.8Z' fill='url(%23e1)'/><path d='M9.6 32c5.302 0 9.6-4.298 9.6-9.6s-4.298-9.6-9.6-9.6S0 17.098 0 22.4 4.298 32 9.6 32z' fill='url(%23e2)'/><defs><linearGradient id='e1' x1='13.6' y1='0' x2='13.6' y2='21.8'><stop stop-color='%23D86BFF'/><stop offset='1' stop-color='%237A00FF'/></linearGradient><radialGradient id='e2' cx='0' cy='0' r='1' gradientTransform='translate(5 20) rotate(40) scale(15)'><stop stop-color='%23E2A6FF'/><stop offset='1' stop-color='%235A00C8'/></radialGradient></defs></svg>");
+
+    background-size:
+        160px,
+        200px,
+        180px,
+        220px,
+        190px;
+
+    animation:
+        float1 40s linear infinite,
+        float2 55s linear infinite,
+        float3 70s linear infinite,
+        float4 65s linear infinite,
+        float5 80s linear infinite;
+}
+
+/* ===========================
+   UI ELEMENTS
+   =========================== */
+
+.box {
+    width: min(440px, 92vw);
+    background: var(--card);
+    padding: 40px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+h1 {
+    color: var(--accent);
+    text-align: center;
+}
+
+input, textarea, button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: none;
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+}
+
+button {
+    background: var(--accent);
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}

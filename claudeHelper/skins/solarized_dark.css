@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap');
+
+:root {
+    --bg: #002b36;       /* Base03 */
+    --card: #073642;     /* Base02 */
+    --text: #839496;     /* Base0 */
+    --primary: #d33682;  /* Magenta */
+    --secondary: #2aa198;/* Cyan */
+    --input: #002b36;    /* Base03 */
+    --border: #586e75;   /* Base01 */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inconsolata", monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid var(--border);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    text-align: center;
+    border-radius: 2px;
+}
+
+h1 {
+    color: var(--secondary);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--border);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 2px;
+    font-family: "Inconsolata", monospace;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: #93a1a1; /* Base1 */
+}
+
+input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+button {
+    background: var(--primary);
+    color: #fdf6e3;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--secondary);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid var(--secondary);
+    color: var(--secondary);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    background: var(--secondary);
+    color: var(--bg);
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

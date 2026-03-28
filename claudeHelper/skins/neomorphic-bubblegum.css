@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap');
+
+:root {
+    /* Hot Pink Base */
+    --bg: #FF80AB; 
+    --text: #880E4F;      /* Deep Magenta */
+    --accent: #FFFFFF;    /* White sugar highlights */
+    
+    /* Pink shadows */
+    --shadow-dark: #d96d91;
+    --shadow-light: #ff93c5;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Quicksand', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--bg);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 40px; /* Super round */
+    border: none;
+    box-shadow: 
+        20px 20px 40px var(--shadow-dark), 
+        -20px -20px 40px var(--shadow-light);
+    text-align: center;
+}
+
+h1 {
+    font-family: 'Fredoka One', cursive; /* Bubbly font */
+    font-size: 2.8rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    text-shadow: 3px 3px 6px rgba(136, 14, 79, 0.2);
+}
+
+input, textarea, button, select {
+    border: none;
+    padding: 18px;
+    margin: 15px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 50px; /* Pill shapes everywhere */
+    background: var(--bg);
+    color: white;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+input::placeholder { color: rgba(255,255,255,0.6); }
+
+/* Deep soft insets */
+input, textarea, select {
+    box-shadow: 
+        inset 6px 6px 12px var(--shadow-dark), 
+        inset -6px -6px 12px var(--shadow-light);
+}
+
+input:focus {
+    outline: none;
+    color: var(--text);
+    box-shadow: 
+        inset 8px 8px 15px var(--shadow-dark), 
+        inset -8px -8px 15px var(--shadow-light);
+}
+
+button {
+    color: var(--text);
+    background: var(--bg);
+    cursor: pointer;
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark), 
+        -8px -8px 16px var(--shadow-light);
+    transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy transition */
+}
+
+button:hover {
+    transform: scale(1.05);
+    background: linear-gradient(145deg, #ff89b7, #e6739a);
+}
+
+.av-prev {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid var(--bg);
+    box-shadow: 
+        10px 10px 20px var(--shadow-dark), 
+        -10px -10px 20px var(--shadow-light);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: var(--bg);
+    border: none;
+    color: var(--accent);
+    display: block;
+    padding: 16px;
+    text-decoration: none;
+    margin-top: 15px;
+    font-weight: bold;
+    border-radius: 30px;
+    box-shadow: 
+        6px 6px 12px var(--shadow-dark), 
+        -6px -6px 12px var(--shadow-light);
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    color: var(--text);
+    box-shadow: 
+        inset 4px 4px 8px var(--shadow-dark), 
+        inset -4px -4px 8px var(--shadow-light);
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; border-top: 2px solid rgba(255,255,255,0.2); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 15px; }
+.embed-label { color: var(--accent) !important; font-weight: bold; }

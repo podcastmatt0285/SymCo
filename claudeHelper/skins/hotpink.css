@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap');
+
+:root {
+    --bg: #000000;
+    --card: #0a0a0a;
+    --pink: #ff007f;     /* Hot Pink */
+    --text: #ffffff;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 2px solid var(--pink);
+    box-shadow: 0 0 15px var(--pink);
+    text-align: center;
+    border-radius: 20px;
+}
+
+h1 {
+    font-weight: 900;
+    color: var(--pink);
+    text-transform: uppercase;
+    font-style: italic;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #fff;
+}
+
+input, textarea, button, select {
+    border: 2px solid #333;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 30px;
+}
+
+input, textarea, select {
+    background: #111;
+    color: var(--pink);
+    font-weight: bold;
+}
+
+input:focus { border-color: var(--pink); outline: none; }
+
+button {
+    background: var(--pink);
+    color: white;
+    font-weight: 900;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 5px 15px rgba(255, 0, 127, 0.4);
+}
+
+button:hover { transform: scale(1.02); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid var(--pink);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 2px solid var(--pink);
+    color: var(--pink);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 30px;
+}
+
+.link-btn:hover {
+    background: var(--pink);
+    color: white;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid #333; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

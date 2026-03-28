@@ -1,0 +1,122 @@
+/* Theme: Protocol TERMINUS */
+:root {
+  --term-bg: #030303;
+  --term-border: #ff003c;
+  --term-text: #eaeaea;
+}
+
+@keyframes glitch-skew {
+  0% { clip-path: inset(40% 0 61% 0); transform: skew(0.5deg); }
+  20% { clip-path: inset(92% 0 1% 0); transform: skew(0.2deg); }
+  40% { clip-path: inset(43% 0 1% 0); transform: skew(0.1deg); }
+  60% { clip-path: inset(25% 0 58% 0); transform: skew(0.6deg); }
+  80% { clip-path: inset(54% 0 7% 0); transform: skew(0.2deg); }
+  100% { clip-path: inset(58% 0 43% 0); transform: skew(0.8deg); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+body {
+  background: var(--term-bg);
+  /* Hex Grid SVG Pattern */
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0l20 10v20L20 40 0 30V10z' fill='none' stroke='%23111' stroke-width='1'/%3E%3C/svg%3E");
+  color: var(--term-text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+}
+
+/* CRT Overlay */
+body::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 10;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+.box {
+  width: 100%;
+  max-width: 420px;
+  background: #0a0a0a;
+  padding: 30px;
+  position: relative;
+  border: 2px solid var(--term-border);
+  box-shadow: 0 0 20px rgba(255, 0, 60, 0.2);
+  /* The "Chipped" Card Shape */
+  clip-path: polygon(
+    20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px
+  );
+}
+
+/* Pseudo-element for glitch effect on the box */
+.box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: transparent;
+  border: 2px solid #fff;
+  opacity: 0.5;
+  clip-path: polygon(0 0, 0 0, 0 0); /* Hidden by default */
+  animation: glitch-skew 4s infinite linear alternate-reverse;
+  pointer-events: none;
+}
+
+h1 {
+  text-transform: uppercase;
+  border-bottom: 4px solid var(--term-border);
+  display: inline-block;
+  padding-right: 20px;
+  text-shadow: 2px 2px #000;
+}
+
+.av-prev {
+  width: 100px; height: 100px;
+  object-fit: cover;
+  display: block; margin: 20px auto;
+  border: 2px solid var(--term-border);
+  /* Hard Edges */
+  border-radius: 0;
+  filter: grayscale(100%) contrast(1.2);
+  transition: 0.2s;
+}
+.av-prev:hover { filter: grayscale(0%); transform: translate(-2px, -2px); box-shadow: 4px 4px var(--term-border); }
+
+.link-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+.link-btn {
+  background: #000;
+  color: var(--term-border);
+  text-decoration: none;
+  padding: 15px 20px;
+  font-weight: 900;
+  text-transform: uppercase;
+  border: 1px solid var(--term-border);
+  position: relative;
+  transition: 0.2s;
+  /* Tech Cut */
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.link-btn:hover {
+  background: var(--term-border);
+  color: #000;
+  text-shadow: 0 0 5px rgba(255,255,255,0.8);
+  box-shadow: 5px 5px 0px rgba(255,255,255,0.2);
+  transform: translateX(-5px);
+}
+
+input, textarea, select, button {
+  width: 100%; padding: 15px; background: #000; border: 1px solid #333; color: var(--term-border);
+  font-family: monospace; margin: 5px 0;
+}
+button { background: var(--term-border); color: black; font-weight: bold; cursor: pointer; text-transform: uppercase; }

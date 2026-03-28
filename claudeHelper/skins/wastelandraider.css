@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Mono:wght@400;700&display=swap');
+
+:root {
+    --bg: #4b4b44;       /* Drab Olive/Grey */
+    --card: #2e2e2a;     /* Dark Grey */
+    --text: #dcdcdc;
+    --rust: #a0522d;     /* Rust */
+    --alert: #e0e040;    /* Caution Yellow */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Roboto Mono', monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Dirty texture */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 3px solid #111;
+    /* Ragged borders using multiple box-shadows */
+    box-shadow: 5px 5px 0 var(--rust), 0 0 30px rgba(0,0,0,0.8) inset;
+    text-align: center;
+    border-radius: 2px;
+    transform: rotate(1deg); /* Slightly askew */
+}
+
+h1 {
+    font-family: 'Black Ops One', cursive;
+    color: var(--alert);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 black;
+}
+
+input, textarea, button, select {
+    border: 2px solid #555;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+    font-family: 'Roboto Mono', monospace;
+}
+
+input, textarea, select {
+    background: #1a1a1a;
+    color: #a0a0a0;
+}
+
+input:focus { border-color: var(--alert); color: var(--alert); outline: none; }
+
+button {
+    background: var(--rust);
+    color: black;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 1px solid black;
+    font-family: 'Black Ops One', cursive;
+}
+
+button:hover { background: var(--alert); }
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px dashed var(--alert);
+    margin: 20px auto;
+    display: block;
+    filter: contrast(120%) grayscale(50%);
+}
+
+.link-btn {
+    background: #3a3a36;
+    border: 2px solid #000;
+    color: #ccc;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+.link-btn:hover {
+    border-color: var(--rust);
+    color: var(--rust);
+    background: #222;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid #000; padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

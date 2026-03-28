@@ -1,0 +1,107 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+    --bg: #e6ded5;       /* Creamy clay */
+    --card: #d4c5b5;     /* Darker bisque */
+    --text: #5c4d3c;     /* Earthy brown */
+    --primary: #a65e4e;  /* Terracotta */
+    --accent: #8fa08e;   /* Sage green */
+    --input: #f0ebe5;    /* Light glaze */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Lora", serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Subtle texture */
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 10px 10px 20px rgba(92, 77, 60, 0.1), -5px -5px 15px rgba(255, 255, 255, 0.5);
+    text-align: center;
+    border-radius: 30px 10px 30px 10px; /* Organic shape */
+}
+
+h1 {
+    font-style: italic;
+    color: var(--primary);
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: none;
+    padding: 15px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 15px;
+    font-family: "Lora", serif;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: var(--text);
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
+}
+
+input:focus {
+    outline: 2px solid var(--accent);
+    background: #fff;
+}
+
+button {
+    background: var(--primary);
+    color: #f0ebe5;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 3px 3px 8px rgba(0,0,0,0.1);
+}
+
+button:hover {
+    background: #8c4a3b;
+    transform: translateY(-1px);
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--input);
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.link-btn {
+    background: var(--accent);
+    border: none;
+    color: white;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 15px;
+    font-weight: bold;
+    border-radius: 15px;
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    background: #7a8c79;
+}
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; border-top: 1px dashed var(--primary); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

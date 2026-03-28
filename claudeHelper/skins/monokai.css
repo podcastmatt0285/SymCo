@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+:root {
+    --bg: #272822;
+    --card: #1e1f1c;
+    --text: #f8f8f2;
+    --pink: #f92672;
+    --green: #a6e22e;
+    --yellow: #e6db74;
+    --blue: #66d9ef;
+    --orange: #fd971f;
+    --border: #49483e;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "JetBrains Mono", monospace;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    text-align: left; /* Like code alignment */
+    border-radius: 4px;
+}
+
+h1 {
+    color: var(--pink);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+h1::before { content: "<"; color: var(--text); }
+h1::after { content: " />"; color: var(--text); }
+
+input, textarea, button, select {
+    border: 1px solid var(--border);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 2px;
+    font-family: "JetBrains Mono", monospace;
+}
+
+input, textarea, select {
+    background: var(--bg);
+    color: var(--yellow); /* String color */
+}
+
+input:focus {
+    border-color: var(--blue); /* Function color */
+    outline: none;
+}
+
+button {
+    background: var(--green); /* Class/Type color */
+    color: #272822;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover { background: #b7eb46; }
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px dashed var(--orange); /* Argument color */
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid var(--blue);
+    color: var(--blue);
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: normal;
+    transition: 0.2s;
+    text-align: center;
+}
+
+.link-btn::before { content: "import "; color: var(--pink); }
+.link-btn:hover { background: rgba(102, 217, 239, 0.1); }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; color: var(--border); }

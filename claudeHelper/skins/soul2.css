@@ -1,0 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Chonburi&family=Outfit:wght@400;700&display=swap');
+
+:root {
+    --bg: #2d1b15;       /* Darker Espresso */
+    --card: #fdf6e3;     /* Cream/Off-White */
+    --orange: #d84315;   /* Deep Burnt Orange */
+    --yellow: #f9a825;   /* Goldenrod */
+    --text: #3e2723;     /* Dark Brown text */
+}
+
+body {
+    background: var(--bg);
+    /* Subtle, smooth radial gradient instead of messy stripes */
+    background: radial-gradient(circle at 50% 30%, #3e2723 0%, #2d1b15 70%);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif; /* Cleaner geometric sans */
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 420px;
+    padding: 40px 30px;
+    /* Clean, solid offset shadow */
+    box-shadow: 12px 12px 0px var(--orange); 
+    text-align: center;
+    border-radius: 20px;
+    border: 3px solid var(--text);
+    position: relative;
+}
+
+/* Decorative top bar to frame the content */
+.box::before {
+    content: '';
+    display: block;
+    height: 8px;
+    background: var(--yellow);
+    width: 60px;
+    margin: 0 auto 25px auto;
+    border-radius: 4px;
+}
+
+h1 {
+    font-family: 'Chonburi', serif; /* Curvy 70s serif, very legible */
+    font-size: 2.5rem;
+    color: var(--orange);
+    margin-bottom: 5px;
+    margin-top: 0;
+    line-height: 1.1;
+    text-transform: capitalize;
+}
+
+input, textarea, button, select {
+    border: 2px solid #ddd; /* Softer border for inputs */
+    padding: 16px;
+    margin: 12px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 12px;
+    background: white;
+    font-family: 'Outfit', sans-serif;
+    color: var(--text);
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 4px 12px rgba(216, 67, 21, 0.15);
+    outline: none;
+}
+
+button {
+    background: var(--text);
+    color: var(--yellow);
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+}
+
+button:hover {
+    background: var(--orange);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+}
+
+.av-prev {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 50%;
+    /* Clean double border */
+    border: 4px solid var(--card);
+    outline: 3px solid var(--orange);
+    margin: 0 auto 20px auto;
+    display: block;
+    background: var(--text);
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 30px;
+    border-top: 2px solid #eee;
+    padding-top: 25px;
+}
+
+.link-btn {
+    display: block;
+    background: white;
+    color: var(--text);
+    text-decoration: none;
+    padding: 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    border: 2px solid #eee;
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: #fffbf0;
+    transform: scale(1.02);
+}
+
+/* Admin list items */
+.link-item {
+    display: flex; gap: 8px; margin-bottom: 8px; align-items: center;
+    font-size: 14px;
+    background: rgba(0,0,0,0.05);
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.embed-label { color: #8d6e63 !important; font-weight: 500; }

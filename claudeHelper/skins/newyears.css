@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+:root {
+    --bg: #000000;
+    --card: #111111;
+    --text: #D4AF37; /* Gold */
+    --silver: #C0C0C0;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    /* Sparkle effect */
+    background-image: radial-gradient(white 1px, transparent 1px), radial-gradient(white 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: 0 0, 25px 25px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 2px solid var(--text);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    text-align: center;
+    border-radius: 4px;
+}
+
+h1 {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--text);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 1px solid var(--text);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: #000;
+    color: var(--silver);
+    font-family: 'Playfair Display', serif;
+}
+
+input:focus { border-color: var(--silver); outline: none; }
+
+button {
+    background: var(--text);
+    color: black;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background: var(--silver);
+    box-shadow: 0 0 15px white;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--text);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid var(--silver);
+    color: var(--silver);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 0;
+}
+
+.link-btn:hover { background: var(--silver); color: black; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid var(--text); padding-top: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

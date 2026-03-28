@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --text-color: #333;
+    --accent-color: #e73c7e; /* Pulled from your gradient */
+}
+
+body {
+    /* 1. YOUR GRADIENT ANIMATION */
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    
+    color: var(--text-color);
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 60px 20px;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* GRADIENT KEYFRAMES (User Provided) */
+@keyframes gradient {
+	0% { background-position: 0% 50%; }
+	50% { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+/* 2. HEARTFALL ANIMATION LAYERS 
+   We use pseudo-elements to create the "raining hearts" effect 
+   so we don't need to touch the HTML.
+*/
+
+body::before, body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; /* Let clicks pass through */
+    z-index: 0;
+}
+
+/* LAYER 1: Small Hearts (Background, Slower) */
+body::before {
+    /* SVG Heart - Semi-transparent White */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 32 29.6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-11.3,16-21.2C32,3.8,28.2,0,23.6,0z' fill='white' fill-opacity='0.2'/%3E%3C/svg%3E");
+    background-size: 40px 40px;
+    animation: heartRain 20s linear infinite;
+}
+
+/* LAYER 2: Big Hearts (Foreground, Faster) */
+body::after {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 32 29.6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-11.3,16-21.2C32,3.8,28.2,0,23.6,0z' fill='white' fill-opacity='0.4'/%3E%3C/svg%3E");
+    background-size: 70px 70px;
+    background-position: 50% 0; /* Offset horizontally */
+    animation: heartRain 12s linear infinite;
+}
+
+/* Rain Animation: Moves background pattern down */
+@keyframes heartRain {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100vh; }
+}
+
+/* 3. CONTENT BOX STYLING 
+   Clean, glass-morphism style to sit nicely on the busy background.
+*/
+.box {
+    position: relative;
+    z-index: 10;
+    width: min(440px, 92vw);
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 25px;
+    text-align: center;
+    letter-spacing: -1px;
+    text-shadow: 2px 2px 0 rgba(255,255,255,0.5);
+}
+
+input, textarea, button, select, .link-btn {
+    width: 100%;
+    min-height: 56px;
+    padding: 16px;
+    margin-bottom: 15px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: #fff;
+    color: #333;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    display: block;
+    transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(231, 60, 126, 0.2);
+    transform: translateY(-2px);
+}
+
+button {
+    background: var(--accent-color); /* Pink from gradient */
+    color: white;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+button:hover {
+    background: #ee7752; /* Orange from gradient */
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(238, 119, 82, 0.4);
+}
+
+.av-prev {
+    width: 110px; height: 110px; object-fit: cover;
+    border-radius: 50%; 
+    border: 4px solid white;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    margin: 0 auto 20px auto; display: block;
+}
+
+.link-stack { display: flex; flex-direction: column; margin-top: 20px; }
+
+.link-btn {
+    background: white;
+    border: 1px solid #eee;
+}
+
+.link-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    transform: scale(1.02);
+}
+
+.embed-label { color: #666 !important; text-align: center; font-size: 12px; font-weight: 600; margin-top: 5px; }
+.link-item { background: #f8f9fa; padding: 10px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; border-radius: 8px; border: 1px solid #eee; }

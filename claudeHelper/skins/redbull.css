@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap');
+
+:root {
+    --bg: #111e40;       /* Deep Blue */
+    --card: #c0c0c0;     /* Silver */
+    --text: #111e40;
+    --red: #d90e2e;
+    --yellow: #fccf4c;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Oswald', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    background: linear-gradient(135deg, #e6e6e6 25%, #c0c0c0 25%, #c0c0c0 50%, #e6e6e6 50%, #e6e6e6 75%, #c0c0c0 75%, #c0c0c0 100%);
+    background-size: 20px 20px;
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: 2px solid white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 2px;
+}
+
+h1 {
+    color: var(--red);
+    text-transform: uppercase;
+    font-weight: 700;
+    background: white;
+    display: inline-block;
+    padding: 5px 15px;
+    transform: skew(-10deg);
+    margin-bottom: 20px;
+}
+
+input, textarea, button, select {
+    border: 2px solid var(--bg);
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: white;
+    color: var(--bg);
+}
+
+button {
+    background: var(--bg);
+    color: var(--yellow);
+    font-weight: bold;
+    text-transform: uppercase;
+    border: none;
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--yellow);
+    margin: 20px auto;
+    display: block;
+    background: white;
+}
+
+.link-btn {
+    background: white;
+    border: 2px solid var(--red);
+    color: var(--red);
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+.link-btn:hover { background: var(--red); color: var(--yellow); }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid var(--bg); padding-top: 20px; background: white; padding: 20px; }
+.link-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }

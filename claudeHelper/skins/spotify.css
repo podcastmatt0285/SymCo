@@ -1,0 +1,95 @@
+:root {
+    --bg: #121212;
+    --card: #181818;
+    --text: #FFFFFF;
+    --primary: #1DB954;
+    --input: #333333;
+    --border: #282828;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border: none;
+    box-shadow: 0 4px 60px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 8px;
+}
+
+h1 {
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    margin-bottom: 25px;
+}
+
+/* STRUCTURAL FIX: Added width: 100% and display: block */
+input, textarea, button, select {
+    border: none;
+    padding: 12px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 4px;
+}
+
+input, textarea, select {
+    background: var(--input);
+    color: white;
+}
+
+button {
+    background: var(--primary);
+    color: #ffffff;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 500px; /* Pill shape */
+}
+
+button:hover {
+    background: #1ed760;
+    transform: scale(1.02);
+}
+
+/* AVATAR FIX - STRICT */
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    margin: 20px auto;
+    display: block;
+}
+
+.link-btn {
+    background: transparent;
+    border: 1px solid #727272;
+    color: white;
+    display: block;
+    padding: 15px;
+    text-decoration: none;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: 0.2s;
+    border-radius: 500px;
+}
+
+.link-btn:hover { border-color: white; }
+
+.link-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+.link-item { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; color: #b3b3b3; font-size: 14px; }

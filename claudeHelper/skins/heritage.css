@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Bevan&family=Roboto:wght@400;700&display=swap');
+
+:root {
+    --bg: #101010;       /* Black */
+    --card: #1a1a1a;
+    --red: #D32F2F;      /* Blood */
+    --green: #388E3C;    /* Land */
+    --text: #ffffff;
+    --gold: #FFD700;     /* Prosperity */
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.box {
+    background: var(--card);
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    /* Tri-color border at the top */
+    border-top: 5px solid var(--red);
+    border-bottom: 5px solid var(--green);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    text-align: center;
+    border-radius: 4px;
+}
+
+h1 {
+    font-family: 'Bevan', cursive; /* Strong, bold serif */
+    font-size: 2.5rem;
+    color: var(--text);
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+input, textarea, button, select {
+    border: 1px solid #333;
+    padding: 14px;
+    margin: 10px 0;
+    box-sizing: border-box;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+}
+
+input, textarea, select {
+    background: #000;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+}
+
+input:focus {
+    border-color: var(--green);
+    outline: none;
+}
+
+button {
+    background: linear-gradient(135deg, var(--red), #b71c1c);
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Bevan', cursive;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    filter: brightness(110%);
+}
+
+.av-prev {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--gold);
+    margin: 20px auto;
+    display: block;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+}
+
+.link-btn {
+    display: block;
+    background: #111;
+    color: white;
+    text-decoration: none;
+    padding: 15px;
+    border-left: 5px solid var(--green); /* Green accent */
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    background: #222;
+    border-left-color: var(--red); /* Switches to red on hover */
+    padding-left: 20px;
+}
+
+.embed-label { color: #888; font-size: 11px; }
+
+.link-item {
+    display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
+    background: #000;
+    padding: 5px;
+    border: 1px solid #333;
+}

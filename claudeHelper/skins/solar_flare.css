@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap');
+
+:root {
+    --bg: #000000;
+    --card: rgba(10, 10, 10, 0.92); /* Slightly more opaque for contrast */
+    --text: #ffffff;
+    --primary: #ff4500; /* Orange Red */
+    --secondary: #ff8c00; /* Dark Orange */
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    min-height: 100vh;
+    
+    /* YOUR SVG PATTERN ENCODED HERE */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1000 1000'%3E%3Crect fill='%23ffff99' width='1000' height='1000'/%3E%3Cg fill='%23ffd573'%3E%3Cpolygon points='1000 -50 0 -50 500 450'/%3E%3Cpolygon points='550 500 1050 1000 1050 0'/%3E%3Cpolygon points='-50 0 -50 1000 450 500'/%3E%3Cpolygon points='0 1050 1000 1050 500 550'/%3E%3C/g%3E%3Cg fill='%23ffaa4d'%3E%3Cpolygon points='1000 -133.3 0 -133.3 500 366.7'/%3E%3Cpolygon points='633.3 500 1133.3 1000 1133.3 0'/%3E%3Cpolygon points='-133.3 0 -133.3 1000 366.7 500'/%3E%3Cpolygon points='0 1133.3 1000 1133.3 500 633.3'/%3E%3C/g%3E%3Cg fill='%23ff8026'%3E%3Cpolygon points='1000 -216.7 0 -216.7 500 283.3'/%3E%3Cpolygon points='716.7 500 1216.7 1000 1216.7 0'/%3E%3Cpolygon points='-216.7 0 -216.7 1000 283.3 500'/%3E%3Cpolygon points='0 1216.7 1000 1216.7 500 716.7'/%3E%3C/g%3E%3Cg fill='%23F50'%3E%3Cpolygon points='1000 -300 0 -300 500 200'/%3E%3Cpolygon points='800 500 1300 1000 1300 0'/%3E%3Cpolygon points='-300 0 -300 1000 200 500'/%3E%3Cpolygon points='0 1300 1000 1300 500 800'/%3E%3C/g%3E%3Cg fill-opacity='0.28'%3E%3Cpolygon fill='%23FE0' points='0 707.1 0 292.9 292.9 0 707.1 0 1000 292.9 1000 707.1 707.1 1000 292.9 1000'/%3E%3Cg fill='%23ffc800'%3E%3Cpolygon points='464.6 -242.5 -242.5 464.6 464.6 464.6'/%3E%3Cpolygon points='535.4 464.6 1242.5 464.6 535.4 -242.5'/%3E%3Cpolygon points='-242.5 535.4 464.6 1242.5 464.6 535.4'/%3E%3Cpolygon points='535.4 1242.5 1242.5 535.4 535.4 535.4'/%3E%3C/g%3E%3Cg fill='%23ffa200'%3E%3Cpolygon points='405.7 -301.4 -301.4 405.7 405.7 405.7'/%3E%3Cpolygon points='594.3 405.7 1301.4 405.7 594.3 -301.4'/%3E%3Cpolygon points='-301.4 594.3 405.7 1301.4 405.7 594.3'/%3E%3Cpolygon points='594.3 1301.4 1301.4 594.3 594.3 594.3'/%3E%3C/g%3E%3Cg fill='%23ff7b00'%3E%3Cpolygon points='346.8 -360.3 -360.3 346.8 346.8 346.8'/%3E%3Cpolygon points='653.2 346.8 1360.3 346.8 653.2 -360.3'/%3E%3Cpolygon points='-360.3 653.2 346.8 1360.3 346.8 653.2'/%3E%3Cpolygon points='653.2 1360.3 1360.3 653.2 653.2 653.2'/%3E%3C/g%3E%3Cg fill='%23F50'%3E%3Cpolygon points='287.9 -419.2 -419.2 287.9 287.9 287.9'/%3E%3Cpolygon points='712.1 287.9 1419.2 287.9 712.1 -419.2'/%3E%3Cpolygon points='-419.2 712.1 287.9 1419.2 287.9 712.1'/%3E%3Cpolygon points='712.1 1419.2 1419.2 712.1 712.1 712.1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* Parallax feel */
+}
+
+/* THE COCKPIT BOX */
+.box {
+    background: var(--card); /* Dark semi-transparent black */
+    width: 100%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 0;
+    
+    /* Boxy Sci-Fi borders */
+    border: 1px solid #331000;
+    border-top: 2px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
+    
+    /* Intense Red/Orange Glow */
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 69, 0, 0.3);
+    
+    text-align: center;
+    backdrop-filter: blur(8px); /* Blurs the busy background pattern */
+}
+
+h1 {
+    font-weight: 700;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    background: -webkit-linear-gradient(0deg, var(--secondary), var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 5px rgba(255, 69, 0, 0.5));
+}
+
+input, textarea, button, select {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 0; 
+    border: 1px solid #441500;
+    box-sizing: border-box;
+    display: block;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.1rem;
+}
+
+input, textarea, select {
+    background: #050505;
+    color: var(--secondary);
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(255, 69, 0, 0.3);
+    outline: none;
+    background: #000;
+}
+
+button {
+    background: rgba(255, 69, 0, 0.1);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: var(--primary);
+    color: black;
+    box-shadow: 0 0 30px rgba(255, 69, 0, 0.8);
+}
+
+.av-prev {
+    width: 80px; height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin: 10px auto 30px auto;
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 15px var(--primary);
+    background: #000;
+}
+
+.link-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+    border-top: 1px solid #441500;
+    padding-top: 25px;
+}
+
+.link-btn {
+    display: block;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ccc;
+    text-decoration: none;
+    padding: 15px;
+    border: 1px solid #333;
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.link-btn:before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--primary);
+    opacity: 0.7;
+    transition: 0.2s;
+}
+
+.link-btn:hover {
+    background: #1a0500;
+    color: white;
+    border-color: var(--primary);
+    transform: translateX(5px);
+}
+
+.link-btn:hover:before {
+    width: 100%;
+    opacity: 0.1;
+    box-shadow: 0 0 10px var(--primary);
+}
+
+.embed-label { color: var(--secondary) !important; font-weight: bold; letter-spacing: 1px; }
+
+.link-item {
+    display: flex; gap: 5px; margin-bottom: 5px; align-items: center;
+    border: 1px solid #441500; padding: 5px; background: rgba(0,0,0,0.5);
+}
