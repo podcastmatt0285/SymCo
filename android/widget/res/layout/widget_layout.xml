@@ -66,14 +66,16 @@
         android:textSize="9sp"
         android:layout_marginBottom="8dp" />
 
-    <!-- Divider -->
-    <TextView
+    <!-- Divider: ImageView is safe in RemoteViews and supports background color -->
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#1e293b"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginBottom="6dp"
+        android:scaleType="fitXY"
+        android:src="@android:color/transparent"
+        android:background="#334155" />
 
-    <!-- Scrolling ticker -->
+    <!-- Scrolling ticker: marquee activated via setSelected(true) in Java -->
     <TextView
         android:id="@+id/widget_tickers"
         android:layout_width="match_parent"
@@ -82,10 +84,6 @@
         android:textColor="#94a3b8"
         android:textSize="10sp"
         android:singleLine="true"
-        android:ellipsize="marquee"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:scrollHorizontally="true" />
+        android:ellipsize="marquee" />
 
 </LinearLayout>
