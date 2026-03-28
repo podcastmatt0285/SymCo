@@ -70,6 +70,14 @@ cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"   app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/drawable/widget_background.xml"  app/src/main/res/drawable/
 echo "  Copied widget layout, xml, drawable resources"
 
+# Reduce Gradle JVM heap — default 1.5 GB kills the daemon on low-RAM machines.
+# Also disable the persistent daemon so each build starts clean.
+cat >> gradle.properties << 'GPROPS'
+org.gradle.jvmargs=-Xmx512m -Dfile.encoding=UTF-8
+org.gradle.daemon=false
+GPROPS
+echo "  Set Gradle heap to 512m, daemon disabled"
+
 # Notification sound — copy from the live static directory so it matches
 # whatever sound the admin uploaded via the dashboard.
 SOUND_SRC="$(cd "$(dirname "$0")/.." && pwd)/static/sounds/notification.mp3"
