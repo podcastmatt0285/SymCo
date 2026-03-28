@@ -163,13 +163,19 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # PWA — these must be served from the root so the service worker scope covers
 # the whole app and browsers can discover the manifest automatically.
+# CORS headers are required so PWABuilder and other external validators can
+# fetch these files cross-origin.
+_PWA_CORS = {"Access-Control-Allow-Origin": "*"}
+
 @app.get("/manifest.json", include_in_schema=False)
 async def pwa_manifest():
-    return FileResponse("static/manifest.json", media_type="application/manifest+json")
+    return FileResponse("static/manifest.json", media_type="application/manifest+json",
+                        headers=_PWA_CORS)
 
 @app.get("/sw.js", include_in_schema=False)
 async def pwa_service_worker():
-    return FileResponse("static/sw.js", media_type="application/javascript")
+    return FileResponse("static/sw.js", media_type="application/javascript",
+                        headers=_PWA_CORS)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
