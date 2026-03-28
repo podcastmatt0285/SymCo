@@ -3415,6 +3415,19 @@ def force_close_commodity_loan(loan_id: int):
         db.close()
 
 
+def _fire_govt_push(player_id: int, title: str, body: str):
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body, url="/banking",
+                                   notif_type="govt",
+                                   tag=f"govt-{player_id}-{title[:20]}")
+        except Exception as e:
+            print(f"[BrokerageFirm] Push error: {e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+
 def create_lien(player_id: int, amount: float, source: str):
     db = get_db()
     try:
@@ -3422,17 +3435,20 @@ def create_lien(player_id: int, amount: float, source: str):
             BrokerageLien.player_id == player_id,
             BrokerageLien.source == source
         ).first()
-        
+
         if lien:
             lien.principal += amount
         else:
             lien = BrokerageLien(player_id=player_id, principal=amount, source=source)
             db.add(lien)
-        
+
         db.commit()
         modify_credit_score(player_id, "lien_created")
     finally:
         db.close()
+
+    _fire_govt_push(player_id, "Lien Placed on Your Account",
+                    f"${amount:,.0f} lien from {source} — funds will be garnished until cleared")
 
 
 def process_liens():
@@ -3454,17 +3470,21 @@ def process_liens():
                 player = auth_db.query(Player).filter(Player.id == lien.player_id).first()
                 if player and player.cash_balance > 0:
                     garnish = min(player.cash_balance * 0.5, lien.total_owed)
-                    
+
                     if garnish >= 0.01:
                         player.cash_balance -= garnish
                         lien.total_paid += garnish
                         lien.last_payment = datetime.utcnow()
                         auth_db.commit()
-                        
+
                         firm_add_cash(garnish, "lien_payment", f"Garnishment", lien.player_id)
-                        
+                        _fire_govt_push(lien.player_id, "Lien Garnishment",
+                                        f"${garnish:,.0f} garnished from your balance — ${max(0, lien.total_owed):,.0f} remaining on lien")
+
                         if lien.total_owed <= 0:
                             modify_credit_score(lien.player_id, "lien_paid_off")
+                            _fire_govt_push(lien.player_id, "Lien Cleared",
+                                            "Your lien has been fully paid off — credit score updated")
             finally:
                 auth_db.close()
         

@@ -372,12 +372,33 @@ def process_lien_system(current_tick: int):
                     lien.total_paid += garnish_amount
                     lien.last_payment = datetime.utcnow()
                     total_garnished += garnish_amount
-                    
+
                     auth_db.commit()
-                    
+
+                    try:
+                        from push_ux import send_push_notification
+                        import threading
+                        _pid, _g, _rem = lien.player_id, garnish_amount, max(0, lien.total_owed)
+                        threading.Thread(target=send_push_notification, daemon=True, kwargs=dict(
+                            player_id=_pid, title="Lien Garnishment",
+                            body=f"${_g:,.0f} garnished from your balance — ${_rem:,.0f} remaining on lien",
+                            url="/banking", notif_type="govt", tag=f"govt-{_pid}-lien")).start()
+                    except Exception:
+                        pass
+
                     remaining = lien.total_owed
                     if remaining <= 0:
                         print(f"[{BANK_NAME}] ✅ Lien CLEARED for Player {lien.player_id}")
+                        try:
+                            from push_ux import send_push_notification
+                            import threading
+                            _pid = lien.player_id
+                            threading.Thread(target=send_push_notification, daemon=True, kwargs=dict(
+                                player_id=_pid, title="Lien Cleared",
+                                body="Your lien has been fully paid off — credit score updated",
+                                url="/banking", notif_type="govt", tag=f"govt-{_pid}-lien-clear")).start()
+                        except Exception:
+                            pass
                     else:
                         print(f"[{BANK_NAME}] Garnished ${garnish_amount:.2f} from Player {lien.player_id} (${remaining:.2f} remains)")
             finally:
