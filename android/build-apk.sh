@@ -105,7 +105,7 @@ bubblewrap build \
     --keystorePassword "wadsworth123" \
     --keyPassword "wadsworth123"
 
-cp app/build/outputs/apk/release/app-release.apk "../wadsworth-signed.apk"
+cp app-release-signed.apk "../wadsworth-signed.apk"
 cd ..
 
 echo ""
