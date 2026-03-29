@@ -4,20 +4,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="14dp"
+    android:padding="12dp"
     android:background="@drawable/widget_background">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:text="WADSWORTH"
-            android:textColor="#7dd3fc"
-            android:textSize="10sp"
+            android:textColor="#38bdf8"
+            android:textSize="9sp"
             android:textStyle="bold" />
 
         <TextView
@@ -25,8 +26,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:text="LIVE"
-            android:textColor="#4ade80"
-            android:textSize="9sp" />
+            android:textColor="#22c55e"
+            android:textSize="8sp" />
 
     </RelativeLayout>
 
@@ -35,9 +36,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="--"
-        android:textColor="#f8fafc"
-        android:textSize="24sp"
-        android:textStyle="bold" />
+        android:textColor="#f1f5f9"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
 
     <TextView
         android:id="@+id/widget_alert"
@@ -45,8 +47,8 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#cbd5e1"
-        android:textSize="11sp"
-        android:maxLines="1"
+        android:textSize="10sp"
+        android:maxLines="2"
         android:ellipsize="end" />
 
     <TextView
@@ -54,8 +56,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#64748b"
-        android:textSize="9sp" />
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="MARKETS"
+        android:textColor="#475569"
+        android:textSize="8sp"
+        android:layout_marginBottom="3dp" />
 
     <TextView
         android:id="@+id/widget_tickers"
@@ -63,8 +74,8 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="10sp"
-        android:maxLines="1"
-        android:ellipsize="marquee" />
+        android:textSize="9sp"
+        android:maxLines="3"
+        android:ellipsize="end" />
 
 </LinearLayout>

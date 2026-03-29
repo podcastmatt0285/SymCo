@@ -150,8 +150,6 @@ public class WadsworthWidget extends AppWidgetProvider {
                         if (i < max - 1) ticker.append("  ·  ");
                     }
                     views.setTextViewText(id(ctx, "widget_tickers"), ticker.toString());
-                    // setSelected(true) activates the marquee scroll in RemoteViews
-                    views.setBoolean(id(ctx, "widget_tickers"), "setSelected", true);
                 }
 
                 mgr.updateAppWidget(widgetId, views);
