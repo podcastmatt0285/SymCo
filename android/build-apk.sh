@@ -94,15 +94,32 @@ echo "  Set Gradle heap to 512m, daemon disabled"
 # If the system default Java is too new, find Java 17 or 21 and tell Gradle.
 _JV=$(java -version 2>&1 | grep -oE '"[0-9]+' | grep -oE '[0-9]+' | head -1)
 if [ "${_JV:-0}" -gt 21 ]; then
-    _COMPAT=$(ls -d /usr/lib/jvm/java-21-openjdk* /usr/lib/jvm/java-17-openjdk* \
-                    /usr/lib/jvm/temurin-21* /usr/lib/jvm/temurin-17* 2>/dev/null \
-              | head -1)
+    # 1. Try update-alternatives (catches any registered JVM)
+    _COMPAT=$(update-alternatives --list java 2>/dev/null \
+              | grep -E 'java-(17|18|19|20|21)-' | head -1 | sed 's|/bin/java$||')
+    # 2. Try common apt-installed paths
+    if [ -z "$_COMPAT" ]; then
+        _COMPAT=$(ls -d \
+            /usr/lib/jvm/java-21-openjdk* \
+            /usr/lib/jvm/java-17-openjdk* \
+            /usr/lib/jvm/temurin-21* \
+            /usr/lib/jvm/temurin-17* \
+            "$HOME/.sdkman/candidates/java/21."* \
+            "$HOME/.sdkman/candidates/java/17."* \
+            2>/dev/null | head -1)
+    fi
     if [ -n "$_COMPAT" ]; then
         echo "org.gradle.java.home=${_COMPAT}" >> gradle.properties
         echo "  Java $_JV too new for AGP Groovy DSL — using ${_COMPAT}"
     else
-        echo "ERROR: Java $_JV is installed but Java 17/21 was not found."
-        echo "  Fix: sudo apt install openjdk-21-jdk  then re-run this script."
+        echo "ERROR: Java $_JV detected. Android Gradle Plugin requires Java 17 or 21."
+        echo "  Install Java 17 with one of these commands, then re-run:"
+        echo "    sudo apt install openjdk-17-jdk"
+        echo "    sudo apt install openjdk-21-jdk"
+        echo "  Or via SDKMAN:"
+        echo "    curl -s https://get.sdkman.io | bash"
+        echo "    source ~/.sdkman/bin/sdkman-init.sh"
+        echo "    sdk install java 17.0.13-tem"
         exit 1
     fi
 fi
