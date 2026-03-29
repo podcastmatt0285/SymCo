@@ -134,7 +134,7 @@
 
             
             <meta-data android:name="android.support.customtabs.trusted.DISPLAY_MODE"
-                android:value="minimal-ui" />
+                android:value="sticky-immersive" />
             
 
             <meta-data android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"

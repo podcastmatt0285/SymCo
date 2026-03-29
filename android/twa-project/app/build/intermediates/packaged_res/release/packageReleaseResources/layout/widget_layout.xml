@@ -4,81 +4,88 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp"
+    android:padding="14dp"
     android:background="@drawable/widget_background">
 
-    <!-- Header: WADSWORTH label + LIVE indicator -->
+    <!-- Header row: WADSWORTH + LIVE -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:text="WADSWORTH"
-            android:textColor="#38bdf8"
-            android:textSize="9sp"
+            android:textColor="#7dd3fc"
+            android:textSize="10sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:text="LIVE"
-            android:textColor="#22c55e"
-            android:textSize="8sp" />
+            android:layout_centerVertical="true"
+            android:text="● LIVE"
+            android:textColor="#4ade80"
+            android:textSize="9sp" />
     </RelativeLayout>
 
-    <!-- Cash balance -->
+    <!-- Cash balance — large and prominent -->
     <TextView
         android:id="@+id/widget_balance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="&#8212;"
-        android:textColor="#f1f5f9"
-        android:textSize="20sp"
+        android:textColor="#f8fafc"
+        android:textSize="26sp"
         android:textStyle="bold"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp" />
 
-    <!-- Last alert -->
+    <!-- Last alert text -->
     <TextView
         android:id="@+id/widget_alert"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#cbd5e1"
-        android:textSize="10sp"
-        android:maxLines="2"
+        android:textSize="11sp"
+        android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Alert timestamp -->
     <TextView
         android:id="@+id/widget_time"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#475569"
+        android:textColor="#64748b"
         android:textSize="9sp"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginBottom="8dp" />
 
-    <!-- Market tickers -->
+    <!-- Divider -->
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="MARKETS"
-        android:textColor="#475569"
-        android:textSize="8sp"
-        android:layout_marginBottom="3dp" />
+        android:layout_height="1dp"
+        android:background="#1e293b"
+        android:layout_marginBottom="6dp" />
 
+    <!-- Scrolling ticker -->
     <TextView
         android:id="@+id/widget_tickers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:maxLines="3"
-        android:ellipsize="end" />
+        android:textSize="10sp"
+        android:singleLine="true"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:scrollHorizontally="true" />
 
 </LinearLayout>

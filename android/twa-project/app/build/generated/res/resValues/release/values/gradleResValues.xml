@@ -8,9 +8,9 @@
     <!-- Value from default config. -->
     <bool name="enableSiteSettingsShortcut">true</bool>
     <!-- Value from default config. -->
-    <color name="backgroundColor">#000000</color>
+    <color name="backgroundColor">#FFFFFF</color>
     <!-- Value from default config. -->
-    <color name="colorPrimary">#000000</color>
+    <color name="colorPrimary">#FFFFFF</color>
     <!-- Value from default config. -->
     <color name="colorPrimaryDark">#000000</color>
     <!-- Value from default config. -->

@@ -247,9 +247,9 @@ ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManif
 	android:name
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:130:24-91
 meta-data#android.support.customtabs.trusted.DISPLAY_MODE
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:13-137:46
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:13-137:52
 	android:value
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:17-43
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:17-49
 	android:name
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:24-86
 meta-data#android.support.customtabs.trusted.SCREEN_ORIENTATION
