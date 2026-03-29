@@ -90,12 +90,21 @@ org.gradle.daemon=false
 GPROPS
 echo "  Set Gradle heap to 512m, daemon disabled"
 
-# Upgrade Gradle wrapper to 8.13 — the first release with Java 26 support.
-# bubblewrap generates a project using 8.11.1 which cannot compile on Java 26.
-GRADLE_WRAPPER="gradle/wrapper/gradle-wrapper.properties"
-if grep -q "8\.11\." "$GRADLE_WRAPPER" 2>/dev/null; then
-    sed -i 's|gradle-8\.11\.[0-9]*-bin|gradle-8.13-bin|g' "$GRADLE_WRAPPER"
-    echo "  Upgraded Gradle wrapper: 8.11.x → 8.13"
+# Groovy DSL (used by Android Gradle Plugin) cannot run on Java 22+.
+# If the system default Java is too new, find Java 17 or 21 and tell Gradle.
+_JV=$(java -version 2>&1 | grep -oE '"[0-9]+' | grep -oE '[0-9]+' | head -1)
+if [ "${_JV:-0}" -gt 21 ]; then
+    _COMPAT=$(ls -d /usr/lib/jvm/java-21-openjdk* /usr/lib/jvm/java-17-openjdk* \
+                    /usr/lib/jvm/temurin-21* /usr/lib/jvm/temurin-17* 2>/dev/null \
+              | head -1)
+    if [ -n "$_COMPAT" ]; then
+        echo "org.gradle.java.home=${_COMPAT}" >> gradle.properties
+        echo "  Java $_JV too new for AGP Groovy DSL — using ${_COMPAT}"
+    else
+        echo "ERROR: Java $_JV is installed but Java 17/21 was not found."
+        echo "  Fix: sudo apt install openjdk-21-jdk  then re-run this script."
+        exit 1
+    fi
 fi
 
 # Notification sound — copy from the live static directory so it matches
