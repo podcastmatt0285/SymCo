@@ -90,6 +90,14 @@ org.gradle.daemon=false
 GPROPS
 echo "  Set Gradle heap to 512m, daemon disabled"
 
+# Upgrade Gradle wrapper to 8.13 — the first release with Java 26 support.
+# bubblewrap generates a project using 8.11.1 which cannot compile on Java 26.
+GRADLE_WRAPPER="gradle/wrapper/gradle-wrapper.properties"
+if grep -q "8\.11\." "$GRADLE_WRAPPER" 2>/dev/null; then
+    sed -i 's|gradle-8\.11\.[0-9]*-bin|gradle-8.13-bin|g' "$GRADLE_WRAPPER"
+    echo "  Upgraded Gradle wrapper: 8.11.x → 8.13"
+fi
+
 # Notification sound — copy from the live static directory so it matches
 # whatever sound the admin uploaded via the dashboard.
 SOUND_SRC="$(cd "$(dirname "$0")/.." && pwd)/static/sounds/notification.mp3"
