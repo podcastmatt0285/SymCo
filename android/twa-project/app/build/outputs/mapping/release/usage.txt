@@ -7785,11 +7785,18 @@ androidx.viewpager.widget.ViewPager$SavedState
 androidx.viewpager.widget.ViewPager$SimpleOnPageChangeListener
 androidx.viewpager.widget.ViewPager$ViewPositionComparator
 androidx.viewpager.widget.ViewPager
+cc.notifly.wadsworth.ChatWidgetBase:
+    static final java.lang.String BASE_URL
+cc.notifly.wadsworth.GlobalChatWidget:
+    static final java.lang.String ACTION_REFRESH
+cc.notifly.wadsworth.TradeChatWidget:
+    static final java.lang.String ACTION_REFRESH
 cc.notifly.wadsworth.WadsworthApplication
 cc.notifly.wadsworth.WadsworthTokenActivity:
     static final java.lang.String KEY_TOKEN
     static final java.lang.String PREFS
 cc.notifly.wadsworth.WadsworthWidget:
+    static final java.lang.String ACTION_REFRESH
     static final java.lang.String BASE_URL
     static final java.lang.String WIDGET_DATA
 cc.notifly.wadsworth.twa.R$array

@@ -23,8 +23,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cc.notifly.wadsworth.twa"
-    android:versionCode="10"
-    android:versionName="10" >
+    android:versionCode="16"
+    android:versionName="16" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -142,9 +142,6 @@
                 android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
                 android:value="@string/fallbackType" />
             <meta-data
-                android:name="android.support.customtabs.trusted.DISPLAY_MODE"
-                android:value="sticky-immersive" />
-            <meta-data
                 android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
                 android:value="@string/orientation" />
             <meta-data
@@ -226,6 +223,7 @@
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="cc.notifly.wadsworth.WIDGET_REFRESH" />
             </intent-filter>
 
             <meta-data
@@ -248,6 +246,31 @@
                     android:scheme="wadsworth" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name="cc.notifly.wadsworth.GlobalChatWidget"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/global_chat_widget_info" />
+        </receiver>
+        <receiver
+            android:name="cc.notifly.wadsworth.TradeChatWidget"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/trade_chat_widget_info" />
+        </receiver>
 
         <meta-data
             android:name="com.google.android.play.billingclient.version"

@@ -4,88 +4,153 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="14dp"
+    android:padding="12dp"
     android:background="@drawable/widget_background">
 
-    <!-- Header row: WADSWORTH + LIVE -->
+    <!-- Header -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
             android:text="WADSWORTH"
-            android:textColor="#7dd3fc"
-            android:textSize="10sp"
+            android:textColor="#38bdf8"
+            android:textSize="9sp"
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/widget_refresh"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="● LIVE"
-            android:textColor="#4ade80"
-            android:textSize="9sp" />
+            android:text="&#8635;"
+            android:textColor="#38bdf8"
+            android:textSize="13sp" />
+
     </RelativeLayout>
 
-    <!-- Cash balance — large and prominent -->
+    <!-- Balance -->
     <TextView
         android:id="@+id/widget_balance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="&#8212;"
-        android:textColor="#f8fafc"
-        android:textSize="26sp"
+        android:text="--"
+        android:textColor="#f1f5f9"
+        android:textSize="22sp"
         android:textStyle="bold"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="2dp" />
+        android:layout_marginBottom="8dp" />
 
-    <!-- Last alert text -->
+    <!-- Notification rows (fading from bright → dim = recent → older) -->
     <TextView
-        android:id="@+id/widget_alert"
+        android:id="@+id/widget_notif1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#e2e8f0"
+        android:textSize="10sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#cbd5e1"
-        android:textSize="11sp"
+        android:textSize="9sp"
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Alert timestamp -->
     <TextView
-        android:id="@+id/widget_time"
+        android:id="@+id/widget_notif3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif5"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
         android:textColor="#64748b"
         android:textSize="9sp"
-        android:layout_marginBottom="8dp" />
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-    <!-- Divider -->
     <TextView
+        android:id="@+id/widget_notif6"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#1e293b"
-        android:layout_marginBottom="6dp" />
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#64748b"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-    <!-- Scrolling ticker -->
+    <TextView
+        android:id="@+id/widget_notif7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#64748b"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif8"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif9"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif10"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- invisible placeholder keeps IDs valid -->
     <TextView
         android:id="@+id/widget_tickers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="10sp"
-        android:singleLine="true"
-        android:ellipsize="marquee"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:scrollHorizontally="true" />
+        android:textSize="1sp" />
 
 </LinearLayout>

@@ -8,6 +8,10 @@
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xhdpi/shortcut_2.png"
     },
     {
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/xml_global_chat_widget_info.xml.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/xml/global_chat_widget_info.xml"
+    },
+    {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-hdpi_splash.png.flat",
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-hdpi/splash.png"
     },
@@ -148,6 +152,10 @@
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xhdpi/shortcut_3.png"
     },
     {
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/xml_trade_chat_widget_info.xml.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/xml/trade_chat_widget_info.xml"
+    },
+    {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/xml_filepaths.xml.flat",
         "source": "cc.notifly.wadsworth.twa.app-main-30:/xml/filepaths.xml"
     },
@@ -160,12 +168,16 @@
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-anydpi/shortcut_legacy_background.xml"
     },
     {
-        "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-xxhdpi_shortcut_0.png.flat",
-        "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xxhdpi/shortcut_0.png"
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/layout_widget_chat_layout.xml.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/layout/widget_chat_layout.xml"
     },
     {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-xhdpi_shortcut_1.png.flat",
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xhdpi/shortcut_1.png"
+    },
+    {
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-xxhdpi_shortcut_0.png.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xxhdpi/shortcut_0.png"
     },
     {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/mipmap-xxhdpi_ic_launcher.png.flat",
