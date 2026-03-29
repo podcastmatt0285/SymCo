@@ -7,11 +7,11 @@
     android:padding="12dp"
     android:background="@drawable/widget_background">
 
-    <!-- Header: WADSWORTH + refresh button -->
+    <!-- Header -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp">
+        android:layout_marginBottom="6dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -28,9 +28,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:text="&#8635;"
-            android:textColor="#22c55e"
-            android:textSize="14sp"
-            android:padding="2dp" />
+            android:textColor="#38bdf8"
+            android:textSize="13sp" />
 
     </RelativeLayout>
 
@@ -41,13 +40,23 @@
         android:layout_height="wrap_content"
         android:text="--"
         android:textColor="#f1f5f9"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:textStyle="bold"
-        android:layout_marginBottom="4dp" />
+        android:layout_marginBottom="8dp" />
 
-    <!-- Notification 1 (most recent) -->
+    <!-- Notification rows (fading from bright → dim = recent → older) -->
     <TextView
         android:id="@+id/widget_notif1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#e2e8f0"
+        android:textSize="10sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
@@ -56,9 +65,8 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Notification 2 -->
     <TextView
-        android:id="@+id/widget_notif2"
+        android:id="@+id/widget_notif3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
@@ -67,9 +75,18 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Notification 3 -->
     <TextView
-        android:id="@+id/widget_notif3"
+        android:id="@+id/widget_notif4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#94a3b8"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif5"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
@@ -78,16 +95,62 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Tickers -->
+    <TextView
+        android:id="@+id/widget_notif6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#64748b"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#64748b"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif8"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif9"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_notif10"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#475569"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- invisible placeholder keeps IDs valid -->
     <TextView
         android:id="@+id/widget_tickers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text=""
-        android:textColor="#475569"
-        android:textSize="8sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:layout_marginTop="4dp" />
+        android:textSize="1sp" />
 
 </LinearLayout>

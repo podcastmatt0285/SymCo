@@ -86,9 +86,8 @@ public class WadsworthWidget extends AppWidgetProvider {
 
         // Loading state
         views.setTextViewText(id(ctx, "widget_balance"), "Loading\u2026");
-        views.setTextViewText(id(ctx, "widget_notif1"),  "");
-        views.setTextViewText(id(ctx, "widget_notif2"),  "");
-        views.setTextViewText(id(ctx, "widget_notif3"),  "");
+        for (int i = 1; i <= 10; i++)
+            views.setTextViewText(id(ctx, "widget_notif" + i), "");
         views.setTextViewText(id(ctx, "widget_tickers"), "");
         mgr.updateAppWidget(widgetId, views);
 
@@ -126,38 +125,27 @@ public class WadsworthWidget extends AppWidgetProvider {
                 views.setTextViewText(id(ctx, "widget_balance"),
                         data.optString("balance", "\u2014"));
 
-                // Notifications — show 3 most recent
+                // Notifications — show up to 10 most recent
                 JSONArray notifs = data.optJSONArray("notifications");
-                String[] notifIds = {"widget_notif1", "widget_notif2", "widget_notif3"};
+                String[] notifIds = {
+                    "widget_notif1", "widget_notif2", "widget_notif3", "widget_notif4",
+                    "widget_notif5", "widget_notif6", "widget_notif7", "widget_notif8",
+                    "widget_notif9", "widget_notif10"
+                };
                 for (int i = 0; i < notifIds.length; i++) {
                     if (notifs != null && i < notifs.length()) {
                         JSONObject n = notifs.getJSONObject(i);
                         String text   = n.optString("text", "");
                         String amount = n.optString("amount", "");
                         String time   = n.optString("time", "");
-                        String line2  = text + (amount.isEmpty() ? "" : "  " + amount)
+                        String row    = text + (amount.isEmpty() ? "" : "  " + amount)
                                       + (time.isEmpty() ? "" : "  " + time);
-                        views.setTextViewText(id(ctx, notifIds[i]), line2);
+                        views.setTextViewText(id(ctx, notifIds[i]), row);
                     } else {
                         views.setTextViewText(id(ctx, notifIds[i]), "");
                     }
                 }
-
-                // Market tickers — compact single line
-                JSONArray tickers = data.optJSONArray("tickers");
-                if (tickers != null && tickers.length() > 0) {
-                    StringBuilder ticker = new StringBuilder();
-                    int max = Math.min(tickers.length(), 12);
-                    for (int i = 0; i < max; i++) {
-                        JSONObject t = tickers.getJSONObject(i);
-                        ticker.append(t.optString("label", ""))
-                              .append(" ").append(t.optString("value", ""));
-                        String change = t.optString("change", "");
-                        if (!change.isEmpty()) ticker.append(" ").append(change);
-                        if (i < max - 1) ticker.append("  \u00b7  ");
-                    }
-                    views.setTextViewText(id(ctx, "widget_tickers"), ticker.toString());
-                }
+                views.setTextViewText(id(ctx, "widget_tickers"), "");
 
                 mgr.updateAppWidget(widgetId, views);
 
@@ -170,9 +158,8 @@ public class WadsworthWidget extends AppWidgetProvider {
 
     private static void setError(Context ctx, RemoteViews views, String msg) {
         views.setTextViewText(id(ctx, "widget_balance"), msg);
-        views.setTextViewText(id(ctx, "widget_notif1"),  "");
-        views.setTextViewText(id(ctx, "widget_notif2"),  "");
-        views.setTextViewText(id(ctx, "widget_notif3"),  "");
+        for (int i = 1; i <= 10; i++)
+            views.setTextViewText(id(ctx, "widget_notif" + i), "");
         views.setTextViewText(id(ctx, "widget_tickers"), "");
     }
 }
