@@ -150,8 +150,13 @@ MANIFEST="app/src/main/AndroidManifest.xml"
 
 # 1. Point <application> at our custom Application subclass so channels are
 #    seeded with the custom notification sound on every app launch.
+#    Bubblewrap generates android:name="Application" — replace it rather than
+#    prepending a second android:name (duplicate attributes break XML parsing).
 if grep -q "WadsworthApplication" "$MANIFEST"; then
     echo "  WadsworthApplication already in AndroidManifest.xml — skipping"
+elif grep -q 'android:name="Application"' "$MANIFEST"; then
+    sed -i "s|android:name=\"Application\"|android:name=\"${PACKAGE}.WadsworthApplication\"|" "$MANIFEST"
+    echo "  Set android:name=WadsworthApplication on <application>"
 else
     sed -i "s|<application |<application android:name=\"${PACKAGE}.WadsworthApplication\" |" "$MANIFEST"
     echo "  Set android:name=WadsworthApplication on <application>"
