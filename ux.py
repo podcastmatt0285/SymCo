@@ -9361,6 +9361,61 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
     return JSONResponse(result)
 
 
+@router.get("/api/widget/wbc50")
+def api_widget_wbc50(device_id: Optional[str] = None,
+                     session_token: Optional[str] = Cookie(None)):
+    """WBC-50 index value, 7-day sparkline, and top-5 constituents."""
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+        import auth as _auth
+        _db = _auth.get_db()
+        try:
+            player = _db.query(_auth.Player).filter(_auth.Player.id == pid).first()
+        finally:
+            _db.close()
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    from banks.indices import _get_latest, _get_history
+    from banks.wbc50_index_fund import get_wbc50_constituents
+
+    # Current value + 24h change
+    latest = _get_latest("WBC50")
+    current = latest.value if latest else 0.0
+
+    history_24h = _get_history("WBC50", days=1)
+    prev_24h = history_24h[0].value if history_24h else current
+    change_pct = ((current - prev_24h) / prev_24h * 100) if prev_24h else 0.0
+
+    # 7-day sparkline using Unicode block chars
+    history_7d = _get_history("WBC50", days=7)
+    BLOCKS = " \u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588"
+    sparkline = ""
+    if len(history_7d) >= 2:
+        vals = [s.value for s in history_7d]
+        lo, hi = min(vals), max(vals)
+        rng = hi - lo or 1
+        sparkline = "".join(BLOCKS[min(8, int((v - lo) / rng * 8) + 1)] for v in vals[-40:])
+
+    # Top 5 by market cap
+    constituents = get_wbc50_constituents()[:5]
+    top5 = [{"name": c.company_name, "price": f"${c.current_price:,.2f}"} for c in constituents]
+
+    return JSONResponse({
+        "value":      f"${current:,.2f}",
+        "change_pct": f"{'+'if change_pct>=0 else ''}{change_pct:.2f}%",
+        "up":         change_pct >= 0,
+        "sparkline":  sparkline,
+        "top5":       top5,
+    })
+
+
 @router.get("/api/widget/chat")
 def api_widget_chat(room: str = "global",
                     device_id: Optional[str] = None,

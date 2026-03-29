@@ -50,6 +50,11 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthWidget.java" \
     > "${JAVA_DIR}/WadsworthWidget.java"
 echo "  Copied WadsworthWidget.java → ${JAVA_DIR}/"
 
+# WBC-50 index widget
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WBCWidget.java" \
+    > "${JAVA_DIR}/WBCWidget.java"
+echo "  Copied WBCWidget.java → ${JAVA_DIR}/"
+
 # Chat widgets — public classes required so Android can instantiate via reflection
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/ChatWidgetBase.java"   > "${JAVA_DIR}/ChatWidgetBase.java"
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/GlobalChatWidget.java" > "${JAVA_DIR}/GlobalChatWidget.java"
@@ -85,9 +90,11 @@ mkdir -p app/src/main/res/raw
 # Widget layout + metadata
 cp "${WIDGET_DIR}/res/layout/widget_layout.xml"           app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/layout/widget_chat_layout.xml"      app/src/main/res/layout/
+cp "${WIDGET_DIR}/res/layout/widget_wbc_layout.xml"       app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"      app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/global_chat_widget_info.xml"    app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/trade_chat_widget_info.xml"     app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/xml/wbc_widget_info.xml"            app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/drawable/widget_background.xml"     app/src/main/res/drawable/
 echo "  Copied widget layout, xml, drawable resources"
 
@@ -151,7 +158,7 @@ else
 fi
 
 # 2. Inject AppWidget receiver
-RECEIVER_BLOCK="        <receiver android:name=\"${PACKAGE}.WadsworthWidget\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.WIDGET_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/wadsworth_widget_info\"/></receiver>"
+RECEIVER_BLOCK="        <receiver android:name=\"${PACKAGE}.WadsworthWidget\" android:label=\"Balance &amp; Alerts\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.WIDGET_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/wadsworth_widget_info\"/></receiver>"
 
 if grep -q "WadsworthWidget" "$MANIFEST"; then
     echo "  WadsworthWidget already in AndroidManifest.xml — skipping"
@@ -170,8 +177,18 @@ else
     echo "  Injected WadsworthTokenActivity into AndroidManifest.xml"
 fi
 
-# 4. Inject GlobalChatWidget receiver
-GLOBAL_CHAT_BLOCK="        <receiver android:name=\"${PACKAGE}.GlobalChatWidget\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.GLOBAL_CHAT_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/global_chat_widget_info\"/></receiver>"
+# 4. Inject WBCWidget receiver
+WBC_BLOCK="        <receiver android:name=\"${PACKAGE}.WBCWidget\" android:label=\"WBC-50 Index\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.WBC_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/wbc_widget_info\"/></receiver>"
+
+if grep -q "WBCWidget" "$MANIFEST"; then
+    echo "  WBCWidget already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${WBC_BLOCK}\n    </application>|" "$MANIFEST"
+    echo "  Injected WBCWidget receiver into AndroidManifest.xml"
+fi
+
+# 6. Inject GlobalChatWidget receiver
+GLOBAL_CHAT_BLOCK="        <receiver android:name=\"${PACKAGE}.GlobalChatWidget\" android:label=\"Global Chat\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.GLOBAL_CHAT_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/global_chat_widget_info\"/></receiver>"
 
 if grep -q "GlobalChatWidget" "$MANIFEST"; then
     echo "  GlobalChatWidget already in AndroidManifest.xml — skipping"
@@ -181,7 +198,7 @@ else
 fi
 
 # 5. Inject TradeChatWidget receiver
-TRADE_CHAT_BLOCK="        <receiver android:name=\"${PACKAGE}.TradeChatWidget\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.TRADE_CHAT_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/trade_chat_widget_info\"/></receiver>"
+TRADE_CHAT_BLOCK="        <receiver android:name=\"${PACKAGE}.TradeChatWidget\" android:label=\"Trade Chat\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.TRADE_CHAT_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/trade_chat_widget_info\"/></receiver>"
 
 if grep -q "TradeChatWidget" "$MANIFEST"; then
     echo "  TradeChatWidget already in AndroidManifest.xml — skipping"
@@ -201,6 +218,7 @@ else
 -keep class PACKAGE_PLACEHOLDER.WadsworthWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.WadsworthApplication { *; }
 -keep class PACKAGE_PLACEHOLDER.WadsworthTokenActivity { *; }
+-keep class PACKAGE_PLACEHOLDER.WBCWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.ChatWidgetBase { *; }
 -keep class PACKAGE_PLACEHOLDER.GlobalChatWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.TradeChatWidget { *; }
