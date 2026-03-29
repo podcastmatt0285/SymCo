@@ -21,8 +21,6 @@ APP_NAME="Wadsworth"
 PACKAGE="cc.notifly.wadsworth"           # ← change if yours differs
 VERSION_CODE=2
 VERSION_NAME="1.1"
-SIGNING_KEY="wadsworth-key.jks"
-KEY_ALIAS="wadsworth"
 
 WIDGET_DIR="$(cd "$(dirname "$0")/widget" && pwd)"
 
@@ -160,31 +158,86 @@ EOF
     echo "  Added ProGuard keep rules"
 fi
 
-echo "=== Step 4: Generate signing key (skip if reusing) ==="
+echo "=== Step 4: Create/reuse signing keystore (lives outside twa-project) ==="
+# Stored in android/ so it survives 'rm -rf twa-project' on rebuilds.
+# Alias must be 'android' to match what bubblewrap's Gradle template expects.
 cd ..
-if [ ! -f "${SIGNING_KEY}" ]; then
+KEYSTORE_ABS="$(pwd)/wadsworth-signing.jks"
+KEY_PASS="wadsworth123"
+if [ ! -f "${KEYSTORE_ABS}" ]; then
     keytool -genkey -v \
-        -keystore "${SIGNING_KEY}" \
-        -alias "${KEY_ALIAS}" \
+        -keystore "${KEYSTORE_ABS}" \
+        -alias android \
         -keyalg RSA -keysize 2048 \
         -validity 10000 \
-        -storepass wadsworth123 \
-        -keypass wadsworth123 \
+        -storepass "${KEY_PASS}" \
+        -keypass  "${KEY_PASS}" \
         -dname "CN=Wadsworth, OU=Game, O=Wadsworth, L=US, ST=US, C=US"
-    echo "  Key generated: ${SIGNING_KEY}"
+    echo "  Key generated: ${KEYSTORE_ABS}"
 else
-    echo "  Reusing existing ${SIGNING_KEY}"
+    echo "  Reusing existing ${KEYSTORE_ABS}"
 fi
 cd twa-project
 
-echo "=== Step 5: Build and sign APK ==="
-bubblewrap build \
-    --keyPath "../${SIGNING_KEY}" \
-    --keyAlias "${KEY_ALIAS}" \
-    --keystorePassword "wadsworth123" \
-    --keyPassword "wadsworth123"
+echo "=== Step 5: Inject Gradle signing config ==="
+# Patch app/build.gradle to sign the release build directly via Gradle.
+# This bypasses 'bubblewrap build' signing (which prompts interactively).
+python3 - "${KEYSTORE_ABS}" "${KEY_PASS}" << 'PYEOF'
+import sys, re
 
-cp app-release-signed.apk "../wadsworth-signed.apk"
+ks_path = sys.argv[1]
+ks_pass = sys.argv[2]
+
+with open('app/build.gradle', 'r') as f:
+    content = f.read()
+
+if 'signingConfigs' not in content:
+    signing_block = f"""
+    signingConfigs {{
+        release {{
+            storeFile file('{ks_path}')
+            storePassword '{ks_pass}'
+            keyAlias 'android'
+            keyPassword '{ks_pass}'
+        }}
+    }}
+"""
+    content = content.replace('    buildTypes {', signing_block + '    buildTypes {', 1)
+    content = re.sub(
+        r'(buildTypes\s*\{[^}]*?release\s*\{)',
+        r'\1\n            signingConfig signingConfigs.release',
+        content, flags=re.DOTALL
+    )
+    with open('app/build.gradle', 'w') as f:
+        f.write(content)
+    print('  Injected signingConfigs into app/build.gradle')
+else:
+    print('  signingConfigs already present — skipping')
+PYEOF
+
+echo "=== Step 6: Build release APK with Gradle ==="
+chmod +x gradlew
+./gradlew assembleRelease
+
+# Find the release APK (location varies by bubblewrap version)
+RELEASE_APK="$(find app/build/outputs/apk/release -name '*.apk' | grep -v unsigned | head -1)"
+if [ -z "$RELEASE_APK" ]; then
+    # Fall back: align + sign the unsigned APK manually
+    UNSIGNED_APK="$(find app/build/outputs/apk/release -name '*unsigned*.apk' | head -1)"
+    BUILD_TOOLS="$(ls "$ANDROID_HOME/build-tools/" | sort -V | tail -1)"
+    ZIPALIGN="$ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign"
+    APKSIGNER="$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner"
+    "$ZIPALIGN" -v -p 4 "$UNSIGNED_APK" app-release-aligned.apk
+    "$APKSIGNER" sign \
+        --ks "${KEYSTORE_ABS}" \
+        --ks-key-alias android \
+        --ks-pass pass:"${KEY_PASS}" \
+        --key-pass pass:"${KEY_PASS}" \
+        --out "../wadsworth-signed.apk" \
+        app-release-aligned.apk
+else
+    cp "$RELEASE_APK" "../wadsworth-signed.apk"
+fi
 cd ..
 
 echo ""
