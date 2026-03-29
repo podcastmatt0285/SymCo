@@ -9247,6 +9247,7 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
         "balance": fmt_usd(player.cash_balance, _disp, precision=0),
         "last_alert": "No recent activity",
         "last_alert_time": "",
+        "notifications": [],
         "tickers": [], "indices": [], "stocks": [], "bonds": [], "memes": [],
     }
 
@@ -9260,14 +9261,23 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
 
         db = SessionLocal()
         try:
-            # ── Last transaction as "last alert" ──────────────────────────────
-            tx = (db.query(TransactionLog)
-                    .filter(TransactionLog.player_id == player.id)
-                    .order_by(TransactionLog.timestamp.desc())
-                    .first())
-            if tx:
-                result["last_alert"] = (tx.description or tx.transaction_type or "")[:80]
-                result["last_alert_time"] = _ago(tx.timestamp)
+            # ── Last 10 transactions as notifications ─────────────────────────
+            txs = (db.query(TransactionLog)
+                     .filter(TransactionLog.player_id == player.id)
+                     .order_by(TransactionLog.timestamp.desc())
+                     .limit(10).all())
+            if txs:
+                result["last_alert"] = (txs[0].description or txs[0].transaction_type or "")[:80]
+                result["last_alert_time"] = _ago(txs[0].timestamp)
+                result["notifications"] = [
+                    {
+                        "text": (t.description or t.transaction_type or "")[:60],
+                        "time": _ago(t.timestamp),
+                        "amount": fmt_usd(t.amount, _disp, precision=0) if t.amount else "",
+                        "positive": (t.amount or 0) >= 0,
+                    }
+                    for t in txs
+                ]
 
             # ── Indices ───────────────────────────────────────────────────────
             INDEX_CODES = ["WBC50","GLVI","CCC","EPI","CDI","REGI","BEE","WEI","GPI","SEED"]

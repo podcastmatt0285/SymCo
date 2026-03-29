@@ -3,6 +3,7 @@ package PACKAGE_NAME;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -19,26 +20,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-/**
- * Wadsworth home-screen widget.
- *
- * Shows the player's cash balance, most-recent alert, and a rolling
- * market ticker (indices → stocks → bonds → memecoins).
- *
- * Authentication piggy-backs on the TWA WebView cookie store: Chrome
- * shares cookies with the host app via CookieManager, so the session_token
- * cookie is available as long as the user is logged in inside the app.
- *
- * All resource IDs are resolved at runtime via getIdentifier() so this
- * file compiles regardless of the AGP namespace configuration.
- */
 public class WadsworthWidget extends AppWidgetProvider {
 
     static final String BASE_URL    = "https://wadsworth.notifly.cc";
     static final String WIDGET_DATA = BASE_URL + "/api/widget/data";
+    static final String ACTION_REFRESH = "PACKAGE_NAME.WIDGET_REFRESH";
 
-    /** Compute SHA-256(ANDROID_ID + salt) — same value that LauncherActivity
-     *  appends to the launch URL so the server can link device → player. */
     private static String getDeviceHash(Context ctx) {
         try {
             String androidId = Settings.Secure.getString(
@@ -54,16 +41,21 @@ public class WadsworthWidget extends AppWidgetProvider {
         }
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
-
     @Override
     public void onUpdate(Context ctx, AppWidgetManager mgr, int[] widgetIds) {
-        for (int id : widgetIds) {
-            updateWidget(ctx, mgr, id);
-        }
+        for (int id : widgetIds) updateWidget(ctx, mgr, id);
     }
 
-    // ── Resource ID helpers ───────────────────────────────────────────────────
+    /** Refresh button tap triggers this broadcast. */
+    @Override
+    public void onReceive(Context ctx, Intent intent) {
+        super.onReceive(ctx, intent);
+        if (ACTION_REFRESH.equals(intent.getAction())) {
+            AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
+            int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, WadsworthWidget.class));
+            for (int id : ids) updateWidget(ctx, mgr, id);
+        }
+    }
 
     private static int layoutId(Context ctx) {
         return ctx.getResources().getIdentifier("widget_layout", "layout", ctx.getPackageName());
@@ -73,34 +65,40 @@ public class WadsworthWidget extends AppWidgetProvider {
         return ctx.getResources().getIdentifier(name, "id", ctx.getPackageName());
     }
 
-    // ── Core update logic ─────────────────────────────────────────────────────
-
     static void updateWidget(Context ctx, AppWidgetManager mgr, int widgetId) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), layoutId(ctx));
 
-        // Tap anywhere → open the app
+        // Tap body → open the app
         Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL));
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        int flags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
-        PendingIntent pi = PendingIntent.getActivity(ctx, 0, launch, flags);
-        views.setOnClickPendingIntent(id(ctx, "widget_root"), pi);
+        int piFlags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
+        PendingIntent openApp = PendingIntent.getActivity(ctx, 0, launch, piFlags);
+        views.setOnClickPendingIntent(id(ctx, "widget_root"), openApp);
 
-        // Show loading state immediately, then update with real data
-        views.setTextViewText(id(ctx, "widget_balance"),  "Loading…");
-        views.setTextViewText(id(ctx, "widget_alert"),    "");
-        views.setTextViewText(id(ctx, "widget_time"),     "");
-        views.setTextViewText(id(ctx, "widget_tickers"),  "");
+        // Refresh button → broadcast back to this provider
+        Intent refresh = new Intent(ACTION_REFRESH);
+        refresh.setComponent(new ComponentName(ctx, WadsworthWidget.class));
+        int refreshFlags = Build.VERSION.SDK_INT >= 23
+                ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+                : PendingIntent.FLAG_UPDATE_CURRENT;
+        PendingIntent refreshPi = PendingIntent.getBroadcast(ctx, 1, refresh, refreshFlags);
+        views.setOnClickPendingIntent(id(ctx, "widget_refresh"), refreshPi);
+
+        // Loading state
+        views.setTextViewText(id(ctx, "widget_balance"), "Loading\u2026");
+        views.setTextViewText(id(ctx, "widget_notif1"),  "");
+        views.setTextViewText(id(ctx, "widget_notif2"),  "");
+        views.setTextViewText(id(ctx, "widget_notif3"),  "");
+        views.setTextViewText(id(ctx, "widget_tickers"), "");
         mgr.updateAppWidget(widgetId, views);
 
         final String deviceHash = getDeviceHash(ctx);
 
-        // Fetch data on a background thread
         new Thread(() -> {
             try {
                 String dataUrl = WIDGET_DATA;
-                if (deviceHash != null) {
+                if (deviceHash != null)
                     dataUrl = WIDGET_DATA + "?device_id=" + Uri.encode(deviceHash);
-                }
 
                 URL url = new URL(dataUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -116,8 +114,8 @@ public class WadsworthWidget extends AppWidgetProvider {
                     return;
                 }
 
-                BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(conn.getInputStream()));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) sb.append(line);
@@ -125,29 +123,38 @@ public class WadsworthWidget extends AppWidgetProvider {
 
                 JSONObject data = new JSONObject(sb.toString());
 
-                // Balance
                 views.setTextViewText(id(ctx, "widget_balance"),
-                    data.optString("balance", "—"));
+                        data.optString("balance", "\u2014"));
 
-                // Last alert
-                String alert = data.optString("last_alert", "");
-                String time  = data.optString("last_alert_time", "");
-                views.setTextViewText(id(ctx, "widget_alert"), alert);
-                views.setTextViewText(id(ctx, "widget_time"),  time);
+                // Notifications — show 3 most recent
+                JSONArray notifs = data.optJSONArray("notifications");
+                String[] notifIds = {"widget_notif1", "widget_notif2", "widget_notif3"};
+                for (int i = 0; i < notifIds.length; i++) {
+                    if (notifs != null && i < notifs.length()) {
+                        JSONObject n = notifs.getJSONObject(i);
+                        String text   = n.optString("text", "");
+                        String amount = n.optString("amount", "");
+                        String time   = n.optString("time", "");
+                        String line2  = text + (amount.isEmpty() ? "" : "  " + amount)
+                                      + (time.isEmpty() ? "" : "  " + time);
+                        views.setTextViewText(id(ctx, notifIds[i]), line2);
+                    } else {
+                        views.setTextViewText(id(ctx, notifIds[i]), "");
+                    }
+                }
 
-                // Tickers — build a compact single-line string
+                // Market tickers — compact single line
                 JSONArray tickers = data.optJSONArray("tickers");
                 if (tickers != null && tickers.length() > 0) {
                     StringBuilder ticker = new StringBuilder();
                     int max = Math.min(tickers.length(), 12);
                     for (int i = 0; i < max; i++) {
                         JSONObject t = tickers.getJSONObject(i);
-                        String label  = t.optString("label", "");
-                        String value  = t.optString("value", "");
+                        ticker.append(t.optString("label", ""))
+                              .append(" ").append(t.optString("value", ""));
                         String change = t.optString("change", "");
-                        ticker.append(label).append(" ").append(value);
                         if (!change.isEmpty()) ticker.append(" ").append(change);
-                        if (i < max - 1) ticker.append("  ·  ");
+                        if (i < max - 1) ticker.append("  \u00b7  ");
                     }
                     views.setTextViewText(id(ctx, "widget_tickers"), ticker.toString());
                 }
@@ -163,8 +170,9 @@ public class WadsworthWidget extends AppWidgetProvider {
 
     private static void setError(Context ctx, RemoteViews views, String msg) {
         views.setTextViewText(id(ctx, "widget_balance"), msg);
-        views.setTextViewText(id(ctx, "widget_alert"),   "");
-        views.setTextViewText(id(ctx, "widget_time"),    "");
+        views.setTextViewText(id(ctx, "widget_notif1"),  "");
+        views.setTextViewText(id(ctx, "widget_notif2"),  "");
+        views.setTextViewText(id(ctx, "widget_notif3"),  "");
         views.setTextViewText(id(ctx, "widget_tickers"), "");
     }
 }
