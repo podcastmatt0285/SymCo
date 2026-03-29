@@ -21,15 +21,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /** Shared logic for the Global Chat and Trade Chat home-screen widgets. */
-abstract class ChatWidgetBase extends AppWidgetProvider {
+public abstract class ChatWidgetBase extends AppWidgetProvider {
 
     static final String BASE_URL = "https://wadsworth.notifly.cc";
 
-    abstract String getRoomId();
-    abstract String getActionRefresh();
-    abstract String getRoomLabel();
+    public abstract String getRoomId();
+    public abstract String getActionRefresh();
+    public abstract String getRoomLabel();
 
-    private static String getDeviceHash(Context ctx) {
+    static String getDeviceHash(Context ctx) {
         try {
             String androidId = Settings.Secure.getString(
                     ctx.getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -44,11 +44,11 @@ abstract class ChatWidgetBase extends AppWidgetProvider {
         }
     }
 
-    private static int id(Context ctx, String name) {
+    static int viewId(Context ctx, String name) {
         return ctx.getResources().getIdentifier(name, "id", ctx.getPackageName());
     }
 
-    private static int layoutId(Context ctx) {
+    static int layoutId(Context ctx) {
         return ctx.getResources().getIdentifier("widget_chat_layout", "layout", ctx.getPackageName());
     }
 
@@ -70,30 +70,28 @@ abstract class ChatWidgetBase extends AppWidgetProvider {
     static void updateWidget(Context ctx, AppWidgetManager mgr, int widgetId, ChatWidgetBase w) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), layoutId(ctx));
 
-        // Title
-        views.setTextViewText(id(ctx, "widget_chat_title"), w.getRoomLabel());
+        views.setTextViewText(viewId(ctx, "widget_chat_title"), w.getRoomLabel());
 
-        // Tap title → open chat page
+        // Tap title → open chat page in the app
         int piFlags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
-        Intent launch = new Intent(Intent.ACTION_VIEW,
-                Uri.parse(BASE_URL + "/chat"));
+        Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL + "/chat"));
         launch.setPackage(ctx.getPackageName());
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        views.setOnClickPendingIntent(id(ctx, "widget_chat_title"),
-                PendingIntent.getActivity(ctx, w.getRoomId().hashCode(), launch, piFlags));
+        views.setOnClickPendingIntent(viewId(ctx, "widget_chat_title"),
+                PendingIntent.getActivity(ctx, (w.getRoomId() + "_open").hashCode(), launch, piFlags));
 
-        // Refresh button → broadcast
+        // Refresh button → broadcast to this provider
         Intent refresh = new Intent(w.getActionRefresh());
         refresh.setComponent(new ComponentName(ctx, w.getClass()));
         int rfFlags = Build.VERSION.SDK_INT >= 23
                 ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
                 : PendingIntent.FLAG_UPDATE_CURRENT;
-        views.setOnClickPendingIntent(id(ctx, "widget_chat_refresh"),
-                PendingIntent.getBroadcast(ctx, w.getRoomId().hashCode() + 1, refresh, rfFlags));
+        views.setOnClickPendingIntent(viewId(ctx, "widget_chat_refresh"),
+                PendingIntent.getBroadcast(ctx, (w.getRoomId() + "_refresh").hashCode(), refresh, rfFlags));
 
-        // Clear rows
+        // Clear message rows
         for (int i = 1; i <= 25; i++)
-            views.setTextViewText(id(ctx, "widget_chat_msg" + i), "");
+            views.setTextViewText(viewId(ctx, "widget_chat_msg" + i), "");
         mgr.updateAppWidget(widgetId, views);
 
         final String deviceHash = getDeviceHash(ctx);
@@ -114,7 +112,7 @@ abstract class ChatWidgetBase extends AppWidgetProvider {
                 conn.connect();
 
                 if (conn.getResponseCode() != 200) {
-                    views.setTextViewText(id(ctx, "widget_chat_msg1"), "Open app to log in");
+                    views.setTextViewText(viewId(ctx, "widget_chat_msg1"), "Open app to log in");
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
@@ -134,37 +132,20 @@ abstract class ChatWidgetBase extends AppWidgetProvider {
                         JSONObject m = msgs.getJSONObject(i - 1);
                         String sender = m.optString("sender", "");
                         String text   = m.optString("text", "");
-                        // Truncate long names for readability
                         if (sender.length() > 12)
                             sender = sender.substring(0, 11) + "\u2026";
-                        views.setTextViewText(id(ctx, "widget_chat_msg" + i),
+                        views.setTextViewText(viewId(ctx, "widget_chat_msg" + i),
                                 sender + ": " + text);
                     } else {
-                        views.setTextViewText(id(ctx, "widget_chat_msg" + i), "");
+                        views.setTextViewText(viewId(ctx, "widget_chat_msg" + i), "");
                     }
                 }
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
-                views.setTextViewText(id(ctx, "widget_chat_msg1"), "Tap \u21bb to refresh");
+                views.setTextViewText(viewId(ctx, "widget_chat_msg1"), "Tap \u21bb to refresh");
                 mgr.updateAppWidget(widgetId, views);
             }
         }).start();
     }
-}
-
-// ── Concrete widget classes ───────────────────────────────────────────────────
-
-class GlobalChatWidget extends ChatWidgetBase {
-    static final String ACTION_REFRESH = "PACKAGE_NAME.GLOBAL_CHAT_REFRESH";
-    @Override String getRoomId()      { return "global"; }
-    @Override String getActionRefresh() { return ACTION_REFRESH; }
-    @Override String getRoomLabel()   { return "\uD83C\uDF10 GLOBAL CHAT"; }
-}
-
-class TradeChatWidget extends ChatWidgetBase {
-    static final String ACTION_REFRESH = "PACKAGE_NAME.TRADE_CHAT_REFRESH";
-    @Override String getRoomId()      { return "trade"; }
-    @Override String getActionRefresh() { return ACTION_REFRESH; }
-    @Override String getRoomLabel()   { return "\uD83D\uDCCA TRADE CHAT"; }
 }

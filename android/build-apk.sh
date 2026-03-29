@@ -50,10 +50,11 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthWidget.java" \
     > "${JAVA_DIR}/WadsworthWidget.java"
 echo "  Copied WadsworthWidget.java → ${JAVA_DIR}/"
 
-# Chat widgets — GlobalChatWidget + TradeChatWidget share ChatWidgetBase
-sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/ChatWidget.java" \
-    > "${JAVA_DIR}/ChatWidget.java"
-echo "  Copied ChatWidget.java → ${JAVA_DIR}/"
+# Chat widgets — public classes required so Android can instantiate via reflection
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/ChatWidgetBase.java"   > "${JAVA_DIR}/ChatWidgetBase.java"
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/GlobalChatWidget.java" > "${JAVA_DIR}/GlobalChatWidget.java"
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/TradeChatWidget.java"  > "${JAVA_DIR}/TradeChatWidget.java"
+echo "  Copied ChatWidgetBase, GlobalChatWidget, TradeChatWidget → ${JAVA_DIR}/"
 
 # Custom Application subclass — pre-seeds notification channels with our
 # sound at startup before Chrome/TWA can create them with the system default.
