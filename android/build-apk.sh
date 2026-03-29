@@ -50,6 +50,11 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthWidget.java" \
     > "${JAVA_DIR}/WadsworthWidget.java"
 echo "  Copied WadsworthWidget.java → ${JAVA_DIR}/"
 
+# Chat widgets — GlobalChatWidget + TradeChatWidget share ChatWidgetBase
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/ChatWidget.java" \
+    > "${JAVA_DIR}/ChatWidget.java"
+echo "  Copied ChatWidget.java → ${JAVA_DIR}/"
+
 # Custom Application subclass — pre-seeds notification channels with our
 # sound at startup before Chrome/TWA can create them with the system default.
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthApplication.java" \
@@ -77,9 +82,12 @@ mkdir -p app/src/main/res/drawable
 mkdir -p app/src/main/res/raw
 
 # Widget layout + metadata
-cp "${WIDGET_DIR}/res/layout/widget_layout.xml"        app/src/main/res/layout/
-cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"   app/src/main/res/xml/
-cp "${WIDGET_DIR}/res/drawable/widget_background.xml"  app/src/main/res/drawable/
+cp "${WIDGET_DIR}/res/layout/widget_layout.xml"           app/src/main/res/layout/
+cp "${WIDGET_DIR}/res/layout/widget_chat_layout.xml"      app/src/main/res/layout/
+cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"      app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/xml/global_chat_widget_info.xml"    app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/xml/trade_chat_widget_info.xml"     app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/drawable/widget_background.xml"     app/src/main/res/drawable/
 echo "  Copied widget layout, xml, drawable resources"
 
 # Reduce Gradle JVM heap — default 1.5 GB kills the daemon on low-RAM machines.
@@ -151,8 +159,7 @@ else
     echo "  Injected WadsworthWidget receiver into AndroidManifest.xml"
 fi
 
-# 3. Inject token activity — handles wadsworth://widget-auth?token=... intents
-#    fired by the web app JS to pass auth tokens into SharedPreferences.
+# 3. Inject token activity
 TOKEN_ACTIVITY="        <activity android:name=\"${PACKAGE}.WadsworthTokenActivity\" android:exported=\"true\" android:theme=\"@android:style/Theme.NoDisplay\"><intent-filter><action android:name=\"android.intent.action.VIEW\"/><category android:name=\"android.intent.category.DEFAULT\"/><category android:name=\"android.intent.category.BROWSABLE\"/><data android:scheme=\"wadsworth\" android:host=\"widget-auth\"/></intent-filter></activity>"
 
 if grep -q "WadsworthTokenActivity" "$MANIFEST"; then
@@ -162,7 +169,27 @@ else
     echo "  Injected WadsworthTokenActivity into AndroidManifest.xml"
 fi
 
-# ProGuard/R8 keep rules — prevent shrinking of our injected classes
+# 4. Inject GlobalChatWidget receiver
+GLOBAL_CHAT_BLOCK="        <receiver android:name=\"${PACKAGE}.GlobalChatWidget\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.GLOBAL_CHAT_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/global_chat_widget_info\"/></receiver>"
+
+if grep -q "GlobalChatWidget" "$MANIFEST"; then
+    echo "  GlobalChatWidget already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${GLOBAL_CHAT_BLOCK}\n    </application>|" "$MANIFEST"
+    echo "  Injected GlobalChatWidget receiver into AndroidManifest.xml"
+fi
+
+# 5. Inject TradeChatWidget receiver
+TRADE_CHAT_BLOCK="        <receiver android:name=\"${PACKAGE}.TradeChatWidget\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.TRADE_CHAT_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/trade_chat_widget_info\"/></receiver>"
+
+if grep -q "TradeChatWidget" "$MANIFEST"; then
+    echo "  TradeChatWidget already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${TRADE_CHAT_BLOCK}\n    </application>|" "$MANIFEST"
+    echo "  Injected TradeChatWidget receiver into AndroidManifest.xml"
+fi
+
+# ProGuard/R8 keep rules
 PROGUARD_RULES="app/proguard-rules.pro"
 if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
     echo "  ProGuard rules already present — skipping"
@@ -173,6 +200,9 @@ else
 -keep class PACKAGE_PLACEHOLDER.WadsworthWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.WadsworthApplication { *; }
 -keep class PACKAGE_PLACEHOLDER.WadsworthTokenActivity { *; }
+-keep class PACKAGE_PLACEHOLDER.ChatWidgetBase { *; }
+-keep class PACKAGE_PLACEHOLDER.GlobalChatWidget { *; }
+-keep class PACKAGE_PLACEHOLDER.TradeChatWidget { *; }
 EOF
     sed -i "s/PACKAGE_PLACEHOLDER/${PACKAGE}/g" "$PROGUARD_RULES"
     echo "  Added ProGuard keep rules"

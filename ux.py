@@ -9361,6 +9361,62 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
     return JSONResponse(result)
 
 
+@router.get("/api/widget/chat")
+def api_widget_chat(room: str = "global",
+                    device_id: Optional[str] = None,
+                    session_token: Optional[str] = Cookie(None)):
+    """Last 6 chat messages for the home-screen chat widgets."""
+    if room not in ("global", "trade", "qa"):
+        return JSONResponse({"error": "invalid room"}, status_code=400)
+
+    # Auth — same pattern as api_widget_data
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+        import auth as _auth
+        _db = _auth.get_db()
+        try:
+            player = _db.query(_auth.Player).filter(_auth.Player.id == pid).first()
+        finally:
+            _db.close()
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    from chat import get_room_messages
+    from datetime import datetime as _dt
+
+    def _ago(iso):
+        if not iso:
+            return ""
+        try:
+            s = (_dt.utcnow() - _dt.fromisoformat(iso)).total_seconds()
+            if s < 60:    return "just now"
+            if s < 3600:  return f"{int(s/60)}m ago"
+            if s < 86400: return f"{int(s/3600)}h ago"
+            return f"{int(s/86400)}d ago"
+        except Exception:
+            return ""
+
+    msgs = get_room_messages(room, limit=6)
+    return JSONResponse({
+        "room": room,
+        "messages": [
+            {
+                "sender": m["sender_name"],
+                "text":   m["content"],
+                "time":   _ago(m.get("timestamp")),
+            }
+            for m in reversed(msgs)
+            if m.get("message_type", "chat") == "chat"
+        ]
+    })
+
+
 # ==========================
 # JSON API ENDPOINT
 # ==========================
