@@ -3720,6 +3720,23 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
         item_desc = item_info.get("description", "") if item_info else ""
         item_cat = item_info.get("category", "other") if item_info else "other"
         
+        # Adaptive price formatter: shows enough decimals for small prices
+        def _fmt_price(price, d):
+            if price is None:
+                return "MKT"
+            abs_p = abs(price)
+            if abs_p == 0:
+                prec = 2
+            elif abs_p < 0.0001:
+                prec = 8
+            elif abs_p < 0.01:
+                prec = 6
+            elif abs_p < 1:
+                prec = 4
+            else:
+                prec = 2
+            return fmt_usd(price, d, precision=prec)
+
         # Build "All My Open Orders" panel (across all items)
         all_orders_html = ""
         if all_my_orders:
@@ -3727,7 +3744,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
             for o in all_my_orders:
                 side_color = "#22c55e" if o.order_type == "buy" else "#ef4444"
                 rem = o.quantity - o.quantity_filled
-                price_str = fmt_usd(o.price, disp) if o.price else "MKT"
+                price_str = _fmt_price(o.price, disp)
                 item_label = o.item_type.replace("_", " ").title()
                 all_rows += f'''<tr style="border-bottom:1px solid #1e293b;">
                     <td style="padding:6px 8px;"><a href="/market?item={o.item_type}" style="color:#38bdf8;text-decoration:none;">{item_label}</a></td>
@@ -3762,9 +3779,20 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
 
         # Build market HTML
         market_html = f'''
+        <style>
+        @media (max-width: 640px) {{
+            .mkt-main-flex {{ flex-direction: column !important; }}
+            .mkt-sidebar {{ max-width: 100% !important; flex: none !important; }}
+            .mkt-order-form {{ grid-template-columns: 1fr !important; }}
+            .mkt-order-book-grid {{ grid-template-columns: 1fr !important; }}
+            .mkt-order-book-row {{ grid-template-columns: 1fr 1fr !important; }}
+            .mkt-order-book-hdr {{ grid-template-columns: 1fr 1fr !important; }}
+            .mkt-orders-wrap {{ overflow-x: auto !important; }}
+        }}
+        </style>
         <a href="/" style="color: #38bdf8;"><- Dashboard</a>
         {all_orders_html}
-        <div style="display: flex; gap: 20px; max-width: 100%;">
+        <div class="mkt-main-flex" style="display: flex; gap: 20px; max-width: 100%;">
             <div style="flex: 2; min-width: 0;">
                 <h1>📈 Market</h1>
                 <div style="margin-bottom: 16px; padding: 12px; background: #0f172a; border-left: 4px solid {cat_colors.get(item_cat, "#64748b")};">
@@ -3780,7 +3808,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 <!-- Order Placement Form -->
                 <div class="card">
                     <h3>Place Limit Order</h3>
-                    <form action="/api/market/order" method="post" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
+                    <form action="/api/market/order" method="post" class="mkt-order-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
                         <input type="hidden" name="item_type" value="{item}">
                         <select name="order_type">
                             <option value="buy">BUY</option>
@@ -3793,12 +3821,12 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 </div>
                 
                 <!-- Order Book Grid -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    
+                <div class="mkt-order-book-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+
                     <!-- BIDS -->
                     <div class="card">
                         <h3 style="color: #22c55e;">Bids (Buy Orders)</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                        <div class="mkt-order-book-hdr" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
                             <span>Price</span>
                             <span>Qty</span>
                             <span>Trader</span>
@@ -3808,8 +3836,8 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
             for price, qty, order_id, player_name, player_id in order_book['bids'][:10]:
                 p_flag = player_flags.get(player_id, "🌐")
                 market_html += f'''
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
-                            <span>{fmt_usd(price, disp)}</span>
+                        <div class="mkt-order-book-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #22c55e;">
+                            <span>{_fmt_price(price, disp)}</span>
                             <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;" title="Legal tender flag">{p_flag} {player_name[:15]}</span>
                         </div>'''
@@ -3822,7 +3850,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                     <!-- ASKS -->
                     <div class="card">
                         <h3 style="color: #ef4444;">Asks (Sell Orders)</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
+                        <div class="mkt-order-book-hdr" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; font-size: 0.85rem; color: #64748b;">
                             <span>Price</span>
                             <span>Qty</span>
                             <span>Trader</span>
@@ -3832,8 +3860,8 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
             for price, qty, order_id, player_name, player_id in order_book['asks'][:10]:
                 p_flag = player_flags.get(player_id, "🌐")
                 market_html += f'''
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
-                            <span>{fmt_usd(price, disp)}</span>
+                        <div class="mkt-order-book-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.9rem; padding: 4px 0; color: #ef4444;">
+                            <span>{_fmt_price(price, disp)}</span>
                             <span>{qty:,.2f}</span>
                             <span style="font-size: 0.8rem; color: #64748b;" title="Legal tender flag">{p_flag} {player_name[:15]}</span>
                         </div>'''
@@ -3850,7 +3878,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 my_orders_rows += f'''
                 <tr style="border-bottom: 1px solid #1e293b;">
                     <td style="padding: 8px 6px; color: {side_color}; font-weight: bold;">{o.order_type.upper()}</td>
-                    <td style="padding: 8px 6px;">{'MKT' if o.price is None else f'{fmt_usd(o.price, disp)}'}</td>
+                    <td style="padding: 8px 6px;">{_fmt_price(o.price, disp)}</td>
                     <td style="padding: 8px 6px;">{o.quantity:,.2f}</td>
                     <td style="padding: 8px 6px; color: #94a3b8;">{o.quantity_filled:,.2f}</td>
                     <td style="padding: 8px 6px; color: #f59e0b;">{remaining:,.2f}</td>
@@ -3867,7 +3895,8 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
             my_orders_html = f'''
             <div class="card" style="margin-top: 20px;">
                 <h3>My Open Orders</h3>
-                <table style="width:100%;border-collapse:collapse;">
+                <div class="mkt-orders-wrap" style="overflow-x: auto;">
+                <table style="width:100%;border-collapse:collapse;min-width:420px;">
                     <thead>
                         <tr style="border-bottom:1px solid #1e293b;font-size:0.85rem;color:#64748b;text-align:left;">
                             <th style="padding:8px 6px;">Side</th>
@@ -3880,6 +3909,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                     </thead>
                     <tbody>{my_orders_rows}</tbody>
                 </table>
+                </div>
             </div>'''
         else:
             my_orders_html = '''
@@ -3895,7 +3925,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
             </div>
 
             <!-- Sidebar -->
-            <div style="flex: 1; min-width: 0; max-width: 280px;">
+            <div class="mkt-sidebar" style="flex: 1; min-width: 0; max-width: 280px;">
                 <div class="card">
                     <h3>Market Stats</h3>
                     <p><strong>24h Volume:</strong><br>{fmt_usd(stats["volume_24h"], disp)}</p>
@@ -9359,6 +9389,61 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
         print(f"[widget/data] error: {_e}")
 
     return JSONResponse(result)
+
+
+@router.get("/api/widget/wbc50")
+def api_widget_wbc50(device_id: Optional[str] = None,
+                     session_token: Optional[str] = Cookie(None)):
+    """WBC-50 index value, 7-day sparkline, and top-5 constituents."""
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+        import auth as _auth
+        _db = _auth.get_db()
+        try:
+            player = _db.query(_auth.Player).filter(_auth.Player.id == pid).first()
+        finally:
+            _db.close()
+        if not player:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    from banks.indices import _get_latest, _get_history
+    from banks.wbc50_index_fund import get_wbc50_constituents
+
+    # Current value + 24h change
+    latest = _get_latest("WBC50")
+    current = latest.value if latest else 0.0
+
+    history_24h = _get_history("WBC50", days=1)
+    prev_24h = history_24h[0].value if history_24h else current
+    change_pct = ((current - prev_24h) / prev_24h * 100) if prev_24h else 0.0
+
+    # 7-day sparkline using Unicode block chars
+    history_7d = _get_history("WBC50", days=7)
+    BLOCKS = " \u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588"
+    sparkline = ""
+    if len(history_7d) >= 2:
+        vals = [s.value for s in history_7d]
+        lo, hi = min(vals), max(vals)
+        rng = hi - lo or 1
+        sparkline = "".join(BLOCKS[min(8, int((v - lo) / rng * 8) + 1)] for v in vals[-40:])
+
+    # Top 5 by market cap
+    constituents = get_wbc50_constituents()[:5]
+    top5 = [{"name": c.company_name, "price": f"${c.current_price:,.2f}"} for c in constituents]
+
+    return JSONResponse({
+        "value":      f"${current:,.2f}",
+        "change_pct": f"{'+'if change_pct>=0 else ''}{change_pct:.2f}%",
+        "up":         change_pct >= 0,
+        "sparkline":  sparkline,
+        "top5":       top5,
+    })
 
 
 @router.get("/api/widget/chat")
