@@ -90,6 +90,12 @@ org.gradle.daemon=false
 GPROPS
 echo "  Set Gradle heap to 512m, daemon disabled"
 
+# Write sdk.dir to local.properties — Gradle needs this when ANDROID_HOME is not set.
+# bubblewrap installs the SDK at ~/.bubblewrap/android_sdk by default.
+SDK_DIR="${ANDROID_HOME:-$HOME/.bubblewrap/android_sdk}"
+echo "sdk.dir=${SDK_DIR}" > local.properties
+echo "  Set sdk.dir=${SDK_DIR} in local.properties"
+
 # Groovy DSL (used by Android Gradle Plugin) cannot run on Java 22+.
 # If the system default Java is too new, find Java 17 or 21 and tell Gradle.
 _JV=$(java -version 2>&1 | grep -oE '"[0-9]+' | grep -oE '[0-9]+' | head -1)
