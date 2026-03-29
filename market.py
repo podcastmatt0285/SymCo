@@ -1,0 +1,713 @@
+"""
+market.py
+
+Market module for the economic simulation.
+Handles:
+- Player-driven buy and sell orders
+- Order matching engine (tick-driven)
+- Market orders vs limit orders
+- Order book display
+- Price discovery
+- Trade execution
+- Market statistics
+- Initial inventory distribution for new players
+"""
+
+from datetime import datetime
+from typing import Optional, List, Tuple
+from enum import Enum
+from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from stats_ux import log_transaction
+# ==========================
+# DATABASE SETUP
+# ==========================
+from database import engine, SessionLocal
+Base = declarative_base()
+
+# ==========================
+# ENUMS
+# ==========================
+class OrderType(str, Enum):
+    BUY = "buy"
+    SELL = "sell"
+
+class OrderMode(str, Enum):
+    LIMIT = "limit"      # Execute at specified price or better
+    MARKET = "market"    # Execute at best available price immediately
+
+class OrderStatus(str, Enum):
+    ACTIVE = "active"          # Order is open and waiting
+    FILLED = "filled"          # Order completely filled
+    PARTIALLY_FILLED = "partial"  # Order partially filled
+    CANCELLED = "cancelled"    # Order cancelled by user
+    EXPIRED = "expired"        # Order expired (if we add time limits)
+
+# ==========================
+# DATABASE MODELS
+# ==========================
+class MarketOrder(Base):
+    """Market order model."""
+    __tablename__ = "market_orders"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    player_id = Column(Integer, index=True, nullable=False)
+    order_type = Column(String, nullable=False)
+    order_mode = Column(String, nullable=False)
+    item_type = Column(String, index=True, nullable=False)
+    price = Column(Float, nullable=True)
+    quantity = Column(Float, nullable=False)
+    quantity_filled = Column(Float, default=0.0)
+    status = Column(String, default=OrderStatus.ACTIVE)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    filled_at = Column(DateTime, nullable=True)
+
+class Trade(Base):
+    """Trade history model."""
+    __tablename__ = "trades"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    buyer_id = Column(Integer, index=True, nullable=False)
+    seller_id = Column(Integer, index=True, nullable=False)
+    buy_order_id = Column(Integer, nullable=False)
+    sell_order_id = Column(Integer, nullable=False)
+    item_type = Column(String, index=True, nullable=False)
+    quantity = Column(Float, nullable=False)
+    price = Column(Float, nullable=False)
+    executed_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+# ==========================
+# STARTER INVENTORY
+# ==========================
+STARTER_INVENTORY = {
+    "apple_seeds": 1,
+    "orange_seeds": 1,
+    "water": 5000,
+    "energy": 1500,
+    "paper": 15000,
+    "wheat_seeds": 15,
+    "barley_seeds": 13,
+    "corn_seeds": 15,
+    "coffee_seeds": 12,
+    "cherry_seeds": 12,
+    "cocoa_seeds": 12,
+    "grape_seeds": 12,
+    "tomato_seeds": 5,
+    "tobacco_seeds": 3,
+    "rice_seeds": 10,
+    "bees": 2,
+}
+
+# ==========================
+# HELPER FUNCTIONS
+# ==========================
+def get_db():
+    db = SessionLocal()
+    try:
+        return db
+    except Exception as e:
+        print(f"[Market] Database error: {e}")
+        db.close()
+        raise
+
+def give_starter_inventory(player_id: int) -> dict:
+    try:
+        import inventory
+        print(f"[Market] Giving starter inventory to player {player_id}:")
+        for item, quantity in STARTER_INVENTORY.items():
+            inventory.add_item(player_id, item, quantity)
+            print(f"  → {quantity}x {item}")
+    except ImportError:
+        print("[Market] Inventory module not available - starter items not given")
+    return STARTER_INVENTORY
+
+# ==========================
+# ORDER PLACEMENT
+# ==========================
+
+def create_order(
+    player_id: int,
+    order_type: OrderType,
+    order_mode: OrderMode,
+    item_type: str,
+    quantity: float,
+    price: Optional[float] = None
+) -> Optional[MarketOrder]:
+    db = get_db()
+    
+    # 1. Basic Validation 
+    if order_mode == OrderMode.LIMIT and price is None:
+        db.close()
+        return None
+    if quantity <= 0:
+        db.close()
+        return None
+
+    # 2. Cash Validation: Prevent buy orders if player is broke
+    if order_type == OrderType.BUY:
+        from auth import Player
+        from reserve_banks import can_afford_usd
+        player = db.query(Player).filter(Player.id == player_id).first()
+        if not player or not can_afford_usd(player_id, quantity * (price or 0)):
+            print(f"[Market] Player {player_id} has insufficient funds for buy order")
+            db.close()
+            return None
+    
+    # 3. NEW: Inventory Validation: Prevent sell orders if player doesn't have the items
+    if order_type == OrderType.SELL:
+        try:
+            import inventory
+            current_quantity = inventory.get_item_quantity(player_id, item_type)
+            if current_quantity < quantity:
+                print(f"[Market] Player {player_id} has insufficient inventory for sell order (has {current_quantity}, needs {quantity} {item_type})")
+                db.close()
+                return None
+        except Exception as e:
+            print(f"[Market] Failed to verify inventory: {e}")
+            db.close()
+            return None
+    
+    # 4. Create order record 
+    order = MarketOrder(
+        player_id=player_id,
+        order_type=order_type.value,
+        order_mode=order_mode.value,
+        item_type=item_type,
+        quantity=quantity,
+        price=price if order_mode == OrderMode.LIMIT else None,
+        status=OrderStatus.ACTIVE
+    )
+    
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+    
+    print(f"[Market] Order {order.id} created: {order_type.value} {quantity} {item_type}" + 
+          (f" @ ${price}" if price else " at market price"))
+    
+    match_order(db, order)
+    db.close()
+    return order
+
+# ==========================
+# ORDER MATCHING ENGINE
+# ==========================
+def match_order(db, order: MarketOrder) -> bool:
+    if order.status not in [OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]:
+        return False 
+    
+    matched_any = False
+    remaining_qty = order.quantity - order.quantity_filled
+    
+    if order.order_type == OrderType.BUY:
+        potential_matches = db.query(MarketOrder).filter(
+            MarketOrder.order_type == OrderType.SELL,
+            MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+            MarketOrder.item_type == order.item_type
+        ).order_by(MarketOrder.price.asc()).all()
+    else:
+        potential_matches = db.query(MarketOrder).filter(
+            MarketOrder.order_type == OrderType.BUY,
+            MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+            MarketOrder.item_type == order.item_type
+        ).order_by(MarketOrder.price.desc()).all()
+
+    for match in potential_matches:
+        if remaining_qty <= 0: break
+
+        # Price Check
+        if order.order_mode == OrderMode.LIMIT:
+            if order.order_type == OrderType.BUY and (match.price is None or match.price > order.price): continue
+            if order.order_type == OrderType.SELL and (match.price is None or match.price < order.price): continue
+
+        # Anti-arbitrage: city members cannot buy from their own city's bank market listing
+        if order.order_type == OrderType.BUY and -1999 <= match.player_id <= -1001:
+            city_id_for_check = -match.player_id - 1000
+            try:
+                from cities import CityMember
+                member_check = db.query(CityMember).filter(
+                    CityMember.player_id == order.player_id,
+                    CityMember.city_id == city_id_for_check
+                ).first()
+                if member_check:
+                    print(f"[Market] Blocked: Player {order.player_id} cannot buy from own city {city_id_for_check} bank listing")
+                    continue
+            except Exception:
+                pass  # Cities module unavailable, proceed normally
+
+        # Prevent self-trading (player buying their own sell order or vice versa)
+        if order.player_id == match.player_id:
+            continue
+
+        trade_qty = min(remaining_qty, match.quantity - match.quantity_filled)
+        trade_price = match.price if match.price else order.price
+        
+        # Determine Buy/Sell roles for execute_trade
+        if order.order_type == OrderType.BUY:
+            execute_trade(db, order, match, trade_qty, trade_price)
+        else:
+            execute_trade(db, match, order, trade_qty, trade_price)
+            
+        remaining_qty -= trade_qty
+        matched_any = True
+        
+    return matched_any
+
+# ==========================
+# TRADE EXECUTION (With Bank IPO Hook)
+# ==========================
+
+def execute_trade(db, buy_order, sell_order, quantity, price):
+    """
+    Transfers inventory and cash between players.
+    Special handling for bank IPO sales - routes money to bank reserves instead of player accounts.
+    """
+    # 1. Update order quantities
+    buy_order.quantity_filled += quantity
+    sell_order.quantity_filled += quantity
+    
+    # 2. Update order statuses
+    for order in [buy_order, sell_order]:
+        if order.quantity_filled >= order.quantity:
+            order.status = OrderStatus.FILLED
+            order.filled_at = datetime.utcnow()
+        else:
+            order.status = OrderStatus.PARTIALLY_FILLED
+
+    # 3. Record the trade
+    trade = Trade(
+        buyer_id=buy_order.player_id,
+        seller_id=sell_order.player_id,
+        buy_order_id=buy_order.id,
+        sell_order_id=sell_order.id,
+        item_type=buy_order.item_type,
+        quantity=quantity,
+        price=price
+    )
+    db.add(trade)
+    
+    total_cost = quantity * price
+
+    # 4. Determine if this is a bank IPO sale (sell-side bank) or bank buy (buy-side bank)
+    is_bank_ipo = False
+    bank_id = None
+    is_bank_buyer = False
+    bank_buyer_city_id = None
+
+    # Land Bank IPO detection
+    if sell_order.player_id == -2 and sell_order.item_type == "land_bank_shares":
+        is_bank_ipo = True
+        bank_id = "land_bank"
+
+    # ETF Bank IPO detection
+    elif sell_order.player_id == -3 and sell_order.item_type == "apple_seeds_etf_shares":
+        is_bank_ipo = True
+        bank_id = "apple_seeds_etf"
+
+    # Energy ETF Bank IPO detection
+    elif sell_order.player_id == -4 and sell_order.item_type == "energy_etf_shares":
+        is_bank_ipo = True
+        bank_id = "energy_etf"
+
+    # WBC-50 Index Fund IPO detection
+    elif sell_order.player_id == -7 and sell_order.item_type == "wbc50_index_fund_shares":
+        is_bank_ipo = True
+        bank_id = "wbc50_index_fund"
+
+    # City NAV ETF IPO detection
+    elif sell_order.player_id == -6 and sell_order.item_type == "city_nav_etf_shares":
+        is_bank_ipo = True
+        bank_id = "city_nav_etf"
+
+    # City Bank sell detection (IDs are -(1000 + city_id), range -1001 to -1999)
+    # NPC players use -2001 and below — must exclude them from this check.
+    elif -1999 <= sell_order.player_id <= -1001:
+        is_bank_ipo = True  # Reuse the IPO logic (money goes to bank reserves)
+        bank_id = f"city_bank_{-sell_order.player_id - 1000}"  # Extract city_id
+
+    # City Bank buy detection (bank acquiring currency from market)
+    elif -1999 <= buy_order.player_id <= -1001:
+        is_bank_buyer = True
+        bank_buyer_city_id = -buy_order.player_id - 1000
+
+    # 4b. Pre-flight: verify seller has the items before taking payment.
+    # This catches stale sell orders (items consumed/transferred after the order was placed).
+    # Prevents deducting buyer's foreign-currency payment when the transfer would fail.
+    if sell_order.player_id > 0 or sell_order.player_id <= -2000:  # skip only city/ETF/land banks (-1 to -1999)
+        import inventory as _inv
+        current_qty = _inv.get_item_quantity(sell_order.player_id, buy_order.item_type)
+        if current_qty < quantity:
+            print(
+                f"[Market] Stale sell order {sell_order.id}: seller {sell_order.player_id} has "
+                f"{current_qty:.4f} {buy_order.item_type}, need {quantity:.4f} — cancelling order"
+            )
+            sell_order.status = "cancelled"
+            db.commit()
+            return
+
+    # 5. Handle cash transfer
+    if is_bank_ipo:
+        # Special bank IPO handling: buyer pays, money goes to BANK RESERVES (not player account)
+        try:
+            from auth import Player
+            
+            # Get buyer
+            buyer = db.query(Player).filter(Player.id == buy_order.player_id).first()
+            if not buyer:
+                print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} not found!")
+                db.rollback()
+                return
+            
+            # Deduct from buyer's account (respects legal tender preference)
+            from reserve_banks import spend_player_funds
+            ok, _err = spend_player_funds(buy_order.player_id, total_cost)
+            if not ok:
+                print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} insufficient funds: {_err}")
+                db.rollback()
+                return
+            
+            # Route to appropriate bank
+            if bank_id.startswith("city_bank_"):
+                # City bank sale - money goes to city bank reserves
+                city_id = int(bank_id.replace("city_bank_", ""))
+                try:
+                    from cities import CityBank
+                    city_db = db  # Reuse same session
+                    city_bank = city_db.query(CityBank).filter(CityBank.city_id == city_id).first()
+                    if city_bank:
+                        city_bank.cash_reserves += total_cost
+                        print(f"[Market] CITY BANK SALE: Player {buy_order.player_id} paid ${total_cost:.2f} → City {city_id} Bank Reserves")
+                    else:
+                        print(f"[Market] WARNING: City bank {city_id} not found, funds lost!")
+                except Exception as e:
+                    print(f"[Market] City bank transfer error: {e}")
+            else:
+                # ETF/Land bank sale
+                import banks
+                banks.add_bank_revenue(
+                    bank_id, 
+                    total_cost, 
+                    f"IPO Sale: {quantity} shares to Player {buy_order.player_id}"
+                )
+                print(f"[Market] {bank_id.upper()} IPO SALE: Player {buy_order.player_id} paid ${total_cost:.2f} → Bank Reserves")
+            
+        except Exception as e:
+            print(f"[Market] Bank Transfer Error: {e}")
+            import traceback
+            traceback.print_exc()
+            db.rollback()
+            return
+
+    elif is_bank_buyer:
+        # City bank is buying currency from market: pay seller from bank reserves
+        try:
+            from cities import CityBank
+            from auth import Player
+            city_bank = db.query(CityBank).filter(CityBank.city_id == bank_buyer_city_id).first()
+            seller_player = db.query(Player).filter(Player.id == sell_order.player_id).first()
+            if not city_bank or not seller_player:
+                print(f"[Market] City bank buy error: bank or seller not found")
+                db.rollback()
+                return
+            if city_bank.cash_reserves < total_cost:
+                print(f"[Market] City bank {bank_buyer_city_id} has insufficient reserves (need ${total_cost:.2f}, have ${city_bank.cash_reserves:.2f})")
+                db.rollback()
+                return
+            city_bank.cash_reserves -= total_cost
+            try:
+                from reserve_banks import convert_to_legal_tender
+                convert_to_legal_tender(seller_player.id, total_cost)
+            except Exception:
+                from reserve_banks import credit_usd
+                credit_usd(seller_player.id, total_cost)
+            print(f"[Market] CITY BANK BUY: Bank {bank_buyer_city_id} bought {quantity:.2f} {buy_order.item_type} from Player {sell_order.player_id} @ ${price:.2f}")
+        except Exception as e:
+            print(f"[Market] City bank buy error: {e}")
+            import traceback
+            traceback.print_exc()
+            db.rollback()
+            return
+
+    else:
+        # Regular player-to-player trade: invoke petrodollar hook, then transfer cash
+        petrodollar_handled = False
+        try:
+            from cities import handle_outsider_trade
+            petro_ok, petro_msg = handle_outsider_trade(
+                buy_order.player_id, sell_order.player_id,
+                buy_order.item_type, quantity, price
+            )
+            if not petro_ok:
+                db.rollback()
+                print(f"[Market] Trade blocked by petrodollar system: {petro_msg}")
+                return
+            if "handled" in petro_msg:
+                petrodollar_handled = True
+        except ImportError:
+            pass  # Cities module not loaded, proceed with normal cash transfer
+        except Exception as e:
+            print(f"[Market] Petrodollar hook error (non-fatal): {e}")
+
+        if not petrodollar_handled:
+            # Standard cash transfer: buyer pays seller
+            try:
+                from auth import Player
+                buyer = db.query(Player).filter(Player.id == buy_order.player_id).first()
+                seller = db.query(Player).filter(Player.id == sell_order.player_id).first()
+                if not buyer or not seller:
+                    print(f"[Market] Cash transfer error: player not found (buyer={buy_order.player_id}, seller={sell_order.player_id})")
+                    db.rollback()
+                    return
+                from reserve_banks import spend_player_funds, convert_to_legal_tender
+                ok, _err = spend_player_funds(buy_order.player_id, total_cost)
+                if not ok:
+                    print(f"[Market] Cash transfer error: Player {buy_order.player_id} insufficient funds: {_err}")
+                    db.rollback()
+                    return
+                # City sales tax: compute tax on total_cost, route to city bank
+                _tax_deducted = 0.0
+                try:
+                    from city_projects import get_city_sales_tax_rate, _get_player_city_id
+                    from cities import CityBank, get_db as _city_get_db
+                    _seller_city_id = _get_player_city_id(sell_order.player_id)
+                    if _seller_city_id:
+                        _tax_rate = get_city_sales_tax_rate(_seller_city_id)
+                        if _tax_rate > 0:
+                            _tax_deducted = total_cost * _tax_rate
+                            _city_db = _city_get_db()
+                            try:
+                                _city_bank = _city_db.query(CityBank).filter(
+                                    CityBank.city_id == _seller_city_id).first()
+                                if _city_bank:
+                                    _city_bank.cash_reserves = (_city_bank.cash_reserves or 0.0) + _tax_deducted
+                                _city_db.commit()
+                            finally:
+                                _city_db.close()
+                except Exception as _te:
+                    _tax_deducted = 0.0
+
+                seller_net = total_cost - _tax_deducted
+                try:
+                    convert_to_legal_tender(seller.id, seller_net)
+                except Exception:
+                    from reserve_banks import credit_usd
+                    credit_usd(seller.id, seller_net)
+            except Exception as e:
+                print(f"[Market] Cash transfer error: {e}")
+                import traceback
+                traceback.print_exc()
+                db.rollback()
+                return
+
+    # 6. Transfer inventory (goods from seller to buyer)
+    # For bank-buyer trades, the inventory represents currency going into bank reserves —
+    # handled separately below; still run transfer so seller loses the item.
+    try:
+        import inventory
+        success = inventory.transfer_item(
+            sell_order.player_id,
+            buy_order.player_id,
+            buy_order.item_type,
+            quantity
+        )
+        if not success:
+            actual_qty = inventory.get_item_quantity(sell_order.player_id, buy_order.item_type)
+            print(
+                f"[Market] Inventory transfer failed! Seller {sell_order.player_id} has "
+                f"{actual_qty:.4f} {buy_order.item_type}, needed {quantity:.4f}"
+            )
+            # Refund buyer whose payment was already committed
+            if not is_bank_ipo and not is_bank_buyer:
+                try:
+                    from reserve_banks import (
+                        get_player_legal_tender, get_db as _rb_get_db,
+                        StateReserveBank, _adjust_currency_balance, credit_usd,
+                    )
+                    _tender = get_player_legal_tender(buy_order.player_id)
+                    if _tender != "USD":
+                        _rb = _rb_get_db()
+                        try:
+                            _bank = _rb.query(StateReserveBank).filter(
+                                StateReserveBank.currency_code == _tender
+                            ).first()
+                            if _bank:
+                                _adjust_currency_balance(_rb, buy_order.player_id, _tender,
+                                                         total_cost / _bank.usd_per_unit)
+                                _rb.commit()
+                                print(f"[Market] Refunded {total_cost / _bank.usd_per_unit:.4f} "
+                                      f"{_tender} to player {buy_order.player_id}")
+                        finally:
+                            _rb.close()
+                    else:
+                        credit_usd(buy_order.player_id, total_cost)
+                        print(f"[Market] Refunded ${total_cost:.4f} USD to player {buy_order.player_id}")
+                except Exception as _ref_e:
+                    print(f"[Market] Refund error (manual reconciliation needed): {_ref_e}")
+            # Rollback first (reverts quantity_filled increments and trade record),
+            # then cancel the sell order in a fresh transaction so it doesn't keep
+            # getting matched on every future tick.
+            sell_order_id = sell_order.id
+            db.rollback()
+            try:
+                stale = db.query(MarketOrder).filter(MarketOrder.id == sell_order_id).first()
+                if stale:
+                    stale.status = "cancelled"
+                    db.commit()
+                    print(f"[Market] Sell order {sell_order_id} cancelled after failed inventory transfer")
+            except Exception as _ce:
+                print(f"[Market] Failed to cancel stale order {sell_order_id}: {_ce}")
+            return
+    except Exception as e:
+        print(f"[Market] Inventory Transfer Error: {e}")
+        db.rollback()
+        return
+
+    # 6b. For city bank buy orders: move acquired currency into bank.currency_quantity
+    # and clear the virtual inventory entry so bank_list_currency_at_discount stays consistent.
+    if is_bank_buyer:
+        try:
+            from cities import CityBank
+            city_bank = db.query(CityBank).filter(CityBank.city_id == bank_buyer_city_id).first()
+            if city_bank:
+                city_bank.currency_quantity += quantity
+                import inventory as _inv
+                _inv.remove_item(buy_order.player_id, buy_order.item_type, quantity)
+                print(f"[Market] City bank {bank_buyer_city_id} reserves updated: +{quantity:.2f} {buy_order.item_type}")
+        except Exception as e:
+            print(f"[Market] Error updating city bank currency reserves: {e}")
+
+    # 7. Commit everything
+    db.commit()
+
+    # 7b. Update WMA cost basis for the buyer (real players only).
+    if not is_bank_buyer and buy_order.player_id > 0:
+        try:
+            from wma import update_wma
+            update_wma(buy_order.player_id, buy_order.item_type, quantity, price)
+        except Exception as _wma_e:
+            print(f"[Market] WMA update error: {_wma_e}")
+
+    # 8. Log transactions — one entry per side, with unit_price for cost-average tracking
+    _unit_price = price  # price per unit from the matched trade
+    log_transaction(
+        buy_order.player_id,
+        "market_buy",
+        "money",
+        -total_cost,
+        f"Market buy: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
+        item_type=buy_order.item_type,
+        quantity=quantity,
+        unit_price=_unit_price,
+    )
+    if not is_bank_ipo:
+        log_transaction(
+            sell_order.player_id,
+            "market_sell",
+            "money",
+            total_cost,
+            f"Market sell: {quantity:,.4g}x {buy_order.item_type} @ {_unit_price:.4f}",
+            item_type=buy_order.item_type,
+            quantity=quantity,
+            unit_price=_unit_price,
+        )
+
+# ==========================
+# MARKET DATA FUNCTIONS
+# ==========================
+def get_order_book(item_type: str) -> dict:
+    """Returns active bids (buys) and asks (sells) with player information."""
+    db = get_db()
+    
+    buy_orders = db.query(MarketOrder).filter(
+        MarketOrder.item_type == item_type, 
+        MarketOrder.order_type == OrderType.BUY,
+        MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+    ).order_by(MarketOrder.price.desc()).all() 
+    
+    sell_orders = db.query(MarketOrder).filter(
+        MarketOrder.item_type == item_type, 
+        MarketOrder.order_type == OrderType.SELL,
+        MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])
+    ).order_by(MarketOrder.price.asc()).all()
+    
+    # Get player names for display
+    from auth import Player
+    
+    bids = []
+    for o in buy_orders:
+        if o.price:
+            player = db.query(Player).filter(Player.id == o.player_id).first()
+            player_name = player.business_name if player else f"Player {o.player_id}"
+            bids.append((o.price, o.quantity - o.quantity_filled, o.id, player_name, o.player_id))
+    
+    asks = []
+    for o in sell_orders:
+        if o.price:
+            player = db.query(Player).filter(Player.id == o.player_id).first()
+            player_name = player.business_name if player else f"Player {o.player_id}"
+            asks.append((o.price, o.quantity - o.quantity_filled, o.id, player_name, o.player_id))
+    
+    db.close()
+    return {"bids": bids, "asks": asks}
+
+
+def get_market_price(item_type: str) -> Optional[float]:
+    """Midpoint bid/ask or last trade price."""
+    db = get_db()
+    last_trade = db.query(Trade).filter(Trade.item_type == item_type).order_by(Trade.executed_at.desc()).first()
+    if last_trade:
+        db.close()
+        return last_trade.price
+    
+    best_bid = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.BUY, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.desc()).first()
+    best_ask = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.SELL, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.asc()).first()
+    db.close()
+    if best_bid and best_ask: return (best_bid.price + best_ask.price) / 2
+    return best_bid.price if best_bid else best_ask.price if best_ask else None
+
+def cancel_order(order_id: int, player_id: int) -> bool:
+    db = get_db()
+    order = db.query(MarketOrder).filter(MarketOrder.id == order_id, MarketOrder.player_id == player_id, MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])).first()
+    if not order:
+        db.close()
+        return False
+    order.status = OrderStatus.CANCELLED
+    db.commit()
+    db.close()
+    return True
+
+def get_market_stats() -> dict:
+    db = get_db()
+    from datetime import timedelta
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    recent_trades = db.query(Trade).filter(Trade.executed_at >= yesterday).all() 
+    volume = sum(t.quantity * (t.price or 0) for t in recent_trades)
+    stats = {
+        "total_orders": db.query(MarketOrder).count(),
+        "active_orders": db.query(MarketOrder).filter(MarketOrder.status == OrderStatus.ACTIVE).count(),
+        "total_trades": db.query(Trade).count(),
+        "volume_24h": volume
+    }
+    db.close()
+    return stats
+
+# ==========================
+# MODULE LIFECYCLE
+# ==========================
+def initialize():
+    print("[Market] Initializing database...")
+    Base.metadata.create_all(bind=engine)
+    print("[Market] Module initialized")
+
+def tick(current_tick: int, now: datetime):
+    db = get_db()
+    active_orders = db.query(MarketOrder).filter(MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED])).order_by(MarketOrder.created_at.asc()).all()
+    for order in active_orders:
+        match_order(db, order)
+    if current_tick % 3600 == 0:
+        print(f"[Market] Hourly Stats: {get_market_stats()}")
+    db.close()
+
+__all__ = ['create_order', 'cancel_order', 'get_order_book', 'get_market_price', 'get_market_stats', 'give_starter_inventory']

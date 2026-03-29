@@ -1,0 +1,455 @@
+import subprocess
+import sys
+
+# Ensure all dependencies are installed before anything else imports them.
+# Uses the same interpreter that's running this file so it targets the
+# correct venv / site-packages regardless of how the server was launched.
+subprocess.run(
+    [sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--quiet"],
+    check=False,
+)
+
+import asyncio
+import os
+from datetime import datetime
+from typing import Optional
+from fastapi import FastAPI, Cookie
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
+from starlette.concurrency import run_in_threadpool
+
+# ==========================
+# GLOBAL TICK STATE
+# ==========================
+
+TICK_INTERVAL = 5.0  # seconds
+current_tick = 0
+tick_start_time = None
+tick_task = None
+
+_TICK_STATE_FILE = os.path.join(os.path.dirname(__file__), "tick_state.txt")
+
+def _load_tick_state() -> int:
+    """Load persisted tick counter from disk, or 0 if not found."""
+    try:
+        with open(_TICK_STATE_FILE, "r") as f:
+            return int(f.read().strip())
+    except Exception:
+        return 0
+
+def _save_tick_state(tick: int):
+    """Persist tick counter to disk."""
+    try:
+        with open(_TICK_STATE_FILE, "w") as f:
+            f.write(str(tick))
+    except Exception as e:
+        print(f"[Tick] WARNING: could not save tick state: {e}")
+
+# ==========================
+# MODULE REGISTRY
+# ==========================
+
+modules = {}
+
+def register_module(name: str, module):
+    """Register a module with the application."""
+    modules[name] = module
+    print(f" → {name.capitalize()} registered")
+
+def load_modules():
+    """Attempt to load all game modules."""
+    module_names = ['auth', 'inventory', 'wma', 'business', 'market', 'land', 'land_market', 'banks', 'districts', 'district_market', 'cities', 'city_projects', 'counties', 'memecoins', 'wallet', 'city_wallet', 'stats_ux', 'executive', 'estate', 'p2p', 'chat', 'admins', 'dm', 'corporate_actions', 'reserve_banks', 'trusted_trade', 'contacts', 'soundtrack', 'wcpr', 'npc']
+    for name in module_names:
+        try:
+            mod = __import__(name)
+            register_module(name, mod)
+        except ModuleNotFoundError:
+            pass
+
+# ==========================
+# TICK LOOP
+# ==========================
+
+async def tick_loop():
+    """Global tick loop executing every second."""
+    global current_tick
+    while True:
+        current_tick += 1
+        now = datetime.utcnow()
+        for name, module in modules.items():
+            if hasattr(module, 'tick'):
+                try:
+                    tick_fn = module.tick
+                    if asyncio.iscoroutinefunction(tick_fn):
+                        await tick_fn(current_tick, now)
+                    else:
+                        await run_in_threadpool(tick_fn, current_tick, now)
+                except Exception as e:
+                    print(f"[Tick {current_tick}] ERROR in {name}: {e}")
+
+        if current_tick % 60 == 0:
+            print(f"[Tick {current_tick}] {now.isoformat()}")
+            _save_tick_state(current_tick)
+        await asyncio.sleep(TICK_INTERVAL)
+
+# ==========================
+# MODULE INITIALIZATION
+# ==========================
+
+def initialize_modules():
+    """Initialize all registered modules."""
+    print("Initializing modules...")
+    for name, module in modules.items():
+        if hasattr(module, 'initialize'):
+            try:
+                module.initialize()
+                print(f" ✓ {name.capitalize()} initialized")
+            except Exception as e:
+                print(f" ✗ {name.capitalize()} failed: {e}")
+    if not modules:
+        print(" (No modules loaded)")
+    print("Module initialization complete.")
+
+# ==========================
+# LIFESPAN MANAGEMENT
+# ==========================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global tick_start_time, tick_task, current_tick
+    print("=" * 50)
+    print("Starting Real-Time Economic Simulation")
+    print("=" * 50)
+    current_tick = _load_tick_state()
+    print(f"Tick counter restored: {current_tick}")
+    tick_start_time = datetime.utcnow()
+    # DB migrations
+    try:
+        from auth import migrate_player_table, migrate_ip_tables, migrate_push_subscriptions
+        migrate_player_table()
+        migrate_ip_tables()
+        migrate_push_subscriptions()
+        print("DB migrations applied")
+    except Exception as _me:
+        print(f"DB migration error: {_me}")
+    load_modules()
+    initialize_modules()
+    tick_task = asyncio.create_task(tick_loop())
+    print(f"Tick loop started (interval: {TICK_INTERVAL}s)")
+    print("=" * 50)
+    yield
+    print("\nShutting down...")
+    if tick_task:
+        tick_task.cancel()
+        try:
+            await tick_task
+        except asyncio.CancelledError:
+            pass
+    print("Shutdown complete.")
+
+# ==========================
+# FASTAPI APP
+# ==========================
+
+app = FastAPI(
+    title="Wadsworth Economic Simulation",
+    description="Real-time multiplayer economic simulation",
+    version="1.1.2132026",
+    lifespan=lifespan
+)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# PWA — these must be served from the root so the service worker scope covers
+# the whole app and browsers can discover the manifest automatically.
+# CORS headers are required so PWABuilder and other external validators can
+# fetch these files cross-origin.
+_PWA_CORS = {
+    "Access-Control-Allow-Origin": "*",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+}
+
+@app.get("/manifest.json", include_in_schema=False)
+@app.head("/manifest.json", include_in_schema=False)
+async def pwa_manifest():
+    return FileResponse("static/manifest.json", media_type="application/manifest+json",
+                        headers=_PWA_CORS)
+
+@app.get("/sw.js", include_in_schema=False)
+@app.head("/sw.js", include_in_schema=False)
+async def pwa_service_worker():
+    return FileResponse("static/sw.js", media_type="application/javascript",
+                        headers=_PWA_CORS)
+
+@app.head("/", include_in_schema=False)
+async def root_head():
+    from fastapi.responses import Response
+    return Response(status_code=200, headers={"content-type": "text/html; charset=utf-8"})
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("static/icons/icon-48.png", media_type="image/png")
+
+@app.get("/.well-known/assetlinks.json", include_in_schema=False)
+async def assetlinks():
+    """Required for Android TWA verification and App Links."""
+    from fastapi.responses import JSONResponse
+    return JSONResponse([{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "cc.notifly.wadsworth",
+            "sha256_cert_fingerprints": [
+                "4D:39:74:05:A7:E1:A5:EB:9B:7D:B9:51:80:0F:25:92:6C:89:64:2D:C7:50:AD:97:3B:BB:C9:C2:45:8C:30:6E"
+            ]
+        }
+    }])
+
+# ==========================
+# SYSTEM ENDPOINTS (PATCHED)
+# ==========================
+# Update within app.py @app.get("/api/status")
+@app.get("/api/status")
+async def get_status(session_token: Optional[str] = Cookie(None)):
+    from auth import get_player_from_session, get_db
+    from business import Business # Add this import
+    
+    db = get_db()
+    player = get_player_from_session(db, session_token)
+    
+    # Fetch active business progress for this player.
+    # district_businesses.json must be merged with the standard BUSINESS_TYPES
+    # dict so that high-tier district businesses report the correct
+    # cycles_to_complete instead of falling back to 1 (which makes their
+    # progress bars appear instantly complete/broken).
+    biz_list = []
+    if player:
+        user_biz = db.query(Business).filter(Business.owner_id == player.id).all()
+        from business import BUSINESS_TYPES, get_district_business_types
+        all_business_types = {**BUSINESS_TYPES, **get_district_business_types()}
+        for b in user_biz:
+            config = all_business_types.get(b.business_type, {})
+            biz_list.append({
+                "id": b.id,
+                "progress_ticks": b.progress_ticks,
+                "cycles_to_complete": config.get("cycles_to_complete", 1)
+            })
+
+    status_data = {
+        "status": "running",
+        "current_tick": current_tick,
+        "player_balance": player.cash_balance if player else 0,
+        "businesses": biz_list, # Now the progress bars can move!
+        "modules": {name: True for name in modules.keys()}
+    }
+    db.close()
+    return status_data
+
+@app.get("/api/tick")
+async def get_tick():
+    return {
+        "tick": current_tick,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# ==========================
+# ROUTING
+# ==========================
+
+try:
+    from auth import router as auth_router
+    app.include_router(auth_router)
+    print("Auth routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from ux import router as ux_router
+    app.include_router(ux_router)
+    print("UX routes registered")
+except ModuleNotFoundError:
+    @app.get("/")
+    async def root():
+        return {
+            "message": "Wadsworth Economic Simulation",
+            "status": "UX module not loaded",
+            "tick": current_tick,
+            "api_status": "/api/status"
+        }
+
+try:
+    from corporate_actions_ux import router as corporate_actions_router
+    app.include_router(corporate_actions_router)
+    print("Corporate Actions routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from corporate_actions_ui import router as corporate_actions_ui_router
+    app.include_router(corporate_actions_ui_router)
+    print("Corporate Actions UI routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from districts_ux import router as districts_ux_router
+    app.include_router(districts_ux_router)
+    print("Districts UX routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from stats_ux import router as stats_router
+    app.include_router(stats_router)
+    print("Stats routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from cities_ux import router as cities_router
+    app.include_router(cities_router)
+    print("Cities routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from counties_ux import router as counties_router
+    app.include_router(counties_router)
+    print("Counties routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from executive_ux import router as executive_router
+    app.include_router(executive_router)
+    print("Executive routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from estate_ux import router as estate_router
+    app.include_router(estate_router)
+    print("Estate routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from dm_ux import router as dm_ux_router
+    app.include_router(dm_ux_router)
+    print("DM UX routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from p2p_ux import router as p2p_ux_router
+    app.include_router(p2p_ux_router)
+    print("P2P UX routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from chat_ux import router as chat_router
+    app.include_router(chat_router)
+    print("Chat routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from admins_ux import router as admins_router
+    app.include_router(admins_router)
+    print("Admin routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from memecoins_ux import router as memecoins_router
+    app.include_router(memecoins_router)
+    print("Meme Coins routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    import wallet  # ensures WSC tables are created and tick handler is registered
+    print("Wallet module loaded")
+except ModuleNotFoundError:
+    pass
+
+
+try:
+    from tutorial_ux import router as tutorial_router
+    app.include_router(tutorial_router)
+    print("Tutorial routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from reserve_banks_ux import router as reserve_banks_router
+    app.include_router(reserve_banks_router)
+    print("Reserve Banks routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from trusted_trade_ux import router as trusted_trade_router
+    app.include_router(trusted_trade_router)
+    print("Trusted Trade routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from banks import indices as indices_mod
+    app.include_router(indices_mod.router)
+    modules['indices'] = indices_mod
+    print("Indices routes registered")
+except Exception as _ie:
+    print(f"Indices failed to load: {_ie}")
+
+try:
+    from contacts_ux import router as contacts_router
+    app.include_router(contacts_router)
+    print("Contacts routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from soundtrack_ux import router as soundtrack_router
+    app.include_router(soundtrack_router)
+    print("Soundtrack routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from wcpr_ux import router as wcpr_router
+    app.include_router(wcpr_router)
+    print("WCPR routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from settings_ux import router as settings_router
+    app.include_router(settings_router)
+    print("Settings routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from push_ux import router as push_router
+    app.include_router(push_router)
+    print("Push notification routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from world_map_ux import router as world_map_router
+    app.include_router(world_map_router)
+    print("World Map routes registered")
+except ModuleNotFoundError:
+    pass
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    reload = os.environ.get("ENV", "production") == "development"
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=reload)

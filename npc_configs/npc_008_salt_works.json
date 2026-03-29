@@ -1,0 +1,52 @@
+{
+  "player_id": -2008,
+  "business_name": "Salt Works",
+  "description": "Evaporates brine to produce salt, supplying food processors and personal care manufacturers.",
+
+  "cash_caps": {
+    "hard_high": 10000000,
+    "soft_high":  4000000,
+    "soft_low":   1500000,
+    "hard_low":    300000
+  },
+
+  "seed": {
+    "starting_cash": 1500000,
+    "land_plots": [
+      { "terrain_type": "desert", "proximity_features": ["remote"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "salt_works",
+      "district_id": null,
+      "active_lines": ["salt"]
+    }
+  ],
+
+  "buy_items": {
+    "water": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "salt": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
+  }
+}

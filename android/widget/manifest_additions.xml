@@ -1,0 +1,26 @@
+<!--
+  Add this <receiver> block inside the <application> tag in
+  app/src/main/AndroidManifest.xml, just before </application>.
+
+  Replace PACKAGE_NAME with your actual package (e.g. cc.notifly.wadsworth).
+-->
+
+<receiver
+    android:name="PACKAGE_NAME.WadsworthWidget"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+    </intent-filter>
+    <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/wadsworth_widget_info" />
+</receiver>
+
+<!--
+  Also add this permission near the top of AndroidManifest.xml
+  (inside <manifest>, outside <application>):
+
+  <uses-permission android:name="android.permission.INTERNET" />
+
+  (Bubblewrap should already have this — if it does, skip it.)
+-->

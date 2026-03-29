@@ -1,0 +1,154 @@
+{
+  "player_id": -2012,
+  "business_name": "Al Waha Dining Co.",
+  "description": "Operates a Tagine House in a food court district — the primary buyer of lamb_meat for experiential dining. Buys all inputs from the open market and sells Moroccan dining experiences on the district market.",
+
+  "cash_caps": {
+    "hard_high": 60000000,
+    "soft_high": 35000000,
+    "soft_low":  15000000,
+    "hard_low":   5000000
+  },
+
+  "seed": {
+    "starting_cash": 25000000,
+    "districts": [
+      { "district_type": "food_court", "size": 3, "plots_merged": 3 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "tagine_house",
+      "district_seed_index": 0
+    }
+  ],
+
+  "buy_items": {
+    "lamb_meat": {
+      "target_inventory": 800,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "bastilla": {
+      "target_inventory": 150,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "eggs": {
+      "target_inventory": 200,
+      "reorder_at": 50,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "flour": {
+      "target_inventory": 100,
+      "reorder_at": 25,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "cinnamon": {
+      "target_inventory": 300,
+      "reorder_at": 75,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "mint": {
+      "target_inventory": 1000,
+      "reorder_at": 250,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "honey": {
+      "target_inventory": 250,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 700,
+      "reorder_at": 175,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "salt": {
+      "target_inventory": 150,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "bread": {
+      "target_inventory": 250,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "cotton": {
+      "target_inventory": 100,
+      "reorder_at": 25,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "religious_candle": {
+      "target_inventory": 150,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "ornamental_candle": {
+      "target_inventory": 100,
+      "reorder_at": 25,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "hospitality_linen_set": {
+      "target_inventory": 80,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "glass": {
+      "target_inventory": 200,
+      "reorder_at": 50,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 350000,
+      "reorder_at": 80000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 150000,
+      "reorder_at": 40000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "moroccan_evening": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "district"
+    },
+    "medina_feast": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    },
+    "mint_tea_ceremony": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 800,
+      "market": "district"
+    },
+    "casbah_private_dining": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "district"
+    }
+  }
+}
