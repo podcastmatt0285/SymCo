@@ -9166,11 +9166,12 @@ def api_widget_token(session_token: Optional[str] = Cookie(None)):
     return JSONResponse({"token": _make_widget_token(player.id), "player_id": player.id})
 
 _WIDGET_DEVICE_MAP: dict = {}  # device_hash → player_id, in-memory (survives restarts via file)
-_WIDGET_DEVICE_FILE = "widget_devices.json"
+import os as _os
+_WIDGET_DEVICE_FILE = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "widget_devices.json")
 
 def _load_device_map():
     global _WIDGET_DEVICE_MAP
-    import json as _json, os as _os
+    import json as _json
     if _os.path.exists(_WIDGET_DEVICE_FILE):
         try:
             with open(_WIDGET_DEVICE_FILE) as _f:
@@ -9180,11 +9181,8 @@ def _load_device_map():
 
 def _save_device_map():
     import json as _json
-    try:
-        with open(_WIDGET_DEVICE_FILE, 'w') as _f:
-            _json.dump(_WIDGET_DEVICE_MAP, _f)
-    except Exception:
-        pass
+    with open(_WIDGET_DEVICE_FILE, 'w') as _f:
+        _json.dump(_WIDGET_DEVICE_MAP, _f)
 
 _load_device_map()
 
