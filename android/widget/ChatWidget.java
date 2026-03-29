@@ -92,7 +92,7 @@ abstract class ChatWidgetBase extends AppWidgetProvider {
                 PendingIntent.getBroadcast(ctx, w.getRoomId().hashCode() + 1, refresh, rfFlags));
 
         // Clear rows
-        for (int i = 1; i <= 6; i++)
+        for (int i = 1; i <= 25; i++)
             views.setTextViewText(id(ctx, "widget_chat_msg" + i), "");
         mgr.updateAppWidget(widgetId, views);
 
@@ -129,7 +129,7 @@ abstract class ChatWidgetBase extends AppWidgetProvider {
                 JSONObject data = new JSONObject(sb.toString());
                 JSONArray msgs = data.optJSONArray("messages");
 
-                for (int i = 1; i <= 6; i++) {
+                for (int i = 1; i <= 25; i++) {
                     if (msgs != null && (i - 1) < msgs.length()) {
                         JSONObject m = msgs.getJSONObject(i - 1);
                         String sender = m.optString("sender", "");

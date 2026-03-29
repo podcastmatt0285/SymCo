@@ -9402,7 +9402,7 @@ def api_widget_chat(room: str = "global",
         except Exception:
             return ""
 
-    msgs = get_room_messages(room, limit=6)
+    msgs = get_room_messages(room, limit=25)
     return JSONResponse({
         "room": room,
         "messages": [

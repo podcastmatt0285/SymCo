@@ -11,7 +11,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp">
+        android:layout_marginBottom="4dp">
 
         <TextView
             android:id="@+id/widget_chat_title"
@@ -34,65 +34,39 @@
 
     </RelativeLayout>
 
-    <!-- Message rows — 6 lines, fading oldest→dimmest -->
-    <TextView
-        android:id="@+id/widget_chat_msg1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#e2e8f0"
-        android:textSize="9sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+    <!-- Messages 1-5: brightest (most recent) -->
+    <TextView android:id="@+id/widget_chat_msg1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#e2e8f0" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#e2e8f0" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#e2e8f0" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg4" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#e2e8f0" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg5" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#e2e8f0" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/widget_chat_msg2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#e2e8f0"
-        android:textSize="9sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+    <!-- Messages 6-10 -->
+    <TextView android:id="@+id/widget_chat_msg6" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#cbd5e1" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg7" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#cbd5e1" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg8" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#cbd5e1" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg9" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#cbd5e1" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg10" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#cbd5e1" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/widget_chat_msg3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#cbd5e1"
-        android:textSize="9sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+    <!-- Messages 11-15 -->
+    <TextView android:id="@+id/widget_chat_msg11" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#94a3b8" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg12" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#94a3b8" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg13" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#94a3b8" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg14" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#94a3b8" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg15" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#94a3b8" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/widget_chat_msg4"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#cbd5e1"
-        android:textSize="9sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+    <!-- Messages 16-20 -->
+    <TextView android:id="@+id/widget_chat_msg16" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#64748b" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg17" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#64748b" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg18" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#64748b" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg19" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#64748b" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg20" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#64748b" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/widget_chat_msg5"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <TextView
-        android:id="@+id/widget_chat_msg6"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="#94a3b8"
-        android:textSize="9sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+    <!-- Messages 21-25: dimmest (oldest) -->
+    <TextView android:id="@+id/widget_chat_msg21" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#475569" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg22" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#475569" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg23" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#475569" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg24" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#475569" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_chat_msg25" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:textColor="#475569" android:textSize="9sp" android:maxLines="1" android:ellipsize="end" />
 
 </LinearLayout>
