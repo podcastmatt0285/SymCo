@@ -9242,8 +9242,11 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
         if s < 86400:return f"{int(s/3600)}h ago"
         return f"{int(s/86400)}d ago"
 
+    from reserve_banks import get_player_display_currency, fmt_usd
+    _disp = get_player_display_currency(player.id)
+
     result = {
-        "balance": f"${player.cash_balance:,.0f}",
+        "balance": fmt_usd(player.cash_balance, _disp, precision=0),
         "last_alert": "No recent activity",
         "last_alert_time": "",
         "tickers": [], "indices": [], "stocks": [], "bonds": [], "memes": [],
