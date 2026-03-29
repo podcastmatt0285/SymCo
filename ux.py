@@ -1288,19 +1288,27 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         </script>
         <script>
         // Android widget device-link: LauncherActivity appends ?_wdid=sha256(ANDROID_ID)
-        // to every launch URL. We silently POST it to the server so it can map this device
-        // to the current player session. No user interaction required.
+        // on every TWA launch. We persist it in sessionStorage so it survives navigations
+        // (e.g. login → main page), then re-link on every page load while authenticated.
+        // This ensures account switches are reflected immediately after re-login.
         (function(){{
             var params = new URLSearchParams(window.location.search);
             var wdid = params.get('_wdid');
-            if (!wdid) return;
-            fetch('/api/widget/link?device_id=' + encodeURIComponent(wdid),
-                  {{credentials:'same-origin'}}).catch(function(){{}});
-            // Remove _wdid from the visible URL without reloading
-            var clean = window.location.pathname +
-                (window.location.search.replace(/[?&]_wdid=[^&]*/g, '').replace(/^\?$/, '') || '') +
-                window.location.hash;
-            history.replaceState(null, '', clean);
+            if (wdid) {{
+                // Persist for this session across navigations
+                try {{ sessionStorage.setItem('_wdid', wdid); }} catch(e) {{}}
+                // Remove from visible URL without reloading
+                var clean = window.location.pathname +
+                    (window.location.search.replace(/[?&]_wdid=[^&]*/g, '').replace(/^\?$/, '') || '') +
+                    window.location.hash;
+                history.replaceState(null, '', clean);
+            }}
+            // Re-link on every page load (no-op if not authenticated)
+            var stored = wdid || (function(){{ try {{ return sessionStorage.getItem('_wdid'); }} catch(e) {{ return null; }} }})();
+            if (stored) {{
+                fetch('/api/widget/link?device_id=' + encodeURIComponent(stored),
+                      {{credentials:'same-origin'}}).catch(function(){{}});
+            }}
         }})();
         </script>
     </body>

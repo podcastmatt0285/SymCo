@@ -68,14 +68,17 @@ public class WadsworthWidget extends AppWidgetProvider {
     static void updateWidget(Context ctx, AppWidgetManager mgr, int widgetId) {
         RemoteViews views = new RemoteViews(ctx.getPackageName(), layoutId(ctx));
 
-        // Tap body → open the app
-        Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL));
-        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         int piFlags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
+
+        // Tap balance → open the app (explicit package avoids browser fallback)
+        Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL));
+        launch.setPackage(ctx.getPackageName());
+        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent openApp = PendingIntent.getActivity(ctx, 0, launch, piFlags);
-        views.setOnClickPendingIntent(id(ctx, "widget_root"), openApp);
+        views.setOnClickPendingIntent(id(ctx, "widget_balance"), openApp);
 
         // Refresh button → broadcast back to this provider
+        // Do NOT set a click on widget_root; this avoids root-level intent stealing the tap.
         Intent refresh = new Intent(ACTION_REFRESH);
         refresh.setComponent(new ComponentName(ctx, WadsworthWidget.class));
         int refreshFlags = Build.VERSION.SDK_INT >= 23
