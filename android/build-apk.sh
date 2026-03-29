@@ -90,6 +90,26 @@ org.gradle.daemon=false
 GPROPS
 echo "  Set Gradle heap to 512m, daemon disabled"
 
+# sdk.dir — Gradle needs this; bubblewrap installs the SDK here by default.
+SDK_DIR="${ANDROID_HOME:-$HOME/.bubblewrap/android_sdk}"
+echo "sdk.dir=${SDK_DIR}" > local.properties
+echo "  Set sdk.dir=${SDK_DIR}"
+
+# Gradle's Groovy DSL cannot compile on Java 22+. Point it at Java 17 if needed.
+_JV=$(java -version 2>&1 | grep -oE '"[0-9]+' | grep -oE '[0-9]+' | head -1)
+if [ "${_JV:-0}" -gt 21 ]; then
+    _COMPAT=$(update-alternatives --list java 2>/dev/null \
+              | grep -E 'java-(17|18|19|20|21)-' | head -1 | sed 's|/bin/java$||')
+    [ -z "$_COMPAT" ] && _COMPAT=$(ls -d /usr/lib/jvm/java-17-openjdk* \
+        /usr/lib/jvm/java-21-openjdk* 2>/dev/null | head -1)
+    if [ -n "$_COMPAT" ]; then
+        echo "org.gradle.java.home=${_COMPAT}" >> gradle.properties
+        echo "  Java $_JV too new for Groovy DSL — using ${_COMPAT}"
+    else
+        echo "ERROR: need Java 17 or 21.  Run: sudo apt install openjdk-17-jdk"; exit 1
+    fi
+fi
+
 # Notification sound — copy from the live static directory so it matches
 # whatever sound the admin uploaded via the dashboard.
 SOUND_SRC="$(cd "$(dirname "$0")/.." && pwd)/static/sounds/notification.mp3"
@@ -178,25 +198,17 @@ else
 fi
 cd twa-project
 
-# Point twa-manifest.json at our keystore so bubblewrap build uses it.
-python3 - "${KEYSTORE_ABS}" << 'PYEOF'
-import json, sys
-path = sys.argv[1]
-with open('twa-manifest.json', 'r') as f:
-    m = json.load(f)
-m['signingKey']['path'] = path
-m['signingKey']['alias'] = 'android'
-with open('twa-manifest.json', 'w') as f:
-    json.dump(m, f, indent=2)
-print(f'  Updated twa-manifest.json signingKey → {path}')
-PYEOF
+echo "=== Step 5: Build and sign APK with Gradle ==="
+# Pass signing credentials as project properties — no build.gradle modification needed.
+# bubblewrap build always prompts interactively for passwords and ignores flags.
+chmod +x gradlew
+./gradlew assembleRelease \
+    -Pandroid.injected.signing.store.file="${KEYSTORE_ABS}" \
+    -Pandroid.injected.signing.store.password="${KEY_PASS}" \
+    -Pandroid.injected.signing.key.alias=android \
+    -Pandroid.injected.signing.key.password="${KEY_PASS}"
 
-echo "=== Step 5: Build and sign APK ==="
-bubblewrap build \
-    --keystorePassword "${KEY_PASS}" \
-    --keyPassword "${KEY_PASS}"
-
-cp app-release-signed.apk "../wadsworth-signed.apk"
+cp app/build/outputs/apk/release/app-release.apk "../wadsworth-signed.apk"
 cd ..
 
 echo ""
