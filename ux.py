@@ -2904,9 +2904,10 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
                 listing_plots[l.id] = p
                 all_terrains.add(p.terrain_type)
 
-        # Market stats
-        total_auctions = len(auctions)
-        total_listings = len(listings)
+        # Market stats — use only entries where the land plot was found,
+        # so the displayed count matches the number of cards rendered.
+        total_auctions = len(auction_plots)
+        total_listings = len(listing_plots)
         total_available = total_auctions + total_listings
         avg_auction_price = (sum(a.current_price for a in auctions) / total_auctions) if total_auctions else 0
         avg_listing_price = (sum(l.asking_price for l in listings) / total_listings) if total_listings else 0
@@ -4418,7 +4419,14 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
         bank_entities = db.query(banks.BankEntity).filter(banks.BankEntity.is_active == True).all()
         db.close()
 
-        bank_html = '<a href="/" style="color: #38bdf8;">← Dashboard</a><h1>Banking & Investments</h1>'
+        bank_html = '''<style>
+        @media (max-width: 600px) {
+            .bnk-4col { grid-template-columns: 1fr 1fr !important; }
+            .bnk-2col { grid-template-columns: 1fr !important; }
+            .bnk-select { min-width: 0 !important; width: 100% !important; }
+        }
+        </style>
+        <a href="/" style="color: #38bdf8;">← Dashboard</a><h1>Banking & Investments</h1>'''
         
         # ==========================
         # BROKERAGE FIRM CARD (Special - not in BankEntity table)
@@ -4479,7 +4487,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
+                <div class="bnk-4col" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
                     <div>
                         <div style="color: #64748b; font-size: 0.8rem;">Your Credit</div>
                         <div style="font-size: 1.5rem; font-weight: bold; color: {tier_color};">
@@ -4556,7 +4564,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     </div>
                     <span class="badge" style="background:#7c3aed;">LIVE</span>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px;">
+                <div class="bnk-4col" style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px;">
                     <div>
                         <div style="color:#64748b;font-size:.8rem;">WBC-50</div>
                         <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">{wbc_str}</div>
@@ -4633,7 +4641,8 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                         <label style="color:#94a3b8;font-size:.8rem;display:block;margin-bottom:4px;">Legal Tender Currency</label>
                         <select name="currency_code"
                                 style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;
-                                       padding:6px 10px;border-radius:3px;min-width:320px;font-family:inherit;">
+                                       padding:6px 10px;border-radius:3px;min-width:320px;font-family:inherit;"
+                                class="bnk-select">
                             {currency_rows}
                         </select>
                     </div>
@@ -4759,7 +4768,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             <div class="card">
                 <h3>{bank.bank_id.replace("_", " ").title()}</h3>
                 <p style="color: #64748b;">{bank.description}</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <div class="bnk-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                     <div><b>Share Price:</b> {fmt_usd(bank.share_price, disp, precision=4)}</div>
                     <div><b>Market Cap:</b> {fmt_usd(bank.share_price * bank.total_shares_issued, disp)}</div>
                     <div><b>Your Shares:</b> {holding["shares_owned"]:,}</div>
