@@ -7,11 +7,9 @@
     android:padding="14dp"
     android:background="@drawable/widget_background">
 
-    <!-- Header row: WADSWORTH + LIVE -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp">
+        android:layout_height="wrap_content">
 
         <TextView
             android:layout_width="wrap_content"
@@ -26,22 +24,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:text="&#9679; LIVE"
+            android:text="LIVE"
             android:textColor="#4ade80"
             android:textSize="9sp" />
+
     </RelativeLayout>
 
-    <!-- Cash balance -->
     <TextView
         android:id="@+id/widget_balance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="&#8212;"
+        android:text="--"
         android:textColor="#f8fafc"
-        android:textSize="26sp"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
-    <!-- Last alert text -->
     <TextView
         android:id="@+id/widget_alert"
         android:layout_width="match_parent"
@@ -52,7 +49,6 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Alert timestamp -->
     <TextView
         android:id="@+id/widget_time"
         android:layout_width="match_parent"
@@ -61,15 +57,6 @@
         android:textColor="#64748b"
         android:textSize="9sp" />
 
-    <!-- Spacer before ticker -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="6dp"
-        android:background="#334155" />
-
-    <!-- Market ticker: marquee scroll activated via setSelected(true) in Java -->
     <TextView
         android:id="@+id/widget_tickers"
         android:layout_width="match_parent"
