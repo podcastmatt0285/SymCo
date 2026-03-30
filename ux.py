@@ -22,8 +22,121 @@ import json as _json
 router = APIRouter()
 
 # ==========================
-# STREAMING LOADER PAGE
-# Yielded immediately for slow server-side pages so the loader renders
+# DIGITAL ASSET LINKS (TWA full-screen verification)
+# SHA-256 must match wadsworth-signing.jks
+# ==========================
+@router.get("/.well-known/assetlinks.json")
+def assetlinks():
+    from fastapi.responses import JSONResponse
+    return JSONResponse([{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "cc.notifly.wadsworth.twa",
+            "sha256_cert_fingerprints": [
+                "73:E0:0D:08:1F:93:32:4D:A0:59:19:C6:AC:73:9E:F0:C8:4F:BB:C3:11:5D:A3:43:10:46:0B:A6:E0:DF:C7:1D"
+            ]
+        }
+    }])
+
+
+# ==========================
+# PRIVACY POLICY
+# ==========================
+@router.get("/privacy-policy", response_class=HTMLResponse)
+def privacy_policy():
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Wadsworth Economic Tycoon Simulator</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 800px; margin: 40px auto; padding: 0 20px;
+         color: #1a1a1a; line-height: 1.7; }
+  h1 { font-size: 1.8rem; border-bottom: 2px solid #333; padding-bottom: 10px; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; color: #222; }
+  p, li { font-size: 0.95rem; }
+  ul { padding-left: 1.5rem; }
+  a { color: #1a56db; }
+  .updated { color: #666; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<h1>Privacy Policy</h1>
+<p class="updated">Last updated: March 2026</p>
+
+<p>Wadsworth Economic Tycoon Simulator ("the Game", "we", "us") is operated by IllinoisJo. This policy
+explains what information we collect, how we use it, and your rights.</p>
+
+<h2>1. Information We Collect</h2>
+<ul>
+  <li><strong>Account information</strong> — username, email address, and hashed password when you register.</li>
+  <li><strong>Game data</strong> — in-game currency balances, inventory, land holdings, business activity,
+      market orders, and all other gameplay actions you take.</li>
+  <li><strong>Chat messages</strong> — messages sent in the Global Chat and Trade Chat rooms are stored on
+      our servers and visible to other players.</li>
+  <li><strong>Financial transaction records</strong> — all in-game purchases, sales, market trades, and
+      transfers between players.</li>
+  <li><strong>Device identifier</strong> — a one-way hash of your Android device ID, used solely to link
+      home-screen widgets to your account. This hash cannot be reversed to identify your device.</li>
+  <li><strong>Session data</strong> — login session tokens stored as secure HTTP-only cookies.</li>
+  <li><strong>Server logs</strong> — IP address and request timestamps retained for up to 30 days for
+      security and abuse prevention.</li>
+</ul>
+
+<h2>2. How We Use Your Information</h2>
+<ul>
+  <li>To operate and maintain your game account.</li>
+  <li>To display your game data to you and, where applicable, to other players (e.g. public market orders,
+      chat messages, leaderboard positions).</li>
+  <li>To deliver home-screen widget updates to your Android device.</li>
+  <li>To detect and prevent fraud, cheating, or abuse.</li>
+  <li>To send transactional notifications (e.g. market fills, alerts) if you have enabled push
+      notifications.</li>
+</ul>
+
+<h2>3. Information Shared With Third Parties</h2>
+<p>We do <strong>not</strong> sell, rent, or trade your personal information. We do not use third-party
+advertising networks. Your data is not shared with any third party except:</p>
+<ul>
+  <li>Hosting and infrastructure providers who process data on our behalf under confidentiality obligations.</li>
+  <li>Law enforcement when required by applicable law.</li>
+</ul>
+
+<h2>4. In-App Purchases</h2>
+<p>The Game uses Google Play Billing for any in-app purchases. Payment processing is handled entirely by
+Google. We do not receive or store your payment card details.</p>
+
+<h2>5. Children's Privacy</h2>
+<p>The Game is not directed at children under 13. We do not knowingly collect personal information from
+children under 13. If you believe a child under 13 has provided us with personal information, please
+contact us and we will delete it.</p>
+
+<h2>6. Data Retention</h2>
+<p>Your account data is retained for as long as your account is active. Chat messages are retained
+indefinitely for gameplay purposes. Server logs are deleted after 30 days. You may request deletion of
+your account by contacting us at the address below.</p>
+
+<h2>7. Your Rights</h2>
+<p>You may request access to, correction of, or deletion of your personal data at any time by contacting
+us. We will respond within 30 days.</p>
+
+<h2>8. Security</h2>
+<p>Passwords are stored as salted hashes. Session tokens are transmitted over HTTPS only. We take
+reasonable technical measures to protect your data, but no system is perfectly secure.</p>
+
+<h2>9. Changes to This Policy</h2>
+<p>We may update this policy from time to time. We will post the updated date at the top of this page.
+Continued use of the Game after changes constitutes acceptance.</p>
+
+<h2>10. Contact</h2>
+<p>Questions about this privacy policy: <a href="mailto:privacy@notifly.cc">privacy@notifly.cc</a></p>
+</body>
+</html>"""
+    return HTMLResponse(html)
+
+
 # before any computation begins.  A second streaming chunk uses
 # document.open/write/close to replace this with the full shell page.
 # Note: intentionally has no </body></html> — those arrive in chunk 2.
@@ -2491,9 +2604,13 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
 
         @media (max-width:600px) {
             .inv-grid { grid-template-columns:1fr; }
-            .inv-search-input { width:130px; }
+            .inv-search-input { width:calc(100vw - 120px) !important; max-width:220px; }
+            .inv-search-wrap { flex: 1; }
             .inv-summary-bar { flex-direction:column; align-items:flex-start; }
             .inv-summary-stats { gap:16px; }
+            .inv-filter-tabs { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
+            .inv-filter-tabs::-webkit-scrollbar { height:3px; }
+            .inv-filter-tabs::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
         }
         </style>
         <script>
@@ -2617,7 +2734,16 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                 arrow = " ▲" if order == "asc" else " ▼"
             return f'<a href="/land?sort={field}&order={new_order}" style="padding: 6px 12px; font-size: 0.8rem; background: {"#1e293b" if sort == field else "#0f172a"}; color: {"#38bdf8" if sort == field else "#94a3b8"}; border: 1px solid #1e293b; border-radius: 3px; text-decoration: none; white-space: nowrap;">{label}{arrow}</a>'
 
-        land_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+        land_html = '''<style>
+        @media (max-width: 600px) {
+            .land-card-row { flex-direction: column !important; }
+            .land-card-main { min-width: 0 !important; }
+            .land-card-actions { min-width: 0 !important; width: 100% !important; }
+            .land-eff-bar { width: 100% !important; }
+            .land-form-row select { min-width: 0 !important; width: 100% !important; }
+        }
+        </style>
+        <a href="/" style="color: #38bdf8;"><- Dashboard</a>'''
 
         _land_success = {"listing_cancelled": "Listing cancelled.", "land_listed": "Plot listed on the market."}
         _land_errors = {"cancel_failed": "Could not cancel — listing may already be inactive.", "listing_failed": "Could not list plot. Ensure it is vacant and not already listed."}
@@ -2753,8 +2879,8 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
 
                 land_html += f'''
                 <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                        <div style="flex: 1; min-width: 250px;">
+                    <div class="land-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                        <div class="land-card-main" style="flex: 1; min-width: 250px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                 <span class="badge" style="background: {status_color}; color: #020617;">{status}</span>
@@ -2779,7 +2905,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                                     <span style="font-size: 0.8rem; color: #64748b;">Efficiency:</span>
                                     <span style="font-size: 0.85rem; color: {eff_color}; font-weight: bold;">{eff:.3f}%</span>
                                 </div>
-                                <div style="background: #020617; height: 6px; border-radius: 3px; margin-top: 4px; width: 200px;">
+                                <div class="land-eff-bar" style="background: #020617; height: 6px; border-radius: 3px; margin-top: 4px; width: 200px;">
                                     <div style="background: {eff_color}; height: 6px; border-radius: 3px; width: {eff_width}%;"></div>
                                 </div>
                             </div>'''
@@ -2795,7 +2921,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
 
                 # Actions column
                 if not plot.occupied_by_business_id:
-                    land_html += '<div style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">'
+                    land_html += '<div class="land-card-actions" style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">'
                     if is_listed:
                         # Plot is listed — show cancel button; no building allowed while listed
                         land_html += f'''
@@ -2904,14 +3030,25 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
                 listing_plots[l.id] = p
                 all_terrains.add(p.terrain_type)
 
-        # Market stats
-        total_auctions = len(auctions)
-        total_listings = len(listings)
+        # Market stats — use only entries where the land plot was found,
+        # so the displayed count matches the number of cards rendered.
+        total_auctions = len(auction_plots)
+        total_listings = len(listing_plots)
         total_available = total_auctions + total_listings
         avg_auction_price = (sum(a.current_price for a in auctions) / total_auctions) if total_auctions else 0
         avg_listing_price = (sum(l.asking_price for l in listings) / total_listings) if total_listings else 0
 
-        market_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+        market_html = '''<style>
+        @media (max-width: 600px) {
+            .lm-card-row { flex-direction: column !important; }
+            .lm-card-main { min-width: 0 !important; }
+            .lm-card-action { min-width: 0 !important; width: 100% !important; flex-direction: row !important; flex-wrap: wrap !important; }
+            .lm-price-row { flex-wrap: wrap !important; gap: 6px !important; }
+            .lm-form-row { flex-wrap: wrap !important; }
+            .lm-form-row input, .lm-form-row select { width: 100% !important; }
+        }
+        </style>
+        <a href="/" style="color: #38bdf8;"><- Dashboard</a>'''
 
         if success:
             _success_msgs = {
@@ -3093,8 +3230,8 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += f'''
                     <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                            <div style="flex: 1; min-width: 280px;">
+                        <div class="lm-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div class="lm-card-main" style="flex: 1; min-width: 280px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                     <span class="badge" style="background: #f59e0b; color: #020617;">AUCTION</span>
@@ -3117,7 +3254,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += f'''
                                 <div style="margin-top: 12px; padding: 10px; background: #020617; border-radius: 4px;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
+                                    <div class="lm-price-row" style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
                                         <span style="color: #ef4444;">Start: {fmt_usd(auction.starting_price, disp, precision=0)}</span>
                                         <span style="color: #22c55e; font-weight: bold;">Now: {fmt_usd(auction.current_price, disp, precision=0)}</span>
                                         <span style="color: #64748b;">Floor: {fmt_usd(auction.minimum_price, disp, precision=0)}</span>
@@ -3131,7 +3268,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
+                            <div class="lm-card-action" style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
                                 <div style="text-align: center;">
                                     <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">{fmt_usd(auction.current_price, disp, precision=0)}</div>
                                     <div style="font-size: 0.7rem; color: #64748b;">current price</div>
@@ -3207,8 +3344,8 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += f'''
                     <div class="card" style="border-left: 4px solid {border_color}; margin-bottom: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                            <div style="flex: 1; min-width: 280px;">
+                        <div class="lm-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div class="lm-card-main" style="flex: 1; min-width: 280px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                     {own_badge}
@@ -3232,7 +3369,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += '''
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">'''
+                            <div class="lm-card-action" style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">'''
 
                     market_html += f'''
                                 <div style="text-align: center;">
@@ -4418,7 +4555,14 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
         bank_entities = db.query(banks.BankEntity).filter(banks.BankEntity.is_active == True).all()
         db.close()
 
-        bank_html = '<a href="/" style="color: #38bdf8;">← Dashboard</a><h1>Banking & Investments</h1>'
+        bank_html = '''<style>
+        @media (max-width: 600px) {
+            .bnk-4col { grid-template-columns: 1fr 1fr !important; }
+            .bnk-2col { grid-template-columns: 1fr !important; }
+            .bnk-select { min-width: 0 !important; width: 100% !important; }
+        }
+        </style>
+        <a href="/" style="color: #38bdf8;">← Dashboard</a><h1>Banking & Investments</h1>'''
         
         # ==========================
         # BROKERAGE FIRM CARD (Special - not in BankEntity table)
@@ -4479,7 +4623,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     </div>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
+                <div class="bnk-4col" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;">
                     <div>
                         <div style="color: #64748b; font-size: 0.8rem;">Your Credit</div>
                         <div style="font-size: 1.5rem; font-weight: bold; color: {tier_color};">
@@ -4556,7 +4700,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                     </div>
                     <span class="badge" style="background:#7c3aed;">LIVE</span>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px;">
+                <div class="bnk-4col" style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:16px;">
                     <div>
                         <div style="color:#64748b;font-size:.8rem;">WBC-50</div>
                         <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">{wbc_str}</div>
@@ -4633,7 +4777,8 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
                         <label style="color:#94a3b8;font-size:.8rem;display:block;margin-bottom:4px;">Legal Tender Currency</label>
                         <select name="currency_code"
                                 style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;
-                                       padding:6px 10px;border-radius:3px;min-width:320px;font-family:inherit;">
+                                       padding:6px 10px;border-radius:3px;min-width:320px;font-family:inherit;"
+                                class="bnk-select">
                             {currency_rows}
                         </select>
                     </div>
@@ -4759,7 +4904,7 @@ def banks_page(session_token: Optional[str] = Cookie(None)):
             <div class="card">
                 <h3>{bank.bank_id.replace("_", " ").title()}</h3>
                 <p style="color: #64748b;">{bank.description}</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <div class="bnk-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                     <div><b>Share Price:</b> {fmt_usd(bank.share_price, disp, precision=4)}</div>
                     <div><b>Market Cap:</b> {fmt_usd(bank.share_price * bank.total_shares_issued, disp)}</div>
                     <div><b>Your Shares:</b> {holding["shares_owned"]:,}</div>
@@ -5865,6 +6010,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         td_css += '.td-input{width:100%;padding:8px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;font-size:0.85rem;font-family:inherit;}'
         td_css += '.td-input:focus{border-color:#38bdf8;outline:none;}'
         td_css += '@media(max-width:1024px){.td-layout{grid-template-columns:1fr!important;}.td-sidebar{max-height:none;overflow-x:auto;white-space:nowrap;display:flex;}.td-sidebar>a{min-width:140px;white-space:normal;}}'
+        td_css += '@media(max-width:600px){.td-layout{grid-template-columns:1fr!important;}.td-3col{grid-template-columns:1fr 1fr!important;}.td-2col{grid-template-columns:1fr!important;}.td-portbar{flex-wrap:wrap!important;gap:12px!important;}.td-input-row{flex-wrap:wrap!important;}.td-input-row input{width:100%!important;}.td-depths{grid-template-columns:1fr!important;}}'
         td_css += '</style>'
 
         # ── ETF mode ─────────────────────────────────────────────────────────────
@@ -5901,7 +6047,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             </div>
                             <a href="/banks/{bank_id.replace("_","-")}" class="btn-blue" style="font-size:.75rem;">Details</a>
                         </div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;">
+                        <div class="td-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;">
                             <div><div style="color:#64748b;font-size:.75rem;">Market Price</div>
                                  <div style="font-weight:bold;color:#22c55e;">{mkt_price_display}</div></div>
                             <div><div style="color:#64748b;font-size:.75rem;">NAV</div>
@@ -6022,7 +6168,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         </div>
 
         <!-- Portfolio Summary Bar -->
-        <div style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
+        <div class="td-portbar" style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
             <div>
                 <span class="td-label">Portfolio Value</span>
                 <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;">{fmt_usd(total_portfolio_value, disp)}</div>
@@ -6082,7 +6228,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
 
                 <!-- Key Stats Grid -->
                 <div class="td-section">
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div class="td-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
                         <div><div class="td-label">Market Cap</div><div style="font-size:0.9rem;">{fmt_usd(selected_company.current_price * selected_company.shares_outstanding, disp, precision=0)}</div></div>
                         <div><div class="td-label">Shares Out</div><div style="font-size:0.9rem;">{selected_company.shares_outstanding:,}</div></div>
                         <div><div class="td-label">Float</div><div style="font-size:0.9rem;">{selected_company.shares_in_float:,}</div></div>
@@ -6093,7 +6239,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 </div>
 
                 <!-- Depth of Market + Time & Sales -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="td-depths" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div class="td-section" style="margin-bottom:0;">
                         <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Depth of Market</div>
                         {ob_html}
@@ -6111,7 +6257,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 <!-- Position Summary -->
                 <div style="margin-bottom:12px;">
                     <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Your Position &mdash; {selected_company.ticker_symbol}</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+                    <div class="td-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
                         <div><span style="color:#64748b;">Shares</span><div style="color:#38bdf8;font-size:1rem;font-weight:600;">{player_shares:,}</div></div>
                         <div><span style="color:#64748b;">Value</span><div style="font-size:1rem;">{fmt_usd(player_mkt_value, disp)}</div></div>
                         <div><span style="color:#64748b;">Avg Cost</span><div>{fmt_usd(player_cost_basis, disp, precision=4)}</div></div>

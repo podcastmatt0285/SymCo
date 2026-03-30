@@ -280,105 +280,117 @@ EXECUTIVE_JOBS = {
 # ==========================
 EXEC_ABILITIES = {
     # ── BUSINESS ──────────────────────────────────────────────────────────────
+    # Hookpoints: hire_executive (board_influence, talent_scout), _process_aging (culture_builder)
+    # Global multipliers in get_player_job_bonus: corp_synergy, executive_aura, fl_shadow_exec, fl_dar_organizer
     "corp_synergy":        {"name": "Corporate Synergy",       "desc": "All executive bonuses +5% across the board",            "effect": "business", "value": 0.05},
-    "talent_scout":        {"name": "Talent Scout",            "desc": "New executives appear on marketplace 15% more often",   "effect": "business", "value": 0.15},
+    "talent_scout":        {"name": "Talent Scout",            "desc": "Executives you hire retire 15% later than normal",      "effect": "business", "value": 0.15},
     "board_influence":     {"name": "Board Influence",         "desc": "All executive hiring fees −20%",                        "effect": "business", "value": 0.20},
-    "strategic_vision":    {"name": "Strategic Vision",        "desc": "Business production output +8%",                       "effect": "business", "value": 0.08},
+    "strategic_vision":    {"name": "Strategic Vision",        "desc": "Business production output +8%",                       "effect": "production","value": 0.08},
     "culture_builder":     {"name": "Culture Builder",         "desc": "All executives age 10% slower",                        "effect": "business", "value": 0.10},
     "executive_aura":      {"name": "Executive Aura",          "desc": "All other executive effects +3%",                      "effect": "business", "value": 0.03},
     "hr_mastery":          {"name": "HR Mastery",              "desc": "All executive wages −8%",                              "effect": "wages",    "value": 0.08},
     "retention_bonus":     {"name": "Retention Bonus",         "desc": "Executive school costs −12%",                          "effect": "school",   "value": 0.12},
-    "succession_plan":     {"name": "Succession Planning",     "desc": "On this exec's retirement the next hire fee is waived", "effect": "business", "value": 1.0},
+    "succession_plan":     {"name": "Succession Planning",     "desc": "On this exec's retirement the next hire fee is waived", "effect": "special",  "value": 0.0},
     # ── SALES ─────────────────────────────────────────────────────────────────
-    "demand_surge":        {"name": "Demand Surge",            "desc": "Retail/sales volume +12%",                             "effect": "sales",   "value": 0.12},
-    "brand_equity":        {"name": "Brand Equity",            "desc": "Passive income from all businesses +6%",               "effect": "sales",   "value": 0.06},
-    "viral_campaign":      {"name": "Viral Campaign",          "desc": "Business demand multiplier +10%",                      "effect": "sales",   "value": 0.10},
-    "conversion_pro":      {"name": "Conversion Pro",          "desc": "Business sale price +8%",                              "effect": "sales",   "value": 0.08},
-    "loyalty_program":     {"name": "Loyalty Program",         "desc": "Sales tax on businesses −8%",                          "effect": "sales",   "value": 0.08},
-    "influencer_network":  {"name": "Influencer Network",      "desc": "Cities generate 10% more revenue",                     "effect": "cities",  "value": 0.10},
-    "market_intelligence": {"name": "Market Intelligence",     "desc": "Reveals real-time demand trends for all markets",       "effect": "sales",   "value": 0.07},
-    "upsell_mastery":      {"name": "Upsell Mastery",          "desc": "Average transaction value +10%",                       "effect": "sales",   "value": 0.10},
+    # Hookpoint: business.py retail revenue * (1 + sales_bonus)
+    "demand_surge":        {"name": "Demand Surge",            "desc": "Retail/sales revenue +12%",                            "effect": "sales",   "value": 0.12},
+    "brand_equity":        {"name": "Brand Equity",            "desc": "Retail/sales revenue +6%",                             "effect": "sales",   "value": 0.06},
+    "viral_campaign":      {"name": "Viral Campaign",          "desc": "Retail/sales revenue +10%",                            "effect": "sales",   "value": 0.10},
+    "conversion_pro":      {"name": "Conversion Pro",          "desc": "Retail/sales revenue +8%",                             "effect": "sales",   "value": 0.08},
+    "loyalty_program":     {"name": "Loyalty Program",         "desc": "Retail/sales revenue +8%",                             "effect": "sales",   "value": 0.08},
+    "influencer_network":  {"name": "Influencer Network",      "desc": "City production bonuses +10%",                         "effect": "cities",  "value": 0.10},
+    "market_intelligence": {"name": "Market Intelligence",     "desc": "Retail/sales revenue +7%",                             "effect": "sales",   "value": 0.07},
+    "upsell_mastery":      {"name": "Upsell Mastery",          "desc": "Retail/sales revenue +10%",                            "effect": "sales",   "value": 0.10},
     # ── PRODUCTION ────────────────────────────────────────────────────────────
-    "lean_ops":            {"name": "Lean Operations",         "desc": "Business production cycles 10% faster",                "effect": "production", "value": 0.10},
+    # Hookpoint: wma.py production output qty * (1 + production_bonus)
+    "lean_ops":            {"name": "Lean Operations",         "desc": "Business production output +10%",                      "effect": "production", "value": 0.10},
     "supply_chain_opt":    {"name": "Supply Chain Optimization","desc": "Business input costs −8%",                            "effect": "production", "value": 0.08},
     "automation_drive":    {"name": "Automation Drive",        "desc": "Production output +12%",                               "effect": "production", "value": 0.12},
-    "quality_control":     {"name": "Quality Control",         "desc": "Business waste / output loss −10%",                    "effect": "production", "value": 0.10},
-    "capacity_expand":     {"name": "Capacity Expansion",      "desc": "Business production output +10% (scales with level and school)",                 "effect": "production", "value": 0.10},
+    "quality_control":     {"name": "Quality Control",         "desc": "Production output +10%",                               "effect": "production", "value": 0.10},
+    "capacity_expand":     {"name": "Capacity Expansion",      "desc": "Business production output +10%",                      "effect": "production", "value": 0.10},
     "process_reeng":       {"name": "Process Reengineering",   "desc": "Executive school duration −15%",                       "effect": "school",     "value": 0.15},
-    "ops_excellence":      {"name": "Operational Excellence",  "desc": "Land efficiency decay slowed −10%",                    "effect": "land",       "value": 0.10},
-    "throughput_boost":    {"name": "Throughput Boost",        "desc": "Production output +10%, speed +5%",                    "effect": "production", "value": 0.10},
+    "ops_excellence":      {"name": "Operational Excellence",  "desc": "Land purchase prices and hoarding taxes −10%",         "effect": "land",       "value": 0.10},
+    "throughput_boost":    {"name": "Throughput Boost",        "desc": "Production output +10%",                               "effect": "production", "value": 0.10},
     # ── BANKING ───────────────────────────────────────────────────────────────
-    "interest_arb":        {"name": "Interest Arbitrage",      "desc": "Loan interest rates −15%",                             "effect": "banking", "value": 0.15},
-    "dividend_boost":      {"name": "Dividend Booster",        "desc": "Bank dividend returns +12%",                           "effect": "banking", "value": 0.12},
+    # Hookpoint: ETF pay_dividends() — dividend_amount * (1 + banking_bonus) per player
+    "interest_arb":        {"name": "Interest Arbitrage",      "desc": "Banking/ETF income +15%",                              "effect": "banking", "value": 0.15},
+    "dividend_boost":      {"name": "Dividend Booster",        "desc": "ETF dividend returns +12%",                            "effect": "banking", "value": 0.12},
     "capital_reserve":     {"name": "Capital Reserve Protocol","desc": "$5,000 negative balance buffer before penalties",       "effect": "banking", "value": 5000.0},
-    "portfolio_hedge":     {"name": "Portfolio Hedge",         "desc": "Crypto market volatility impact −20%",                  "effect": "banking", "value": 0.20},
-    "cost_center_audit":   {"name": "Cost Center Audit",       "desc": "All executive wages −8% through efficiency gains",     "effect": "wages",   "value": 0.08},
-    "investment_grade":    {"name": "Investment Grade",        "desc": "Banking bonus effectiveness +15%",                     "effect": "banking", "value": 0.15},
-    "debt_restructure":    {"name": "Debt Restructuring",      "desc": "Can renegotiate loans at 10% better terms",            "effect": "banking", "value": 0.10},
-    "banking_synergy":     {"name": "Banking Synergy",         "desc": "All banking effects compound an extra 5%",             "effect": "banking", "value": 0.05},
+    "portfolio_hedge":     {"name": "Portfolio Hedge",         "desc": "ETF dividend returns +20%",                            "effect": "banking", "value": 0.20},
+    "cost_center_audit":   {"name": "Cost Center Audit",       "desc": "All executive wages −8%",                              "effect": "wages",   "value": 0.08},
+    "investment_grade":    {"name": "Investment Grade",        "desc": "Banking/ETF income +15%",                              "effect": "banking", "value": 0.15},
+    "debt_restructure":    {"name": "Debt Restructuring",      "desc": "Banking/ETF income +10%",                              "effect": "banking", "value": 0.10},
+    "banking_synergy":     {"name": "Banking Synergy",         "desc": "Banking/ETF income +5%",                               "effect": "banking", "value": 0.05},
     # ── TAXES ─────────────────────────────────────────────────────────────────
-    "tax_shield":          {"name": "Tax Shield",              "desc": "All property taxes −10%",                              "effect": "taxes",  "value": 0.10},
-    "compliance_expert":   {"name": "Compliance Expert",       "desc": "Immune to random tax penalty events",                  "effect": "taxes",  "value": 1.0},
-    "loophole_finder":     {"name": "Loophole Finder",         "desc": "Land taxes −15%",                                      "effect": "taxes",  "value": 0.15},
-    "deduction_master":    {"name": "Deduction Master",        "desc": "Business taxes −12%",                                  "effect": "taxes",  "value": 0.12},
-    "audit_defense":       {"name": "Audit Defense",           "desc": "Immunity to audit events and related penalties",       "effect": "taxes",  "value": 1.0},
-    "tax_treaty":          {"name": "Tax Treaty Expertise",    "desc": "District taxes −10%",                                  "effect": "taxes",  "value": 0.10},
-    "legal_arb":           {"name": "Legal Arbitrage",         "desc": "All platform fees −8%",                                "effect": "taxes",  "value": 0.08},
-    "county_exemption":    {"name": "County Exemption",        "desc": "County taxes −20%",                                    "effect": "taxes",  "value": 0.20},
+    # Hookpoint: districts.py monthly tax * (1 - taxes_bonus - districts_bonus)
+    "tax_shield":          {"name": "Tax Shield",              "desc": "All taxes −10%",                                       "effect": "taxes",  "value": 0.10},
+    "compliance_expert":   {"name": "Compliance Expert",       "desc": "All taxes −10%",                                       "effect": "taxes",  "value": 0.10},
+    "loophole_finder":     {"name": "Loophole Finder",         "desc": "All taxes −15%",                                       "effect": "taxes",  "value": 0.15},
+    "deduction_master":    {"name": "Deduction Master",        "desc": "All taxes −12%",                                       "effect": "taxes",  "value": 0.12},
+    "audit_defense":       {"name": "Audit Defense",           "desc": "All taxes −10%",                                       "effect": "taxes",  "value": 0.10},
+    "tax_treaty":          {"name": "Tax Treaty Expertise",    "desc": "All taxes −10%",                                       "effect": "taxes",  "value": 0.10},
+    "legal_arb":           {"name": "Legal Arbitrage",         "desc": "All taxes −8%",                                        "effect": "taxes",  "value": 0.08},
+    "county_exemption":    {"name": "County Exemption",        "desc": "All taxes −20%",                                       "effect": "taxes",  "value": 0.20},
     # ── CRYPTO ────────────────────────────────────────────────────────────────
-    "blockchain_native":   {"name": "Blockchain Native",       "desc": "Crypto transaction fees −20%",                         "effect": "crypto",  "value": 0.20},
-    "defi_specialist":     {"name": "DeFi Specialist",         "desc": "Yield farming / staking returns +15%",                 "effect": "crypto",  "value": 0.15},
-    "security_hard":       {"name": "Security Hardening",      "desc": "Crypto wallet protected from theft/hack events",       "effect": "crypto",  "value": 1.0},
-    "algo_trading":        {"name": "Algorithmic Trading",     "desc": "Automated crypto positions earn +5% more",             "effect": "crypto",  "value": 0.05},
-    "smart_contract_aud":  {"name": "Smart Contract Auditing", "desc": "P2P contract disputes resolved +20% in your favour",   "effect": "crypto",  "value": 0.20},
-    "data_analytics":      {"name": "Data Analytics",          "desc": "Reveals live market trend data for all assets",        "effect": "crypto",  "value": 1.0},
-    "web3_native":         {"name": "Web3 Native",             "desc": "All crypto bonuses +8%",                               "effect": "crypto",  "value": 0.08},
+    # Hookpoint: wallet.py yield farming + memecoins.py mining payout * (1 + crypto_bonus)
+    "blockchain_native":   {"name": "Blockchain Native",       "desc": "WSC yield farming returns +20%",                       "effect": "crypto",  "value": 0.20},
+    "defi_specialist":     {"name": "DeFi Specialist",         "desc": "WSC yield farming returns +15%",                       "effect": "crypto",  "value": 0.15},
+    "security_hard":       {"name": "Security Hardening",      "desc": "WSC yield farming returns +10%",                       "effect": "crypto",  "value": 0.10},
+    "algo_trading":        {"name": "Algorithmic Trading",     "desc": "WSC yield farming returns +5%",                        "effect": "crypto",  "value": 0.05},
+    "smart_contract_aud":  {"name": "Smart Contract Auditing", "desc": "Meme coin / WSC yield +20%",                           "effect": "crypto",  "value": 0.20},
+    "data_analytics":      {"name": "Data Analytics",          "desc": "Meme coin / WSC yield +8%",                            "effect": "crypto",  "value": 0.08},
+    "web3_native":         {"name": "Web3 Native",             "desc": "Meme coin / WSC yield +8%",                            "effect": "crypto",  "value": 0.08},
     "token_strategy":      {"name": "Token Strategy",          "desc": "Meme coin / WSC yield +10%",                           "effect": "crypto",  "value": 0.10},
     # ── LAND ──────────────────────────────────────────────────────────────────
-    "land_survey_exp":     {"name": "Land Survey Expertise",   "desc": "Land efficiency decay −20%",                           "effect": "land", "value": 0.20},
-    "zoning_expert":       {"name": "Zoning Expert",           "desc": "Land purchase prices −10%",                            "effect": "land", "value": 0.10},
-    "green_cert":          {"name": "Green Certification",     "desc": "Sustainable land plots get 15% tax exemption",         "effect": "land", "value": 0.15},
-    "property_dev":        {"name": "Property Development",    "desc": "Land appreciation value +8% per cycle",                "effect": "land", "value": 0.08},
+    # Hookpoints: land.py hoarding tax * (1 - land_bonus), land_market.py asking_price * (1 - land_bonus)
+    "land_survey_exp":     {"name": "Land Survey Expertise",   "desc": "Land purchase prices and hoarding taxes −20%",         "effect": "land", "value": 0.20},
+    "zoning_expert":       {"name": "Zoning Expert",           "desc": "Land purchase prices and hoarding taxes −10%",         "effect": "land", "value": 0.10},
+    "green_cert":          {"name": "Green Certification",     "desc": "Land purchase prices and hoarding taxes −15%",         "effect": "land", "value": 0.15},
+    "property_dev":        {"name": "Property Development",    "desc": "Land purchase prices and hoarding taxes −8%",          "effect": "land", "value": 0.08},
     "easement_neg":        {"name": "Easement Negotiator",     "desc": "Land hoarding tax −15%",                               "effect": "land", "value": 0.15},
-    "urban_planning":      {"name": "Urban Planning",          "desc": "City bonus effects +8%",                               "effect": "cities","value": 0.08},
-    "env_compliance":      {"name": "Environmental Compliance","desc": "Regulatory fines and land penalties −25%",              "effect": "land", "value": 0.25},
-    "land_banking":        {"name": "Land Banking",            "desc": "Owned land plots passively appreciate 5%/cycle",       "effect": "land", "value": 0.05},
+    "urban_planning":      {"name": "Urban Planning",          "desc": "City production bonuses +8%",                          "effect": "cities","value": 0.08},
+    "env_compliance":      {"name": "Environmental Compliance","desc": "Land purchase prices and hoarding taxes −25%",          "effect": "land", "value": 0.25},
+    "land_banking":        {"name": "Land Banking",            "desc": "Land purchase prices and hoarding taxes −5%",          "effect": "land", "value": 0.05},
     # ── CITIES ────────────────────────────────────────────────────────────────
-    "grant_writer":        {"name": "Grant Writer",            "desc": "City grants +20%",                                     "effect": "cities","value": 0.20},
-    "infra_push":          {"name": "Infrastructure Push",     "desc": "City fund generation +15%",                            "effect": "cities","value": 0.15},
-    "civic_partner":       {"name": "Civic Partnership",       "desc": "District output +10% from city investment",            "effect": "cities","value": 0.10},
-    "urban_renewal":       {"name": "Urban Renewal",           "desc": "City growth rate +12%",                                "effect": "cities","value": 0.12},
-    "public_relations":    {"name": "Public Relations",        "desc": "City-level taxes −10%",                                "effect": "cities","value": 0.10},
-    "mayoral_liaison":     {"name": "Mayoral Liaison",         "desc": "Government grants appear 25% more often",              "effect": "cities","value": 0.25},
-    "smart_city":          {"name": "Smart City Initiative",   "desc": "Tech investments multiply city output +12%",           "effect": "cities","value": 0.12},
+    # Hookpoint: city_projects.py get_city_production_buffs output_multiplier * (1 + cities_bonus)
+    "grant_writer":        {"name": "Grant Writer",            "desc": "City production bonuses +20%",                         "effect": "cities","value": 0.20},
+    "infra_push":          {"name": "Infrastructure Push",     "desc": "City production bonuses +15%",                         "effect": "cities","value": 0.15},
+    "civic_partner":       {"name": "Civic Partnership",       "desc": "City production bonuses +10%",                         "effect": "cities","value": 0.10},
+    "urban_renewal":       {"name": "Urban Renewal",           "desc": "City production bonuses +12%",                         "effect": "cities","value": 0.12},
+    "public_relations":    {"name": "Public Relations",        "desc": "City production bonuses +10%",                         "effect": "cities","value": 0.10},
+    "mayoral_liaison":     {"name": "Mayoral Liaison",         "desc": "City production bonuses +25%",                         "effect": "cities","value": 0.25},
+    "smart_city":          {"name": "Smart City Initiative",   "desc": "City production bonuses +12%",                         "effect": "cities","value": 0.12},
     # ── DISTRICTS ─────────────────────────────────────────────────────────────
-    "district_champ":      {"name": "District Champion",       "desc": "District business output +15%",                        "effect": "districts","value": 0.15},
-    "tax_incentive_zone":  {"name": "Tax Incentive Zone",      "desc": "District taxes −20%",                                  "effect": "districts","value": 0.20},
-    "biz_incubator":       {"name": "Business Incubator",      "desc": "New businesses in district cost 10% less",             "effect": "districts","value": 0.10},
-    "corridor_dev":        {"name": "Corridor Development",    "desc": "Connected districts share a 5% bonus",                 "effect": "districts","value": 0.05},
-    "rezoning_expert":     {"name": "Rezoning Expert",         "desc": "District type conversion costs −15%",                  "effect": "districts","value": 0.15},
-    "cluster_effect":      {"name": "Cluster Effect",          "desc": "Multiple businesses in same district +8% each",        "effect": "districts","value": 0.08},
-    "local_partnership":   {"name": "Local Partnership",       "desc": "District P2P fees −15%",                               "effect": "districts","value": 0.15},
-    # ── COUNTIES ──────────────────────────────────────────────────────────────
-    "county_commission":   {"name": "County Commissioner",     "desc": "County taxes −25%",                                    "effect": "counties","value": 0.25},
-    "land_grant_prog":     {"name": "Land Grant Program",      "desc": "Occasional free land plot in county",                  "effect": "counties","value": 1.0},
-    "rural_dev":           {"name": "Rural Development",       "desc": "County business output +12%",                          "effect": "counties","value": 0.12},
-    "county_bond":         {"name": "County Bond Access",      "desc": "County infrastructure loans at 5% lower rates",        "effect": "counties","value": 0.05},
-    "annexation_right":    {"name": "Annexation Rights",       "desc": "Expand district territory into county land",           "effect": "counties","value": 1.0},
-    "agri_bonus":          {"name": "Agricultural Bonus",      "desc": "Farming/rural land efficiency +15%",                   "effect": "counties","value": 0.15},
-    "regional_hub":        {"name": "Regional Hub",            "desc": "County as trade hub: P2P traffic +10%",                "effect": "counties","value": 0.10},
+    # Hookpoint: districts.py monthly tax * (1 - taxes_bonus - districts_bonus)
+    "district_champ":      {"name": "District Champion",       "desc": "District monthly taxes −15%",                          "effect": "districts","value": 0.15},
+    "tax_incentive_zone":  {"name": "Tax Incentive Zone",      "desc": "District monthly taxes −20%",                          "effect": "districts","value": 0.20},
+    "biz_incubator":       {"name": "Business Incubator",      "desc": "District monthly taxes −10%",                          "effect": "districts","value": 0.10},
+    "corridor_dev":        {"name": "Corridor Development",    "desc": "District monthly taxes −5%",                           "effect": "districts","value": 0.05},
+    "rezoning_expert":     {"name": "Rezoning Expert",         "desc": "District monthly taxes −15%",                          "effect": "districts","value": 0.15},
+    "cluster_effect":      {"name": "Cluster Effect",          "desc": "District monthly taxes −8%",                           "effect": "districts","value": 0.08},
+    "local_partnership":   {"name": "Local Partnership",       "desc": "District monthly taxes −15%",                          "effect": "districts","value": 0.15},
+    # ── COUNTIES (redirected to real effect types — county-specific systems TBD) ─
+    "county_commission":   {"name": "County Commissioner",     "desc": "All taxes −25%",                                       "effect": "taxes",      "value": 0.25},
+    "land_grant_prog":     {"name": "Land Grant Program",      "desc": "All taxes −20%",                                       "effect": "taxes",      "value": 0.20},
+    "rural_dev":           {"name": "Rural Development",       "desc": "Business production output +12%",                      "effect": "production", "value": 0.12},
+    "county_bond":         {"name": "County Bond Access",      "desc": "All executive wages −5%",                              "effect": "wages",      "value": 0.05},
+    "annexation_right":    {"name": "Annexation Rights",       "desc": "District monthly taxes −15%",                          "effect": "districts",  "value": 0.15},
+    "agri_bonus":          {"name": "Agricultural Bonus",      "desc": "Land purchase prices and hoarding taxes −15%",         "effect": "land",       "value": 0.15},
+    "regional_hub":        {"name": "Regional Hub",            "desc": "Business production output +10%",                      "effect": "production", "value": 0.10},
     # ── P2P ───────────────────────────────────────────────────────────────────
-    "p2p_notification":    {"name": "P2P Notification System", "desc": "Enables envelope (DM) and paper (contract) icons on the P2P dashboard button", "effect": "p2p","value": 1.0},
-    "dm_threeway":         {"name": "Multi-Party DMs",         "desc": "Unlocks adding 3rd parties to direct messages",        "effect": "p2p","value": 1.0},
-    "contract_tracker":    {"name": "Contract Tracker",        "desc": "Real-time contract status alerts in dashboard",        "effect": "p2p","value": 1.0},
-    "fee_negotiator":      {"name": "Fee Negotiator",          "desc": "P2P entry/listing fees −25%",                          "effect": "p2p","value": 0.25},
-    "network_expander":    {"name": "Network Expander",        "desc": "P2P reach increased: more players discoverable",       "effect": "p2p","value": 1.0},
-    "deal_scout":          {"name": "Deal Scout",              "desc": "Early access to new P2P marketplace listings",         "effect": "p2p","value": 1.0},
-    "rep_shield":          {"name": "Reputation Shield",       "desc": "P2P reputation score protected from dispute fallout",  "effect": "p2p","value": 1.0},
-    "mediation_svc":       {"name": "Mediation Service",       "desc": "P2P disputes resolved in your favour 20% more often", "effect": "p2p","value": 0.20},
+    # Hookpoint: p2p.py charge_p2p_access fee * (1 - p2p_bonus)
+    # Special UI abilities use effect "special" — checked via player_has_ability(), not get_player_job_bonus()
+    "p2p_notification":    {"name": "P2P Notification System", "desc": "Enables DM and contract icons on P2P dashboard button", "effect": "special","value": 1.0},
+    "dm_threeway":         {"name": "Multi-Party DMs",         "desc": "Unlocks adding 3rd parties to direct messages",        "effect": "special","value": 1.0},
+    "contract_tracker":    {"name": "Contract Tracker",        "desc": "Real-time contract status alerts in dashboard",        "effect": "special","value": 1.0},
+    "fee_negotiator":      {"name": "Fee Negotiator",          "desc": "P2P access fee −25%",                                  "effect": "p2p","value": 0.25},
+    "network_expander":    {"name": "Network Expander",        "desc": "P2P access fee −15%",                                  "effect": "p2p","value": 0.15},
+    "deal_scout":          {"name": "Deal Scout",              "desc": "P2P access fee −15%",                                  "effect": "p2p","value": 0.15},
+    "rep_shield":          {"name": "Reputation Shield",       "desc": "P2P access fee −10%",                                  "effect": "p2p","value": 0.10},
+    "mediation_svc":       {"name": "Mediation Service",       "desc": "P2P access fee −20%",                                  "effect": "p2p","value": 0.20},
     # ── FIRST LADIES (unique — one per exec, tutorial reward) ─────────────────
     "fl_estate_manager":   {"name": "Estate Management",       "desc": "All farming & plantation output +15%",                 "effect": "production","value": 0.15},
-    "fl_political_advisor":{"name": "Political Advisor",       "desc": "Overall business strategy output +10%",               "effect": "business","value": 0.10},
+    "fl_political_advisor":{"name": "Political Advisor",       "desc": "Overall business strategy output +10%",               "effect": "production","value": 0.10},
     "fl_social_diplomat":  {"name": "Social Diplomacy",        "desc": "All P2P transaction fees −20%",                        "effect": "p2p","value": 0.20},
     "fl_un_diplomat":      {"name": "UN Diplomacy",            "desc": "Market listing/transaction fees −15%",                 "effect": "sales","value": 0.15},
     "fl_retail_entrepreneur":{"name":"Retail Entrepreneur",    "desc": "Retail sales revenue +12%",                           "effect": "sales","value": 0.12},
@@ -403,18 +415,18 @@ EXEC_ABILITIES = {
     "fl_frontier_supply":       {"name": "Frontier Supply Officer", "desc": "All business input costs −12%",                       "effect": "production", "value": 0.12},
     "fl_school_librarian":      {"name": "Schoolteacher & Librarian","desc": "Executive school costs −20%",                        "effect": "school",     "value": 0.20},
     "fl_correspondence_mgr":    {"name": "Correspondence Manager",  "desc": "All P2P message and contract fees −18%",              "effect": "p2p",        "value": 0.18},
-    "fl_arts_patroness":        {"name": "Arts Patroness",          "desc": "City revenue and grants +12%",                        "effect": "cities",     "value": 0.12},
-    "fl_fashion_linguist":      {"name": "Fashion & Linguistics",   "desc": "Retail sales volume +12%",                           "effect": "sales",      "value": 0.12},
-    "fl_reading_teacher":       {"name": "Reading Teacher",         "desc": "School upgrade effectiveness +22%",                   "effect": "school",     "value": 0.22},
-    "fl_social_climber":        {"name": "Social Architect",        "desc": "P2P listing and entry fees −18%",                     "effect": "p2p",        "value": 0.18},
+    "fl_arts_patroness":        {"name": "Arts Patroness",          "desc": "City production bonuses +12%",                        "effect": "cities",     "value": 0.12},
+    "fl_fashion_linguist":      {"name": "Fashion & Linguistics",   "desc": "Retail/sales revenue +12%",                          "effect": "sales",      "value": 0.12},
+    "fl_reading_teacher":       {"name": "Reading Teacher",         "desc": "Executive school costs and duration −22%",            "effect": "school",     "value": 0.22},
+    "fl_social_climber":        {"name": "Social Architect",        "desc": "P2P access fee −18%",                                 "effect": "p2p",        "value": 0.18},
     "fl_temperance_scholar":    {"name": "Temperance Scholar",      "desc": "All executive wages −10%",                            "effect": "wages",      "value": 0.10},
     "fl_classical_scholar":     {"name": "Classical Scholar",       "desc": "Executive school duration −18%",                      "effect": "school",     "value": 0.18},
-    "fl_celebrity_endorser":    {"name": "Celebrity Endorser",      "desc": "Brand equity across all businesses +15%",             "effect": "sales",      "value": 0.15},
-    "fl_dar_organizer":         {"name": "DAR Organizer",           "desc": "County and city bonus effectiveness +10%",             "effect": "counties",   "value": 0.10},
-    "fl_bank_president":        {"name": "Bank President",          "desc": "Bank dividend returns +15%",                          "effect": "banking",    "value": 0.15},
+    "fl_celebrity_endorser":    {"name": "Celebrity Endorser",      "desc": "Retail/sales revenue +15%",                           "effect": "sales",      "value": 0.15},
+    "fl_dar_organizer":         {"name": "DAR Organizer",           "desc": "All active executive ability effects +10%",            "effect": "business",   "value": 0.10},
+    "fl_bank_president":        {"name": "Bank President",          "desc": "ETF dividend returns +15%",                           "effect": "banking",    "value": 0.15},
     "fl_whitehouse_coo":        {"name": "White House COO",         "desc": "All production output +12%",                          "effect": "production", "value": 0.12},
-    "fl_city_diplomat":         {"name": "City Diplomat",           "desc": "City fund generation +18%",                           "effect": "cities",     "value": 0.18},
-    "fl_housing_reformer":      {"name": "Housing Reformer",        "desc": "All city-level taxes −15%",                           "effect": "cities",     "value": 0.15},
+    "fl_city_diplomat":         {"name": "City Diplomat",           "desc": "City production bonuses +18%",                        "effect": "cities",     "value": 0.18},
+    "fl_housing_reformer":      {"name": "Housing Reformer",        "desc": "City production bonuses +15%",                        "effect": "cities",     "value": 0.15},
     "fl_shadow_exec":           {"name": "Shadow Executive",        "desc": "All active executive ability effects +10%",            "effect": "business",   "value": 0.10},
     "fl_press_publisher":       {"name": "Press Publisher",         "desc": "Passive income from all businesses +15%",             "effect": "sales",      "value": 0.15},
     "fl_deaf_educator":         {"name": "School for the Deaf",     "desc": "Executive school duration −25%",                      "effect": "school",     "value": 0.25},
@@ -1041,14 +1053,15 @@ def get_player_job_bonus(db, player_id: int, effect: str) -> float:
 
     total *= get_team_performance_boost(db, player_id)
 
-    # Apply corp_synergy global boost (business executives)
-    for ex in executives:
-        for key in (ex.abilities or "").split(","):
-            if key == "corp_synergy":
-                adef = EXEC_ABILITIES.get("corp_synergy")
+    # Apply global multiplier abilities (corp_synergy, executive_aura, fl_shadow_exec, fl_dar_organizer)
+    _global_mult_keys = ("corp_synergy", "executive_aura", "fl_shadow_exec", "fl_dar_organizer")
+    for key in _global_mult_keys:
+        for ex in executives:
+            if key in (ex.abilities or "").split(","):
+                adef = EXEC_ABILITIES.get(key)
                 if adef:
                     total *= (1.0 + adef["value"])
-                    break
+                break  # one application per ability type
 
     return min(total, 0.95)
 
@@ -1099,10 +1112,8 @@ def player_has_cco(db, player_id: int) -> bool:
 
 
 def get_school_discount(db, player_id: int) -> float:
-    """Combined school cost/time discount from process_reeng + retention_bonus abilities."""
-    d = (get_specific_ability_bonus(db, player_id, "process_reeng") +
-         get_specific_ability_bonus(db, player_id, "retention_bonus"))
-    return min(d, 0.75)
+    """Combined school cost/time discount from all school-effect executive abilities."""
+    return min(get_player_job_bonus(db, player_id, "school"), 0.75)
 
 
 def get_player_executives(db, player_id: int) -> List[Executive]:
@@ -1240,6 +1251,12 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
         return {"success": False, "error": f"Maximum {MAX_EXECUTIVES_PER_PLAYER} executives allowed"}
 
     hiring_fee = exec_obj.wage * (PAY_CYCLES["day"] / PAY_CYCLES[exec_obj.pay_cycle])
+
+    # Apply board_influence ability: reduces all hiring fees
+    board_bonus = get_specific_ability_bonus(db, player_id, "board_influence")
+    if board_bonus > 0:
+        hiring_fee = round(hiring_fee * max(0.05, 1.0 - board_bonus), 2)
+
     from reserve_banks import can_afford_usd, spend_player_funds
     if not can_afford_usd(player_id, hiring_fee):
         return {"success": False, "error": f"Insufficient funds. Hiring fee: ${hiring_fee:,.2f}"}
@@ -1247,6 +1264,13 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
     ok, err = spend_player_funds(player.id, hiring_fee)
     if not ok:
         return {"success": False, "error": err}
+    # Apply talent_scout ability: extends hired exec's retirement age
+    talent_bonus = get_specific_ability_bonus(db, player_id, "talent_scout")
+    if talent_bonus > 0:
+        extra_years = max(1, int(exec_obj.retirement_age * min(talent_bonus, 0.50)))
+        exec_obj.retirement_age += extra_years
+        exec_obj.max_age        += extra_years
+
     exec_obj.player_id       = player_id
     exec_obj.on_marketplace  = False
     exec_obj.hired_at        = datetime.utcnow()
@@ -1458,12 +1482,29 @@ def tick(current_tick: int, now: datetime):
 
 def _process_aging(db, current_tick: int):
     living = db.query(Executive).filter(Executive.is_dead == False).all()
+
+    # Pre-compute per-player aging slowdown from culture_builder + fl_health_advocate
+    from collections import defaultdict
+    _player_aging_bonus: dict = defaultdict(float)
+    for be in living:
+        if be.player_id is None or be.is_retired or be.is_in_school:
+            continue
+        for key in (be.abilities or "").split(","):
+            adef = EXEC_ABILITIES.get(key)
+            if adef and key in ("culture_builder", "fl_health_advocate"):
+                _player_aging_bonus[be.player_id] += adef["value"]
+
     for ex in living:
         ex.age_tick_accumulator += 1
 
         ticks_needed = TICKS_PER_YEAR
         if ex.is_special and ex.special_ability == "eternal_youth":
             ticks_needed = int(TICKS_PER_YEAR * 2)  # ages half speed
+
+        # Apply culture_builder / fl_health_advocate aging slowdown
+        if ex.player_id and ex.player_id in _player_aging_bonus:
+            aging_bonus = min(_player_aging_bonus[ex.player_id], 0.75)
+            ticks_needed = int(ticks_needed * (1.0 + aging_bonus))
 
         if ex.age_tick_accumulator < ticks_needed:
             continue

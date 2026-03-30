@@ -9,3 +9,4 @@ Pillow
 requests
 wheel
 pywebpush
+sentry-sdk[fastapi]

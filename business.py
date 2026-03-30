@@ -450,6 +450,16 @@ def process_business_tick(db):
                 except Exception as e:
                     print(f"[Business] Subsidy error: {e}")
 
+            # Apply executive sales bonus to retail revenue
+            if has_retail and total_revenue > 0:
+                try:
+                    from executive import get_player_job_bonus as _exec_gjb
+                    _sales_bonus = _exec_gjb(db, player.id, "sales")
+                    if _sales_bonus > 0:
+                        total_revenue = round(total_revenue * (1.0 + _sales_bonus), 2)
+                except Exception:
+                    pass
+
             net_revenue = total_revenue - wage_cost
             # Route income through the reserve bank so JPY (and other legal-
             # tender) players receive their earnings in their chosen currency.

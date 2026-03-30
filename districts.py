@@ -564,34 +564,46 @@ def collect_district_taxes(current_month: int):
 
     from reserve_banks import can_afford_usd, spend_player_funds
     for district, owner in district_owner_pairs:
-        if can_afford_usd(owner.id, district.monthly_tax):
-            ok, _err = spend_player_funds(owner.id, district.monthly_tax)
+        # Apply district/taxes exec bonus to reduce tax amount
+        effective_tax = district.monthly_tax
+        try:
+            from executive import get_player_job_bonus
+            _dist_bonus = get_player_job_bonus(db, owner.id, "districts")
+            _tax_bonus  = get_player_job_bonus(db, owner.id, "taxes")
+            _total_reduction = min(_dist_bonus + _tax_bonus, 0.95)
+            if _total_reduction > 0:
+                effective_tax = round(effective_tax * (1.0 - _total_reduction), 2)
+        except Exception:
+            pass
+
+        if can_afford_usd(owner.id, effective_tax):
+            ok, _err = spend_player_funds(owner.id, effective_tax)
             if not ok:
                 continue
             if government:
-                government.cash_balance += district.monthly_tax
-            total_tax_collected += district.monthly_tax
+                government.cash_balance += effective_tax
+            total_tax_collected += effective_tax
             district.last_tax_payment = datetime.utcnow()
             log_transaction(
                 owner.id,
                 "district_tax",
                 "money",
-                -district.monthly_tax,
+                -effective_tax,
                 f"District tax: {district.district_type}",
                 reference_id=f"district_{district.id}"
             )
-            print(f"[Districts] Player {owner.id} paid ${district.monthly_tax:,.2f} tax for district {district.id}")
+            print(f"[Districts] Player {owner.id} paid ${effective_tax:,.2f} tax for district {district.id}")
             _fire_govt_push(
                 owner.id,
                 "District Tax Collected",
-                f"${district.monthly_tax:,.0f} monthly tax charged for your {district.district_type.replace('_',' ').title()} district",
+                f"${effective_tax:,.0f} monthly tax charged for your {district.district_type.replace('_',' ').title()} district",
             )
         else:
             print(f"[Districts] WARNING: Player {owner.id} cannot afford tax for district {district.id}")
             _fire_govt_push(
                 owner.id,
                 "District Tax Payment Failed",
-                f"Insufficient funds for ${district.monthly_tax:,.0f} district tax — fund your account to avoid penalties",
+                f"Insufficient funds for ${effective_tax:,.0f} district tax — fund your account to avoid penalties",
             )
 
     db.commit()

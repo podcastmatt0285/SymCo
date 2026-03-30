@@ -293,8 +293,18 @@ def buy_listed_land(buyer_id: int, listing_id: int) -> bool:
         if listing.seller_id == buyer_id:
             return False
         
+        # Apply zoning_expert / land-effect exec bonus to reduce purchase price
+        effective_price = listing.asking_price
+        try:
+            from executive import get_player_job_bonus
+            _land_bonus = get_player_job_bonus(db, buyer_id, "land")
+            if _land_bonus > 0:
+                effective_price = round(listing.asking_price * max(0.05, 1.0 - _land_bonus), 2)
+        except Exception:
+            pass
+
         # Transfer cash
-        if not transfer_cash(buyer_id, listing.seller_id, listing.asking_price):
+        if not transfer_cash(buyer_id, listing.seller_id, effective_price):
             print("[LandMarket] Insufficient funds")
             return False
         

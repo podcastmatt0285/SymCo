@@ -3696,6 +3696,81 @@ async def wiki_executives(
         + '</div></div>'
     )
 
+    # ── Ability reference table grouped by effect type ──────────────────────
+    _EFFECT_META = {
+        "production": {"label": "Production",  "color": "#4ade80", "hook": "Business output qty × (1 + bonus) — wma.py"},
+        "sales":      {"label": "Sales",        "color": "#fb923c", "hook": "Retail revenue × (1 + bonus) — business.py"},
+        "wages":      {"label": "Wages",        "color": "#a78bfa", "hook": "Exec wages × (1 − bonus) — wma.py"},
+        "school":     {"label": "School",       "color": "#38bdf8", "hook": "School cost/duration × (1 − bonus) — executive.py"},
+        "banking":    {"label": "Banking",      "color": "#facc15", "hook": "ETF dividends × (1 + bonus) — apple_seeds_etf, energy_etf"},
+        "land":       {"label": "Land",         "color": "#86efac", "hook": "Hoarding tax & purchase price × (1 − bonus) — land.py, land_market.py"},
+        "p2p":        {"label": "P2P",          "color": "#67e8f9", "hook": "P2P access fee × (1 − bonus) — p2p.py"},
+        "taxes":      {"label": "Taxes",        "color": "#f472b6", "hook": "District monthly tax × (1 − taxes_bonus − districts_bonus) — districts.py"},
+        "districts":  {"label": "Districts",    "color": "#c084fc", "hook": "District monthly tax × (1 − taxes_bonus − districts_bonus) — districts.py"},
+        "crypto":     {"label": "Crypto",       "color": "#34d399", "hook": "Yield farming & meme mining payout × (1 + bonus) — wallet.py, memecoins.py"},
+        "cities":     {"label": "Cities",       "color": "#60a5fa", "hook": "City output_multiplier × (1 + bonus) — city_projects.py"},
+        "business":   {"label": "Business",     "color": "#fbbf24", "hook": "Global mult on all effects · aging slowdown · hiring fee — executive.py"},
+        "special":    {"label": "Special / UI", "color": "#94a3b8", "hook": "Feature unlock — checked via player_has_ability(), no numeric bonus"},
+    }
+    _ability_rows = ""
+    _seen_effect_headers: set = set()
+    # Sort abilities by effect type then name
+    _sorted_abilities = sorted(EXEC_ABILITIES.items(), key=lambda x: (x[1]["effect"], x[1]["name"]))
+    for ak, adef in _sorted_abilities:
+        eff = adef["effect"]
+        emeta = _EFFECT_META.get(eff, {"label": eff.title(), "color": "#607098", "hook": ""})
+        clr = emeta["color"]
+        v = adef["value"]
+        if eff not in _seen_effect_headers:
+            _seen_effect_headers.add(eff)
+            _ability_rows += (
+                f'<tr style="background:rgba(0,0,0,0.3);">'
+                f'<td colspan="4" style="padding:8px 10px;font-size:0.68rem;font-weight:700;'
+                f'text-transform:uppercase;letter-spacing:0.08em;color:{clr};">'
+                f'{emeta["label"]}'
+                f'<span style="font-weight:400;color:#607098;margin-left:10px;text-transform:none;'
+                f'letter-spacing:0;font-size:0.65rem;">{emeta["hook"]}</span>'
+                f'</td></tr>'
+            )
+        # Format value: skip 0.0 (boolean/special), skip > 1 (flat dollar amounts)
+        if v == 0.0 or v > 1.0:
+            val_str = "—"
+        else:
+            val_str = f"{v*100:.0f}%"
+        _ability_rows += (
+            f'<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">'
+            f'<td style="padding:5px 10px;font-size:0.75rem;font-weight:600;white-space:nowrap;">'
+            f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;'
+            f'background:{clr};margin-right:6px;"></span>{adef["name"]}</td>'
+            f'<td style="padding:5px 10px;font-size:0.72rem;color:#90a0c8;">{adef["desc"]}</td>'
+            f'<td style="padding:5px 10px;font-size:0.75rem;font-weight:700;color:{clr};'
+            f'text-align:right;white-space:nowrap;">{val_str}</td>'
+            f'<td style="padding:5px 10px;font-size:0.65rem;color:#475569;font-family:monospace;">{ak}</td>'
+            f'</tr>'
+        )
+
+    ability_ref = (
+        '<div class="wc wcs" style="grid-column:1/-1;margin-top:16px;overflow:hidden;">'
+        '<div class="wc-title" style="color:#94a3b8;margin-bottom:12px;">📋 Ability Reference</div>'
+        '<div style="font-size:0.72rem;color:#607098;margin-bottom:12px;">'
+        'Every ability listed below — its name, what it actually does in the game engine, '
+        'its % bonus value, and the internal key used in exec ability pools.</div>'
+        '<div style="overflow-x:auto;">'
+        '<table style="width:100%;border-collapse:collapse;">'
+        '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.1);">'
+        '<th style="padding:6px 10px;text-align:left;font-size:0.65rem;color:#607098;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Ability</th>'
+        '<th style="padding:6px 10px;text-align:left;font-size:0.65rem;color:#607098;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Effect Description</th>'
+        '<th style="padding:6px 10px;text-align:right;font-size:0.65rem;color:#607098;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Bonus</th>'
+        '<th style="padding:6px 10px;text-align:left;font-size:0.65rem;color:#607098;'
+        'text-transform:uppercase;letter-spacing:0.06em;">Key</th>'
+        '</tr></thead>'
+        f'<tbody>{_ability_rows}</tbody>'
+        '</table></div></div>'
+    )
+
     body = f"""
 <h1 class="wpt">👔 Executives</h1>
 <p class="wpd">23 executive roles across 11 specialisations. Each exec brings a unique pool of
@@ -3710,6 +3785,7 @@ receive a bonus ability from the legendary pool. Hover ability badges to see the
 <div class="wg" id="eg">
     {cards if cards else '<div class="wnone">No executives found.</div>'}
     {mechanics if category == "all" else ""}
+    {ability_ref if category == "all" else ""}
 </div>
 <p id="en" style="color:#607098;text-align:center;margin-top:16px;display:none;">No executives match your search.</p>
 <script>
