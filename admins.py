@@ -1352,10 +1352,29 @@ def admin_delete_city(admin_id: int, city_id: int) -> dict:
                 city_db.query(CityVote).filter(
                     CityVote.poll_id.in_(poll_ids)
                 ).delete(synchronize_session=False)
+
+            # CityBankLoan uses city_bank_id; CityDebtAssumption uses loan_id
+            bank = city_db.query(CityBank).filter(
+                CityBank.city_id == city_id
+            ).first()
+            if bank:
+                loan_ids = [
+                    row.id for row in city_db.query(CityBankLoan.id).filter(
+                        CityBankLoan.city_bank_id == bank.id
+                    ).all()
+                ]
+                if loan_ids:
+                    city_db.query(CityDebtAssumption).filter(
+                        CityDebtAssumption.loan_id.in_(loan_ids)
+                    ).delete(synchronize_session=False)
+                city_db.query(CityBankLoan).filter(
+                    CityBankLoan.city_bank_id == bank.id
+                ).delete(synchronize_session=False)
+
             for model in (
                 CityApplication, CityPoll,
-                CityStableCoinBalance, CityBankLoan, CityDebtAssumption,
-                CityProductionLog, CityMember, CityBank,
+                CityStableCoinBalance, CityProductionLog,
+                CityMember, CityBank,
             ):
                 city_db.query(model).filter(
                     model.city_id == city_id
