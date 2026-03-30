@@ -1263,16 +1263,18 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
             if any(cc == c["id"] for cc in cn.get("city_ids", [])):
                 county_link = f'<a href="/admin/counties">#{cn["id"]} {cn["name"]}</a>'
                 break
+        _cid   = c["id"]
+        _cname = c["name"]
         city_rows += f"""<tr>
-            <td>#{c["id"]}</td>
-            <td><a href="/admin/cities/{c['id']}">{c["name"]}</a></td>
+            <td>#{_cid}</td>
+            <td><a href="/admin/cities/{_cid}">{_cname}</a></td>
             <td>{c.get("mayor_name", "-")}</td>
             <td>{c.get("member_count", 0)}</td>
             <td>{county_link or '<span style="color:#64748b;">—</span>'}</td>
             <td style="color:#22c55e;">{fmt_usd(c.get("bank_reserves", 0), disp, precision=0)}</td>
             <td>
-                <form method="post" action="/admin/cities/{c['id']}/delete"
-                      onsubmit="return confirm('PERMANENTLY delete city {c[\"name\"]} and ALL its data? This cannot be undone.');">
+                <form method="post" action="/admin/cities/{_cid}/delete"
+                      onsubmit="return confirm('PERMANENTLY delete city {_cname} and ALL its data? This cannot be undone.');">
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Delete</button>
                 </form>
             </td>
@@ -1280,20 +1282,22 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
 
     county_rows = ""
     for cn in counties:
+        _cnid   = cn["id"]
+        _cnname = cn["name"]
         county_rows += f"""<tr>
-            <td>#{cn["id"]}</td>
-            <td><a href="/admin/counties/{cn['id']}">{cn["name"]}</a></td>
+            <td>#{_cnid}</td>
+            <td><a href="/admin/counties/{_cnid}">{_cnname}</a></td>
             <td style="font-weight:bold;color:#f59e0b;">{cn.get("crypto_symbol","?")}</td>
             <td>{cn.get("city_count", 0)}</td>
             <td style="color:#94a3b8;">{cn.get("total_supply", 0):,.0f}</td>
             <td>
                 <form method="post" action="/admin/counties/remove-city" style="display:inline;">
                     <input type="number" name="city_id" placeholder="City ID" style="width:70px;font-size:0.7rem;display:inline;">
-                    <input type="hidden" name="county_id" value="{cn['id']}">
+                    <input type="hidden" name="county_id" value="{_cnid}">
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 5px;">Remove City</button>
                 </form>
-                <form method="post" action="/admin/counties/{cn['id']}/delete" style="display:inline;margin-left:4px;"
-                      onsubmit="return confirm('PERMANENTLY delete county {cn[\"name\"]} and ALL its crypto/data? This cannot be undone.');">
+                <form method="post" action="/admin/counties/{_cnid}/delete" style="display:inline;margin-left:4px;"
+                      onsubmit="return confirm('PERMANENTLY delete county {_cnname} and ALL its crypto/data? This cannot be undone.');">
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Delete County</button>
                 </form>
             </td>
