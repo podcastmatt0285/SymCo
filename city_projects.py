@@ -68,7 +68,8 @@ HIGH_LEVEL_THRESHOLD    = 7       # levels 8-12 use extra cost multiplier
 DEFAULT_MEMBER_SLOTS    = 25      # base slots before Municipal Center
 LICENSES_PER_TICK_BASE  = 5.0     # city_post_office: per level per tick
 EXTRACTOR_CURRENCY_BASE = 3.0     # city_extractor: units city-currency / level / tick
-COMPTROLLER_INVEST_RATE = 0.0005  # 0.05 % of cash_reserves per tick
+COMPTROLLER_INVEST_RATE  = 0.0005  # 0.05 % of cash_reserves per *hour* (not per tick)
+COMPTROLLER_TICK_INTERVAL = 720   # Run hourly: 720 ticks × 5 s/tick = 3 600 s
 
 STATUS_CONSTRUCTING   = "constructing"
 STATUS_UPGRADING      = "upgrading"
@@ -1535,8 +1536,11 @@ def tick(current_tick: int, now: datetime):
         except Exception as e:
             print(f"[CityProjects] Extractor tick error: {e}")
 
-        # ── 5. Comptroller — bond investment ──────────────────
+        # ── 5. Comptroller — bond investment (hourly only) ────
         try:
+            if current_tick % COMPTROLLER_TICK_INTERVAL != 0:
+                raise StopIteration  # skip this tick
+
             from cities import CityBank, get_db as city_get_db
 
             comptrollers = db.query(CityProjectInstance).filter(
@@ -1595,6 +1599,8 @@ def tick(current_tick: int, now: datetime):
                     city_db.commit()
                 finally:
                     city_db.close()
+        except StopIteration:
+            pass  # non-hourly tick — skip comptroller
         except Exception as e:
             print(f"[CityProjects] Comptroller tick error: {e}")
 
