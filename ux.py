@@ -22,8 +22,121 @@ import json as _json
 router = APIRouter()
 
 # ==========================
-# STREAMING LOADER PAGE
-# Yielded immediately for slow server-side pages so the loader renders
+# DIGITAL ASSET LINKS (TWA full-screen verification)
+# SHA-256 must match wadsworth-signing.jks
+# ==========================
+@router.get("/.well-known/assetlinks.json")
+def assetlinks():
+    from fastapi.responses import JSONResponse
+    return JSONResponse([{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "cc.notifly.wadsworth.twa",
+            "sha256_cert_fingerprints": [
+                "73:E0:0D:08:1F:93:32:4D:A0:59:19:C6:AC:73:9E:F0:C8:4F:BB:C3:11:5D:A3:43:10:46:0B:A6:E0:DF:C7:1D"
+            ]
+        }
+    }])
+
+
+# ==========================
+# PRIVACY POLICY
+# ==========================
+@router.get("/privacy-policy", response_class=HTMLResponse)
+def privacy_policy():
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Wadsworth Economic Tycoon Simulator</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 800px; margin: 40px auto; padding: 0 20px;
+         color: #1a1a1a; line-height: 1.7; }
+  h1 { font-size: 1.8rem; border-bottom: 2px solid #333; padding-bottom: 10px; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; color: #222; }
+  p, li { font-size: 0.95rem; }
+  ul { padding-left: 1.5rem; }
+  a { color: #1a56db; }
+  .updated { color: #666; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<h1>Privacy Policy</h1>
+<p class="updated">Last updated: March 2026</p>
+
+<p>Wadsworth Economic Tycoon Simulator ("the Game", "we", "us") is operated by IllinoisJo. This policy
+explains what information we collect, how we use it, and your rights.</p>
+
+<h2>1. Information We Collect</h2>
+<ul>
+  <li><strong>Account information</strong> — username, email address, and hashed password when you register.</li>
+  <li><strong>Game data</strong> — in-game currency balances, inventory, land holdings, business activity,
+      market orders, and all other gameplay actions you take.</li>
+  <li><strong>Chat messages</strong> — messages sent in the Global Chat and Trade Chat rooms are stored on
+      our servers and visible to other players.</li>
+  <li><strong>Financial transaction records</strong> — all in-game purchases, sales, market trades, and
+      transfers between players.</li>
+  <li><strong>Device identifier</strong> — a one-way hash of your Android device ID, used solely to link
+      home-screen widgets to your account. This hash cannot be reversed to identify your device.</li>
+  <li><strong>Session data</strong> — login session tokens stored as secure HTTP-only cookies.</li>
+  <li><strong>Server logs</strong> — IP address and request timestamps retained for up to 30 days for
+      security and abuse prevention.</li>
+</ul>
+
+<h2>2. How We Use Your Information</h2>
+<ul>
+  <li>To operate and maintain your game account.</li>
+  <li>To display your game data to you and, where applicable, to other players (e.g. public market orders,
+      chat messages, leaderboard positions).</li>
+  <li>To deliver home-screen widget updates to your Android device.</li>
+  <li>To detect and prevent fraud, cheating, or abuse.</li>
+  <li>To send transactional notifications (e.g. market fills, alerts) if you have enabled push
+      notifications.</li>
+</ul>
+
+<h2>3. Information Shared With Third Parties</h2>
+<p>We do <strong>not</strong> sell, rent, or trade your personal information. We do not use third-party
+advertising networks. Your data is not shared with any third party except:</p>
+<ul>
+  <li>Hosting and infrastructure providers who process data on our behalf under confidentiality obligations.</li>
+  <li>Law enforcement when required by applicable law.</li>
+</ul>
+
+<h2>4. In-App Purchases</h2>
+<p>The Game uses Google Play Billing for any in-app purchases. Payment processing is handled entirely by
+Google. We do not receive or store your payment card details.</p>
+
+<h2>5. Children's Privacy</h2>
+<p>The Game is not directed at children under 13. We do not knowingly collect personal information from
+children under 13. If you believe a child under 13 has provided us with personal information, please
+contact us and we will delete it.</p>
+
+<h2>6. Data Retention</h2>
+<p>Your account data is retained for as long as your account is active. Chat messages are retained
+indefinitely for gameplay purposes. Server logs are deleted after 30 days. You may request deletion of
+your account by contacting us at the address below.</p>
+
+<h2>7. Your Rights</h2>
+<p>You may request access to, correction of, or deletion of your personal data at any time by contacting
+us. We will respond within 30 days.</p>
+
+<h2>8. Security</h2>
+<p>Passwords are stored as salted hashes. Session tokens are transmitted over HTTPS only. We take
+reasonable technical measures to protect your data, but no system is perfectly secure.</p>
+
+<h2>9. Changes to This Policy</h2>
+<p>We may update this policy from time to time. We will post the updated date at the top of this page.
+Continued use of the Game after changes constitutes acceptance.</p>
+
+<h2>10. Contact</h2>
+<p>Questions about this privacy policy: <a href="mailto:privacy@notifly.cc">privacy@notifly.cc</a></p>
+</body>
+</html>"""
+    return HTMLResponse(html)
+
+
 # before any computation begins.  A second streaming chunk uses
 # document.open/write/close to replace this with the full shell page.
 # Note: intentionally has no </body></html> — those arrive in chunk 2.
