@@ -1008,8 +1008,20 @@ def get_city_production_buffs(player_id: int) -> Dict[str, float]:
             total_input_pen += d.get("input_penalty", 0.0)       * lv
             total_tax       += d.get("sales_tax", 0.0)           * lv
 
+        # Apply cities exec bonus — amplifies the output multiplier from city projects
+        cities_exec_mult = 1.0
+        try:
+            from executive import get_player_job_bonus, get_db as exec_get_db
+            _exec_db = exec_get_db()
+            _cities_bonus = get_player_job_bonus(_exec_db, player_id, "cities")
+            _exec_db.close()
+            if _cities_bonus > 0:
+                cities_exec_mult = 1.0 + _cities_bonus
+        except Exception:
+            pass
+
         return {
-            "output_multiplier":       max(0.5,  1.0 + total_output),
+            "output_multiplier":       max(0.5,  (1.0 + total_output) * cities_exec_mult),
             "wage_multiplier":         max(0.1,  1.0 - (total_wage_save - total_wage_pen)),
             "input_multiplier":        max(0.1,  1.0 - (total_input_save - total_input_pen)),
             "cycle_speed_multiplier":  max(0.3,  1.0 - total_cycle),

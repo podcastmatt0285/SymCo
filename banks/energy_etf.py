@@ -601,10 +601,21 @@ def pay_dividends():
         for player_id, shares_owned in shareholders.items():
             ownership_fraction = shares_owned / bank_entity.total_shares_issued
             dividend_amount = dividend_pool * ownership_fraction
-            
+
+            # Apply banking exec bonus (dividend_boost, portfolio_hedge, fl_bank_president, etc.)
+            try:
+                from executive import get_player_job_bonus, get_db as exec_get_db
+                _exec_db = exec_get_db()
+                _banking_bonus = get_player_job_bonus(_exec_db, player_id, "banking")
+                _exec_db.close()
+                if _banking_bonus > 0:
+                    dividend_amount = round(dividend_amount * (1.0 + _banking_bonus), 2)
+            except Exception:
+                pass
+
             if dividend_amount < 0.01:
                 continue
-            
+
             auth_db = get_auth_db()
             try:
                 player = auth_db.query(Player).filter(Player.id == player_id).first()
@@ -619,7 +630,7 @@ def pay_dividends():
                     auth_db.commit()
             finally:
                 auth_db.close()
-            
+
             transaction = banks.BankTransaction(
                 bank_id=BANK_ID,
                 transaction_type="dividend",
@@ -629,7 +640,7 @@ def pay_dividends():
                 description=f"Weekly dividend - {shares_owned} ETF shares"
             )
             bank_db.add(transaction)
-            
+
             total_paid += dividend_amount
         
         bank_entity.cash_reserves -= total_paid

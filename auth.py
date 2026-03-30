@@ -666,6 +666,12 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
+    <footer style="text-align:center;margin-top:24px;padding-bottom:16px;font-size:0.75rem;color:#475569;">
+        <a href="/privacy-policy" style="color:#64748b;text-decoration:none;">Privacy Policy</a>
+        &nbsp;·&nbsp;
+        <span style="color:#334155;">© 2026 IllinoisJo</span>
+    </footer>
+
     <script>
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

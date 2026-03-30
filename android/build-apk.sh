@@ -19,8 +19,8 @@ set -e
 DOMAIN="wadsworth.notifly.cc"
 APP_NAME="Wadsworth"
 PACKAGE="cc.notifly.wadsworth"           # ← change if yours differs
-VERSION_CODE=2
-VERSION_NAME="1.1"
+VERSION_CODE=1
+VERSION_NAME="1.0"
 
 WIDGET_DIR="$(cd "$(dirname "$0")/widget" && pwd)"
 
@@ -268,3 +268,9 @@ cd ..
 echo ""
 echo "✅  Done!  APK is at: $(pwd)/wadsworth-signed.apk"
 echo "    Install on device:  adb install wadsworth-signed.apk"
+echo ""
+echo "=== Signing certificate SHA-256 (for assetlinks.json) ==="
+keytool -list -v -keystore "${KEYSTORE_ABS}" -alias android \
+    -storepass "${KEY_PASS}" 2>/dev/null | grep "SHA256:"
+echo ""
+echo "    Verify live:  curl https://${DOMAIN}/.well-known/assetlinks.json"

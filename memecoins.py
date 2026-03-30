@@ -837,6 +837,17 @@ def process_meme_mining_payouts():
                 if player_reward <= 0:
                     continue
 
+                # Apply crypto exec bonus (token_strategy, smart_contract_aud, etc.)
+                try:
+                    from executive import get_player_job_bonus, get_db as exec_get_db
+                    _exec_db = exec_get_db()
+                    _crypto_bonus = get_player_job_bonus(_exec_db, dep.player_id, "crypto")
+                    _exec_db.close()
+                    if _crypto_bonus > 0:
+                        player_reward = round(player_reward * (1.0 + _crypto_bonus), 8)
+                except Exception:
+                    pass
+
                 wallet = get_or_create_meme_wallet(db, dep.player_id, meme.symbol)
                 wallet.balance += player_reward
                 wallet.total_mined += player_reward
