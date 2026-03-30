@@ -100,6 +100,10 @@
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xhdpi/splash.png"
     },
     {
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/xml_wbc_widget_info.xml.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/xml/wbc_widget_info.xml"
+    },
+    {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/mipmap-mdpi_ic_launcher.png.flat",
         "source": "cc.notifly.wadsworth.twa.app-main-30:/mipmap-mdpi/ic_launcher.png"
     },
@@ -144,16 +148,20 @@
         "source": "cc.notifly.wadsworth.twa.app-main-30:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
-        "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-mdpi_shortcut_0.png.flat",
-        "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-mdpi/shortcut_0.png"
-    },
-    {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-xhdpi_shortcut_3.png.flat",
         "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-xhdpi/shortcut_3.png"
     },
     {
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/drawable-mdpi_shortcut_0.png.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/drawable-mdpi/shortcut_0.png"
+    },
+    {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/xml_trade_chat_widget_info.xml.flat",
         "source": "cc.notifly.wadsworth.twa.app-main-30:/xml/trade_chat_widget_info.xml"
+    },
+    {
+        "merged": "cc.notifly.wadsworth.twa.app-release-29:/layout_widget_wbc_layout.xml.flat",
+        "source": "cc.notifly.wadsworth.twa.app-main-30:/layout/widget_wbc_layout.xml"
     },
     {
         "merged": "cc.notifly.wadsworth.twa.app-release-29:/xml_filepaths.xml.flat",

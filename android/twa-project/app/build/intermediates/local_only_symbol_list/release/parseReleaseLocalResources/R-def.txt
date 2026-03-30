@@ -61,9 +61,20 @@ id widget_notif9
 id widget_refresh
 id widget_root
 id widget_tickers
+id widget_wbc_change
+id widget_wbc_co1
+id widget_wbc_co2
+id widget_wbc_co3
+id widget_wbc_co4
+id widget_wbc_co5
+id widget_wbc_refresh
+id widget_wbc_root
+id widget_wbc_sparkline
+id widget_wbc_value
 integer splashScreenFadeOutDuration
 layout widget_chat_layout
 layout widget_layout
+layout widget_wbc_layout
 mipmap ic_launcher
 mipmap ic_maskable
 raw web_app_manifest
@@ -93,3 +104,4 @@ xml global_chat_widget_info
 xml shortcuts
 xml trade_chat_widget_info
 xml wadsworth_widget_info
+xml wbc_widget_info

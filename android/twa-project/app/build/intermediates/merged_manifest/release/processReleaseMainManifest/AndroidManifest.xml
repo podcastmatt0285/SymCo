@@ -23,8 +23,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cc.notifly.wadsworth.twa"
-    android:versionCode="16"
-    android:versionName="16" >
+    android:versionCode="1"
+    android:versionName="1" >
 
     <uses-sdk
         android:minSdkVersion="21"
@@ -60,7 +60,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name="cc.notifly.wadsworth.twa.Application"
+        android:name="cc.notifly.wadsworth.WadsworthApplication"
         android:allowBackup="true"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:extractNativeLibs="true"
@@ -142,6 +142,9 @@
                 android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
                 android:value="@string/fallbackType" />
             <meta-data
+                android:name="android.support.customtabs.trusted.DISPLAY_MODE"
+                android:value="sticky-immersive" />
+            <meta-data
                 android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
                 android:value="@string/orientation" />
             <meta-data
@@ -220,7 +223,8 @@
 
         <receiver
             android:name="cc.notifly.wadsworth.WadsworthWidget"
-            android:exported="true" >
+            android:exported="true"
+            android:label="Balance + Alerts" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="cc.notifly.wadsworth.WIDGET_REFRESH" />
@@ -248,8 +252,22 @@
         </activity>
 
         <receiver
+            android:name="cc.notifly.wadsworth.WBCWidget"
+            android:exported="true"
+            android:label="WBC-50 Index" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="cc.notifly.wadsworth.WBC_REFRESH" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/wbc_widget_info" />
+        </receiver>
+        <receiver
             android:name="cc.notifly.wadsworth.GlobalChatWidget"
-            android:exported="true" >
+            android:exported="true"
+            android:label="Global Chat" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH" />
@@ -261,7 +279,8 @@
         </receiver>
         <receiver
             android:name="cc.notifly.wadsworth.TradeChatWidget"
-            android:exported="true" >
+            android:exported="true"
+            android:label="Trade Chat" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH" />

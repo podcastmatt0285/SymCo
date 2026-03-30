@@ -3,14 +3,14 @@
   "host": "wadsworth.notifly.cc",
   "name": "Wadsworth Economic Tycoon Simulator",
   "launcherName": "Wadsworth",
-  "display": "standalone",
-  "themeColor": "#000000",
+  "display": "fullscreen-sticky",
+  "themeColor": "#38BDF8",
   "themeColorDark": "#000000",
   "navigationColor": "#000000",
   "navigationColorDark": "#000000",
   "navigationDividerColor": "#000000",
   "navigationDividerColorDark": "#000000",
-  "backgroundColor": "#000000",
+  "backgroundColor": "#020617",
   "enableNotifications": true,
   "startUrl": "/",
   "iconUrl": "https://wadsworth.notifly.cc/static/icons/icon-512.png",
@@ -21,8 +21,8 @@
     "path": "/home/maphematics/SymCo/android/twa-project/android.keystore",
     "alias": "android"
   },
-  "appVersionName": "16",
-  "appVersionCode": 16,
+  "appVersionName": "1",
+  "appVersionCode": 1,
   "shortcuts": [
     {
       "name": "Businesses",
@@ -79,5 +79,5 @@
     "window-controls-overlay",
     "fullscreen"
   ],
-  "appVersion": "16"
+  "appVersion": "1"
 }

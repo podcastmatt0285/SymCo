@@ -935,8 +935,18 @@ int id widget_notif9 0x7f0900e5
 int id widget_refresh 0x7f0900e6
 int id widget_root 0x7f0900e7
 int id widget_tickers 0x7f0900e8
-int id withText 0x7f0900e9
-int id wrap_content 0x7f0900ea
+int id widget_wbc_change 0x7f0900e9
+int id widget_wbc_co1 0x7f0900ea
+int id widget_wbc_co2 0x7f0900eb
+int id widget_wbc_co3 0x7f0900ec
+int id widget_wbc_co4 0x7f0900ed
+int id widget_wbc_co5 0x7f0900ee
+int id widget_wbc_refresh 0x7f0900ef
+int id widget_wbc_root 0x7f0900f0
+int id widget_wbc_sparkline 0x7f0900f1
+int id widget_wbc_value 0x7f0900f2
+int id withText 0x7f0900f3
+int id wrap_content 0x7f0900f4
 int integer abc_config_activityDefaultDur 0x7f0a0000
 int integer abc_config_activityShortDur 0x7f0a0001
 int integer cancel_button_image_alpha 0x7f0a0002
@@ -996,6 +1006,7 @@ int layout select_dialog_singlechoice_material 0x7f0c0029
 int layout support_simple_spinner_dropdown_item 0x7f0c002a
 int layout widget_chat_layout 0x7f0c002b
 int layout widget_layout 0x7f0c002c
+int layout widget_wbc_layout 0x7f0c002d
 int mipmap ic_launcher 0x7f0d0000
 int mipmap ic_maskable 0x7f0d0001
 int raw com_android_billingclient_heterodyne_info 0x7f0e0000
@@ -1940,3 +1951,4 @@ int xml image_share_filepaths 0x7f120003
 int xml shortcuts 0x7f120004
 int xml trade_chat_widget_info 0x7f120005
 int xml wadsworth_widget_info 0x7f120006
+int xml wbc_widget_info 0x7f120007

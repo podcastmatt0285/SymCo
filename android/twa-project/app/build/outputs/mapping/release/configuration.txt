@@ -5,9 +5,10 @@
 -keep class androidx.startup.InitializationProvider { <init>(); }
 -keep class cc.notifly.wadsworth.GlobalChatWidget { <init>(); }
 -keep class cc.notifly.wadsworth.TradeChatWidget { <init>(); }
+-keep class cc.notifly.wadsworth.WBCWidget { <init>(); }
+-keep class cc.notifly.wadsworth.WadsworthApplication { <init>(); }
 -keep class cc.notifly.wadsworth.WadsworthTokenActivity { <init>(); }
 -keep class cc.notifly.wadsworth.WadsworthWidget { <init>(); }
--keep class cc.notifly.wadsworth.twa.Application { <init>(); }
 -keep class cc.notifly.wadsworth.twa.DelegationService { <init>(); }
 -keep class cc.notifly.wadsworth.twa.LauncherActivity { <init>(); }
 -keep class com.android.billingclient.api.ProxyBillingActivity { <init>(); }

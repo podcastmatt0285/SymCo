@@ -33,7 +33,7 @@
     
 
     <application
-        android:name="Application"
+        android:name="cc.notifly.wadsworth.WadsworthApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/appName"
@@ -133,6 +133,9 @@
             
 
             
+            <meta-data android:name="android.support.customtabs.trusted.DISPLAY_MODE"
+                android:value="sticky-immersive" />
+            
 
             <meta-data android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
                 android:value="@string/orientation"/>
@@ -229,9 +232,10 @@
             </intent-filter>
         </service> 
         
-            <receiver android:name="cc.notifly.wadsworth.WadsworthWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WIDGET_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wadsworth_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.WadsworthWidget" android:label="Balance + Alerts" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WIDGET_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wadsworth_widget_info"/></receiver>
             <activity android:name="cc.notifly.wadsworth.WadsworthTokenActivity" android:exported="true" android:theme="@android:style/Theme.NoDisplay"><intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="wadsworth" android:host="widget-auth"/></intent-filter></activity>
-            <receiver android:name="cc.notifly.wadsworth.GlobalChatWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/global_chat_widget_info"/></receiver>
-            <receiver android:name="cc.notifly.wadsworth.TradeChatWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/trade_chat_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.WBCWidget" android:label="WBC-50 Index" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.WBC_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/wbc_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.GlobalChatWidget" android:label="Global Chat" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/global_chat_widget_info"/></receiver>
+            <receiver android:name="cc.notifly.wadsworth.TradeChatWidget" android:label="Trade Chat" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/><action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/trade_chat_widget_info"/></receiver>
     </application>
 </manifest>

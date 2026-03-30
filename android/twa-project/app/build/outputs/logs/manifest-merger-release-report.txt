@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-237:12
-INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-237:12
-INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-237:12
-INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-237:12
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-241:12
+INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-241:12
+INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-241:12
+INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:22:1-241:12
 MERGED from [com.google.androidbrowserhelper:billing:1.1.0] /home/maphematics/.gradle/caches/8.11.1/transforms/86daebdf1ac5a298358120b63e4f1cb9/transformed/billing-1.1.0/AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/5053e02be90783e54992393be394bb70/transformed/androidbrowserhelper-2.6.2/AndroidManifest.xml:17:1-32:12
 MERGED from [com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:2:1-38:12
@@ -60,8 +60,8 @@ ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManif
 	android:name
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:26:26-78
 application
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:35:5-236:19
-INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:35:5-236:19
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:35:5-240:19
+INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:35:5-240:19
 MERGED from [com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:21:5-36:19
 MERGED from [com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:21:5-36:19
 MERGED from [com.google.android.gms:play-services-location:19.0.0] /home/maphematics/.gradle/caches/8.11.1/transforms/e7cbde54ad547b82b2f871a970f72558/transformed/play-services-location-19.0.0/AndroidManifest.xml:7:5-20
@@ -107,7 +107,7 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/maphe
 	android:theme
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:44:9-68
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:36:9-35
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:36:9-65
 meta-data#asset_statements
 ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:46:9-48:58
 	android:resource
@@ -153,7 +153,7 @@ ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManif
 	android:name
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
 activity#cc.notifly.wadsworth.twa.LauncherActivity
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:79:9-168:20
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:79:9-171:20
 	android:label
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:81:13-49
 	android:exported
@@ -246,186 +246,212 @@ ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManif
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:131:17-53
 	android:name
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:130:24-91
+meta-data#android.support.customtabs.trusted.DISPLAY_MODE
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:13-137:52
+	android:value
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:17-49
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:24-86
 meta-data#android.support.customtabs.trusted.SCREEN_ORIENTATION
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:13-138:54
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:140:13-141:54
 	android:value
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:138:17-52
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:141:17-52
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:24-92
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:140:24-92
 meta-data#android.support.customtabs.trusted.DISPLAY_OVERRIDE
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:143:17-145:66
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:146:17-148:66
 	android:resource
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:145:21-63
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:148:21-63
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:144:21-87
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:147:21-87
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:150:13-153:29
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:153:13-156:29
 action#android.intent.action.MAIN
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:151:17-69
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:154:17-69
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:151:25-66
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:154:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:152:17-77
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:17-77
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:152:27-74
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:27-74
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:@string/hostName+data:scheme:https
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:13-163:29
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:13-166:29
 	android:autoVerify
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:28-53
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:28-53
 action#android.intent.action.VIEW
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:17-68
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-68
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:25-66
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:25-66
 category#android.intent.category.BROWSABLE
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:17-77
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:17-77
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:27-75
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:27-75
 data
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-162:19
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:17-165:19
 	android:host
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:160:21-52
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:163:21-52
 	android:scheme
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:23-45
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:23-45
 activity#com.google.androidbrowserhelper.trusted.FocusActivity
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:170:9-90
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:173:9-90
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:170:19-87
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:173:19-87
 activity#com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:172:9-173:62
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:175:9-176:62
 	android:configChanges
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:173:13-59
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:176:13-59
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:172:19-97
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:175:19-97
 provider#androidx.core.content.FileProvider
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:175:9-183:20
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:178:9-186:20
 	android:grantUriPermissions
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:178:13-47
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:181:13-47
 	android:authorities
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:177:13-60
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:180:13-60
 	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:179:13-37
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:182:13-37
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:176:13-62
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:179:13-62
 meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:180:13-182:53
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:183:13-185:53
 	android:resource
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:182:17-50
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:185:17-50
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:181:17-67
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:184:17-67
 service#cc.notifly.wadsworth.twa.DelegationService
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:185:9-200:19
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:188:9-203:19
 	android:enabled
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:187:13-55
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:190:13-55
 	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:188:13-56
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:191:13-56
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:186:13-46
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:189:13-46
 meta-data#android.support.customtabs.trusted.SMALL_ICON
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:191:17-193:73
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:194:17-196:73
 	android:resource
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:193:21-70
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:196:21-70
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:192:21-81
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:195:21-81
 intent-filter#action:name:android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE+category:name:android.intent.category.DEFAULT
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:196:13-199:29
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:199:13-202:29
 action#android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:197:17-105
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:200:17-105
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:197:25-103
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:200:25-103
 activity#com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:203:13-118
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:206:13-118
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:203:23-115
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:206:23-115
 activity#com.google.androidbrowserhelper.playbilling.provider.PaymentActivity
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:208:9-221:20
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:211:9-224:20
 	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:212:13-36
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:215:13-36
 	android:configChanges
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:211:13-96
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:214:13-96
 	android:theme
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:210:13-72
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:213:13-72
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:209:13-96
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:212:13-96
 intent-filter#action:name:org.chromium.intent.action.PAY
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:214:13-216:29
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:217:13-219:29
 action#org.chromium.intent.action.PAY
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:215:17-73
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:218:17-73
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:215:25-70
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:218:25-70
 meta-data#org.chromium.default_payment_method_name
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:218:13-220:67
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:221:13-223:67
 	android:value
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:220:17-64
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:223:17-64
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:219:17-72
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:222:17-72
 service#com.google.androidbrowserhelper.playbilling.provider.PaymentService
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:224:9-230:19
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:227:9-233:19
 	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:226:13-36
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:229:13-36
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:225:13-95
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:228:13-95
 intent-filter#action:name:org.chromium.intent.action.IS_READY_TO_PAY
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:227:13-229:29
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:230:13-232:29
 action#org.chromium.intent.action.IS_READY_TO_PAY
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:228:17-85
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:231:17-85
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:228:25-82
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:231:25-82
 receiver#cc.notifly.wadsworth.WadsworthWidget
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:13-367
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:13-400
+	android:label
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:75-107
 	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:75-98
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:23-74
-intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.WIDGET_REFRESH
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:99-256
-action#android.appwidget.action.APPWIDGET_UPDATE
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:114-180
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:122-178
-action#cc.notifly.wadsworth.WIDGET_REFRESH
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:180-240
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:188-238
-meta-data#android.appwidget.provider
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:256-356
-	android:resource
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:309-354
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:267-308
-activity#cc.notifly.wadsworth.WadsworthTokenActivity
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:13-425
-	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:82-105
-	android:theme
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:106-152
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:23-81
-intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:widget-auth+data:scheme:wadsworth
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:153-414
-receiver#cc.notifly.wadsworth.GlobalChatWidget
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:13-375
-	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:76-99
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:23-75
-intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:100-262
-action#cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:181-246
-	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:189-244
-receiver#cc.notifly.wadsworth.TradeChatWidget
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:13-372
-	android:exported
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:75-98
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:108-131
 	android:name
 		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:23-74
-intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.TRADE_CHAT_REFRESH
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:99-260
-action#cc.notifly.wadsworth.TRADE_CHAT_REFRESH
-ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:180-244
+intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.WIDGET_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:132-289
+action#android.appwidget.action.APPWIDGET_UPDATE
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:147-213
 	android:name
-		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:188-242
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:155-211
+action#cc.notifly.wadsworth.WIDGET_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:213-273
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:221-271
+meta-data#android.appwidget.provider
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:289-389
+	android:resource
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:342-387
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:300-341
+activity#cc.notifly.wadsworth.WadsworthTokenActivity
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:13-425
+	android:exported
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:82-105
+	android:theme
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:106-152
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:23-81
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:widget-auth+data:scheme:wadsworth
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:153-414
+receiver#cc.notifly.wadsworth.WBCWidget
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:13-381
+	android:label
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:69-97
+	android:exported
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:98-121
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:23-68
+intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.WBC_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:122-276
+action#cc.notifly.wadsworth.WBC_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:203-260
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:211-258
+receiver#cc.notifly.wadsworth.GlobalChatWidget
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:13-403
+	android:label
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:76-103
+	android:exported
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:104-127
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:23-75
+intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:128-290
+action#cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:209-274
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:217-272
+receiver#cc.notifly.wadsworth.TradeChatWidget
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:13-399
+	android:label
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:75-101
+	android:exported
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:102-125
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:23-74
+intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE+action:name:cc.notifly.wadsworth.TRADE_CHAT_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:126-287
+action#cc.notifly.wadsworth.TRADE_CHAT_REFRESH
+ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:207-271
+	android:name
+		ADDED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:215-269
 uses-sdk
 INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml
