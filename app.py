@@ -12,6 +12,22 @@ subprocess.run(
 import asyncio
 import os
 from datetime import datetime
+
+# ── Sentry error monitoring ────────────────────────────────────────────────────
+# Set SENTRY_DSN env var to activate. Safe no-op if the var is absent or
+# sentry-sdk is not installed.
+try:
+    import sentry_sdk
+    _sentry_dsn = os.environ.get("SENTRY_DSN", "")
+    if _sentry_dsn:
+        sentry_sdk.init(
+            dsn=_sentry_dsn,
+            traces_sample_rate=0.1,   # 10% of requests traced for performance
+            profiles_sample_rate=0.05,
+        )
+        print("Sentry error monitoring active")
+except ImportError:
+    pass  # sentry-sdk not installed — monitoring disabled
 from typing import Optional
 from fastapi import FastAPI, Cookie
 from fastapi.staticfiles import StaticFiles

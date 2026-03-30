@@ -2604,9 +2604,13 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
 
         @media (max-width:600px) {
             .inv-grid { grid-template-columns:1fr; }
-            .inv-search-input { width:130px; }
+            .inv-search-input { width:calc(100vw - 120px) !important; max-width:220px; }
+            .inv-search-wrap { flex: 1; }
             .inv-summary-bar { flex-direction:column; align-items:flex-start; }
             .inv-summary-stats { gap:16px; }
+            .inv-filter-tabs { overflow-x:auto; flex-wrap:nowrap; padding-bottom:4px; }
+            .inv-filter-tabs::-webkit-scrollbar { height:3px; }
+            .inv-filter-tabs::-webkit-scrollbar-thumb { background:#334155; border-radius:2px; }
         }
         </style>
         <script>
@@ -2730,7 +2734,16 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                 arrow = " ▲" if order == "asc" else " ▼"
             return f'<a href="/land?sort={field}&order={new_order}" style="padding: 6px 12px; font-size: 0.8rem; background: {"#1e293b" if sort == field else "#0f172a"}; color: {"#38bdf8" if sort == field else "#94a3b8"}; border: 1px solid #1e293b; border-radius: 3px; text-decoration: none; white-space: nowrap;">{label}{arrow}</a>'
 
-        land_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+        land_html = '''<style>
+        @media (max-width: 600px) {
+            .land-card-row { flex-direction: column !important; }
+            .land-card-main { min-width: 0 !important; }
+            .land-card-actions { min-width: 0 !important; width: 100% !important; }
+            .land-eff-bar { width: 100% !important; }
+            .land-form-row select { min-width: 0 !important; width: 100% !important; }
+        }
+        </style>
+        <a href="/" style="color: #38bdf8;"><- Dashboard</a>'''
 
         _land_success = {"listing_cancelled": "Listing cancelled.", "land_listed": "Plot listed on the market."}
         _land_errors = {"cancel_failed": "Could not cancel — listing may already be inactive.", "listing_failed": "Could not list plot. Ensure it is vacant and not already listed."}
@@ -2866,8 +2879,8 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
 
                 land_html += f'''
                 <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                        <div style="flex: 1; min-width: 250px;">
+                    <div class="land-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                        <div class="land-card-main" style="flex: 1; min-width: 250px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                 <span class="badge" style="background: {status_color}; color: #020617;">{status}</span>
@@ -2892,7 +2905,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                                     <span style="font-size: 0.8rem; color: #64748b;">Efficiency:</span>
                                     <span style="font-size: 0.85rem; color: {eff_color}; font-weight: bold;">{eff:.3f}%</span>
                                 </div>
-                                <div style="background: #020617; height: 6px; border-radius: 3px; margin-top: 4px; width: 200px;">
+                                <div class="land-eff-bar" style="background: #020617; height: 6px; border-radius: 3px; margin-top: 4px; width: 200px;">
                                     <div style="background: {eff_color}; height: 6px; border-radius: 3px; width: {eff_width}%;"></div>
                                 </div>
                             </div>'''
@@ -2908,7 +2921,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
 
                 # Actions column
                 if not plot.occupied_by_business_id:
-                    land_html += '<div style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">'
+                    land_html += '<div class="land-card-actions" style="display: flex; flex-direction: column; gap: 10px; min-width: 220px;">'
                     if is_listed:
                         # Plot is listed — show cancel button; no building allowed while listed
                         land_html += f'''
@@ -3025,7 +3038,17 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
         avg_auction_price = (sum(a.current_price for a in auctions) / total_auctions) if total_auctions else 0
         avg_listing_price = (sum(l.asking_price for l in listings) / total_listings) if total_listings else 0
 
-        market_html = '<a href="/" style="color: #38bdf8;"><- Dashboard</a>'
+        market_html = '''<style>
+        @media (max-width: 600px) {
+            .lm-card-row { flex-direction: column !important; }
+            .lm-card-main { min-width: 0 !important; }
+            .lm-card-action { min-width: 0 !important; width: 100% !important; flex-direction: row !important; flex-wrap: wrap !important; }
+            .lm-price-row { flex-wrap: wrap !important; gap: 6px !important; }
+            .lm-form-row { flex-wrap: wrap !important; }
+            .lm-form-row input, .lm-form-row select { width: 100% !important; }
+        }
+        </style>
+        <a href="/" style="color: #38bdf8;"><- Dashboard</a>'''
 
         if success:
             _success_msgs = {
@@ -3207,8 +3230,8 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += f'''
                     <div class="card" style="border-left: 4px solid {terrain_color}; margin-bottom: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                            <div style="flex: 1; min-width: 280px;">
+                        <div class="lm-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div class="lm-card-main" style="flex: 1; min-width: 280px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                     <span class="badge" style="background: #f59e0b; color: #020617;">AUCTION</span>
@@ -3231,7 +3254,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += f'''
                                 <div style="margin-top: 12px; padding: 10px; background: #020617; border-radius: 4px;">
-                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
+                                    <div class="lm-price-row" style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
                                         <span style="color: #ef4444;">Start: {fmt_usd(auction.starting_price, disp, precision=0)}</span>
                                         <span style="color: #22c55e; font-weight: bold;">Now: {fmt_usd(auction.current_price, disp, precision=0)}</span>
                                         <span style="color: #64748b;">Floor: {fmt_usd(auction.minimum_price, disp, precision=0)}</span>
@@ -3245,7 +3268,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
                                     </div>
                                 </div>
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
+                            <div class="lm-card-action" style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
                                 <div style="text-align: center;">
                                     <div style="font-size: 1.3rem; font-weight: bold; color: #22c55e;">{fmt_usd(auction.current_price, disp, precision=0)}</div>
                                     <div style="font-size: 0.7rem; color: #64748b;">current price</div>
@@ -3321,8 +3344,8 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += f'''
                     <div class="card" style="border-left: 4px solid {border_color}; margin-bottom: 12px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
-                            <div style="flex: 1; min-width: 280px;">
+                        <div class="lm-card-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                            <div class="lm-card-main" style="flex: 1; min-width: 280px;">
                                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <h3 style="margin: 0;">Plot #{plot.id}</h3>
                                     {own_badge}
@@ -3346,7 +3369,7 @@ def _land_market_page_impl(session_token: Optional[str] = None, sort: str = "pri
 
                     market_html += '''
                             </div>
-                            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">'''
+                            <div class="lm-card-action" style="display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">'''
 
                     market_html += f'''
                                 <div style="text-align: center;">
@@ -5987,6 +6010,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         td_css += '.td-input{width:100%;padding:8px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;font-size:0.85rem;font-family:inherit;}'
         td_css += '.td-input:focus{border-color:#38bdf8;outline:none;}'
         td_css += '@media(max-width:1024px){.td-layout{grid-template-columns:1fr!important;}.td-sidebar{max-height:none;overflow-x:auto;white-space:nowrap;display:flex;}.td-sidebar>a{min-width:140px;white-space:normal;}}'
+        td_css += '@media(max-width:600px){.td-layout{grid-template-columns:1fr!important;}.td-3col{grid-template-columns:1fr 1fr!important;}.td-2col{grid-template-columns:1fr!important;}.td-portbar{flex-wrap:wrap!important;gap:12px!important;}.td-input-row{flex-wrap:wrap!important;}.td-input-row input{width:100%!important;}.td-depths{grid-template-columns:1fr!important;}}'
         td_css += '</style>'
 
         # ── ETF mode ─────────────────────────────────────────────────────────────
@@ -6023,7 +6047,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                             </div>
                             <a href="/banks/{bank_id.replace("_","-")}" class="btn-blue" style="font-size:.75rem;">Details</a>
                         </div>
-                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;">
+                        <div class="td-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;">
                             <div><div style="color:#64748b;font-size:.75rem;">Market Price</div>
                                  <div style="font-weight:bold;color:#22c55e;">{mkt_price_display}</div></div>
                             <div><div style="color:#64748b;font-size:.75rem;">NAV</div>
@@ -6144,7 +6168,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         </div>
 
         <!-- Portfolio Summary Bar -->
-        <div style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
+        <div class="td-portbar" style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
             <div>
                 <span class="td-label">Portfolio Value</span>
                 <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;">{fmt_usd(total_portfolio_value, disp)}</div>
@@ -6204,7 +6228,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
 
                 <!-- Key Stats Grid -->
                 <div class="td-section">
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                    <div class="td-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
                         <div><div class="td-label">Market Cap</div><div style="font-size:0.9rem;">{fmt_usd(selected_company.current_price * selected_company.shares_outstanding, disp, precision=0)}</div></div>
                         <div><div class="td-label">Shares Out</div><div style="font-size:0.9rem;">{selected_company.shares_outstanding:,}</div></div>
                         <div><div class="td-label">Float</div><div style="font-size:0.9rem;">{selected_company.shares_in_float:,}</div></div>
@@ -6215,7 +6239,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 </div>
 
                 <!-- Depth of Market + Time & Sales -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="td-depths" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div class="td-section" style="margin-bottom:0;">
                         <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Depth of Market</div>
                         {ob_html}
@@ -6233,7 +6257,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
                 <!-- Position Summary -->
                 <div style="margin-bottom:12px;">
                     <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Your Position &mdash; {selected_company.ticker_symbol}</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+                    <div class="td-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
                         <div><span style="color:#64748b;">Shares</span><div style="color:#38bdf8;font-size:1rem;font-weight:600;">{player_shares:,}</div></div>
                         <div><span style="color:#64748b;">Value</span><div style="font-size:1rem;">{fmt_usd(player_mkt_value, disp)}</div></div>
                         <div><span style="color:#64748b;">Avg Cost</span><div>{fmt_usd(player_cost_basis, disp, precision=4)}</div></div>
