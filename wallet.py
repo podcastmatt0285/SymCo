@@ -765,6 +765,16 @@ def _tick_yield_farming(wallet_db, current_tick: int):
         for d in deposits:
             share = weighted[d.id] / total_w
             payout = payout_total * share
+            # Apply crypto exec bonus (defi_specialist, blockchain_native, etc.)
+            try:
+                from executive import get_player_job_bonus, get_db as exec_get_db
+                _exec_db = exec_get_db()
+                _crypto_bonus = get_player_job_bonus(_exec_db, d.player_id, "crypto")
+                _exec_db.close()
+                if _crypto_bonus > 0:
+                    payout = round(payout * (1.0 + _crypto_bonus), 8)
+            except Exception:
+                pass
             wsc_w = _get_or_create_wsc_wallet(wallet_db, d.player_id)
             wsc_w.balance            += payout
             wsc_w.total_earned_yield += payout
