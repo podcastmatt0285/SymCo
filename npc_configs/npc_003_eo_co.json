@@ -1,0 +1,194 @@
+{
+  "player_id": -2003,
+  "business_name": "EO Co",
+  "description": "Grows apples and oranges, distills all 15 essential oil varieties for market, and sells surplus fruit retail.",
+
+  "cash_caps": {
+    "hard_high": 25000000,
+    "soft_high": 10000000,
+    "soft_low":   5000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 6000000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["remote"],    "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["riverside"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "plantation",
+      "district_id": null,
+      "active_lines": ["apples", "oranges", "apple_seeds", "orange_seeds"]
+    },
+    {
+      "business_type": "essential_oil_distillery",
+      "district_id": null,
+      "active_lines": [
+        "apple_essential_oil",
+        "orange_essential_oil",
+        "cotton_essential_oil",
+        "barley_essential_oil",
+        "cherry_essential_oil",
+        "cocoa_essential_oil",
+        "coffee_essential_oil",
+        "corn_essential_oil",
+        "grape_essential_oil",
+        "onion_essential_oil",
+        "rice_essential_oil",
+        "tea_essential_oil",
+        "tobacco_essential_oil",
+        "tomato_essential_oil",
+        "wheat_essential_oil"
+      ]
+    }
+  ],
+
+  "buy_items": {
+    "apple_seeds": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "orange_seeds": {
+      "target_inventory": 6000,
+      "reorder_at": 1200,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "cotton_seeds": {
+      "target_inventory": 15000,
+      "reorder_at": 5000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "barley_seeds": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "cherry_seeds": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "cocoa_seeds": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "coffee_seeds": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "corn_seeds": {
+      "target_inventory": 6000,
+      "reorder_at": 1500,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "grape_seeds": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "onion_seeds": {
+      "target_inventory": 12000,
+      "reorder_at": 3000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "rice_seeds": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "tea_seeds": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "tobacco_seeds": {
+      "target_inventory": 15000,
+      "reorder_at": 5000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "tomato_seeds": {
+      "target_inventory": 10000,
+      "reorder_at": 2500,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "wheat_seeds": {
+      "target_inventory": 8000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "pollen": {
+      "target_inventory": 20000,
+      "reorder_at": 5000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 2000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 1000,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 500,
+      "reorder_at": 50,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "apple_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "orange_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "cotton_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "barley_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "cherry_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "cocoa_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "coffee_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "corn_essential_oil":    { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "grape_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "onion_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "rice_essential_oil":    { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "tea_essential_oil":     { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "tobacco_essential_oil": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "tomato_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "wheat_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "apples": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "oranges": {
+      "min_inventory_to_keep": 30,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    }
+  }
+}

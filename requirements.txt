@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+python-multipart
+python-dotenv
+pycryptodome
+Pillow
+requests
+wheel
+pywebpush
+sentry-sdk[fastapi]

@@ -1,0 +1,26 @@
+{
+    "videos": [
+        {
+            "youtube_id": "_uunsDAShzM",
+            "title": "Wadsworth: The Explainer",
+            "description": "The Wadsworth Economic Tycoon Simulator Explainer."
+        },
+        {
+            "youtube_id": "Zk7J9ETwVwY",
+            "title": "Wadsworth: Executives Tutorial",
+            "description": "An introduction to the executives \u2014 purpose, penalties, and rewards."
+        },
+        {
+            "youtube_id": "uneqXirAwKQ",
+            "title": "Demystifying IPO",
+            "description": "What are the 7 IPO types?"
+        }
+    ],
+    "audio": [
+        {
+            "youtube_id": "CNlbq2Djo5c",
+            "title": "The Brutal Banking Mechanics of Wadsworth",
+            "description": "Are the banks slaves to the government or are they the overlords?"
+        }
+    ]
+}
