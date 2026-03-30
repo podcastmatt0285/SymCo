@@ -1342,8 +1342,18 @@ def admin_delete_city(admin_id: int, city_id: int) -> dict:
         # 3. Remove all city-table records
         city_db = get_city_db()
         try:
+            # CityVote has poll_id only — delete via poll subquery first
+            poll_ids = [
+                row.id for row in city_db.query(CityPoll.id).filter(
+                    CityPoll.city_id == city_id
+                ).all()
+            ]
+            if poll_ids:
+                city_db.query(CityVote).filter(
+                    CityVote.poll_id.in_(poll_ids)
+                ).delete(synchronize_session=False)
             for model in (
-                CityVote, CityApplication, CityPoll,
+                CityApplication, CityPoll,
                 CityStableCoinBalance, CityBankLoan, CityDebtAssumption,
                 CityProductionLog, CityMember, CityBank,
             ):
@@ -1406,18 +1416,26 @@ def admin_delete_county(admin_id: int, county_id: int) -> dict:
                 except Exception:
                     pass  # tables may not exist yet
 
-            # Remove governance cycles, votes, polls, petitions, city links
+            # Remove governance cycles
             co_db.query(GovernanceCycle).filter(
                 GovernanceCycle.county_id == county_id
             ).delete(synchronize_session=False)
-            co_db.query(CountyVote).filter(
-                CountyVote.county_id == county_id
-            ).delete(synchronize_session=False)
+            # CountyVote has poll_id only — delete via poll subquery first
+            poll_ids = [
+                row.id for row in co_db.query(CountyPoll.id).filter(
+                    CountyPoll.county_id == county_id
+                ).all()
+            ]
+            if poll_ids:
+                co_db.query(CountyVote).filter(
+                    CountyVote.poll_id.in_(poll_ids)
+                ).delete(synchronize_session=False)
             co_db.query(CountyPoll).filter(
                 CountyPoll.county_id == county_id
             ).delete(synchronize_session=False)
+            # CountyPetition uses target_county_id for county membership
             co_db.query(CountyPetition).filter(
-                CountyPetition.county_id == county_id
+                CountyPetition.target_county_id == county_id
             ).delete(synchronize_session=False)
             co_db.query(MiningDeposit).filter(
                 MiningDeposit.county_id == county_id
