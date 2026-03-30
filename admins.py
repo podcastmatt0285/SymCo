@@ -1286,6 +1286,159 @@ def admin_remove_city_from_county(admin_id: int, city_id: int) -> dict:
         return {"ok": False, "error": str(e)}
 
 
+def admin_delete_city(admin_id: int, city_id: int) -> dict:
+    """
+    Permanently delete a city and ALL associated data:
+      cities, city_banks, city_members, city_applications, city_polls,
+      city_votes, city_stable_coin_balances, city_bank_loans,
+      city_debt_assumptions, city_project_instances (+ vaults),
+      county_cities link.
+    """
+    try:
+        from cities import (
+            City, CityBank, CityMember, CityApplication, CityPoll,
+            CityVote, CityStableCoinBalance, CityBankLoan,
+            CityDebtAssumption, CityProductionLog,
+            get_db as get_city_db,
+        )
+        from counties import CountyCity, get_db as get_county_db
+        from city_projects import (
+            CityProjectInstance, CityProjectVault,
+            get_db as cp_get_db,
+        )
+
+        # Verify city exists
+        city_db = get_city_db()
+        city = city_db.query(City).filter(City.id == city_id).first()
+        if not city:
+            city_db.close()
+            return {"ok": False, "error": f"City #{city_id} not found"}
+        city_name = city.name
+        city_db.close()
+
+        # 1. Remove city_project_instances and vaults
+        cp_db = cp_get_db()
+        try:
+            cp_db.query(CityProjectVault).filter(
+                CityProjectVault.city_id == city_id
+            ).delete(synchronize_session=False)
+            cp_db.query(CityProjectInstance).filter(
+                CityProjectInstance.city_id == city_id
+            ).delete(synchronize_session=False)
+            cp_db.commit()
+        finally:
+            cp_db.close()
+
+        # 2. Remove county link
+        co_db = get_county_db()
+        try:
+            co_db.query(CountyCity).filter(
+                CountyCity.city_id == city_id
+            ).delete(synchronize_session=False)
+            co_db.commit()
+        finally:
+            co_db.close()
+
+        # 3. Remove all city-table records
+        city_db = get_city_db()
+        try:
+            for model in (
+                CityVote, CityApplication, CityPoll,
+                CityStableCoinBalance, CityBankLoan, CityDebtAssumption,
+                CityProductionLog, CityMember, CityBank,
+            ):
+                city_db.query(model).filter(
+                    model.city_id == city_id
+                ).delete(synchronize_session=False)
+            city_db.query(City).filter(City.id == city_id).delete(
+                synchronize_session=False
+            )
+            city_db.commit()
+        finally:
+            city_db.close()
+
+        log_action(admin_id, "delete_city", None,
+                   f"Deleted city #{city_id} '{city_name}' and all assets")
+        return {"ok": True, "msg": f"City '{city_name}' (#{city_id}) permanently deleted."}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_delete_county(admin_id: int, county_id: int) -> dict:
+    """
+    Permanently delete a county and ALL associated data:
+      counties, county_cities, county_petitions, county_polls,
+      county_votes, mining_deposits, crypto_wallets (for county symbol),
+      governance_cycles, crypto_exchange_orders, crypto_price_history.
+    """
+    try:
+        from counties import (
+            County, CountyCity, CountyPetition, CountyPoll, CountyVote,
+            MiningDeposit, CryptoWallet, GovernanceCycle,
+            get_db as get_county_db,
+        )
+
+        co_db = get_county_db()
+        county = co_db.query(County).filter(County.id == county_id).first()
+        if not county:
+            co_db.close()
+            return {"ok": False, "error": f"County #{county_id} not found"}
+        county_name   = county.name
+        crypto_symbol = county.crypto_symbol  # may be None
+
+        try:
+            # Remove all wallets holding this county's crypto token
+            if crypto_symbol:
+                co_db.query(CryptoWallet).filter(
+                    CryptoWallet.crypto_symbol == crypto_symbol
+                ).delete(synchronize_session=False)
+
+                # Remove exchange orders and price history for this token
+                try:
+                    from counties import CryptoExchangeOrder, CryptoPriceHistory
+                    co_db.query(CryptoExchangeOrder).filter(
+                        (CryptoExchangeOrder.sell_crypto_symbol == crypto_symbol) |
+                        (CryptoExchangeOrder.buy_crypto_symbol  == crypto_symbol)
+                    ).delete(synchronize_session=False)
+                    co_db.query(CryptoPriceHistory).filter(
+                        CryptoPriceHistory.crypto_symbol == crypto_symbol
+                    ).delete(synchronize_session=False)
+                except Exception:
+                    pass  # tables may not exist yet
+
+            # Remove governance cycles, votes, polls, petitions, city links
+            co_db.query(GovernanceCycle).filter(
+                GovernanceCycle.county_id == county_id
+            ).delete(synchronize_session=False)
+            co_db.query(CountyVote).filter(
+                CountyVote.county_id == county_id
+            ).delete(synchronize_session=False)
+            co_db.query(CountyPoll).filter(
+                CountyPoll.county_id == county_id
+            ).delete(synchronize_session=False)
+            co_db.query(CountyPetition).filter(
+                CountyPetition.county_id == county_id
+            ).delete(synchronize_session=False)
+            co_db.query(MiningDeposit).filter(
+                MiningDeposit.county_id == county_id
+            ).delete(synchronize_session=False)
+            co_db.query(CountyCity).filter(
+                CountyCity.county_id == county_id
+            ).delete(synchronize_session=False)
+            co_db.query(County).filter(County.id == county_id).delete(
+                synchronize_session=False
+            )
+            co_db.commit()
+        finally:
+            co_db.close()
+
+        log_action(admin_id, "delete_county", None,
+                   f"Deleted county #{county_id} '{county_name}' (symbol={crypto_symbol}) and all assets")
+        return {"ok": True, "msg": f"County '{county_name}' (#{county_id}) permanently deleted."}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 def admin_get_city_polls(city_id: int) -> list:
     """Return all polls for a city (active and recent)."""
     try:

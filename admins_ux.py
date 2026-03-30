@@ -36,7 +36,7 @@ from admins import (
     # District admin
     admin_create_district, admin_delete_district, admin_edit_district_tax,
     # City admin
-    admin_create_city,
+    admin_create_city, admin_delete_city,
     get_all_cities_admin, get_player_city_info,
     admin_add_player_to_city, admin_remove_player_from_city,
     admin_get_city_polls, admin_resolve_city_poll,
@@ -47,6 +47,7 @@ from admins import (
     get_all_counties_admin, get_player_county_info,
     admin_add_city_to_county, admin_remove_city_from_county,
     admin_get_county_polls, admin_resolve_county_poll,
+    admin_delete_county,
     # Moderator management
     add_moderator, remove_moderator, get_all_moderators,
 )
@@ -1269,6 +1270,12 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
             <td>{c.get("member_count", 0)}</td>
             <td>{county_link or '<span style="color:#64748b;">—</span>'}</td>
             <td style="color:#22c55e;">{fmt_usd(c.get("bank_reserves", 0), disp, precision=0)}</td>
+            <td>
+                <form method="post" action="/admin/cities/{c['id']}/delete"
+                      onsubmit="return confirm('PERMANENTLY delete city {c[\"name\"]} and ALL its data? This cannot be undone.');">
+                    <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Delete</button>
+                </form>
+            </td>
         </tr>"""
 
     county_rows = ""
@@ -1284,6 +1291,10 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
                     <input type="number" name="city_id" placeholder="City ID" style="width:70px;font-size:0.7rem;display:inline;">
                     <input type="hidden" name="county_id" value="{cn['id']}">
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 5px;">Remove City</button>
+                </form>
+                <form method="post" action="/admin/counties/{cn['id']}/delete" style="display:inline;margin-left:4px;"
+                      onsubmit="return confirm('PERMANENTLY delete county {cn[\"name\"]} and ALL its crypto/data? This cannot be undone.');">
+                    <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Delete County</button>
                 </form>
             </td>
         </tr>"""
@@ -1323,7 +1334,7 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
 
     <div class="card">
         <h3>All Cities ({len(cities)})</h3>
-        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Name</th><th>Mayor</th><th>Members</th><th>County</th><th>Bank</th></tr>{city_rows}</table></div>' if city_rows else '<p style="color:#64748b;font-size:0.75rem;">No cities yet.</p>'}
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Name</th><th>Mayor</th><th>Members</th><th>County</th><th>Bank</th><th></th></tr>{city_rows}</table></div>' if city_rows else '<p style="color:#64748b;font-size:0.75rem;">No cities yet.</p>'}
     </div>
 
     <div class="card">
@@ -1369,6 +1380,32 @@ def post_county_remove_city(session_token: Optional[str] = Cookie(None), city_id
     if result["ok"]:
         return RedirectResponse(url=f"/admin/cities?msg=City+%23{city_id}+removed+from+county", status_code=303)
     return RedirectResponse(url=f"/admin/cities?err={result['error']}", status_code=303)
+
+
+@router.post("/admin/cities/{city_id}/delete")
+def post_admin_delete_city(city_id: int, session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_delete_city(admin.id, city_id)
+    if result.get("ok"):
+        msg = result.get("msg", f"City #{city_id} deleted").replace(" ", "+")
+        return RedirectResponse(url=f"/admin/cities?msg={msg}", status_code=303)
+    err = result.get("error", "Unknown error").replace(" ", "+")
+    return RedirectResponse(url=f"/admin/cities?err={err}", status_code=303)
+
+
+@router.post("/admin/counties/{county_id}/delete")
+def post_admin_delete_county(county_id: int, session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_delete_county(admin.id, county_id)
+    if result.get("ok"):
+        msg = result.get("msg", f"County #{county_id} deleted").replace(" ", "+")
+        return RedirectResponse(url=f"/admin/cities?msg={msg}", status_code=303)
+    err = result.get("error", "Unknown error").replace(" ", "+")
+    return RedirectResponse(url=f"/admin/cities?err={err}", status_code=303)
 
 
 # ──────────────────────────────────────────────────────────────
