@@ -775,6 +775,15 @@ def collect_hoarding_taxes():
         tax_info = calculate_player_hoarding_tax(plot_count)
         hourly_payment = tax_info["hourly_total"]
 
+        # Apply easement_neg / land-effect exec bonus to reduce hoarding tax
+        try:
+            from executive import get_player_job_bonus
+            _land_bonus = get_player_job_bonus(db, owner_id, "land")
+            if _land_bonus > 0:
+                hourly_payment = round(hourly_payment * max(0.05, 1.0 - _land_bonus), 2)
+        except Exception:
+            pass
+
         if hourly_payment <= 0:
             continue
 

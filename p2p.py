@@ -227,13 +227,25 @@ def charge_p2p_access(player_id: int) -> bool:
     from stats_ux import log_transaction
     from reserve_banks import can_afford_usd, spend_player_funds
 
+    # Apply fee_negotiator / p2p-effect exec bonus to reduce access fee
+    effective_fee = P2P_DASHBOARD_FEE
+    try:
+        from executive import get_player_job_bonus, get_db as exec_get_db
+        _exec_db = exec_get_db()
+        _p2p_bonus = get_player_job_bonus(_exec_db, player_id, "p2p")
+        _exec_db.close()
+        if _p2p_bonus > 0:
+            effective_fee = max(0.0, round(P2P_DASHBOARD_FEE * (1.0 - _p2p_bonus), 2))
+    except Exception:
+        pass
+
     auth_db = get_auth_db()
     player = auth_db.query(Player).filter(Player.id == player_id).first()
-    if not player or not can_afford_usd(player_id, P2P_DASHBOARD_FEE):
+    if not player or not can_afford_usd(player_id, effective_fee):
         auth_db.close()
         return False
 
-    ok, _err = spend_player_funds(player_id, P2P_DASHBOARD_FEE)
+    ok, _err = spend_player_funds(player_id, effective_fee)
     auth_db.close()
     if not ok:
         return False
@@ -243,13 +255,13 @@ def charge_p2p_access(player_id: int) -> bool:
     gov_db = get_auth_db()
     gov = gov_db.query(Player).filter(Player.id == 0).first()
     if gov:
-        gov.cash_balance += P2P_DASHBOARD_FEE
+        gov.cash_balance += effective_fee
         gov_db.commit()
     gov_db.close()
 
     # Log access
     db = get_db()
-    access_log = P2PAccessLog(player_id=player_id, fee_paid=P2P_DASHBOARD_FEE)
+    access_log = P2PAccessLog(player_id=player_id, fee_paid=effective_fee)
     db.add(access_log)
     db.commit()
     db.close()
@@ -258,8 +270,8 @@ def charge_p2p_access(player_id: int) -> bool:
         player_id=player_id,
         transaction_type="p2p_access",
         category="money",
-        amount=-P2P_DASHBOARD_FEE,
-        description=f"P2P Dashboard access fee: ${P2P_DASHBOARD_FEE:,.0f}"
+        amount=-effective_fee,
+        description=f"P2P Dashboard access fee: ${effective_fee:,.0f}"
     )
 
     return True

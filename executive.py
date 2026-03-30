@@ -281,9 +281,9 @@ EXECUTIVE_JOBS = {
 EXEC_ABILITIES = {
     # ── BUSINESS ──────────────────────────────────────────────────────────────
     "corp_synergy":        {"name": "Corporate Synergy",       "desc": "All executive bonuses +5% across the board",            "effect": "business", "value": 0.05},
-    "talent_scout":        {"name": "Talent Scout",            "desc": "New executives appear on marketplace 15% more often",   "effect": "business", "value": 0.15},
+    "talent_scout":        {"name": "Talent Scout",            "desc": "Executives you hire retire 15% later than normal",      "effect": "business", "value": 0.15},
     "board_influence":     {"name": "Board Influence",         "desc": "All executive hiring fees −20%",                        "effect": "business", "value": 0.20},
-    "strategic_vision":    {"name": "Strategic Vision",        "desc": "Business production output +8%",                       "effect": "business", "value": 0.08},
+    "strategic_vision":    {"name": "Strategic Vision",        "desc": "Business production output +8%",                       "effect": "production", "value": 0.08},
     "culture_builder":     {"name": "Culture Builder",         "desc": "All executives age 10% slower",                        "effect": "business", "value": 0.10},
     "executive_aura":      {"name": "Executive Aura",          "desc": "All other executive effects +3%",                      "effect": "business", "value": 0.03},
     "hr_mastery":          {"name": "HR Mastery",              "desc": "All executive wages −8%",                              "effect": "wages",    "value": 0.08},
@@ -311,7 +311,7 @@ EXEC_ABILITIES = {
     "interest_arb":        {"name": "Interest Arbitrage",      "desc": "Loan interest rates −15%",                             "effect": "banking", "value": 0.15},
     "dividend_boost":      {"name": "Dividend Booster",        "desc": "Bank dividend returns +12%",                           "effect": "banking", "value": 0.12},
     "capital_reserve":     {"name": "Capital Reserve Protocol","desc": "$5,000 negative balance buffer before penalties",       "effect": "banking", "value": 5000.0},
-    "portfolio_hedge":     {"name": "Portfolio Hedge",         "desc": "Crypto market volatility impact −20%",                  "effect": "banking", "value": 0.20},
+    "portfolio_hedge":     {"name": "Portfolio Hedge",         "desc": "ETF dividend returns +20%",                            "effect": "banking", "value": 0.20},
     "cost_center_audit":   {"name": "Cost Center Audit",       "desc": "All executive wages −8% through efficiency gains",     "effect": "wages",   "value": 0.08},
     "investment_grade":    {"name": "Investment Grade",        "desc": "Banking bonus effectiveness +15%",                     "effect": "banking", "value": 0.15},
     "debt_restructure":    {"name": "Debt Restructuring",      "desc": "Can renegotiate loans at 10% better terms",            "effect": "banking", "value": 0.10},
@@ -349,7 +349,7 @@ EXEC_ABILITIES = {
     "civic_partner":       {"name": "Civic Partnership",       "desc": "District output +10% from city investment",            "effect": "cities","value": 0.10},
     "urban_renewal":       {"name": "Urban Renewal",           "desc": "City growth rate +12%",                                "effect": "cities","value": 0.12},
     "public_relations":    {"name": "Public Relations",        "desc": "City-level taxes −10%",                                "effect": "cities","value": 0.10},
-    "mayoral_liaison":     {"name": "Mayoral Liaison",         "desc": "Government grants appear 25% more often",              "effect": "cities","value": 0.25},
+    "mayoral_liaison":     {"name": "Mayoral Liaison",         "desc": "City grants awarded to you are +25% larger",           "effect": "cities","value": 0.25},
     "smart_city":          {"name": "Smart City Initiative",   "desc": "Tech investments multiply city output +12%",           "effect": "cities","value": 0.12},
     # ── DISTRICTS ─────────────────────────────────────────────────────────────
     "district_champ":      {"name": "District Champion",       "desc": "District business output +15%",                        "effect": "districts","value": 0.15},
@@ -361,24 +361,24 @@ EXEC_ABILITIES = {
     "local_partnership":   {"name": "Local Partnership",       "desc": "District P2P fees −15%",                               "effect": "districts","value": 0.15},
     # ── COUNTIES ──────────────────────────────────────────────────────────────
     "county_commission":   {"name": "County Commissioner",     "desc": "County taxes −25%",                                    "effect": "counties","value": 0.25},
-    "land_grant_prog":     {"name": "Land Grant Program",      "desc": "Occasional free land plot in county",                  "effect": "counties","value": 1.0},
+    "land_grant_prog":     {"name": "Land Grant Program",      "desc": "County land purchase prices −20%",                     "effect": "counties","value": 0.20},
     "rural_dev":           {"name": "Rural Development",       "desc": "County business output +12%",                          "effect": "counties","value": 0.12},
     "county_bond":         {"name": "County Bond Access",      "desc": "County infrastructure loans at 5% lower rates",        "effect": "counties","value": 0.05},
-    "annexation_right":    {"name": "Annexation Rights",       "desc": "Expand district territory into county land",           "effect": "counties","value": 1.0},
+    "annexation_right":    {"name": "Annexation Rights",       "desc": "District setup/construction costs −15%",               "effect": "districts","value": 0.15},
     "agri_bonus":          {"name": "Agricultural Bonus",      "desc": "Farming/rural land efficiency +15%",                   "effect": "counties","value": 0.15},
-    "regional_hub":        {"name": "Regional Hub",            "desc": "County as trade hub: P2P traffic +10%",                "effect": "counties","value": 0.10},
+    "regional_hub":        {"name": "Regional Hub",            "desc": "County business input costs −10%",                     "effect": "counties","value": 0.10},
     # ── P2P ───────────────────────────────────────────────────────────────────
     "p2p_notification":    {"name": "P2P Notification System", "desc": "Enables envelope (DM) and paper (contract) icons on the P2P dashboard button", "effect": "p2p","value": 1.0},
     "dm_threeway":         {"name": "Multi-Party DMs",         "desc": "Unlocks adding 3rd parties to direct messages",        "effect": "p2p","value": 1.0},
     "contract_tracker":    {"name": "Contract Tracker",        "desc": "Real-time contract status alerts in dashboard",        "effect": "p2p","value": 1.0},
     "fee_negotiator":      {"name": "Fee Negotiator",          "desc": "P2P entry/listing fees −25%",                          "effect": "p2p","value": 0.25},
-    "network_expander":    {"name": "Network Expander",        "desc": "P2P reach increased: more players discoverable",       "effect": "p2p","value": 1.0},
-    "deal_scout":          {"name": "Deal Scout",              "desc": "Early access to new P2P marketplace listings",         "effect": "p2p","value": 1.0},
+    "network_expander":    {"name": "Network Expander",        "desc": "P2P listing/entry fees −15%",                          "effect": "p2p","value": 0.15},
+    "deal_scout":          {"name": "Deal Scout",              "desc": "P2P disputes resolved 15% more in your favour",        "effect": "p2p","value": 0.15},
     "rep_shield":          {"name": "Reputation Shield",       "desc": "P2P reputation score protected from dispute fallout",  "effect": "p2p","value": 1.0},
     "mediation_svc":       {"name": "Mediation Service",       "desc": "P2P disputes resolved in your favour 20% more often", "effect": "p2p","value": 0.20},
     # ── FIRST LADIES (unique — one per exec, tutorial reward) ─────────────────
     "fl_estate_manager":   {"name": "Estate Management",       "desc": "All farming & plantation output +15%",                 "effect": "production","value": 0.15},
-    "fl_political_advisor":{"name": "Political Advisor",       "desc": "Overall business strategy output +10%",               "effect": "business","value": 0.10},
+    "fl_political_advisor":{"name": "Political Advisor",       "desc": "Overall business strategy output +10%",               "effect": "production","value": 0.10},
     "fl_social_diplomat":  {"name": "Social Diplomacy",        "desc": "All P2P transaction fees −20%",                        "effect": "p2p","value": 0.20},
     "fl_un_diplomat":      {"name": "UN Diplomacy",            "desc": "Market listing/transaction fees −15%",                 "effect": "sales","value": 0.15},
     "fl_retail_entrepreneur":{"name":"Retail Entrepreneur",    "desc": "Retail sales revenue +12%",                           "effect": "sales","value": 0.12},
@@ -1041,14 +1041,15 @@ def get_player_job_bonus(db, player_id: int, effect: str) -> float:
 
     total *= get_team_performance_boost(db, player_id)
 
-    # Apply corp_synergy global boost (business executives)
-    for ex in executives:
-        for key in (ex.abilities or "").split(","):
-            if key == "corp_synergy":
-                adef = EXEC_ABILITIES.get("corp_synergy")
+    # Apply global multiplier abilities (corp_synergy, executive_aura, fl_shadow_exec)
+    _global_mult_keys = ("corp_synergy", "executive_aura", "fl_shadow_exec")
+    for key in _global_mult_keys:
+        for ex in executives:
+            if key in (ex.abilities or "").split(","):
+                adef = EXEC_ABILITIES.get(key)
                 if adef:
                     total *= (1.0 + adef["value"])
-                    break
+                break  # one application per ability type
 
     return min(total, 0.95)
 
@@ -1099,10 +1100,8 @@ def player_has_cco(db, player_id: int) -> bool:
 
 
 def get_school_discount(db, player_id: int) -> float:
-    """Combined school cost/time discount from process_reeng + retention_bonus abilities."""
-    d = (get_specific_ability_bonus(db, player_id, "process_reeng") +
-         get_specific_ability_bonus(db, player_id, "retention_bonus"))
-    return min(d, 0.75)
+    """Combined school cost/time discount from all school-effect executive abilities."""
+    return min(get_player_job_bonus(db, player_id, "school"), 0.75)
 
 
 def get_player_executives(db, player_id: int) -> List[Executive]:
@@ -1240,6 +1239,12 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
         return {"success": False, "error": f"Maximum {MAX_EXECUTIVES_PER_PLAYER} executives allowed"}
 
     hiring_fee = exec_obj.wage * (PAY_CYCLES["day"] / PAY_CYCLES[exec_obj.pay_cycle])
+
+    # Apply board_influence ability: reduces all hiring fees
+    board_bonus = get_specific_ability_bonus(db, player_id, "board_influence")
+    if board_bonus > 0:
+        hiring_fee = round(hiring_fee * max(0.05, 1.0 - board_bonus), 2)
+
     from reserve_banks import can_afford_usd, spend_player_funds
     if not can_afford_usd(player_id, hiring_fee):
         return {"success": False, "error": f"Insufficient funds. Hiring fee: ${hiring_fee:,.2f}"}
@@ -1247,6 +1252,13 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
     ok, err = spend_player_funds(player.id, hiring_fee)
     if not ok:
         return {"success": False, "error": err}
+    # Apply talent_scout ability: extends hired exec's retirement age
+    talent_bonus = get_specific_ability_bonus(db, player_id, "talent_scout")
+    if talent_bonus > 0:
+        extra_years = max(1, int(exec_obj.retirement_age * min(talent_bonus, 0.50)))
+        exec_obj.retirement_age += extra_years
+        exec_obj.max_age        += extra_years
+
     exec_obj.player_id       = player_id
     exec_obj.on_marketplace  = False
     exec_obj.hired_at        = datetime.utcnow()
@@ -1458,12 +1470,29 @@ def tick(current_tick: int, now: datetime):
 
 def _process_aging(db, current_tick: int):
     living = db.query(Executive).filter(Executive.is_dead == False).all()
+
+    # Pre-compute per-player aging slowdown from culture_builder + fl_health_advocate
+    from collections import defaultdict
+    _player_aging_bonus: dict = defaultdict(float)
+    for be in living:
+        if be.player_id is None or be.is_retired or be.is_in_school:
+            continue
+        for key in (be.abilities or "").split(","):
+            adef = EXEC_ABILITIES.get(key)
+            if adef and key in ("culture_builder", "fl_health_advocate"):
+                _player_aging_bonus[be.player_id] += adef["value"]
+
     for ex in living:
         ex.age_tick_accumulator += 1
 
         ticks_needed = TICKS_PER_YEAR
         if ex.is_special and ex.special_ability == "eternal_youth":
             ticks_needed = int(TICKS_PER_YEAR * 2)  # ages half speed
+
+        # Apply culture_builder / fl_health_advocate aging slowdown
+        if ex.player_id and ex.player_id in _player_aging_bonus:
+            aging_bonus = min(_player_aging_bonus[ex.player_id], 0.75)
+            ticks_needed = int(ticks_needed * (1.0 + aging_bonus))
 
         if ex.age_tick_accumulator < ticks_needed:
             continue
