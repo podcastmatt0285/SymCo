@@ -50,88 +50,201 @@ def privacy_policy():
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Privacy Policy — Wadsworth Economic Tycoon Simulator</title>
+<title>Privacy Policy — Wadsworth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: Georgia, serif; max-width: 800px; margin: 40px auto; padding: 0 20px;
-         color: #1a1a1a; line-height: 1.7; }
-  h1 { font-size: 1.8rem; border-bottom: 2px solid #333; padding-bottom: 10px; }
-  h2 { font-size: 1.2rem; margin-top: 2rem; color: #222; }
-  p, li { font-size: 0.95rem; }
-  ul { padding-left: 1.5rem; }
-  a { color: #1a56db; }
-  .updated { color: #666; font-size: 0.85rem; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a0e06;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px 60px;
+    font-family: 'Caveat', cursive;
+  }
+
+  .ledger {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    background: #f5ead0;
+    background-image:
+      repeating-linear-gradient(transparent, transparent 31px, #c9a97a55 31px, #c9a97a55 32px),
+      radial-gradient(ellipse at 20% 10%, #e8d5b0 0%, #f5ead0 60%),
+      radial-gradient(ellipse at 80% 90%, #dfc99a 0%, #f5ead0 60%);
+    border-radius: 4px 12px 12px 4px;
+    box-shadow:
+      -8px 0 0 #6b3a1f,
+      -14px 0 0 #3d1f0a,
+      4px 4px 30px rgba(0,0,0,0.7),
+      inset 0 0 60px rgba(139,90,43,0.15);
+    padding: 52px 52px 52px 64px;
+    color: #1a0e06;
+    line-height: 2;
+  }
+
+  /* Leather spine */
+  .ledger::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -8px;
+    width: 8px; height: 100%;
+    background: linear-gradient(to right, #3d1f0a, #6b3a1f);
+    border-radius: 4px 0 0 4px;
+  }
+
+  /* Page edge shadow */
+  .ledger::after {
+    content: '';
+    position: absolute;
+    top: 4px; right: -4px;
+    width: 100%; height: 100%;
+    background: #c9a97a;
+    border-radius: 4px 12px 12px 4px;
+    z-index: -1;
+  }
+
+  .ledger-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: #3d1f0a;
+    border-bottom: 2px solid #c9a97a;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .ledger-subtitle {
+    font-size: 1.1rem;
+    color: #7a5230;
+    margin-bottom: 32px;
+    font-style: italic;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3d1f0a;
+    margin: 28px 0 4px;
+    border-left: 3px solid #c9a97a;
+    padding-left: 10px;
+  }
+
+  p { font-size: 1.15rem; color: #2a1505; margin-bottom: 8px; }
+
+  ul {
+    list-style: none;
+    padding-left: 8px;
+    margin-bottom: 8px;
+  }
+
+  ul li {
+    font-size: 1.15rem;
+    color: #2a1505;
+    padding: 2px 0 2px 20px;
+    position: relative;
+  }
+
+  ul li::before {
+    content: '✦';
+    position: absolute;
+    left: 0;
+    color: #c9a97a;
+    font-size: 0.75rem;
+    top: 6px;
+  }
+
+  strong { color: #3d1f0a; font-weight: 700; }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: #6b3a1f;
+    text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    .ledger { padding: 36px 24px 36px 36px; }
+    .ledger-title { font-size: 1.9rem; }
+  }
 </style>
 </head>
 <body>
-<h1>Privacy Policy</h1>
-<p class="updated">Last updated: March 2026</p>
+<div class="ledger">
+  <a href="/" class="back-link">← Back to Wadsworth</a>
 
-<p>Wadsworth Economic Tycoon Simulator ("the Game", "we", "us") is operated by IllinoisJo. This policy
-explains what information we collect, how we use it, and your rights.</p>
+  <div class="ledger-title">Privacy Policy</div>
+  <div class="ledger-subtitle">Wadsworth Economic Tycoon Simulator &mdash; Last updated March 2026</div>
 
-<h2>1. Information We Collect</h2>
-<ul>
-  <li><strong>Account information</strong> — username, email address, and hashed password when you register.</li>
-  <li><strong>Game data</strong> — in-game currency balances, inventory, land holdings, business activity,
-      market orders, and all other gameplay actions you take.</li>
-  <li><strong>Chat messages</strong> — messages sent in the Global Chat and Trade Chat rooms are stored on
-      our servers and visible to other players.</li>
-  <li><strong>Financial transaction records</strong> — all in-game purchases, sales, market trades, and
-      transfers between players.</li>
-  <li><strong>Device identifier</strong> — a one-way hash of your Android device ID, used solely to link
-      home-screen widgets to your account. This hash cannot be reversed to identify your device.</li>
-  <li><strong>Session data</strong> — login session tokens stored as secure HTTP-only cookies.</li>
-  <li><strong>Server logs</strong> — IP address and request timestamps retained for up to 30 days for
-      security and abuse prevention.</li>
-</ul>
+  <p>Wadsworth Economic Tycoon Simulator ("the Game", "we", "us") is operated by IllinoisJo. This policy
+  explains what information we collect, how we use it, and your rights.</p>
 
-<h2>2. How We Use Your Information</h2>
-<ul>
-  <li>To operate and maintain your game account.</li>
-  <li>To display your game data to you and, where applicable, to other players (e.g. public market orders,
-      chat messages, leaderboard positions).</li>
-  <li>To deliver home-screen widget updates to your Android device.</li>
-  <li>To detect and prevent fraud, cheating, or abuse.</li>
-  <li>To send transactional notifications (e.g. market fills, alerts) if you have enabled push
-      notifications.</li>
-</ul>
+  <h2>I. Information We Collect</h2>
+  <ul>
+    <li><strong>Account information</strong> &mdash; username, email address, and hashed password when you register.</li>
+    <li><strong>Game data</strong> &mdash; in-game currency balances, inventory, land holdings, business activity,
+        market orders, and all other gameplay actions you take.</li>
+    <li><strong>Chat messages</strong> &mdash; messages sent in the Global Chat and Trade Chat rooms are stored on
+        our servers and visible to other players.</li>
+    <li><strong>Financial transaction records</strong> &mdash; all in-game purchases, sales, market trades, and
+        transfers between players.</li>
+    <li><strong>Device identifier</strong> &mdash; a one-way hash of your Android device ID, used solely to link
+        home-screen widgets to your account. This hash cannot be reversed to identify your device.</li>
+    <li><strong>Session data</strong> &mdash; login session tokens stored as secure HTTP-only cookies.</li>
+    <li><strong>Server logs</strong> &mdash; IP address and request timestamps retained for up to 30 days for
+        security and abuse prevention.</li>
+  </ul>
 
-<h2>3. Information Shared With Third Parties</h2>
-<p>We do <strong>not</strong> sell, rent, or trade your personal information. We do not use third-party
-advertising networks. Your data is not shared with any third party except:</p>
-<ul>
-  <li>Hosting and infrastructure providers who process data on our behalf under confidentiality obligations.</li>
-  <li>Law enforcement when required by applicable law.</li>
-</ul>
+  <h2>II. How We Use Your Information</h2>
+  <ul>
+    <li>To operate and maintain your game account.</li>
+    <li>To display your game data to you and, where applicable, to other players (e.g. public market orders,
+        chat messages, leaderboard positions).</li>
+    <li>To deliver home-screen widget updates to your Android device.</li>
+    <li>To detect and prevent fraud, cheating, or abuse.</li>
+    <li>To send transactional notifications (e.g. market fills, alerts) if you have enabled push notifications.</li>
+  </ul>
 
-<h2>4. In-App Purchases</h2>
-<p>The Game uses Google Play Billing for any in-app purchases. Payment processing is handled entirely by
-Google. We do not receive or store your payment card details.</p>
+  <h2>III. Information Shared With Third Parties</h2>
+  <p>We do <strong>not</strong> sell, rent, or trade your personal information. We do not use third-party
+  advertising networks. Your data is not shared with any third party except:</p>
+  <ul>
+    <li>Hosting and infrastructure providers who process data on our behalf under confidentiality obligations.</li>
+    <li>Law enforcement when required by applicable law.</li>
+  </ul>
 
-<h2>5. Children's Privacy</h2>
-<p>The Game is not directed at children under 13. We do not knowingly collect personal information from
-children under 13. If you believe a child under 13 has provided us with personal information, please
-contact us and we will delete it.</p>
+  <h2>IV. In-App Purchases</h2>
+  <p>The Game uses Google Play Billing for any in-app purchases. Payment processing is handled entirely by
+  Google. We do not receive or store your payment card details.</p>
 
-<h2>6. Data Retention</h2>
-<p>Your account data is retained for as long as your account is active. Chat messages are retained
-indefinitely for gameplay purposes. Server logs are deleted after 30 days. You may request deletion of
-your account by contacting us at the address below.</p>
+  <h2>V. Children's Privacy</h2>
+  <p>The Game is not directed at children under 13. We do not knowingly collect personal information from
+  children under 13. If you believe a child under 13 has provided us with personal information, please
+  contact us through the in-game support system and we will delete it promptly.</p>
 
-<h2>7. Your Rights</h2>
-<p>You may request access to, correction of, or deletion of your personal data at any time by contacting
-us. We will respond within 30 days.</p>
+  <h2>VI. Data Retention</h2>
+  <p>Your account data is retained for as long as your account is active. Chat messages are retained
+  indefinitely for gameplay purposes. Server logs are deleted after 30 days. You may request deletion of
+  your account via the Estate &rarr; Leave Game page inside the game.</p>
 
-<h2>8. Security</h2>
-<p>Passwords are stored as salted hashes. Session tokens are transmitted over HTTPS only. We take
-reasonable technical measures to protect your data, but no system is perfectly secure.</p>
+  <h2>VII. Your Rights</h2>
+  <p>You may request access to, correction of, or deletion of your personal data at any time by using the
+  in-game account tools. We will respond within 30 days.</p>
 
-<h2>9. Changes to This Policy</h2>
-<p>We may update this policy from time to time. We will post the updated date at the top of this page.
-Continued use of the Game after changes constitutes acceptance.</p>
+  <h2>VIII. Security</h2>
+  <p>Passwords are stored as salted hashes. Session tokens are transmitted over HTTPS only. We take
+  reasonable technical measures to protect your data, but no system is perfectly secure.</p>
 
-<h2>10. Contact</h2>
-<p>Questions about this privacy policy: <a href="mailto:privacy@notifly.cc">privacy@notifly.cc</a></p>
+  <h2>IX. Changes to This Policy</h2>
+  <p>We may update this policy from time to time. We will post the updated date at the top of this page.
+  Continued use of the Game after changes constitutes acceptance.</p>
+</div>
 </body>
 </html>"""
     return HTMLResponse(html)
@@ -234,6 +347,172 @@ _JOURNEY_PIE_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:
     </g>
   </g>
 </svg>'''
+
+
+# ==========================
+# SHARED NAV-LOADER
+# ==========================
+
+def _nav_loader_html() -> str:
+    """Mobile-friendly loading overlay — included in every page shell."""
+    return """
+        <!-- ═══════════════════════════════════════════════════
+             NAVIGATION LOADER — shown on slow server pages
+             Triggers on link click, disappears when page arrives.
+        ═══════════════════════════════════════════════════ -->
+        <div id="nav-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0806;color:#F5F5DC;font-family:Georgia,serif;align-items:center;justify-content:center;padding:12px;">
+          <div id="nl-card" style="position:relative;width:100%;max-width:420px;padding:clamp(16px,5vw,40px);background:#1A0F0A;border:4px solid #2D1810;box-shadow:0 25px 50px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;box-sizing:border-box;max-height:92vh;overflow-y:auto;">
+            <!-- brass corners -->
+            <div style="position:absolute;top:8px;left:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
+            <div style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
+            <div style="position:absolute;bottom:8px;left:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
+            <div style="position:absolute;bottom:8px;right:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
+            <!-- apple SVG -->
+            <div style="width:min(110px,28vw);height:min(110px,28vw);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg viewBox="0 0 201.5 207.54" style="width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(229,0,0,0.4));" class="nl-pulse">
+                <defs>
+                  <linearGradient id="nl-lg"><stop style="stop-color:#e50000" offset="0"/><stop style="stop-color:#ff5555;stop-opacity:0" offset="1"/></linearGradient>
+                  <radialGradient id="nl-rg" cy="172.36" cx="342.86" gradientTransform="matrix(1 0 0 1.0417 0 -7.1934)" r="193.09" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#e50000"/><stop offset="1" style="stop-color:#ff5555;stop-opacity:0"/></radialGradient>
+                </defs>
+                <g transform="matrix(.15791 0 0 .15791 16.376 41.416)">
+                  <path style="fill-rule:evenodd;fill:#008000" d="m470.03 168.72c-34.81 0.55-75.98 25.14-120.23 80.45 287.24-187.49 318.09 308.34-234.97 802.83h105.53c11.37-10.2 22.06-19.9 30.58-28.8 404.11-366.71 376.62-856.94 219.09-854.48z"/>
+                  <path style="fill-rule:evenodd;fill:#008000" d="m834.13 625.57c77.98-166.27-189.49-144.42-409.81 189.81l-7.81-53.51c195.76-321.73 564.68-292.21 417.62-136.3z"/>
+                  <path style="fill-rule:evenodd;fill:#008000" d="m44.425 533.84c57.285-180.94 245.14 23.08 178.28 431.36l43.44-35.18c76.75-381.56-224.17-617.67-221.72-396.18z"/>
+                  <g transform="translate(17.143 -148.57)">
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(219.15 -163.07)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(27.721 -188.78)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-86.565 -45.925)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(256.29 14.075)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(150.58 151.22)"/>
+                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-12.279 128.36)"/>
+                    <path style="fill-rule:evenodd;fill:url(#nl-rg)" d="m500 300.93c-39.84 48.69-62.4-55.86-121.24-33.61s-6.6 115.57-68.68 105.42c-62.08-10.16 17.18-81.97-31.51-121.81-48.69-39.83-103.38 52.08-125.63-6.76-22.25-58.85 79.57-26.11 89.73-88.2 10.15-62.077-96.79-63.492-56.96-112.18 39.84-48.687 62.4 55.86 121.25 33.613 58.84-22.247 6.59-115.57 68.67-105.42 62.08 10.158-17.17 81.973 31.51 121.81 48.69 39.837 103.39-52.077 125.63 6.767 22.25 58.84-79.57 26.11-89.73 88.19-10.15 62.08 96.8 63.5 56.96 112.18z" transform="matrix(1.2126 0 0 1.2126 -107.6 -19.596)"/>
+                    <path style="fill-rule:evenodd;fill:#ffd5d5" d="m514.29 249.39c0.01 44.19-33.25 80.02-74.29 80.02s-74.3-35.83-74.29-80.02c-0.01-44.2 33.25-80.03 74.29-80.03s74.3 35.83 74.29 80.03z" transform="translate(-131.87 -59.983)"/>
+                  </g>
+                </g>
+              </svg>
+            </div>
+            <!-- title + messages -->
+            <div style="margin-top:20px;width:100%;text-align:center;">
+              <p style="font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:#B08D57;font-weight:900;opacity:.4;margin:0 0 10px;">Wadsworth Executive Terminal</p>
+              <div id="nl-msgs" style="min-height:60px;display:flex;flex-direction:column-reverse;align-items:center;gap:4px;overflow:hidden;"></div>
+            </div>
+            <!-- progress bar -->
+            <div style="margin-top:16px;width:100%;height:3px;background:rgba(0,0,0,.6);border:1px solid rgba(176,141,87,.1);border-radius:9999px;overflow:hidden;">
+              <div id="nl-bar" style="height:100%;width:0%;background:linear-gradient(to right,#8B4513,#B08D57,#F5F5DC);box-shadow:0 0 10px rgba(176,141,87,.5);transition:width .15s linear;"></div>
+            </div>
+            <!-- footer row -->
+            <div style="margin-top:10px;width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+              <div style="display:flex;gap:14px;opacity:.2;font-size:13px;">&#9646; &#9632; &#9650;</div>
+              <span id="nl-pct" style="font-size:9px;font-family:monospace;opacity:.4;color:#B08D57;">0% SECURED</span>
+            </div>
+            <div style="margin-top:12px;font-size:9px;letter-spacing:.6em;text-transform:uppercase;opacity:.2;color:#B08D57;" class="nl-pulse">Handshake in Progress</div>
+          </div>
+        </div>
+        <style>
+          @keyframes nl-pulse-anim { 0%,100%{opacity:.3} 50%{opacity:.7} }
+          .nl-pulse { animation: nl-pulse-anim 2s ease-in-out infinite; }
+        </style>
+        <script>
+        (function() {
+          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market', '/stats', '/brokerage', '/banks', '/executives', '/cities', '/counties', '/exchange', '/estate', '/wallet'];
+          var SLOW_EXACT = ['/', '/api/inventory/list', '/api/market/order'];
+          var STEPS = [
+            "Initializing Secure Terminal...",
+            "Authenticating Executive Credentials...",
+            "Decrypting Asset Valuation Data...",
+            "Syncing Broadcast Signal...",
+            "Verifying Market Volatility...",
+            "Establishing Brass Inlay Connection...",
+            "Buffering Liquidity Pools...",
+            "Optimizing Yield Curves...",
+            "Parsing Capitol Schematics...",
+            "Engaging Stealth Protocols...",
+            "Allocating Surplus Capital...",
+            "Calibrating Brass Resonance...",
+            "Updating Ledger Entries...",
+            "Deploying Asset Containers...",
+            "Finalizing Handshake..."
+          ];
+          var overlay = document.getElementById('nav-loader');
+          var bar     = document.getElementById('nl-bar');
+          var pct     = document.getElementById('nl-pct');
+          var msgs    = document.getElementById('nl-msgs');
+          var prog    = 0;
+          var timer   = null;
+          var msgList = ["Initializing Secure Terminal..."];
+
+          function renderMsgs() {
+            msgs.innerHTML = msgList.slice(0,4).map(function(m,i) {
+              var opacity = i === 0 ? '1' : '0.3';
+              var scale   = i === 0 ? '1' : '0.95';
+              var prefix  = i === 0 ? '&gt; ' : '';
+              return '<p style="font-size:11px;font-style:italic;letter-spacing:-.01em;color:#B08D57;margin:0;transition:all .3s;opacity:'+opacity+';transform:scale('+scale+')">'
+                     + prefix + m + '</p>';
+            }).join('');
+          }
+
+          function startLoader() {
+            prog = 0; msgList = ["Initializing Secure Terminal..."];
+            overlay.style.display = 'flex';
+            renderMsgs();
+            timer = setInterval(function() {
+              prog += 5;
+              if (prog >= 100) prog = 0;
+              if (Math.floor(prog/15) > Math.floor((prog-5)/15)) {
+                var next = STEPS[Math.floor(Math.random()*STEPS.length)];
+                msgList = [next].concat(msgList).slice(0,4);
+                renderMsgs();
+              }
+              bar.style.width = prog + '%';
+              pct.textContent = prog + '% SECURED';
+            }, 150);
+          }
+
+          function _isSlowPath(pathname) {
+            for (var i=0; i<SLOW_EXACT.length; i++) {
+              if (pathname === SLOW_EXACT[i]) return true;
+            }
+            for (var i=0; i<SLOW_PATHS.length; i++) {
+              if (pathname.startsWith(SLOW_PATHS[i])) return true;
+            }
+            return false;
+          }
+
+          if (_isSlowPath(location.pathname)) {
+            startLoader();
+            document.addEventListener('DOMContentLoaded', function() {
+              overlay.style.display = 'none';
+              clearInterval(timer);
+            });
+          }
+
+          document.addEventListener('click', function(e) {
+            var a = e.target.closest('a');
+            if (!a || !a.href) return;
+            try {
+              var url = new URL(a.href);
+              if (url.origin !== location.origin) return;
+              if (_isSlowPath(url.pathname)) startLoader();
+            } catch(ex) {}
+          });
+
+          document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (!form || !form.action) return;
+            try {
+              var url = new URL(form.action);
+              if (url.origin !== location.origin) return;
+              if (_isSlowPath(url.pathname)) startLoader();
+            } catch(ex) {}
+          });
+
+          window.startLoader = startLoader;
+
+          window.addEventListener('pageshow', function(e) {
+            if (e.persisted) { overlay.style.display='none'; clearInterval(timer); }
+          });
+        })();
+        </script>"""
 
 
 # ==========================
@@ -595,6 +874,11 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         <div class="container">
             {body}
         </div>
+
+        <footer style="border-top:1px solid #1e293b;padding:14px 16px 80px;text-align:center;font-size:0.72rem;color:#475569;">
+            &copy; 2026 Wadsworth Economic Tycoon Simulator &nbsp;|&nbsp;
+            <a href="/privacy-policy" style="color:#475569;text-decoration:underline;">Privacy Policy</a>
+        </footer>
 
         <div class="ticker" id="tickerBar">
             <div class="ticker-controls">
@@ -1183,170 +1467,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         }}
         </script>
 
-        <!-- ═══════════════════════════════════════════════════
-             NAVIGATION LOADER — shown on slow server pages
-             (production costs calculator, etc.)
-             Triggers on click, disappears when new page arrives.
-        ═══════════════════════════════════════════════════ -->
-        <div id="nav-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0806;color:#F5F5DC;font-family:Georgia,serif;align-items:center;justify-content:center;">
-          <div style="position:relative;width:100%;max-width:420px;padding:40px;background:#1A0F0A;border:4px solid #2D1810;box-shadow:0 25px 50px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;box-sizing:border-box;">
-            <!-- brass corners -->
-            <div style="position:absolute;top:8px;left:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
-            <div style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-top:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
-            <div style="position:absolute;bottom:8px;left:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-left:1px solid rgba(176,141,87,.4);"></div>
-            <div style="position:absolute;bottom:8px;right:8px;width:16px;height:16px;border-bottom:1px solid rgba(176,141,87,.4);border-right:1px solid rgba(176,141,87,.4);"></div>
-            <!-- apple SVG -->
-            <div style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;">
-              <svg viewBox="0 0 201.5 207.54" style="width:100%;height:100%;filter:drop-shadow(0 0 20px rgba(229,0,0,0.4));" class="nl-pulse">
-                <defs>
-                  <linearGradient id="nl-lg"><stop style="stop-color:#e50000" offset="0"/><stop style="stop-color:#ff5555;stop-opacity:0" offset="1"/></linearGradient>
-                  <radialGradient id="nl-rg" cy="172.36" cx="342.86" gradientTransform="matrix(1 0 0 1.0417 0 -7.1934)" r="193.09" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:#e50000"/><stop offset="1" style="stop-color:#ff5555;stop-opacity:0"/></radialGradient>
-                </defs>
-                <g transform="matrix(.15791 0 0 .15791 16.376 41.416)">
-                  <path style="fill-rule:evenodd;fill:#008000" d="m470.03 168.72c-34.81 0.55-75.98 25.14-120.23 80.45 287.24-187.49 318.09 308.34-234.97 802.83h105.53c11.37-10.2 22.06-19.9 30.58-28.8 404.11-366.71 376.62-856.94 219.09-854.48z"/>
-                  <path style="fill-rule:evenodd;fill:#008000" d="m834.13 625.57c77.98-166.27-189.49-144.42-409.81 189.81l-7.81-53.51c195.76-321.73 564.68-292.21 417.62-136.3z"/>
-                  <path style="fill-rule:evenodd;fill:#008000" d="m44.425 533.84c57.285-180.94 245.14 23.08 178.28 431.36l43.44-35.18c76.75-381.56-224.17-617.67-221.72-396.18z"/>
-                  <g transform="translate(17.143 -148.57)">
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(219.15 -163.07)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(27.721 -188.78)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-86.565 -45.925)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(256.29 14.075)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(150.58 151.22)"/>
-                    <path style="fill-rule:evenodd;fill:#ff8e8e" d="m357.14 205.1c0.02 71.81-65.23 130.02-145.71 130.02-80.49 0-145.73-58.21-145.72-130.02-0.009-71.81 65.23-130.02 145.72-130.02 80.48-0.002 145.73 58.21 145.71 130.02z" transform="translate(-12.279 128.36)"/>
-                    <path style="fill-rule:evenodd;fill:url(#nl-rg)" d="m500 300.93c-39.84 48.69-62.4-55.86-121.24-33.61s-6.6 115.57-68.68 105.42c-62.08-10.16 17.18-81.97-31.51-121.81-48.69-39.83-103.38 52.08-125.63-6.76-22.25-58.85 79.57-26.11 89.73-88.2 10.15-62.077-96.79-63.492-56.96-112.18 39.84-48.687 62.4 55.86 121.25 33.613 58.84-22.247 6.59-115.57 68.67-105.42 62.08 10.158-17.17 81.973 31.51 121.81 48.69 39.837 103.39-52.077 125.63 6.767 22.25 58.84-79.57 26.11-89.73 88.19-10.15 62.08 96.8 63.5 56.96 112.18z" transform="matrix(1.2126 0 0 1.2126 -107.6 -19.596)"/>
-                    <path style="fill-rule:evenodd;fill:#ffd5d5" d="m514.29 249.39c0.01 44.19-33.25 80.02-74.29 80.02s-74.3-35.83-74.29-80.02c-0.01-44.2 33.25-80.03 74.29-80.03s74.3 35.83 74.29 80.03z" transform="translate(-131.87 -59.983)"/>
-                  </g>
-                </g>
-              </svg>
-            </div>
-            <!-- title + messages -->
-            <div style="margin-top:28px;width:100%;text-align:center;">
-              <p style="font-size:9px;letter-spacing:.5em;text-transform:uppercase;color:#B08D57;font-weight:900;opacity:.4;margin:0 0 14px;">Wadsworth Executive Terminal</p>
-              <div id="nl-msgs" style="height:88px;display:flex;flex-direction:column-reverse;align-items:center;gap:4px;overflow:hidden;"></div>
-            </div>
-            <!-- progress bar -->
-            <div style="margin-top:20px;width:100%;height:3px;background:rgba(0,0,0,.6);border:1px solid rgba(176,141,87,.1);border-radius:9999px;overflow:hidden;">
-              <div id="nl-bar" style="height:100%;width:0%;background:linear-gradient(to right,#8B4513,#B08D57,#F5F5DC);box-shadow:0 0 10px rgba(176,141,87,.5);transition:width .15s linear;"></div>
-            </div>
-            <!-- footer -->
-            <div style="margin-top:12px;width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-              <div style="display:flex;gap:14px;opacity:.2;font-size:13px;">&#9646; &#9632; &#9650;</div>
-              <span id="nl-pct" style="font-size:9px;font-family:monospace;opacity:.4;color:#B08D57;">0% SECURED</span>
-            </div>
-            <div style="position:absolute;bottom:-52px;font-size:9px;letter-spacing:.6em;text-transform:uppercase;opacity:.2;color:#B08D57;" class="nl-pulse">Handshake in Progress</div>
-          </div>
-        </div>
-        <style>
-          @keyframes nl-pulse-anim {{ 0%,100%{{opacity:.3}} 50%{{opacity:.7}} }}
-          .nl-pulse {{ animation: nl-pulse-anim 2s ease-in-out infinite; }}
-        </style>
-        <script>
-        (function() {{
-          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market'];
-          var SLOW_EXACT = ['/', '/api/inventory/list', '/api/market/order'];
-          var STEPS = [
-            "Initializing Secure Terminal...",
-            "Authenticating Executive Credentials...",
-            "Decrypting Asset Valuation Data...",
-            "Syncing Broadcast Signal...",
-            "Verifying Market Volatility...",
-            "Establishing Brass Inlay Connection...",
-            "Buffering Liquidity Pools...",
-            "Optimizing Yield Curves...",
-            "Parsing Capitol Schematics...",
-            "Engaging Stealth Protocols...",
-            "Allocating Surplus Capital...",
-            "Calibrating Brass Resonance...",
-            "Updating Ledger Entries...",
-            "Deploying Asset Containers...",
-            "Finalizing Handshake..."
-          ];
-          var overlay = document.getElementById('nav-loader');
-          var bar     = document.getElementById('nl-bar');
-          var pct     = document.getElementById('nl-pct');
-          var msgs    = document.getElementById('nl-msgs');
-          var prog    = 0;
-          var timer   = null;
-          var msgList = ["Initializing Secure Terminal..."];
-
-          function renderMsgs() {{
-            msgs.innerHTML = msgList.slice(0,4).map(function(m,i) {{
-              var opacity = i === 0 ? '1' : '0.3';
-              var scale   = i === 0 ? '1' : '0.95';
-              var prefix  = i === 0 ? '&gt; ' : '';
-              return '<p style="font-size:11px;font-style:italic;letter-spacing:-.01em;color:#B08D57;margin:0;transition:all .3s;opacity:'+opacity+';transform:scale('+scale+')">'
-                     + prefix + m + '</p>';
-            }}).join('');
-          }}
-
-          function startLoader() {{
-            prog = 0; msgList = ["Initializing Secure Terminal..."];
-            overlay.style.display = 'flex';
-            renderMsgs();
-            timer = setInterval(function() {{
-              prog += 5;
-              if (prog >= 100) prog = 0;
-              if (Math.floor(prog/15) > Math.floor((prog-5)/15)) {{
-                var next = STEPS[Math.floor(Math.random()*STEPS.length)];
-                msgList = [next].concat(msgList).slice(0,4);
-                renderMsgs();
-              }}
-              bar.style.width = prog + '%';
-              pct.textContent = prog + '% SECURED';
-            }}, 150);
-          }}
-
-          function _isSlowPath(pathname) {{
-            for (var i=0; i<SLOW_EXACT.length; i++) {{
-              if (pathname === SLOW_EXACT[i]) return true;
-            }}
-            for (var i=0; i<SLOW_PATHS.length; i++) {{
-              if (pathname.startsWith(SLOW_PATHS[i])) return true;
-            }}
-            return false;
-          }}
-
-          // Show immediately on direct load / refresh of a slow page,
-          // then hide once the browser has finished rendering the DOM.
-          if (_isSlowPath(location.pathname)) {{
-            startLoader();
-            document.addEventListener('DOMContentLoaded', function() {{
-              overlay.style.display = 'none';
-              clearInterval(timer);
-            }});
-          }}
-
-          // Show on <a> clicks to known-slow pages
-          document.addEventListener('click', function(e) {{
-            var a = e.target.closest('a');
-            if (!a || !a.href) return;
-            try {{
-              var url = new URL(a.href);
-              if (url.origin !== location.origin) return;
-              if (_isSlowPath(url.pathname)) startLoader();
-            }} catch(ex) {{}}
-          }});
-
-          // Show on form submits to known-slow pages (e.g. search box)
-          document.addEventListener('submit', function(e) {{
-            var form = e.target;
-            if (!form || !form.action) return;
-            try {{
-              var url = new URL(form.action);
-              if (url.origin !== location.origin) return;
-              if (_isSlowPath(url.pathname)) startLoader();
-            }} catch(ex) {{}}
-          }});
-
-          // Expose so inline onclick handlers can trigger it: window.startLoader()
-          window.startLoader = startLoader;
-
-          // Hide if user hits back/forward into this page (bfcache)
-          window.addEventListener('pageshow', function(e) {{
-            if (e.persisted) {{ overlay.style.display='none'; clearInterval(timer); }}
-          }});
-        }})();
-        </script>
+        {_nav_loader_html()}
         <script>
         // ── Notification Badge & In-App Sound ─────────────────────────────────
         (function() {{

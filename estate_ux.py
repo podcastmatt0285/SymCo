@@ -14,6 +14,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
+from ux import _nav_loader_html as _nav_loader
 
 router = APIRouter()
 
@@ -364,6 +365,7 @@ def death_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
     <div class="container">
         {body}
     </div>
+    {_nav_loader()}
 </body>
 </html>
 """
