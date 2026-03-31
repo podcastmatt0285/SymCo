@@ -1,5 +1,5 @@
 // Wadsworth PWA Service Worker — static assets cached, live API/pages always network
-const CACHE_VERSION = "wadsworth-v6";
+const CACHE_VERSION = "wadsworth-v7";
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
