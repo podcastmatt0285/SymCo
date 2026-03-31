@@ -16,6 +16,7 @@ NOTE: There is NO manual forex swap route. All currency conversion is automatic
 from fastapi import APIRouter, Cookie, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Optional
+from ux import _nav_loader_html as _nav_loader
 
 from auth import get_player_from_session, get_db as get_auth_db
 from reserve_banks import (
@@ -120,7 +121,7 @@ def _page(title: str, body: str) -> str:
 <title>{title} — Reserve Banks</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>{_CSS}</style>
-</head><body><div class="container">{body}</div></body></html>"""
+</head><body><div class="container">{body}</div>{_nav_loader()}</body></html>"""
 
 
 # ──────────────────────────────────────────────────────────────────────────────
