@@ -623,10 +623,10 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
     <head>
         <title>{title} · Wadsworth</title>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <!-- PWA -->
         <link rel="manifest" href="/manifest.json">
-        <meta name="theme-color" content="#38bdf8">
+        <meta name="theme-color" content="#020617">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -661,7 +661,10 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                 color: #e5e7eb;
                 font-family: 'JetBrains Mono', monospace;
                 margin: 0;
-                padding-bottom: 60px;
+                /* Push content below OS status bar on iOS (viewport-fit=cover) and
+                   below WCO titlebar on desktop */
+                padding-top: env(safe-area-inset-top, 0px);
+                padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
                 font-size: 18px;
             }}
 
@@ -671,12 +674,18 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             .header {{
                 border-bottom: 1px solid #1e293b;
                 padding: 12px 16px;
+                /* On desktop WCO the titlebar area overlays the top of the page —
+                   shift content below it so it isn't hidden behind the window controls */
+                padding-top: max(12px, env(titlebar-area-height, 12px));
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 flex-wrap: wrap;
                 gap: 8px;
+                /* Make the header draggable on desktop so the window can still be moved */
+                -webkit-app-region: drag;
             }}
+            .header * {{ -webkit-app-region: no-drag; }}
 
             .brand {{
                 font-weight: bold;
@@ -760,7 +769,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 
             .ticker {{
                 position: fixed;
-                bottom: 0;
+                bottom: env(safe-area-inset-bottom, 0px);
                 left: 0;
                 right: 0;
                 background: #0f172a;
