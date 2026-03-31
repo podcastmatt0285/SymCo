@@ -148,7 +148,12 @@
     {
       "type": "Action.OpenUrl",
       "title": "Open Wadsworth",
-      "url": "/"
+      "url": "${open_url}"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "View Activity",
+      "url": "${last_alert_url}"
     }
   ]
 }

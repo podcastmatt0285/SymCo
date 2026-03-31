@@ -143,9 +143,28 @@ self.addEventListener("widgetresume", (event) => {
 });
 
 self.addEventListener("widgetclick", (event) => {
-  if (event.action === "open") {
-    event.waitUntil(clients.openWindow("/"));
+  // Resolve target URL: prefer data embedded in the widget, fall back to "/"
+  const widgetData = (() => {
+    try { return JSON.parse(event.widget && event.widget.instanceId ? "{}" : "{}"); } catch(e) { return {}; }
+  })();
+
+  let targetUrl = "/";
+  if (event.action === "open_alert" || event.action === "view_activity") {
+    targetUrl = widgetData.last_alert_url || "/stats";
   }
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
+      for (const c of cs) {
+        if ("focus" in c) {
+          return c.focus().then(() => {
+            if ("navigate" in c) return c.navigate(targetUrl);
+          }).catch(() => clients.openWindow(targetUrl));
+        }
+      }
+      return clients.openWindow(targetUrl);
+    })
+  );
 });
 
 // ── Routing ───────────────────────────────────────────────────────────────────

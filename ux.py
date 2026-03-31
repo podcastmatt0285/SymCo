@@ -512,6 +512,23 @@ def _nav_loader_html() -> str:
             if (e.persisted) { overlay.style.display='none'; clearInterval(timer); }
           });
         })();
+        </script>
+        <script>
+        // ── In-app notification sound (fires on all pages via service worker message) ──
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
+              // Android standalone/TWA already plays the OS channel sound — skip to avoid double play
+              if (/android/i.test(navigator.userAgent) &&
+                  window.matchMedia('(display-mode: standalone)').matches) return;
+              try {
+                var snd = new Audio('/static/sounds/notification.mp3');
+                snd.volume = 0.6;
+                snd.play().catch(function(){});
+              } catch(e) {}
+            }
+          });
+        }
         </script>"""
 
 
@@ -1449,20 +1466,6 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         if ('serviceWorker' in navigator) {{
             window.addEventListener('load', () => {{
                 navigator.serviceWorker.register('/sw.js').catch(() => {{}});
-            }});
-            // Play in-app notification sound when a push arrives while the page is open
-            navigator.serviceWorker.addEventListener('message', (event) => {{
-                if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {{
-                    // On Android in standalone/TWA the native notification channel
-                    // already plays the sound — skip web audio to avoid double-play.
-                    if (/android/i.test(navigator.userAgent) &&
-                        window.matchMedia('(display-mode: standalone)').matches) return;
-                    try {{
-                        const snd = new Audio('/static/sounds/notification.mp3');
-                        snd.volume = 0.6;
-                        snd.play().catch(() => {{}});  // ignore autoplay policy rejections
-                    }} catch(e) {{}}
-                }}
             }});
         }}
         </script>
@@ -9548,10 +9551,29 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
     from reserve_banks import get_player_display_currency, fmt_usd
     _disp = get_player_display_currency(player.id)
 
+    def _url_for_tx_type(tx_type: str) -> str:
+        t = (tx_type or "").lower()
+        if "brokerage" in t or "stock" in t or "ipo" in t or "etf" in t or "short" in t: return "/brokerage"
+        if "market" in t or "commodity" in t: return "/market"
+        if "land" in t or "real_estate" in t or "real estate" in t: return "/land"
+        if "bank" in t or "loan" in t or "banking" in t: return "/banks"
+        if "executive" in t or "exec" in t: return "/executives"
+        if "dm" in t or "direct_message" in t or "message" in t: return "/dm"
+        if "contract" in t or "p2p" in t or "trust" in t: return "/p2p"
+        if "city" in t: return "/cities"
+        if "county" in t: return "/counties"
+        if "reserve" in t or "bond" in t or "forex" in t: return "/reserve-banks"
+        if "memecoin" in t or "meme" in t: return "/memecoins"
+        if "business" in t or "production" in t or "retail" in t or "inventory" in t: return "/businesses"
+        if "estate" in t or "will" in t or "inheritance" in t: return "/estate"
+        return "/stats"
+
     result = {
         "balance": fmt_usd(player.cash_balance, _disp, precision=0),
         "last_alert": "No recent activity",
         "last_alert_time": "",
+        "last_alert_url": "/stats",
+        "open_url": "/",
         "notifications": [],
         "tickers": [], "indices": [], "stocks": [], "bonds": [], "memes": [],
     }
@@ -9574,6 +9596,7 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
             if txs:
                 result["last_alert"] = (txs[0].description or txs[0].transaction_type or "")[:80]
                 result["last_alert_time"] = _ago(txs[0].timestamp)
+                result["last_alert_url"] = _url_for_tx_type(txs[0].transaction_type)
                 result["notifications"] = [
                     {
                         "text": (t.description or t.transaction_type or "")[:60],
