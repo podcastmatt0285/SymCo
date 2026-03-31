@@ -12,6 +12,7 @@ Provides web interface and API endpoints for:
 from typing import Optional, List
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
+from ux import _nav_loader_html as _nav_loader
 
 router = APIRouter()
 
@@ -783,6 +784,7 @@ async def counties_dashboard(
             </div>
         </div>
         {ticker_html}
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1038,6 +1040,7 @@ async def view_county(
 
             {parliament_html}
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1106,6 +1109,7 @@ async def petition_new_county_page(session_token: Optional[str] = Cookie(None)):
                 </form>
             </div>
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1182,6 +1186,7 @@ async def petition_join_county_page(session_token: Optional[str] = Cookie(None))
                 </form>
             </div>
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1399,6 +1404,7 @@ async def county_mining_node(
                 {deposits_html}
             </div>
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1848,6 +1854,7 @@ async def crypto_exchange(
             </div>
         </div>
         {ticker_html}
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1998,6 +2005,7 @@ tr:hover {{ background: #0f172a; }}
     </div>
 
 </div>
+{_nav_loader()}
 </body>
 </html>"""
 
@@ -2318,6 +2326,7 @@ async def token_info_page(
             </div>
         </div>
         {ticker_html}
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -3017,6 +3026,7 @@ async def county_governance(
             {delegation_html}
             {history_html}
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """

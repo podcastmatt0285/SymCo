@@ -414,8 +414,8 @@ def _nav_loader_html() -> str:
         </style>
         <script>
         (function() {
-          var SLOW_PATHS = ['/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market', '/stats', '/brokerage', '/banks', '/executives', '/cities', '/counties', '/exchange', '/estate', '/wallet'];
-          var SLOW_EXACT = ['/', '/api/inventory/list', '/api/market/order'];
+          var SLOW_PATHS = ['/api', '/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market', '/stats', '/brokerage', '/banks', '/executives', '/cities', '/counties', '/exchange', '/estate', '/wallet'];
+          var SLOW_EXACT = ['/'];
           var STEPS = [
             "Initializing Secure Terminal...",
             "Authenticating Executive Credentials...",

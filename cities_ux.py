@@ -8,6 +8,7 @@ Provides web interface and API endpoints for city management.
 from typing import Optional, List
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
+from ux import _nav_loader_html as _nav_loader
 
 router = APIRouter()
 
@@ -422,6 +423,7 @@ async def cities_list(session_token: Optional[str] = Cookie(None), msg: Optional
                 {cities_html}
             </div>
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -662,6 +664,7 @@ async def view_applicant_profile(city_id: int, applicant_id: int, session_token:
                 <a href="/city/{city_id}" class="btn btn-primary">← Back to City</a>
             </div>
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """
@@ -1690,6 +1693,7 @@ async def view_city(city_id: int, session_token: Optional[str] = Cookie(None)):
             {member_actions}
             {mayor_controls}
         </div>
+    {_nav_loader()}
     </body>
     </html>
     """

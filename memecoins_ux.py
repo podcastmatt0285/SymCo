@@ -19,6 +19,7 @@ Routes:
 from typing import Optional
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from ux import _nav_loader_html as _nav_loader
 
 router = APIRouter()
 
@@ -386,6 +387,7 @@ async def county_memecoins(
 
     {cards_html}
 </div>
+{_nav_loader()}
 </body>
 </html>"""
 
@@ -560,6 +562,7 @@ function updateBacking() {{
 window.addEventListener('load', updateBacking);
 </script>
 </div>
+{_nav_loader()}
 </body>
 </html>"""
 
@@ -1461,6 +1464,7 @@ function calcBurnMint() {{
     }}
 }}
 </script>
+{_nav_loader()}
 </body>
 </html>"""
 
@@ -2479,6 +2483,7 @@ async def wallet_dashboard(
     setInterval(refreshTicker,15000);
 }})();
 </script>
+{_nav_loader()}
 </body>
 </html>"""
 
