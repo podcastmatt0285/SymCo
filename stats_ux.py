@@ -20,6 +20,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from database import engine, SessionLocal
+from ux import _nav_loader_html as _nav_loader
 Base = declarative_base()
 
 # ==========================
@@ -771,6 +772,7 @@ def stats_shell(title: str, body: str, balance: float = 0.0, player_name: str = 
             }});
         }}
     </script>
+    {_nav_loader()}
 </body>
 </html>
 """
@@ -3005,6 +3007,7 @@ a{color:#90c4f0;text-decoration:none;}a:hover{color:#f5d76e;}
 </header>
 <nav class="wn">{nav}</nav>
 <main class="wm">{body}</main>
+{_nav_loader()}
 </body></html>"""
 
 
