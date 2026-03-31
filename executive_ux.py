@@ -12,6 +12,7 @@ UX for the executive management system.
 from typing import Optional
 from fastapi import APIRouter, Cookie, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
+from ux import _nav_loader_html as _nav_loader
 
 router = APIRouter()
 
@@ -378,6 +379,7 @@ def exec_shell(title: str, body: str, player=None) -> str:
     </div>
     {body}
 </div>
+{_nav_loader()}
 </body></html>"""
 
 
