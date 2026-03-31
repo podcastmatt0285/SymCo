@@ -39,16 +39,16 @@
 36        <intent>
 36-->[com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/5053e02be90783e54992393be394bb70/transformed/androidbrowserhelper-2.6.2/AndroidManifest.xml:23:9-29:18
 37            <action android:name="android.intent.action.VIEW" />
-37-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-68
-37-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:25-66
+37-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:17-68
+37-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:25-66
 38
 39            <category android:name="android.intent.category.BROWSABLE" />
-39-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:17-77
-39-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:27-75
+39-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:17-77
+39-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:27-75
 40
 41            <data android:scheme="https" />
-41-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:17-165:19
-41-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:23-45
+41-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-162:19
+41-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:23-45
 42        </intent>
 43        <intent>
 43-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:13:9-15:18
@@ -87,7 +87,7 @@
 60-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:25:22-64
 61
 62    <application
-62-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:35:5-240:19
+62-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:35:5-237:19
 63        android:name="cc.notifly.wadsworth.WadsworthApplication"
 63-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:36:9-65
 64        android:allowBackup="true"
@@ -153,7 +153,7 @@
 95            </intent-filter>
 96        </activity>
 97        <activity
-97-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:79:9-171:20
+97-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:79:9-168:20
 98            android:name="cc.notifly.wadsworth.twa.LauncherActivity"
 98-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:79:19-50
 99            android:alwaysRetainTaskState="true"
@@ -247,423 +247,417 @@
 143                android:value="@string/fallbackType" />
 143-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:131:17-53
 144            <meta-data
-144-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:13-137:52
-145                android:name="android.support.customtabs.trusted.DISPLAY_MODE"
-145-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:136:24-86
-146                android:value="sticky-immersive" />
-146-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:17-49
+144-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:13-138:54
+145                android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
+145-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:137:24-92
+146                android:value="@string/orientation" />
+146-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:138:17-52
 147            <meta-data
-147-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:140:13-141:54
-148                android:name="android.support.customtabs.trusted.SCREEN_ORIENTATION"
-148-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:140:24-92
-149                android:value="@string/orientation" />
-149-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:141:17-52
-150            <meta-data
-150-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:146:17-148:66
-151                android:name="android.support.customtabs.trusted.DISPLAY_OVERRIDE"
-151-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:147:21-87
-152                android:resource="@array/display_override" />
-152-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:148:21-63
+147-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:143:17-145:66
+148                android:name="android.support.customtabs.trusted.DISPLAY_OVERRIDE"
+148-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:144:21-87
+149                android:resource="@array/display_override" />
+149-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:145:21-63
+150
+151            <intent-filter>
+151-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:150:13-153:29
+152                <action android:name="android.intent.action.MAIN" />
+152-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:151:17-69
+152-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:151:25-66
 153
-154            <intent-filter>
-154-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:153:13-156:29
-155                <action android:name="android.intent.action.MAIN" />
-155-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:154:17-69
-155-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:154:25-66
-156
-157                <category android:name="android.intent.category.LAUNCHER" />
-157-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:17-77
-157-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:27-74
-158            </intent-filter>
-159            <intent-filter android:autoVerify="true" >
-159-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:13-166:29
-159-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:28-53
-160                <action android:name="android.intent.action.VIEW" />
-160-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-68
-160-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:25-66
+154                <category android:name="android.intent.category.LAUNCHER" />
+154-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:152:17-77
+154-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:152:27-74
+155            </intent-filter>
+156            <intent-filter android:autoVerify="true" >
+156-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:13-163:29
+156-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:155:28-53
+157                <action android:name="android.intent.action.VIEW" />
+157-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:17-68
+157-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:25-66
+158
+159                <category android:name="android.intent.category.DEFAULT" />
+159-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:21-80
+159-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
+160                <category android:name="android.intent.category.BROWSABLE" />
+160-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:17-77
+160-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:27-75
 161
-162                <category android:name="android.intent.category.DEFAULT" />
-162-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:21-80
-162-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
-163                <category android:name="android.intent.category.BROWSABLE" />
-163-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:17-77
-163-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:27-75
-164
-165                <data
-165-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:17-165:19
-166                    android:host="@string/hostName"
-166-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:163:21-52
-167                    android:scheme="https" />
-167-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:23-45
-168            </intent-filter>
-169        </activity>
-170        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
-170-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:173:9-90
-170-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:173:19-87
-171        <activity
-171-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:175:9-176:62
-172            android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
-172-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:175:19-97
-173            android:configChanges="orientation|screenSize" />
-173-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:176:13-59
-174
-175        <provider
-175-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:178:9-186:20
-176            android:name="androidx.core.content.FileProvider"
-176-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:179:13-62
-177            android:authorities="@string/providerAuthority"
-177-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:180:13-60
-178            android:exported="false"
-178-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:182:13-37
-179            android:grantUriPermissions="true" >
-179-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:181:13-47
-180            <meta-data
-180-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:183:13-185:53
-181                android:name="android.support.FILE_PROVIDER_PATHS"
-181-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:184:17-67
-182                android:resource="@xml/filepaths" />
-182-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:185:17-50
-183        </provider>
-184
-185        <service
-185-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:188:9-203:19
-186            android:name="cc.notifly.wadsworth.twa.DelegationService"
-186-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:189:13-46
-187            android:enabled="@bool/enableNotification"
-187-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:190:13-55
-188            android:exported="@bool/enableNotification" >
-188-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:191:13-56
-189            <meta-data
-189-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:194:17-196:73
-190                android:name="android.support.customtabs.trusted.SMALL_ICON"
-190-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:195:21-81
-191                android:resource="@drawable/ic_notification_icon" />
-191-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:196:21-70
+162                <data
+162-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-162:19
+163                    android:host="@string/hostName"
+163-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:160:21-52
+164                    android:scheme="https" />
+164-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:23-45
+165            </intent-filter>
+166        </activity>
+167        <activity android:name="com.google.androidbrowserhelper.trusted.FocusActivity" />
+167-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:170:9-90
+167-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:170:19-87
+168        <activity
+168-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:172:9-173:62
+169            android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
+169-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:172:19-97
+170            android:configChanges="orientation|screenSize" />
+170-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:173:13-59
+171
+172        <provider
+172-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:175:9-183:20
+173            android:name="androidx.core.content.FileProvider"
+173-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:176:13-62
+174            android:authorities="@string/providerAuthority"
+174-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:177:13-60
+175            android:exported="false"
+175-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:179:13-37
+176            android:grantUriPermissions="true" >
+176-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:178:13-47
+177            <meta-data
+177-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:180:13-182:53
+178                android:name="android.support.FILE_PROVIDER_PATHS"
+178-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:181:17-67
+179                android:resource="@xml/filepaths" />
+179-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:182:17-50
+180        </provider>
+181
+182        <service
+182-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:185:9-200:19
+183            android:name="cc.notifly.wadsworth.twa.DelegationService"
+183-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:186:13-46
+184            android:enabled="@bool/enableNotification"
+184-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:187:13-55
+185            android:exported="@bool/enableNotification" >
+185-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:188:13-56
+186            <meta-data
+186-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:191:17-193:73
+187                android:name="android.support.customtabs.trusted.SMALL_ICON"
+187-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:192:21-81
+188                android:resource="@drawable/ic_notification_icon" />
+188-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:193:21-70
+189
+190            <intent-filter>
+190-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:196:13-199:29
+191                <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+191-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:197:17-105
+191-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:197:25-103
 192
-193            <intent-filter>
-193-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:199:13-202:29
-194                <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
-194-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:200:17-105
-194-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:200:25-103
-195
-196                <category android:name="android.intent.category.DEFAULT" />
-196-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:21-80
-196-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
-197            </intent-filter>
-198        </service>
-199
-200        <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
-200-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:206:13-118
-200-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:206:23-115
-201        <activity
-201-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:211:9-224:20
-202            android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentActivity"
-202-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:212:13-96
-203            android:configChanges="keyboardHidden|keyboard|orientation|screenLayout|screenSize"
-203-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:214:13-96
-204            android:exported="true"
-204-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:215:13-36
-205            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
-205-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:213:13-72
-206            <intent-filter>
-206-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:217:13-219:29
-207                <action android:name="org.chromium.intent.action.PAY" />
-207-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:218:17-73
-207-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:218:25-70
-208            </intent-filter>
-209
-210            <meta-data
-210-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:221:13-223:67
-211                android:name="org.chromium.default_payment_method_name"
-211-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:222:17-72
-212                android:value="https://play.google.com/billing" />
-212-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:223:17-64
-213        </activity>
-214
-215        <!-- This service checks who calls it at runtime. -->
-216        <service
-216-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:227:9-233:19
-217            android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentService"
-217-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:228:13-95
-218            android:exported="true" >
-218-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:229:13-36
-219            <intent-filter>
-219-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:230:13-232:29
-220                <action android:name="org.chromium.intent.action.IS_READY_TO_PAY" />
-220-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:231:17-85
-220-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:231:25-82
-221            </intent-filter>
-222        </service>
-223
-224        <receiver
-224-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:13-400
-225            android:name="cc.notifly.wadsworth.WadsworthWidget"
-225-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:23-74
-226            android:exported="true"
-226-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:108-131
-227            android:label="Balance + Alerts" >
-227-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:75-107
-228            <intent-filter>
-228-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:132-289
-229                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-229-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:147-213
-229-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:155-211
-230                <action android:name="cc.notifly.wadsworth.WIDGET_REFRESH" />
-230-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:213-273
-230-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:221-271
-231            </intent-filter>
-232
-233            <meta-data
-233-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:289-389
-234                android:name="android.appwidget.provider"
-234-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:300-341
-235                android:resource="@xml/wadsworth_widget_info" />
-235-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:342-387
-236        </receiver>
-237
-238        <activity
-238-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:13-425
-239            android:name="cc.notifly.wadsworth.WadsworthTokenActivity"
-239-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:23-81
-240            android:exported="true"
-240-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:82-105
-241            android:theme="@android:style/Theme.NoDisplay" >
-241-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:106-152
-242            <intent-filter>
-242-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:153-414
-243                <action android:name="android.intent.action.VIEW" />
-243-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-68
-243-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:25-66
+193                <category android:name="android.intent.category.DEFAULT" />
+193-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:21-80
+193-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
+194            </intent-filter>
+195        </service>
+196
+197        <activity android:name="com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity" />
+197-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:203:13-118
+197-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:203:23-115
+198        <activity
+198-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:208:9-221:20
+199            android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentActivity"
+199-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:209:13-96
+200            android:configChanges="keyboardHidden|keyboard|orientation|screenLayout|screenSize"
+200-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:211:13-96
+201            android:exported="true"
+201-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:212:13-36
+202            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+202-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:210:13-72
+203            <intent-filter>
+203-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:214:13-216:29
+204                <action android:name="org.chromium.intent.action.PAY" />
+204-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:215:17-73
+204-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:215:25-70
+205            </intent-filter>
+206
+207            <meta-data
+207-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:218:13-220:67
+208                android:name="org.chromium.default_payment_method_name"
+208-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:219:17-72
+209                android:value="https://play.google.com/billing" />
+209-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:220:17-64
+210        </activity>
+211
+212        <!-- This service checks who calls it at runtime. -->
+213        <service
+213-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:224:9-230:19
+214            android:name="com.google.androidbrowserhelper.playbilling.provider.PaymentService"
+214-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:225:13-95
+215            android:exported="true" >
+215-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:226:13-36
+216            <intent-filter>
+216-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:227:13-229:29
+217                <action android:name="org.chromium.intent.action.IS_READY_TO_PAY" />
+217-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:228:17-85
+217-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:228:25-82
+218            </intent-filter>
+219        </service>
+220
+221        <receiver
+221-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:13-400
+222            android:name="cc.notifly.wadsworth.WadsworthWidget"
+222-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:23-74
+223            android:exported="true"
+223-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:108-131
+224            android:label="Balance + Alerts" >
+224-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:75-107
+225            <intent-filter>
+225-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:132-289
+226                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+226-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:147-213
+226-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:155-211
+227                <action android:name="cc.notifly.wadsworth.WIDGET_REFRESH" />
+227-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:213-273
+227-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:221-271
+228            </intent-filter>
+229
+230            <meta-data
+230-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:289-389
+231                android:name="android.appwidget.provider"
+231-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:300-341
+232                android:resource="@xml/wadsworth_widget_info" />
+232-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:342-387
+233        </receiver>
+234
+235        <activity
+235-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:13-425
+236            android:name="cc.notifly.wadsworth.WadsworthTokenActivity"
+236-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:23-81
+237            android:exported="true"
+237-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:82-105
+238            android:theme="@android:style/Theme.NoDisplay" >
+238-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:106-152
+239            <intent-filter>
+239-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:233:153-414
+240                <action android:name="android.intent.action.VIEW" />
+240-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:17-68
+240-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:156:25-66
+241
+242                <category android:name="android.intent.category.DEFAULT" />
+242-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:21-80
+242-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
+243                <category android:name="android.intent.category.BROWSABLE" />
+243-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:17-77
+243-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:158:27-75
 244
-245                <category android:name="android.intent.category.DEFAULT" />
-245-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:21-80
-245-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:74:31-77
-246                <category android:name="android.intent.category.BROWSABLE" />
-246-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:17-77
-246-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:161:27-75
-247
-248                <data
-248-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:17-165:19
-249                    android:host="widget-auth"
-249-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:163:21-52
-250                    android:scheme="wadsworth" />
-250-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:162:23-45
-251            </intent-filter>
-252        </activity>
-253
-254        <receiver
-254-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:13-381
-255            android:name="cc.notifly.wadsworth.WBCWidget"
-255-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:23-68
-256            android:exported="true"
-256-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:98-121
-257            android:label="WBC-50 Index" >
-257-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:69-97
-258            <intent-filter>
-258-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:122-276
-259                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-259-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:147-213
-259-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:155-211
-260                <action android:name="cc.notifly.wadsworth.WBC_REFRESH" />
-260-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:203-260
-260-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:237:211-258
-261            </intent-filter>
-262
-263            <meta-data
-263-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:289-389
-264                android:name="android.appwidget.provider"
-264-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:300-341
-265                android:resource="@xml/wbc_widget_info" />
-265-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:342-387
-266        </receiver>
-267        <receiver
-267-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:13-403
-268            android:name="cc.notifly.wadsworth.GlobalChatWidget"
-268-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:23-75
-269            android:exported="true"
-269-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:104-127
-270            android:label="Global Chat" >
-270-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:76-103
-271            <intent-filter>
-271-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:128-290
-272                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-272-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:147-213
-272-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:155-211
-273                <action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH" />
-273-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:209-274
-273-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:238:217-272
-274            </intent-filter>
-275
-276            <meta-data
-276-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:289-389
-277                android:name="android.appwidget.provider"
-277-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:300-341
-278                android:resource="@xml/global_chat_widget_info" />
-278-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:342-387
-279        </receiver>
-280        <receiver
-280-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:13-399
-281            android:name="cc.notifly.wadsworth.TradeChatWidget"
-281-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:23-74
-282            android:exported="true"
-282-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:102-125
-283            android:label="Trade Chat" >
-283-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:75-101
-284            <intent-filter>
-284-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:126-287
-285                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-285-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:147-213
-285-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:155-211
-286                <action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH" />
-286-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:207-271
-286-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:239:215-269
-287            </intent-filter>
-288
-289            <meta-data
-289-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:289-389
-290                android:name="android.appwidget.provider"
-290-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:300-341
-291                android:resource="@xml/trade_chat_widget_info" />
-291-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:342-387
-292        </receiver>
-293
-294        <meta-data
-294-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:22:9-24:37
-295            android:name="com.google.android.play.billingclient.version"
-295-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:23:13-73
-296            android:value="7.1.1" />
-296-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:24:13-34
-297
-298        <activity
-298-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:26:9-30:75
-299            android:name="com.android.billingclient.api.ProxyBillingActivity"
-299-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:27:13-78
-300            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-300-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:28:13-96
-301            android:exported="false"
-301-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:29:13-37
-302            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-302-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:30:13-72
-303        <activity
-303-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:31:9-35:75
-304            android:name="com.android.billingclient.api.ProxyBillingActivityV2"
-304-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:32:13-80
-305            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-305-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:33:13-96
-306            android:exported="false"
-306-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:34:13-37
-307            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-307-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:35:13-72
-308        <activity
-308-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
-309            android:name="com.google.android.gms.common.api.GoogleApiActivity"
-309-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
-310            android:exported="false"
-310-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
-311            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-311-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
-312
-313        <meta-data
-313-->[com.google.android.gms:play-services-basement:18.4.0] /home/maphematics/.gradle/caches/8.11.1/transforms/af1250092db6525f6762c9b32f91bede/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
-314            android:name="com.google.android.gms.version"
-314-->[com.google.android.gms:play-services-basement:18.4.0] /home/maphematics/.gradle/caches/8.11.1/transforms/af1250092db6525f6762c9b32f91bede/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
-315            android:value="@integer/google_play_services_version" />
-315-->[com.google.android.gms:play-services-basement:18.4.0] /home/maphematics/.gradle/caches/8.11.1/transforms/af1250092db6525f6762c9b32f91bede/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
-316
-317        <provider
-317-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
-318            android:name="androidx.startup.InitializationProvider"
-318-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
-319            android:authorities="cc.notifly.wadsworth.twa.androidx-startup"
-319-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
-320            android:exported="false" >
-320-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+245                <data
+245-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:17-162:19
+246                    android:host="widget-auth"
+246-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:160:21-52
+247                    android:scheme="wadsworth" />
+247-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:159:23-45
+248            </intent-filter>
+249        </activity>
+250
+251        <receiver
+251-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:13-381
+252            android:name="cc.notifly.wadsworth.WBCWidget"
+252-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:23-68
+253            android:exported="true"
+253-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:98-121
+254            android:label="WBC-50 Index" >
+254-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:69-97
+255            <intent-filter>
+255-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:122-276
+256                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+256-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:147-213
+256-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:155-211
+257                <action android:name="cc.notifly.wadsworth.WBC_REFRESH" />
+257-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:203-260
+257-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:234:211-258
+258            </intent-filter>
+259
+260            <meta-data
+260-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:289-389
+261                android:name="android.appwidget.provider"
+261-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:300-341
+262                android:resource="@xml/wbc_widget_info" />
+262-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:342-387
+263        </receiver>
+264        <receiver
+264-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:13-403
+265            android:name="cc.notifly.wadsworth.GlobalChatWidget"
+265-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:23-75
+266            android:exported="true"
+266-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:104-127
+267            android:label="Global Chat" >
+267-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:76-103
+268            <intent-filter>
+268-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:128-290
+269                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+269-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:147-213
+269-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:155-211
+270                <action android:name="cc.notifly.wadsworth.GLOBAL_CHAT_REFRESH" />
+270-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:209-274
+270-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:235:217-272
+271            </intent-filter>
+272
+273            <meta-data
+273-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:289-389
+274                android:name="android.appwidget.provider"
+274-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:300-341
+275                android:resource="@xml/global_chat_widget_info" />
+275-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:342-387
+276        </receiver>
+277        <receiver
+277-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:13-399
+278            android:name="cc.notifly.wadsworth.TradeChatWidget"
+278-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:23-74
+279            android:exported="true"
+279-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:102-125
+280            android:label="Trade Chat" >
+280-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:75-101
+281            <intent-filter>
+281-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:126-287
+282                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+282-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:147-213
+282-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:155-211
+283                <action android:name="cc.notifly.wadsworth.TRADE_CHAT_REFRESH" />
+283-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:207-271
+283-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:236:215-269
+284            </intent-filter>
+285
+286            <meta-data
+286-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:289-389
+287                android:name="android.appwidget.provider"
+287-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:300-341
+288                android:resource="@xml/trade_chat_widget_info" />
+288-->/home/maphematics/SymCo/android/twa-project/app/src/main/AndroidManifest.xml:232:342-387
+289        </receiver>
+290
+291        <meta-data
+291-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:22:9-24:37
+292            android:name="com.google.android.play.billingclient.version"
+292-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:23:13-73
+293            android:value="7.1.1" />
+293-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:24:13-34
+294
+295        <activity
+295-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:26:9-30:75
+296            android:name="com.android.billingclient.api.ProxyBillingActivity"
+296-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:27:13-78
+297            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+297-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:28:13-96
+298            android:exported="false"
+298-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:29:13-37
+299            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+299-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:30:13-72
+300        <activity
+300-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:31:9-35:75
+301            android:name="com.android.billingclient.api.ProxyBillingActivityV2"
+301-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:32:13-80
+302            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+302-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:33:13-96
+303            android:exported="false"
+303-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:34:13-37
+304            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+304-->[com.android.billingclient:billing:7.1.1] /home/maphematics/.gradle/caches/8.11.1/transforms/1dcabcea90c9508775a51aeea5d7fca7/transformed/billing-7.1.1/AndroidManifest.xml:35:13-72
+305        <activity
+305-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:9-173
+306            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+306-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:19-85
+307            android:exported="false"
+307-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:146-170
+308            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+308-->[com.google.android.gms:play-services-base:18.5.0] /home/maphematics/.gradle/caches/8.11.1/transforms/57bacb9ef58048c0e6f8321d8067096b/transformed/play-services-base-18.5.0/AndroidManifest.xml:5:86-145
+309
+310        <meta-data
+310-->[com.google.android.gms:play-services-basement:18.4.0] /home/maphematics/.gradle/caches/8.11.1/transforms/af1250092db6525f6762c9b32f91bede/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:9-122
+311            android:name="com.google.android.gms.version"
+311-->[com.google.android.gms:play-services-basement:18.4.0] /home/maphematics/.gradle/caches/8.11.1/transforms/af1250092db6525f6762c9b32f91bede/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:20-65
+312            android:value="@integer/google_play_services_version" />
+312-->[com.google.android.gms:play-services-basement:18.4.0] /home/maphematics/.gradle/caches/8.11.1/transforms/af1250092db6525f6762c9b32f91bede/transformed/play-services-basement-18.4.0/AndroidManifest.xml:6:66-119
+313
+314        <provider
+314-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+315            android:name="androidx.startup.InitializationProvider"
+315-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+316            android:authorities="cc.notifly.wadsworth.twa.androidx-startup"
+316-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+317            android:exported="false" >
+317-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+318            <meta-data
+318-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+319                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+319-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+320                android:value="androidx.startup" />
+320-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
 321            <meta-data
-321-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
-322                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-322-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+321-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/4bc52031417e9743197e36b704fe409f/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+322                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+322-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/4bc52031417e9743197e36b704fe409f/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
 323                android:value="androidx.startup" />
-323-->[androidx.emoji2:emoji2:1.3.0] /home/maphematics/.gradle/caches/8.11.1/transforms/5cb7738f5242d8c4e38c8ffa2b265b31/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+323-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/4bc52031417e9743197e36b704fe409f/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
 324            <meta-data
-324-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/4bc52031417e9743197e36b704fe409f/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
-325                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-325-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/4bc52031417e9743197e36b704fe409f/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+324-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+325                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+325-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
 326                android:value="androidx.startup" />
-326-->[androidx.lifecycle:lifecycle-process:2.6.2] /home/maphematics/.gradle/caches/8.11.1/transforms/4bc52031417e9743197e36b704fe409f/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
-327            <meta-data
-327-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
-328                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-328-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
-329                android:value="androidx.startup" />
-329-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
-330        </provider>
-331
-332        <service
-332-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:28:9-34:19
-333            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
-333-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:29:13-103
-334            android:exported="false" >
-334-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:30:13-37
-335            <meta-data
-335-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:31:13-33:39
-336                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
-336-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:32:17-94
-337                android:value="cct" />
-337-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:33:17-36
-338        </service>
-339        <service
-339-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:26:9-30:19
-340            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
-340-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:27:13-117
-341            android:exported="false"
-341-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:28:13-37
-342            android:permission="android.permission.BIND_JOB_SERVICE" >
-342-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:29:13-69
-343        </service>
-344
+326-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+327        </provider>
+328
+329        <service
+329-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:28:9-34:19
+330            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+330-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:29:13-103
+331            android:exported="false" >
+331-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:30:13-37
+332            <meta-data
+332-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:31:13-33:39
+333                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+333-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:32:17-94
+334                android:value="cct" />
+334-->[com.google.android.datatransport:transport-backend-cct:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/85bc3f8cc97bd85b10d760e1ca7886a3/transformed/transport-backend-cct-3.1.8/AndroidManifest.xml:33:17-36
+335        </service>
+336        <service
+336-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:26:9-30:19
+337            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+337-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:27:13-117
+338            android:exported="false"
+338-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:28:13-37
+339            android:permission="android.permission.BIND_JOB_SERVICE" >
+339-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:29:13-69
+340        </service>
+341
+342        <receiver
+342-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:32:9-34:40
+343            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+343-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:33:13-132
+344            android:exported="false" />
+344-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:34:13-37
 345        <receiver
-345-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:32:9-34:40
-346            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
-346-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:33:13-132
-347            android:exported="false" />
-347-->[com.google.android.datatransport:transport-runtime:3.1.8] /home/maphematics/.gradle/caches/8.11.1/transforms/390580f802b798735a90189ae7e85163/transformed/transport-runtime-3.1.8/AndroidManifest.xml:34:13-37
-348        <receiver
-348-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
-349            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-349-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
-350            android:directBootAware="false"
-350-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
-351            android:enabled="true"
-351-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
-352            android:exported="true"
-352-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
-353            android:permission="android.permission.DUMP" >
-353-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+345-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+346            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+346-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+347            android:directBootAware="false"
+347-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+348            android:enabled="true"
+348-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+349            android:exported="true"
+349-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+350            android:permission="android.permission.DUMP" >
+350-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+351            <intent-filter>
+351-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+352                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+352-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+352-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+353            </intent-filter>
 354            <intent-filter>
-354-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
-355                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-355-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-355-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+354-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+355                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+355-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+355-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
 356            </intent-filter>
 357            <intent-filter>
-357-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
-358                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-358-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-358-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+357-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+358                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+358-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+358-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
 359            </intent-filter>
 360            <intent-filter>
-360-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
-361                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-361-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-361-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+360-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+361                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+361-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+361-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
 362            </intent-filter>
-363            <intent-filter>
-363-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
-364                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-364-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-364-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/maphematics/.gradle/caches/8.11.1/transforms/bb4a0d32d1b17a1dcea0cf71d2bde5e0/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
-365            </intent-filter>
-366        </receiver>
-367    </application>
-368
-369</manifest>
+363        </receiver>
+364    </application>
+365
+366</manifest>
