@@ -223,6 +223,60 @@ async def assetlinks():
         }
     }])
 
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    from fastapi.responses import PlainTextResponse
+    content = (
+        "User-agent: *\n"
+        "Disallow: /\n"
+        "\n"
+        "User-agent: Googlebot\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /api\n"
+        "\n"
+        "User-agent: Bingbot\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /api\n"
+        "\n"
+        "User-agent: ClaudeBot\n"
+        "Allow: /\n"
+        "Disallow: /admin\n"
+        "Disallow: /api\n"
+        "\n"
+        "Sitemap: https://wadsworth.cc/sitemap.xml\n"
+    )
+    return PlainTextResponse(content, headers={"Cache-Control": "public, max-age=86400"})
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml():
+    from fastapi.responses import Response
+    base = "https://wadsworth.cc"
+    urls = [
+        "/",
+        "/stats",
+        "/brokerage",
+        "/banks",
+        "/executives",
+        "/cities",
+        "/counties",
+        "/exchange",
+        "/estate",
+        "/wallet",
+        "/reserve-banks",
+        "/privacy-policy",
+    ]
+    items = "\n".join(
+        f"  <url><loc>{base}{path}</loc></url>" for path in urls
+    )
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{items}
+</urlset>"""
+    return Response(content=xml, media_type="application/xml",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
 # ==========================
 # SYSTEM ENDPOINTS (PATCHED)
 # ==========================
