@@ -3789,7 +3789,7 @@ def admin_push_keys(session_token: Optional[str] = Cookie(None)):
 
 @router.get("/admin/careers", response_class=HTMLResponse)
 def admin_careers(session_token: Optional[str] = Cookie(None)):
-    admin = _require_admin(session_token)
+    admin = require_admin(session_token)
     if isinstance(admin, RedirectResponse):
         return admin
 
@@ -3838,7 +3838,7 @@ def admin_careers(session_token: Optional[str] = Cookie(None)):
 
 @router.post("/admin/careers/{sub_id}/mark-reviewed", response_class=HTMLResponse)
 def admin_careers_mark_reviewed(sub_id: int, session_token: Optional[str] = Cookie(None)):
-    admin = _require_admin(session_token)
+    admin = require_admin(session_token)
     if isinstance(admin, RedirectResponse):
         return admin
 
