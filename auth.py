@@ -427,7 +427,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Login · Wadsworth</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#38bdf8">
+    <meta name="theme-color" content="#020617">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Wadsworth">
@@ -666,10 +666,10 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
-    <footer style="text-align:center;margin-top:24px;padding-bottom:16px;font-size:0.75rem;color:#475569;">
-        <a href="/privacy-policy" style="color:#64748b;text-decoration:none;">Privacy Policy</a>
+    <footer style="position:fixed;bottom:0;left:0;right:0;padding:10px 16px;text-align:center;font-size:0.75rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
+        <a href="/privacy-policy" style="color:#64748b;text-decoration:underline;">Privacy Policy</a>
         &nbsp;·&nbsp;
-        <span style="color:#334155;">© 2026 IllinoisJo</span>
+        <span style="color:#334155;">© 2026 Wadsworth Economic Tycoon Simulator</span>
     </footer>
 
     <script>
