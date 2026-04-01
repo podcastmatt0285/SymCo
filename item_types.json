@@ -2689,6 +2689,11 @@
     "description": "Refined cooking oil cold-pressed from peanuts",
     "name": "Peanut Oil"
   },
+  "cooking_oil": {
+    "category": "food",
+    "description": "Blended culinary oil refined from cold-pressed seed oils. An essential ingredient in food production, cooking, and baking.",
+    "name": "Cooking Oil"
+  },
   "pembroke_welsh_corgi": {
     "category": "livestock",
     "description": "Low-slung Welsh sheep driver famously associated with British royalty.",
