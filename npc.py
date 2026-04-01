@@ -639,6 +639,24 @@ def _seed_npc(cfg: dict):
                 _NPC_PLAYERS[player_id] = cfg
                 print(f"[NPC] {cfg['business_name']} already seeded (id={player_id})")
 
+                # Sync paused_lines from current config so changes to active_lines
+                # in NPC JSON take effect without a DB wipe.
+                existing_bizs = (
+                    db.query(Business)
+                    .filter(Business.owner_id == player_id)
+                    .order_by(Business.id.asc())
+                    .all()
+                )
+                for i, biz in enumerate(existing_bizs):
+                    if i < len(cfg_businesses):
+                        new_paused = _build_paused_lines(
+                            biz.business_type,
+                            cfg_businesses[i].get("active_lines", [])
+                        )
+                        if biz.paused_lines != new_paused:
+                            biz.paused_lines = new_paused
+                db.commit()
+
                 # Cash rescue: if the NPC's balance has fallen below hard_low
                 # (e.g. due to a prior routing bug), top it up to soft_low so
                 # the NPC can immediately resume buying inputs.
