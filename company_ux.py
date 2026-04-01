@@ -295,6 +295,39 @@ _LEATHER_HEAD = """<!DOCTYPE html>
 </style>"""
 
 _LEATHER_FOOT = """
+<div id="nav-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:#0D0806;color:#F5F5DC;font-family:Georgia,serif;align-items:center;justify-content:center;padding:12px;">
+  <div style="position:relative;width:100%;max-width:420px;padding:clamp(16px,5vw,40px);background:#1A0F0A;border:4px solid #2D1810;box-shadow:0 25px 50px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;box-sizing:border-box;max-height:92vh;overflow-y:auto;">
+    <div style="width:min(90px,22vw);height:min(90px,22vw);flex-shrink:0;">
+      <img src="/static/logo.png" alt="" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(229,0,0,0.4));">
+    </div>
+    <p style="font-size:13px;font-style:italic;color:#B08D57;margin:12px 0 6px;text-align:center;">Loading&hellip;</p>
+    <div style="width:100%;height:3px;background:#2D1810;border-radius:2px;overflow:hidden;margin-top:4px;">
+      <div id="nl-bar-co" style="height:100%;width:0%;background:linear-gradient(90deg,#B08D57,#e5c88a);transition:width .15s linear;border-radius:2px;"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var ov=document.getElementById('nav-loader');
+  var bar=document.getElementById('nl-bar-co');
+  var prog=0,timer=null;
+  function start(){if(timer)clearInterval(timer);prog=0;ov.style.display='flex';timer=setInterval(function(){prog+=5;if(prog>=100)prog=0;bar.style.width=prog+'%';},150);}
+  function hide(){ov.style.display='none';clearInterval(timer);timer=null;}
+  start();
+  document.addEventListener('DOMContentLoaded',hide);
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a');if(!a)return;
+    if(a.target==='_blank'||a.hasAttribute('download'))return;
+    var h=a.getAttribute('href');if(!h||h.charAt(0)==='#'||/^(javascript|mailto|tel):/.test(h))return;
+    try{var u=new URL(a.href,location.origin);if(u.origin!==location.origin)return;start();}catch(ex){}
+  });
+  document.addEventListener('submit',function(e){
+    var f=e.target;if(!f)return;
+    try{var u=new URL(f.action||location.href,location.origin);if(u.origin!==location.origin)return;start();}catch(ex){}
+  });
+  window.addEventListener('pageshow',function(e){if(e.persisted)hide();});
+})();
+</script>
 </body>
 </html>"""
 
