@@ -846,17 +846,41 @@ def claim_faucet(player_id: int, claim_type: str = "manual") -> Tuple[bool, str,
 
 
 def _tick_airdrops(wallet_db, current_tick: int):
-    """Airdrop WSC to all commodity holders every AIRDROP_INTERVAL_TICKS."""
+    """Airdrop WSC to holders of active petrodollar commodities every AIRDROP_INTERVAL_TICKS.
+
+    Only players holding a commodity that serves as the petrodollar (City.currency_type)
+    for at least one active city are eligible — not all commodity holders.
+    """
     if current_tick % AIRDROP_INTERVAL_TICKS != 0:
         return
 
     try:
+        # ── Collect active petrodollar commodity types from all cities ────────
+        from cities import City, get_db as city_get_db
+        city_db = city_get_db()
+        try:
+            petrodollar_types = [
+                row.currency_type
+                for row in city_db.query(City.currency_type)
+                                  .filter(City.currency_type != None,
+                                          City.currency_type != "")
+                                  .distinct().all()
+            ]
+        finally:
+            city_db.close()
+
+        if not petrodollar_types:
+            return  # No cities have set a petrodollar — nothing to do
+
+        # ── Find players who hold at least 1 unit of any petrodollar commodity ─
         from inventory import InventoryItem, get_db as inv_get_db
         inv_db = inv_get_db()
         try:
             holders = inv_db.query(
                 InventoryItem.player_id,
                 sqlfunc.sum(InventoryItem.quantity).label("total_qty"),
+            ).filter(
+                InventoryItem.item_type.in_(petrodollar_types)
             ).group_by(InventoryItem.player_id).having(
                 sqlfunc.sum(InventoryItem.quantity) >= 1
             ).all()
@@ -886,7 +910,8 @@ def _tick_airdrops(wallet_db, current_tick: int):
 
         treasury.airdrop_pool -= total_paid
         wallet_db.commit()
-        print(f"[Wallet] Airdrop: distributed {total_paid:.4f} WSC to {len(holders)} commodity holders.")
+        print(f"[Wallet] Airdrop: distributed {total_paid:.4f} WSC to {len(holders)} petrodollar holders "
+              f"(commodities: {', '.join(petrodollar_types)}).")
     except Exception as e:
         wallet_db.rollback()
         print(f"[Wallet] Airdrop tick error: {e}")

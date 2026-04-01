@@ -901,11 +901,6 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             {body}
         </div>
 
-        <footer style="border-top:1px solid #1e293b;padding:14px 16px 80px;text-align:center;font-size:0.72rem;color:#475569;">
-            &copy; 2026 Wadsworth Economic Tycoon Simulator &nbsp;|&nbsp;
-            <a href="/privacy-policy" style="color:#475569;text-decoration:underline;">Privacy Policy</a>
-        </footer>
-
         <div class="ticker" id="tickerBar">
             <div class="ticker-controls">
                 <button class="ticker-btn" id="tkRestart" title="Restart">&#9198;</button>
