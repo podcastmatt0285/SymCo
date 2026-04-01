@@ -249,8 +249,8 @@
     ]
   },
   "essential_oil_distillery": {
-    "name": "Essential Oil Press",
-    "description": "Extracts essential oils from aromatic plants.",
+    "name": "Seed Press",
+    "description": "Cold-presses seeds to extract essential oils and blended cooking oil.",
     "startup_cost": 95000,
     "cycles_to_complete": 60,
     "base_wage_cost": 500.0,
@@ -593,6 +593,31 @@
             "item": "paper",
             "quantity": 1
           }
+        ]
+      },
+      {
+        "output_item": "cooking_oil",
+        "output_qty": 10,
+        "inputs": [
+          { "item": "peanut_oil",            "quantity": 5 },
+          { "item": "apple_essential_oil",   "quantity": 1 },
+          { "item": "barley_essential_oil",  "quantity": 1 },
+          { "item": "cherry_essential_oil",  "quantity": 1 },
+          { "item": "cocoa_essential_oil",   "quantity": 1 },
+          { "item": "coffee_essential_oil",  "quantity": 1 },
+          { "item": "corn_essential_oil",    "quantity": 1 },
+          { "item": "cotton_essential_oil",  "quantity": 1 },
+          { "item": "grape_essential_oil",   "quantity": 1 },
+          { "item": "onion_essential_oil",   "quantity": 1 },
+          { "item": "orange_essential_oil",  "quantity": 1 },
+          { "item": "rice_essential_oil",    "quantity": 1 },
+          { "item": "tea_essential_oil",     "quantity": 1 },
+          { "item": "tobacco_essential_oil", "quantity": 1 },
+          { "item": "tomato_essential_oil",  "quantity": 1 },
+          { "item": "wheat_essential_oil",   "quantity": 1 },
+          { "item": "water",                 "quantity": 20 },
+          { "item": "energy",                "quantity": 30 },
+          { "item": "paper",                 "quantity": 1 }
         ]
       }
     ]
@@ -3567,6 +3592,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -3607,6 +3636,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -3647,6 +3680,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -3691,6 +3728,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -3717,6 +3758,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -3743,6 +3788,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       }
@@ -12983,6 +13032,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -16248,6 +16301,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -16274,6 +16331,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -16334,6 +16395,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -16356,6 +16421,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
           }
         ]
       },
@@ -16416,6 +16485,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -16438,6 +16511,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
           }
         ]
       },
@@ -16460,6 +16537,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 6000
           }
         ]
       },

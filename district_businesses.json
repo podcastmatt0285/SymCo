@@ -5721,6 +5721,10 @@
           {
             "item": "vinegar",
             "quantity": 30
+          },
+          {
+            "item": "cooking_oil",
+            "quantity": 50
           }
         ]
       }

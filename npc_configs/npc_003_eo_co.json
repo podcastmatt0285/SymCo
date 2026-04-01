@@ -1,7 +1,7 @@
 {
   "player_id": -2003,
   "business_name": "EO Co",
-  "description": "Grows apples and oranges, distills all 15 essential oil varieties for market, and sells surplus fruit retail.",
+  "description": "Grows apples and oranges, cold-presses all 15 essential oil varieties, and blends them into cooking oil for market.",
 
   "cash_caps": {
     "hard_high": 25000000,
@@ -42,7 +42,8 @@
         "tea_essential_oil",
         "tobacco_essential_oil",
         "tomato_essential_oil",
-        "wheat_essential_oil"
+        "wheat_essential_oil",
+        "cooking_oil"
       ]
     }
   ],
@@ -144,6 +145,12 @@
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
+    "peanut_oil": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
     "water": {
       "target_inventory": 2000,
       "reorder_at": 200,
@@ -180,6 +187,7 @@
     "tobacco_essential_oil": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
     "tomato_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
     "wheat_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "cooking_oil":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
     "apples": {
       "min_inventory_to_keep": 50,
       "max_order_quantity": 5000,
