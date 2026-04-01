@@ -132,7 +132,7 @@ DEFAULT_BANKS = [
     ("TRY", "Central Bank of the Wadsworth Republic","₺","🇹🇷",0.400,  0.029,   0.030, 0.99),
     ("SAR", "Wadsworth Saudi Central Bank",      "﷼",  "🇸🇦", 0.050,  0.267,  -0.010, 0.25),
     ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,  -0.010, 0.25),
-    ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "{J}", "🌿", 4.20,  10.00, -1.12, 4.20),
+    ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "{J}", "🌿", 0.00,  10.00, -99.00, 420.00),
 ]
 
 # How long a player must wait between legal-tender switches (days).
