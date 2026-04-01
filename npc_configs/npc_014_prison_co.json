@@ -19,11 +19,11 @@
   },
 
   "businesses": [
-    { "business_type": "prison_supply_factory",       "district_seed_index": 0, "active_lines": ["inmate_jumpsuit", "prison_bedding"] },
-    { "business_type": "prison_food_service",          "district_seed_index": 0, "active_lines": ["prison_meal"] },
-    { "business_type": "prison_security_factory",      "district_seed_index": 0, "active_lines": ["cell_door", "handcuff_pair", "razor_wire"] },
-    { "business_type": "prison_rehabilitation_center", "district_seed_index": 0, "active_lines": ["ged_materials", "vocational_manual"] },
-    { "business_type": "prison_district",              "district_seed_index": 0, "active_lines": ["inmate_housing", "work_release"] }
+    { "business_type": "prison_supply_factory",       "district_seed_index": 0 },
+    { "business_type": "prison_food_service",          "district_seed_index": 0 },
+    { "business_type": "prison_security_factory",      "district_seed_index": 0 },
+    { "business_type": "prison_rehabilitation_center", "district_seed_index": 0 },
+    { "business_type": "prison_district",              "district_seed_index": 0 }
   ],
 
   "buy_items": {
