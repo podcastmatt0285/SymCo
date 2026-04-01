@@ -414,8 +414,6 @@ def _nav_loader_html() -> str:
         </style>
         <script>
         (function() {
-          var SLOW_PATHS = ['/api', '/stats/production-costs', '/market', '/businesses', '/inventory', '/land', '/land-market', '/stats', '/brokerage', '/banks', '/executives', '/cities', '/counties', '/exchange', '/estate', '/wallet'];
-          var SLOW_EXACT = ['/'];
           var STEPS = [
             "Initializing Secure Terminal...",
             "Authenticating Executive Credentials...",
@@ -452,6 +450,7 @@ def _nav_loader_html() -> str:
           }
 
           function startLoader() {
+            if (timer) clearInterval(timer);
             prog = 0; msgList = ["Initializing Secure Terminal..."];
             overlay.style.display = 'flex';
             renderMsgs();
@@ -468,48 +467,53 @@ def _nav_loader_html() -> str:
             }, 150);
           }
 
-          function _isSlowPath(pathname) {
-            for (var i=0; i<SLOW_EXACT.length; i++) {
-              if (pathname === SLOW_EXACT[i]) return true;
-            }
-            for (var i=0; i<SLOW_PATHS.length; i++) {
-              if (pathname.startsWith(SLOW_PATHS[i])) return true;
-            }
-            return false;
+          function hideLoader() {
+            overlay.style.display = 'none';
+            clearInterval(timer);
+            timer = null;
           }
 
-          if (_isSlowPath(location.pathname)) {
-            startLoader();
-            document.addEventListener('DOMContentLoaded', function() {
-              overlay.style.display = 'none';
-              clearInterval(timer);
-            });
-          }
+          // Show loader on every page load; hide once content is ready
+          startLoader();
+          document.addEventListener('DOMContentLoaded', hideLoader);
 
+          // Show loader on any same-origin link click
+          // Skip: new-tab, hash-only, external, download, mailto/tel/javascript
           document.addEventListener('click', function(e) {
             var a = e.target.closest('a');
-            if (!a || !a.href) return;
+            if (!a) return;
+            if (a.target === '_blank') return;
+            if (a.hasAttribute('download')) return;
+            var href = a.getAttribute('href');
+            if (!href) return;
+            if (href.charAt(0) === '#') return;
+            if (/^(javascript|mailto|tel):/.test(href)) return;
             try {
-              var url = new URL(a.href);
+              var url = new URL(a.href, location.origin);
               if (url.origin !== location.origin) return;
-              if (_isSlowPath(url.pathname)) startLoader();
+              // Pure same-page hash scroll — no navigation
+              if (url.pathname === location.pathname && url.hash && !url.search) return;
+              startLoader();
             } catch(ex) {}
           });
 
+          // Show loader on any same-origin form submit
           document.addEventListener('submit', function(e) {
             var form = e.target;
-            if (!form || !form.action) return;
+            if (!form) return;
             try {
-              var url = new URL(form.action);
+              var action = form.action || location.href;
+              var url = new URL(action, location.origin);
               if (url.origin !== location.origin) return;
-              if (_isSlowPath(url.pathname)) startLoader();
+              startLoader();
             } catch(ex) {}
           });
 
           window.startLoader = startLoader;
+          window.hideLoader  = hideLoader;
 
           window.addEventListener('pageshow', function(e) {
-            if (e.persisted) { overlay.style.display='none'; clearInterval(timer); }
+            if (e.persisted) hideLoader();
           });
         })();
         </script>
