@@ -700,7 +700,7 @@ def _seed_npc(cfg: dict):
                 seed_plot_idx += 1
 
             # Re-query existing districts owned by this NPC (ordered by id)
-            from districts import District as DistrictModel
+            from districts import District as DistrictModel, DISTRICT_TYPES
             existing_district_ids = [
                 d.id for d in
                 db.query(DistrictModel)
@@ -708,6 +708,30 @@ def _seed_npc(cfg: dict):
                 .order_by(DistrictModel.id.asc())
                 .all()
             ]
+
+            # Create any districts in the config that don't exist yet
+            seed_districts = cfg.get("seed", {}).get("districts", [])
+            for dist_idx, dist_cfg in enumerate(seed_districts):
+                if dist_idx < len(existing_district_ids):
+                    continue  # already exists
+                dtype = dist_cfg["district_type"]
+                if dtype not in DISTRICT_TYPES:
+                    print(f"[NPC]   WARNING: unknown district_type {dtype!r} — skipping")
+                    continue
+                dt_info = DISTRICT_TYPES[dtype]
+                district = DistrictModel(
+                    owner_id      = player_id,
+                    district_type = dtype,
+                    terrain_type  = dt_info["district_terrain"],
+                    size          = dist_cfg.get("size", 3.0),
+                    plots_merged  = dist_cfg.get("plots_merged", 3),
+                    monthly_tax   = dt_info["base_tax"],
+                )
+                db.add(district)
+                db.commit()
+                db.refresh(district)
+                existing_district_ids.append(district.id)
+                print(f"[NPC]   District {district.id} ({dtype} → {dt_info['district_terrain']}) [recovery]")
 
             _seed_businesses(player_id, {**cfg, "businesses": missing_biz_cfgs},
                              db, plot_ids_for_missing,
