@@ -266,6 +266,10 @@ async def sitemap_xml():
         "/wallet",
         "/reserve-banks",
         "/privacy-policy",
+        "/sitemap",
+        "/company/whitepaper",
+        "/company/careers",
+        "/company/press-kit",
     ]
     items = "\n".join(
         f"  <url><loc>{base}{path}</loc></url>" for path in urls
@@ -515,6 +519,14 @@ try:
     from world_map_ux import router as world_map_router
     app.include_router(world_map_router)
     print("World Map routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
+    from company_ux import router as company_router, initialize as company_init
+    company_init()
+    app.include_router(company_router)
+    print("Company/Sitemap routes registered")
 except ModuleNotFoundError:
     pass
 
