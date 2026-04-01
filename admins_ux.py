@@ -76,6 +76,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
         ("/admin/logs", "Logs"),
         ("/admin/wiki", "Wiki Media"),
         ("/admin/item-routes", "Item Routes"),
+        ("/admin/careers", "Careers"),
     ]
     nav_html = ""
     for href, label in nav_items:
@@ -3782,3 +3783,74 @@ def admin_push_keys(session_token: Optional[str] = Cookie(None)):
 </p>
 """
     return HTMLResponse(admin_shell("VAPID Keys", body, admin.business_name, "/admin/notification-sound"))
+
+
+# ── /admin/careers ────────────────────────────────────────────────────────────
+
+@router.get("/admin/careers", response_class=HTMLResponse)
+def admin_careers(session_token: Optional[str] = Cookie(None)):
+    admin = _require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+
+    from company_ux import CareerSubmission, get_db as company_get_db
+    db = company_get_db()
+    try:
+        submissions = db.query(CareerSubmission).order_by(
+            CareerSubmission.reviewed.asc(),
+            CareerSubmission.submitted_at.desc()
+        ).all()
+    finally:
+        db.close()
+
+    if not submissions:
+        rows = '<p style="color:#64748b;font-size:0.85rem;">No submissions yet.</p>'
+    else:
+        rows = ""
+        for s in submissions:
+            badge_color = "#1e293b" if s.reviewed else "#7f1d1d"
+            badge_label = "Reviewed" if s.reviewed else "New"
+            _type_color = "#1d4ed8" if s.position_type == "paid" else "#065f46"
+            rows += f"""
+<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:16px;margin-bottom:12px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+    <div>
+      <span style="font-weight:700;font-size:1rem;color:#e5e7eb;">{s.name}</span>
+      <span style="margin-left:10px;font-size:0.72rem;padding:2px 8px;background:{badge_color};color:#fca5a5;border-radius:10px;">{badge_label}</span>
+      <span style="margin-left:6px;font-size:0.72rem;padding:2px 8px;background:{_type_color};color:#e5e7eb;border-radius:10px;">{s.position_type.title()}</span>
+    </div>
+    <span style="font-size:0.75rem;color:#475569;">{s.submitted_at.strftime('%Y-%m-%d %H:%M') if s.submitted_at else ''}</span>
+  </div>
+  <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:8px;white-space:pre-wrap;">{s.description}</div>
+  <div style="font-size:0.78rem;color:#94a3b8;">
+    📧 <a href="mailto:{s.email}" style="color:#38bdf8;">{s.email}</a>
+    &nbsp;·&nbsp; 📸 {s.instagram}
+  </div>
+  {'<form method="post" action="/admin/careers/' + str(s.id) + '/mark-reviewed" style="margin-top:10px;display:inline;"><button type="submit" style="padding:4px 12px;background:transparent;border:1px solid #334155;border-radius:4px;color:#94a3b8;font-size:0.75rem;cursor:pointer;">Mark Reviewed</button></form>' if not s.reviewed else ''}
+</div>"""
+
+    body = f"""
+<h2 style="margin:0 0 20px;color:#e5e7eb;">Career Submissions ({len(submissions)})</h2>
+{rows}
+"""
+    return HTMLResponse(admin_shell("Careers", body, admin.business_name, "/admin/careers"))
+
+
+@router.post("/admin/careers/{sub_id}/mark-reviewed", response_class=HTMLResponse)
+def admin_careers_mark_reviewed(sub_id: int, session_token: Optional[str] = Cookie(None)):
+    admin = _require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+
+    from company_ux import CareerSubmission, get_db as company_get_db
+    db = company_get_db()
+    try:
+        sub = db.query(CareerSubmission).filter(CareerSubmission.id == sub_id).first()
+        if sub:
+            sub.reviewed = True
+            db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+    return RedirectResponse("/admin/careers", status_code=303)

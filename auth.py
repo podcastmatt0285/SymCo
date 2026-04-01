@@ -666,10 +666,18 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
-    <footer style="position:fixed;bottom:0;left:0;right:0;padding:10px 16px;text-align:center;font-size:0.75rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
-        <a href="/privacy-policy" style="color:#64748b;text-decoration:underline;">Privacy Policy</a>
+    <footer style="position:fixed;bottom:0;left:0;right:0;padding:8px 16px;text-align:center;font-size:0.72rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
+        <a href="/sitemap"            style="color:#64748b;text-decoration:underline;">Sitemap</a>
         &nbsp;·&nbsp;
-        <span style="color:#334155;">© 2026 Wadsworth Economic Tycoon Simulator</span>
+        <a href="/company/whitepaper" style="color:#64748b;text-decoration:underline;">Whitepaper</a>
+        &nbsp;·&nbsp;
+        <a href="/company/careers"    style="color:#64748b;text-decoration:underline;">Careers</a>
+        &nbsp;·&nbsp;
+        <a href="/company/press-kit"  style="color:#64748b;text-decoration:underline;">Press Kit</a>
+        &nbsp;·&nbsp;
+        <a href="/privacy-policy"     style="color:#64748b;text-decoration:underline;">Privacy Policy</a>
+        <br style="margin:2px 0;">
+        <span style="color:#334155;">&copy; 2026 Wadsworth Notifly. All rights reserved.</span>
     </footer>
 
     <script>
