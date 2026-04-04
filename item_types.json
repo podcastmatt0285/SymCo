@@ -1,4 +1,29 @@
 {
+  "3d_printer_industrial": {
+    "category": "industrial",
+    "description": "Large-format metal or polymer additive manufacturing system.",
+    "name": "Industrial 3D Printer"
+  },
+  "acetone": {
+    "category": "materials",
+    "description": "Common industrial solvent used in explosives, plastics, and pharmaceuticals.",
+    "name": "Acetone"
+  },
+  "acid_solution": {
+    "category": "materials",
+    "description": "Dilute mixed acid bath used in metal plating and semiconductor etching.",
+    "name": "Acid Solution"
+  },
+  "acrylonitrile": {
+    "category": "materials",
+    "description": "CH2=CHCN; monomer for PAN precursor and ABS plastic production.",
+    "name": "Acrylonitrile"
+  },
+  "activated_carbon": {
+    "category": "materials",
+    "description": "Highly porous carbon used in filtration, gas masks, and water treatment.",
+    "name": "Activated Carbon"
+  },
   "active_ingredient": {
     "category": "ingredients",
     "description": "Synthesized medicinal compound",
@@ -34,15 +59,30 @@
     "description": "A precision-engineered aircraft wing, a critical component in vehicle manufacturing and assembly.",
     "name": "Aircraft Wing"
   },
+  "airline_ticket": {
+    "category": "services",
+    "description": "Commercial airline ticket for domestic or international travel.",
+    "name": "Airline Ticket"
+  },
   "alarm_system": {
     "category": "industrial",
     "description": "An industrial alarm system, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Alarm System"
   },
+  "alnico_magnet": {
+    "category": "components",
+    "description": "Aluminum-nickel-cobalt magnet for sensors, guitars, and instruments.",
+    "name": "Alnico Magnet"
+  },
   "alpaca": {
     "category": "livestock",
     "description": "Fibre camelid producing exceptionally soft, hypoallergenic fleece in many natural colours.",
     "name": "Alpaca"
+  },
+  "alumina": {
+    "category": "materials",
+    "description": "Aluminum oxide ceramic; used in armor, electronics substrates, and abrasives.",
+    "name": "Alumina (Al2O3)"
   },
   "aluminum": {
     "category": "metals",
@@ -58,6 +98,11 @@
     "category": "livestock",
     "description": "Reddish-faced American breed producing lean meat and medium-grade wool.",
     "name": "American Tunis"
+  },
+  "ammonia": {
+    "category": "materials",
+    "description": "NH3; primary nitrogen source for fertilizers and chemical synthesis.",
+    "name": "Ammonia"
   },
   "ammunition": {
     "category": "military",
@@ -89,6 +134,11 @@
     "description": "Fleece-producing breed yielding long, silky Angora fibre for luxury garments.",
     "name": "Angora"
   },
+  "animal_adoption": {
+    "category": "services",
+    "description": "Adoption package for shelter or zoo animal.",
+    "name": "Animal Adoption"
+  },
   "animal_enclosure": {
     "category": "livestock",
     "description": "A living or processed animal enclosure, part of the agricultural and livestock economy.",
@@ -114,6 +164,16 @@
     "description": "A medical-grade antidepressant, essential for healthcare, treatment, and patient care.",
     "name": "Antidepressant"
   },
+  "antimony": {
+    "category": "metals",
+    "description": "Metalloid used in lead-acid batteries, flame retardants, and alloy hardeners.",
+    "name": "Antimony"
+  },
+  "antimony_ore": {
+    "category": "ore",
+    "description": "Stibnite ore; used in flame retardants and lead alloys.",
+    "name": "Antimony Ore"
+  },
   "antiseptic": {
     "category": "health",
     "description": "Wound cleaner",
@@ -123,6 +183,11 @@
     "category": "military",
     "description": "Military-grade apc, manufactured for defense applications and armed forces.",
     "name": "Apc"
+  },
+  "apc_hull": {
+    "category": "components",
+    "description": "Armored personnel carrier hull with troop compartment.",
+    "name": "APC Hull"
   },
   "appenzeller_sennenhund": {
     "category": "livestock",
@@ -174,6 +239,16 @@
     "description": "A large glass aquarium tank used for fish farming and aquaculture operations.",
     "name": "Aquarium Tank"
   },
+  "aramid_fabric": {
+    "category": "materials",
+    "description": "Woven para-aramid textile; primary layer in soft body armor vests.",
+    "name": "Aramid Fabric"
+  },
+  "armored_car": {
+    "category": "vehicles",
+    "description": "Ballistic and blast protected executive or cash transport vehicle.",
+    "name": "Armored Car"
+  },
   "armored_personnel_carrier": {
     "category": "vehicles",
     "description": "A fully assembled armored personnel carrier, built for transport, logistics, or specialized operations.",
@@ -183,6 +258,11 @@
     "category": "tobacco",
     "description": "Sweetened Cavendish-based pipe blend with flavourings, the entry point for casual pipe smokers",
     "name": "Aromatic Pipe Tobacco"
+  },
+  "arsenic": {
+    "category": "metals",
+    "description": "Metalloid refined from copper/gold smelting; used in GaAs semiconductor compounds.",
+    "name": "Arsenic"
   },
   "art_book": {
     "category": "media",
@@ -204,6 +284,11 @@
     "description": "A professional athlete contract, a contracted or licensed service within the economy.",
     "name": "Athlete Contract"
   },
+  "attack_helicopter": {
+    "category": "vehicles",
+    "description": "Armed rotary-wing close air support and anti-armor aircraft.",
+    "name": "Attack Helicopter"
+  },
   "australian_kelpie": {
     "category": "livestock",
     "description": "Australia's premier mustering dog; works cattle and sheep independently in heat.",
@@ -219,6 +304,16 @@
     "description": "High-energy aviation fuel, used to power vehicles, machinery, and industrial operations.",
     "name": "Aviation Fuel"
   },
+  "avionics_suite": {
+    "category": "components",
+    "description": "Integrated flight instruments, navigation, and communications package.",
+    "name": "Avionics Suite"
+  },
+  "bachelors_degree": {
+    "category": "services",
+    "description": "Four-year undergraduate university degree credential.",
+    "name": "Bachelor's Degree"
+  },
   "bacon": {
     "category": "meat",
     "description": "Cured pork belly",
@@ -233,6 +328,11 @@
     "category": "baked_goods",
     "description": "Crusty artisan bread",
     "name": "French Baguette"
+  },
+  "ballistic_plate": {
+    "category": "components",
+    "description": "Ceramic-composite armor plate for body armor and vehicle protection.",
+    "name": "Ballistic Plate"
   },
   "band_instruments": {
     "category": "media",
@@ -289,6 +389,11 @@
     "description": "Versatile Indo-Pacific fish that thrives in salt and freshwater aquaculture",
     "name": "Barramundi"
   },
+  "base_housing": {
+    "category": "services",
+    "description": "Military on-base housing allocation and support service.",
+    "name": "Base Housing"
+  },
   "basketball_hoop": {
     "category": "accessories",
     "description": "A basketball hoop, used in sports, recreation, or specialty retail.",
@@ -306,13 +411,18 @@
   },
   "bastilla": {
     "category": "baked_goods",
-    "description": "Flaky Moroccan pastry: slow-braised spiced lamb layered with egg and drizzled with honey and cinnamon beneath a buttery warka crust — the cornerstone of celebratory Moroccan cuisine",
+    "description": "Flaky Moroccan pastry: slow-braised spiced lamb layered with egg and drizzled with honey and cinnamon beneath a buttery warka crust \u2014 the cornerstone of celebratory Moroccan cuisine",
     "name": "Bastilla"
   },
   "battery_cell": {
     "category": "components",
     "description": "A high-tech battery cell, used in electronics, computing, and advanced manufacturing.",
     "name": "Battery Cell"
+  },
+  "bauxite": {
+    "category": "ore",
+    "description": "Aluminum-bearing ore; primary feedstock for aluminum smelting.",
+    "name": "Bauxite"
   },
   "bearded_collie": {
     "category": "livestock",
@@ -323,6 +433,16 @@
     "category": "livestock",
     "description": "Large French herder with natural double dew claws; intelligent and authoritative.",
     "name": "Beauceron"
+  },
+  "beauty_kit": {
+    "category": "retail_shopping",
+    "description": "Personal care and cosmetics bundle.",
+    "name": "Beauty Kit"
+  },
+  "bedroom_set": {
+    "category": "home_goods",
+    "description": "Bed frame, mattress, and dresser furniture package.",
+    "name": "Bedroom Set"
   },
   "beef": {
     "category": "meat",
@@ -343,6 +463,11 @@
     "category": "industrial",
     "description": "Natural wax secreted by honeybees; used in cosmetics and polish",
     "name": "Beeswax"
+  },
+  "behind_scenes_tour": {
+    "category": "services",
+    "description": "Exclusive backstage entertainment venue tour.",
+    "name": "Behind the Scenes Tour"
   },
   "belgian_laekenois": {
     "category": "livestock",
@@ -374,6 +499,26 @@
     "description": "Traditional French breed from the Berry region; excellent meat quality and medium wool.",
     "name": "Berrichon du Cher"
   },
+  "beryllium": {
+    "category": "metals",
+    "description": "Refined beryllium; extremely lightweight nuclear and aerospace metal.",
+    "name": "Beryllium"
+  },
+  "beryllium_copper": {
+    "category": "metals",
+    "description": "High-strength copper alloy for precision instruments and aerospace fasteners.",
+    "name": "Beryllium Copper"
+  },
+  "beryllium_ore": {
+    "category": "ore",
+    "description": "Beryl mineral bearing lightweight strategic metal.",
+    "name": "Beryllium Ore"
+  },
+  "beverage_package": {
+    "category": "retail_food",
+    "description": "Mixed beverage assortment bundle.",
+    "name": "Beverage Package"
+  },
   "bio_fuel": {
     "category": "energy",
     "description": "Renewable fuel from agricultural products",
@@ -389,10 +534,25 @@
     "description": "Slender dyed beeswax candles for celebration cakes, sold in packs",
     "name": "Birthday Candles"
   },
+  "bismuth": {
+    "category": "metals",
+    "description": "Soft, low-toxicity heavy metal; used in cosmetics, pharmaceuticals, and lead-free alloys.",
+    "name": "Bismuth"
+  },
+  "bismuth_ore": {
+    "category": "ore",
+    "description": "Native bismuth or bismuthinite ore.",
+    "name": "Bismuth Ore"
+  },
   "black_pearl": {
     "category": "luxury",
     "description": "Rare Tahitian black pearl with natural dark luster, highly valued",
     "name": "Black Pearl"
+  },
+  "black_powder": {
+    "category": "materials",
+    "description": "KNO3 + charcoal + sulfur; traditional propellant and blasting agent.",
+    "name": "Black Powder"
   },
   "black_welsh_mountain_sheep": {
     "category": "livestock",
@@ -403,6 +563,11 @@
     "category": "sweeteners",
     "description": "Thick, dark, and bitter molasses byproduct of sugar refining.",
     "name": "Blackstrap Molasses"
+  },
+  "blast_resistant_glass": {
+    "category": "components",
+    "description": "Laminated polycarbonate and glass for armored vehicle viewports.",
+    "name": "Blast-Resistant Glass"
   },
   "blessed_sheep": {
     "category": "luxury",
@@ -479,6 +644,21 @@
     "description": "Large longwool breed with lustrous fleece prized for weaving and spinning.",
     "name": "Border Leicester"
   },
+  "boric_acid": {
+    "category": "materials",
+    "description": "H3BO3; used in boron carbide production, flame retardants, and glass.",
+    "name": "Boric Acid"
+  },
+  "boron": {
+    "category": "metals",
+    "description": "Non-metal element used in neodymium magnets, boron carbide armor, and nuclear control rods.",
+    "name": "Boron"
+  },
+  "boron_carbide": {
+    "category": "materials",
+    "description": "Extremely hard ceramic compound; used in body armor and nuclear shielding.",
+    "name": "Boron Carbide"
+  },
   "bottle": {
     "category": "packaging",
     "description": "Container for beverages",
@@ -518,6 +698,11 @@
     "category": "baked_goods",
     "description": "Fresh baked loaf",
     "name": "Artisan Bread"
+  },
+  "bronze": {
+    "category": "metals",
+    "description": "Copper-tin alloy; corrosion resistant, used in marine and artistic applications.",
+    "name": "Bronze"
   },
   "brownie": {
     "category": "baked_goods",
@@ -579,6 +764,11 @@
     "description": "Fasteners for clothing",
     "name": "Buttons"
   },
+  "c4_explosive": {
+    "category": "materials",
+    "description": "RDX + plasticizer composition; demolition and warhead explosive.",
+    "name": "C-4 Explosive"
+  },
   "calamari": {
     "category": "seafood_product",
     "description": "Cleaned and sliced squid rings for frying or grilling",
@@ -623,6 +813,11 @@
     "category": "canned_goods",
     "description": "Picked crab meat in shelf-stable tins",
     "name": "Canned Crab"
+  },
+  "canned_lamb": {
+    "category": "food",
+    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
+    "name": "Canned Lamb"
   },
   "canned_mackerel": {
     "category": "canned_goods",
@@ -674,6 +869,11 @@
     "description": "Confectionery product made by heating sugar.",
     "name": "Caramel"
   },
+  "carbon_fiber": {
+    "category": "materials",
+    "description": "High-strength, lightweight composite reinforcement for aerospace and defense.",
+    "name": "Carbon Fiber"
+  },
   "cardboard": {
     "category": "industrial",
     "description": "Heavy corrugated paper board for packaging and construction",
@@ -719,6 +919,11 @@
     "description": "Fresh carrots from the field",
     "name": "Carrots"
   },
+  "casbah_private_dining": {
+    "category": "services",
+    "description": "Exclusive private dining experience at a Casbah-style venue.",
+    "name": "Casbah Private Dining"
+  },
   "cashmere_sheep": {
     "category": "livestock",
     "description": "Produces ultra-fine cashmere undercoat \u2014 among the most valuable fibres in the world.",
@@ -733,6 +938,11 @@
     "category": "retail_entertainment",
     "description": "Prepaid casino floor credits redeemable for table games, slots, and entertainment.",
     "name": "Casino Floor Credit"
+  },
+  "casino_night": {
+    "category": "services",
+    "description": "Casino entertainment package including gaming and dining.",
+    "name": "Casino Night"
   },
   "cast_material": {
     "category": "industrial",
@@ -759,6 +969,11 @@
     "description": "Bottom-dwelling freshwater fish widely farmed and popular in Southern cuisine",
     "name": "Catfish"
   },
+  "caustic_soda": {
+    "category": "materials",
+    "description": "NaOH; used in alumina refining, paper, and chemical manufacturing.",
+    "name": "Caustic Soda"
+  },
   "cavendish_leaf": {
     "category": "crops",
     "description": "Base tobacco leaf selected for sweetened fermentation processing into Cavendish tobacco",
@@ -779,6 +994,11 @@
     "description": "An industrial cell door, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Cell Door"
   },
+  "cellulose": {
+    "category": "materials",
+    "description": "Plant-derived biopolymer used in paper, nitrocellulose, and textiles.",
+    "name": "Cellulose"
+  },
   "cement": {
     "category": "materials",
     "description": "A construction-grade cement, used in building, fabrication, and structural applications.",
@@ -788,6 +1008,11 @@
     "category": "industrial",
     "description": "Fired clay products",
     "name": "Ceramics"
+  },
+  "cerium": {
+    "category": "metals",
+    "description": "Most abundant rare earth; used in catalysts and polishing compounds.",
+    "name": "Cerium"
   },
   "champagne": {
     "category": "alcohol",
@@ -808,6 +1033,11 @@
     "category": "vehicles",
     "description": "A fully assembled charter bus, built for transport, logistics, or specialized operations.",
     "name": "Charter Bus"
+  },
+  "charter_service": {
+    "category": "services",
+    "description": "Private aircraft or vessel charter service.",
+    "name": "Charter Service"
   },
   "chassis": {
     "category": "vehicle_parts",
@@ -884,6 +1114,11 @@
     "description": "Structural polymer from crustacean shells used in medical and bioplastic applications",
     "name": "Chitin"
   },
+  "chlorine": {
+    "category": "materials",
+    "description": "Cl2; produced by electrolysis; used in PVC, bleach, and water treatment.",
+    "name": "Chlorine"
+  },
   "chocolate": {
     "category": "confectionery",
     "description": "Delicious Food",
@@ -893,6 +1128,16 @@
     "category": "prepared_food",
     "description": "Layered celebration cake",
     "name": "Chocolate Cake"
+  },
+  "chromium": {
+    "category": "metals",
+    "description": "Refined chromium; primary hardening agent in stainless steel.",
+    "name": "Chromium"
+  },
+  "chromium_ore": {
+    "category": "ore",
+    "description": "Chromite rock; source of chromium for stainless steel.",
+    "name": "Chromium Ore"
   },
   "churchill_cigar": {
     "category": "tobacco",
@@ -949,6 +1194,11 @@
     "description": "Hard-shelled bivalve mollusks harvested from sandy seabeds",
     "name": "Clams"
   },
+  "clay": {
+    "category": "industrial",
+    "description": "Raw mineral clay extracted from riverbeds and hillsides; used in ceramics, sealing, and as a binding agent in religious artefacts.",
+    "name": "Clay"
+  },
   "cloud_storage_unit": {
     "category": "components",
     "description": "A high-tech cloud storage unit, used in electronics, computing, and advanced manufacturing.",
@@ -969,10 +1219,25 @@
     "description": "Hardy British breed thriving on marginal hill pasture with good lambing ease.",
     "name": "Clun Forest Sheep"
   },
+  "cnc_machine": {
+    "category": "industrial",
+    "description": "Computer numerically controlled precision machining center.",
+    "name": "CNC Machine"
+  },
   "coal": {
     "category": "energy",
     "description": "Fossil fuel for smelting and energy",
     "name": "Coal"
+  },
+  "cobalt": {
+    "category": "metals",
+    "description": "Refined cobalt; essential for lithium-ion battery cathodes.",
+    "name": "Cobalt"
+  },
+  "cobalt_ore": {
+    "category": "ore",
+    "description": "Cobalt-bearing ore, often co-mined with copper or nickel.",
+    "name": "Cobalt Ore"
   },
   "cocktail_service": {
     "category": "services",
@@ -1034,6 +1299,11 @@
     "description": "Protein supplement derived from fish skin and bones for skin and joint health",
     "name": "Marine Collagen Powder"
   },
+  "coltan_ore": {
+    "category": "ore",
+    "description": "Columbite-tantalite ore bearing tantalum and niobium.",
+    "name": "Coltan Ore"
+  },
   "columbia_sheep": {
     "category": "livestock",
     "description": "Large American dual-purpose breed with heavy medium-grade wool clip.",
@@ -1054,6 +1324,11 @@
     "description": "Feather-filled blanket",
     "name": "Down Comforter"
   },
+  "commissary_package": {
+    "category": "retail_prison",
+    "description": "Inmate commissary goods bundle from prison store.",
+    "name": "Commissary Package"
+  },
   "commissary_snacks": {
     "category": "industrial",
     "description": "An industrial commissary snacks, used in manufacturing, processing, and heavy-industry operations.",
@@ -1064,10 +1339,20 @@
     "description": "Refined composite alloy, a structural and manufacturing metal used across heavy industries.",
     "name": "Composite Alloy"
   },
+  "composite_armor_panel": {
+    "category": "components",
+    "description": "Layered steel-ceramic-kevlar armor panel for vehicle hulls.",
+    "name": "Composite Armor Panel"
+  },
   "compute_credit": {
     "category": "components",
     "description": "A high-tech compute credit, used in electronics, computing, and advanced manufacturing.",
     "name": "Compute Credit"
+  },
+  "concert_package": {
+    "category": "services",
+    "description": "Concert tickets plus backstage access bundle.",
+    "name": "Concert Package"
   },
   "concert_stage": {
     "category": "industrial",
@@ -1109,6 +1394,11 @@
     "description": "Delicate light wrapper leaf grown under shade cloth in the Connecticut River valley",
     "name": "Connecticut Shade Leaf"
   },
+  "conservation_membership": {
+    "category": "services",
+    "description": "Annual zoo or wildlife conservation membership.",
+    "name": "Conservation Membership"
+  },
   "consulting_contract": {
     "category": "retail_service",
     "description": "A professional consulting engagement providing expert advisory services to clients.",
@@ -1123,6 +1413,11 @@
     "category": "baked_goods",
     "description": "Baked sweet treat",
     "name": "Cookie"
+  },
+  "cooking_oil": {
+    "category": "food",
+    "description": "Blended culinary oil refined from cold-pressed seed oils. An essential ingredient in food production, cooking, and baking.",
+    "name": "Cooking Oil"
   },
   "copper": {
     "category": "metals",
@@ -1249,6 +1544,11 @@
     "description": "Flaky French pastry",
     "name": "Butter Croissant"
   },
+  "cruise_package": {
+    "category": "services",
+    "description": "All-inclusive cruise vacation package.",
+    "name": "Cruise Package"
+  },
   "cruise_ship": {
     "category": "vehicles",
     "description": "A fully assembled cruise ship, built for transport, logistics, or specialized operations.",
@@ -1259,10 +1559,20 @@
     "description": "An industrial crutches, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Crutches"
   },
+  "ct_scanner": {
+    "category": "industrial",
+    "description": "Computed tomography X-ray scanner for medical diagnosis.",
+    "name": "CT Scanner"
+  },
   "cuban_style_cigar": {
     "category": "tobacco",
     "description": "Ultra-premium handrolled cigar crafted entirely from Cuban-heritage Habano and Corojo tobaccos",
     "name": "Cuban-Style Cigar"
+  },
+  "cupronickel": {
+    "category": "metals",
+    "description": "Copper-nickel alloy for coinage, heat exchangers, and naval piping.",
+    "name": "Cupronickel"
   },
   "curriculum_package": {
     "category": "industrial",
@@ -1289,6 +1599,11 @@
     "description": "A single-day admission ticket granting full access to all theme park rides and attractions.",
     "name": "Theme Park Day Pass"
   },
+  "defense_contract": {
+    "category": "services",
+    "description": "Government defense procurement contract fulfillment.",
+    "name": "Defense Contract"
+  },
   "defibrillator": {
     "category": "industrial",
     "description": "An industrial defibrillator, used in manufacturing, processing, and heavy-industry operations.",
@@ -1299,20 +1614,55 @@
     "description": "A fully assembled delivery truck, built for transport, logistics, or specialized operations.",
     "name": "Delivery Truck"
   },
+  "depleted_uranium": {
+    "category": "metals",
+    "description": "U-238 byproduct from enrichment; used in armor-piercing projectiles and radiation shielding.",
+    "name": "Depleted Uranium"
+  },
   "desktop_computer": {
     "category": "components",
     "description": "A high-tech desktop computer, used in electronics, computing, and advanced manufacturing.",
     "name": "Desktop Computer"
+  },
+  "dessert_sampler": {
+    "category": "retail_food",
+    "description": "Assorted dessert tasting selection.",
+    "name": "Dessert Sampler"
   },
   "destroyer": {
     "category": "vehicles",
     "description": "A fully assembled destroyer, built for transport, logistics, or specialized operations.",
     "name": "Destroyer"
   },
+  "destroyer_hull": {
+    "category": "components",
+    "description": "High-strength steel destroyer ship hull and superstructure.",
+    "name": "Destroyer Hull"
+  },
+  "det_cord": {
+    "category": "materials",
+    "description": "PETN-filled cordex line for simultaneous multi-point detonation.",
+    "name": "Detonation Cord"
+  },
+  "diagnostic_panel": {
+    "category": "services",
+    "description": "Comprehensive medical diagnostic test panel.",
+    "name": "Diagnostic Panel"
+  },
+  "dialysis_machine": {
+    "category": "industrial",
+    "description": "Kidney dialysis machine for renal failure patients.",
+    "name": "Dialysis Machine"
+  },
   "diesel": {
     "category": "energy",
     "description": "Heavy refined petroleum fuel for trucks, machinery, and industrial engines.",
     "name": "Diesel Fuel"
+  },
+  "diesel_engine": {
+    "category": "components",
+    "description": "Heavy-duty compression-ignition engine for trucks and military vehicles.",
+    "name": "Diesel Engine"
   },
   "diploma_certificate": {
     "category": "industrial",
@@ -1399,6 +1749,16 @@
     "description": "A high-tech drone, used in electronics, computing, and advanced manufacturing.",
     "name": "Drone"
   },
+  "drone_avionics": {
+    "category": "components",
+    "description": "Flight controller, GPS, and ESC package for unmanned aerial vehicles.",
+    "name": "Drone Avionics Pack"
+  },
+  "drone_swarm_unit": {
+    "category": "vehicles",
+    "description": "Coordinated expendable micro-drone swarm for electronic warfare.",
+    "name": "Drone Swarm Unit"
+  },
   "duck": {
     "category": "livestock",
     "description": "Waterfowl for meat and feathers",
@@ -1419,6 +1779,11 @@
     "description": "Pacific coast crab prized for its sweet, tender meat",
     "name": "Dungeness Crab"
   },
+  "duralumin": {
+    "category": "metals",
+    "description": "Aluminum-copper-manganese alloy for aircraft frames and armor.",
+    "name": "Duralumin"
+  },
   "duty_free_spirits": {
     "category": "retail_shopping",
     "description": "Premium imported spirits sold duty-free at port-of-entry retail locations.",
@@ -1428,6 +1793,11 @@
     "category": "ingredients",
     "description": "Mineral-based pigment dissolved in solution, used to colour candles, textiles and crafts",
     "name": "Dye"
+  },
+  "dysprosium": {
+    "category": "metals",
+    "description": "Heavy rare earth that maintains magnet strength at high temperatures.",
+    "name": "Dysprosium"
   },
   "eagle": {
     "category": "industrial",
@@ -1444,10 +1814,45 @@
     "description": "Fresh poultry eggs",
     "name": "Eggs"
   },
+  "ejection_seat": {
+    "category": "components",
+    "description": "Rocket-propelled pilot escape system for combat aircraft.",
+    "name": "Ejection Seat"
+  },
+  "electric_bus": {
+    "category": "vehicles",
+    "description": "Zero-emission battery-electric transit bus.",
+    "name": "Electric Bus"
+  },
+  "electric_car": {
+    "category": "vehicles",
+    "description": "Battery-electric passenger vehicle.",
+    "name": "Electric Car"
+  },
+  "electric_truck": {
+    "category": "vehicles",
+    "description": "Heavy-duty battery-electric commercial truck.",
+    "name": "Electric Truck"
+  },
+  "electronics_package": {
+    "category": "retail_shopping",
+    "description": "Consumer electronics bundle.",
+    "name": "Electronics Package"
+  },
   "elephant": {
     "category": "industrial",
     "description": "An industrial elephant, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Elephant"
+  },
+  "emergency_room_visit": {
+    "category": "services",
+    "description": "Emergency medical care service.",
+    "name": "Emergency Room Visit"
+  },
+  "encrypted_radio": {
+    "category": "components",
+    "description": "Frequency-hopping tactical communications radio.",
+    "name": "Encrypted Radio"
   },
   "encryption_device": {
     "category": "industrial",
@@ -1499,10 +1904,25 @@
     "description": "Paper envelope for letters and mail",
     "name": "Envelope"
   },
+  "epoxy_resin": {
+    "category": "materials",
+    "description": "Two-part structural adhesive and composite matrix for PCBs and carbon fiber.",
+    "name": "Epoxy Resin"
+  },
+  "erbium": {
+    "category": "metals",
+    "description": "Rare earth used in fiber-optic amplifiers and laser applications.",
+    "name": "Erbium"
+  },
   "espresso": {
     "category": "beverages",
     "description": "Concentrated coffee shot",
     "name": "Espresso"
+  },
+  "europium": {
+    "category": "metals",
+    "description": "Heavy rare earth producing red phosphors in LEDs and displays.",
+    "name": "Europium"
   },
   "event_supply_kit": {
     "category": "industrial",
@@ -1519,6 +1939,21 @@
     "description": "An industrial explosive ordnance, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Explosive Ordnance"
   },
+  "explosive_reactive_armor": {
+    "category": "components",
+    "description": "ERA tile that disrupts shaped-charge jets from RPGs and ATGMs.",
+    "name": "Explosive Reactive Armor"
+  },
+  "fashion_bundle": {
+    "category": "retail_shopping",
+    "description": "Curated apparel and accessories package.",
+    "name": "Fashion Bundle"
+  },
+  "fast_food_combo": {
+    "category": "retail_food",
+    "description": "Value meal combo from fast food establishment.",
+    "name": "Fast Food Combo"
+  },
   "feathers": {
     "category": "textiles",
     "description": "Down feathers for upholstery",
@@ -1534,10 +1969,20 @@
     "description": "A fully assembled ferry, built for transport, logistics, or specialized operations.",
     "name": "Ferry"
   },
+  "fertilizer_npk": {
+    "category": "materials",
+    "description": "Nitrogen-phosphorus-potassium blended crop fertilizer.",
+    "name": "NPK Fertilizer"
+  },
   "fiberglass": {
     "category": "industrial",
     "description": "Reinforced plastic composite",
     "name": "Fiberglass"
+  },
+  "field_gear_set": {
+    "category": "services",
+    "description": "Military field equipment and gear package.",
+    "name": "Field Gear Set"
   },
   "fighter_jet": {
     "category": "vehicles",
@@ -1558,6 +2003,11 @@
     "category": "livestock",
     "description": "Prolific Finnish breed producing fine, soft fleece and exceptionally large litters.",
     "name": "Finnsheep"
+  },
+  "fire_control_system": {
+    "category": "components",
+    "description": "Computerized targeting and weapons control system for military platforms.",
+    "name": "Fire Control System"
   },
   "fire_cured_tobacco": {
     "category": "cured_tobacco",
@@ -1634,6 +2084,11 @@
     "description": "Bright golden tobacco cured by heat from metal flues, producing a high-sugar, low-nicotine leaf",
     "name": "Flue-Cured Tobacco"
   },
+  "fluorite": {
+    "category": "ore",
+    "description": "Calcium fluoride mineral used in metallurgy and chemical production.",
+    "name": "Fluorite"
+  },
   "food_tray": {
     "category": "industrial",
     "description": "An industrial food tray, used in manufacturing, processing, and heavy-industry operations.",
@@ -1648,6 +2103,11 @@
     "category": "industrial",
     "description": "An industrial freight container, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Freight Container"
+  },
+  "freight_contract": {
+    "category": "services",
+    "description": "Commercial cargo shipping contract.",
+    "name": "Freight Contract"
   },
   "freight_manifest": {
     "category": "industrial",
@@ -1694,10 +2154,40 @@
     "description": "Gas reservoir",
     "name": "Fuel Tank"
   },
+  "furnishing_set": {
+    "category": "home_goods",
+    "description": "Complete room furnishing bundle.",
+    "name": "Furnishing Set"
+  },
+  "gadolinium": {
+    "category": "metals",
+    "description": "Heavy rare earth used in MRI contrast agents and nuclear control rods.",
+    "name": "Gadolinium"
+  },
+  "gallium": {
+    "category": "metals",
+    "description": "Trace metal recovered from bauxite processing; used in semiconductors.",
+    "name": "Gallium"
+  },
+  "gallium_arsenide": {
+    "category": "components",
+    "description": "GaAs compound semiconductor wafer for high-frequency and solar applications.",
+    "name": "Gallium Arsenide Wafer"
+  },
+  "gallium_nitride": {
+    "category": "components",
+    "description": "GaN wide-bandgap semiconductor for power electronics and RF devices.",
+    "name": "Gallium Nitride Wafer"
+  },
   "garbage_truck": {
     "category": "vehicles",
     "description": "A fully assembled garbage truck, built for transport, logistics, or specialized operations.",
     "name": "Garbage Truck"
+  },
+  "gas_turbine": {
+    "category": "components",
+    "description": "Industrial gas turbine for power generation and naval propulsion.",
+    "name": "Gas Turbine"
   },
   "gasoline": {
     "category": "energy",
@@ -1724,6 +2214,11 @@
     "description": "Versatile working dog with superior intelligence and protective instincts.",
     "name": "German Shepherd"
   },
+  "germanium": {
+    "category": "metals",
+    "description": "Semiconductor metal recovered from zinc smelting.",
+    "name": "Germanium"
+  },
   "gin": {
     "category": "alcohol",
     "description": "Juniper-flavored spirit",
@@ -1744,10 +2239,25 @@
     "description": "Industrial adhesive made from rendered animals",
     "name": "Industrial Glue"
   },
+  "glycerin": {
+    "category": "materials",
+    "description": "Byproduct of biodiesel production; used in pharmaceuticals and explosives.",
+    "name": "Glycerin"
+  },
   "goal_post": {
     "category": "industrial",
     "description": "An industrial goal post, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Goal Post"
+  },
+  "gold": {
+    "category": "metals",
+    "description": "Refined gold; monetary metal and electronics conductor.",
+    "name": "Gold"
+  },
+  "gold_ore": {
+    "category": "ore",
+    "description": "Low-grade rock with trace gold; processed by cyanidation.",
+    "name": "Gold Ore"
   },
   "golden_burley_leaf": {
     "category": "crops",
@@ -1779,6 +2289,11 @@
     "description": "Premium varietal grapes for winemaking",
     "name": "Wine Grapes"
   },
+  "graphite": {
+    "category": "materials",
+    "description": "Carbon allotrope used in lubricants, battery anodes, and nuclear moderators.",
+    "name": "Graphite"
+  },
   "grass": {
     "category": "crops",
     "description": "Food for grazing animals",
@@ -1793,6 +2308,11 @@
     "category": "military",
     "description": "Military-grade grenade, manufactured for defense applications and armed forces.",
     "name": "Grenade"
+  },
+  "grenade_body": {
+    "category": "components",
+    "description": "Fragmentation sleeve and fuze assembly for hand grenades.",
+    "name": "Grenade Body"
   },
   "grilled_salmon": {
     "category": "prepared_food",
@@ -1874,15 +2394,35 @@
     "description": "A fully assembled helicopter, built for transport, logistics, or specialized operations.",
     "name": "Helicopter"
   },
+  "helicopter_rotor": {
+    "category": "components",
+    "description": "Main and tail rotor assembly for military helicopters.",
+    "name": "Helicopter Rotor"
+  },
   "herring": {
     "category": "seafood",
     "description": "Versatile oily fish used in pickling, smoking and canning",
     "name": "Herring"
   },
+  "high_school_diploma": {
+    "category": "services",
+    "description": "Secondary education completion credential.",
+    "name": "High School Diploma"
+  },
   "hippo": {
     "category": "industrial",
     "description": "An industrial hippo, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hippo"
+  },
+  "holmium": {
+    "category": "metals",
+    "description": "Rare earth with strongest magnetic moment; used in nuclear reactors.",
+    "name": "Holmium"
+  },
+  "home_maintenance_package": {
+    "category": "services",
+    "description": "Residential maintenance and repair service bundle.",
+    "name": "Home Maintenance Package"
   },
   "honey": {
     "category": "sweeteners",
@@ -1924,6 +2464,11 @@
     "description": "An industrial hot dog, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hot Dog"
   },
+  "hree_ore": {
+    "category": "ore",
+    "description": "Xenotime or ion-adsorption ore rich in dysprosium, terbium, europium.",
+    "name": "Heavy Rare Earth Ore"
+  },
   "hull": {
     "category": "vehicle_parts",
     "description": "Fiberglass boat body",
@@ -1938,6 +2483,36 @@
     "category": "industrial",
     "description": "An industrial hvac unit, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hvac Unit"
+  },
+  "hybrid_car": {
+    "category": "vehicles",
+    "description": "Gasoline-electric hybrid passenger vehicle.",
+    "name": "Hybrid Car"
+  },
+  "hydrochloric_acid": {
+    "category": "materials",
+    "description": "HCl; used in ore processing, metal pickling, and chemical synthesis.",
+    "name": "Hydrochloric Acid"
+  },
+  "hydrofluoric_acid": {
+    "category": "materials",
+    "description": "HF; critical etchant in semiconductor fabrication.",
+    "name": "Hydrofluoric Acid"
+  },
+  "hydrogen_fuel_cell": {
+    "category": "components",
+    "description": "PEM fuel cell stack converting hydrogen and oxygen to electricity.",
+    "name": "Hydrogen Fuel Cell"
+  },
+  "hydrogen_peroxide": {
+    "category": "materials",
+    "description": "H2O2; oxidizer and bleaching agent in chemicals and propellants.",
+    "name": "Hydrogen Peroxide"
+  },
+  "hydrogen_vehicle": {
+    "category": "vehicles",
+    "description": "Fuel-cell powered passenger or commercial vehicle.",
+    "name": "Hydrogen Vehicle"
   },
   "hygiene_kit": {
     "category": "industrial",
@@ -1979,15 +2554,45 @@
     "description": "A government-issued contract for housing and processing inmates at a detention facility.",
     "name": "Incarceration Contract"
   },
+  "inconel": {
+    "category": "metals",
+    "description": "Nickel-chromium superalloy for jet engines and extreme heat environments.",
+    "name": "Inconel"
+  },
+  "indium": {
+    "category": "metals",
+    "description": "Soft metal recovered from zinc/lead smelting; used in ITO displays.",
+    "name": "Indium"
+  },
   "industrial_robot": {
     "category": "components",
     "description": "A high-tech industrial robot, used in electronics, computing, and advanced manufacturing.",
     "name": "Industrial Robot"
   },
+  "industrial_robot_arm": {
+    "category": "industrial",
+    "description": "6-axis robotic manipulator for manufacturing automation.",
+    "name": "Industrial Robot Arm"
+  },
+  "inertial_nav_unit": {
+    "category": "components",
+    "description": "IMU providing GPS-independent position and attitude data.",
+    "name": "Inertial Navigation Unit"
+  },
+  "infantry_fighting_vehicle": {
+    "category": "vehicles",
+    "description": "Tracked IFV combining troop transport with direct fire weapon system.",
+    "name": "Infantry Fighting Vehicle"
+  },
   "ink": {
     "category": "industrial",
     "description": "Ink for publishing",
     "name": "Printing Ink"
+  },
+  "inmate_housing": {
+    "category": "retail_prison",
+    "description": "Correctional facility housing and basic services.",
+    "name": "Inmate Housing"
   },
   "inmate_jumpsuit": {
     "category": "apparel",
@@ -2003,6 +2608,16 @@
     "category": "health",
     "description": "A medical-grade insulin, essential for healthcare, treatment, and patient care.",
     "name": "Insulin"
+  },
+  "international_platter": {
+    "category": "retail_food",
+    "description": "Assorted international cuisine food platter.",
+    "name": "International Platter"
+  },
+  "internet_bundle": {
+    "category": "services",
+    "description": "Broadband internet service package.",
+    "name": "Internet Bundle"
   },
   "iron": {
     "category": "metals",
@@ -2054,6 +2669,11 @@
     "description": "An industrial jellyfish, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Jellyfish"
   },
+  "jet_airframe": {
+    "category": "components",
+    "description": "Titanium and carbon fiber structural frame for combat jets.",
+    "name": "Jet Airframe"
+  },
   "jet_fuel": {
     "category": "fuel",
     "description": "High-energy jet fuel, used to power vehicles, machinery, and industrial operations.",
@@ -2063,6 +2683,11 @@
     "category": "fuel",
     "description": "High-energy jet fuel additive, used to power vehicles, machinery, and industrial operations.",
     "name": "Jet Fuel Additive"
+  },
+  "jet_turbine_blade": {
+    "category": "components",
+    "description": "Single-crystal Inconel turbine blade for jet engine hot section.",
+    "name": "Jet Turbine Blade"
   },
   "jewelry": {
     "category": "accessories",
@@ -2094,6 +2719,21 @@
     "description": "Sweetened tomato condiment sauce used in cooking and as a topping",
     "name": "Ketchup"
   },
+  "kevlar_fiber": {
+    "category": "materials",
+    "description": "Para-aramid fiber; primary ballistic protection material.",
+    "name": "Kevlar Fiber"
+  },
+  "kids_meal": {
+    "category": "retail_food",
+    "description": "Children's meal with toy at family restaurant.",
+    "name": "Kids Meal"
+  },
+  "kitchen_package": {
+    "category": "home_goods",
+    "description": "Kitchen appliance and cookware bundle.",
+    "name": "Kitchen Package"
+  },
   "koala": {
     "category": "industrial",
     "description": "An industrial koala, used in manufacturing, processing, and heavy-industry operations.",
@@ -2124,6 +2764,11 @@
     "description": "Tender cuts from young sheep; prized for its mild, delicate flavour.",
     "name": "Lamb Meat"
   },
+  "lamb_stew": {
+    "category": "food",
+    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
+    "name": "Lamb Stew"
+  },
   "land_bank_shares": {
     "category": "financial",
     "description": "Tradeable equity shares in the Land Bank",
@@ -2133,6 +2778,11 @@
     "category": "shellfish",
     "description": "Slender European lobster with delicate, sweet flavor",
     "name": "Langoustine"
+  },
+  "lanthanum": {
+    "category": "metals",
+    "description": "Rare earth metal used in solid-state batteries and camera lenses.",
+    "name": "Lanthanum"
   },
   "lapponian_herder": {
     "category": "livestock",
@@ -2164,6 +2814,11 @@
     "description": "Legal reference text",
     "name": "Law Book"
   },
+  "lawn_service": {
+    "category": "services",
+    "description": "Residential lawn care and landscaping service.",
+    "name": "Lawn Service"
+  },
   "lcd_panel": {
     "category": "industrial",
     "description": "An industrial lcd panel, used in manufacturing, processing, and heavy-industry operations.",
@@ -2174,6 +2829,11 @@
     "description": "Heavy metal for batteries",
     "name": "Lead"
   },
+  "lead_acid_battery": {
+    "category": "components",
+    "description": "Traditional 12V automotive battery; lead plates in sulfuric acid electrolyte.",
+    "name": "Lead-Acid Battery"
+  },
   "lead_ore": {
     "category": "ore",
     "description": "Raw lead from mines",
@@ -2183,6 +2843,11 @@
     "category": "textiles",
     "description": "High-quality hides for bookbinding and luxury goods",
     "name": "Leather"
+  },
+  "legal_aid": {
+    "category": "services",
+    "description": "Legal representation and advice service.",
+    "name": "Legal Aid"
   },
   "leggings": {
     "category": "apparel",
@@ -2198,6 +2863,11 @@
     "category": "produce",
     "description": "Fresh leafy greens",
     "name": "Lettuce"
+  },
+  "lfp_cell": {
+    "category": "components",
+    "description": "Lithium iron phosphate cell; thermally stable, long-cycle EV and grid battery.",
+    "name": "LFP Battery Cell"
   },
   "license_plate_batch": {
     "category": "services",
@@ -2229,10 +2899,45 @@
     "description": "An industrial lion, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Lion"
   },
+  "lithium": {
+    "category": "metals",
+    "description": "Refined lithium carbonate; primary feedstock for all lithium batteries.",
+    "name": "Lithium"
+  },
+  "lithium_battery_pack": {
+    "category": "components",
+    "description": "Assembled lithium cell array with BMS for EV and grid storage.",
+    "name": "Lithium Battery Pack"
+  },
+  "lithium_nmc_cell": {
+    "category": "components",
+    "description": "Nickel-manganese-cobalt lithium cell; high energy density for EVs and electronics.",
+    "name": "Lithium NMC Cell"
+  },
+  "lithium_ore": {
+    "category": "ore",
+    "description": "Spodumene or lepidolite bearing lithium carbonate.",
+    "name": "Lithium Ore"
+  },
+  "liturgical_lamb_light": {
+    "category": "luxury",
+    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
+    "name": "Liturgical Lamb Light"
+  },
+  "live_lake_scrolls": {
+    "category": "luxury",
+    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
+    "name": "Live Lake Scrolls"
+  },
   "livestock_product_supply": {
     "category": "livestock",
     "description": "A living or processed livestock product supply, part of the agricultural and livestock economy.",
     "name": "Livestock Product Supply"
+  },
+  "living_room_set": {
+    "category": "home_goods",
+    "description": "Sofa, coffee table, and entertainment unit package.",
+    "name": "Living Room Set"
   },
   "lobster": {
     "category": "shellfish",
@@ -2264,6 +2969,11 @@
     "description": "A precision-engineered locomotive engine, a critical component in vehicle manufacturing and assembly.",
     "name": "Locomotive Engine"
   },
+  "logistics_contract": {
+    "category": "services",
+    "description": "Supply chain and logistics management contract.",
+    "name": "Logistics Contract"
+  },
   "lollipop": {
     "category": "confectionery",
     "description": "Hard candy on a stick",
@@ -2279,6 +2989,11 @@
     "description": "Skincare moisturizer",
     "name": "Body Lotion"
   },
+  "lree_ore": {
+    "category": "ore",
+    "description": "Bastn\u00e4site or monazite ore rich in cerium, lanthanum, neodymium.",
+    "name": "Light Rare Earth Ore"
+  },
   "lumber": {
     "category": "industrial",
     "description": "Processed wood for construction and manufacturing",
@@ -2288,6 +3003,11 @@
     "category": "vehicle",
     "description": "Premium automobile",
     "name": "Luxury Sedan"
+  },
+  "machine_gun": {
+    "category": "military",
+    "description": "Belt-fed automatic weapon for sustained fire in military applications.",
+    "name": "Machine Gun"
   },
   "mackerel": {
     "category": "seafood",
@@ -2299,6 +3019,16 @@
     "description": "Weekly glossy publication",
     "name": "Lifestyle Magazine"
   },
+  "magnesite": {
+    "category": "ore",
+    "description": "Magnesium carbonate ore for refractory and chemical uses.",
+    "name": "Magnesite"
+  },
+  "magnesium": {
+    "category": "metals",
+    "description": "Refined magnesium; lightest structural metal.",
+    "name": "Magnesium"
+  },
   "mahi_mahi": {
     "category": "seafood",
     "description": "Tropical pelagic fish with firm, sweet flesh",
@@ -2309,10 +3039,25 @@
     "description": "Processed grain for brewing and distilling",
     "name": "Malted Barley"
   },
+  "manganese": {
+    "category": "metals",
+    "description": "Refined manganese; used in steel and battery chemistry.",
+    "name": "Manganese"
+  },
+  "manganese_ore": {
+    "category": "ore",
+    "description": "Oxide ore used in steelmaking and battery production.",
+    "name": "Manganese Ore"
+  },
   "manta_ray": {
     "category": "industrial",
     "description": "An industrial manta ray, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Manta Ray"
+  },
+  "maraging_steel": {
+    "category": "metals",
+    "description": "Ultra-high-strength steel alloy used in missile bodies and tooling.",
+    "name": "Maraging Steel"
   },
   "marine_engine": {
     "category": "vehicle_parts",
@@ -2329,15 +3074,35 @@
     "description": "Fluffy sugar confection",
     "name": "Marshmallows"
   },
+  "masters_degree": {
+    "category": "services",
+    "description": "Graduate-level academic degree credential.",
+    "name": "Master's Degree"
+  },
+  "maternity_package": {
+    "category": "services",
+    "description": "Prenatal care and delivery medical service bundle.",
+    "name": "Maternity Package"
+  },
   "medical_scanner": {
     "category": "health",
     "description": "A medical-grade medical scanner, essential for healthcare, treatment, and patient care.",
     "name": "Medical Scanner"
   },
+  "medical_supply_kit": {
+    "category": "health",
+    "description": "Emergency and first aid medical supply bundle.",
+    "name": "Medical Supply Kit"
+  },
   "medicine": {
     "category": "health",
     "description": "Standard medical supplies",
     "name": "Antibiotics"
+  },
+  "medina_feast": {
+    "category": "retail_food",
+    "description": "Traditional Medina-style multi-course feast.",
+    "name": "Medina Feast"
   },
   "memory_module": {
     "category": "industrial",
@@ -2364,6 +3129,11 @@
     "description": "An industrial microscope, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Microscope"
   },
+  "military_drone": {
+    "category": "vehicles",
+    "description": "Armed or reconnaissance unmanned aerial vehicle.",
+    "name": "Military Drone"
+  },
   "military_helicopter": {
     "category": "vehicles",
     "description": "A fully assembled military helicopter, built for transport, logistics, or specialized operations.",
@@ -2373,6 +3143,16 @@
     "category": "military",
     "description": "Military-grade military radio, manufactured for defense applications and armed forces.",
     "name": "Military Radio"
+  },
+  "military_training": {
+    "category": "services",
+    "description": "Military skills and readiness training program.",
+    "name": "Military Training"
+  },
+  "military_truck": {
+    "category": "vehicles",
+    "description": "Heavy military logistics and troop transport truck.",
+    "name": "Military Truck"
   },
   "military_uniform": {
     "category": "military",
@@ -2399,25 +3179,65 @@
     "description": "Aromatic herb for flavoring",
     "name": "Fresh Mint"
   },
+  "mint_tea_ceremony": {
+    "category": "retail_food",
+    "description": "Traditional Moroccan mint tea service ceremony.",
+    "name": "Mint Tea Ceremony"
+  },
   "missile": {
     "category": "military",
     "description": "Military-grade missile, manufactured for defense applications and armed forces.",
     "name": "Missile"
+  },
+  "missile_guidance_unit": {
+    "category": "components",
+    "description": "Inertial/GPS/IR seeker guidance package for precision munitions.",
+    "name": "Missile Guidance Unit"
+  },
+  "missile_warhead": {
+    "category": "components",
+    "description": "High-explosive, shaped-charge, or thermobaric warhead assembly.",
+    "name": "Missile Warhead"
   },
   "mohair_sheep": {
     "category": "livestock",
     "description": "Angora-type breed yielding long, lustrous mohair fibre with silky sheen.",
     "name": "Mohair Sheep"
   },
+  "molybdenum": {
+    "category": "metals",
+    "description": "Refined molybdenum; adds strength and heat resistance to alloys.",
+    "name": "Molybdenum"
+  },
+  "molybdenum_ore": {
+    "category": "ore",
+    "description": "Molybdenite concentrate for high-strength alloy steels.",
+    "name": "Molybdenum Ore"
+  },
+  "monel": {
+    "category": "metals",
+    "description": "Nickel-copper alloy; highly corrosion resistant for marine and chemical use.",
+    "name": "Monel"
+  },
   "monkfish": {
     "category": "seafood",
     "description": "Prized fish with dense, sweet flesh called the poor mans lobster",
     "name": "Monkfish"
   },
+  "monthly_utility_bill": {
+    "category": "services",
+    "description": "Combined electricity, water, and gas utility service.",
+    "name": "Monthly Utility Bill"
+  },
   "moonshine": {
     "category": "alcohol",
     "description": "Unaged corn whiskey",
     "name": "Moonshine"
+  },
+  "moroccan_evening": {
+    "category": "services",
+    "description": "Themed Moroccan cultural dining and entertainment experience.",
+    "name": "Moroccan Evening"
   },
   "mother_of_pearl": {
     "category": "luxury",
@@ -2429,6 +3249,11 @@
     "description": "Two-wheeled transport",
     "name": "Motorcycle"
   },
+  "movie_premier": {
+    "category": "services",
+    "description": "Exclusive film premiere event ticket and experience.",
+    "name": "Movie Premiere"
+  },
   "movie_screen": {
     "category": "media",
     "description": "A cultural or entertainment product \u2014 movie screen \u2014 created for public consumption.",
@@ -2438,6 +3263,11 @@
     "category": "industrial",
     "description": "An industrial mre, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Mre"
+  },
+  "mri_machine": {
+    "category": "industrial",
+    "description": "Magnetic resonance imaging scanner using superconducting magnets.",
+    "name": "MRI Machine"
   },
   "muffin": {
     "category": "baked_goods",
@@ -2459,15 +3289,85 @@
     "description": "An industrial natural gas, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Natural Gas"
   },
+  "naval_destroyer": {
+    "category": "vehicles",
+    "description": "Guided-missile destroyer warship.",
+    "name": "Naval Destroyer"
+  },
+  "naval_gun_system": {
+    "category": "components",
+    "description": "Automated 76mm or 127mm deck gun system for surface combatants.",
+    "name": "Naval Gun System"
+  },
+  "neodymium": {
+    "category": "metals",
+    "description": "Rare earth metal critical for permanent magnets in EVs and turbines.",
+    "name": "Neodymium"
+  },
+  "neodymium_magnet": {
+    "category": "components",
+    "description": "NdFeB permanent magnet; most powerful type used in motors and speakers.",
+    "name": "Neodymium Magnet"
+  },
   "newspaper": {
     "category": "media",
     "description": "Current events publication",
     "name": "Daily Newspaper"
   },
+  "nichrome": {
+    "category": "metals",
+    "description": "Nickel-chromium resistance alloy used in heating elements.",
+    "name": "Nichrome"
+  },
+  "nickel": {
+    "category": "metals",
+    "description": "Refined nickel; critical for stainless steel and battery cathodes.",
+    "name": "Nickel"
+  },
+  "nickel_ore": {
+    "category": "ore",
+    "description": "Sulfide or laterite ore containing nickel.",
+    "name": "Nickel Ore"
+  },
   "night_vision": {
     "category": "industrial",
     "description": "An industrial night vision, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Night Vision"
+  },
+  "night_vision_optic": {
+    "category": "components",
+    "description": "Image-intensifying monocular or scope for low-light operations.",
+    "name": "Night Vision Optic"
+  },
+  "nightclub_vip": {
+    "category": "services",
+    "description": "VIP nightclub access and bottle service package.",
+    "name": "Nightclub VIP"
+  },
+  "niobium": {
+    "category": "metals",
+    "description": "Refined niobium from coltan; microalloying steel additive.",
+    "name": "Niobium"
+  },
+  "nitinol": {
+    "category": "metals",
+    "description": "Nickel-titanium shape-memory alloy for medical devices and actuators.",
+    "name": "Nitinol"
+  },
+  "nitric_acid": {
+    "category": "materials",
+    "description": "HNO3; used in explosives production, fertilizers, and metal etching.",
+    "name": "Nitric Acid"
+  },
+  "nitrocellulose": {
+    "category": "materials",
+    "description": "Gun cotton; used in smokeless powder and lacquers.",
+    "name": "Nitrocellulose"
+  },
+  "nitroglycerin": {
+    "category": "materials",
+    "description": "NG; high-sensitivity explosive and vasodilator active ingredient.",
+    "name": "Nitroglycerin"
   },
   "noodles": {
     "category": "food",
@@ -2489,6 +3389,21 @@
     "description": "Paperback fiction",
     "name": "Mystery Novel"
   },
+  "nuclear_reactor_core": {
+    "category": "components",
+    "description": "Enriched fuel assembly and control rod assembly for power reactors.",
+    "name": "Nuclear Reactor Core"
+  },
+  "nuclear_waste_container": {
+    "category": "industrial",
+    "description": "Shielded dry cask for spent nuclear fuel storage.",
+    "name": "Nuclear Waste Container"
+  },
+  "nylon": {
+    "category": "materials",
+    "description": "Polyamide synthetic polymer; used in body armor carriers, parachutes, and ropes.",
+    "name": "Nylon"
+  },
   "obstacle_course": {
     "category": "industrial",
     "description": "An industrial obstacle course, used in manufacturing, processing, and heavy-industry operations.",
@@ -2503,6 +3418,11 @@
     "category": "seafood_product",
     "description": "Prepared octopus ready for braising, grilling or salad",
     "name": "Cleaned Octopus"
+  },
+  "office_furniture": {
+    "category": "home_goods",
+    "description": "Desk, chair, and filing cabinet office furniture set.",
+    "name": "Office Furniture"
   },
   "oil": {
     "category": "liquids",
@@ -2609,6 +3529,16 @@
     "description": "Colored coating for surfaces",
     "name": "Paint"
   },
+  "palladium": {
+    "category": "metals",
+    "description": "Refined palladium; catalytic converter and electronics plating.",
+    "name": "Palladium"
+  },
+  "pan_precursor": {
+    "category": "materials",
+    "description": "Polyacrylonitrile fiber; intermediate in carbon fiber production.",
+    "name": "PAN Precursor"
+  },
   "panda": {
     "category": "industrial",
     "description": "An industrial panda, used in manufacturing, processing, and heavy-industry operations.",
@@ -2664,6 +3594,11 @@
     "description": "Rich liver spread",
     "name": "P\u00e2t\u00e9"
   },
+  "pcb_substrate": {
+    "category": "components",
+    "description": "FR-4 fiberglass-epoxy laminate; the base material for circuit boards.",
+    "name": "PCB Substrate"
+  },
   "peanut": {
     "category": "crops",
     "description": "Legume for cooking and snacks",
@@ -2688,11 +3623,6 @@
     "category": "food",
     "description": "Refined cooking oil cold-pressed from peanuts",
     "name": "Peanut Oil"
-  },
-  "cooking_oil": {
-    "category": "food",
-    "description": "Blended culinary oil refined from cold-pressed seed oils. An essential ingredient in food production, cooking, and baking.",
-    "name": "Cooking Oil"
   },
   "pembroke_welsh_corgi": {
     "category": "livestock",
@@ -2729,10 +3659,30 @@
     "description": "Pressure-fermented under its own juices for months, producing a uniquely spicy, plummy condiment tobacco",
     "name": "Perique Tobacco"
   },
+  "phenylenediamine": {
+    "category": "materials",
+    "description": "Aromatic diamine monomer; precursor to PPTA polymer for Kevlar.",
+    "name": "Phenylenediamine"
+  },
   "phone_card": {
     "category": "vehicles",
     "description": "A fully assembled phone card, built for transport, logistics, or specialized operations.",
     "name": "Phone Card"
+  },
+  "phosphate_rock": {
+    "category": "ore",
+    "description": "Apatite-rich rock; primary source of phosphorus for fertilizers.",
+    "name": "Phosphate Rock"
+  },
+  "phosphor_bronze": {
+    "category": "metals",
+    "description": "Copper-tin-phosphorus alloy for springs, bearings, and connectors.",
+    "name": "Phosphor Bronze"
+  },
+  "phosphoric_acid": {
+    "category": "materials",
+    "description": "H3PO4; used in LFP batteries, fertilizers, and food additives.",
+    "name": "Phosphoric Acid"
   },
   "pickled_herring": {
     "category": "seafood_product",
@@ -2779,6 +3729,16 @@
     "description": "Synthetic polymer material refined from petroleum; used in packaging, components, and consumer goods.",
     "name": "Plastic"
   },
+  "platinum": {
+    "category": "metals",
+    "description": "Refined platinum; catalytic converter and hydrogen fuel cell metal.",
+    "name": "Platinum"
+  },
+  "platinum_ore": {
+    "category": "ore",
+    "description": "PGM-bearing sulphide ore from layered intrusions.",
+    "name": "Platinum Ore"
+  },
   "playing_cards": {
     "category": "vehicles",
     "description": "A fully assembled playing cards, built for transport, logistics, or specialized operations.",
@@ -2819,6 +3779,11 @@
     "description": "Fine-wool breed crossed from Merino and Lincoln; a favourite of hand-spinners.",
     "name": "Polwarth"
   },
+  "polycarbonate": {
+    "category": "materials",
+    "description": "Tough transparent thermoplastic; used in ballistic glazing and riot shields.",
+    "name": "Polycarbonate"
+  },
   "polyester": {
     "category": "textiles",
     "description": "Synthetic textile fiber used in modern manufacturing",
@@ -2849,6 +3814,21 @@
     "description": "Printed card for correspondence and greetings",
     "name": "Postcard"
   },
+  "potash_ore": {
+    "category": "ore",
+    "description": "Potassium-bearing mineral salt mined for fertilizers.",
+    "name": "Potash Ore"
+  },
+  "potassium_hydroxide": {
+    "category": "materials",
+    "description": "KOH; electrolyte in alkaline batteries and chemical synthesis.",
+    "name": "Potassium Hydroxide"
+  },
+  "potassium_nitrate": {
+    "category": "materials",
+    "description": "KNO3; oxidizer component in black powder and fertilizers.",
+    "name": "Potassium Nitrate"
+  },
   "potato_sack": {
     "category": "packaging",
     "description": "Burlap sack for storing potatoes",
@@ -2858,6 +3838,16 @@
     "category": "produce",
     "description": "Fresh potatoes from the field",
     "name": "Potatoes"
+  },
+  "ppta_polymer": {
+    "category": "materials",
+    "description": "Poly(p-phenylene terephthalamide); chemical precursor to Kevlar.",
+    "name": "PPTA Polymer"
+  },
+  "praseodymium": {
+    "category": "metals",
+    "description": "Rare earth alloying element; used in magnets and aircraft engines.",
+    "name": "Praseodymium"
   },
   "prawn_cocktail": {
     "category": "prepared_food",
@@ -2878,6 +3868,11 @@
     "category": "prepared_food",
     "description": "A ready-to-eat premium sashimi, prepared and sold through food service establishments.",
     "name": "Premium Sashimi"
+  },
+  "prescription_bundle": {
+    "category": "health",
+    "description": "Prescribed medication fulfillment package.",
+    "name": "Prescription Bundle"
   },
   "pretzel": {
     "category": "baked_goods",
@@ -2959,6 +3954,11 @@
     "description": "An industrial python, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Python"
   },
+  "quartz": {
+    "category": "ore",
+    "description": "High-purity silicon dioxide; feedstock for silicon refining.",
+    "name": "Quartz"
+  },
   "queen_bee": {
     "category": "livestock",
     "description": "Extremely rare fertile queen bee, raised on vast reserves of royal jelly. Establishes new colonies.",
@@ -2969,10 +3969,25 @@
     "description": "An industrial radar array, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Radar Array"
   },
+  "radar_system": {
+    "category": "components",
+    "description": "Active phased-array radar unit for aircraft, ships, and missile defense.",
+    "name": "Radar System"
+  },
+  "radiation_therapy_unit": {
+    "category": "industrial",
+    "description": "Linear accelerator for cancer radiation treatment.",
+    "name": "Radiation Therapy Unit"
+  },
   "radiator": {
     "category": "vehicle_parts",
     "description": "Cooling system",
     "name": "Radiator"
+  },
+  "rail_pass": {
+    "category": "services",
+    "description": "Multi-ride railway transit pass.",
+    "name": "Rail Pass"
   },
   "rambouillet_sheep": {
     "category": "livestock",
@@ -2989,10 +4004,20 @@
     "description": "A hand-polished ceremonial ram's horn \u2014 an extraordinarily rare luxury religious artefact of immense spiritual significance.",
     "name": "Ram's Horn"
   },
+  "ration_pack": {
+    "category": "retail_food",
+    "description": "Military or emergency food ration package.",
+    "name": "Ration Pack"
+  },
   "razor_wire": {
     "category": "industrial",
     "description": "An industrial razor wire, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Razor Wire"
+  },
+  "rdx_explosive": {
+    "category": "materials",
+    "description": "Cyclonite; military-grade high explosive used in warheads and demolition.",
+    "name": "RDX Explosive"
   },
   "rebar": {
     "category": "industrial",
@@ -3009,6 +4034,11 @@
     "description": "Full-bodied cabernet",
     "name": "Red Wine"
   },
+  "reentry_package": {
+    "category": "retail_prison",
+    "description": "Post-incarceration reintegration support bundle.",
+    "name": "Reentry Package"
+  },
   "refrigerated_container": {
     "category": "industrial",
     "description": "An industrial refrigerated container, used in manufacturing, processing, and heavy-industry operations.",
@@ -3018,6 +4048,11 @@
     "category": "industrial",
     "description": "An industrial refrigerator, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Refrigerator"
+  },
+  "rehabilitation_program": {
+    "category": "retail_prison",
+    "description": "Inmate rehabilitation and skills development program.",
+    "name": "Rehabilitation Program"
   },
   "religious_book": {
     "category": "luxury",
@@ -3029,15 +4064,30 @@
     "description": "Luxury hand-crafted devotional candle: dyed, cinnamon-scented beeswax poured over a pearl-adorned silk-wrapped cardboard vessel with an apple-fibre rope wick \u2014 a sacred heirloom object",
     "name": "Religious Candle"
   },
+  "rental_car": {
+    "category": "services",
+    "description": "Vehicle rental service.",
+    "name": "Rental Car"
+  },
   "research_enzyme": {
     "category": "industrial",
     "description": "An industrial research enzyme, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Research Enzyme"
   },
+  "research_grant": {
+    "category": "services",
+    "description": "Academic or industrial research funding award.",
+    "name": "Research Grant"
+  },
   "residential_electricity": {
     "category": "industrial",
     "description": "An industrial residential electricity, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Residential Electricity"
+  },
+  "rhenium": {
+    "category": "metals",
+    "description": "Ultra-rare metal recovered from molybdenum roasting; for jet turbines.",
+    "name": "Rhenium"
   },
   "rhino": {
     "category": "industrial",
@@ -3089,6 +4139,16 @@
     "description": "Military-grade rifle, manufactured for defense applications and armed forces.",
     "name": "Rifle"
   },
+  "rifle_barrel": {
+    "category": "components",
+    "description": "Precision-rifled steel barrel for service rifles.",
+    "name": "Rifle Barrel"
+  },
+  "rifle_receiver": {
+    "category": "components",
+    "description": "Machined aluminum or steel rifle lower and upper receiver set.",
+    "name": "Rifle Receiver"
+  },
   "roasted_coffee": {
     "category": "ingredients",
     "description": "Roasted beans ready for grinding",
@@ -3103,6 +4163,11 @@
     "category": "tobacco",
     "description": "Short, thick handrolled cigar delivering a concentrated, full-bodied smoke",
     "name": "Robusto Cigar"
+  },
+  "rocket_motor": {
+    "category": "components",
+    "description": "Solid or liquid-propellant rocket motor for missiles and launch vehicles.",
+    "name": "Rocket Motor"
   },
   "romanov_sheep": {
     "category": "livestock",
@@ -3169,10 +4234,20 @@
     "description": "High-quality molasses suitable for fermentation and distillation.",
     "name": "Rum Molasses"
   },
+  "sacred_lamb_offering": {
+    "category": "luxury",
+    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
+    "name": "Sacred Lamb Offering"
+  },
   "sacred_tobacco": {
     "category": "tobacco",
     "description": "Ceremonial grade tobacco prepared for ritual and spiritual use, distinct from commercial smoking tobacco",
     "name": "Sacred Tobacco"
+  },
+  "safari_tour": {
+    "category": "services",
+    "description": "Guided wildlife safari experience.",
+    "name": "Safari Tour"
   },
   "sake": {
     "category": "alcohol",
@@ -3208,6 +4283,16 @@
     "category": "seafood_product",
     "description": "Dried and salted cod, a preserved staple with centuries of tradition",
     "name": "Salt Cod"
+  },
+  "samarium": {
+    "category": "metals",
+    "description": "Rare earth used in samarium-cobalt magnets for high-temp applications.",
+    "name": "Samarium"
+  },
+  "samarium_cobalt_magnet": {
+    "category": "components",
+    "description": "High-temperature permanent magnet for aerospace and defense motors.",
+    "name": "Samarium-Cobalt Magnet"
   },
   "samoyed": {
     "category": "livestock",
@@ -3253,6 +4338,11 @@
     "category": "shellfish",
     "description": "Bivalve mollusks with sweet, tender adductor muscles",
     "name": "Scallops"
+  },
+  "scandium": {
+    "category": "metals",
+    "description": "Light rare earth used to strengthen aluminum alloys for aerospace.",
+    "name": "Scandium"
   },
   "schipperke": {
     "category": "livestock",
@@ -3329,10 +4419,30 @@
     "description": "An industrial security camera, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Security Camera"
   },
+  "security_clearance": {
+    "category": "services",
+    "description": "Government security clearance vetting and issuance service.",
+    "name": "Security Clearance"
+  },
   "security_contract": {
     "category": "services",
     "description": "A professional security contract, a contracted or licensed service within the economy.",
     "name": "Security Contract"
+  },
+  "security_package": {
+    "category": "services",
+    "description": "Comprehensive physical security service bundle.",
+    "name": "Security Package"
+  },
+  "selenium": {
+    "category": "metals",
+    "description": "Byproduct of copper refining; used in solar cells and glass.",
+    "name": "Selenium"
+  },
+  "self_propelled_artillery": {
+    "category": "vehicles",
+    "description": "Armored howitzer on a tracked or wheeled self-propelled chassis.",
+    "name": "Self-Propelled Artillery"
   },
   "semi_truck": {
     "category": "vehicles",
@@ -3404,6 +4514,31 @@
     "description": "Compact British Down breed with excellent feed conversion and mild fleece.",
     "name": "Shropshire Sheep"
   },
+  "silicon": {
+    "category": "metals",
+    "description": "Metallurgical-grade silicon refined from quartz.",
+    "name": "Silicon"
+  },
+  "silicon_carbide": {
+    "category": "materials",
+    "description": "Hard ceramic abrasive; used in advanced power electronics and armor.",
+    "name": "Silicon Carbide"
+  },
+  "silicon_carbide_wafer": {
+    "category": "components",
+    "description": "SiC power semiconductor substrate for EVs and grid-scale inverters.",
+    "name": "Silicon Carbide Wafer"
+  },
+  "silicon_steel": {
+    "category": "metals",
+    "description": "Electrical steel alloyed with silicon; used in transformer and motor cores.",
+    "name": "Silicon Steel"
+  },
+  "silicon_wafer": {
+    "category": "components",
+    "description": "Ultra-pure single-crystal silicon disk; substrate for all microchip fabrication.",
+    "name": "Silicon Wafer"
+  },
   "silk": {
     "category": "textiles",
     "description": "Luxury textile fiber for high-end goods",
@@ -3413,6 +4548,16 @@
     "category": "livestock",
     "description": "Larvae used to produce silk threads.",
     "name": "Silkworm"
+  },
+  "silver": {
+    "category": "metals",
+    "description": "Refined silver; highest electrical conductivity of all metals.",
+    "name": "Silver"
+  },
+  "silver_ore": {
+    "category": "ore",
+    "description": "Argentiferous galena or native silver in host rock.",
+    "name": "Silver Ore"
   },
   "skate": {
     "category": "seafood",
@@ -3449,6 +4594,11 @@
     "description": "Cold-smoked salmon slices prized for charcuterie and brunch dishes",
     "name": "Smoked Salmon"
   },
+  "smokeless_powder": {
+    "category": "materials",
+    "description": "Nitrocellulose-based propellant for modern firearms and artillery.",
+    "name": "Smokeless Powder"
+  },
   "smoothie": {
     "category": "industrial",
     "description": "An industrial smoothie, used in manufacturing, processing, and heavy-industry operations.",
@@ -3484,6 +4634,11 @@
     "description": "An industrial soda cup, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Soda Cup"
   },
+  "sodium_ion_cell": {
+    "category": "components",
+    "description": "Low-cost sodium-ion battery cell; cobalt-free grid storage alternative.",
+    "name": "Sodium-Ion Cell"
+  },
   "soft_serve": {
     "category": "industrial",
     "description": "An industrial soft serve, used in manufacturing, processing, and heavy-industry operations.",
@@ -3494,10 +4649,30 @@
     "description": "A high-tech software license, used in electronics, computing, and advanced manufacturing.",
     "name": "Software License"
   },
+  "solar_panel": {
+    "category": "components",
+    "description": "Photovoltaic module converting sunlight to DC electricity.",
+    "name": "Solar Panel"
+  },
+  "solder": {
+    "category": "metals",
+    "description": "Tin-lead alloy used to join electronic components to circuit boards.",
+    "name": "Solder"
+  },
   "sole": {
     "category": "seafood",
     "description": "Premium flatfish with delicate flavor and fine texture",
     "name": "Dover Sole"
+  },
+  "solid_state_cell": {
+    "category": "components",
+    "description": "LLZO ceramic electrolyte lithium cell; next-generation battery technology.",
+    "name": "Solid-State Cell"
+  },
+  "sonar_system": {
+    "category": "components",
+    "description": "Active/passive hydrophone sonar array for submarine detection.",
+    "name": "Sonar System"
   },
   "sound_system": {
     "category": "industrial",
@@ -3524,6 +4699,11 @@
     "description": "Ignition components",
     "name": "Spark Plugs"
   },
+  "sporting_goods": {
+    "category": "retail_shopping",
+    "description": "Sports equipment and athletic gear bundle.",
+    "name": "Sporting Goods"
+  },
   "sports_ball": {
     "category": "accessories",
     "description": "A sports ball, used in sports, recreation, or specialty retail.",
@@ -3533,6 +4713,11 @@
     "category": "industrial",
     "description": "An industrial sports equipment, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sports Equipment"
+  },
+  "sports_package": {
+    "category": "services",
+    "description": "Sports event tickets and fan experience package.",
+    "name": "Sports Package"
   },
   "squid": {
     "category": "seafood",
@@ -3549,6 +4734,11 @@
     "description": "A stadium seat, used in sports, recreation, or specialty retail.",
     "name": "Stadium Seat"
   },
+  "stainless_steel": {
+    "category": "metals",
+    "description": "Iron-chromium-nickel alloy; corrosion resistant structural metal.",
+    "name": "Stainless Steel"
+  },
   "standard_room_night": {
     "category": "retail_service",
     "description": "One night's accommodation in a standard hotel room including housekeeping and amenities.",
@@ -3558,6 +4748,11 @@
     "category": "industrial",
     "description": "An industrial standardized test, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Standardized Test"
+  },
+  "steam": {
+    "category": "industrial",
+    "description": "High-pressure steam; process heat and activation agent in industrial chemical production.",
+    "name": "Steam"
   },
   "steel": {
     "category": "metals",
@@ -3594,6 +4789,11 @@
     "description": "An industrial student desk, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Student Desk"
   },
+  "study_abroad": {
+    "category": "services",
+    "description": "International educational exchange program.",
+    "name": "Study Abroad Program"
+  },
   "sturgeon": {
     "category": "industrial",
     "description": "An industrial sturgeon, used in manufacturing, processing, and heavy-industry operations.",
@@ -3603,6 +4803,11 @@
     "category": "vehicles",
     "description": "A fully assembled submarine, built for transport, logistics, or specialized operations.",
     "name": "Submarine"
+  },
+  "submarine_hull": {
+    "category": "components",
+    "description": "Pressure-resistant double-hull submarine body section.",
+    "name": "Submarine Hull"
   },
   "suffolk_sheep": {
     "category": "livestock",
@@ -3619,6 +4824,16 @@
     "description": "Formal leather and silk jacket with buttons",
     "name": "Suit Jacket"
   },
+  "sulfur": {
+    "category": "ore",
+    "description": "Elemental sulfur from volcanic or refinery sources.",
+    "name": "Sulfur"
+  },
+  "sulfuric_acid": {
+    "category": "materials",
+    "description": "H2SO4; most produced industrial chemical, used in ore leaching and batteries.",
+    "name": "Sulfuric Acid"
+  },
   "sumatra_leaf": {
     "category": "crops",
     "description": "Indonesian wrapper and binder leaf with thin, silky texture and a mild, creamy character",
@@ -3629,6 +4844,11 @@
     "description": "Oriental tobacco dried in direct sunlight, producing a light aromatic leaf for Turkish-style blends",
     "name": "Sun-Cured Tobacco"
   },
+  "surgery_package": {
+    "category": "services",
+    "description": "Elective or necessary surgical procedure bundle.",
+    "name": "Surgery Package"
+  },
   "surgical_gloves": {
     "category": "health",
     "description": "A medical-grade surgical gloves, essential for healthcare, treatment, and patient care.",
@@ -3638,6 +4858,11 @@
     "category": "health",
     "description": "A medical-grade surgical mask, essential for healthcare, treatment, and patient care.",
     "name": "Surgical Mask"
+  },
+  "surgical_robot": {
+    "category": "industrial",
+    "description": "Robotic surgery system for minimally invasive procedures.",
+    "name": "Surgical Robot"
   },
   "surgical_tools": {
     "category": "health",
@@ -3704,10 +4929,40 @@
     "description": "An industrial takeout container, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Takeout Container"
   },
+  "tallow_candle": {
+    "category": "home_goods",
+    "description": "A hand-dipped candle rendered from lamb tallow \u2014 the working person's light, practical and long-burning, produced for centuries before beeswax became affordable.",
+    "name": "Tallow Candle"
+  },
   "tank": {
     "category": "military",
     "description": "Military-grade tank, manufactured for defense applications and armed forces.",
     "name": "Tank"
+  },
+  "tank_cannon": {
+    "category": "components",
+    "description": "120mm smoothbore cannon for main battle tank armament.",
+    "name": "Tank Cannon"
+  },
+  "tank_hull": {
+    "category": "components",
+    "description": "Welded composite-armor main battle tank hull and chassis.",
+    "name": "Tank Hull"
+  },
+  "tank_turret": {
+    "category": "components",
+    "description": "Rotating armored turret assembly for main battle tank.",
+    "name": "Tank Turret"
+  },
+  "tantalum": {
+    "category": "metals",
+    "description": "Refined tantalum from coltan; essential for electronic capacitors.",
+    "name": "Tantalum"
+  },
+  "targeting_optic": {
+    "category": "components",
+    "description": "Precision rifle scope or laser rangefinder targeting system.",
+    "name": "Targeting Optic"
   },
   "targhee_sheep": {
     "category": "livestock",
@@ -3754,10 +5009,25 @@
     "description": "An industrial television, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Television"
   },
+  "tellurium": {
+    "category": "metals",
+    "description": "Rare byproduct of copper refining; used in CdTe solar panels.",
+    "name": "Tellurium"
+  },
   "tequila": {
     "category": "alcohol",
     "description": "Agave spirit",
     "name": "Tequila"
+  },
+  "terbium": {
+    "category": "metals",
+    "description": "Heavy rare earth used in solid-state devices and green phosphors.",
+    "name": "Terbium"
+  },
+  "terephthaloyl_chloride": {
+    "category": "materials",
+    "description": "Acid chloride monomer; combines with phenylenediamine to form PPTA.",
+    "name": "Terephthaloyl Chloride"
   },
   "textbook": {
     "category": "media",
@@ -3768,6 +5038,21 @@
     "category": "industrial",
     "description": "An industrial theater seat, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Theater Seat"
+  },
+  "theme_park_pass": {
+    "category": "services",
+    "description": "Multi-day theme park admission pass.",
+    "name": "Theme Park Pass"
+  },
+  "therapy_program": {
+    "category": "services",
+    "description": "Mental health or physical therapy treatment program.",
+    "name": "Therapy Program"
+  },
+  "thermite": {
+    "category": "materials",
+    "description": "Iron oxide and aluminum powder mixture; incendiary material.",
+    "name": "Thermite"
   },
   "thread": {
     "category": "textiles",
@@ -3804,10 +5089,35 @@
     "description": "Raw logs from the forest",
     "name": "Timber"
   },
+  "tin": {
+    "category": "metals",
+    "description": "Refined tin; used in solder, coatings, and bronze alloys.",
+    "name": "Tin"
+  },
+  "tin_ore": {
+    "category": "ore",
+    "description": "Raw tin-bearing rock extracted from mines.",
+    "name": "Tin Ore"
+  },
   "tires": {
     "category": "vehicle_parts",
     "description": "Set of 4 vehicle tires",
     "name": "Rubber Tires"
+  },
+  "titanium": {
+    "category": "metals",
+    "description": "Refined titanium; high strength-to-weight ratio aerospace metal.",
+    "name": "Titanium"
+  },
+  "titanium_alloy": {
+    "category": "metals",
+    "description": "Ti-6Al-4V aerospace alloy; exceptional strength-to-weight ratio.",
+    "name": "Titanium Alloy"
+  },
+  "titanium_ore": {
+    "category": "ore",
+    "description": "Ilmenite or rutile ore for aerospace-grade titanium.",
+    "name": "Titanium Ore"
   },
   "tobacco_cured_fish": {
     "category": "seafood_product",
@@ -3859,6 +5169,11 @@
     "description": "Dental hygiene product",
     "name": "Toothpaste"
   },
+  "torpedo": {
+    "category": "components",
+    "description": "Self-propelled underwater weapon for submarine and surface launch.",
+    "name": "Torpedo"
+  },
   "tortoise": {
     "category": "industrial",
     "description": "An industrial tortoise, used in manufacturing, processing, and heavy-industry operations.",
@@ -3868,6 +5183,11 @@
     "category": "home_goods",
     "description": "Absorbent cloth",
     "name": "Towel"
+  },
+  "toy_bundle": {
+    "category": "retail_shopping",
+    "description": "Children's toy assortment package.",
+    "name": "Toy Bundle"
   },
   "train_car_frame": {
     "category": "vehicles",
@@ -3879,10 +5199,20 @@
     "description": "An industrial tranquilizer, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Tranquilizer"
   },
+  "transformer": {
+    "category": "components",
+    "description": "High-voltage power transformer for grid transmission and distribution.",
+    "name": "Transformer"
+  },
   "transmission": {
     "category": "vehicle_parts",
     "description": "Vehicle gear system",
     "name": "Transmission"
+  },
+  "transport_helicopter": {
+    "category": "vehicles",
+    "description": "Military medium-lift utility and troop transport helicopter.",
+    "name": "Transport Helicopter"
   },
   "trawler": {
     "category": "vehicle",
@@ -3924,6 +5254,31 @@
     "description": "Thick-cut yellowfin tuna steak for grilling or searing",
     "name": "Tuna Steak"
   },
+  "tungsten": {
+    "category": "metals",
+    "description": "Refined tungsten; the highest melting point of all metals.",
+    "name": "Tungsten"
+  },
+  "tungsten_carbide": {
+    "category": "metals",
+    "description": "Hardest man-made material; used in cutting tools and armor.",
+    "name": "Tungsten Carbide"
+  },
+  "tungsten_ore": {
+    "category": "ore",
+    "description": "Scheelite or wolframite ore; source of the hardest metal.",
+    "name": "Tungsten Ore"
+  },
+  "turbofan_engine": {
+    "category": "components",
+    "description": "High-bypass jet engine for commercial and military transport aircraft.",
+    "name": "Turbofan Engine"
+  },
+  "turbojet_engine": {
+    "category": "components",
+    "description": "Axial-flow jet engine for combat aircraft and cruise missiles.",
+    "name": "Turbojet Engine"
+  },
   "turbot": {
     "category": "seafood",
     "description": "Prized European flatfish with firm white flesh, among the most expensive fish",
@@ -3939,6 +5294,21 @@
     "description": "Grilled eel glazed with tare sauce, a celebrated Japanese delicacy",
     "name": "Unagi Kabayaki"
   },
+  "uniform_kit": {
+    "category": "services",
+    "description": "Complete uniform and equipment kit.",
+    "name": "Uniform Kit"
+  },
+  "uranium_ore": {
+    "category": "ore",
+    "description": "Pitchblende bearing fissile uranium oxide.",
+    "name": "Uranium Ore"
+  },
+  "uranium_oxide": {
+    "category": "metals",
+    "description": "Yellowcake uranium concentrate; nuclear fuel precursor.",
+    "name": "Uranium Oxide (U3O8)"
+  },
   "urchin": {
     "category": "shellfish",
     "description": "Spiny echinoderm with prized golden roe used in sushi and pasta",
@@ -3949,15 +5319,35 @@
     "description": "A medical-grade vaccine, essential for healthcare, treatment, and patient care.",
     "name": "Vaccine"
   },
+  "vanadium": {
+    "category": "metals",
+    "description": "Refined vanadium; used in high-strength steels and redox batteries.",
+    "name": "Vanadium"
+  },
+  "vanadium_ore": {
+    "category": "ore",
+    "description": "Oxide ore refined for high-strength and energy-storage uses.",
+    "name": "Vanadium Ore"
+  },
   "vanilla_beans": {
     "category": "crops",
     "description": "Aromatic flavoring pods",
     "name": "Vanilla Beans"
   },
+  "vellum": {
+    "category": "luxury",
+    "description": "Premium lambskin parchment, limed and scraped smooth on a stretching frame \u2014 the finest writing surface for sacred manuscripts and legal instruments, prized over all ordinary paper.",
+    "name": "Vellum"
+  },
   "ventilator": {
     "category": "industrial",
     "description": "An industrial ventilator, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Ventilator"
+  },
+  "veterans_package": {
+    "category": "services",
+    "description": "Military veteran benefits and support services bundle.",
+    "name": "Veterans Package"
   },
   "veterinary_supplies": {
     "category": "industrial",
@@ -3994,6 +5384,11 @@
     "description": "Daily supplements",
     "name": "Vitamins"
   },
+  "vocational_certificate": {
+    "category": "services",
+    "description": "Vocational training completion credential.",
+    "name": "Vocational Certificate"
+  },
   "vocational_kit": {
     "category": "industrial",
     "description": "An industrial vocational kit, used in manufacturing, processing, and heavy-industry operations.",
@@ -4013,6 +5408,11 @@
     "category": "industrial",
     "description": "An industrial washer dryer, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Washer Dryer"
+  },
+  "waste_service": {
+    "category": "services",
+    "description": "Municipal waste collection and disposal service.",
+    "name": "Waste Service"
   },
   "wastewater_service": {
     "category": "services",
@@ -4064,6 +5464,11 @@
     "description": "Classic white freshwater or Akoya pearl used in fine jewelry",
     "name": "White Pearl"
   },
+  "white_phosphorus": {
+    "category": "materials",
+    "description": "Incendiary and smoke-generating munition compound.",
+    "name": "White Phosphorus"
+  },
   "white_swiss_shepherd": {
     "category": "livestock",
     "description": "Elegant white variant of the German Shepherd; gentler temperament and attentive herder.",
@@ -4073,6 +5478,16 @@
     "category": "alcohol",
     "description": "Crisp chardonnay",
     "name": "White Wine"
+  },
+  "wildlife_program": {
+    "category": "services",
+    "description": "Wildlife conservation and education program.",
+    "name": "Wildlife Program"
+  },
+  "wind_turbine_blade": {
+    "category": "components",
+    "description": "Fiberglass-carbon fiber blade set for utility-scale wind turbines.",
+    "name": "Wind Turbine Blade"
   },
   "windshield": {
     "category": "vehicle_parts",
@@ -4093,6 +5508,11 @@
     "category": "condiments",
     "description": "Fermented anchovy and vinegar sauce used as a condiment and cooking ingredient",
     "name": "Worcestershire Sauce"
+  },
+  "work_release": {
+    "category": "retail_prison",
+    "description": "Supervised work release program for qualifying inmates.",
+    "name": "Work Release Program"
   },
   "yacht": {
     "category": "vehicle",
@@ -4119,10 +5539,20 @@
     "description": "Creamy fermented dairy product made from cultured milk",
     "name": "Yogurt"
   },
+  "yttrium": {
+    "category": "metals",
+    "description": "Rare earth used in radar, superconductors, and LED phosphors.",
+    "name": "Yttrium"
+  },
   "zebra": {
     "category": "industrial",
     "description": "An industrial zebra, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Zebra"
+  },
+  "zinc": {
+    "category": "metals",
+    "description": "Refined zinc; used in galvanizing, alloys, and batteries.",
+    "name": "Zinc"
   },
   "zinc_ore": {
     "category": "ore",
@@ -4134,44 +5564,19 @@
     "description": "Metal fasteners for clothing and bags",
     "name": "Zippers"
   },
-  "clay": {
-    "name": "Clay",
-    "description": "Raw mineral clay extracted from riverbeds and hillsides; used in ceramics, sealing, and as a binding agent in religious artefacts.",
-    "category": "industrial"
+  "zircon_ore": {
+    "category": "ore",
+    "description": "Zirconium silicate mineral used in ceramics and nuclear.",
+    "name": "Zircon Ore"
   },
-  "vellum": {
-    "name": "Vellum",
-    "description": "Premium lambskin parchment, limed and scraped smooth on a stretching frame \u2014 the finest writing surface for sacred manuscripts and legal instruments, prized over all ordinary paper.",
-    "category": "luxury"
+  "zirconium": {
+    "category": "metals",
+    "description": "Refined zirconium; used in nuclear reactors and ceramics.",
+    "name": "Zirconium"
   },
-  "liturgical_lamb_light": {
-    "name": "Liturgical Lamb Light",
-    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
-    "category": "luxury"
-  },
-  "live_lake_scrolls": {
-    "name": "Live Lake Scrolls",
-    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
-    "category": "luxury"
-  },
-  "lamb_stew": {
-    "name": "Lamb Stew",
-    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
-    "category": "food"
-  },
-  "tallow_candle": {
-    "name": "Tallow Candle",
-    "description": "A hand-dipped candle rendered from lamb tallow \u2014 the working person's light, practical and long-burning, produced for centuries before beeswax became affordable.",
-    "category": "home_goods"
-  },
-  "canned_lamb": {
-    "name": "Canned Lamb",
-    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
-    "category": "food"
-  },
-  "sacred_lamb_offering": {
-    "name": "Sacred Lamb Offering",
-    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
-    "category": "luxury"
+  "zoo_pass": {
+    "category": "services",
+    "description": "Annual zoo admission pass.",
+    "name": "Zoo Pass"
   }
 }
