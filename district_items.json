@@ -1683,5 +1683,185 @@
     "name": "Event Decor Package",
     "description": "Full floral decoration service for corporate and private events",
     "category": "retail_service"
+  },
+  "concierge_package": {
+    "name": "Concierge Package",
+    "description": "Full-service hotel concierge assistance",
+    "category": "retail_service"
+  },
+  "suite_night": {
+    "name": "Suite Night",
+    "description": "Luxury hotel suite stay for one night",
+    "category": "retail_service"
+  },
+  "penthouse_night": {
+    "name": "Penthouse Night",
+    "description": "Penthouse floor accommodation with premium amenities",
+    "category": "retail_service"
+  },
+  "bottle_service": {
+    "name": "Bottle Service",
+    "description": "VIP table with premium bottle service",
+    "category": "retail_entertainment"
+  },
+  "club_entry": {
+    "name": "Club Entry",
+    "description": "General admission to nightclub",
+    "category": "retail_entertainment"
+  },
+  "vip_lounge_pass": {
+    "name": "VIP Lounge Pass",
+    "description": "Access to VIP lounge with priority service",
+    "category": "retail_entertainment"
+  },
+  "casino_dining": {
+    "name": "Casino Dining",
+    "description": "Fine dining experience at the casino restaurant",
+    "category": "retail_food"
+  },
+  "premium_show_ticket": {
+    "name": "Premium Show Ticket",
+    "description": "Front-row seating at casino headline show",
+    "category": "retail_entertainment"
+  },
+  "vip_gaming_package": {
+    "name": "VIP Gaming Package",
+    "description": "Private table access with casino credits and amenities",
+    "category": "retail_entertainment"
+  },
+  "annual_pass": {
+    "name": "Annual Pass",
+    "description": "Unlimited park entry pass for one year",
+    "category": "retail_entertainment"
+  },
+  "vip_experience": {
+    "name": "VIP Experience",
+    "description": "Behind-the-scenes tour and fast-pass access",
+    "category": "retail_entertainment"
+  },
+  "park_merchandise": {
+    "name": "Park Merchandise",
+    "description": "Branded merchandise from theme park gift shops",
+    "category": "retail_shopping"
+  },
+  "banquet_ticket": {
+    "name": "Banquet Ticket",
+    "description": "Admission to convention center banquet event",
+    "category": "retail_entertainment"
+  },
+  "event_booth_package": {
+    "name": "Event Booth Package",
+    "description": "Exhibition booth rental for convention events",
+    "category": "retail_service"
+  },
+  "keynote_sponsorship": {
+    "name": "Keynote Sponsorship",
+    "description": "Headline sponsorship slot at major convention",
+    "category": "retail_service"
+  },
+  "bulk_household_pallet": {
+    "name": "Bulk Household Pallet",
+    "description": "Pallet of household essentials at wholesale pricing",
+    "category": "retail_shopping"
+  },
+  "bulk_industrial_pallet": {
+    "name": "Bulk Industrial Pallet",
+    "description": "Pallet of industrial supplies at wholesale pricing",
+    "category": "industrial"
+  },
+  "members_subscription": {
+    "name": "Members Subscription",
+    "description": "Annual wholesale warehouse membership",
+    "category": "retail_service"
+  },
+  "cargo_insurance": {
+    "name": "Cargo Insurance",
+    "description": "Insurance policy covering port cargo shipments",
+    "category": "services"
+  },
+  "dock_berth_lease": {
+    "name": "Dock Berth Lease",
+    "description": "Long-term lease of a seaport berth",
+    "category": "services"
+  },
+  "port_logistics_package": {
+    "name": "Port Logistics Package",
+    "description": "End-to-end port handling and customs clearance",
+    "category": "services"
+  },
+  "gaming_setup": {
+    "name": "Gaming Setup",
+    "description": "Complete gaming PC or console setup bundle",
+    "category": "retail_shopping"
+  },
+  "home_appliance_set": {
+    "name": "Home Appliance Set",
+    "description": "Bundled major home appliances",
+    "category": "retail_shopping"
+  },
+  "smart_home_kit": {
+    "name": "Smart Home Kit",
+    "description": "Connected home automation starter kit",
+    "category": "retail_shopping"
+  },
+  "startup_accelerator_seat": {
+    "name": "Startup Accelerator Seat",
+    "description": "Funded seat in a tech startup accelerator programme",
+    "category": "retail_service"
+  },
+  "tech_consulting_day": {
+    "name": "Tech Consulting Day",
+    "description": "Full day of senior technology consulting",
+    "category": "retail_service"
+  },
+  "venture_capital_advisory": {
+    "name": "Venture Capital Advisory",
+    "description": "VC advisory session and pitch feedback",
+    "category": "retail_service"
+  },
+  "lab_access_package": {
+    "name": "Lab Access Package",
+    "description": "Monthly access to shared research laboratory facilities",
+    "category": "retail_service"
+  },
+  "research_grant_contract": {
+    "name": "Research Grant Contract",
+    "description": "Externally funded research engagement contract",
+    "category": "retail_service"
+  },
+  "technology_license": {
+    "name": "Technology License",
+    "description": "Commercial licence for campus-developed technology",
+    "category": "retail_service"
+  },
+  "correctional_training": {
+    "name": "Correctional Training",
+    "description": "Accredited officer training programme for corrections staff",
+    "category": "retail_service"
+  },
+  "prisoner_transport_service": {
+    "name": "Prisoner Transport Service",
+    "description": "Secure prisoner transportation contract",
+    "category": "services"
+  },
+  "duty_free_confections": {
+    "name": "Duty Free Confections",
+    "description": "Airport duty-free sweets, chocolate and confections",
+    "category": "retail_food"
+  },
+  "duty_free_luxury": {
+    "name": "Duty Free Luxury",
+    "description": "Duty-free luxury goods including watches and jewellery",
+    "category": "retail_shopping"
+  },
+  "duty_free_tobacco": {
+    "name": "Duty Free Tobacco",
+    "description": "Airport duty-free tobacco products",
+    "category": "retail_shopping"
+  },
+  "surgical_stent": {
+    "name": "Surgical Stent",
+    "description": "Nitinol mesh tube used to keep arteries and ducts open",
+    "category": "medical_equipment"
   }
 }
