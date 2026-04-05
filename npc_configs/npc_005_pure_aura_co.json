@@ -157,6 +157,42 @@
       "reorder_at": 100,
       "max_price_multiplier": 1.10,
       "market": "regular"
+    },
+    "lard": {
+      "target_inventory": 600,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "fish_oil": {
+      "target_inventory": 600,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "potassium_hydroxide": {
+      "target_inventory": 500,
+      "reorder_at": 80,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "collagen_powder": {
+      "target_inventory": 400,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "beeswax": {
+      "target_inventory": 400,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "paraffin_wax": {
+      "target_inventory": 400,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
     }
   },
 
