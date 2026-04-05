@@ -870,7 +870,7 @@
     "name": "Cappuccino"
   },
   "car": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Standard consumer vehicle",
     "name": "Sedan"
   },
@@ -915,7 +915,7 @@
     "name": "Cargo Freighter"
   },
   "cargo_manifest": {
-    "category": "vehicles",
+    "category": "services",
     "description": "A fully assembled cargo manifest, built for transport, logistics, or specialized operations.",
     "name": "Cargo Manifest"
   },
@@ -1045,7 +1045,7 @@
     "name": "Champagne"
   },
   "championship_trophy": {
-    "category": "vehicles",
+    "category": "luxury",
     "description": "A fully assembled championship trophy, built for transport, logistics, or specialized operations.",
     "name": "Championship Trophy"
   },
@@ -1505,7 +1505,7 @@
     "name": "Cotton"
   },
   "cotton_essential_oil": {
-    "category": "fuel",
+    "category": "essential_oils",
     "description": "High-energy cotton essential oil, used to power vehicles, machinery, and industrial operations.",
     "name": "Cotton Essential Oil"
   },
@@ -1653,11 +1653,6 @@
     "category": "retail_food",
     "description": "Assorted dessert tasting selection.",
     "name": "Dessert Sampler"
-  },
-  "destroyer": {
-    "category": "vehicles",
-    "description": "A fully assembled destroyer, built for transport, logistics, or specialized operations.",
-    "name": "Destroyer"
   },
   "destroyer_hull": {
     "category": "components",
@@ -2440,7 +2435,7 @@
     "name": "Heating Element"
   },
   "heating_oil": {
-    "category": "metals",
+    "category": "fuel",
     "description": "Refined heating oil, a structural and manufacturing metal used across heavy industries.",
     "name": "Heating Oil"
   },
@@ -2945,7 +2940,7 @@
     "name": "Licorice"
   },
   "lighting_rig": {
-    "category": "metals",
+    "category": "industrial",
     "description": "Refined lighting rig, a structural and manufacturing metal used across heavy industries.",
     "name": "Lighting Rig"
   },
@@ -3335,7 +3330,7 @@
     "name": "Mother of Pearl"
   },
   "motorcycle": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Two-wheeled transport",
     "name": "Motorcycle"
   },
@@ -3555,7 +3550,7 @@
     "name": "Optical Glass"
   },
   "orange_essential_oil": {
-    "category": "fuel",
+    "category": "essential_oils",
     "description": "High-energy orange essential oil, used to power vehicles, machinery, and industrial operations.",
     "name": "Orange Essential Oil"
   },
@@ -3760,7 +3755,7 @@
     "name": "Phenylenediamine"
   },
   "phone_card": {
-    "category": "vehicles",
+    "category": "retail_service",
     "description": "A fully assembled phone card, built for transport, logistics, or specialized operations.",
     "name": "Phone Card"
   },
@@ -3835,7 +3830,7 @@
     "name": "Platinum Ore"
   },
   "playing_cards": {
-    "category": "vehicles",
+    "category": "retail_entertainment",
     "description": "A fully assembled playing cards, built for transport, logistics, or specialized operations.",
     "name": "Playing Cards"
   },
@@ -4520,7 +4515,7 @@
     "name": "Seafood Chowder"
   },
   "seafood_tower": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial seafood tower, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Seafood Tower"
   },
@@ -4600,7 +4595,7 @@
     "name": "Ship Hull"
   },
   "shipping_container": {
-    "category": "vehicles",
+    "category": "industrial",
     "description": "A fully assembled shipping container, built for transport, logistics, or specialized operations.",
     "name": "Shipping Container"
   },
@@ -4915,7 +4910,7 @@
     "name": "Beef Stew"
   },
   "stingray": {
-    "category": "metals",
+    "category": "seafood",
     "description": "Refined stingray, a structural and manufacturing metal used across heavy industries.",
     "name": "Stingray"
   },
@@ -5385,7 +5380,7 @@
     "name": "Rainbow Trout"
   },
   "truck": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Utility work vehicle",
     "name": "Pickup Truck"
   },
