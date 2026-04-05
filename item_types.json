@@ -5738,5 +5738,325 @@
     "category": "services",
     "description": "Annual zoo admission pass.",
     "name": "Zoo Pass"
+  },
+  "rose": {
+    "name": "Rose",
+    "description": "Prized cut flower; base of rose oil and rose water",
+    "category": "flowers"
+  },
+  "lily": {
+    "name": "Lily",
+    "description": "Elegant long-stemmed flower for arrangements and funerals",
+    "category": "flowers"
+  },
+  "tulip": {
+    "name": "Tulip",
+    "description": "Spring bulb flower; one of the most traded cut flowers",
+    "category": "flowers"
+  },
+  "orchid": {
+    "name": "Orchid",
+    "description": "Exotic tropical flower; premium bloom with intense fragrance",
+    "category": "flowers"
+  },
+  "lavender": {
+    "name": "Lavender",
+    "description": "Aromatic herb-flower; base of lavender essential oil",
+    "category": "flowers"
+  },
+  "sunflower": {
+    "name": "Sunflower",
+    "description": "Large bright flower; seeds yield sunflower oil",
+    "category": "flowers"
+  },
+  "chrysanthemum": {
+    "name": "Chrysanthemum",
+    "description": "High-volume cut flower; used in teas and arrangements",
+    "category": "flowers"
+  },
+  "carnation": {
+    "name": "Carnation",
+    "description": "Mass-market cut flower with long vase life",
+    "category": "flowers"
+  },
+  "peony": {
+    "name": "Peony",
+    "description": "Premium luxury bloom; prized in wedding bouquets",
+    "category": "flowers"
+  },
+  "hydrangea": {
+    "name": "Hydrangea",
+    "description": "Full decorative bloom for event and home arrangements",
+    "category": "flowers"
+  },
+  "iris": {
+    "name": "Iris",
+    "description": "Distinctive blade-petalled cut flower",
+    "category": "flowers"
+  },
+  "dahlia": {
+    "name": "Dahlia",
+    "description": "Vibrant decorative bloom with many colour forms",
+    "category": "flowers"
+  },
+  "jasmine": {
+    "name": "Jasmine",
+    "description": "Intensely fragrant flower; cornerstone of high perfumery",
+    "category": "flowers"
+  },
+  "marigold": {
+    "name": "Marigold",
+    "description": "Pungent flower; primary source of natural floral dye",
+    "category": "flowers"
+  },
+  "lotus": {
+    "name": "Lotus",
+    "description": "Sacred aquatic flower; used in cosmetics and luxury decor",
+    "category": "flowers"
+  },
+  "gardenia": {
+    "name": "Gardenia",
+    "description": "Creamy white flower with heavy jasmine-like scent",
+    "category": "flowers"
+  },
+  "freesia": {
+    "name": "Freesia",
+    "description": "Delicate funnel-shaped flower with sweet fragrance",
+    "category": "flowers"
+  },
+  "narcissus": {
+    "name": "Narcissus",
+    "description": "Spring bulb flower including daffodils",
+    "category": "flowers"
+  },
+  "snapdragon": {
+    "name": "Snapdragon",
+    "description": "Tall spike flower popular in mixed bouquets",
+    "category": "flowers"
+  },
+  "zinnia": {
+    "name": "Zinnia",
+    "description": "Vivid summer flower; excellent for dried arrangements",
+    "category": "flowers"
+  },
+  "violet": {
+    "name": "Violet",
+    "description": "Small purple flower; used in perfumery and confectionery",
+    "category": "flowers"
+  },
+  "magnolia": {
+    "name": "Magnolia",
+    "description": "Large-cupped tree flower with a lemony fragrance",
+    "category": "flowers"
+  },
+  "hibiscus": {
+    "name": "Hibiscus",
+    "description": "Tropical flower used in teas, dyes, and cosmetics",
+    "category": "flowers"
+  },
+  "anemone": {
+    "name": "Anemone",
+    "description": "Windflower with striking dark centres",
+    "category": "flowers"
+  },
+  "ranunculus": {
+    "name": "Ranunculus",
+    "description": "Multi-layered luxury bloom resembling a tight rose",
+    "category": "flowers"
+  },
+  "wisteria": {
+    "name": "Wisteria",
+    "description": "Cascading purple fragrant flower",
+    "category": "flowers"
+  },
+  "lilac": {
+    "name": "Lilac",
+    "description": "Intensely fragrant spring cluster flower",
+    "category": "flowers"
+  },
+  "geranium": {
+    "name": "Geranium",
+    "description": "Aromatic flower used in perfumery and insect repellent",
+    "category": "flowers"
+  },
+  "foxglove": {
+    "name": "Foxglove",
+    "description": "Tall bell flower; source of medicinal digitalis",
+    "category": "flowers"
+  },
+  "heather": {
+    "name": "Heather",
+    "description": "Hardy moorland flower; used in dried arrangements",
+    "category": "flowers"
+  },
+  "clover_flower": {
+    "name": "Clover Flower",
+    "description": "Pollinator favourite; used in teas and honey flavouring",
+    "category": "flowers"
+  },
+  "elderflower": {
+    "name": "Elderflower",
+    "description": "Delicate white flower; used in cordials and liqueurs",
+    "category": "flowers"
+  },
+  "chamomile": {
+    "name": "Chamomile",
+    "description": "Daisy-like herb flower; used in teas and skin care",
+    "category": "flowers"
+  },
+  "echinacea": {
+    "name": "Echinacea",
+    "description": "Purple coneflower; medicinal herb and ornamental bloom",
+    "category": "flowers"
+  },
+  "passionflower": {
+    "name": "Passionflower",
+    "description": "Exotic climbing flower; used in relaxation supplements",
+    "category": "flowers"
+  },
+  "apple_blossom": {
+    "name": "Apple Blossom",
+    "description": "Spring flower of apple trees; aromatic and highly attractive to pollinators",
+    "category": "flowers"
+  },
+  "orange_blossom": {
+    "name": "Orange Blossom",
+    "description": "Delicate citrus flower; base of neroli oil and orange blossom water",
+    "category": "flowers"
+  },
+  "cherry_blossom": {
+    "name": "Cherry Blossom",
+    "description": "Iconic spring flower of cherry trees; prized decorative bloom",
+    "category": "flowers"
+  },
+  "coffee_blossom": {
+    "name": "Coffee Blossom",
+    "description": "Jasmine-scented white flower of the coffee plant",
+    "category": "flowers"
+  },
+  "tobacco_flower": {
+    "name": "Tobacco Flower",
+    "description": "Tubular white flower of the tobacco plant; fragrant at night",
+    "category": "flowers"
+  },
+  "tea_flower": {
+    "name": "Tea Flower",
+    "description": "Small white camellia-like flower of the tea plant",
+    "category": "flowers"
+  },
+  "vanilla_blossom": {
+    "name": "Vanilla Blossom",
+    "description": "Delicate orchid-like flower; must be hand-pollinated for pods",
+    "category": "flowers"
+  },
+  "agave_flower": {
+    "name": "Agave Flower",
+    "description": "Towering bloom spike of the agave; plant dies after flowering",
+    "category": "flowers"
+  },
+  "bouquet": {
+    "name": "Flower Bouquet",
+    "description": "Mixed fresh-cut arrangement of seasonal flowers",
+    "category": "floral_products"
+  },
+  "wedding_bouquet": {
+    "name": "Wedding Bouquet",
+    "description": "Premium bridal arrangement of peonies, roses and orchids",
+    "category": "floral_products"
+  },
+  "funeral_wreath": {
+    "name": "Funeral Wreath",
+    "description": "Memorial wreath of lilies, chrysanthemums and roses",
+    "category": "floral_products"
+  },
+  "corsage": {
+    "name": "Corsage",
+    "description": "Small wearable orchid-and-rose flower piece",
+    "category": "floral_products"
+  },
+  "floral_centerpiece": {
+    "name": "Floral Centerpiece",
+    "description": "Statement table centrepiece for events and hospitality",
+    "category": "floral_products"
+  },
+  "dried_flower_bundle": {
+    "name": "Dried Flower Bundle",
+    "description": "Preserved bundle of lavender, rose and zinnia",
+    "category": "floral_products"
+  },
+  "potpourri": {
+    "name": "Potpourri",
+    "description": "Aromatic jar of dried petals and essential oils",
+    "category": "floral_products"
+  },
+  "flower_crown": {
+    "name": "Flower Crown",
+    "description": "Wearable floral crown of roses and carnations",
+    "category": "floral_products"
+  },
+  "pressed_flower_art": {
+    "name": "Pressed Flower Art",
+    "description": "Framed art piece of pressed iris and peony blooms",
+    "category": "floral_products"
+  },
+  "rose_essential_oil": {
+    "name": "Rose Essential Oil",
+    "description": "Intensely concentrated attar of roses; the most prized perfume base",
+    "category": "essential_oils"
+  },
+  "lavender_essential_oil": {
+    "name": "Lavender Essential Oil",
+    "description": "Classic calming oil distilled from lavender spikes",
+    "category": "essential_oils"
+  },
+  "jasmine_essential_oil": {
+    "name": "Jasmine Essential Oil",
+    "description": "Heady floral absolute from jasmine; cornerstone of oriental perfumes",
+    "category": "essential_oils"
+  },
+  "neroli_oil": {
+    "name": "Neroli Oil",
+    "description": "Steam-distilled oil of orange blossom; fresh and floral",
+    "category": "essential_oils"
+  },
+  "chrysanthemum_essential_oil": {
+    "name": "Chrysanthemum Essential Oil",
+    "description": "Clean herbal oil distilled from chrysanthemum blooms",
+    "category": "essential_oils"
+  },
+  "rose_water": {
+    "name": "Rose Water",
+    "description": "Rose distillate used in cooking, cosmetics and perfumery",
+    "category": "ingredients"
+  },
+  "orange_blossom_water": {
+    "name": "Orange Blossom Water",
+    "description": "Floral hydrosol used in pastry, cocktails and skin care",
+    "category": "ingredients"
+  },
+  "floral_dye": {
+    "name": "Floral Dye",
+    "description": "Natural textile dye extracted from marigold and hibiscus",
+    "category": "ingredients"
+  },
+  "signature_perfume": {
+    "name": "Signature Perfume",
+    "description": "Hand-crafted luxury fragrance from rose and jasmine absolutes",
+    "category": "luxury"
+  },
+  "artisan_fragrance": {
+    "name": "Artisan Fragrance",
+    "description": "Small-batch aromatic blend of lavender and rose water",
+    "category": "luxury"
+  },
+  "cologne": {
+    "name": "Cologne",
+    "description": "Fresh eau de cologne of neroli, jasmine and lavender",
+    "category": "luxury"
+  },
+  "rare_orchid_specimen": {
+    "name": "Rare Orchid Specimen",
+    "description": "Museum-quality potted exotic orchid from botanical gardens",
+    "category": "luxury"
   }
 }
