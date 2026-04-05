@@ -50,18 +50,6 @@
       "max_price_multiplier": 1.05,
       "market": "regular"
     },
-    "grass": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.10,
-      "market": "regular"
-    },
-    "sawdust": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
-      "max_price_multiplier": 1.10,
-      "market": "regular"
-    }
   },
 
   "sell_items": {
