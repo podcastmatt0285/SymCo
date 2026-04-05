@@ -18462,5 +18462,535 @@
       }
     ],
     "startup_cost": 4000000
+  },
+  "street_flower_cart": {
+    "name": "Street Flower Cart",
+    "description": "A humble wooden cart selling single-stem flowers one at a time. Earns almost nothing per cycle, but costs absolutely nothing to operate \u2014 no startup capital, no wages, no overhead. Can slowly pull a struggling company out of the red while better businesses are being rebuilt.",
+    "class": "retail",
+    "startup_cost": 0,
+    "base_wage_cost": 0,
+    "cycles_to_complete": 60,
+    "allowed_terrain": [
+      "district_aerospace",
+      "district_airport",
+      "district_coastal",
+      "district_convention_center",
+      "district_education",
+      "district_entertainment",
+      "district_entertainment_district",
+      "district_food",
+      "district_food_court",
+      "district_hospital",
+      "district_industrial",
+      "district_mall",
+      "district_medical",
+      "district_mega_mall",
+      "district_military",
+      "district_military_base",
+      "district_neighborhood",
+      "district_prison",
+      "district_prison_complex",
+      "district_research_campus",
+      "district_seaport",
+      "district_shipyard",
+      "district_tech",
+      "district_tech_park",
+      "district_transport",
+      "district_utilities",
+      "district_zoo"
+    ],
+    "products": {
+      "rose": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.1
+      },
+      "lily": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.1
+      },
+      "carnation": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.1
+      },
+      "tulip": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "sunflower": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "chrysanthemum": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "lavender": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "bouquet": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.2
+      }
+    }
+  },
+  "botanical_garden": {
+    "name": "Botanical Garden",
+    "description": "Premium public botanical garden offering garden passes, rare orchid cultivation, and botanical research. Requires heavy pollination resources.",
+    "class": "production",
+    "startup_cost": 2000000,
+    "base_wage_cost": 8000,
+    "cycles_to_complete": 2880,
+    "allowed_terrain": [
+      "district_entertainment",
+      "district_entertainment_district",
+      "district_neighborhood",
+      "district_zoo"
+    ],
+    "production_lines": [
+      {
+        "output_item": "garden_pass",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 2000
+          },
+          {
+            "item": "energy",
+            "quantity": 1000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 120000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "rare_orchid_specimen",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "orchid",
+            "quantity": 50
+          },
+          {
+            "item": "lotus",
+            "quantity": 20
+          },
+          {
+            "item": "pollen",
+            "quantity": 200000
+          },
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 800
+          },
+          {
+            "item": "glass",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "pressed_flower_art",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "iris",
+            "quantity": 80
+          },
+          {
+            "item": "peony",
+            "quantity": 60
+          },
+          {
+            "item": "violet",
+            "quantity": 80
+          },
+          {
+            "item": "cherry_blossom",
+            "quantity": 60
+          },
+          {
+            "item": "pollen",
+            "quantity": 150000
+          },
+          {
+            "item": "glass",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 400
+          }
+        ]
+      }
+    ]
+  },
+  "flower_market_district": {
+    "name": "Flower Market",
+    "description": "Wholesale district flower market trading bulk cut flowers and finished arrangements. High throughput, pollen-intensive operations.",
+    "class": "production",
+    "startup_cost": 800000,
+    "base_wage_cost": 3500,
+    "cycles_to_complete": 1440,
+    "allowed_terrain": [
+      "district_food",
+      "district_food_court",
+      "district_mall",
+      "district_mega_mall",
+      "district_neighborhood"
+    ],
+    "production_lines": [
+      {
+        "output_item": "bouquet",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 200
+          },
+          {
+            "item": "lily",
+            "quantity": 150
+          },
+          {
+            "item": "carnation",
+            "quantity": 250
+          },
+          {
+            "item": "tulip",
+            "quantity": 150
+          },
+          {
+            "item": "freesia",
+            "quantity": 100
+          },
+          {
+            "item": "pollen",
+            "quantity": 180000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 400
+          }
+        ]
+      },
+      {
+        "output_item": "dried_flower_bundle",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "lavender",
+            "quantity": 300
+          },
+          {
+            "item": "rose",
+            "quantity": 200
+          },
+          {
+            "item": "zinnia",
+            "quantity": 200
+          },
+          {
+            "item": "heather",
+            "quantity": 200
+          },
+          {
+            "item": "chamomile",
+            "quantity": 150
+          },
+          {
+            "item": "pollen",
+            "quantity": 160000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          }
+        ]
+      },
+      {
+        "output_item": "floral_centerpiece",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "hydrangea",
+            "quantity": 150
+          },
+          {
+            "item": "peony",
+            "quantity": 100
+          },
+          {
+            "item": "dahlia",
+            "quantity": 120
+          },
+          {
+            "item": "rose",
+            "quantity": 150
+          },
+          {
+            "item": "pollen",
+            "quantity": 220000
+          },
+          {
+            "item": "glass",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "perfume_atelier": {
+    "name": "Perfume Atelier",
+    "description": "Luxury artisan perfume house hand-crafting signature fragrances from floral absolutes and essential oils. Pollen is used throughout blending and fixation.",
+    "class": "production",
+    "startup_cost": 1200000,
+    "base_wage_cost": 5000,
+    "cycles_to_complete": 2160,
+    "allowed_terrain": [
+      "district_mall",
+      "district_mega_mall",
+      "district_entertainment_district"
+    ],
+    "production_lines": [
+      {
+        "output_item": "signature_perfume",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "rose_essential_oil",
+            "quantity": 10
+          },
+          {
+            "item": "jasmine_essential_oil",
+            "quantity": 6
+          },
+          {
+            "item": "neroli_oil",
+            "quantity": 4
+          },
+          {
+            "item": "orange_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "pollen",
+            "quantity": 100000
+          },
+          {
+            "item": "bottle",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 600
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "artisan_fragrance",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "lavender_essential_oil",
+            "quantity": 12
+          },
+          {
+            "item": "rose_water",
+            "quantity": 20
+          },
+          {
+            "item": "neroli_oil",
+            "quantity": 5
+          },
+          {
+            "item": "pollen",
+            "quantity": 80000
+          },
+          {
+            "item": "bottle",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "cologne",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "jasmine_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "neroli_oil",
+            "quantity": 5
+          },
+          {
+            "item": "lavender_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "orange_blossom_water",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 70000
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 450
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      }
+    ]
+  },
+  "floral_event_services": {
+    "name": "Floral Event Services",
+    "description": "Full-service floral design studio for weddings, corporate events and funerals. Assembles large-scale arrangements requiring massive pollen at every stage.",
+    "class": "production",
+    "startup_cost": 600000,
+    "base_wage_cost": 2500,
+    "cycles_to_complete": 1440,
+    "allowed_terrain": [
+      "district_entertainment",
+      "district_convention_center",
+      "district_entertainment_district",
+      "district_neighborhood",
+      "district_mall"
+    ],
+    "production_lines": [
+      {
+        "output_item": "wedding_floral_package",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "wedding_bouquet",
+            "quantity": 1
+          },
+          {
+            "item": "floral_centerpiece",
+            "quantity": 8
+          },
+          {
+            "item": "flower_crown",
+            "quantity": 4
+          },
+          {
+            "item": "corsage",
+            "quantity": 10
+          },
+          {
+            "item": "pollen",
+            "quantity": 200000
+          },
+          {
+            "item": "energy",
+            "quantity": 800
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "event_decor_package",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "floral_centerpiece",
+            "quantity": 12
+          },
+          {
+            "item": "dried_flower_bundle",
+            "quantity": 20
+          },
+          {
+            "item": "potpourri",
+            "quantity": 10
+          },
+          {
+            "item": "bouquet",
+            "quantity": 8
+          },
+          {
+            "item": "pollen",
+            "quantity": 160000
+          },
+          {
+            "item": "energy",
+            "quantity": 600
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
   }
 }
