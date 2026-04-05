@@ -150,8 +150,22 @@
   },
 
   "sell_items": {
-    "cane":  { "min_inventory_to_keep": 1200, "max_order_quantity": 500, "market": "regular" },
-    "sugar": { "min_inventory_to_keep": 800,  "max_order_quantity": 300, "market": "regular" },
-    "water": { "min_inventory_to_keep": 600,  "max_order_quantity": 400, "market": "regular" }
+    "chocolate":   { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "candy_bar":   { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "lollipop":    { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "gummy_bears": { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "hard_candy":  { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "taffy":       { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "fudge":       { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "truffles":    { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular" },
+    "toffee":      { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "licorice":    { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "marshmallow": { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "peppermint":  { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "caramel":     { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
+    "honey":       { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular" },
+    "cane":        { "min_inventory_to_keep": 1200, "max_order_quantity": 500,  "market": "regular" },
+    "sugar":       { "min_inventory_to_keep": 800,  "max_order_quantity": 300,  "market": "regular" },
+    "water":       { "min_inventory_to_keep": 600, "max_order_quantity": 400,  "market": "regular" }
   }
 }

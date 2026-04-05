@@ -49,18 +49,6 @@
   ],
 
   "buy_items": {
-    "apple_seeds": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.10,
-      "market": "regular"
-    },
-    "orange_seeds": {
-      "target_inventory": 6000,
-      "reorder_at": 1200,
-      "max_price_multiplier": 1.10,
-      "market": "regular"
-    },
     "cotton_seeds": {
       "target_inventory": 15000,
       "reorder_at": 5000,
