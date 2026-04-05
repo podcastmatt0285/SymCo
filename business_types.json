@@ -3813,6 +3813,10 @@
           {
             "item": "energy",
             "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_tuna",
@@ -3831,6 +3835,10 @@
           {
             "item": "energy",
             "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_sardines",
@@ -3849,6 +3857,10 @@
           {
             "item": "energy",
             "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_salmon",
@@ -3867,6 +3879,10 @@
           {
             "item": "energy",
             "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_mackerel",
@@ -3885,6 +3901,10 @@
           {
             "item": "energy",
             "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_clams",
@@ -3903,6 +3923,10 @@
           {
             "item": "energy",
             "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_crab",
@@ -3921,6 +3945,10 @@
           {
             "item": "energy",
             "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_oysters",
@@ -3939,6 +3967,10 @@
           {
             "item": "energy",
             "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ],
         "output_item": "canned_anchovies",
@@ -6347,6 +6379,10 @@
           {
             "item": "paper",
             "quantity": 2
+          },
+          {
+            "item": "precision_spring",
+            "quantity": 20
           }
         ],
         "output_item": "engine",
