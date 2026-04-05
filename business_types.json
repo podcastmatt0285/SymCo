@@ -740,6 +740,10 @@
           {
             "item": "gasoline",
             "quantity": 4
+          },
+          {
+            "item": "catalytic_converter",
+            "quantity": 1
           }
         ],
         "output_item": "car",
@@ -930,6 +934,10 @@
           {
             "item": "paper",
             "quantity": 20
+          },
+          {
+            "item": "power_electronics_module",
+            "quantity": 2
           }
         ],
         "output_item": "electric_car",
@@ -1045,6 +1053,64 @@
           }
         ],
         "output_item": "hydrogen_vehicle",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "chassis",
+            "quantity": 1
+          },
+          {
+            "item": "transmission",
+            "quantity": 1
+          },
+          {
+            "item": "tires",
+            "quantity": 4
+          },
+          {
+            "item": "windshield",
+            "quantity": 1
+          },
+          {
+            "item": "solid_state_battery_pack",
+            "quantity": 2
+          },
+          {
+            "item": "power_electronics_module",
+            "quantity": 4
+          },
+          {
+            "item": "neodymium_magnet",
+            "quantity": 20
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 200
+          },
+          {
+            "item": "car_seat",
+            "quantity": 1
+          },
+          {
+            "item": "steering_wheel",
+            "quantity": 1
+          },
+          {
+            "item": "glass",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 120000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "premium_ev",
         "output_qty": 2
       }
     ],
@@ -1164,28 +1230,28 @@
       {
         "inputs": [
           {
-            "item": "lead",
-            "quantity": 30
+            "item": "lead_acid_battery",
+            "quantity": 60
           },
           {
-            "item": "copper",
-            "quantity": 15
+            "item": "plastic",
+            "quantity": 50
           },
           {
-            "item": "rubber",
-            "quantity": 8
+            "item": "copper_wire",
+            "quantity": 20
           },
           {
             "item": "energy",
-            "quantity": 55
+            "quantity": 10000
           },
           {
             "item": "paper",
-            "quantity": 1
+            "quantity": 10
           }
         ],
         "output_item": "car_battery",
-        "output_qty": 20
+        "output_qty": 100
       },
       {
         "inputs": [
@@ -1308,6 +1374,36 @@
         ],
         "output_item": "fuel_tank",
         "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "palladium",
+            "quantity": 10
+          },
+          {
+            "item": "platinum",
+            "quantity": 5
+          },
+          {
+            "item": "cerium",
+            "quantity": 20
+          },
+          {
+            "item": "steel",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ],
+        "output_item": "catalytic_converter",
+        "output_qty": 50
       }
     ],
     "startup_cost": 150000
@@ -2827,6 +2923,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "burley_leaf",
@@ -2853,6 +2953,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "golden_burley_leaf",
@@ -3938,6 +4042,10 @@
           {
             "item": "paper",
             "quantity": 2
+          },
+          {
+            "item": "nails",
+            "quantity": 20
           }
         ],
         "output_item": "chassis",
@@ -5403,6 +5511,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "cotton",
@@ -7735,6 +7847,276 @@
         ],
         "output_item": "collagen_powder",
         "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "sole",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "turbot",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "flounder",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "dab",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "skate",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "coley",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "gurnard",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "red_mullet",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "snapper",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "tilefish",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "bluefish",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "monkfish",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "perch",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "seabass",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "sea_bass_fillet",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "bass",
+            "quantity": 100
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 5000
+          }
+        ],
+        "output_item": "fish_fillet",
+        "output_qty": 55
       }
     ],
     "startup_cost": 75000
@@ -8320,6 +8702,32 @@
         ],
         "output_item": "jar",
         "output_qty": 80
+      },
+      {
+        "inputs": [
+          {
+            "item": "glass",
+            "quantity": 300
+          },
+          {
+            "item": "cerium",
+            "quantity": 30
+          },
+          {
+            "item": "quartz",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ],
+        "output_item": "optical_glass",
+        "output_qty": 100
       }
     ],
     "startup_cost": 35000
@@ -8708,6 +9116,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "wheat",
@@ -8752,6 +9164,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "barley",
@@ -8796,6 +9212,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "corn",
@@ -8844,6 +9264,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "wheat",
@@ -8874,6 +9298,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "barley",
@@ -8904,6 +9332,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "corn",
@@ -10111,24 +10543,24 @@
       {
         "inputs": [
           {
-            "item": "brass",
-            "quantity": 40
+            "item": "bronze",
+            "quantity": 200
           },
           {
             "item": "iron",
-            "quantity": 20
+            "quantity": 100
           },
           {
             "item": "energy",
-            "quantity": 60
+            "quantity": 30000
           },
           {
             "item": "paper",
-            "quantity": 1
+            "quantity": 20
           }
         ],
         "output_item": "propeller",
-        "output_qty": 15
+        "output_qty": 50
       }
     ],
     "startup_cost": 120000
@@ -12371,6 +12803,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "oriental_leaf",
@@ -12397,6 +12833,10 @@
           {
             "item": "pollen",
             "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "greek_basma_leaf",
@@ -12423,6 +12863,10 @@
           {
             "item": "pollen",
             "quantity": 6000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "dokha_leaf",
@@ -14336,6 +14780,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 80
           }
         ],
         "output_item": "peanut",
@@ -14519,6 +14967,10 @@
           {
             "item": "paper",
             "quantity": 2
+          },
+          {
+            "item": "potassium_hydroxide",
+            "quantity": 30
           }
         ],
         "output_item": "soap",
@@ -15852,6 +16304,28 @@
         ],
         "output_item": "active_ingredient",
         "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "bismuth",
+            "quantity": 100
+          },
+          {
+            "item": "active_ingredient",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ],
+        "output_item": "bismuth_subsalicylate",
+        "output_qty": 200
       }
     ],
     "startup_cost": 120000
@@ -18940,6 +19414,42 @@
         ],
         "output_item": "tobacco_cured_fish",
         "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "trout",
+            "quantity": 80
+          },
+          {
+            "item": "lumber",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          }
+        ],
+        "output_item": "smoked_trout",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "sea_trout",
+            "quantity": 80
+          },
+          {
+            "item": "lumber",
+            "quantity": 20
+          },
+          {
+            "item": "salt",
+            "quantity": 20
+          }
+        ],
+        "output_item": "smoked_sea_trout",
+        "output_qty": 40
       }
     ],
     "startup_cost": 45000
@@ -22052,6 +22562,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "onions",
@@ -22096,6 +22610,10 @@
           {
             "item": "paper",
             "quantity": 1
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "onions",
@@ -22122,6 +22640,10 @@
           {
             "item": "pollen",
             "quantity": 20000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "tomato",
@@ -22152,6 +22674,10 @@
           {
             "item": "pollen",
             "quantity": 20000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "tomato",
@@ -22279,6 +22805,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "virginia_leaf",
@@ -22309,6 +22839,10 @@
           {
             "item": "pollen",
             "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
           }
         ],
         "output_item": "virginia_leaf",
