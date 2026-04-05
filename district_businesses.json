@@ -7530,6 +7530,18 @@
       "kids_meal": {
         "base_sale_chance": 0.0004,
         "elasticity": 0.9
+      },
+      "elderflower_cordial": {
+        "base_sale_chance": 0.15,
+        "elasticity": 1.3
+      },
+      "spaghetti": {
+        "base_sale_chance": 0.55,
+        "elasticity": 0.8
+      },
+      "peanut_butter_cookie": {
+        "base_sale_chance": 0.6,
+        "elasticity": 0.7
       }
     },
     "startup_cost": 8000000
@@ -8190,6 +8202,30 @@
       "therapy_program": {
         "base_sale_chance": 0.0003,
         "elasticity": 0.6
+      },
+      "surgical_stent": {
+        "base_sale_chance": 0.06,
+        "elasticity": 2.0
+      },
+      "mri_machine": {
+        "base_sale_chance": 0.1,
+        "elasticity": 2.5
+      },
+      "ct_scanner": {
+        "base_sale_chance": 0.12,
+        "elasticity": 2.3
+      },
+      "dialysis_machine": {
+        "base_sale_chance": 0.15,
+        "elasticity": 2.2
+      },
+      "radiation_therapy_unit": {
+        "base_sale_chance": 0.08,
+        "elasticity": 2.8
+      },
+      "surgical_robot": {
+        "base_sale_chance": 0.07,
+        "elasticity": 3.0
       }
     },
     "startup_cost": 25000000
@@ -11861,6 +11897,22 @@
       "waste_service": {
         "base_sale_chance": 0.0006,
         "elasticity": 0.2
+      },
+      "religious_book": {
+        "base_sale_chance": 0.3,
+        "elasticity": 0.9
+      },
+      "blessed_sheep": {
+        "base_sale_chance": 0.25,
+        "elasticity": 1.1
+      },
+      "sacred_lamb_offering": {
+        "base_sale_chance": 0.2,
+        "elasticity": 1.2
+      },
+      "liturgical_lamb_light": {
+        "base_sale_chance": 0.28,
+        "elasticity": 1.0
       }
     },
     "startup_cost": 12000000
@@ -15637,6 +15689,10 @@
       "toy_bundle": {
         "base_sale_chance": 0.0004,
         "elasticity": 1.0
+      },
+      "live_lake_scrolls": {
+        "base_sale_chance": 0.15,
+        "elasticity": 2.2
       }
     },
     "startup_cost": 15000000
@@ -16636,6 +16692,18 @@
       "moroccan_evening": {
         "base_sale_chance": 0.0004,
         "elasticity": 1.0
+      },
+      "canned_lamb": {
+        "base_sale_chance": 0.45,
+        "elasticity": 0.9
+      },
+      "lamb_stew": {
+        "base_sale_chance": 0.5,
+        "elasticity": 0.8
+      },
+      "satay": {
+        "base_sale_chance": 0.48,
+        "elasticity": 0.85
       }
     },
     "startup_cost": 18000000
@@ -17773,6 +17841,26 @@
       "members_subscription": {
         "base_sale_chance": 0.0008,
         "elasticity": 0.3
+      },
+      "3d_printer_industrial": {
+        "base_sale_chance": 0.18,
+        "elasticity": 2.0
+      },
+      "cnc_machine": {
+        "base_sale_chance": 0.15,
+        "elasticity": 2.1
+      },
+      "industrial_heater": {
+        "base_sale_chance": 0.22,
+        "elasticity": 1.7
+      },
+      "industrial_robot_arm": {
+        "base_sale_chance": 0.12,
+        "elasticity": 2.3
+      },
+      "nuclear_waste_container": {
+        "base_sale_chance": 0.1,
+        "elasticity": 2.5
       }
     },
     "startup_cost": 18000000
@@ -18649,8 +18737,48 @@
             "quantity": 400
           }
         ]
+      },
+      {
+        "output_item": "garden_pass",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "agave_flower",
+            "quantity": 20
+          },
+          {
+            "item": "tea_flower",
+            "quantity": 30
+          },
+          {
+            "item": "vanilla_blossom",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 110000
+          },
+          {
+            "item": "water",
+            "quantity": 1500
+          },
+          {
+            "item": "energy",
+            "quantity": 800
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
       }
-    ]
+    ],
+    "products": {
+      "rare_orchid_specimen": {
+        "base_sale_chance": 0.2,
+        "elasticity": 2.0
+      }
+    }
   },
   "flower_market_district": {
     "name": "Flower Market",
@@ -18905,8 +19033,90 @@
             "quantity": 10
           }
         ]
+      },
+      {
+        "output_item": "artisan_fragrance",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "vanilla_blossom",
+            "quantity": 30
+          },
+          {
+            "item": "tobacco_flower",
+            "quantity": 20
+          },
+          {
+            "item": "clover_flower",
+            "quantity": 40
+          },
+          {
+            "item": "pollen",
+            "quantity": 85000
+          },
+          {
+            "item": "bottle",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 520
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "cologne",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "tea_flower",
+            "quantity": 40
+          },
+          {
+            "item": "coffee_blossom",
+            "quantity": 30
+          },
+          {
+            "item": "geranium_essential_oil",
+            "quantity": 4
+          },
+          {
+            "item": "pollen",
+            "quantity": 72000
+          },
+          {
+            "item": "bottle",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 460
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
       }
-    ]
+    ],
+    "products": {
+      "signature_perfume": {
+        "base_sale_chance": 0.3,
+        "elasticity": 1.8
+      },
+      "artisan_fragrance": {
+        "base_sale_chance": 0.35,
+        "elasticity": 1.6
+      },
+      "cologne": {
+        "base_sale_chance": 0.4,
+        "elasticity": 1.4
+      }
+    }
   },
   "floral_event_services": {
     "name": "Floral Event Services",

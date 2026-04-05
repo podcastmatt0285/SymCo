@@ -390,7 +390,7 @@
     "name": "Barnacles"
   },
   "barracks_bunk": {
-    "category": "military",
+    "category": "entertainment",
     "description": "Military-grade barracks bunk, manufactured for defense applications and armed forces.",
     "name": "Barracks Bunk"
   },
@@ -965,7 +965,7 @@
     "name": "Casino Night"
   },
   "cast_material": {
-    "category": "industrial",
+    "category": "medical_supplies",
     "description": "An industrial cast material, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Cast Material"
   },
@@ -1015,7 +1015,7 @@
     "name": "Caviar"
   },
   "cell_door": {
-    "category": "industrial",
+    "category": "prison_infrastructure",
     "description": "An industrial cell door, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Cell Door"
   },
@@ -1130,7 +1130,7 @@
     "name": "Chicken Nuggets"
   },
   "chimpanzee": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial chimpanzee, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Chimpanzee"
   },
@@ -1235,7 +1235,7 @@
     "name": "Clove Cigarettes"
   },
   "clownfish": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial clownfish, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Clownfish"
   },
@@ -1355,7 +1355,7 @@
     "name": "Commissary Package"
   },
   "commissary_snacks": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial commissary snacks, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Commissary Snacks"
   },
@@ -1380,7 +1380,7 @@
     "name": "Concert Package"
   },
   "concert_stage": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial concert stage, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Concert Stage"
   },
@@ -1520,7 +1520,7 @@
     "name": "Cough Syrup"
   },
   "counseling_materials": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial counseling materials, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Counseling Materials"
   },
@@ -1560,7 +1560,7 @@
     "name": "Croatian Sheepdog"
   },
   "crocodile": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial crocodile, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Crocodile"
   },
@@ -1580,7 +1580,7 @@
     "name": "Cruise Ship"
   },
   "crutches": {
-    "category": "industrial",
+    "category": "medical_equipment",
     "description": "An industrial crutches, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Crutches"
   },
@@ -1600,7 +1600,7 @@
     "name": "Cupronickel"
   },
   "curriculum_package": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial curriculum package, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Curriculum Package"
   },
@@ -1630,7 +1630,7 @@
     "name": "Defense Contract"
   },
   "defibrillator": {
-    "category": "industrial",
+    "category": "medical_equipment",
     "description": "An industrial defibrillator, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Defibrillator"
   },
@@ -1675,7 +1675,7 @@
     "name": "Dialysis Machine"
   },
   "diesel": {
-    "category": "energy",
+    "category": "fuel",
     "description": "Heavy refined petroleum fuel for trucks, machinery, and industrial engines.",
     "name": "Diesel Fuel"
   },
@@ -1685,17 +1685,17 @@
     "name": "Diesel Engine"
   },
   "diploma_certificate": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial diploma certificate, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Diploma Certificate"
   },
   "disposable_utensils": {
-    "category": "industrial",
+    "category": "food_service",
     "description": "An industrial disposable utensils, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Disposable Utensils"
   },
   "dissection_kit": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial dissection kit, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Dissection Kit"
   },
@@ -1705,7 +1705,7 @@
     "name": "Dive Vessel"
   },
   "dog_tags": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial dog tags, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Dog Tags"
   },
@@ -1720,7 +1720,7 @@
     "name": "Dokha Leaf"
   },
   "dolphin": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial dolphin, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Dolphin"
   },
@@ -1760,7 +1760,7 @@
     "name": "Dried Squid"
   },
   "drinking_water": {
-    "category": "industrial",
+    "category": "utilities",
     "description": "An industrial drinking water, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Drinking Water"
   },
@@ -1820,7 +1820,7 @@
     "name": "Dysprosium"
   },
   "eagle": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial eagle, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Eagle"
   },
@@ -1860,7 +1860,7 @@
     "name": "Electronics Package"
   },
   "elephant": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial elephant, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Elephant"
   },
@@ -1875,7 +1875,7 @@
     "name": "Encrypted Radio"
   },
   "encryption_device": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial encryption device, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Encryption Device"
   },
@@ -1955,7 +1955,7 @@
     "name": "Exhaust System"
   },
   "explosive_ordnance": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial explosive ordnance, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Explosive Ordnance"
   },
@@ -2015,7 +2015,7 @@
     "name": "Fighter Jet"
   },
   "film_reel": {
-    "category": "media",
+    "category": "entertainment",
     "description": "A cultural or entertainment product \u2014 film reel \u2014 created for public consumption.",
     "name": "Film Reel"
   },
@@ -2045,7 +2045,7 @@
     "name": "Fire Truck"
   },
   "firing_range": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial firing range, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Firing Range"
   },
@@ -2090,7 +2090,7 @@
     "name": "Flake Pipe Tobacco"
   },
   "flamingo": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial flamingo, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Flamingo"
   },
@@ -2115,7 +2115,7 @@
     "name": "Fluorite"
   },
   "food_tray": {
-    "category": "industrial",
+    "category": "food_service",
     "description": "An industrial food tray, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Food Tray"
   },
@@ -2125,7 +2125,7 @@
     "name": "Freight Car"
   },
   "freight_container": {
-    "category": "industrial",
+    "category": "logistics",
     "description": "An industrial freight container, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Freight Container"
   },
@@ -2135,7 +2135,7 @@
     "name": "Freight Contract"
   },
   "freight_manifest": {
-    "category": "industrial",
+    "category": "logistics",
     "description": "An industrial freight manifest, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Freight Manifest"
   },
@@ -2145,12 +2145,12 @@
     "name": "Freshwater Fishing Boat"
   },
   "fried_rice": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial fried rice, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Fried Rice"
   },
   "fries": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial fries, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Fries"
   },
@@ -2220,12 +2220,12 @@
     "name": "Gasoline"
   },
   "gauze": {
-    "category": "industrial",
+    "category": "medical_supplies",
     "description": "An industrial gauze, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Gauze"
   },
   "ged_materials": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial ged materials, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Ged Materials"
   },
@@ -2250,7 +2250,7 @@
     "name": "London Dry Gin"
   },
   "giraffe": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial giraffe, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Giraffe"
   },
@@ -2300,7 +2300,7 @@
     "name": "Golden Pearl"
   },
   "gorilla": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial gorilla, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Gorilla"
   },
@@ -2385,7 +2385,7 @@
     "name": "Gurnard"
   },
   "gyro": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial gyro, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Gyro"
   },
@@ -2415,7 +2415,7 @@
     "name": "Halibut Steak"
   },
   "handcuffs": {
-    "category": "industrial",
+    "category": "prison_infrastructure",
     "description": "An industrial handcuffs, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Handcuffs"
   },
@@ -2460,7 +2460,7 @@
     "name": "High School Diploma"
   },
   "hippo": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial hippo, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hippo"
   },
@@ -2500,7 +2500,7 @@
     "name": "Hospital Bed"
   },
   "hospitality_linen_set": {
-    "category": "health",
+    "category": "hospitality",
     "description": "A medical-grade hospitality linen set, essential for healthcare, treatment, and patient care.",
     "name": "Hospitality Linen Set"
   },
@@ -2510,7 +2510,7 @@
     "name": "Hot Chocolate"
   },
   "hot_dog": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial hot dog, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hot Dog"
   },
@@ -2525,12 +2525,12 @@
     "name": "Boat Hull"
   },
   "humvee": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial humvee, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Humvee"
   },
   "hvac_unit": {
-    "category": "industrial",
+    "category": "appliances",
     "description": "An industrial hvac unit, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hvac Unit"
   },
@@ -2565,7 +2565,7 @@
     "name": "Hydrogen Vehicle"
   },
   "hygiene_kit": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial hygiene kit, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Hygiene Kit"
   },
@@ -2660,7 +2660,7 @@
     "name": "Inmate Jumpsuit"
   },
   "institutional_furniture_set": {
-    "category": "industrial",
+    "category": "prison_infrastructure",
     "description": "An industrial institutional furniture set, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Institutional Furniture Set"
   },
@@ -2695,12 +2695,12 @@
     "name": "Isinglass"
   },
   "iv_bag": {
-    "category": "industrial",
+    "category": "medical_supplies",
     "description": "An industrial iv bag, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Iv Bag"
   },
   "iv_pump": {
-    "category": "industrial",
+    "category": "medical_equipment",
     "description": "An industrial iv pump, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Iv Pump"
   },
@@ -2725,7 +2725,7 @@
     "name": "Jelly"
   },
   "jellyfish": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial jellyfish, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Jellyfish"
   },
@@ -2755,7 +2755,7 @@
     "name": "Jewelry"
   },
   "jumbotron": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial jumbotron, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Jumbotron"
   },
@@ -2765,7 +2765,7 @@
     "name": "Juniper Berries"
   },
   "kangaroo": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial kangaroo, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Kangaroo"
   },
@@ -2795,7 +2795,7 @@
     "name": "Kitchen Package"
   },
   "koala": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial koala, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Koala"
   },
@@ -2805,7 +2805,7 @@
     "name": "Lab Equipment"
   },
   "lab_kit": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial lab kit, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Lab Kit"
   },
@@ -2850,7 +2850,7 @@
     "name": "Lapponian Herder"
   },
   "laptop": {
-    "category": "industrial",
+    "category": "electronics",
     "description": "An industrial laptop, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Laptop"
   },
@@ -2885,7 +2885,7 @@
     "name": "Lawn Service"
   },
   "lcd_panel": {
-    "category": "industrial",
+    "category": "electronics",
     "description": "An industrial lcd panel, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Lcd Panel"
   },
@@ -2935,7 +2935,7 @@
     "name": "LFP Battery Cell"
   },
   "license_plate_batch": {
-    "category": "services",
+    "category": "prison",
     "description": "A professional license plate batch, a contracted or licensed service within the economy.",
     "name": "License Plate Batch"
   },
@@ -2945,7 +2945,7 @@
     "name": "Licorice"
   },
   "lighting_rig": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "Refined lighting rig, a structural and manufacturing metal used across heavy industries.",
     "name": "Lighting Rig"
   },
@@ -2960,7 +2960,7 @@
     "name": "Lincoln"
   },
   "lion": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial lion, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Lion"
   },
@@ -3125,7 +3125,7 @@
     "name": "Manganese Ore"
   },
   "manta_ray": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial manta ray, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Manta Ray"
   },
@@ -3185,7 +3185,7 @@
     "name": "Medina Feast"
   },
   "memory_module": {
-    "category": "industrial",
+    "category": "electronics",
     "description": "An industrial memory module, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Memory Module"
   },
@@ -3245,7 +3245,7 @@
     "name": "Milk"
   },
   "milkshake": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial milkshake, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Milkshake"
   },
@@ -3350,7 +3350,7 @@
     "name": "Movie Screen"
   },
   "mre": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial mre, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Mre"
   },
@@ -3375,7 +3375,7 @@
     "name": "Nails"
   },
   "natural_gas": {
-    "category": "industrial",
+    "category": "utilities",
     "description": "An industrial natural gas, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Natural Gas"
   },
@@ -3420,7 +3420,7 @@
     "name": "Nickel Ore"
   },
   "night_vision": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial night vision, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Night Vision"
   },
@@ -3495,7 +3495,7 @@
     "name": "Nylon"
   },
   "obstacle_course": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial obstacle course, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Obstacle Course"
   },
@@ -3570,7 +3570,7 @@
     "name": "Oranges"
   },
   "orangutan": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial orangutan, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Orangutan"
   },
@@ -3605,7 +3605,7 @@
     "name": "Oysters"
   },
   "pad_thai": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial pad thai, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Pad Thai"
   },
@@ -3635,7 +3635,7 @@
     "name": "PAN Precursor"
   },
   "panda": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial panda, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Panda"
   },
@@ -3670,7 +3670,7 @@
     "name": "Passenger Jet"
   },
   "passenger_train": {
-    "category": "industrial",
+    "category": "vehicles",
     "description": "An industrial passenger train, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Passenger Train"
   },
@@ -3840,12 +3840,12 @@
     "name": "Playing Cards"
   },
   "poker_table": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial poker table, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Poker Table"
   },
   "polar_bear": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial polar bear, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Polar Bear"
   },
@@ -3895,7 +3895,7 @@
     "name": "Polypay Sheep"
   },
   "popcorn_machine": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial popcorn machine, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Popcorn Machine"
   },
@@ -3990,7 +3990,7 @@
     "name": "Soft Pretzel"
   },
   "prison_bedding": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial prison bedding, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Prison Bedding"
   },
@@ -4005,7 +4005,7 @@
     "name": "Prison Meal"
   },
   "prison_produce_crate": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial prison produce crate, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Prison Produce Crate"
   },
@@ -4020,7 +4020,7 @@
     "name": "Processor"
   },
   "projector": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial projector, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Projector"
   },
@@ -4030,12 +4030,12 @@
     "name": "Propeller"
   },
   "prosthetic": {
-    "category": "industrial",
+    "category": "medical_equipment",
     "description": "An industrial prosthetic, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Prosthetic"
   },
   "puffer_fish": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial puffer fish, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Puffer Fish"
   },
@@ -4055,12 +4055,12 @@
     "name": "Pyrenean Sheepdog"
   },
   "pyrotechnics": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial pyrotechnics, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Pyrotechnics"
   },
   "python": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial python, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Python"
   },
@@ -4075,7 +4075,7 @@
     "name": "Queen Bee"
   },
   "radar_array": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial radar array, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Radar Array"
   },
@@ -4105,7 +4105,7 @@
     "name": "Rambouillet"
   },
   "ramen_bowl": {
-    "category": "components",
+    "category": "prepared_food",
     "description": "A high-tech ramen bowl, used in electronics, computing, and advanced manufacturing.",
     "name": "Ramen Bowl"
   },
@@ -4120,7 +4120,7 @@
     "name": "Ration Pack"
   },
   "razor_wire": {
-    "category": "industrial",
+    "category": "prison_infrastructure",
     "description": "An industrial razor wire, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Razor Wire"
   },
@@ -4155,12 +4155,12 @@
     "name": "Refined Ore Concentrate"
   },
   "refrigerated_container": {
-    "category": "industrial",
+    "category": "logistics",
     "description": "An industrial refrigerated container, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Refrigerated Container"
   },
   "refrigerator": {
-    "category": "industrial",
+    "category": "appliances",
     "description": "An industrial refrigerator, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Refrigerator"
   },
@@ -4195,7 +4195,7 @@
     "name": "Research Grant"
   },
   "residential_electricity": {
-    "category": "industrial",
+    "category": "utilities",
     "description": "An industrial residential electricity, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Residential Electricity"
   },
@@ -4205,7 +4205,7 @@
     "name": "Rhenium"
   },
   "rhino": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial rhino, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Rhino"
   },
@@ -4315,7 +4315,7 @@
     "name": "Rottweiler"
   },
   "roulette_wheel": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial roulette wheel, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Roulette Wheel"
   },
@@ -4470,7 +4470,7 @@
     "name": "School Bus"
   },
   "school_lunch": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial school lunch, used in manufacturing, processing, and heavy-industry operations.",
     "name": "School Lunch"
   },
@@ -4480,7 +4480,7 @@
     "name": "School Uniform"
   },
   "scoreboard": {
-    "category": "wood",
+    "category": "education",
     "description": "Processed scoreboard, a timber product used in construction and furniture manufacturing.",
     "name": "Scoreboard"
   },
@@ -4495,7 +4495,7 @@
     "name": "Sea Bass Fillet"
   },
   "sea_lion": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial sea lion, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sea Lion"
   },
@@ -4505,7 +4505,7 @@
     "name": "Sea Trout"
   },
   "sea_turtle": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial sea turtle, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sea Turtle"
   },
@@ -4530,12 +4530,12 @@
     "name": "Seahorse"
   },
   "seal": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial seal, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Seal"
   },
   "security_camera": {
-    "category": "industrial",
+    "category": "electronics",
     "description": "An industrial security camera, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Security Camera"
   },
@@ -4580,7 +4580,7 @@
     "name": "Shampoo"
   },
   "shark": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial shark, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Shark"
   },
@@ -4685,12 +4685,12 @@
     "name": "Skate"
   },
   "slot_machine": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial slot machine, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Slot Machine"
   },
   "smartboard": {
-    "category": "wood",
+    "category": "education",
     "description": "Processed smartboard, a timber product used in construction and furniture manufacturing.",
     "name": "Smartboard"
   },
@@ -4735,7 +4735,7 @@
     "name": "Smokeless Powder"
   },
   "smoothie": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial smoothie, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Smoothie"
   },
@@ -4770,7 +4770,7 @@
     "name": "Soda"
   },
   "soda_cup": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial soda cup, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Soda Cup"
   },
@@ -4780,7 +4780,7 @@
     "name": "Sodium-Ion Cell"
   },
   "soft_serve": {
-    "category": "industrial",
+    "category": "prepared_food",
     "description": "An industrial soft serve, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Soft Serve"
   },
@@ -4820,7 +4820,7 @@
     "name": "Sonar System"
   },
   "sound_system": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial sound system, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sound System"
   },
@@ -4860,7 +4860,7 @@
     "name": "Sports Ball"
   },
   "sports_equipment": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial sports equipment, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sports Equipment"
   },
@@ -4895,7 +4895,7 @@
     "name": "Standard Room Night"
   },
   "standardized_test": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial standardized test, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Standardized Test"
   },
@@ -4930,12 +4930,12 @@
     "name": "Stout"
   },
   "stove": {
-    "category": "industrial",
+    "category": "appliances",
     "description": "An industrial stove, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Stove"
   },
   "student_desk": {
-    "category": "industrial",
+    "category": "education",
     "description": "An industrial student desk, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Student Desk"
   },
@@ -4945,7 +4945,7 @@
     "name": "Study Abroad Program"
   },
   "sturgeon": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial sturgeon, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sturgeon"
   },
@@ -5030,7 +5030,7 @@
     "name": "Surimi"
   },
   "surveillance_system": {
-    "category": "industrial",
+    "category": "prison_infrastructure",
     "description": "An industrial surveillance system, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Surveillance System"
   },
@@ -5040,7 +5040,7 @@
     "name": "Sushi Roll"
   },
   "sutures": {
-    "category": "industrial",
+    "category": "medical_supplies",
     "description": "An industrial sutures, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Sutures"
   },
@@ -5060,7 +5060,7 @@
     "name": "Syringe"
   },
   "tablet": {
-    "category": "industrial",
+    "category": "electronics",
     "description": "An industrial tablet, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Tablet"
   },
@@ -5070,7 +5070,7 @@
     "name": "Taco"
   },
   "tactical_vest": {
-    "category": "industrial",
+    "category": "military",
     "description": "An industrial tactical vest, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Tactical Vest"
   },
@@ -5080,7 +5080,7 @@
     "name": "Salt Water Taffy"
   },
   "takeout_container": {
-    "category": "industrial",
+    "category": "food_service",
     "description": "An industrial takeout container, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Takeout Container"
   },
@@ -5125,7 +5125,7 @@
     "name": "Targhee Sheep"
   },
   "taser": {
-    "category": "industrial",
+    "category": "prison_infrastructure",
     "description": "An industrial taser, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Taser"
   },
@@ -5155,12 +5155,12 @@
     "name": "Tea Seeds"
   },
   "team_jersey": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial team jersey, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Team Jersey"
   },
   "television": {
-    "category": "industrial",
+    "category": "electronics",
     "description": "An industrial television, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Television"
   },
@@ -5190,7 +5190,7 @@
     "name": "Textbook"
   },
   "theater_seat": {
-    "category": "industrial",
+    "category": "entertainment",
     "description": "An industrial theater seat, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Theater Seat"
   },
@@ -5225,7 +5225,7 @@
     "name": "Tibetan Terrier"
   },
   "tiger": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial tiger, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Tiger"
   },
@@ -5330,7 +5330,7 @@
     "name": "Torpedo"
   },
   "tortoise": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial tortoise, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Tortoise"
   },
@@ -5375,7 +5375,7 @@
     "name": "Trawler"
   },
   "tropical_fish": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial tropical fish, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Tropical Fish"
   },
@@ -5495,7 +5495,7 @@
     "name": "Vellum"
   },
   "ventilator": {
-    "category": "industrial",
+    "category": "medical_equipment",
     "description": "An industrial ventilator, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Ventilator"
   },
@@ -5510,7 +5510,7 @@
     "name": "Veterinary Supplies"
   },
   "viewing_platform": {
-    "category": "vehicle_parts",
+    "category": "zoo_infrastructure",
     "description": "A precision-engineered viewing platform, a critical component in vehicle manufacturing and assembly.",
     "name": "Viewing Platform"
   },
@@ -5545,7 +5545,7 @@
     "name": "Vocational Certificate"
   },
   "vocational_kit": {
-    "category": "industrial",
+    "category": "prison",
     "description": "An industrial vocational kit, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Vocational Kit"
   },
@@ -5560,7 +5560,7 @@
     "name": "Wallet"
   },
   "washer_dryer": {
-    "category": "industrial",
+    "category": "appliances",
     "description": "An industrial washer dryer, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Washer Dryer"
   },
@@ -5570,7 +5570,7 @@
     "name": "Waste Service"
   },
   "wastewater_service": {
-    "category": "services",
+    "category": "utilities",
     "description": "A professional wastewater service, a contracted or licensed service within the economy.",
     "name": "Wastewater Service"
   },
@@ -5580,7 +5580,7 @@
     "name": "Water"
   },
   "water_heater": {
-    "category": "industrial",
+    "category": "appliances",
     "description": "An industrial water heater, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Water Heater"
   },
@@ -5605,7 +5605,7 @@
     "name": "Wheat Seeds"
   },
   "wheelchair": {
-    "category": "industrial",
+    "category": "medical_equipment",
     "description": "An industrial wheelchair, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Wheelchair"
   },
@@ -5705,7 +5705,7 @@
     "name": "Yttrium"
   },
   "zebra": {
-    "category": "industrial",
+    "category": "animals",
     "description": "An industrial zebra, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Zebra"
   },
@@ -6058,5 +6058,50 @@
     "name": "Rare Orchid Specimen",
     "description": "Museum-quality potted exotic orchid from botanical gardens",
     "category": "luxury"
+  },
+  "apple_blossom_water": {
+    "name": "Apple Blossom Water",
+    "description": "Delicate floral hydrosol from apple blossoms",
+    "category": "ingredients"
+  },
+  "coffee_blossom_water": {
+    "name": "Coffee Blossom Water",
+    "description": "Jasmine-scented hydrosol from coffee flowers",
+    "category": "ingredients"
+  },
+  "geranium_essential_oil": {
+    "name": "Geranium Essential Oil",
+    "description": "Rose-like aromatic oil from scented geranium",
+    "category": "essential_oils"
+  },
+  "elderflower_cordial": {
+    "name": "Elderflower Cordial",
+    "description": "Light syrup made from elderflowers and sugar",
+    "category": "beverages"
+  },
+  "echinacea_extract": {
+    "name": "Echinacea Extract",
+    "description": "Herbal immune-support tincture from echinacea flowers",
+    "category": "health"
+  },
+  "foxglove_extract": {
+    "name": "Foxglove Extract",
+    "description": "Digitalis-based medicinal extract used in cardiac drugs",
+    "category": "health"
+  },
+  "passionflower_extract": {
+    "name": "Passionflower Extract",
+    "description": "Calming herbal extract used in supplements",
+    "category": "health"
+  },
+  "elderflower_gin": {
+    "name": "Elderflower Gin",
+    "description": "Premium small-batch gin infused with elderflower and botanicals",
+    "category": "alcohol"
+  },
+  "cardiac_drug": {
+    "name": "Cardiac Drug",
+    "description": "Digitalis-based medication for heart conditions",
+    "category": "health"
   }
 }
