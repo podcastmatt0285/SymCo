@@ -2903,6 +2903,36 @@
         ],
         "output_item": "apple_cider_vinegar",
         "output_qty": 40
+      },
+      {
+        "output_item": "elderflower_cordial",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "elderflower",
+            "quantity": 300
+          },
+          {
+            "item": "sugar",
+            "quantity": 500
+          },
+          {
+            "item": "pollen",
+            "quantity": 28000
+          },
+          {
+            "item": "water",
+            "quantity": 600
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 38000
@@ -8731,6 +8761,40 @@
         ],
         "output_item": "brandy",
         "output_qty": 30
+      },
+      {
+        "output_item": "elderflower_gin",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "elderflower",
+            "quantity": 200
+          },
+          {
+            "item": "juniper_berries",
+            "quantity": 100
+          },
+          {
+            "item": "pollen",
+            "quantity": 32000
+          },
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 400
+          },
+          {
+            "item": "glass",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
       }
     ],
     "startup_cost": 42000
@@ -14652,6 +14716,32 @@
         ],
         "output_item": "dye",
         "output_qty": 50
+      },
+      {
+        "output_item": "dye",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "floral_dye",
+            "quantity": 30
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          },
+          {
+            "item": "water",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 48000
@@ -15883,6 +15973,96 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "shampoo",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "chrysanthemum_essential_oil",
+            "quantity": 5
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          },
+          {
+            "item": "water",
+            "quantity": 25
+          },
+          {
+            "item": "bottle",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "lotion",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "apple_blossom_water",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 32000
+          },
+          {
+            "item": "water",
+            "quantity": 20
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "perfume",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "coffee_blossom_water",
+            "quantity": 12
+          },
+          {
+            "item": "pollen",
+            "quantity": 38000
+          },
+          {
+            "item": "water",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ],
     "startup_cost": 55000
@@ -16636,6 +16816,114 @@
         ],
         "output_item": "bismuth_subsalicylate",
         "output_qty": 200
+      },
+      {
+        "output_item": "echinacea_extract",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "echinacea",
+            "quantity": 300
+          },
+          {
+            "item": "pollen",
+            "quantity": 35000
+          },
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "foxglove_extract",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "foxglove",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 45000
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 400
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "passionflower_extract",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "passionflower",
+            "quantity": 250
+          },
+          {
+            "item": "pollen",
+            "quantity": 38000
+          },
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "cardiac_drug",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "foxglove_extract",
+            "quantity": 10
+          },
+          {
+            "item": "active_ingredient",
+            "quantity": 30
+          },
+          {
+            "item": "pollen",
+            "quantity": 40000
+          },
+          {
+            "item": "water",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ],
     "startup_cost": 120000
@@ -16693,6 +16981,22 @@
       "vitamins": {
         "base_sale_chance": 0.04,
         "elasticity": 1.2
+      },
+      "bismuth_subsalicylate": {
+        "base_sale_chance": 0.12,
+        "elasticity": 1.3
+      },
+      "echinacea_extract": {
+        "base_sale_chance": 0.12,
+        "elasticity": 1.3
+      },
+      "passionflower_extract": {
+        "base_sale_chance": 0.12,
+        "elasticity": 1.3
+      },
+      "cardiac_drug": {
+        "base_sale_chance": 0.1,
+        "elasticity": 1.5
       }
     },
     "startup_cost": 22000
@@ -25462,6 +25766,116 @@
             "quantity": 50
           }
         ]
+      },
+      {
+        "output_item": "bouquet",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "ranunculus",
+            "quantity": 15
+          },
+          {
+            "item": "snapdragon",
+            "quantity": 20
+          },
+          {
+            "item": "anemone",
+            "quantity": 15
+          },
+          {
+            "item": "lilac",
+            "quantity": 10
+          },
+          {
+            "item": "pollen",
+            "quantity": 52000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "floral_centerpiece",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "magnolia",
+            "quantity": 10
+          },
+          {
+            "item": "gardenia",
+            "quantity": 15
+          },
+          {
+            "item": "wisteria",
+            "quantity": 12
+          },
+          {
+            "item": "orchid",
+            "quantity": 5
+          },
+          {
+            "item": "pollen",
+            "quantity": 75000
+          },
+          {
+            "item": "glass",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 65
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "potpourri",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "wisteria",
+            "quantity": 20
+          },
+          {
+            "item": "lilac",
+            "quantity": 20
+          },
+          {
+            "item": "geranium",
+            "quantity": 20
+          },
+          {
+            "item": "rose",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 48000
+          },
+          {
+            "item": "jar",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ]
   },
@@ -25687,6 +26101,114 @@
           {
             "item": "energy",
             "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "apple_blossom_water",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "apple_blossom",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          },
+          {
+            "item": "water",
+            "quantity": 700
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "coffee_blossom_water",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "coffee_blossom",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 25000
+          },
+          {
+            "item": "water",
+            "quantity": 700
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "geranium_essential_oil",
+        "output_qty": 6,
+        "inputs": [
+          {
+            "item": "geranium",
+            "quantity": 400
+          },
+          {
+            "item": "pollen",
+            "quantity": 42000
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 480
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ]
+      },
+      {
+        "output_item": "elderflower_cordial",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "elderflower",
+            "quantity": 300
+          },
+          {
+            "item": "sugar",
+            "quantity": 500
+          },
+          {
+            "item": "pollen",
+            "quantity": 28000
+          },
+          {
+            "item": "water",
+            "quantity": 600
+          },
+          {
+            "item": "energy",
+            "quantity": 200
           },
           {
             "item": "paper",
