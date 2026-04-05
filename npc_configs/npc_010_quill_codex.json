@@ -28,12 +28,12 @@
     {
       "business_type": "bookbindery",
       "district_id": null,
-      "active_lines": ["religious_book", "law_book", "art_book", "notebook"]
+      "active_lines": ["religious_book", "law_book", "art_book", "notebook", "encyclopedia"]
     },
     {
       "business_type": "bookstore",
       "district_id": null,
-      "active_lines": ["religious_book", "law_book", "art_book", "notebook", "encyclopedia", "textbook", "novel"]
+      "active_lines": ["religious_book", "law_book", "art_book", "notebook", "encyclopedia"]
     }
   ],
 
@@ -81,6 +81,7 @@
     "religious_book":{ "min_inventory_to_keep": 200,  "max_order_quantity": 500,   "market": "regular" },
     "law_book":      { "min_inventory_to_keep": 200,  "max_order_quantity": 500,   "market": "regular" },
     "art_book":      { "min_inventory_to_keep": 200,  "max_order_quantity": 500,   "market": "regular" },
-    "notebook":      { "min_inventory_to_keep": 500,  "max_order_quantity": 1000,  "market": "regular" }
+    "notebook":      { "min_inventory_to_keep": 500,  "max_order_quantity": 1000,  "market": "regular" },
+    "encyclopedia":  { "min_inventory_to_keep": 100,  "max_order_quantity": 200,   "market": "regular" }
   }
 }
