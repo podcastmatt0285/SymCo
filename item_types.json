@@ -2869,6 +2869,11 @@
     "description": "Espresso with steamed milk",
     "name": "Caff\u00e8 Latte"
   },
+  "launch_vehicle": {
+    "category": "vehicles",
+    "description": "Orbital launch rocket using liquid rocket engines; delivers payload to low Earth orbit.",
+    "name": "Launch Vehicle"
+  },
   "law_book": {
     "category": "media",
     "description": "Legal reference text",
@@ -4738,6 +4743,11 @@
     "category": "seafood",
     "description": "Tropical reef fish with firm, moist flesh",
     "name": "Red Snapper"
+  },
+  "sniper_kit": {
+    "category": "military",
+    "description": "Long-range precision rifle package with targeting optic, bipod, and suppressor.",
+    "name": "Sniper Rifle Kit"
   },
   "snuff": {
     "category": "tobacco",
