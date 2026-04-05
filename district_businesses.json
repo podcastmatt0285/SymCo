@@ -7530,6 +7530,10 @@
       "kids_meal": {
         "base_sale_chance": 0.0004,
         "elasticity": 0.9
+      },
+      "elderflower_cordial": {
+        "base_sale_chance": 0.15,
+        "elasticity": 1.3
       }
     },
     "startup_cost": 8000000
@@ -8190,6 +8194,10 @@
       "therapy_program": {
         "base_sale_chance": 0.0003,
         "elasticity": 0.6
+      },
+      "surgical_stent": {
+        "base_sale_chance": 0.06,
+        "elasticity": 2.0
       }
     },
     "startup_cost": 25000000
@@ -18649,6 +18657,40 @@
             "quantity": 400
           }
         ]
+      },
+      {
+        "output_item": "garden_pass",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "agave_flower",
+            "quantity": 20
+          },
+          {
+            "item": "tea_flower",
+            "quantity": 30
+          },
+          {
+            "item": "vanilla_blossom",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 110000
+          },
+          {
+            "item": "water",
+            "quantity": 1500
+          },
+          {
+            "item": "energy",
+            "quantity": 800
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
       }
     ]
   },
@@ -18899,6 +18941,74 @@
           {
             "item": "energy",
             "quantity": 450
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "artisan_fragrance",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "vanilla_blossom",
+            "quantity": 30
+          },
+          {
+            "item": "tobacco_flower",
+            "quantity": 20
+          },
+          {
+            "item": "clover_flower",
+            "quantity": 40
+          },
+          {
+            "item": "pollen",
+            "quantity": 85000
+          },
+          {
+            "item": "bottle",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 520
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "cologne",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "tea_flower",
+            "quantity": 40
+          },
+          {
+            "item": "coffee_blossom",
+            "quantity": 30
+          },
+          {
+            "item": "geranium_essential_oil",
+            "quantity": 4
+          },
+          {
+            "item": "pollen",
+            "quantity": 72000
+          },
+          {
+            "item": "bottle",
+            "quantity": 25
+          },
+          {
+            "item": "energy",
+            "quantity": 460
           },
           {
             "item": "paper",
