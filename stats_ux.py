@@ -3098,7 +3098,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
         ("districts",     "🏙️", "Districts",     "District terrain types, base taxes, allowed businesses, and formation rules.",                             f"{dist_count} types",   "Encyclopedia"),
         ("items",         "📦", "Items",         "Every craftable and tradeable item — categories, descriptions, and live market prices.",                   f"{item_count}+ items",  "Catalog"),
         ("city_projects", "🏗️", "City Projects", "30 municipal mega-projects with buffs, debuffs, construction materials, and NAV contributions.",          "30 projects",           "Reference"),
-        ("executives",    "👔", "Executives",    "23 executive roles, ability pools, school system, legendary bonuses, and marketplace mechanics.",          "23 roles",              "Reference"),
+        ("executives",    "👔", "Executives",    "30 executive roles, ability pools, school system, legendary bonuses, and marketplace mechanics.",          "30 roles",              "Reference"),
         ("banks",         "🏦", "Banks",         f"Brokerage firm, {bank_count} active banks, {listed_count} public listings, ETFs, city banks, and all {reserve_count} reserve banks with live yield charts.", f"{bank_count} banks",    "Finance"),
         ("counties",      "🗺️", "Counties",      "County federations with native blockchains — tokenomics, treasury, mining pools, city members, and governance.", f"{county_count} counties", "Governance"),
         ("crypto",        "🪙", "Crypto",        f"WSC stable coin, {native_count} county native tokens, and {meme_count} community-launched meme coins with live order-book prices.", f"{meme_count + native_count} tokens", "Crypto"),
@@ -3604,7 +3604,7 @@ async def wiki_executives(
     session_token: Optional[str] = Cookie(None),
     category: str = Query("all"),
 ):
-    """Executives encyclopedia — 23 roles, abilities, school, marketplace."""
+    """Executives encyclopedia — 30 roles, abilities, school, marketplace."""
     from auth import get_player_from_session
     db = get_db()
     player = get_player_from_session(db, session_token)
@@ -3776,7 +3776,7 @@ async def wiki_executives(
 
     body = f"""
 <h1 class="wpt">👔 Executives</h1>
-<p class="wpd">23 executive roles across 11 specialisations. Each exec brings a unique pool of
+<p class="wpd">30 executive roles across 10 specialisations. Each exec brings a unique pool of
 abilities that scale with level and school training. Legendary executives (5% spawn chance)
 receive a bonus ability from the legendary pool. Hover ability badges to see their effects.</p>
 <div class="wfilters">{filters}</div>

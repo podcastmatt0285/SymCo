@@ -61,7 +61,7 @@
   },
   "cement": {
     "name": "Cement",
-    "description": "ite powder for making concrete",
+    "description": "Limestone-based binder powder for making concrete",
     "category": "construction"
   },
   "rebar": {
@@ -394,9 +394,9 @@
     "description": "Attack/transport rotorcraft",
     "category": "military"
   },
-  "destroyer": {
+  "naval_destroyer": {
     "name": "Naval Destroyer",
-    "description": "Warship",
+    "description": "Guided-missile destroyer with radar, sonar, and naval gun systems",
     "category": "military"
   },
   "submarine": {
@@ -1171,7 +1171,7 @@
   },
   "mint_tea_ceremony": {
     "name": "Mint Tea Ceremony",
-    "description": "Traditional Moroccan tea service — fresh mint, sugar, and the theatrical three-pour presentation in ornate glass",
+    "description": "Traditional Moroccan tea service \u2014 fresh mint, sugar, and the theatrical three-pour presentation in ornate glass",
     "category": "retail_food"
   },
   "casbah_private_dining": {
@@ -1668,5 +1668,20 @@
     "name": "Office Furniture",
     "description": "Professional office furniture bundle including desk, ergonomic chair, filing cabinet, and shelving units.",
     "category": "retail_shopping"
+  },
+  "garden_pass": {
+    "name": "Garden Pass",
+    "description": "Day admission to the botanical garden including guided tours",
+    "category": "retail_entertainment"
+  },
+  "wedding_floral_package": {
+    "name": "Wedding Floral Package",
+    "description": "Complete floral design service for wedding ceremonies and receptions",
+    "category": "retail_service"
+  },
+  "event_decor_package": {
+    "name": "Event Decor Package",
+    "description": "Full floral decoration service for corporate and private events",
+    "category": "retail_service"
   }
 }
