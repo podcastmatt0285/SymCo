@@ -557,19 +557,6 @@ def district_details(district_id: int, session_token: Optional[str] = Cookie(Non
                 district_businesses = get_district_business_types()
                 district_terrain_key = f"district_{district.district_type}"
                 
-                # DEBUG: Show what we're working with
-                html += f'''
-                <div class="card" style="background: #1e1e2e; border-left: 4px solid #f59e0b;">
-                    <h4 style="margin: 0 0 8px 0; color: #f59e0b;">🔍 Debug Info</h4>
-                    <div style="font-size: 0.8rem; color: #94a3b8; font-family: monospace;">
-                        <div>district.district_type = "{district.district_type}"</div>
-                        <div>district.terrain_type = "{district.terrain_type}"</div>
-                        <div>district_terrain_key = "{district_terrain_key}"</div>
-                        <div>district_businesses loaded = {len(district_businesses)} types</div>
-                    </div>
-                </div>
-                '''
-                
                 # Get owned businesses count for cost calculation
                 from business import Business
                 owned_businesses_count = db.query(Business).filter(Business.owner_id == player.id).count()
