@@ -76,10 +76,11 @@ GOVERNMENT_PLAYER_ID = 0
 
 # Business types exempt from land hoarding tax (food carts / trucks occupy plots
 # but are considered transient street vendors, not land holdings)
-FOOD_CART_TYPES = {"fish_cart", "hot_dog_cart", "burrito_truck"}
+FOOD_CART_TYPES = {"fish_cart", "hot_dog_cart", "burrito_truck", "street_flower_cart"}
 
 # Terrain types - the base land type
 TERRAIN_TYPES = {
+    "urban": {"description": "City center plot, high foot traffic and demand", "base_tax": 120.0},
     "prairie": {"description": "Flat grassland, good for farming", "base_tax": 50.0},
     "forest": {"description": "Wooded area, good for lumber", "base_tax": 60.0},
     "desert": {"description": "Arid land, challenging conditions", "base_tax": 30.0},
