@@ -14422,7 +14422,7 @@
             "quantity": 20
           },
           {
-            "item": "copper_ore",
+            "item": "copper",
             "quantity": 10
           },
           {
@@ -17964,19 +17964,19 @@
         "inputs": [
           {
             "item": "fish_oil",
-            "quantity": 60
+            "quantity": 80
           },
           {
             "item": "energy",
-            "quantity": 10
+            "quantity": 5000
           },
           {
             "item": "paper",
-            "quantity": 1
+            "quantity": 2
           }
         ],
-        "output_item": "lard",
-        "output_qty": 20
+        "output_item": "bio_fuel",
+        "output_qty": 40
       },
       {
         "inputs": [

@@ -35,7 +35,7 @@
             "quantity": 500
           },
           {
-            "item": "zinc_ore",
+            "item": "zinc",
             "quantity": 200
           },
           {
@@ -10114,7 +10114,7 @@
             "quantity": 2
           },
           {
-            "item": "destroyer",
+            "item": "naval_destroyer",
             "quantity": 1
           },
           {
@@ -10701,78 +10701,6 @@
         ],
         "output_item": "naval_gun_system",
         "output_qty": 20
-      },
-      {
-        "inputs": [
-          {
-            "item": "destroyer_hull",
-            "quantity": 1
-          },
-          {
-            "item": "turbofan_engine",
-            "quantity": 4
-          },
-          {
-            "item": "naval_gun_system",
-            "quantity": 4
-          },
-          {
-            "item": "radar_system",
-            "quantity": 4
-          },
-          {
-            "item": "sonar_system",
-            "quantity": 2
-          },
-          {
-            "item": "missile",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 5000000
-          },
-          {
-            "item": "paper",
-            "quantity": 1000
-          }
-        ],
-        "output_item": "naval_destroyer",
-        "output_qty": 2
-      },
-      {
-        "inputs": [
-          {
-            "item": "submarine_hull",
-            "quantity": 1
-          },
-          {
-            "item": "nuclear_reactor_core",
-            "quantity": 1
-          },
-          {
-            "item": "torpedo",
-            "quantity": 20
-          },
-          {
-            "item": "sonar_system",
-            "quantity": 4
-          },
-          {
-            "item": "fire_control_system",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 8000000
-          },
-          {
-            "item": "paper",
-            "quantity": 1500
-          }
-        ],
-        "output_item": "submarine",
-        "output_qty": 1
       }
     ],
     "startup_cost": 20000000
@@ -11580,90 +11508,78 @@
       {
         "inputs": [
           {
-            "item": "ship_hull",
+            "item": "destroyer_hull",
+            "quantity": 1
+          },
+          {
+            "item": "turbofan_engine",
             "quantity": 4
           },
           {
-            "item": "marine_engine",
-            "quantity": 8
+            "item": "naval_gun_system",
+            "quantity": 2
           },
           {
-            "item": "steel",
-            "quantity": 5000
+            "item": "radar_system",
+            "quantity": 2
           },
           {
-            "item": "aluminum",
-            "quantity": 1000
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 300
-          },
-          {
-            "item": "processor",
-            "quantity": 100
-          },
-          {
-            "item": "radar_array",
-            "quantity": 4
+            "item": "sonar_system",
+            "quantity": 1
           },
           {
             "item": "missile",
-            "quantity": 50
+            "quantity": 8
           },
           {
-            "item": "copper_wire",
-            "quantity": 2000
+            "item": "marine_piping",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 3000000
           },
           {
             "item": "paper",
             "quantity": 600
-          },
-          {
-            "item": "energy",
-            "quantity": 1000000
           }
         ],
-        "output_item": "destroyer",
+        "output_item": "naval_destroyer",
         "output_qty": 1
       },
       {
         "inputs": [
           {
-            "item": "ship_hull",
+            "item": "submarine_hull",
+            "quantity": 1
+          },
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "torpedo",
+            "quantity": 12
+          },
+          {
+            "item": "sonar_system",
             "quantity": 3
           },
           {
-            "item": "marine_engine",
-            "quantity": 4
+            "item": "fire_control_system",
+            "quantity": 2
           },
           {
-            "item": "steel",
-            "quantity": 4000
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 400
-          },
-          {
-            "item": "processor",
-            "quantity": 150
-          },
-          {
-            "item": "copper_wire",
-            "quantity": 2500
-          },
-          {
-            "item": "missile",
-            "quantity": 24
-          },
-          {
-            "item": "paper",
-            "quantity": 500
+            "item": "marine_piping",
+            "quantity": 50
           },
           {
             "item": "energy",
-            "quantity": 900000
+            "quantity": 5000000
+          },
+          {
+            "item": "paper",
+            "quantity": 800
           }
         ],
         "output_item": "submarine",
