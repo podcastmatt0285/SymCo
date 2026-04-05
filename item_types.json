@@ -29,6 +29,11 @@
     "description": "Synthesized medicinal compound",
     "name": "Active Pharmaceutical Ingredient"
   },
+  "aerospace_fastener": {
+    "category": "components",
+    "description": "Beryllium copper high-strength bolt and nut set for aerospace structural assembly.",
+    "name": "Aerospace Fastener"
+  },
   "agave": {
     "category": "crops",
     "description": "Desert succulent for tequila production",
@@ -68,6 +73,11 @@
     "category": "industrial",
     "description": "An industrial alarm system, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Alarm System"
+  },
+  "alkaline_battery": {
+    "category": "components",
+    "description": "Potassium hydroxide alkaline battery for consumer electronics.",
+    "name": "Alkaline Battery"
   },
   "alnico_magnet": {
     "category": "components",
@@ -278,6 +288,11 @@
     "category": "accessories",
     "description": "Synthetic grass surface used in sports stadiums, athletic fields, and recreational facilities.",
     "name": "Artificial Turf"
+  },
+  "artillery_shell": {
+    "category": "military",
+    "description": "Large-caliber howitzer round with smokeless or black powder propellant charge.",
+    "name": "Artillery Shell"
   },
   "athlete_contract": {
     "category": "services",
@@ -543,6 +558,11 @@
     "category": "ore",
     "description": "Native bismuth or bismuthinite ore.",
     "name": "Bismuth Ore"
+  },
+  "bismuth_subsalicylate": {
+    "category": "health",
+    "description": "Active ingredient in antacid and antidiarrheal medications (e.g. Pepto-Bismol).",
+    "name": "Bismuth Subsalicylate"
   },
   "black_pearl": {
     "category": "luxury",
@@ -958,6 +978,11 @@
     "category": "livestock",
     "description": "Catalan herder with wavy coat; alert and independent on rocky Pyrenean terrain.",
     "name": "Catalan Sheepdog"
+  },
+  "catalytic_converter": {
+    "category": "components",
+    "description": "Exhaust emission control unit using platinum group metals.",
+    "name": "Catalytic Converter"
   },
   "catered_banquet_service": {
     "category": "services",
@@ -1974,6 +1999,11 @@
     "description": "Nitrogen-phosphorus-potassium blended crop fertilizer.",
     "name": "NPK Fertilizer"
   },
+  "fiber_optic_cable": {
+    "category": "components",
+    "description": "Germanium-doped silica glass fiber for high-speed data transmission.",
+    "name": "Fiber Optic Cable"
+  },
   "fiberglass": {
     "category": "industrial",
     "description": "Reinforced plastic composite",
@@ -2254,6 +2284,11 @@
     "description": "Refined gold; monetary metal and electronics conductor.",
     "name": "Gold"
   },
+  "gold_bond_wire": {
+    "category": "components",
+    "description": "Ultra-thin gold wire for chip-to-package electrical bonding.",
+    "name": "Gold Bond Wire"
+  },
   "gold_ore": {
     "category": "ore",
     "description": "Low-grade rock with trace gold; processed by cyanidation.",
@@ -2314,6 +2349,16 @@
     "description": "Fragmentation sleeve and fuze assembly for hand grenades.",
     "name": "Grenade Body"
   },
+  "grid_battery_lfp": {
+    "category": "components",
+    "description": "Large-scale lithium iron phosphate battery system for grid energy storage.",
+    "name": "Grid Battery Pack (LFP)"
+  },
+  "grid_battery_sodium": {
+    "category": "components",
+    "description": "Sodium-ion grid storage battery system; cobalt-free and low-cost.",
+    "name": "Grid Battery Pack (Sodium-Ion)"
+  },
   "grilled_salmon": {
     "category": "prepared_food",
     "description": "Fresh salmon fillet grilled to perfection served in upscale restaurants",
@@ -2323,6 +2368,11 @@
     "category": "ingredients",
     "description": "Ready-to-brew coffee grounds",
     "name": "Ground Coffee"
+  },
+  "guitar_pickup": {
+    "category": "components",
+    "description": "Alnico magnet-based electromagnetic transducer for electric guitar.",
+    "name": "Guitar Pickup"
   },
   "gulf_coast_native_sheep": {
     "category": "livestock",
@@ -2383,6 +2433,11 @@
     "category": "vehicle_parts",
     "description": "Front lighting pair",
     "name": "Headlight Assembly"
+  },
+  "heating_element": {
+    "category": "components",
+    "description": "Nichrome resistance coil used in industrial ovens, furnaces, and toasters.",
+    "name": "Heating Element"
   },
   "heating_oil": {
     "category": "metals",
@@ -2554,6 +2609,11 @@
     "description": "A government-issued contract for housing and processing inmates at a detention facility.",
     "name": "Incarceration Contract"
   },
+  "incendiary_rocket": {
+    "category": "military",
+    "description": "Unguided rocket with white phosphorus or thermite warhead.",
+    "name": "Incendiary Rocket"
+  },
   "inconel": {
     "category": "metals",
     "description": "Nickel-chromium superalloy for jet engines and extreme heat environments.",
@@ -2563,6 +2623,11 @@
     "category": "metals",
     "description": "Soft metal recovered from zinc/lead smelting; used in ITO displays.",
     "name": "Indium"
+  },
+  "industrial_heater": {
+    "category": "industrial",
+    "description": "High-wattage nichrome heating unit for industrial processes and HVAC.",
+    "name": "Industrial Heater"
   },
   "industrial_robot": {
     "category": "components",
@@ -2899,6 +2964,11 @@
     "description": "An industrial lion, used in manufacturing, processing, and heavy-industry operations.",
     "name": "Lion"
   },
+  "liquid_rocket_engine": {
+    "category": "components",
+    "description": "Bipropellant liquid rocket engine for launch vehicles and upper stages.",
+    "name": "Liquid Rocket Engine"
+  },
   "lithium": {
     "category": "metals",
     "description": "Refined lithium carbonate; primary feedstock for all lithium batteries.",
@@ -3034,6 +3104,11 @@
     "description": "Tropical pelagic fish with firm, sweet flesh",
     "name": "Mahi-Mahi"
   },
+  "main_battle_tank": {
+    "category": "vehicles",
+    "description": "Main battle tank with explosive reactive armor package for enhanced RPG protection.",
+    "name": "Main Battle Tank (ERA)"
+  },
   "malt": {
     "category": "ingredients",
     "description": "Processed grain for brewing and distilling",
@@ -3068,6 +3143,11 @@
     "category": "fuel",
     "description": "High-energy marine fuel, used to power vehicles, machinery, and industrial operations.",
     "name": "Marine Fuel"
+  },
+  "marine_piping": {
+    "category": "components",
+    "description": "Corrosion-resistant cupronickel pipe and fitting set for naval vessels.",
+    "name": "Marine Piping"
   },
   "marshmallow": {
     "category": "confectionery",
@@ -3199,6 +3279,11 @@
     "description": "High-explosive, shaped-charge, or thermobaric warhead assembly.",
     "name": "Missile Warhead"
   },
+  "mixed_rare_earth_oxide": {
+    "category": "materials",
+    "description": "Partially separated mixed rare earth oxide precipitate; intermediate in REE refining.",
+    "name": "Mixed Rare Earth Oxide"
+  },
   "mohair_sheep": {
     "category": "livestock",
     "description": "Angora-type breed yielding long, lustrous mohair fibre with silky sheen.",
@@ -3223,6 +3308,11 @@
     "category": "seafood",
     "description": "Prized fish with dense, sweet flesh called the poor mans lobster",
     "name": "Monkfish"
+  },
+  "monopropellant": {
+    "category": "materials",
+    "description": "Concentrated hydrogen peroxide rocket monopropellant for reaction control thrusters.",
+    "name": "Monopropellant"
   },
   "monthly_utility_bill": {
     "category": "services",
@@ -3458,6 +3548,11 @@
     "category": "produce",
     "description": "Essential savory vegetable",
     "name": "Onions"
+  },
+  "optical_glass": {
+    "category": "components",
+    "description": "Cerium-doped high-purity glass for optics, camera lenses, and display panels.",
+    "name": "Optical Glass"
   },
   "orange_essential_oil": {
     "category": "fuel",
@@ -3839,6 +3934,11 @@
     "description": "Fresh potatoes from the field",
     "name": "Potatoes"
   },
+  "power_electronics_module": {
+    "category": "components",
+    "description": "GaN or SiC based power converter module for EV inverters and grid equipment.",
+    "name": "Power Electronics Module"
+  },
   "ppta_polymer": {
     "category": "materials",
     "description": "Poly(p-phenylene terephthalamide); chemical precursor to Kevlar.",
@@ -3854,6 +3954,11 @@
     "description": "Chilled shrimp served with zesty cocktail sauce, a classic appetizer",
     "name": "Prawn Cocktail"
   },
+  "precision_spring": {
+    "category": "components",
+    "description": "Phosphor bronze spring for switches, connectors, and precision mechanisms.",
+    "name": "Precision Spring"
+  },
   "premium_cigar": {
     "category": "tobacco",
     "description": "Luxury handrolled cigar using the finest aged wrapper, binder, and filler \u2014 Holt's-quality",
@@ -3863,6 +3968,11 @@
     "category": "retail_food",
     "description": "A premium mixed drink crafted with top-shelf spirits, fresh ingredients, and garnishes.",
     "name": "Premium Cocktail"
+  },
+  "premium_ev": {
+    "category": "vehicles",
+    "description": "High-performance solid-state battery electric vehicle with extended range.",
+    "name": "Premium Electric Vehicle"
   },
   "premium_sashimi": {
     "category": "prepared_food",
@@ -4038,6 +4148,11 @@
     "category": "retail_prison",
     "description": "Post-incarceration reintegration support bundle.",
     "name": "Reentry Package"
+  },
+  "refined_ore_concentrate": {
+    "category": "materials",
+    "description": "Pre-processed ore concentrate after acid leaching, ready for rare earth separation.",
+    "name": "Refined Ore Concentrate"
   },
   "refrigerated_container": {
     "category": "industrial",
@@ -4374,6 +4489,11 @@
     "description": "Traditional Scottish rough collie; origin of Lassie fame; devoted and gentle.",
     "name": "Scotch Collie"
   },
+  "sea_bass_fillet": {
+    "category": "seafood_product",
+    "description": "Fresh-filleted sea bass; a premium white fish for fine dining.",
+    "name": "Sea Bass Fillet"
+  },
   "sea_lion": {
     "category": "industrial",
     "description": "An industrial sea lion, used in manufacturing, processing, and heavy-industry operations.",
@@ -4579,6 +4699,11 @@
     "description": "A cultural or entertainment product \u2014 smartphone \u2014 created for public consumption.",
     "name": "Smartphone"
   },
+  "smoke_grenade": {
+    "category": "military",
+    "description": "Colored smoke grenade for signaling and concealment.",
+    "name": "Smoke Grenade"
+  },
   "smoked_eel": {
     "category": "seafood_product",
     "description": "Delicately smoked eel fillets \u2013 a Dutch and British delicacy and a sacred offering in several traditional religious ceremonies.",
@@ -4593,6 +4718,16 @@
     "category": "seafood_product",
     "description": "Cold-smoked salmon slices prized for charcuterie and brunch dishes",
     "name": "Smoked Salmon"
+  },
+  "smoked_sea_trout": {
+    "category": "seafood_product",
+    "description": "Cold-smoked sea trout; similar to smoked salmon in flavour and use.",
+    "name": "Smoked Sea Trout"
+  },
+  "smoked_trout": {
+    "category": "seafood_product",
+    "description": "Cold-smoked whole trout; a delicacy in European cuisine.",
+    "name": "Smoked Trout"
   },
   "smokeless_powder": {
     "category": "materials",
@@ -4664,6 +4799,11 @@
     "description": "Premium flatfish with delicate flavor and fine texture",
     "name": "Dover Sole"
   },
+  "solid_state_battery_pack": {
+    "category": "components",
+    "description": "Next-generation solid-state battery assembly for premium EVs and aerospace.",
+    "name": "Solid-State Battery Pack"
+  },
   "solid_state_cell": {
     "category": "components",
     "description": "LLZO ceramic electrolyte lithium cell; next-generation battery technology.",
@@ -4698,6 +4838,11 @@
     "category": "vehicle_parts",
     "description": "Ignition components",
     "name": "Spark Plugs"
+  },
+  "special_munitions_kit": {
+    "category": "military",
+    "description": "Packaged field kit containing smoke, incendiary, and WP grenades for special operations.",
+    "name": "Special Munitions Kit"
   },
   "sporting_goods": {
     "category": "retail_shopping",
@@ -4863,6 +5008,11 @@
     "category": "industrial",
     "description": "Robotic surgery system for minimally invasive procedures.",
     "name": "Surgical Robot"
+  },
+  "surgical_stent": {
+    "category": "health",
+    "description": "Nitinol self-expanding coronary or vascular stent for interventional cardiology.",
+    "name": "Surgical Stent"
   },
   "surgical_tools": {
     "category": "health",
@@ -5513,6 +5663,11 @@
     "category": "retail_prison",
     "description": "Supervised work release program for qualifying inmates.",
     "name": "Work Release Program"
+  },
+  "wp_grenade": {
+    "category": "military",
+    "description": "Smoke and incendiary grenade using white phosphorus fill.",
+    "name": "White Phosphorus Grenade"
   },
   "yacht": {
     "category": "vehicle",
