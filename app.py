@@ -216,7 +216,7 @@ async def assetlinks():
         "relation": ["delegate_permission/common.handle_all_urls"],
         "target": {
             "namespace": "android_app",
-            "package_name": "cc.notifly.wadsworth",
+            "package_name": "cc.notifly.wadsworth.twa",
             "sha256_cert_fingerprints": [
                 "4D:39:74:05:A7:E1:A5:EB:9B:7D:B9:51:80:0F:25:92:6C:89:64:2D:C7:50:AD:97:3B:BB:C9:C2:45:8C:30:6E"
             ]
