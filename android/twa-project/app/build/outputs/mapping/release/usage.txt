@@ -7794,6 +7794,9 @@ cc.notifly.wadsworth.TradeChatWidget:
 cc.notifly.wadsworth.WBCWidget:
     static final java.lang.String ACTION_REFRESH
     static final java.lang.String BASE_URL
+cc.notifly.wadsworth.WadsworthApplication:
+    private static final int CHANNEL_VERSION
+    private static final java.lang.String PREF_CHANNEL_VER
 cc.notifly.wadsworth.WadsworthTokenActivity:
     static final java.lang.String KEY_TOKEN
     static final java.lang.String PREFS
