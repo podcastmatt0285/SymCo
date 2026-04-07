@@ -4741,6 +4741,28 @@
         ],
         "output_item": "concrete",
         "output_qty": 300
+      },
+      {
+        "output_item": "cement",
+        "output_qty": 400,
+        "inputs": [
+          {
+            "item": "volcanic_ash",
+            "quantity": 500
+          },
+          {
+            "item": "coal",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 28000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
       }
     ],
     "startup_cost": 3000000
@@ -19202,5 +19224,156 @@
         ]
       }
     ]
+  },
+  "gem_exchange_district": {
+    "name": "Gem Exchange District",
+    "description": "A formal trading and retail district for cut gemstones and fine jewellery. Buys and sells certified gems, finished jewellery pieces, and collector specimens.",
+    "class": "retail",
+    "allowed_terrain": [
+      "district_mall",
+      "district_mega_mall",
+      "district_entertainment_district",
+      "district_entertainment"
+    ],
+    "startup_cost": 850000,
+    "base_wage_cost": 2500,
+    "cycles_to_complete": 60,
+    "products": {
+      "cut_diamond": {
+        "base_sale_chance": 0.2,
+        "elasticity": 2.5
+      },
+      "cut_ruby": {
+        "base_sale_chance": 0.25,
+        "elasticity": 2.2
+      },
+      "cut_emerald": {
+        "base_sale_chance": 0.22,
+        "elasticity": 2.3
+      },
+      "cut_sapphire": {
+        "base_sale_chance": 0.28,
+        "elasticity": 2.0
+      },
+      "cut_aquamarine": {
+        "base_sale_chance": 0.32,
+        "elasticity": 1.8
+      },
+      "cut_amethyst": {
+        "base_sale_chance": 0.4,
+        "elasticity": 1.5
+      },
+      "cut_topaz": {
+        "base_sale_chance": 0.38,
+        "elasticity": 1.5
+      },
+      "cut_opal": {
+        "base_sale_chance": 0.3,
+        "elasticity": 2.0
+      },
+      "cut_garnet": {
+        "base_sale_chance": 0.42,
+        "elasticity": 1.4
+      },
+      "cut_tourmaline": {
+        "base_sale_chance": 0.35,
+        "elasticity": 1.6
+      },
+      "cut_peridot": {
+        "base_sale_chance": 0.38,
+        "elasticity": 1.5
+      },
+      "diamond_ring": {
+        "base_sale_chance": 0.18,
+        "elasticity": 2.8
+      },
+      "ruby_ring": {
+        "base_sale_chance": 0.22,
+        "elasticity": 2.5
+      },
+      "emerald_necklace": {
+        "base_sale_chance": 0.2,
+        "elasticity": 2.6
+      },
+      "sapphire_bracelet": {
+        "base_sale_chance": 0.25,
+        "elasticity": 2.3
+      },
+      "amethyst_pendant": {
+        "base_sale_chance": 0.35,
+        "elasticity": 1.8
+      },
+      "gem_pendant": {
+        "base_sale_chance": 0.38,
+        "elasticity": 1.6
+      },
+      "gemstone_bracelet": {
+        "base_sale_chance": 0.3,
+        "elasticity": 2.0
+      }
+    }
+  },
+  "crystal_market_cart": {
+    "name": "Crystal Market Cart",
+    "description": "A simple market stall selling rough crystal specimens and mineral curiosities. No startup cost, no wages \u2014 a reliable if modest lifeline for a struggling company.",
+    "class": "retail",
+    "allowed_terrain": [
+      "district_aerospace",
+      "district_airport",
+      "district_coastal",
+      "district_convention_center",
+      "district_education",
+      "district_entertainment",
+      "district_entertainment_district",
+      "district_food",
+      "district_food_court",
+      "district_hospital",
+      "district_industrial",
+      "district_mall",
+      "district_medical",
+      "district_mega_mall",
+      "district_military",
+      "district_military_base",
+      "district_neighborhood",
+      "district_prison",
+      "district_prison_complex",
+      "district_research_campus",
+      "district_seaport",
+      "district_shipyard",
+      "district_tech",
+      "district_tech_park",
+      "district_transport",
+      "district_utilities",
+      "district_zoo"
+    ],
+    "startup_cost": 0,
+    "base_wage_cost": 0,
+    "cycles_to_complete": 60,
+    "products": {
+      "rough_amethyst": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.0
+      },
+      "rough_garnet": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.0
+      },
+      "rough_peridot": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.0
+      },
+      "obsidian": {
+        "base_sale_chance": 0.05,
+        "elasticity": 0.9
+      },
+      "chalcedony": {
+        "base_sale_chance": 0.04,
+        "elasticity": 0.9
+      },
+      "agate": {
+        "base_sale_chance": 0.04,
+        "elasticity": 0.9
+      }
+    }
   }
 }
