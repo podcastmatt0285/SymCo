@@ -670,6 +670,22 @@
       "yarn": {
         "base_sale_chance": 0.025,
         "elasticity": 1.3
+      },
+      "obsidian": {
+        "base_sale_chance": 0.5,
+        "elasticity": 1.0
+      },
+      "chalcedony": {
+        "base_sale_chance": 0.45,
+        "elasticity": 1.0
+      },
+      "agate": {
+        "base_sale_chance": 0.48,
+        "elasticity": 1.0
+      },
+      "mica": {
+        "base_sale_chance": 0.35,
+        "elasticity": 0.8
       }
     },
     "startup_cost": 8000
@@ -4112,6 +4128,28 @@
         ],
         "output_item": "ceramic",
         "output_qty": 60
+      },
+      {
+        "output_item": "ceramic",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "feldspar",
+            "quantity": 60
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 45
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ],
     "startup_cost": 18000
@@ -5195,6 +5233,40 @@
           {
             "item": "pollen",
             "quantity": 28000
+          }
+        ]
+      },
+      {
+        "output_item": "coffee_beans",
+        "output_qty": 140,
+        "inputs": [
+          {
+            "item": "coffee_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "burlap",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 16000
           }
         ]
       }
@@ -8895,6 +8967,28 @@
         ],
         "output_item": "optical_glass",
         "output_qty": 100
+      },
+      {
+        "output_item": "glass",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "feldspar",
+            "quantity": 100
+          },
+          {
+            "item": "sand",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 35000
@@ -9507,6 +9601,74 @@
         ],
         "output_item": "corn",
         "output_qty": 270
+      },
+      {
+        "output_item": "wheat",
+        "output_qty": 220,
+        "inputs": [
+          {
+            "item": "wheat_seeds",
+            "quantity": 10
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
+          }
+        ]
+      },
+      {
+        "output_item": "corn",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "corn_seeds",
+            "quantity": 12
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 35
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
+          }
+        ]
       }
     ],
     "startup_cost": 8500
@@ -10330,6 +10492,186 @@
         ],
         "output_item": "jewelry",
         "output_qty": 4
+      },
+      {
+        "output_item": "diamond_ring",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "cut_diamond",
+            "quantity": 3
+          },
+          {
+            "item": "gold",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ruby_ring",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "cut_ruby",
+            "quantity": 4
+          },
+          {
+            "item": "gold",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "emerald_necklace",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "cut_emerald",
+            "quantity": 4
+          },
+          {
+            "item": "gold",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "sapphire_bracelet",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 5
+          },
+          {
+            "item": "silver",
+            "quantity": 6
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "amethyst_pendant",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "cut_amethyst",
+            "quantity": 6
+          },
+          {
+            "item": "silver",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "gem_pendant",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "cut_garnet",
+            "quantity": 5
+          },
+          {
+            "item": "silver",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 25
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "gemstone_bracelet",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "cut_tourmaline",
+            "quantity": 4
+          },
+          {
+            "item": "gold",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 35
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "luxury_watch",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 3
+          },
+          {
+            "item": "gold",
+            "quantity": 5
+          },
+          {
+            "item": "brass",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 60000
@@ -10599,6 +10941,18 @@
       "luxury_car": {
         "base_sale_chance": 0.0003,
         "elasticity": 0.8
+      },
+      "diamond_ring": {
+        "price": 85000,
+        "quantity": 1
+      },
+      "ruby_ring": {
+        "price": 62000,
+        "quantity": 1
+      },
+      "luxury_watch": {
+        "price": 48000,
+        "quantity": 1
       }
     },
     "startup_cost": 450000
@@ -12790,6 +13144,160 @@
         ],
         "output_item": "antimony_ore",
         "output_qty": 55
+      },
+      {
+        "output_item": "rough_amethyst",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 35
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_opal",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_peridot",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 160
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 38
+          },
+          {
+            "item": "water",
+            "quantity": 75
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "obsidian",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 25
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "volcanic_ash",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "chalcedony",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 130
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "agate",
+        "output_qty": 35,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 32
+          },
+          {
+            "item": "water",
+            "quantity": 65
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 150000
@@ -16066,6 +16574,62 @@
             "quantity": 3
           }
         ]
+      },
+      {
+        "output_item": "mineral_makeup",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "mica",
+            "quantity": 25
+          },
+          {
+            "item": "oil",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "toothpaste",
+        "output_qty": 45,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "salt",
+            "quantity": 8
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 10
+          },
+          {
+            "item": "plastic",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 55000
@@ -18525,6 +19089,72 @@
         ],
         "output_item": "antimony",
         "output_qty": 24
+      },
+      {
+        "output_item": "chromium",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "chromite",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 190
+          },
+          {
+            "item": "water",
+            "quantity": 58
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "titanium",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "ilmenite",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "lithium",
+        "output_qty": 28,
+        "inputs": [
+          {
+            "item": "spodumene",
+            "quantity": 160
+          },
+          {
+            "item": "energy",
+            "quantity": 280
+          },
+          {
+            "item": "water",
+            "quantity": 65
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 12000
@@ -22200,6 +22830,36 @@
           {
             "item": "pollen",
             "quantity": 26000
+          }
+        ]
+      },
+      {
+        "output_item": "tea_leaves",
+        "output_qty": 160,
+        "inputs": [
+          {
+            "item": "tea_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 16000
           }
         ]
       }
@@ -26389,5 +27049,899 @@
       "deposits"
     ],
     "is_food_cart": true
+  },
+  "gem_mine": {
+    "name": "Gem Mine",
+    "description": "Hard-rock mine extracting gem-bearing ore from volcanic pipes, metamorphic, and granitic formations. Produces kimberlite (diamond source), corundum ore (ruby/sapphire), and pegmatite ore (emerald/aquamarine/tourmaline).",
+    "class": "production",
+    "allowed_terrain": [
+      "mountain",
+      "desert",
+      "tundra",
+      "jungle",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "volcanic",
+      "caves",
+      "deposits",
+      "remote"
+    ],
+    "startup_cost": 280000,
+    "base_wage_cost": 800,
+    "cycles_to_complete": 10,
+    "production_lines": [
+      {
+        "output_item": "kimberlite",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "corundum_ore",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 65
+          },
+          {
+            "item": "water",
+            "quantity": 120
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "pegmatite_ore",
+        "output_qty": 70,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 55
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "alluvial_mine": {
+    "name": "Alluvial Mine",
+    "description": "Pans and sluices river and stream sediment to recover gem-bearing gravel. Low capital cost compared to hard-rock mining; yields sapphires, garnets, topaz, and tourmaline.",
+    "class": "production",
+    "allowed_terrain": [
+      "marsh",
+      "hills",
+      "forest"
+    ],
+    "allowed_proximity": [
+      "riverside",
+      "lakeside"
+    ],
+    "startup_cost": 55000,
+    "base_wage_cost": 220,
+    "cycles_to_complete": 8,
+    "production_lines": [
+      {
+        "output_item": "alluvial_gravel",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      }
+    ]
+  },
+  "mineral_processing_plant": {
+    "name": "Mineral Processing Plant",
+    "description": "Crushes, sorts, and separates ore rocks into gem-quality rough crystals and industrial mineral by-products. Each ore type yields distinct rough gems alongside bulk minerals.",
+    "class": "production",
+    "allowed_terrain": [
+      "mountain",
+      "hills",
+      "prairie",
+      "desert"
+    ],
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "startup_cost": 280000,
+    "base_wage_cost": 450,
+    "cycles_to_complete": 8,
+    "production_lines": [
+      {
+        "output_item": "rough_diamond",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "rough_garnet",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "chromite",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "ilmenite",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "diamond_dust",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 400
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_ruby",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_sapphire",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "aluminum_oxide",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "feldspar",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "rough_emerald",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "rough_aquamarine",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_tourmaline",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 120
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "feldspar",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "mica",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
+      },
+      {
+        "output_item": "spodumene",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_sapphire",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_garnet",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 120
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_tourmaline",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 130
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "rough_topaz",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 250
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "lapidary": {
+    "name": "Lapidary",
+    "description": "Cuts, facets, and polishes rough gemstones into finished gems. Hard gems (diamond, ruby, sapphire, emerald, aquamarine) require diamond dust as cutting abrasive; softer gems use aluminum oxide.",
+    "class": "production",
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "startup_cost": 85000,
+    "base_wage_cost": 320,
+    "cycles_to_complete": 6,
+    "production_lines": [
+      {
+        "output_item": "cut_diamond",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "rough_diamond",
+            "quantity": 5
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_ruby",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "rough_ruby",
+            "quantity": 15
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_emerald",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "rough_emerald",
+            "quantity": 10
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_sapphire",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "rough_sapphire",
+            "quantity": 18
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_aquamarine",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "rough_aquamarine",
+            "quantity": 14
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_amethyst",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "rough_amethyst",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_topaz",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "rough_topaz",
+            "quantity": 15
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_opal",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "rough_opal",
+            "quantity": 12
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_garnet",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "rough_garnet",
+            "quantity": 25
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_tourmaline",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "rough_tourmaline",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "cut_peridot",
+        "output_qty": 18,
+        "inputs": [
+          {
+            "item": "rough_peridot",
+            "quantity": 22
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
+  },
+  "crystal_shop": {
+    "name": "Crystal Shop",
+    "description": "Retail store selling rough crystal specimens, cut gemstones, and mineral curiosities to collectors, hobbyists, and spiritual markets.",
+    "class": "retail",
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills",
+      "island",
+      "coastal"
+    ],
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "startup_cost": 18000,
+    "base_wage_cost": 180,
+    "cycles_to_complete": 4,
+    "products": {
+      "rough_amethyst": {
+        "base_sale_chance": 0.55,
+        "elasticity": 1.2
+      },
+      "rough_opal": {
+        "base_sale_chance": 0.4,
+        "elasticity": 1.5
+      },
+      "rough_garnet": {
+        "base_sale_chance": 0.5,
+        "elasticity": 1.1
+      },
+      "rough_tourmaline": {
+        "base_sale_chance": 0.45,
+        "elasticity": 1.2
+      },
+      "rough_peridot": {
+        "base_sale_chance": 0.48,
+        "elasticity": 1.2
+      },
+      "obsidian": {
+        "base_sale_chance": 0.6,
+        "elasticity": 0.9
+      },
+      "chalcedony": {
+        "base_sale_chance": 0.5,
+        "elasticity": 1.0
+      },
+      "agate": {
+        "base_sale_chance": 0.55,
+        "elasticity": 1.0
+      },
+      "cut_amethyst": {
+        "base_sale_chance": 0.35,
+        "elasticity": 1.4
+      },
+      "cut_garnet": {
+        "base_sale_chance": 0.38,
+        "elasticity": 1.3
+      },
+      "cut_tourmaline": {
+        "base_sale_chance": 0.3,
+        "elasticity": 1.5
+      },
+      "cut_peridot": {
+        "base_sale_chance": 0.32,
+        "elasticity": 1.4
+      }
+    }
   }
 }

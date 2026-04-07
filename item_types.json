@@ -6103,5 +6103,245 @@
     "name": "Cardiac Drug",
     "description": "Digitalis-based medication for heart conditions",
     "category": "health"
+  },
+  "kimberlite": {
+    "name": "Kimberlite",
+    "category": "ore",
+    "description": "Volcanic pipe rock; the primary host of diamonds. Also yields garnets, chromite, and ilmenite."
+  },
+  "corundum_ore": {
+    "name": "Corundum Ore",
+    "category": "ore",
+    "description": "Metamorphic rock bearing ruby and sapphire crystals. By-products include aluminum oxide and feldspar."
+  },
+  "pegmatite_ore": {
+    "name": "Pegmatite Ore",
+    "category": "ore",
+    "description": "Coarse-grained granitic rock hosting emeralds, aquamarine, tourmaline, mica, feldspar, and lithium-bearing spodumene."
+  },
+  "alluvial_gravel": {
+    "name": "Alluvial Gravel",
+    "category": "ore",
+    "description": "River and stream sediment concentrated by water flow. Contains sapphires, garnets, topaz, and tourmaline."
+  },
+  "rough_diamond": {
+    "name": "Rough Diamond",
+    "category": "gem",
+    "description": "Uncut diamond crystal extracted from kimberlite. Extremely rare and valuable; fed to a lapidary for cutting or ground into diamond dust."
+  },
+  "rough_ruby": {
+    "name": "Rough Ruby",
+    "category": "gem",
+    "description": "Uncut ruby crystal (red corundum) from metamorphic rock. Requires lapidary cutting to release its full value."
+  },
+  "rough_emerald": {
+    "name": "Rough Emerald",
+    "category": "gem",
+    "description": "Uncut emerald crystal from pegmatite veins. Fragile and inclusion-heavy; careful lapidary work required."
+  },
+  "rough_sapphire": {
+    "name": "Rough Sapphire",
+    "category": "gem",
+    "description": "Uncut sapphire crystal (blue corundum) from corundum ore or alluvial deposits."
+  },
+  "rough_amethyst": {
+    "name": "Rough Amethyst",
+    "category": "gem",
+    "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones."
+  },
+  "rough_topaz": {
+    "name": "Rough Topaz",
+    "category": "gem",
+    "description": "Fluorine-bearing silicate mineral from alluvial and pegmatite deposits. Cuts into brilliant faceted gems."
+  },
+  "rough_opal": {
+    "name": "Rough Opal",
+    "category": "gem",
+    "description": "Hydrated silica gem from desert sedimentary deposits. Play-of-colour stones command premium prices."
+  },
+  "rough_garnet": {
+    "name": "Rough Garnet",
+    "category": "gem",
+    "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common."
+  },
+  "rough_aquamarine": {
+    "name": "Rough Aquamarine",
+    "category": "gem",
+    "description": "Blue-green beryl crystal from pegmatite ore. Sea-blue colour makes it a popular cut gemstone."
+  },
+  "rough_tourmaline": {
+    "name": "Rough Tourmaline",
+    "category": "gem",
+    "description": "Complex boron silicate crystal from pegmatite and alluvial sources. Found in many colours."
+  },
+  "rough_peridot": {
+    "name": "Rough Peridot",
+    "category": "gem",
+    "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle."
+  },
+  "cut_diamond": {
+    "name": "Cut Diamond",
+    "category": "gem",
+    "description": "Precisely faceted diamond; brilliant-cut to maximise light return. The highest-value gem per carat."
+  },
+  "cut_ruby": {
+    "name": "Cut Ruby",
+    "category": "gem",
+    "description": "Faceted ruby gemstone. Deep pigeon-blood red commands the highest prices of all coloured stones."
+  },
+  "cut_emerald": {
+    "name": "Cut Emerald",
+    "category": "gem",
+    "description": "Faceted emerald; typically cut in the emerald step-cut to minimise chip risk."
+  },
+  "cut_sapphire": {
+    "name": "Cut Sapphire",
+    "category": "gem",
+    "description": "Faceted sapphire gemstone. Royal blue most prized; also found in yellow, pink, and padparadscha."
+  },
+  "cut_amethyst": {
+    "name": "Cut Amethyst",
+    "category": "gem",
+    "description": "Faceted amethyst; vivid purple quartz popular in mass-market jewellery."
+  },
+  "cut_topaz": {
+    "name": "Cut Topaz",
+    "category": "gem",
+    "description": "Faceted topaz gemstone. Imperial topaz (orange-pink) is rarest; blue topaz most widely sold."
+  },
+  "cut_opal": {
+    "name": "Cut Opal",
+    "category": "gem",
+    "description": "Cabochon-cut opal displaying play-of-colour. Cut en cabochon rather than faceted to showcase spectral fire."
+  },
+  "cut_garnet": {
+    "name": "Cut Garnet",
+    "category": "gem",
+    "description": "Faceted garnet gemstone. Deep red pyrope and demantoid green are most valuable varieties."
+  },
+  "cut_aquamarine": {
+    "name": "Cut Aquamarine",
+    "category": "gem",
+    "description": "Faceted aquamarine; sea-blue beryl cut to emphasise clarity and colour depth."
+  },
+  "cut_tourmaline": {
+    "name": "Cut Tourmaline",
+    "category": "gem",
+    "description": "Faceted tourmaline; available in virtually every colour. Paraiba tourmaline commands exceptional prices."
+  },
+  "cut_peridot": {
+    "name": "Cut Peridot",
+    "category": "gem",
+    "description": "Faceted peridot; warm olive-green gem with high double refraction producing a velvety look."
+  },
+  "diamond_dust": {
+    "name": "Diamond Dust",
+    "category": "industrial",
+    "description": "Finely ground diamond powder; the hardest known abrasive. Essential cutting medium for lapidary work and precision grinding."
+  },
+  "aluminum_oxide": {
+    "name": "Aluminum Oxide",
+    "category": "industrial",
+    "description": "White crystalline powder (corundum) recovered from corundum ore processing. Used as an abrasive in lapidary work and semiconductor fabrication."
+  },
+  "feldspar": {
+    "name": "Feldspar",
+    "category": "industrial",
+    "description": "Aluminosilicate mineral recovered from corundum and pegmatite processing. Lowers the melting point of glass and is used as a ceramic flux."
+  },
+  "mica": {
+    "name": "Mica",
+    "category": "industrial",
+    "description": "Sheet silicate mineral from pegmatite ore. Excellent electrical insulator used in electronics and arts."
+  },
+  "ilmenite": {
+    "name": "Ilmenite",
+    "category": "ore",
+    "description": "Iron-titanium oxide mineral recovered from kimberlite. Primary feedstock for titanium metal production."
+  },
+  "chromite": {
+    "name": "Chromite",
+    "category": "ore",
+    "description": "Chromium-iron oxide mineral recovered from kimberlite. Smelted to produce chromium for stainless steel alloys."
+  },
+  "spodumene": {
+    "name": "Spodumene",
+    "category": "ore",
+    "description": "Lithium aluminum silicate mineral from pegmatite ore. One of the most important lithium ore minerals for battery production."
+  },
+  "volcanic_ash": {
+    "name": "Volcanic Ash",
+    "category": "industrial",
+    "description": "Fine pyroclastic material from volcanic activity. Pozzolanic properties make it a natural cement additive that improves concrete strength."
+  },
+  "obsidian": {
+    "name": "Obsidian",
+    "category": "gem",
+    "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving."
+  },
+  "chalcedony": {
+    "name": "Chalcedony",
+    "category": "gem",
+    "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons."
+  },
+  "agate": {
+    "name": "Agate",
+    "category": "gem",
+    "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens."
+  },
+  "diamond_ring": {
+    "name": "Diamond Ring",
+    "category": "accessories",
+    "description": "Solitaire or cluster diamond ring set in gold. The benchmark luxury jewellery purchase."
+  },
+  "ruby_ring": {
+    "name": "Ruby Ring",
+    "category": "accessories",
+    "description": "Ruby gemstone set in gold; symbol of passion and vitality."
+  },
+  "emerald_necklace": {
+    "name": "Emerald Necklace",
+    "category": "accessories",
+    "description": "Emerald pendant or collar necklace set in gold. Deep green colour commands high collector interest."
+  },
+  "sapphire_bracelet": {
+    "name": "Sapphire Bracelet",
+    "category": "accessories",
+    "description": "Sapphire gemstones set in a silver or white-gold bracelet. Classic fine jewellery piece."
+  },
+  "amethyst_pendant": {
+    "name": "Amethyst Pendant",
+    "category": "accessories",
+    "description": "Purple amethyst set in silver. Accessible fine jewellery popular across all markets."
+  },
+  "gem_pendant": {
+    "name": "Gem Pendant",
+    "category": "accessories",
+    "description": "Garnet or mixed gemstone pendant set in silver. Versatile mid-range jewellery."
+  },
+  "gemstone_bracelet": {
+    "name": "Gemstone Bracelet",
+    "category": "accessories",
+    "description": "Tourmaline or multi-gemstone bracelet set in gold. Colourful statement piece."
+  },
+  "mineral_makeup": {
+    "name": "Mineral Makeup",
+    "category": "cosmetic",
+    "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer."
+  },
+  "luxury_watch": {
+    "name": "Luxury Watch",
+    "category": "accessories",
+    "description": "High-end mechanical watch with a sapphire crystal face, gold case, and precision movement. Sapphire glass is scratch-proof and far harder than mineral glass."
+  },
+  "ruby_laser": {
+    "name": "Ruby Laser Module",
+    "category": "industrial",
+    "description": "Solid-state laser using a synthetic ruby crystal as the lasing medium. Used in rangefinding, targeting systems, tattoo removal, and precision manufacturing."
+  },
+  "surgical_scalpel": {
+    "name": "Surgical Scalpel",
+    "category": "medical",
+    "description": "Obsidian or steel-bladed surgical instrument. Obsidian blades are sharper than surgical steel and cause less cell trauma in delicate procedures."
   }
 }
