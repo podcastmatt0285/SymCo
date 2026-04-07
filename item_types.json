@@ -6323,5 +6323,25 @@
     "name": "Gemstone Bracelet",
     "category": "accessories",
     "description": "Tourmaline or multi-gemstone bracelet set in gold. Colourful statement piece."
+  },
+  "mineral_makeup": {
+    "name": "Mineral Makeup",
+    "category": "cosmetic",
+    "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer."
+  },
+  "luxury_watch": {
+    "name": "Luxury Watch",
+    "category": "accessories",
+    "description": "High-end mechanical watch with a sapphire crystal face, gold case, and precision movement. Sapphire glass is scratch-proof and far harder than mineral glass."
+  },
+  "ruby_laser": {
+    "name": "Ruby Laser Module",
+    "category": "industrial",
+    "description": "Solid-state laser using a synthetic ruby crystal as the lasing medium. Used in rangefinding, targeting systems, tattoo removal, and precision manufacturing."
+  },
+  "surgical_scalpel": {
+    "name": "Surgical Scalpel",
+    "category": "medical",
+    "description": "Obsidian or steel-bladed surgical instrument. Obsidian blades are sharper than surgical steel and cause less cell trauma in delicate procedures."
   }
 }

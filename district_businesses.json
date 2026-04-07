@@ -5333,6 +5333,32 @@
         ],
         "output_item": "military_radio",
         "output_qty": 200
+      },
+      {
+        "output_item": "ruby_laser",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "cut_ruby",
+            "quantity": 3
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 15
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
       }
     ],
     "startup_cost": 8000000
@@ -5398,6 +5424,26 @@
       "duty_free_tobacco": {
         "base_sale_chance": 0.0005,
         "elasticity": 0.9
+      },
+      "diamond_ring": {
+        "price": 92000,
+        "quantity": 1
+      },
+      "ruby_ring": {
+        "price": 68000,
+        "quantity": 1
+      },
+      "emerald_necklace": {
+        "price": 58000,
+        "quantity": 1
+      },
+      "sapphire_bracelet": {
+        "price": 52000,
+        "quantity": 1
+      },
+      "luxury_watch": {
+        "price": 55000,
+        "quantity": 1
       }
     },
     "startup_cost": 8000000
@@ -6185,6 +6231,32 @@
         ],
         "output_item": "guitar_pickup",
         "output_qty": 100
+      },
+      {
+        "output_item": "heating_element",
+        "output_qty": 250,
+        "inputs": [
+          {
+            "item": "nichrome",
+            "quantity": 200
+          },
+          {
+            "item": "mica",
+            "quantity": 40
+          },
+          {
+            "item": "ceramic",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
       }
     ],
     "startup_cost": 10000000
@@ -8248,6 +8320,10 @@
       "surgical_robot": {
         "base_sale_chance": 0.07,
         "elasticity": 3.0
+      },
+      "surgical_scalpel": {
+        "price": 2800,
+        "quantity": 3
       }
     },
     "startup_cost": 25000000
@@ -9939,6 +10015,28 @@
         ],
         "output_item": "cast_material",
         "output_qty": 150
+      },
+      {
+        "output_item": "surgical_scalpel",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "obsidian",
+            "quantity": 20
+          },
+          {
+            "item": "steel",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
       }
     ],
     "startup_cost": 5000000
@@ -15715,6 +15813,22 @@
       "live_lake_scrolls": {
         "base_sale_chance": 0.15,
         "elasticity": 2.2
+      },
+      "amethyst_pendant": {
+        "price": 8500,
+        "quantity": 1
+      },
+      "gem_pendant": {
+        "price": 12000,
+        "quantity": 1
+      },
+      "gemstone_bracelet": {
+        "price": 14000,
+        "quantity": 1
+      },
+      "mineral_makeup": {
+        "price": 3200,
+        "quantity": 2
       }
     },
     "startup_cost": 15000000

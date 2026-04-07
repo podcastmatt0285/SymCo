@@ -4128,6 +4128,28 @@
         ],
         "output_item": "ceramic",
         "output_qty": 60
+      },
+      {
+        "output_item": "ceramic",
+        "output_qty": 90,
+        "inputs": [
+          {
+            "item": "feldspar",
+            "quantity": 60
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 45
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ]
       }
     ],
     "startup_cost": 18000
@@ -5211,6 +5233,40 @@
           {
             "item": "pollen",
             "quantity": 28000
+          }
+        ]
+      },
+      {
+        "output_item": "coffee_beans",
+        "output_qty": 140,
+        "inputs": [
+          {
+            "item": "coffee_seeds",
+            "quantity": 8
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 20
+          },
+          {
+            "item": "water",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 12
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "burlap",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 16000
           }
         ]
       }
@@ -9545,6 +9601,74 @@
         ],
         "output_item": "corn",
         "output_qty": 270
+      },
+      {
+        "output_item": "wheat",
+        "output_qty": 220,
+        "inputs": [
+          {
+            "item": "wheat_seeds",
+            "quantity": 10
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 30
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 15
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 8000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
+          }
+        ]
+      },
+      {
+        "output_item": "corn",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "corn_seeds",
+            "quantity": 12
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 35
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 10000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 60
+          }
+        ]
       }
     ],
     "startup_cost": 8500
@@ -10522,6 +10646,32 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "luxury_watch",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 3
+          },
+          {
+            "item": "gold",
+            "quantity": 5
+          },
+          {
+            "item": "brass",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
       }
     ],
     "startup_cost": 60000
@@ -10791,6 +10941,18 @@
       "luxury_car": {
         "base_sale_chance": 0.0003,
         "elasticity": 0.8
+      },
+      "diamond_ring": {
+        "price": 85000,
+        "quantity": 1
+      },
+      "ruby_ring": {
+        "price": 62000,
+        "quantity": 1
+      },
+      "luxury_watch": {
+        "price": 48000,
+        "quantity": 1
       }
     },
     "startup_cost": 450000
@@ -16410,6 +16572,62 @@
           {
             "item": "paper",
             "quantity": 3
+          }
+        ]
+      },
+      {
+        "output_item": "mineral_makeup",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "mica",
+            "quantity": 25
+          },
+          {
+            "item": "oil",
+            "quantity": 10
+          },
+          {
+            "item": "bottle",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "toothpaste",
+        "output_qty": 45,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 15
+          },
+          {
+            "item": "salt",
+            "quantity": 8
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 10
+          },
+          {
+            "item": "plastic",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 8
+          },
+          {
+            "item": "paper",
+            "quantity": 2
           }
         ]
       }
@@ -22612,6 +22830,36 @@
           {
             "item": "pollen",
             "quantity": 26000
+          }
+        ]
+      },
+      {
+        "output_item": "tea_leaves",
+        "output_qty": 160,
+        "inputs": [
+          {
+            "item": "tea_seeds",
+            "quantity": 6
+          },
+          {
+            "item": "volcanic_ash",
+            "quantity": 15
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 10
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          },
+          {
+            "item": "pollen",
+            "quantity": 16000
           }
         ]
       }
