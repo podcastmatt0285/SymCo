@@ -26802,22 +26802,25 @@
     ],
     "is_food_cart": true
   },
-  "kimberlite_mine": {
-    "name": "Kimberlite Mine",
-    "description": "Extracts kimberlite ore from deep volcanic pipes. The only commercial source of natural diamonds. Extremely capital-intensive and terrain-restricted.",
+  "gem_mine": {
+    "name": "Gem Mine",
+    "description": "Hard-rock mine extracting gem-bearing ore from volcanic pipes, metamorphic, and granitic formations. Produces kimberlite (diamond source), corundum ore (ruby/sapphire), and pegmatite ore (emerald/aquamarine/tourmaline).",
     "class": "production",
     "allowed_terrain": [
       "mountain",
       "desert",
-      "tundra"
+      "tundra",
+      "jungle",
+      "hills"
     ],
     "allowed_proximity": [
       "volcanic",
+      "caves",
       "deposits",
       "remote"
     ],
-    "startup_cost": 350000,
-    "base_wage_cost": 900,
+    "startup_cost": 280000,
+    "base_wage_cost": 800,
     "cycles_to_complete": 10,
     "production_lines": [
       {
@@ -26841,27 +26844,7 @@
             "quantity": 3
           }
         ]
-      }
-    ]
-  },
-  "gem_mine": {
-    "name": "Gem Mine",
-    "description": "Extracts corundum and pegmatite ore from metamorphic and granitic rock formations. Source of rubies, sapphires, emeralds, aquamarine, tourmaline, and associated industrial minerals.",
-    "class": "production",
-    "allowed_terrain": [
-      "mountain",
-      "jungle",
-      "hills"
-    ],
-    "allowed_proximity": [
-      "caves",
-      "deposits",
-      "remote"
-    ],
-    "startup_cost": 220000,
-    "base_wage_cost": 700,
-    "cycles_to_complete": 10,
-    "production_lines": [
+      },
       {
         "output_item": "corundum_ore",
         "output_qty": 60,
