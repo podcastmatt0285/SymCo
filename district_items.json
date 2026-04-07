@@ -1863,5 +1863,123 @@
     "name": "Surgical Stent",
     "description": "Nitinol mesh tube used to keep arteries and ducts open",
     "category": "medical_equipment"
+  },
+  "cut_diamond": {
+    "name": "Cut Diamond",
+    "category": "gem",
+    "description": "Precisely faceted diamond gemstone."
+  },
+  "cut_ruby": {
+    "name": "Cut Ruby",
+    "category": "gem",
+    "description": "Faceted ruby; deep red precious stone."
+  },
+  "cut_emerald": {
+    "name": "Cut Emerald",
+    "category": "gem",
+    "description": "Faceted emerald; rich green precious stone."
+  },
+  "cut_sapphire": {
+    "name": "Cut Sapphire",
+    "category": "gem",
+    "description": "Faceted sapphire; royal blue precious stone."
+  },
+  "cut_amethyst": {
+    "name": "Cut Amethyst",
+    "category": "gem",
+    "description": "Faceted amethyst; vivid purple quartz."
+  },
+  "cut_topaz": {
+    "name": "Cut Topaz",
+    "category": "gem",
+    "description": "Faceted topaz gemstone."
+  },
+  "cut_opal": {
+    "name": "Cut Opal",
+    "category": "gem",
+    "description": "Cabochon opal with play-of-colour."
+  },
+  "cut_garnet": {
+    "name": "Cut Garnet",
+    "category": "gem",
+    "description": "Faceted garnet; deep red to green."
+  },
+  "cut_aquamarine": {
+    "name": "Cut Aquamarine",
+    "category": "gem",
+    "description": "Faceted aquamarine; sea-blue beryl."
+  },
+  "cut_tourmaline": {
+    "name": "Cut Tourmaline",
+    "category": "gem",
+    "description": "Faceted tourmaline; multi-colour gem."
+  },
+  "cut_peridot": {
+    "name": "Cut Peridot",
+    "category": "gem",
+    "description": "Faceted peridot; olive-green gem."
+  },
+  "diamond_ring": {
+    "name": "Diamond Ring",
+    "category": "accessories",
+    "description": "Diamond solitaire set in gold."
+  },
+  "ruby_ring": {
+    "name": "Ruby Ring",
+    "category": "accessories",
+    "description": "Ruby set in gold ring."
+  },
+  "emerald_necklace": {
+    "name": "Emerald Necklace",
+    "category": "accessories",
+    "description": "Emerald pendant necklace in gold."
+  },
+  "sapphire_bracelet": {
+    "name": "Sapphire Bracelet",
+    "category": "accessories",
+    "description": "Sapphire bracelet in silver."
+  },
+  "amethyst_pendant": {
+    "name": "Amethyst Pendant",
+    "category": "accessories",
+    "description": "Amethyst pendant in silver."
+  },
+  "gem_pendant": {
+    "name": "Gem Pendant",
+    "category": "accessories",
+    "description": "Garnet pendant in silver."
+  },
+  "gemstone_bracelet": {
+    "name": "Gemstone Bracelet",
+    "category": "accessories",
+    "description": "Tourmaline bracelet in gold."
+  },
+  "mineral_makeup": {
+    "name": "Mineral Makeup",
+    "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer.",
+    "category": "cosmetic",
+    "base_price": 100,
+    "rarity": "uncommon"
+  },
+  "luxury_watch": {
+    "name": "Luxury Watch",
+    "description": "High-end mechanical watch with a sapphire crystal face, gold case, and precision movement. Sapphire glass is scratch-proof and far harder than mineral glass.",
+    "category": "accessories",
+    "base_price": 100,
+    "rarity": "uncommon"
+  },
+  "ruby_laser": {
+    "name": "Ruby Laser Module",
+    "description": "Solid-state laser using a synthetic ruby crystal as the lasing medium. Used in rangefinding, targeting systems, tattoo removal, and precision manufacturing.",
+    "category": "industrial",
+    "base_price": 100,
+    "rarity": "uncommon"
+  },
+  "surgical_scalpel": {
+    "name": "Surgical Scalpel",
+    "description": "Obsidian or steel-bladed surgical instrument. Obsidian blades are sharper than surgical steel and cause less cell trauma in delicate procedures.",
+    "category": "medical",
+    "base_price": 100,
+    "rarity": "uncommon"
   }
 }
