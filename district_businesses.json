@@ -18,7 +18,6 @@
       "district_tech"
     ],
     "startup_cost": 22000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "superconducting_wire",
@@ -102,7 +101,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 75000
   },
   "african_wildlife_preserve": {
     "allowed_proximity": [],
@@ -19659,7 +19661,6 @@
       "district_industrial"
     ],
     "startup_cost": 8000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "led_panel",
@@ -19747,7 +19748,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 40000
   },
   "storage_media_factory": {
     "name": "Storage Media Factory",
@@ -19757,7 +19761,6 @@
       "district_industrial"
     ],
     "startup_cost": 6000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "hdd_platter",
@@ -19841,7 +19844,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 35000
   },
   "server_farm_factory": {
     "name": "Server Farm Components Factory",
@@ -19851,7 +19857,6 @@
       "district_industrial"
     ],
     "startup_cost": 5000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "server_rack",
@@ -19909,7 +19914,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 21600,
+    "base_wage_cost": 30000
   },
   "internet_exchange_point": {
     "name": "Internet Exchange Point",
@@ -19919,7 +19927,6 @@
       "district_tech"
     ],
     "startup_cost": 18000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "cloud_service_contract",
@@ -19973,7 +19980,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 55000
   },
   "submarine_cable_terminal": {
     "name": "Submarine Cable Terminal",
@@ -19983,7 +19993,6 @@
       "district_seaport"
     ],
     "startup_cost": 25000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "undersea_cable_segment",
@@ -20041,7 +20050,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 60000
   },
   "cdn_campus": {
     "name": "CDN Campus",
@@ -20051,7 +20063,6 @@
       "district_tech"
     ],
     "startup_cost": 12000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "cdn_service",
@@ -20101,7 +20112,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 45000
   },
   "hyperscale_data_center": {
     "name": "Hyperscale Data Center",
@@ -20110,7 +20124,6 @@
       "district_tech_park"
     ],
     "startup_cost": 35000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "cloud_service_contract",
@@ -20206,7 +20219,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 80000
   },
   "5g_tower_factory": {
     "name": "5G Tower Factory",
@@ -20216,7 +20232,6 @@
       "district_tech"
     ],
     "startup_cost": 5000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "antenna_array",
@@ -20308,7 +20323,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 35000
   },
   "telecom_switching_center": {
     "name": "Telecom Switching Center",
@@ -20318,7 +20336,6 @@
       "district_tech"
     ],
     "startup_cost": 15000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "internet_bundle",
@@ -20397,8 +20414,37 @@
             "quantity": 10
           }
         ]
+      },
+      {
+        "output_item": "gps_license",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "comms_satellite",
+            "quantity": 1
+          },
+          {
+            "item": "network_switch",
+            "quantity": 3
+          },
+          {
+            "item": "server_rack",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 50000
   },
   "rocket_propellant_plant": {
     "name": "Rocket Propellant Plant",
@@ -20408,7 +20454,6 @@
       "district_utilities"
     ],
     "startup_cost": 8000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "liquid_hydrogen",
@@ -20468,7 +20513,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 45000
   },
   "heat_shield_factory": {
     "name": "Heat Shield Factory",
@@ -20478,7 +20526,6 @@
       "district_industrial"
     ],
     "startup_cost": 7000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "heat_shield_tile",
@@ -20570,7 +20617,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 43200,
+    "base_wage_cost": 50000
   },
   "satellite_components_factory": {
     "name": "Satellite Components Factory",
@@ -20579,7 +20629,6 @@
       "district_aerospace"
     ],
     "startup_cost": 20000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "ion_thruster",
@@ -20713,7 +20762,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 90000
   },
   "satellite_assembly_facility": {
     "name": "Satellite Assembly Facility",
@@ -20722,7 +20774,6 @@
       "district_aerospace"
     ],
     "startup_cost": 35000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "nanosatellite",
@@ -20868,7 +20919,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 172800,
+    "base_wage_cost": 120000
   },
   "space_launch_complex": {
     "name": "Space Launch Complex",
@@ -20878,7 +20932,6 @@
       "district_coastal"
     ],
     "startup_cost": 100000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "launch_contract",
@@ -20978,7 +21031,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 259200,
+    "base_wage_cost": 200000
   },
   "reusable_rocket_program": {
     "name": "Reusable Rocket Program",
@@ -20987,7 +21043,6 @@
       "district_aerospace"
     ],
     "startup_cost": 150000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "reusable_rocket_stage",
@@ -21057,7 +21112,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 604800,
+    "base_wage_cost": 300000
   },
   "cryogenics_plant": {
     "name": "Cryogenics Plant",
@@ -21067,7 +21125,6 @@
       "district_utilities"
     ],
     "startup_cost": 10000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "argon",
@@ -21167,7 +21224,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 28800,
+    "base_wage_cost": 40000
   },
   "particle_accelerator": {
     "name": "Particle Accelerator",
@@ -21176,7 +21236,6 @@
       "district_research_campus"
     ],
     "startup_cost": 500000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "particle_detector",
@@ -21302,7 +21361,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 604800,
+    "base_wage_cost": 500000
   },
   "nuclear_research_reactor": {
     "name": "Nuclear Research Reactor",
@@ -21312,7 +21374,6 @@
       "district_utilities"
     ],
     "startup_cost": 120000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "medical_isotope",
@@ -21422,7 +21483,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 259200,
+    "base_wage_cost": 250000
   },
   "tokamak_fusion_reactor": {
     "name": "Tokamak Fusion Reactor",
@@ -21432,7 +21496,6 @@
       "district_utilities"
     ],
     "startup_cost": 300000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "plasma_chamber",
@@ -21566,7 +21629,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 604800,
+    "base_wage_cost": 400000
   },
   "gravitational_wave_observatory": {
     "name": "Gravitational Wave Observatory",
@@ -21575,7 +21641,6 @@
       "district_research_campus"
     ],
     "startup_cost": 200000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "optical_interferometer",
@@ -21637,7 +21702,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 259200,
+    "base_wage_cost": 180000
   },
   "radio_telescope_array": {
     "name": "Radio Telescope Array",
@@ -21646,7 +21714,6 @@
       "district_research_campus"
     ],
     "startup_cost": 80000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "radio_dish",
@@ -21708,7 +21775,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 100000
   },
   "quantum_chip_fab": {
     "name": "Quantum Chip Fabrication Lab",
@@ -21718,7 +21788,6 @@
       "district_research_campus"
     ],
     "startup_cost": 30000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "quantum_bit",
@@ -21784,7 +21853,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 120000
   },
   "cryostat_factory": {
     "name": "Cryostat Manufacturing Facility",
@@ -21794,7 +21866,6 @@
       "district_industrial"
     ],
     "startup_cost": 18000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "cryostat",
@@ -21830,7 +21901,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 57600,
+    "base_wage_cost": 65000
   },
   "quantum_computing_campus": {
     "name": "Quantum Computing Campus",
@@ -21840,7 +21914,6 @@
       "district_research_campus"
     ],
     "startup_cost": 40000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "computing_time_contract",
@@ -21932,7 +22005,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 172800,
+    "base_wage_cost": 200000
   },
   "ai_supercomputer_campus": {
     "name": "AI Supercomputer Campus",
@@ -21941,7 +22017,6 @@
       "district_tech_park"
     ],
     "startup_cost": 25000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "ai_training_run",
@@ -22037,7 +22112,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 150000
   },
   "humanoid_robotics_lab": {
     "name": "Humanoid Robotics Lab",
@@ -22047,7 +22125,6 @@
       "district_research_campus"
     ],
     "startup_cost": 18000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "sensor_array",
@@ -22185,7 +22262,10 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 172800,
+    "base_wage_cost": 130000
   },
   "autonomous_vehicle_testing_complex": {
     "name": "Autonomous Vehicle Testing Complex",
@@ -22195,7 +22275,6 @@
       "district_tech_park"
     ],
     "startup_cost": 12000000,
-    "base_wage": 0,
     "production_lines": [
       {
         "output_item": "av_certification",
@@ -22257,6 +22336,9 @@
           }
         ]
       }
-    ]
+    ],
+    "class": "production",
+    "cycles_to_complete": 86400,
+    "base_wage_cost": 90000
   }
 }
