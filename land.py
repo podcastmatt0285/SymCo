@@ -327,6 +327,27 @@ BUSINESS_COMPATIBILITY = {
     "cybersecurity_firm":             {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
     "data_center":                    {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road", "remote"]},
     "tech_startup_hub":               {"allowed_terrain": ["district_tech_park"],            "allowed_proximity": ["urban", "road"]},
+    # ── Gem & mineral system ──────────────────────────────────────────────────
+    "gem_mine":                       {"allowed_terrain": ["mountain", "desert", "tundra", "jungle", "hills"],          "allowed_proximity": ["volcanic", "caves", "deposits", "remote"]},
+    "alluvial_mine":                  {"allowed_terrain": ["marsh", "hills", "forest"],                                  "allowed_proximity": ["riverside", "lakeside"]},
+    "mineral_processing_plant":       {"allowed_terrain": ["mountain", "hills", "prairie", "desert"],                   "allowed_proximity": ["road", "urban"]},
+    "lapidary":                       {"allowed_terrain": ["urban", "prairie", "hills"],                                 "allowed_proximity": ["urban", "road"]},
+    "crystal_shop":                   {"allowed_terrain": ["urban", "prairie", "hills", "island", "coastal"],           "allowed_proximity": ["urban", "road"]},
+    "quartz_oscillator_plant":        {"allowed_terrain": ["urban", "prairie", "hills", "mountain"],                    "allowed_proximity": ["road", "urban"]},
+    # ── Flower & botanical system ─────────────────────────────────────────────
+    "flower_farm":                    {"allowed_terrain": ["prairie", "hills", "marsh", "savanna", "jungle", "island"], "allowed_proximity": ["remote", "riverside"]},
+    "flower_shop":                    {"allowed_terrain": ["urban", "prairie", "hills"],                                 "allowed_proximity": ["urban", "road"]},
+    "floral_studio":                  {"allowed_terrain": ["urban", "prairie", "hills"],                                 "allowed_proximity": ["urban", "road"]},
+    "essential_oil_distillery":       {"allowed_terrain": ["prairie", "forest", "hills"],                               "allowed_proximity": ["riverside", "urban"]},
+    "botanical_extract_lab":          {"allowed_terrain": ["urban", "prairie", "hills"],                                 "allowed_proximity": ["urban", "road"]},
+    "street_flower_cart":             {"allowed_terrain": ["prairie", "forest", "desert", "marsh", "mountain", "tundra", "jungle", "savanna", "hills", "island", "coastal", "lake"], "allowed_proximity": ["urban", "road", "remote", "riverside", "lakeside", "oasis", "hot_springs", "caves", "volcanic", "deposits"]},
+    # ── Food carts ───────────────────────────────────────────────────────────
+    "fish_cart":                      {"allowed_terrain": ["coastal", "island", "urban", "desert", "lake"],             "allowed_proximity": ["urban", "road", "hot_springs"]},
+    "hot_dog_cart":                   {"allowed_terrain": ["coastal", "island", "urban", "desert", "lake"],             "allowed_proximity": ["urban", "road", "hot_springs"]},
+    "burrito_truck":                  {"allowed_terrain": ["coastal", "island", "urban", "desert", "lake"],             "allowed_proximity": ["urban", "road", "hot_springs"]},
+    # ── Specialty production ──────────────────────────────────────────────────
+    "bastilla_kitchen":               {"allowed_terrain": ["urban", "prairie"],                                          "allowed_proximity": ["urban", "road"]},
+    "tallow_works":                   {"allowed_terrain": ["urban", "prairie", "hills"],                                 "allowed_proximity": ["urban", "road"]},
 }
 
 # ==========================

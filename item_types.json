@@ -240,7 +240,7 @@
     "name": "Apples"
   },
   "aquaculture_raft": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Floating net-pen platform for farming fish and shellfish in open water",
     "name": "Aquaculture Raft"
   },
@@ -635,7 +635,7 @@
     "name": "Bluefish"
   },
   "boat": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Recreational watercraft",
     "name": "Motorboat"
   },
@@ -1700,7 +1700,7 @@
     "name": "Dissection Kit"
   },
   "dive_vessel": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Support vessel for commercial dive operations targeting exotic marine species",
     "name": "Dive Vessel"
   },
@@ -1740,7 +1740,7 @@
     "name": "Raw Dough"
   },
   "dredger": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Vessel equipped with metal dredges for harvesting shellfish beds",
     "name": "Shellfish Dredger"
   },
@@ -2140,7 +2140,7 @@
     "name": "Freight Manifest"
   },
   "freshwater_boat": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Small flat-bottom boat suited for river, lake and pond fishing",
     "name": "Freshwater Fishing Boat"
   },
@@ -3020,7 +3020,7 @@
     "name": "Lobster Bisque"
   },
   "lobster_boat": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Small vessel rigged for deploying and retrieving crustacean traps and pots",
     "name": "Lobster Boat"
   },
@@ -3050,7 +3050,7 @@
     "name": "Lollipop"
   },
   "longliner": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Deep-sea fishing vessel using long lines with hundreds of baited hooks",
     "name": "Long-liner"
   },
@@ -3070,7 +3070,7 @@
     "name": "Lumber"
   },
   "luxury_car": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Premium automobile",
     "name": "Luxury Sedan"
   },
@@ -4045,7 +4045,7 @@
     "name": "Purse"
   },
   "purse_seiner": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Vessel for catching schooling pelagic fish with purse seine nets",
     "name": "Purse Seiner"
   },
@@ -4625,7 +4625,7 @@
     "name": "Peeled Shrimp"
   },
   "shrimp_trawler": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Specialized trawling vessel with fine-mesh nets for shrimp harvesting",
     "name": "Shrimp Trawler"
   },
@@ -5370,7 +5370,7 @@
     "name": "Transport Helicopter"
   },
   "trawler": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Bottom-fishing vessel with large nets for demersal fish species",
     "name": "Trawler"
   },
@@ -5675,7 +5675,7 @@
     "name": "White Phosphorus Grenade"
   },
   "yacht": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Premium watercraft",
     "name": "Luxury Yacht"
   },
@@ -6326,7 +6326,7 @@
   },
   "mineral_makeup": {
     "name": "Mineral Makeup",
-    "category": "cosmetic",
+    "category": "personal_care",
     "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer."
   },
   "luxury_watch": {
@@ -6341,7 +6341,493 @@
   },
   "surgical_scalpel": {
     "name": "Surgical Scalpel",
-    "category": "medical",
+    "category": "medical_equipment",
     "description": "Obsidian or steel-bladed surgical instrument. Obsidian blades are sharper than surgical steel and cause less cell trauma in delicate procedures."
+  },
+  "crystal_oscillator": {
+    "name": "Crystal Oscillator",
+    "description": "Precision quartz timing component. Required in every circuit board for clock signal generation.",
+    "category": "components",
+    "base_price": 0
+  },
+  "polishing_compound": {
+    "name": "CMP Polishing Compound",
+    "description": "Chemical-mechanical planarization slurry of diamond dust and aluminum oxide. Used to achieve atomic-level flatness on silicon wafers.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "sapphire_wafer": {
+    "name": "Sapphire Wafer",
+    "description": "Precision-sliced synthetic sapphire substrate for GaN-on-sapphire LED and semiconductor manufacturing.",
+    "category": "components",
+    "base_price": 0
+  },
+  "led_chip": {
+    "name": "LED Chip",
+    "description": "Gallium nitride die grown on a sapphire substrate. Basis of all modern LED and display technology.",
+    "category": "components",
+    "base_price": 0
+  },
+  "led_panel": {
+    "name": "LED Panel",
+    "description": "Tiled array of LED chips on an aluminum backplane. Used in displays, signage, and general illumination.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "oled_panel": {
+    "name": "OLED Panel",
+    "description": "Organic light-emitting diode panel offering per-pixel brightness control. Used in premium smartphones, watches, and VR headsets.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "touch_screen": {
+    "name": "Touch Screen",
+    "description": "Capacitive multi-touch display combining an indium tin oxide touch layer with an LED or OLED panel.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "smartwatch": {
+    "name": "Smartwatch",
+    "description": "Wrist-worn smart device with a sapphire crystal face, OLED display, health sensors, and wireless connectivity.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "vr_headset": {
+    "name": "VR Headset",
+    "description": "Virtual reality headset with dual OLED micro-displays, optical lenses, and spatial tracking sensors.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "chromium_oxide": {
+    "name": "Chromium Oxide",
+    "description": "Magnetic coating material derived from chromium. Deposited onto hard disk platters for data storage.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "hdd_platter": {
+    "name": "Hard Disk Platter",
+    "description": "Precision-polished aluminum disk coated with chromium oxide magnetic material. Core component of hard drives.",
+    "category": "components",
+    "base_price": 0
+  },
+  "hard_drive": {
+    "name": "Hard Drive",
+    "description": "Mechanical magnetic storage device built from stacked chromium-coated platters and read/write heads.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "solid_state_drive": {
+    "name": "Solid State Drive",
+    "description": "Flash-based storage device using NAND memory cells on silicon wafers. Faster and more durable than HDDs.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "server_rack": {
+    "name": "Server Rack",
+    "description": "19-inch equipment rack loaded with dense server blades, network switches, and power distribution units.",
+    "category": "components",
+    "base_price": 0
+  },
+  "network_switch": {
+    "name": "Network Switch",
+    "description": "High-throughput packet-switching device connecting servers and network segments at data center scale.",
+    "category": "components",
+    "base_price": 0
+  },
+  "cloud_service_contract": {
+    "name": "Cloud Service Contract",
+    "description": "Enterprise cloud computing subscription covering compute, storage, and network services.",
+    "category": "services",
+    "base_price": 0
+  },
+  "colocation_service": {
+    "name": "Colocation Service",
+    "description": "Data center space and power rental for third-party server equipment.",
+    "category": "services",
+    "base_price": 0
+  },
+  "undersea_cable_segment": {
+    "name": "Undersea Cable Segment",
+    "description": "Armored submarine fiber optic cable segment rated for deep-sea deployment.",
+    "category": "components",
+    "base_price": 0
+  },
+  "international_bandwidth": {
+    "name": "International Bandwidth",
+    "description": "Transoceanic internet capacity measured in terabits per second. Traded between carriers and content networks.",
+    "category": "services",
+    "base_price": 0
+  },
+  "cdn_service": {
+    "name": "CDN Service",
+    "description": "Content delivery network caching and distribution service reducing latency for global users.",
+    "category": "services",
+    "base_price": 0
+  },
+  "satellite_broadband_subscription": {
+    "name": "Satellite Broadband Subscription",
+    "description": "Low-earth orbit satellite internet service providing global high-speed connectivity.",
+    "category": "services",
+    "base_price": 0
+  },
+  "antenna_array": {
+    "name": "Phased Antenna Array",
+    "description": "Beamforming antenna array for 5G/6G millimeter-wave communications. Uses gallium nitride amplifiers.",
+    "category": "components",
+    "base_price": 0
+  },
+  "5g_antenna": {
+    "name": "5G Antenna Unit",
+    "description": "Integrated 5G base station antenna with MIMO array and fiber backhaul connection.",
+    "category": "components",
+    "base_price": 0
+  },
+  "cell_tower_kit": {
+    "name": "Cell Tower Kit",
+    "description": "Complete cellular tower installation package including antenna, backhaul, and power systems.",
+    "category": "components",
+    "base_price": 0
+  },
+  "encrypted_comms_contract": {
+    "name": "Encrypted Comms Contract",
+    "description": "End-to-end encrypted satellite communications service for enterprise and government clients.",
+    "category": "services",
+    "base_price": 0
+  },
+  "gps_license": {
+    "name": "GPS Data License",
+    "description": "Commercial license for high-precision differential GPS positioning data.",
+    "category": "services",
+    "base_price": 0
+  },
+  "liquid_hydrogen": {
+    "name": "Liquid Hydrogen",
+    "description": "Cryogenic rocket propellant (LH2) produced by electrolysis and liquefaction of hydrogen gas.",
+    "category": "fuel",
+    "base_price": 0
+  },
+  "liquid_oxygen": {
+    "name": "Liquid Oxygen",
+    "description": "Cryogenic oxidizer (LOX) produced by fractional distillation of air. Paired with liquid hydrogen in rocket engines.",
+    "category": "fuel",
+    "base_price": 0
+  },
+  "heat_shield_tile": {
+    "name": "Heat Shield Tile",
+    "description": "Ablative reentry protection tile made from carbon-silicon carbide composite with ceramic coating. Withstands 1,600\u00b0C.",
+    "category": "components",
+    "base_price": 0
+  },
+  "ablative_coating": {
+    "name": "Ablative Coating",
+    "description": "Sacrificial thermal protection coating applied to reentry vehicles. Burns away to carry heat away from the vehicle.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "payload_fairing": {
+    "name": "Payload Fairing",
+    "description": "Aerodynamic nose cone protecting satellite payloads during ascent. Jettisoned at altitude.",
+    "category": "components",
+    "base_price": 0
+  },
+  "satellite_bus": {
+    "name": "Satellite Bus",
+    "description": "Structural platform of a satellite providing power, attitude control, telemetry, and thermal management.",
+    "category": "components",
+    "base_price": 0
+  },
+  "ion_thruster": {
+    "name": "Ion Thruster",
+    "description": "Electric propulsion system using xenon gas ionized by electromagnetic fields. Provides efficient orbital maneuvering.",
+    "category": "components",
+    "base_price": 0
+  },
+  "satellite_payload": {
+    "name": "Satellite Payload",
+    "description": "Mission-specific sensor and communications package for satellites, including cameras, transceivers, and antennas.",
+    "category": "components",
+    "base_price": 0
+  },
+  "avionics_module": {
+    "name": "Avionics Module",
+    "description": "Flight computer and sensor suite for rocket guidance, navigation, and control.",
+    "category": "components",
+    "base_price": 0
+  },
+  "xenon": {
+    "name": "Xenon Gas",
+    "description": "Noble gas used as propellant in ion thrusters and as fill gas in lighting and plasma displays.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "nanosatellite": {
+    "name": "Nanosatellite",
+    "description": "CubeSat-class satellite under 10kg. Used for Earth observation, IoT, and communications swarms.",
+    "category": "vehicles",
+    "base_price": 0
+  },
+  "comms_satellite": {
+    "name": "Communications Satellite",
+    "description": "Geostationary or LEO satellite providing broadband internet, TV, and voice communications.",
+    "category": "vehicles",
+    "base_price": 0
+  },
+  "weather_satellite": {
+    "name": "Weather Satellite",
+    "description": "Earth observation satellite with multispectral imaging and atmospheric sensors for meteorological data.",
+    "category": "vehicles",
+    "base_price": 0
+  },
+  "spy_satellite": {
+    "name": "Reconnaissance Satellite",
+    "description": "Military-grade imaging satellite with sub-meter optical resolution and signals intelligence capability.",
+    "category": "military",
+    "base_price": 0
+  },
+  "reusable_rocket_stage": {
+    "name": "Reusable Rocket Stage",
+    "description": "Propulsive first stage capable of autonomous landing via grid fins and engine relighting. Dramatically reduces launch costs.",
+    "category": "vehicles",
+    "base_price": 0
+  },
+  "launch_contract": {
+    "name": "Launch Contract",
+    "description": "Commercial rocket launch service for satellite, cargo, or crewed payloads to orbit.",
+    "category": "services",
+    "base_price": 0
+  },
+  "space_tourism_seat": {
+    "name": "Space Tourism Seat",
+    "description": "Suborbital or orbital spaceflight experience for private passengers. Includes pre-flight training.",
+    "category": "services",
+    "base_price": 0
+  },
+  "satellite_deployment_contract": {
+    "name": "Satellite Deployment Contract",
+    "description": "End-to-end service covering satellite manufacture, launch, and on-orbit commissioning.",
+    "category": "services",
+    "base_price": 0
+  },
+  "heavy_payload_launch": {
+    "name": "Heavy Payload Launch",
+    "description": "Super-heavy lift rocket launch service for payloads exceeding 50 tonnes to low Earth orbit.",
+    "category": "services",
+    "base_price": 0
+  },
+  "superconducting_magnet": {
+    "name": "Superconducting Magnet",
+    "description": "Niobium-titanium or niobium-tin coil cooled to near absolute zero, producing magnetic fields exceeding 8 Tesla.",
+    "category": "components",
+    "base_price": 0
+  },
+  "superconducting_wire": {
+    "name": "Superconducting Wire",
+    "description": "Niobium-titanium wire that conducts electricity with zero resistance when cooled below critical temperature.",
+    "category": "components",
+    "base_price": 0
+  },
+  "vacuum_vessel": {
+    "name": "Ultra-High Vacuum Vessel",
+    "description": "Stainless steel chamber capable of achieving pressures below 10^-9 mbar. Required for particle accelerators and fusion reactors.",
+    "category": "components",
+    "base_price": 0
+  },
+  "particle_detector": {
+    "name": "Particle Detector",
+    "description": "Silicon strip tracking detector combined with lead tungstate calorimeter crystals for particle collision analysis.",
+    "category": "components",
+    "base_price": 0
+  },
+  "research_data_package": {
+    "name": "Research Data Package",
+    "description": "Curated dataset from particle physics, radio astronomy, or gravitational wave experiments. Licensed to universities worldwide.",
+    "category": "services",
+    "base_price": 0
+  },
+  "exotic_isotope": {
+    "name": "Exotic Isotope",
+    "description": "Short-lived radioactive isotope produced in particle accelerator collisions. Used in medical imaging and nuclear research.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "antimatter_trace": {
+    "name": "Antimatter Trace",
+    "description": "Nanogram quantities of antihydrogen produced and magnetically trapped in a particle accelerator. Extraordinary value.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "plasma_chamber": {
+    "name": "Plasma Containment Chamber",
+    "description": "Tungsten-lined toroidal vacuum vessel where fusion plasma is confined by superconducting magnets at 150 million\u00b0C.",
+    "category": "components",
+    "base_price": 0
+  },
+  "tritium": {
+    "name": "Tritium",
+    "description": "Radioactive hydrogen isotope (H-3) used as fusion fuel. Produced by neutron bombardment of lithium in nuclear reactors.",
+    "category": "fuel",
+    "base_price": 0
+  },
+  "deuterium": {
+    "name": "Deuterium",
+    "description": "Stable hydrogen isotope (H-2) extracted from heavy water. Primary fusion fuel component.",
+    "category": "fuel",
+    "base_price": 0
+  },
+  "helium": {
+    "name": "Helium Gas",
+    "description": "Noble gas extracted from natural gas wells or air separation. Liquefied for cryogenic cooling applications.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "liquid_helium": {
+    "name": "Liquid Helium",
+    "description": "Cryogenic coolant at 4 Kelvin (-269\u00b0C). Required for superconducting magnets in MRI machines, quantum computers, and particle accelerators.",
+    "category": "fuel",
+    "base_price": 0
+  },
+  "helium_3": {
+    "name": "Helium-3",
+    "description": "Rare light isotope with applications in quantum computing, neutron detection, and advanced fusion concepts.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "neutron_flux_data": {
+    "name": "Neutron Flux Data",
+    "description": "High-fidelity neutron flux measurements from fusion reactor operation. Sold to materials science and nuclear engineering programs.",
+    "category": "services",
+    "base_price": 0
+  },
+  "heavy_water": {
+    "name": "Heavy Water",
+    "description": "Deuterium oxide (D\u2082O) used as neutron moderator in research reactors and as deuterium source for fusion fuel.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "medical_isotope": {
+    "name": "Medical Isotope",
+    "description": "Short-lived radioisotope such as Tc-99m or I-131 used in nuclear medicine imaging and cancer therapy.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "argon": {
+    "name": "Argon Gas",
+    "description": "Noble gas extracted from air by fractional distillation. Used in welding, semiconductor processing, and cryogenics.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "optical_interferometer": {
+    "name": "Optical Interferometer",
+    "description": "Precision laser interferometer with diamond-polished mirrors capable of detecting spacetime distortions smaller than a proton.",
+    "category": "components",
+    "base_price": 0
+  },
+  "radio_dish": {
+    "name": "Parabolic Radio Dish",
+    "description": "Large-diameter parabolic steel and aluminum dish antenna for receiving microwave and radio signals from deep space.",
+    "category": "components",
+    "base_price": 0
+  },
+  "radio_astronomy_data": {
+    "name": "Radio Astronomy Data",
+    "description": "Processed radio telescope observations covering pulsars, quasars, cosmic microwave background, and SETI scans.",
+    "category": "services",
+    "base_price": 0
+  },
+  "quantum_processor": {
+    "name": "Quantum Processor",
+    "description": "Superconducting qubit processor chip fabricated on a sapphire substrate with niobium Josephson junctions.",
+    "category": "components",
+    "base_price": 0
+  },
+  "quantum_bit": {
+    "name": "Qubit Module",
+    "description": "Individual superconducting qubit unit with control electronics. Building block of a quantum processor.",
+    "category": "components",
+    "base_price": 0
+  },
+  "cryogenic_tank": {
+    "name": "Cryogenic Tank",
+    "description": "Vacuum-jacketed dewar vessel for storing and transporting liquid helium, liquid hydrogen, or liquid nitrogen.",
+    "category": "components",
+    "base_price": 0
+  },
+  "cryostat": {
+    "name": "Dilution Refrigerator Cryostat",
+    "description": "Multi-stage cooling system reaching 15 millikelvin. Required to operate superconducting quantum processors.",
+    "category": "components",
+    "base_price": 0
+  },
+  "computing_time_contract": {
+    "name": "Quantum Computing Contract",
+    "description": "Access contract for quantum computing time measured in qubit-hours. Used for cryptography, drug discovery, and optimization.",
+    "category": "services",
+    "base_price": 0
+  },
+  "quantum_encryption_key": {
+    "name": "Quantum Encryption Key",
+    "description": "Quantum key distribution (QKD) cryptographic key with provable information-theoretic security.",
+    "category": "services",
+    "base_price": 0
+  },
+  "ai_training_run": {
+    "name": "AI Training Run",
+    "description": "Large-scale machine learning training job on GPU or quantum hardware. Output is a trained model license.",
+    "category": "services",
+    "base_price": 0
+  },
+  "sensor_array": {
+    "name": "Sensor Array",
+    "description": "Integrated suite of silicon MEMS sensors including IMU, lidar, camera, radar, and temperature sensors.",
+    "category": "components",
+    "base_price": 0
+  },
+  "lidar_sensor": {
+    "name": "LiDAR Sensor",
+    "description": "Pulsed ruby laser range-finder producing real-time 3D point clouds. Essential for autonomous vehicles and robotics.",
+    "category": "components",
+    "base_price": 0
+  },
+  "humanoid_robot": {
+    "name": "Humanoid Robot",
+    "description": "Bipedal autonomous robot with dexterous hands, computer vision, and AI-driven motion planning. Capable of general-purpose physical labor.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "inference_api_credit": {
+    "name": "AI Inference Credit",
+    "description": "Prepaid API credit for running inference on trained AI models at data center scale.",
+    "category": "services",
+    "base_price": 0
+  },
+  "autonomous_model_license": {
+    "name": "Autonomous System License",
+    "description": "Commercial license for a trained autonomous driving or robotics AI model stack.",
+    "category": "services",
+    "base_price": 0
+  },
+  "robot_labor_contract": {
+    "name": "Robot Labor Contract",
+    "description": "Fleet robotics-as-a-service contract for warehouse, logistics, or manufacturing automation.",
+    "category": "services",
+    "base_price": 0
+  },
+  "av_certification": {
+    "name": "AV Certification",
+    "description": "Regulatory certification for autonomous vehicle systems following simulation and road testing programs.",
+    "category": "services",
+    "base_price": 0
+  },
+  "fleet_automation_contract": {
+    "name": "Fleet Automation Contract",
+    "description": "End-to-end autonomous vehicle fleet deployment contract covering software, sensors, and maintenance.",
+    "category": "services",
+    "base_price": 0
+  },
+  "quartz_crystal_blank": {
+    "name": "Quartz Crystal Blank",
+    "description": "Precision-cut quartz disk lapped to a specific thickness determining its resonant frequency. Intermediate step in oscillator production.",
+    "category": "components",
+    "base_price": 0
   }
 }
