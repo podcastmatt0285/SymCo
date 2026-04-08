@@ -13407,6 +13407,28 @@
         ],
         "output_item": "plastic",
         "output_qty": 80
+      },
+      {
+        "output_item": "polymer_compound",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "plastic",
+            "quantity": 80
+          },
+          {
+            "item": "acrylonitrile",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
       }
     ],
     "startup_cost": 280000
@@ -19153,6 +19175,28 @@
           {
             "item": "paper",
             "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "chromium_oxide",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "chromium",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "water",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 3
           }
         ]
       }
@@ -27611,6 +27655,32 @@
             "quantity": 2
           }
         ]
+      },
+      {
+        "output_item": "polishing_compound",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "diamond_dust",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ]
       }
     ]
   },
@@ -27943,5 +28013,72 @@
         "elasticity": 1.4
       }
     }
+  },
+  "quartz_oscillator_plant": {
+    "name": "Quartz Oscillator Plant",
+    "description": "Precision facility that slices quartz crystals into frequency-specific blanks and packages them as crystal oscillators \u2014 the timing heartbeat of every electronic device.",
+    "category": "manufacturing",
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills",
+      "mountain"
+    ],
+    "proximity_bonus": [
+      "road",
+      "urban"
+    ],
+    "startup_cost": 320000,
+    "base_wage": 480,
+    "production_lines": [
+      {
+        "output_item": "quartz_crystal_blank",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "quartz",
+            "quantity": 100
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      },
+      {
+        "output_item": "crystal_oscillator",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "quartz_crystal_blank",
+            "quantity": 50
+          },
+          {
+            "item": "silver",
+            "quantity": 10
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 6000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ]
+      }
+    ]
   }
 }
