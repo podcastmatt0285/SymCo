@@ -2245,5 +2245,233 @@
     "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving.",
     "category": "gem",
     "base_price": 0
+  },
+  "casino_floor_credit": {
+    "name": "Casino Floor Credit",
+    "description": "Prepaid casino floor credits redeemable for table games, slots, and entertainment.",
+    "category": "retail_entertainment",
+    "base_price": 0
+  },
+  "conference_pass": {
+    "name": "Conference Pass",
+    "description": "Full-access pass to a hosted convention or conference event including sessions and exhibits.",
+    "category": "retail_entertainment",
+    "base_price": 0
+  },
+  "duty_free_spirits": {
+    "name": "Duty-Free Spirits",
+    "description": "Premium imported spirits sold duty-free at port-of-entry retail locations.",
+    "category": "retail_shopping",
+    "base_price": 0
+  },
+  "consumer_electronics_bundle": {
+    "name": "Consumer Electronics Bundle",
+    "description": "A curated bundle of consumer electronics including devices, accessories, and warranties.",
+    "category": "retail_shopping",
+    "base_price": 0
+  },
+  "elderflower_cordial": {
+    "name": "Elderflower Cordial",
+    "description": "Light syrup made from elderflowers and sugar",
+    "category": "beverages",
+    "base_price": 0
+  },
+  "spaghetti": {
+    "name": "Spaghetti",
+    "description": "Long thin pasta strands made from durum wheat",
+    "category": "food",
+    "base_price": 0
+  },
+  "peanut_butter_cookie": {
+    "name": "Peanut Butter Cookie",
+    "description": "Classic baked cookie made with creamy peanut butter",
+    "category": "food",
+    "base_price": 0
+  },
+  "mri_machine": {
+    "name": "MRI Machine",
+    "description": "Magnetic resonance imaging scanner using superconducting magnets.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "ct_scanner": {
+    "name": "CT Scanner",
+    "description": "Computed tomography X-ray scanner for medical diagnosis.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "dialysis_machine": {
+    "name": "Dialysis Machine",
+    "description": "Kidney dialysis machine for renal failure patients.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "radiation_therapy_unit": {
+    "name": "Radiation Therapy Unit",
+    "description": "Linear accelerator for cancer radiation treatment.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "surgical_robot": {
+    "name": "Surgical Robot",
+    "description": "Robotic surgery system for minimally invasive procedures.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "standard_room_night": {
+    "name": "Standard Room Night",
+    "description": "One night's accommodation in a standard hotel room including housekeeping and amenities.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "incarceration_contract": {
+    "name": "Incarceration Contract",
+    "description": "A government-issued contract for housing and processing inmates at a detention facility.",
+    "category": "retail_prison",
+    "base_price": 0
+  },
+  "religious_book": {
+    "name": "Religious Text",
+    "description": "A thick, leather-bound spiritual manuscript. High value.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "blessed_sheep": {
+    "name": "Blessed Sheep",
+    "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "sacred_lamb_offering": {
+    "name": "Sacred Lamb Offering",
+    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "liturgical_lamb_light": {
+    "name": "Liturgical Lamb Light",
+    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "premium_cocktail": {
+    "name": "Premium Cocktail",
+    "description": "A premium mixed drink crafted with top-shelf spirits, fresh ingredients, and garnishes.",
+    "category": "retail_food",
+    "base_price": 0
+  },
+  "consulting_contract": {
+    "name": "Consulting Contract",
+    "description": "A professional consulting engagement providing expert advisory services to clients.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "customs_clearance_service": {
+    "name": "Customs Clearance Service",
+    "description": "Professional customs brokerage service handling import/export documentation and clearance.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "live_lake_scrolls": {
+    "name": "Live Lake Scrolls",
+    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "canned_lamb": {
+    "name": "Canned Lamb",
+    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
+    "category": "food",
+    "base_price": 0
+  },
+  "lamb_stew": {
+    "name": "Lamb Stew",
+    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
+    "category": "food",
+    "base_price": 0
+  },
+  "satay": {
+    "name": "Satay",
+    "description": "Grilled skewered pork served with a rich peanut dipping sauce",
+    "category": "food",
+    "base_price": 0
+  },
+  "coworking_membership": {
+    "name": "Coworking Membership",
+    "description": "A monthly membership granting access to a shared coworking office space and amenities.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "day_pass": {
+    "name": "Theme Park Day Pass",
+    "description": "A single-day admission ticket granting full access to all theme park rides and attractions.",
+    "category": "retail_entertainment",
+    "base_price": 0
+  },
+  "bulk_grocery_pallet": {
+    "name": "Bulk Grocery Pallet",
+    "description": "A wholesale pallet of assorted grocery goods sold in bulk to retailers and institutions.",
+    "category": "retail_shopping",
+    "base_price": 0
+  },
+  "3d_printer_industrial": {
+    "name": "Industrial 3D Printer",
+    "description": "Large-format metal or polymer additive manufacturing system.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "cnc_machine": {
+    "name": "CNC Machine",
+    "description": "Computer numerically controlled precision machining center.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "industrial_heater": {
+    "name": "Industrial Heater",
+    "description": "High-wattage nichrome heating unit for industrial processes and HVAC.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "industrial_robot_arm": {
+    "name": "Industrial Robot Arm",
+    "description": "6-axis robotic manipulator for manufacturing automation.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "nuclear_waste_container": {
+    "name": "Nuclear Waste Container",
+    "description": "Shielded dry cask for spent nuclear fuel storage.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "sunflower": {
+    "name": "Sunflower",
+    "description": "Large bright flower; seeds yield sunflower oil",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "rare_orchid_specimen": {
+    "name": "Rare Orchid Specimen",
+    "description": "Museum-quality potted exotic orchid from botanical gardens",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "signature_perfume": {
+    "name": "Signature Perfume",
+    "description": "Hand-crafted luxury fragrance from rose and jasmine absolutes",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "artisan_fragrance": {
+    "name": "Artisan Fragrance",
+    "description": "Small-batch aromatic blend of lavender and rose water",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "cologne": {
+    "name": "Cologne",
+    "description": "Fresh eau de cologne of neroli, jasmine and lavender",
+    "category": "luxury",
+    "base_price": 0
   }
 }
