@@ -28017,19 +28017,20 @@
   "quartz_oscillator_plant": {
     "name": "Quartz Oscillator Plant",
     "description": "Precision facility that slices quartz crystals into frequency-specific blanks and packages them as crystal oscillators \u2014 the timing heartbeat of every electronic device.",
-    "category": "manufacturing",
+    "class": "production",
     "allowed_terrain": [
       "urban",
       "prairie",
       "hills",
       "mountain"
     ],
-    "proximity_bonus": [
+    "allowed_proximity": [
       "road",
       "urban"
     ],
     "startup_cost": 320000,
-    "base_wage": 480,
+    "base_wage_cost": 480,
+    "cycles_to_complete": 8,
     "production_lines": [
       {
         "output_item": "quartz_crystal_blank",

@@ -240,7 +240,7 @@
     "name": "Apples"
   },
   "aquaculture_raft": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Floating net-pen platform for farming fish and shellfish in open water",
     "name": "Aquaculture Raft"
   },
@@ -635,7 +635,7 @@
     "name": "Bluefish"
   },
   "boat": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Recreational watercraft",
     "name": "Motorboat"
   },
@@ -1700,7 +1700,7 @@
     "name": "Dissection Kit"
   },
   "dive_vessel": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Support vessel for commercial dive operations targeting exotic marine species",
     "name": "Dive Vessel"
   },
@@ -1740,7 +1740,7 @@
     "name": "Raw Dough"
   },
   "dredger": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Vessel equipped with metal dredges for harvesting shellfish beds",
     "name": "Shellfish Dredger"
   },
@@ -2140,7 +2140,7 @@
     "name": "Freight Manifest"
   },
   "freshwater_boat": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Small flat-bottom boat suited for river, lake and pond fishing",
     "name": "Freshwater Fishing Boat"
   },
@@ -3020,7 +3020,7 @@
     "name": "Lobster Bisque"
   },
   "lobster_boat": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Small vessel rigged for deploying and retrieving crustacean traps and pots",
     "name": "Lobster Boat"
   },
@@ -3050,7 +3050,7 @@
     "name": "Lollipop"
   },
   "longliner": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Deep-sea fishing vessel using long lines with hundreds of baited hooks",
     "name": "Long-liner"
   },
@@ -3070,7 +3070,7 @@
     "name": "Lumber"
   },
   "luxury_car": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Premium automobile",
     "name": "Luxury Sedan"
   },
@@ -4045,7 +4045,7 @@
     "name": "Purse"
   },
   "purse_seiner": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Vessel for catching schooling pelagic fish with purse seine nets",
     "name": "Purse Seiner"
   },
@@ -4625,7 +4625,7 @@
     "name": "Peeled Shrimp"
   },
   "shrimp_trawler": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Specialized trawling vessel with fine-mesh nets for shrimp harvesting",
     "name": "Shrimp Trawler"
   },
@@ -5370,7 +5370,7 @@
     "name": "Transport Helicopter"
   },
   "trawler": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Bottom-fishing vessel with large nets for demersal fish species",
     "name": "Trawler"
   },
@@ -5675,7 +5675,7 @@
     "name": "White Phosphorus Grenade"
   },
   "yacht": {
-    "category": "vehicle",
+    "category": "vehicles",
     "description": "Premium watercraft",
     "name": "Luxury Yacht"
   },
@@ -6326,7 +6326,7 @@
   },
   "mineral_makeup": {
     "name": "Mineral Makeup",
-    "category": "cosmetic",
+    "category": "personal_care",
     "description": "Foundation, blush, and eyeshadow made from finely milled mica and natural oxides. Prized for clean formulation and natural shimmer."
   },
   "luxury_watch": {
@@ -6341,7 +6341,7 @@
   },
   "surgical_scalpel": {
     "name": "Surgical Scalpel",
-    "category": "medical",
+    "category": "medical_equipment",
     "description": "Obsidian or steel-bladed surgical instrument. Obsidian blades are sharper than surgical steel and cause less cell trauma in delicate procedures."
   },
   "crystal_oscillator": {

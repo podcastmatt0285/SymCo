@@ -2137,5 +2137,113 @@
     "description": "High-fidelity neutron flux measurements from fusion reactor operation. Sold to materials science and nuclear engineering programs.",
     "category": "services",
     "base_price": 0
+  },
+  "tulip": {
+    "name": "Tulip",
+    "description": "Spring bulb flower; one of the most traded cut flowers",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "agate": {
+    "name": "Agate",
+    "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "antimatter_trace": {
+    "name": "Antimatter Trace",
+    "description": "Nanogram quantities of antihydrogen produced and magnetically trapped in a particle accelerator. Extraordinary value.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "rough_garnet": {
+    "name": "Rough Garnet",
+    "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "rough_peridot": {
+    "name": "Rough Peridot",
+    "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "exotic_isotope": {
+    "name": "Exotic Isotope",
+    "description": "Short-lived radioactive isotope produced in particle accelerator collisions. Used in medical imaging and nuclear research.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "humanoid_robot": {
+    "name": "Humanoid Robot",
+    "description": "Bipedal autonomous robot with dexterous hands, computer vision, and AI-driven motion planning. Capable of general-purpose physical labor.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "chalcedony": {
+    "name": "Chalcedony",
+    "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "compute_credit": {
+    "name": "Compute Credit",
+    "description": "A high-tech compute credit, used in electronics, computing, and advanced manufacturing.",
+    "category": "components",
+    "base_price": 0
+  },
+  "helium_3": {
+    "name": "Helium-3",
+    "description": "Rare light isotope with applications in quantum computing, neutron detection, and advanced fusion concepts.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "lily": {
+    "name": "Lily",
+    "description": "Elegant long-stemmed flower for arrangements and funerals",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "chrysanthemum": {
+    "name": "Chrysanthemum",
+    "description": "High-volume cut flower; used in teas and arrangements",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "carnation": {
+    "name": "Carnation",
+    "description": "Mass-market cut flower with long vase life",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "rough_amethyst": {
+    "name": "Rough Amethyst",
+    "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "bouquet": {
+    "name": "Flower Bouquet",
+    "description": "Mixed fresh-cut arrangement of seasonal flowers",
+    "category": "floral_products",
+    "base_price": 0
+  },
+  "rose": {
+    "name": "Rose",
+    "description": "Prized cut flower; base of rose oil and rose water",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "lavender": {
+    "name": "Lavender",
+    "description": "Aromatic herb-flower; base of lavender essential oil",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "obsidian": {
+    "name": "Obsidian",
+    "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving.",
+    "category": "gem",
+    "base_price": 0
   }
 }
