@@ -11,54 +11,30 @@
   "_comment8": "=== TIER 4: PRISON PRODUCTION ===",
   "_comment9": "=== TIER 4: FOOD SERVICE PRODUCTION ===",
   "advanced_materials_lab": {
-    "allowed_proximity": [
-      "urban",
-      "remote"
-    ],
-    "allowed_terrain": [
-      "district_research_campus"
-    ],
-    "base_wage_cost": 70000,
-    "class": "production",
-    "cycles_to_complete": 57600,
-    "description": "Novel alloys and polymer research",
     "name": "Advanced Materials Lab",
+    "description": "Produces superconducting wires, magnets, and ultra-high vacuum vessels for particle physics and fusion research.",
+    "allowed_terrain": [
+      "district_research_campus",
+      "district_tech"
+    ],
+    "startup_cost": 22000000,
+    "base_wage": 0,
     "production_lines": [
       {
+        "output_item": "superconducting_wire",
+        "output_qty": 60,
         "inputs": [
           {
-            "item": "iron",
-            "quantity": 1000
+            "item": "niobium",
+            "quantity": 100
+          },
+          {
+            "item": "titanium",
+            "quantity": 60
           },
           {
             "item": "copper",
-            "quantity": 500
-          },
-          {
-            "item": "zinc",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 100000
-          },
-          {
-            "item": "paper",
-            "quantity": 50
-          }
-        ],
-        "output_item": "composite_alloy",
-        "output_qty": 100
-      },
-      {
-        "inputs": [
-          {
-            "item": "rubber",
-            "quantity": 500
-          },
-          {
-            "item": "plastic",
-            "quantity": 1000
+            "quantity": 80
           },
           {
             "item": "energy",
@@ -66,81 +42,29 @@
           },
           {
             "item": "paper",
-            "quantity": 50
+            "quantity": 15
           }
-        ],
-        "output_item": "polymer_compound",
-        "output_qty": 200
+        ]
       },
       {
+        "output_item": "superconducting_magnet",
+        "output_qty": 4,
         "inputs": [
           {
-            "item": "stainless_steel",
+            "item": "superconducting_wire",
+            "quantity": 60
+          },
+          {
+            "item": "copper_wire",
             "quantity": 200
           },
           {
-            "item": "titanium_alloy",
-            "quantity": 100
+            "item": "cryogenic_tank",
+            "quantity": 2
           },
           {
-            "item": "processor",
-            "quantity": 50
-          },
-          {
-            "item": "neodymium_magnet",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 150000
-          },
-          {
-            "item": "paper",
-            "quantity": 100
-          }
-        ],
-        "output_item": "industrial_robot_arm",
-        "output_qty": 10
-      },
-      {
-        "inputs": [
-          {
-            "item": "stainless_steel",
-            "quantity": 300
-          },
-          {
-            "item": "tungsten_carbide",
-            "quantity": 100
-          },
-          {
-            "item": "processor",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 120000
-          },
-          {
-            "item": "paper",
-            "quantity": 80
-          }
-        ],
-        "output_item": "cnc_machine",
-        "output_qty": 15
-      },
-      {
-        "inputs": [
-          {
-            "item": "stainless_steel",
-            "quantity": 200
-          },
-          {
-            "item": "processor",
-            "quantity": 30
-          },
-          {
-            "item": "titanium_alloy",
-            "quantity": 50
+            "item": "steel",
+            "quantity": 150
           },
           {
             "item": "energy",
@@ -148,36 +72,37 @@
           },
           {
             "item": "paper",
-            "quantity": 80
+            "quantity": 20
           }
-        ],
-        "output_item": "3d_printer_industrial",
-        "output_qty": 10
+        ]
       },
       {
+        "output_item": "vacuum_vessel",
+        "output_qty": 3,
         "inputs": [
           {
-            "item": "heating_element",
-            "quantity": 20
+            "item": "stainless_steel",
+            "quantity": 400
           },
           {
-            "item": "stainless_steel",
+            "item": "titanium",
+            "quantity": 100
+          },
+          {
+            "item": "aluminum_oxide",
             "quantity": 50
           },
           {
             "item": "energy",
-            "quantity": 10000
+            "quantity": 80000
           },
           {
             "item": "paper",
-            "quantity": 10
+            "quantity": 15
           }
-        ],
-        "output_item": "industrial_heater",
-        "output_qty": 50
+        ]
       }
-    ],
-    "startup_cost": 22000000
+    ]
   },
   "african_wildlife_preserve": {
     "allowed_proximity": [],
@@ -1511,6 +1436,36 @@
         ],
         "output_item": "aerospace_fastener",
         "output_qty": 200
+      },
+      {
+        "output_item": "composite_alloy",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 80
+          },
+          {
+            "item": "titanium",
+            "quantity": 30
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 20
+          },
+          {
+            "item": "nickel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ]
       }
     ],
     "startup_cost": 5500000
@@ -4987,6 +4942,14 @@
           {
             "item": "enterprise_software_suite",
             "quantity": 1
+          },
+          {
+            "item": "hard_drive",
+            "quantity": 10
+          },
+          {
+            "item": "solid_state_drive",
+            "quantity": 5
           }
         ],
         "output_item": "compute_credit",
@@ -6257,6 +6220,120 @@
             "quantity": 15
           }
         ]
+      },
+      {
+        "output_item": "smartwatch",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 10
+          },
+          {
+            "item": "oled_panel",
+            "quantity": 20
+          },
+          {
+            "item": "processor",
+            "quantity": 20
+          },
+          {
+            "item": "crystal_oscillator",
+            "quantity": 20
+          },
+          {
+            "item": "lithium_battery_pack",
+            "quantity": 20
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "vr_headset",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "oled_panel",
+            "quantity": 20
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 30
+          },
+          {
+            "item": "processor",
+            "quantity": 15
+          },
+          {
+            "item": "memory_module",
+            "quantity": 20
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 5
+          },
+          {
+            "item": "crystal_oscillator",
+            "quantity": 10
+          },
+          {
+            "item": "plastic",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 35000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "led_panel",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "led_chip",
+            "quantity": 100
+          },
+          {
+            "item": "glass",
+            "quantity": 60
+          },
+          {
+            "item": "aluminum",
+            "quantity": 40
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
       }
     ],
     "startup_cost": 10000000
@@ -6318,6 +6395,26 @@
       "smart_home_kit": {
         "base_sale_chance": 0.0002,
         "elasticity": 1.8
+      },
+      "smartwatch": {
+        "price": 4500,
+        "quantity": 1
+      },
+      "vr_headset": {
+        "price": 3200,
+        "quantity": 1
+      },
+      "hard_drive": {
+        "price": 180,
+        "quantity": 1
+      },
+      "solid_state_drive": {
+        "price": 280,
+        "quantity": 1
+      },
+      "satellite_broadband_subscription": {
+        "price": 800,
+        "quantity": 1
       }
     },
     "startup_cost": 12000000
@@ -15116,6 +15213,10 @@
           {
             "item": "paper",
             "quantity": 150
+          },
+          {
+            "item": "polishing_compound",
+            "quantity": 30
           }
         ],
         "output_item": "silicon_wafer",
@@ -15402,6 +15503,66 @@
         ],
         "output_item": "gold_bond_wire",
         "output_qty": 200
+      },
+      {
+        "output_item": "sapphire_wafer",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "cut_sapphire",
+            "quantity": 20
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 10
+          },
+          {
+            "item": "polishing_compound",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 150000
+          },
+          {
+            "item": "water",
+            "quantity": 1000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "led_chip",
+        "output_qty": 300,
+        "inputs": [
+          {
+            "item": "sapphire_wafer",
+            "quantity": 8
+          },
+          {
+            "item": "gallium_nitride",
+            "quantity": 60
+          },
+          {
+            "item": "indium",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "water",
+            "quantity": 2000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
       }
     ],
     "startup_cost": 15000000
@@ -19489,5 +19650,2613 @@
         "elasticity": 0.9
       }
     }
+  },
+  "display_factory": {
+    "name": "Display Factory",
+    "description": "Manufactures LED, OLED, and touch-screen panels from semiconductor chips and precision glass. Supplies displays for all consumer devices.",
+    "allowed_terrain": [
+      "district_tech",
+      "district_industrial"
+    ],
+    "startup_cost": 8000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "led_panel",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "led_chip",
+            "quantity": 200
+          },
+          {
+            "item": "glass",
+            "quantity": 100
+          },
+          {
+            "item": "aluminum",
+            "quantity": 60
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "oled_panel",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "led_chip",
+            "quantity": 300
+          },
+          {
+            "item": "indium",
+            "quantity": 40
+          },
+          {
+            "item": "glass",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "touch_screen",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "oled_panel",
+            "quantity": 50
+          },
+          {
+            "item": "indium",
+            "quantity": 30
+          },
+          {
+            "item": "glass",
+            "quantity": 60
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "storage_media_factory": {
+    "name": "Storage Media Factory",
+    "description": "Produces hard drives and solid state drives from chromium-coated platters and silicon flash memory.",
+    "allowed_terrain": [
+      "district_tech",
+      "district_industrial"
+    ],
+    "startup_cost": 6000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "hdd_platter",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "chromium_oxide",
+            "quantity": 80
+          },
+          {
+            "item": "aluminum",
+            "quantity": 100
+          },
+          {
+            "item": "nickel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "hard_drive",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "hdd_platter",
+            "quantity": 120
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 30
+          },
+          {
+            "item": "steel",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 25000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "solid_state_drive",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "silicon_wafer",
+            "quantity": 80
+          },
+          {
+            "item": "memory_module",
+            "quantity": 60
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "server_farm_factory": {
+    "name": "Server Farm Components Factory",
+    "description": "Assembles server racks and high-throughput network switches from processors, memory, and steel chassis.",
+    "allowed_terrain": [
+      "district_tech",
+      "district_industrial"
+    ],
+    "startup_cost": 5000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "server_rack",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "server",
+            "quantity": 20
+          },
+          {
+            "item": "steel",
+            "quantity": 80
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "network_switch",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "circuit_board",
+            "quantity": 60
+          },
+          {
+            "item": "silicon",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 50
+          },
+          {
+            "item": "aluminum",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "internet_exchange_point": {
+    "name": "Internet Exchange Point",
+    "description": "Physical facility where internet service providers and networks interconnect to exchange traffic. Backbone of regional internet infrastructure.",
+    "allowed_terrain": [
+      "district_tech_park",
+      "district_tech"
+    ],
+    "startup_cost": 18000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "cloud_service_contract",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 5
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 100
+          },
+          {
+            "item": "network_switch",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "colocation_service",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 3
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 50
+          },
+          {
+            "item": "network_switch",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "submarine_cable_terminal": {
+    "name": "Submarine Cable Terminal",
+    "description": "Coastal landing station where transoceanic fiber optic cables come ashore. Provides international internet bandwidth.",
+    "allowed_terrain": [
+      "district_coastal",
+      "district_seaport"
+    ],
+    "startup_cost": 25000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "undersea_cable_segment",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 500
+          },
+          {
+            "item": "copper",
+            "quantity": 200
+          },
+          {
+            "item": "plastic",
+            "quantity": 300
+          },
+          {
+            "item": "steel",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "international_bandwidth",
+        "output_qty": 25,
+        "inputs": [
+          {
+            "item": "undersea_cable_segment",
+            "quantity": 3
+          },
+          {
+            "item": "network_switch",
+            "quantity": 8
+          },
+          {
+            "item": "server_rack",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "cdn_campus": {
+    "name": "CDN Campus",
+    "description": "Content delivery network point-of-presence caching popular content at the edge to reduce latency worldwide.",
+    "allowed_terrain": [
+      "district_tech_park",
+      "district_tech"
+    ],
+    "startup_cost": 12000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "cdn_service",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 4
+          },
+          {
+            "item": "solid_state_drive",
+            "quantity": 30
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "compute_credit",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 3
+          },
+          {
+            "item": "hard_drive",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      }
+    ]
+  },
+  "hyperscale_data_center": {
+    "name": "Hyperscale Data Center",
+    "description": "Massive cloud computing campus with hundreds of thousands of servers. Backbone of cloud platforms and AI infrastructure.",
+    "allowed_terrain": [
+      "district_tech_park"
+    ],
+    "startup_cost": 35000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "cloud_service_contract",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 20
+          },
+          {
+            "item": "hard_drive",
+            "quantity": 100
+          },
+          {
+            "item": "solid_state_drive",
+            "quantity": 80
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 200
+          },
+          {
+            "item": "network_switch",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 300000
+          },
+          {
+            "item": "water",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "compute_credit",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 15
+          },
+          {
+            "item": "processor",
+            "quantity": 100
+          },
+          {
+            "item": "memory_module",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "ai_training_run",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 30
+          },
+          {
+            "item": "processor",
+            "quantity": 200
+          },
+          {
+            "item": "memory_module",
+            "quantity": 400
+          },
+          {
+            "item": "solid_state_drive",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ]
+      }
+    ]
+  },
+  "5g_tower_factory": {
+    "name": "5G Tower Factory",
+    "description": "Manufactures complete 5G base station kits with beamforming antenna arrays and backhaul systems.",
+    "allowed_terrain": [
+      "district_industrial",
+      "district_tech"
+    ],
+    "startup_cost": 5000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "antenna_array",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "aluminum",
+            "quantity": 80
+          },
+          {
+            "item": "gallium_nitride",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "5g_antenna",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "antenna_array",
+            "quantity": 40
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 50
+          },
+          {
+            "item": "steel",
+            "quantity": 60
+          },
+          {
+            "item": "processor",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "cell_tower_kit",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "5g_antenna",
+            "quantity": 20
+          },
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 100
+          },
+          {
+            "item": "battery_cell",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      }
+    ]
+  },
+  "telecom_switching_center": {
+    "name": "Telecom Switching Center",
+    "description": "Core telecommunications hub routing voice, data, and internet traffic across national and regional networks.",
+    "allowed_terrain": [
+      "district_tech_park",
+      "district_tech"
+    ],
+    "startup_cost": 15000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "internet_bundle",
+        "output_qty": 60,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 5
+          },
+          {
+            "item": "network_switch",
+            "quantity": 10
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "satellite_broadband_subscription",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "comms_satellite",
+            "quantity": 1
+          },
+          {
+            "item": "network_switch",
+            "quantity": 5
+          },
+          {
+            "item": "antenna_array",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "encrypted_comms_contract",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 3
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 60
+          },
+          {
+            "item": "network_switch",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      }
+    ]
+  },
+  "rocket_propellant_plant": {
+    "name": "Rocket Propellant Plant",
+    "description": "Electrolyzes water into hydrogen and oxygen then liquefies both to cryogenic temperatures, producing LH2 and LOX rocket propellants.",
+    "allowed_terrain": [
+      "district_industrial",
+      "district_utilities"
+    ],
+    "startup_cost": 8000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "liquid_hydrogen",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 2000
+          },
+          {
+            "item": "platinum",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 150000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "liquid_oxygen",
+        "output_qty": 120,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 1500
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "deuterium",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "heavy_water",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "heat_shield_factory": {
+    "name": "Heat Shield Factory",
+    "description": "Produces ablative reentry tiles and thermal protection coatings for rockets and reentry vehicles from carbon-ceramic composites.",
+    "allowed_terrain": [
+      "district_aerospace",
+      "district_industrial"
+    ],
+    "startup_cost": 7000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "heat_shield_tile",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "carbon_fiber",
+            "quantity": 150
+          },
+          {
+            "item": "ceramic",
+            "quantity": 100
+          },
+          {
+            "item": "silicon_carbide",
+            "quantity": 80
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 60
+          },
+          {
+            "item": "titanium",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "ablative_coating",
+        "output_qty": 100,
+        "inputs": [
+          {
+            "item": "carbon_fiber",
+            "quantity": 80
+          },
+          {
+            "item": "epoxy_resin",
+            "quantity": 100
+          },
+          {
+            "item": "silicon_carbide",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "payload_fairing",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "carbon_fiber",
+            "quantity": 300
+          },
+          {
+            "item": "aluminum",
+            "quantity": 200
+          },
+          {
+            "item": "ablative_coating",
+            "quantity": 50
+          },
+          {
+            "item": "titanium",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "satellite_components_factory": {
+    "name": "Satellite Components Factory",
+    "description": "Builds ion thrusters, satellite buses, and mission payloads for commercial and military satellite programs.",
+    "allowed_terrain": [
+      "district_aerospace"
+    ],
+    "startup_cost": 20000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "ion_thruster",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "xenon",
+            "quantity": 100
+          },
+          {
+            "item": "titanium",
+            "quantity": 40
+          },
+          {
+            "item": "neodymium_magnet",
+            "quantity": 20
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "satellite_bus",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "titanium",
+            "quantity": 200
+          },
+          {
+            "item": "aluminum",
+            "quantity": 150
+          },
+          {
+            "item": "solar_panel",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 40
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "satellite_payload",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 20
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "antenna_array",
+            "quantity": 5
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "avionics_module",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "processor",
+            "quantity": 15
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 8
+          },
+          {
+            "item": "memory_module",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      }
+    ]
+  },
+  "satellite_assembly_facility": {
+    "name": "Satellite Assembly Facility",
+    "description": "Cleanroom facility for final satellite integration, testing, and pre-launch processing.",
+    "allowed_terrain": [
+      "district_aerospace"
+    ],
+    "startup_cost": 35000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "nanosatellite",
+        "output_qty": 6,
+        "inputs": [
+          {
+            "item": "satellite_bus",
+            "quantity": 6
+          },
+          {
+            "item": "satellite_payload",
+            "quantity": 6
+          },
+          {
+            "item": "solar_panel",
+            "quantity": 12
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "comms_satellite",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "satellite_bus",
+            "quantity": 1
+          },
+          {
+            "item": "satellite_payload",
+            "quantity": 2
+          },
+          {
+            "item": "ion_thruster",
+            "quantity": 2
+          },
+          {
+            "item": "solar_panel",
+            "quantity": 20
+          },
+          {
+            "item": "heat_shield_tile",
+            "quantity": 30
+          },
+          {
+            "item": "titanium",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "weather_satellite",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "satellite_bus",
+            "quantity": 1
+          },
+          {
+            "item": "satellite_payload",
+            "quantity": 3
+          },
+          {
+            "item": "ion_thruster",
+            "quantity": 1
+          },
+          {
+            "item": "solar_panel",
+            "quantity": 15
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 20
+          },
+          {
+            "item": "titanium",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "spy_satellite",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "satellite_bus",
+            "quantity": 1
+          },
+          {
+            "item": "satellite_payload",
+            "quantity": 4
+          },
+          {
+            "item": "ion_thruster",
+            "quantity": 2
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 40
+          },
+          {
+            "item": "processor",
+            "quantity": 30
+          },
+          {
+            "item": "titanium",
+            "quantity": 60
+          },
+          {
+            "item": "energy",
+            "quantity": 120000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      }
+    ]
+  },
+  "space_launch_complex": {
+    "name": "Space Launch Complex",
+    "description": "Full orbital launch facility with fueling, assembly, and tracking infrastructure. Provides commercial launch services to LEO and beyond.",
+    "allowed_terrain": [
+      "district_aerospace",
+      "district_coastal"
+    ],
+    "startup_cost": 100000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "launch_contract",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "launch_vehicle",
+            "quantity": 1
+          },
+          {
+            "item": "liquid_hydrogen",
+            "quantity": 500
+          },
+          {
+            "item": "liquid_oxygen",
+            "quantity": 800
+          },
+          {
+            "item": "payload_fairing",
+            "quantity": 1
+          },
+          {
+            "item": "avionics_module",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "satellite_deployment_contract",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "launch_vehicle",
+            "quantity": 1
+          },
+          {
+            "item": "nanosatellite",
+            "quantity": 6
+          },
+          {
+            "item": "liquid_hydrogen",
+            "quantity": 400
+          },
+          {
+            "item": "liquid_oxygen",
+            "quantity": 600
+          },
+          {
+            "item": "payload_fairing",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 150000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ]
+      },
+      {
+        "output_item": "space_tourism_seat",
+        "output_qty": 4,
+        "inputs": [
+          {
+            "item": "launch_vehicle",
+            "quantity": 1
+          },
+          {
+            "item": "liquid_hydrogen",
+            "quantity": 300
+          },
+          {
+            "item": "liquid_oxygen",
+            "quantity": 500
+          },
+          {
+            "item": "heat_shield_tile",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 180000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "reusable_rocket_program": {
+    "name": "Reusable Rocket Program",
+    "description": "SpaceX-style super-heavy lift rocket program with propulsive first-stage recovery. Dramatically lower cost-per-kilogram to orbit.",
+    "allowed_terrain": [
+      "district_aerospace"
+    ],
+    "startup_cost": 150000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "reusable_rocket_stage",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "liquid_rocket_engine",
+            "quantity": 9
+          },
+          {
+            "item": "stainless_steel",
+            "quantity": 2000
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 500
+          },
+          {
+            "item": "titanium",
+            "quantity": 300
+          },
+          {
+            "item": "heat_shield_tile",
+            "quantity": 500
+          },
+          {
+            "item": "avionics_module",
+            "quantity": 4
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ]
+      },
+      {
+        "output_item": "heavy_payload_launch",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "reusable_rocket_stage",
+            "quantity": 1
+          },
+          {
+            "item": "liquid_hydrogen",
+            "quantity": 1000
+          },
+          {
+            "item": "liquid_oxygen",
+            "quantity": 2000
+          },
+          {
+            "item": "payload_fairing",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 300000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
+      }
+    ]
+  },
+  "cryogenics_plant": {
+    "name": "Cryogenics Plant",
+    "description": "Liquefies noble gases and hydrogen to cryogenic temperatures. Supplies liquid helium for superconducting magnets and quantum computers.",
+    "allowed_terrain": [
+      "district_industrial",
+      "district_utilities"
+    ],
+    "startup_cost": 10000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "argon",
+        "output_qty": 200,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ]
+      },
+      {
+        "output_item": "helium",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "xenon",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "argon",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 8
+          }
+        ]
+      },
+      {
+        "output_item": "cryogenic_tank",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "aluminum",
+            "quantity": 100
+          },
+          {
+            "item": "fiberglass",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "liquid_helium",
+        "output_qty": 40,
+        "inputs": [
+          {
+            "item": "helium",
+            "quantity": 80
+          },
+          {
+            "item": "cryogenic_tank",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "particle_accelerator": {
+    "name": "Particle Accelerator",
+    "description": "CERN-class circular collider using superconducting magnets to accelerate particles to relativistic speeds. Produces exotic isotopes and fundamental research data.",
+    "allowed_terrain": [
+      "district_research_campus"
+    ],
+    "startup_cost": 500000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "particle_detector",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "silicon_wafer",
+            "quantity": 500
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 200
+          },
+          {
+            "item": "lead",
+            "quantity": 300
+          },
+          {
+            "item": "tungsten",
+            "quantity": 100
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "research_data_package",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "superconducting_magnet",
+            "quantity": 2
+          },
+          {
+            "item": "particle_detector",
+            "quantity": 1
+          },
+          {
+            "item": "vacuum_vessel",
+            "quantity": 1
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 1000000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "exotic_isotope",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "superconducting_magnet",
+            "quantity": 1
+          },
+          {
+            "item": "particle_detector",
+            "quantity": 1
+          },
+          {
+            "item": "vacuum_vessel",
+            "quantity": 1
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 800000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "antimatter_trace",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "superconducting_magnet",
+            "quantity": 3
+          },
+          {
+            "item": "particle_detector",
+            "quantity": 2
+          },
+          {
+            "item": "vacuum_vessel",
+            "quantity": 2
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 2000000
+          },
+          {
+            "item": "paper",
+            "quantity": 80
+          }
+        ]
+      }
+    ]
+  },
+  "nuclear_research_reactor": {
+    "name": "Nuclear Research Reactor",
+    "description": "Research fission reactor producing medical isotopes, neutron beams, and tritium for fusion fuel. Distinct from power reactors.",
+    "allowed_terrain": [
+      "district_research_campus",
+      "district_utilities"
+    ],
+    "startup_cost": 120000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "medical_isotope",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "uranium_oxide",
+            "quantity": 50
+          },
+          {
+            "item": "zirconium",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 300000
+          },
+          {
+            "item": "water",
+            "quantity": 5000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "tritium",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "nuclear_reactor_core",
+            "quantity": 1
+          },
+          {
+            "item": "uranium_oxide",
+            "quantity": 80
+          },
+          {
+            "item": "lithium",
+            "quantity": 100
+          },
+          {
+            "item": "heavy_water",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "water",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "heavy_water",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 5000
+          },
+          {
+            "item": "energy",
+            "quantity": 400000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "nuclear_waste_container",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "uranium_oxide",
+            "quantity": 100
+          },
+          {
+            "item": "steel",
+            "quantity": 200
+          },
+          {
+            "item": "lead",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "tokamak_fusion_reactor": {
+    "name": "Tokamak Fusion Reactor",
+    "description": "ITER-class magnetic confinement fusion device. Fuses deuterium and tritium plasma at 150 million\u00b0C, releasing enormous energy. The ultimate power source.",
+    "allowed_terrain": [
+      "district_research_campus",
+      "district_utilities"
+    ],
+    "startup_cost": 300000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "plasma_chamber",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "tungsten",
+            "quantity": 500
+          },
+          {
+            "item": "titanium",
+            "quantity": 300
+          },
+          {
+            "item": "ceramic",
+            "quantity": 400
+          },
+          {
+            "item": "vacuum_vessel",
+            "quantity": 2
+          },
+          {
+            "item": "stainless_steel",
+            "quantity": 800
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 60
+          }
+        ]
+      },
+      {
+        "output_item": "energy",
+        "output_qty": 5000000,
+        "inputs": [
+          {
+            "item": "plasma_chamber",
+            "quantity": 1
+          },
+          {
+            "item": "superconducting_magnet",
+            "quantity": 6
+          },
+          {
+            "item": "tritium",
+            "quantity": 8
+          },
+          {
+            "item": "deuterium",
+            "quantity": 12
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "helium_3",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "plasma_chamber",
+            "quantity": 1
+          },
+          {
+            "item": "superconducting_magnet",
+            "quantity": 4
+          },
+          {
+            "item": "tritium",
+            "quantity": 5
+          },
+          {
+            "item": "deuterium",
+            "quantity": 8
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 400000
+          },
+          {
+            "item": "paper",
+            "quantity": 40
+          }
+        ]
+      },
+      {
+        "output_item": "neutron_flux_data",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "plasma_chamber",
+            "quantity": 1
+          },
+          {
+            "item": "particle_detector",
+            "quantity": 1
+          },
+          {
+            "item": "tritium",
+            "quantity": 3
+          },
+          {
+            "item": "deuterium",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 300000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "gravitational_wave_observatory": {
+    "name": "Gravitational Wave Observatory",
+    "description": "LIGO-class laser interferometer stretching kilometers, detecting spacetime ripples from merging black holes and neutron stars.",
+    "allowed_terrain": [
+      "district_research_campus"
+    ],
+    "startup_cost": 200000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "optical_interferometer",
+        "output_qty": 1,
+        "inputs": [
+          {
+            "item": "cut_diamond",
+            "quantity": 10
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 100
+          },
+          {
+            "item": "ruby_laser",
+            "quantity": 4
+          },
+          {
+            "item": "vacuum_vessel",
+            "quantity": 4
+          },
+          {
+            "item": "silicon_wafer",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      },
+      {
+        "output_item": "research_data_package",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "optical_interferometer",
+            "quantity": 1
+          },
+          {
+            "item": "server_rack",
+            "quantity": 3
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 500000
+          },
+          {
+            "item": "paper",
+            "quantity": 30
+          }
+        ]
+      }
+    ]
+  },
+  "radio_telescope_array": {
+    "name": "Radio Telescope Array",
+    "description": "Network of parabolic dish antennas performing interferometric radio astronomy. Detects pulsars, quasars, and potential extraterrestrial signals.",
+    "allowed_terrain": [
+      "district_research_campus"
+    ],
+    "startup_cost": 80000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "radio_dish",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "steel",
+            "quantity": 500
+          },
+          {
+            "item": "aluminum",
+            "quantity": 300
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          },
+          {
+            "item": "alnico_magnet",
+            "quantity": 4
+          }
+        ]
+      },
+      {
+        "output_item": "radio_astronomy_data",
+        "output_qty": 12,
+        "inputs": [
+          {
+            "item": "radio_dish",
+            "quantity": 8
+          },
+          {
+            "item": "network_switch",
+            "quantity": 5
+          },
+          {
+            "item": "server_rack",
+            "quantity": 3
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "quantum_chip_fab": {
+    "name": "Quantum Chip Fabrication Lab",
+    "description": "Ultra-clean fabrication facility producing superconducting qubit chips on sapphire substrates with niobium Josephson junctions.",
+    "allowed_terrain": [
+      "district_tech",
+      "district_research_campus"
+    ],
+    "startup_cost": 30000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "quantum_bit",
+        "output_qty": 50,
+        "inputs": [
+          {
+            "item": "sapphire_wafer",
+            "quantity": 20
+          },
+          {
+            "item": "niobium",
+            "quantity": 30
+          },
+          {
+            "item": "aluminum",
+            "quantity": 20
+          },
+          {
+            "item": "gold",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "quantum_processor",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "quantum_bit",
+            "quantity": 50
+          },
+          {
+            "item": "sapphire_wafer",
+            "quantity": 10
+          },
+          {
+            "item": "niobium",
+            "quantity": 50
+          },
+          {
+            "item": "gold",
+            "quantity": 10
+          },
+          {
+            "item": "gold_bond_wire",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ]
+      }
+    ]
+  },
+  "cryostat_factory": {
+    "name": "Cryostat Manufacturing Facility",
+    "description": "Builds dilution refrigerator systems that cool quantum processors to 15 millikelvin \u2014 colder than outer space.",
+    "allowed_terrain": [
+      "district_tech",
+      "district_industrial"
+    ],
+    "startup_cost": 18000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "cryostat",
+        "output_qty": 3,
+        "inputs": [
+          {
+            "item": "cryogenic_tank",
+            "quantity": 4
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 60
+          },
+          {
+            "item": "stainless_steel",
+            "quantity": 200
+          },
+          {
+            "item": "vacuum_vessel",
+            "quantity": 1
+          },
+          {
+            "item": "copper_wire",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
+  },
+  "quantum_computing_campus": {
+    "name": "Quantum Computing Campus",
+    "description": "Operational quantum computing facility offering quantum-as-a-service for cryptography, drug discovery, financial modeling, and AI acceleration.",
+    "allowed_terrain": [
+      "district_tech_park",
+      "district_research_campus"
+    ],
+    "startup_cost": 40000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "computing_time_contract",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "quantum_processor",
+            "quantity": 2
+          },
+          {
+            "item": "cryostat",
+            "quantity": 1
+          },
+          {
+            "item": "server_rack",
+            "quantity": 2
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 50
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      },
+      {
+        "output_item": "quantum_encryption_key",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "quantum_processor",
+            "quantity": 1
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 30
+          },
+          {
+            "item": "network_switch",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "ai_training_run",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "quantum_processor",
+            "quantity": 3
+          },
+          {
+            "item": "cryostat",
+            "quantity": 2
+          },
+          {
+            "item": "server_rack",
+            "quantity": 5
+          },
+          {
+            "item": "liquid_helium",
+            "quantity": 80
+          },
+          {
+            "item": "energy",
+            "quantity": 400000
+          },
+          {
+            "item": "paper",
+            "quantity": 25
+          }
+        ]
+      }
+    ]
+  },
+  "ai_supercomputer_campus": {
+    "name": "AI Supercomputer Campus",
+    "description": "Exascale GPU cluster farm for training frontier AI models. Consumes enormous power and produces compute credits and AI model licenses.",
+    "allowed_terrain": [
+      "district_tech_park"
+    ],
+    "startup_cost": 25000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "ai_training_run",
+        "output_qty": 20,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 40
+          },
+          {
+            "item": "processor",
+            "quantity": 400
+          },
+          {
+            "item": "memory_module",
+            "quantity": 600
+          },
+          {
+            "item": "solid_state_drive",
+            "quantity": 100
+          },
+          {
+            "item": "fiber_optic_cable",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 800000
+          },
+          {
+            "item": "water",
+            "quantity": 10000
+          },
+          {
+            "item": "paper",
+            "quantity": 50
+          }
+        ]
+      },
+      {
+        "output_item": "inference_api_credit",
+        "output_qty": 80,
+        "inputs": [
+          {
+            "item": "server_rack",
+            "quantity": 15
+          },
+          {
+            "item": "processor",
+            "quantity": 100
+          },
+          {
+            "item": "memory_module",
+            "quantity": 200
+          },
+          {
+            "item": "network_switch",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 300000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "autonomous_model_license",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "ai_training_run",
+            "quantity": 3
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 20
+          },
+          {
+            "item": "server_rack",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 200000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      }
+    ]
+  },
+  "humanoid_robotics_lab": {
+    "name": "Humanoid Robotics Lab",
+    "description": "Designs and manufactures general-purpose bipedal robots with dexterous manipulation, computer vision, and AI locomotion. Suitable for physical labor, caregiving, and manufacturing.",
+    "allowed_terrain": [
+      "district_tech",
+      "district_research_campus"
+    ],
+    "startup_cost": 18000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "sensor_array",
+        "output_qty": 30,
+        "inputs": [
+          {
+            "item": "silicon_wafer",
+            "quantity": 60
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 30
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 30
+          },
+          {
+            "item": "microchip",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 20000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "lidar_sensor",
+        "output_qty": 15,
+        "inputs": [
+          {
+            "item": "ruby_laser",
+            "quantity": 3
+          },
+          {
+            "item": "optical_glass",
+            "quantity": 20
+          },
+          {
+            "item": "processor",
+            "quantity": 10
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 15
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 30000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      },
+      {
+        "output_item": "humanoid_robot",
+        "output_qty": 2,
+        "inputs": [
+          {
+            "item": "robotic_arm_assembly",
+            "quantity": 2
+          },
+          {
+            "item": "titanium",
+            "quantity": 80
+          },
+          {
+            "item": "carbon_fiber",
+            "quantity": 60
+          },
+          {
+            "item": "processor",
+            "quantity": 20
+          },
+          {
+            "item": "memory_module",
+            "quantity": 30
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 8
+          },
+          {
+            "item": "lidar_sensor",
+            "quantity": 2
+          },
+          {
+            "item": "battery_cell",
+            "quantity": 40
+          },
+          {
+            "item": "neodymium_magnet",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 100000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "robot_labor_contract",
+        "output_qty": 8,
+        "inputs": [
+          {
+            "item": "humanoid_robot",
+            "quantity": 2
+          },
+          {
+            "item": "autonomous_model_license",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          }
+        ]
+      }
+    ]
+  },
+  "autonomous_vehicle_testing_complex": {
+    "name": "Autonomous Vehicle Testing Complex",
+    "description": "Closed-course AI training environment for autonomous vehicle and drone systems. Issues regulatory certifications and licenses AI model stacks.",
+    "allowed_terrain": [
+      "district_research_campus",
+      "district_tech_park"
+    ],
+    "startup_cost": 12000000,
+    "base_wage": 0,
+    "production_lines": [
+      {
+        "output_item": "av_certification",
+        "output_qty": 10,
+        "inputs": [
+          {
+            "item": "lidar_sensor",
+            "quantity": 5
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 10
+          },
+          {
+            "item": "processor",
+            "quantity": 20
+          },
+          {
+            "item": "ai_training_run",
+            "quantity": 1
+          },
+          {
+            "item": "energy",
+            "quantity": 80000
+          },
+          {
+            "item": "paper",
+            "quantity": 20
+          }
+        ]
+      },
+      {
+        "output_item": "fleet_automation_contract",
+        "output_qty": 5,
+        "inputs": [
+          {
+            "item": "av_certification",
+            "quantity": 3
+          },
+          {
+            "item": "autonomous_model_license",
+            "quantity": 1
+          },
+          {
+            "item": "lidar_sensor",
+            "quantity": 10
+          },
+          {
+            "item": "sensor_array",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 15
+          }
+        ]
+      }
+    ]
   }
 }

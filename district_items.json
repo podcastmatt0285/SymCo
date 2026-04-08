@@ -1981,5 +1981,161 @@
     "category": "medical",
     "base_price": 100,
     "rarity": "uncommon"
+  },
+  "smartwatch": {
+    "name": "Smartwatch",
+    "description": "Wrist-worn smart device with a sapphire crystal face, OLED display, health sensors, and wireless connectivity.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "vr_headset": {
+    "name": "VR Headset",
+    "description": "Virtual reality headset with dual OLED micro-displays, optical lenses, and spatial tracking sensors.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "hard_drive": {
+    "name": "Hard Drive",
+    "description": "Mechanical magnetic storage device built from stacked chromium-coated platters and read/write heads.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "solid_state_drive": {
+    "name": "Solid State Drive",
+    "description": "Flash-based storage device using NAND memory cells on silicon wafers. Faster and more durable than HDDs.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "cloud_service_contract": {
+    "name": "Cloud Service Contract",
+    "description": "Enterprise cloud computing subscription covering compute, storage, and network services.",
+    "category": "services",
+    "base_price": 0
+  },
+  "colocation_service": {
+    "name": "Colocation Service",
+    "description": "Data center space and power rental for third-party server equipment.",
+    "category": "services",
+    "base_price": 0
+  },
+  "cdn_service": {
+    "name": "CDN Service",
+    "description": "Content delivery network caching and distribution service reducing latency for global users.",
+    "category": "services",
+    "base_price": 0
+  },
+  "satellite_broadband_subscription": {
+    "name": "Satellite Broadband Subscription",
+    "description": "Low-earth orbit satellite internet service providing global high-speed connectivity.",
+    "category": "services",
+    "base_price": 0
+  },
+  "encrypted_comms_contract": {
+    "name": "Encrypted Comms Contract",
+    "description": "End-to-end encrypted satellite communications service for enterprise and government clients.",
+    "category": "services",
+    "base_price": 0
+  },
+  "gps_license": {
+    "name": "GPS Data License",
+    "description": "Commercial license for high-precision differential GPS positioning data.",
+    "category": "services",
+    "base_price": 0
+  },
+  "launch_contract": {
+    "name": "Launch Contract",
+    "description": "Commercial rocket launch service for satellite, cargo, or crewed payloads to orbit.",
+    "category": "services",
+    "base_price": 0
+  },
+  "space_tourism_seat": {
+    "name": "Space Tourism Seat",
+    "description": "Suborbital or orbital spaceflight experience for private passengers. Includes pre-flight training.",
+    "category": "services",
+    "base_price": 0
+  },
+  "satellite_deployment_contract": {
+    "name": "Satellite Deployment Contract",
+    "description": "End-to-end service covering satellite manufacture, launch, and on-orbit commissioning.",
+    "category": "services",
+    "base_price": 0
+  },
+  "heavy_payload_launch": {
+    "name": "Heavy Payload Launch",
+    "description": "Super-heavy lift rocket launch service for payloads exceeding 50 tonnes to low Earth orbit.",
+    "category": "services",
+    "base_price": 0
+  },
+  "research_data_package": {
+    "name": "Research Data Package",
+    "description": "Curated dataset from particle physics, radio astronomy, or gravitational wave experiments. Licensed to universities worldwide.",
+    "category": "services",
+    "base_price": 0
+  },
+  "medical_isotope": {
+    "name": "Medical Isotope",
+    "description": "Short-lived radioisotope such as Tc-99m or I-131 used in nuclear medicine imaging and cancer therapy.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "computing_time_contract": {
+    "name": "Quantum Computing Contract",
+    "description": "Access contract for quantum computing time measured in qubit-hours. Used for cryptography, drug discovery, and optimization.",
+    "category": "services",
+    "base_price": 0
+  },
+  "quantum_encryption_key": {
+    "name": "Quantum Encryption Key",
+    "description": "Quantum key distribution (QKD) cryptographic key with provable information-theoretic security.",
+    "category": "services",
+    "base_price": 0
+  },
+  "ai_training_run": {
+    "name": "AI Training Run",
+    "description": "Large-scale machine learning training job on GPU or quantum hardware. Output is a trained model license.",
+    "category": "services",
+    "base_price": 0
+  },
+  "inference_api_credit": {
+    "name": "AI Inference Credit",
+    "description": "Prepaid API credit for running inference on trained AI models at data center scale.",
+    "category": "services",
+    "base_price": 0
+  },
+  "autonomous_model_license": {
+    "name": "Autonomous System License",
+    "description": "Commercial license for a trained autonomous driving or robotics AI model stack.",
+    "category": "services",
+    "base_price": 0
+  },
+  "robot_labor_contract": {
+    "name": "Robot Labor Contract",
+    "description": "Fleet robotics-as-a-service contract for warehouse, logistics, or manufacturing automation.",
+    "category": "services",
+    "base_price": 0
+  },
+  "av_certification": {
+    "name": "AV Certification",
+    "description": "Regulatory certification for autonomous vehicle systems following simulation and road testing programs.",
+    "category": "services",
+    "base_price": 0
+  },
+  "fleet_automation_contract": {
+    "name": "Fleet Automation Contract",
+    "description": "End-to-end autonomous vehicle fleet deployment contract covering software, sensors, and maintenance.",
+    "category": "services",
+    "base_price": 0
+  },
+  "radio_astronomy_data": {
+    "name": "Radio Astronomy Data",
+    "description": "Processed radio telescope observations covering pulsars, quasars, cosmic microwave background, and SETI scans.",
+    "category": "services",
+    "base_price": 0
+  },
+  "neutron_flux_data": {
+    "name": "Neutron Flux Data",
+    "description": "High-fidelity neutron flux measurements from fusion reactor operation. Sold to materials science and nuclear engineering programs.",
+    "category": "services",
+    "base_price": 0
   }
 }
