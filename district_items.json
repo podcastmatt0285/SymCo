@@ -1981,5 +1981,497 @@
     "category": "medical",
     "base_price": 100,
     "rarity": "uncommon"
+  },
+  "smartwatch": {
+    "name": "Smartwatch",
+    "description": "Wrist-worn smart device with a sapphire crystal face, OLED display, health sensors, and wireless connectivity.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "vr_headset": {
+    "name": "VR Headset",
+    "description": "Virtual reality headset with dual OLED micro-displays, optical lenses, and spatial tracking sensors.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "hard_drive": {
+    "name": "Hard Drive",
+    "description": "Mechanical magnetic storage device built from stacked chromium-coated platters and read/write heads.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "solid_state_drive": {
+    "name": "Solid State Drive",
+    "description": "Flash-based storage device using NAND memory cells on silicon wafers. Faster and more durable than HDDs.",
+    "category": "electronics",
+    "base_price": 0
+  },
+  "cloud_service_contract": {
+    "name": "Cloud Service Contract",
+    "description": "Enterprise cloud computing subscription covering compute, storage, and network services.",
+    "category": "services",
+    "base_price": 0
+  },
+  "colocation_service": {
+    "name": "Colocation Service",
+    "description": "Data center space and power rental for third-party server equipment.",
+    "category": "services",
+    "base_price": 0
+  },
+  "cdn_service": {
+    "name": "CDN Service",
+    "description": "Content delivery network caching and distribution service reducing latency for global users.",
+    "category": "services",
+    "base_price": 0
+  },
+  "satellite_broadband_subscription": {
+    "name": "Satellite Broadband Subscription",
+    "description": "Low-earth orbit satellite internet service providing global high-speed connectivity.",
+    "category": "services",
+    "base_price": 0
+  },
+  "encrypted_comms_contract": {
+    "name": "Encrypted Comms Contract",
+    "description": "End-to-end encrypted satellite communications service for enterprise and government clients.",
+    "category": "services",
+    "base_price": 0
+  },
+  "gps_license": {
+    "name": "GPS Data License",
+    "description": "Commercial license for high-precision differential GPS positioning data.",
+    "category": "services",
+    "base_price": 0
+  },
+  "launch_contract": {
+    "name": "Launch Contract",
+    "description": "Commercial rocket launch service for satellite, cargo, or crewed payloads to orbit.",
+    "category": "services",
+    "base_price": 0
+  },
+  "space_tourism_seat": {
+    "name": "Space Tourism Seat",
+    "description": "Suborbital or orbital spaceflight experience for private passengers. Includes pre-flight training.",
+    "category": "services",
+    "base_price": 0
+  },
+  "satellite_deployment_contract": {
+    "name": "Satellite Deployment Contract",
+    "description": "End-to-end service covering satellite manufacture, launch, and on-orbit commissioning.",
+    "category": "services",
+    "base_price": 0
+  },
+  "heavy_payload_launch": {
+    "name": "Heavy Payload Launch",
+    "description": "Super-heavy lift rocket launch service for payloads exceeding 50 tonnes to low Earth orbit.",
+    "category": "services",
+    "base_price": 0
+  },
+  "research_data_package": {
+    "name": "Research Data Package",
+    "description": "Curated dataset from particle physics, radio astronomy, or gravitational wave experiments. Licensed to universities worldwide.",
+    "category": "services",
+    "base_price": 0
+  },
+  "medical_isotope": {
+    "name": "Medical Isotope",
+    "description": "Short-lived radioisotope such as Tc-99m or I-131 used in nuclear medicine imaging and cancer therapy.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "computing_time_contract": {
+    "name": "Quantum Computing Contract",
+    "description": "Access contract for quantum computing time measured in qubit-hours. Used for cryptography, drug discovery, and optimization.",
+    "category": "services",
+    "base_price": 0
+  },
+  "quantum_encryption_key": {
+    "name": "Quantum Encryption Key",
+    "description": "Quantum key distribution (QKD) cryptographic key with provable information-theoretic security.",
+    "category": "services",
+    "base_price": 0
+  },
+  "ai_training_run": {
+    "name": "AI Training Run",
+    "description": "Large-scale machine learning training job on GPU or quantum hardware. Output is a trained model license.",
+    "category": "services",
+    "base_price": 0
+  },
+  "inference_api_credit": {
+    "name": "AI Inference Credit",
+    "description": "Prepaid API credit for running inference on trained AI models at data center scale.",
+    "category": "services",
+    "base_price": 0
+  },
+  "autonomous_model_license": {
+    "name": "Autonomous System License",
+    "description": "Commercial license for a trained autonomous driving or robotics AI model stack.",
+    "category": "services",
+    "base_price": 0
+  },
+  "robot_labor_contract": {
+    "name": "Robot Labor Contract",
+    "description": "Fleet robotics-as-a-service contract for warehouse, logistics, or manufacturing automation.",
+    "category": "services",
+    "base_price": 0
+  },
+  "av_certification": {
+    "name": "AV Certification",
+    "description": "Regulatory certification for autonomous vehicle systems following simulation and road testing programs.",
+    "category": "services",
+    "base_price": 0
+  },
+  "fleet_automation_contract": {
+    "name": "Fleet Automation Contract",
+    "description": "End-to-end autonomous vehicle fleet deployment contract covering software, sensors, and maintenance.",
+    "category": "services",
+    "base_price": 0
+  },
+  "radio_astronomy_data": {
+    "name": "Radio Astronomy Data",
+    "description": "Processed radio telescope observations covering pulsars, quasars, cosmic microwave background, and SETI scans.",
+    "category": "services",
+    "base_price": 0
+  },
+  "neutron_flux_data": {
+    "name": "Neutron Flux Data",
+    "description": "High-fidelity neutron flux measurements from fusion reactor operation. Sold to materials science and nuclear engineering programs.",
+    "category": "services",
+    "base_price": 0
+  },
+  "tulip": {
+    "name": "Tulip",
+    "description": "Spring bulb flower; one of the most traded cut flowers",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "agate": {
+    "name": "Agate",
+    "description": "Banded chalcedony with concentric colour layers from mineral-rich groundwater. Polished slices are sold as decorative specimens.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "antimatter_trace": {
+    "name": "Antimatter Trace",
+    "description": "Nanogram quantities of antihydrogen produced and magnetically trapped in a particle accelerator. Extraordinary value.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "rough_garnet": {
+    "name": "Rough Garnet",
+    "description": "Garnet crystal recovered from kimberlite processing and alluvial gravel. Deep red pyrope variety most common.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "rough_peridot": {
+    "name": "Rough Peridot",
+    "description": "Gem-quality olivine from volcanic and mantle-derived rock. Olive-green colour; only gem formed deep in the mantle.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "exotic_isotope": {
+    "name": "Exotic Isotope",
+    "description": "Short-lived radioactive isotope produced in particle accelerator collisions. Used in medical imaging and nuclear research.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "humanoid_robot": {
+    "name": "Humanoid Robot",
+    "description": "Bipedal autonomous robot with dexterous hands, computer vision, and AI-driven motion planning. Capable of general-purpose physical labor.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "chalcedony": {
+    "name": "Chalcedony",
+    "description": "Microcrystalline quartz from sedimentary and volcanic deposits. Waxy lustre; includes blue and white varieties used in carving and cabochons.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "compute_credit": {
+    "name": "Compute Credit",
+    "description": "A high-tech compute credit, used in electronics, computing, and advanced manufacturing.",
+    "category": "components",
+    "base_price": 0
+  },
+  "helium_3": {
+    "name": "Helium-3",
+    "description": "Rare light isotope with applications in quantum computing, neutron detection, and advanced fusion concepts.",
+    "category": "materials",
+    "base_price": 0
+  },
+  "lily": {
+    "name": "Lily",
+    "description": "Elegant long-stemmed flower for arrangements and funerals",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "chrysanthemum": {
+    "name": "Chrysanthemum",
+    "description": "High-volume cut flower; used in teas and arrangements",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "carnation": {
+    "name": "Carnation",
+    "description": "Mass-market cut flower with long vase life",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "rough_amethyst": {
+    "name": "Rough Amethyst",
+    "description": "Purple quartz crystal formed in volcanic geodes. Common and beautiful; sold raw as a specimen or cut into faceted stones.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "bouquet": {
+    "name": "Flower Bouquet",
+    "description": "Mixed fresh-cut arrangement of seasonal flowers",
+    "category": "floral_products",
+    "base_price": 0
+  },
+  "rose": {
+    "name": "Rose",
+    "description": "Prized cut flower; base of rose oil and rose water",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "lavender": {
+    "name": "Lavender",
+    "description": "Aromatic herb-flower; base of lavender essential oil",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "obsidian": {
+    "name": "Obsidian",
+    "description": "Volcanic glass formed from rapidly cooling lava. Deep black with conchoidal fracture; prized as a specimen and for ornamental carving.",
+    "category": "gem",
+    "base_price": 0
+  },
+  "casino_floor_credit": {
+    "name": "Casino Floor Credit",
+    "description": "Prepaid casino floor credits redeemable for table games, slots, and entertainment.",
+    "category": "retail_entertainment",
+    "base_price": 0
+  },
+  "conference_pass": {
+    "name": "Conference Pass",
+    "description": "Full-access pass to a hosted convention or conference event including sessions and exhibits.",
+    "category": "retail_entertainment",
+    "base_price": 0
+  },
+  "duty_free_spirits": {
+    "name": "Duty-Free Spirits",
+    "description": "Premium imported spirits sold duty-free at port-of-entry retail locations.",
+    "category": "retail_shopping",
+    "base_price": 0
+  },
+  "consumer_electronics_bundle": {
+    "name": "Consumer Electronics Bundle",
+    "description": "A curated bundle of consumer electronics including devices, accessories, and warranties.",
+    "category": "retail_shopping",
+    "base_price": 0
+  },
+  "elderflower_cordial": {
+    "name": "Elderflower Cordial",
+    "description": "Light syrup made from elderflowers and sugar",
+    "category": "beverages",
+    "base_price": 0
+  },
+  "spaghetti": {
+    "name": "Spaghetti",
+    "description": "Long thin pasta strands made from durum wheat",
+    "category": "food",
+    "base_price": 0
+  },
+  "peanut_butter_cookie": {
+    "name": "Peanut Butter Cookie",
+    "description": "Classic baked cookie made with creamy peanut butter",
+    "category": "food",
+    "base_price": 0
+  },
+  "mri_machine": {
+    "name": "MRI Machine",
+    "description": "Magnetic resonance imaging scanner using superconducting magnets.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "ct_scanner": {
+    "name": "CT Scanner",
+    "description": "Computed tomography X-ray scanner for medical diagnosis.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "dialysis_machine": {
+    "name": "Dialysis Machine",
+    "description": "Kidney dialysis machine for renal failure patients.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "radiation_therapy_unit": {
+    "name": "Radiation Therapy Unit",
+    "description": "Linear accelerator for cancer radiation treatment.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "surgical_robot": {
+    "name": "Surgical Robot",
+    "description": "Robotic surgery system for minimally invasive procedures.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "standard_room_night": {
+    "name": "Standard Room Night",
+    "description": "One night's accommodation in a standard hotel room including housekeeping and amenities.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "incarceration_contract": {
+    "name": "Incarceration Contract",
+    "description": "A government-issued contract for housing and processing inmates at a detention facility.",
+    "category": "retail_prison",
+    "base_price": 0
+  },
+  "religious_book": {
+    "name": "Religious Text",
+    "description": "A thick, leather-bound spiritual manuscript. High value.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "blessed_sheep": {
+    "name": "Blessed Sheep",
+    "description": "A sheep consecrated through sacred ritual; offered as sacrifice in religious ceremonies.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "sacred_lamb_offering": {
+    "name": "Sacred Lamb Offering",
+    "description": "A ritually slaughtered and dressed lamb offering, prepared according to ancient rites and anointed with salt and beeswax \u2014 presented at consecrated altars as a sacrificial act of devotion.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "liturgical_lamb_light": {
+    "name": "Liturgical Lamb Light",
+    "description": "A devotional tallow candle hand-dipped from rendered lamb fat, scented with cinnamon and vanilla, adorned with a golden pearl and set in richly dyed wax \u2014 lit only during the highest religious ceremonies.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "premium_cocktail": {
+    "name": "Premium Cocktail",
+    "description": "A premium mixed drink crafted with top-shelf spirits, fresh ingredients, and garnishes.",
+    "category": "retail_food",
+    "base_price": 0
+  },
+  "consulting_contract": {
+    "name": "Consulting Contract",
+    "description": "A professional consulting engagement providing expert advisory services to clients.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "customs_clearance_service": {
+    "name": "Customs Clearance Service",
+    "description": "Professional customs brokerage service handling import/export documentation and clearance.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "live_lake_scrolls": {
+    "name": "Live Lake Scrolls",
+    "description": "Extraordinarily rare sacred scrolls inscribed on lambskin vellum with concentrated ink, gilded with golden pearls, sealed in clay jars anointed with precious essential oils, cinnamon and beeswax \u2014 a once-in-a-generation religious artefact of incalculable spiritual and monetary value.",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "canned_lamb": {
+    "name": "Canned Lamb",
+    "description": "Salt-preserved lamb packed in tins \u2014 a durable provisions staple with a long shelf life, traded across supply chains and consumed far from any slaughterhouse.",
+    "category": "food",
+    "base_price": 0
+  },
+  "lamb_stew": {
+    "name": "Lamb Stew",
+    "description": "A hearty slow-cooked stew of tender lamb, root vegetables, and lard-based broth \u2014 a warming staple served at soup kitchens and roadside inns.",
+    "category": "food",
+    "base_price": 0
+  },
+  "satay": {
+    "name": "Satay",
+    "description": "Grilled skewered pork served with a rich peanut dipping sauce",
+    "category": "food",
+    "base_price": 0
+  },
+  "coworking_membership": {
+    "name": "Coworking Membership",
+    "description": "A monthly membership granting access to a shared coworking office space and amenities.",
+    "category": "retail_service",
+    "base_price": 0
+  },
+  "day_pass": {
+    "name": "Theme Park Day Pass",
+    "description": "A single-day admission ticket granting full access to all theme park rides and attractions.",
+    "category": "retail_entertainment",
+    "base_price": 0
+  },
+  "bulk_grocery_pallet": {
+    "name": "Bulk Grocery Pallet",
+    "description": "A wholesale pallet of assorted grocery goods sold in bulk to retailers and institutions.",
+    "category": "retail_shopping",
+    "base_price": 0
+  },
+  "3d_printer_industrial": {
+    "name": "Industrial 3D Printer",
+    "description": "Large-format metal or polymer additive manufacturing system.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "cnc_machine": {
+    "name": "CNC Machine",
+    "description": "Computer numerically controlled precision machining center.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "industrial_heater": {
+    "name": "Industrial Heater",
+    "description": "High-wattage nichrome heating unit for industrial processes and HVAC.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "industrial_robot_arm": {
+    "name": "Industrial Robot Arm",
+    "description": "6-axis robotic manipulator for manufacturing automation.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "nuclear_waste_container": {
+    "name": "Nuclear Waste Container",
+    "description": "Shielded dry cask for spent nuclear fuel storage.",
+    "category": "industrial",
+    "base_price": 0
+  },
+  "sunflower": {
+    "name": "Sunflower",
+    "description": "Large bright flower; seeds yield sunflower oil",
+    "category": "flowers",
+    "base_price": 0
+  },
+  "rare_orchid_specimen": {
+    "name": "Rare Orchid Specimen",
+    "description": "Museum-quality potted exotic orchid from botanical gardens",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "signature_perfume": {
+    "name": "Signature Perfume",
+    "description": "Hand-crafted luxury fragrance from rose and jasmine absolutes",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "artisan_fragrance": {
+    "name": "Artisan Fragrance",
+    "description": "Small-batch aromatic blend of lavender and rose water",
+    "category": "luxury",
+    "base_price": 0
+  },
+  "cologne": {
+    "name": "Cologne",
+    "description": "Fresh eau de cologne of neroli, jasmine and lavender",
+    "category": "luxury",
+    "base_price": 0
   }
 }
