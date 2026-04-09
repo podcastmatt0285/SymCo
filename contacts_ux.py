@@ -89,13 +89,16 @@ def contacts_page(
 
     # ── header ──
     html = f'''
+    <style>
+    @media(max-width:640px){{.contacts-grid{{grid-template-columns:1fr!important;}}}}
+    </style>
     <a href="/p2p/dashboard" style="color:#38bdf8;">&larr; P2P Dashboard</a>
     <h1 style="margin:8px 0 4px 0;">Contacts</h1>
     <p style="color:#64748b;margin-bottom:20px;">
         Your private contact list. Contact cards reveal detailed player information visible only to mutual contacts.
     </p>
     {banner}
-    <div style="display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;">
+    <div class="contacts-grid" style="display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start;">
     '''
 
     # ═══════════════════════ LEFT COLUMN ═══════════════════════

@@ -848,19 +848,36 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 
             /* Responsive utilities */
             @media (max-width: 640px) {{
-                .container {{ padding: 16px 12px; }}
-                .card {{ padding: 16px; }}
+                body {{ font-size: 15px; }}
+                .container {{ padding: 12px 10px; }}
+                .card {{ padding: 14px; }}
                 input, select {{ font-size: 16px; }}
 
-                /* Stack grids on mobile */
-                div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {{
+                /* Stack all common multi-column grid patterns on mobile */
+                div[style*="display: grid"][style*="1fr 1fr"],
+                div[style*="display: grid"][style*="2fr 1fr"],
+                div[style*="display: grid"][style*="1fr 2fr"],
+                div[style*="display: grid"][style*="3fr 1fr"],
+                div[style*="display: grid"][style*="1fr 3fr"],
+                div[style*="display: grid"][style*="repeat(2,"],
+                div[style*="display: grid"][style*="repeat(3,"],
+                div[style*="display: grid"][style*="repeat(4,"],
+                div[style*="display: grid"][style*="repeat(5,"],
+                div[style*="display: grid"][style*="repeat(2, "],
+                div[style*="display: grid"][style*="repeat(3, "],
+                div[style*="display: grid"][style*="repeat(4, "],
+                div[style*="display: grid"][style*="repeat(5, "] {{
                     display: flex !important;
                     flex-direction: column !important;
                 }}
 
-                /* Make flex containers wrap */
-                div[style*="display: flex"]:not(.header-right) {{
-                    flex-wrap: wrap !important;
+                /* Tables: horizontal scroll instead of breaking layout */
+                table {{
+                    display: block;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    width: 100%;
+                    max-width: 100%;
                 }}
 
                 /* Stack forms vertically */
@@ -887,6 +904,12 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                     background: #1e293b !important;
                     border-radius: 3px !important;
                 }}
+            }}
+
+            @media (max-width: 480px) {{
+                body {{ font-size: 14px; }}
+                .container {{ padding: 10px 8px; }}
+                .card {{ padding: 10px; }}
             }}
 
         </style>
@@ -9529,6 +9552,10 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
     if device_id:
         pid = _WIDGET_DEVICE_MAP.get(device_id)
         if not pid:
+            # Reload from file in case another worker wrote the link after our last load
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
             return JSONResponse({"error": "not authenticated"}, status_code=401)
         import auth as _auth
         db = _auth.get_db()
@@ -9576,8 +9603,26 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
         if "estate" in t or "will" in t or "inheritance" in t: return "/estate"
         return "/stats"
 
+    # Resolve balance the same way shell() does: use PlayerCurrencyBalance,
+    # not the legacy player.cash_balance column (which may be 0 / stale).
+    try:
+        from reserve_banks import (get_usd_balance as _get_usd_bal,
+                                   get_player_legal_tender as _get_tender,
+                                   get_player_currency_balances as _get_balances)
+        _tender = _get_tender(player.id)
+        if _tender == "USD":
+            _bal_str = fmt_usd(_get_usd_bal(player.id), _disp, precision=2)
+        else:
+            _bal_str = fmt_usd(_get_usd_bal(player.id), _disp, precision=2)  # fallback
+            for _b in _get_balances(player.id):
+                if _b["currency_code"] == _tender:
+                    _bal_str = f"{_b['currency_symbol']}{_b['balance']:,.2f}\u00a0{_tender}"
+                    break
+    except Exception:
+        _bal_str = fmt_usd(player.cash_balance or 0.0, _disp, precision=2)
+
     result = {
-        "balance": fmt_usd(player.cash_balance, _disp, precision=0),
+        "balance": _bal_str,
         "last_alert": "No recent activity",
         "last_alert_time": "",
         "last_alert_url": "/stats",
@@ -9696,6 +9741,9 @@ def api_widget_wbc50(device_id: Optional[str] = None,
     if device_id:
         pid = _WIDGET_DEVICE_MAP.get(device_id)
         if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
             return JSONResponse({"error": "not authenticated"}, status_code=401)
         import auth as _auth
         _db = _auth.get_db()
@@ -9755,6 +9803,9 @@ def api_widget_chat(room: str = "global",
     # Auth — same pattern as api_widget_data
     if device_id:
         pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
         if not pid:
             return JSONResponse({"error": "not authenticated"}, status_code=401)
         import auth as _auth
