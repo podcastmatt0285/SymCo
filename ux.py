@@ -9552,6 +9552,10 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
     if device_id:
         pid = _WIDGET_DEVICE_MAP.get(device_id)
         if not pid:
+            # Reload from file in case another worker wrote the link after our last load
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
             return JSONResponse({"error": "not authenticated"}, status_code=401)
         import auth as _auth
         db = _auth.get_db()
@@ -9599,8 +9603,26 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
         if "estate" in t or "will" in t or "inheritance" in t: return "/estate"
         return "/stats"
 
+    # Resolve balance the same way shell() does: use PlayerCurrencyBalance,
+    # not the legacy player.cash_balance column (which may be 0 / stale).
+    try:
+        from reserve_banks import (get_usd_balance as _get_usd_bal,
+                                   get_player_legal_tender as _get_tender,
+                                   get_player_currency_balances as _get_balances)
+        _tender = _get_tender(player.id)
+        if _tender == "USD":
+            _bal_str = fmt_usd(_get_usd_bal(player.id), _disp, precision=2)
+        else:
+            _bal_str = fmt_usd(_get_usd_bal(player.id), _disp, precision=2)  # fallback
+            for _b in _get_balances(player.id):
+                if _b["currency_code"] == _tender:
+                    _bal_str = f"{_b['currency_symbol']}{_b['balance']:,.2f}\u00a0{_tender}"
+                    break
+    except Exception:
+        _bal_str = fmt_usd(player.cash_balance or 0.0, _disp, precision=2)
+
     result = {
-        "balance": fmt_usd(player.cash_balance, _disp, precision=0),
+        "balance": _bal_str,
         "last_alert": "No recent activity",
         "last_alert_time": "",
         "last_alert_url": "/stats",
@@ -9719,6 +9741,9 @@ def api_widget_wbc50(device_id: Optional[str] = None,
     if device_id:
         pid = _WIDGET_DEVICE_MAP.get(device_id)
         if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
             return JSONResponse({"error": "not authenticated"}, status_code=401)
         import auth as _auth
         _db = _auth.get_db()
@@ -9778,6 +9803,9 @@ def api_widget_chat(room: str = "global",
     # Auth — same pattern as api_widget_data
     if device_id:
         pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
         if not pid:
             return JSONResponse({"error": "not authenticated"}, status_code=401)
         import auth as _auth
