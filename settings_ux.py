@@ -259,6 +259,7 @@ def _audio_tab() -> str:
 }
 .rp-slogan-anim { animation:rp-fade-slogan 4s ease-in-out; }
 @keyframes rp-spin-slow { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@media(max-width:600px){.rp-body{grid-template-columns:1fr;}.rp-left{flex-direction:row;flex-wrap:wrap;gap:12px;}.rp-artwork{max-width:160px;}}
 </style>
 
 <div id="rp-wrap">

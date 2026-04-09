@@ -4143,6 +4143,55 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
 .rb-bond-sold{{padding:2px 7px;background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.25);border-radius:10px;font-size:.68rem;font-weight:600;}}
 .rb-bond-empty{{color:#607098;font-style:italic;font-size:0.78rem;padding:12px 8px;}}
 .wb-reserve-hdr{{display:grid;grid-template-columns:36px 52px 1fr 36px 80px 100px 90px 120px 24px;gap:10px;padding:4px 14px;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}}
+/* ── Mobile responsive ── */
+@media(max-width:640px){{
+  /* Hide dense column-header rows that won't align in card layout */
+  .wb-reserve-hdr{{display:none;}}
+  .wb-share-hdr{{display:none;}}
+  .rb-bond-hdr{{display:none;}}
+  /* Reserve bank header: 2-row card layout on mobile */
+  .rb-header{{
+    grid-template-columns:auto auto 1fr auto;
+    grid-template-rows:auto auto;
+    gap:4px 8px;
+  }}
+  .rb-header>*:nth-child(1){{grid-area:1/1;}}
+  .rb-header>*:nth-child(2){{grid-area:1/2;}}
+  .rb-header>*:nth-child(3){{grid-area:1/3;font-size:0.78rem;line-height:1.3;}}
+  .rb-header>*:nth-child(4){{grid-area:2/1;font-size:0.85rem;}}
+  .rb-header>*:nth-child(5){{grid-area:2/2;font-size:0.78rem;}}
+  .rb-header>*:nth-child(6){{grid-area:2/3;font-size:0.75rem;color:#607098;}}
+  .rb-header>*:nth-child(7){{display:none;}}
+  .rb-header>*:nth-child(8){{display:none;}}
+  .rb-header>*:nth-child(9){{grid-area:1/4;grid-row:1/3;align-self:center;}}
+  /* Share data rows: compact 2-column card layout */
+  .wb-share-row{{
+    grid-template-columns:1fr auto;
+    grid-template-rows:auto auto;
+    gap:3px 8px;
+  }}
+  .wb-share-ticker{{grid-area:1/1;}}
+  .wb-share-name{{grid-area:2/1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
+  .wb-share-class{{display:none;}}
+  .wb-share-price{{grid-area:1/2;text-align:right;}}
+  .wb-share-ipo{{display:none;}}
+  .wb-share-float{{display:none;}}
+  .wb-share-vol{{grid-area:2/2;text-align:right;font-size:0.7rem;}}
+  /* Bond rows: simplified 2-column layout (holder + yield / face value + status) */
+  .rb-bond-row{{
+    grid-template-columns:1fr auto;
+    grid-template-rows:auto auto;
+    gap:3px 8px;
+  }}
+  .rb-bond-row>*:nth-child(1){{grid-area:1/1;}}
+  .rb-bond-row>*:nth-child(2){{grid-area:2/1;}}
+  .rb-bond-row>*:nth-child(3){{grid-area:2/2;text-align:right;}}
+  .rb-bond-row>*:nth-child(4){{display:none;}}
+  .rb-bond-row>*:nth-child(5){{display:none;}}
+  .rb-bond-row>*:nth-child(6){{display:none;}}
+  .rb-bond-row>*:nth-child(7){{grid-area:1/2;text-align:right;}}
+  /* Drawer columns: already handled by existing 900px breakpoint */
+}}
 </style>
 
 <h1 class="wpt">🏦 Banks</h1>
@@ -4169,7 +4218,7 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
     <span class="ws-sh-line"></span>
   </div>
   <div style="margin-bottom:8px;">
-    <div class="wb-share-row" style="background:#0a1020;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;">
+    <div class="wb-share-row wb-share-hdr" style="background:#0a1020;font-size:0.7rem;color:#607098;text-transform:uppercase;letter-spacing:.05em;">
       <div>Ticker</div><div>Company</div><div>Class</div><div>Price</div><div>IPO Price</div><div>Float</div><div>Volume</div>
     </div>
     {listed_html}
