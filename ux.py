@@ -848,19 +848,36 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 
             /* Responsive utilities */
             @media (max-width: 640px) {{
-                .container {{ padding: 16px 12px; }}
-                .card {{ padding: 16px; }}
+                body {{ font-size: 15px; }}
+                .container {{ padding: 12px 10px; }}
+                .card {{ padding: 14px; }}
                 input, select {{ font-size: 16px; }}
 
-                /* Stack grids on mobile */
-                div[style*="display: grid"][style*="grid-template-columns: 1fr 1fr"] {{
+                /* Stack all common multi-column grid patterns on mobile */
+                div[style*="display: grid"][style*="1fr 1fr"],
+                div[style*="display: grid"][style*="2fr 1fr"],
+                div[style*="display: grid"][style*="1fr 2fr"],
+                div[style*="display: grid"][style*="3fr 1fr"],
+                div[style*="display: grid"][style*="1fr 3fr"],
+                div[style*="display: grid"][style*="repeat(2,"],
+                div[style*="display: grid"][style*="repeat(3,"],
+                div[style*="display: grid"][style*="repeat(4,"],
+                div[style*="display: grid"][style*="repeat(5,"],
+                div[style*="display: grid"][style*="repeat(2, "],
+                div[style*="display: grid"][style*="repeat(3, "],
+                div[style*="display: grid"][style*="repeat(4, "],
+                div[style*="display: grid"][style*="repeat(5, "] {{
                     display: flex !important;
                     flex-direction: column !important;
                 }}
 
-                /* Make flex containers wrap */
-                div[style*="display: flex"]:not(.header-right) {{
-                    flex-wrap: wrap !important;
+                /* Tables: horizontal scroll instead of breaking layout */
+                table {{
+                    display: block;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    width: 100%;
+                    max-width: 100%;
                 }}
 
                 /* Stack forms vertically */
@@ -887,6 +904,12 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
                     background: #1e293b !important;
                     border-radius: 3px !important;
                 }}
+            }}
+
+            @media (max-width: 480px) {{
+                body {{ font-size: 14px; }}
+                .container {{ padding: 10px 8px; }}
+                .card {{ padding: 10px; }}
             }}
 
         </style>
