@@ -4487,7 +4487,7 @@ def brokerage_company_detail(ticker: str, session_token: Optional[str] = Cookie(
         from banks.brokerage_firm import (
             CompanyShares, ShareholderPosition, CompanyEarningsReport,
             CompanyProposal, PriceHistory, get_db as get_firm_db,
-            SHARE_CLASS_DESCRIPTIONS, IPO_CONFIG, IPOType, LOYALTY_TIERS,
+            SHARE_CLASS_DESCRIPTIONS,
         )
         from auth import Player, get_db as get_auth_db
 
@@ -4505,7 +4505,6 @@ def brokerage_company_detail(ticker: str, session_token: Optional[str] = Cookie(
             founder_name = founder.business_name if founder else f"Player {company.founder_id}"
 
             # Price history (last 14 data points)
-            from datetime import timedelta
             cutoff = datetime.utcnow() - timedelta(days=14)
             price_history = db.query(PriceHistory).filter(
                 PriceHistory.company_shares_id == company.id,
@@ -4538,15 +4537,18 @@ def brokerage_company_detail(ticker: str, session_token: Optional[str] = Cookie(
                 ShareholderPosition.shares_owned > 0,
             ).order_by(ShareholderPosition.shares_owned.desc()).limit(10).all()
 
-            # Player's own position + loyalty
-            my_pos = None
+            # Player's own position + loyalty (may not be in top 10)
+            my_pos = next((p for p in top_holders if p.player_id == player.id), None)
+            if my_pos is None:
+                my_pos = db.query(ShareholderPosition).filter(
+                    ShareholderPosition.company_shares_id == company.id,
+                    ShareholderPosition.player_id == player.id,
+                    ShareholderPosition.shares_owned > 0,
+                ).first()
             my_loyalty_label = "New holder"
-            for p in top_holders:
-                if p.player_id == player.id:
-                    my_pos = p
-                    from banks.brokerage_firm import get_loyalty_tier
-                    _, my_loyalty_label = get_loyalty_tier(p.first_held_at)
-                    break
+            if my_pos:
+                from banks.brokerage_firm import get_loyalty_tier
+                _, my_loyalty_label = get_loyalty_tier(my_pos.first_held_at)
 
             # Open proposals
             open_proposals = db.query(CompanyProposal).filter(

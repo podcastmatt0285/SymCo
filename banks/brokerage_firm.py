@@ -3742,22 +3742,43 @@ def process_dividends(current_tick: int):
 
 def _process_cash_dividend(company, config, db):
     from auth import Player, get_db as get_auth_db
-    
+
     amount_per_share = config.get("amount", 0.01)
-    total_dividend = amount_per_share * company.shares_outstanding
-    
+
+    # Pre-compute per-position amounts (including loyalty multipliers) so we
+    # charge the founder the true total rather than the unadjusted base total.
+    positions = db.query(ShareholderPosition).filter(
+        ShareholderPosition.company_shares_id == company.id,
+        ShareholderPosition.shares_owned > 0
+    ).all()
+
+    position_payouts = []  # [(position, amount, loyalty_mult, loyalty_label)]
+    total_adjusted = 0.0
+    for position in positions:
+        # Firm receives base rate only (no loyalty bonus for the brokerage itself)
+        if position.player_id == BANK_PLAYER_ID:
+            mult, label = 1.0, ""
+        else:
+            mult, label = get_loyalty_tier(position.first_held_at)
+        amt = position.shares_owned * amount_per_share * mult
+        position_payouts.append((position, amt, mult, label))
+        total_adjusted += amt
+
+    if total_adjusted < 0.01:
+        return
+
     auth_db = get_auth_db()
     try:
         founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
-        
+
         from reserve_banks import can_afford_usd, spend_player_funds
-        if not founder or not can_afford_usd(company.founder_id, total_dividend):
+        if not founder or not can_afford_usd(company.founder_id, total_adjusted):
             company.consecutive_dividend_payouts = 0
             company.dividend_warning_active = True
             company.last_dividend_warning = datetime.utcnow()
             modify_credit_score(company.founder_id, "dividend_missed")
             return
-        ok, _ = spend_player_funds(founder.id, total_dividend)
+        ok, _ = spend_player_funds(founder.id, total_adjusted)
         if not ok:
             company.consecutive_dividend_payouts = 0
             company.dividend_warning_active = True
@@ -3765,7 +3786,7 @@ def _process_cash_dividend(company, config, db):
             return
         try:
             from stats_ux import log_transaction as _lt
-            _lt(company.founder_id, "dividend_paid", "money", -total_dividend,
+            _lt(company.founder_id, "dividend_paid", "money", -total_adjusted,
                 f"Dividend paid: {company.ticker_symbol} — {amount_per_share:.4f}/share",
                 reference_id=str(company.id))
         except Exception:
@@ -3774,14 +3795,7 @@ def _process_cash_dividend(company, config, db):
     finally:
         auth_db.close()
 
-    positions = db.query(ShareholderPosition).filter(
-        ShareholderPosition.company_shares_id == company.id,
-        ShareholderPosition.shares_owned > 0
-    ).all()
-
-    for position in positions:
-        loyalty_mult, loyalty_label = get_loyalty_tier(position.first_held_at)
-        dividend_amount = position.shares_owned * amount_per_share * loyalty_mult
+    for position, dividend_amount, loyalty_mult, loyalty_label in position_payouts:
 
         if dividend_amount < 0.01:
             continue
