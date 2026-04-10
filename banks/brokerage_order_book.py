@@ -310,12 +310,20 @@ def place_limit_order(
                 auth_db.close()
         
         else:  # SELL
+            # Enforce post-IPO lockup: founder cannot sell before lockup expires
+            if player_id == company.founder_id and company.lockup_expires_at:
+                if datetime.utcnow() < company.lockup_expires_at:
+                    remaining = (company.lockup_expires_at - datetime.utcnow()).days + 1
+                    print(f"[OrderBook] Founder lockup active for {company.ticker_symbol}: "
+                          f"{remaining} day(s) remaining")
+                    return None
+
             # Reserve shares for sell order
             available_shares = get_player_shares(player_id, company_shares_id)
             if available_shares < quantity:
                 print(f"[OrderBook] Insufficient shares: need {quantity}, have {available_shares}")
                 return None
-            
+
             order.reserved_shares = quantity
             # Shares stay in player's position, just marked as reserved
         
@@ -626,7 +634,8 @@ def execute_trade(
                 is_margin_position=buy_order.use_margin,
                 margin_shares=0,
                 margin_debt=0.0,
-                margin_multiplier_used=buy_order.margin_multiplier
+                margin_multiplier_used=buy_order.margin_multiplier,
+                first_held_at=datetime.utcnow(),
             )
             db.add(buyer_position)
         

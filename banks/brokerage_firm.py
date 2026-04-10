@@ -295,6 +295,90 @@ IPO_CONFIG = {
     },
 }
 
+# Lockup duration (days) per IPO type — founder cannot sell before expiry
+IPO_LOCKUP_DAYS = {
+    "direct_listing":   15,
+    "firm_underwritten": 30,
+    "income_shares":    30,
+    "preferred_offering": 30,
+    "dual_class":       60,
+    "series_a_growth":  60,
+    "quad_class":       90,
+}
+
+# Monthly listing fee charged to founder; 3 misses triggers distressed status
+MONTHLY_LISTING_FEE = 500.0
+LISTING_FEE_DISTRESSED_THRESHOLD = 3
+
+# Sector keywords mapped from business_type key substrings (checked in order)
+_SECTOR_KEYWORDS = [
+    ("Technology",       ["semiconductor", "quantum", "laser", "data_center", "robotics",
+                          "satellite", "radar", "particle", "space_launch", "server_farm",
+                          "electronics", "telecom", "fiber", "display", "wbc_chip",
+                          "oscillator", "led_fab", "circuit", "solar_panel"]),
+    ("Energy",           ["oil_refinery", "oil_well", "refinery", "energy", "solar",
+                          "nuclear", "wind_farm", "coal", "petroleum"]),
+    ("Mining",           ["mine", "quarry", "alluvial", "mineral_processing",
+                          "gem_mine", "lapidary", "crystal_shop", "tallow_works"]),
+    ("Agriculture",      ["farm", "orchard", "vineyard", "greenhouse", "plantation",
+                          "fishery", "aquaculture", "apiary", "flower_farm", "tea"]),
+    ("Food & Beverage",  ["brewery", "winery", "distillery", "bakery", "kitchen",
+                          "cannery", "dairy", "slaughterhouse", "smokehouse",
+                          "food", "restaurant", "cart", "truck", "coffee"]),
+    ("Manufacturing",    ["factory", "plant", "forge", "foundry", "workshop",
+                          "mill", "press", "works", "alloy", "chemical",
+                          "polymer", "glass", "textile", "paper", "rubber"]),
+    ("Healthcare",       ["hospital", "pharmacy", "medical", "clinic", "biotech",
+                          "pharmaceutical", "lab", "extract"]),
+    ("Retail & Commerce", ["shop", "store", "market", "mall", "boutique", "bazaar",
+                           "showroom", "duty_free", "superstore", "warehouse"]),
+    ("Finance",          ["bank", "exchange", "fund", "brokerage", "insurance", "mint"]),
+    ("Construction",     ["construction", "lumber", "sawmill", "quarry", "cement",
+                          "brick", "tile", "plumbing"]),
+    ("Transport",        ["transport", "logistics", "port", "shipyard", "dock",
+                          "railway", "airline", "freight"]),
+    ("Real Estate",      ["estate", "property", "hotel", "resort", "casino"]),
+    ("Media & Services", ["studio", "press", "printing", "publishing", "media",
+                          "theater", "arena", "service"]),
+]
+
+def derive_sector(business_type_key: str) -> str:
+    """Return a sector label derived from the business type key."""
+    key = (business_type_key or "").lower()
+    for sector, keywords in _SECTOR_KEYWORDS:
+        if any(kw in key for kw in keywords):
+            return sector
+    return "General"
+
+# Human-readable descriptions for share classes shown in tooltips
+SHARE_CLASS_DESCRIPTIONS = {
+    "common":    "1 vote/share · standard economic rights",
+    "preferred": "Priority in liquidation (1.5×) · fixed quarterly dividend · callable",
+    "series_a":  "Growth-round equity · 1 vote/share · no fixed dividend",
+    "class_a":   "Founder super-shares · 10× voting · non-lendable · not shortable",
+    "class_b":   "Public voting shares · 1 vote/share · full economic rights",
+    "class_c":   "Preferred dividend shares · 0 votes · 1.2× liquidation priority",
+    "class_d":   "Non-voting equity · 0 votes · participates in appreciation",
+}
+
+# Loyalty tier multipliers applied at dividend time
+LOYALTY_TIERS = [
+    (90, 1.25, "Long-term holder (90 d)"),
+    (30, 1.10, "Established holder (30 d)"),
+    (7,  1.00, "Active holder (7 d)"),
+    (0,  1.00, "New holder"),
+]
+
+def get_loyalty_tier(first_held_at) -> tuple:
+    """Return (multiplier, label) for a shareholder based on holding duration."""
+    if not first_held_at:
+        return 1.00, "New holder"
+    days = (datetime.utcnow() - first_held_at).days
+    for min_days, mult, label in LOYALTY_TIERS:
+        if days >= min_days:
+            return mult, label
+    return 1.00, "New holder"
+
 
 # ==========================
 # DATABASE MODELS
@@ -427,6 +511,26 @@ class CompanyShares(Base):
     parent_company_id = Column(Integer, nullable=True, index=True)
     share_class_label = Column(String, default="main")  # "main" | "class_c" | "class_d"
 
+    # ── Sector classification (auto-derived at IPO) ──
+    sector = Column(String, nullable=True)
+
+    # ── IPO lockup: founder cannot sell before this date ──
+    lockup_expires_at = Column(DateTime, nullable=True)
+
+    # ── Profit siphon: auto-divert % of founder revenue → escrow ──
+    profit_siphon_rate = Column(Float, default=0.0)       # 0.0–0.10 (0–10 %)
+    dividend_escrow_balance = Column(Float, default=0.0)  # accumulated, released by vote
+
+    # ── Monthly listing fee tracking ──
+    listing_fee_next_due = Column(DateTime, nullable=True)
+    listing_fee_missed_count = Column(Integer, default=0)
+
+    # ── Rolling revenue for earnings display ──
+    revenue_7d  = Column(Float, default=0.0)
+    revenue_30d = Column(Float, default=0.0)
+    revenue_reset_7d  = Column(DateTime, nullable=True)
+    revenue_reset_30d = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -449,8 +553,28 @@ class ShareholderPosition(Base):
     margin_interest_accrued = Column(Float, default=0.0)
     last_interest_accrual = Column(DateTime, nullable=True)
     
+    # ── Loyalty: when this player first held any shares in this company ──
+    first_held_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CompanyEarningsReport(Base):
+    """Weekly earnings snapshot for investor visibility."""
+    __tablename__ = "company_earnings_reports"
+
+    id = Column(Integer, primary_key=True)
+    company_shares_id = Column(Integer, ForeignKey("company_shares.id"), index=True, nullable=False)
+    period_end = Column(DateTime, nullable=False)
+    period_days = Column(Integer, default=7)
+
+    total_revenue    = Column(Float, default=0.0)
+    eps              = Column(Float, default=0.0)   # earnings per share
+    payout_ratio     = Column(Float, default=0.0)   # dividends paid / earnings
+    dividends_paid   = Column(Float, default=0.0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CompanyProposal(Base):
@@ -463,13 +587,15 @@ class CompanyProposal(Base):
 
     proposal_type = Column(String, nullable=False)
     # "dividend_change" | "secondary_offering" | "trading_halt" | "custom"
+    # "force_dividend_from_escrow"  ← minority protection: ignores 10× founder vote weight
     title = Column(String, nullable=False)
     description = Column(String, nullable=False)
     # Structured parameter for executable proposals. Stored as a JSON dict.
-    # dividend_change:     {"new_rate": 0.08}   (annual rate as decimal)
-    # secondary_offering:  {"shares": 50000}    (new shares to add to float)
-    # trading_halt:        {"hours": 24}        (duration)
-    # custom:              {}
+    # dividend_change:            {"new_rate": 0.08}   (annual rate as decimal)
+    # secondary_offering:         {"shares": 50000}    (new shares to add to float)
+    # trading_halt:               {"hours": 24}        (duration)
+    # force_dividend_from_escrow: {"amount": 10000}    (USD to release from escrow)
+    # custom:                     {}
     proposal_param = Column(JSON, nullable=True, default=dict)
 
     yes_votes = Column(Float, default=0.0)   # weighted vote tally
@@ -1380,6 +1506,39 @@ def create_player_ipo(
         db.close()
 
 
+def _finalize_new_company(db, company, ipo_type_val: str, founder_id: int):
+    """Set post-creation defaults shared by all IPO types."""
+    # Lockup
+    lockup_days = IPO_LOCKUP_DAYS.get(ipo_type_val, 30)
+    company.lockup_expires_at = datetime.utcnow() + timedelta(days=lockup_days)
+    # Monthly listing fee starts one month from now
+    company.listing_fee_next_due = datetime.utcnow() + timedelta(days=30)
+    # Reset revenue windows
+    now = datetime.utcnow()
+    company.revenue_reset_7d  = now
+    company.revenue_reset_30d = now
+    # Derive sector from founder's businesses
+    try:
+        from business import Business, BUSINESS_TYPES, get_district_business_types
+        from land import get_db as get_land_db
+        land_db = get_land_db()
+        try:
+            bizzes = land_db.query(Business).filter(
+                Business.owner_id == founder_id, Business.is_active == True
+            ).all()
+        finally:
+            land_db.close()
+        all_types = {**BUSINESS_TYPES, **get_district_business_types()}
+        if bizzes:
+            from collections import Counter
+            type_counts = Counter(b.business_type for b in bizzes)
+            most_common_type = type_counts.most_common(1)[0][0]
+            company.sector = derive_sector(most_common_type)
+    except Exception:
+        company.sector = "General"
+    db.commit()
+
+
 def _process_direct_listing_ipo(db, founder_id, company_name, ticker_symbol, config,
                                  shares_to_offer, total_shares, share_price, share_class,
                                  dividend_config, total_valuation):
@@ -1424,13 +1583,15 @@ def _process_direct_listing_ipo(db, founder_id, company_name, ticker_symbol, con
     db.add(company)
     db.commit()
     db.refresh(company)
-    
+    _finalize_new_company(db, company, "direct_listing", founder_id)
+
     founder_position = ShareholderPosition(
         player_id=founder_id,
         company_shares_id=company.id,
         shares_owned=total_shares,
         shares_available_to_lend=total_shares,
-        average_cost_basis=0.0
+        average_cost_basis=0.0,
+        first_held_at=datetime.utcnow(),
     )
     db.add(founder_position)
     db.commit()
@@ -1500,7 +1661,8 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
     db.add(company)
     db.commit()
     db.refresh(company)
-    
+    _finalize_new_company(db, company, ipo_type.value, founder_id)
+
     from reserve_banks import credit_usd
     credit_usd(founder_id, total_cost)
 
@@ -1511,7 +1673,8 @@ def _process_underwritten_ipo(db, founder_id, company_name, ticker_symbol, ipo_t
             company_shares_id=company.id,
             shares_owned=founder_shares,
             shares_available_to_lend=founder_shares,
-            average_cost_basis=0.0
+            average_cost_basis=0.0,
+            first_held_at=datetime.utcnow(),
         )
         db.add(founder_position)
 
@@ -1592,7 +1755,8 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.add(company)
     db.commit()
     db.refresh(company)
-    
+    _finalize_new_company(db, company, "dual_class", founder_id)
+
     from reserve_banks import credit_usd
     credit_usd(founder_id, total_cost)
 
@@ -1602,7 +1766,8 @@ def _process_dual_class_ipo(db, founder_id, company_name, ticker_symbol, config,
             company_shares_id=company.id,
             shares_owned=class_a_shares,
             shares_available_to_lend=0,
-            average_cost_basis=0.0
+            average_cost_basis=0.0,
+            first_held_at=datetime.utcnow(),
         )
         db.add(founder_position)
     
@@ -1684,6 +1849,7 @@ def _process_preferred_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.add(company)
     db.commit()
     db.refresh(company)
+    _finalize_new_company(db, company, "preferred_offering", founder_id)
 
     from reserve_banks import credit_usd
     credit_usd(founder_id, total_cost)
@@ -1696,6 +1862,7 @@ def _process_preferred_ipo(db, founder_id, company_name, ticker_symbol, config,
             shares_owned=founder_shares,
             shares_available_to_lend=founder_shares,
             average_cost_basis=0.0,
+            first_held_at=datetime.utcnow(),
         ))
     db.add(ShareholderPosition(
         player_id=BANK_PLAYER_ID,
@@ -1764,6 +1931,7 @@ def _process_series_a_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.add(company)
     db.commit()
     db.refresh(company)
+    _finalize_new_company(db, company, "series_a_growth", founder_id)
 
     from reserve_banks import credit_usd
     credit_usd(founder_id, total_payout)
@@ -1776,6 +1944,7 @@ def _process_series_a_ipo(db, founder_id, company_name, ticker_symbol, config,
             shares_owned=founder_shares,
             shares_available_to_lend=founder_shares,
             average_cost_basis=0.0,
+            first_held_at=datetime.utcnow(),
         ))
     db.add(ShareholderPosition(
         player_id=BANK_PLAYER_ID,
@@ -1866,6 +2035,7 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.add(company)
     db.commit()
     db.refresh(company)
+    _finalize_new_company(db, company, "quad_class", founder_id)
 
     from reserve_banks import credit_usd
     credit_usd(founder_id, total_payout)
@@ -1878,6 +2048,7 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
             shares_owned=class_a_shares,
             shares_available_to_lend=0,
             average_cost_basis=0.0,
+            first_held_at=datetime.utcnow(),
         ))
 
     # Class B: 60% of offered shares — public voting common
@@ -2208,6 +2379,12 @@ def cast_vote(proposal_id: int, voter_id: int, vote: bool):
         if power <= 0:
             return False, "Your share class carries no voting rights."
 
+        # Minority protection: founder's 10× super-vote is neutralised for escrow releases
+        if (proposal.proposal_type == "force_dividend_from_escrow"
+                and voter_id == company.founder_id
+                and company.is_dual_class):
+            power = pos.shares_owned  # cap to 1× regardless of share class
+
         cv = CompanyVote(
             proposal_id=proposal_id,
             voter_id=voter_id,
@@ -2276,6 +2453,36 @@ def _apply_proposal_effect(db, proposal: "CompanyProposal", company: "CompanySha
         company.trading_halted = True
         company.trading_halted_until = datetime.utcnow() + timedelta(hours=hours)
         return f"Trading halted for {hours} hours"
+
+    elif ptype == "force_dividend_from_escrow":
+        # Minority shareholder protection: release accumulated escrow to shareholders.
+        # The founder's 10× vote is capped to 1× when casting (see cast_vote above).
+        amount = float(param.get("amount", 0.0))
+        if amount <= 0:
+            return None
+        available = company.dividend_escrow_balance or 0.0
+        release = min(amount, available)
+        if release < 0.01:
+            return "No escrow balance to release"
+
+        positions = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == company.id,
+            ShareholderPosition.shares_owned > 0,
+            ShareholderPosition.player_id != company.founder_id,
+            ShareholderPosition.player_id != BANK_PLAYER_ID,
+        ).all()
+
+        public_shares = sum(p.shares_owned for p in positions)
+        if public_shares > 0:
+            per_share = release / public_shares
+            from reserve_banks import credit_usd as _credit_usd
+            for pos in positions:
+                payout = pos.shares_owned * per_share
+                if payout >= 0.01:
+                    _credit_usd(pos.player_id, payout)
+
+        company.dividend_escrow_balance = max(0.0, available - release)
+        return f"Released ${release:,.2f} from escrow to {len(positions)} shareholders"
 
     # custom or unknown: no automatic effect
     return None
@@ -3573,7 +3780,8 @@ def _process_cash_dividend(company, config, db):
     ).all()
 
     for position in positions:
-        dividend_amount = position.shares_owned * amount_per_share
+        loyalty_mult, loyalty_label = get_loyalty_tier(position.first_held_at)
+        dividend_amount = position.shares_owned * amount_per_share * loyalty_mult
 
         if dividend_amount < 0.01:
             continue
@@ -3584,27 +3792,22 @@ def _process_cash_dividend(company, config, db):
                           company_id=company.id)
             continue
 
-        auth_db = get_auth_db()
+        from reserve_banks import credit_usd as _credit_usd
+        _credit_usd(position.player_id, dividend_amount)
         try:
-            player = auth_db.query(Player).filter(Player.id == position.player_id).first()
-            if player:
-                try:
-                    from reserve_banks import convert_to_legal_tender
-                    _amt, _code = convert_to_legal_tender(player.id, dividend_amount)
-                    if _code == "USD":
-                        player.cash_balance += _amt
-                except Exception:
-                    player.cash_balance += dividend_amount
-                auth_db.commit()
-                try:
-                    from stats_ux import log_transaction as _lt
-                    _lt(position.player_id, "dividend", "money", dividend_amount,
-                        f"Dividend received: {company.ticker_symbol} × {position.shares_owned:,.0f} shares",
-                        reference_id=str(company.id))
-                except Exception:
-                    pass
-        finally:
-            auth_db.close()
+            from stats_ux import log_transaction as _lt
+            tier_note = f" [{loyalty_label}]" if loyalty_mult != 1.0 else ""
+            _lt(position.player_id, "dividend", "money", dividend_amount,
+                f"Dividend received: {company.ticker_symbol} × {position.shares_owned:,.0f} shares{tier_note}",
+                reference_id=str(company.id))
+        except Exception:
+            pass
+        # Finance sector perk: +1 credit per dividend received
+        if company.sector == "Finance":
+            try:
+                apply_finance_sector_dividend_credit(position.player_id)
+            except Exception:
+                pass
 
     company.consecutive_dividend_payouts += 1
     company.last_dividend_date = datetime.utcnow()
@@ -3725,6 +3928,191 @@ def _process_scrip_dividend(company, config, db):
 
 
 # ==========================
+# LISTING FEE BILLING
+# ==========================
+
+def process_listing_fees():
+    """Charge founders monthly listing fees; mark distressed after LISTING_FEE_DISTRESSED_THRESHOLD misses."""
+    now = datetime.utcnow()
+    db = get_db()
+    try:
+        due_companies = db.query(CompanyShares).filter(
+            CompanyShares.is_delisted == False,
+            CompanyShares.listing_fee_next_due != None,
+            CompanyShares.listing_fee_next_due <= now,
+        ).all()
+
+        from reserve_banks import can_afford_usd, spend_player_funds
+        for company in due_companies:
+            ok = False
+            if can_afford_usd(company.founder_id, MONTHLY_LISTING_FEE):
+                ok2, _ = spend_player_funds(company.founder_id, MONTHLY_LISTING_FEE)
+                if ok2:
+                    firm_add_cash(MONTHLY_LISTING_FEE, "listing_fee",
+                                  f"Monthly listing fee: {company.ticker_symbol}",
+                                  company.founder_id, company.id)
+                    company.listing_fee_missed_count = 0
+                    ok = True
+            if not ok:
+                company.listing_fee_missed_count = (company.listing_fee_missed_count or 0) + 1
+                if company.listing_fee_missed_count >= LISTING_FEE_DISTRESSED_THRESHOLD:
+                    company.trading_halted = True
+                    company.halt_reason = "Listing fee delinquent — trading suspended"
+                    company.trading_halted_until = now + timedelta(days=7)
+                    print(f"[{BANK_NAME}] ⚠ {company.ticker_symbol} SUSPENDED — listing fee missed "
+                          f"{company.listing_fee_missed_count}×")
+
+            company.listing_fee_next_due = now + timedelta(days=30)
+
+        db.commit()
+    finally:
+        db.close()
+
+
+# ==========================
+# EARNINGS REPORT GENERATION
+# ==========================
+
+def generate_earnings_reports():
+    """Snapshot weekly revenue and EPS for every listed company."""
+    now = datetime.utcnow()
+    db = get_db()
+    try:
+        companies = db.query(CompanyShares).filter(
+            CompanyShares.is_delisted == False,
+            CompanyShares.share_class_label == "main",
+        ).all()
+
+        for company in companies:
+            shares_out = max(company.shares_outstanding, 1)
+            rev = company.revenue_7d or 0.0
+            eps = rev / shares_out
+
+            # Compute dividends_paid this period from consecutive_dividend_payouts
+            div_paid = 0.0
+            if company.dividend_config:
+                for dc in company.dividend_config:
+                    div_paid += dc.get("amount", 0.0) * shares_out
+
+            payout = div_paid / rev if rev > 0 else 0.0
+
+            report = CompanyEarningsReport(
+                company_shares_id=company.id,
+                period_end=now,
+                period_days=7,
+                total_revenue=rev,
+                eps=eps,
+                payout_ratio=min(payout, 9.99),
+                dividends_paid=div_paid,
+            )
+            db.add(report)
+
+            # Reset 7-day counter
+            company.revenue_7d = 0.0
+            company.revenue_reset_7d = now
+
+        db.commit()
+    finally:
+        db.close()
+
+
+# ==========================
+# SHAREHOLDER PERKS
+# ==========================
+
+# Sector → perk description table (displayed on company detail and portfolio pages)
+SECTOR_PERKS = {
+    "Technology":        "Reduced margin interest rate (−1%) on tech sector trades",
+    "Energy":            "10% discount on fuel/energy-related commodity purchases",
+    "Mining":            "Priority access to commodities from Mining companies",
+    "Agriculture":       "Seasonal harvest bonus: 5% extra yield from farming businesses",
+    "Food & Beverage":   "5% discount on food/drink items sold at the company's venues",
+    "Manufacturing":     "2% production cost reduction for compatible factory types",
+    "Healthcare":        "Reduced hospital and pharmaceutical costs",
+    "Retail & Commerce": "5% discount at any Retail businesses in the same sector",
+    "Finance":           "1 extra credit score point per dividend received",
+    "Construction":      "5% discount on land plot upgrade costs",
+    "Transport":         "Reduced freight and shipping fees",
+    "Real Estate":       "Priority tenant access for hotel/resort stays",
+    "Media & Services":  "Reduced advertising costs for related businesses",
+}
+
+
+def get_player_shareholder_perks(player_id: int) -> list:
+    """Return a list of perk dicts for every company the player holds shares in."""
+    db = get_db()
+    try:
+        positions = db.query(ShareholderPosition).filter(
+            ShareholderPosition.player_id == player_id,
+            ShareholderPosition.shares_owned > 0,
+        ).all()
+
+        perks = []
+        seen_sectors = set()
+        for pos in positions:
+            company = db.query(CompanyShares).filter(
+                CompanyShares.id == pos.company_shares_id,
+                CompanyShares.is_delisted == False,
+            ).first()
+            if not company:
+                continue
+            sector = company.sector or "General"
+            if sector in seen_sectors:
+                continue  # deduplicate per sector
+            seen_sectors.add(sector)
+            perk_desc = SECTOR_PERKS.get(sector)
+            if perk_desc:
+                _, loyalty_label = get_loyalty_tier(pos.first_held_at)
+                perks.append({
+                    "ticker": company.ticker_symbol,
+                    "company_name": company.company_name,
+                    "sector": sector,
+                    "perk": perk_desc,
+                    "shares": pos.shares_owned,
+                    "loyalty": loyalty_label,
+                })
+        return perks
+    finally:
+        db.close()
+
+
+def apply_finance_sector_dividend_credit(player_id: int):
+    """Finance sector perk: award +1 credit score when a dividend is received."""
+    db = get_db()
+    try:
+        finance_pos = db.query(ShareholderPosition).join(
+            CompanyShares, CompanyShares.id == ShareholderPosition.company_shares_id
+        ).filter(
+            ShareholderPosition.player_id == player_id,
+            ShareholderPosition.shares_owned > 0,
+            CompanyShares.sector == "Finance",
+            CompanyShares.is_delisted == False,
+        ).first()
+        if finance_pos:
+            modify_credit_score(player_id, "trade_completed")  # +1 point
+    finally:
+        db.close()
+
+
+# ==========================
+# LOCKUP CHECK (PUBLIC HELPER)
+# ==========================
+
+def is_founder_locked_up(company_id: int, player_id: int) -> bool:
+    """Return True if the founder is still inside the post-IPO lockup window."""
+    db = get_db()
+    try:
+        company = db.query(CompanyShares).filter(CompanyShares.id == company_id).first()
+        if not company or company.founder_id != player_id:
+            return False
+        if not company.lockup_expires_at:
+            return False
+        return datetime.utcnow() < company.lockup_expires_at
+    finally:
+        db.close()
+
+
+# ==========================
 # INITIALIZATION
 # ==========================
 
@@ -3747,6 +4135,18 @@ def initialize():
         "ALTER TABLE company_proposals ADD COLUMN IF NOT EXISTS proposal_param JSON",
         # Short loans: remove artificial expiry — positions are open-ended
         "ALTER TABLE share_loans ALTER COLUMN due_date DROP NOT NULL",
+        # Phase-2 brokerage improvements
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS sector VARCHAR",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS lockup_expires_at TIMESTAMP",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS profit_siphon_rate FLOAT DEFAULT 0.0",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS dividend_escrow_balance FLOAT DEFAULT 0.0",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS listing_fee_next_due TIMESTAMP",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS listing_fee_missed_count INTEGER DEFAULT 0",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS revenue_7d FLOAT DEFAULT 0.0",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS revenue_30d FLOAT DEFAULT 0.0",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS revenue_reset_7d TIMESTAMP",
+        "ALTER TABLE company_shares ADD COLUMN IF NOT EXISTS revenue_reset_30d TIMESTAMP",
+        "ALTER TABLE shareholder_positions ADD COLUMN IF NOT EXISTS first_held_at TIMESTAMP",
     ])
 
     try:
@@ -3806,7 +4206,15 @@ async def tick(current_tick: int, now: datetime, bank_entity=None):
             pass
     
     process_dividends(current_tick)
-    
+
+    # Monthly listing fees: check every hour
+    if current_tick % 3600 == 0:
+        process_listing_fees()
+
+    # Weekly earnings snapshots: every 604800 ticks (1 week in seconds)
+    if current_tick % 604800 == 0:
+        generate_earnings_reports()
+
     if current_tick % 3600 == 0:
         firm = get_firm_entity()
         
@@ -3862,4 +4270,11 @@ __all__ = [
     'PriceHistory', 'MarginCall', 'FirmTransaction',
     'DividendType', 'DividendFrequency', 'ShareLoanStatus',
     'CommodityLoanStatus', 'LiquidationLevel',
+    # New Phase-2 additions
+    'CompanyEarningsReport',
+    'SHARE_CLASS_DESCRIPTIONS', 'LOYALTY_TIERS', 'SECTOR_PERKS',
+    'IPO_LOCKUP_DAYS', 'MONTHLY_LISTING_FEE',
+    'get_loyalty_tier', 'derive_sector', 'is_founder_locked_up',
+    'process_listing_fees', 'generate_earnings_reports',
+    'get_player_shareholder_perks',
 ]
