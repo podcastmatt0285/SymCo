@@ -4262,137 +4262,187 @@ def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
 
     try:
         from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, get_db as get_firm_db
+            CompanyShares, ShareholderPosition, CompanyEarningsReport,
+            get_db as get_firm_db, SHARE_CLASS_DESCRIPTIONS,
         )
         from auth import Player, get_db as get_auth_db
         from business import Business, BUSINESS_TYPES
         from land import get_db as get_land_db
-        
+
         db = get_firm_db()
         auth_db = get_auth_db()
         land_db = get_land_db()
-        
+
+        _SECTOR_COLORS = {
+            "Technology": "#38bdf8", "Energy": "#f59e0b", "Mining": "#a78bfa",
+            "Agriculture": "#4ade80", "Food & Beverage": "#fb923c",
+            "Manufacturing": "#94a3b8", "Healthcare": "#f472b6",
+            "Retail & Commerce": "#fbbf24", "Finance": "#22d3ee",
+            "Construction": "#d97706", "Transport": "#60a5fa",
+            "Real Estate": "#c084fc", "Media & Services": "#34d399",
+        }
+
         try:
-            # Get all public companies
             companies = db.query(CompanyShares).filter(
-                CompanyShares.is_delisted == False
+                CompanyShares.is_delisted == False,
+                CompanyShares.share_class_label == "main",
             ).order_by(CompanyShares.ticker_symbol).all()
-            
+
             company_data = []
             for company in companies:
-                # Get founder info
                 founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
                 founder_name = founder.business_name if founder else f"Player {company.founder_id}"
-                
-                # Get business info
+
                 business = land_db.query(Business).filter(Business.id == company.business_id).first()
                 business_type = BUSINESS_TYPES.get(business.business_type, {}).get("name", "Unknown") if business else "Unknown"
-                
-                # Get shareholder count
+
                 shareholder_count = db.query(ShareholderPosition).filter(
                     ShareholderPosition.company_shares_id == company.id,
-                    ShareholderPosition.shares_owned > 0
+                    ShareholderPosition.shares_owned > 0,
+                    ShareholderPosition.player_id != company.founder_id,
                 ).count()
-                
-                # Calculate market cap
+
                 market_cap = company.current_price * company.shares_outstanding
-                
-                # Calculate price change from IPO
+
                 if company.ipo_price > 0:
                     price_change = ((company.current_price - company.ipo_price) / company.ipo_price) * 100
                 else:
                     price_change = 0
-                
+
+                # Annualised dividend yield
+                div_yield = 0.0
+                div_text = "No dividends"
+                if company.dividend_config and company.current_price > 0:
+                    freq_mult = {"daily": 365, "weekly": 52, "biweekly": 26, "monthly": 12, "quarterly": 4}
+                    annual = 0.0
+                    for dc in company.dividend_config:
+                        if dc.get("type") == "cash":
+                            mult = freq_mult.get(dc.get("frequency", "quarterly"), 4)
+                            annual += dc.get("amount", 0.0) * mult
+                    if annual > 0:
+                        div_yield = (annual / company.current_price) * 100
+                        div_text = f"{div_yield:.2f}% yield/yr"
+                    else:
+                        first_dc = company.dividend_config[0]
+                        if first_dc.get("type") == "commodity":
+                            div_text = f"{first_dc.get('item', 'item')}/share"
+                        elif first_dc.get("type") == "scrip":
+                            div_text = f"Stock {first_dc.get('ratio', 0)*100:.1f}%"
+
+                # Latest earnings
+                latest_report = db.query(CompanyEarningsReport).filter(
+                    CompanyEarningsReport.company_shares_id == company.id,
+                ).order_by(CompanyEarningsReport.period_end.desc()).first()
+
+                # Player's position
+                my_pos = db.query(ShareholderPosition).filter(
+                    ShareholderPosition.company_shares_id == company.id,
+                    ShareholderPosition.player_id == player.id,
+                ).first()
+
                 company_data.append({
                     "company": company,
                     "founder_name": founder_name,
                     "business_type": business_type,
                     "shareholder_count": shareholder_count,
                     "market_cap": market_cap,
-                    "price_change": price_change
+                    "price_change": price_change,
+                    "div_yield": div_yield,
+                    "div_text": div_text,
+                    "latest_report": latest_report,
+                    "my_shares": my_pos.shares_owned if my_pos else 0,
                 })
-            
+
         finally:
             db.close()
             auth_db.close()
             land_db.close()
-        
-        # Build company cards
+
         companies_html = ""
         if company_data:
             for item in company_data:
                 company = item["company"]
                 change_color = "#22c55e" if item["price_change"] >= 0 else "#ef4444"
                 change_arrow = "▲" if item["price_change"] >= 0 else "▼"
-                
-                # Status badges
-                badges = ""
+
+                sector = company.sector or "General"
+                sector_color = _SECTOR_COLORS.get(sector, "#64748b")
+                sc_desc = SHARE_CLASS_DESCRIPTIONS.get(company.share_class, company.share_class)
+
+                badges = f'<span style="background:{sector_color}22;color:{sector_color};border:1px solid {sector_color}44;border-radius:4px;padding:1px 7px;font-size:0.72rem;margin-left:6px;">{sector}</span>'
                 if company.is_tbtf:
-                    badges += '<span class="badge" style="background: #22c55e; margin-left: 5px;">🛡️ TBTF</span>'
+                    badges += '<span class="badge" style="background:#22c55e;margin-left:5px;">🛡️ TBTF</span>'
                 if company.trading_halted_until and datetime.utcnow() < company.trading_halted_until:
-                    badges += '<span class="badge" style="background: #ef4444; margin-left: 5px;">🛑 HALTED</span>'
+                    badges += '<span class="badge" style="background:#ef4444;margin-left:5px;">🛑 HALTED</span>'
                 if company.stabilization_active:
-                    badges += '<span class="badge" style="background: #8b5cf6; margin-left: 5px;">📊 STABILIZED</span>'
+                    badges += '<span class="badge" style="background:#8b5cf6;margin-left:5px;">📊 STAB</span>'
                 if company.dividend_warning_active:
-                    badges += '<span class="badge" style="background: #f59e0b; margin-left: 5px;">⚠️ DIV WARNING</span>'
-                
-                # Dividend info
-                dividend_text = "No dividends"
-                if company.dividend_config:
-                    div = company.dividend_config[0]
-                    if div.get("type") == "cash":
-                        dividend_text = f"Cash: {div.get('amount', 0)*100:.1f}% ({div.get('frequency', 'weekly')})"
-                    elif div.get("type") == "commodity":
-                        dividend_text = f"{div.get('item', 'item')}: {div.get('amount', 0)}/share"
-                    elif div.get("type") == "scrip":
-                        dividend_text = f"Stock: {div.get('rate', 0)*100:.1f}%"
-                
+                    badges += '<span class="badge" style="background:#f59e0b;margin-left:5px;">⚠ DIV WARN</span>'
+                # Lockup badge (founder only)
+                if company.founder_id == player.id and company.lockup_expires_at and datetime.utcnow() < company.lockup_expires_at:
+                    ld = (company.lockup_expires_at - datetime.utcnow()).days + 1
+                    badges += f'<span class="badge" style="background:#0f172a;border:1px solid #f59e0b;color:#f59e0b;margin-left:5px;">🔒 LOCKUP {ld}d</span>'
+
+                my_shares_html = ""
+                if item["my_shares"] > 0:
+                    my_val = item["my_shares"] * company.current_price
+                    my_shares_html = f'<div style="color:#22c55e;font-size:0.8rem;margin-top:4px;">✓ You hold {item["my_shares"]:,} shares (≈{fmt_usd(my_val, disp, precision=0)})</div>'
+
+                eps_html = ""
+                rpt = item["latest_report"]
+                if rpt:
+                    eps_html = f'<div style="color:#64748b;font-size:0.78rem;">7d Rev: {fmt_usd(rpt.total_revenue, disp, precision=0)} · EPS: {fmt_usd(rpt.eps, disp, precision=4)}</div>'
+
                 companies_html += f'''
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <h3 style="margin: 0;">
-                                {company.ticker_symbol} - {company.company_name}
+                <div class="card" style="border-left:3px solid {sector_color};">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                        <div style="flex:1;min-width:0;">
+                            <h3 style="margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+                                <a href="/brokerage/company/{company.ticker_symbol}" style="color:#f1f5f9;text-decoration:none;">{company.ticker_symbol}</a>
+                                <span style="color:#94a3b8;font-weight:normal;"> — {company.company_name}</span>
                                 {badges}
                             </h3>
-                            <p style="color: #64748b; margin: 5px 0;">
-                                {item["business_type"]} · Founded by {item["founder_name"]} · Class {company.share_class}
+                            <p style="color:#64748b;margin:5px 0;font-size:0.85rem;">
+                                {item["business_type"]} · <span style="color:#94a3b8;">Founded by {item["founder_name"]}</span>
                             </p>
+                            <p style="margin:2px 0;font-size:0.8rem;">
+                                <span style="color:#94a3b8;" title="{sc_desc}">📋 {company.share_class.replace("_"," ").title()}</span>
+                                &nbsp;·&nbsp;
+                                <span style="color:{"#22c55e" if item["div_yield"] > 0 else "#64748b"};">💰 {item["div_text"]}</span>
+                            </p>
+                            {my_shares_html}
+                            {eps_html}
                         </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;">{fmt_usd(company.current_price, disp, precision=4)}</div>
-                            <div style="color: {change_color};">
-                                {change_arrow} {abs(item["price_change"]):.1f}% from IPO
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 15px;">
-                        <div>
-                            <div style="color: #64748b; font-size: 0.8rem;">Market Cap</div>
-                            <div style="font-size: 1.1rem;">{fmt_usd(item["market_cap"], disp, precision=0)}</div>
-                        </div>
-                        <div>
-                            <div style="color: #64748b; font-size: 0.8rem;">Float</div>
-                            <div style="font-size: 1.1rem;">{company.shares_in_float:,}</div>
-                        </div>
-                        <div>
-                            <div style="color: #64748b; font-size: 0.8rem;">Shareholders</div>
-                            <div style="font-size: 1.1rem;">{item["shareholder_count"]}</div>
-                        </div>
-                        <div>
-                            <div style="color: #64748b; font-size: 0.8rem;">Dividend Streak</div>
-                            <div style="font-size: 1.1rem;">{company.consecutive_dividend_payouts}</div>
-                        </div>
-                        <div>
-                            <div style="color: #64748b; font-size: 0.8rem;">Dividends</div>
-                            <div style="font-size: 0.9rem;">{dividend_text}</div>
+                        <div style="text-align:right;white-space:nowrap;">
+                            <div style="font-size:1.7rem;font-weight:bold;color:#38bdf8;">{fmt_usd(company.current_price, disp, precision=4)}</div>
+                            <div style="color:{change_color};font-size:0.9rem;">{change_arrow} {abs(item["price_change"]):.1f}% from IPO</div>
+                            <div style="color:#475569;font-size:0.78rem;">MCap {fmt_usd(item["market_cap"], disp, precision=0)}</div>
                         </div>
                     </div>
-                    
-                    <div style="margin-top: 15px; display: flex; gap: 10px;">
-                        <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue">Trade</a>
-                        <a href="/brokerage/shorts?ticker={company.ticker_symbol}" class="btn-orange">Short</a>
+
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
+                        <div>
+                            <div style="color:#64748b;font-size:0.75rem;">Float</div>
+                            <div>{company.shares_in_float:,}</div>
+                        </div>
+                        <div>
+                            <div style="color:#64748b;font-size:0.75rem;">Investors</div>
+                            <div>{item["shareholder_count"]}</div>
+                        </div>
+                        <div>
+                            <div style="color:#64748b;font-size:0.75rem;">Div Streak</div>
+                            <div>{"🔥 " if company.consecutive_dividend_payouts >= 3 else ""}{company.consecutive_dividend_payouts}</div>
+                        </div>
+                        <div>
+                            <div style="color:#64748b;font-size:0.75rem;">52w Range</div>
+                            <div style="font-size:0.85rem;">{fmt_usd(company.low_52_week, disp, precision=2)} – {fmt_usd(company.high_52_week, disp, precision=2)}</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                        <a href="/brokerage/company/{company.ticker_symbol}" class="btn-blue" style="padding:5px 12px;font-size:0.85rem;">📊 Details</a>
+                        <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue" style="padding:5px 12px;font-size:0.85rem;">Trade</a>
+                        <a href="/brokerage/shorts?ticker={company.ticker_symbol}" class="btn-orange" style="padding:5px 12px;font-size:0.85rem;">Short</a>
                     </div>
                 </div>
                 '''
@@ -4400,25 +4450,313 @@ def brokerage_companies_page(session_token: Optional[str] = Cookie(None)):
             companies_html = '''
             <div class="card">
                 <h3>No Companies Listed</h3>
-                <p style="color: #64748b;">Be the first to take your business public!</p>
+                <p style="color:#64748b;">Be the first to take your business public!</p>
                 <a href="/brokerage/ipo" class="btn-blue">Launch an IPO</a>
             </div>
             '''
-        
+
         body = f'''
-        <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
+        <a href="/banks/brokerage-firm" style="color:#38bdf8;">← Brokerage Firm</a>
         <h1>WPE Listed Companies</h1>
-        <p style="color: #64748b;">{len(company_data)} companies listed on the Wadsworth Player Exchange</p>
-        
+        <p style="color:#64748b;">{len(company_data)} companies · Wadsworth Player Exchange</p>
         {companies_html}
         '''
-        
+
         return shell("WPE Companies", body, player.cash_balance, player.id)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         return shell("WPE Companies", f"Error: {e}", player.cash_balance, player.id)
+
+
+# ==========================
+# COMPANY DETAIL PAGE
+# ==========================
+
+@router.get("/brokerage/company/{ticker}", response_class=HTMLResponse)
+def brokerage_company_detail(ticker: str, session_token: Optional[str] = Cookie(None)):
+    """Detailed view for a single listed company."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        from banks.brokerage_firm import (
+            CompanyShares, ShareholderPosition, CompanyEarningsReport,
+            CompanyProposal, PriceHistory, get_db as get_firm_db,
+            SHARE_CLASS_DESCRIPTIONS,
+        )
+        from auth import Player, get_db as get_auth_db
+
+        db = get_firm_db()
+        auth_db = get_auth_db()
+        try:
+            company = db.query(CompanyShares).filter(
+                CompanyShares.ticker_symbol == ticker.upper(),
+                CompanyShares.is_delisted == False,
+            ).first()
+            if not company:
+                return shell("Company Not Found", f'<p>No listed company with ticker <b>{ticker.upper()}</b>.</p><a href="/brokerage/companies" style="color:#38bdf8;">← Back</a>', player.cash_balance, player.id)
+
+            founder = auth_db.query(Player).filter(Player.id == company.founder_id).first()
+            founder_name = founder.business_name if founder else f"Player {company.founder_id}"
+
+            # Price history (last 14 data points)
+            cutoff = datetime.utcnow() - timedelta(days=14)
+            price_history = db.query(PriceHistory).filter(
+                PriceHistory.company_shares_id == company.id,
+                PriceHistory.recorded_at >= cutoff,
+            ).order_by(PriceHistory.recorded_at.asc()).all()
+
+            # Sparkline from price history
+            spark_html = ""
+            if price_history:
+                prices = [p.price for p in price_history]
+                mn, mx = min(prices), max(prices)
+                rng = mx - mn if mx != mn else 1
+                W, H = 260, 40
+                pts = []
+                for i, p in enumerate(prices):
+                    x = int(i / max(len(prices) - 1, 1) * W)
+                    y = int(H - (p - mn) / rng * H)
+                    pts.append(f"{x},{y}")
+                clr = "#22c55e" if prices[-1] >= prices[0] else "#ef4444"
+                spark_html = f'<svg width="{W}" height="{H}" style="margin:8px 0;"><polyline points="{" ".join(pts)}" fill="none" stroke="{clr}" stroke-width="1.5"/></svg>'
+
+            # Earnings reports (last 4)
+            reports = db.query(CompanyEarningsReport).filter(
+                CompanyEarningsReport.company_shares_id == company.id,
+            ).order_by(CompanyEarningsReport.period_end.desc()).limit(4).all()
+
+            # Top shareholders
+            top_holders = db.query(ShareholderPosition).filter(
+                ShareholderPosition.company_shares_id == company.id,
+                ShareholderPosition.shares_owned > 0,
+            ).order_by(ShareholderPosition.shares_owned.desc()).limit(10).all()
+
+            # Player's own position + loyalty (may not be in top 10)
+            my_pos = next((p for p in top_holders if p.player_id == player.id), None)
+            if my_pos is None:
+                my_pos = db.query(ShareholderPosition).filter(
+                    ShareholderPosition.company_shares_id == company.id,
+                    ShareholderPosition.player_id == player.id,
+                    ShareholderPosition.shares_owned > 0,
+                ).first()
+            my_loyalty_label = "New holder"
+            if my_pos:
+                from banks.brokerage_firm import get_loyalty_tier
+                _, my_loyalty_label = get_loyalty_tier(my_pos.first_held_at)
+
+            # Open proposals
+            open_proposals = db.query(CompanyProposal).filter(
+                CompanyProposal.company_shares_id == company.id,
+                CompanyProposal.status == "open",
+            ).order_by(CompanyProposal.created_at.desc()).limit(5).all()
+
+            # Sub-records (Quad-Class C/D)
+            sub_records = db.query(CompanyShares).filter(
+                CompanyShares.parent_company_id == company.id,
+                CompanyShares.is_delisted == False,
+            ).all()
+
+        finally:
+            db.close()
+            auth_db.close()
+
+        sc_desc = SHARE_CLASS_DESCRIPTIONS.get(company.share_class, company.share_class)
+        sector = company.sector or "General"
+
+        # Annualised yield
+        div_yield = 0.0
+        div_details_html = "<em style='color:#64748b;'>No dividend configured.</em>"
+        if company.dividend_config and company.current_price > 0:
+            freq_mult = {"daily": 365, "weekly": 52, "biweekly": 26, "monthly": 12, "quarterly": 4}
+            rows = []
+            for dc in company.dividend_config:
+                dtype = dc.get("type", "cash")
+                freq = dc.get("frequency", "quarterly")
+                if dtype == "cash":
+                    mult = freq_mult.get(freq, 4)
+                    ann = dc.get("amount", 0.0) * mult
+                    div_yield += (ann / company.current_price) * 100
+                    req = "Required" if dc.get("required") else "Discretionary"
+                    rows.append(f'<tr><td>Cash</td><td>{dc.get("amount", 0):.4f}/share</td><td>{freq.title()}</td><td>{ann/company.current_price*100:.2f}% p.a.</td><td>{req}</td></tr>')
+                elif dtype == "commodity":
+                    rows.append(f'<tr><td>Commodity</td><td>{dc.get("amount", 1)} {dc.get("item", "item")} per {dc.get("per_shares", 100)} shares</td><td>{freq.title()}</td><td>—</td><td>Discretionary</td></tr>')
+                elif dtype == "scrip":
+                    rows.append(f'<tr><td>Stock</td><td>{dc.get("ratio", 0)*100:.2f}% new shares</td><td>{freq.title()}</td><td>—</td><td>Discretionary</td></tr>')
+            if rows:
+                div_details_html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><tr style="color:#64748b;"><th align="left">Type</th><th align="left">Amount</th><th align="left">Frequency</th><th align="left">Yield</th><th align="left">Status</th></tr>' + "".join(rows) + "</table>"
+
+        # Earnings table
+        earnings_html = "<em style='color:#64748b;'>No earnings reports yet.</em>"
+        if reports:
+            rows = []
+            for r in reports:
+                pct = r.payout_ratio * 100 if r.payout_ratio else 0
+                rows.append(f'<tr><td>{r.period_end.strftime("%b %d")}</td><td>{fmt_usd(r.total_revenue, disp, precision=0)}</td><td>{fmt_usd(r.eps, disp, precision=4)}</td><td>{pct:.1f}%</td></tr>')
+            earnings_html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><tr style="color:#64748b;"><th align="left">Period</th><th align="left">Revenue</th><th align="left">EPS</th><th align="left">Payout</th></tr>' + "".join(rows) + "</table>"
+
+        # Shareholders table
+        holder_rows = []
+        for pos in top_holders:
+            pct = pos.shares_owned / max(company.shares_outstanding, 1) * 100
+            role = "Founder" if pos.player_id == company.founder_id else ("You" if pos.player_id == player.id else "Investor")
+            holder_rows.append(f'<tr><td>Player {pos.player_id}</td><td>{pos.shares_owned:,}</td><td>{pct:.1f}%</td><td style="color:#94a3b8;">{role}</td></tr>')
+        holders_html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;"><tr style="color:#64748b;"><th align="left">Holder</th><th align="left">Shares</th><th align="left">%</th><th align="left">Role</th></tr>' + "".join(holder_rows) + "</table>" if holder_rows else "<em style='color:#64748b;'>No shareholders.</em>"
+
+        # Proposals
+        prop_html = ""
+        for prop in open_proposals:
+            ends_in = max(0, (prop.voting_ends_at - datetime.utcnow()).seconds // 3600)
+            total_v = (prop.yes_votes or 0) + (prop.no_votes or 0)
+            yes_pct = prop.yes_votes / total_v * 100 if total_v > 0 else 0
+            prop_html += f'''
+            <div style="background:#0f172a;border-radius:6px;padding:12px;margin-bottom:8px;">
+                <strong>{prop.title}</strong> <span style="color:#64748b;font-size:0.8rem;">[{prop.proposal_type}]</span>
+                <div style="color:#94a3b8;font-size:0.85rem;margin:4px 0;">{prop.description}</div>
+                <div style="display:flex;gap:16px;font-size:0.8rem;margin-top:6px;">
+                    <span style="color:#22c55e;">✓ {prop.yes_votes:.0f} ({yes_pct:.0f}%)</span>
+                    <span style="color:#ef4444;">✗ {prop.no_votes:.0f}</span>
+                    <span style="color:#64748b;">Closes in ~{ends_in}h</span>
+                </div>
+            </div>'''
+        if not prop_html:
+            prop_html = "<em style='color:#64748b;'>No open proposals.</em>"
+
+        # Lockup notice
+        lockup_html = ""
+        if company.founder_id == player.id and company.lockup_expires_at and datetime.utcnow() < company.lockup_expires_at:
+            ld = (company.lockup_expires_at - datetime.utcnow()).days + 1
+            lockup_html = f'<div style="background:#1c1917;border:1px solid #f59e0b;border-radius:6px;padding:10px;margin-bottom:12px;color:#f59e0b;">🔒 Founder lockup active — you cannot sell shares for {ld} more day(s) ({company.lockup_expires_at.strftime("%b %d, %Y")})</div>'
+
+        # My position card
+        my_pos_html = ""
+        if my_pos:
+            my_val = my_pos.shares_owned * company.current_price
+            pnl = (company.current_price - my_pos.average_cost_basis) * my_pos.shares_owned if my_pos.average_cost_basis else 0
+            pnl_clr = "#22c55e" if pnl >= 0 else "#ef4444"
+            my_pos_html = f'''
+            <div class="card" style="background:#0f2d0f;border:1px solid #22c55e;">
+                <h4 style="margin:0 0 8px;color:#22c55e;">Your Position</h4>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:0.9rem;">
+                    <div><div style="color:#64748b;font-size:0.75rem;">Shares</div>{my_pos.shares_owned:,}</div>
+                    <div><div style="color:#64748b;font-size:0.75rem;">Market Value</div>{fmt_usd(my_val, disp, precision=2)}</div>
+                    <div><div style="color:#64748b;font-size:0.75rem;">Unrealised P&L</div><span style="color:{pnl_clr};">{fmt_usd(pnl, disp, precision=2)}</span></div>
+                    <div><div style="color:#64748b;font-size:0.75rem;">Avg Cost</div>{fmt_usd(my_pos.average_cost_basis or 0, disp, precision=4)}</div>
+                    <div><div style="color:#64748b;font-size:0.75rem;">Loyalty Tier</div>{my_loyalty_label}</div>
+                    <div><div style="color:#64748b;font-size:0.75rem;">Lendable</div>{my_pos.shares_available_to_lend:,}</div>
+                </div>
+            </div>'''
+
+        # Sub-class records
+        sub_html = ""
+        for sr in sub_records:
+            sub_html += f'<div style="background:#1e293b;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;"><span style="color:#94a3b8;">{sr.ticker_symbol} — {sr.share_class.replace("_"," ").title()}</span><span style="color:#38bdf8;">{fmt_usd(sr.current_price, disp, precision=4)}</span></div>'
+
+        price_change = ((company.current_price - company.ipo_price) / company.ipo_price * 100) if company.ipo_price > 0 else 0
+        change_color = "#22c55e" if price_change >= 0 else "#ef4444"
+
+        body = f'''
+        <a href="/brokerage/companies" style="color:#38bdf8;">← All Companies</a>
+        <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+            <div>
+                <h1 style="margin:0;">{company.ticker_symbol} <span style="color:#64748b;font-weight:normal;font-size:1.2rem;">— {company.company_name}</span></h1>
+                <div style="color:#94a3b8;margin-top:4px;">Sector: <strong style="color:#e2e8f0;">{sector}</strong> &nbsp;·&nbsp; Founded by <strong>{founder_name}</strong></div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:2.2rem;font-weight:bold;color:#38bdf8;">{fmt_usd(company.current_price, disp, precision=4)}</div>
+                <div style="color:{change_color};">{"▲" if price_change >= 0 else "▼"} {abs(price_change):.1f}% from IPO (${company.ipo_price:.4f})</div>
+            </div>
+        </div>
+
+        {spark_html}
+        {lockup_html}
+        {my_pos_html}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+            <div class="card">
+                <h4 style="margin:0 0 8px;">Share Class</h4>
+                <div style="font-size:1.1rem;color:#e2e8f0;">{company.share_class.replace("_"," ").title()}</div>
+                <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">{sc_desc}</div>
+                {"<div style='margin-top:6px;font-size:0.85rem;color:#f59e0b;'>📞 Callable</div>" if company.is_callable else ""}
+                {"<div style='margin-top:6px;font-size:0.85rem;color:#a78bfa;'>🏛 Dual-Class structure</div>" if company.is_dual_class else ""}
+                {sub_html}
+            </div>
+            <div class="card">
+                <h4 style="margin:0 0 8px;">Dividend Yield</h4>
+                {"<div style='font-size:1.5rem;font-weight:bold;color:#22c55e;'>" + f"{div_yield:.2f}%" + "</div><div style='color:#64748b;font-size:0.8rem;'>annualised</div>" if div_yield > 0 else "<div style='color:#64748b;'>No cash dividend</div>"}
+                <div style="margin-top:8px;">{div_details_html}</div>
+                {"<div style='margin-top:6px;font-size:0.8rem;color:#f59e0b;'>⚠ Dividend warning active</div>" if company.dividend_warning_active else f"<div style='margin-top:6px;font-size:0.8rem;color:#22c55e;'>🔥 Consecutive payouts: {company.consecutive_dividend_payouts}</div>"}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0;">
+            <div class="card" style="padding:10px;">
+                <div style="color:#64748b;font-size:0.72rem;">Market Cap</div>
+                <div>{fmt_usd(company.current_price * company.shares_outstanding, disp, precision=0)}</div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <div style="color:#64748b;font-size:0.72rem;">Shares Out</div>
+                <div>{company.shares_outstanding:,}</div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <div style="color:#64748b;font-size:0.72rem;">Float</div>
+                <div>{company.shares_in_float:,}</div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <div style="color:#64748b;font-size:0.72rem;">52w High</div>
+                <div style="color:#22c55e;">{fmt_usd(company.high_52_week, disp, precision=2)}</div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <div style="color:#64748b;font-size:0.72rem;">52w Low</div>
+                <div style="color:#ef4444;">{fmt_usd(company.low_52_week, disp, precision=2)}</div>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="card">
+                <h4 style="margin:0 0 8px;">Weekly Earnings</h4>
+                {earnings_html}
+                <div style="margin-top:8px;font-size:0.8rem;color:#64748b;">7d Revenue: {fmt_usd(company.revenue_7d or 0, disp, precision=0)} &nbsp;·&nbsp; 30d: {fmt_usd(company.revenue_30d or 0, disp, precision=0)}</div>
+            </div>
+            <div class="card">
+                <h4 style="margin:0 0 8px;">Loyalty Tiers</h4>
+                <table style="width:100%;font-size:0.82rem;border-collapse:collapse;">
+                    <tr><td style="color:#f59e0b;">⭐⭐⭐ 90+ days</td><td style="color:#22c55e;">1.25× dividend</td></tr>
+                    <tr><td style="color:#94a3b8;">⭐⭐ 30+ days</td><td style="color:#4ade80;">1.10× dividend</td></tr>
+                    <tr><td style="color:#64748b;">⭐ 7+ days</td><td style="color:#94a3b8;">1.00× dividend</td></tr>
+                </table>
+                <div style="margin-top:8px;color:#64748b;font-size:0.78rem;">Hold longer to earn more from every dividend payout.</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+            <h4 style="margin:0 0 8px;">Top Shareholders</h4>
+            {holders_html}
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+            <h4 style="margin:0 0 8px;">Governance Proposals</h4>
+            {prop_html}
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue">Trade {company.ticker_symbol}</a>
+            <a href="/brokerage/shorts?ticker={company.ticker_symbol}" class="btn-orange">Short Sell</a>
+            {"<a href='/brokerage/my-companies' class='btn-blue' style='background:#334155;'>Manage My Company</a>" if company.founder_id == player.id else ""}
+        </div>
+        '''
+
+        return shell(f"{company.ticker_symbol} — {company.company_name}", body, player.cash_balance, player.id)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return shell("Company Detail", f"Error: {e}", player.cash_balance, player.id)
 
 
 # ==========================
@@ -4541,18 +4879,51 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                 if item["open_proposals"] > 0:
                     proposals_badge = f' <span style="background:#7c3aed;color:#fff;padding:2px 7px;border-radius:10px;font-size:0.75rem;">{item["open_proposals"]} open vote{"s" if item["open_proposals"] != 1 else ""}</span>'
 
+                # Lockup notice
+                lockup_notice = ""
+                if company.lockup_expires_at and datetime.utcnow() < company.lockup_expires_at:
+                    ld = (company.lockup_expires_at - datetime.utcnow()).days + 1
+                    lockup_notice = f'<div style="background:#1c1917;border:1px solid #f59e0b;border-radius:5px;padding:8px 12px;margin-top:10px;color:#f59e0b;font-size:0.85rem;">🔒 Founder lockup: {ld} day(s) remaining — you cannot sell your shares until {company.lockup_expires_at.strftime("%b %d, %Y")}</div>'
+
+                # Profit siphon form
+                siphon_rate_pct = int((company.profit_siphon_rate or 0.0) * 100)
+                siphon_form = f'''
+                    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #1e293b;">
+                        <h4 style="margin:0 0 6px;">Profit Siphon (Escrow)</h4>
+                        <p style="color:#64748b;font-size:0.82rem;margin:0 0 8px;">Automatically divert a % of your business revenue into dividend escrow, visible to investors.</p>
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <form action="/api/brokerage/set-siphon" method="post" style="display:flex;gap:8px;align-items:center;">
+                                <input type="hidden" name="company_id" value="{company.id}">
+                                <input type="number" name="rate_pct" value="{siphon_rate_pct}" min="0" max="10" step="1" style="width:60px;padding:5px;">
+                                <span style="color:#94a3b8;font-size:0.9rem;">% of revenue</span>
+                                <button type="submit" class="btn-blue" style="padding:5px 12px;">Set</button>
+                            </form>
+                            <span style="color:#94a3b8;font-size:0.82rem;">Escrow balance: <strong style="color:#22c55e;">{fmt_usd(company.dividend_escrow_balance or 0, disp, precision=2)}</strong></span>
+                        </div>
+                    </div>'''
+
+                listing_fee_note = ""
+                if company.listing_fee_next_due:
+                    listing_fee_note = f'<div style="color:#64748b;font-size:0.78rem;margin-top:4px;">Next listing fee: {company.listing_fee_next_due.strftime("%b %d, %Y")} · Missed: {company.listing_fee_missed_count or 0}×</div>'
+
                 companies_html += f'''
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
-                            <h3 style="margin: 0;">{company.ticker_symbol} - {company.company_name}</h3>
-                            <p style="color: #64748b;">You founded this company</p>
+                            <h3 style="margin: 0;">
+                                <a href="/brokerage/company/{company.ticker_symbol}" style="color:#f1f5f9;text-decoration:none;">{company.ticker_symbol}</a>
+                                — {company.company_name}
+                            </h3>
+                            <p style="color: #64748b;">Sector: {company.sector or "General"} · Share class: {company.share_class.replace("_"," ").title()}</p>
+                            {listing_fee_note}
                         </div>
                         <div style="text-align: right;">
                             <div style="font-size: 1.5rem; font-weight: bold; color: #38bdf8;">{fmt_usd(company.current_price, disp, precision=4)}</div>
                         </div>
                     </div>
-                    
+
+                    {lockup_notice}
+
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px;">
                         <div>
                             <div style="color: #64748b; font-size: 0.8rem;">Your Shares</div>
@@ -4571,7 +4942,7 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                             <div style="font-size: 1.2rem;">{company.shares_in_float:,}</div>
                         </div>
                     </div>
-                    
+
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #1e293b;">
                         <h4>Current Dividends</h4>
                         <ul style="color: #94a3b8; margin: 10px 0;">
@@ -4582,7 +4953,9 @@ def brokerage_my_companies_page(session_token: Optional[str] = Cookie(None)):
                             {' | <span style="color: #f59e0b;">⚠️ Warning active</span>' if company.dividend_warning_active else ''}
                         </p>
                     </div>
-                    
+
+                    {siphon_form}
+
                     <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <a href="/brokerage/trading?ticker={company.ticker_symbol}" class="btn-blue">View Trading</a>
                         <a href="/brokerage/governance?company_id={company.id}" class="btn-blue" style="background:#4c1d95;">
@@ -4685,6 +5058,37 @@ async def brokerage_buyback_shares(
     except Exception as e:
         print(f"[UX] Buyback error: {e}")
         return RedirectResponse(url="/brokerage/my-companies?error=exception", status_code=303)
+
+
+@router.post("/api/brokerage/set-siphon")
+async def brokerage_set_siphon(
+    company_id: int = Form(...),
+    rate_pct: int = Form(...),
+    session_token: Optional[str] = Cookie(None)
+):
+    """Set the profit siphon rate (0–10%) for a company the player founded."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as get_firm_db
+        rate = max(0, min(10, rate_pct)) / 100.0
+        db = get_firm_db()
+        try:
+            company = db.query(CompanyShares).filter(
+                CompanyShares.id == company_id,
+                CompanyShares.founder_id == player.id,
+                CompanyShares.is_delisted == False,
+            ).first()
+            if not company:
+                return RedirectResponse(url="/brokerage/my-companies?error=not_found", status_code=303)
+            company.profit_siphon_rate = rate
+            db.commit()
+        finally:
+            db.close()
+        return RedirectResponse(url=f"/brokerage/my-companies?success=siphon_set", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/brokerage/my-companies?error=siphon_error", status_code=303)
 
 
 # go-private route is defined later at /api/brokerage/go-private (line ~4028)
@@ -6517,7 +6921,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
 
     try:
         from banks.brokerage_firm import (
-            get_firm_entity, IPO_CONFIG, IPOType,
+            get_firm_entity, IPO_CONFIG, IPOType, IPO_LOCKUP_DAYS,
             calculate_player_company_valuation, CompanyShares,
             calculate_delisting_cost, get_db as get_firm_db
         )
@@ -6734,7 +7138,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $25,000</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $25,000 &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("direct_listing", 15)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px;">Select Direct Listing</button>
                 </div>
 
@@ -6770,7 +7174,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("firm_underwritten", 30)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px;">Select Underwritten IPO</button>
                 </div>
 
@@ -6806,7 +7210,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $75,000 &bull; Max float: 40%</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $75,000 &bull; Max float: 40% &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("income_shares", 30)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #92400e; border-color: #f59e0b;">Select Income Shares IPO</button>
                 </div>
 
@@ -6842,7 +7246,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $100,000 &bull; Max float: 49% &bull; Class A (founder) + Class B (public)</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $100,000 &bull; Max float: 49% &bull; Class A (founder) + Class B (public) &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("dual_class", 60)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #2e1065; border-color: #a78bfa;">Select Dual-Class IPO</button>
                 </div>
 
@@ -6878,7 +7282,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; Max float: 40% &bull; Callable preferred shares</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; Max float: 40% &bull; Callable preferred shares &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("preferred_offering", 30)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #431407; border-color: #fb923c;">Select Preferred Offering</button>
                 </div>
 
@@ -6914,7 +7318,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $150,000 &bull; Max float: 30% &bull; Growth capital injection</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $150,000 &bull; Max float: 30% &bull; Growth capital injection &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("series_a_growth", 60)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #022c22; border-color: #34d399;">Select Series A Growth Round</button>
                 </div>
 
@@ -6951,7 +7355,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $200,000 &bull; Max float: 60% &bull; Retain 40%+ as Class A</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $200,000 &bull; Max float: 60% &bull; Retain 40%+ as Class A &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("quad_class", 90)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #1a0533; border-color: #e879f9;">Select Quad-Class IPO</button>
                 </div>
             </div>
@@ -7298,6 +7702,7 @@ def brokerage_governance_page(
                             <option value="dividend_change">Dividend Change — set a new annual dividend rate</option>
                             <option value="secondary_offering">Secondary Offering — issue new shares into the float</option>
                             <option value="trading_halt">Trading Halt — pause all trading temporarily</option>
+                            <option value="force_dividend_from_escrow">Release Escrow — distribute escrow to minority shareholders</option>
                             <option value="custom">Custom / Other — advisory, no automatic effect</option>
                         </select>
                     </div>
@@ -7320,6 +7725,12 @@ def brokerage_governance_page(
                                style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
                         <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, all trading in this company is suspended for the chosen duration (max 168h / 1 week).</p>
                     </div>
+                    <div id="gov-param-escrow" style="margin-bottom:12px;display:none;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Amount to Release from Escrow ($)</label>
+                        <input type="number" name="param_escrow_amount" min="0" step="0.01" placeholder="Leave blank to release full escrow balance"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, the founder's voting power is capped to 1× and the specified amount (or full escrow balance) is distributed proportionally to non-founder shareholders.</p>
+                    </div>
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Title</label>
                         <input type="text" name="title" required maxlength="120"
@@ -7339,6 +7750,7 @@ def brokerage_governance_page(
                     document.getElementById('gov-param-dividend').style.display = type === 'dividend_change' ? '' : 'none';
                     document.getElementById('gov-param-offering').style.display = type === 'secondary_offering' ? '' : 'none';
                     document.getElementById('gov-param-halt').style.display = type === 'trading_halt' ? '' : 'none';
+                    document.getElementById('gov-param-escrow').style.display = type === 'force_dividend_from_escrow' ? '' : 'none';
                 }}
                 </script>
             </div>'''
@@ -7421,6 +7833,7 @@ async def create_proposal_endpoint(
     param_dividend_rate: Optional[str] = Form(None),
     param_shares: Optional[str] = Form(None),
     param_halt_hours: Optional[str] = Form(None),
+    param_escrow_amount: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None)
 ):
     player = require_auth(session_token)
@@ -7446,6 +7859,12 @@ async def create_proposal_endpoint(
                 proposal_param["hours"] = int(param_halt_hours)
             except ValueError:
                 proposal_param["hours"] = 24
+        elif proposal_type == "force_dividend_from_escrow":
+            if param_escrow_amount:
+                try:
+                    proposal_param["escrow_amount"] = float(param_escrow_amount)
+                except ValueError:
+                    pass
         proposal, err = create_proposal(company_id, player.id, proposal_type, title, description, proposal_param)
         if proposal:
             return RedirectResponse(
@@ -7505,9 +7924,10 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
 
     try:
         from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, get_db as get_firm_db
+            CompanyShares, ShareholderPosition, get_db as get_firm_db,
+            get_loyalty_tier, get_player_shareholder_perks
         )
-        
+
         db = get_firm_db()
         try:
             # Get all player positions
@@ -7531,14 +7951,17 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                     cost_basis_total = pos.shares_owned * pos.average_cost_basis
                     pnl = market_value - cost_basis_total
                     pnl_pct = (pnl / cost_basis_total * 100) if cost_basis_total > 0 else 0
-                    
+                    loyalty_mult, loyalty_label = get_loyalty_tier(pos.first_held_at)
+
                     portfolio_data.append({
                         "company": company,
                         "position": pos,
                         "market_value": market_value,
                         "cost_basis_total": cost_basis_total,
                         "pnl": pnl,
-                        "pnl_pct": pnl_pct
+                        "pnl_pct": pnl_pct,
+                        "loyalty_mult": loyalty_mult,
+                        "loyalty_label": loyalty_label,
                     })
                     
                     total_value += market_value
@@ -7547,10 +7970,16 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
             
         finally:
             db.close()
-        
+
+        # Fetch shareholder perks (outside db context)
+        try:
+            shareholder_perks = get_player_shareholder_perks(player.id)
+        except Exception:
+            shareholder_perks = []
+
         total_pnl = total_value - total_cost
         total_pnl_pct = (total_pnl / total_cost * 100) if total_cost > 0 else 0
-        
+
         # Build portfolio table
         LEND_OPT_OUT_BASE_FEE = 50_000.0   # flat fee per position to opt out of lending
         LEND_OPT_OUT_PCT      = 0.01        # plus 1 % of position market value
@@ -7567,6 +7996,7 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                         <th style="padding: 12px 8px;">Market Value</th>
                         <th style="padding: 12px 8px;">Cost Basis</th>
                         <th style="padding: 12px 8px;">P/L</th>
+                        <th style="padding: 12px 8px;">Loyalty</th>
                         <th style="padding: 12px 8px;">Margin</th>
                         <th style="padding: 12px 8px;">Lending</th>
                         <th style="padding: 12px 8px;">Actions</th>
@@ -7579,6 +8009,11 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                 pos = item["position"]
                 pnl_color = "#22c55e" if item["pnl"] >= 0 else "#ef4444"
                 margin_badge = f'<span class="badge" style="background: #f59e0b;">MARGIN</span>' if pos.is_margin_position else ""
+                loyalty_mult = item["loyalty_mult"]
+                loyalty_label = item["loyalty_label"]
+                loyalty_color = "#22c55e" if loyalty_mult >= 1.20 else ("#f59e0b" if loyalty_mult >= 1.10 else "#94a3b8")
+                loyalty_bonus_html = f'<br><span style="font-size:0.75rem;color:{loyalty_color};">+{(loyalty_mult-1)*100:.0f}% div bonus</span>' if loyalty_mult > 1.0 else ""
+                loyalty_cell = f'<span style="color:{loyalty_color};font-size:0.85rem;">{loyalty_label}</span>{loyalty_bonus_html}'
 
                 # Share-lending status cell
                 available_to_lend = pos.shares_available_to_lend or 0
@@ -7647,6 +8082,9 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                         {fmt_usd(item["pnl"], disp)}<br>
                         <span style="font-size: 0.85rem;">({item["pnl_pct"]:+.1f}%)</span>
                     </td>
+                    <td style="padding: 12px 8px; vertical-align: top;">
+                        {loyalty_cell}
+                    </td>
                     <td style="padding: 12px 8px;">
                         {fmt_usd(pos.margin_debt, disp) if pos.margin_debt > 0 else "-"}
                     </td>
@@ -7661,6 +8099,36 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
             portfolio_html += '</tbody></table>'
         else:
             portfolio_html = '<p style="color: #64748b;">You have no equity positions. <a href="/brokerage/trading">Start trading!</a></p>'
+
+        # Build shareholder perks section
+        if shareholder_perks:
+            perks_rows = ""
+            for perk in shareholder_perks:
+                perks_rows += f'''
+                <tr style="border-bottom:1px solid #1e293b;">
+                    <td style="padding:10px 8px;"><strong>{perk["ticker"]}</strong><br><span style="color:#64748b;font-size:0.8rem;">{perk["company_name"]}</span></td>
+                    <td style="padding:10px 8px;color:#38bdf8;">{perk["sector"]}</td>
+                    <td style="padding:10px 8px;color:#94a3b8;">{perk["perk"]}</td>
+                </tr>'''
+            perks_html = f'''
+        <div class="card" style="margin-top:20px;">
+            <h3>Shareholder Perks</h3>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:12px;">
+                Sector-based perks that apply to your equity positions. Finance sector holdings grant bonus credit per dividend payment.
+            </p>
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom:1px solid #334155;text-align:left;">
+                        <th style="padding:10px 8px;">Company</th>
+                        <th style="padding:10px 8px;">Sector</th>
+                        <th style="padding:10px 8px;">Perk</th>
+                    </tr>
+                </thead>
+                <tbody>{perks_rows}</tbody>
+            </table>
+        </div>'''
+        else:
+            perks_html = ""
 
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
@@ -7700,9 +8168,11 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                 Share lending is <strong style="color:#22c55e;">enabled by default</strong> for all positions.
                 Borrowers who request shares receive them proportionally from all opted-in lenders.
                 Opting out costs a <strong style="color:#ef4444;">$50,000 base fee plus 1% of position value</strong> per stock.
+                Loyalty tiers boost your dividend payouts: <strong style="color:#f59e0b;">7+ days</strong> = standard, <strong style="color:#f59e0b;">30+ days</strong> = +10%, <strong style="color:#22c55e;">90+ days</strong> = +25%.
             </p>
             {portfolio_html}
         </div>
+        {perks_html}
         '''
         
         return shell("My Portfolio", body, player.cash_balance, player.id)
