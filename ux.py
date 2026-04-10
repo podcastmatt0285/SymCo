@@ -6921,7 +6921,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
 
     try:
         from banks.brokerage_firm import (
-            get_firm_entity, IPO_CONFIG, IPOType,
+            get_firm_entity, IPO_CONFIG, IPOType, IPO_LOCKUP_DAYS,
             calculate_player_company_valuation, CompanyShares,
             calculate_delisting_cost, get_db as get_firm_db
         )
@@ -7138,7 +7138,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $25,000</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $25,000 &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("direct_listing", 15)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px;">Select Direct Listing</button>
                 </div>
 
@@ -7174,7 +7174,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("firm_underwritten", 30)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px;">Select Underwritten IPO</button>
                 </div>
 
@@ -7210,7 +7210,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $75,000 &bull; Max float: 40%</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $75,000 &bull; Max float: 40% &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("income_shares", 30)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #92400e; border-color: #f59e0b;">Select Income Shares IPO</button>
                 </div>
 
@@ -7246,7 +7246,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $100,000 &bull; Max float: 49% &bull; Class A (founder) + Class B (public)</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $100,000 &bull; Max float: 49% &bull; Class A (founder) + Class B (public) &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("dual_class", 60)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #2e1065; border-color: #a78bfa;">Select Dual-Class IPO</button>
                 </div>
 
@@ -7282,7 +7282,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; Max float: 40% &bull; Callable preferred shares</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $50,000 &bull; Max float: 40% &bull; Callable preferred shares &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("preferred_offering", 30)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #431407; border-color: #fb923c;">Select Preferred Offering</button>
                 </div>
 
@@ -7318,7 +7318,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $150,000 &bull; Max float: 30% &bull; Growth capital injection</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $150,000 &bull; Max float: 30% &bull; Growth capital injection &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("series_a_growth", 60)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #022c22; border-color: #34d399;">Select Series A Growth Round</button>
                 </div>
 
@@ -7355,7 +7355,7 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
                             </ul>
                         </div>
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $200,000 &bull; Max float: 60% &bull; Retain 40%+ as Class A</div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">Min valuation: $200,000 &bull; Max float: 60% &bull; Retain 40%+ as Class A &bull; <span style="color:#f59e0b;">&#8987; {IPO_LOCKUP_DAYS.get("quad_class", 90)}-day founder lockup</span></div>
                     <button type="button" class="btn-blue select-ipo-btn" style="width: 100%; margin-top: 15px; background: #1a0533; border-color: #e879f9;">Select Quad-Class IPO</button>
                 </div>
             </div>
@@ -7702,6 +7702,7 @@ def brokerage_governance_page(
                             <option value="dividend_change">Dividend Change — set a new annual dividend rate</option>
                             <option value="secondary_offering">Secondary Offering — issue new shares into the float</option>
                             <option value="trading_halt">Trading Halt — pause all trading temporarily</option>
+                            <option value="force_dividend_from_escrow">Release Escrow — distribute escrow to minority shareholders</option>
                             <option value="custom">Custom / Other — advisory, no automatic effect</option>
                         </select>
                     </div>
@@ -7724,6 +7725,12 @@ def brokerage_governance_page(
                                style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
                         <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, all trading in this company is suspended for the chosen duration (max 168h / 1 week).</p>
                     </div>
+                    <div id="gov-param-escrow" style="margin-bottom:12px;display:none;">
+                        <label style="color:#94a3b8;display:block;margin-bottom:4px;">Amount to Release from Escrow ($)</label>
+                        <input type="number" name="param_escrow_amount" min="0" step="0.01" placeholder="Leave blank to release full escrow balance"
+                               style="width:100%;padding:8px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;">
+                        <p style="color:#64748b;font-size:0.8rem;margin-top:4px;">If passed, the founder's voting power is capped to 1× and the specified amount (or full escrow balance) is distributed proportionally to non-founder shareholders.</p>
+                    </div>
                     <div style="margin-bottom:12px;">
                         <label style="color:#94a3b8;display:block;margin-bottom:4px;">Title</label>
                         <input type="text" name="title" required maxlength="120"
@@ -7743,6 +7750,7 @@ def brokerage_governance_page(
                     document.getElementById('gov-param-dividend').style.display = type === 'dividend_change' ? '' : 'none';
                     document.getElementById('gov-param-offering').style.display = type === 'secondary_offering' ? '' : 'none';
                     document.getElementById('gov-param-halt').style.display = type === 'trading_halt' ? '' : 'none';
+                    document.getElementById('gov-param-escrow').style.display = type === 'force_dividend_from_escrow' ? '' : 'none';
                 }}
                 </script>
             </div>'''
@@ -7825,6 +7833,7 @@ async def create_proposal_endpoint(
     param_dividend_rate: Optional[str] = Form(None),
     param_shares: Optional[str] = Form(None),
     param_halt_hours: Optional[str] = Form(None),
+    param_escrow_amount: Optional[str] = Form(None),
     session_token: Optional[str] = Cookie(None)
 ):
     player = require_auth(session_token)
@@ -7850,6 +7859,12 @@ async def create_proposal_endpoint(
                 proposal_param["hours"] = int(param_halt_hours)
             except ValueError:
                 proposal_param["hours"] = 24
+        elif proposal_type == "force_dividend_from_escrow":
+            if param_escrow_amount:
+                try:
+                    proposal_param["escrow_amount"] = float(param_escrow_amount)
+                except ValueError:
+                    pass
         proposal, err = create_proposal(company_id, player.id, proposal_type, title, description, proposal_param)
         if proposal:
             return RedirectResponse(
@@ -7909,9 +7924,10 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
 
     try:
         from banks.brokerage_firm import (
-            CompanyShares, ShareholderPosition, get_db as get_firm_db
+            CompanyShares, ShareholderPosition, get_db as get_firm_db,
+            get_loyalty_tier, get_player_shareholder_perks
         )
-        
+
         db = get_firm_db()
         try:
             # Get all player positions
@@ -7935,14 +7951,17 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                     cost_basis_total = pos.shares_owned * pos.average_cost_basis
                     pnl = market_value - cost_basis_total
                     pnl_pct = (pnl / cost_basis_total * 100) if cost_basis_total > 0 else 0
-                    
+                    loyalty_mult, loyalty_label = get_loyalty_tier(pos.first_held_at)
+
                     portfolio_data.append({
                         "company": company,
                         "position": pos,
                         "market_value": market_value,
                         "cost_basis_total": cost_basis_total,
                         "pnl": pnl,
-                        "pnl_pct": pnl_pct
+                        "pnl_pct": pnl_pct,
+                        "loyalty_mult": loyalty_mult,
+                        "loyalty_label": loyalty_label,
                     })
                     
                     total_value += market_value
@@ -7951,10 +7970,16 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
             
         finally:
             db.close()
-        
+
+        # Fetch shareholder perks (outside db context)
+        try:
+            shareholder_perks = get_player_shareholder_perks(player.id)
+        except Exception:
+            shareholder_perks = []
+
         total_pnl = total_value - total_cost
         total_pnl_pct = (total_pnl / total_cost * 100) if total_cost > 0 else 0
-        
+
         # Build portfolio table
         LEND_OPT_OUT_BASE_FEE = 50_000.0   # flat fee per position to opt out of lending
         LEND_OPT_OUT_PCT      = 0.01        # plus 1 % of position market value
@@ -7971,6 +7996,7 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                         <th style="padding: 12px 8px;">Market Value</th>
                         <th style="padding: 12px 8px;">Cost Basis</th>
                         <th style="padding: 12px 8px;">P/L</th>
+                        <th style="padding: 12px 8px;">Loyalty</th>
                         <th style="padding: 12px 8px;">Margin</th>
                         <th style="padding: 12px 8px;">Lending</th>
                         <th style="padding: 12px 8px;">Actions</th>
@@ -7983,6 +8009,11 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                 pos = item["position"]
                 pnl_color = "#22c55e" if item["pnl"] >= 0 else "#ef4444"
                 margin_badge = f'<span class="badge" style="background: #f59e0b;">MARGIN</span>' if pos.is_margin_position else ""
+                loyalty_mult = item["loyalty_mult"]
+                loyalty_label = item["loyalty_label"]
+                loyalty_color = "#22c55e" if loyalty_mult >= 1.20 else ("#f59e0b" if loyalty_mult >= 1.10 else "#94a3b8")
+                loyalty_bonus_html = f'<br><span style="font-size:0.75rem;color:{loyalty_color};">+{(loyalty_mult-1)*100:.0f}% div bonus</span>' if loyalty_mult > 1.0 else ""
+                loyalty_cell = f'<span style="color:{loyalty_color};font-size:0.85rem;">{loyalty_label}</span>{loyalty_bonus_html}'
 
                 # Share-lending status cell
                 available_to_lend = pos.shares_available_to_lend or 0
@@ -8051,6 +8082,9 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                         {fmt_usd(item["pnl"], disp)}<br>
                         <span style="font-size: 0.85rem;">({item["pnl_pct"]:+.1f}%)</span>
                     </td>
+                    <td style="padding: 12px 8px; vertical-align: top;">
+                        {loyalty_cell}
+                    </td>
                     <td style="padding: 12px 8px;">
                         {fmt_usd(pos.margin_debt, disp) if pos.margin_debt > 0 else "-"}
                     </td>
@@ -8065,6 +8099,36 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
             portfolio_html += '</tbody></table>'
         else:
             portfolio_html = '<p style="color: #64748b;">You have no equity positions. <a href="/brokerage/trading">Start trading!</a></p>'
+
+        # Build shareholder perks section
+        if shareholder_perks:
+            perks_rows = ""
+            for perk in shareholder_perks:
+                perks_rows += f'''
+                <tr style="border-bottom:1px solid #1e293b;">
+                    <td style="padding:10px 8px;"><strong>{perk["ticker"]}</strong><br><span style="color:#64748b;font-size:0.8rem;">{perk["company_name"]}</span></td>
+                    <td style="padding:10px 8px;color:#38bdf8;">{perk["sector"]}</td>
+                    <td style="padding:10px 8px;color:#94a3b8;">{perk["perk"]}</td>
+                </tr>'''
+            perks_html = f'''
+        <div class="card" style="margin-top:20px;">
+            <h3>Shareholder Perks</h3>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:12px;">
+                Sector-based perks that apply to your equity positions. Finance sector holdings grant bonus credit per dividend payment.
+            </p>
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom:1px solid #334155;text-align:left;">
+                        <th style="padding:10px 8px;">Company</th>
+                        <th style="padding:10px 8px;">Sector</th>
+                        <th style="padding:10px 8px;">Perk</th>
+                    </tr>
+                </thead>
+                <tbody>{perks_rows}</tbody>
+            </table>
+        </div>'''
+        else:
+            perks_html = ""
 
         body = f'''
         <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
@@ -8104,9 +8168,11 @@ def brokerage_portfolio_page(session_token: Optional[str] = Cookie(None)):
                 Share lending is <strong style="color:#22c55e;">enabled by default</strong> for all positions.
                 Borrowers who request shares receive them proportionally from all opted-in lenders.
                 Opting out costs a <strong style="color:#ef4444;">$50,000 base fee plus 1% of position value</strong> per stock.
+                Loyalty tiers boost your dividend payouts: <strong style="color:#f59e0b;">7+ days</strong> = standard, <strong style="color:#f59e0b;">30+ days</strong> = +10%, <strong style="color:#22c55e;">90+ days</strong> = +25%.
             </p>
             {portfolio_html}
         </div>
+        {perks_html}
         '''
         
         return shell("My Portfolio", body, player.cash_balance, player.id)
