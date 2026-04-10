@@ -461,14 +461,43 @@ def process_business_tick(db):
                     pass
 
             net_revenue = total_revenue - wage_cost
+
+            # ── Profit siphon: divert a % into the company's dividend escrow ──
+            siphon_amount = 0.0
+            try:
+                from banks.brokerage_firm import SessionLocal as _BrokDB, CompanyShares as _CS
+                _bdb = _BrokDB()
+                try:
+                    _cs = _bdb.query(_CS).filter(
+                        _CS.founder_id == player.id,
+                        _CS.is_delisted == False,
+                        _CS.profit_siphon_rate > 0,
+                        _CS.share_class_label == "main",
+                    ).first()
+                    if _cs and _cs.profit_siphon_rate and net_revenue > 0:
+                        siphon_amount = net_revenue * _cs.profit_siphon_rate
+                        _cs.dividend_escrow_balance = (_cs.dividend_escrow_balance or 0.0) + siphon_amount
+                        _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
+                        _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
+                        _bdb.commit()
+                    elif _cs:
+                        _cs.revenue_7d  = (_cs.revenue_7d  or 0.0) + net_revenue
+                        _cs.revenue_30d = (_cs.revenue_30d or 0.0) + net_revenue
+                        _bdb.commit()
+                finally:
+                    _bdb.close()
+            except Exception:
+                pass
+
+            founder_credit = net_revenue - siphon_amount
             # Route income through the reserve bank so JPY (and other legal-
             # tender) players receive their earnings in their chosen currency.
             try:
                 from reserve_banks import convert_to_legal_tender
-                convert_to_legal_tender(player.id, net_revenue)
+                convert_to_legal_tender(player.id, founder_credit)
             except Exception:
                 from reserve_banks import credit_usd
-                credit_usd(player.id, net_revenue)
+                credit_usd(player.id, founder_credit)
             biz.progress_ticks = 0
             db.commit()
             if net_revenue > 0:
@@ -476,7 +505,7 @@ def process_business_tick(db):
                     biz.owner_id,
                     "retail_sale",
                     "money",
-                    net_revenue,
+                    founder_credit,
                     f"Retail revenue: {biz.business_type}",
                     str(biz.id)
                 )
