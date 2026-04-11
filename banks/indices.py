@@ -179,9 +179,16 @@ _SEED_ITEMS = [
 # HELPERS
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _fmt(value: float, unit: str) -> str:
-    """Format a value for display."""
-    if unit == "USD":
+def _fmt(value: float, unit: str, disp: dict | None = None) -> str:
+    """Format a value for display, optionally converting USD to player's display currency."""
+    if unit in ("USD", "USD/hr", "USD/mo"):
+        if disp:
+            try:
+                from reserve_banks import fmt_usd as _fmt_usd
+                return _fmt_usd(value, disp)
+            except Exception:
+                pass
+        # fallback: hardcoded USD format
         if abs(value) >= 1_000_000_000:
             return f"${value/1_000_000_000:.2f}B"
         if abs(value) >= 1_000_000:
@@ -193,8 +200,6 @@ def _fmt(value: float, unit: str) -> str:
         return f"{value:.3f}%"
     if unit == "ratio":
         return f"{value:.3f}×"
-    if unit in ("USD/hr", "USD/mo"):
-        return f"${value:,.2f}"
     if unit == "WSC":
         if abs(value) >= 1_000_000:
             return f"{value/1_000_000:.2f}M WSC"
@@ -703,7 +708,7 @@ def calc_GFI() -> tuple[float, dict]:
             current = snaps[-1].value
             sma = sum(s.value for s in snaps) / len(snaps)
             pct = (current - sma) / max(sma, 1.0)
-            signals["Momentum"] = _clamp((pct * 150 + 0.5) * 30, 0, 30)
+            signals["Momentum"] = _clamp(pct * 150 + 15, 0, 30)
         else:
             signals["Momentum"] = 15.0
     except Exception:
@@ -945,6 +950,12 @@ def indices_landing(session_token: Optional[str] = Cookie(None)):
     except Exception:
         return RedirectResponse(url="/login", status_code=303)
 
+    try:
+        from reserve_banks import get_player_display_currency
+        disp = get_player_display_currency(player.id)
+    except Exception:
+        disp = None
+
     # Build cards for all 19 indices
     cards_html = ""
     for code, meta in INDICES.items():
@@ -960,7 +971,7 @@ def indices_landing(session_token: Optional[str] = Cookie(None)):
         change_str   = f"{change_arrow} {abs(change):.2f}%"
 
         svg   = _sparkline_svg(snap24[-48:], meta["color"]) if snap24 else ""
-        fmted = _fmt(current, meta["unit"])
+        fmted = _fmt(current, meta["unit"], disp)
 
         cards_html += f"""
         <a href="/banks/indices/{code}" class="idx-card" style="--c:{meta['color']};">
@@ -1031,6 +1042,12 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
         return _shell("Not Found", "<p>Index not found. <a href='/banks/indices'>← Back</a></p>",
                       getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
 
+    try:
+        from reserve_banks import get_player_display_currency
+        disp = get_player_display_currency(player.id)
+    except Exception:
+        disp = None
+
     meta  = INDICES[code]
     color = meta["color"]
 
@@ -1047,7 +1064,7 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     current = snap_now.value if snap_now else 0.0
     ch24    = _pct_change(current, snap_24h.value) if snap_24h else 0.0
     ch30    = _pct_change(current, snap_30d.value) if snap_30d else 0.0
-    fmted   = _fmt(current, meta["unit"])
+    fmted   = _fmt(current, meta["unit"], disp)
 
     def ch_span(pct: float) -> str:
         c = "#22c55e" if pct >= 0 else "#ef4444"
@@ -1077,7 +1094,7 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     pie_vals   = json.dumps([b["value"] for b in breakdown[:12]])
 
     # ── Heatmap HTML
-    heatmap_html = _build_heatmap(code, breakdown, latest_meta, color, meta["unit"])
+    heatmap_html = _build_heatmap(code, breakdown, latest_meta, color, meta["unit"], disp)
 
     # ── Pie chart colors (cycling palette)
     _palette = [
@@ -1195,13 +1212,30 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
 
     <script>
     (function() {{
-      const COLOR   = {json.dumps(color)};
-      const LABELS  = {line_labels};
-      const VALS    = {line_vals};
-      const CANDLES = {candle_js};
-      const P_LBL   = {pie_labels};
-      const P_VAL   = {pie_vals};
-      const P_COL   = {pie_colors};
+      const COLOR      = {json.dumps(color)};
+      const LABELS     = {line_labels};
+      const VALS       = {line_vals};
+      const CANDLES    = {candle_js};
+      const P_LBL      = {pie_labels};
+      const P_VAL      = {pie_vals};
+      const P_COL      = {pie_colors};
+      const IDX_UNIT   = {json.dumps(meta["unit"])};
+      const DISP_SYM   = {json.dumps(disp["symbol"] if disp else "$")};
+      const DISP_RATE  = {json.dumps(disp["usd_per_unit"] if disp else 1.0)};
+
+      function fmtTick(v) {{
+        if (IDX_UNIT === "USD" || IDX_UNIT === "USD/hr" || IDX_UNIT === "USD/mo") {{
+          const conv = v / DISP_RATE;
+          if (Math.abs(conv) >= 1e9) return DISP_SYM + (conv/1e9).toFixed(1) + 'B';
+          if (Math.abs(conv) >= 1e6) return DISP_SYM + (conv/1e6).toFixed(1) + 'M';
+          if (Math.abs(conv) >= 1e3) return DISP_SYM + (conv/1e3).toFixed(1) + 'K';
+          return DISP_SYM + conv.toFixed(2);
+        }}
+        if (IDX_UNIT === "%") return v.toFixed(2) + '%';
+        if (IDX_UNIT === "ratio") return v.toFixed(3) + '×';
+        if (IDX_UNIT === "WSC") return v >= 1e6 ? (v/1e6).toFixed(2)+'M WSC' : v.toFixed(0)+' WSC';
+        return v >= 1e6 ? (v/1e6).toFixed(2)+'M' : v >= 1e3 ? (v/1e3).toFixed(1)+'K' : v.toFixed(2);
+      }}
 
       // ── Line chart
       if (VALS.length >= 2) {{
@@ -1222,12 +1256,19 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
           }},
           options: {{
             responsive: true,
-            plugins: {{ legend: {{ display: false }} }},
+            plugins: {{
+              legend: {{ display: false }},
+              tooltip: {{
+                callbacks: {{
+                  label: ctx => fmtTick(ctx.parsed.y),
+                }}
+              }}
+            }},
             scales: {{
               x: {{ display: false }},
               y: {{
                 grid: {{ color: '#1e293b' }},
-                ticks: {{ color: '#64748b', font: {{ size: 10 }} }},
+                ticks: {{ color: '#64748b', font: {{ size: 10 }}, callback: fmtTick }},
               }}
             }}
           }}
@@ -1244,11 +1285,13 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
           grid: {{ vertLines: {{ color: '#1e293b' }}, horzLines: {{ color: '#1e293b' }} }},
           rightPriceScale: {{ borderColor: '#1e293b' }},
           timeScale: {{ borderColor: '#1e293b', timeVisible: true }},
+          localization: {{ priceFormatter: fmtTick }},
         }});
         const series = chart.addCandlestickSeries({{
           upColor: '#22c55e', downColor: '#ef4444',
           borderUpColor: '#22c55e', borderDownColor: '#ef4444',
           wickUpColor: '#22c55e', wickDownColor: '#ef4444',
+          priceFormat: {{ type: 'custom', formatter: fmtTick }},
         }});
         series.setData(CANDLES);
         chart.timeScale().fitContent();
@@ -1291,7 +1334,8 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
 
 
 def _build_heatmap(code: str, breakdown: list[dict],
-                   meta: dict, color: str, unit: str) -> str:
+                   meta: dict, color: str, unit: str,
+                   disp: dict | None = None) -> str:
     """Build the heatmap HTML for the detail page."""
     if code == "GFI":
         return _gfi_gauge(meta)
@@ -1308,12 +1352,12 @@ def _build_heatmap(code: str, breakdown: list[dict],
     for b in breakdown[:24]:
         ratio = abs(b["value"]) / max_v
         bg    = _heatmap_color(ratio)
-        disp  = _fmt(b["value"], unit) if unit in ("USD", "USD/hr", "USD/mo", "WSC") \
-                else str(b["value"])
+        cell_disp = _fmt(b["value"], unit, disp) if unit in ("USD", "USD/hr", "USD/mo", "WSC") \
+                    else str(b["value"])
         cells += (f'<div class="hm-cell" style="background:{bg};flex:1 0 80px;" '
-                  f'title="{b["label"]}: {disp}">'
+                  f'title="{b["label"]}: {cell_disp}">'
                   f'<div style="font-weight:bold;font-size:.6rem;">{b["label"][:12]}</div>'
-                  f'<div>{disp}</div></div>')
+                  f'<div>{cell_disp}</div></div>')
 
     return f'<div class="hm-grid" style="max-height:200px;overflow-y:auto;">{cells}</div>'
 
