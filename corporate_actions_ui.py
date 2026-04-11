@@ -5,7 +5,7 @@ Add these endpoints to your ux.py file to give users actual forms and dashboards
 for managing buybacks, splits, and secondary offerings.
 """
 
-from fastapi import APIRouter, HTTPException, Cookie
+from fastapi import APIRouter, HTTPException, Cookie, Request
 from fastapi.responses import HTMLResponse
 from typing import Optional
 
@@ -27,14 +27,19 @@ router = APIRouter(prefix="/corporate-actions", tags=["corporate-actions-ui"])
 # ==========================
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None)):
+async def corporate_actions_dashboard(
+    request: Request,
+    session_token: Optional[str] = Cookie(None)
+):
     """Main dashboard showing all corporate actions for player's companies."""
     auth_db = get_auth_db()
     player = get_player_from_session(auth_db, session_token)
     auth_db.close()
-    
+
     if not player:
         return HTMLResponse(content="<p>Please log in to view corporate actions.</p>", status_code=401)
+
+    t4_reward = request.query_params.get("t4_reward") == "1"
 
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
@@ -512,7 +517,31 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
 
         # Tax Vouchers
         voucher_balance = get_tax_voucher_balance(player.id)
-        html += f"""
+
+        # Tutorial 4 reward highlight — shown when redirected from T4 claim
+        t4_banner = ""
+        if t4_reward:
+            t4_banner = f"""
+            <div style="background:linear-gradient(135deg,#061620,#0f172a);border:2px solid #38bdf8;
+                        border-radius:6px;padding:18px 22px;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    <span style="background:#38bdf8;color:#020617;padding:3px 10px;border-radius:10px;
+                                 font-size:0.7rem;font-weight:bold;">TUTORIAL 4 COMPLETE</span>
+                    <strong style="color:#38bdf8;font-size:0.9rem;">ETFs &amp; Market Indices</strong>
+                </div>
+                <p style="color:#94a3b8;margin:0 0 8px 0;line-height:1.6;">
+                    Congratulations! The government has awarded you a
+                    <strong style="color:#22c55e;">Tax Voucher worth {fmt_usd(100_000.0, disp)}</strong>
+                    for completing Tutorial 4. You can see it in your Tax Voucher balance below —
+                    redeem it at any time for instant cash.
+                </p>
+                <p style="color:#64748b;font-size:0.8rem;margin:0;">
+                    Tax vouchers don't expire. Redeem them now or save them for when you need liquidity.
+                </p>
+            </div>
+            """
+
+        html += t4_banner + f"""
             <div class="card" style="border-top:3px solid #22c55e;margin-top:8px;">
                 <h2 style="color:#22c55e;margin:0 0 12px 0;font-size:1.1rem;">🎟️ Tax Vouchers</h2>
                 <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
@@ -522,7 +551,7 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                 <form action="/api/corporate-actions/vouchers/redeem" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                     <div>
                         <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Amount to Redeem ({disp["symbol"]})</label>
-                        <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
+                        <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance / disp['usd_per_unit']:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
                     </div>
                     <button type="submit" class="btn btn-success" {"disabled" if voucher_balance <= 0 else ""}>Redeem Vouchers</button>
                 </form>

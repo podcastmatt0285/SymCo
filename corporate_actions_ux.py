@@ -775,7 +775,11 @@ async def api_pay_special_dividend(
     auth_db.close()
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    result = pay_special_dividend(company_shares_id, player.id, total_amount)
+    # total_amount is entered in the player's display currency — convert to USD for backend
+    from reserve_banks import get_player_display_currency
+    disp = get_player_display_currency(player.id)
+    total_amount_usd = total_amount * disp["usd_per_unit"]
+    result = pay_special_dividend(company_shares_id, player.id, total_amount_usd)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -803,7 +807,11 @@ async def api_redeem_vouchers(
     auth_db.close()
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    result = redeem_tax_vouchers(player.id, amount)
+    # amount is entered in the player's display currency — convert to USD for backend
+    from reserve_banks import get_player_display_currency
+    disp = get_player_display_currency(player.id)
+    amount_usd = amount * disp["usd_per_unit"]
+    result = redeem_tax_vouchers(player.id, amount_usd)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
