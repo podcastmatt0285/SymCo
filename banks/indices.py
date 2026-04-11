@@ -1024,7 +1024,15 @@ def indices_landing(session_token: Optional[str] = Cookie(None)):
     </p>
     <div class="idx-grid">{cards_html}</div>
     """
-    return _shell("Market Indices", body, getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
+
+    tut4 = ""
+    try:
+        from tutorial_ux import get_tutorial4_overlay_html
+        tut4 = get_tutorial4_overlay_html(player, "banks_indices")
+    except Exception:
+        pass
+
+    return _shell("Market Indices", tut4 + body, getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
 
 
 @router.get("/banks/indices/{code}", response_class=HTMLResponse)
@@ -1329,7 +1337,17 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     }})();
     </script>
     """
-    return _shell(meta["name"], body,
+
+    tut4 = ""
+    try:
+        from tutorial_ux import get_tutorial4_overlay_html
+        # Only inject for WBC50 detail page
+        if code == "WBC50":
+            tut4 = get_tutorial4_overlay_html(player, "banks_indices_wbc50")
+    except Exception:
+        pass
+
+    return _shell(meta["name"], tut4 + body,
                   getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
 
 

@@ -1936,7 +1936,14 @@ def home(session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
-    dashboard_top = tutorial_overlay or tutorial_banner or tutorial3_banner
+    tutorial4_banner = ""
+    try:
+        from tutorial_ux import get_tutorial4_banner_html
+        tutorial4_banner = get_tutorial4_banner_html(player)
+    except Exception:
+        pass
+
+    dashboard_top = tutorial_overlay or tutorial_banner or tutorial3_banner or tutorial4_banner
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
     if crypto_inherit_banners:
