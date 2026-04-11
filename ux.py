@@ -7038,7 +7038,15 @@ def brokerage_ipo_page(session_token: Optional[str] = Cookie(None), error: Optio
 
             {go_private_html}
             '''
-            return shell("IPO Center", body, player.cash_balance, player.id)
+            # Inject Tutorial 3 overlay — needed when player retakes T3 at step 6
+            # (player already has a public company so this is an early return path)
+            tut3 = ""
+            try:
+                from tutorial_ux import get_tutorial3_overlay_html
+                tut3 = get_tutorial3_overlay_html(player, "brokerage_ipo")
+            except Exception:
+                pass
+            return shell("IPO Center", tut3 + body, player.cash_balance, player.id)
 
         # Get player's company valuation
         valuation = calculate_player_company_valuation(player.id)

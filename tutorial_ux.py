@@ -536,7 +536,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             or used in even further downstream businesses.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            With <strong style="color:#e5e7eb;">106 business types</strong> available, you can build anything
+            With <strong style="color:#e5e7eb;">155 business types</strong> available, you can build anything
             from a bakery sourcing wheat from your own fields, to a luxury auto plant sourcing steel from
             your own refinery. The deeper your integration, the greater your margin.
         </p>
@@ -1225,12 +1225,15 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             publicly traded player companies.
         </p>
         <ul style="color:#94a3b8;line-height:1.9;margin:0 0 14px 24px;padding:0;">
-            <li><strong style="color:#e5e7eb;">Equity trading</strong> — buy and sell shares in player companies</li>
-            <li><strong style="color:#e5e7eb;">IPO underwriting</strong> — take your company public on the WPE</li>
+            <li><strong style="color:#e5e7eb;">Equity trading</strong> — buy and sell shares in player companies on the WPE</li>
+            <li><strong style="color:#e5e7eb;">IPO underwriting</strong> — 7 IPO structures to take your company public</li>
             <li><strong style="color:#e5e7eb;">Short selling</strong> — borrow and short shares you don't own</li>
             <li><strong style="color:#e5e7eb;">Margin lending</strong> — borrow against your portfolio to amplify positions</li>
-            <li><strong style="color:#e5e7eb;">ETF funds</strong> — invest in themed commodity-backed funds</li>
-            <li><strong style="color:#e5e7eb;">Governance</strong> — vote on corporate proposals as a shareholder</li>
+            <li><strong style="color:#e5e7eb;">ETF funds</strong> — invest in themed commodity-backed index funds</li>
+            <li><strong style="color:#e5e7eb;">Governance</strong> — create and vote on corporate proposals as a shareholder</li>
+            <li><strong style="color:#e5e7eb;">Loyalty dividends</strong> — hold shares 30+ days for a +10% dividend bonus, 90+ days for +25%</li>
+            <li><strong style="color:#e5e7eb;">Sector perks</strong> — holding shares in Finance, Tech, or other sectors unlocks passive bonuses</li>
+            <li><strong style="color:#e5e7eb;">Listing fees</strong> — public companies pay $500/month to stay listed; miss 3 and trading halts</li>
         </ul>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
             When you're ready to take your company public, the Firm handles everything from
@@ -1292,7 +1295,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Direct Listing</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              Flat $5,000 fee · No underwriter · Market-priced · Up to 80% float · Min valuation $25k
+              Flat $5,000 fee · No underwriter · Market-priced · Up to 80% float · Min $25k
+              <span style="color:#f59e0b;"> · ⌛ 15-day founder lockup</span>
             </div>
           </div>
 
@@ -1300,7 +1304,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Underwritten IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              7% discount · Guaranteed capital · Up to 60% float · Min valuation $50k
+              7% discount · Guaranteed capital · Up to 60% float · Min $50k
+              <span style="color:#f59e0b;"> · ⌛ 30-day founder lockup</span>
             </div>
           </div>
 
@@ -1308,7 +1313,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Income Shares IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              3% discount (best price) · 10% annual dividend quarterly · Up to 40% float · Min valuation $75k
+              3% discount · 10% annual dividend quarterly · Up to 40% float · Min $75k
+              <span style="color:#f59e0b;"> · ⌛ 30-day founder lockup</span>
             </div>
           </div>
 
@@ -1316,7 +1322,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Dual-Class IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              8% discount · Class B public + Class A founder · Up to 49% float · Min valuation $100k · You keep >51% votes
+              8% discount · Class B public + Class A founder · Up to 49% float · Min $100k · You keep &gt;51% votes
+              <span style="color:#f59e0b;"> · ⌛ 60-day founder lockup</span>
             </div>
           </div>
 
@@ -1324,7 +1331,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Preferred Share Offering</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              5% discount · Guaranteed quarterly dividends · 1.5× liquidation priority · Callable · Up to 40% float · Min valuation $50k
+              5% discount · Guaranteed quarterly dividends · 1.5× liquidation priority · Callable · Up to 40% float · Min $50k
+              <span style="color:#f59e0b;"> · ⌛ 30-day founder lockup</span>
             </div>
           </div>
 
@@ -1332,7 +1340,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Series A Growth Round</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              12% discount · +20% growth capital bonus · Up to 30% float · Min valuation $150k
+              12% discount · +20% growth capital bonus · Up to 30% float · Min $150k
+              <span style="color:#f59e0b;"> · ⌛ 60-day founder lockup</span>
             </div>
           </div>
 
@@ -1340,9 +1349,15 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Quad-Class IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              10% discount · 4 share classes · +15% growth bonus · 10% fixed dividend · 1.2× liquidation priority · Up to 60% float · Min valuation $200k
+              10% discount · 4 share classes · +15% growth bonus · 10% fixed dividend · 1.2× liquidation priority · Up to 60% float · Min $200k
+              <span style="color:#f59e0b;"> · ⌛ 90-day founder lockup</span>
             </div>
           </div>
+
+        <p style="color:#64748b;font-size:0.8rem;margin:8px 0 0 0;">
+            ⌛ <strong style="color:#f59e0b;">Founder lockup</strong>: after your IPO, you cannot sell your founder shares until the lockup expires.
+            All public companies also pay a <strong style="color:#f59e0b;">$500/month listing fee</strong> billed every 30 days.
+        </p>
 
         </div>
         <form action="/api/tutorial3/advance" method="post">
@@ -1463,29 +1478,113 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             Taking your company public is one of the most powerful moves in Wadsworth.
             It gives you instant capital, real shareholders, and a market-priced valuation.
         </p>
+        <div style="background:#1c0f00;border:1px solid #f59e0b;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#fbbf24;">
+            <strong>Know before you launch:</strong><br>
+            ⌛ <strong>Founder lockup</strong> — you cannot sell your own shares for a period after IPO (15 to 90 days depending on IPO type). Plan your cash flow accordingly.<br>
+            💳 <strong>Listing fee</strong> — your company owes $500/month billed every 30 days to stay listed. Miss 3 payments and trading halts automatically.
+        </div>
         {cta}
         """
 
     elif step == 7:
-        title = "IPO Complete — Congratulations!"
-        content = """
+        import json as _json
+        _t3_video_id = "uneqXirAwKQ"  # fallback — "Demystifying IPO"
+        try:
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            _t3_video_id = _media["videos"][2]["youtube_id"]
+        except Exception:
+            pass
+
+        title = "IPO Complete — Watch & Claim Your Reward!"
+        content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             Your company is now publicly traded on the <strong style="color:#e5e7eb;">Wadsworth
             Public Exchange</strong>. Shareholders hold real stakes in your holding company,
             and your share price will reflect how well you run it.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
-            <strong style="color:#d4af37;">Tutorial 3 Reward:</strong> you've unlocked the ability
-            to access <strong style="color:#e5e7eb;">margin lending</strong> on your portfolio —
-            borrow up to 50% of your equity value to amplify positions. Use it wisely.
+            Watch the IPO deep-dive video, then claim your Tutorial 3 reward below.
         </p>
-        <form action="/api/tutorial3/advance" method="post">
-            <button type="submit"
-                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
-                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Claim Reward & Complete Tutorial →
-            </button>
-        </form>
+
+        <!-- YouTube IFrame Player -->
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;border:1px solid #1d2f55;margin-bottom:16px;">
+            <div id="yt3-player-container" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+
+        <!-- Watch-progress bar -->
+        <div id="tut3-watch-bar" style="background:#111c35;border:1px solid #1d2f55;border-radius:4px;height:6px;margin-bottom:12px;overflow:hidden;">
+            <div id="tut3-watch-fill" style="background:#d4af37;height:6px;width:0%;transition:width .5s;"></div>
+        </div>
+        <p id="tut3-watch-label" style="color:#64748b;font-size:0.8rem;margin:0 0 16px 0;text-align:center;">
+            ⏳ Watch the video to unlock your reward…
+        </p>
+
+        <!-- Reward section — hidden until video watched -->
+        <div id="tut3-reward-section" style="display:none;">
+            <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.35);
+                        border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+                <strong style="color:#d4af37;">Tutorial 3 Reward — Margin Lending Unlocked</strong>
+                <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                    You can now borrow up to <strong style="color:#e5e7eb;">50% of your equity portfolio value</strong>
+                    as a margin loan to amplify your positions. Visit the Brokerage Firm dashboard to access it.
+                    Use leverage wisely — margin calls are real.
+                </p>
+            </div>
+            <form action="/api/tutorial3/advance" method="post">
+                <button type="submit"
+                        style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                               border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                    Claim Reward &amp; Complete Tutorial 3 →
+                </button>
+            </form>
+        </div>
+
+        <script>
+        (function() {{
+            var WATCH_THRESHOLD = 0.90;
+            var watched = false;
+
+            function unlockReward() {{
+                if (watched) return;
+                watched = true;
+                document.getElementById('tut3-watch-label').innerHTML =
+                    '<span style="color:#4ade80;">✓ Video complete! Claim your reward below.</span>';
+                document.getElementById('tut3-watch-fill').style.width = '100%';
+                document.getElementById('tut3-reward-section').style.display = 'block';
+            }}
+
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+
+            var ytPlayer3;
+            window.onYouTubeIframeAPIReady = function() {{
+                ytPlayer3 = new YT.Player('yt3-player-container', {{
+                    videoId: '{_t3_video_id}',
+                    playerVars: {{ rel: 0, modestbranding: 1 }},
+                    events: {{
+                        onStateChange: function(e) {{
+                            if (e.data === YT.PlayerState.ENDED) unlockReward();
+                        }}
+                    }}
+                }});
+            }};
+
+            var pollTimer = setInterval(function() {{
+                if (!ytPlayer3 || typeof ytPlayer3.getCurrentTime !== 'function') return;
+                try {{
+                    var cur = ytPlayer3.getCurrentTime();
+                    var dur = ytPlayer3.getDuration();
+                    if (dur > 0) {{
+                        var pct = Math.min(cur / dur, 1);
+                        document.getElementById('tut3-watch-fill').style.width = (pct * 100).toFixed(1) + '%';
+                        if (pct >= WATCH_THRESHOLD) {{ unlockReward(); clearInterval(pollTimer); }}
+                    }}
+                }} catch(ex) {{}}
+            }}, 2000);
+        }})();
+        </script>
         """
 
     else:
