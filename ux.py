@@ -1972,6 +1972,20 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">View Stock</span>
             </a>
 
+            <a href="/counties" class="dc" style="--c:#a3e635;--g:linear-gradient(90deg,#a3e635,#bef264);--glow:rgba(163,230,53,0.12);--btn:#a3e635;">
+                <span class="dc-ico">🗾</span>
+                <div class="dc-t">Counties</div>
+                <div class="dc-d">Regional governments, county taxes, borders, and territorial governance</div>
+                <span class="dc-btn">View Counties</span>
+            </a>
+
+            <a href="/cities" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#34d399,#6ee7b7);--glow:rgba(52,211,153,0.12);--btn:#34d399;">
+                <span class="dc-ico">🏙️</span>
+                <div class="dc-t">Cities</div>
+                <div class="dc-d">Urban centres, city projects, population, and municipal infrastructure</div>
+                <span class="dc-btn">View Cities</span>
+            </a>
+
             <a href="/land" class="dc" style="--c:#22c55e;--g:linear-gradient(90deg,#22c55e,#4ade80);--glow:rgba(34,197,94,0.12);--btn:#22c55e;">
                 <span class="dc-ico">🌿</span>
                 <div class="dc-t">Land</div>
@@ -1998,6 +2012,13 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <div class="dc-t">Banks</div>
                 <div class="dc-d">ETF investment funds, share trading, dividends, and reserve banking</div>
                 <span class="dc-btn">Banking</span>
+            </a>
+
+            <a href="/wallet" class="dc" style="--c:#fb923c;--g:linear-gradient(90deg,#fb923c,#fdba74);--glow:rgba(251,146,60,0.12);--btn:#fb923c;">
+                <span class="dc-ico">💳</span>
+                <div class="dc-t">Wallet</div>
+                <div class="dc-d">Your cash balances, transaction history, and multi-currency holdings</div>
+                <span class="dc-btn">Open Wallet</span>
             </a>
 
             <a href="/executives" class="dc" style="--c:#c084fc;--g:linear-gradient(90deg,#c084fc,#e879f9);--glow:rgba(192,132,252,0.12);--btn:#c084fc;">
@@ -6209,6 +6230,11 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
                 <h3>📈 WPE Trading</h3>
                 <p style="color: #64748b; font-size: 0.9rem;">Buy and sell player company shares</p>
                 <a href="/brokerage/trading" class="btn-blue" style="display: inline-block; margin-top: 10px;">Trade Equities</a>
+            </div>
+            <div class="card">
+                <h3>🏢 Listed Companies</h3>
+                <p style="color: #64748b; font-size: 0.9rem;">Browse all public companies, prices, dividends, and detailed profiles</p>
+                <a href="/brokerage/companies" class="btn-blue" style="display: inline-block; margin-top: 10px;">View Companies</a>
             </div>
             <div class="card">
                 <h3>🏢 IPO Center</h3>
