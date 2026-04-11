@@ -396,7 +396,7 @@ async def corporate_actions_dashboard(
                 <div class="card" style="border-left:4px solid #22c55e;">
                     <div class="action-header">💸 Special One-Time Dividend — {company.ticker_symbol}</div>
                     <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                        Distribute a special dividend to all float shareholders proportionally. For every {disp["symbol"]}1 paid, the government awards <strong style="color:#22c55e;">{fmt_usd(TAX_VOUCHER_RATE, disp, precision=4)}</strong> in redeemable tax vouchers to you.
+                        Distribute a special dividend to all float shareholders proportionally. For every {disp["symbol"]}1 paid, the government awards <strong style="color:#22c55e;">{disp["symbol"]}{TAX_VOUCHER_RATE:.4f}</strong> in redeemable tax vouchers to you ({TAX_VOUCHER_RATE * 100:.2f}% back).
                     </p>
                     <form action="/api/corporate-actions/special-dividend/pay" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                         <input type="hidden" name="company_shares_id" value="{company.id}">
@@ -545,7 +545,7 @@ async def corporate_actions_dashboard(
             <div class="card" style="border-top:3px solid #22c55e;margin-top:8px;">
                 <h2 style="color:#22c55e;margin:0 0 12px 0;font-size:1.1rem;">🎟️ Tax Vouchers</h2>
                 <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                    Earned from special dividends at <strong>{fmt_usd(TAX_VOUCHER_RATE, disp, precision=4)}</strong> per {disp["symbol"]}1 paid. Redeem for cash from the government at any time.
+                    Earned from special dividends at <strong>{disp["symbol"]}{TAX_VOUCHER_RATE:.4f}</strong> per {disp["symbol"]}1 paid ({TAX_VOUCHER_RATE * 100:.2f}% of the amount distributed). Redeem for cash from the government at any time.
                     Current balance: <strong style="color:#22c55e;">{fmt_usd(voucher_balance, disp, precision=4)}</strong>
                 </p>
                 <form action="/api/corporate-actions/vouchers/redeem" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
