@@ -21,8 +21,8 @@
     "path": "/home/maphematics/SymCo/android/twa-project/android.keystore",
     "alias": "android"
   },
-  "appVersionName": "5",
-  "appVersionCode": 5,
+  "appVersionName": "6",
+  "appVersionCode": 6,
   "shortcuts": [
     {
       "name": "Businesses",
@@ -79,5 +79,5 @@
     "window-controls-overlay",
     "fullscreen"
   ],
-  "appVersion": "5"
+  "appVersion": "6"
 }
