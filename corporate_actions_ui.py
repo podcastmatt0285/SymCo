@@ -522,7 +522,7 @@ async def corporate_actions_dashboard(session_token: Optional[str] = Cookie(None
                 <form action="/api/corporate-actions/vouchers/redeem" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
                     <div>
                         <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Amount to Redeem ({disp["symbol"]})</label>
-                        <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
+                        <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance / disp['usd_per_unit']:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
                     </div>
                     <button type="submit" class="btn btn-success" {"disabled" if voucher_balance <= 0 else ""}>Redeem Vouchers</button>
                 </form>
