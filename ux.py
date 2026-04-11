@@ -1961,98 +1961,98 @@ def home(session_token: Optional[str] = Cookie(None)):
             <a href="/businesses" class="dc" style="--c:#38bdf8;--g:linear-gradient(90deg,#38bdf8,#67e8f9);--glow:rgba(56,189,248,0.12);--btn:#38bdf8;">
                 <span class="dc-ico">🏭</span>
                 <div class="dc-t">Businesses</div>
-                <div class="dc-d">Operate factories, plantations, and production chains across your land portfolio</div>
+                <div class="dc-d">Build and run your production empire — factories, plantations, refineries, and retail shops. Each business consumes inputs, generates revenue every tick, and pays your workers. Set retail prices, monitor output cycles, and scale up to dominate your sector.</div>
                 <span class="dc-btn">Open Terminal</span>
             </a>
 
             <a href="/inventory" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e);--glow:rgba(245,168,85,0.12);--btn:#f5a855;">
                 <span class="dc-ico">📦</span>
                 <div class="dc-t">Inventory</div>
-                <div class="dc-d">Raw materials, finished goods, and district items ready to sell or process</div>
+                <div class="dc-d">Everything you own that isn't land or cash — raw materials, finished goods, district items, and commodities. Use your stock to supply businesses, list on the Market, lend to other players, or hold for price appreciation.</div>
                 <span class="dc-btn">View Stock</span>
             </a>
 
             <a href="/counties" class="dc" style="--c:#a3e635;--g:linear-gradient(90deg,#a3e635,#bef264);--glow:rgba(163,230,53,0.12);--btn:#a3e635;">
                 <span class="dc-ico">🗾</span>
                 <div class="dc-t">Counties</div>
-                <div class="dc-d">Regional governments, county taxes, borders, and territorial governance</div>
+                <div class="dc-d">The top tier of regional government in Wadsworth. Each county sets its own tax rates, controls land within its borders, and funds public services. View which county your land sits in, who governs it, and how their policies affect your business costs.</div>
                 <span class="dc-btn">View Counties</span>
             </a>
 
             <a href="/cities" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#34d399,#6ee7b7);--glow:rgba(52,211,153,0.12);--btn:#34d399;">
                 <span class="dc-ico">🏙️</span>
                 <div class="dc-t">Cities</div>
-                <div class="dc-d">Urban centres, city projects, population, and municipal infrastructure</div>
+                <div class="dc-d">Urban hubs that unlock advanced buildings, districts, and city-level infrastructure projects. Cities grow with player investment, attract workers, and boost production bonuses for nearby land. Check active projects, population, and development status.</div>
                 <span class="dc-btn">View Cities</span>
             </a>
 
             <a href="/land" class="dc" style="--c:#22c55e;--g:linear-gradient(90deg,#22c55e,#4ade80);--glow:rgba(34,197,94,0.12);--btn:#22c55e;">
                 <span class="dc-ico">🌿</span>
                 <div class="dc-t">Land</div>
-                <div class="dc-d">Your owned plots, terrain types, business placement, and land portfolio</div>
+                <div class="dc-d">Your owned plots are where all production happens. Each plot has a terrain type that determines which businesses can be built on it. Place new businesses, view your plots by county and city, list land for sale, or browse available terrain.</div>
                 <span class="dc-btn">Real Estate</span>
             </a>
 
             <a href="/market" class="dc" style="--c:#67e8f9;--g:linear-gradient(90deg,#67e8f9,#a5f3fc);--glow:rgba(103,232,249,0.12);--btn:#67e8f9;">
                 <span class="dc-ico">📈</span>
                 <div class="dc-t">Market</div>
-                <div class="dc-d">Buy and sell commodities with other players on the Wadsworth Exchange</div>
+                <div class="dc-d">The Wadsworth Commodity Exchange — a live player-driven market for raw materials and finished goods. Post sell orders, place buy orders, watch prices update in real time, and profit from supply and demand across the economy.</div>
                 <span class="dc-btn">Trading Floor</span>
             </a>
 
             <a href="/land-market" class="dc" style="--c:#f5d76e;--g:linear-gradient(90deg,#f5d76e,#fde68a);--glow:rgba(245,215,110,0.12);--btn:#f5d76e;">
                 <span class="dc-ico">🏗️</span>
                 <div class="dc-t">Land Market</div>
-                <div class="dc-d">Government auctions, player-listed plots, and new land opportunities</div>
+                <div class="dc-d">Buy new land to expand your empire. Government plots go to auction at set intervals — bid competitively or browse player-listed land for immediate purchase. Place standing buy orders to automatically snap up plots that meet your price.</div>
                 <span class="dc-btn">View Auctions</span>
             </a>
 
             <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
                 <span class="dc-ico">🏦</span>
                 <div class="dc-t">Banks</div>
-                <div class="dc-d">ETF investment funds, share trading, dividends, and reserve banking</div>
+                <div class="dc-d">The full financial system — WPE stock exchange, IPOs, ETF index funds, short selling, commodity lending, credit ratings, margin trading, and the Reserve Bank for bonds and forex. Your financial hub for investing beyond your own business.</div>
                 <span class="dc-btn">Banking</span>
             </a>
 
             <a href="/wallet" class="dc" style="--c:#fb923c;--g:linear-gradient(90deg,#fb923c,#fdba74);--glow:rgba(251,146,60,0.12);--btn:#fb923c;">
                 <span class="dc-ico">💳</span>
                 <div class="dc-t">Wallet</div>
-                <div class="dc-d">Your cash balances, transaction history, and multi-currency holdings</div>
+                <div class="dc-d">Your personal finances at a glance — current cash balance, full transaction history, multi-currency holdings, and incoming payments. See exactly where your money comes from and where it goes, down to individual ticks.</div>
                 <span class="dc-btn">Open Wallet</span>
             </a>
 
             <a href="/executives" class="dc" style="--c:#c084fc;--g:linear-gradient(90deg,#c084fc,#e879f9);--glow:rgba(192,132,252,0.12);--btn:#c084fc;">
                 <span class="dc-ico">👔</span>
                 <div class="dc-t">Executives</div>
-                <div class="dc-d">Hire C-suite talent, unlock abilities, and train your leadership team</div>
+                <div class="dc-d">Hire C-suite leaders to unlock powerful abilities — CFOs that cut costs, CMOs that boost sales, COOs that speed up production cycles, and more. Train your team over time to gain a compounding edge over rival players.</div>
                 <span class="dc-btn">C-Suite</span>
             </a>
 
             <a href="/p2p" class="dc" style="--c:#f59e0b;--g:linear-gradient(90deg,#f59e0b,#fbbf24);--glow:rgba(245,158,11,0.12);--btn:#f59e0b;">
                 <span class="dc-ico">💬</span>
                 <div class="dc-t">Peer to Peer</div>
-                <div class="dc-d">Private contracts, chatrooms, and direct messages between players</div>
+                <div class="dc-d">Trade and communicate directly with other players — write binding P2P contracts, negotiate custom deals, join chatrooms, and send direct messages. Everything off the public market happens here.</div>
                 <span class="dc-btn">P2P Network</span>
             </a>
 
             <a href="/stats/wiki" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e,#90c4f0);--glow:rgba(245,168,85,0.18);--btn:linear-gradient(90deg,#f5a855,#f5d76e);">
                 <span class="dc-ico">📖</span>
                 <div class="dc-t">WikaWads</div>
-                <div class="dc-d">The living encyclopedia — businesses, districts, items, city projects, executives & analytics</div>
+                <div class="dc-d">The living game encyclopedia — look up every business type, input/output chain, district unlock, city project, executive ability, item recipe, and economic stat. Updated automatically as the game evolves. Essential for planning your next move.</div>
                 <span class="dc-btn">Open Wiki</span>
             </a>
 
             <a href="/world-map" class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12);--btn:#4ade80;">
                 <span class="dc-ico">🗺️</span>
                 <div class="dc-t">World Map</div>
-                <div class="dc-d">Live political atlas — counties, cities, districts, and terrain across Wadsworth</div>
+                <div class="dc-d">A live political and geographic atlas of Wadsworth. See every county, city, district, and terrain type. Identify where land is cheap, where cities are booming, which counties have low taxes, and where competitors are building their empires.</div>
                 <span class="dc-btn">Open Map</span>
             </a>
 
             <a href="/settings" class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);--btn:#818cf8;">
                 <span class="dc-ico">⚙️</span>
                 <div class="dc-t">Settings</div>
-                <div class="dc-d">Audio player controls, track selection, volume, and game preferences</div>
+                <div class="dc-d">Personalise your experience — background music, track selection, volume controls, display currency, notification preferences, and account options.</div>
                 <span class="dc-btn">Open Settings</span>
             </a>
 
