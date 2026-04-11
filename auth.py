@@ -41,6 +41,7 @@ class Player(Base):
     last_login = Column(DateTime, default=datetime.utcnow)
     tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
     tutorial_3_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=reward pending, 8=complete
+    tutorial_4_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
     is_npc = Column(Boolean, default=False)           # True for NPC accounts
     npc_config_key = Column(String, nullable=True)    # Links to npc_configs/<key>.json
     # Notification preferences
@@ -162,6 +163,7 @@ def migrate_player_table():
     run_ddl_migration(engine, [
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_step INTEGER DEFAULT 0",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_3_step INTEGER DEFAULT 0",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_4_step INTEGER DEFAULT 0",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS npc_config_key VARCHAR(128)",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_sounds BOOLEAN DEFAULT TRUE",

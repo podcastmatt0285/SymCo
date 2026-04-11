@@ -1118,11 +1118,9 @@ def pay_special_dividend(company_shares_id: int, founder_id: int, total_amount: 
                 if holder:
                     try:
                         from reserve_banks import convert_to_legal_tender
-                        _amt, _code = convert_to_legal_tender(holder.id, payout)
-                        if _code == "USD":
-                            holder.cash_balance += _amt
-                    except Exception:
-                        holder.cash_balance += payout
+                        convert_to_legal_tender(holder.id, payout)
+                    except Exception as _ce:
+                        print(f"[SpecialDividend] convert_to_legal_tender failed for player {pos.player_id}: {_ce}")
                     distributed += payout
                     log_transaction(pos.player_id, "dividend", "money", payout,
                                     f"Special dividend: {company.ticker_symbol} (${per_share:.4f}/share × {pos.shares_owned:,})")
@@ -1201,11 +1199,9 @@ def redeem_tax_vouchers(player_id: int, amount: float) -> dict:
             if p:
                 try:
                     from reserve_banks import convert_to_legal_tender
-                    _amt, _code = convert_to_legal_tender(p.id, redeemed_total)
-                    if _code == "USD":
-                        p.cash_balance += _amt
-                except Exception:
-                    p.cash_balance += redeemed_total
+                    convert_to_legal_tender(p.id, redeemed_total)
+                except Exception as _ce:
+                    print(f"[TaxVoucher] convert_to_legal_tender failed for player {player_id}: {_ce}")
                 auth_db.commit()
         finally:
             auth_db.close()

@@ -536,7 +536,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             or used in even further downstream businesses.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            With <strong style="color:#e5e7eb;">106 business types</strong> available, you can build anything
+            With <strong style="color:#e5e7eb;">155 business types</strong> available, you can build anything
             from a bakery sourcing wheat from your own fields, to a luxury auto plant sourcing steel from
             your own refinery. The deeper your integration, the greater your margin.
         </p>
@@ -1225,12 +1225,15 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             publicly traded player companies.
         </p>
         <ul style="color:#94a3b8;line-height:1.9;margin:0 0 14px 24px;padding:0;">
-            <li><strong style="color:#e5e7eb;">Equity trading</strong> — buy and sell shares in player companies</li>
-            <li><strong style="color:#e5e7eb;">IPO underwriting</strong> — take your company public on the WPE</li>
+            <li><strong style="color:#e5e7eb;">Equity trading</strong> — buy and sell shares in player companies on the WPE</li>
+            <li><strong style="color:#e5e7eb;">IPO underwriting</strong> — 7 IPO structures to take your company public</li>
             <li><strong style="color:#e5e7eb;">Short selling</strong> — borrow and short shares you don't own</li>
             <li><strong style="color:#e5e7eb;">Margin lending</strong> — borrow against your portfolio to amplify positions</li>
-            <li><strong style="color:#e5e7eb;">ETF funds</strong> — invest in themed commodity-backed funds</li>
-            <li><strong style="color:#e5e7eb;">Governance</strong> — vote on corporate proposals as a shareholder</li>
+            <li><strong style="color:#e5e7eb;">ETF funds</strong> — invest in themed commodity-backed index funds</li>
+            <li><strong style="color:#e5e7eb;">Governance</strong> — create and vote on corporate proposals as a shareholder</li>
+            <li><strong style="color:#e5e7eb;">Loyalty dividends</strong> — hold shares 30+ days for a +10% dividend bonus, 90+ days for +25%</li>
+            <li><strong style="color:#e5e7eb;">Sector perks</strong> — holding shares in Finance, Tech, or other sectors unlocks passive bonuses</li>
+            <li><strong style="color:#e5e7eb;">Listing fees</strong> — public companies pay $500/month to stay listed; miss 3 and trading halts</li>
         </ul>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
             When you're ready to take your company public, the Firm handles everything from
@@ -1292,7 +1295,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Direct Listing</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              Flat $5,000 fee · No underwriter · Market-priced · Up to 80% float · Min valuation $25k
+              Flat $5,000 fee · No underwriter · Market-priced · Up to 80% float · Min $25k
+              <span style="color:#f59e0b;"> · ⌛ 15-day founder lockup</span>
             </div>
           </div>
 
@@ -1300,7 +1304,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Underwritten IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              7% discount · Guaranteed capital · Up to 60% float · Min valuation $50k
+              7% discount · Guaranteed capital · Up to 60% float · Min $50k
+              <span style="color:#f59e0b;"> · ⌛ 30-day founder lockup</span>
             </div>
           </div>
 
@@ -1308,7 +1313,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Income Shares IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              3% discount (best price) · 10% annual dividend quarterly · Up to 40% float · Min valuation $75k
+              3% discount · 10% annual dividend quarterly · Up to 40% float · Min $75k
+              <span style="color:#f59e0b;"> · ⌛ 30-day founder lockup</span>
             </div>
           </div>
 
@@ -1316,7 +1322,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Dual-Class IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              8% discount · Class B public + Class A founder · Up to 49% float · Min valuation $100k · You keep >51% votes
+              8% discount · Class B public + Class A founder · Up to 49% float · Min $100k · You keep &gt;51% votes
+              <span style="color:#f59e0b;"> · ⌛ 60-day founder lockup</span>
             </div>
           </div>
 
@@ -1324,7 +1331,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Preferred Share Offering</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              5% discount · Guaranteed quarterly dividends · 1.5× liquidation priority · Callable · Up to 40% float · Min valuation $50k
+              5% discount · Guaranteed quarterly dividends · 1.5× liquidation priority · Callable · Up to 40% float · Min $50k
+              <span style="color:#f59e0b;"> · ⌛ 30-day founder lockup</span>
             </div>
           </div>
 
@@ -1332,7 +1340,8 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Series A Growth Round</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              12% discount · +20% growth capital bonus · Up to 30% float · Min valuation $150k
+              12% discount · +20% growth capital bonus · Up to 30% float · Min $150k
+              <span style="color:#f59e0b;"> · ⌛ 60-day founder lockup</span>
             </div>
           </div>
 
@@ -1340,9 +1349,15 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                       padding:10px 14px;border-radius:4px;">
             <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">Quad-Class IPO</div>
             <div style="color:#94a3b8;font-size:0.8rem;line-height:1.6;">
-              10% discount · 4 share classes · +15% growth bonus · 10% fixed dividend · 1.2× liquidation priority · Up to 60% float · Min valuation $200k
+              10% discount · 4 share classes · +15% growth bonus · 10% fixed dividend · 1.2× liquidation priority · Up to 60% float · Min $200k
+              <span style="color:#f59e0b;"> · ⌛ 90-day founder lockup</span>
             </div>
           </div>
+
+        <p style="color:#64748b;font-size:0.8rem;margin:8px 0 0 0;">
+            ⌛ <strong style="color:#f59e0b;">Founder lockup</strong>: after your IPO, you cannot sell your founder shares until the lockup expires.
+            All public companies also pay a <strong style="color:#f59e0b;">$500/month listing fee</strong> billed every 30 days.
+        </p>
 
         </div>
         <form action="/api/tutorial3/advance" method="post">
@@ -1463,29 +1478,113 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             Taking your company public is one of the most powerful moves in Wadsworth.
             It gives you instant capital, real shareholders, and a market-priced valuation.
         </p>
+        <div style="background:#1c0f00;border:1px solid #f59e0b;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#fbbf24;">
+            <strong>Know before you launch:</strong><br>
+            ⌛ <strong>Founder lockup</strong> — you cannot sell your own shares for a period after IPO (15 to 90 days depending on IPO type). Plan your cash flow accordingly.<br>
+            💳 <strong>Listing fee</strong> — your company owes $500/month billed every 30 days to stay listed. Miss 3 payments and trading halts automatically.
+        </div>
         {cta}
         """
 
     elif step == 7:
-        title = "IPO Complete — Congratulations!"
-        content = """
+        import json as _json
+        _t3_video_id = "uneqXirAwKQ"  # fallback — "Demystifying IPO"
+        try:
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            _t3_video_id = _media["videos"][2]["youtube_id"]
+        except Exception:
+            pass
+
+        title = "IPO Complete — Watch & Claim Your Reward!"
+        content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             Your company is now publicly traded on the <strong style="color:#e5e7eb;">Wadsworth
             Public Exchange</strong>. Shareholders hold real stakes in your holding company,
             and your share price will reflect how well you run it.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
-            <strong style="color:#d4af37;">Tutorial 3 Reward:</strong> you've unlocked the ability
-            to access <strong style="color:#e5e7eb;">margin lending</strong> on your portfolio —
-            borrow up to 50% of your equity value to amplify positions. Use it wisely.
+            Watch the IPO deep-dive video, then claim your Tutorial 3 reward below.
         </p>
-        <form action="/api/tutorial3/advance" method="post">
-            <button type="submit"
-                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
-                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Claim Reward & Complete Tutorial →
-            </button>
-        </form>
+
+        <!-- YouTube IFrame Player -->
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;border:1px solid #1d2f55;margin-bottom:16px;">
+            <div id="yt3-player-container" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+
+        <!-- Watch-progress bar -->
+        <div id="tut3-watch-bar" style="background:#111c35;border:1px solid #1d2f55;border-radius:4px;height:6px;margin-bottom:12px;overflow:hidden;">
+            <div id="tut3-watch-fill" style="background:#d4af37;height:6px;width:0%;transition:width .5s;"></div>
+        </div>
+        <p id="tut3-watch-label" style="color:#64748b;font-size:0.8rem;margin:0 0 16px 0;text-align:center;">
+            ⏳ Watch the video to unlock your reward…
+        </p>
+
+        <!-- Reward section — hidden until video watched -->
+        <div id="tut3-reward-section" style="display:none;">
+            <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.35);
+                        border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+                <strong style="color:#d4af37;">Tutorial 3 Reward — Margin Lending Unlocked</strong>
+                <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                    You can now borrow up to <strong style="color:#e5e7eb;">50% of your equity portfolio value</strong>
+                    as a margin loan to amplify your positions. Visit the Brokerage Firm dashboard to access it.
+                    Use leverage wisely — margin calls are real.
+                </p>
+            </div>
+            <form action="/api/tutorial3/advance" method="post">
+                <button type="submit"
+                        style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                               border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                    Claim Reward &amp; Complete Tutorial 3 →
+                </button>
+            </form>
+        </div>
+
+        <script>
+        (function() {{
+            var WATCH_THRESHOLD = 0.90;
+            var watched = false;
+
+            function unlockReward() {{
+                if (watched) return;
+                watched = true;
+                document.getElementById('tut3-watch-label').innerHTML =
+                    '<span style="color:#4ade80;">✓ Video complete! Claim your reward below.</span>';
+                document.getElementById('tut3-watch-fill').style.width = '100%';
+                document.getElementById('tut3-reward-section').style.display = 'block';
+            }}
+
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+
+            var ytPlayer3;
+            window.onYouTubeIframeAPIReady = function() {{
+                ytPlayer3 = new YT.Player('yt3-player-container', {{
+                    videoId: '{_t3_video_id}',
+                    playerVars: {{ rel: 0, modestbranding: 1 }},
+                    events: {{
+                        onStateChange: function(e) {{
+                            if (e.data === YT.PlayerState.ENDED) unlockReward();
+                        }}
+                    }}
+                }});
+            }};
+
+            var pollTimer = setInterval(function() {{
+                if (!ytPlayer3 || typeof ytPlayer3.getCurrentTime !== 'function') return;
+                try {{
+                    var cur = ytPlayer3.getCurrentTime();
+                    var dur = ytPlayer3.getDuration();
+                    if (dur > 0) {{
+                        var pct = Math.min(cur / dur, 1);
+                        document.getElementById('tut3-watch-fill').style.width = (pct * 100).toFixed(1) + '%';
+                        if (pct >= WATCH_THRESHOLD) {{ unlockReward(); clearInterval(pollTimer); }}
+                    }}
+                }} catch(ex) {{}}
+            }}, 2000);
+        }})();
+        </script>
         """
 
     else:
@@ -1633,3 +1732,496 @@ def tutorial3_check_ipo_done(session_token: Optional[str] = Cookie(None)):
     if step == 6 and player_has_public_company(player.id):
         set_tutorial3_step(player.id, 7)
     return RedirectResponse(url="/brokerage/trading?success=ipo_created", status_code=303)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TUTORIAL 4 — ETFs & Market Indices
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Steps:
+#   0  — Not started (T4 banner on dashboard after T3 complete)
+#   1  — Introduction to Market Indices  (/banks/indices)
+#   2  — Explore the grid, then visit WBC-50  (/banks/indices)
+#   3  — WBC-50 deep dive  (/banks/indices/WBC50)
+#   4  — ETFs vs Indices explained  (/banks/indices/WBC50)
+#   5  — Watch Tutorial 4 video  (/banks/indices/WBC50)
+#   6  — Claim reward: Tax Voucher $100,000  (/banks/indices/WBC50)
+#   7  — Complete  (redirect → /corporate-actions/dashboard)
+
+T4_TOTAL_STEPS = 6
+
+
+def get_tutorial4_step(player_id: int) -> int:
+    """Return the player's current Tutorial 4 step (0–7)."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        db.close()
+        if player is None:
+            return 0
+        step = getattr(player, "tutorial_4_step", 0)
+        return step if step is not None else 0
+    except Exception as e:
+        print(f"[Tutorial4] get_tutorial4_step error: {e}")
+        return 0
+
+
+def set_tutorial4_step(player_id: int, step: int):
+    """Set the player's Tutorial 4 step."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        if player:
+            player.tutorial_4_step = step
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial4] set_tutorial4_step error: {e}")
+
+
+def should_show_tutorial4_banner(player) -> bool:
+    """Show the T4 start banner only after Tutorial 3 is complete and T4 not yet started."""
+    t3 = getattr(player, "tutorial_3_step", 0) or 0
+    t4 = getattr(player, "tutorial_4_step", 0) or 0
+    return t3 >= 8 and t4 == 0
+
+
+# ── Tutorial 4 overlay HTML generator ─────────────────────────────────────────
+
+def get_tutorial4_overlay_html(player, current_page: str) -> str:
+    """
+    Return the Tutorial 4 overlay panel HTML for the given page.
+    `current_page` is one of: 'banks_indices', 'banks_indices_wbc50'.
+    Returns empty string if T4 is not active or wrong page.
+    """
+    step = get_tutorial4_step(player.id)
+    if step == 0 or step >= 7:
+        return ""
+
+    T4_STEP_PAGE = {
+        1: "banks_indices",
+        2: "banks_indices",
+        3: "banks_indices_wbc50",
+        4: "banks_indices_wbc50",
+        5: "banks_indices_wbc50",
+        6: "banks_indices_wbc50",
+    }
+
+    if T4_STEP_PAGE.get(step, "") != current_page:
+        return ""
+
+    try:
+        from reserve_banks import get_player_display_currency, fmt_usd
+        disp = get_player_display_currency(player.id)
+        reward_display = fmt_usd(100_000.0, disp)
+    except Exception:
+        disp = None
+        reward_display = "$100,000"
+
+    title = ""
+    content = ""
+
+    if step == 1:
+        title = "Welcome to the Market Indices"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            A <strong style="color:#e5e7eb;">market index</strong> is a composite number that
+            summarises the health of a slice of the Wadsworth economy. You're looking at
+            <strong style="color:#38bdf8;">19 live indices</strong> — from total market cap
+            (WBC-50) to bee populations (BEE) and fear sentiment (GFI).
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            Each index is calculated automatically from real in-game data and snapshotted
+            regularly so you can track trends over time with 30-day history charts and
+            hourly candlesticks.
+        </p>
+        <form action="/api/tutorial4/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 2:
+        title = "Explore the Grid, Then Visit WBC-50"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Each card below shows a live index value, a 24-hour change, and a sparkline.
+            Click any card to open the full detail page with charts, composition breakdowns,
+            and a distribution heatmap.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            Your next stop is the <strong style="color:#38bdf8;">WBC-50 Index</strong> —
+            Wadsworth's broadest market-cap measure. Click the <strong>WBC50</strong> card
+            to continue your tutorial.
+        </p>
+        <a href="/banks/indices/WBC50"
+           onclick="fetch('/api/tutorial4/advance', {{method:'POST',credentials:'include'}});"
+           style="display:inline-block;background:#d4af37;color:#020617;
+                  text-decoration:none;padding:10px 24px;border-radius:4px;
+                  font-size:0.9rem;font-weight:bold;">
+            Go to WBC-50 →
+        </a>
+        """
+
+    elif step == 3:
+        title = "The WBC-50 Index — Wadsworth's Benchmark"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            The <strong style="color:#38bdf8;">WBC-50</strong> (Wadsworth Benchmark Composite 50)
+            tracks the total market capitalisation of the top 50 entities in the economy —
+            public companies valued at <em>shares outstanding × current price</em>, plus NPC
+            private enterprises estimated by cash + land holdings.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            The <strong style="color:#e5e7eb;">30-Day History chart</strong> and
+            <strong style="color:#e5e7eb;">7-Day OHLCV candlesticks</strong> let you spot
+            growth trends, corrections, and volatility windows. The composition breakdown
+            shows which entities hold the most weight.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            When WBC-50 rises, economic activity is expanding. When it falls, capital is
+            leaving the market — watch it alongside the
+            <strong style="color:#e5e7eb;">GFI (Greed &amp; Fear Index)</strong> for full
+            sentiment context.
+        </p>
+        <form action="/api/tutorial4/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 4:
+        title = "ETFs vs Indices — What's the Difference?"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            An <strong style="color:#e5e7eb;">index</strong> is a <em>number</em> — a read-only
+            measure of the market. You cannot buy an index directly any more than you can
+            "buy" the temperature outside.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            An <strong style="color:#22c55e;">ETF (Exchange-Traded Fund)</strong> is a
+            <em>tradable product</em> designed to track an index. When you buy a WBC-50 ETF
+            share, you're getting diversified exposure across the top 50 entities without
+            owning each one individually.
+        </p>
+        <div style="background:#0f1f11;border:1px solid #22c55e;border-radius:4px;
+                    padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#4ade80;">
+            <strong>Key rule:</strong> Indices show you what's happening.
+            ETFs let you act on it.
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            In Wadsworth, the Brokerage Firm hosts ETF shares linked to the WBC-50 and other
+            indices. Their price floats with the underlying index value. Unlike company shares,
+            ETF shares have no founder lockup and no listing fees.
+        </p>
+        <form action="/api/tutorial4/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Watch the Video →
+            </button>
+        </form>
+        """
+
+    elif step == 5:
+        import json as _json
+        _t4_video_id = None
+        try:
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            _t4_video_id = _media["videos"][3]["youtube_id"]
+        except Exception:
+            pass
+
+        if _t4_video_id:
+            video_block = f"""
+        <!-- YouTube IFrame Player -->
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+                    border-radius:6px;border:1px solid #1d2f55;margin-bottom:16px;">
+            <div id="yt4-player-container"
+                 style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+
+        <!-- Watch-progress bar -->
+        <div id="tut4-watch-bar" style="background:#111c35;border:1px solid #1d2f55;
+                 border-radius:4px;height:6px;margin-bottom:12px;overflow:hidden;">
+            <div id="tut4-watch-fill"
+                 style="background:#d4af37;height:6px;width:0%;transition:width .5s;"></div>
+        </div>
+        <p id="tut4-watch-label" style="color:#64748b;font-size:0.8rem;
+               margin:0 0 16px 0;text-align:center;">
+            ⏳ Watch the video to unlock your reward…
+        </p>
+
+        <!-- Reward section — hidden until video watched -->
+        <div id="tut4-reward-section" style="display:none;">
+            <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.35);
+                        border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+                <strong style="color:#d4af37;">Tutorial 4 Reward — Tax Voucher {reward_display}</strong>
+                <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                    The government is awarding you a
+                    <strong style="color:#22c55e;">Tax Voucher worth {reward_display}</strong>
+                    for completing the ETFs &amp; Indices tutorial. Redeem it any time in your
+                    Corporate Actions dashboard to receive instant cash.
+                </p>
+            </div>
+            <form action="/api/tutorial4/claim-reward" method="post">
+                <button type="submit"
+                        style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                               border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                    Claim Reward &amp; Complete Tutorial 4 →
+                </button>
+            </form>
+        </div>
+
+        <script>
+        (function() {{
+            var WATCH_THRESHOLD = 0.90;
+            var watched = false;
+
+            function unlockReward4() {{
+                if (watched) return;
+                watched = true;
+                document.getElementById('tut4-watch-label').innerHTML =
+                    '<span style="color:#4ade80;">✓ Video complete! Claim your reward below.</span>';
+                document.getElementById('tut4-watch-fill').style.width = '100%';
+                document.getElementById('tut4-reward-section').style.display = 'block';
+            }}
+
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+
+            var ytPlayer4;
+            window.onYouTubeIframeAPIReady = function() {{
+                ytPlayer4 = new YT.Player('yt4-player-container', {{
+                    videoId: '{_t4_video_id}',
+                    playerVars: {{ rel: 0, modestbranding: 1 }},
+                    events: {{
+                        onStateChange: function(e) {{
+                            if (e.data === YT.PlayerState.ENDED) unlockReward4();
+                        }}
+                    }}
+                }});
+            }};
+
+            var pollTimer = setInterval(function() {{
+                if (!ytPlayer4 || typeof ytPlayer4.getCurrentTime !== 'function') return;
+                try {{
+                    var cur = ytPlayer4.getCurrentTime();
+                    var dur = ytPlayer4.getDuration();
+                    if (dur > 0) {{
+                        var pct = Math.min(cur / dur, 1);
+                        document.getElementById('tut4-watch-fill').style.width =
+                            (pct * 100).toFixed(1) + '%';
+                        if (pct >= WATCH_THRESHOLD) {{
+                            unlockReward4();
+                            clearInterval(pollTimer);
+                        }}
+                    }}
+                }} catch(ex) {{}}
+            }}, 2000);
+        }})();
+        </script>
+            """
+        else:
+            # No video uploaded yet — skip straight to reward
+            video_block = f"""
+        <div style="background:#1c1a00;border:1px solid #ca8a04;border-radius:4px;
+                    padding:10px 14px;margin-bottom:16px;font-size:0.82rem;
+                    color:#fbbf24;line-height:1.6;">
+            ⚠ The Tutorial 4 video hasn't been uploaded yet — check back soon!
+        </div>
+        <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.35);
+                    border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+            <strong style="color:#d4af37;">Tutorial 4 Reward — Tax Voucher {reward_display}</strong>
+            <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                Claim your <strong style="color:#22c55e;">Tax Voucher worth {reward_display}</strong>
+                below. Redeem it any time in your Corporate Actions dashboard for instant cash.
+            </p>
+        </div>
+        <form action="/api/tutorial4/claim-reward" method="post">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Claim Reward &amp; Complete Tutorial 4 →
+            </button>
+        </form>
+            """
+
+        title = "Watch &amp; Claim Your Reward"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            You've explored market indices and learned how ETFs work.
+            Watch the video below, then claim your Tax Voucher reward.
+        </p>
+        {video_block}
+        """
+
+    elif step == 6:
+        # Shouldn't normally show — step 6 is the claim-reward endpoint
+        return ""
+
+    else:
+        return ""
+
+    # ── display step counter (steps 1-6, not beyond) ──────────────────────────
+    display_step = min(step, T4_TOTAL_STEPS)
+
+    return f"""
+    <div id="tutorial4-panel" style="
+        background: linear-gradient(135deg, #061620, #0f172a);
+        border: 2px solid #38bdf8;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#38bdf8;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                TUTORIAL 4 — STEP {display_step}/{T4_TOTAL_STEPS}
+            </span>
+            <span style="color:#38bdf8;font-size:0.85rem;font-weight:bold;">Level 4 · ETFs &amp; Market Indices</span>
+            <div style="flex:1;background:#1e293b;height:4px;border-radius:2px;min-width:80px;">
+                <div style="background:#38bdf8;height:4px;border-radius:2px;
+                            width:{int(display_step / T4_TOTAL_STEPS * 100)}%;"></div>
+            </div>
+        </div>
+        <h3 style="color:#38bdf8;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
+        {content}
+        <a href="/api/tutorial4/dismiss"
+           onclick="return confirm('Skip Tutorial 4? You can restart it from Settings.');"
+           style="position:absolute;top:12px;right:16px;color:#475569;font-size:0.72rem;text-decoration:none;">
+            Skip
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 4 banner (shown on dashboard when T3 done and T4 not started) ────
+
+def get_tutorial4_banner_html(player) -> str:
+    """Return the T4 start banner HTML, or empty string if not applicable."""
+    if not should_show_tutorial4_banner(player):
+        return ""
+    return f"""
+    <div style="
+        background: linear-gradient(135deg, #061620, #0f172a);
+        border: 2px solid #38bdf8;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#38bdf8;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                NEW TUTORIAL AVAILABLE
+            </span>
+            <span style="color:#38bdf8;font-size:0.85rem;font-weight:bold;">Level 4 · ETFs &amp; Market Indices</span>
+        </div>
+        <h3 style="color:#38bdf8;margin:0 0 10px 0;font-size:1.05rem;">
+            Understand the Markets
+        </h3>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Tutorial 4 walks you through the <strong style="color:#e5e7eb;">19 Market Indices</strong>,
+            the <strong style="color:#e5e7eb;">WBC-50 Benchmark</strong>, and how
+            <strong style="color:#e5e7eb;">ETFs</strong> let you invest in the broad market
+            without picking individual stocks. Complete it and earn a
+            <strong style="color:#22c55e;">Tax Voucher reward</strong>.
+        </p>
+        <form action="/api/tutorial4/start" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Start Tutorial 4 →
+            </button>
+        </form>
+        <a href="/api/tutorial4/dismiss"
+           style="margin-left:16px;color:#475569;font-size:0.82rem;">
+            Dismiss
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 4 API routes ──────────────────────────────────────────────────────
+
+@router.post("/api/tutorial4/start")
+def tutorial4_start(session_token: Optional[str] = Cookie(None)):
+    """Start Tutorial 4 (step 0 → 1)."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial4_step(player.id) == 0:
+        set_tutorial4_step(player.id, 1)
+    return RedirectResponse(url="/banks/indices", status_code=303)
+
+
+@router.post("/api/tutorial4/advance")
+def tutorial4_advance(session_token: Optional[str] = Cookie(None)):
+    """Advance Tutorial 4 to the next step."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial4_step(player.id)
+
+    NEXT_REDIRECT = {
+        1: "/banks/indices",
+        2: "/banks/indices/WBC50",
+        3: "/banks/indices/WBC50",
+        4: "/banks/indices/WBC50",
+        5: "/banks/indices/WBC50",
+    }
+
+    if step == 0 or step >= 7:
+        return RedirectResponse(url="/", status_code=303)
+
+    set_tutorial4_step(player.id, step + 1)
+    redirect_url = NEXT_REDIRECT.get(step, "/banks/indices")
+    return RedirectResponse(url=redirect_url, status_code=303)
+
+
+@router.post("/api/tutorial4/claim-reward")
+def tutorial4_claim_reward(session_token: Optional[str] = Cookie(None)):
+    """Grant the Tutorial 4 Tax Voucher reward and complete the tutorial."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial4_step(player.id)
+    if step not in (5, 6):
+        return RedirectResponse(url="/banks/indices", status_code=303)
+
+    # Grant a $100,000 USD Tax Voucher (source_dividend_id=None = tutorial grant)
+    try:
+        from corporate_actions import TaxVoucher, get_db as get_ca_db
+        db = get_ca_db()
+        voucher = TaxVoucher(player_id=player.id, amount=100_000.0, source_dividend_id=None)
+        db.add(voucher)
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial4] Failed to grant tax voucher for player {player.id}: {e}")
+
+    set_tutorial4_step(player.id, 7)
+    return RedirectResponse(url="/corporate-actions/dashboard?t4_reward=1", status_code=303)
+
+
+@router.get("/api/tutorial4/dismiss")
+def tutorial4_dismiss(session_token: Optional[str] = Cookie(None)):
+    """Dismiss / skip Tutorial 4."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_tutorial4_step(player.id, 7)
+    return RedirectResponse(url="/", status_code=303)
