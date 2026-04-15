@@ -1859,13 +1859,13 @@ def get_tutorial4_overlay_html(player, current_page: str) -> str:
             Wadsworth's broadest market-cap measure. Click the <strong>WBC50</strong> card
             to continue your tutorial.
         </p>
-        <a href="/banks/indices/WBC50"
-           onclick="fetch('/api/tutorial4/advance', {{method:'POST',credentials:'include'}});"
-           style="display:inline-block;background:#d4af37;color:#020617;
-                  text-decoration:none;padding:10px 24px;border-radius:4px;
-                  font-size:0.9rem;font-weight:bold;">
-            Go to WBC-50 →
-        </a>
+        <form action="/api/tutorial4/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#d4af37;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Go to WBC-50 →
+            </button>
+        </form>
         """
 
     elif step == 3:

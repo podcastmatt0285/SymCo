@@ -1,8 +1,5 @@
 """
 corporate_actions_ui.py - HTML UX for Corporate Actions
-
-Add these endpoints to your ux.py file to give users actual forms and dashboards
-for managing buybacks, splits, and secondary offerings.
 """
 
 from fastapi import APIRouter, HTTPException, Cookie, Request
@@ -19,8 +16,201 @@ from corporate_actions import (
 )
 from banks.brokerage_firm import CompanyShares, ShareholderPosition
 from auth import get_player_from_session, get_db as get_auth_db
+from ux import _nav_loader_html as _nav_loader
 
 router = APIRouter(prefix="/corporate-actions", tags=["corporate-actions-ui"])
+
+# ── Shared CSS used across all sub-pages ──────────────────────────────────────
+_BASE_CSS = """
+* { box-sizing: border-box; }
+body {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    margin: 0; padding: 0;
+    background: #020617;
+    color: #e5e7eb;
+    font-size: 14px;
+    min-height: 100vh;
+}
+.page-wrap { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+.topbar {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 16px;
+    background: #0a1628;
+    border-bottom: 1px solid #1e293b;
+    flex-wrap: wrap;
+}
+.topbar-brand { color: #d4af37; font-weight: bold; font-size: 0.85rem; letter-spacing: 0.04em; }
+.topbar-sep { color: #334155; }
+.topbar-crumb { color: #94a3b8; font-size: 0.8rem; }
+.topbar a { color: #38bdf8; text-decoration: none; font-size: 0.8rem; }
+.topbar a:hover { text-decoration: underline; }
+.topbar-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+
+.page-header { margin: 24px 0 8px; }
+.page-header h1 { color: #e5e7eb; font-size: 1.4rem; margin: 0 0 6px 0; font-weight: bold; }
+.page-header .subtitle { color: #64748b; font-size: 0.85rem; margin: 0; line-height: 1.6; }
+
+.section-card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+}
+.section-card.accent-blue  { border-left: 3px solid #38bdf8; }
+.section-card.accent-green { border-left: 3px solid #22c55e; }
+.section-card.accent-amber { border-left: 3px solid #f59e0b; }
+.section-card.accent-red   { border-left: 3px solid #ef4444; }
+.section-card.accent-gold  { border-left: 3px solid #d4af37; }
+.section-card.accent-purple{ border-left: 3px solid #a78bfa; }
+
+.section-title {
+    font-size: 0.95rem; font-weight: bold;
+    color: #e5e7eb; margin: 0 0 4px 0;
+    display: flex; align-items: center; gap: 8px;
+}
+.section-desc {
+    color: #64748b; font-size: 0.78rem; line-height: 1.6;
+    margin: 0 0 14px 0;
+}
+.info-box {
+    background: #0a1628;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.7;
+}
+.info-box strong { color: #94a3b8; }
+.info-box.tip { border-left: 3px solid #38bdf8; }
+.info-box.warning { border-left: 3px solid #f59e0b; color: #f59e0b; }
+.info-box.success { border-left: 3px solid #22c55e; }
+
+.prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px; }
+.prog-bar { height: 5px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+
+.badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.badge-active    { background: rgba(34,197,94,.15); color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
+.badge-paused    { background: rgba(245,158,11,.15); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
+.badge-completed { background: rgba(100,116,139,.15); color: #64748b; border: 1px solid rgba(100,116,139,.3); }
+.badge-enabled   { background: rgba(34,197,94,.15); color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
+.badge-disabled  { background: rgba(100,116,139,.15); color: #64748b; border: 1px solid rgba(100,116,139,.3); }
+.badge-pending   { background: rgba(56,189,248,.15); color: #38bdf8; border: 1px solid rgba(56,189,248,.3); }
+
+.program-row {
+    background: #070f1e;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+.program-row:last-child { margin-bottom: 0; }
+.program-meta { color: #64748b; font-size: 0.76rem; margin: 6px 0; line-height: 1.7; }
+.program-meta span { color: #94a3b8; }
+
+.btn {
+    display: inline-block;
+    padding: 6px 14px;
+    border: none; border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: bold;
+    font-family: inherit;
+    margin: 4px 4px 0 0;
+    transition: opacity .15s;
+    letter-spacing: 0.02em;
+}
+.btn:hover { opacity: 0.85; }
+.btn-primary  { background: #38bdf8; color: #020617; }
+.btn-success  { background: #22c55e; color: #020617; }
+.btn-warning  { background: #f59e0b; color: #020617; }
+.btn-danger   { background: #ef4444; color: #fff; }
+.btn-ghost    { background: transparent; color: #64748b; border: 1px solid #334155; }
+.btn-gold     { background: #d4af37; color: #020617; }
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #334155;
+    font-size: 0.82rem;
+    line-height: 1.8;
+}
+.empty-state p { margin: 0 0 4px 0; }
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.stat-box {
+    background: #070f1e;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 12px 14px;
+    text-align: center;
+}
+.stat-label { color: #475569; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.stat-value { color: #e5e7eb; font-size: 1.1rem; font-weight: bold; }
+.stat-value.green { color: #22c55e; }
+.stat-value.blue  { color: #38bdf8; }
+.stat-value.amber { color: #f59e0b; }
+.stat-value.gold  { color: #d4af37; }
+
+.company-header-card {
+    background: linear-gradient(135deg, #07111f, #0f172a);
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+.company-ticker { font-size: 1.8rem; font-weight: bold; color: #38bdf8; line-height: 1; }
+.company-name   { color: #94a3b8; font-size: 0.85rem; margin-top: 4px; }
+.company-price  { font-size: 1.3rem; font-weight: bold; color: #22c55e; }
+.company-outstanding { color: #64748b; font-size: 0.78rem; margin-top: 4px; }
+
+.form-inline { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { color: #94a3b8; font-size: 0.75rem; }
+.form-input {
+    background: #070f1e;
+    color: #e5e7eb;
+    border: 1px solid #334155;
+    border-radius: 3px;
+    padding: 7px 10px;
+    font-family: inherit;
+    font-size: 0.82rem;
+}
+.form-input:focus { outline: none; border-color: #38bdf8; }
+select.form-input { cursor: pointer; }
+
+.divider { border: none; border-top: 1px solid #1e293b; margin: 16px 0; }
+
+@media (max-width: 640px) {
+    .page-wrap { padding: 16px 12px 40px; }
+    .company-ticker { font-size: 1.4rem; }
+    .company-price  { font-size: 1rem; }
+    .form-inline { flex-direction: column; }
+    .form-input  { width: 100%; }
+}
+"""
 
 # ==========================
 # CORPORATE ACTIONS DASHBOARD
@@ -37,7 +227,10 @@ async def corporate_actions_dashboard(
     auth_db.close()
 
     if not player:
-        return HTMLResponse(content="<p>Please log in to view corporate actions.</p>", status_code=401)
+        return HTMLResponse(
+            content='<script>location.href="/login"</script>',
+            status_code=302
+        )
 
     t4_reward = request.query_params.get("t4_reward") == "1"
 
@@ -46,526 +239,517 @@ async def corporate_actions_dashboard(
 
     db = get_db()
     try:
-        # Get player's companies
         companies = db.query(CompanyShares).filter(
             CompanyShares.founder_id == player.id,
             CompanyShares.is_delisted == False
         ).all()
-        
-        html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Corporate Actions Dashboard</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                * { box-sizing: border-box; }
-                body { 
-                    font-family: 'JetBrains Mono', monospace; 
-                    margin: 0; 
-                    padding: 20px 16px; 
-                    background: #020617; 
-                    color: #e5e7eb;
-                    font-size: 14px;
-                }
-                .container { max-width: 1200px; margin: 0 auto; }
-                .card { 
-                    background: #0f172a; 
-                    border: 1px solid #1e293b; 
-                    padding: 20px; 
-                    margin-bottom: 16px; 
-                }
-                .company-header { 
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center; 
-                    margin-bottom: 15px; 
-                    border-bottom: 1px solid #1e293b; 
-                    padding-bottom: 10px; 
-                }
-                .ticker { font-size: 1.5rem; font-weight: bold; color: #38bdf8; }
-                .price { font-size: 1.2rem; color: #22c55e; }
-                .action-section { 
-                    margin: 15px 0; 
-                    padding: 15px; 
-                    background: #020617; 
-                    border: 1px solid #1e293b;
-                }
-                .action-header { 
-                    font-size: 1rem; 
-                    font-weight: bold; 
-                    margin-bottom: 10px; 
-                    color: #94a3b8;
-                }
-                .badge { 
-                    display: inline-block; 
-                    padding: 2px 8px; 
-                    border-radius: 3px; 
-                    font-size: 0.7rem; 
-                    margin-left: 8px;
-                }
-                .badge-active { background: #22c55e; color: #020617; }
-                .badge-paused { background: #f59e0b; color: #020617; }
-                .badge-completed { background: #64748b; color: #e5e7eb; }
-                .program-item { 
-                    background: #0f172a; 
-                    padding: 12px; 
-                    margin: 10px 0; 
-                    border-left: 4px solid #38bdf8; 
-                }
-                .progress-bar { 
-                    width: 100%; 
-                    height: 8px; 
-                    background: #020617; 
-                    margin: 8px 0; 
-                }
-                .progress-fill { 
-                    height: 100%; 
-                    background: #38bdf8; 
-                }
-                .btn { 
-                    padding: 6px 12px; 
-                    border: none; 
-                    cursor: pointer; 
-                    text-decoration: none; 
-                    display: inline-block; 
-                    margin: 5px 5px 5px 0; 
-                    font-size: 0.8rem;
-                    border-radius: 3px;
-                }
-                .btn-primary { background: #38bdf8; color: #020617; }
-                .btn-success { background: #22c55e; color: #020617; }
-                .btn-warning { background: #f59e0b; color: #020617; }
-                .btn-danger { background: #ef4444; color: #fff; }
-                .create-section { 
-                    margin-top: 15px; 
-                    padding-top: 15px; 
-                    border-top: 1px dashed #1e293b; 
-                }
-                .no-actions { 
-                    color: #64748b; 
-                    font-style: italic; 
-                    text-align: center; 
-                    padding: 20px; 
-                }
-                .history-item { 
-                    padding: 8px; 
-                    margin: 5px 0; 
-                    background: #0f172a; 
-                    border-left: 3px solid #64748b; 
-                    font-size: 0.85rem;
-                    color: #94a3b8;
-                }
-                
-                @media (max-width: 640px) {
-                    body { padding: 16px 12px; }
-                    .card { padding: 16px; }
-                    .company-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-                    .ticker { font-size: 1.2rem; }
-                    .price { font-size: 1rem; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <a href="/banks/brokerage-firm" style="color: #38bdf8; text-decoration: none;">← Brokerage Firm</a>
-                <h1 style="color: #e5e7eb; margin-top: 10px;">Corporate Actions Dashboard</h1>
-                <p style="color: #64748b; margin-bottom: 20px;">Manage automated buybacks, splits, and offerings</p>
-        """
-        
-        if not companies:
-            html += """
-                <div class="card">
-                    <div class="no-actions">
-                        <p>You don't have any public companies yet.</p>
-                        <p>Create an IPO first, then configure corporate actions!</p>
-                    </div>
-                </div>
-            """
-        
-        for company in companies:
-            # Get active programs
-            buybacks = db.query(BuybackProgram).filter(
-                BuybackProgram.company_shares_id == company.id
-            ).all()
-            
-            splits = db.query(StockSplitRule).filter(
-                StockSplitRule.company_shares_id == company.id
-            ).all()
-            
-            offerings = db.query(SecondaryOffering).filter(
-                SecondaryOffering.company_shares_id == company.id
-            ).all()
-            
-            # Recent history
-            history = db.query(CorporateActionHistory).filter(
-                CorporateActionHistory.company_shares_id == company.id
-            ).order_by(CorporateActionHistory.executed_at.desc()).limit(5).all()
-            
-            html += f"""
-                <div class="card">
-                    <div class="company-header">
-                        <div>
-                            <span class="ticker">{company.ticker_symbol}</span>
-                            <span style="color: #64748b; margin-left: 10px;">{company.company_name}</span>
-                        </div>
-                        <div class="price">{fmt_usd(company.current_price, disp)}</div>
-                    </div>
-                    
-                    <!-- Buyback Programs -->
-                    <div class="action-section">
-                        <div class="action-header">
-                            📦 Share Buyback Programs
-                        </div>
-            """
-            
-            if buybacks:
-                for buyback in buybacks:
-                    progress_pct = (buyback.shares_bought / buyback.max_shares_to_buy * 100) if buyback.max_shares_to_buy > 0 else 0
-                    status_badge = "badge-active" if buyback.status == "active" else ("badge-paused" if buyback.status == "paused" else "badge-completed")
-                    
-                    html += f"""
-                        <div class="program-item">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong>{buyback.trigger_type.replace('_', ' ').title()}</strong>
-                                    <span class="badge {status_badge}">{buyback.status.upper()}</span>
-                                </div>
-                                <div>
-                                    {buyback.shares_bought:,} / {buyback.max_shares_to_buy:,} shares
-                                </div>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: {progress_pct}%"></div>
-                            </div>
-                            <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
-                                Total spent: {fmt_usd(buyback.total_spent, disp)} | Avg price: {fmt_usd(buyback.average_buy_price, disp)} | Treasury: {buyback.treasury_shares:,}
-                            </div>
-                    """
-                    
-                    if buyback.status == "active":
-                        html += f'<a href="/corporate-actions/buyback/{buyback.id}/pause" class="btn btn-warning">⏸ Pause</a>'
-                    elif buyback.status == "paused":
-                        html += f'<a href="/corporate-actions/buyback/{buyback.id}/resume" class="btn btn-success">▶ Resume</a>'
-                    
-                    html += '</div>'
-            else:
-                html += '<div class="no-actions">No buyback programs configured</div>'
-            
-            html += f"""
-                        <div class="create-section">
-                            <a href="/corporate-actions/buyback/create/{company.id}" class="btn btn-primary">+ Create Buyback Program</a>
-                        </div>
-                    </div>
-                    
-                    <!-- Stock Splits -->
-                    <div class="action-section">
-                        <div class="action-header">
-                            ✂️ Stock Split Rules
-                        </div>
-            """
-            
-            if splits:
-                for split in splits:
-                    status_badge = "badge-active" if split.is_enabled else "badge-paused"
-                    
-                    html += f"""
-                        <div class="program-item">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong>{split.trigger_type.replace('_', ' ').title()}</strong>
-                                    <span class="badge {status_badge}">{'ENABLED' if split.is_enabled else 'DISABLED'}</span>
-                                </div>
-                                <div>
-                                    {split.split_ratio}:1 Split
-                                </div>
-                            </div>
-                            <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
-                                Executed {split.total_splits_executed} time(s)
-                    """
-                    
-                    if split.last_split_date:
-                        html += f" | Last: {split.last_split_date.strftime('%Y-%m-%d')}"
-                    
-                    html += '</div>'
-                    
-                    if split.is_enabled:
-                        html += f'<a href="/corporate-actions/split/{split.id}/disable" class="btn btn-warning">⏸ Disable</a>'
-                    else:
-                        html += f'<a href="/corporate-actions/split/{split.id}/enable" class="btn btn-success">▶ Enable</a>'
-                    
-                    html += '</div>'
-            else:
-                html += '<div class="no-actions">No split rules configured</div>'
-            
-            html += f"""
-                        <div class="create-section">
-                            <a href="/corporate-actions/split/create/{company.id}" class="btn btn-primary">+ Create Split Rule</a>
-                        </div>
-                    </div>
-                    
-                    <!-- Secondary Offerings -->
-                    <div class="action-section">
-                        <div class="action-header">
-                            📢 Secondary Offerings
-                        </div>
-            """
-            
-            if offerings:
-                for offering in offerings:
-                    progress_pct = (offering.shares_issued / offering.shares_to_issue * 100) if offering.shares_to_issue > 0 else 0
-                    status_badge = "badge-active" if offering.status == "active" else "badge-completed"
-                    
-                    html += f"""
-                        <div class="program-item">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div>
-                                    <strong>{offering.trigger_type.replace('_', ' ').title()}</strong>
-                                    <span class="badge {status_badge}">{offering.status.upper()}</span>
-                                </div>
-                                <div>
-                                    {offering.shares_issued:,} / {offering.shares_to_issue:,} shares
-                                </div>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: {progress_pct}%"></div>
-                            </div>
-                            <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
-                                Raised: {fmt_usd(offering.total_raised, disp)} | Dilution: {offering.dilution_pct*100:.1f}%
-                    """
-                    
-                    if offering.last_offering_date:
-                        html += f" | Last: {offering.last_offering_date.strftime('%Y-%m-%d')}"
-                    
-                    html += '</div></div>'
-            else:
-                html += '<div class="no-actions">No offerings configured</div>'
-            
-            html += f"""
-                        <div class="create-section">
-                            <a href="/corporate-actions/offering/create/{company.id}" class="btn btn-primary">+ Create Offering</a>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent History -->
-                    <div class="action-section">
-                        <div class="action-header">📜 Recent Actions</div>
-            """
-            
-            if history:
-                for action in history:
-                    emoji_map = {"buyback": "📦", "split": "✂️", "secondary_offering": "📢"}
-                    emoji = emoji_map.get(action.action_type, "📋")
-                    
-                    html += f"""
-                        <div class="history-item">
-                            {emoji} {action.description} - {action.executed_at.strftime('%Y-%m-%d %H:%M')}
-                        </div>
-                    """
-            else:
-                html += '<div class="no-actions">No actions executed yet</div>'
-            
-            html += """
-                    </div>
-                </div>
-            """
 
-            # --- Reverse Stock Split ---
-            ratio_options = "".join(f'<option value="{r}">{r}:1</option>' for r in VALID_REVERSE_SPLIT_RATIOS)
-            html += f"""
-                <div class="card" style="border-left:4px solid #f59e0b;">
-                    <div class="action-header">🔀 Reverse Stock Split — {company.ticker_symbol}</div>
-                    <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                        Consolidates all shares (yours and all shareholders') at the selected ratio. Current price: <strong>{fmt_usd(company.current_price, disp)}</strong> &bull; Outstanding: <strong>{company.shares_outstanding:,}</strong>
-                    </p>
-                    <form action="/api/corporate-actions/reverse-split/execute" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-                        <input type="hidden" name="company_shares_id" value="{company.id}">
-                        <div>
-                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Consolidation Ratio</label>
-                            <select name="ratio" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;">
-                                {ratio_options}
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('This affects ALL shareholders. Proceed?')">Execute Reverse Split</button>
-                    </form>
-                </div>
-            """
-
-            # --- Special Dividend ---
-            html += f"""
-                <div class="card" style="border-left:4px solid #22c55e;">
-                    <div class="action-header">💸 Special One-Time Dividend — {company.ticker_symbol}</div>
-                    <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                        Distribute a special dividend to all float shareholders proportionally. For every {disp["symbol"]}1 paid, the government awards <strong style="color:#22c55e;">{disp["symbol"]}{TAX_VOUCHER_RATE:.4f}</strong> in redeemable tax vouchers to you ({TAX_VOUCHER_RATE * 100:.2f}% back).
-                    </p>
-                    <form action="/api/corporate-actions/special-dividend/pay" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-                        <input type="hidden" name="company_shares_id" value="{company.id}">
-                        <div>
-                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Total Dividend Amount ({disp["symbol"]})</label>
-                            <input type="number" name="total_amount" min="1" step="0.01" placeholder="e.g. 50000" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" required>
-                        </div>
-                        <button type="submit" class="btn btn-success" onclick="return confirm('Pay this special dividend to all shareholders?')">Pay Dividend</button>
-                    </form>
-                </div>
-            """
-
-            # --- Acquisition Offer (send to another player) ---
-            html += f"""
-                <div class="card" style="border-left:4px solid #38bdf8;">
-                    <div class="action-header">🤝 New Acquisition Offer — using {company.ticker_symbol} shares</div>
-                    <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                        Offer shares of <strong>{company.ticker_symbol}</strong> in exchange for an income stake (up to 50%) in another player's business. The target player must accept within 7 days.
-                    </p>
-                    <form action="/api/corporate-actions/acquisition/offer" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-                        <input type="hidden" name="offeror_company_id" value="{company.id}">
-                        <div>
-                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Target Player ID</label>
-                            <input type="number" name="target_player_id" min="1" placeholder="Player ID" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:120px;" required>
-                        </div>
-                        <div>
-                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Shares Offered</label>
-                            <input type="number" name="shares_offered" min="1" placeholder="e.g. 1000" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:130px;" required>
-                        </div>
-                        <div>
-                            <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Income Stake % (0–50)</label>
-                            <input type="number" name="stake_pct" min="0.1" max="50" step="0.1" placeholder="e.g. 25" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:100px;" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Send Offer →</button>
-                    </form>
-                </div>
-            """
-
-        # ---- Global sections (outside per-company loop) ----
-
-        # Active Acquisition Stakes
-        stakes_as_acquirer = db.query(AcquisitionStake).filter(
-            AcquisitionStake.acquirer_id == player.id,
-            AcquisitionStake.is_active == True
-        ).all()
-        stakes_as_target = db.query(AcquisitionStake).filter(
-            AcquisitionStake.target_player_id == player.id,
-            AcquisitionStake.is_active == True
-        ).all()
-        pending_offers_received = db.query(AcquisitionOffer).filter(
-            AcquisitionOffer.target_player_id == player.id,
-            AcquisitionOffer.status == "pending"
-        ).all()
-        diffuse_notices = db.query(DiffuseNotice).filter(
-            DiffuseNotice.target_player_id == player.id,
-            DiffuseNotice.status == "pending"
-        ).all()
-
-        html += """
-            <div class="card" style="border-top:3px solid #38bdf8;margin-top:20px;">
-                <h2 style="color:#38bdf8;margin:0 0 16px 0;font-size:1.1rem;">🤝 Acquisition Activity</h2>
-        """
-
-        if pending_offers_received:
-            html += '<h3 style="color:#94a3b8;font-size:0.9rem;margin:0 0 10px 0;">Incoming Offers</h3>'
-            for offer in pending_offers_received:
-                html += f"""
-                    <div class="program-item" style="border-left-color:#38bdf8;">
-                        <strong style="color:#38bdf8;">{offer.stake_pct*100:.1f}%</strong> income stake requested &bull; {offer.shares_offered:,} shares offered
-                        <div style="margin-top:8px;display:flex;gap:8px;">
-                            <form action="/api/corporate-actions/acquisition/accept/{offer.id}" method="post" style="display:inline;">
-                                <button class="btn btn-success" type="submit">Accept</button>
-                            </form>
-                            <form action="/api/corporate-actions/acquisition/reject/{offer.id}" method="post" style="display:inline;">
-                                <button class="btn btn-danger" type="submit">Reject</button>
-                            </form>
-                        </div>
-                    </div>"""
-
-        if stakes_as_acquirer:
-            html += '<h3 style="color:#94a3b8;font-size:0.9rem;margin:12px 0 10px 0;">Stakes You Hold</h3>'
-            for stake in stakes_as_acquirer:
-                html += f"""
-                    <div class="program-item" style="border-left-color:#22c55e;">
-                        <span style="color:#22c55e;">{stake.stake_pct*100:.1f}%</span> income stake &bull; Target player #{stake.target_player_id} &bull; Paid {stake.shares_paid:,} shares
-                        <div style="margin-top:6px;">
-                            <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;" onsubmit="return confirm('Initiate diffuse? You will demand share return within 30 days.')">
-                                <button class="btn btn-warning" type="submit">⚡ Initiate Diffuse</button>
-                            </form>
-                        </div>
-                    </div>"""
-
-        if stakes_as_target:
-            html += '<h3 style="color:#94a3b8;font-size:0.9rem;margin:12px 0 10px 0;">Stakes Held Against You</h3>'
-            for stake in stakes_as_target:
-                html += f"""
-                    <div class="program-item" style="border-left-color:#f59e0b;">
-                        Player #{stake.acquirer_id} holds <span style="color:#f59e0b;">{stake.stake_pct*100:.1f}%</span> income stake &bull; Paid you {stake.shares_paid:,} shares
-                    </div>"""
-
-        if diffuse_notices:
-            html += '<h3 style="color:#f59e0b;font-size:0.9rem;margin:12px 0 10px 0;">⚠️ Pending Diffuse Notices</h3>'
-            for notice in diffuse_notices:
-                html += f"""
-                    <div class="program-item" style="border-left-color:#ef4444;">
-                        Must return <strong style="color:#ef4444;">{notice.shares_to_return:,} shares</strong> by {notice.deadline_at.strftime('%Y-%m-%d')} — value ${notice.share_value_at_notice:,.2f}
-                        <div style="margin-top:6px;">
-                            <form action="/api/corporate-actions/diffuse/return/{notice.id}" method="post" style="display:inline;">
-                                <button class="btn btn-danger" type="submit">Return Shares Now</button>
-                            </form>
-                        </div>
-                    </div>"""
-
-        if not (pending_offers_received or stakes_as_acquirer or stakes_as_target or diffuse_notices):
-            html += '<div class="no-actions">No active acquisitions or pending offers.</div>'
-
-        html += '</div>'
-
-        # Tax Vouchers
         voucher_balance = get_tax_voucher_balance(player.id)
 
-        # Tutorial 4 reward highlight — shown when redirected from T4 claim
-        t4_banner = ""
-        if t4_reward:
-            t4_banner = f"""
-            <div style="background:linear-gradient(135deg,#061620,#0f172a);border:2px solid #38bdf8;
-                        border-radius:6px;padding:18px 22px;margin-bottom:16px;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                    <span style="background:#38bdf8;color:#020617;padding:3px 10px;border-radius:10px;
-                                 font-size:0.7rem;font-weight:bold;">TUTORIAL 4 COMPLETE</span>
-                    <strong style="color:#38bdf8;font-size:0.9rem;">ETFs &amp; Market Indices</strong>
-                </div>
-                <p style="color:#94a3b8;margin:0 0 8px 0;line-height:1.6;">
-                    Congratulations! The government has awarded you a
-                    <strong style="color:#22c55e;">Tax Voucher worth {fmt_usd(100_000.0, disp)}</strong>
-                    for completing Tutorial 4. You can see it in your Tax Voucher balance below —
-                    redeem it at any time for instant cash.
-                </p>
-                <p style="color:#64748b;font-size:0.8rem;margin:0;">
-                    Tax vouchers don't expire. Redeem them now or save them for when you need liquidity.
-                </p>
-            </div>
-            """
+        # ── page shell open ────────────────────────────────────────────────────
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Corporate Actions — Wadsworth</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>{_BASE_CSS}</style>
+</head>
+<body>
+<!-- top nav bar -->
+<div class="topbar">
+    <span class="topbar-brand">WADSWORTH</span>
+    <span class="topbar-sep">/</span>
+    <a href="/">Dashboard</a>
+    <span class="topbar-sep">/</span>
+    <a href="/banks/brokerage-firm">Brokerage Firm</a>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-crumb">Corporate Actions</span>
+    <div class="topbar-right">
+        <span style="color:#64748b;font-size:0.75rem;">Tax Voucher Balance:</span>
+        <span style="color:#22c55e;font-size:0.82rem;font-weight:bold;">{fmt_usd(voucher_balance, disp)}</span>
+    </div>
+</div>
 
-        html += t4_banner + f"""
-            <div class="card" style="border-top:3px solid #22c55e;margin-top:8px;">
-                <h2 style="color:#22c55e;margin:0 0 12px 0;font-size:1.1rem;">🎟️ Tax Vouchers</h2>
-                <p style="color:#94a3b8;font-size:0.85rem;margin:0 0 12px 0;">
-                    Earned from special dividends at <strong>{disp["symbol"]}{TAX_VOUCHER_RATE:.4f}</strong> per {disp["symbol"]}1 paid ({TAX_VOUCHER_RATE * 100:.2f}% of the amount distributed). Redeem for cash from the government at any time.
-                    Current balance: <strong style="color:#22c55e;">{fmt_usd(voucher_balance, disp, precision=4)}</strong>
-                </p>
-                <form action="/api/corporate-actions/vouchers/redeem" method="post" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-                    <div>
-                        <label style="color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:4px;">Amount to Redeem ({disp["symbol"]})</label>
-                        <input type="number" name="amount" min="0.01" step="0.01" max="{voucher_balance / disp['usd_per_unit']:.4f}" placeholder="e.g. 100" style="background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:6px 10px;border-radius:3px;width:160px;" {"required" if voucher_balance > 0 else "disabled"}>
-                    </div>
-                    <button type="submit" class="btn btn-success" {"disabled" if voucher_balance <= 0 else ""}>Redeem Vouchers</button>
-                </form>
+<div class="page-wrap">
+<div class="page-header">
+    <h1>Corporate Actions</h1>
+    <p class="subtitle">
+        Automate share management for your public companies — buybacks, splits, secondary offerings,
+        dividends, and acquisitions. All programs run automatically on game ticks based on the
+        conditions you configure. Monitor execution history and adjust triggers at any time.
+    </p>
+</div>
+
+<div class="info-box tip" style="margin-bottom:18px;">
+    <strong>How Corporate Actions Work</strong><br>
+    Each program you set up watches for a trigger condition (price level, cash balance, schedule) and
+    executes automatically when met. You don't need to be online — the game engine processes them
+    every few minutes. Use the dashboard below to create, pause, or cancel programs at any time.
+</div>
+"""
+
+        # ── Tutorial 4 reward banner ───────────────────────────────────────────
+        if t4_reward:
+            html += f"""
+<div style="background:linear-gradient(135deg,#061620,#0f172a);border:2px solid #38bdf8;
+            border-radius:6px;padding:18px 22px;margin-bottom:18px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="background:#38bdf8;color:#020617;padding:3px 10px;border-radius:10px;
+                     font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">TUTORIAL 4 COMPLETE</span>
+        <strong style="color:#38bdf8;">ETFs &amp; Market Indices</strong>
+    </div>
+    <p style="color:#e5e7eb;margin:0 0 6px 0;line-height:1.6;">
+        The government has awarded you a
+        <strong style="color:#22c55e;">Tax Voucher worth {fmt_usd(100_000.0, disp)}</strong>
+        for completing Tutorial 4. It's been added to your Tax Voucher balance below —
+        redeem it any time for instant cash.
+    </p>
+    <p style="color:#64748b;font-size:0.8rem;margin:0;">
+        Tax vouchers never expire. Redeem now or hold them for when you need liquidity.
+    </p>
+</div>
+"""
+
+        # ── No companies state ─────────────────────────────────────────────────
+        if not companies:
+            html += """
+<div class="section-card">
+    <div class="empty-state" style="padding:40px 20px;">
+        <p style="font-size:1.1rem;color:#475569;margin-bottom:8px;">No public companies yet.</p>
+        <p style="color:#334155;margin-bottom:20px;">
+            Corporate actions require at least one IPO-listed company.<br>
+            Go to the Brokerage Firm to list your first company.
+        </p>
+        <a href="/banks/brokerage-firm" class="btn btn-primary">Go to Brokerage Firm →</a>
+    </div>
+</div>
+"""
+
+        # ── Per-company sections ───────────────────────────────────────────────
+        for company in companies:
+            buybacks  = db.query(BuybackProgram).filter(BuybackProgram.company_shares_id == company.id).all()
+            splits    = db.query(StockSplitRule).filter(StockSplitRule.company_shares_id == company.id).all()
+            offerings = db.query(SecondaryOffering).filter(SecondaryOffering.company_shares_id == company.id).all()
+            history   = db.query(CorporateActionHistory).filter(
+                CorporateActionHistory.company_shares_id == company.id
+            ).order_by(CorporateActionHistory.executed_at.desc()).limit(8).all()
+
+            active_buybacks   = sum(1 for b in buybacks  if b.status == "active")
+            active_splits     = sum(1 for s in splits    if s.is_enabled)
+            active_offerings  = sum(1 for o in offerings if o.status == "active")
+
+            html += f"""
+<!-- ═══ {company.ticker_symbol} ═══════════════════════════════════════════ -->
+<div class="company-header-card">
+    <div>
+        <div class="company-ticker">{company.ticker_symbol}</div>
+        <div class="company-name">{company.company_name}</div>
+        <div class="company-outstanding">{company.shares_outstanding:,} shares outstanding</div>
+    </div>
+    <div style="text-align:right;">
+        <div class="company-price">{fmt_usd(company.current_price, disp)}</div>
+        <div style="color:#64748b;font-size:0.75rem;margin-top:4px;">
+            Mkt cap ≈ {fmt_usd(company.current_price * company.shares_outstanding, disp)}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+            <span style="color:#64748b;font-size:0.72rem;">{active_buybacks} buyback{'s' if active_buybacks!=1 else ''} active</span>
+            <span style="color:#64748b;font-size:0.72rem;">{active_splits} split rule{'s' if active_splits!=1 else ''}</span>
+            <span style="color:#64748b;font-size:0.72rem;">{active_offerings} offering{'s' if active_offerings!=1 else ''} active</span>
+        </div>
+    </div>
+</div>
+
+<!-- Buyback Programs -->
+<div class="section-card accent-blue" style="margin-bottom:10px;">
+    <div class="section-title">Share Buyback Programs</div>
+    <div class="section-desc">
+        A buyback program instructs the game to automatically repurchase your company's shares
+        from the open market using company cash. Repurchased shares become treasury shares,
+        reducing float and typically supporting the share price. You can hold or cancel them later.
+        Maximum program size: 30% of outstanding shares ({int(company.shares_outstanding*0.30):,} shares).
+    </div>
+"""
+            if buybacks:
+                for bb in buybacks:
+                    pct = (bb.shares_bought / bb.max_shares_to_buy * 100) if bb.max_shares_to_buy > 0 else 0
+                    badge_cls = "badge-active" if bb.status == "active" else ("badge-paused" if bb.status == "paused" else "badge-completed")
+                    trigger_label = bb.trigger_type.replace("_", " ").title()
+                    html += f"""
+    <div class="program-row">
+        <div class="prog-row">
+            <div>
+                <strong style="color:#e5e7eb;">{trigger_label}</strong>
+                <span class="badge {badge_cls}" style="margin-left:8px;">{bb.status.upper()}</span>
             </div>
-        """
+            <span style="color:#94a3b8;font-size:0.8rem;">{bb.shares_bought:,} / {bb.max_shares_to_buy:,} shares</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="background:#38bdf8;width:{pct:.1f}%;"></div></div>
+        <div class="program-meta">
+            Spent: <span>{fmt_usd(bb.total_spent, disp)}</span> &nbsp;|&nbsp;
+            Avg price: <span>{fmt_usd(bb.average_buy_price, disp)}</span> &nbsp;|&nbsp;
+            Treasury shares held: <span>{bb.treasury_shares:,}</span>
+        </div>
+        <div>
+"""
+                    if bb.status == "active":
+                        html += f'<a href="/corporate-actions/buyback/{bb.id}/pause" class="btn btn-warning">Pause</a>'
+                    elif bb.status == "paused":
+                        html += f'<a href="/corporate-actions/buyback/{bb.id}/resume" class="btn btn-success">Resume</a>'
+                    html += "</div></div>"
+            else:
+                html += '<div class="empty-state"><p>No buyback programs configured yet.</p><p style="color:#475569;">Create one to automatically support your share price during dips.</p></div>'
+
+            html += f"""
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;">
+        <a href="/corporate-actions/buyback/create/{company.id}" class="btn btn-primary">+ New Buyback Program</a>
+    </div>
+</div>
+
+<!-- Stock Split Rules -->
+<div class="section-card accent-amber" style="margin-bottom:10px;">
+    <div class="section-title">Stock Split Rules</div>
+    <div class="section-desc">
+        A forward split automatically multiplies all shareholders' holdings when your share price
+        reaches a set threshold. For example: a 2-for-1 split at {fmt_usd(100, disp)} doubles everyone's
+        shares and halves the price to {fmt_usd(50, disp)}, leaving total value unchanged.
+        Splits make your stock more accessible to smaller investors and are a signal of growth.
+    </div>
+"""
+            if splits:
+                for sp in splits:
+                    badge_cls = "badge-enabled" if sp.is_enabled else "badge-disabled"
+                    last_date = sp.last_split_date.strftime("%Y-%m-%d") if sp.last_split_date else "never"
+                    html += f"""
+    <div class="program-row">
+        <div class="prog-row">
+            <div>
+                <strong style="color:#e5e7eb;">{sp.split_ratio}-for-1 split</strong>
+                <span class="badge {badge_cls}" style="margin-left:8px;">{'ENABLED' if sp.is_enabled else 'DISABLED'}</span>
+            </div>
+            <span style="color:#94a3b8;font-size:0.8rem;">Trigger: {sp.trigger_type.replace('_',' ').title()}</span>
+        </div>
+        <div class="program-meta">
+            Executed: <span>{sp.total_splits_executed} time(s)</span> &nbsp;|&nbsp;
+            Last split: <span>{last_date}</span>
+        </div>
+        <div>
+"""
+                    if sp.is_enabled:
+                        html += f'<a href="/corporate-actions/split/{sp.id}/disable" class="btn btn-warning">Disable</a>'
+                    else:
+                        html += f'<a href="/corporate-actions/split/{sp.id}/enable" class="btn btn-success">Enable</a>'
+                    html += "</div></div>"
+            else:
+                html += '<div class="empty-state"><p>No split rules configured yet.</p><p style="color:#475569;">Set a price threshold to automatically split when your stock gets expensive.</p></div>'
+
+            html += f"""
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;">
+        <a href="/corporate-actions/split/create/{company.id}" class="btn btn-primary">+ New Split Rule</a>
+    </div>
+</div>
+
+<!-- Secondary Offerings -->
+<div class="section-card accent-purple" style="margin-bottom:10px;">
+    <div class="section-title">Secondary Offerings</div>
+    <div class="section-desc">
+        A secondary offering issues new shares into the market to raise capital. Unlike a buyback,
+        this <em>dilutes</em> existing shareholders — each share represents a slightly smaller slice
+        of the company. Use sparingly and only when capital is genuinely needed for growth.
+        Maximum dilution per offering: 20% of outstanding shares ({int(company.shares_outstanding*0.20):,} shares).
+    </div>
+"""
+            if offerings:
+                for of in offerings:
+                    pct = (of.shares_issued / of.shares_to_issue * 100) if of.shares_to_issue > 0 else 0
+                    badge_cls = "badge-active" if of.status == "active" else "badge-completed"
+                    last_date = of.last_offering_date.strftime("%Y-%m-%d") if of.last_offering_date else "—"
+                    html += f"""
+    <div class="program-row">
+        <div class="prog-row">
+            <div>
+                <strong style="color:#e5e7eb;">{of.trigger_type.replace('_',' ').title()}</strong>
+                <span class="badge {badge_cls}" style="margin-left:8px;">{of.status.upper()}</span>
+            </div>
+            <span style="color:#94a3b8;font-size:0.8rem;">{of.shares_issued:,} / {of.shares_to_issue:,} shares issued</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="background:#a78bfa;width:{pct:.1f}%;"></div></div>
+        <div class="program-meta">
+            Raised: <span>{fmt_usd(of.total_raised, disp)}</span> &nbsp;|&nbsp;
+            Dilution: <span>{of.dilution_pct*100:.1f}%</span> &nbsp;|&nbsp;
+            Last: <span>{last_date}</span>
+        </div>
+    </div>
+"""
+            else:
+                html += '<div class="empty-state"><p>No secondary offerings configured yet.</p><p style="color:#475569;">Issue new shares to raise capital — use with caution as it dilutes existing holders.</p></div>'
+
+            html += f"""
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;">
+        <a href="/corporate-actions/offering/create/{company.id}" class="btn btn-primary">+ New Secondary Offering</a>
+    </div>
+</div>
+
+<!-- Reverse Split -->
+<div class="section-card accent-amber" style="margin-bottom:10px;">
+    <div class="section-title">Reverse Stock Split</div>
+    <div class="section-desc">
+        A reverse split consolidates shares at a ratio — a 4:1 reverse split converts every 4 shares
+        into 1 share and multiplies the price by 4. Total value is unchanged, but the share count drops
+        and price rises. Used to prevent penny-stock status or meet exchange listing minimums.
+        <strong style="color:#f59e0b;">This immediately affects ALL shareholders.</strong>
+    </div>
+    <div class="info-box warning">
+        One-time manual action — executes immediately when you click the button.
+        Cannot be undone. Confirm you understand before proceeding.
+    </div>
+"""
+            ratio_options = "".join(f'<option value="{r}">{r}:1 — {company.shares_outstanding // r:,} shares @ approx {fmt_usd(company.current_price * r, disp)}</option>' for r in VALID_REVERSE_SPLIT_RATIOS)
+            html += f"""
+    <form action="/api/corporate-actions/reverse-split/execute" method="post">
+        <input type="hidden" name="company_shares_id" value="{company.id}">
+        <div class="form-inline">
+            <div class="form-group">
+                <label class="form-label">Consolidation Ratio</label>
+                <select name="ratio" class="form-input">{ratio_options}</select>
+            </div>
+            <button type="submit" class="btn btn-warning"
+                    onclick="return confirm('Execute reverse split for {company.ticker_symbol}? This immediately affects ALL shareholders and cannot be undone.')">
+                Execute Reverse Split
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Special Dividend -->
+<div class="section-card accent-green" style="margin-bottom:10px;">
+    <div class="section-title">Special One-Time Dividend</div>
+    <div class="section-desc">
+        Pay an immediate cash dividend to all float shareholders, distributed proportionally
+        by their share count. The government rewards you for distributing capital:
+        for every <strong style="color:#22c55e;">{disp["symbol"]}1</strong> you pay out,
+        you receive <strong style="color:#22c55e;">{disp["symbol"]}{TAX_VOUCHER_RATE:.4f}</strong>
+        in redeemable Tax Vouchers ({TAX_VOUCHER_RATE*100:.2f}% back) — essentially a tax rebate
+        that you can redeem below for instant cash at any time.
+    </div>
+    <div class="info-box success">
+        Tax Vouchers from dividends never expire. Pay a large dividend now and redeem
+        the vouchers later when you need liquidity.
+    </div>
+    <form action="/api/corporate-actions/special-dividend/pay" method="post">
+        <input type="hidden" name="company_shares_id" value="{company.id}">
+        <div class="form-inline">
+            <div class="form-group">
+                <label class="form-label">Total Dividend Amount ({disp["symbol"]})</label>
+                <input type="number" name="total_amount" min="1" step="0.01"
+                       placeholder="e.g. 50,000" class="form-input" style="width:160px;" required>
+            </div>
+            <button type="submit" class="btn btn-success"
+                    onclick="return confirm('Pay this special dividend to all float shareholders of {company.ticker_symbol}?')">
+                Pay Dividend
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Acquisition Offer -->
+<div class="section-card accent-blue" style="margin-bottom:20px;">
+    <div class="section-title">Send Acquisition Offer</div>
+    <div class="section-desc">
+        Offer your <strong style="color:#38bdf8;">{company.ticker_symbol}</strong> shares
+        to another player in exchange for an ongoing income stake (up to 50%) in their business.
+        The target player receives your shares and you receive a percentage of their business income
+        for as long as the stake remains active. They have 7 days to accept or reject.
+        You can initiate a "diffuse" at any time to demand return of shares and end the stake.
+    </div>
+    <form action="/api/corporate-actions/acquisition/offer" method="post">
+        <input type="hidden" name="offeror_company_id" value="{company.id}">
+        <div class="form-inline">
+            <div class="form-group">
+                <label class="form-label">Target Player ID</label>
+                <input type="number" name="target_player_id" min="1" placeholder="e.g. 42"
+                       class="form-input" style="width:110px;" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Shares Offered</label>
+                <input type="number" name="shares_offered" min="1" placeholder="e.g. 1,000"
+                       class="form-input" style="width:130px;" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Income Stake % (max 50)</label>
+                <input type="number" name="stake_pct" min="0.1" max="50" step="0.1"
+                       placeholder="e.g. 25" class="form-input" style="width:110px;" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Offer</button>
+        </div>
+    </form>
+</div>
+
+<!-- Recent History -->
+<div class="section-card" style="margin-bottom:28px;">
+    <div class="section-title" style="margin-bottom:10px;">Execution History — {company.ticker_symbol}</div>
+    <div class="section-desc">The last 8 automated actions executed for this company by the game engine.</div>
+"""
+            if history:
+                emoji_map = {{"buyback": "BB", "split": "SP", "secondary_offering": "SO"}}
+                for act in history:
+                    tag = emoji_map.get(act.action_type, "CA")
+                    html += f"""
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #0f172a;">
+        <span style="background:#1e293b;color:#64748b;font-size:0.68rem;font-weight:bold;
+                     padding:2px 6px;border-radius:3px;flex-shrink:0;margin-top:1px;">{tag}</span>
+        <div>
+            <span style="color:#94a3b8;font-size:0.82rem;">{act.description}</span>
+            <span style="color:#334155;font-size:0.72rem;display:block;">{act.executed_at.strftime('%Y-%m-%d %H:%M')}</span>
+        </div>
+    </div>
+"""
+            else:
+                html += '<div class="empty-state"><p>No actions executed yet.</p><p style="color:#475569;">Actions appear here once your programs trigger for the first time.</p></div>'
+
+            html += "</div>"
+
+        # ── Global: Acquisition Activity ──────────────────────────────────────
+        stakes_as_acquirer    = db.query(AcquisitionStake).filter(AcquisitionStake.acquirer_id == player.id, AcquisitionStake.is_active == True).all()
+        stakes_as_target      = db.query(AcquisitionStake).filter(AcquisitionStake.target_player_id == player.id, AcquisitionStake.is_active == True).all()
+        pending_offers_recv   = db.query(AcquisitionOffer).filter(AcquisitionOffer.target_player_id == player.id, AcquisitionOffer.status == "pending").all()
+        diffuse_notices       = db.query(DiffuseNotice).filter(DiffuseNotice.target_player_id == player.id, DiffuseNotice.status == "pending").all()
 
         html += """
+<div class="section-card accent-blue" style="margin-bottom:14px;">
+    <div class="section-title" style="margin-bottom:4px;">Acquisition Activity</div>
+    <div class="section-desc">
+        Incoming acquisition offers from other players, stakes you hold in other businesses,
+        stakes other players hold in yours, and any pending diffuse notices requiring action.
+    </div>
+"""
+        if pending_offers_recv:
+            html += '<div style="color:#38bdf8;font-size:0.78rem;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Incoming Offers</div>'
+            for offer in pending_offers_recv:
+                html += f"""
+    <div class="program-row" style="border-left-color:#38bdf8;">
+        <div style="color:#e5e7eb;margin-bottom:6px;">
+            Player #{offer.offeror_company_id} is offering
+            <strong style="color:#38bdf8;">{offer.shares_offered:,} shares</strong>
+            for a <strong style="color:#38bdf8;">{offer.stake_pct*100:.1f}%</strong> income stake in your business.
+        </div>
+        <div class="program-meta">Accept to receive shares; a percentage of your business income will flow to them going forward.</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <form action="/api/corporate-actions/acquisition/accept/{offer.id}" method="post" style="display:inline;">
+                <button class="btn btn-success" type="submit">Accept Offer</button>
+            </form>
+            <form action="/api/corporate-actions/acquisition/reject/{offer.id}" method="post" style="display:inline;">
+                <button class="btn btn-danger" type="submit">Reject</button>
+            </form>
+        </div>
+    </div>
+"""
+
+        if stakes_as_acquirer:
+            html += '<div style="color:#22c55e;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Stakes You Hold</div>'
+            for stake in stakes_as_acquirer:
+                html += f"""
+    <div class="program-row" style="border-left-color:#22c55e;">
+        <div style="color:#e5e7eb;margin-bottom:4px;">
+            <strong style="color:#22c55e;">{stake.stake_pct*100:.1f}%</strong> income stake
+            in Player #{stake.target_player_id}'s business &mdash;
+            you paid <strong>{stake.shares_paid:,} shares</strong>
+        </div>
+        <div class="program-meta">You receive a cut of their business income as long as this stake is active.</div>
+        <div style="margin-top:8px;">
+            <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;"
+                  onsubmit="return confirm('Initiate diffuse? The target player will have 30 days to return your shares.')">
+                <button class="btn btn-warning" type="submit">Initiate Diffuse</button>
+            </form>
+        </div>
+    </div>
+"""
+
+        if stakes_as_target:
+            html += '<div style="color:#f59e0b;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Stakes Held Against You</div>'
+            for stake in stakes_as_target:
+                html += f"""
+    <div class="program-row" style="border-left-color:#f59e0b;">
+        <div style="color:#e5e7eb;">
+            Player #{stake.acquirer_id} holds a
+            <strong style="color:#f59e0b;">{stake.stake_pct*100:.1f}%</strong> income stake
+            in your business &mdash; they paid you <strong>{stake.shares_paid:,} shares</strong>
+        </div>
+        <div class="program-meta">A share of your income flows to them automatically. They can initiate a diffuse to end it.</div>
+    </div>
+"""
+
+        if diffuse_notices:
+            html += '<div style="color:#ef4444;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Pending Diffuse Notices — Action Required</div>'
+            for notice in diffuse_notices:
+                html += f"""
+    <div class="program-row" style="border-left-color:#ef4444;">
+        <div style="color:#ef4444;margin-bottom:4px;">
+            You must return <strong>{notice.shares_to_return:,} shares</strong>
+            by <strong>{notice.deadline_at.strftime('%Y-%m-%d')}</strong>
+        </div>
+        <div class="program-meta">Share value at time of notice: {fmt_usd(notice.share_value_at_notice, disp)}</div>
+        <div style="margin-top:8px;">
+            <form action="/api/corporate-actions/diffuse/return/{notice.id}" method="post" style="display:inline;">
+                <button class="btn btn-danger" type="submit">Return Shares Now</button>
+            </form>
+        </div>
+    </div>
+"""
+
+        if not (pending_offers_recv or stakes_as_acquirer or stakes_as_target or diffuse_notices):
+            html += '<div class="empty-state"><p>No active acquisitions or pending offers.</p></div>'
+
+        html += "</div>"
+
+        # ── Tax Vouchers ───────────────────────────────────────────────────────
+        redeem_max = voucher_balance / disp["usd_per_unit"] if disp["usd_per_unit"] else 0
+        can_redeem = voucher_balance > 0
+        html += f"""
+<div class="section-card accent-gold">
+    <div class="section-title" style="margin-bottom:4px;">Tax Vouchers</div>
+    <div class="section-desc">
+        Tax vouchers are government-issued credit instruments you earn automatically whenever
+        you pay a special dividend. For every <strong>{disp["symbol"]}1</strong> distributed to shareholders,
+        you receive <strong style="color:#d4af37;">{disp["symbol"]}{TAX_VOUCHER_RATE:.4f}</strong> in vouchers
+        ({TAX_VOUCHER_RATE*100:.2f}% rebate). Vouchers can also be awarded by tutorials and government events.
+        Redeem them below for instant cash deposited to your wallet — they never expire.
+    </div>
+    <div class="stat-grid" style="max-width:380px;margin-bottom:16px;">
+        <div class="stat-box">
+            <div class="stat-label">Voucher Balance</div>
+            <div class="stat-value gold">{fmt_usd(voucher_balance, disp)}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Rebate Rate</div>
+            <div class="stat-value amber">{TAX_VOUCHER_RATE*100:.2f}%</div>
+        </div>
+    </div>
+    <form action="/api/corporate-actions/vouchers/redeem" method="post">
+        <div class="form-inline">
+            <div class="form-group">
+                <label class="form-label">Amount to Redeem ({disp["symbol"]})</label>
+                <input type="number" name="amount" min="0.01" step="0.01"
+                       max="{redeem_max:.4f}"
+                       placeholder="e.g. {fmt_usd(min(voucher_balance, 10000), disp)}"
+                       class="form-input" style="width:170px;"
+                       {'required' if can_redeem else 'disabled'}>
             </div>
-        </body>
-        </html>
-        """
+            <button type="submit" class="btn btn-gold"
+                    {'disabled' if not can_redeem else ''}>
+                {'Redeem for Cash' if can_redeem else 'No Vouchers to Redeem'}
+            </button>
+        </div>
+    </form>
+</div>
+
+</div><!-- /page-wrap -->
+{_nav_loader()}
+</body>
+</html>"""
 
         return HTMLResponse(content=html)
-    
+
     finally:
         db.close()
 
@@ -599,173 +783,151 @@ async def create_buyback_form(company_id: int, session_token: Optional[str] = Co
 
         max_shares = int(company.shares_outstanding * 0.30)
         
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Create Buyback Program - {company.ticker_symbol}</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                * {{ box-sizing: border-box; }}
-                body {{ font-family: 'JetBrains Mono', monospace; margin: 0; padding: 20px 16px; background: #020617; color: #e5e7eb; font-size: 14px; }}
-                .container {{ max-width: 800px; margin: 0 auto; }}
-                .card {{ background: #0f172a; border: 1px solid #1e293b; padding: 30px; }}
-                h1 {{ color: #e5e7eb; }}
-                .form-group {{ margin: 20px 0; }}
-                label {{ display: block; margin-bottom: 5px; font-weight: bold; color: #94a3b8; font-size: 0.9rem; }}
-                input, select {{ width: 100%; padding: 10px; border: 1px solid #1e293b; background: #020617; color: #e5e7eb; font-size: 0.9rem; font-family: inherit; }}
-                input:focus, select:focus {{ outline: none; border-color: #38bdf8; }}
-                .help-text {{ font-size: 0.85rem; color: #64748b; margin-top: 5px; }}
-                .btn {{ padding: 12px 24px; border: none; cursor: pointer; font-size: 0.9rem; font-family: inherit; margin: 10px 5px 10px 0; border-radius: 3px; }}
-                .btn-primary {{ background: #38bdf8; color: #020617; }}
-                .btn-secondary {{ background: #64748b; color: #e5e7eb; }}
-                .trigger-config {{ display: none; padding: 15px; background: #020617; border: 1px solid #1e293b; margin-top: 10px; }}
-                .ticker {{ color: #38bdf8; font-weight: bold; }}
-                a {{ color: #38bdf8; text-decoration: none; }}
-                a:hover {{ text-decoration: underline; }}
-                
-                @media (max-width: 640px) {{
-                    body {{ padding: 16px 12px; }}
-                    .card {{ padding: 20px; }}
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <a href="/corporate-actions/dashboard">← Dashboard</a>
-                <div class="card" style="margin-top: 15px;">
-                <h1>📦 Create Buyback Program</h1>
-                <p>Company: <span class="ticker">{company.ticker_symbol}</span> - {company.company_name}</p>
-                <p style="color: #64748b;">Current Price: <strong>{fmt_usd(company.current_price, disp)}</strong></p>
-                
-                <form id="buyback-form">
-                    <div class="form-group">
-                        <label>Trigger Type</label>
-                        <select id="trigger-type" required>
-                            <option value="">-- Select Trigger --</option>
-                            <option value="price_drop">Price Support (Buy when price drops)</option>
-                            <option value="earnings_surplus">Earnings Reinvestment (Buy with surplus cash)</option>
-                            <option value="schedule">Regular Schedule (Buy periodically)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Price Drop Config -->
-                    <div id="config-price-drop" class="trigger-config">
-                        <div class="form-group">
-                            <label>Target Price</label>
-                            <input type="number" id="target-price" step="0.01" value="{company.current_price:.2f}">
-                            <div class="help-text">The price you want to support (typically IPO price or higher)</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Drop Threshold (%)</label>
-                            <input type="number" id="drop-threshold" value="15" min="5" max="50">
-                            <div class="help-text">Buy when price drops this % below target (e.g., 15% = buy at {disp["symbol"]}8.50 if target is {disp["symbol"]}10)</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Earnings Surplus Config -->
-                    <div id="config-earnings-surplus" class="trigger-config">
-                        <div class="form-group">
-                            <label>Surplus Threshold ({disp["symbol"]})</label>
-                            <input type="number" id="surplus-threshold" value="50000" step="1000">
-                            <div class="help-text">Buy shares when your cash balance exceeds this amount</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Schedule Config -->
-                    <div id="config-schedule" class="trigger-config">
-                        <div class="form-group">
-                            <label>Frequency</label>
-                            <select id="schedule-frequency">
-                                <option value="3600">Every Hour</option>
-                                <option value="86400">Every Day</option>
-                                <option value="604800">Every Week</option>
-                            </select>
-                            <div class="help-text">How often to attempt buybacks</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Common Settings -->
-                    <div class="form-group">
-                        <label>Maximum Shares to Buy</label>
-                        <input type="number" id="max-shares" required min="1" max="{max_shares}">
-                        <div class="help-text">Total program size (max 30% of outstanding = {max_shares:,} shares)</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Maximum Price per Share</label>
-                        <input type="number" id="max-price" step="0.01" required value="{company.current_price * 1.2:.2f}">
-                        <div class="help-text">Won't buy above this price (typically 20% above current)</div>
-                    </div>
-                    
-                    <div style="margin-top: 30px;">
-                        <button type="submit" class="btn btn-primary">Create Buyback Program</button>
-                        <a href="/corporate-actions/dashboard" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-                </div>
-            </div>
-            
-            <script>
-                const triggerType = document.getElementById('trigger-type');
-                const configs = {{
-                    'price_drop': document.getElementById('config-price-drop'),
-                    'earnings_surplus': document.getElementById('config-earnings-surplus'),
-                    'schedule': document.getElementById('config-schedule')
-                }};
-                
-                triggerType.addEventListener('change', () => {{
-                    Object.values(configs).forEach(el => el.style.display = 'none');
-                    if (configs[triggerType.value]) {{
-                        configs[triggerType.value].style.display = 'block';
-                    }}
-                }});
-                
-                document.getElementById('buyback-form').addEventListener('submit', async (e) => {{
-                    e.preventDefault();
-                    
-                    const trigger = triggerType.value;
-                    let trigger_params = {{}};
-                    
-                    if (trigger === 'price_drop') {{
-                        trigger_params = {{
-                            target_price: parseFloat(document.getElementById('target-price').value),
-                            drop_threshold_pct: parseFloat(document.getElementById('drop-threshold').value) / 100
-                        }};
-                    }} else if (trigger === 'earnings_surplus') {{
-                        trigger_params = {{
-                            surplus_threshold: parseFloat(document.getElementById('surplus-threshold').value)
-                        }};
-                    }} else if (trigger === 'schedule') {{
-                        trigger_params = {{
-                            interval_ticks: parseInt(document.getElementById('schedule-frequency').value)
-                        }};
-                    }}
-                    
-                    const response = await fetch('/api/corporate-actions/buyback/create', {{
-                        method: 'POST',
-                        headers: {{'Content-Type': 'application/json'}},
-                        body: JSON.stringify({{
-                            company_shares_id: {company.id},
-                            trigger_type: trigger,
-                            trigger_params: trigger_params,
-                            max_shares_to_buy: parseInt(document.getElementById('max-shares').value),
-                            max_price_per_share: parseFloat(document.getElementById('max-price').value)
-                        }})
-                    }});
-                    
-                    if (response.ok) {{
-                        alert('Buyback program created successfully!');
-                        window.location.href = '/corporate-actions/dashboard';
-                    }} else {{
-                        const error = await response.json();
-                        alert('Error: ' + error.detail);
-                    }}
-                }});
-            </script>
-        </body>
-        </html>
-        """
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New Buyback — {company.ticker_symbol}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>{_BASE_CSS}
+.fgroup {{ margin-bottom:18px; }}
+.fgroup label {{ display:block;color:#94a3b8;font-size:0.78rem;margin-bottom:5px;font-weight:bold; }}
+.fgroup input,.fgroup select {{ width:100%;padding:9px 12px;background:#070f1e;color:#e5e7eb;
+    border:1px solid #334155;border-radius:4px;font-family:inherit;font-size:0.85rem; }}
+.fgroup input:focus,.fgroup select:focus {{ outline:none;border-color:#38bdf8; }}
+.fgroup .hint {{ color:#475569;font-size:0.72rem;margin-top:4px;line-height:1.5; }}
+.tconfig {{ display:none;background:#070f1e;border:1px solid #1e293b;border-radius:4px;
+    padding:14px 16px;margin-top:10px; }}
+</style>
+</head>
+<body>
+<div class="topbar">
+    <span class="topbar-brand">WADSWORTH</span>
+    <span class="topbar-sep">/</span>
+    <a href="/">Dashboard</a>
+    <span class="topbar-sep">/</span>
+    <a href="/corporate-actions/dashboard">Corporate Actions</a>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-crumb">New Buyback</span>
+</div>
+<div class="page-wrap" style="max-width:700px;">
+<div class="page-header">
+    <h1>New Buyback Program</h1>
+    <p class="subtitle">
+        <strong style="color:#38bdf8;">{company.ticker_symbol}</strong> — {company.company_name} &nbsp;&bull;&nbsp;
+        Current price: <strong style="color:#22c55e;">{fmt_usd(company.current_price, disp)}</strong> &nbsp;&bull;&nbsp;
+        Outstanding: <strong>{company.shares_outstanding:,}</strong>
+    </p>
+</div>
+<div class="info-box tip" style="margin-bottom:20px;">
+    <strong>What is a Buyback Program?</strong><br>
+    The game engine automatically purchases your company's own shares from the open market
+    using company cash whenever the trigger condition is met. Bought shares become treasury
+    shares that reduce float, which can support the share price. Max program size is
+    30% of outstanding shares ({max_shares:,} shares for {company.ticker_symbol}).
+</div>
+<div class="section-card accent-blue">
+<form id="buyback-form">
+    <div class="fgroup">
+        <label>Trigger Type — when should the engine buy?</label>
+        <select id="trigger-type" required>
+            <option value="">— Select a trigger —</option>
+            <option value="price_drop">Price Support — buy when price drops below a target</option>
+            <option value="earnings_surplus">Earnings Surplus — buy when company cash exceeds a threshold</option>
+            <option value="schedule">Scheduled — buy on a regular interval</option>
+        </select>
+    </div>
+    <div id="config-price-drop" class="tconfig">
+        <div class="fgroup">
+            <label>Target Price ({disp["symbol"]})</label>
+            <input type="number" id="target-price" step="0.01" value="{company.current_price:.2f}">
+            <div class="hint">The price level you want to defend. Buybacks trigger when price falls below this.</div>
+        </div>
+        <div class="fgroup">
+            <label>Drop Threshold (%)</label>
+            <input type="number" id="drop-threshold" value="15" min="5" max="50">
+            <div class="hint">Buy when price drops this % below target. At 15%, a {fmt_usd(10, disp)} target triggers at {fmt_usd(8.5, disp)}.</div>
+        </div>
+    </div>
+    <div id="config-earnings-surplus" class="tconfig">
+        <div class="fgroup">
+            <label>Surplus Threshold ({disp["symbol"]})</label>
+            <input type="number" id="surplus-threshold" value="50000" step="1000">
+            <div class="hint">Trigger when your company cash balance exceeds this amount — reinvests excess earnings.</div>
+        </div>
+    </div>
+    <div id="config-schedule" class="tconfig">
+        <div class="fgroup">
+            <label>Purchase Frequency</label>
+            <select id="schedule-frequency">
+                <option value="3600">Every Hour</option>
+                <option value="86400">Every Day</option>
+                <option value="604800">Every Week</option>
+            </select>
+            <div class="hint">The engine attempts a buyback purchase on each interval, if funds allow.</div>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="fgroup">
+        <label>Maximum Shares to Buy (program total)</label>
+        <input type="number" id="max-shares" required min="1" max="{max_shares}">
+        <div class="hint">The program stops once this many shares have been repurchased. Max: {max_shares:,} (30% of outstanding).</div>
+    </div>
+    <div class="fgroup">
+        <label>Maximum Price per Share ({disp["symbol"]})</label>
+        <input type="number" id="max-price" step="0.01" required value="{company.current_price * 1.2:.2f}">
+        <div class="hint">Engine will not buy above this price. Default is 20% above current to allow for normal fluctuation.</div>
+    </div>
+    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary">Create Buyback Program</button>
+        <a href="/corporate-actions/dashboard" class="btn btn-ghost">Cancel</a>
+    </div>
+</form>
+</div>
+</div>
+{_nav_loader()}
+<script>
+(function() {{
+    var sel = document.getElementById('trigger-type');
+    var cfgs = {{
+        price_drop: document.getElementById('config-price-drop'),
+        earnings_surplus: document.getElementById('config-earnings-surplus'),
+        schedule: document.getElementById('config-schedule')
+    }};
+    sel.addEventListener('change', function() {{
+        Object.values(cfgs).forEach(function(el) {{ el.style.display = 'none'; }});
+        if (cfgs[sel.value]) cfgs[sel.value].style.display = 'block';
+    }});
+    document.getElementById('buyback-form').addEventListener('submit', async function(e) {{
+        e.preventDefault();
+        var trigger = sel.value;
+        if (!trigger) {{ alert('Please select a trigger type.'); return; }}
+        var tp = {{}};
+        if (trigger === 'price_drop') {{
+            tp = {{ target_price: parseFloat(document.getElementById('target-price').value),
+                    drop_threshold_pct: parseFloat(document.getElementById('drop-threshold').value) / 100 }};
+        }} else if (trigger === 'earnings_surplus') {{
+            tp = {{ surplus_threshold: parseFloat(document.getElementById('surplus-threshold').value) }};
+        }} else if (trigger === 'schedule') {{
+            tp = {{ interval_ticks: parseInt(document.getElementById('schedule-frequency').value) }};
+        }}
+        var res = await fetch('/api/corporate-actions/buyback/create', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{
+                company_shares_id: {company.id},
+                trigger_type: trigger,
+                trigger_params: tp,
+                max_shares_to_buy: parseInt(document.getElementById('max-shares').value),
+                max_price_per_share: parseFloat(document.getElementById('max-price').value)
+            }})
+        }});
+        if (res.ok) {{ window.location.href = '/corporate-actions/dashboard'; }}
+        else {{ var err = await res.json(); alert('Error: ' + err.detail); }}
+    }});
+}})();
+</script>
+</body></html>"""
         
         return HTMLResponse(content=html)
     
@@ -800,96 +962,100 @@ async def create_split_form(company_id: int, session_token: Optional[str] = Cook
         if not company:
             return HTMLResponse(content="<p>Company not found.</p>", status_code=404)
 
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Create Split Rule - {company.ticker_symbol}</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
-                .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }}
-                h1 {{ color: #2c3e50; }}
-                .form-group {{ margin: 20px 0; }}
-                label {{ display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }}
-                input, select {{ width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; font-size: 16px; }}
-                .help-text {{ font-size: 12px; color: #7f8c8d; margin-top: 5px; }}
-                .btn {{ padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 5px; }}
-                .btn-primary {{ background: #3498db; color: white; }}
-                .btn-secondary {{ background: #95a5a6; color: white; }}
-                .ticker {{ color: #3498db; font-weight: bold; }}
-                .example {{ background: #ecf0f1; padding: 10px; border-radius: 5px; margin: 10px 0; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>✂️ Create Stock Split Rule</h1>
-                <p>Company: <span class="ticker">{company.ticker_symbol}</span> - {company.company_name}</p>
-                <p>Current Price: <strong>{fmt_usd(company.current_price, disp)}</strong></p>
-
-                <form id="split-form">
-                    <div class="form-group">
-                        <label>Price Threshold</label>
-                        <input type="number" id="price-threshold" step="1" required value="100">
-                        <div class="help-text">Split when share price reaches this level</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Split Ratio</label>
-                        <select id="split-ratio" required>
-                            <option value="2">2-for-1 (Double shares, half price)</option>
-                            <option value="3">3-for-1 (Triple shares, 1/3 price)</option>
-                            <option value="5">5-for-1 (5x shares, 1/5 price)</option>
-                            <option value="10">10-for-1 (10x shares, 1/10 price)</option>
-                        </select>
-                        <div class="help-text">Higher ratios for very expensive stocks</div>
-                    </div>
-                    
-                    <div class="example">
-                        <strong>Example:</strong> If price hits {disp["symbol"]}100 with a 2:1 split:
-                        <ul>
-                            <li>Shareholders get 2x their shares</li>
-                            <li>Price becomes {disp["symbol"]}50</li>
-                            <li>Total value unchanged</li>
-                            <li>Makes stock more affordable for retail investors</li>
-                        </ul>
-                    </div>
-                    
-                    <div style="margin-top: 30px;">
-                        <button type="submit" class="btn btn-primary">Create Split Rule</button>
-                        <a href="/corporate-actions/dashboard" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
-            
-            <script>
-                document.getElementById('split-form').addEventListener('submit', async (e) => {{
-                    e.preventDefault();
-                    
-                    const response = await fetch('/api/corporate-actions/split/create', {{
-                        method: 'POST',
-                        headers: {{'Content-Type': 'application/json'}},
-                        body: JSON.stringify({{
-                            company_shares_id: {company.id},
-                            trigger_type: 'price_threshold',
-                            trigger_params: {{
-                                price_threshold: parseFloat(document.getElementById('price-threshold').value)
-                            }},
-                            split_ratio: parseInt(document.getElementById('split-ratio').value)
-                        }})
-                    }});
-                    
-                    if (response.ok) {{
-                        alert('Split rule created successfully!');
-                        window.location.href = '/corporate-actions/dashboard';
-                    }} else {{
-                        const error = await response.json();
-                        alert('Error: ' + error.detail);
-                    }}
-                }});
-            </script>
-        </body>
-        </html>
-        """
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New Split Rule — {company.ticker_symbol}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>{_BASE_CSS}
+.fgroup {{ margin-bottom:18px; }}
+.fgroup label {{ display:block;color:#94a3b8;font-size:0.78rem;margin-bottom:5px;font-weight:bold; }}
+.fgroup input,.fgroup select {{ width:100%;padding:9px 12px;background:#070f1e;color:#e5e7eb;
+    border:1px solid #334155;border-radius:4px;font-family:inherit;font-size:0.85rem; }}
+.fgroup input:focus,.fgroup select:focus {{ outline:none;border-color:#f59e0b; }}
+.fgroup .hint {{ color:#475569;font-size:0.72rem;margin-top:4px;line-height:1.5; }}
+</style>
+</head>
+<body>
+<div class="topbar">
+    <span class="topbar-brand">WADSWORTH</span>
+    <span class="topbar-sep">/</span>
+    <a href="/">Dashboard</a>
+    <span class="topbar-sep">/</span>
+    <a href="/corporate-actions/dashboard">Corporate Actions</a>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-crumb">New Split Rule</span>
+</div>
+<div class="page-wrap" style="max-width:700px;">
+<div class="page-header">
+    <h1>New Stock Split Rule</h1>
+    <p class="subtitle">
+        <strong style="color:#38bdf8;">{company.ticker_symbol}</strong> — {company.company_name} &nbsp;&bull;&nbsp;
+        Current price: <strong style="color:#22c55e;">{fmt_usd(company.current_price, disp)}</strong> &nbsp;&bull;&nbsp;
+        Outstanding: <strong>{company.shares_outstanding:,}</strong>
+    </p>
+</div>
+<div class="info-box tip" style="margin-bottom:20px;">
+    <strong>What is a Forward Stock Split?</strong><br>
+    When your share price hits the threshold you set, the game multiplies every shareholder's holdings
+    by the split ratio and divides the price by the same ratio. A 2-for-1 split doubles share count
+    and halves price — total value is unchanged. Splits make your stock more accessible to smaller
+    investors and are widely seen as a sign of sustained growth.
+</div>
+<div class="section-card accent-amber">
+<form id="split-form">
+    <div class="fgroup">
+        <label>Price Threshold — trigger split when price reaches ({disp["symbol"]})</label>
+        <input type="number" id="price-threshold" step="1" required
+               value="{max(int(company.current_price * 2), 100)}">
+        <div class="hint">
+            The share price at which the split triggers automatically.
+            Current price is {fmt_usd(company.current_price, disp)} — set this well above current for a future trigger.
+        </div>
+    </div>
+    <div class="fgroup">
+        <label>Split Ratio</label>
+        <select id="split-ratio" required>
+            <option value="2">2-for-1 — doubles shares, halves price (most common)</option>
+            <option value="3">3-for-1 — triples shares, price becomes 1/3</option>
+            <option value="5">5-for-1 — five times the shares at 1/5 the price</option>
+            <option value="10">10-for-1 — for very high-priced stocks</option>
+        </select>
+        <div class="hint">Higher ratios are used when the share price has grown very large and you want to bring it back to a smaller number.</div>
+    </div>
+    <div class="info-box" style="margin-bottom:16px;">
+        <strong>Example:</strong> At a 2-for-1 split with a {fmt_usd(100, disp)} threshold —
+        every shareholder's 100 shares becomes 200 shares,
+        and price drops from {fmt_usd(100, disp)} to {fmt_usd(50, disp)}.
+        Total portfolio value is identical. The split can fire multiple times as the price keeps rising.
+    </div>
+    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="submit" class="btn btn-warning">Create Split Rule</button>
+        <a href="/corporate-actions/dashboard" class="btn btn-ghost">Cancel</a>
+    </div>
+</form>
+</div>
+</div>
+{_nav_loader()}
+<script>
+document.getElementById('split-form').addEventListener('submit', async function(e) {{
+    e.preventDefault();
+    var res = await fetch('/api/corporate-actions/split/create', {{
+        method: 'POST',
+        headers: {{'Content-Type': 'application/json'}},
+        body: JSON.stringify({{
+            company_shares_id: {company.id},
+            trigger_type: 'price_threshold',
+            trigger_params: {{ price_threshold: parseFloat(document.getElementById('price-threshold').value) }},
+            split_ratio: parseInt(document.getElementById('split-ratio').value)
+        }})
+    }});
+    if (res.ok) {{ window.location.href = '/corporate-actions/dashboard'; }}
+    else {{ var err = await res.json(); alert('Error: ' + err.detail); }}
+}});
+</script>
+</body></html>"""
         
         return HTMLResponse(content=html)
     
@@ -926,154 +1092,147 @@ async def create_offering_form(company_id: int, session_token: Optional[str] = C
 
         max_dilution_shares = int(company.shares_outstanding * 0.20)
         
-        html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Create Secondary Offering - {company.ticker_symbol}</title>
-            <style>
-                body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
-                .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }}
-                h1 {{ color: #2c3e50; }}
-                .form-group {{ margin: 20px 0; }}
-                label {{ display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }}
-                input, select {{ width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; font-size: 16px; }}
-                .help-text {{ font-size: 12px; color: #7f8c8d; margin-top: 5px; }}
-                .btn {{ padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 5px; }}
-                .btn-primary {{ background: #3498db; color: white; }}
-                .btn-secondary {{ background: #95a5a6; color: white; }}
-                .ticker {{ color: #3498db; font-weight: bold; }}
-                .warning {{ background: #fff3cd; padding: 15px; border-left: 4px solid #f39c12; margin: 15px 0; }}
-                .trigger-config {{ display: none; padding: 15px; background: #ecf0f1; border-radius: 5px; margin-top: 10px; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <h1>📢 Create Secondary Offering</h1>
-                <p>Company: <span class="ticker">{company.ticker_symbol}</span> - {company.company_name}</p>
-                <p>Current Price: <strong>{fmt_usd(company.current_price, disp)}</strong></p>
-                <p>Outstanding Shares: <strong>{company.shares_outstanding:,}</strong></p>
-                
-                <div class="warning">
-                    <strong>⚠️ Warning:</strong> Secondary offerings dilute existing shareholders.
-                    Only use when you need capital to grow the business!
-                </div>
-                
-                <form id="offering-form">
-                    <div class="form-group">
-                        <label>Trigger Type</label>
-                        <select id="trigger-type" required>
-                            <option value="">-- Select Trigger --</option>
-                            <option value="cash_need">Emergency Capital (When cash runs low)</option>
-                            <option value="expansion">Expansion Funding (When growing business)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Cash Need Config -->
-                    <div id="config-cash-need" class="trigger-config">
-                        <div class="form-group">
-                            <label>Cash Threshold ({disp["symbol"]})</label>
-                            <input type="number" id="cash-threshold" value="5000" step="1000">
-                            <div class="help-text">Issue shares when your cash balance drops below this</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Expansion Config -->
-                    <div id="config-expansion" class="trigger-config">
-                        <div class="form-group">
-                            <label>Business Count Trigger</label>
-                            <input type="number" id="business-count" value="5" min="1">
-                            <div class="help-text">Issue shares when you have this many active businesses</div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Shares to Issue</label>
-                        <input type="number" id="shares-to-issue" required min="1" max="{max_dilution_shares}">
-                        <div class="help-text">Max 20% dilution = {max_dilution_shares:,} shares</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Minimum Price per Share</label>
-                        <input type="number" id="min-price" step="0.01" required value="{company.current_price * 0.8:.2f}">
-                        <div class="help-text">Won't issue below this price (typically 80% of current)</div>
-                    </div>
-                    
-                    <div id="estimated-raise" style="background: #d4edda; padding: 15px; border-radius: 5px; margin: 15px 0; display: none;">
-                        <strong>Estimated Raise:</strong> <span id="raise-amount">{disp["symbol"]}0</span> (after 3% fee)
-                    </div>
-                    
-                    <div style="margin-top: 30px;">
-                        <button type="submit" class="btn btn-primary">Create Secondary Offering</button>
-                        <a href="/corporate-actions/dashboard" class="btn btn-secondary">Cancel</a>
-                    </div>
-                </form>
-            </div>
-            
-            <script>
-                const triggerType = document.getElementById('trigger-type');
-                const configs = {{
-                    'cash_need': document.getElementById('config-cash-need'),
-                    'expansion': document.getElementById('config-expansion')
-                }};
-                
-                triggerType.addEventListener('change', () => {{
-                    Object.values(configs).forEach(el => el.style.display = 'none');
-                    if (configs[triggerType.value]) {{
-                        configs[triggerType.value].style.display = 'block';
-                    }}
-                }});
-                
-                // Calculate estimated raise
-                document.getElementById('shares-to-issue').addEventListener('input', () => {{
-                    const shares = parseInt(document.getElementById('shares-to-issue').value) || 0;
-                    const price = {company.current_price};
-                    const gross = shares * price;
-                    const net = gross * 0.97; // After 3% fee
-                    document.getElementById('raise-amount').textContent = '{disp["symbol"]}' + net.toFixed(2).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ',');
-                    document.getElementById('estimated-raise').style.display = shares > 0 ? 'block' : 'none';
-                }});
-                
-                document.getElementById('offering-form').addEventListener('submit', async (e) => {{
-                    e.preventDefault();
-                    
-                    const trigger = triggerType.value;
-                    let trigger_params = {{}};
-                    
-                    if (trigger === 'cash_need') {{
-                        trigger_params = {{
-                            cash_threshold: parseFloat(document.getElementById('cash-threshold').value)
-                        }};
-                    }} else if (trigger === 'expansion') {{
-                        trigger_params = {{
-                            business_count: parseInt(document.getElementById('business-count').value)
-                        }};
-                    }}
-                    
-                    const response = await fetch('/api/corporate-actions/offering/create', {{
-                        method: 'POST',
-                        headers: {{'Content-Type': 'application/json'}},
-                        body: JSON.stringify({{
-                            company_shares_id: {company.id},
-                            trigger_type: trigger,
-                            trigger_params: trigger_params,
-                            shares_to_issue: parseInt(document.getElementById('shares-to-issue').value),
-                            min_price_per_share: parseFloat(document.getElementById('min-price').value)
-                        }})
-                    }});
-                    
-                    if (response.ok) {{
-                        alert('Secondary offering created successfully!');
-                        window.location.href = '/corporate-actions/dashboard';
-                    }} else {{
-                        const error = await response.json();
-                        alert('Error: ' + error.detail);
-                    }}
-                }});
-            </script>
-        </body>
-        </html>
-        """
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New Secondary Offering — {company.ticker_symbol}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>{_BASE_CSS}
+.fgroup {{ margin-bottom:18px; }}
+.fgroup label {{ display:block;color:#94a3b8;font-size:0.78rem;margin-bottom:5px;font-weight:bold; }}
+.fgroup input,.fgroup select {{ width:100%;padding:9px 12px;background:#070f1e;color:#e5e7eb;
+    border:1px solid #334155;border-radius:4px;font-family:inherit;font-size:0.85rem; }}
+.fgroup input:focus,.fgroup select:focus {{ outline:none;border-color:#a78bfa; }}
+.fgroup .hint {{ color:#475569;font-size:0.72rem;margin-top:4px;line-height:1.5; }}
+.tconfig {{ display:none;background:#070f1e;border:1px solid #1e293b;border-radius:4px;
+    padding:14px 16px;margin-top:10px; }}
+</style>
+</head>
+<body>
+<div class="topbar">
+    <span class="topbar-brand">WADSWORTH</span>
+    <span class="topbar-sep">/</span>
+    <a href="/">Dashboard</a>
+    <span class="topbar-sep">/</span>
+    <a href="/corporate-actions/dashboard">Corporate Actions</a>
+    <span class="topbar-sep">/</span>
+    <span class="topbar-crumb">New Secondary Offering</span>
+</div>
+<div class="page-wrap" style="max-width:700px;">
+<div class="page-header">
+    <h1>New Secondary Offering</h1>
+    <p class="subtitle">
+        <strong style="color:#38bdf8;">{company.ticker_symbol}</strong> — {company.company_name} &nbsp;&bull;&nbsp;
+        Price: <strong style="color:#22c55e;">{fmt_usd(company.current_price, disp)}</strong> &nbsp;&bull;&nbsp;
+        Outstanding: <strong>{company.shares_outstanding:,}</strong>
+    </p>
+</div>
+<div class="info-box warning" style="margin-bottom:16px;">
+    <strong>Dilution Warning</strong> — A secondary offering creates new shares and sells them into the market.
+    Every existing shareholder's ownership percentage decreases. Only use this when you genuinely
+    need capital and the growth it funds will outweigh the dilution impact.
+</div>
+<div class="info-box tip" style="margin-bottom:20px;">
+    <strong>How it works:</strong> When the trigger condition is met, the game issues new shares at or above
+    your minimum price, depositing proceeds into your company treasury. A 3% issuance fee applies.
+    Maximum offering size: 20% of outstanding shares ({max_dilution_shares:,} shares).
+</div>
+<div class="section-card accent-purple">
+<form id="offering-form">
+    <div class="fgroup">
+        <label>Trigger Type — when should new shares be issued?</label>
+        <select id="trigger-type" required>
+            <option value="">— Select a trigger —</option>
+            <option value="cash_need">Emergency Capital — issue shares when cash runs low</option>
+            <option value="expansion">Expansion Funding — issue shares when business count grows</option>
+        </select>
+    </div>
+    <div id="config-cash-need" class="tconfig">
+        <div class="fgroup">
+            <label>Minimum Cash Threshold ({disp["symbol"]})</label>
+            <input type="number" id="cash-threshold" value="5000" step="1000">
+            <div class="hint">Issue shares when your company cash balance falls below this amount.</div>
+        </div>
+    </div>
+    <div id="config-expansion" class="tconfig">
+        <div class="fgroup">
+            <label>Business Count Trigger</label>
+            <input type="number" id="business-count" value="5" min="1">
+            <div class="hint">Issue shares when you operate at least this many active businesses — fund expansion capital.</div>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="fgroup">
+        <label>Number of Shares to Issue</label>
+        <input type="number" id="shares-to-issue" required min="1" max="{max_dilution_shares}">
+        <div class="hint">Max 20% dilution cap = {max_dilution_shares:,} shares. Gross raise shown below updates as you type.</div>
+    </div>
+    <div class="fgroup">
+        <label>Minimum Issue Price per Share ({disp["symbol"]})</label>
+        <input type="number" id="min-price" step="0.01" required value="{company.current_price * 0.85:.2f}">
+        <div class="hint">Won't issue below this floor. Default is 85% of current price — protects against adverse conditions.</div>
+    </div>
+    <div id="est-raise" style="display:none;background:#0a1628;border:1px solid #1e293b;border-radius:4px;
+         padding:12px 14px;margin-bottom:14px;">
+        <span style="color:#64748b;font-size:0.78rem;">Estimated raise (after 3% fee):</span>
+        <strong id="raise-val" style="color:#22c55e;margin-left:8px;"></strong>
+    </div>
+    <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="submit" class="btn btn-primary">Create Secondary Offering</button>
+        <a href="/corporate-actions/dashboard" class="btn btn-ghost">Cancel</a>
+    </div>
+</form>
+</div>
+</div>
+{_nav_loader()}
+<script>
+(function() {{
+    var sel = document.getElementById('trigger-type');
+    var cfgs = {{
+        cash_need: document.getElementById('config-cash-need'),
+        expansion: document.getElementById('config-expansion')
+    }};
+    sel.addEventListener('change', function() {{
+        Object.values(cfgs).forEach(function(el) {{ el.style.display = 'none'; }});
+        if (cfgs[sel.value]) cfgs[sel.value].style.display = 'block';
+    }});
+    var sharesInput = document.getElementById('shares-to-issue');
+    sharesInput.addEventListener('input', function() {{
+        var shares = parseInt(sharesInput.value) || 0;
+        if (shares > 0) {{
+            var net = shares * {company.current_price} * 0.97;
+            document.getElementById('raise-val').textContent = '{disp["symbol"]}' +
+                net.toFixed(2).replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, ',');
+            document.getElementById('est-raise').style.display = 'block';
+        }} else {{
+            document.getElementById('est-raise').style.display = 'none';
+        }}
+    }});
+    document.getElementById('offering-form').addEventListener('submit', async function(e) {{
+        e.preventDefault();
+        var trigger = sel.value;
+        if (!trigger) {{ alert('Please select a trigger type.'); return; }}
+        var tp = {{}};
+        if (trigger === 'cash_need') tp = {{ cash_threshold: parseFloat(document.getElementById('cash-threshold').value) }};
+        else if (trigger === 'expansion') tp = {{ business_count: parseInt(document.getElementById('business-count').value) }};
+        var res = await fetch('/api/corporate-actions/offering/create', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{
+                company_shares_id: {company.id},
+                trigger_type: trigger,
+                trigger_params: tp,
+                shares_to_issue: parseInt(document.getElementById('shares-to-issue').value),
+                min_price_per_share: parseFloat(document.getElementById('min-price').value)
+            }})
+        }});
+        if (res.ok) {{ window.location.href = '/corporate-actions/dashboard'; }}
+        else {{ var err = await res.json(); alert('Error: ' + err.detail); }}
+    }});
+}})();
+</script>
+</body></html>"""
         
         return HTMLResponse(content=html)
     
