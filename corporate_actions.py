@@ -1732,6 +1732,8 @@ def reject_counter_offer(offer_id: int, offeror_id: int) -> dict:
         offer.counter_stake_pct = None
         offer.counter_shares = None
         offer.counter_cash = 0.0
+        offer.counter_term_days = None
+        offer.counter_lock_up_days = None
         offer.notification_seen_target = False
         _target_id = offer.target_player_id
         db.commit()
