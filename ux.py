@@ -1934,6 +1934,47 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">{msg} <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View dashboard →</a></p>
             </div>""")
 
+        for reneg in notifs.get("renegotiation_proposals", []):
+            proposer = reneg.get("proposed_by", "?")
+            new_pct = reneg.get("new_stake_pct", 0) * 100
+            new_term = reneg.get("new_term_days")
+            term_str = f"{new_term}-day term" if new_term else "perpetual"
+            note_str = f' — "{reneg.get("note","")}"' if reneg.get("note") else ""
+            reneg_id = reneg.get("id")
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #a78bfa;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="background:#a78bfa;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">RENEGOTIATION PROPOSAL</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0 0 12px 0;font-size:0.9rem;">
+                    Player #{proposer} proposed new stake terms: <strong style="color:#a78bfa;">{new_pct:.1f}% stake, {term_str}{note_str}</strong>.
+                </p>
+                <div style="display:flex;gap:8px;">
+                    <form action="/api/corporate-actions/stake/renegotiate/respond/{reneg_id}" method="post" style="display:inline;">
+                        <input type="hidden" name="accept" value="true">
+                        <button type="submit" style="background:#22c55e;color:#020617;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Accept</button>
+                    </form>
+                    <form action="/api/corporate-actions/stake/renegotiate/respond/{reneg_id}" method="post" style="display:inline;">
+                        <input type="hidden" name="accept" value="false">
+                        <button type="submit" style="background:#f59e0b;color:#020617;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Decline</button>
+                    </form>
+                    <a href="/corporate-actions/dashboard" style="color:#38bdf8;font-size:0.85rem;align-self:center;margin-left:8px;">View details →</a>
+                </div>
+            </div>""")
+
+        for reneg_resp in notifs.get("renegotiation_responses", []):
+            r_status = reneg_resp.get("status", "rejected")
+            r_color = "#22c55e" if r_status == "accepted" else "#ef4444"
+            r_label = "RENEGOTIATION ACCEPTED" if r_status == "accepted" else "RENEGOTIATION DECLINED"
+            r_msg = f"Your proposed terms ({reneg_resp.get('new_stake_pct',0)*100:.1f}% stake) were {r_status}."
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid {r_color};border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="background:{r_color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">{r_label}</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">{r_msg} <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View dashboard →</a></p>
+            </div>""")
+
         if banner_parts:
             mark_acquisition_notifications_seen(player.id)
         acq_banners = "".join(banner_parts)

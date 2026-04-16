@@ -11,7 +11,8 @@ from corporate_actions import (
     BuybackTrigger, SplitTrigger, OfferingTrigger, ActionStatus,
     get_db,
     VALID_REVERSE_SPLIT_RATIOS, TAX_VOUCHER_RATE, ACQUISITION_OFFER_DAYS, DIFFUSE_RETURN_DAYS,
-    AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord,
+    ACQUISITION_DEFAULT_LOCKUP_DAYS, ACQUISITION_TERM_OPTIONS,
+    AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord, StakeRenegotiation,
     get_tax_voucher_balance, is_player_bankrupt,
 )
 from banks.brokerage_firm import CompanyShares, ShareholderPosition
@@ -575,7 +576,8 @@ async def corporate_actions_dashboard(
             <div class="form-group">
                 <label class="form-label">Target Player ID</label>
                 <input type="number" name="target_player_id" min="1" placeholder="e.g. 42"
-                       class="form-input" required>
+                       class="form-input" id="acq-target-{company.id}" required
+                       oninput="acqFetchVal('{company.id}',this.value)">
                 <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Find player IDs on Leaderboard</div>
             </div>
             <div class="form-group">
@@ -591,7 +593,8 @@ async def corporate_actions_dashboard(
             <div class="form-group">
                 <label class="form-label">Income Stake % Requested</label>
                 <input type="number" name="stake_pct" min="0.1" max="50" step="0.1"
-                       placeholder="e.g. 25" class="form-input" required>
+                       placeholder="e.g. 25" class="form-input" id="acq-pct-{company.id}"
+                       oninput="acqCalc('{company.id}',{company.current_price})" required>
                 <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Max 50% · % of their net business income</div>
             </div>
             <div class="form-group">
@@ -601,11 +604,35 @@ async def corporate_actions_dashboard(
                        oninput="acqCalc('{company.id}',{company.current_price})">
                 <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Extra cash included — escrowed until outcome</div>
             </div>
+            <div class="form-group">
+                <label class="form-label">Deal Term</label>
+                <select name="term_days" class="form-input">
+                    <option value="0">Perpetual (no end date)</option>
+                    <option value="30">30 days</option>
+                    <option value="60">60 days</option>
+                    <option value="90">90 days</option>
+                    <option value="180">180 days</option>
+                    <option value="365">365 days (1 year)</option>
+                </select>
+                <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Stake auto-closes when term expires</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Lock-Up Period (days)</label>
+                <input type="number" name="lock_up_days" min="0" max="365" value="7"
+                       placeholder="7" class="form-input">
+                <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Minimum hold before exit is allowed (default 7)</div>
+            </div>
         </div>
         <div class="form-group" style="margin-bottom:14px;">
             <label class="form-label">Deal Memo (optional — visible to recipient)</label>
             <textarea name="offer_memo" maxlength="500" placeholder="Explain why this deal benefits both parties, your company growth plans, etc."
                       class="form-input" style="width:100%;height:64px;resize:vertical;font-size:0.82rem;"></textarea>
+        </div>
+        <!-- Valuation basis panel -->
+        <div id="acq-valuation-{company.id}" style="display:none;background:#0f172a;border:1px solid #1e293b;
+             border-radius:6px;padding:10px 14px;margin-bottom:10px;font-size:0.82rem;">
+            <div style="color:#94a3b8;margin-bottom:4px;font-weight:600;">Target Income Estimate (30-day basis)</div>
+            <div id="acq-val-body-{company.id}" style="color:#e5e7eb;"></div>
         </div>
         <div id="acq-preview-{company.id}" style="display:none;background:#0f172a;border:1px solid #1e293b;
              border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;">
@@ -621,9 +648,12 @@ async def corporate_actions_dashboard(
     function acqCalc(cid, price) {{
         var shares = parseFloat(document.getElementById('acq-shares-'+cid)?.value) || 0;
         var cash = parseFloat(document.getElementById('acq-cash-'+cid)?.value) || 0;
+        var pct = parseFloat(document.getElementById('acq-pct-'+cid)?.value) || 0;
         var total = shares * price + cash;
         var prev = document.getElementById('acq-preview-'+cid);
         var val = document.getElementById('acq-preview-val-'+cid);
+        var valPanel = document.getElementById('acq-valuation-'+cid);
+        var valBody = document.getElementById('acq-val-body-'+cid);
         if (total > 0 && prev && val) {{
             var shareStr = shares > 0 ? shares.toLocaleString() + ' shares @ $' + price.toFixed(4) + ' = $' + (shares*price).toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) : '';
             var cashStr = cash > 0 ? ' + $' + cash.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) + ' cash' : '';
@@ -633,6 +663,45 @@ async def corporate_actions_dashboard(
         }} else if (prev) {{
             prev.style.display = 'none';
         }}
+        // Update implied return if valuation data exists
+        if (valBody && valBody.dataset.dailyAvg && pct > 0) {{
+            var daily = parseFloat(valBody.dataset.dailyAvg) * (pct / 100);
+            var annual = daily * 365;
+            var multiple = total > 0 ? (annual / total).toFixed(2) : '—';
+            valBody.dataset.impliedLine = 'Your ' + pct.toFixed(1) + '% → ~$' + daily.toLocaleString(undefined,{{maximumFractionDigits:0}}) + '/day · ~$' + annual.toLocaleString(undefined,{{maximumFractionDigits:0}}) + '/yr · ' + multiple + 'x implied multiple';
+            _acqRefreshValBody(cid);
+        }}
+    }}
+    function _acqRefreshValBody(cid) {{
+        var valBody = document.getElementById('acq-val-body-'+cid);
+        if (!valBody) return;
+        var html = '';
+        if (valBody.dataset.summaryLine) html += '<div>' + valBody.dataset.summaryLine + '</div>';
+        if (valBody.dataset.impliedLine) html += '<div style="color:#38bdf8;margin-top:3px;">' + valBody.dataset.impliedLine + '</div>';
+        valBody.innerHTML = html;
+    }}
+    var _acqValTimer = {{}};
+    function acqFetchVal(cid, targetId) {{
+        clearTimeout(_acqValTimer[cid]);
+        if (!targetId || parseInt(targetId) < 1) return;
+        _acqValTimer[cid] = setTimeout(function() {{
+            fetch('/api/corporate-actions/acquisition/valuation/' + parseInt(targetId))
+                .then(function(r){{return r.json();}})
+                .then(function(d){{
+                    if (!d.ok) return;
+                    var valPanel = document.getElementById('acq-valuation-'+cid);
+                    var valBody = document.getElementById('acq-val-body-'+cid);
+                    if (!valPanel || !valBody) return;
+                    var fmt = function(n){{return '$'+Math.round(n).toLocaleString();}};
+                    valBody.dataset.dailyAvg = d.daily_avg;
+                    valBody.dataset.summaryLine = '30-day net: ' + fmt(d.net_income) + ' · Daily avg: ' + fmt(d.daily_avg) + ' · Annual est: ' + fmt(d.annual_est);
+                    _acqRefreshValBody(cid);
+                    valPanel.style.display = 'block';
+                    // Trigger implied return calc if pct is already filled
+                    var pct = parseFloat(document.getElementById('acq-pct-'+cid)?.value) || 0;
+                    if (pct > 0) acqCalc(cid, {company.current_price});
+                }}).catch(function(){{}});
+        }}, 600);
     }}
     </script>
 </div>
@@ -803,6 +872,22 @@ async def corporate_actions_dashboard(
                             <input type="number" name="counter_cash" min="0" step="0.01" value="0"
                                    placeholder="e.g. 10,000" class="form-input" style="width:130px;">
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">Counter Term (days)</label>
+                            <select name="counter_term_days" class="form-input" style="width:120px;">
+                                <option value="0">Keep original</option>
+                                <option value="30">30 days</option>
+                                <option value="60">60 days</option>
+                                <option value="90">90 days</option>
+                                <option value="180">180 days</option>
+                                <option value="365">365 days</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Counter Lock-up (days)</label>
+                            <input type="number" name="counter_lock_up_days" min="0" max="365"
+                                   placeholder="keep original" class="form-input" style="width:110px;">
+                        </div>
                         <button type="submit" class="btn btn-primary" style="align-self:flex-end;margin-bottom:4px;">Send Counter</button>
                     </div>
                 </form>
@@ -858,11 +943,31 @@ async def corporate_actions_dashboard(
                 share_cur_val = cprice * stake.shares_paid
                 last_sweep_str = _time_ago(stake.last_income_sweep)
                 stake_date = stake.created_at.strftime('%Y-%m-%d') if stake.created_at else "—"
+                # Lock-up / expiry metadata
+                from datetime import timedelta as _td
+                _lockup_days = stake.lock_up_days or 0
+                _lockup_expiry = (stake.created_at + _td(days=_lockup_days)) if stake.created_at and _lockup_days > 0 else None
+                from datetime import datetime as _dt2
+                _lockup_active = _lockup_expiry and _dt2.utcnow() < _lockup_expiry
+                _lockup_label = f"Lock-up active until {_lockup_expiry.strftime('%Y-%m-%d')}" if _lockup_active else (f"Lock-up ended {_lockup_expiry.strftime('%Y-%m-%d')}" if _lockup_expiry else "No lock-up")
+                _lockup_color = "#ef4444" if _lockup_active else "#22c55e"
+                _expires_label = stake.expires_at.strftime('%Y-%m-%d') if stake.expires_at else "Perpetual"
+                _term_label = f"{stake.term_days}-day term · expires {_expires_label}" if stake.term_days else "Perpetual deal"
+                # Pending renegotiation for this stake?
+                _stake_reneg = db.query(StakeRenegotiation).filter(
+                    StakeRenegotiation.stake_id == stake.id,
+                    StakeRenegotiation.status == "pending"
+                ).first() if StakeRenegotiation else None
+                _reneg_pending = _stake_reneg is not None
                 html += f"""
     <div class="program-row" style="border-left-color:#22c55e;">
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-            <span style="background:#22c55e;color:#020617;padding:2px 8px;border-radius:10px;
-                         font-size:0.68rem;font-weight:bold;">ACTIVE STAKE</span>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                <span style="background:#22c55e;color:#020617;padding:2px 8px;border-radius:10px;
+                             font-size:0.68rem;font-weight:bold;">ACTIVE STAKE</span>
+                <span style="background:{_lockup_color};color:#020617;padding:2px 7px;border-radius:10px;
+                             font-size:0.63rem;font-weight:bold;">{"LOCKED" if _lockup_active else "UNLOCKED"}</span>
+            </div>
             <span style="color:#64748b;font-size:0.72rem;">in Player #{stake.target_player_id} · since {stake_date}</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
@@ -881,16 +986,57 @@ async def corporate_actions_dashboard(
                 <div style="color:#94a3b8;font-size:0.9rem;">{last_sweep_str}</div>
                 <div style="color:#64748b;font-size:0.72rem;">income sweeps every 24h</div>
             </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Term</div>
+                <div style="color:#94a3b8;font-size:0.82rem;">{_term_label}</div>
+                <div style="color:{_lockup_color};font-size:0.68rem;">{_lockup_label}</div>
+            </div>
         </div>
-        <div class="info-box warning" style="font-size:0.78rem;padding:8px 12px;margin-bottom:10px;">
-            <strong>Diffuse</strong> ends the income stake immediately and demands return of your {stake.shares_paid:,} shares
-            within {DIFFUSE_RETURN_DAYS} days. If they fail to return them, a financial lien is created for the current
-            share value ({fmt_usd(share_cur_val, disp)}).
+        {"<div class='info-box' style='font-size:0.78rem;padding:6px 12px;margin-bottom:10px;border-color:#a78bfa;'>A renegotiation proposal is currently pending on this stake.</div>" if _reneg_pending else ""}
+        {"<div class='info-box warning' style='font-size:0.78rem;padding:6px 12px;margin-bottom:10px;'>Lock-up period is active — exit not allowed until " + (_lockup_expiry.strftime('%Y-%m-%d') if _lockup_expiry else "") + ".</div>" if _lockup_active else ""}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;">
+                <input type="hidden" name="diffuse_type" value="share_return">
+                <button class="btn btn-warning" type="submit" {"disabled" if _lockup_active else ""}
+                        onclick="return confirm('Request share return? Income stops now. Player #{stake.target_player_id} has {DIFFUSE_RETURN_DAYS} days to return {stake.shares_paid:,} shares or a lien is created.')">
+                    Request Share Return
+                </button>
+            </form>
+            <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;">
+                <input type="hidden" name="diffuse_type" value="cash_buyout">
+                <button class="btn btn-primary" type="submit" {"disabled" if _lockup_active else ""}
+                        onclick="return confirm('Cash buyout: you pay ≈{fmt_usd(share_cur_val, disp)} now to exit cleanly. Target keeps the shares. Confirm?')">
+                    Cash Buyout (~{fmt_usd(share_cur_val, disp)})
+                </button>
+            </form>
         </div>
-        <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;"
-              onsubmit="return confirm('Initiate diffuse on this stake? Income sharing stops immediately. Player #{stake.target_player_id} will have {DIFFUSE_RETURN_DAYS} days to return {stake.shares_paid:,} shares or a lien will be created.')">
-            <button class="btn btn-warning" type="submit">Initiate Diffuse</button>
-        </form>
+        <details style="margin-top:6px;">
+            <summary style="cursor:pointer;color:#a78bfa;font-size:0.78rem;font-weight:600;">Propose Renegotiation</summary>
+            <div style="background:#0a1628;border:1px solid #1e293b;border-radius:4px;padding:12px;margin-top:8px;">
+                <form action="/api/corporate-actions/stake/renegotiate/{stake.id}" method="post">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                        <div class="form-group">
+                            <label class="form-label">New Stake %</label>
+                            <input type="number" name="new_stake_pct" min="0.1" max="50" step="0.1"
+                                   value="{stake.stake_pct*100:.1f}" class="form-input" style="width:100px;" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Term (days, 0=perpetual)</label>
+                            <input type="number" name="new_term_days" min="0" value="0"
+                                   class="form-input" style="width:110px;">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:140px;">
+                            <label class="form-label">Note (optional)</label>
+                            <input type="text" name="note" maxlength="200" placeholder="Why are you proposing this?"
+                                   class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="align-self:flex-end;margin-bottom:4px;">
+                            Send Proposal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </details>
     </div>
 """
 
@@ -900,6 +1046,17 @@ async def corporate_actions_dashboard(
             for stake in stakes_as_target:
                 stake_date = stake.created_at.strftime('%Y-%m-%d') if stake.created_at else "—"
                 last_sweep_str = _time_ago(stake.last_income_sweep)
+                _stake_offer2 = db.query(AcquisitionOffer).filter(
+                    AcquisitionOffer.id == stake.acquisition_offer_id).first() if stake.acquisition_offer_id else None
+                ticker2, _, cprice2 = _ticker_for(_stake_offer2.offeror_company_id if _stake_offer2 else 0)
+                buyout_val = cprice2 * stake.shares_paid
+                _expires_label2 = stake.expires_at.strftime('%Y-%m-%d') if stake.expires_at else "Perpetual"
+                _term_label2 = f"{stake.term_days}-day term · expires {_expires_label2}" if stake.term_days else "Perpetual"
+                _stake_reneg2 = db.query(StakeRenegotiation).filter(
+                    StakeRenegotiation.stake_id == stake.id,
+                    StakeRenegotiation.status == "pending"
+                ).first() if StakeRenegotiation else None
+                _reneg_pending2 = _stake_reneg2 is not None
                 html += f"""
     <div class="program-row" style="border-left-color:#f59e0b;">
         <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
@@ -914,8 +1071,8 @@ async def corporate_actions_dashboard(
                 <div style="color:#64748b;font-size:0.72rem;">of your net daily income</div>
             </div>
             <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
-                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Shares You Received</div>
-                <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{stake.shares_paid:,} shares</div>
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Shares You Hold</div>
+                <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{stake.shares_paid:,} {ticker2}</div>
                 <div style="color:#64748b;font-size:0.72rem;">paid by Player #{stake.acquirer_id}</div>
             </div>
             <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
@@ -923,11 +1080,50 @@ async def corporate_actions_dashboard(
                 <div style="color:#94a3b8;font-size:0.9rem;">{last_sweep_str}</div>
                 <div style="color:#64748b;font-size:0.72rem;">automatic 24h cycle</div>
             </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Term</div>
+                <div style="color:#94a3b8;font-size:0.82rem;">{_term_label2}</div>
+            </div>
         </div>
-        <div style="color:#64748b;font-size:0.78rem;">
-            Player #{stake.acquirer_id} holds this stake. Only they can end it via a diffuse notice.
-            If you receive a diffuse notice, you must return the {stake.shares_paid:,} shares within {DIFFUSE_RETURN_DAYS} days.
+        {"<div class='info-box' style='font-size:0.78rem;padding:6px 12px;margin-bottom:8px;border-color:#a78bfa;'>A renegotiation proposal is currently pending on this stake.</div>" if _reneg_pending2 else ""}
+        <div style="color:#64748b;font-size:0.78rem;margin-bottom:10px;">
+            Player #{stake.acquirer_id} holds this stake. To end it early, you can <strong>buy them out</strong> at
+            current market value of the shares, or propose a <strong>renegotiation</strong>.
+            If they initiate a diffuse, you'll have {DIFFUSE_RETURN_DAYS} days to return the shares.
         </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            <form action="/api/corporate-actions/stake/buyout/{stake.id}" method="post" style="display:inline;"
+                  onsubmit="return confirm('Buy out Player #{stake.acquirer_id}\\'s stake for ≈{fmt_usd(buyout_val, disp)}? This ends the income obligation immediately.')">
+                <button class="btn btn-danger" type="submit">Buy Out Stake ({fmt_usd(buyout_val, disp)})</button>
+            </form>
+        </div>
+        <details style="margin-top:4px;">
+            <summary style="cursor:pointer;color:#a78bfa;font-size:0.78rem;font-weight:600;">Propose Renegotiation</summary>
+            <div style="background:#0a1628;border:1px solid #1e293b;border-radius:4px;padding:12px;margin-top:8px;">
+                <form action="/api/corporate-actions/stake/renegotiate/{stake.id}" method="post">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                        <div class="form-group">
+                            <label class="form-label">New Stake %</label>
+                            <input type="number" name="new_stake_pct" min="0.1" max="50" step="0.1"
+                                   value="{stake.stake_pct*100:.1f}" class="form-input" style="width:100px;" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Term (days, 0=perpetual)</label>
+                            <input type="number" name="new_term_days" min="0" value="0"
+                                   class="form-input" style="width:110px;">
+                        </div>
+                        <div class="form-group" style="flex:1;min-width:140px;">
+                            <label class="form-label">Note (optional)</label>
+                            <input type="text" name="note" maxlength="200" placeholder="Why are you proposing this?"
+                                   class="form-input">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="align-self:flex-end;margin-bottom:4px;">
+                            Send Proposal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </details>
     </div>
 """
 
@@ -967,6 +1163,45 @@ async def corporate_actions_dashboard(
     </div>
 """
 
+        # ── Pending Renegotiation Proposals ───────────────────────────────────
+        pending_renegs = db.query(StakeRenegotiation).filter(
+            StakeRenegotiation.status == "pending"
+        ).join(AcquisitionStake, AcquisitionStake.id == StakeRenegotiation.stake_id).filter(
+            ((AcquisitionStake.acquirer_id == player.id) |
+             (AcquisitionStake.target_player_id == player.id))
+        ).all() if StakeRenegotiation else []
+        if pending_renegs:
+            html += '<div style="color:#a78bfa;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Renegotiation Proposals</div>'
+            for r in pending_renegs:
+                is_proposer = r.proposed_by_player_id == player.id
+                other_label = f"Player #{r.proposed_by_player_id}" if not is_proposer else f"Waiting on other party"
+                term_str = f"{r.new_term_days}-day term" if r.new_term_days else "Perpetual"
+                html += f"""
+    <div class="program-row" style="border-left-color:#a78bfa;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <span style="background:#a78bfa;color:#020617;padding:2px 8px;border-radius:10px;
+                         font-size:0.68rem;font-weight:bold;">{"PROPOSAL SENT" if is_proposer else "PROPOSAL RECEIVED"}</span>
+            <span style="color:#64748b;font-size:0.72rem;">Stake #{r.stake_id} · {other_label}</span>
+        </div>
+        <div style="color:#e5e7eb;font-size:0.82rem;margin-bottom:8px;">
+            Proposed terms: <strong>{r.new_stake_pct*100:.1f}% stake</strong> · {term_str}
+            {"· <em>" + r.note + "</em>" if r.note else ""}
+        </div>
+        {"" if is_proposer else f'''
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form action="/api/corporate-actions/stake/renegotiate/respond/{r.id}" method="post" style="display:inline;">
+                <input type="hidden" name="accept" value="true">
+                <button class="btn btn-success" type="submit">Accept</button>
+            </form>
+            <form action="/api/corporate-actions/stake/renegotiate/respond/{r.id}" method="post" style="display:inline;">
+                <input type="hidden" name="accept" value="false">
+                <button class="btn btn-warning" type="submit">Decline</button>
+            </form>
+        </div>'''}
+        {"<div style='color:#64748b;font-size:0.72rem;'>Waiting for the other party to respond.</div>" if is_proposer else ""}
+    </div>
+"""
+
         # ── Recent Acquisition History ─────────────────────────────────────────
         if recent_offers_hist:
             html += '<div style="color:#475569;font-size:0.78rem;font-weight:bold;margin:16px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Recent Acquisition History</div>'
@@ -988,7 +1223,7 @@ async def corporate_actions_dashboard(
     </div>
 """
 
-        if not (pending_offers_recv or countered_outgoing or stakes_as_acquirer or stakes_as_target or diffuse_notices):
+        if not (pending_offers_recv or countered_outgoing or stakes_as_acquirer or stakes_as_target or diffuse_notices or pending_renegs):
             html += '<div class="empty-state"><p>No active acquisitions or pending offers.</p><p style="color:#475569;">Use the "Send Acquisition Offer" form above to begin a deal with another player.</p></div>'
 
         html += "</div>"
