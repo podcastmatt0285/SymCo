@@ -680,11 +680,11 @@ async def corporate_actions_dashboard(
         if (valBody.dataset.impliedLine) html += '<div style="color:#38bdf8;margin-top:3px;">' + valBody.dataset.impliedLine + '</div>';
         valBody.innerHTML = html;
     }}
-    var _acqValTimer = {{}};
+    window._acqValTimer = window._acqValTimer || {{}};
     function acqFetchVal(cid, targetId) {{
-        clearTimeout(_acqValTimer[cid]);
+        clearTimeout(window._acqValTimer[cid]);
         if (!targetId || parseInt(targetId) < 1) return;
-        _acqValTimer[cid] = setTimeout(function() {{
+        window._acqValTimer[cid] = setTimeout(function() {{
             fetch('/api/corporate-actions/acquisition/valuation/' + parseInt(targetId))
                 .then(function(r){{return r.json();}})
                 .then(function(d){{
@@ -934,6 +934,7 @@ async def corporate_actions_dashboard(
 """
 
         # ── Stakes You Hold ────────────────────────────────────────────────────
+        from datetime import timedelta as _td, datetime as _dt2
         if stakes_as_acquirer:
             html += '<div style="color:#22c55e;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Income Stakes You Hold</div>'
             for stake in stakes_as_acquirer:
@@ -944,10 +945,8 @@ async def corporate_actions_dashboard(
                 last_sweep_str = _time_ago(stake.last_income_sweep)
                 stake_date = stake.created_at.strftime('%Y-%m-%d') if stake.created_at else "—"
                 # Lock-up / expiry metadata
-                from datetime import timedelta as _td
                 _lockup_days = stake.lock_up_days or 0
                 _lockup_expiry = (stake.created_at + _td(days=_lockup_days)) if stake.created_at and _lockup_days > 0 else None
-                from datetime import datetime as _dt2
                 _lockup_active = _lockup_expiry and _dt2.utcnow() < _lockup_expiry
                 _lockup_label = f"Lock-up active until {_lockup_expiry.strftime('%Y-%m-%d')}" if _lockup_active else (f"Lock-up ended {_lockup_expiry.strftime('%Y-%m-%d')}" if _lockup_expiry else "No lock-up")
                 _lockup_color = "#ef4444" if _lockup_active else "#22c55e"
