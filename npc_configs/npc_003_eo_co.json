@@ -1,7 +1,7 @@
 {
   "player_id": -2003,
   "business_name": "EO Co",
-  "description": "Grows apples and oranges, cold-presses all 15 essential oil varieties, and blends them into cooking oil for market.",
+  "description": "Cold-presses all 15 essential oil varieties from market-sourced seeds and fruits, and blends them into cooking oil for market.",
 
   "cash_caps": {
     "hard_high": 25000000,
@@ -19,11 +19,6 @@
   },
 
   "businesses": [
-    {
-      "business_type": "plantation",
-      "district_id": null,
-      "active_lines": ["apples", "oranges", "apple_seeds", "orange_seeds"]
-    },
     {
       "business_type": "essential_oil_distillery",
       "district_id": null,
@@ -49,6 +44,18 @@
   ],
 
   "buy_items": {
+    "apple_seeds": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "orange_seeds": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
     "cotton_seeds": {
       "target_inventory": 15000,
       "reorder_at": 5000,
@@ -175,16 +182,6 @@
     "tobacco_essential_oil": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
     "tomato_essential_oil":  { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
     "wheat_essential_oil":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "cooking_oil":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "apples": {
-      "min_inventory_to_keep": 50,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    },
-    "oranges": {
-      "min_inventory_to_keep": 30,
-      "max_order_quantity": 5000,
-      "market": "regular"
-    }
+    "cooking_oil":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
   }
 }
