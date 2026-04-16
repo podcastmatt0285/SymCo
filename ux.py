@@ -1832,25 +1832,65 @@ def home(session_token: Optional[str] = Cookie(None)):
         from corporate_actions import get_acquisition_notifications, mark_acquisition_notifications_seen
         notifs = get_acquisition_notifications(player.id)
         banner_parts = []
+
         for offer in notifs.get("incoming_offers", []):
+            ticker = offer.get("ticker", "")
+            share_val = offer.get("share_value", 0.0)
+            cash_c = offer.get("cash_component", 0.0)
+            total_val = share_val + cash_c
+            ticker_str = f" ({ticker})" if ticker else ""
+            cash_str = f" + ${cash_c:,.0f} cash" if cash_c > 0 else ""
+            memo = offer.get("offer_memo", "").strip()
             banner_parts.append(f"""
             <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #38bdf8;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
                     <span style="background:#38bdf8;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">ACQUISITION OFFER</span>
+                    <span style="color:#64748b;font-size:0.78rem;">from Player #{offer.get('offeror_id','?')}{ticker_str}</span>
                 </div>
-                <p style="color:#cbd5e1;margin:0 0 12px 0;font-size:0.9rem;">
-                    A player has offered to acquire <strong style="color:#38bdf8;">{offer.get('stake_pct',0)*100:.1f}%</strong> of your business income in exchange for <strong style="color:#38bdf8;">{offer.get('shares_offered',0):,}</strong> shares of their company. Offer expires in 7 days.
+                <p style="color:#cbd5e1;margin:0 0 8px 0;font-size:0.9rem;">
+                    Offering <strong style="color:#38bdf8;">{offer.get('shares_offered',0):,} shares</strong>{cash_str}
+                    (≈ <strong style="color:#d4af37;">${total_val:,.0f}</strong> total) for
+                    <strong style="color:#38bdf8;">{offer.get('stake_pct',0)*100:.1f}%</strong> of your business income.
                 </p>
+                {('<p style="color:#94a3b8;font-style:italic;font-size:0.82rem;margin:0 0 10px 0;">' + memo + '</p>') if memo else ''}
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <form action="/api/corporate-actions/acquisition/accept/{offer['id']}" method="post" style="display:inline;">
-                        <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Accept Offer</button>
+                        <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Accept</button>
                     </form>
                     <form action="/api/corporate-actions/acquisition/reject/{offer['id']}" method="post" style="display:inline;">
                         <button type="submit" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;">Reject</button>
                     </form>
-                    <a href="/corporate-actions/dashboard" style="color:#475569;font-size:0.8rem;line-height:2.2;">View Details</a>
+                    <a href="/corporate-actions/dashboard" style="color:#475569;font-size:0.8rem;line-height:2.2;">Counter / View Details →</a>
                 </div>
             </div>""")
+
+        for counter in notifs.get("countered_offers", []):
+            ticker = counter.get("ticker", "")
+            counter_cash = counter.get("counter_cash", 0.0)
+            cash_str = f" + ${counter_cash:,.0f} cash" if counter_cash > 0 else ""
+            banner_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #a78bfa;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <span style="background:#a78bfa;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">COUNTER-OFFER RECEIVED</span>
+                    <span style="color:#64748b;font-size:0.78rem;">from Player #{counter.get('target_id','?')}</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0 0 12px 0;font-size:0.9rem;">
+                    Player #{counter.get('target_id','?')} countered your offer:
+                    <strong style="color:#a78bfa;">{counter.get('counter_shares',0):,} {ticker} shares{cash_str}
+                    for {(counter.get('counter_stake_pct') or 0)*100:.1f}% income stake</strong>
+                    (you originally offered {counter.get('original_shares',0):,} shares for {counter.get('original_stake_pct',0)*100:.1f}%).
+                </p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <form action="/api/corporate-actions/acquisition/counter/accept/{counter['id']}" method="post" style="display:inline;">
+                        <button type="submit" style="background:#a78bfa;color:#020617;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Accept Counter</button>
+                    </form>
+                    <form action="/api/corporate-actions/acquisition/counter/reject/{counter['id']}" method="post" style="display:inline;">
+                        <button type="submit" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;">Decline Counter</button>
+                    </form>
+                    <a href="/corporate-actions/dashboard" style="color:#475569;font-size:0.8rem;line-height:2.2;">View Full Details →</a>
+                </div>
+            </div>""")
+
         for update in notifs.get("outgoing_updates", []):
             status = update.get("status", "unknown")
             color = "#22c55e" if status == "accepted" else "#ef4444"
@@ -1860,30 +1900,40 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
                     <span style="background:{color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">ACQUISITION {label}</span>
                 </div>
-                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">Your acquisition offer has been <strong style="color:{color};">{status}</strong>. <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View your active stakes →</a></p>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">Your acquisition offer was <strong style="color:{color};">{status}</strong> by Player #{update.get('target_id','?')}. <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View your active stakes →</a></p>
             </div>""")
+
         for notice in notifs.get("diffuse_notices", []):
-            deadline = notice.get("deadline_at", "")
+            deadline = notice.get("deadline", "")  # key is "deadline" not "deadline_at"
             banner_parts.append(f"""
             <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #f59e0b;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                    <span style="background:#f59e0b;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">DIFFUSE NOTICE</span>
+                    <span style="background:#f59e0b;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">DIFFUSE NOTICE — ACTION REQUIRED</span>
                 </div>
                 <p style="color:#cbd5e1;margin:0 0 12px 0;font-size:0.9rem;">
-                    The acquiring party has initiated a diffuse. You must return <strong style="color:#f59e0b;">{notice.get('shares_to_return',0):,} shares</strong> by <strong style="color:#f59e0b;">{deadline}</strong> or a lien will be placed on your account.
+                    An acquirer has ended their stake. You must return
+                    <strong style="color:#f59e0b;">{notice.get('shares_to_return',0):,} shares</strong>
+                    by <strong style="color:#f59e0b;">{deadline}</strong> or a financial lien will be placed on your account.
                 </p>
                 <form action="/api/corporate-actions/diffuse/return/{notice['id']}" method="post" style="display:inline;">
                     <button type="submit" style="background:#f59e0b;color:#020617;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;font-size:0.85rem;font-weight:bold;">Return Shares Now</button>
                 </form>
             </div>""")
+
         for resolved in notifs.get("diffuse_resolved", []):
+            status = resolved.get("status", "returned")
+            if status == "returned":
+                color, label, msg = "#22c55e", "DIFFUSE RESOLVED", "Shares have been returned successfully. The stake is fully closed."
+            else:
+                color, label, msg = "#f59e0b", "DIFFUSE DEFAULTED — LIEN CREATED", "The deadline passed without share return. A financial lien has been placed on the defaulting player's account."
             banner_parts.append(f"""
-            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid #22c55e;border-radius:6px;padding:16px 20px;margin-bottom:12px;">
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid {color};border-radius:6px;padding:16px 20px;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                    <span style="background:#22c55e;color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">DIFFUSE COMPLETE</span>
+                    <span style="background:{color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">{label}</span>
                 </div>
-                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">Your diffuse notice has been resolved. The stake has been fully returned. <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View dashboard →</a></p>
+                <p style="color:#cbd5e1;margin:0;font-size:0.9rem;">{msg} <a href="/corporate-actions/dashboard" style="color:#38bdf8;">View dashboard →</a></p>
             </div>""")
+
         if banner_parts:
             mark_acquisition_notifications_seen(player.id)
         acq_banners = "".join(banner_parts)
