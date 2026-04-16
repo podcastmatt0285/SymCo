@@ -24,11 +24,13 @@ from corporate_actions import (
     create_acquisition_offer, accept_acquisition_offer, reject_acquisition_offer,
     counter_acquisition_offer, accept_counter_offer, reject_counter_offer,
     get_acquisition_notifications, mark_acquisition_notifications_seen,
-    initiate_diffuse, complete_diffuse_return,
+    initiate_diffuse, complete_diffuse_return, target_buyout_stake,
+    get_target_income_estimate, propose_stake_renegotiation, respond_to_renegotiation,
     declare_bankruptcy, is_player_bankrupt,
-    AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord,
+    AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord, StakeRenegotiation,
     TaxVoucher, VALID_REVERSE_SPLIT_RATIOS, TAX_VOUCHER_RATE,
     ACQUISITION_OFFER_DAYS, DIFFUSE_RETURN_DAYS, BANKRUPTCY_RESTART_CASH,
+    ACQUISITION_DEFAULT_LOCKUP_DAYS, ACQUISITION_TERM_OPTIONS,
     get_db
 )
 from banks.brokerage_firm import CompanyShares, ShareholderPosition, BANK_NAME
@@ -830,21 +832,29 @@ async def api_create_acquisition_offer(
     shares_offered: int = Form(...),
     stake_pct: float = Form(...),
     cash_component: float = Form(0.0),
-    offer_memo: str = Form('')
+    offer_memo: str = Form(''),
+    term_days: Optional[int] = Form(None),
+    lock_up_days: int = Form(ACQUISITION_DEFAULT_LOCKUP_DAYS)
 ):
     """
     Offer shares (+ optional cash) in your company for a % stake (≤50%) in another player's
     business income. Cash component is escrowed immediately; refunded if rejected/expired.
+    term_days=None means perpetual deal; otherwise 30/60/90/180/365.
+    lock_up_days sets the minimum hold period before either party can exit.
     """
     auth_db = get_auth_db()
     player = get_player_from_session(auth_db, session_token)
     auth_db.close()
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    # Sanitize term_days — treat 0 as perpetual
+    _term = int(term_days) if term_days and int(term_days) > 0 else None
     result = create_acquisition_offer(player.id, target_player_id, offeror_company_id,
                                       shares_offered, stake_pct / 100.0,
                                       cash_component=max(0.0, cash_component),
-                                      offer_memo=offer_memo)
+                                      offer_memo=offer_memo,
+                                      term_days=_term,
+                                      lock_up_days=max(0, int(lock_up_days)))
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
@@ -890,7 +900,9 @@ async def api_counter_acquisition(
     session_token: Optional[str] = Cookie(None),
     counter_stake_pct: float = Form(...),
     counter_shares: int = Form(...),
-    counter_cash: float = Form(0.0)
+    counter_cash: float = Form(0.0),
+    counter_term_days: Optional[int] = Form(None),
+    counter_lock_up_days: Optional[int] = Form(None)
 ):
     """Target proposes different terms on an incoming offer."""
     auth_db = get_auth_db()
@@ -898,10 +910,14 @@ async def api_counter_acquisition(
     auth_db.close()
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    _cterm = int(counter_term_days) if counter_term_days and int(counter_term_days) > 0 else None
+    _clockup = int(counter_lock_up_days) if counter_lock_up_days is not None else None
     result = counter_acquisition_offer(offer_id, player.id,
                                        counter_stake_pct / 100.0,
                                        counter_shares,
-                                       max(0.0, counter_cash))
+                                       max(0.0, counter_cash),
+                                       counter_term_days=_cterm,
+                                       counter_lock_up_days=_clockup)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
@@ -987,18 +1003,22 @@ async def api_my_stakes(session_token: Optional[str] = Cookie(None)):
 @router.post("/diffuse/initiate/{stake_id}")
 async def api_initiate_diffuse(
     stake_id: int,
-    session_token: Optional[str] = Cookie(None)
+    session_token: Optional[str] = Cookie(None),
+    diffuse_type: str = Form("share_return")
 ):
-    """Acquirer gives back the stake and demands return of shares within 30 days."""
+    """Acquirer exits their income stake.
+    diffuse_type='share_return': target must return shares within 30 days.
+    diffuse_type='cash_buyout': acquirer pays market value cash now; stake ends immediately.
+    """
     auth_db = get_auth_db()
     player = get_player_from_session(auth_db, session_token)
     auth_db.close()
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    result = initiate_diffuse(stake_id, player.id)
+    result = initiate_diffuse(stake_id, player.id, diffuse_type=diffuse_type)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
-    return result
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
 
 
 @router.post("/diffuse/return/{notice_id}")
@@ -1016,7 +1036,82 @@ async def api_complete_diffuse_return(
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
     mark_acquisition_notifications_seen(player.id)
-    return result
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/stake/buyout/{stake_id}")
+async def api_target_buyout(
+    stake_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Target proactively buys out the acquirer's stake with cash at market value."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = target_buyout_stake(stake_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/stake/renegotiate/{stake_id}")
+async def api_propose_renegotiation(
+    stake_id: int,
+    session_token: Optional[str] = Cookie(None),
+    new_stake_pct: float = Form(...),
+    new_term_days: Optional[int] = Form(None),
+    note: str = Form('')
+):
+    """Either party proposes new stake % and/or term on an active stake."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    _term = int(new_term_days) if new_term_days and int(new_term_days) > 0 else None
+    result = propose_stake_renegotiation(stake_id, player.id,
+                                         new_stake_pct / 100.0,
+                                         new_term_days=_term,
+                                         note=note)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/stake/renegotiate/respond/{reneg_id}")
+async def api_respond_renegotiation(
+    reneg_id: int,
+    session_token: Optional[str] = Cookie(None),
+    accept: bool = Form(...)
+):
+    """Accept or reject a pending renegotiation proposal."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = respond_to_renegotiation(reneg_id, player.id, accept=accept)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    mark_acquisition_notifications_seen(player.id)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.get("/acquisition/valuation/{target_player_id}")
+async def api_acquisition_valuation(
+    target_player_id: int,
+    days: int = 30,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Return income estimates for a potential acquisition target (for offer valuation basis)."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return get_target_income_estimate(target_player_id, days=days)
 
 
 # ==========================

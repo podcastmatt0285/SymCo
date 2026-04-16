@@ -1375,7 +1375,7 @@ def _notifications_tab(player) -> str:
   {_toggle("notif_push_land",      push_land, "Land Alerts",       "Plot sold, buy order filled, efficiency floor reached",                   disabled=not has_cco)}
   {_toggle("notif_push_execs",     push_exec, "Executive Alerts",  "Hired, fired, quit, salary missed, retired, school sent and complete",    disabled=not has_cco)}
   {_toggle("notif_push_trades",    push_trd,  "Trade Alerts",      "Trusted swap proposed, executed, rejected, or expired",                   disabled=not has_cco)}
-  {_toggle("notif_push_corporate", push_corp, "Corporate Alerts",  "Acquisition offers received/accepted/rejected and monthly income sweeps", disabled=not has_cco)}
+  {_toggle("notif_push_corporate", push_corp, "Corporate Alerts",  "Acquisition offers, counter-offers, diffuse notices, renegotiation proposals, buyout events, and income sweeps", disabled=not has_cco)}
   {_toggle("notif_push_govt",      push_govt, "Government Alerts", "Hoard tax, district tax failure, liens, city membership changes",         disabled=not has_cco)}
 </div>"""
 

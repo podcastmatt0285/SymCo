@@ -898,6 +898,23 @@ DIFFUSE_RETURN_DAYS = 30
 BANKRUPTCY_RESTART_CASH = 20000.0
 BANKRUPTCY_RED_Q_DAYS = 30
 
+# Acquisition term / lock-up options
+ACQUISITION_DEFAULT_LOCKUP_DAYS = 7       # minimum hold before diffuse allowed
+ACQUISITION_TERM_OPTIONS = [None, 30, 60, 90, 180, 365]  # None = perpetual
+
+# Income transaction types included in the daily acquisition sweep.
+# Covers all real business earnings: sales, market activity, bonds, dividends,
+# P2P payments, crypto proceeds, city income, and district market sales.
+ACQUISITION_INCOME_TYPES = [
+    "retail_sale", "market_sell", "dividend",
+    "bond_maturity", "bond_called", "bond_sell",
+    "district_market_sell", "share_sell",
+    "p2p_contract_payment", "crypto_sell",
+    "city_application_income",
+]
+# Tax-like deductions subtracted before calculating the acquirer's share
+ACQUISITION_TAX_TYPES = ["tax", "district_tax"]
+
 
 # ==========================
 # NEW MODELS
@@ -955,14 +972,19 @@ class AcquisitionOffer(Base):
     expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     responded_at = Column(DateTime, nullable=True)
-    # Cash component — cash escrowed from offeror at offer creation, released on accept/reject
+    # Cash component — escrowed from offeror at creation, released on accept/reject
     cash_component = Column(Float, default=0.0)
-    # Optional memo from offeror explaining the deal rationale
+    # Optional memo explaining the deal rationale
     offer_memo = Column(String, default='')
-    # Counter-offer terms proposed by the target
+    # --- Gap 1: deal duration (None = perpetual) and lock-up period ---
+    term_days = Column(Integer, nullable=True)           # None = perpetual
+    lock_up_days = Column(Integer, default=ACQUISITION_DEFAULT_LOCKUP_DAYS)
+    # Counter-offer terms proposed by the target (includes their preferred duration)
     counter_stake_pct = Column(Float, nullable=True)
     counter_shares = Column(Integer, nullable=True)
     counter_cash = Column(Float, default=0.0)
+    counter_term_days = Column(Integer, nullable=True)   # None = keep original term
+    counter_lock_up_days = Column(Integer, nullable=True)
 
 
 class AcquisitionStake(Base):
@@ -978,10 +1000,14 @@ class AcquisitionStake(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_income_sweep = Column(DateTime, nullable=True)
     diffuse_initiated_at = Column(DateTime, nullable=True)
+    # --- Gap 1 & 2: term + lock-up (copied from offer at acceptance) ---
+    term_days = Column(Integer, nullable=True)           # None = perpetual
+    lock_up_days = Column(Integer, default=ACQUISITION_DEFAULT_LOCKUP_DAYS)
+    expires_at = Column(DateTime, nullable=True)         # created_at + term_days, or None
 
 
 class DiffuseNotice(Base):
-    """Notice demanding return of shares within DIFFUSE_RETURN_DAYS; lien created on default."""
+    """Exit notice: share-return demand (30-day deadline) or immediate cash buyout."""
     __tablename__ = "diffuse_notices"
     id = Column(Integer, primary_key=True, index=True)
     stake_id = Column(Integer, index=True, nullable=False)
@@ -990,11 +1016,30 @@ class DiffuseNotice(Base):
     shares_to_return = Column(Integer, nullable=False)
     share_value_at_notice = Column(Float, nullable=False)
     deadline_at = Column(DateTime, nullable=False)
-    status = Column(String, default="pending")  # pending/returned/lien_created
+    status = Column(String, default="pending")  # pending/returned/lien_created/buyout_paid/target_bought_out
+    # --- Gap 3: diffuse type ---
+    diffuse_type = Column(String, default="share_return")  # share_return | cash_buyout | target_buyout
+    buyout_amount = Column(Float, nullable=True)           # cash paid in buyout scenarios
     created_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
     notification_seen_target = Column(Boolean, default=False)
     notification_seen_acquirer = Column(Boolean, default=False)
+
+
+class StakeRenegotiation(Base):
+    """Either party can propose amended stake terms on an active stake."""
+    __tablename__ = "stake_renegotiations"
+    id = Column(Integer, primary_key=True, index=True)
+    stake_id = Column(Integer, index=True, nullable=False)
+    proposed_by_player_id = Column(Integer, nullable=False)
+    new_stake_pct = Column(Float, nullable=False)          # proposed new income %
+    new_term_days = Column(Integer, nullable=True)         # None = keep current / extend perpetual
+    note = Column(String, default='')                      # optional reason
+    status = Column(String, default="pending")             # pending/accepted/rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
+    responded_at = Column(DateTime, nullable=True)
+    notification_seen_proposer = Column(Boolean, default=False)
+    notification_seen_respondent = Column(Boolean, default=False)
 
 
 class BankruptcyRecord(Base):
@@ -1245,9 +1290,13 @@ def _push_corp(player_id: int, title: str, body: str):
 def create_acquisition_offer(offeror_id: int, target_player_id: int,
                               offeror_company_id: int, shares_offered: int,
                               stake_pct: float, cash_component: float = 0.0,
-                              offer_memo: str = '') -> dict:
+                              offer_memo: str = '',
+                              term_days: Optional[int] = None,
+                              lock_up_days: int = ACQUISITION_DEFAULT_LOCKUP_DAYS) -> dict:
     """Offer shares (+ optional cash) in exchange for stake_pct (≤50%) of target's business income.
-    Cash component is escrowed from offeror immediately and returned if the offer is rejected/expired."""
+    term_days: None=perpetual; 30/60/90/180/365=time-limited (auto-closes, shares returned).
+    lock_up_days: minimum hold period before acquirer can initiate diffuse (default 7).
+    Cash component is escrowed immediately and returned if the offer is rejected/expired."""
     if not (0 < stake_pct <= 0.50):
         return {"ok": False, "error": "Stake must be 0%–50%"}
     if shares_offered <= 0:
@@ -1256,6 +1305,9 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
         return {"ok": False, "error": "Cannot acquire yourself"}
     if cash_component < 0:
         return {"ok": False, "error": "Cash component cannot be negative"}
+    if term_days is not None and term_days not in ACQUISITION_TERM_OPTIONS[1:]:
+        return {"ok": False, "error": f"Term must be one of {ACQUISITION_TERM_OPTIONS[1:]} days, or omit for perpetual"}
+    lock_up_days = max(0, int(lock_up_days))
 
     # Escrow the cash component from the offeror before creating the offer
     if cash_component > 0:
@@ -1306,7 +1358,8 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
             offeror_id=offeror_id, target_player_id=target_player_id,
             offeror_company_id=offeror_company_id, shares_offered=shares_offered,
             stake_pct=stake_pct, expires_at=expires_at,
-            cash_component=cash_component, offer_memo=(offer_memo or '')[:500]
+            cash_component=cash_component, offer_memo=(offer_memo or '')[:500],
+            term_days=term_days, lock_up_days=lock_up_days
         )
         db.add(offer)
         db.commit()
@@ -1323,8 +1376,9 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
         db.close()
 
     cash_str = f" + ${cash_component:,.0f} cash" if cash_component > 0 else ""
+    term_str = f" ({term_days}d term)" if term_days else " (perpetual)"
     _push_corp(target_player_id, "Acquisition Offer Received",
-               f"Player #{offeror_id} ({_ticker}) offers {shares_offered:,} shares{cash_str} for {stake_pct*100:.1f}% income stake")
+               f"Player #{offeror_id} ({_ticker}) offers {shares_offered:,} shares{cash_str} for {stake_pct*100:.1f}% income stake{term_str}")
     return {"ok": True, "offer_id": _offer_id,
             "share_value": _share_value,
             "expires_at": expires_at.isoformat()}
@@ -1397,14 +1451,18 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
                 average_cost_basis=company.current_price if company else 0.0
             ))
 
+        _now = datetime.utcnow()
+        _stake_expires = (_now + timedelta(days=offer.term_days)) if offer.term_days else None
         stake = AcquisitionStake(
             acquirer_id=offer.offeror_id, target_player_id=target_player_id,
             stake_pct=offer.stake_pct, shares_paid=offer.shares_offered,
-            acquisition_offer_id=offer.id, last_income_sweep=datetime.utcnow()
+            acquisition_offer_id=offer.id, last_income_sweep=_now,
+            term_days=offer.term_days, lock_up_days=(offer.lock_up_days or ACQUISITION_DEFAULT_LOCKUP_DAYS),
+            expires_at=_stake_expires
         )
         db.add(stake)
         offer.status = "accepted"
-        offer.responded_at = datetime.utcnow()
+        offer.responded_at = _now
         offer.notification_seen_offeror = False
         _cash = offer.cash_component or 0.0
         db.commit()
@@ -1480,14 +1538,19 @@ def reject_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
 
 def counter_acquisition_offer(offer_id: int, target_player_id: int,
                                counter_stake_pct: float, counter_shares: int,
-                               counter_cash: float = 0.0) -> dict:
-    """Target proposes different terms. Offer status → 'countered'; offeror gets push notification."""
+                               counter_cash: float = 0.0,
+                               counter_term_days: Optional[int] = None,
+                               counter_lock_up_days: Optional[int] = None) -> dict:
+    """Target proposes different terms (stake %, shares, cash, duration, lock-up).
+    Offer status → 'countered'; offeror gets push notification."""
     if not (0 < counter_stake_pct <= 0.50):
         return {"ok": False, "error": "Counter stake must be 0%–50%"}
     if counter_shares <= 0:
         return {"ok": False, "error": "Counter shares must be > 0"}
     if counter_cash < 0:
         return {"ok": False, "error": "Counter cash cannot be negative"}
+    if counter_term_days is not None and counter_term_days not in ACQUISITION_TERM_OPTIONS[1:]:
+        return {"ok": False, "error": f"Counter term must be one of {ACQUISITION_TERM_OPTIONS[1:]} days or omit"}
     db = get_db()
     try:
         offer = db.query(AcquisitionOffer).filter(
@@ -1508,6 +1571,8 @@ def counter_acquisition_offer(offer_id: int, target_player_id: int,
         offer.counter_stake_pct = counter_stake_pct
         offer.counter_shares = counter_shares
         offer.counter_cash = counter_cash
+        offer.counter_term_days = counter_term_days      # None = keep offeror's original term
+        offer.counter_lock_up_days = counter_lock_up_days
         offer.status = "countered"
         offer.notification_seen_offeror = False
         _offeror_id = offer.offeror_id
@@ -1595,10 +1660,16 @@ def accept_counter_offer(offer_id: int, offeror_id: int) -> dict:
                 average_cost_basis=company.current_price if company else 0.0
             ))
 
+        _now2 = datetime.utcnow()
+        # Use counter's preferred term/lock-up if set, otherwise fall back to original offer values
+        _final_term = offer.counter_term_days if offer.counter_term_days is not None else offer.term_days
+        _final_lockup = offer.counter_lock_up_days if offer.counter_lock_up_days is not None else (offer.lock_up_days or ACQUISITION_DEFAULT_LOCKUP_DAYS)
+        _final_expires = (_now2 + timedelta(days=_final_term)) if _final_term else None
         stake = AcquisitionStake(
             acquirer_id=offeror_id, target_player_id=target_player_id,
             stake_pct=counter_stake, shares_paid=counter_shares,
-            acquisition_offer_id=offer.id, last_income_sweep=datetime.utcnow()
+            acquisition_offer_id=offer.id, last_income_sweep=_now2,
+            term_days=_final_term, lock_up_days=_final_lockup, expires_at=_final_expires
         )
         db.add(stake)
 
@@ -1606,8 +1677,10 @@ def accept_counter_offer(offer_id: int, offeror_id: int) -> dict:
         offer.shares_offered = counter_shares
         offer.stake_pct = counter_stake
         offer.cash_component = counter_cash
+        offer.term_days = _final_term
+        offer.lock_up_days = _final_lockup
         offer.status = "accepted"
-        offer.responded_at = datetime.utcnow()
+        offer.responded_at = _now2
         offer.notification_seen_target = False
         db.commit()
         db.refresh(stake)
@@ -1727,6 +1800,22 @@ def get_acquisition_notifications(player_id: int) -> dict:
             except Exception:
                 return 0.0
 
+        # Renegotiation proposals where player is the respondent (not proposer)
+        pending_renegs_for_me = db.query(StakeRenegotiation).filter(
+            StakeRenegotiation.status == "pending",
+            StakeRenegotiation.proposed_by_player_id != player_id,
+            StakeRenegotiation.notification_seen_respondent == False
+        ).join(AcquisitionStake, AcquisitionStake.id == StakeRenegotiation.stake_id).filter(
+            ((AcquisitionStake.acquirer_id == player_id) |
+             (AcquisitionStake.target_player_id == player_id))
+        ).all()
+        # Renegotiation responses to proposals I made
+        reneg_responses = db.query(StakeRenegotiation).filter(
+            StakeRenegotiation.proposed_by_player_id == player_id,
+            StakeRenegotiation.status.in_(["accepted", "rejected"]),
+            StakeRenegotiation.notification_seen_proposer == False
+        ).all()
+
         return {
             "incoming_offers": [{"id": o.id, "offeror_id": o.offeror_id,
                                   "company_id": o.offeror_company_id,
@@ -1751,6 +1840,15 @@ def get_acquisition_notifications(player_id: int) -> dict:
                                   "deadline": d.deadline_at.isoformat()} for d in diffuse_notices],
             "diffuse_resolved": [{"id": d.id, "target_id": d.target_player_id,
                                    "status": d.status} for d in diffuse_resolved],
+            "renegotiation_proposals": [{"id": r.id, "stake_id": r.stake_id,
+                                          "proposed_by": r.proposed_by_player_id,
+                                          "new_stake_pct": r.new_stake_pct,
+                                          "new_term_days": r.new_term_days,
+                                          "note": r.note} for r in pending_renegs_for_me],
+            "renegotiation_responses": [{"id": r.id, "stake_id": r.stake_id,
+                                          "status": r.status,
+                                          "new_stake_pct": r.new_stake_pct,
+                                          "new_term_days": r.new_term_days} for r in reneg_responses],
         }
     finally:
         db.close()
@@ -1781,6 +1879,26 @@ def mark_acquisition_notifications_seen(player_id: int):
             DiffuseNotice.acquirer_id == player_id,
             DiffuseNotice.notification_seen_acquirer == False
         ).update({"notification_seen_acquirer": True})
+        # Renegotiation proposals addressed to me
+        seen_reneg_ids = [
+            r.id for r in db.query(StakeRenegotiation).filter(
+                StakeRenegotiation.status == "pending",
+                StakeRenegotiation.proposed_by_player_id != player_id,
+                StakeRenegotiation.notification_seen_respondent == False
+            ).join(AcquisitionStake, AcquisitionStake.id == StakeRenegotiation.stake_id).filter(
+                ((AcquisitionStake.acquirer_id == player_id) |
+                 (AcquisitionStake.target_player_id == player_id))
+            ).all()
+        ]
+        if seen_reneg_ids:
+            db.query(StakeRenegotiation).filter(
+                StakeRenegotiation.id.in_(seen_reneg_ids)
+            ).update({"notification_seen_respondent": True}, synchronize_session=False)
+        # Renegotiation responses to my proposals
+        db.query(StakeRenegotiation).filter(
+            StakeRenegotiation.proposed_by_player_id == player_id,
+            StakeRenegotiation.notification_seen_proposer == False
+        ).update({"notification_seen_proposer": True})
         db.commit()
     finally:
         db.close()
@@ -1802,13 +1920,13 @@ def process_acquisition_income(current_tick: int):
                     income_txs = stats_db.query(TransactionLog).filter(
                         TransactionLog.player_id == stake.target_player_id,
                         TransactionLog.amount > 0,
-                        TransactionLog.transaction_type.in_(["retail_sale", "market_sell", "dividend"]),
+                        TransactionLog.transaction_type.in_(ACQUISITION_INCOME_TYPES),
                         TransactionLog.timestamp > stake.last_income_sweep
                     ).all()
                     tax_txs = stats_db.query(TransactionLog).filter(
                         TransactionLog.player_id == stake.target_player_id,
                         TransactionLog.amount < 0,
-                        TransactionLog.transaction_type == "tax",
+                        TransactionLog.transaction_type.in_(ACQUISITION_TAX_TYPES),
                         TransactionLog.timestamp > stake.last_income_sweep
                     ).all()
                     total_income = sum(tx.amount for tx in income_txs)
@@ -1857,12 +1975,53 @@ def process_acquisition_income(current_tick: int):
         db.close()
 
 
+def process_expired_stakes():
+    """Auto-close term-limited stakes that have passed their expiry date."""
+    db = get_db()
+    try:
+        expired = db.query(AcquisitionStake).filter(
+            AcquisitionStake.is_active == True,
+            AcquisitionStake.expires_at.isnot(None),
+            AcquisitionStake.expires_at < datetime.utcnow()
+        ).all()
+        for stake in expired:
+            stake.is_active = False
+            stake.diffuse_initiated_at = datetime.utcnow()
+            if stake.acquisition_offer_id:
+                offer = db.query(AcquisitionOffer).filter(
+                    AcquisitionOffer.id == stake.acquisition_offer_id
+                ).first()
+                if offer:
+                    offer.status = "diffused"
+            _push_corp(stake.acquirer_id, "Acquisition Stake Expired",
+                       f"Your term-limited stake in Player #{stake.target_player_id} has expired naturally. "
+                       f"Shares remain with the target.")
+            _push_corp(stake.target_player_id, "Acquisition Stake Expired",
+                       f"The {stake.stake_pct*100:.1f}% income stake held by Player #{stake.acquirer_id} "
+                       f"has reached its term end and closed automatically.")
+        if expired:
+            db.commit()
+    except Exception as e:
+        print(f"[Corporate Actions] Expired stakes error: {e}")
+    finally:
+        db.close()
+
+
 # ==========================
 # DIFFUSE
 # ==========================
 
-def initiate_diffuse(stake_id: int, acquirer_id: int) -> dict:
-    """Give up acquisition stake and demand share return within DIFFUSE_RETURN_DAYS."""
+def initiate_diffuse(stake_id: int, acquirer_id: int,
+                     diffuse_type: str = "share_return") -> dict:
+    """Exit an active income stake.
+
+    diffuse_type="share_return"  — target must return shares within DIFFUSE_RETURN_DAYS.
+                                   Lien created on default (existing behaviour).
+    diffuse_type="cash_buyout"   — acquirer pays market-value cash immediately;
+                                   stake ends at once, target keeps their shares.
+    """
+    if diffuse_type not in ("share_return", "cash_buyout"):
+        return {"ok": False, "error": "diffuse_type must be 'share_return' or 'cash_buyout'"}
     db = get_db()
     try:
         stake = db.query(AcquisitionStake).filter(
@@ -1875,6 +2034,16 @@ def initiate_diffuse(stake_id: int, acquirer_id: int) -> dict:
         if stake.diffuse_initiated_at:
             return {"ok": False, "error": "Diffuse already initiated"}
 
+        # --- Gap 2: lock-up check ---
+        lock_up = stake.lock_up_days or ACQUISITION_DEFAULT_LOCKUP_DAYS
+        if lock_up > 0:
+            lock_up_expiry = stake.created_at + timedelta(days=lock_up)
+            if datetime.utcnow() < lock_up_expiry:
+                days_left = (lock_up_expiry - datetime.utcnow()).days + 1
+                return {"ok": False,
+                        "error": f"Lock-up period active — diffuse not allowed for {days_left} more day(s) "
+                                 f"(lock-up expires {lock_up_expiry.strftime('%Y-%m-%d')})"}
+
         offer = db.query(AcquisitionOffer).filter(
             AcquisitionOffer.id == stake.acquisition_offer_id
         ).first() if stake.acquisition_offer_id else None
@@ -1882,25 +2051,72 @@ def initiate_diffuse(stake_id: int, acquirer_id: int) -> dict:
             CompanyShares.id == offer.offeror_company_id
         ).first() if offer else None
         share_value_now = (company.current_price * stake.shares_paid) if company else 0.0
-        deadline = datetime.utcnow() + timedelta(days=DIFFUSE_RETURN_DAYS)
-
-        notice = DiffuseNotice(
-            stake_id=stake_id, acquirer_id=acquirer_id,
-            target_player_id=stake.target_player_id,
-            shares_to_return=stake.shares_paid,
-            share_value_at_notice=share_value_now, deadline_at=deadline
-        )
-        db.add(notice)
-        stake.diffuse_initiated_at = datetime.utcnow()
-        stake.is_active = False  # Income sharing stops immediately
-        db.commit()
-        db.refresh(notice)
+        _now = datetime.utcnow()
         _target_id = stake.target_player_id
         _shares_paid = stake.shares_paid
+
+        # --- Gap 3: cash buyout path ---
+        if diffuse_type == "cash_buyout":
+            # Acquirer pays market value of shares to target; stake ends immediately.
+            from auth import Player, get_db as get_auth_db
+            _adb = get_auth_db()
+            try:
+                _acq_p = _adb.query(Player).filter(Player.id == acquirer_id).first()
+                _tgt_p = _adb.query(Player).filter(Player.id == _target_id).first()
+                if not _acq_p or _acq_p.cash_balance < share_value_now:
+                    have = _acq_p.cash_balance if _acq_p else 0
+                    return {"ok": False,
+                            "error": f"Insufficient cash for buyout (need ${share_value_now:,.2f}, have ${have:,.2f})"}
+                _acq_p.cash_balance -= share_value_now
+                if _tgt_p:
+                    _tgt_p.cash_balance += share_value_now
+                _adb.commit()
+            finally:
+                _adb.close()
+
+            # Create a resolved notice for audit trail
+            notice = DiffuseNotice(
+                stake_id=stake_id, acquirer_id=acquirer_id, target_player_id=_target_id,
+                shares_to_return=_shares_paid, share_value_at_notice=share_value_now,
+                deadline_at=_now, status="buyout_paid",
+                diffuse_type="cash_buyout", buyout_amount=share_value_now,
+                resolved_at=_now
+            )
+            db.add(notice)
+            stake.is_active = False
+            stake.diffuse_initiated_at = _now
+            if offer:
+                offer.status = "diffused"
+            db.commit()
+            db.refresh(notice)
+            log_transaction(acquirer_id, "corporate", "money", -share_value_now,
+                            f"Diffuse cash buyout: paid ${share_value_now:,.2f} to exit stake in player {_target_id}")
+            log_transaction(_target_id, "corporate", "money", share_value_now,
+                            f"Diffuse cash buyout: received ${share_value_now:,.2f} from player {acquirer_id}")
+            _push_corp(_target_id, "Acquisition Stake Bought Out",
+                       f"Player #{acquirer_id} bought out their income stake for ${share_value_now:,.2f} cash. "
+                       f"Your {_shares_paid:,} shares are yours to keep.")
+            return {"ok": True, "notice_id": notice.id, "buyout_amount": share_value_now,
+                    "diffuse_type": "cash_buyout"}
+
+        # --- share_return path (existing behaviour) ---
+        deadline = _now + timedelta(days=DIFFUSE_RETURN_DAYS)
+        notice = DiffuseNotice(
+            stake_id=stake_id, acquirer_id=acquirer_id, target_player_id=_target_id,
+            shares_to_return=_shares_paid, share_value_at_notice=share_value_now,
+            deadline_at=deadline, diffuse_type="share_return"
+        )
+        db.add(notice)
+        stake.diffuse_initiated_at = _now
+        stake.is_active = False
+        db.commit()
+        db.refresh(notice)
         log_transaction(acquirer_id, "corporate", "money", 0,
-                        f"Diffuse initiated: {stake.shares_paid} shares worth ${share_value_now:,.2f} — return deadline {deadline.strftime('%Y-%m-%d')}")
+                        f"Diffuse initiated: {_shares_paid:,} shares worth ${share_value_now:,.2f} — "
+                        f"return deadline {deadline.strftime('%Y-%m-%d')}")
         _result = {"ok": True, "notice_id": notice.id, "deadline": deadline.isoformat(),
-                   "shares_to_return": stake.shares_paid, "share_value": share_value_now}
+                   "shares_to_return": _shares_paid, "share_value": share_value_now,
+                   "diffuse_type": "share_return"}
     except Exception as e:
         db.rollback()
         return {"ok": False, "error": str(e)}
@@ -1908,8 +2124,216 @@ def initiate_diffuse(stake_id: int, acquirer_id: int) -> dict:
         db.close()
 
     _push_corp(_target_id, "Diffuse Notice: Return Shares Required",
-               f"An acquirer has ended their stake. You must return {_shares_paid:,} shares by {deadline.strftime('%Y-%m-%d')} or a financial lien will be created.")
+               f"Player #{acquirer_id} has ended their stake. Return {_shares_paid:,} shares "
+               f"by {deadline.strftime('%Y-%m-%d')} or a financial lien will be created.")
     return _result
+
+
+def target_buyout_stake(stake_id: int, target_player_id: int) -> dict:
+    """Target proactively buys out the acquirer's stake (defensive exit).
+    Target pays market value of the shares; stake ends immediately; acquirer is made whole in cash."""
+    db = get_db()
+    try:
+        stake = db.query(AcquisitionStake).filter(
+            AcquisitionStake.id == stake_id,
+            AcquisitionStake.target_player_id == target_player_id,
+            AcquisitionStake.is_active == True
+        ).first()
+        if not stake:
+            return {"ok": False, "error": "Active stake not found"}
+        if stake.diffuse_initiated_at:
+            return {"ok": False, "error": "A diffuse is already in progress on this stake"}
+
+        offer = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.id == stake.acquisition_offer_id
+        ).first() if stake.acquisition_offer_id else None
+        company = db.query(CompanyShares).filter(
+            CompanyShares.id == offer.offeror_company_id
+        ).first() if offer else None
+        buyout_amount = (company.current_price * stake.shares_paid) if company else 0.0
+        _now = datetime.utcnow()
+        _acquirer_id = stake.acquirer_id
+
+        from auth import Player, get_db as get_auth_db
+        _adb = get_auth_db()
+        try:
+            _tgt_p = _adb.query(Player).filter(Player.id == target_player_id).first()
+            _acq_p = _adb.query(Player).filter(Player.id == _acquirer_id).first()
+            if not _tgt_p or _tgt_p.cash_balance < buyout_amount:
+                have = _tgt_p.cash_balance if _tgt_p else 0
+                return {"ok": False,
+                        "error": f"Insufficient cash for buyout (need ${buyout_amount:,.2f}, have ${have:,.2f})"}
+            _tgt_p.cash_balance -= buyout_amount
+            if _acq_p:
+                _acq_p.cash_balance += buyout_amount
+            _adb.commit()
+        finally:
+            _adb.close()
+
+        notice = DiffuseNotice(
+            stake_id=stake_id, acquirer_id=_acquirer_id, target_player_id=target_player_id,
+            shares_to_return=stake.shares_paid, share_value_at_notice=buyout_amount,
+            deadline_at=_now, status="target_bought_out",
+            diffuse_type="target_buyout", buyout_amount=buyout_amount, resolved_at=_now
+        )
+        db.add(notice)
+        stake.is_active = False
+        stake.diffuse_initiated_at = _now
+        if offer:
+            offer.status = "diffused"
+        db.commit()
+        db.refresh(notice)
+        log_transaction(target_player_id, "corporate", "money", -buyout_amount,
+                        f"Target buyout: paid ${buyout_amount:,.2f} to end player {_acquirer_id}'s income stake")
+        log_transaction(_acquirer_id, "corporate", "money", buyout_amount,
+                        f"Target buyout: player {target_player_id} paid ${buyout_amount:,.2f} to end income stake")
+        _push_corp(_acquirer_id, "Stake Bought Out by Target",
+                   f"Player #{target_player_id} bought out your income stake for ${buyout_amount:,.2f} cash.")
+        return {"ok": True, "notice_id": notice.id, "buyout_amount": buyout_amount}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def get_target_income_estimate(target_player_id: int, days: int = 30) -> dict:
+    """Return income stats for a target player over the last `days` days.
+    Used to show valuation basis when creating an acquisition offer."""
+    try:
+        from stats_ux import TransactionLog, get_db as get_stats_db
+        stats_db = get_stats_db()
+        try:
+            since = datetime.utcnow() - timedelta(days=days)
+            income_txs = stats_db.query(TransactionLog).filter(
+                TransactionLog.player_id == target_player_id,
+                TransactionLog.amount > 0,
+                TransactionLog.transaction_type.in_(ACQUISITION_INCOME_TYPES),
+                TransactionLog.timestamp > since
+            ).all()
+            tax_txs = stats_db.query(TransactionLog).filter(
+                TransactionLog.player_id == target_player_id,
+                TransactionLog.amount < 0,
+                TransactionLog.transaction_type.in_(ACQUISITION_TAX_TYPES),
+                TransactionLog.timestamp > since
+            ).all()
+        finally:
+            stats_db.close()
+        gross = sum(tx.amount for tx in income_txs)
+        taxes = sum(abs(tx.amount) for tx in tax_txs)
+        net = gross - taxes
+        daily_avg = net / max(days, 1)
+        annual_est = daily_avg * 365
+        return {
+            "ok": True,
+            "days": days,
+            "gross_income": round(gross, 2),
+            "taxes": round(taxes, 2),
+            "net_income": round(net, 2),
+            "daily_avg": round(daily_avg, 2),
+            "annual_est": round(annual_est, 2),
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e), "daily_avg": 0, "annual_est": 0, "net_income": 0}
+
+
+def propose_stake_renegotiation(stake_id: int, player_id: int,
+                                 new_stake_pct: float, new_term_days=None,
+                                 note: str = '') -> dict:
+    """Either party proposes amended terms on an active stake."""
+    db = get_db()
+    try:
+        stake = db.query(AcquisitionStake).filter(
+            AcquisitionStake.id == stake_id,
+            AcquisitionStake.is_active == True
+        ).first()
+        if not stake:
+            return {"ok": False, "error": "Active stake not found"}
+        if player_id not in (stake.acquirer_id, stake.target_player_id):
+            return {"ok": False, "error": "Not a party to this stake"}
+        # Only one pending proposal at a time
+        existing = db.query(StakeRenegotiation).filter(
+            StakeRenegotiation.stake_id == stake_id,
+            StakeRenegotiation.status == "pending"
+        ).first()
+        if existing:
+            return {"ok": False, "error": "A renegotiation proposal is already pending for this stake"}
+        if not (0 < new_stake_pct <= 1.0):
+            return {"ok": False, "error": "new_stake_pct must be between 0 and 1"}
+
+        reneg = StakeRenegotiation(
+            stake_id=stake_id,
+            proposed_by_player_id=player_id,
+            new_stake_pct=new_stake_pct,
+            new_term_days=new_term_days,
+            note=note or ''
+        )
+        db.add(reneg)
+        db.commit()
+        db.refresh(reneg)
+
+        other_id = stake.target_player_id if player_id == stake.acquirer_id else stake.acquirer_id
+        _push_corp(other_id, "Stake Renegotiation Proposed",
+                   f"Player #{player_id} has proposed new terms for your income stake: "
+                   f"{new_stake_pct*100:.1f}% stake"
+                   + (f", {new_term_days}-day term" if new_term_days else ", perpetual term")
+                   + (f" — \"{note}\"" if note else ""))
+        return {"ok": True, "reneg_id": reneg.id}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def respond_to_renegotiation(reneg_id: int, player_id: int, accept: bool) -> dict:
+    """Accept or reject a pending stake renegotiation proposal."""
+    db = get_db()
+    try:
+        reneg = db.query(StakeRenegotiation).filter(
+            StakeRenegotiation.id == reneg_id,
+            StakeRenegotiation.status == "pending"
+        ).first()
+        if not reneg:
+            return {"ok": False, "error": "Pending renegotiation not found"}
+
+        stake = db.query(AcquisitionStake).filter(
+            AcquisitionStake.id == reneg.stake_id
+        ).first()
+        if not stake:
+            return {"ok": False, "error": "Stake not found"}
+        # Only the other party (not the proposer) can respond
+        if player_id == reneg.proposed_by_player_id:
+            return {"ok": False, "error": "Cannot respond to your own proposal"}
+        if player_id not in (stake.acquirer_id, stake.target_player_id):
+            return {"ok": False, "error": "Not a party to this stake"}
+
+        _now = datetime.utcnow()
+        reneg.status = "accepted" if accept else "rejected"
+        reneg.responded_at = _now
+        reneg.notification_seen_proposer = False
+
+        if accept:
+            stake.stake_pct = reneg.new_stake_pct
+            if reneg.new_term_days is not None:
+                stake.term_days = reneg.new_term_days
+                stake.expires_at = _now + timedelta(days=reneg.new_term_days)
+            db.commit()
+            _push_corp(reneg.proposed_by_player_id, "Renegotiation Accepted",
+                       f"Player #{player_id} accepted your proposed terms: "
+                       f"{reneg.new_stake_pct*100:.1f}% stake"
+                       + (f", {reneg.new_term_days}-day term" if reneg.new_term_days else ""))
+        else:
+            db.commit()
+            _push_corp(reneg.proposed_by_player_id, "Renegotiation Rejected",
+                       f"Player #{player_id} declined your proposed stake renegotiation.")
+
+        return {"ok": True, "status": reneg.status}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
 
 
 def complete_diffuse_return(notice_id: int, target_player_id: int) -> dict:
@@ -2371,6 +2795,7 @@ def process_corporate_actions():
         db.close()
 
     process_diffuse_deadlines()
+    process_expired_stakes()
 
 
 def tick(current_tick: int, now):
@@ -2398,11 +2823,37 @@ def _run_acquisition_migrations():
     from banks.brokerage_firm import engine as _engine
     from sqlalchemy import text
     _new_cols = [
+        # --- batch 1 (counter-offer, cash, memo) ---
         "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS cash_component DOUBLE PRECISION DEFAULT 0.0",
         "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS offer_memo TEXT DEFAULT ''",
         "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_stake_pct DOUBLE PRECISION",
         "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_shares INTEGER",
         "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_cash DOUBLE PRECISION DEFAULT 0.0",
+        # --- batch 2 (term + lock-up) ---
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS term_days INTEGER",
+        f"ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS lock_up_days INTEGER DEFAULT {ACQUISITION_DEFAULT_LOCKUP_DAYS}",
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_term_days INTEGER",
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_lock_up_days INTEGER",
+        "ALTER TABLE acquisition_stakes ADD COLUMN IF NOT EXISTS term_days INTEGER",
+        f"ALTER TABLE acquisition_stakes ADD COLUMN IF NOT EXISTS lock_up_days INTEGER DEFAULT {ACQUISITION_DEFAULT_LOCKUP_DAYS}",
+        "ALTER TABLE acquisition_stakes ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP",
+        # --- batch 3 (diffuse type + buyout) ---
+        "ALTER TABLE diffuse_notices ADD COLUMN IF NOT EXISTS diffuse_type TEXT DEFAULT 'share_return'",
+        "ALTER TABLE diffuse_notices ADD COLUMN IF NOT EXISTS buyout_amount DOUBLE PRECISION",
+        # --- batch 4 (stake renegotiations table) ---
+        """CREATE TABLE IF NOT EXISTS stake_renegotiations (
+            id SERIAL PRIMARY KEY,
+            stake_id INTEGER NOT NULL,
+            proposed_by_player_id INTEGER NOT NULL,
+            new_stake_pct DOUBLE PRECISION NOT NULL,
+            new_term_days INTEGER,
+            note TEXT DEFAULT '',
+            status TEXT DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT NOW(),
+            responded_at TIMESTAMP,
+            notification_seen_proposer BOOLEAN DEFAULT FALSE,
+            notification_seen_respondent BOOLEAN DEFAULT FALSE
+        )""",
     ]
     with _engine.connect() as _conn:
         for _stmt in _new_cols:
@@ -2433,6 +2884,7 @@ __all__ = [
     'BuybackProgram', 'StockSplitRule', 'SecondaryOffering', 'CorporateActionHistory',
     'ReverseSplitRecord', 'SpecialDividendRecord', 'TaxVoucher',
     'AcquisitionOffer', 'AcquisitionStake', 'DiffuseNotice', 'BankruptcyRecord',
+    'StakeRenegotiation',
     'BuybackTrigger', 'SplitTrigger', 'OfferingTrigger', 'ActionStatus',
     'create_buyback_program', 'create_stock_split_rule', 'create_secondary_offering',
     'execute_reverse_split',
@@ -2441,8 +2893,13 @@ __all__ = [
     'counter_acquisition_offer', 'accept_counter_offer', 'reject_counter_offer',
     'get_acquisition_notifications', 'mark_acquisition_notifications_seen',
     'initiate_diffuse', 'complete_diffuse_return',
+    'target_buyout_stake',
+    'get_target_income_estimate',
+    'propose_stake_renegotiation', 'respond_to_renegotiation',
     'declare_bankruptcy', 'is_player_bankrupt',
     'process_corporate_actions', 'initialize', 'tick',
     'TAX_VOUCHER_RATE', 'VALID_REVERSE_SPLIT_RATIOS', 'BANKRUPTCY_RESTART_CASH',
-    'BANKRUPTCY_RED_Q_DAYS', 'ACQUISITION_OFFER_DAYS', 'DIFFUSE_RETURN_DAYS', 'get_db',
+    'BANKRUPTCY_RED_Q_DAYS', 'ACQUISITION_OFFER_DAYS', 'DIFFUSE_RETURN_DAYS',
+    'ACQUISITION_DEFAULT_LOCKUP_DAYS', 'ACQUISITION_TERM_OPTIONS',
+    'ACQUISITION_INCOME_TYPES', 'ACQUISITION_TAX_TYPES', 'get_db',
 ]
