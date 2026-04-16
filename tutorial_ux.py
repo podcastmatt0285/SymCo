@@ -941,6 +941,12 @@ def restart_tutorial(
             set_tutorial3_step(player.id, 1)
             return RedirectResponse(url="/banks", status_code=303)
 
+    if tutorial_number == 4:
+        step4 = get_tutorial4_step(player.id)
+        if step4 > 0:
+            set_tutorial4_step(player.id, 1)
+            return RedirectResponse(url="/banks/indices", status_code=303)
+
     return RedirectResponse(url="/settings?tab=tutorials", status_code=303)
 
 

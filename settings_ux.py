@@ -1096,6 +1096,79 @@ def _tutorials_tab(player) -> str:
         can_restart=(step3 > 0),
     )
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Tutorial 4 — ETFs & Market Indices  (tutorial_4_step 1–5 active, 7=complete)
+    # ─────────────────────────────────────────────────────────────────────────
+    from tutorial_ux import get_tutorial4_step
+    step4 = get_tutorial4_step(player.id)
+    T4_STEPS = 6
+
+    if step3 < 8:          # locked until Tutorial 3 complete
+        t4_status  = "locked"
+        t4_done    = 0
+        t4_current = None
+    elif step4 >= 7:
+        t4_status  = "complete"
+        t4_done    = T4_STEPS
+        t4_current = None
+    elif step4 == 0:
+        t4_status  = "not_started"
+        t4_done    = 0
+        t4_current = None
+    else:
+        t4_status  = "in_progress"
+        t4_done    = min(step4 - 1, T4_STEPS)
+        t4_current = min(step4, T4_STEPS)
+
+    if step4 >= 7:
+        t4_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#4ade80;font-size:1rem;">&#10003;</span>
+  <div>
+    <span style="font-size:0.85rem;font-weight:bold;color:#4ade80;">Tax Voucher — Claimed</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      $100,000 Tax Voucher deposited. Redeem anytime in
+      <a href="/corporate-actions/dashboard" style="color:#38bdf8;">Corporate Actions</a>.
+    </div>
+  </div>
+</div>"""
+    elif step4 in (5, 6):
+        t4_reward = """
+<div style="font-size:0.82rem;font-weight:bold;color:#d4af37;margin-bottom:8px;">
+  &#127381; Ready to claim — watch the video on WBC-50:
+</div>
+<a href="/banks/indices/WBC50"
+   style="display:inline-block;padding:8px 18px;background:#d4af37;color:#020617;
+          border-radius:4px;font-weight:bold;font-size:0.82rem;text-decoration:none;">
+  Go Claim Reward →
+</a>"""
+    elif step3 < 8:
+        t4_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; Tax Voucher ($100,000) — complete Tutorial 3 to unlock</div>'
+    elif step4 == 0:
+        t4_reward = """
+<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#128274; Tax Voucher ($100,000) — finish this tutorial to claim</div>
+<form method="post" action="/api/tutorial4/start" style="display:inline;">
+  <button type="submit"
+          style="padding:8px 18px;background:#38bdf8;color:#020617;border:none;
+                 border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;">
+    Start Tutorial 4 →
+  </button>
+</form>"""
+    else:
+        t4_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; Tax Voucher ($100,000) — finish this tutorial to claim</div>'
+
+    card4 = _tutorial_card(
+        number=4,
+        title="ETFs &amp; Market Indices",
+        description="Learn how the 19 Wadsworth Market Indices work, explore the WBC-50 Benchmark, and discover how ETFs let you invest in the broad market without picking individual stocks.",
+        total_steps=T4_STEPS,
+        completed_steps=t4_done,
+        current_step=t4_current,
+        status=t4_status,
+        reward_html=t4_reward,
+        can_restart=(step4 > 0),
+    )
+
     # ── CTA if nothing started ────────────────────────────────────────────────
     cta = ""
     if step == 0:
@@ -1107,7 +1180,7 @@ def _tutorials_tab(player) -> str:
   </a>
 </div>"""
 
-    return card1 + card2 + card3 + cta
+    return card1 + card2 + card3 + card4 + cta
 
 
 # ── Notifications tab ─────────────────────────────────────────────────────────
