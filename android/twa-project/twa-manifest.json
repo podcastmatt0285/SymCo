@@ -3,7 +3,7 @@
   "host": "wadsworth.notifly.cc",
   "name": "Wadsworth Economic Tycoon Simulator",
   "launcherName": "Wadsworth",
-  "display": "standalone",
+  "display": "fullscreen",
   "themeColor": "#000000",
   "themeColorDark": "#000000",
   "navigationColor": "#000000",
