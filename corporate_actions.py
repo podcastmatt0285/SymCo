@@ -2761,6 +2761,7 @@ _last_acq_tick = 0
 
 def process_corporate_actions():
     """Process all active automated corporate action programs."""
+    _refunds = []
     db = get_db()
     try:
         for program in db.query(BuybackProgram).filter(
@@ -2780,11 +2781,16 @@ def process_corporate_actions():
         ).all():
             check_and_execute_offering(offering.id)
 
-        # Expire stale acquisition offers
-        db.query(AcquisitionOffer).filter(
+        # Expire stale acquisition offers — refund any escrowed cash first
+        _now_expire = datetime.utcnow()
+        stale_offers = db.query(AcquisitionOffer).filter(
             AcquisitionOffer.status == "pending",
-            AcquisitionOffer.expires_at < datetime.utcnow()
-        ).update({"status": "expired"})
+            AcquisitionOffer.expires_at < _now_expire
+        ).all()
+        _refunds = [(o.offeror_id, o.cash_component) for o in stale_offers if (o.cash_component or 0) > 0]
+        for o in stale_offers:
+            o.status = "expired"
+        db.flush()
 
         # Expire old red-Q records
         db.query(BankruptcyRecord).filter(
@@ -2795,6 +2801,10 @@ def process_corporate_actions():
         db.commit()
     finally:
         db.close()
+
+    # Refund escrowed cash for offers expired this tick (done outside the main session to avoid locking)
+    for _pid, _amt in _refunds:
+        _refund_cash_to(_pid, _amt)
 
     process_diffuse_deadlines()
     process_expired_stakes()
