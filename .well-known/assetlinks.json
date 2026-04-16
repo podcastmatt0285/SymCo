@@ -1,0 +1,16 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cc.notifly.wadsworth.twa",
+      "sha256_cert_fingerprints": [
+        "4D:39:74:05:A7:E1:A5:EB:9B:7D:B9:51:80:0F:25:92:6C:89:64:2D:C7:50:AD:97:3B:BB:C9:C2:45:8C:30:6E",
+        "A7:21:91:A3:04:C4:5A:A2:C8:69:76:EF:7C:C6:3D:56:2D:77:57:94:38:1B:C5:F1:A8:8A:73:6A:B7:D9:DF:03"
+      ]
+    }
+  }
+]
