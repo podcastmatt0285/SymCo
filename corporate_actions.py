@@ -949,12 +949,20 @@ class AcquisitionOffer(Base):
     offeror_company_id = Column(Integer, nullable=False)
     shares_offered = Column(Integer, nullable=False)
     stake_pct = Column(Float, nullable=False)
-    status = Column(String, default="pending")  # pending/accepted/rejected/expired/diffused
+    status = Column(String, default="pending")  # pending/countered/accepted/rejected/expired/diffused
     notification_seen_offeror = Column(Boolean, default=False)
     notification_seen_target = Column(Boolean, default=False)
     expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     responded_at = Column(DateTime, nullable=True)
+    # Cash component — cash escrowed from offeror at offer creation, released on accept/reject
+    cash_component = Column(Float, default=0.0)
+    # Optional memo from offeror explaining the deal rationale
+    offer_memo = Column(String, default='')
+    # Counter-offer terms proposed by the target
+    counter_stake_pct = Column(Float, nullable=True)
+    counter_shares = Column(Integer, nullable=True)
+    counter_cash = Column(Float, default=0.0)
 
 
 class AcquisitionStake(Base):
@@ -1236,14 +1244,35 @@ def _push_corp(player_id: int, title: str, body: str):
 
 def create_acquisition_offer(offeror_id: int, target_player_id: int,
                               offeror_company_id: int, shares_offered: int,
-                              stake_pct: float) -> dict:
-    """Offer shares in exchange for stake_pct (≤50%) of target's business income."""
+                              stake_pct: float, cash_component: float = 0.0,
+                              offer_memo: str = '') -> dict:
+    """Offer shares (+ optional cash) in exchange for stake_pct (≤50%) of target's business income.
+    Cash component is escrowed from offeror immediately and returned if the offer is rejected/expired."""
     if not (0 < stake_pct <= 0.50):
         return {"ok": False, "error": "Stake must be 0%–50%"}
     if shares_offered <= 0:
         return {"ok": False, "error": "Must offer at least 1 share"}
     if offeror_id == target_player_id:
         return {"ok": False, "error": "Cannot acquire yourself"}
+    if cash_component < 0:
+        return {"ok": False, "error": "Cash component cannot be negative"}
+
+    # Escrow the cash component from the offeror before creating the offer
+    if cash_component > 0:
+        from auth import Player, get_db as get_auth_db
+        _adb = get_auth_db()
+        try:
+            _offeror_p = _adb.query(Player).filter(Player.id == offeror_id).first()
+            if not _offeror_p or _offeror_p.cash_balance < cash_component:
+                return {"ok": False, "error": f"Insufficient cash (need ${cash_component:,.2f}, have ${_offeror_p.cash_balance:,.2f} if any)"}
+            _offeror_p.cash_balance -= cash_component
+            _adb.commit()
+        except Exception as _e:
+            _adb.rollback()
+            return {"ok": False, "error": f"Cash escrow error: {_e}"}
+        finally:
+            _adb.close()
+
     db = get_db()
     try:
         company = db.query(CompanyShares).filter(
@@ -1251,42 +1280,70 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
             CompanyShares.founder_id == offeror_id
         ).first()
         if not company:
+            # Refund escrowed cash
+            if cash_component > 0:
+                _refund_cash_to(offeror_id, cash_component)
             return {"ok": False, "error": "Company not found or not owned by you"}
         pos = db.query(ShareholderPosition).filter(
             ShareholderPosition.company_shares_id == offeror_company_id,
             ShareholderPosition.player_id == offeror_id
         ).first()
         if not pos or pos.shares_owned < shares_offered:
+            if cash_component > 0:
+                _refund_cash_to(offeror_id, cash_component)
             return {"ok": False, "error": f"Insufficient shares (have {pos.shares_owned if pos else 0})"}
         existing = db.query(AcquisitionOffer).filter(
             AcquisitionOffer.offeror_id == offeror_id,
             AcquisitionOffer.target_player_id == target_player_id,
-            AcquisitionOffer.status == "pending"
+            AcquisitionOffer.status.in_(["pending", "countered"])
         ).first()
         if existing:
-            return {"ok": False, "error": "Pending offer to this player already exists"}
+            if cash_component > 0:
+                _refund_cash_to(offeror_id, cash_component)
+            return {"ok": False, "error": "A pending offer to this player already exists"}
         expires_at = datetime.utcnow() + timedelta(days=ACQUISITION_OFFER_DAYS)
         offer = AcquisitionOffer(
             offeror_id=offeror_id, target_player_id=target_player_id,
             offeror_company_id=offeror_company_id, shares_offered=shares_offered,
-            stake_pct=stake_pct, expires_at=expires_at
+            stake_pct=stake_pct, expires_at=expires_at,
+            cash_component=cash_component, offer_memo=(offer_memo or '')[:500]
         )
         db.add(offer)
         db.commit()
         db.refresh(offer)
         _share_value = company.current_price * shares_offered
+        _ticker = company.ticker_symbol
         _offer_id = offer.id
     except Exception as e:
         db.rollback()
+        if cash_component > 0:
+            _refund_cash_to(offeror_id, cash_component)
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
 
+    cash_str = f" + ${cash_component:,.0f} cash" if cash_component > 0 else ""
     _push_corp(target_player_id, "Acquisition Offer Received",
-               f"You received an offer: {shares_offered} shares for {stake_pct*100:.1f}% of your income (offer #{_offer_id})")
+               f"Player #{offeror_id} ({_ticker}) offers {shares_offered:,} shares{cash_str} for {stake_pct*100:.1f}% income stake")
     return {"ok": True, "offer_id": _offer_id,
             "share_value": _share_value,
             "expires_at": expires_at.isoformat()}
+
+
+def _refund_cash_to(player_id: int, amount: float):
+    """Internal helper: return escrowed cash to a player."""
+    try:
+        from auth import Player, get_db as get_auth_db
+        _adb = get_auth_db()
+        try:
+            _p = _adb.query(Player).filter(Player.id == player_id).first()
+            if _p:
+                _p.cash_balance += amount
+                _adb.commit()
+        finally:
+            _adb.close()
+    except Exception as _e:
+        print(f"[Corporate Actions] Cash refund error for player {player_id}: {_e}")
 
 
 def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
@@ -1304,7 +1361,10 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
             offer.status = "expired"
             _exp_offeror_id = offer.offeror_id
             _exp_stake_pct = offer.stake_pct
+            _exp_cash = offer.cash_component or 0.0
             db.commit()
+            if _exp_cash > 0:
+                _refund_cash_to(_exp_offeror_id, _exp_cash)
             _push_corp(_exp_offeror_id, "Acquisition Offer Expired",
                        f"Your offer for a {_exp_stake_pct*100:.1f}% income stake expired without a response.")
             return {"ok": False, "error": "Offer expired"}
@@ -1315,7 +1375,11 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
         ).first()
         if not offeror_pos or offeror_pos.shares_owned < offer.shares_offered:
             offer.status = "expired"
+            _exp_cash2 = offer.cash_component or 0.0
+            _exp_offeror2 = offer.offeror_id
             db.commit()
+            if _exp_cash2 > 0:
+                _refund_cash_to(_exp_offeror2, _exp_cash2)
             return {"ok": False, "error": "Offeror no longer has sufficient shares"}
 
         offeror_pos.shares_owned -= offer.shares_offered
@@ -1342,10 +1406,12 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
         offer.status = "accepted"
         offer.responded_at = datetime.utcnow()
         offer.notification_seen_offeror = False
+        _cash = offer.cash_component or 0.0
         db.commit()
         db.refresh(stake)
-        log_transaction(target_player_id, "corporate", "money", 0,
-                        f"Acquisition accepted: sold {offer.stake_pct*100:.1f}% income stake for {offer.shares_offered} shares")
+        log_transaction(target_player_id, "corporate", "money", _cash,
+                        f"Acquisition accepted: sold {offer.stake_pct*100:.1f}% income stake for {offer.shares_offered:,} shares"
+                        + (f" + ${_cash:,.2f} cash" if _cash > 0 else ""))
         log_transaction(offer.offeror_id, "corporate", "money", 0,
                         f"Acquisition accepted: acquired {offer.stake_pct*100:.1f}% of player {target_player_id} income")
         _offeror_id = offer.offeror_id
@@ -1359,8 +1425,24 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
     finally:
         db.close()
 
+    # Release escrowed cash to target
+    if _cash > 0:
+        try:
+            from auth import Player, get_db as get_auth_db
+            _adb = get_auth_db()
+            try:
+                _tp = _adb.query(Player).filter(Player.id == target_player_id).first()
+                if _tp:
+                    _tp.cash_balance += _cash
+                    _adb.commit()
+            finally:
+                _adb.close()
+        except Exception as _ce:
+            print(f"[Corporate Actions] Cash release error: {_ce}")
+
+    cash_str = f" + ${_cash:,.0f} cash" if _cash > 0 else ""
     _push_corp(_offeror_id, "Acquisition Offer Accepted",
-               f"Your offer was accepted — you now hold {_stake_pct*100:.1f}% income stake for {_shares} shares")
+               f"Accepted — you hold {_stake_pct*100:.1f}% income stake (paid {_shares:,} shares{cash_str})")
     return _result
 
 
@@ -1370,7 +1452,7 @@ def reject_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
         offer = db.query(AcquisitionOffer).filter(
             AcquisitionOffer.id == offer_id,
             AcquisitionOffer.target_player_id == target_player_id,
-            AcquisitionOffer.status == "pending"
+            AcquisitionOffer.status.in_(["pending", "countered"])
         ).first()
         if not offer:
             return {"ok": False, "error": "Offer not found"}
@@ -1379,6 +1461,7 @@ def reject_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
         offer.notification_seen_offeror = False
         _offeror_id = offer.offeror_id
         _stake_pct = offer.stake_pct
+        _cash = offer.cash_component or 0.0
         db.commit()
     except Exception as e:
         db.rollback()
@@ -1386,19 +1469,233 @@ def reject_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
     finally:
         db.close()
 
+    # Return escrowed cash to offeror
+    if _cash > 0:
+        _refund_cash_to(_offeror_id, _cash)
+
     _push_corp(_offeror_id, "Acquisition Offer Rejected",
                f"Your offer for a {_stake_pct*100:.1f}% income stake was rejected.")
     return {"ok": True}
 
 
+def counter_acquisition_offer(offer_id: int, target_player_id: int,
+                               counter_stake_pct: float, counter_shares: int,
+                               counter_cash: float = 0.0) -> dict:
+    """Target proposes different terms. Offer status → 'countered'; offeror gets push notification."""
+    if not (0 < counter_stake_pct <= 0.50):
+        return {"ok": False, "error": "Counter stake must be 0%–50%"}
+    if counter_shares <= 0:
+        return {"ok": False, "error": "Counter shares must be > 0"}
+    if counter_cash < 0:
+        return {"ok": False, "error": "Counter cash cannot be negative"}
+    db = get_db()
+    try:
+        offer = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.id == offer_id,
+            AcquisitionOffer.target_player_id == target_player_id,
+            AcquisitionOffer.status == "pending"
+        ).first()
+        if not offer:
+            return {"ok": False, "error": "Offer not found or no longer pending"}
+        if datetime.utcnow() > offer.expires_at:
+            offer.status = "expired"
+            _cash = offer.cash_component or 0.0
+            _exp_offeror = offer.offeror_id
+            db.commit()
+            if _cash > 0:
+                _refund_cash_to(_exp_offeror, _cash)
+            return {"ok": False, "error": "Offer has expired"}
+        offer.counter_stake_pct = counter_stake_pct
+        offer.counter_shares = counter_shares
+        offer.counter_cash = counter_cash
+        offer.status = "countered"
+        offer.notification_seen_offeror = False
+        _offeror_id = offer.offeror_id
+        _ticker = _company_ticker_local(db, offer.offeror_company_id)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    cash_str = f" + ${counter_cash:,.0f} cash" if counter_cash > 0 else ""
+    _push_corp(_offeror_id, "Counter-Offer Received",
+               f"Player #{target_player_id} countered: {counter_shares:,} {_ticker} shares{cash_str} for {counter_stake_pct*100:.1f}% stake")
+    return {"ok": True}
+
+
+def accept_counter_offer(offer_id: int, offeror_id: int) -> dict:
+    """Offeror accepts the target's counter-offer terms. Shares and optional cash transfer accordingly."""
+    db = get_db()
+    try:
+        offer = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.id == offer_id,
+            AcquisitionOffer.offeror_id == offeror_id,
+            AcquisitionOffer.status == "countered"
+        ).first()
+        if not offer:
+            return {"ok": False, "error": "Counter-offer not found or already responded to"}
+        if datetime.utcnow() > offer.expires_at:
+            offer.status = "expired"
+            _cash = offer.cash_component or 0.0
+            db.commit()
+            if _cash > 0:
+                _refund_cash_to(offeror_id, _cash)
+            return {"ok": False, "error": "Offer expired"}
+        if not offer.counter_shares or not offer.counter_stake_pct:
+            return {"ok": False, "error": "No counter terms on this offer"}
+
+        counter_shares = offer.counter_shares
+        counter_stake = offer.counter_stake_pct
+        counter_cash = offer.counter_cash or 0.0
+        original_cash = offer.cash_component or 0.0
+
+        # Validate shares for counter amount
+        offeror_pos = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == offer.offeror_company_id,
+            ShareholderPosition.player_id == offeror_id
+        ).first()
+        if not offeror_pos or offeror_pos.shares_owned < counter_shares:
+            return {"ok": False, "error": f"Insufficient shares for counter terms (need {counter_shares:,})"}
+
+        # Handle cash difference between original escrow and counter terms
+        cash_delta = counter_cash - original_cash
+        target_player_id = offer.target_player_id
+
+        if cash_delta > 0:
+            # Counter asks for MORE cash than originally escrowed — charge the difference
+            from auth import Player, get_db as get_auth_db
+            _adb = get_auth_db()
+            try:
+                _op = _adb.query(Player).filter(Player.id == offeror_id).first()
+                if not _op or _op.cash_balance < cash_delta:
+                    return {"ok": False, "error": f"Insufficient cash for counter terms (need ${cash_delta:,.2f} more)"}
+                _op.cash_balance -= cash_delta
+                _adb.commit()
+            finally:
+                _adb.close()
+        elif cash_delta < 0:
+            # Counter asks for LESS cash — refund the surplus escrow to offeror
+            _refund_cash_to(offeror_id, abs(cash_delta))
+
+        # Transfer shares: offeror → target
+        offeror_pos.shares_owned -= counter_shares
+        target_pos = db.query(ShareholderPosition).filter(
+            ShareholderPosition.company_shares_id == offer.offeror_company_id,
+            ShareholderPosition.player_id == target_player_id
+        ).first()
+        if target_pos:
+            target_pos.shares_owned += counter_shares
+        else:
+            company = db.query(CompanyShares).filter(CompanyShares.id == offer.offeror_company_id).first()
+            db.add(ShareholderPosition(
+                player_id=target_player_id, company_shares_id=offer.offeror_company_id,
+                shares_owned=counter_shares, shares_available_to_lend=counter_shares,
+                average_cost_basis=company.current_price if company else 0.0
+            ))
+
+        stake = AcquisitionStake(
+            acquirer_id=offeror_id, target_player_id=target_player_id,
+            stake_pct=counter_stake, shares_paid=counter_shares,
+            acquisition_offer_id=offer.id, last_income_sweep=datetime.utcnow()
+        )
+        db.add(stake)
+
+        # Update offer to reflect final accepted terms
+        offer.shares_offered = counter_shares
+        offer.stake_pct = counter_stake
+        offer.cash_component = counter_cash
+        offer.status = "accepted"
+        offer.responded_at = datetime.utcnow()
+        offer.notification_seen_target = False
+        db.commit()
+        db.refresh(stake)
+
+        log_transaction(target_player_id, "corporate", "money", counter_cash,
+                        f"Counter-offer accepted: sold {counter_stake*100:.1f}% income stake for {counter_shares:,} shares"
+                        + (f" + ${counter_cash:,.2f} cash" if counter_cash > 0 else ""))
+        log_transaction(offeror_id, "corporate", "money", 0,
+                        f"Counter-offer accepted: acquired {counter_stake*100:.1f}% of player {target_player_id} income")
+        _stake_id = stake.id
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    # Release counter_cash escrow to target
+    if counter_cash > 0:
+        try:
+            from auth import Player, get_db as get_auth_db
+            _adb = get_auth_db()
+            try:
+                _tp = _adb.query(Player).filter(Player.id == target_player_id).first()
+                if _tp:
+                    _tp.cash_balance += counter_cash
+                    _adb.commit()
+            finally:
+                _adb.close()
+        except Exception as _ce:
+            print(f"[Corporate Actions] Counter-offer cash release error: {_ce}")
+
+    _push_corp(target_player_id, "Counter-Offer Accepted",
+               f"Player #{offeror_id} accepted your counter-offer — income stake active")
+    return {"ok": True, "stake_id": _stake_id}
+
+
+def reject_counter_offer(offer_id: int, offeror_id: int) -> dict:
+    """Offeror rejects counter-offer — offer reverts to 'pending' so target can still accept/reject original terms."""
+    db = get_db()
+    try:
+        offer = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.id == offer_id,
+            AcquisitionOffer.offeror_id == offeror_id,
+            AcquisitionOffer.status == "countered"
+        ).first()
+        if not offer:
+            return {"ok": False, "error": "Counter-offer not found"}
+        offer.status = "pending"
+        offer.counter_stake_pct = None
+        offer.counter_shares = None
+        offer.counter_cash = 0.0
+        offer.notification_seen_target = False
+        _target_id = offer.target_player_id
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+    _push_corp(_target_id, "Counter-Offer Declined",
+               f"Player #{offeror_id} declined your counter. Original offer terms are still active.")
+    return {"ok": True}
+
+
+def _company_ticker_local(db, company_id: int) -> str:
+    """Helper to get ticker symbol from an open DB session."""
+    try:
+        c = db.query(CompanyShares).filter(CompanyShares.id == company_id).first()
+        return c.ticker_symbol if c else f"Co#{company_id}"
+    except Exception:
+        return f"Co#{company_id}"
+
+
 def get_acquisition_notifications(player_id: int) -> dict:
-    """Pending offers and diffuse notices for dashboard banners."""
+    """Pending offers, counter-offers, and diffuse notices for dashboard banners."""
     db = get_db()
     try:
         incoming = db.query(AcquisitionOffer).filter(
             AcquisitionOffer.target_player_id == player_id,
             AcquisitionOffer.status == "pending",
             AcquisitionOffer.notification_seen_target == False
+        ).all()
+        # Counter-offers awaiting offeror's decision
+        countered = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.offeror_id == player_id,
+            AcquisitionOffer.status == "countered",
+            AcquisitionOffer.notification_seen_offeror == False
         ).all()
         outgoing_updates = db.query(AcquisitionOffer).filter(
             AcquisitionOffer.offeror_id == player_id,
@@ -1415,11 +1712,37 @@ def get_acquisition_notifications(player_id: int) -> dict:
             DiffuseNotice.status.in_(["returned", "lien_created"]),
             DiffuseNotice.notification_seen_acquirer == False
         ).all()
+
+        def _company_ticker(company_id):
+            try:
+                c = db.query(CompanyShares).filter(CompanyShares.id == company_id).first()
+                return c.ticker_symbol if c else f"#{company_id}"
+            except Exception:
+                return f"#{company_id}"
+
+        def _share_value(company_id, shares):
+            try:
+                c = db.query(CompanyShares).filter(CompanyShares.id == company_id).first()
+                return (c.current_price * shares) if c else 0.0
+            except Exception:
+                return 0.0
+
         return {
             "incoming_offers": [{"id": o.id, "offeror_id": o.offeror_id,
                                   "company_id": o.offeror_company_id,
+                                  "ticker": _company_ticker(o.offeror_company_id),
+                                  "share_value": _share_value(o.offeror_company_id, o.shares_offered),
                                   "shares_offered": o.shares_offered, "stake_pct": o.stake_pct,
+                                  "cash_component": o.cash_component or 0.0,
+                                  "offer_memo": o.offer_memo or '',
                                   "expires_at": o.expires_at.isoformat()} for o in incoming],
+            "countered_offers": [{"id": o.id, "target_id": o.target_player_id,
+                                   "original_stake_pct": o.stake_pct,
+                                   "original_shares": o.shares_offered,
+                                   "counter_stake_pct": o.counter_stake_pct,
+                                   "counter_shares": o.counter_shares,
+                                   "counter_cash": o.counter_cash or 0.0,
+                                   "ticker": _company_ticker(o.offeror_company_id)} for o in countered],
             "outgoing_updates": [{"id": o.id, "target_id": o.target_player_id,
                                    "status": o.status} for o in outgoing_updates],
             "diffuse_notices": [{"id": d.id, "acquirer_id": d.acquirer_id,
@@ -1442,6 +1765,12 @@ def mark_acquisition_notifications_seen(player_id: int):
         ).update({"notification_seen_target": True})
         db.query(AcquisitionOffer).filter(
             AcquisitionOffer.offeror_id == player_id,
+            AcquisitionOffer.notification_seen_offeror == False
+        ).update({"notification_seen_offeror": True})
+        # Also mark countered offers seen for offeror
+        db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.offeror_id == player_id,
+            AcquisitionOffer.status == "countered",
             AcquisitionOffer.notification_seen_offeror == False
         ).update({"notification_seen_offeror": True})
         db.query(DiffuseNotice).filter(
@@ -1509,10 +1838,13 @@ def process_acquisition_income(current_tick: int):
                             log_transaction(stake.target_player_id, "corporate", "money", -net,
                                             f"Acquisition deduction ({stake.stake_pct*100:.1f}% to player {stake.acquirer_id})")
                             _acq_id = stake.acquirer_id
+                            _tgt_id = stake.target_player_id
                             _net = net
                             _pct = stake.stake_pct
                             _push_corp(_acq_id, "Income Sweep Received",
                                        f"${_net:,.0f} income sweep ({_pct*100:.1f}% stake) deposited")
+                            _push_corp(_tgt_id, "Acquisition Income Deducted",
+                                       f"${_net:,.0f} swept by Player #{_acq_id} ({_pct*100:.1f}% acquisition stake)")
                     finally:
                         auth_db.close()
                 stake.last_income_sweep = datetime.utcnow()
@@ -1563,15 +1895,21 @@ def initiate_diffuse(stake_id: int, acquirer_id: int) -> dict:
         stake.is_active = False  # Income sharing stops immediately
         db.commit()
         db.refresh(notice)
+        _target_id = stake.target_player_id
+        _shares_paid = stake.shares_paid
         log_transaction(acquirer_id, "corporate", "money", 0,
                         f"Diffuse initiated: {stake.shares_paid} shares worth ${share_value_now:,.2f} — return deadline {deadline.strftime('%Y-%m-%d')}")
-        return {"ok": True, "notice_id": notice.id, "deadline": deadline.isoformat(),
-                "shares_to_return": stake.shares_paid, "share_value": share_value_now}
+        _result = {"ok": True, "notice_id": notice.id, "deadline": deadline.isoformat(),
+                   "shares_to_return": stake.shares_paid, "share_value": share_value_now}
     except Exception as e:
         db.rollback()
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
+
+    _push_corp(_target_id, "Diffuse Notice: Return Shares Required",
+               f"An acquirer has ended their stake. You must return {_shares_paid:,} shares by {deadline.strftime('%Y-%m-%d')} or a financial lien will be created.")
+    return _result
 
 
 def complete_diffuse_return(notice_id: int, target_player_id: int) -> dict:
@@ -2055,11 +2393,35 @@ def tick(current_tick: int, now):
 # INITIALIZATION
 # ==========================
 
+def _run_acquisition_migrations():
+    """Add columns introduced after initial deployment (create_all only adds missing tables)."""
+    from banks.brokerage_firm import engine as _engine
+    from sqlalchemy import text
+    _new_cols = [
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS cash_component DOUBLE PRECISION DEFAULT 0.0",
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS offer_memo TEXT DEFAULT ''",
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_stake_pct DOUBLE PRECISION",
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_shares INTEGER",
+        "ALTER TABLE acquisition_offers ADD COLUMN IF NOT EXISTS counter_cash DOUBLE PRECISION DEFAULT 0.0",
+    ]
+    with _engine.connect() as _conn:
+        for _stmt in _new_cols:
+            try:
+                _conn.execute(text(_stmt))
+            except Exception:
+                pass
+        _conn.commit()
+
+
 def initialize():
     """Initialize corporate actions module."""
     from banks.brokerage_firm import engine as _engine
     print("[Corporate Actions] Creating database tables...")
     Base.metadata.create_all(bind=_engine)
+    try:
+        _run_acquisition_migrations()
+    except Exception as _mig_err:
+        print(f"[Corporate Actions] Migration warning: {_mig_err}")
     print("[Corporate Actions] Module initialized")
 
 
@@ -2076,6 +2438,7 @@ __all__ = [
     'execute_reverse_split',
     'pay_special_dividend', 'get_tax_voucher_balance', 'redeem_tax_vouchers',
     'create_acquisition_offer', 'accept_acquisition_offer', 'reject_acquisition_offer',
+    'counter_acquisition_offer', 'accept_counter_offer', 'reject_counter_offer',
     'get_acquisition_notifications', 'mark_acquisition_notifications_seen',
     'initiate_diffuse', 'complete_diffuse_return',
     'declare_bankruptcy', 'is_player_bankrupt',

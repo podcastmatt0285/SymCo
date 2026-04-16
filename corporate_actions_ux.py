@@ -22,6 +22,7 @@ from corporate_actions import (
     BuybackTrigger, SplitTrigger, OfferingTrigger, ActionStatus,
     execute_reverse_split, pay_special_dividend, get_tax_voucher_balance, redeem_tax_vouchers,
     create_acquisition_offer, accept_acquisition_offer, reject_acquisition_offer,
+    counter_acquisition_offer, accept_counter_offer, reject_counter_offer,
     get_acquisition_notifications, mark_acquisition_notifications_seen,
     initiate_diffuse, complete_diffuse_return,
     declare_bankruptcy, is_player_bankrupt,
@@ -827,11 +828,13 @@ async def api_create_acquisition_offer(
     target_player_id: int = Form(...),
     offeror_company_id: int = Form(...),
     shares_offered: int = Form(...),
-    stake_pct: float = Form(...)
+    stake_pct: float = Form(...),
+    cash_component: float = Form(0.0),
+    offer_memo: str = Form('')
 ):
     """
-    Offer shares in your company for a % stake (≤50%) in another player's business income.
-    Both parties see a dashboard notification.
+    Offer shares (+ optional cash) in your company for a % stake (≤50%) in another player's
+    business income. Cash component is escrowed immediately; refunded if rejected/expired.
     """
     auth_db = get_auth_db()
     player = get_player_from_session(auth_db, session_token)
@@ -839,10 +842,12 @@ async def api_create_acquisition_offer(
     if not player:
         raise HTTPException(status_code=401, detail="Not authenticated")
     result = create_acquisition_offer(player.id, target_player_id, offeror_company_id,
-                                      shares_offered, stake_pct / 100.0)
+                                      shares_offered, stake_pct / 100.0,
+                                      cash_component=max(0.0, cash_component),
+                                      offer_memo=offer_memo)
     if not result["ok"]:
         raise HTTPException(status_code=400, detail=result["error"])
-    return result
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
 
 
 @router.post("/acquisition/accept/{offer_id}")
@@ -877,6 +882,65 @@ async def api_reject_acquisition(
         raise HTTPException(status_code=400, detail=result["error"])
     mark_acquisition_notifications_seen(player.id)
     return result
+
+
+@router.post("/acquisition/counter/{offer_id}")
+async def api_counter_acquisition(
+    offer_id: int,
+    session_token: Optional[str] = Cookie(None),
+    counter_stake_pct: float = Form(...),
+    counter_shares: int = Form(...),
+    counter_cash: float = Form(0.0)
+):
+    """Target proposes different terms on an incoming offer."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = counter_acquisition_offer(offer_id, player.id,
+                                       counter_stake_pct / 100.0,
+                                       counter_shares,
+                                       max(0.0, counter_cash))
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/acquisition/counter/accept/{offer_id}")
+async def api_accept_counter(
+    offer_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Offeror accepts the counter-offer terms."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = accept_counter_offer(offer_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    mark_acquisition_notifications_seen(player.id)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/acquisition/counter/reject/{offer_id}")
+async def api_reject_counter(
+    offer_id: int,
+    session_token: Optional[str] = Cookie(None)
+):
+    """Offeror rejects the counter — offer reverts to pending with original terms."""
+    auth_db = get_auth_db()
+    player = get_player_from_session(auth_db, session_token)
+    auth_db.close()
+    if not player:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    result = reject_counter_offer(offer_id, player.id)
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    mark_acquisition_notifications_seen(player.id)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
 
 
 @router.get("/acquisition/notifications")

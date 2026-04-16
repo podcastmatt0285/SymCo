@@ -10,7 +10,7 @@ from corporate_actions import (
     BuybackProgram, StockSplitRule, SecondaryOffering, CorporateActionHistory,
     BuybackTrigger, SplitTrigger, OfferingTrigger, ActionStatus,
     get_db,
-    VALID_REVERSE_SPLIT_RATIOS, TAX_VOUCHER_RATE,
+    VALID_REVERSE_SPLIT_RATIOS, TAX_VOUCHER_RATE, ACQUISITION_OFFER_DAYS, DIFFUSE_RETURN_DAYS,
     AcquisitionOffer, AcquisitionStake, DiffuseNotice, BankruptcyRecord,
     get_tax_voucher_balance, is_player_bankrupt,
 )
@@ -334,6 +334,11 @@ async def corporate_actions_dashboard(
             history   = db.query(CorporateActionHistory).filter(
                 CorporateActionHistory.company_shares_id == company.id
             ).order_by(CorporateActionHistory.executed_at.desc()).limit(8).all()
+            founder_pos = db.query(ShareholderPosition).filter(
+                ShareholderPosition.company_shares_id == company.id,
+                ShareholderPosition.player_id == player.id
+            ).first()
+            founder_pos_shares = founder_pos.shares_owned if founder_pos else 0
 
             active_buybacks   = sum(1 for b in buybacks  if b.status == "active")
             active_splits     = sum(1 for s in splits    if s.is_enabled)
@@ -555,34 +560,81 @@ async def corporate_actions_dashboard(
 <!-- Acquisition Offer -->
 <div class="section-card accent-blue" style="margin-bottom:20px;">
     <div class="section-title">Send Acquisition Offer</div>
-    <div class="section-desc">
-        Offer your <strong style="color:#38bdf8;">{company.ticker_symbol}</strong> shares
-        to another player in exchange for an ongoing income stake (up to 50%) in their business.
-        The target player receives your shares and you receive a percentage of their business income
-        for as long as the stake remains active. They have 7 days to accept or reject.
-        You can initiate a "diffuse" at any time to demand return of shares and end the stake.
+    <div class="info-box tip" style="margin-bottom:14px;">
+        <strong>How acquisitions work:</strong> You offer shares of <strong style="color:#38bdf8;">{company.ticker_symbol}</strong>
+        (and optionally cash) to another player in exchange for an ongoing income stake in their business — similar to how
+        one company buys a revenue share in another. The target reviews your offer and can <strong>accept</strong>,
+        <strong>reject</strong>, or <strong>counter-offer</strong> with different terms. Once accepted, a percentage of their
+        business income flows to you automatically every 24 hours. You can later initiate a <em>diffuse</em> to end the
+        arrangement and reclaim your shares (the target has {DIFFUSE_RETURN_DAYS} days to return them or a financial lien is created).
+        Offers expire after {ACQUISITION_OFFER_DAYS} days — any escrowed cash is refunded automatically.
     </div>
-    <form action="/api/corporate-actions/acquisition/offer" method="post">
+    <form action="/api/corporate-actions/acquisition/offer" method="post" id="acq-offer-form-{company.id}">
         <input type="hidden" name="offeror_company_id" value="{company.id}">
-        <div class="form-inline">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:14px;">
             <div class="form-group">
                 <label class="form-label">Target Player ID</label>
                 <input type="number" name="target_player_id" min="1" placeholder="e.g. 42"
-                       class="form-input" style="width:110px;" required>
+                       class="form-input" required>
+                <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Find player IDs on Leaderboard</div>
             </div>
             <div class="form-group">
-                <label class="form-label">Shares Offered</label>
+                <label class="form-label">{company.ticker_symbol} Shares to Offer</label>
                 <input type="number" name="shares_offered" min="1" placeholder="e.g. 1,000"
-                       class="form-input" style="width:130px;" required>
+                       class="form-input" id="acq-shares-{company.id}"
+                       oninput="acqCalc('{company.id}',{company.current_price})" required>
+                <div style="font-size:0.72rem;color:#475569;margin-top:3px;">
+                    Current price: <strong style="color:#38bdf8;">{disp["symbol"]}{company.current_price:,.4f}</strong>
+                    &nbsp;·&nbsp; You hold: <strong style="color:#e5e7eb;">{founder_pos_shares:,} shares</strong>
+                </div>
             </div>
             <div class="form-group">
-                <label class="form-label">Income Stake % (max 50)</label>
+                <label class="form-label">Income Stake % Requested</label>
                 <input type="number" name="stake_pct" min="0.1" max="50" step="0.1"
-                       placeholder="e.g. 25" class="form-input" style="width:110px;" required>
+                       placeholder="e.g. 25" class="form-input" required>
+                <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Max 50% · % of their net business income</div>
             </div>
-            <button type="submit" class="btn btn-primary">Send Offer</button>
+            <div class="form-group">
+                <label class="form-label">Cash Sweetener (optional)</label>
+                <input type="number" name="cash_component" min="0" step="0.01" value="0"
+                       placeholder="e.g. 50,000" class="form-input" id="acq-cash-{company.id}"
+                       oninput="acqCalc('{company.id}',{company.current_price})">
+                <div style="font-size:0.72rem;color:#475569;margin-top:3px;">Extra cash included — escrowed until outcome</div>
+            </div>
         </div>
+        <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label">Deal Memo (optional — visible to recipient)</label>
+            <textarea name="offer_memo" maxlength="500" placeholder="Explain why this deal benefits both parties, your company growth plans, etc."
+                      class="form-input" style="width:100%;height:64px;resize:vertical;font-size:0.82rem;"></textarea>
+        </div>
+        <div id="acq-preview-{company.id}" style="display:none;background:#0f172a;border:1px solid #1e293b;
+             border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;">
+            <span style="color:#64748b;">Offer value preview: </span>
+            <span id="acq-preview-val-{company.id}" style="color:#38bdf8;font-weight:bold;"></span>
+        </div>
+        <button type="submit" class="btn btn-primary"
+                onclick="return confirm('Send this acquisition offer? The cash component (if any) will be escrowed from your balance immediately.')">
+            Send Acquisition Offer
+        </button>
     </form>
+    <script>
+    function acqCalc(cid, price) {{
+        var shares = parseFloat(document.getElementById('acq-shares-'+cid)?.value) || 0;
+        var cash = parseFloat(document.getElementById('acq-cash-'+cid)?.value) || 0;
+        var total = shares * price + cash;
+        var prev = document.getElementById('acq-preview-'+cid);
+        var val = document.getElementById('acq-preview-val-'+cid);
+        if (total > 0 && prev && val) {{
+            var shareStr = shares > 0 ? shares.toLocaleString() + ' shares @ $' + price.toFixed(4) + ' = $' + (shares*price).toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) : '';
+            var cashStr = cash > 0 ? ' + $' + cash.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) + ' cash' : '';
+            var totalStr = ' = Total offer: $' + total.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}});
+            val.textContent = shareStr + cashStr + totalStr;
+            prev.style.display = 'block';
+        }} else if (prev) {{
+            prev.style.display = 'none';
+        }}
+    }}
+    </script>
 </div>
 
 <!-- Recent History -->
@@ -610,95 +662,334 @@ async def corporate_actions_dashboard(
             html += "</div>"
 
         # ── Global: Acquisition Activity ──────────────────────────────────────
-        stakes_as_acquirer    = db.query(AcquisitionStake).filter(AcquisitionStake.acquirer_id == player.id, AcquisitionStake.is_active == True).all()
-        stakes_as_target      = db.query(AcquisitionStake).filter(AcquisitionStake.target_player_id == player.id, AcquisitionStake.is_active == True).all()
-        pending_offers_recv   = db.query(AcquisitionOffer).filter(AcquisitionOffer.target_player_id == player.id, AcquisitionOffer.status == "pending").all()
-        diffuse_notices       = db.query(DiffuseNotice).filter(DiffuseNotice.target_player_id == player.id, DiffuseNotice.status == "pending").all()
+        from datetime import datetime as _dt
+        _now = _dt.utcnow()
+
+        stakes_as_acquirer  = db.query(AcquisitionStake).filter(
+            AcquisitionStake.acquirer_id == player.id, AcquisitionStake.is_active == True).all()
+        stakes_as_target    = db.query(AcquisitionStake).filter(
+            AcquisitionStake.target_player_id == player.id, AcquisitionStake.is_active == True).all()
+        # Incoming: pending or countered-back-to-pending offers for this player
+        pending_offers_recv = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.target_player_id == player.id,
+            AcquisitionOffer.status == "pending").all()
+        # Counter-offers this player sent that are now awaiting the original offeror's decision
+        countered_outgoing  = db.query(AcquisitionOffer).filter(
+            AcquisitionOffer.offeror_id == player.id,
+            AcquisitionOffer.status == "countered").all()
+        diffuse_notices     = db.query(DiffuseNotice).filter(
+            DiffuseNotice.target_player_id == player.id, DiffuseNotice.status == "pending").all()
+        # Recent completed/rejected/expired offers for history
+        recent_offers_hist  = db.query(AcquisitionOffer).filter(
+            (AcquisitionOffer.offeror_id == player.id) | (AcquisitionOffer.target_player_id == player.id),
+            AcquisitionOffer.status.in_(["accepted", "rejected", "expired", "diffused"])
+        ).order_by(AcquisitionOffer.responded_at.desc()).limit(6).all()
+
+        def _ticker_for(company_id):
+            c = db.query(CompanyShares).filter(CompanyShares.id == company_id).first()
+            return (c.ticker_symbol, c.company_name, c.current_price) if c else (f"#{company_id}", "Unknown", 0.0)
+
+        def _days_until(dt):
+            if not dt:
+                return "—"
+            delta = (dt - _now).total_seconds()
+            if delta < 0:
+                return "Expired"
+            d = int(delta // 86400)
+            h = int((delta % 86400) // 3600)
+            return f"{d}d {h}h"
+
+        def _time_ago(dt):
+            if not dt:
+                return "never"
+            delta = (_now - dt).total_seconds()
+            if delta < 3600:
+                return f"{int(delta//60)}m ago"
+            if delta < 86400:
+                return f"{int(delta//3600)}h ago"
+            return f"{int(delta//86400)}d ago"
 
         html += """
 <div class="section-card accent-blue" style="margin-bottom:14px;">
     <div class="section-title" style="margin-bottom:4px;">Acquisition Activity</div>
-    <div class="section-desc">
-        Incoming acquisition offers from other players, stakes you hold in other businesses,
-        stakes other players hold in yours, and any pending diffuse notices requiring action.
+    <div class="info-box tip" style="margin-bottom:14px;">
+        <strong>Acquisitions</strong> let you buy a revenue stake in another player's business by offering
+        shares (and optionally cash). Once active, a percentage of their net income flows to you every 24 hours.
+        To end the arrangement, initiate a <strong>Diffuse</strong> — the other party has 30 days to return your
+        shares or a financial lien is issued against them. You can also negotiate by sending a
+        <strong>Counter-Offer</strong> with different terms.
     </div>
 """
+        # ── Incoming Offers (pending) ──────────────────────────────────────────
         if pending_offers_recv:
-            html += '<div style="color:#38bdf8;font-size:0.78rem;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Incoming Offers</div>'
+            html += '<div style="color:#38bdf8;font-size:0.78rem;font-weight:bold;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Incoming Offers — Action Required</div>'
             for offer in pending_offers_recv:
+                ticker, cname, cprice = _ticker_for(offer.offeror_company_id)
+                share_val = cprice * offer.shares_offered
+                cash_c = offer.cash_component or 0.0
+                total_val = share_val + cash_c
+                memo = (offer.offer_memo or '').strip()
+                expires_str = _days_until(offer.expires_at)
+                expires_color = "#ef4444" if expires_str in ("Expired", "—") else ("#f59e0b" if expires_str.startswith("0d") else "#64748b")
                 html += f"""
     <div class="program-row" style="border-left-color:#38bdf8;">
-        <div style="color:#e5e7eb;margin-bottom:6px;">
-            Player #{offer.offeror_company_id} is offering
-            <strong style="color:#38bdf8;">{offer.shares_offered:,} shares</strong>
-            for a <strong style="color:#38bdf8;">{offer.stake_pct*100:.1f}%</strong> income stake in your business.
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <div>
+                <span style="background:#38bdf8;color:#020617;padding:2px 8px;border-radius:10px;
+                             font-size:0.68rem;font-weight:bold;letter-spacing:0.04em;">INCOMING OFFER</span>
+                <span style="color:#64748b;font-size:0.72rem;margin-left:10px;">from Player #{offer.offeror_id}</span>
+            </div>
+            <span style="font-size:0.72rem;color:{expires_color};">Expires: {expires_str}</span>
         </div>
-        <div class="program-meta">Accept to receive shares; a percentage of your business income will flow to them going forward.</div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-            <form action="/api/corporate-actions/acquisition/accept/{offer.id}" method="post" style="display:inline;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;">Shares Offered</div>
+                <div style="color:#38bdf8;font-weight:bold;font-size:0.9rem;">{offer.shares_offered:,} {ticker}</div>
+                <div style="color:#64748b;font-size:0.72rem;">{cname[:24]}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;">Share Value</div>
+                <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{fmt_usd(share_val, disp)}</div>
+                <div style="color:#64748b;font-size:0.72rem;">@ {fmt_usd(cprice, disp)} / share</div>
+            </div>
+            {'<div style="background:#0f172a;border-radius:4px;padding:8px 10px;"><div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;">Cash Sweetener</div><div style="color:#22c55e;font-weight:bold;font-size:0.9rem;">' + fmt_usd(cash_c, disp) + '</div><div style="color:#64748b;font-size:0.72rem;">paid to you on accept</div></div>' if cash_c > 0 else ''}
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;">Total Offer Value</div>
+                <div style="color:#d4af37;font-weight:bold;font-size:0.9rem;">{fmt_usd(total_val, disp)}</div>
+                <div style="color:#64748b;font-size:0.72rem;">shares + cash combined</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;">Stake Requested</div>
+                <div style="color:#f59e0b;font-weight:bold;font-size:0.9rem;">{offer.stake_pct*100:.1f}% of income</div>
+                <div style="color:#64748b;font-size:0.72rem;">swept daily from your earnings</div>
+            </div>
+        </div>
+        {'<div style="background:#0a1628;border:1px solid #1e3a5f;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:0.82rem;color:#94a3b8;font-style:italic;">' + memo + '</div>' if memo else ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <form action="/api/corporate-actions/acquisition/accept/{offer.id}" method="post" style="display:inline;"
+                  onsubmit="return confirm('Accept this offer? {offer.stake_pct*100:.1f}% of your net income will flow to Player #{offer.offeror_id} every 24 hours.')">
                 <button class="btn btn-success" type="submit">Accept Offer</button>
             </form>
-            <form action="/api/corporate-actions/acquisition/reject/{offer.id}" method="post" style="display:inline;">
+            <form action="/api/corporate-actions/acquisition/reject/{offer.id}" method="post" style="display:inline;"
+                  onsubmit="return confirm('Reject this offer? The offeror will be notified and any escrowed cash returned to them.')">
                 <button class="btn btn-danger" type="submit">Reject</button>
             </form>
         </div>
+        <details style="margin-top:6px;">
+            <summary style="cursor:pointer;color:#94a3b8;font-size:0.8rem;user-select:none;">
+                ↔ Counter-Offer — propose different terms
+            </summary>
+            <div style="background:#0a1628;border:1px solid #1e293b;border-radius:4px;padding:12px;margin-top:8px;">
+                <div style="color:#94a3b8;font-size:0.78rem;margin-bottom:10px;">
+                    Propose new terms. The offeror will be notified and can accept or decline —
+                    if declined the original offer reverts to pending and you can still accept/reject it.
+                </div>
+                <form action="/api/corporate-actions/acquisition/counter/{offer.id}" method="post">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                        <div class="form-group">
+                            <label class="form-label">Counter Shares Requested</label>
+                            <input type="number" name="counter_shares" min="1"
+                                   placeholder="e.g. {offer.shares_offered:,}" value="{offer.shares_offered}"
+                                   class="form-input" style="width:140px;" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Counter Stake %</label>
+                            <input type="number" name="counter_stake_pct" min="0.1" max="50" step="0.1"
+                                   placeholder="e.g. {offer.stake_pct*100:.1f}" value="{offer.stake_pct*100:.1f}"
+                                   class="form-input" style="width:110px;" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Cash Also Requested</label>
+                            <input type="number" name="counter_cash" min="0" step="0.01" value="0"
+                                   placeholder="e.g. 10,000" class="form-input" style="width:130px;">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="align-self:flex-end;margin-bottom:4px;">Send Counter</button>
+                    </div>
+                </form>
+            </div>
+        </details>
     </div>
 """
 
+        # ── Countered Outgoing (awaiting other party's response to your counter) ─
+        if countered_outgoing:
+            html += '<div style="color:#a78bfa;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Your Counter-Offers — Awaiting Response</div>'
+            for offer in countered_outgoing:
+                ticker, cname, cprice = _ticker_for(offer.offeror_company_id)
+                counter_cash = offer.counter_cash or 0.0
+                expires_str = _days_until(offer.expires_at)
+                html += f"""
+    <div class="program-row" style="border-left-color:#a78bfa;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <span style="background:#a78bfa;color:#020617;padding:2px 8px;border-radius:10px;
+                         font-size:0.68rem;font-weight:bold;">COUNTER-OFFER PENDING</span>
+            <span style="color:#64748b;font-size:0.72rem;">to Player #{offer.target_player_id} · Expires: {expires_str}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Original Offer</div>
+                <div style="color:#94a3b8;font-size:0.82rem;">{offer.shares_offered:,} {ticker} shares for {offer.stake_pct*100:.1f}%</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Counter Requests</div>
+                <div style="color:#a78bfa;font-weight:bold;font-size:0.82rem;">{offer.counter_shares:,} shares for {(offer.counter_stake_pct or 0)*100:.1f}%{'  +  ' + fmt_usd(counter_cash, disp) + ' cash' if counter_cash > 0 else ''}</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form action="/api/corporate-actions/acquisition/counter/accept/{offer.id}" method="post" style="display:inline;"
+                  onsubmit="return confirm('Accept counter-offer? You will transfer {offer.counter_shares:,} shares and {offer.counter_stake_pct and offer.counter_stake_pct*100:.1f}% income stake begins.')">
+                <button class="btn btn-success" type="submit">Accept Counter</button>
+            </form>
+            <form action="/api/corporate-actions/acquisition/counter/reject/{offer.id}" method="post" style="display:inline;"
+                  onsubmit="return confirm('Decline this counter? The offer reverts to pending — Player #{offer.target_player_id} can still accept/reject your original terms.')">
+                <button class="btn btn-warning" type="submit">Decline Counter</button>
+            </form>
+        </div>
+    </div>
+"""
+
+        # ── Stakes You Hold ────────────────────────────────────────────────────
         if stakes_as_acquirer:
-            html += '<div style="color:#22c55e;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Stakes You Hold</div>'
+            html += '<div style="color:#22c55e;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Income Stakes You Hold</div>'
             for stake in stakes_as_acquirer:
+                _stake_offer = db.query(AcquisitionOffer).filter(
+                    AcquisitionOffer.id == stake.acquisition_offer_id).first() if stake.acquisition_offer_id else None
+                ticker, cname, cprice = _ticker_for(_stake_offer.offeror_company_id if _stake_offer else 0)
+                share_cur_val = cprice * stake.shares_paid
+                last_sweep_str = _time_ago(stake.last_income_sweep)
+                stake_date = stake.created_at.strftime('%Y-%m-%d') if stake.created_at else "—"
                 html += f"""
     <div class="program-row" style="border-left-color:#22c55e;">
-        <div style="color:#e5e7eb;margin-bottom:4px;">
-            <strong style="color:#22c55e;">{stake.stake_pct*100:.1f}%</strong> income stake
-            in Player #{stake.target_player_id}'s business &mdash;
-            you paid <strong>{stake.shares_paid:,} shares</strong>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <span style="background:#22c55e;color:#020617;padding:2px 8px;border-radius:10px;
+                         font-size:0.68rem;font-weight:bold;">ACTIVE STAKE</span>
+            <span style="color:#64748b;font-size:0.72rem;">in Player #{stake.target_player_id} · since {stake_date}</span>
         </div>
-        <div class="program-meta">You receive a cut of their business income as long as this stake is active.</div>
-        <div style="margin-top:8px;">
-            <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;"
-                  onsubmit="return confirm('Initiate diffuse? The target player will have 30 days to return your shares.')">
-                <button class="btn btn-warning" type="submit">Initiate Diffuse</button>
-            </form>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Income Share</div>
+                <div style="color:#22c55e;font-weight:bold;font-size:0.95rem;">{stake.stake_pct*100:.1f}%</div>
+                <div style="color:#64748b;font-size:0.72rem;">of their net daily income</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Shares Paid</div>
+                <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{stake.shares_paid:,} {ticker}</div>
+                <div style="color:#64748b;font-size:0.72rem;">now worth ≈ {fmt_usd(share_cur_val, disp)}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Last Sweep</div>
+                <div style="color:#94a3b8;font-size:0.9rem;">{last_sweep_str}</div>
+                <div style="color:#64748b;font-size:0.72rem;">income sweeps every 24h</div>
+            </div>
         </div>
+        <div class="info-box warning" style="font-size:0.78rem;padding:8px 12px;margin-bottom:10px;">
+            <strong>Diffuse</strong> ends the income stake immediately and demands return of your {stake.shares_paid:,} shares
+            within {DIFFUSE_RETURN_DAYS} days. If they fail to return them, a financial lien is created for the current
+            share value ({fmt_usd(share_cur_val, disp)}).
+        </div>
+        <form action="/api/corporate-actions/diffuse/initiate/{stake.id}" method="post" style="display:inline;"
+              onsubmit="return confirm('Initiate diffuse on this stake? Income sharing stops immediately. Player #{stake.target_player_id} will have {DIFFUSE_RETURN_DAYS} days to return {stake.shares_paid:,} shares or a lien will be created.')">
+            <button class="btn btn-warning" type="submit">Initiate Diffuse</button>
+        </form>
     </div>
 """
 
+        # ── Stakes Held Against You ────────────────────────────────────────────
         if stakes_as_target:
-            html += '<div style="color:#f59e0b;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Stakes Held Against You</div>'
+            html += '<div style="color:#f59e0b;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Obligations — Stakes in Your Business</div>'
             for stake in stakes_as_target:
+                stake_date = stake.created_at.strftime('%Y-%m-%d') if stake.created_at else "—"
+                last_sweep_str = _time_ago(stake.last_income_sweep)
                 html += f"""
     <div class="program-row" style="border-left-color:#f59e0b;">
-        <div style="color:#e5e7eb;">
-            Player #{stake.acquirer_id} holds a
-            <strong style="color:#f59e0b;">{stake.stake_pct*100:.1f}%</strong> income stake
-            in your business &mdash; they paid you <strong>{stake.shares_paid:,} shares</strong>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <span style="background:#f59e0b;color:#020617;padding:2px 8px;border-radius:10px;
+                         font-size:0.68rem;font-weight:bold;">INCOME OBLIGATION</span>
+            <span style="color:#64748b;font-size:0.72rem;">to Player #{stake.acquirer_id} · since {stake_date}</span>
         </div>
-        <div class="program-meta">A share of your income flows to them automatically. They can initiate a diffuse to end it.</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:8px;">
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Income Deducted</div>
+                <div style="color:#f59e0b;font-weight:bold;font-size:0.95rem;">{stake.stake_pct*100:.1f}%</div>
+                <div style="color:#64748b;font-size:0.72rem;">of your net daily income</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Shares You Received</div>
+                <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{stake.shares_paid:,} shares</div>
+                <div style="color:#64748b;font-size:0.72rem;">paid by Player #{stake.acquirer_id}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Last Deduction</div>
+                <div style="color:#94a3b8;font-size:0.9rem;">{last_sweep_str}</div>
+                <div style="color:#64748b;font-size:0.72rem;">automatic 24h cycle</div>
+            </div>
+        </div>
+        <div style="color:#64748b;font-size:0.78rem;">
+            Player #{stake.acquirer_id} holds this stake. Only they can end it via a diffuse notice.
+            If you receive a diffuse notice, you must return the {stake.shares_paid:,} shares within {DIFFUSE_RETURN_DAYS} days.
+        </div>
     </div>
 """
 
+        # ── Pending Diffuse Notices ────────────────────────────────────────────
         if diffuse_notices:
-            html += '<div style="color:#ef4444;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Pending Diffuse Notices — Action Required</div>'
+            html += '<div style="color:#ef4444;font-size:0.78rem;font-weight:bold;margin:12px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Diffuse Notices — Urgent Action Required</div>'
             for notice in diffuse_notices:
+                days_left = _days_until(notice.deadline_at)
                 html += f"""
     <div class="program-row" style="border-left-color:#ef4444;">
-        <div style="color:#ef4444;margin-bottom:4px;">
-            You must return <strong>{notice.shares_to_return:,} shares</strong>
-            by <strong>{notice.deadline_at.strftime('%Y-%m-%d')}</strong>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            <span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:10px;
+                         font-size:0.68rem;font-weight:bold;">RETURN REQUIRED</span>
+            <span style="color:#ef4444;font-size:0.72rem;font-weight:bold;">Deadline: {notice.deadline_at.strftime('%Y-%m-%d')} ({days_left})</span>
         </div>
-        <div class="program-meta">Share value at time of notice: {fmt_usd(notice.share_value_at_notice, disp)}</div>
-        <div style="margin-top:8px;">
-            <form action="/api/corporate-actions/diffuse/return/{notice.id}" method="post" style="display:inline;">
-                <button class="btn btn-danger" type="submit">Return Shares Now</button>
-            </form>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:10px;">
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Shares to Return</div>
+                <div style="color:#ef4444;font-weight:bold;font-size:0.95rem;">{notice.shares_to_return:,}</div>
+                <div style="color:#64748b;font-size:0.72rem;">to Player #{notice.acquirer_id}</div>
+            </div>
+            <div style="background:#0f172a;border-radius:4px;padding:8px 10px;">
+                <div style="color:#64748b;font-size:0.68rem;text-transform:uppercase;">Value at Notice</div>
+                <div style="color:#e5e7eb;font-weight:bold;font-size:0.9rem;">{fmt_usd(notice.share_value_at_notice, disp)}</div>
+                <div style="color:#64748b;font-size:0.72rem;">lien amount if deadline missed</div>
+            </div>
         </div>
+        <div class="info-box warning" style="font-size:0.78rem;padding:8px 12px;margin-bottom:10px;">
+            If you do not return the shares by the deadline, a financial lien of
+            <strong>{fmt_usd(notice.share_value_at_notice, disp)}</strong> will be placed on your account
+            (equivalent to a debt). Return them now to avoid the lien.
+        </div>
+        <form action="/api/corporate-actions/diffuse/return/{notice.id}" method="post" style="display:inline;"
+              onsubmit="return confirm('Return {notice.shares_to_return:,} shares to Player #{notice.acquirer_id}? This will deduct them from your portfolio.')">
+            <button class="btn btn-danger" type="submit">Return Shares Now</button>
+        </form>
     </div>
 """
 
-        if not (pending_offers_recv or stakes_as_acquirer or stakes_as_target or diffuse_notices):
-            html += '<div class="empty-state"><p>No active acquisitions or pending offers.</p></div>'
+        # ── Recent Acquisition History ─────────────────────────────────────────
+        if recent_offers_hist:
+            html += '<div style="color:#475569;font-size:0.78rem;font-weight:bold;margin:16px 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Recent Acquisition History</div>'
+            status_colors = {"accepted": "#22c55e", "rejected": "#ef4444", "expired": "#64748b", "diffused": "#f59e0b"}
+            for offer in recent_offers_hist:
+                ticker, _, _ = _ticker_for(offer.offeror_company_id)
+                sc = status_colors.get(offer.status, "#64748b")
+                role = "You offered" if offer.offeror_id == player.id else "You received"
+                other_id = offer.target_player_id if offer.offeror_id == player.id else offer.offeror_id
+                date_str = offer.responded_at.strftime('%Y-%m-%d') if offer.responded_at else "—"
+                html += f"""
+    <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #0f172a;font-size:0.8rem;">
+        <span style="background:{sc};color:#000;padding:1px 7px;border-radius:10px;
+                     font-size:0.65rem;font-weight:bold;flex-shrink:0;">{offer.status.upper()}</span>
+        <span style="color:#94a3b8;">{role} {offer.shares_offered:,} {ticker} shares for {offer.stake_pct*100:.1f}% stake
+              {'(+' + fmt_usd(offer.cash_component, disp) + ' cash)' if (offer.cash_component or 0) > 0 else ''}
+              · Player #{other_id}</span>
+        <span style="color:#475569;margin-left:auto;flex-shrink:0;">{date_str}</span>
+    </div>
+"""
+
+        if not (pending_offers_recv or countered_outgoing or stakes_as_acquirer or stakes_as_target or diffuse_notices):
+            html += '<div class="empty-state"><p>No active acquisitions or pending offers.</p><p style="color:#475569;">Use the "Send Acquisition Offer" form above to begin a deal with another player.</p></div>'
 
         html += "</div>"
 
