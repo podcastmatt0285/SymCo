@@ -639,19 +639,36 @@ def _seed_npc(cfg: dict):
                 _NPC_PLAYERS[player_id] = cfg
                 print(f"[NPC] {cfg['business_name']} already seeded (id={player_id})")
 
-                # Sync paused_lines from current config so changes to active_lines
-                # in NPC JSON take effect without a DB wipe.
+                # Build a set of business types the config wants.
+                cfg_types = [b["business_type"] for b in cfg_businesses]
+
                 existing_bizs = (
                     db.query(Business)
                     .filter(Business.owner_id == player_id)
                     .order_by(Business.id.asc())
                     .all()
                 )
-                for i, biz in enumerate(existing_bizs):
-                    if i < len(cfg_businesses):
+
+                # Remove any businesses whose type is no longer in the config
+                # (e.g. plantation removed from EO Co config).
+                for biz in existing_bizs:
+                    if biz.business_type not in cfg_types:
+                        print(f"[NPC] {cfg['business_name']}: removing obsolete "
+                              f"'{biz.business_type}' (id={biz.id}) — not in config")
+                        db.delete(biz)
+                db.flush()
+
+                # Sync paused_lines by business_type (not positional index) so
+                # changes to active_lines in the JSON take effect without a DB wipe.
+                cfg_by_type = {b["business_type"]: b for b in cfg_businesses}
+                for biz in existing_bizs:
+                    if biz in db.deleted:
+                        continue
+                    biz_cfg = cfg_by_type.get(biz.business_type)
+                    if biz_cfg:
                         new_paused = _build_paused_lines(
                             biz.business_type,
-                            cfg_businesses[i].get("active_lines", [])
+                            biz_cfg.get("active_lines", [])
                         )
                         if biz.paused_lines != new_paused:
                             biz.paused_lines = new_paused

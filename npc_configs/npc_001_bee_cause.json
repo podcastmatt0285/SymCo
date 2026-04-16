@@ -38,6 +38,12 @@
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
+    "queen_bee": {
+      "target_inventory": 100,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
     "water": {
       "target_inventory": 1000,
       "reorder_at": 100,
