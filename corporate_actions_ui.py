@@ -645,7 +645,9 @@ async def corporate_actions_dashboard(
         </button>
     </form>
     <script>
+    var _acqSym = '{disp["symbol"]}';
     function acqCalc(cid, price) {{
+        var sym = _acqSym;
         var shares = parseFloat(document.getElementById('acq-shares-'+cid)?.value) || 0;
         var cash = parseFloat(document.getElementById('acq-cash-'+cid)?.value) || 0;
         var pct = parseFloat(document.getElementById('acq-pct-'+cid)?.value) || 0;
@@ -655,9 +657,9 @@ async def corporate_actions_dashboard(
         var valPanel = document.getElementById('acq-valuation-'+cid);
         var valBody = document.getElementById('acq-val-body-'+cid);
         if (total > 0 && prev && val) {{
-            var shareStr = shares > 0 ? shares.toLocaleString() + ' shares @ $' + price.toFixed(4) + ' = $' + (shares*price).toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) : '';
-            var cashStr = cash > 0 ? ' + $' + cash.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) + ' cash' : '';
-            var totalStr = ' = Total offer: $' + total.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}});
+            var shareStr = shares > 0 ? shares.toLocaleString() + ' shares @ ' + sym + price.toFixed(4) + ' = ' + sym + (shares*price).toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) : '';
+            var cashStr = cash > 0 ? ' + ' + sym + cash.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}}) + ' cash' : '';
+            var totalStr = ' = Total offer: ' + sym + total.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}});
             val.textContent = shareStr + cashStr + totalStr;
             prev.style.display = 'block';
         }} else if (prev) {{
@@ -668,7 +670,7 @@ async def corporate_actions_dashboard(
             var daily = parseFloat(valBody.dataset.dailyAvg) * (pct / 100);
             var annual = daily * 365;
             var multiple = total > 0 ? (annual / total).toFixed(2) : '—';
-            valBody.dataset.impliedLine = 'Your ' + pct.toFixed(1) + '% → ~$' + daily.toLocaleString(undefined,{{maximumFractionDigits:0}}) + '/day · ~$' + annual.toLocaleString(undefined,{{maximumFractionDigits:0}}) + '/yr · ' + multiple + 'x implied multiple';
+            valBody.dataset.impliedLine = 'Your ' + pct.toFixed(1) + '% → ~' + _acqSym + daily.toLocaleString(undefined,{{maximumFractionDigits:0}}) + '/day · ~' + _acqSym + annual.toLocaleString(undefined,{{maximumFractionDigits:0}}) + '/yr · ' + multiple + 'x implied multiple';
             _acqRefreshValBody(cid);
         }}
     }}
@@ -692,7 +694,7 @@ async def corporate_actions_dashboard(
                     var valPanel = document.getElementById('acq-valuation-'+cid);
                     var valBody = document.getElementById('acq-val-body-'+cid);
                     if (!valPanel || !valBody) return;
-                    var fmt = function(n){{return '$'+Math.round(n).toLocaleString();}};
+                    var fmt = function(n){{return _acqSym+Math.round(n).toLocaleString();}};
                     valBody.dataset.dailyAvg = d.daily_avg;
                     valBody.dataset.summaryLine = '30-day net: ' + fmt(d.net_income) + ' · Daily avg: ' + fmt(d.daily_avg) + ' · Annual est: ' + fmt(d.annual_est);
                     _acqRefreshValBody(cid);
