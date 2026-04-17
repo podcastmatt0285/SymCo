@@ -1311,19 +1311,10 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
 
     # Escrow the cash component from the offeror before creating the offer
     if cash_component > 0:
-        from auth import Player, get_db as get_auth_db
-        _adb = get_auth_db()
-        try:
-            _offeror_p = _adb.query(Player).filter(Player.id == offeror_id).first()
-            if not _offeror_p or _offeror_p.cash_balance < cash_component:
-                return {"ok": False, "error": f"Insufficient cash (need ${cash_component:,.2f}, have ${_offeror_p.cash_balance:,.2f} if any)"}
-            _offeror_p.cash_balance -= cash_component
-            _adb.commit()
-        except Exception as _e:
-            _adb.rollback()
-            return {"ok": False, "error": f"Cash escrow error: {_e}"}
-        finally:
-            _adb.close()
+        from reserve_banks import spend_player_funds
+        _ok, _err = spend_player_funds(offeror_id, cash_component)
+        if not _ok:
+            return {"ok": False, "error": f"Insufficient cash for escrow: {_err}"}
 
     db = get_db()
     try:
@@ -1385,17 +1376,10 @@ def create_acquisition_offer(offeror_id: int, target_player_id: int,
 
 
 def _refund_cash_to(player_id: int, amount: float):
-    """Internal helper: return escrowed cash to a player."""
+    """Internal helper: return escrowed cash to a player in their legal tender."""
     try:
-        from auth import Player, get_db as get_auth_db
-        _adb = get_auth_db()
-        try:
-            _p = _adb.query(Player).filter(Player.id == player_id).first()
-            if _p:
-                _p.cash_balance += amount
-                _adb.commit()
-        finally:
-            _adb.close()
+        from reserve_banks import convert_to_legal_tender
+        convert_to_legal_tender(player_id, amount)
     except Exception as _e:
         print(f"[Corporate Actions] Cash refund error for player {player_id}: {_e}")
 
@@ -1483,18 +1467,11 @@ def accept_acquisition_offer(offer_id: int, target_player_id: int) -> dict:
     finally:
         db.close()
 
-    # Release escrowed cash to target
+    # Release escrowed cash to target in their legal tender
     if _cash > 0:
         try:
-            from auth import Player, get_db as get_auth_db
-            _adb = get_auth_db()
-            try:
-                _tp = _adb.query(Player).filter(Player.id == target_player_id).first()
-                if _tp:
-                    _tp.cash_balance += _cash
-                    _adb.commit()
-            finally:
-                _adb.close()
+            from reserve_banks import convert_to_legal_tender
+            convert_to_legal_tender(target_player_id, _cash)
         except Exception as _ce:
             print(f"[Corporate Actions] Cash release error: {_ce}")
 
@@ -1630,16 +1607,10 @@ def accept_counter_offer(offer_id: int, offeror_id: int) -> dict:
 
         if cash_delta > 0:
             # Counter asks for MORE cash than originally escrowed — charge the difference
-            from auth import Player, get_db as get_auth_db
-            _adb = get_auth_db()
-            try:
-                _op = _adb.query(Player).filter(Player.id == offeror_id).first()
-                if not _op or _op.cash_balance < cash_delta:
-                    return {"ok": False, "error": f"Insufficient cash for counter terms (need ${cash_delta:,.2f} more)"}
-                _op.cash_balance -= cash_delta
-                _adb.commit()
-            finally:
-                _adb.close()
+            from reserve_banks import spend_player_funds
+            _ok2, _err2 = spend_player_funds(offeror_id, cash_delta)
+            if not _ok2:
+                return {"ok": False, "error": f"Insufficient cash for counter terms: {_err2}"}
         elif cash_delta < 0:
             # Counter asks for LESS cash — refund the surplus escrow to offeror
             _refund_cash_to(offeror_id, abs(cash_delta))
@@ -1697,18 +1668,11 @@ def accept_counter_offer(offer_id: int, offeror_id: int) -> dict:
     finally:
         db.close()
 
-    # Release counter_cash escrow to target
+    # Release counter_cash escrow to target in their legal tender
     if counter_cash > 0:
         try:
-            from auth import Player, get_db as get_auth_db
-            _adb = get_auth_db()
-            try:
-                _tp = _adb.query(Player).filter(Player.id == target_player_id).first()
-                if _tp:
-                    _tp.cash_balance += counter_cash
-                    _adb.commit()
-            finally:
-                _adb.close()
+            from reserve_banks import convert_to_legal_tender
+            convert_to_legal_tender(target_player_id, counter_cash)
         except Exception as _ce:
             print(f"[Corporate Actions] Counter-offer cash release error: {_ce}")
 
@@ -1937,36 +1901,26 @@ def process_acquisition_income(current_tick: int):
                     stats_db.close()
                 net = (total_income - total_taxes) * stake.stake_pct
                 if abs(net) > 0.01:
-                    from auth import Player, get_db as get_auth_db
-                    auth_db = get_auth_db()
-                    try:
-                        target = auth_db.query(Player).filter(Player.id == stake.target_player_id).first()
-                        acquirer = auth_db.query(Player).filter(Player.id == stake.acquirer_id).first()
-                        if target and acquirer:
-                            from reserve_banks import spend_player_funds, convert_to_legal_tender
-                            ok, _ = spend_player_funds(target.id, net)
-                            if ok:
-                                try:
-                                    _amt, _code = convert_to_legal_tender(acquirer.id, net)
-                                    if _code == "USD":
-                                        acquirer.cash_balance += _amt
-                                except Exception:
-                                    acquirer.cash_balance += net
-                            auth_db.commit()
-                            log_transaction(stake.acquirer_id, "corporate", "money", net,
-                                            f"Acquisition income ({stake.stake_pct*100:.1f}% of player {stake.target_player_id})")
-                            log_transaction(stake.target_player_id, "corporate", "money", -net,
-                                            f"Acquisition deduction ({stake.stake_pct*100:.1f}% to player {stake.acquirer_id})")
-                            _acq_id = stake.acquirer_id
-                            _tgt_id = stake.target_player_id
-                            _net = net
-                            _pct = stake.stake_pct
-                            _push_corp(_acq_id, "Income Sweep Received",
-                                       f"${_net:,.0f} income sweep ({_pct*100:.1f}% stake) deposited")
-                            _push_corp(_tgt_id, "Acquisition Income Deducted",
-                                       f"${_net:,.0f} swept by Player #{_acq_id} ({_pct*100:.1f}% acquisition stake)")
-                    finally:
-                        auth_db.close()
+                    from reserve_banks import spend_player_funds, convert_to_legal_tender
+                    ok, _ = spend_player_funds(stake.target_player_id, net)
+                    if ok:
+                        try:
+                            convert_to_legal_tender(stake.acquirer_id, net)
+                        except Exception:
+                            from reserve_banks import credit_usd
+                            credit_usd(stake.acquirer_id, net)
+                        log_transaction(stake.acquirer_id, "corporate", "money", net,
+                                        f"Acquisition income ({stake.stake_pct*100:.1f}% of player {stake.target_player_id})")
+                        log_transaction(stake.target_player_id, "corporate", "money", -net,
+                                        f"Acquisition deduction ({stake.stake_pct*100:.1f}% to player {stake.acquirer_id})")
+                        _acq_id = stake.acquirer_id
+                        _tgt_id = stake.target_player_id
+                        _net = net
+                        _pct = stake.stake_pct
+                        _push_corp(_acq_id, "Income Sweep Received",
+                                   f"${_net:,.0f} income sweep ({_pct*100:.1f}% stake) deposited")
+                        _push_corp(_tgt_id, "Acquisition Income Deducted",
+                                   f"${_net:,.0f} swept by Player #{_acq_id} ({_pct*100:.1f}% acquisition stake)")
                 stake.last_income_sweep = datetime.utcnow()
             except Exception as e:
                 print(f"[Corporate Actions] Acquisition stake {stake.id} sweep error: {e}")
@@ -2060,21 +2014,12 @@ def initiate_diffuse(stake_id: int, acquirer_id: int,
         # --- Gap 3: cash buyout path ---
         if diffuse_type == "cash_buyout":
             # Acquirer pays market value of shares to target; stake ends immediately.
-            from auth import Player, get_db as get_auth_db
-            _adb = get_auth_db()
-            try:
-                _acq_p = _adb.query(Player).filter(Player.id == acquirer_id).first()
-                _tgt_p = _adb.query(Player).filter(Player.id == _target_id).first()
-                if not _acq_p or _acq_p.cash_balance < share_value_now:
-                    have = _acq_p.cash_balance if _acq_p else 0
-                    return {"ok": False,
-                            "error": f"Insufficient cash for buyout (need ${share_value_now:,.2f}, have ${have:,.2f})"}
-                _acq_p.cash_balance -= share_value_now
-                if _tgt_p:
-                    _tgt_p.cash_balance += share_value_now
-                _adb.commit()
-            finally:
-                _adb.close()
+            from reserve_banks import spend_player_funds, convert_to_legal_tender
+            _ok_buy, _err_buy = spend_player_funds(acquirer_id, share_value_now)
+            if not _ok_buy:
+                return {"ok": False,
+                        "error": f"Insufficient cash for buyout (need ${share_value_now:,.2f}): {_err_buy}"}
+            convert_to_legal_tender(_target_id, share_value_now)
 
             # Create a resolved notice for audit trail
             notice = DiffuseNotice(
@@ -2156,21 +2101,12 @@ def target_buyout_stake(stake_id: int, target_player_id: int) -> dict:
         _now = datetime.utcnow()
         _acquirer_id = stake.acquirer_id
 
-        from auth import Player, get_db as get_auth_db
-        _adb = get_auth_db()
-        try:
-            _tgt_p = _adb.query(Player).filter(Player.id == target_player_id).first()
-            _acq_p = _adb.query(Player).filter(Player.id == _acquirer_id).first()
-            if not _tgt_p or _tgt_p.cash_balance < buyout_amount:
-                have = _tgt_p.cash_balance if _tgt_p else 0
-                return {"ok": False,
-                        "error": f"Insufficient cash for buyout (need ${buyout_amount:,.2f}, have ${have:,.2f})"}
-            _tgt_p.cash_balance -= buyout_amount
-            if _acq_p:
-                _acq_p.cash_balance += buyout_amount
-            _adb.commit()
-        finally:
-            _adb.close()
+        from reserve_banks import spend_player_funds, convert_to_legal_tender
+        _ok_tbo, _err_tbo = spend_player_funds(target_player_id, buyout_amount)
+        if not _ok_tbo:
+            return {"ok": False,
+                    "error": f"Insufficient cash for buyout (need ${buyout_amount:,.2f}): {_err_tbo}"}
+        convert_to_legal_tender(_acquirer_id, buyout_amount)
 
         notice = DiffuseNotice(
             stake_id=stake_id, acquirer_id=_acquirer_id, target_player_id=target_player_id,
