@@ -10453,6 +10453,159 @@ def api_widget_chat(room: str = "global",
     })
 
 
+@router.get("/api/widget/bonds")
+def api_widget_bonds(device_id: Optional[str] = None,
+                     session_token: Optional[str] = Cookie(None)):
+    """Live bond yields + 24-hour sparkline for all reserve-bank currencies."""
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    from database import ReserveSessionLocal
+    from reserve_banks import StateReserveBank, BondYieldHistory
+
+    BLOCKS = " \u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588"
+
+    def _spark(rows_desc):
+        vals = [r.yield_rate for r in reversed(rows_desc)]
+        if len(vals) < 2:
+            return ""
+        lo, hi = min(vals), max(vals)
+        rng = hi - lo or 0.0001
+        return "".join(BLOCKS[min(8, int((v - lo) / rng * 8) + 1)] for v in vals[-24:])
+
+    r_db = ReserveSessionLocal()
+    try:
+        banks = r_db.query(StateReserveBank).order_by(StateReserveBank.currency_code).all()
+        rates = []
+        for b in banks:
+            hist = (r_db.query(BondYieldHistory)
+                       .filter(BondYieldHistory.bank_id == b.id)
+                       .order_by(BondYieldHistory.recorded_at.desc())
+                       .limit(24).all())
+            prev_yield = hist[-1].yield_rate if len(hist) >= 2 else b.yield_rate
+            change = b.yield_rate - prev_yield
+            rates.append({
+                "code":      b.currency_code,
+                "name":      b.currency_name,
+                "symbol":    b.currency_symbol,
+                "flag":      b.flag_emoji,
+                "yield_pct": round(b.yield_rate * 100, 3),
+                "change_bp": round(change * 10000, 1),
+                "up":        change >= 0,
+                "sparkline": _spark(hist),
+                "min_pct":   round(b.min_yield * 100, 2),
+                "max_pct":   round(b.max_yield * 100, 2),
+            })
+    finally:
+        r_db.close()
+
+    return JSONResponse({"rates": rates})
+
+
+@router.get("/api/widget/forex")
+def api_widget_forex(device_id: Optional[str] = None,
+                     session_token: Optional[str] = Cookie(None)):
+    """Live FX rates (usd_per_unit) for all reserve-bank currencies with 24h change."""
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    from database import ReserveSessionLocal
+    from reserve_banks import StateReserveBank, BondYieldHistory
+
+    BLOCKS = " \u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588"
+
+    def _fx_spark(rows_desc):
+        vals = [r.usd_per_unit for r in reversed(rows_desc)]
+        if len(vals) < 2:
+            return ""
+        lo, hi = min(vals), max(vals)
+        rng = hi - lo or 0.000001
+        return "".join(BLOCKS[min(8, int((v - lo) / rng * 8) + 1)] for v in vals[-24:])
+
+    r_db = ReserveSessionLocal()
+    try:
+        banks = r_db.query(StateReserveBank).order_by(StateReserveBank.currency_code).all()
+        pairs = []
+        for b in banks:
+            hist = (r_db.query(BondYieldHistory)
+                       .filter(BondYieldHistory.bank_id == b.id)
+                       .order_by(BondYieldHistory.recorded_at.desc())
+                       .limit(24).all())
+            prev_fx = hist[-1].usd_per_unit if len(hist) >= 2 else b.usd_per_unit
+            pct = ((b.usd_per_unit - prev_fx) / prev_fx * 100) if prev_fx else 0.0
+            # For display: show units-per-USD for non-USD (easier to read, e.g. ¥149.25/$)
+            if b.currency_code == "USD":
+                rate_str = "1.0000"
+                units_str = "1 USD"
+            elif b.usd_per_unit > 0:
+                per_usd = 1.0 / b.usd_per_unit
+                rate_str = f"{per_usd:,.4f}" if per_usd < 1000 else f"{per_usd:,.2f}"
+                units_str = f"{b.currency_symbol}{rate_str}/$"
+            else:
+                rate_str = "—"
+                units_str = "—"
+            pairs.append({
+                "code":      b.currency_code,
+                "name":      b.currency_name,
+                "symbol":    b.currency_symbol,
+                "flag":      b.flag_emoji,
+                "rate_str":  rate_str,
+                "units_str": units_str,
+                "usd_per_unit": round(b.usd_per_unit, 8),
+                "change_pct": round(pct, 3),
+                "up":        pct >= 0,
+                "sparkline": _fx_spark(hist),
+            })
+    finally:
+        r_db.close()
+
+    return JSONResponse({"pairs": pairs})
+
+
+@router.get("/api/widget/music")
+def api_widget_music(device_id: Optional[str] = None,
+                     session_token: Optional[str] = Cookie(None)):
+    """Returns WCPR station metadata for the music home-screen widget."""
+    if device_id:
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            _load_device_map()
+            pid = _WIDGET_DEVICE_MAP.get(device_id)
+        if not pid:
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+    else:
+        player = require_auth(session_token)
+        if isinstance(player, RedirectResponse):
+            return JSONResponse({"error": "not authenticated"}, status_code=401)
+
+    return JSONResponse({
+        "station":     "WCPR 104.1",
+        "full_name":   "Wadsworth Carter Public Radio",
+        "slogan":      "The Sound of the Market",
+        "frequency":   "104.1 FM",
+        "status":      "ON AIR",
+        "deep_link":   "https://wadsworth.notifly.cc/settings?tab=audio",
+    })
+
+
 # ==========================
 # JSON API ENDPOINT
 # ==========================
