@@ -793,9 +793,7 @@ def check_and_execute_offering(offering_id: int) -> bool:
             if founder:
                 try:
                     from reserve_banks import convert_to_legal_tender
-                    _amt, _code = convert_to_legal_tender(founder.id, net_to_founder)
-                    if _code == "USD":
-                        founder.cash_balance += _amt
+                    convert_to_legal_tender(founder.id, net_to_founder)
                 except Exception:
                     founder.cash_balance += net_to_founder
                 auth_db.commit()
@@ -2484,11 +2482,15 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
                         payout = payout_per_share * pos.shares_owned
                         if firm_deduct_cash(payout, "liquidation_pref",
                                             f"Liq pref {co.ticker_symbol} → player {pos.player_id}"):
-                            shareholder = auth_db.query(Player).filter(
-                                Player.id == pos.player_id
-                            ).first()
-                            if shareholder:
-                                shareholder.cash_balance += payout
+                            try:
+                                from reserve_banks import convert_to_legal_tender
+                                convert_to_legal_tender(pos.player_id, payout)
+                            except Exception:
+                                shareholder = auth_db.query(Player).filter(
+                                    Player.id == pos.player_id
+                                ).first()
+                                if shareholder:
+                                    shareholder.cash_balance += payout
                     auth_db.commit()
                 for pos in db.query(ShareholderPosition).filter(
                     ShareholderPosition.company_shares_id == co.id
