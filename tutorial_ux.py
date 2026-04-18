@@ -2232,3 +2232,518 @@ def tutorial4_dismiss(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/login", status_code=303)
     set_tutorial4_step(player.id, 7)
     return RedirectResponse(url="/", status_code=303)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TUTORIAL 5 — Corporate Actions / Acquisitions & Income Stakes
+# ══════════════════════════════════════════════════════════════════════════════
+#
+#   0  — Not started  (banner shown after T4 complete)
+#   1  — What is an income stake?           (corporate-actions/dashboard)
+#   2  — Making an offer                    (corporate-actions/dashboard)
+#   3  — Receiving an offer                 (corporate-actions/dashboard)
+#   4  — Counter-offers & income sweep      (corporate-actions/dashboard)
+#   5  — Exiting a stake                   (corporate-actions/dashboard)
+#   6  — Watch video & claim First Lady     (corporate-actions/dashboard)
+#   7  — Complete
+
+T5_TOTAL_STEPS = 6
+
+
+def get_tutorial5_step(player_id: int) -> int:
+    """Return the player's current Tutorial 5 step (0–7)."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        db.close()
+        if player is None:
+            return 0
+        step = getattr(player, "tutorial_5_step", 0)
+        return step if step is not None else 0
+    except Exception as e:
+        print(f"[Tutorial5] get_tutorial5_step error: {e}")
+        return 0
+
+
+def set_tutorial5_step(player_id: int, step: int):
+    """Set the player's Tutorial 5 step."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        if player:
+            player.tutorial_5_step = step
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial5] set_tutorial5_step error: {e}")
+
+
+# ── Tutorial 5 overlay HTML generator ─────────────────────────────────────────
+
+def get_tutorial5_overlay_html(player, current_page: str) -> str:
+    """
+    Return the Tutorial 5 overlay panel HTML for the given page.
+    `current_page` must be 'corporate_actions_dashboard'.
+    Returns empty string if T5 is not active or wrong page.
+    """
+    step = get_tutorial5_step(player.id)
+    if step == 0 or step >= 7:
+        return ""
+
+    if current_page != "corporate_actions_dashboard":
+        return ""
+
+    title = ""
+    content = ""
+
+    if step == 1:
+        title = "What Is an Income Stake?"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            An <strong style="color:#e5e7eb;">income stake</strong> is a contractual right to receive
+            a fixed percentage of another player's <em>net business income</em> — every day,
+            automatically, for as long as the stake is active.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            As the <strong style="color:#f59e0b;">acquirer</strong> you pay the target with shares in
+            your own company (plus an optional cash sweetener). In exchange, the target lets you
+            <em>sweep</em> a portion of their earnings — retail sales, dividends, bond maturities,
+            market sells, and more.
+        </p>
+        <div style="background:#1a1200;border:1px solid #92400e;border-radius:4px;
+                    padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#fbbf24;">
+            <strong>Key rule:</strong> Taxes are excluded from the sweep — only <em>net</em> income
+            after taxes is shared with the acquirer.
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            Stakes can be perpetual or time-limited (30 / 60 / 90 / 180 / 365 days).
+            All payouts are made in each player's own legal tender, regardless of which
+            currency the deal was struck in.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 2:
+        title = "Making an Acquisition Offer"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            To make an offer, scroll down to any of your public companies and open the
+            <strong style="color:#e5e7eb;">Acquisitions</strong> tab.
+            You'll specify:
+        </p>
+        <ul style="color:#94a3b8;line-height:1.9;margin:0 0 12px 20px;font-size:0.9rem;">
+            <li><strong style="color:#e5e7eb;">Target player</strong> — find their ID on the Leaderboard</li>
+            <li><strong style="color:#e5e7eb;">Shares offered</strong> — from your own company's holdings</li>
+            <li><strong style="color:#e5e7eb;">Stake %</strong> — 0.1 % to 50 % of net income</li>
+            <li><strong style="color:#e5e7eb;">Cash sweetener</strong> — optional extra cash to sweeten the deal</li>
+            <li><strong style="color:#e5e7eb;">Term</strong> — perpetual, or 30 / 60 / 90 / 180 / 365 days</li>
+            <li><strong style="color:#e5e7eb;">Lock-up</strong> — minimum days before exit is allowed (default 7)</li>
+        </ul>
+        <div style="background:#0f1a00;border:1px solid #3f6212;border-radius:4px;
+                    padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#86efac;">
+            <strong>Escrow:</strong> Any cash sweetener is <em>deducted from your balance immediately</em>
+            when the offer is sent. It's held in escrow and returned to you if the target
+            rejects or ignores the offer within 7 days.
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            Once sent, the target has 7 days to accept, reject, or counter. You can cancel a
+            pending offer at any time before they respond — the escrow is refunded to your wallet.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 3:
+        title = "Receiving an Offer — Accept, Reject, or Counter"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            When another player sends you an offer, you'll see it in your
+            <strong style="color:#e5e7eb;">Incoming Offers</strong> section here on the dashboard.
+            You have three choices:
+        </p>
+        <div style="display:grid;gap:10px;margin-bottom:14px;">
+            <div style="background:#0f1f11;border:1px solid #166534;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;color:#86efac;">
+                <strong>✓ Accept</strong> — The stake activates immediately. The acquirer's shares
+                transfer to you and, if there's a cash sweetener, it's released from escrow
+                straight to your wallet.
+            </div>
+            <div style="background:#1f0f0f;border:1px solid #991b1b;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;color:#fca5a5;">
+                <strong>✗ Reject</strong> — The offer closes. The escrow cash is returned
+                to the acquirer automatically in their own legal tender.
+            </div>
+            <div style="background:#1a1000;border:1px solid #92400e;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;color:#fcd34d;">
+                <strong>⇄ Counter</strong> — Propose new terms: a different stake %,
+                different shares, or a different cash component. The original offer is
+                put on hold while your counter is reviewed.
+            </div>
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            All three actions can be taken directly from this dashboard
+            without needing to navigate anywhere else.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 4:
+        title = "Counter-Offers, Income Sweep &amp; Multi-Currency"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px 0;">
+            <strong style="color:#e5e7eb;">Counter-offers</strong> work in both directions.
+            When you counter an incoming offer, the acquirer can accept, reject <em>your counter</em>,
+            or let it expire. Rejecting a counter reverts the original offer back to
+            <em>pending</em> — giving the target a second chance to accept or reject the original terms.
+        </p>
+        <div style="background:#0a1628;border:1px solid #1d4ed8;border-radius:4px;
+                    padding:10px 14px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;color:#93c5fd;">
+            <strong>Income Sweep — what gets shared:</strong><br>
+            Retail sales · Market sells · Dividends · Bond maturities &amp; calls · Bond sells ·
+            District market sells · Share sells · P2P contract payments · Crypto sells ·
+            City application income.<br>
+            <em>Taxes and district taxes are excluded before the split is calculated.</em>
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            The daily sweep deducts the acquirer's share directly from the target via
+            <em>spend_player_funds</em> and credits the acquirer via <em>convert_to_legal_tender</em>
+            — so each player always receives and pays in their own currency, no matter what
+            currency the original deal was denominated in.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 5:
+        title = "Exiting a Stake — Diffuse &amp; Target Buyout"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px 0;">
+            Once the lock-up period has passed, either side can exit the stake.
+            There are three exit mechanisms:
+        </p>
+        <div style="display:grid;gap:10px;margin-bottom:16px;">
+            <div style="background:#0a1628;border:1px solid #1d4ed8;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;line-height:1.7;">
+                <strong style="color:#93c5fd;">Diffuse — Share Return</strong>
+                <p style="color:#94a3b8;margin:4px 0 0;">
+                    The acquirer initiates. The target has <strong>30 days</strong> to return
+                    the original shares. If they default, a government lien is placed on their
+                    assets for the market value of the shares.
+                </p>
+            </div>
+            <div style="background:#0f1f11;border:1px solid #166534;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;line-height:1.7;">
+                <strong style="color:#86efac;">Diffuse — Cash Buyout</strong>
+                <p style="color:#94a3b8;margin:4px 0 0;">
+                    The acquirer pays the target the current market value of the shares
+                    instead of receiving them back. The stake ends immediately — no 30-day window.
+                </p>
+            </div>
+            <div style="background:#1a1000;border:1px solid #92400e;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;line-height:1.7;">
+                <strong style="color:#fcd34d;">Target Buyout</strong>
+                <p style="color:#94a3b8;margin:4px 0 0;">
+                    A defensive exit for the <em>target</em>. The target pays the acquirer
+                    the current market value of the held shares, ending the stake immediately.
+                    The acquirer keeps the cash; the target gets their income stream back.
+                </p>
+            </div>
+        </div>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 6:
+        # Video + First Lady claim (mirrors T4 step 5 pattern)
+        _t5_video_id = None
+        try:
+            import json as _json
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            if len(_media.get("videos", [])) > 4:
+                _t5_video_id = _media["videos"][4]["youtube_id"]
+        except Exception:
+            pass
+
+        try:
+            from executive import FIRST_LADY_EXECUTIVES as _FL_EXECS
+            fl_opts = "".join(
+                f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
+                for fl in _FL_EXECS
+            )
+        except Exception:
+            fl_opts = '<option value="martha_washington">Martha Washington</option>'
+
+        fl_form = f"""
+        <form action="/api/tutorial5/claim-reward" method="post"
+              style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <select name="first_lady"
+                    style="flex:1;min-width:220px;padding:7px 10px;background:#1e293b;
+                           border:1px solid #334155;border-radius:4px;color:#f1f5f9;
+                           font-size:0.78rem;cursor:pointer;">
+                {fl_opts}
+            </select>
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 20px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;
+                           white-space:nowrap;">
+                Claim First Lady &amp; Complete →
+            </button>
+        </form>
+        """
+
+        if _t5_video_id:
+            video_block = f"""
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+                    border-radius:6px;border:1px solid #2d1a00;margin-bottom:16px;">
+            <div id="yt5-player-container"
+                 style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+        <div id="tut5-watch-bar" style="background:#1a0e00;border:1px solid #92400e;
+                 border-radius:4px;height:6px;margin-bottom:12px;overflow:hidden;">
+            <div id="tut5-watch-fill"
+                 style="background:#f59e0b;height:6px;width:0%;transition:width .5s;"></div>
+        </div>
+        <p id="tut5-watch-label" style="color:#64748b;font-size:0.8rem;
+               margin:0 0 16px 0;text-align:center;">
+            ⏳ Watch the video to unlock your First Lady selection…
+        </p>
+        <div id="tut5-reward-section" style="display:none;">
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
+                        border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+                <strong style="color:#f59e0b;">Tutorial 5 Reward — First Lady Executive</strong>
+                <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                    Choose a <strong style="color:#d4af37;">Former First Lady</strong> executive —
+                    free forever, starts age 18, retires at 110, max level 18.
+                </p>
+            </div>
+            {fl_form}
+        </div>
+        <script>
+        (function() {{
+            var WATCH_THRESHOLD = 0.90;
+            var watched = false;
+            function unlockReward5() {{
+                if (watched) return;
+                watched = true;
+                document.getElementById('tut5-watch-label').innerHTML =
+                    '<span style="color:#4ade80;">✓ Video complete! Choose your First Lady below.</span>';
+                document.getElementById('tut5-watch-fill').style.width = '100%';
+                document.getElementById('tut5-reward-section').style.display = 'block';
+            }}
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+            var ytPlayer5;
+            window.onYouTubeIframeAPIReady = function() {{
+                ytPlayer5 = new YT.Player('yt5-player-container', {{
+                    videoId: '{_t5_video_id}',
+                    playerVars: {{ rel: 0, modestbranding: 1 }},
+                    events: {{
+                        onStateChange: function(e) {{
+                            if (e.data === YT.PlayerState.ENDED) unlockReward5();
+                        }}
+                    }}
+                }});
+            }};
+            var pollTimer = setInterval(function() {{
+                if (!ytPlayer5 || typeof ytPlayer5.getCurrentTime !== 'function') return;
+                try {{
+                    var cur = ytPlayer5.getCurrentTime();
+                    var dur = ytPlayer5.getDuration();
+                    if (dur > 0) {{
+                        var pct = Math.min(cur / dur, 1);
+                        document.getElementById('tut5-watch-fill').style.width =
+                            (pct * 100).toFixed(1) + '%';
+                        if (pct >= WATCH_THRESHOLD) {{ unlockReward5(); clearInterval(pollTimer); }}
+                    }}
+                }} catch(ex) {{}}
+            }}, 2000);
+        }})();
+        </script>
+            """
+        else:
+            # No video uploaded yet — show reward selector directly
+            video_block = f"""
+        <div style="background:#1c1a00;border:1px solid #ca8a04;border-radius:4px;
+                    padding:10px 14px;margin-bottom:16px;font-size:0.82rem;
+                    color:#fbbf24;line-height:1.6;">
+            ⚠ The Tutorial 5 video hasn't been uploaded yet — check back soon!
+        </div>
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
+                    border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+            <strong style="color:#f59e0b;">Tutorial 5 Reward — First Lady Executive</strong>
+            <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                Choose a <strong style="color:#d4af37;">Former First Lady</strong> executive —
+                free forever, starts age 18, retires at 110, max level 18.
+            </p>
+        </div>
+        {fl_form}
+            """
+
+        title = "Watch &amp; Claim Your Reward"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            You've completed the acquisitions &amp; income stake curriculum.
+            Watch the video below, then choose your First Lady executive reward.
+        </p>
+        {video_block}
+        """
+
+    else:
+        return ""
+
+    display_step = min(step, T5_TOTAL_STEPS)
+
+    return f"""
+    <div id="tutorial5-panel" style="
+        background: linear-gradient(135deg, #1a0e00, #0f172a);
+        border: 2px solid #f59e0b;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#f59e0b;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                TUTORIAL 5 — STEP {display_step}/{T5_TOTAL_STEPS}
+            </span>
+            <span style="color:#f59e0b;font-size:0.85rem;font-weight:bold;">Level 5 · Acquisitions &amp; Income Stakes</span>
+            <div style="flex:1;background:#1e293b;height:4px;border-radius:2px;min-width:80px;">
+                <div style="background:#f59e0b;height:4px;border-radius:2px;
+                            width:{int(display_step / T5_TOTAL_STEPS * 100)}%;"></div>
+            </div>
+        </div>
+        <h3 style="color:#f59e0b;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
+        {content}
+        <a href="/api/tutorial5/dismiss"
+           onclick="return confirm('Skip Tutorial 5? You can restart it from Settings.');"
+           style="position:absolute;top:12px;right:16px;color:#475569;font-size:0.72rem;text-decoration:none;">
+            Skip
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 5 API routes ──────────────────────────────────────────────────────
+
+@router.post("/api/tutorial5/start")
+def tutorial5_start(session_token: Optional[str] = Cookie(None)):
+    """Start Tutorial 5 (step 0 → 1)."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial5_step(player.id) == 0:
+        set_tutorial5_step(player.id, 1)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/api/tutorial5/advance")
+def tutorial5_advance(session_token: Optional[str] = Cookie(None)):
+    """Advance Tutorial 5 to the next step."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial5_step(player.id)
+
+    if step == 0 or step >= 7:
+        return RedirectResponse(url="/", status_code=303)
+
+    set_tutorial5_step(player.id, step + 1)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/api/tutorial5/claim-reward")
+def tutorial5_claim_reward(
+    session_token: Optional[str] = Cookie(None),
+    first_lady: str = Form(...),
+):
+    """Grant the Tutorial 5 First Lady executive reward and complete the tutorial."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial5_step(player.id)
+    if step not in (6, 7):
+        return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+    try:
+        from executive import (
+            Executive, FIRST_LADY_EXECUTIVES, SessionLocal as ExecSessionLocal,
+        )
+        fl_data = next((f for f in FIRST_LADY_EXECUTIVES if f["key"] == first_lady), None)
+        if fl_data is None:
+            fl_data = FIRST_LADY_EXECUTIVES[0]
+
+        first_name, *rest = fl_data["name"].split(" ", 1)
+        last_name = rest[0] if rest else ""
+
+        db = ExecSessionLocal()
+        exec_obj = Executive(
+            first_name       = first_name,
+            last_name        = last_name,
+            player_id        = player.id,
+            level            = 1,
+            job              = "first_lady",
+            wage             = 0.0,
+            pay_cycle        = "hour",
+            current_age      = 18,
+            retirement_age   = 110,
+            is_retired       = False,
+            is_dead          = False,
+            is_special       = False,
+            is_first_lady    = True,
+            max_level        = 18,
+            abilities        = fl_data["ability"],
+            bonuses          = "",
+        )
+        db.add(exec_obj)
+        db.commit()
+        db.close()
+        print(f"[Tutorial5] Created First Lady '{fl_data['name']}' for player {player.id}")
+    except Exception as e:
+        print(f"[Tutorial5] Failed to create First Lady for player {player.id}: {e}")
+
+    set_tutorial5_step(player.id, 7)
+    return RedirectResponse(url="/corporate-actions/dashboard?t5_reward=1", status_code=303)
+
+
+@router.get("/api/tutorial5/dismiss")
+def tutorial5_dismiss(session_token: Optional[str] = Cookie(None)):
+    """Dismiss / skip Tutorial 5."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_tutorial5_step(player.id, 7)
+    return RedirectResponse(url="/", status_code=303)
