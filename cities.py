@@ -1830,10 +1830,35 @@ def _notify_petrodollar_block(buyer_id: int, currency_type: str, message: str):
 
 
 def _broadcast_currency_opportunity(currency_type: str, needed: float, city_name: str):
-    """Log a currency opportunity — in-game notification only, not a push."""
-    _item_disp = currency_type.replace("_", " ")
-    print(f"[Cities] Market opportunity: {city_name} needs {needed:.2f} {_item_disp} — "
-          f"players holding {_item_disp} can list to profit.")
+    """In-game banner notification to all players holding the needed currency."""
+    import threading
+    def _send():
+        try:
+            from push_ux import create_game_notification
+            import inventory as _inv
+            from auth import Player, get_db as _auth_get_db
+            _db = _auth_get_db()
+            try:
+                holders = _db.query(Player).filter(Player.id > 0).all()
+                _item_disp = currency_type.replace("_", " ")
+                for _p in holders:
+                    try:
+                        qty = _inv.get_item_quantity(_p.id, currency_type)
+                    except Exception:
+                        qty = 0
+                    if qty > 0:
+                        create_game_notification(
+                            _p.id,
+                            f"Market Opportunity — {_item_disp.upper()}",
+                            f"{city_name} has a pending trade requiring {needed:.2f} {_item_disp}. "
+                            f"List yours for sale to profit.",
+                            url="/market", notif_type="trades",
+                        )
+            finally:
+                _db.close()
+        except Exception as _e:
+            print(f"[Cities] Broadcast error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
 
 def _place_bank_currency_buy_order(db, bank: "CityBank", city: "City", needed_qty: float, currency_price: float) -> None:
     """

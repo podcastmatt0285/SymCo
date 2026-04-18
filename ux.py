@@ -2020,11 +2020,37 @@ def home(session_token: Optional[str] = Cookie(None)):
     except Exception:
         crypto_inherit_banners = ""
 
+    # General in-game notification banners (trade pending, market opportunity, etc.)
+    game_notif_banners = ""
+    try:
+        from push_ux import get_game_notifications, mark_game_notifications_seen
+        game_notifs = get_game_notifications(player.id)
+        gn_parts = []
+        for gn in game_notifs:
+            _color = "#f59e0b" if gn["notif_type"] == "trades" else "#64748b"
+            _label = "MARKET" if gn["notif_type"] == "trades" else "NOTICE"
+            _link = f'<a href="{gn["url"]}" style="color:#38bdf8;font-size:0.82rem;">View →</a>' if gn["url"] and gn["url"] != "/" else ""
+            gn_parts.append(f"""
+            <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid {_color};border-radius:6px;padding:14px 18px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
+                    <span style="background:{_color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">{_label}</span>
+                    <span style="color:#94a3b8;font-size:0.85rem;font-weight:600;">{gn["title"]}</span>
+                </div>
+                <p style="color:#cbd5e1;margin:0;font-size:0.88rem;">{gn["body"]} {_link}</p>
+            </div>""")
+        if gn_parts:
+            mark_game_notifications_seen(player.id)
+        game_notif_banners = "".join(gn_parts)
+    except Exception:
+        game_notif_banners = ""
+
     dashboard_top = tutorial_overlay or tutorial_banner
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
     if crypto_inherit_banners:
         dashboard_top = dashboard_top + crypto_inherit_banners
+    if game_notif_banners:
+        dashboard_top = dashboard_top + game_notif_banners
 
     return shell(
         "Dashboard",

@@ -478,6 +478,17 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             if not petro_ok:
                 db.rollback()
                 print(f"[Market] Trade blocked by petrodollar system: {petro_msg}")
+                if buy_order.player_id > 0:
+                    try:
+                        from push_ux import create_game_notification
+                        create_game_notification(
+                            buy_order.player_id,
+                            "Trade Pending — Currency Required",
+                            f"Your purchase of {buy_order.item_type.replace('_',' ')} is on hold. {petro_msg}.",
+                            url="/market", notif_type="trades",
+                        )
+                    except Exception:
+                        pass
                 return
             if "handled" in petro_msg:
                 petrodollar_handled = True
