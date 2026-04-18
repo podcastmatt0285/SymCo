@@ -366,11 +366,20 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 f"[Market] Stale sell order {sell_order.id}: seller {sell_order.player_id} has "
                 f"{current_qty:.4f} {buy_order.item_type}, need {quantity:.4f} — cancelling order"
             )
-            sell_order.status = "cancelled"
-            db.commit()
-            if sell_order.player_id > 0:
-                _push_market(sell_order.player_id, "Sell Order Cancelled",
-                             f"Your sell order for {buy_order.item_type.replace('_',' ')} was cancelled — "
+            _sell_order_id = sell_order.id
+            _seller_pid = sell_order.player_id
+            _item_type_stale = buy_order.item_type
+            db.rollback()
+            try:
+                stale = db.query(MarketOrder).filter(MarketOrder.id == _sell_order_id).first()
+                if stale:
+                    stale.status = "cancelled"
+                    db.commit()
+            except Exception as _ce:
+                print(f"[Market] Failed to cancel stale order {_sell_order_id}: {_ce}")
+            if _seller_pid > 0:
+                _push_market(_seller_pid, "Sell Order Cancelled",
+                             f"Your sell order for {_item_type_stale.replace('_',' ')} was cancelled — "
                              f"item was no longer in your inventory at the time of match.")
             return
 

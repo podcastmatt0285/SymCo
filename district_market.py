@@ -445,23 +445,33 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
                 f"[DistrictMarket] Inventory transfer failed! Seller {sell_order.player_id} has "
                 f"{actual_qty:.4f} {buy_order.item_type}, needed {quantity:.4f} — reversing payment"
             )
-            sell_order_id = sell_order.id
+            _sell_order_id = sell_order.id
+            _buyer_pid = buy_order.player_id
+            _seller_pid = sell_order.player_id
+            _item_type_fail = buy_order.item_type
             db.rollback()
+            # spend_player_funds uses its own session so db.rollback() won't undo it — refund explicitly
+            if not petrodollar_handled and _buyer_pid > 0:
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(_buyer_pid, total_cost)
+                except Exception as _re:
+                    print(f"[DistrictMarket] Refund error (manual reconciliation needed): {_re}")
             try:
-                stale = db.query(DistrictMarketOrder).filter(DistrictMarketOrder.id == sell_order_id).first()
+                stale = db.query(DistrictMarketOrder).filter(DistrictMarketOrder.id == _sell_order_id).first()
                 if stale:
                     stale.status = "cancelled"
                     db.commit()
-                    print(f"[DistrictMarket] Sell order {sell_order_id} cancelled after failed inventory transfer")
-                    if sell_order.player_id > 0:
-                        _push_district(sell_order.player_id, "Sell Order Cancelled",
-                                       f"Your district sell order for {buy_order.item_type.replace('_',' ')} "
+                    print(f"[DistrictMarket] Sell order {_sell_order_id} cancelled after failed inventory transfer")
+                    if _seller_pid > 0:
+                        _push_district(_seller_pid, "Sell Order Cancelled",
+                                       f"Your district sell order for {_item_type_fail.replace('_',' ')} "
                                        f"was cancelled — insufficient inventory at time of match.")
             except Exception as _ce:
-                print(f"[DistrictMarket] Failed to cancel stale order {sell_order_id}: {_ce}")
-            if buy_order.player_id > 0:
-                _push_district(buy_order.player_id, "Trade Failed — Refunded",
-                               f"Your district purchase of {buy_order.item_type.replace('_',' ')} failed "
+                print(f"[DistrictMarket] Failed to cancel stale order {_sell_order_id}: {_ce}")
+            if _buyer_pid > 0:
+                _push_district(_buyer_pid, "Trade Failed — Refunded",
+                               f"Your district purchase of {_item_type_fail.replace('_',' ')} failed "
                                f"(seller had insufficient inventory). Payment refunded.")
             return
     except Exception as e:

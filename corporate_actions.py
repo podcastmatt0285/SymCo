@@ -614,19 +614,23 @@ def check_and_execute_split(rule_id: int) -> bool:
             description=f"{ratio}:1 stock split"
         )
         
+        # Capture shareholder IDs and post-split price before commit expires ORM objects
+        _split_shareholder_ids = [p.player_id for p in positions if p.player_id > 0]
+        _split_ticker = company.ticker_symbol
+        _split_ratio = ratio
+        _post_split_price = company.current_price  # already divided by ratio above
+
         db.commit()
-        
-        print(f"[{BANK_NAME}] ✂️ SPLIT EXECUTED: {company.ticker_symbol} {ratio}:1")
-        print(f"  → Shares: {old_shares:,} → {company.shares_outstanding:,}")
-        print(f"  → Price: ${old_price:.2f} → ${company.current_price:.2f}")
+
+        print(f"[{BANK_NAME}] ✂️ SPLIT EXECUTED: {_split_ticker} {_split_ratio}:1")
+        print(f"  → Price: ${old_price:.2f} → ${_post_split_price:.2f}")
 
         # Notify all shareholders (including founder)
         try:
-            for _pos in positions:
-                if _pos.player_id > 0:
-                    _push_corp(_pos.player_id, f"Stock Split — {company.ticker_symbol}",
-                               f"{company.ticker_symbol} executed a {ratio}:1 split. "
-                               f"Your shares multiplied ×{ratio} and price adjusted to ${company.current_price:.2f}.")
+            for _pid in _split_shareholder_ids:
+                _push_corp(_pid, f"Stock Split — {_split_ticker}",
+                           f"{_split_ticker} executed a {_split_ratio}:1 split. "
+                           f"Your shares multiplied ×{_split_ratio} and price adjusted to ${_post_split_price:.2f}.")
         except Exception:
             pass
 
