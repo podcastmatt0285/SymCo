@@ -447,6 +447,10 @@ def check_and_execute_buyback(program_id: int) -> bool:
                 print(f"  → Actual cost: ${actual_cost:,.2f} (Fee: ${fee:.2f})")
                 print(f"  → Progress: {program.shares_bought}/{program.max_shares_to_buy}")
 
+                _push_corp(company.founder_id, f"Buyback Executed — {company.ticker_symbol}",
+                           f"Bought back {actual_bought:,} {company.ticker_symbol} shares @ ${company.current_price:.2f} "
+                           f"(cost ${actual_cost:,.2f}). Progress: {program.shares_bought:,}/{program.max_shares_to_buy:,} shares.")
+
             return True
         else:
             print(f"[{BANK_NAME}] BUYBACK FAILED: Market order unsuccessful")
@@ -615,7 +619,17 @@ def check_and_execute_split(rule_id: int) -> bool:
         print(f"[{BANK_NAME}] ✂️ SPLIT EXECUTED: {company.ticker_symbol} {ratio}:1")
         print(f"  → Shares: {old_shares:,} → {company.shares_outstanding:,}")
         print(f"  → Price: ${old_price:.2f} → ${company.current_price:.2f}")
-        
+
+        # Notify all shareholders (including founder)
+        try:
+            for _pos in positions:
+                if _pos.player_id > 0:
+                    _push_corp(_pos.player_id, f"Stock Split — {company.ticker_symbol}",
+                               f"{company.ticker_symbol} executed a {ratio}:1 split. "
+                               f"Your shares multiplied ×{ratio} and price adjusted to ${company.current_price:.2f}.")
+        except Exception:
+            pass
+
         # Update credit (splits are positive events)
         modify_credit_score(company.founder_id, "stock_split_executed")
         
@@ -828,7 +842,27 @@ def check_and_execute_offering(offering_id: int) -> bool:
         print(f"  → Price: ${company.current_price:.2f}")
         print(f"  → Net to founder: ${net_to_founder:,.2f}")
         print(f"  → Dilution: {offering.dilution_pct*100:.1f}%")
-        
+
+        # Notify founder
+        _push_corp(company.founder_id, f"Secondary Offering Executed — {company.ticker_symbol}",
+                   f"{shares_to_issue:,} new shares issued at ${company.current_price:.2f}. "
+                   f"Net proceeds: ${net_to_founder:,.2f} ({offering.dilution_pct*100:.1f}% dilution).")
+
+        # Notify existing shareholders of dilution
+        try:
+            _sh_positions = db.query(ShareholderPosition).filter(
+                ShareholderPosition.company_shares_id == company.id,
+                ShareholderPosition.player_id != company.founder_id,
+                ShareholderPosition.shares_owned > 0
+            ).all()
+            for _sh in _sh_positions:
+                if _sh.player_id > 0:
+                    _push_corp(_sh.player_id, f"Share Dilution — {company.ticker_symbol}",
+                               f"{company.ticker_symbol} issued {shares_to_issue:,} new shares "
+                               f"({offering.dilution_pct*100:.1f}% dilution). New price: ${company.current_price:.2f}.")
+        except Exception:
+            pass
+
         # Dilution hurts credit slightly
         modify_credit_score(company.founder_id, "secondary_offering_dilution")
         
@@ -1175,6 +1209,9 @@ def pay_special_dividend(company_shares_id: int, founder_id: int, total_amount: 
                     distributed += payout
                     log_transaction(pos.player_id, "dividend", "money", payout,
                                     f"Special dividend: {company.ticker_symbol} (${per_share:.4f}/share × {pos.shares_owned:,})")
+                    _push_corp(pos.player_id, f"Dividend Received — {company.ticker_symbol}",
+                               f"You received a special dividend of ${payout:,.2f} "
+                               f"(${per_share:.4f}/share × {pos.shares_owned:,} shares).")
             auth_db2.commit()
         finally:
             auth_db2.close()
