@@ -2112,6 +2112,13 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">District Exchange</span>
             </a>
 
+            <a href="/land-market" class="dc" style="--c:#f5d76e;--g:linear-gradient(90deg,#f5d76e,#fde68a);--glow:rgba(245,215,110,0.12);--btn:#f5d76e;">
+                <span class="dc-ico">🏗️</span>
+                <div class="dc-t">Land Market</div>
+                <div class="dc-d">Buy new land to expand your empire. Government plots go to auction at set intervals — bid competitively or browse player-listed land for immediate purchase. Place standing buy orders to automatically snap up plots that meet your price.</div>
+                <span class="dc-btn">View Auctions</span>
+            </a>
+
             <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
                 <span class="dc-ico">🏦</span>
                 <div class="dc-t">Banking</div>
