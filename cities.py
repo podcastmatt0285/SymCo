@@ -1823,53 +1823,17 @@ def set_relocation_fee(mayor_id: int, city_id: int, fee_amount: float) -> Tuple[
 # ==========================
 
 def _notify_petrodollar_block(buyer_id: int, currency_type: str, message: str):
-    """Push a notification to the buyer whose trade was blocked by the petrodollar system."""
+    """Log a petrodollar block — in-game notification only, not a push."""
     if buyer_id <= 0:
         return
-    import threading
-    def _send():
-        try:
-            from push_ux import send_push_notification
-            send_push_notification(buyer_id, "Trade Pending — Petrodollar System",
-                                   message, url="/market", notif_type="trades",
-                                   tag=f"petro-block-{buyer_id}")
-        except Exception as _e:
-            print(f"[Cities] Push error (block): {_e}")
-    threading.Thread(target=_send, daemon=True).start()
+    print(f"[Cities] Petrodollar block for player {buyer_id}: {message}")
 
 
 def _broadcast_currency_opportunity(currency_type: str, needed: float, city_name: str):
-    """Notify all players who hold the needed currency that there is a pending trade opportunity."""
-    import threading
-    def _send():
-        try:
-            from push_ux import send_push_notification
-            import inventory as _inv
-            from auth import Player, get_db as _auth_get_db
-            _db = _auth_get_db()
-            try:
-                holders = _db.query(Player).filter(Player.id > 0).all()
-                _item_disp = currency_type.replace("_", " ")
-                for _p in holders:
-                    try:
-                        qty = _inv.get_item_quantity(_p.id, currency_type)
-                    except Exception:
-                        qty = 0
-                    if qty > 0:
-                        send_push_notification(
-                            _p.id,
-                            f"Market Opportunity — {_item_disp.upper()}",
-                            f"{city_name} has a pending trade requiring {needed:.2f} {_item_disp}. "
-                            f"List yours for sale to profit.",
-                            url="/market",
-                            notif_type="trades",
-                            tag=f"petro-opportunity-{currency_type}"
-                        )
-            finally:
-                _db.close()
-        except Exception as _e:
-            print(f"[Cities] Broadcast error: {_e}")
-    threading.Thread(target=_send, daemon=True).start()
+    """Log a currency opportunity — in-game notification only, not a push."""
+    _item_disp = currency_type.replace("_", " ")
+    print(f"[Cities] Market opportunity: {city_name} needs {needed:.2f} {_item_disp} — "
+          f"players holding {_item_disp} can list to profit.")
 
 def _place_bank_currency_buy_order(db, bank: "CityBank", city: "City", needed_qty: float, currency_price: float) -> None:
     """

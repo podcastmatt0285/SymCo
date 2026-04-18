@@ -384,10 +384,6 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
         if not petro_ok:
             db.rollback()
             print(f"[DistrictMarket] Trade blocked by petrodollar system: {petro_msg}")
-            if buy_order.player_id > 0:
-                _push_district(buy_order.player_id, "Trade Pending — Currency Required",
-                               f"Your purchase of {buy_order.item_type.replace('_',' ')} is on hold. "
-                               f"{petro_msg}.")
             return
         if "handled" in petro_msg:
             petrodollar_handled = True
