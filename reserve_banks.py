@@ -465,6 +465,20 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         bank.total_interest_paid += abs(actual_credit)
 
 
+def _push_reserve(player_id: int, title: str, body: str):
+    """Fire a reserve-bank push notification in a background thread."""
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url="/bonds", notif_type="general",
+                                   tag=f"reserve-{player_id}-{title[:20]}")
+        except Exception as _e:
+            print(f"[ReserveBanks] Push error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+
 def _call_bonds_if_needed(db, bank: StateReserveBank):
     """
     Bank call provision: if the current yield has fallen to ≤ BOND_CALL_YIELD_THRESHOLD
@@ -523,6 +537,14 @@ def _call_bonds_if_needed(db, bank: StateReserveBank):
               f"(purchase yield {bond.purchase_yield:.4f}, current {bank.yield_rate:.4f}). "
               f"Player {bond.holder_player_id} received {call_value + bond.interest_accrued:.4f} "
               f"{bank.currency_code} (face + {BOND_CALL_PREMIUM*100:.0f}% premium + interest).")
+        if bond.holder_player_id > 0:
+            _push_reserve(
+                bond.holder_player_id,
+                f"Bond Called — {bank.currency_code}",
+                f"Your {bank.currency_code} bond was called early. Received "
+                f"{bank.currency_symbol}{total_call_payout:.4f} {bank.currency_code} "
+                f"(face + {BOND_CALL_PREMIUM*100:.0f}% premium + accrued interest).",
+            )
 
 
 def _adjust_yield_and_fx(db, bank: StateReserveBank):
@@ -603,6 +625,13 @@ def _mature_bonds(db, bank: StateReserveBank, now: datetime):
                 reference_id=str(bond.id))
         except Exception:
             pass
+        _push_reserve(
+            bond.holder_player_id,
+            f"Bond Matured — {bank.currency_code}",
+            f"Your {bank.currency_code} bond has matured. Principal returned: "
+            f"{bank.currency_symbol}{foreign_return:.4f} {bank.currency_code} "
+            f"(+ {bond.interest_accrued:.4f} {bank.currency_code} accrued interest in your balance).",
+        )
 
 
 def _snapshot_history(db, bank: StateReserveBank, now: datetime):
@@ -1261,6 +1290,13 @@ def purchase_bond(
         annual_pct   = bank.yield_rate * 100
         daily_int    = face_value_usd * bank.yield_rate / 365
         currency_sym = bank.currency_symbol
+        _push_reserve(
+            player_id,
+            f"Bond Purchased — {currency_code}",
+            f"Bought {currency_code} {maturity_days}d bond with {paid_label}. "
+            f"Yield: {annual_pct:.3f}% p.a., ~{currency_sym}{daily_int:.4f}/day. "
+            f"Matures {bond.matures_at.strftime('%Y-%m-%d')}.",
+        )
         return True, (
             f"Bond purchased: {paid_label} → {currency_code} {maturity_days}-day bond. "
             f"Current yield: {annual_pct:.3f}% p.a. "
@@ -1358,6 +1394,12 @@ def sell_bond(player_id: int, bond_id: int) -> Tuple[bool, str]:
         penalty_note  = (
             f" Early redemption penalty: {currency_sym}{early_penalty:.4f} {currency_code}."
             if early_penalty > 0 else ""
+        )
+        _push_reserve(
+            player_id,
+            f"Bond Sold — {currency_code}",
+            f"Received {currency_sym}{foreign_return:.4f} {currency_code} "
+            f"({sign}{gain_foreign:.4f} vs face value).{penalty_note}",
         )
         return True, (
             f"Bond sold: received {currency_sym}{foreign_return:.4f} {currency_code} "
@@ -1587,8 +1629,19 @@ def set_player_legal_tender(player_id: int, currency_code: str) -> Tuple[bool, s
         db.commit()
 
         if code == "USD":
+            _push_reserve(
+                player_id,
+                "Legal Tender Changed to USD",
+                f"Your legal tender is now USD (default).{fee_msg}{conversion_msg}",
+            )
             return True, f"Legal tender set back to USD (default game currency).{fee_msg}{conversion_msg}"
 
+        _push_reserve(
+            player_id,
+            f"Legal Tender Changed to {code}",
+            f"Now using {new_bank.flag_emoji} {new_bank.currency_name} ({code}) as legal tender. "
+            f"Future income auto-converts at the live forex rate.{fee_msg}",
+        )
         return True, (
             f"Legal tender changed to {new_bank.flag_emoji} {new_bank.currency_name} ({code}). "
             f"Future income will be auto-converted at the live forex rate.{fee_msg}{conversion_msg}"

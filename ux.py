@@ -10914,31 +10914,6 @@ def api_widget_forex(device_id: Optional[str] = None,
     return JSONResponse({"pairs": pairs})
 
 
-@router.get("/api/widget/music")
-def api_widget_music(device_id: Optional[str] = None,
-                     session_token: Optional[str] = Cookie(None)):
-    """Returns WCPR station metadata for the music home-screen widget."""
-    if device_id:
-        pid = _WIDGET_DEVICE_MAP.get(device_id)
-        if not pid:
-            _load_device_map()
-            pid = _WIDGET_DEVICE_MAP.get(device_id)
-        if not pid:
-            return JSONResponse({"error": "not authenticated"}, status_code=401)
-    else:
-        player = require_auth(session_token)
-        if isinstance(player, RedirectResponse):
-            return JSONResponse({"error": "not authenticated"}, status_code=401)
-
-    return JSONResponse({
-        "station":     "WCPR 104.1",
-        "full_name":   "Wadsworth Carter Public Radio",
-        "slogan":      "The Sound of the Market",
-        "frequency":   "104.1 FM",
-        "status":      "ON AIR",
-        "deep_link":   "https://wadsworth.notifly.cc/settings?tab=audio",
-    })
-
 
 # ==========================
 # JSON API ENDPOINT

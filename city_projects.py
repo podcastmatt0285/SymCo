@@ -1400,6 +1400,37 @@ def deconstruct_project(mayor_id: int, city_id: int, instance_id: int) -> Tuple[
         db.close()
 
 
+def _notify_project_completions(completed: list):
+    """Notify all city members when a project finishes construction/upgrade."""
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            from cities import CityMember, City, get_db as _city_get_db
+            _db = _city_get_db()
+            try:
+                for _id, city_id, project_type in completed:
+                    defn = CITY_PROJECT_TYPES.get(project_type, {})
+                    proj_name = defn.get("name", project_type.replace("_", " ").title())
+                    city = _db.query(City).filter(City.id == city_id).first()
+                    city_name = city.name if city else f"City {city_id}"
+                    members = _db.query(CityMember).filter(CityMember.city_id == city_id).all()
+                    for m in members:
+                        if m.player_id > 0:
+                            send_push_notification(
+                                m.player_id,
+                                f"{proj_name} Complete — {city_name}",
+                                f"{proj_name} has finished construction in {city_name} and is now active.",
+                                url="/city-projects", notif_type="govt",
+                                tag=f"cityproj-{city_id}-{project_type}",
+                            )
+            finally:
+                _db.close()
+        except Exception as _e:
+            print(f"[CityProjects] Notification error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+
 # ──────────────────────────────────────────────────────────────
 # TICK
 # ──────────────────────────────────────────────────────────────
@@ -1428,6 +1459,7 @@ def tick(current_tick: int, now: datetime):
             _clear_project_vault(db, city_id, project_type)
         if completed_ids:
             db.commit()
+            _notify_project_completions(completed_ids)
 
         # ── 2. Increment active ticks counter ─────────────────
         db.query(CityProjectInstance).filter(

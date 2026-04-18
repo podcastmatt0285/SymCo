@@ -1822,6 +1822,55 @@ def set_relocation_fee(mayor_id: int, city_id: int, fee_amount: float) -> Tuple[
 # PETRODOLLAR TRADE HANDLING
 # ==========================
 
+def _notify_petrodollar_block(buyer_id: int, currency_type: str, message: str):
+    """Push a notification to the buyer whose trade was blocked by the petrodollar system."""
+    if buyer_id <= 0:
+        return
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(buyer_id, "Trade Pending — Petrodollar System",
+                                   message, url="/market", notif_type="trades",
+                                   tag=f"petro-block-{buyer_id}")
+        except Exception as _e:
+            print(f"[Cities] Push error (block): {_e}")
+    threading.Thread(target=_send, daemon=True).start()
+
+
+def _broadcast_currency_opportunity(currency_type: str, needed: float, city_name: str):
+    """Notify all players who hold the needed currency that there is a pending trade opportunity."""
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            import inventory as _inv
+            from auth import Player, get_db as _auth_get_db
+            _db = _auth_get_db()
+            try:
+                holders = _db.query(Player).filter(Player.id > 0).all()
+                _item_disp = currency_type.replace("_", " ")
+                for _p in holders:
+                    try:
+                        qty = _inv.get_item_quantity(_p.id, currency_type)
+                    except Exception:
+                        qty = 0
+                    if qty > 0:
+                        send_push_notification(
+                            _p.id,
+                            f"Market Opportunity — {_item_disp.upper()}",
+                            f"{city_name} has a pending trade requiring {needed:.2f} {_item_disp}. "
+                            f"List yours for sale to profit.",
+                            url="/market",
+                            notif_type="trades",
+                            tag=f"petro-opportunity-{currency_type}"
+                        )
+            finally:
+                _db.close()
+        except Exception as _e:
+            print(f"[Cities] Broadcast error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
+
 def _place_bank_currency_buy_order(db, bank: "CityBank", city: "City", needed_qty: float, currency_price: float) -> None:
     """
     Place a limit BUY order on behalf of the city bank to acquire city currency from the open market.
@@ -1979,6 +2028,8 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
                 print(f"[Cities] Trade pending: insufficient {city.currency_type} "
                       f"(market={available_currency:.2f}, reserves={bank.currency_quantity:.2f}, "
                       f"needed={currency_needed:.2f}). Bank buy order queued.")
+                # Broadcast opportunity to holders of the needed currency
+                _broadcast_currency_opportunity(city.currency_type, currency_needed, city.name)
                 return False, f"Trade pending: bank acquiring {city.currency_type} — retry when filled"
         
         # ---- STEP 3: Outsider pays in their legal tender; bank receives USD equivalent ----
@@ -2041,11 +2092,10 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
                 bank.cash_reserves -= cost
                 try:
                     from reserve_banks import convert_to_legal_tender
-                    _amt, _code = convert_to_legal_tender(order_seller.id, cost)
-                    if _code == "USD":
-                        order_seller.cash_balance += _amt
+                    convert_to_legal_tender(order_seller.id, cost)
                 except Exception:
-                    order_seller.cash_balance += cost
+                    from reserve_banks import credit_usd
+                    credit_usd(order_seller.id, cost)
             
             # 2. Transfer inventory from seller to bank's holding
             inventory.remove_item(sell_order.player_id, city.currency_type, buy_qty)
@@ -2079,6 +2129,8 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             # Queue a bank buy order so supply grows for the next attempt
             _place_bank_currency_buy_order(db, bank, city, shortfall, currency_price)
             db.rollback()
+            # Broadcast opportunity to holders of the needed currency
+            _broadcast_currency_opportunity(city.currency_type, shortfall, city.name)
             return False, f"Trade pending: bank acquiring {city.currency_type} — retry when filled"
 
         # ---- STEP 5: Deposit currency to seller ----

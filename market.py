@@ -24,6 +24,20 @@ from stats_ux import log_transaction
 # DATABASE SETUP
 # ==========================
 from database import engine, SessionLocal
+
+
+def _push_market(player_id: int, title: str, body: str):
+    """Fire a market push notification in a background thread."""
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url="/market", notif_type="trades",
+                                   tag=f"market-{player_id}-{title[:20]}")
+        except Exception as _e:
+            print(f"[Market] Push error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
 Base = declarative_base()
 
 # ==========================
@@ -152,6 +166,9 @@ def create_order(
         player = db.query(Player).filter(Player.id == player_id).first()
         if not player or not can_afford_usd(player_id, quantity * (price or 0)):
             print(f"[Market] Player {player_id} has insufficient funds for buy order")
+            _push_market(player_id, "Order Rejected — Insufficient Funds",
+                         f"Not enough funds to buy {quantity:,.4g}× {item_type.replace('_',' ')} "
+                         f"@ ${price:.4f}. Required: ${quantity*(price or 0):,.2f}.")
             db.close()
             return None
     
@@ -162,6 +179,9 @@ def create_order(
             current_quantity = inventory.get_item_quantity(player_id, item_type)
             if current_quantity < quantity:
                 print(f"[Market] Player {player_id} has insufficient inventory for sell order (has {current_quantity}, needs {quantity} {item_type})")
+                _push_market(player_id, "Order Rejected — Insufficient Inventory",
+                             f"You have {current_quantity:,.4g} {item_type.replace('_',' ')} "
+                             f"but the order requires {quantity:,.4g}.")
                 db.close()
                 return None
         except Exception as e:
@@ -233,6 +253,8 @@ def match_order(db, order: MarketOrder) -> bool:
                 ).first()
                 if member_check:
                     print(f"[Market] Blocked: Player {order.player_id} cannot buy from own city {city_id_for_check} bank listing")
+                    _push_market(order.player_id, "Order Blocked — City Member",
+                                 f"City members cannot buy from their own city bank's market listings.")
                     continue
             except Exception:
                 pass  # Cities module unavailable, proceed normally
@@ -289,6 +311,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
     db.add(trade)
     
     total_cost = quantity * price
+    _notif_tax = 0.0  # track city sales tax for seller notification
 
     # 4. Determine if this is a bank IPO sale (sell-side bank) or bank buy (buy-side bank)
     is_bank_ipo = False
@@ -343,8 +366,21 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 f"[Market] Stale sell order {sell_order.id}: seller {sell_order.player_id} has "
                 f"{current_qty:.4f} {buy_order.item_type}, need {quantity:.4f} — cancelling order"
             )
-            sell_order.status = "cancelled"
-            db.commit()
+            _sell_order_id = sell_order.id
+            _seller_pid = sell_order.player_id
+            _item_type_stale = buy_order.item_type
+            db.rollback()
+            try:
+                stale = db.query(MarketOrder).filter(MarketOrder.id == _sell_order_id).first()
+                if stale:
+                    stale.status = "cancelled"
+                    db.commit()
+            except Exception as _ce:
+                print(f"[Market] Failed to cancel stale order {_sell_order_id}: {_ce}")
+            if _seller_pid > 0:
+                _push_market(_seller_pid, "Sell Order Cancelled",
+                             f"Your sell order for {_item_type_stale.replace('_',' ')} was cancelled — "
+                             f"item was no longer in your inventory at the time of match.")
             return
 
     # 5. Handle cash transfer
@@ -442,6 +478,10 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             if not petro_ok:
                 db.rollback()
                 print(f"[Market] Trade blocked by petrodollar system: {petro_msg}")
+                if buy_order.player_id > 0:
+                    _push_market(buy_order.player_id, "Trade Pending — Currency Required",
+                                 f"Your purchase of {buy_order.item_type.replace('_',' ')} is on hold. "
+                                 f"{petro_msg}.")
                 return
             if "handled" in petro_msg:
                 petrodollar_handled = True
@@ -468,6 +508,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     return
                 # City sales tax: compute tax on total_cost, route to city bank
                 _tax_deducted = 0.0
+                _notif_tax = 0.0
                 try:
                     from city_projects import get_city_sales_tax_rate, _get_player_city_id
                     from cities import CityBank, get_db as _city_get_db
@@ -476,6 +517,7 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                         _tax_rate = get_city_sales_tax_rate(_seller_city_id)
                         if _tax_rate > 0:
                             _tax_deducted = total_cost * _tax_rate
+                            _notif_tax = _tax_deducted
                             _city_db = _city_get_db()
                             try:
                                 _city_bank = _city_db.query(CityBank).filter(
@@ -556,8 +598,16 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     stale.status = "cancelled"
                     db.commit()
                     print(f"[Market] Sell order {sell_order_id} cancelled after failed inventory transfer")
+                if sell_order.player_id > 0:
+                    _push_market(sell_order.player_id, "Sell Order Cancelled",
+                                 f"Your sell order for {buy_order.item_type.replace('_',' ')} was cancelled — "
+                                 f"insufficient inventory at time of match.")
             except Exception as _ce:
                 print(f"[Market] Failed to cancel stale order {sell_order_id}: {_ce}")
+            if buy_order.player_id > 0:
+                _push_market(buy_order.player_id, "Trade Failed — Refunded",
+                             f"Your purchase of {buy_order.item_type.replace('_',' ')} failed "
+                             f"(seller had insufficient inventory). Payment refunded.")
             return
     except Exception as e:
         print(f"[Market] Inventory Transfer Error: {e}")
@@ -612,6 +662,19 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
             quantity=quantity,
             unit_price=_unit_price,
         )
+
+    # Push trade notifications (real players only)
+    _item_disp = buy_order.item_type.replace("_", " ")
+    if buy_order.player_id > 0 and not is_bank_buyer:
+        _push_market(buy_order.player_id, "Trade Executed",
+                     f"Bought {quantity:,.4g}× {_item_disp} @ ${price:.4f} — "
+                     f"total ${total_cost:,.2f}.")
+    if not is_bank_ipo and sell_order.player_id > 0:
+        _seller_net = total_cost - _notif_tax
+        _tax_note = f" (${_notif_tax:.2f} city tax deducted)" if _notif_tax > 0 else ""
+        _push_market(sell_order.player_id, "Trade Executed",
+                     f"Sold {quantity:,.4g}× {_item_disp} @ ${price:.4f} — "
+                     f"proceeds ${_seller_net:,.2f}{_tax_note}.")
 
 # ==========================
 # MARKET DATA FUNCTIONS

@@ -1,4 +1,4 @@
-package PACKAGE_NAME;
+package cc.notifly.wadsworth;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -12,6 +12,7 @@ import android.provider.Settings;
 import android.widget.RemoteViews;
 import java.security.MessageDigest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -19,10 +20,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class MusicWidget extends AppWidgetProvider {
+public class BondsWidget extends AppWidgetProvider {
 
     static final String BASE_URL       = "https://wadsworth.notifly.cc";
-    static final String ACTION_REFRESH = "PACKAGE_NAME.MUSIC_REFRESH";
+    static final String ACTION_REFRESH = "cc.notifly.wadsworth.BONDS_REFRESH";
 
     private static String getDeviceHash(Context ctx) {
         try {
@@ -42,7 +43,7 @@ public class MusicWidget extends AppWidgetProvider {
     }
 
     private static int layoutId(Context ctx) {
-        return ctx.getResources().getIdentifier("widget_music_layout", "layout", ctx.getPackageName());
+        return ctx.getResources().getIdentifier("widget_bonds_layout", "layout", ctx.getPackageName());
     }
 
     @Override
@@ -55,7 +56,7 @@ public class MusicWidget extends AppWidgetProvider {
         super.onReceive(ctx, intent);
         if (ACTION_REFRESH.equals(intent.getAction())) {
             AppWidgetManager mgr = AppWidgetManager.getInstance(ctx);
-            int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, MusicWidget.class));
+            int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, BondsWidget.class));
             for (int id : ids) updateWidget(ctx, mgr, id);
         }
     }
@@ -65,29 +66,34 @@ public class MusicWidget extends AppWidgetProvider {
 
         int piFlags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
 
-        // Tap anywhere → open the player
-        Intent launch = new Intent(Intent.ACTION_VIEW,
-                Uri.parse(BASE_URL + "/settings?tab=audio"));
+        // Tap header → open bonds page
+        Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL + "/reserve-banks/bonds"));
         launch.setPackage(ctx.getPackageName());
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent openPi = PendingIntent.getActivity(ctx, 40, launch, piFlags);
-        views.setOnClickPendingIntent(id(ctx, "widget_music_play_btn"), openPi);
-        views.setOnClickPendingIntent(id(ctx, "widget_music_station"), openPi);
+        views.setOnClickPendingIntent(id(ctx, "widget_bonds_title"),
+                PendingIntent.getActivity(ctx, 20, launch, piFlags));
 
         // Refresh button
         Intent refresh = new Intent(ACTION_REFRESH);
-        refresh.setComponent(new ComponentName(ctx, MusicWidget.class));
+        refresh.setComponent(new ComponentName(ctx, BondsWidget.class));
         int rfFlags = Build.VERSION.SDK_INT >= 23
                 ? PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
                 : PendingIntent.FLAG_UPDATE_CURRENT;
-        views.setOnClickPendingIntent(id(ctx, "widget_music_refresh"),
-                PendingIntent.getBroadcast(ctx, 41, refresh, rfFlags));
+        views.setOnClickPendingIntent(id(ctx, "widget_bonds_refresh"),
+                PendingIntent.getBroadcast(ctx, 21, refresh, rfFlags));
+
+        // Loading state
+        views.setTextViewText(id(ctx, "widget_bonds_title"), "\uD83D\uDCC8 Bond Yields");
+        for (int i = 1; i <= 8; i++)
+            views.setTextViewText(id(ctx, "widget_bond_row" + i), "");
+        views.setTextViewText(id(ctx, "widget_bonds_updated"), "Loading\u2026");
+        mgr.updateAppWidget(widgetId, views);
 
         final String deviceHash = getDeviceHash(ctx);
 
         new Thread(() -> {
             try {
-                String dataUrl = BASE_URL + "/api/widget/music";
+                String dataUrl = BASE_URL + "/api/widget/bonds";
                 if (deviceHash != null)
                     dataUrl += "?device_id=" + Uri.encode(deviceHash);
 
@@ -100,10 +106,7 @@ public class MusicWidget extends AppWidgetProvider {
                 conn.connect();
 
                 if (conn.getResponseCode() != 200) {
-                    views.setTextViewText(id(ctx, "widget_music_station"), "Open app to log in");
-                    views.setTextViewText(id(ctx, "widget_music_slogan"), "");
-                    views.setTextViewText(id(ctx, "widget_music_freq"), "");
-                    views.setTextViewText(id(ctx, "widget_music_status"), "");
+                    views.setTextViewText(id(ctx, "widget_bonds_updated"), "Open app to log in");
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
@@ -115,24 +118,48 @@ public class MusicWidget extends AppWidgetProvider {
                 while ((line = reader.readLine()) != null) sb.append(line);
                 conn.disconnect();
 
-                JSONObject d = new JSONObject(sb.toString());
-                views.setTextViewText(id(ctx, "widget_music_station"),
-                        d.optString("station", "WCPR 104.1"));
-                views.setTextViewText(id(ctx, "widget_music_slogan"),
-                        d.optString("full_name", "Wadsworth Carter Public Radio"));
-                views.setTextViewText(id(ctx, "widget_music_freq"),
-                        d.optString("frequency", "104.1 FM"));
-                views.setTextViewText(id(ctx, "widget_music_status"),
-                        d.optString("status", "ON AIR"));
-                views.setTextViewText(id(ctx, "widget_music_play_btn"), "\u25B6 Open Player");
+                JSONObject data   = new JSONObject(sb.toString());
+                JSONArray  rates  = data.optJSONArray("rates");
+
+                String[] rowIds = {
+                    "widget_bond_row1", "widget_bond_row2", "widget_bond_row3",
+                    "widget_bond_row4", "widget_bond_row5", "widget_bond_row6",
+                    "widget_bond_row7", "widget_bond_row8"
+                };
+
+                int shown = 0;
+                for (int i = 0; i < rowIds.length; i++) {
+                    if (rates != null && i < rates.length()) {
+                        JSONObject r    = rates.getJSONObject(i);
+                        String flag     = r.optString("flag", "");
+                        String code     = r.optString("code", "");
+                        double yPct     = r.optDouble("yield_pct", 0);
+                        double chBp     = r.optDouble("change_bp", 0);
+                        String spark    = r.optString("sparkline", "");
+                        String chStr    = chBp == 0 ? "" : (chBp > 0 ? "+" : "") + String.format("%.1f", chBp) + "bp";
+                        String row      = flag + " " + code + "  " + String.format("%.2f%%", yPct)
+                                        + (chStr.isEmpty() ? "" : "  " + chStr)
+                                        + (spark.isEmpty() ? "" : "  " + spark);
+                        views.setTextViewText(id(ctx, rowIds[i]), row);
+                        // colour change indicator
+                        if (chBp > 0)
+                            views.setTextColor(id(ctx, rowIds[i]), 0xFFEF4444); // red = yield up = price down
+                        else if (chBp < 0)
+                            views.setTextColor(id(ctx, rowIds[i]), 0xFF22C55E); // green = yield down = price up
+                        else
+                            views.setTextColor(id(ctx, rowIds[i]), 0xFF94A3B8);
+                        shown++;
+                    } else {
+                        views.setTextViewText(id(ctx, rowIds[i]), "");
+                    }
+                }
+
+                views.setTextViewText(id(ctx, "widget_bonds_updated"),
+                        shown + " currencies  \u2022  tap to open");
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
-                views.setTextViewText(id(ctx, "widget_music_station"), "WCPR 104.1");
-                views.setTextViewText(id(ctx, "widget_music_slogan"), "Wadsworth Carter Public Radio");
-                views.setTextViewText(id(ctx, "widget_music_freq"), "104.1 FM");
-                views.setTextViewText(id(ctx, "widget_music_status"), "ON AIR");
-                views.setTextViewText(id(ctx, "widget_music_play_btn"), "\u25B6 Open Player");
+                views.setTextViewText(id(ctx, "widget_bonds_updated"), "Tap \u21bb to refresh");
                 mgr.updateAppWidget(widgetId, views);
             }
         }).start();

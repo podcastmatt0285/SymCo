@@ -27,6 +27,20 @@ from sqlalchemy.orm import sessionmaker
 # DATABASE SETUP
 # ==========================
 from database import engine, SessionLocal
+
+
+def _push_district(player_id: int, title: str, body: str):
+    """Fire a district-market push notification in a background thread."""
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url="/district-market", notif_type="trades",
+                                   tag=f"dmarket-{player_id}-{title[:20]}")
+        except Exception as _e:
+            print(f"[DistrictMarket] Push error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
 Base = declarative_base()
 
 # ==========================
@@ -201,6 +215,9 @@ def create_order(
         player = db.query(Player).filter(Player.id == player_id).first()
         if not player or not can_afford_usd(player_id, quantity * (price or 0)):
             print(f"[DistrictMarket] Player {player_id} has insufficient funds for buy order")
+            _push_district(player_id, "Order Rejected — Insufficient Funds",
+                           f"Not enough funds to buy {quantity:,.4g}× {item_type.replace('_',' ')} "
+                           f"@ ${price:.4f}. Required: ${quantity*(price or 0):,.2f}.")
             db.close()
             return None
     
@@ -211,6 +228,9 @@ def create_order(
             current_quantity = inventory.get_item_quantity(player_id, item_type)
             if current_quantity < quantity:
                 print(f"[DistrictMarket] Player {player_id} has insufficient inventory (has {current_quantity}, needs {quantity} {item_type})")
+                _push_district(player_id, "Order Rejected — Insufficient Inventory",
+                               f"You have {current_quantity:,.4g} {item_type.replace('_',' ')} "
+                               f"but the order requires {quantity:,.4g}.")
                 db.close()
                 return None
         except Exception as e:
@@ -320,7 +340,8 @@ def match_order(db, order: DistrictMarketOrder) -> bool:
 def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarketOrder, quantity: float, price: float):
     """Execute a district trade between two orders."""
     total_cost = quantity * price
-    
+    _notif_tax = 0.0  # track city sales tax for seller notification
+
     # Create trade record
     trade = DistrictTrade(
         buyer_id=buy_order.player_id,
@@ -332,10 +353,10 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
         price=price
     )
     db.add(trade)
-    
+
     print(f"[DistrictMarket] Trade: {quantity} {buy_order.item_type} @ ${price:.2f} "
           f"(Player {sell_order.player_id} -> Player {buy_order.player_id})")
-    
+
     # Pre-flight: verify seller has the items before taking payment
     import inventory
     current_qty = inventory.get_item_quantity(sell_order.player_id, buy_order.item_type)
@@ -346,20 +367,69 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
         )
         sell_order.status = "cancelled"
         db.commit()
+        if sell_order.player_id > 0:
+            _push_district(sell_order.player_id, "Sell Order Cancelled",
+                           f"Your district sell order for {buy_order.item_type.replace('_',' ')} was cancelled — "
+                           f"item was no longer in your inventory at the time of match.")
         return
 
-    # Transfer cash
+    # Petrodollar hook + cash transfer
+    petrodollar_handled = False
     try:
-        from auth import transfer_cash
-        success = transfer_cash(buy_order.player_id, sell_order.player_id, total_cost)
-        if not success:
-            print(f"[DistrictMarket] Cash transfer failed!")
+        from cities import handle_outsider_trade
+        petro_ok, petro_msg = handle_outsider_trade(
+            buy_order.player_id, sell_order.player_id,
+            buy_order.item_type, quantity, price
+        )
+        if not petro_ok:
+            db.rollback()
+            print(f"[DistrictMarket] Trade blocked by petrodollar system: {petro_msg}")
+            if buy_order.player_id > 0:
+                _push_district(buy_order.player_id, "Trade Pending — Currency Required",
+                               f"Your purchase of {buy_order.item_type.replace('_',' ')} is on hold. "
+                               f"{petro_msg}.")
+            return
+        if "handled" in petro_msg:
+            petrodollar_handled = True
+    except ImportError:
+        pass
+    except Exception as _pe:
+        print(f"[DistrictMarket] Petrodollar hook error (non-fatal): {_pe}")
+
+    if not petrodollar_handled:
+        from reserve_banks import spend_player_funds, convert_to_legal_tender
+        ok, _err = spend_player_funds(buy_order.player_id, total_cost)
+        if not ok:
+            print(f"[DistrictMarket] Cash transfer failed: {_err}")
             db.rollback()
             return
-    except ImportError:
-        print("[DistrictMarket] ERROR: Auth module not available")
-        db.rollback()
-        return
+        # City sales tax
+        try:
+            from city_projects import get_city_sales_tax_rate, _get_player_city_id
+            from cities import CityBank, get_db as _city_get_db
+            _seller_city_id = _get_player_city_id(sell_order.player_id)
+            if _seller_city_id:
+                _tax_rate = get_city_sales_tax_rate(_seller_city_id)
+                if _tax_rate > 0:
+                    _notif_tax = total_cost * _tax_rate
+                    _city_db = _city_get_db()
+                    try:
+                        _city_bank = _city_db.query(CityBank).filter(
+                            CityBank.city_id == _seller_city_id).first()
+                        if _city_bank:
+                            _city_bank.cash_reserves = (_city_bank.cash_reserves or 0.0) + _notif_tax
+                        _city_db.commit()
+                    finally:
+                        _city_db.close()
+        except Exception:
+            _notif_tax = 0.0
+
+        seller_net = total_cost - _notif_tax
+        try:
+            convert_to_legal_tender(sell_order.player_id, seller_net)
+        except Exception:
+            from reserve_banks import credit_usd
+            credit_usd(sell_order.player_id, seller_net)
 
     # Transfer inventory
     try:
@@ -375,30 +445,41 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
                 f"[DistrictMarket] Inventory transfer failed! Seller {sell_order.player_id} has "
                 f"{actual_qty:.4f} {buy_order.item_type}, needed {quantity:.4f} — reversing payment"
             )
-            # Reverse the payment (refund buyer, debit seller back)
-            try:
-                transfer_cash(sell_order.player_id, buy_order.player_id, total_cost)
-            except Exception as _rev_e:
-                print(f"[DistrictMarket] Payment reversal error (manual reconciliation needed): {_rev_e}")
-            # Rollback first (reverts quantity_filled increments and trade record),
-            # then cancel the sell order in a fresh transaction.
-            sell_order_id = sell_order.id
+            _sell_order_id = sell_order.id
+            _buyer_pid = buy_order.player_id
+            _seller_pid = sell_order.player_id
+            _item_type_fail = buy_order.item_type
             db.rollback()
+            # spend_player_funds uses its own session so db.rollback() won't undo it — refund explicitly
+            if not petrodollar_handled and _buyer_pid > 0:
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(_buyer_pid, total_cost)
+                except Exception as _re:
+                    print(f"[DistrictMarket] Refund error (manual reconciliation needed): {_re}")
             try:
-                stale = db.query(DistrictMarketOrder).filter(DistrictMarketOrder.id == sell_order_id).first()
+                stale = db.query(DistrictMarketOrder).filter(DistrictMarketOrder.id == _sell_order_id).first()
                 if stale:
                     stale.status = "cancelled"
                     db.commit()
-                    print(f"[DistrictMarket] Sell order {sell_order_id} cancelled after failed inventory transfer")
+                    print(f"[DistrictMarket] Sell order {_sell_order_id} cancelled after failed inventory transfer")
+                    if _seller_pid > 0:
+                        _push_district(_seller_pid, "Sell Order Cancelled",
+                                       f"Your district sell order for {_item_type_fail.replace('_',' ')} "
+                                       f"was cancelled — insufficient inventory at time of match.")
             except Exception as _ce:
-                print(f"[DistrictMarket] Failed to cancel stale order {sell_order_id}: {_ce}")
+                print(f"[DistrictMarket] Failed to cancel stale order {_sell_order_id}: {_ce}")
+            if _buyer_pid > 0:
+                _push_district(_buyer_pid, "Trade Failed — Refunded",
+                               f"Your district purchase of {_item_type_fail.replace('_',' ')} failed "
+                               f"(seller had insufficient inventory). Payment refunded.")
             return
     except Exception as e:
         print(f"[DistrictMarket] Inventory error: {e}")
         db.rollback()
         return
-    
-    # Log transactions — one entry per side, with unit_price for cost-average tracking
+
+    # Log transactions
     try:
         from stats_ux import log_transaction
         _unit_price = price
@@ -422,10 +503,23 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
             quantity=quantity,
             unit_price=_unit_price,
         )
-    except:
-        pass  # Stats logging is optional
-    
+    except Exception:
+        pass
+
     db.commit()
+
+    # Push trade notifications (real players only)
+    _item_disp = buy_order.item_type.replace("_", " ")
+    if buy_order.player_id > 0:
+        _push_district(buy_order.player_id, "Trade Executed",
+                       f"Bought {quantity:,.4g}× {_item_disp} @ ${price:.4f} — "
+                       f"total ${total_cost:,.2f}.")
+    if sell_order.player_id > 0:
+        _seller_net = total_cost - _notif_tax
+        _tax_note = f" (${_notif_tax:.2f} city tax deducted)" if _notif_tax > 0 else ""
+        _push_district(sell_order.player_id, "Trade Executed",
+                       f"Sold {quantity:,.4g}× {_item_disp} @ ${price:.4f} — "
+                       f"proceeds ${_seller_net:,.2f}{_tax_note}.")
 
 # ==========================
 # MARKET DATA FUNCTIONS

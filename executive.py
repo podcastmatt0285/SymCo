@@ -1518,10 +1518,16 @@ def _process_aging(db, current_tick: int):
 
         # Death check
         if ex.current_age >= ex.max_age:
-            ex.is_dead       = True
+            ex.is_dead        = True
             ex.on_marketplace = False
             if ex.player_id is not None:
+                _deceased_pid = ex.player_id
                 print(f"[Executive] {ex.first_name} {ex.last_name} has passed away at age {ex.current_age}.")
+                _fire_exec_push(
+                    _deceased_pid,
+                    f"{ex.first_name} {ex.last_name} Has Passed Away",
+                    f"Your executive passed away at age {ex.current_age}. Their position is now vacant.",
+                )
                 ex.player_id = None
             continue
 
@@ -1656,6 +1662,11 @@ def _process_wages(db, current_tick: int):
                 ex.missed_payments += 1
                 print(f"[Executive] Crisis Manager shields {ex.first_name} {ex.last_name} "
                       f"from immediate quit — one pay cycle grace period granted.")
+                _fire_exec_push(
+                    ex.player_id,
+                    f"Crisis Manager Intervened — {ex.first_name} {ex.last_name}",
+                    f"Your Crisis Manager granted {ex.first_name} {ex.last_name} a one-cycle wage grace. Pay soon or they will quit.",
+                )
             else:
                 _quit_for_nonpayment(db, ex, player)
         else:

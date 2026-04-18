@@ -27,6 +27,20 @@ from stats_ux import log_transaction
 # DATABASE SETUP
 # ==========================
 from database import engine, SessionLocal
+
+
+def _push_ob(player_id: int, title: str, body: str, url: str = "/wpe"):
+    """Fire an order-book push notification in a background thread."""
+    import threading
+    def _send():
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(player_id, title, body,
+                                   url=url, notif_type="trades",
+                                   tag=f"ob-{player_id}-{title[:20]}")
+        except Exception as _e:
+            print(f"[OrderBook] Push error: {_e}")
+    threading.Thread(target=_send, daemon=True).start()
 Base = declarative_base()
 
 # ==========================
@@ -277,10 +291,15 @@ def place_limit_order(
         
         if not company or company.is_delisted:
             print(f"[OrderBook] Company not found or delisted")
+            if company and company.is_delisted:
+                _push_ob(player_id, "Order Rejected",
+                         f"{company.ticker_symbol} is currently delisted and cannot be traded.")
             return None
-        
+
         if company.trading_halted_until and datetime.utcnow() < company.trading_halted_until:
             print(f"[OrderBook] Trading halted for {company.ticker_symbol}")
+            _push_ob(player_id, "Order Rejected — Trading Halted",
+                     f"Trading is temporarily halted for {company.ticker_symbol}. Try again later.")
             return None
         
         # Create order
@@ -308,6 +327,8 @@ def place_limit_order(
                 max_leverage = get_max_leverage_for_player(player_id)
                 if margin_multiplier > max_leverage:
                     print(f"[OrderBook] Margin multiplier {margin_multiplier}x exceeds max {max_leverage}x")
+                    _push_ob(player_id, "Order Rejected — Margin Limit",
+                             f"Margin multiplier {margin_multiplier}x exceeds your approved limit of {max_leverage}x.")
                     return None
                 
                 # Only need to reserve player's portion
@@ -321,6 +342,9 @@ def place_limit_order(
             ok, err = spend_player_funds(player_id, order.reserved_cash)
             if not ok:
                 print(f"[OrderBook] Insufficient cash: {err}")
+                _push_ob(player_id, "Order Rejected — Insufficient Funds",
+                         f"Not enough funds to place a buy order for {quantity:,} {company.ticker_symbol} "
+                         f"@ ${limit_price:.2f}. Required: ${order.reserved_cash:,.2f}.")
                 return None
         
         else:  # SELL
@@ -330,12 +354,18 @@ def place_limit_order(
                     remaining = (company.lockup_expires_at - datetime.utcnow()).days + 1
                     print(f"[OrderBook] Founder lockup active for {company.ticker_symbol}: "
                           f"{remaining} day(s) remaining")
+                    _push_ob(player_id, "Order Rejected — Founder Lockup",
+                             f"You cannot sell {company.ticker_symbol} yet. "
+                             f"Founder lockup expires in {remaining} day(s).")
                     return None
 
             # Reserve shares for sell order
             available_shares = get_player_shares(player_id, company_shares_id)
             if available_shares < quantity:
                 print(f"[OrderBook] Insufficient shares: need {quantity}, have {available_shares}")
+                _push_ob(player_id, "Order Rejected — Insufficient Shares",
+                         f"You have {available_shares:,} available {company.ticker_symbol} shares "
+                         f"but the order requires {quantity:,}.")
                 return None
 
             order.reserved_shares = quantity
@@ -407,6 +437,9 @@ def place_market_order(
             
             if not best_order:
                 print(f"[OrderBook] No sell orders available for market buy")
+                _push_ob(player_id, "Market Order Failed",
+                         f"No sell orders are currently available for {company.ticker_symbol}. "
+                         f"Place a limit order instead.")
                 return False
             
             # Estimate price (could be higher if order book is thin)
@@ -422,6 +455,9 @@ def place_market_order(
             
             if not best_order:
                 print(f"[OrderBook] No buy orders available for market sell")
+                _push_ob(player_id, "Market Order Failed",
+                         f"No buy orders are currently available for {company.ticker_symbol}. "
+                         f"Place a limit order instead.")
                 return False
             
             estimated_price = best_order.limit_price * 0.95  # Subtract 5% buffer
@@ -557,18 +593,30 @@ def match_orders(company_shares_id: int):
                     buy_order.filled_quantity += trade_quantity
                     sell_order.filled_quantity += trade_quantity
                     
-                    # Update statuses
+                    # Update statuses and notify players
                     if buy_order.filled_quantity >= buy_order.quantity:
                         buy_order.status = OrderStatus.FILLED.value
                         buy_order.filled_at = datetime.utcnow()
+                        _push_ob(buy_order.player_id, f"Buy Order Filled — {company.ticker_symbol}",
+                                 f"Your order for {buy_order.quantity:,} {company.ticker_symbol} "
+                                 f"@ ${buy_order.limit_price:.2f} was fully filled at ${execution_price:.2f}.")
                     else:
                         buy_order.status = OrderStatus.PARTIAL.value
-                    
+                        _push_ob(buy_order.player_id, f"Partial Fill — {company.ticker_symbol}",
+                                 f"{trade_quantity:,} of {buy_order.quantity:,} {company.ticker_symbol} "
+                                 f"filled @ ${execution_price:.2f}. Order still active.")
+
                     if sell_order.filled_quantity >= sell_order.quantity:
                         sell_order.status = OrderStatus.FILLED.value
                         sell_order.filled_at = datetime.utcnow()
+                        _push_ob(sell_order.player_id, f"Sell Order Filled — {company.ticker_symbol}",
+                                 f"Your listing of {sell_order.quantity:,} {company.ticker_symbol} "
+                                 f"@ ${sell_order.limit_price:.2f} was fully sold at ${execution_price:.2f}.")
                     else:
                         sell_order.status = OrderStatus.PARTIAL.value
+                        _push_ob(sell_order.player_id, f"Partial Fill — {company.ticker_symbol}",
+                                 f"{trade_quantity:,} of {sell_order.quantity:,} {company.ticker_symbol} "
+                                 f"sold @ ${execution_price:.2f}. Listing still active.")
                 
                 # If buy order is filled, move to next buy order
                 if buy_order.filled_quantity >= buy_order.quantity:
@@ -865,7 +913,18 @@ def cancel_order(player_id: int, order_id: int) -> bool:
         
         order.status = OrderStatus.CANCELLED.value
         db.commit()
-        
+
+        try:
+            from banks.brokerage_firm import CompanyShares as _CS
+            _comp = db.query(_CS).filter(_CS.id == order.company_shares_id).first()
+            _ticker = _comp.ticker_symbol if _comp else "?"
+        except Exception:
+            _ticker = "?"
+        _side = "buy" if order.order_side == OrderSide.BUY.value else "sell"
+        _push_ob(player_id, f"Order Cancelled — {_ticker}",
+                 f"Your {_side} order for {order.quantity:,} {_ticker} has been cancelled"
+                 + (" and reserved funds released." if _side == "buy" else "."))
+
         print(f"[OrderBook] Cancelled order {order_id}")
         return True
     
@@ -896,14 +955,30 @@ def expire_old_orders():
                 unfilled_quantity = order.quantity - order.filled_quantity
                 cash_per_share = order.reserved_cash / order.quantity
                 cash_to_release = cash_per_share * unfilled_quantity
-                
+
                 try:
                     from reserve_banks import convert_to_legal_tender
                     convert_to_legal_tender(order.player_id, cash_to_release)
                 except Exception as _ex:
                     print(f"[OrderBook] expiry refund error: {_ex}")
-            
+
             order.status = OrderStatus.EXPIRED.value
+
+            # Notify the player — look up ticker for the message
+            try:
+                from banks.brokerage_firm import CompanyShares as _CS
+                _comp = db.query(_CS).filter(_CS.id == order.company_shares_id).first()
+                _ticker = _comp.ticker_symbol if _comp else "?"
+            except Exception:
+                _ticker = "?"
+            _unfilled = order.quantity - order.filled_quantity
+            if order.order_side == OrderSide.BUY.value:
+                _push_ob(order.player_id, f"Buy Order Expired — {_ticker}",
+                         f"Your buy order for {_unfilled:,} {_ticker} expired unfilled. "
+                         f"Reserved funds have been released.")
+            else:
+                _push_ob(order.player_id, f"Sell Order Expired — {_ticker}",
+                         f"Your sell order for {_unfilled:,} {_ticker} expired unfilled.")
         
         if expired:
             print(f"[OrderBook] Expired {len(expired)} old order(s)")
