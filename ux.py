@@ -6510,7 +6510,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             </a>'''
         company_tabs += '</div>'
         
-        if not selected_company:
+        if not selected_company and mode != "etf":
             body = f'''
             <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
             <h1>WPE Trading Floor</h1>
@@ -6518,205 +6518,6 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             <a href="/brokerage/ipo" class="btn-blue">Launch the First IPO</a>
             '''
             return shell("WPE Trading", body, player.cash_balance, player.id)
-
-        # Get order book data for selected company
-        order_book = get_order_book_depth(selected_company.id, depth=10)
-        recent_trades = get_recent_fills(selected_company.id, limit=10)
-
-        # Get player's pending orders for this company
-        book_db = get_book_db()
-        try:
-            pending_orders = book_db.query(OrderBook).filter(
-                OrderBook.player_id == player.id,
-                OrderBook.company_shares_id == selected_company.id,
-                OrderBook.status.in_([
-                    OrderStatus.PENDING.value,
-                    OrderStatus.PARTIAL.value
-                ])
-            ).order_by(OrderBook.created_at.desc()).all()
-        finally:
-            book_db.close()
-        
-        # Get player's position in selected company
-        player_position = player_positions.get(selected_company.id)
-        # shares_lent_out are locked as collateral for active short loans — they
-        # cannot be sold until recalled/returned, matching get_player_shares() logic.
-        player_shares = max(0, (player_position.shares_owned or 0) - (player_position.shares_lent_out or 0)) if player_position else 0
-        player_cost_basis = player_position.average_cost_basis if player_position else 0
-        
-        # Calculate margin multiplier for this stock
-        max_margin = calculate_margin_multiplier(player.id, selected_company.id)
-        
-        # Trading halted check
-        is_halted = selected_company.trading_halted_until and datetime.utcnow() < selected_company.trading_halted_until
-        
-        # ===== MODERN TRADING DASHBOARD =====
-
-        # Portfolio totals for summary bar
-        total_portfolio_value = 0
-        total_portfolio_cost = 0
-        total_margin_debt = 0
-        positions_data = []
-
-        for company in companies:
-            pos = player_positions.get(company.id)
-            shares = pos.shares_owned if pos else 0
-            cost_basis = pos.average_cost_basis if pos else 0
-            mkt_val = shares * company.current_price
-            cost_total = shares * cost_basis
-            pl = mkt_val - cost_total if shares > 0 else 0
-            margin_debt_val = 0
-            if pos and hasattr(pos, 'margin_debt') and pos.margin_debt:
-                margin_debt_val = pos.margin_debt
-
-            total_portfolio_value += mkt_val
-            total_portfolio_cost += cost_total
-            total_margin_debt += margin_debt_val
-
-            positions_data.append({
-                'company': company,
-                'shares': shares,
-                'cost_basis': cost_basis,
-                'mkt_val': mkt_val,
-                'pl': pl,
-                'is_selected': company.id == selected_company.id
-            })
-
-        total_pl = total_portfolio_value - total_portfolio_cost
-        total_pl_pct = (total_pl / total_portfolio_cost * 100) if total_portfolio_cost > 0 else 0
-        num_positions = sum(1 for p in positions_data if p['shares'] > 0)
-
-        # Price change from IPO
-        price_change = selected_company.current_price - selected_company.ipo_price
-        price_change_pct = (price_change / selected_company.ipo_price * 100) if selected_company.ipo_price > 0 else 0
-        change_color = "#22c55e" if price_change >= 0 else "#ef4444"
-        change_sign = "+" if price_change >= 0 else ""
-
-        # Player position metrics for selected stock
-        player_mkt_value = player_shares * selected_company.current_price
-        player_total_cost = player_shares * player_cost_basis
-        player_pl = player_mkt_value - player_total_cost if player_shares > 0 else 0
-        player_pl_pct = (player_pl / player_total_cost * 100) if player_total_cost > 0 else 0
-        pl_color = "#22c55e" if player_pl >= 0 else "#ef4444"
-
-        # Generate SVG sparkline from recent trades
-        sparkline_svg = '<div style="height:80px;display:flex;align-items:center;justify-content:center;color:#334155;font-size:0.75rem;">No trade history</div>'
-        if recent_trades:
-            spark_prices = [t['price'] for t in reversed(recent_trades)]
-            if len(spark_prices) >= 2:
-                min_p = min(spark_prices)
-                max_p = max(spark_prices)
-                pr = max_p - min_p if max_p != min_p else 1
-                pts = []
-                area = []
-                for i, p in enumerate(spark_prices):
-                    x = 2 + i / (len(spark_prices) - 1) * 496
-                    y = 2 + 76 - ((p - min_p) / pr * 76)
-                    pts.append(f"{x:.1f},{y:.1f}")
-                    area.append(f"{x:.1f},{y:.1f}")
-                area.append("498,80")
-                area.append("2,80")
-                lc = "#22c55e" if spark_prices[-1] >= spark_prices[0] else "#ef4444"
-                sparkline_svg = f'<svg viewBox="0 0 500 80" preserveAspectRatio="none" style="width:100%;height:80px;display:block;"><defs><linearGradient id="sfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="{lc}" stop-opacity="0.2"/><stop offset="100%" stop-color="{lc}" stop-opacity="0.01"/></linearGradient></defs><polygon points="{" ".join(area)}" fill="url(#sfill)"/><polyline points="{" ".join(pts)}" fill="none" stroke="{lc}" stroke-width="1.5" stroke-linejoin="round"/></svg>'
-
-        # Dividend display
-        dividend_display = "None"
-        if selected_company.dividend_config:
-            div_parts = []
-            for div in selected_company.dividend_config:
-                dt = div.get("type", "")
-                freq = div.get("frequency", "")
-                if dt == "cash":
-                    div_parts.append(f'Cash {div.get("amount",0)*100:.1f}% ({freq})')
-                elif dt == "commodity":
-                    div_parts.append(f'{div.get("item","item")}: {div.get("amount",0)}/{div.get("per_shares",100)}shs ({freq})')
-                elif dt == "scrip":
-                    div_parts.append(f'Stock {div.get("rate",0)*100:.1f}% ({freq})')
-            if div_parts:
-                dividend_display = " | ".join(div_parts)
-
-        # Build positions sidebar HTML
-        positions_html = ""
-        for pd_item in positions_data:
-            c = pd_item['company']
-            is_sel = pd_item['is_selected']
-            bg = "#1e293b" if is_sel else "transparent"
-            bl = "3px solid #38bdf8" if is_sel else "3px solid transparent"
-            shares_txt = f"{pd_item['shares']:,} shs" if pd_item['shares'] > 0 else ""
-            pl_txt = ""
-            plc = "#64748b"
-            if pd_item['shares'] > 0 and pd_item['cost_basis'] > 0:
-                plc = "#22c55e" if pd_item['pl'] >= 0 else "#ef4444"
-                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}{_abbr(pd_item['pl'], disp)}"
-            positions_html += f'<a href="/brokerage/trading?ticker={c.ticker_symbol}" style="display:block;padding:8px 10px;border-left:{bl};background:{bg};text-decoration:none;color:#e5e7eb;">'
-            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;min-width:0;gap:4px;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;flex-shrink:0;">{c.ticker_symbol}</span><span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{_abbr(c.current_price, disp)}</span></div>'
-            if shares_txt or pl_txt:
-                positions_html += f'<div style="display:flex;justify-content:space-between;margin-top:2px;font-size:0.7rem;min-width:0;gap:4px;"><span style="color:#64748b;flex-shrink:0;">{shares_txt}</span><span style="color:{plc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{pl_txt}</span></div>'
-            positions_html += '</a>'
-
-        # Build order book depth ladder
-        spread = order_book['spread']
-        spread_pct = order_book['spread_pct']
-        all_bq = [q for _, q in order_book['bids']] + [q for _, q in order_book['asks']]
-        max_bq = max(all_bq) if all_bq else 1
-
-        ob_html = '<div style="font-size:0.7rem;color:#475569;display:grid;grid-template-columns:1fr 1fr;padding:2px 8px;margin-bottom:4px;"><span>PRICE</span><span style="text-align:right;">QTY</span></div>'
-        if order_book['asks']:
-            for price, qty in reversed(order_book['asks']):
-                bw = qty / max_bq * 100
-                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(239,68,68,0.1);"></div><span style="color:#ef4444;position:relative;">{fmt_usd(price, disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
-        else:
-            ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No asks</div>'
-        ob_html += f'<div style="padding:4px 8px;text-align:center;font-size:0.7rem;color:#64748b;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#0a0f1a;">Spread {fmt_usd(spread, disp, precision=4)} ({spread_pct:.2f}%)</div>'
-        if order_book['bids']:
-            for price, qty in order_book['bids']:
-                bw = qty / max_bq * 100
-                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(34,197,94,0.1);"></div><span style="color:#22c55e;position:relative;">{fmt_usd(price, disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
-        else:
-            ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No bids</div>'
-
-        # Build recent trades (time & sales)
-        trades_html = ""
-        if recent_trades:
-            prev_price = None
-            for trade in recent_trades:
-                trade_time = trade.get('timestamp', '')
-                time_str = ""
-                if isinstance(trade_time, str):
-                    try:
-                        trade_dt = datetime.fromisoformat(trade_time.replace('Z', '+00:00'))
-                        time_str = trade_dt.strftime("%H:%M")
-                    except:
-                        time_str = ""
-                elif trade_time:
-                    time_str = trade_time.strftime("%H:%M")
-                tc = "#94a3b8"
-                if prev_price is not None:
-                    tc = "#22c55e" if trade['price'] >= prev_price else "#ef4444"
-                prev_price = trade['price']
-                trades_html += f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.8rem;padding:2px 8px;"><span style="color:{tc};">{fmt_usd(trade["price"], disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;">{trade["quantity"]:,}</span><span style="text-align:right;color:#475569;">{time_str}</span></div>'
-        else:
-            trades_html = '<div style="padding:8px;color:#334155;font-size:0.75rem;text-align:center;">No trades yet</div>'
-
-        # Build pending orders
-        pending_html = ""
-        if pending_orders:
-            pending_html = f'<div style="margin-top:12px;"><div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding:0 4px;">Open Orders ({len(pending_orders)})</div>'
-            for order in pending_orders:
-                sc = "#22c55e" if order.order_side == "BUY" else "#ef4444"
-                pd_str = f"{fmt_usd(order.limit_price, disp, precision=4)}" if order.limit_price else "MKT"
-                rem = order.quantity - order.filled_quantity
-                pending_html += f'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 4px;border-top:1px solid #0f172a;font-size:0.8rem;"><div><span style="color:{sc};font-weight:600;">{order.order_side}</span> <span style="color:#94a3b8;">{rem:,} @ {pd_str}</span></div><form action="/api/brokerage/cancel-order" method="post" style="display:inline;margin:0;"><input type="hidden" name="order_id" value="{order.id}"><button type="submit" style="background:none;border:1px solid #334155;color:#94a3b8;padding:1px 6px;font-size:0.7rem;cursor:pointer;">X</button></form></div>'
-            pending_html += '</div>'
-
-        # Halted banner
-        halted_html = ""
-        if is_halted:
-            halted_html = f'<div style="background:#451a03;border:1px solid #f59e0b;padding:8px 12px;font-size:0.8rem;color:#fbbf24;text-align:center;margin-bottom:12px;">TRADING HALTED - Circuit breaker until {selected_company.trading_halted_until.strftime("%H:%M UTC")}</div>'
-
-        # Margin debt HTML for summary bar
-        margin_debt_html = f"<div style='min-width:0;'><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;' title='{fmt_usd(total_margin_debt, disp)}'>{_abbr(total_margin_debt, disp)}</div></div>" if total_margin_debt > 0 else ""
-
         # Dashboard CSS (built as regular string to avoid f-string brace conflicts)
         td_css = '<style>'
         td_css += '.container{max-width:1440px!important;}'
@@ -7125,6 +6926,206 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             '''
             return shell("ETF Trading", etf_body, player.cash_balance, player.id)
         # ─────────────────────────────────────────────────────────────────────────
+
+        # Get order book data for selected company
+        order_book = get_order_book_depth(selected_company.id, depth=10)
+        recent_trades = get_recent_fills(selected_company.id, limit=10)
+
+        # Get player's pending orders for this company
+        book_db = get_book_db()
+        try:
+            pending_orders = book_db.query(OrderBook).filter(
+                OrderBook.player_id == player.id,
+                OrderBook.company_shares_id == selected_company.id,
+                OrderBook.status.in_([
+                    OrderStatus.PENDING.value,
+                    OrderStatus.PARTIAL.value
+                ])
+            ).order_by(OrderBook.created_at.desc()).all()
+        finally:
+            book_db.close()
+        
+        # Get player's position in selected company
+        player_position = player_positions.get(selected_company.id)
+        # shares_lent_out are locked as collateral for active short loans — they
+        # cannot be sold until recalled/returned, matching get_player_shares() logic.
+        player_shares = max(0, (player_position.shares_owned or 0) - (player_position.shares_lent_out or 0)) if player_position else 0
+        player_cost_basis = player_position.average_cost_basis if player_position else 0
+        
+        # Calculate margin multiplier for this stock
+        max_margin = calculate_margin_multiplier(player.id, selected_company.id)
+        
+        # Trading halted check
+        is_halted = selected_company.trading_halted_until and datetime.utcnow() < selected_company.trading_halted_until
+        
+        # ===== MODERN TRADING DASHBOARD =====
+
+        # Portfolio totals for summary bar
+        total_portfolio_value = 0
+        total_portfolio_cost = 0
+        total_margin_debt = 0
+        positions_data = []
+
+        for company in companies:
+            pos = player_positions.get(company.id)
+            shares = pos.shares_owned if pos else 0
+            cost_basis = pos.average_cost_basis if pos else 0
+            mkt_val = shares * company.current_price
+            cost_total = shares * cost_basis
+            pl = mkt_val - cost_total if shares > 0 else 0
+            margin_debt_val = 0
+            if pos and hasattr(pos, 'margin_debt') and pos.margin_debt:
+                margin_debt_val = pos.margin_debt
+
+            total_portfolio_value += mkt_val
+            total_portfolio_cost += cost_total
+            total_margin_debt += margin_debt_val
+
+            positions_data.append({
+                'company': company,
+                'shares': shares,
+                'cost_basis': cost_basis,
+                'mkt_val': mkt_val,
+                'pl': pl,
+                'is_selected': company.id == selected_company.id
+            })
+
+        total_pl = total_portfolio_value - total_portfolio_cost
+        total_pl_pct = (total_pl / total_portfolio_cost * 100) if total_portfolio_cost > 0 else 0
+        num_positions = sum(1 for p in positions_data if p['shares'] > 0)
+
+        # Price change from IPO
+        price_change = selected_company.current_price - selected_company.ipo_price
+        price_change_pct = (price_change / selected_company.ipo_price * 100) if selected_company.ipo_price > 0 else 0
+        change_color = "#22c55e" if price_change >= 0 else "#ef4444"
+        change_sign = "+" if price_change >= 0 else ""
+
+        # Player position metrics for selected stock
+        player_mkt_value = player_shares * selected_company.current_price
+        player_total_cost = player_shares * player_cost_basis
+        player_pl = player_mkt_value - player_total_cost if player_shares > 0 else 0
+        player_pl_pct = (player_pl / player_total_cost * 100) if player_total_cost > 0 else 0
+        pl_color = "#22c55e" if player_pl >= 0 else "#ef4444"
+
+        # Generate SVG sparkline from recent trades
+        sparkline_svg = '<div style="height:80px;display:flex;align-items:center;justify-content:center;color:#334155;font-size:0.75rem;">No trade history</div>'
+        if recent_trades:
+            spark_prices = [t['price'] for t in reversed(recent_trades)]
+            if len(spark_prices) >= 2:
+                min_p = min(spark_prices)
+                max_p = max(spark_prices)
+                pr = max_p - min_p if max_p != min_p else 1
+                pts = []
+                area = []
+                for i, p in enumerate(spark_prices):
+                    x = 2 + i / (len(spark_prices) - 1) * 496
+                    y = 2 + 76 - ((p - min_p) / pr * 76)
+                    pts.append(f"{x:.1f},{y:.1f}")
+                    area.append(f"{x:.1f},{y:.1f}")
+                area.append("498,80")
+                area.append("2,80")
+                lc = "#22c55e" if spark_prices[-1] >= spark_prices[0] else "#ef4444"
+                sparkline_svg = f'<svg viewBox="0 0 500 80" preserveAspectRatio="none" style="width:100%;height:80px;display:block;"><defs><linearGradient id="sfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="{lc}" stop-opacity="0.2"/><stop offset="100%" stop-color="{lc}" stop-opacity="0.01"/></linearGradient></defs><polygon points="{" ".join(area)}" fill="url(#sfill)"/><polyline points="{" ".join(pts)}" fill="none" stroke="{lc}" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+
+        # Dividend display
+        dividend_display = "None"
+        if selected_company.dividend_config:
+            div_parts = []
+            for div in selected_company.dividend_config:
+                dt = div.get("type", "")
+                freq = div.get("frequency", "")
+                if dt == "cash":
+                    div_parts.append(f'Cash {div.get("amount",0)*100:.1f}% ({freq})')
+                elif dt == "commodity":
+                    div_parts.append(f'{div.get("item","item")}: {div.get("amount",0)}/{div.get("per_shares",100)}shs ({freq})')
+                elif dt == "scrip":
+                    div_parts.append(f'Stock {div.get("rate",0)*100:.1f}% ({freq})')
+            if div_parts:
+                dividend_display = " | ".join(div_parts)
+
+        # Build positions sidebar HTML
+        positions_html = ""
+        for pd_item in positions_data:
+            c = pd_item['company']
+            is_sel = pd_item['is_selected']
+            bg = "#1e293b" if is_sel else "transparent"
+            bl = "3px solid #38bdf8" if is_sel else "3px solid transparent"
+            shares_txt = f"{pd_item['shares']:,} shs" if pd_item['shares'] > 0 else ""
+            pl_txt = ""
+            plc = "#64748b"
+            if pd_item['shares'] > 0 and pd_item['cost_basis'] > 0:
+                plc = "#22c55e" if pd_item['pl'] >= 0 else "#ef4444"
+                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}{_abbr(pd_item['pl'], disp)}"
+            positions_html += f'<a href="/brokerage/trading?ticker={c.ticker_symbol}" style="display:block;padding:8px 10px;border-left:{bl};background:{bg};text-decoration:none;color:#e5e7eb;">'
+            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;min-width:0;gap:4px;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;flex-shrink:0;">{c.ticker_symbol}</span><span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{_abbr(c.current_price, disp)}</span></div>'
+            if shares_txt or pl_txt:
+                positions_html += f'<div style="display:flex;justify-content:space-between;margin-top:2px;font-size:0.7rem;min-width:0;gap:4px;"><span style="color:#64748b;flex-shrink:0;">{shares_txt}</span><span style="color:{plc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{pl_txt}</span></div>'
+            positions_html += '</a>'
+
+        # Build order book depth ladder
+        spread = order_book['spread']
+        spread_pct = order_book['spread_pct']
+        all_bq = [q for _, q in order_book['bids']] + [q for _, q in order_book['asks']]
+        max_bq = max(all_bq) if all_bq else 1
+
+        ob_html = '<div style="font-size:0.7rem;color:#475569;display:grid;grid-template-columns:1fr 1fr;padding:2px 8px;margin-bottom:4px;"><span>PRICE</span><span style="text-align:right;">QTY</span></div>'
+        if order_book['asks']:
+            for price, qty in reversed(order_book['asks']):
+                bw = qty / max_bq * 100
+                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(239,68,68,0.1);"></div><span style="color:#ef4444;position:relative;">{fmt_usd(price, disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
+        else:
+            ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No asks</div>'
+        ob_html += f'<div style="padding:4px 8px;text-align:center;font-size:0.7rem;color:#64748b;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#0a0f1a;">Spread {fmt_usd(spread, disp, precision=4)} ({spread_pct:.2f}%)</div>'
+        if order_book['bids']:
+            for price, qty in order_book['bids']:
+                bw = qty / max_bq * 100
+                ob_html += f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr;font-size:0.8rem;"><div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(34,197,94,0.1);"></div><span style="color:#22c55e;position:relative;">{fmt_usd(price, disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;position:relative;">{qty:,}</span></div>'
+        else:
+            ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No bids</div>'
+
+        # Build recent trades (time & sales)
+        trades_html = ""
+        if recent_trades:
+            prev_price = None
+            for trade in recent_trades:
+                trade_time = trade.get('timestamp', '')
+                time_str = ""
+                if isinstance(trade_time, str):
+                    try:
+                        trade_dt = datetime.fromisoformat(trade_time.replace('Z', '+00:00'))
+                        time_str = trade_dt.strftime("%H:%M")
+                    except:
+                        time_str = ""
+                elif trade_time:
+                    time_str = trade_time.strftime("%H:%M")
+                tc = "#94a3b8"
+                if prev_price is not None:
+                    tc = "#22c55e" if trade['price'] >= prev_price else "#ef4444"
+                prev_price = trade['price']
+                trades_html += f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.8rem;padding:2px 8px;"><span style="color:{tc};">{fmt_usd(trade["price"], disp, precision=4)}</span><span style="text-align:right;color:#94a3b8;">{trade["quantity"]:,}</span><span style="text-align:right;color:#475569;">{time_str}</span></div>'
+        else:
+            trades_html = '<div style="padding:8px;color:#334155;font-size:0.75rem;text-align:center;">No trades yet</div>'
+
+        # Build pending orders
+        pending_html = ""
+        if pending_orders:
+            pending_html = f'<div style="margin-top:12px;"><div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding:0 4px;">Open Orders ({len(pending_orders)})</div>'
+            for order in pending_orders:
+                sc = "#22c55e" if order.order_side == "BUY" else "#ef4444"
+                pd_str = f"{fmt_usd(order.limit_price, disp, precision=4)}" if order.limit_price else "MKT"
+                rem = order.quantity - order.filled_quantity
+                pending_html += f'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 4px;border-top:1px solid #0f172a;font-size:0.8rem;"><div><span style="color:{sc};font-weight:600;">{order.order_side}</span> <span style="color:#94a3b8;">{rem:,} @ {pd_str}</span></div><form action="/api/brokerage/cancel-order" method="post" style="display:inline;margin:0;"><input type="hidden" name="order_id" value="{order.id}"><button type="submit" style="background:none;border:1px solid #334155;color:#94a3b8;padding:1px 6px;font-size:0.7rem;cursor:pointer;">X</button></form></div>'
+            pending_html += '</div>'
+
+        # Halted banner
+        halted_html = ""
+        if is_halted:
+            halted_html = f'<div style="background:#451a03;border:1px solid #f59e0b;padding:8px 12px;font-size:0.8rem;color:#fbbf24;text-align:center;margin-bottom:12px;">TRADING HALTED - Circuit breaker until {selected_company.trading_halted_until.strftime("%H:%M UTC")}</div>'
+
+        # Margin debt HTML for summary bar
+        margin_debt_html = f"<div style='min-width:0;'><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;' title='{fmt_usd(total_margin_debt, disp)}'>{_abbr(total_margin_debt, disp)}</div></div>" if total_margin_debt > 0 else ""
+
+
 
         # Assemble the full dashboard body
         from html import escape as html_escape
