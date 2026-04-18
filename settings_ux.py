@@ -1174,7 +1174,7 @@ def _tutorials_tab(player) -> str:
     # ─────────────────────────────────────────────────────────────────────────
     from tutorial_ux import get_tutorial5_step
     step5 = get_tutorial5_step(player.id)
-    T5_STEPS = 5
+    T5_STEPS = 6
 
     if step4 < 7:          # locked until Tutorial 4 complete
         t5_status  = "locked"
@@ -1205,7 +1205,7 @@ def _tutorials_tab(player) -> str:
     </div>
   </div>
 </div>"""
-    elif step5 == 5:
+    elif step5 == 6:
         fl_opts5 = "".join(
             f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
             for fl in FIRST_LADY_EXECUTIVES

@@ -6980,6 +6980,31 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
         total_pl_pct = (total_pl / total_portfolio_cost * 100) if total_portfolio_cost > 0 else 0
         num_positions = sum(1 for p in positions_data if p['shares'] > 0)
 
+        # Total buying power: sum all currency balances converted to USD
+        _total_buying_power = player.cash_balance  # fallback
+        try:
+            from reserve_banks import get_db as _get_rb_db, PlayerCurrencyBalance, StateReserveBank
+            _rb_db = _get_rb_db()
+            try:
+                _bals = _rb_db.query(PlayerCurrencyBalance).filter(
+                    PlayerCurrencyBalance.player_id == player.id
+                ).all()
+                _total_buying_power = 0.0
+                for _b in _bals:
+                    if (_b.balance or 0.0) > 0:
+                        if _b.currency_code == "USD":
+                            _total_buying_power += float(_b.balance)
+                        else:
+                            _bk = _rb_db.query(StateReserveBank).filter(
+                                StateReserveBank.currency_code == _b.currency_code
+                            ).first()
+                            if _bk and _bk.usd_per_unit > 0:
+                                _total_buying_power += float(_b.balance) * float(_bk.usd_per_unit)
+            finally:
+                _rb_db.close()
+        except Exception:
+            pass
+
         # Price change from IPO
         price_change = selected_company.current_price - selected_company.ipo_price
         price_change_pct = (price_change / selected_company.ipo_price * 100) if selected_company.ipo_price > 0 else 0
@@ -7171,7 +7196,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             </div>
             <div style="min-width:0;">
                 <span class="td-label">Buying Power</span>
-                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="{fmt_usd(player.cash_balance, disp)}">{_abbr(player.cash_balance, disp)}</div>
+                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="{fmt_usd(_total_buying_power, disp)}">{_abbr(_total_buying_power, disp)}</div>
             </div>
             <div>
                 <span class="td-label">Positions</span>

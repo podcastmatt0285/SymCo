@@ -2244,7 +2244,7 @@ def tutorial4_dismiss(session_token: Optional[str] = Cookie(None)):
 #   3  — Receiving an offer                 (corporate-actions/dashboard)
 #   4  — Counter-offers & income sweep      (corporate-actions/dashboard)
 #   5  — Exiting a stake                   (corporate-actions/dashboard)
-#   6  — Claim reward                      (corporate-actions/dashboard)
+#   6  — Watch video & claim First Lady     (corporate-actions/dashboard)
 #   7  — Complete
 
 T5_TOTAL_STEPS = 6
@@ -2439,17 +2439,8 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
         """
 
     elif step == 5:
-        try:
-            from executive import FIRST_LADY_EXECUTIVES as _FL_EXECS
-            fl_opts = "".join(
-                f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
-                for fl in _FL_EXECS
-            )
-        except Exception:
-            fl_opts = '<option value="martha_washington">Martha Washington</option>'
-
         title = "Exiting a Stake — Diffuse &amp; Target Buyout"
-        content = f"""
+        content = """
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px 0;">
             Once the lock-up period has passed, either side can exit the stake.
             There are three exit mechanisms:
@@ -2482,15 +2473,37 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
                 </p>
             </div>
         </div>
-        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
-                    border-radius:6px;padding:14px 18px;margin-bottom:16px;">
-            <strong style="color:#f59e0b;">Tutorial 5 Reward — First Lady Executive</strong>
-            <p style="color:#94a3b8;margin:6px 0 0 0;line-height:1.6;">
-                You've completed the full acquisition &amp; income stake curriculum.
-                Choose a <strong style="color:#d4af37;">Former First Lady</strong> executive —
-                free forever, starts age 18, retires at 110, max level 18.
-            </p>
-        </div>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 6:
+        # Video + First Lady claim (mirrors T4 step 5 pattern)
+        _t5_video_id = None
+        try:
+            import json as _json
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            if len(_media.get("videos", [])) > 4:
+                _t5_video_id = _media["videos"][4]["youtube_id"]
+        except Exception:
+            pass
+
+        try:
+            from executive import FIRST_LADY_EXECUTIVES as _FL_EXECS
+            fl_opts = "".join(
+                f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
+                for fl in _FL_EXECS
+            )
+        except Exception:
+            fl_opts = '<option value="martha_washington">Martha Washington</option>'
+
+        fl_form = f"""
         <form action="/api/tutorial5/claim-reward" method="post"
               style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
             <select name="first_lady"
@@ -2508,8 +2521,103 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
         </form>
         """
 
-    elif step == 6:
-        return ""
+        if _t5_video_id:
+            video_block = f"""
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+                    border-radius:6px;border:1px solid #2d1a00;margin-bottom:16px;">
+            <div id="yt5-player-container"
+                 style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+        <div id="tut5-watch-bar" style="background:#1a0e00;border:1px solid #92400e;
+                 border-radius:4px;height:6px;margin-bottom:12px;overflow:hidden;">
+            <div id="tut5-watch-fill"
+                 style="background:#f59e0b;height:6px;width:0%;transition:width .5s;"></div>
+        </div>
+        <p id="tut5-watch-label" style="color:#64748b;font-size:0.8rem;
+               margin:0 0 16px 0;text-align:center;">
+            ⏳ Watch the video to unlock your First Lady selection…
+        </p>
+        <div id="tut5-reward-section" style="display:none;">
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
+                        border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+                <strong style="color:#f59e0b;">Tutorial 5 Reward — First Lady Executive</strong>
+                <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                    Choose a <strong style="color:#d4af37;">Former First Lady</strong> executive —
+                    free forever, starts age 18, retires at 110, max level 18.
+                </p>
+            </div>
+            {fl_form}
+        </div>
+        <script>
+        (function() {{
+            var WATCH_THRESHOLD = 0.90;
+            var watched = false;
+            function unlockReward5() {{
+                if (watched) return;
+                watched = true;
+                document.getElementById('tut5-watch-label').innerHTML =
+                    '<span style="color:#4ade80;">✓ Video complete! Choose your First Lady below.</span>';
+                document.getElementById('tut5-watch-fill').style.width = '100%';
+                document.getElementById('tut5-reward-section').style.display = 'block';
+            }}
+            var tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            document.head.appendChild(tag);
+            var ytPlayer5;
+            window.onYouTubeIframeAPIReady = function() {{
+                ytPlayer5 = new YT.Player('yt5-player-container', {{
+                    videoId: '{_t5_video_id}',
+                    playerVars: {{ rel: 0, modestbranding: 1 }},
+                    events: {{
+                        onStateChange: function(e) {{
+                            if (e.data === YT.PlayerState.ENDED) unlockReward5();
+                        }}
+                    }}
+                }});
+            }};
+            var pollTimer = setInterval(function() {{
+                if (!ytPlayer5 || typeof ytPlayer5.getCurrentTime !== 'function') return;
+                try {{
+                    var cur = ytPlayer5.getCurrentTime();
+                    var dur = ytPlayer5.getDuration();
+                    if (dur > 0) {{
+                        var pct = Math.min(cur / dur, 1);
+                        document.getElementById('tut5-watch-fill').style.width =
+                            (pct * 100).toFixed(1) + '%';
+                        if (pct >= WATCH_THRESHOLD) {{ unlockReward5(); clearInterval(pollTimer); }}
+                    }}
+                }} catch(ex) {{}}
+            }}, 2000);
+        }})();
+        </script>
+            """
+        else:
+            # No video uploaded yet — show reward selector directly
+            video_block = f"""
+        <div style="background:#1c1a00;border:1px solid #ca8a04;border-radius:4px;
+                    padding:10px 14px;margin-bottom:16px;font-size:0.82rem;
+                    color:#fbbf24;line-height:1.6;">
+            ⚠ The Tutorial 5 video hasn't been uploaded yet — check back soon!
+        </div>
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
+                    border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+            <strong style="color:#f59e0b;">Tutorial 5 Reward — First Lady Executive</strong>
+            <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                Choose a <strong style="color:#d4af37;">Former First Lady</strong> executive —
+                free forever, starts age 18, retires at 110, max level 18.
+            </p>
+        </div>
+        {fl_form}
+            """
+
+        title = "Watch &amp; Claim Your Reward"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            You've completed the acquisitions &amp; income stake curriculum.
+            Watch the video below, then choose your First Lady executive reward.
+        </p>
+        {video_block}
+        """
 
     else:
         return ""
@@ -2587,7 +2695,7 @@ def tutorial5_claim_reward(
         return RedirectResponse(url="/login", status_code=303)
 
     step = get_tutorial5_step(player.id)
-    if step not in (5, 6):
+    if step not in (6, 7):
         return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
 
     try:

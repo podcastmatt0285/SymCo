@@ -163,14 +163,38 @@ def get_company_ticker(company_shares_id: int) -> Optional[str]:
 
 
 def get_player_cash(player_id: int) -> float:
-    """Get player's available cash."""
-    from auth import Player, get_db as get_auth_db
-    db = get_auth_db()
+    """Get player's total available cash in USD-equivalent across all currency balances."""
     try:
-        player = db.query(Player).filter(Player.id == player_id).first()
-        return player.cash_balance if player else 0.0
-    finally:
-        db.close()
+        from reserve_banks import get_db as get_rb_db, PlayerCurrencyBalance, StateReserveBank
+        rb_db = get_rb_db()
+        try:
+            balances = rb_db.query(PlayerCurrencyBalance).filter(
+                PlayerCurrencyBalance.player_id == player_id
+            ).all()
+            total_usd = 0.0
+            for b in balances:
+                if (b.balance or 0.0) <= 0:
+                    continue
+                if b.currency_code == "USD":
+                    total_usd += float(b.balance)
+                else:
+                    bank = rb_db.query(StateReserveBank).filter(
+                        StateReserveBank.currency_code == b.currency_code
+                    ).first()
+                    if bank and bank.usd_per_unit > 0:
+                        total_usd += float(b.balance) * float(bank.usd_per_unit)
+            return total_usd
+        finally:
+            rb_db.close()
+    except Exception as e:
+        print(f"[OrderBook] get_player_cash error: {e}")
+        from auth import Player, get_db as get_auth_db
+        db = get_auth_db()
+        try:
+            player = db.query(Player).filter(Player.id == player_id).first()
+            return player.cash_balance if player else 0.0
+        finally:
+            db.close()
 
 
 def get_player_shares(player_id: int, company_shares_id: int) -> int:
@@ -292,22 +316,12 @@ def place_limit_order(
             else:
                 order.reserved_cash = total_cost
             
-            # Check if player has enough cash
-            available_cash = get_player_cash(player_id)
-            if available_cash < order.reserved_cash:
-                print(f"[OrderBook] Insufficient cash: need ${order.reserved_cash:.2f}, have ${available_cash:.2f}")
+            # Check and lock funds using multi-currency spend (handles all legal tenders)
+            from reserve_banks import spend_player_funds
+            ok, err = spend_player_funds(player_id, order.reserved_cash)
+            if not ok:
+                print(f"[OrderBook] Insufficient cash: {err}")
                 return None
-            
-            # Lock the cash (deduct from player)
-            from auth import Player, get_db as get_auth_db
-            auth_db = get_auth_db()
-            try:
-                player = auth_db.query(Player).filter(Player.id == player_id).first()
-                if player:
-                    player.cash_balance -= order.reserved_cash
-                    auth_db.commit()
-            finally:
-                auth_db.close()
         
         else:  # SELL
             # Enforce post-IPO lockup: founder cannot sell before lockup expires
@@ -665,44 +679,39 @@ def execute_trade(
         cash_to_release = cash_per_share * (buy_order.quantity - buy_order.filled_quantity - quantity)
         
         if cash_to_release > 0:
-            auth_db = get_auth_db()
             try:
-                buyer = auth_db.query(Player).filter(Player.id == buyer_id).first()
-                if buyer:
-                    buyer.cash_balance += cash_to_release
-                    auth_db.commit()
-            finally:
-                auth_db.close()
-        
-        # Pay commission
-        auth_db = get_auth_db()
-        try:
-            buyer = auth_db.query(Player).filter(Player.id == buyer_id).first()
-            if buyer:
-                buyer.cash_balance -= buyer_commission
-                auth_db.commit()
-                
-                # Log share purchase and payment
-                log_transaction(
-                    buyer_id, 
-                    "share_buy", 
-                    "share", 
-                    quantity,
-                    f"Bought {quantity} {company.ticker_symbol} @ ${price:.2f}",
-                    company.ticker_symbol
-                )
-                
-                total_cost = (quantity * price) + buyer_commission
-                log_transaction(
-                    buyer_id,
-                    "cash_out",
-                    "money",
-                    -total_cost,
-                    f"Share purchase: {company.ticker_symbol}",
-                    company.ticker_symbol
-                )
-        finally:
-            auth_db.close()
+                from reserve_banks import convert_to_legal_tender
+                convert_to_legal_tender(buyer_id, cash_to_release)
+            except Exception as _ex:
+                print(f"[OrderBook] partial-fill refund error: {_ex}")
+
+        # Pay commission (deduct from buyer's legal tender)
+        if buyer_commission > 0:
+            try:
+                from reserve_banks import spend_player_funds
+                spend_player_funds(buyer_id, buyer_commission)
+            except Exception as _ex:
+                print(f"[OrderBook] commission deduct error: {_ex}")
+
+        # Log share purchase and payment
+        log_transaction(
+            buyer_id,
+            "share_buy",
+            "share",
+            quantity,
+            f"Bought {quantity} {company.ticker_symbol} @ ${price:.2f}",
+            company.ticker_symbol
+        )
+
+        total_cost = (quantity * price) + buyer_commission
+        log_transaction(
+            buyer_id,
+            "cash_out",
+            "money",
+            -total_cost,
+            f"Share purchase: {company.ticker_symbol}",
+            company.ticker_symbol
+        )
         
         firm_add_cash(buyer_commission, "trade_commission", 
                      f"Commission on {company.ticker_symbol}", buyer_id, company.id)
@@ -751,42 +760,36 @@ def execute_trade(
         # Add to float
         company.shares_in_float += quantity
         
-        # Pay seller (minus commission)
+        # Pay seller proceeds in their legal tender (no double-credit)
         proceeds = total_value - seller_commission
-        
-        auth_db = get_auth_db()
         try:
-            seller = auth_db.query(Player).filter(Player.id == seller_id).first()
-            if seller:
-                try:
-                    from reserve_banks import convert_to_legal_tender
-                    _amt, _code = convert_to_legal_tender(seller.id, proceeds)
-                    if _code == "USD":
-                        seller.cash_balance += _amt
-                except Exception:
-                    seller.cash_balance += proceeds
-                auth_db.commit()
-                
-                # Log share sale and payment
-                log_transaction(
-                    seller_id,
-                    "share_sell",
-                    "share",
-                    -quantity,  # negative because shares leaving
-                    f"Sold {quantity} {company.ticker_symbol} @ ${price:.2f}",
-                    company.ticker_symbol
-                )
-                
-                log_transaction(
-                    seller_id,
-                    "cash_in",
-                    "money",
-                    proceeds,
-                    f"Share sale: {company.ticker_symbol}",
-                    company.ticker_symbol
-                )
-        finally:
-            auth_db.close()
+            from reserve_banks import convert_to_legal_tender
+            convert_to_legal_tender(seller_id, proceeds)
+        except Exception as _ex:
+            print(f"[OrderBook] seller credit error: {_ex}")
+            try:
+                from reserve_banks import credit_usd
+                credit_usd(seller_id, proceeds)
+            except Exception:
+                pass
+
+        # Log share sale and payment
+        log_transaction(
+            seller_id,
+            "share_sell",
+            "share",
+            -quantity,
+            f"Sold {quantity} {company.ticker_symbol} @ ${price:.2f}",
+            company.ticker_symbol
+        )
+        log_transaction(
+            seller_id,
+            "cash_in",
+            "money",
+            proceeds,
+            f"Share sale: {company.ticker_symbol}",
+            company.ticker_symbol
+        )
         
         firm_add_cash(seller_commission, "trade_commission", 
                      f"Commission on {company.ticker_symbol}", seller_id, company.id)
@@ -846,20 +849,16 @@ def cancel_order(player_id: int, order_id: int) -> bool:
         
         # Release reserved resources
         if order.order_side == OrderSide.BUY.value and order.reserved_cash > 0:
-            # Release unfilled portion of reserved cash
+            # Release unfilled portion of reserved cash back to player's legal tender
             unfilled_quantity = order.quantity - order.filled_quantity
             cash_per_share = order.reserved_cash / order.quantity
             cash_to_release = cash_per_share * unfilled_quantity
-            
-            from auth import Player, get_db as get_auth_db
-            auth_db = get_auth_db()
-            try:
-                player = auth_db.query(Player).filter(Player.id == player_id).first()
-                if player:
-                    player.cash_balance += cash_to_release
-                    auth_db.commit()
-            finally:
-                auth_db.close()
+            if cash_to_release > 0:
+                try:
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(player_id, cash_to_release)
+                except Exception as _ex:
+                    print(f"[OrderBook] cancel refund error: {_ex}")
         
         # Note: For sell orders, shares are already in player's position
         # just marked as reserved by the order existing
@@ -898,15 +897,11 @@ def expire_old_orders():
                 cash_per_share = order.reserved_cash / order.quantity
                 cash_to_release = cash_per_share * unfilled_quantity
                 
-                from auth import Player, get_db as get_auth_db
-                auth_db = get_auth_db()
                 try:
-                    player = auth_db.query(Player).filter(Player.id == order.player_id).first()
-                    if player:
-                        player.cash_balance += cash_to_release
-                        auth_db.commit()
-                finally:
-                    auth_db.close()
+                    from reserve_banks import convert_to_legal_tender
+                    convert_to_legal_tender(order.player_id, cash_to_release)
+                except Exception as _ex:
+                    print(f"[OrderBook] expiry refund error: {_ex}")
             
             order.status = OrderStatus.EXPIRED.value
         
