@@ -2280,13 +2280,6 @@ def set_tutorial5_step(player_id: int, step: int):
         print(f"[Tutorial5] set_tutorial5_step error: {e}")
 
 
-def should_show_tutorial5_banner(player) -> bool:
-    """Show the T5 start banner only after Tutorial 4 is complete and T5 not yet started."""
-    t4 = getattr(player, "tutorial_4_step", 0) or 0
-    t5 = getattr(player, "tutorial_5_step", 0) or 0
-    return t4 >= 7 and t5 == 0
-
-
 # ── Tutorial 5 overlay HTML generator ─────────────────────────────────────────
 
 def get_tutorial5_overlay_html(player, current_page: str) -> str:
@@ -2301,14 +2294,6 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
 
     if current_page != "corporate_actions_dashboard":
         return ""
-
-    try:
-        from reserve_banks import get_player_display_currency, fmt_usd
-        disp = get_player_display_currency(player.id)
-        reward_display = fmt_usd(150_000.0, disp)
-    except Exception:
-        disp = None
-        reward_display = "$150,000"
 
     title = ""
     content = ""
@@ -2454,6 +2439,15 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
         """
 
     elif step == 5:
+        try:
+            from executive import FIRST_LADY_EXECUTIVES as _FL_EXECS
+            fl_opts = "".join(
+                f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
+                for fl in _FL_EXECS
+            )
+        except Exception:
+            fl_opts = '<option value="martha_washington">Martha Washington</option>'
+
         title = "Exiting a Stake — Diffuse &amp; Target Buyout"
         content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px 0;">
@@ -2490,18 +2484,26 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
         </div>
         <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
                     border-radius:6px;padding:14px 18px;margin-bottom:16px;">
-            <strong style="color:#f59e0b;">Tutorial 5 Reward — Tax Voucher {reward_display}</strong>
-            <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
-                You've completed the full acquisition and income stake curriculum. The government
-                is awarding you a <strong style="color:#22c55e;">Tax Voucher worth {reward_display}</strong>.
-                Redeem it any time from this dashboard for instant cash.
+            <strong style="color:#f59e0b;">Tutorial 5 Reward — First Lady Executive</strong>
+            <p style="color:#94a3b8;margin:6px 0 0 0;line-height:1.6;">
+                You've completed the full acquisition &amp; income stake curriculum.
+                Choose a <strong style="color:#d4af37;">Former First Lady</strong> executive —
+                free forever, starts age 18, retires at 110, max level 18.
             </p>
         </div>
-        <form action="/api/tutorial5/claim-reward" method="post">
+        <form action="/api/tutorial5/claim-reward" method="post"
+              style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <select name="first_lady"
+                    style="flex:1;min-width:220px;padding:7px 10px;background:#1e293b;
+                           border:1px solid #334155;border-radius:4px;color:#f1f5f9;
+                           font-size:0.78rem;cursor:pointer;">
+                {fl_opts}
+            </select>
             <button type="submit"
-                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
-                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Claim Reward &amp; Complete Tutorial 5 →
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 20px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;
+                           white-space:nowrap;">
+                Claim First Lady &amp; Complete →
             </button>
         </form>
         """
@@ -2545,52 +2547,6 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
     """
 
 
-# ── Tutorial 5 banner (shown on dashboard when T4 done and T5 not started) ────
-
-def get_tutorial5_banner_html(player) -> str:
-    """Return the T5 start banner HTML, or empty string if not applicable."""
-    if not should_show_tutorial5_banner(player):
-        return ""
-    return f"""
-    <div style="
-        background: linear-gradient(135deg, #1a0e00, #0f172a);
-        border: 2px solid #f59e0b;
-        border-radius: 6px;
-        padding: 20px 24px;
-        margin-bottom: 24px;
-    ">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-            <span style="background:#f59e0b;color:#020617;padding:3px 12px;border-radius:12px;
-                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
-                NEW TUTORIAL AVAILABLE
-            </span>
-            <span style="color:#f59e0b;font-size:0.85rem;font-weight:bold;">Level 5 · Acquisitions &amp; Income Stakes</span>
-        </div>
-        <h3 style="color:#f59e0b;margin:0 0 10px 0;font-size:1.05rem;">
-            Acquire Income Streams from Other Players
-        </h3>
-        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
-            Tutorial 5 covers the <strong style="color:#e5e7eb;">acquisition system</strong> —
-            how to offer shares for a cut of another player's income, how escrow protects both
-            sides, how the <strong style="color:#e5e7eb;">daily income sweep</strong> works,
-            and how to exit a stake cleanly. Complete it and earn a
-            <strong style="color:#22c55e;">Tax Voucher reward</strong>.
-        </p>
-        <form action="/api/tutorial5/start" method="post" style="display:inline;">
-            <button type="submit"
-                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
-                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Start Tutorial 5 →
-            </button>
-        </form>
-        <a href="/api/tutorial5/dismiss"
-           style="margin-left:16px;color:#475569;font-size:0.82rem;">
-            Dismiss
-        </a>
-    </div>
-    """
-
-
 # ── Tutorial 5 API routes ──────────────────────────────────────────────────────
 
 @router.post("/api/tutorial5/start")
@@ -2621,8 +2577,11 @@ def tutorial5_advance(session_token: Optional[str] = Cookie(None)):
 
 
 @router.post("/api/tutorial5/claim-reward")
-def tutorial5_claim_reward(session_token: Optional[str] = Cookie(None)):
-    """Grant the Tutorial 5 Tax Voucher reward and complete the tutorial."""
+def tutorial5_claim_reward(
+    session_token: Optional[str] = Cookie(None),
+    first_lady: str = Form(...),
+):
+    """Grant the Tutorial 5 First Lady executive reward and complete the tutorial."""
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
@@ -2632,14 +2591,41 @@ def tutorial5_claim_reward(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
 
     try:
-        from corporate_actions import TaxVoucher, get_db as get_ca_db
-        db = get_ca_db()
-        voucher = TaxVoucher(player_id=player.id, amount=150_000.0, source_dividend_id=None)
-        db.add(voucher)
+        from executive import (
+            Executive, FIRST_LADY_EXECUTIVES, SessionLocal as ExecSessionLocal,
+        )
+        fl_data = next((f for f in FIRST_LADY_EXECUTIVES if f["key"] == first_lady), None)
+        if fl_data is None:
+            fl_data = FIRST_LADY_EXECUTIVES[0]
+
+        first_name, *rest = fl_data["name"].split(" ", 1)
+        last_name = rest[0] if rest else ""
+
+        db = ExecSessionLocal()
+        exec_obj = Executive(
+            first_name       = first_name,
+            last_name        = last_name,
+            player_id        = player.id,
+            level            = 1,
+            job              = "first_lady",
+            wage             = 0.0,
+            pay_cycle        = "hour",
+            current_age      = 18,
+            retirement_age   = 110,
+            is_retired       = False,
+            is_dead          = False,
+            is_special       = False,
+            is_first_lady    = True,
+            max_level        = 18,
+            abilities        = fl_data["ability"],
+            bonuses          = "",
+        )
+        db.add(exec_obj)
         db.commit()
         db.close()
+        print(f"[Tutorial5] Created First Lady '{fl_data['name']}' for player {player.id}")
     except Exception as e:
-        print(f"[Tutorial5] Failed to grant tax voucher for player {player.id}: {e}")
+        print(f"[Tutorial5] Failed to create First Lady for player {player.id}: {e}")
 
     set_tutorial5_step(player.id, 7)
     return RedirectResponse(url="/corporate-actions/dashboard?t5_reward=1", status_code=303)

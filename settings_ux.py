@@ -1169,6 +1169,89 @@ def _tutorials_tab(player) -> str:
         can_restart=(step4 > 0),
     )
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Tutorial 5 — Acquisitions & Income Stakes
+    # ─────────────────────────────────────────────────────────────────────────
+    from tutorial_ux import get_tutorial5_step
+    step5 = get_tutorial5_step(player.id)
+    T5_STEPS = 5
+
+    if step4 < 7:          # locked until Tutorial 4 complete
+        t5_status  = "locked"
+        t5_done    = 0
+        t5_current = None
+    elif step5 >= 7:
+        t5_status  = "complete"
+        t5_done    = T5_STEPS
+        t5_current = None
+    elif step5 == 0:
+        t5_status  = "not_started"
+        t5_done    = 0
+        t5_current = None
+    else:
+        t5_status  = "in_progress"
+        t5_done    = min(step5 - 1, T5_STEPS)
+        t5_current = min(step5, T5_STEPS)
+
+    if step5 >= 7:
+        t5_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#4ade80;font-size:1rem;">&#10003;</span>
+  <div>
+    <span style="font-size:0.85rem;font-weight:bold;color:#4ade80;">First Lady Executive — Claimed</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      Permanent executive, wage $0 forever, max level 18.
+      View on <a href="/executives" style="color:#f59e0b;">Executives</a>.
+    </div>
+  </div>
+</div>"""
+    elif step5 == 5:
+        fl_opts5 = "".join(
+            f'<option value="{fl["key"]}">{fl["name"]} ({fl["years"]}) — {fl["real_role"]}</option>'
+            for fl in FIRST_LADY_EXECUTIVES
+        )
+        t5_reward = f"""
+<div style="font-size:0.82rem;font-weight:bold;color:#f59e0b;margin-bottom:10px;">
+  &#127381; Ready to claim — choose your First Lady:
+</div>
+<form method="post" action="/api/tutorial5/claim-reward"
+      style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+  <select name="first_lady" style="flex:1;min-width:220px;padding:7px 10px;background:#1e293b;
+          border:1px solid #334155;border-radius:4px;color:#f1f5f9;font-size:0.78rem;cursor:pointer;">
+    {fl_opts5}
+  </select>
+  <button type="submit" style="padding:8px 18px;background:#f59e0b;color:#020617;border:none;
+          border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;white-space:nowrap;">
+    Claim First Lady
+  </button>
+</form>"""
+    elif step4 < 7:
+        t5_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; First Lady Executive — complete Tutorial 4 to unlock</div>'
+    elif step5 == 0:
+        t5_reward = """
+<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#128274; First Lady Executive — finish this tutorial to claim</div>
+<form method="post" action="/api/tutorial5/start" style="display:inline;">
+  <button type="submit"
+          style="padding:8px 18px;background:#f59e0b;color:#020617;border:none;
+                 border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;">
+    Start Tutorial 5 →
+  </button>
+</form>"""
+    else:
+        t5_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; First Lady Executive — finish this tutorial to claim</div>'
+
+    card5 = _tutorial_card(
+        number=5,
+        title="Acquisitions &amp; Income Stakes",
+        description="Learn how to offer shares for a percentage of another player's net income, how escrow protects both sides, how the daily income sweep works across currencies, and how to exit a stake cleanly.",
+        total_steps=T5_STEPS,
+        completed_steps=t5_done,
+        current_step=t5_current,
+        status=t5_status,
+        reward_html=t5_reward,
+        can_restart=(step5 > 0),
+    )
+
     # ── CTA if nothing started ────────────────────────────────────────────────
     cta = ""
     if step == 0:
@@ -1180,7 +1263,7 @@ def _tutorials_tab(player) -> str:
   </a>
 </div>"""
 
-    return card1 + card2 + card3 + card4 + cta
+    return card1 + card2 + card3 + card4 + card5 + cta
 
 
 # ── Notifications tab ─────────────────────────────────────────────────────────

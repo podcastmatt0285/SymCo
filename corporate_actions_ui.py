@@ -315,7 +315,7 @@ async def corporate_actions_dashboard(
 
         # ── Tutorial 5 reward banner ───────────────────────────────────────────
         if t5_reward:
-            html += f"""
+            html += """
 <div style="background:linear-gradient(135deg,#1a0e00,#0f172a);border:2px solid #f59e0b;
             border-radius:6px;padding:18px 22px;margin-bottom:18px;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
@@ -324,13 +324,12 @@ async def corporate_actions_dashboard(
         <strong style="color:#f59e0b;">Acquisitions &amp; Income Stakes</strong>
     </div>
     <p style="color:#e5e7eb;margin:0 0 6px 0;line-height:1.6;">
-        The government has awarded you a
-        <strong style="color:#22c55e;">Tax Voucher worth {fmt_usd(150_000.0, disp)}</strong>
-        for completing Tutorial 5. It's been added to your Tax Voucher balance below —
-        redeem it any time for instant cash.
+        Your <strong style="color:#d4af37;">First Lady executive</strong> has been added to your team —
+        free forever, starts age 18, retires at 110, max level 18.
     </p>
     <p style="color:#64748b;font-size:0.8rem;margin:0;">
-        Tax vouchers never expire. Redeem now or hold them for when you need liquidity.
+        View and manage your executives on the
+        <a href="/executives" style="color:#f59e0b;">Executives page</a>.
     </p>
 </div>
 """
