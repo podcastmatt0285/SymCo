@@ -2119,6 +2119,20 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">View Auctions</span>
             </a>
 
+            <a href="/reserve-banks/bonds" class="dc" style="--c:#fbbf24;--g:linear-gradient(90deg,#f59e0b,#fbbf24);--glow:rgba(251,191,36,0.12);--btn:#fbbf24;">
+                <span class="dc-ico">📊</span>
+                <div class="dc-t">Bond Market</div>
+                <div class="dc-d">Buy and sell government bonds issued by the 20+ reserve banks. Bonds pay fixed interest over 7, 14, or 30-day maturities — a lower-risk way to earn yield on idle cash. Rates shift with inflation, credit risk, and inter-bank demand.</div>
+                <span class="dc-btn">View Bonds</span>
+            </a>
+
+            <a href="/brokerage/trading?mode=etf" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#10b981,#34d399);--glow:rgba(52,211,153,0.12);--btn:#34d399;">
+                <span class="dc-ico">📉</span>
+                <div class="dc-t">ETF &amp; Index Funds</div>
+                <div class="dc-d">Trade shares in Wadsworth's passive investment funds — Apple Seeds ETF, Energy ETF, City NAV ETF, Land Bank, and the WBC-50 Index Fund. Each fund tracks an underlying commodity or index and pays dividends. Prices set by live order book.</div>
+                <span class="dc-btn">ETF Trading Floor</span>
+            </a>
+
             <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
                 <span class="dc-ico">🏦</span>
                 <div class="dc-t">Banking</div>
@@ -2762,6 +2776,22 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     bar_html = '<div class="inv-value-bar"></div>'
 
                 form_id = f"invform-{item}"
+                if item.endswith("_shares"):
+                    market_action_html = '<a href="/brokerage/trading?mode=etf" class="btn-blue" style="font-size:0.75rem;margin-top:6px;display:inline-block;">Trade on ETF Floor →</a>'
+                else:
+                    market_action_html = (
+                        f'<button class="inv-list-toggle" onclick="invToggleForm(\'{form_id}\', this)" type="button">'
+                        f'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+                        f' List on Market</button>'
+                        f'<div class="inv-list-form" id="{form_id}">'
+                        f'<form action="/api/inventory/list" method="post" class="inv-list-inner">'
+                        f'<input type="hidden" name="item_type" value="{item}">'
+                        f'<div class="inv-list-fields">'
+                        f'<input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>'
+                        f'<input type="number" name="price" step="0.0001" placeholder="Price ({disp["code"]})" class="inv-input" required>'
+                        f'<button type="submit" class="btn-blue inv-submit-btn">List →</button>'
+                        f'</div></form></div>'
+                    )
                 cards_html += f'''
                 <div class="inv-card" data-name="{display_name.lower()} {item.lower()}">
                     <div class="inv-card-top">
@@ -2772,20 +2802,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     <div class="inv-card-desc">{desc_short}</div>
                     {val_html}
                     {bar_html}
-                    <button class="inv-list-toggle" onclick="invToggleForm('{form_id}', this)" type="button">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        List on Market
-                    </button>
-                    <div class="inv-list-form" id="{form_id}">
-                        <form action="/api/inventory/list" method="post" class="inv-list-inner">
-                            <input type="hidden" name="item_type" value="{item}">
-                            <div class="inv-list-fields">
-                                <input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>
-                                <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" class="inv-input" required>
-                                <button type="submit" class="btn-blue inv-submit-btn">List →</button>
-                            </div>
-                        </form>
-                    </div>
+                    {market_action_html}
                 </div>'''
 
         page_assets = '''<style>
@@ -6422,13 +6439,24 @@ def brokerage_firm_dashboard(session_token: Optional[str] = Cookie(None)):
 
 @router.get("/brokerage/trading", response_class=HTMLResponse)
 def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: str = None, mode: str = "equity",
-                           success: Optional[str] = None, error: Optional[str] = None):
+                           fund: str = None, success: Optional[str] = None, error: Optional[str] = None):
     """WPE equity and ETF trading page."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
+
+    def _abbr(usd_val, d):
+        """Compact format for tight UI spots — abbreviates to K/M/B/T."""
+        amt = (usd_val or 0.0) / d["usd_per_unit"]
+        sym, code = d["symbol"], d["code"]
+        suffix = ""
+        for thresh, suf in [(1e12, "T"), (1e9, "B"), (1e6, "M"), (1e3, "K")]:
+            if abs(amt) >= thresh:
+                amt /= thresh; suffix = suf; break
+        result = f"{amt:.2f}{suffix}"
+        return f"{sym}{result}" if code == "USD" else f"{sym}{result}\u00a0{code}"
 
     try:
         from banks.brokerage_firm import (
@@ -6482,7 +6510,7 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             </a>'''
         company_tabs += '</div>'
         
-        if not selected_company:
+        if not selected_company and mode != "etf":
             body = f'''
             <a href="/banks/brokerage-firm" style="color: #38bdf8;">← Brokerage Firm</a>
             <h1>WPE Trading Floor</h1>
@@ -6490,6 +6518,414 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             <a href="/brokerage/ipo" class="btn-blue">Launch the First IPO</a>
             '''
             return shell("WPE Trading", body, player.cash_balance, player.id)
+        # Dashboard CSS (built as regular string to avoid f-string brace conflicts)
+        td_css = '<style>'
+        td_css += '.container{max-width:1440px!important;}'
+        td_css += '.td-layout{display:grid;grid-template-columns:220px 1fr 280px;gap:12px;margin-top:12px;}'
+        td_css += '.td-sidebar{background:#0f172a;border:1px solid #1e293b;overflow-y:auto;max-height:calc(100vh - 200px);}'
+        td_css += '.td-main{min-width:0;}'
+        td_css += '.td-panel{background:#0f172a;border:1px solid #1e293b;padding:14px;}'
+        td_css += '.td-section{background:#0f172a;border:1px solid #1e293b;padding:12px;margin-bottom:12px;}'
+        td_css += '.td-label{color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;}'
+        td_css += '#td-tab-buy,#td-tab-sell{display:none;}'
+        td_css += '.td-buy-panel,.td-sell-panel{display:none;}'
+        td_css += '#td-tab-buy:checked~.td-buy-panel{display:block;}'
+        td_css += '#td-tab-sell:checked~.td-sell-panel{display:block;}'
+        td_css += '#td-tab-buy:checked~.td-tab-bar .td-tab-buy{background:#16a34a;color:#fff;}'
+        td_css += '#td-tab-sell:checked~.td-tab-bar .td-tab-sell{background:#dc2626;color:#fff;}'
+        td_css += '.td-input{width:100%;padding:8px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;font-size:0.85rem;font-family:inherit;}'
+        td_css += '.td-input:focus{border-color:#38bdf8;outline:none;}'
+        td_css += '@media(max-width:1024px){.td-layout{grid-template-columns:1fr!important;}.td-sidebar{max-height:none;overflow-x:auto;white-space:nowrap;display:flex;}.td-sidebar>a{min-width:140px;white-space:normal;}}'
+        td_css += '@media(max-width:600px){.td-layout{grid-template-columns:1fr!important;}.td-3col{grid-template-columns:1fr 1fr!important;}.td-2col{grid-template-columns:1fr!important;}.td-portbar{flex-wrap:wrap!important;gap:12px!important;}.td-input-row{flex-wrap:wrap!important;}.td-input-row input{width:100%!important;}.td-depths{grid-template-columns:1fr!important;}}'
+        td_css += '</style>'
+
+        # ── ETF mode ─────────────────────────────────────────────────────────────
+        if mode == "etf":
+            etf_configs = [
+                ("apple_seeds_etf",  "Apple Seeds ETF",   "apple_seeds_etf_shares",  "🍎"),
+                ("energy_etf",       "Energy ETF",        "energy_etf_shares",        "⚡"),
+                ("city_nav_etf",     "City NAV ETF",      "city_nav_etf_shares",      "🏙️"),
+                ("land_bank",        "Land Bank",         "land_bank_shares",          "🏦"),
+                ("wbc50_index_fund", "WBC-50 Index Fund", "wbc50_index_fund_shares",  "📈"),
+            ]
+            import banks as _banks_mod
+            import inventory as _inv_mod
+            import market as _mkt_mod
+            from market import Trade as _MktTrade, MarketOrder as _MktOrder, OrderStatus as _MktOS, get_db as _mkt_get_db
+
+            # Determine selected fund
+            selected_fund_id = fund if fund and fund in {c[0] for c in etf_configs} else etf_configs[0][0]
+
+            # Gather all fund data
+            all_fund_data = []
+            sel_fd = None
+            for bank_id, name, share_item, icon in etf_configs:
+                try:
+                    be = _banks_mod.get_bank_entity(bank_id)
+                    if not be:
+                        continue
+                    your_shares = _inv_mod.get_item_quantity(player.id, share_item)
+                    mkt_price = _mkt_mod.get_market_price(share_item)
+                    nav = (be.cash_reserves or 0) + (be.asset_value or 0)
+                    fd = {"bank_id": bank_id, "name": name, "share_item": share_item,
+                          "icon": icon, "be": be, "your_shares": your_shares,
+                          "mkt_price": mkt_price, "nav": nav,
+                          "is_selected": bank_id == selected_fund_id}
+                    all_fund_data.append(fd)
+                    if bank_id == selected_fund_id:
+                        sel_fd = fd
+                except Exception:
+                    continue
+
+            if not sel_fd and all_fund_data:
+                sel_fd = all_fund_data[0]
+                selected_fund_id = sel_fd["bank_id"]
+            if not sel_fd:
+                return shell("ETF Trading", "<p>No ETF funds available.</p>", player.cash_balance, player.id)
+
+            sel_item = sel_fd["share_item"]
+            sel_be = sel_fd["be"]
+            sel_price = sel_fd["mkt_price"] or sel_be.share_price or 0
+            sel_name = sel_fd["name"]
+            sel_icon = sel_fd["icon"]
+            sel_your_shares = sel_fd["your_shares"]
+            sel_nav = sel_fd["nav"]
+            fund_link_id = selected_fund_id.replace("_", "-")
+            disp_sym = disp["symbol"]
+            disp_code = disp["code"]
+            default_price = round(sel_price / disp["usd_per_unit"], 6)
+            sell_disabled_attr = "disabled" if sel_your_shares <= 0 else ""
+            total_shares_issued = sel_be.total_shares_issued or 1
+            nav_per_share = sel_nav / total_shares_issued
+            sel_name_short = sel_name[:22] if len(sel_name) > 22 else sel_name
+
+            # Order book (named traders)
+            etf_ob = _mkt_mod.get_order_book(sel_item)
+            etf_bids = etf_ob.get("bids", [])  # (price, qty, order_id, player_name, player_id)
+            etf_asks = etf_ob.get("asks", [])
+            best_bid = etf_bids[0][0] if etf_bids else None
+            best_ask = etf_asks[0][0] if etf_asks else None
+            etf_spread = (best_ask - best_bid) if best_bid and best_ask else 0
+            etf_spread_pct = (etf_spread / best_bid * 100) if best_bid and etf_spread else 0
+            mid_price = ((best_bid + best_ask) / 2) if best_bid and best_ask else sel_price
+            premium_discount = ((mid_price - nav_per_share) / nav_per_share * 100) if nav_per_share > 0 else 0
+            pd_color = "#22c55e" if premium_discount >= 0 else "#ef4444"
+            pd_sign = "+" if premium_discount >= 0 else ""
+            mid_price_fmt = fmt_usd(mid_price, disp, precision=4)
+            best_bid_fmt = fmt_usd(best_bid, disp, precision=4) if best_bid else "—"
+            best_ask_fmt = fmt_usd(best_ask, disp, precision=4) if best_ask else "—"
+            etf_spread_fmt = fmt_usd(etf_spread, disp, precision=4)
+
+            # Recent trades for sparkline + time & sales
+            _mkt_db = _mkt_get_db()
+            try:
+                etf_recent_trades = _mkt_db.query(_MktTrade).filter(
+                    _MktTrade.item_type == sel_item
+                ).order_by(_MktTrade.executed_at.desc()).limit(20).all()
+
+                etf_open_orders = _mkt_db.query(_MktOrder).filter(
+                    _MktOrder.player_id == player.id,
+                    _MktOrder.item_type == sel_item,
+                    _MktOrder.status.in_([_MktOS.ACTIVE, _MktOS.PARTIALLY_FILLED])
+                ).order_by(_MktOrder.created_at.desc()).all()
+            finally:
+                _mkt_db.close()
+
+            # Sparkline SVG
+            etf_spark_svg = '<div style="height:70px;display:flex;align-items:center;justify-content:center;color:#334155;font-size:0.75rem;">No trade history yet</div>'
+            if len(etf_recent_trades) >= 2:
+                spark_prices = [t.price for t in reversed(etf_recent_trades)]
+                min_p = min(spark_prices); max_p = max(spark_prices)
+                pr = max_p - min_p if max_p != min_p else 1
+                pts = []; area = []
+                for i, p in enumerate(spark_prices):
+                    x = 2 + i / (len(spark_prices) - 1) * 496
+                    y = 2 + 66 - ((p - min_p) / pr * 66)
+                    pts.append(f"{x:.1f},{y:.1f}"); area.append(f"{x:.1f},{y:.1f}")
+                area.extend(["498,70", "2,70"])
+                lc = "#22c55e" if spark_prices[-1] >= spark_prices[0] else "#ef4444"
+                pts_str = " ".join(pts); area_str = " ".join(area)
+                etf_spark_svg = (
+                    f'<svg viewBox="0 0 500 70" preserveAspectRatio="none" style="width:100%;height:70px;display:block;">'
+                    f'<defs><linearGradient id="esfill" x1="0" y1="0" x2="0" y2="1">'
+                    f'<stop offset="0%" stop-color="{lc}" stop-opacity="0.2"/>'
+                    f'<stop offset="100%" stop-color="{lc}" stop-opacity="0.01"/>'
+                    f'</linearGradient></defs>'
+                    f'<polygon points="{area_str}" fill="url(#esfill)"/>'
+                    f'<polyline points="{pts_str}" fill="none" stroke="{lc}" stroke-width="1.5" stroke-linejoin="round"/>'
+                    f'</svg>'
+                )
+
+            # Order book HTML (with TRADER column unique to ETF)
+            all_bq = [q for _, q, *_ in etf_bids] + [q for _, q, *_ in etf_asks]
+            max_bq = max(all_bq) if all_bq else 1
+            etf_ob_html = (
+                '<div style="font-size:0.65rem;color:#475569;display:grid;grid-template-columns:1fr 1fr 1fr;'
+                'padding:2px 8px;margin-bottom:4px;"><span>PRICE</span>'
+                '<span style="text-align:right;">QTY</span>'
+                '<span style="text-align:right;">TRADER</span></div>'
+            )
+            if etf_asks:
+                for price, qty, oid, pname, pid in reversed(etf_asks):
+                    bw = qty / max_bq * 100
+                    sn = (pname[:13] + "…") if len(pname) > 13 else pname
+                    p_fmt = fmt_usd(price, disp, precision=4)
+                    etf_ob_html += (
+                        f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.78rem;">'
+                        f'<div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(239,68,68,0.1);"></div>'
+                        f'<span style="color:#ef4444;position:relative;">{p_fmt}</span>'
+                        f'<span style="text-align:right;color:#94a3b8;position:relative;">{qty:,.2f}</span>'
+                        f'<span style="text-align:right;color:#475569;position:relative;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{sn}</span>'
+                        f'</div>'
+                    )
+            else:
+                etf_ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No asks</div>'
+            etf_ob_html += (
+                f'<div style="padding:4px 8px;text-align:center;font-size:0.7rem;color:#64748b;'
+                f'border-top:1px solid #1e293b;border-bottom:1px solid #1e293b;background:#0a0f1a;">'
+                f'Spread {etf_spread_fmt} ({etf_spread_pct:.2f}%)</div>'
+            )
+            if etf_bids:
+                for price, qty, oid, pname, pid in etf_bids:
+                    bw = qty / max_bq * 100
+                    sn = (pname[:13] + "…") if len(pname) > 13 else pname
+                    p_fmt = fmt_usd(price, disp, precision=4)
+                    etf_ob_html += (
+                        f'<div style="position:relative;padding:2px 8px;display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.78rem;">'
+                        f'<div style="position:absolute;right:0;top:0;bottom:0;width:{bw:.0f}%;background:rgba(34,197,94,0.1);"></div>'
+                        f'<span style="color:#22c55e;position:relative;">{p_fmt}</span>'
+                        f'<span style="text-align:right;color:#94a3b8;position:relative;">{qty:,.2f}</span>'
+                        f'<span style="text-align:right;color:#475569;position:relative;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{sn}</span>'
+                        f'</div>'
+                    )
+            else:
+                etf_ob_html += '<div style="padding:4px 8px;color:#334155;font-size:0.75rem;text-align:center;">No bids</div>'
+
+            # Time & Sales
+            etf_ts_html = '<div style="padding:8px;color:#334155;font-size:0.75rem;text-align:center;">No trades yet</div>'
+            if etf_recent_trades:
+                etf_ts_html = ""
+                prev_p = None
+                for t in etf_recent_trades[:12]:
+                    tc = "#94a3b8"
+                    if prev_p is not None:
+                        tc = "#22c55e" if t.price >= prev_p else "#ef4444"
+                    prev_p = t.price
+                    ts_str = t.executed_at.strftime("%H:%M") if t.executed_at else ""
+                    p_fmt = fmt_usd(t.price, disp, precision=4)
+                    etf_ts_html += (
+                        f'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;font-size:0.78rem;padding:2px 8px;">'
+                        f'<span style="color:{tc};">{p_fmt}</span>'
+                        f'<span style="text-align:right;color:#94a3b8;">{t.quantity:,.2f}</span>'
+                        f'<span style="text-align:right;color:#475569;">{ts_str}</span>'
+                        f'</div>'
+                    )
+
+            # Fund sidebar
+            etf_sidebar_html = ""
+            for fd in all_fund_data:
+                is_sel = fd["is_selected"]
+                bg = "#1e293b" if is_sel else "transparent"
+                bl = "3px solid #34d399" if is_sel else "3px solid transparent"
+                mp = fd["mkt_price"]
+                mp_str = _abbr(mp, disp) if mp else "—"
+                ys = fd["your_shares"]
+                ys_str = f"{ys:,.2f} shs" if ys > 0 else ""
+                fn = fd["name"]; fn_short = (fn[:16] + "…") if len(fn) > 16 else fn
+                fw = "700" if is_sel else "500"
+                etf_sidebar_html += (
+                    f'<a href="/brokerage/trading?mode=etf&fund={fd["bank_id"]}" '
+                    f'style="display:block;padding:8px 10px;border-left:{bl};background:{bg};text-decoration:none;color:#e5e7eb;">'
+                    f'<div style="display:flex;justify-content:space-between;align-items:baseline;min-width:0;gap:4px;">'
+                    f'<span style="font-weight:{fw};font-size:0.82rem;flex-shrink:0;">{fd["icon"]} {fn_short}</span>'
+                    f'<span style="font-size:0.75rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{mp_str}</span>'
+                    f'</div>'
+                )
+                if ys_str:
+                    etf_sidebar_html += f'<div style="font-size:0.7rem;color:#64748b;margin-top:2px;">{ys_str}</div>'
+                etf_sidebar_html += '</a>'
+
+            # Open orders with cancel
+            etf_orders_html = ""
+            if etf_open_orders:
+                etf_orders_html = f'<div style="margin-top:12px;"><div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;padding:0 4px;">Open Orders ({len(etf_open_orders)})</div>'
+                for ord_ in etf_open_orders:
+                    sc = "#22c55e" if ord_.order_type == "buy" else "#ef4444"
+                    pd_str = fmt_usd(ord_.price, disp, precision=4) if ord_.price else "MKT"
+                    rem = ord_.quantity - ord_.quantity_filled
+                    etf_orders_html += (
+                        f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                        f'padding:5px 4px;border-top:1px solid #0f172a;font-size:0.78rem;">'
+                        f'<div><span style="color:{sc};font-weight:600;">{ord_.order_type.upper()}</span> '
+                        f'<span style="color:#94a3b8;">{rem:,.2f} @ {pd_str}</span></div>'
+                        f'<form action="/api/brokerage/cancel-etf-order" method="post" style="display:inline;margin:0;">'
+                        f'<input type="hidden" name="order_id" value="{ord_.id}">'
+                        f'<input type="hidden" name="fund" value="{selected_fund_id}">'
+                        f'<button type="submit" style="background:none;border:1px solid #334155;color:#94a3b8;padding:1px 6px;font-size:0.7rem;cursor:pointer;">✕</button>'
+                        f'</form></div>'
+                    )
+                etf_orders_html += '</div>'
+
+            # ETF-specific tab CSS (built as plain string — no brace escaping needed)
+            etf_tab_css = (
+                '<style>'
+                '.etf-buy-panel,.etf-sell-panel{display:none;}'
+                '#etf-tab-buy:checked~.etf-buy-panel{display:block;}'
+                '#etf-tab-sell:checked~.etf-sell-panel{display:block;}'
+                '#etf-tab-buy:checked~.etf-tab-bar .etf-tab-buy{background:#16a34a;color:#fff;}'
+                '#etf-tab-sell:checked~.etf-tab-bar .etf-tab-sell{background:#dc2626;color:#fff;}'
+                '</style>'
+            )
+
+            num_funds = len(all_fund_data)
+            nav_ps_fmt = fmt_usd(nav_per_share, disp, precision=4)
+            nav_fmt = _abbr(sel_nav, disp)
+            your_val_fmt = fmt_usd(sel_your_shares * sel_price, disp)
+
+            etf_body = td_css + etf_tab_css + f'''
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:0.8rem;">&larr; Brokerage Firm</a>
+                <span style="font-size:0.85rem;color:#94a3b8;font-weight:600;">ETF Trading Floor</span>
+            </div>
+            <!-- Mode tabs -->
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <a href="/brokerage/trading"
+                   style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#1e293b;color:#94a3b8;font-size:.8rem;">
+                    WPE Equities
+                </a>
+                <a href="/brokerage/trading?mode=etf"
+                   style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#34d399;color:#020617;font-size:.8rem;font-weight:bold;">
+                    ETF &amp; Index Funds
+                </a>
+            </div>
+
+            <!-- 3-Column Trading Layout -->
+            <div class="td-layout">
+                <!-- LEFT: Fund Sidebar -->
+                <div class="td-sidebar">
+                    <div style="padding:8px 10px;border-bottom:1px solid #1e293b;font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">
+                        Funds &middot; {num_funds} Available
+                    </div>
+                    {etf_sidebar_html}
+                </div>
+
+                <!-- CENTER: Fund Detail -->
+                <div class="td-main">
+                    <!-- Price Header -->
+                    <div class="td-section" style="margin-bottom:0;border-bottom:none;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                            <div>
+                                <div style="font-size:1.05rem;font-weight:700;color:#e5e7eb;">{sel_icon} {sel_name}</div>
+                                <div style="font-size:0.75rem;color:#64748b;margin-top:2px;">
+                                    ETF &middot; <a href="/banks/{fund_link_id}" style="color:#a78bfa;font-size:0.75rem;">Fund Details →</a>
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:1.5rem;font-weight:700;color:#34d399;">{mid_price_fmt}</div>
+                                <div style="font-size:0.8rem;color:{pd_color};">{pd_sign}{premium_discount:.2f}% <span style="color:#475569;">vs NAV/share</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sparkline -->
+                    <div class="td-section" style="margin-top:0;border-top:none;padding-top:0;">
+                        {etf_spark_svg}
+                    </div>
+
+                    <!-- Key Stats -->
+                    <div class="td-section">
+                        <div class="td-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                            <div><div class="td-label">Fund NAV</div><div style="font-size:0.9rem;">{nav_fmt}</div></div>
+                            <div><div class="td-label">NAV / Share</div><div style="font-size:0.9rem;">{nav_ps_fmt}</div></div>
+                            <div><div class="td-label">Your Shares</div><div style="font-size:0.9rem;color:#38bdf8;">{sel_your_shares:,.4f}</div></div>
+                            <div><div class="td-label">Best Bid</div><div style="font-size:0.9rem;color:#22c55e;">{best_bid_fmt}</div></div>
+                            <div><div class="td-label">Best Ask</div><div style="font-size:0.9rem;color:#ef4444;">{best_ask_fmt}</div></div>
+                            <div><div class="td-label">Spread</div><div style="font-size:0.9rem;">{etf_spread_fmt} ({etf_spread_pct:.2f}%)</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Depth of Market + Time & Sales -->
+                    <div class="td-depths" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="td-section" style="margin-bottom:0;">
+                            <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Depth of Market</div>
+                            {etf_ob_html}
+                        </div>
+                        <div class="td-section" style="margin-bottom:0;">
+                            <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Time &amp; Sales</div>
+                            <div style="font-size:0.7rem;color:#475569;display:grid;grid-template-columns:1fr 1fr 1fr;padding:2px 8px;margin-bottom:4px;"><span>PRICE</span><span style="text-align:right;">QTY</span><span style="text-align:right;">TIME</span></div>
+                            {etf_ts_html}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Trade Panel -->
+                <div class="td-panel">
+                    <!-- Position Summary -->
+                    <div style="margin-bottom:12px;">
+                        <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Your Position</div>
+                        <div class="td-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+                            <div><span style="color:#64748b;">Shares</span><div style="color:#38bdf8;font-size:1rem;font-weight:600;">{sel_your_shares:,.4f}</div></div>
+                            <div><span style="color:#64748b;">Value</span><div style="font-size:1rem;">{your_val_fmt}</div></div>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid #1e293b;padding-top:12px;">
+                        <input type="radio" id="etf-tab-buy" name="etf-trade-tab" checked style="display:none;">
+                        <input type="radio" id="etf-tab-sell" name="etf-trade-tab" style="display:none;">
+                        <div class="etf-tab-bar" style="display:grid;grid-template-columns:1fr 1fr;margin-bottom:12px;">
+                            <label for="etf-tab-buy" class="etf-tab-buy" style="padding:6px;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:600;background:#1e293b;color:#64748b;border:1px solid #1e293b;">Buy</label>
+                            <label for="etf-tab-sell" class="etf-tab-sell" style="padding:6px;text-align:center;cursor:pointer;font-size:0.85rem;font-weight:600;background:#1e293b;color:#64748b;border:1px solid #1e293b;">Sell</label>
+                        </div>
+
+                        <div class="etf-buy-panel">
+                            <form action="/api/brokerage/etf-order" method="post">
+                                <input type="hidden" name="item_type" value="{sel_item}">
+                                <input type="hidden" name="order_type" value="buy">
+                                <input type="hidden" name="fund" value="{selected_fund_id}">
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Quantity (shares)</label>
+                                    <input type="number" name="quantity" min="0.0001" step="0.0001" value="100" class="td-input">
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price ({disp_sym} {disp_code})</label>
+                                    <input type="number" name="price" min="0.000001" step="0.000001" value="{default_price}" class="td-input">
+                                </div>
+                                <div style="font-size:0.7rem;color:#475569;margin-bottom:10px;">Cash: {_abbr(player.cash_balance, disp)}</div>
+                                <button type="submit" style="width:100%;padding:10px;background:#16a34a;color:#fff;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;">
+                                    Buy {sel_icon} {sel_name_short}
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="etf-sell-panel">
+                            <form action="/api/brokerage/etf-order" method="post">
+                                <input type="hidden" name="item_type" value="{sel_item}">
+                                <input type="hidden" name="order_type" value="sell">
+                                <input type="hidden" name="fund" value="{selected_fund_id}">
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Quantity (shares)</label>
+                                    <input type="number" name="quantity" min="0.0001" step="0.0001" value="100" class="td-input">
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;margin-bottom:4px;color:#94a3b8;font-size:0.8rem;">Limit Price ({disp_sym} {disp_code})</label>
+                                    <input type="number" name="price" min="0.000001" step="0.000001" value="{default_price}" class="td-input">
+                                </div>
+                                <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
+                                    Available: {sel_your_shares:,.4f} shares
+                                </div>
+                                <button type="submit" {sell_disabled_attr} style="width:100%;padding:10px;background:#dc2626;color:#fff;border:none;font-size:0.85rem;font-weight:600;cursor:pointer;">
+                                    Sell {sel_icon} {sel_name_short}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    {etf_orders_html}
+                </div>
+            </div>
+            '''
+            return shell("ETF Trading", etf_body, player.cash_balance, player.id)
+        # ─────────────────────────────────────────────────────────────────────────
 
         # Get order book data for selected company
         order_book = get_order_book_depth(selected_company.id, depth=10)
@@ -6619,11 +7055,11 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             plc = "#64748b"
             if pd_item['shares'] > 0 and pd_item['cost_basis'] > 0:
                 plc = "#22c55e" if pd_item['pl'] >= 0 else "#ef4444"
-                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}{fmt_usd(pd_item['pl'], disp)}"
+                pl_txt = f"{'+'if pd_item['pl']>=0 else ''}{_abbr(pd_item['pl'], disp)}"
             positions_html += f'<a href="/brokerage/trading?ticker={c.ticker_symbol}" style="display:block;padding:8px 10px;border-left:{bl};background:{bg};text-decoration:none;color:#e5e7eb;">'
-            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;">{c.ticker_symbol}</span><span style="font-size:0.8rem;color:#94a3b8;">{fmt_usd(c.current_price, disp)}</span></div>'
+            positions_html += f'<div style="display:flex;justify-content:space-between;align-items:baseline;min-width:0;gap:4px;"><span style="font-weight:{"700" if is_sel else "500"};font-size:0.85rem;flex-shrink:0;">{c.ticker_symbol}</span><span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{_abbr(c.current_price, disp)}</span></div>'
             if shares_txt or pl_txt:
-                positions_html += f'<div style="display:flex;justify-content:space-between;margin-top:2px;font-size:0.7rem;"><span style="color:#64748b;">{shares_txt}</span><span style="color:{plc};">{pl_txt}</span></div>'
+                positions_html += f'<div style="display:flex;justify-content:space-between;margin-top:2px;font-size:0.7rem;min-width:0;gap:4px;"><span style="color:#64748b;flex-shrink:0;">{shares_txt}</span><span style="color:{plc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{pl_txt}</span></div>'
             positions_html += '</a>'
 
         # Build order book depth ladder
@@ -6687,136 +7123,9 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
             halted_html = f'<div style="background:#451a03;border:1px solid #f59e0b;padding:8px 12px;font-size:0.8rem;color:#fbbf24;text-align:center;margin-bottom:12px;">TRADING HALTED - Circuit breaker until {selected_company.trading_halted_until.strftime("%H:%M UTC")}</div>'
 
         # Margin debt HTML for summary bar
-        margin_debt_html = f"<div><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;'>{fmt_usd(total_margin_debt, disp)}</div></div>" if total_margin_debt > 0 else ""
+        margin_debt_html = f"<div style='min-width:0;'><span class='td-label'>Margin Debt</span><div style='color:#f59e0b;font-size:0.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;' title='{fmt_usd(total_margin_debt, disp)}'>{_abbr(total_margin_debt, disp)}</div></div>" if total_margin_debt > 0 else ""
 
-        # Dashboard CSS (built as regular string to avoid f-string brace conflicts)
-        td_css = '<style>'
-        td_css += '.container{max-width:1440px!important;}'
-        td_css += '.td-layout{display:grid;grid-template-columns:220px 1fr 280px;gap:12px;margin-top:12px;}'
-        td_css += '.td-sidebar{background:#0f172a;border:1px solid #1e293b;overflow-y:auto;max-height:calc(100vh - 200px);}'
-        td_css += '.td-main{min-width:0;}'
-        td_css += '.td-panel{background:#0f172a;border:1px solid #1e293b;padding:14px;}'
-        td_css += '.td-section{background:#0f172a;border:1px solid #1e293b;padding:12px;margin-bottom:12px;}'
-        td_css += '.td-label{color:#64748b;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;}'
-        td_css += '#td-tab-buy,#td-tab-sell{display:none;}'
-        td_css += '.td-buy-panel,.td-sell-panel{display:none;}'
-        td_css += '#td-tab-buy:checked~.td-buy-panel{display:block;}'
-        td_css += '#td-tab-sell:checked~.td-sell-panel{display:block;}'
-        td_css += '#td-tab-buy:checked~.td-tab-bar .td-tab-buy{background:#16a34a;color:#fff;}'
-        td_css += '#td-tab-sell:checked~.td-tab-bar .td-tab-sell{background:#dc2626;color:#fff;}'
-        td_css += '.td-input{width:100%;padding:8px;background:#020617;border:1px solid #1e293b;color:#e5e7eb;font-size:0.85rem;font-family:inherit;}'
-        td_css += '.td-input:focus{border-color:#38bdf8;outline:none;}'
-        td_css += '@media(max-width:1024px){.td-layout{grid-template-columns:1fr!important;}.td-sidebar{max-height:none;overflow-x:auto;white-space:nowrap;display:flex;}.td-sidebar>a{min-width:140px;white-space:normal;}}'
-        td_css += '@media(max-width:600px){.td-layout{grid-template-columns:1fr!important;}.td-3col{grid-template-columns:1fr 1fr!important;}.td-2col{grid-template-columns:1fr!important;}.td-portbar{flex-wrap:wrap!important;gap:12px!important;}.td-input-row{flex-wrap:wrap!important;}.td-input-row input{width:100%!important;}.td-depths{grid-template-columns:1fr!important;}}'
-        td_css += '</style>'
 
-        # ── ETF mode ─────────────────────────────────────────────────────────────
-        if mode == "etf":
-            etf_configs = [
-                ("apple_seeds_etf",   "Apple Seeds ETF",      "apple_seeds_etf_shares",   "🍎"),
-                ("energy_etf",        "Energy ETF",           "energy_etf_shares",         "⚡"),
-                ("city_nav_etf",      "City NAV ETF",         "city_nav_etf_shares",       "🏙️"),
-                ("land_bank",         "Land Bank",            "land_bank_shares",           "🏦"),
-                ("wbc50_index_fund",  "WBC-50 Index Fund",    "wbc50_index_fund_shares",   "📈"),
-            ]
-            import banks as _banks_mod
-            import inventory as _inv_mod
-            import market as _mkt_mod
-
-            fund_cards = ""
-            for bank_id, name, share_item, icon in etf_configs:
-                try:
-                    be = _banks_mod.get_bank_entity(bank_id)
-                    if not be:
-                        continue
-                    your_shares = _inv_mod.get_item_quantity(player.id, share_item)
-                    mkt_price   = _mkt_mod.get_market_price(share_item)
-                    nav         = (be.cash_reserves or 0) + (be.asset_value or 0)
-                    mkt_price_display = fmt_usd(mkt_price, disp, precision=6) if mkt_price else "—"
-                    your_value  = fmt_usd(your_shares * (mkt_price or be.share_price), disp)
-                    nav_display = fmt_usd(nav, disp)
-                    fund_cards += f'''
-                    <div class="card" style="border-top:3px solid #86efac;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-                            <div>
-                                <h3 style="margin:0;">{icon} {name}</h3>
-                                <p style="color:#64748b;font-size:.8rem;margin:4px 0 0;">{be.description or ""}</p>
-                            </div>
-                            <a href="/banks/{bank_id.replace("_","-")}" class="btn-blue" style="font-size:.75rem;">Details</a>
-                        </div>
-                        <div class="td-3col" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0;">
-                            <div><div style="color:#64748b;font-size:.75rem;">Market Price</div>
-                                 <div style="font-weight:bold;color:#22c55e;">{mkt_price_display}</div></div>
-                            <div><div style="color:#64748b;font-size:.75rem;">NAV</div>
-                                 <div style="font-weight:bold;">{nav_display}</div></div>
-                            <div><div style="color:#64748b;font-size:.75rem;">Your Shares</div>
-                                 <div style="font-weight:bold;color:#38bdf8;">{your_shares:,.4f}
-                                     <span style="font-size:.7rem;color:#64748b;">({your_value})</span></div></div>
-                        </div>
-                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                            <form action="/api/brokerage/etf-order" method="post"
-                                  style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
-                                <input type="hidden" name="item_type"   value="{share_item}">
-                                <input type="hidden" name="order_type"  value="buy">
-                                <div>
-                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Qty</label>
-                                    <input type="number" name="quantity" min="1" step="1" value="100"
-                                           style="width:90px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
-                                </div>
-                                <div>
-                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Limit Price ({disp["symbol"]})</label>
-                                    <input type="number" name="price" min="0.000001" step="0.000001"
-                                           value="{round((mkt_price or be.share_price) / disp["usd_per_unit"], 6)}"
-                                           style="width:120px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
-                                </div>
-                                <button type="submit" style="background:#22c55e;color:#020617;border:none;padding:7px 14px;border-radius:3px;cursor:pointer;font-weight:bold;font-family:inherit;">Buy</button>
-                            </form>
-                            <form action="/api/brokerage/etf-order" method="post"
-                                  style="display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;">
-                                <input type="hidden" name="item_type"   value="{share_item}">
-                                <input type="hidden" name="order_type"  value="sell">
-                                <div>
-                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Qty</label>
-                                    <input type="number" name="quantity" min="1" step="1" value="100"
-                                           style="width:90px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
-                                </div>
-                                <div>
-                                    <label style="color:#94a3b8;font-size:.72rem;display:block;margin-bottom:2px;">Limit Price ({disp["symbol"]})</label>
-                                    <input type="number" name="price" min="0.000001" step="0.000001"
-                                           value="{round((mkt_price or be.share_price) / disp["usd_per_unit"], 6)}"
-                                           style="width:120px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;padding:5px 8px;border-radius:3px;font-family:inherit;">
-                                </div>
-                                <button type="submit" style="background:#ef4444;color:#fff;border:none;padding:7px 14px;border-radius:3px;cursor:pointer;font-weight:bold;font-family:inherit;">Sell</button>
-                            </form>
-                        </div>
-                    </div>'''
-                except Exception:
-                    continue
-
-            etf_body = f'''
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <a href="/banks/brokerage-firm" style="color:#38bdf8;font-size:.8rem;">&larr; Brokerage Firm</a>
-                <span style="font-size:.85rem;color:#94a3b8;font-weight:600;">WPE Trading Floor</span>
-            </div>
-            <!-- Mode tabs -->
-            <div style="display:flex;gap:8px;margin-bottom:16px;">
-                <a href="/brokerage/trading"
-                   style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#1e293b;color:#94a3b8;font-size:.8rem;">
-                    WPE Equities
-                </a>
-                <a href="/brokerage/trading?mode=etf"
-                   style="padding:7px 18px;border-radius:4px;text-decoration:none;background:#22c55e;color:#020617;font-size:.8rem;font-weight:bold;">
-                    ETF Funds
-                </a>
-            </div>
-            <h2 style="margin:0 0 4px;">ETF Fund Trading</h2>
-            <p style="color:#64748b;font-size:.85rem;margin:0 0 16px;">
-                Place limit orders on ETF fund shares via the ETF Trading Floor.
-            </p>
-            {fund_cards}
-            '''
-            return shell("ETF Trading", etf_body, player.cash_balance, player.id)
-        # ─────────────────────────────────────────────────────────────────────────
 
         # Assemble the full dashboard body
         from html import escape as html_escape
@@ -6866,17 +7175,17 @@ def brokerage_trading_page(session_token: Optional[str] = Cookie(None), ticker: 
 
         <!-- Portfolio Summary Bar -->
         <div class="td-portbar" style="display:flex;gap:24px;padding:10px 16px;background:#0f172a;border:1px solid #1e293b;font-size:0.8rem;flex-wrap:wrap;">
-            <div>
+            <div style="min-width:0;">
                 <span class="td-label">Portfolio Value</span>
-                <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;">{fmt_usd(total_portfolio_value, disp)}</div>
+                <div style="color:#e5e7eb;font-size:0.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="{fmt_usd(total_portfolio_value, disp)}">{_abbr(total_portfolio_value, disp)}</div>
             </div>
-            <div>
+            <div style="min-width:0;">
                 <span class="td-label">Total P/L</span>
-                <div style="color:{"#22c55e" if total_pl >= 0 else "#ef4444"};font-size:0.95rem;font-weight:600;">{"+" if total_pl >= 0 else ""}{fmt_usd(total_pl, disp)} <span style="font-size:0.75rem;">({total_pl_pct:+.1f}%)</span></div>
+                <div style="color:{"#22c55e" if total_pl >= 0 else "#ef4444"};font-size:0.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;" title="{"+" if total_pl >= 0 else ""}{fmt_usd(total_pl, disp)}">{"+" if total_pl >= 0 else ""}{_abbr(total_pl, disp)} <span style="font-size:0.75rem;">({total_pl_pct:+.1f}%)</span></div>
             </div>
-            <div>
+            <div style="min-width:0;">
                 <span class="td-label">Buying Power</span>
-                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;">{fmt_usd(player.cash_balance, disp)}</div>
+                <div style="color:#22c55e;font-size:0.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="{fmt_usd(player.cash_balance, disp)}">{_abbr(player.cash_balance, disp)}</div>
             </div>
             <div>
                 <span class="td-label">Positions</span>
@@ -10819,6 +11128,9 @@ async def biz_progress(session_token: Optional[str] = Cookie(None)):
 async def list_to_market(item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    # ETF/fund shares trade exclusively on the ETF Trading Floor.
+    if item_type.endswith("_shares"):
+        return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     import market
@@ -10951,9 +11263,10 @@ async def brokerage_etf_order(
     order_type: str   = Form(...),
     quantity:   float = Form(...),
     price:      float = Form(...),
+    fund:       str   = Form(""),
     session_token: Optional[str] = Cookie(None),
 ):
-    """Place a limit order for an ETF fund share via the ETF Trading Floor, then return to ETF trading view."""
+    """Place a limit order for an ETF fund share via the ETF Trading Floor."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
@@ -10969,7 +11282,24 @@ async def brokerage_etf_order(
         quantity,
         price_usd,
     )
-    return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
+    fund_param = f"&fund={fund}" if fund else ""
+    return RedirectResponse(url=f"/brokerage/trading?mode=etf{fund_param}", status_code=303)
+
+
+@router.post("/api/brokerage/cancel-etf-order")
+async def brokerage_cancel_etf_order(
+    order_id: int = Form(...),
+    fund:     str = Form(""),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Cancel an open ETF market order and return to the ETF trading floor."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    import market
+    market.cancel_order(order_id, player.id)
+    fund_param = f"&fund={fund}" if fund else ""
+    return RedirectResponse(url=f"/brokerage/trading?mode=etf{fund_param}", status_code=303)
 
 
 @router.post("/api/brokerage/create-ipo")
