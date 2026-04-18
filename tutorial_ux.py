@@ -2232,3 +2232,424 @@ def tutorial4_dismiss(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/login", status_code=303)
     set_tutorial4_step(player.id, 7)
     return RedirectResponse(url="/", status_code=303)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TUTORIAL 5 — Corporate Actions / Acquisitions & Income Stakes
+# ══════════════════════════════════════════════════════════════════════════════
+#
+#   0  — Not started  (banner shown after T4 complete)
+#   1  — What is an income stake?           (corporate-actions/dashboard)
+#   2  — Making an offer                    (corporate-actions/dashboard)
+#   3  — Receiving an offer                 (corporate-actions/dashboard)
+#   4  — Counter-offers & income sweep      (corporate-actions/dashboard)
+#   5  — Exiting a stake                   (corporate-actions/dashboard)
+#   6  — Claim reward                      (corporate-actions/dashboard)
+#   7  — Complete
+
+T5_TOTAL_STEPS = 6
+
+
+def get_tutorial5_step(player_id: int) -> int:
+    """Return the player's current Tutorial 5 step (0–7)."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        db.close()
+        if player is None:
+            return 0
+        step = getattr(player, "tutorial_5_step", 0)
+        return step if step is not None else 0
+    except Exception as e:
+        print(f"[Tutorial5] get_tutorial5_step error: {e}")
+        return 0
+
+
+def set_tutorial5_step(player_id: int, step: int):
+    """Set the player's Tutorial 5 step."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        if player:
+            player.tutorial_5_step = step
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial5] set_tutorial5_step error: {e}")
+
+
+def should_show_tutorial5_banner(player) -> bool:
+    """Show the T5 start banner only after Tutorial 4 is complete and T5 not yet started."""
+    t4 = getattr(player, "tutorial_4_step", 0) or 0
+    t5 = getattr(player, "tutorial_5_step", 0) or 0
+    return t4 >= 7 and t5 == 0
+
+
+# ── Tutorial 5 overlay HTML generator ─────────────────────────────────────────
+
+def get_tutorial5_overlay_html(player, current_page: str) -> str:
+    """
+    Return the Tutorial 5 overlay panel HTML for the given page.
+    `current_page` must be 'corporate_actions_dashboard'.
+    Returns empty string if T5 is not active or wrong page.
+    """
+    step = get_tutorial5_step(player.id)
+    if step == 0 or step >= 7:
+        return ""
+
+    if current_page != "corporate_actions_dashboard":
+        return ""
+
+    try:
+        from reserve_banks import get_player_display_currency, fmt_usd
+        disp = get_player_display_currency(player.id)
+        reward_display = fmt_usd(150_000.0, disp)
+    except Exception:
+        disp = None
+        reward_display = "$150,000"
+
+    title = ""
+    content = ""
+
+    if step == 1:
+        title = "What Is an Income Stake?"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            An <strong style="color:#e5e7eb;">income stake</strong> is a contractual right to receive
+            a fixed percentage of another player's <em>net business income</em> — every day,
+            automatically, for as long as the stake is active.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            As the <strong style="color:#f59e0b;">acquirer</strong> you pay the target with shares in
+            your own company (plus an optional cash sweetener). In exchange, the target lets you
+            <em>sweep</em> a portion of their earnings — retail sales, dividends, bond maturities,
+            market sells, and more.
+        </p>
+        <div style="background:#1a1200;border:1px solid #92400e;border-radius:4px;
+                    padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#fbbf24;">
+            <strong>Key rule:</strong> Taxes are excluded from the sweep — only <em>net</em> income
+            after taxes is shared with the acquirer.
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            Stakes can be perpetual or time-limited (30 / 60 / 90 / 180 / 365 days).
+            All payouts are made in each player's own legal tender, regardless of which
+            currency the deal was struck in.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 2:
+        title = "Making an Acquisition Offer"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            To make an offer, scroll down to any of your public companies and open the
+            <strong style="color:#e5e7eb;">Acquisitions</strong> tab.
+            You'll specify:
+        </p>
+        <ul style="color:#94a3b8;line-height:1.9;margin:0 0 12px 20px;font-size:0.9rem;">
+            <li><strong style="color:#e5e7eb;">Target player</strong> — find their ID on the Leaderboard</li>
+            <li><strong style="color:#e5e7eb;">Shares offered</strong> — from your own company's holdings</li>
+            <li><strong style="color:#e5e7eb;">Stake %</strong> — 0.1 % to 50 % of net income</li>
+            <li><strong style="color:#e5e7eb;">Cash sweetener</strong> — optional extra cash to sweeten the deal</li>
+            <li><strong style="color:#e5e7eb;">Term</strong> — perpetual, or 30 / 60 / 90 / 180 / 365 days</li>
+            <li><strong style="color:#e5e7eb;">Lock-up</strong> — minimum days before exit is allowed (default 7)</li>
+        </ul>
+        <div style="background:#0f1a00;border:1px solid #3f6212;border-radius:4px;
+                    padding:10px 14px;margin-bottom:14px;font-size:0.82rem;line-height:1.7;color:#86efac;">
+            <strong>Escrow:</strong> Any cash sweetener is <em>deducted from your balance immediately</em>
+            when the offer is sent. It's held in escrow and returned to you if the target
+            rejects or ignores the offer within 7 days.
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            Once sent, the target has 7 days to accept, reject, or counter. You can cancel a
+            pending offer at any time before they respond — the escrow is refunded to your wallet.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 3:
+        title = "Receiving an Offer — Accept, Reject, or Counter"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            When another player sends you an offer, you'll see it in your
+            <strong style="color:#e5e7eb;">Incoming Offers</strong> section here on the dashboard.
+            You have three choices:
+        </p>
+        <div style="display:grid;gap:10px;margin-bottom:14px;">
+            <div style="background:#0f1f11;border:1px solid #166534;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;color:#86efac;">
+                <strong>✓ Accept</strong> — The stake activates immediately. The acquirer's shares
+                transfer to you and, if there's a cash sweetener, it's released from escrow
+                straight to your wallet.
+            </div>
+            <div style="background:#1f0f0f;border:1px solid #991b1b;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;color:#fca5a5;">
+                <strong>✗ Reject</strong> — The offer closes. The escrow cash is returned
+                to the acquirer automatically in their own legal tender.
+            </div>
+            <div style="background:#1a1000;border:1px solid #92400e;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;color:#fcd34d;">
+                <strong>⇄ Counter</strong> — Propose new terms: a different stake %,
+                different shares, or a different cash component. The original offer is
+                put on hold while your counter is reviewed.
+            </div>
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            All three actions can be taken directly from this dashboard
+            without needing to navigate anywhere else.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 4:
+        title = "Counter-Offers, Income Sweep &amp; Multi-Currency"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px 0;">
+            <strong style="color:#e5e7eb;">Counter-offers</strong> work in both directions.
+            When you counter an incoming offer, the acquirer can accept, reject <em>your counter</em>,
+            or let it expire. Rejecting a counter reverts the original offer back to
+            <em>pending</em> — giving the target a second chance to accept or reject the original terms.
+        </p>
+        <div style="background:#0a1628;border:1px solid #1d4ed8;border-radius:4px;
+                    padding:10px 14px;margin-bottom:12px;font-size:0.82rem;line-height:1.7;color:#93c5fd;">
+            <strong>Income Sweep — what gets shared:</strong><br>
+            Retail sales · Market sells · Dividends · Bond maturities &amp; calls · Bond sells ·
+            District market sells · Share sells · P2P contract payments · Crypto sells ·
+            City application income.<br>
+            <em>Taxes and district taxes are excluded before the split is calculated.</em>
+        </div>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 14px 0;">
+            The daily sweep deducts the acquirer's share directly from the target via
+            <em>spend_player_funds</em> and credits the acquirer via <em>convert_to_legal_tender</em>
+            — so each player always receives and pays in their own currency, no matter what
+            currency the original deal was denominated in.
+        </p>
+        <form action="/api/tutorial5/advance" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Continue →
+            </button>
+        </form>
+        """
+
+    elif step == 5:
+        title = "Exiting a Stake — Diffuse &amp; Target Buyout"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px 0;">
+            Once the lock-up period has passed, either side can exit the stake.
+            There are three exit mechanisms:
+        </p>
+        <div style="display:grid;gap:10px;margin-bottom:16px;">
+            <div style="background:#0a1628;border:1px solid #1d4ed8;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;line-height:1.7;">
+                <strong style="color:#93c5fd;">Diffuse — Share Return</strong>
+                <p style="color:#94a3b8;margin:4px 0 0;">
+                    The acquirer initiates. The target has <strong>30 days</strong> to return
+                    the original shares. If they default, a government lien is placed on their
+                    assets for the market value of the shares.
+                </p>
+            </div>
+            <div style="background:#0f1f11;border:1px solid #166534;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;line-height:1.7;">
+                <strong style="color:#86efac;">Diffuse — Cash Buyout</strong>
+                <p style="color:#94a3b8;margin:4px 0 0;">
+                    The acquirer pays the target the current market value of the shares
+                    instead of receiving them back. The stake ends immediately — no 30-day window.
+                </p>
+            </div>
+            <div style="background:#1a1000;border:1px solid #92400e;border-radius:4px;
+                        padding:10px 14px;font-size:0.84rem;line-height:1.7;">
+                <strong style="color:#fcd34d;">Target Buyout</strong>
+                <p style="color:#94a3b8;margin:4px 0 0;">
+                    A defensive exit for the <em>target</em>. The target pays the acquirer
+                    the current market value of the held shares, ending the stake immediately.
+                    The acquirer keeps the cash; the target gets their income stream back.
+                </p>
+            </div>
+        </div>
+        <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);
+                    border-radius:6px;padding:14px 18px;margin-bottom:16px;">
+            <strong style="color:#f59e0b;">Tutorial 5 Reward — Tax Voucher {reward_display}</strong>
+            <p style="color:#94a3b8;margin:6px 0 0;line-height:1.6;">
+                You've completed the full acquisition and income stake curriculum. The government
+                is awarding you a <strong style="color:#22c55e;">Tax Voucher worth {reward_display}</strong>.
+                Redeem it any time from this dashboard for instant cash.
+            </p>
+        </div>
+        <form action="/api/tutorial5/claim-reward" method="post">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Claim Reward &amp; Complete Tutorial 5 →
+            </button>
+        </form>
+        """
+
+    elif step == 6:
+        return ""
+
+    else:
+        return ""
+
+    display_step = min(step, T5_TOTAL_STEPS)
+
+    return f"""
+    <div id="tutorial5-panel" style="
+        background: linear-gradient(135deg, #1a0e00, #0f172a);
+        border: 2px solid #f59e0b;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#f59e0b;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                TUTORIAL 5 — STEP {display_step}/{T5_TOTAL_STEPS}
+            </span>
+            <span style="color:#f59e0b;font-size:0.85rem;font-weight:bold;">Level 5 · Acquisitions &amp; Income Stakes</span>
+            <div style="flex:1;background:#1e293b;height:4px;border-radius:2px;min-width:80px;">
+                <div style="background:#f59e0b;height:4px;border-radius:2px;
+                            width:{int(display_step / T5_TOTAL_STEPS * 100)}%;"></div>
+            </div>
+        </div>
+        <h3 style="color:#f59e0b;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
+        {content}
+        <a href="/api/tutorial5/dismiss"
+           onclick="return confirm('Skip Tutorial 5? You can restart it from Settings.');"
+           style="position:absolute;top:12px;right:16px;color:#475569;font-size:0.72rem;text-decoration:none;">
+            Skip
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 5 banner (shown on dashboard when T4 done and T5 not started) ────
+
+def get_tutorial5_banner_html(player) -> str:
+    """Return the T5 start banner HTML, or empty string if not applicable."""
+    if not should_show_tutorial5_banner(player):
+        return ""
+    return f"""
+    <div style="
+        background: linear-gradient(135deg, #1a0e00, #0f172a);
+        border: 2px solid #f59e0b;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#f59e0b;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                NEW TUTORIAL AVAILABLE
+            </span>
+            <span style="color:#f59e0b;font-size:0.85rem;font-weight:bold;">Level 5 · Acquisitions &amp; Income Stakes</span>
+        </div>
+        <h3 style="color:#f59e0b;margin:0 0 10px 0;font-size:1.05rem;">
+            Acquire Income Streams from Other Players
+        </h3>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Tutorial 5 covers the <strong style="color:#e5e7eb;">acquisition system</strong> —
+            how to offer shares for a cut of another player's income, how escrow protects both
+            sides, how the <strong style="color:#e5e7eb;">daily income sweep</strong> works,
+            and how to exit a stake cleanly. Complete it and earn a
+            <strong style="color:#22c55e;">Tax Voucher reward</strong>.
+        </p>
+        <form action="/api/tutorial5/start" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Start Tutorial 5 →
+            </button>
+        </form>
+        <a href="/api/tutorial5/dismiss"
+           style="margin-left:16px;color:#475569;font-size:0.82rem;">
+            Dismiss
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 5 API routes ──────────────────────────────────────────────────────
+
+@router.post("/api/tutorial5/start")
+def tutorial5_start(session_token: Optional[str] = Cookie(None)):
+    """Start Tutorial 5 (step 0 → 1)."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial5_step(player.id) == 0:
+        set_tutorial5_step(player.id, 1)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/api/tutorial5/advance")
+def tutorial5_advance(session_token: Optional[str] = Cookie(None)):
+    """Advance Tutorial 5 to the next step."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial5_step(player.id)
+
+    if step == 0 or step >= 7:
+        return RedirectResponse(url="/", status_code=303)
+
+    set_tutorial5_step(player.id, step + 1)
+    return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+
+@router.post("/api/tutorial5/claim-reward")
+def tutorial5_claim_reward(session_token: Optional[str] = Cookie(None)):
+    """Grant the Tutorial 5 Tax Voucher reward and complete the tutorial."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    step = get_tutorial5_step(player.id)
+    if step not in (5, 6):
+        return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+    try:
+        from corporate_actions import TaxVoucher, get_db as get_ca_db
+        db = get_ca_db()
+        voucher = TaxVoucher(player_id=player.id, amount=150_000.0, source_dividend_id=None)
+        db.add(voucher)
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial5] Failed to grant tax voucher for player {player.id}: {e}")
+
+    set_tutorial5_step(player.id, 7)
+    return RedirectResponse(url="/corporate-actions/dashboard?t5_reward=1", status_code=303)
+
+
+@router.get("/api/tutorial5/dismiss")
+def tutorial5_dismiss(session_token: Optional[str] = Cookie(None)):
+    """Dismiss / skip Tutorial 5."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_tutorial5_step(player.id, 7)
+    return RedirectResponse(url="/", status_code=303)
