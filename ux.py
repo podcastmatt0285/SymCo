@@ -2126,6 +2126,13 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">View Bonds</span>
             </a>
 
+            <a href="/brokerage/trading?mode=etf" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#10b981,#34d399);--glow:rgba(52,211,153,0.12);--btn:#34d399;">
+                <span class="dc-ico">📉</span>
+                <div class="dc-t">ETF &amp; Index Funds</div>
+                <div class="dc-d">Trade shares in Wadsworth's passive investment funds — Apple Seeds ETF, Energy ETF, City NAV ETF, Land Bank, and the WBC-50 Index Fund. Each fund tracks an underlying commodity or index and pays dividends. Prices set by live order book.</div>
+                <span class="dc-btn">ETF Trading Floor</span>
+            </a>
+
             <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
                 <span class="dc-ico">🏦</span>
                 <div class="dc-t">Banking</div>
@@ -2769,6 +2776,22 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     bar_html = '<div class="inv-value-bar"></div>'
 
                 form_id = f"invform-{item}"
+                if item.endswith("_shares"):
+                    market_action_html = '<a href="/brokerage/trading?mode=etf" class="btn-blue" style="font-size:0.75rem;margin-top:6px;display:inline-block;">Trade on ETF Floor →</a>'
+                else:
+                    market_action_html = (
+                        f'<button class="inv-list-toggle" onclick="invToggleForm(\'{form_id}\', this)" type="button">'
+                        f'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
+                        f' List on Market</button>'
+                        f'<div class="inv-list-form" id="{form_id}">'
+                        f'<form action="/api/inventory/list" method="post" class="inv-list-inner">'
+                        f'<input type="hidden" name="item_type" value="{item}">'
+                        f'<div class="inv-list-fields">'
+                        f'<input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>'
+                        f'<input type="number" name="price" step="0.0001" placeholder="Price ({disp["code"]})" class="inv-input" required>'
+                        f'<button type="submit" class="btn-blue inv-submit-btn">List →</button>'
+                        f'</div></form></div>'
+                    )
                 cards_html += f'''
                 <div class="inv-card" data-name="{display_name.lower()} {item.lower()}">
                     <div class="inv-card-top">
@@ -2779,20 +2802,7 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
                     <div class="inv-card-desc">{desc_short}</div>
                     {val_html}
                     {bar_html}
-                    <button class="inv-list-toggle" onclick="invToggleForm('{form_id}', this)" type="button">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                        List on Market
-                    </button>
-                    <div class="inv-list-form" id="{form_id}">
-                        <form action="/api/inventory/list" method="post" class="inv-list-inner">
-                            <input type="hidden" name="item_type" value="{item}">
-                            <div class="inv-list-fields">
-                                <input type="number" name="quantity" placeholder="Qty" min="0" max="{qty:.0f}" class="inv-input" required>
-                                <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" class="inv-input" required>
-                                <button type="submit" class="btn-blue inv-submit-btn">List →</button>
-                            </div>
-                        </form>
-                    </div>
+                    {market_action_html}
                 </div>'''
 
         page_assets = '''<style>
@@ -10826,6 +10836,9 @@ async def biz_progress(session_token: Optional[str] = Cookie(None)):
 async def list_to_market(item_type: str = Form(...), quantity: float = Form(...), price: float = Form(...), session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+    # ETF/fund shares trade exclusively on the ETF Trading Floor.
+    if item_type.endswith("_shares"):
+        return RedirectResponse(url="/brokerage/trading?mode=etf", status_code=303)
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     import market
