@@ -1236,10 +1236,11 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
             <li><strong style="color:#e5e7eb;">Short selling</strong> — borrow and short shares you don't own</li>
             <li><strong style="color:#e5e7eb;">Margin lending</strong> — borrow against your portfolio to amplify positions</li>
             <li><strong style="color:#e5e7eb;">ETF funds</strong> — invest in themed commodity-backed index funds</li>
+            <li><strong style="color:#e5e7eb;">Corporate Actions</strong> — automate buybacks, stock splits, and secondary offerings directly from the dashboard</li>
             <li><strong style="color:#e5e7eb;">Governance</strong> — create and vote on corporate proposals as a shareholder</li>
             <li><strong style="color:#e5e7eb;">Loyalty dividends</strong> — hold shares 30+ days for a +10% dividend bonus, 90+ days for +25%</li>
             <li><strong style="color:#e5e7eb;">Sector perks</strong> — holding shares in Finance, Tech, or other sectors unlocks passive bonuses</li>
-            <li><strong style="color:#e5e7eb;">Listing fees</strong> — public companies pay $500/month to stay listed; miss 3 and trading halts</li>
+            <li><strong style="color:#e5e7eb;">Listing fees</strong> — public companies pay $500/month to stay listed; miss 3 payments and trading halts for 7 days</li>
         </ul>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
             When you're ready to take your company public, the Firm handles everything from

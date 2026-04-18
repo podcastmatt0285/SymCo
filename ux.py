@@ -2119,6 +2119,13 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">View Auctions</span>
             </a>
 
+            <a href="/reserve-banks/bonds" class="dc" style="--c:#fbbf24;--g:linear-gradient(90deg,#f59e0b,#fbbf24);--glow:rgba(251,191,36,0.12);--btn:#fbbf24;">
+                <span class="dc-ico">📊</span>
+                <div class="dc-t">Bond Market</div>
+                <div class="dc-d">Buy and sell government bonds issued by the 20+ reserve banks. Bonds pay fixed interest over 7, 14, or 30-day maturities — a lower-risk way to earn yield on idle cash. Rates shift with inflation, credit risk, and inter-bank demand.</div>
+                <span class="dc-btn">View Bonds</span>
+            </a>
+
             <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
                 <span class="dc-ico">🏦</span>
                 <div class="dc-t">Banking</div>
