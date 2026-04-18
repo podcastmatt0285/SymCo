@@ -486,6 +486,8 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                             "Trade Pending — Currency Required",
                             f"Your purchase of {buy_order.item_type.replace('_',' ')} is on hold. {petro_msg}.",
                             url="/market", notif_type="trades",
+                            cooldown_key=f"tradepending-{buy_order.player_id}-{buy_order.item_type}",
+                            cooldown_secs=1800,
                         )
                     except Exception:
                         pass

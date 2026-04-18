@@ -130,10 +130,17 @@ def create_game_notification(
     body: str,
     url: str = "/",
     notif_type: str = "general",
+    cooldown_key: str = None,
+    cooldown_secs: float = 0,
 ) -> None:
-    """Store an in-game banner notification (not a web push)."""
+    """Store an in-game banner notification (not a web push).
+    cooldown_key + cooldown_secs prevent duplicate banners within a time window."""
     if player_id <= 0:
         return
+    if cooldown_key and cooldown_secs > 0:
+        if not push_rate_ok(f"gn-{cooldown_key}", cooldown_secs):
+            return
+        push_rate_mark(f"gn-{cooldown_key}")
     try:
         _ensure_game_notif_table()
         from database import engine
@@ -495,6 +502,21 @@ def send_push_notification(
             print(f"[Push] govt notifications disabled for player {player_id} — skipping")
             db.close()
             return
+
+        # Also write an in-game banner (same preference gates above already passed)
+        try:
+            _ensure_game_notif_table()
+            from database import engine as _eng
+            from sqlalchemy import text as _sqt
+            with _eng.connect() as _gc:
+                _gc.execute(_sqt(
+                    "INSERT INTO player_notifications (player_id, title, body, url, notif_type) "
+                    "VALUES (:pid, :title, :body, :url, :ntype)"
+                ), {"pid": player_id, "title": title, "body": body,
+                    "url": url, "ntype": notif_type})
+                _gc.commit()
+        except Exception as _ge:
+            print(f"[Push] in-game write error: {_ge}")
 
         subs = db.query(PushSubscription).filter_by(player_id=player_id).all()
         if not subs:

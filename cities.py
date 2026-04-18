@@ -1853,6 +1853,8 @@ def _broadcast_currency_opportunity(currency_type: str, needed: float, city_name
                             f"{city_name} has a pending trade requiring {needed:.2f} {_item_disp}. "
                             f"List yours for sale to profit.",
                             url="/market", notif_type="trades",
+                            cooldown_key=f"mktopportunity-{_p.id}-{currency_type}",
+                            cooldown_secs=7200,
                         )
             finally:
                 _db.close()

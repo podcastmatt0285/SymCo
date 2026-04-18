@@ -2026,17 +2026,28 @@ def home(session_token: Optional[str] = Cookie(None)):
         from push_ux import get_game_notifications, mark_game_notifications_seen
         game_notifs = get_game_notifications(player.id)
         gn_parts = []
+        _type_meta = {
+            "trades":    ("#f59e0b", "MARKET"),
+            "corporate": ("#38bdf8", "CORPORATE"),
+            "execs":     ("#a78bfa", "EXECUTIVES"),
+            "general":   ("#64748b", "NOTICE"),
+            "govt":      ("#22c55e", "GOVERNMENT"),
+            "business":  ("#fb923c", "BUSINESS"),
+            "land":      ("#84cc16", "LAND"),
+            "contract":  ("#f472b6", "CONTRACT"),
+            "dm":        ("#60a5fa", "MESSAGE"),
+        }
         for gn in game_notifs:
-            _color = "#f59e0b" if gn["notif_type"] == "trades" else "#64748b"
-            _label = "MARKET" if gn["notif_type"] == "trades" else "NOTICE"
-            _link = f'<a href="{gn["url"]}" style="color:#38bdf8;font-size:0.82rem;">View →</a>' if gn["url"] and gn["url"] != "/" else ""
+            _color, _label = _type_meta.get(gn["notif_type"], ("#64748b", "NOTICE"))
+            _view = f'<a href="{gn["url"]}" style="color:#38bdf8;font-size:0.82rem;margin-right:12px;">View →</a>' if gn["url"] and gn["url"] != "/" else ""
             gn_parts.append(f"""
             <div style="background:linear-gradient(135deg,#0a1628,#0f172a);border:2px solid {_color};border-radius:6px;padding:14px 18px;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
                     <span style="background:{_color};color:#020617;padding:2px 10px;border-radius:10px;font-size:0.7rem;font-weight:bold;">{_label}</span>
                     <span style="color:#94a3b8;font-size:0.85rem;font-weight:600;">{gn["title"]}</span>
                 </div>
-                <p style="color:#cbd5e1;margin:0;font-size:0.88rem;">{gn["body"]} {_link}</p>
+                <p style="color:#cbd5e1;margin:0;font-size:0.88rem;">{gn["body"]}</p>
+                <div style="margin-top:8px;">{_view}<a href="/settings" style="color:#475569;font-size:0.78rem;">Notification settings →</a></div>
             </div>""")
         if gn_parts:
             mark_game_notifications_seen(player.id)
