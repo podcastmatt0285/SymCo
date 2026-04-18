@@ -2063,25 +2063,18 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Terminal</span>
             </a>
 
+            <a href="/districts" class="dc" style="--c:#6366f1;--g:linear-gradient(90deg,#6366f1,#818cf8);--glow:rgba(99,102,241,0.12);--btn:#6366f1;">
+                <span class="dc-ico">🏘️</span>
+                <div class="dc-t">District Businesses</div>
+                <div class="dc-d">Merge land plots into specialised districts — industrial zones, commercial hubs, agricultural belts, and more. Districts unlock exclusive business types, share workers across plots, and generate district-level bonuses that scale with size.</div>
+                <span class="dc-btn">Manage Districts</span>
+            </a>
+
             <a href="/inventory" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e);--glow:rgba(245,168,85,0.12);--btn:#f5a855;">
                 <span class="dc-ico">📦</span>
                 <div class="dc-t">Inventory</div>
                 <div class="dc-d">Everything you own that isn't land or cash — raw materials, finished goods, district items, and commodities. Use your stock to supply businesses, list on the Market, lend to other players, or hold for price appreciation.</div>
                 <span class="dc-btn">View Stock</span>
-            </a>
-
-            <a href="/counties" class="dc" style="--c:#a3e635;--g:linear-gradient(90deg,#a3e635,#bef264);--glow:rgba(163,230,53,0.12);--btn:#a3e635;">
-                <span class="dc-ico">🗾</span>
-                <div class="dc-t">Counties</div>
-                <div class="dc-d">The top tier of regional government in Wadsworth. Each county sets its own tax rates, controls land within its borders, and funds public services. View which county your land sits in, who governs it, and how their policies affect your business costs.</div>
-                <span class="dc-btn">View Counties</span>
-            </a>
-
-            <a href="/cities" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#34d399,#6ee7b7);--glow:rgba(52,211,153,0.12);--btn:#34d399;">
-                <span class="dc-ico">🏙️</span>
-                <div class="dc-t">Cities</div>
-                <div class="dc-d">Urban hubs that unlock advanced buildings, districts, and city-level infrastructure projects. Cities grow with player investment, attract workers, and boost production bonuses for nearby land. Check active projects, population, and development status.</div>
-                <span class="dc-btn">View Cities</span>
             </a>
 
             <a href="/land" class="dc" style="--c:#22c55e;--g:linear-gradient(90deg,#22c55e,#4ade80);--glow:rgba(34,197,94,0.12);--btn:#22c55e;">
@@ -2091,11 +2084,32 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Real Estate</span>
             </a>
 
+            <a href="/cities" class="dc" style="--c:#34d399;--g:linear-gradient(90deg,#34d399,#6ee7b7);--glow:rgba(52,211,153,0.12);--btn:#34d399;">
+                <span class="dc-ico">🏙️</span>
+                <div class="dc-t">Cities</div>
+                <div class="dc-d">Urban hubs that unlock advanced buildings, districts, and city-level infrastructure projects. Cities grow with player investment, attract workers, and boost production bonuses for nearby land. Check active projects, population, and development status.</div>
+                <span class="dc-btn">View Cities</span>
+            </a>
+
+            <a href="/counties" class="dc" style="--c:#a3e635;--g:linear-gradient(90deg,#a3e635,#bef264);--glow:rgba(163,230,53,0.12);--btn:#a3e635;">
+                <span class="dc-ico">🗾</span>
+                <div class="dc-t">Counties</div>
+                <div class="dc-d">The top tier of regional government in Wadsworth. Each county sets its own tax rates, controls land within its borders, and funds public services. View which county your land sits in, who governs it, and how their policies affect your business costs.</div>
+                <span class="dc-btn">View Counties</span>
+            </a>
+
             <a href="/market" class="dc" style="--c:#67e8f9;--g:linear-gradient(90deg,#67e8f9,#a5f3fc);--glow:rgba(103,232,249,0.12);--btn:#67e8f9;">
                 <span class="dc-ico">📈</span>
                 <div class="dc-t">Market</div>
                 <div class="dc-d">The Wadsworth Commodity Exchange — a live player-driven market for raw materials and finished goods. Post sell orders, place buy orders, watch prices update in real time, and profit from supply and demand across the economy.</div>
                 <span class="dc-btn">Trading Floor</span>
+            </a>
+
+            <a href="/district-market" class="dc" style="--c:#a78bfa;--g:linear-gradient(90deg,#a78bfa,#c4b5fd);--glow:rgba(167,139,250,0.12);--btn:#a78bfa;">
+                <span class="dc-ico">🏪</span>
+                <div class="dc-t">District Market</div>
+                <div class="dc-d">A dedicated exchange for district-exclusive goods produced inside specialised zones. Trade district items with other players, browse the order book, and arbitrage price gaps between the commodity market and district supply chains.</div>
+                <span class="dc-btn">District Exchange</span>
             </a>
 
             <a href="/land-market" class="dc" style="--c:#f5d76e;--g:linear-gradient(90deg,#f5d76e,#fde68a);--glow:rgba(245,215,110,0.12);--btn:#f5d76e;">
@@ -2107,9 +2121,9 @@ def home(session_token: Optional[str] = Cookie(None)):
 
             <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
                 <span class="dc-ico">🏦</span>
-                <div class="dc-t">Banks</div>
+                <div class="dc-t">Banking</div>
                 <div class="dc-d">The full financial system — WPE stock exchange, IPOs, ETF index funds, short selling, commodity lending, credit ratings, margin trading, and the Reserve Bank for bonds and forex. Your financial hub for investing beyond your own business.</div>
-                <span class="dc-btn">Banking</span>
+                <span class="dc-btn">Open Banking</span>
             </a>
 
             <a href="/wallet" class="dc" style="--c:#fb923c;--g:linear-gradient(90deg,#fb923c,#fdba74);--glow:rgba(251,146,60,0.12);--btn:#fb923c;">
@@ -2133,18 +2147,18 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">P2P Network</span>
             </a>
 
-            <a href="/stats/wiki" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e,#90c4f0);--glow:rgba(245,168,85,0.18);--btn:linear-gradient(90deg,#f5a855,#f5d76e);">
-                <span class="dc-ico">📖</span>
-                <div class="dc-t">WikaWads</div>
-                <div class="dc-d">The living game encyclopedia — look up every business type, input/output chain, district unlock, city project, executive ability, item recipe, and economic stat. Updated automatically as the game evolves. Essential for planning your next move.</div>
-                <span class="dc-btn">Open Wiki</span>
-            </a>
-
             <a href="/world-map" class="dc" style="--c:#4ade80;--g:linear-gradient(90deg,#22c55e,#4ade80,#86efac);--glow:rgba(74,222,128,0.12);--btn:#4ade80;">
                 <span class="dc-ico">🗺️</span>
                 <div class="dc-t">World Map</div>
                 <div class="dc-d">A live political and geographic atlas of Wadsworth. See every county, city, district, and terrain type. Identify where land is cheap, where cities are booming, which counties have low taxes, and where competitors are building their empires.</div>
                 <span class="dc-btn">Open Map</span>
+            </a>
+
+            <a href="/stats/wiki" class="dc" style="--c:#f5a855;--g:linear-gradient(90deg,#f5a855,#f5d76e,#90c4f0);--glow:rgba(245,168,85,0.18);--btn:linear-gradient(90deg,#f5a855,#f5d76e);">
+                <span class="dc-ico">📖</span>
+                <div class="dc-t">Wikiwads</div>
+                <div class="dc-d">The living game encyclopedia — look up every business type, input/output chain, district unlock, city project, executive ability, item recipe, and economic stat. Updated automatically as the game evolves. Essential for planning your next move.</div>
+                <span class="dc-btn">Open Wiki</span>
             </a>
 
             <a href="/settings" class="dc" style="--c:#818cf8;--g:linear-gradient(90deg,#818cf8,#a5b4fc);--glow:rgba(129,140,248,0.12);--btn:#818cf8;">
