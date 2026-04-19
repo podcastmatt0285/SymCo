@@ -75,6 +75,7 @@ class GroupParticipant(Base):
     id              = Column(Integer, primary_key=True, autoincrement=True)
     conversation_id = Column(String, index=True, nullable=False)
     player_id       = Column(Integer, index=True, nullable=False)
+    role            = Column(String, default="member", nullable=False)  # "creator", "mod", "member"
     joined_at       = Column(DateTime, default=datetime.utcnow)
 
 
@@ -86,6 +87,21 @@ def initialize():
     """Initialize the DM module."""
     print("[DM] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    # Add role column to existing dm_group_participants tables (no-op if already present)
+    try:
+        from database import run_ddl_migration
+        run_ddl_migration(engine, [
+            "ALTER TABLE dm_group_participants ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'member'",
+            # Backfill: mark existing creator rows based on GroupConversation.created_by
+            """UPDATE dm_group_participants gp
+               SET role = 'creator'
+               FROM dm_group_conversations gc
+               WHERE gp.conversation_id = gc.id
+                 AND gp.player_id = gc.created_by
+                 AND gp.role = 'member'""",
+        ])
+    except Exception as e:
+        print(f"[DM] DDL migration warning: {e}")
     print("[DM] Module initialized")
 
 
@@ -303,7 +319,8 @@ def create_group_dm(creator_id: int, name: str, initial_ids: list) -> dict:
             created_at=datetime.utcnow(), last_message_at=datetime.utcnow(),
         ))
         for pid in participants:
-            db.add(GroupParticipant(conversation_id=conv_id, player_id=pid))
+            role = "creator" if pid == creator_id else "member"
+            db.add(GroupParticipant(conversation_id=conv_id, player_id=pid, role=role))
         db.commit()
         return {"ok": True, "id": conv_id, "name": name, "participants": participants}
     except Exception as e:
@@ -319,8 +336,12 @@ def add_group_participant(conv_id: str, player_id: int, adder_id: int) -> dict:
         conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
         if not conv:
             return {"ok": False, "error": "Group not found."}
-        if conv.created_by != adder_id:
-            return {"ok": False, "error": "Only the group creator can add members."}
+        adder_row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == adder_id,
+        ).first()
+        if not adder_row or adder_row.role not in ("creator", "mod"):
+            return {"ok": False, "error": "Only the creator or a group mod can add members."}
         count = db.query(GroupParticipant).filter(GroupParticipant.conversation_id == conv_id).count()
         if count >= MAX_GROUP_PARTICIPANTS:
             return {"ok": False, "error": f"Maximum {MAX_GROUP_PARTICIPANTS} participants."}
@@ -330,7 +351,7 @@ def add_group_participant(conv_id: str, player_id: int, adder_id: int) -> dict:
         ).first()
         if exists:
             return {"ok": False, "error": "Player is already in this group."}
-        db.add(GroupParticipant(conversation_id=conv_id, player_id=player_id))
+        db.add(GroupParticipant(conversation_id=conv_id, player_id=player_id, role="member"))
         db.commit()
         return {"ok": True}
     except Exception as e:
@@ -346,17 +367,34 @@ def remove_group_participant(conv_id: str, player_id: int, remover_id: int) -> d
         conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
         if not conv:
             return {"ok": False, "error": "Group not found."}
-        if remover_id != player_id and conv.created_by != remover_id:
-            return {"ok": False, "error": "Only the creator can remove other members."}
-        if player_id == conv.created_by:
-            return {"ok": False, "error": "The creator cannot leave. Delete the group instead."}
-        row = db.query(GroupParticipant).filter(
+        target_row = db.query(GroupParticipant).filter(
             GroupParticipant.conversation_id == conv_id,
             GroupParticipant.player_id == player_id,
         ).first()
-        if not row:
+        if not target_row:
             return {"ok": False, "error": "Player is not in this group."}
-        db.delete(row)
+        # Self-leave
+        if remover_id == player_id:
+            if target_row.role == "creator":
+                return {"ok": False, "error": "Transfer ownership before leaving."}
+            db.delete(target_row)
+            db.commit()
+            return {"ok": True}
+        # Kicking someone else
+        remover_row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == remover_id,
+        ).first()
+        if not remover_row:
+            return {"ok": False, "error": "You are not in this group."}
+        if remover_row.role == "creator":
+            pass  # creator can kick anyone
+        elif remover_row.role == "mod":
+            if target_row.role in ("creator", "mod"):
+                return {"ok": False, "error": "Mods can only remove regular members."}
+        else:
+            return {"ok": False, "error": "Only the creator or a mod can remove members."}
+        db.delete(target_row)
         db.commit()
         return {"ok": True}
     except Exception as e:
@@ -372,8 +410,12 @@ def rename_group_dm(conv_id: str, new_name: str, requester_id: int) -> dict:
         conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
         if not conv:
             return {"ok": False, "error": "Group not found."}
-        if conv.created_by != requester_id:
-            return {"ok": False, "error": "Only the creator can rename this group."}
+        req_row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == requester_id,
+        ).first()
+        if not req_row or req_row.role not in ("creator", "mod"):
+            return {"ok": False, "error": "Only the creator or a group mod can rename this group."}
         conv.name = (new_name or "Group Chat").strip()[:80]
         db.commit()
         return {"ok": True, "name": conv.name}
@@ -393,14 +435,18 @@ def get_group_participant_ids(conv_id: str) -> list:
 
 
 def get_group_participants(conv_id: str) -> list:
-    ids = get_group_participant_ids(conv_id)
+    db = get_db()
+    rows = db.query(GroupParticipant).filter(GroupParticipant.conversation_id == conv_id).all()
+    role_map = {r.player_id: r.role for r in rows}
+    ids = list(role_map.keys())
+    db.close()
     if not ids:
         return []
     from auth import get_db as get_auth_db, Player
-    db = get_auth_db()
-    players = db.query(Player).filter(Player.id.in_(ids)).all()
-    result = [{"id": p.id, "name": p.business_name} for p in players]
-    db.close()
+    adb = get_auth_db()
+    players = adb.query(Player).filter(Player.id.in_(ids)).all()
+    result = [{"id": p.id, "name": p.business_name, "role": role_map.get(p.id, "member")} for p in players]
+    adb.close()
     return result
 
 
@@ -450,18 +496,104 @@ def get_player_group_conversations(player_id: int) -> list:
         GroupConversation.id.in_(conv_ids),
         GroupConversation.last_message_at >= cutoff,
     ).order_by(GroupConversation.last_message_at.desc()).all()
+    role_by_conv = {r.conversation_id: r.role for r in part_rows}
     result = []
     for c in convs:
         count = db.query(GroupParticipant).filter(GroupParticipant.conversation_id == c.id).count()
         result.append({
             "id": c.id, "name": c.name, "created_by": c.created_by,
             "participant_count": count,
+            "my_role": role_by_conv.get(c.id, "member"),
             "last_message_at": c.last_message_at.isoformat() if c.last_message_at else None,
             "last_message_preview": c.last_message_preview or "",
             "is_group": True,
         })
     db.close()
     return result
+
+
+def get_participant_role(conv_id: str, player_id: int) -> Optional[str]:
+    """Return a player's role in a group DM, or None if not a member."""
+    db = get_db()
+    row = db.query(GroupParticipant).filter(
+        GroupParticipant.conversation_id == conv_id,
+        GroupParticipant.player_id == player_id,
+    ).first()
+    role = row.role if row else None
+    db.close()
+    return role
+
+
+def set_participant_role(conv_id: str, target_id: int, new_role: str, requester_id: int) -> dict:
+    """Promote/demote a member, or transfer ownership. Only the creator can call this.
+
+    new_role values:
+      "mod"    — promote a member to DM mod
+      "member" — demote a mod back to member
+      "creator" — transfer ownership (old creator becomes "mod")
+    """
+    if new_role not in ("creator", "mod", "member"):
+        return {"ok": False, "error": "Invalid role."}
+    if target_id == requester_id:
+        return {"ok": False, "error": "Use 'transfer ownership' to hand off creator status."}
+    db = get_db()
+    try:
+        req_row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == requester_id,
+        ).first()
+        if not req_row or req_row.role != "creator":
+            return {"ok": False, "error": "Only the creator can change member roles."}
+        target_row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == target_id,
+        ).first()
+        if not target_row:
+            return {"ok": False, "error": "Player is not in this group."}
+        if new_role == "creator":
+            # Transfer: old creator becomes mod, new owner becomes creator
+            req_row.role = "mod"
+            target_row.role = "creator"
+            conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
+            if conv:
+                conv.created_by = target_id
+        else:
+            target_row.role = new_role
+        db.commit()
+        return {"ok": True, "new_role": new_role}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def delete_group_dm(conv_id: str, requester_id: int) -> dict:
+    """Delete the entire group DM (messages, participants, conversation). Creator only.
+
+    Returns participant_ids so the caller can broadcast group_removed to everyone.
+    """
+    db = get_db()
+    try:
+        req_row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == requester_id,
+        ).first()
+        if not req_row or req_row.role != "creator":
+            return {"ok": False, "error": "Only the creator can delete the group."}
+        pids = [r.player_id for r in db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+        ).all()]
+        db.query(DirectMessage).filter(DirectMessage.conversation_id == conv_id).delete()
+        db.query(GroupParticipant).filter(GroupParticipant.conversation_id == conv_id).delete()
+        db.query(GroupConversation).filter(GroupConversation.id == conv_id).delete()
+        db.commit()
+        return {"ok": True, "participant_ids": pids}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
 
 
 # ==========================

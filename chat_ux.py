@@ -387,10 +387,13 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 border-radius: 3px;
                 font-weight: 600;
                 font-size: 0.82em;
+                text-decoration: none;
             }}
+            a.mention:hover {{ opacity: 0.75; }}
             .mention-player {{ background: rgba(34,197,94,0.15); color: #22c55e; }}
             .mention-item   {{ background: rgba(56,189,248,0.15); color: #38bdf8; }}
             .mention-crypto {{ background: rgba(251,191,36,0.15);  color: #fbbf24; }}
+            .mention-stock  {{ background: rgba(249,115,22,0.15); color: #f97316; }}
 
             /* ── Mention autocomplete dropdown ── */
             .mention-dropdown {{
@@ -1112,8 +1115,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     let mentionSelectedIdx = -1;
     let mentionFetchTimer = null;
 
-    const TRIGGER_LABELS = {{'@': 'Players', '/': 'Businesses & Items', '$': 'Crypto'}};
-    const TRIGGER_COLORS = {{'@': '#22c55e', '/': '#38bdf8', '$': '#fbbf24'}};
+    const TRIGGER_LABELS = {{'@': 'Players', '#': 'Businesses & Items', '$': 'Crypto', '%': 'Stocks'}};
+    const TRIGGER_COLORS = {{'@': '#22c55e', '#': '#38bdf8', '$': '#fbbf24', '%': '#f97316'}};
 
     function detectMentionTrigger(val, cursorPos) {{
         const before = val.slice(0, cursorPos);
@@ -1123,9 +1126,12 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         // '$' — no spaces in query
         m = before.match(/(?:^|[\s,])(\$\S*)$/);
         if (m) return {{ type: '$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
-        // '/' — spaces allowed (item names can have spaces)
-        m = before.match(/(?:^|[\s,])(\/[^@$/]*)$/);
-        if (m && m[1].length > 1) return {{ type: '/', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        // '%' — no spaces in query (ticker symbols)
+        m = before.match(/(?:^|[\s,])(%\S*)$/);
+        if (m) return {{ type: '%', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        // '#' — spaces allowed (item names can have spaces)
+        m = before.match(/(?:^|[\s,])(#[^@$#%]*)$/);
+        if (m && m[1].length > 1) return {{ type: '#', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
         return null;
     }}
 
@@ -1139,7 +1145,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     async function fetchMentionSuggestions(type, query) {{
-        const ep = {{'@': 'players', '/': 'items', '$': 'crypto'}}[type];
+        const ep = {{'@': 'players', '#': 'items', '$': 'crypto', '%': 'stocks'}}[type];
         if (!ep) return;
         try {{
             const r = await fetch('/api/chat/suggest/' + ep + '?q=' + encodeURIComponent(query));
@@ -1162,9 +1168,12 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
             if (type === '@') {{
                 primary = escapeHtml(s.name);
                 secondary = '#' + s.id;
-            }} else if (type === '/') {{
+            }} else if (type === '#') {{
                 primary = escapeHtml(s.name);
-                secondary = escapeHtml(s.category);
+                secondary = escapeHtml(s.category || '');
+            }} else if (type === '%') {{
+                primary = escapeHtml(s.ticker) + ' · ' + escapeHtml(s.name);
+                secondary = 'stock';
             }} else {{
                 primary = escapeHtml(s.symbol) + ' · ' + escapeHtml(s.name);
                 secondary = s.type;
@@ -1184,9 +1193,16 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const s = mentionSuggestions[idx];
         const type = mentionState.type;
         let replacement;
-        if (type === '@')      replacement = '@[' + s.name + '] ';
-        else if (type === '/') replacement = '/[' + s.name + '] ';
-        else                   replacement = '$[' + s.symbol + '] ';
+        if (type === '@') {{
+            replacement = '@[' + s.id + '|' + s.name + '] ';
+        }} else if (type === '#') {{
+            const wtype = (s.category || '').toLowerCase().includes('item') ? 'item' : 'biz';
+            replacement = '#[' + wtype + '|' + s.key + '|' + s.name + '] ';
+        }} else if (type === '%') {{
+            replacement = '%[' + s.ticker + '] ';
+        }} else {{
+            replacement = '$[' + s.symbol + '] ';
+        }}
         const input = document.getElementById('msg-input');
         const after = input.value.slice(input.selectionStart);
         input.value = input.value.slice(0, mentionState.start) + replacement + after;
@@ -1214,13 +1230,36 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     function formatMessageContent(raw) {{
-        const re = /@\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]/g;
+        const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]/g;
         let out = '', last = 0, m;
         while ((m = re.exec(raw)) !== null) {{
             if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
-            if (m[1] !== undefined)      out += '<span class="mention mention-player">@' + escapeHtml(m[1]) + '</span>';
-            else if (m[2] !== undefined) out += '<span class="mention mention-item">/'  + escapeHtml(m[2]) + '</span>';
-            else                         out += '<span class="mention mention-crypto">$' + escapeHtml(m[3]) + '</span>';
+            if (m[1] !== undefined) {{
+                // @[id|name] (new) or @[name] (legacy)
+                const parts = m[1].split('|');
+                const name = parts.length >= 2 ? parts[1] : parts[0];
+                const id   = parts.length >= 2 ? parts[0] : null;
+                const href = id ? '/contacts?view=' + encodeURIComponent(id)
+                                : '/contacts?q='   + encodeURIComponent(name);
+                out += '<a href="' + href + '" class="mention mention-player">@' + escapeHtml(name) + '</a>';
+            }} else if (m[2] !== undefined) {{
+                // #[type|key|name] (new) or #[name] (legacy)
+                const parts = m[2].split('|');
+                if (parts.length >= 3) {{
+                    const wtype = parts[0], key = parts[1], name = parts[2];
+                    const href = wtype === 'item' ? '/district-market?item=' + encodeURIComponent(key) : '/land';
+                    out += '<a href="' + href + '" class="mention mention-item">#' + escapeHtml(name) + '</a>';
+                }} else {{
+                    out += '<span class="mention mention-item">#' + escapeHtml(parts[0]) + '</span>';
+                }}
+            }} else if (m[3] !== undefined) {{
+                // /[name] legacy — no link
+                out += '<span class="mention mention-item">#' + escapeHtml(m[3]) + '</span>';
+            }} else if (m[4] !== undefined) {{
+                out += '<a href="/memecoins/' + encodeURIComponent(m[4]) + '" class="mention mention-crypto">$' + escapeHtml(m[4]) + '</a>';
+            }} else {{
+                out += '<a href="/brokerage/company/' + encodeURIComponent(m[5]) + '" class="mention mention-stock">%' + escapeHtml(m[5]) + '</a>';
+            }}
             last = m.index + m[0].length;
         }}
         if (last < raw.length) out += escapeHtml(raw.slice(last));
@@ -1558,6 +1597,30 @@ def suggest_crypto(q: str = Query("", max_length=30)):
         pass
 
     return JSONResponse(results[:10])
+
+
+@router.get("/api/chat/suggest/stocks")
+def suggest_stocks(q: str = Query("", max_length=30)):
+    """Return up to 10 listed companies whose ticker or name matches q."""
+    if not q:
+        return JSONResponse([])
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as firm_db
+        db = firm_db()
+        try:
+            rows = db.query(CompanyShares).filter(
+                CompanyShares.is_delisted == False,
+                (CompanyShares.ticker_symbol.ilike(f"%{q}%") |
+                 CompanyShares.company_name.ilike(f"%{q}%")),
+            ).order_by(CompanyShares.ticker_symbol).limit(10).all()
+            return JSONResponse([
+                {"ticker": r.ticker_symbol, "name": r.company_name}
+                for r in rows
+            ])
+        finally:
+            db.close()
+    except Exception:
+        return JSONResponse([])
 
 
 # ==========================
