@@ -105,14 +105,14 @@ def _ensure_game_notif_table() -> None:
         with engine.connect() as c:
             c.execute(text(
                 "CREATE TABLE IF NOT EXISTS player_notifications ("
-                "  id        INTEGER PRIMARY KEY AUTOINCREMENT,"
-                "  player_id INTEGER NOT NULL,"
-                "  title     TEXT    NOT NULL,"
-                "  body      TEXT    NOT NULL,"
-                "  url       TEXT    NOT NULL DEFAULT '/',"
-                "  notif_type TEXT   NOT NULL DEFAULT 'general',"
-                "  is_seen   INTEGER NOT NULL DEFAULT 0,"
-                "  created_at TEXT   NOT NULL DEFAULT (datetime('now'))"
+                "  id         SERIAL PRIMARY KEY,"
+                "  player_id  INTEGER NOT NULL,"
+                "  title      TEXT    NOT NULL,"
+                "  body       TEXT    NOT NULL,"
+                "  url        TEXT    NOT NULL DEFAULT '/',"
+                "  notif_type TEXT    NOT NULL DEFAULT 'general',"
+                "  is_seen    INTEGER NOT NULL DEFAULT 0,"
+                "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
                 ")"
             ))
             c.execute(text(
