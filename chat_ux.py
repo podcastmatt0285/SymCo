@@ -387,7 +387,9 @@ def chat_shell(title: str, body: str, balance: float = 0.0, player_id: int = Non
                 border-radius: 3px;
                 font-weight: 600;
                 font-size: 0.82em;
+                text-decoration: none;
             }}
+            a.mention:hover {{ opacity: 0.75; }}
             .mention-player {{ background: rgba(34,197,94,0.15); color: #22c55e; }}
             .mention-item   {{ background: rgba(56,189,248,0.15); color: #38bdf8; }}
             .mention-crypto {{ background: rgba(251,191,36,0.15);  color: #fbbf24; }}
@@ -1191,10 +1193,16 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const s = mentionSuggestions[idx];
         const type = mentionState.type;
         let replacement;
-        if (type === '@')      replacement = '@[' + s.name + '] ';
-        else if (type === '#') replacement = '#[' + s.name + '] ';
-        else if (type === '%') replacement = '%[' + s.ticker + '] ';
-        else                   replacement = '$[' + s.symbol + '] ';
+        if (type === '@') {{
+            replacement = '@[' + s.id + '|' + s.name + '] ';
+        }} else if (type === '#') {{
+            const wtype = (s.category || '').toLowerCase().includes('item') ? 'item' : 'biz';
+            replacement = '#[' + wtype + '|' + s.key + '|' + s.name + '] ';
+        }} else if (type === '%') {{
+            replacement = '%[' + s.ticker + '] ';
+        }} else {{
+            replacement = '$[' + s.symbol + '] ';
+        }}
         const input = document.getElementById('msg-input');
         const after = input.value.slice(input.selectionStart);
         input.value = input.value.slice(0, mentionState.start) + replacement + after;
@@ -1222,16 +1230,36 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     function formatMessageContent(raw) {{
-        // Matches @[name], #[name], $[symbol], %[ticker]; also /[name] for backward compat
         const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]/g;
         let out = '', last = 0, m;
         while ((m = re.exec(raw)) !== null) {{
             if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
-            if (m[1] !== undefined)      out += '<span class="mention mention-player">@' + escapeHtml(m[1]) + '</span>';
-            else if (m[2] !== undefined) out += '<span class="mention mention-item">#'  + escapeHtml(m[2]) + '</span>';
-            else if (m[3] !== undefined) out += '<span class="mention mention-item">#'  + escapeHtml(m[3]) + '</span>';
-            else if (m[4] !== undefined) out += '<span class="mention mention-crypto">$' + escapeHtml(m[4]) + '</span>';
-            else                         out += '<span class="mention mention-stock">%'  + escapeHtml(m[5]) + '</span>';
+            if (m[1] !== undefined) {{
+                // @[id|name] (new) or @[name] (legacy)
+                const parts = m[1].split('|');
+                const name = parts.length >= 2 ? parts[1] : parts[0];
+                const id   = parts.length >= 2 ? parts[0] : null;
+                const href = id ? '/contacts?view=' + encodeURIComponent(id)
+                                : '/contacts?q='   + encodeURIComponent(name);
+                out += '<a href="' + href + '" class="mention mention-player">@' + escapeHtml(name) + '</a>';
+            }} else if (m[2] !== undefined) {{
+                // #[type|key|name] (new) or #[name] (legacy)
+                const parts = m[2].split('|');
+                if (parts.length >= 3) {{
+                    const wtype = parts[0], key = parts[1], name = parts[2];
+                    const href = wtype === 'item' ? '/district-market?item=' + encodeURIComponent(key) : '/land';
+                    out += '<a href="' + href + '" class="mention mention-item">#' + escapeHtml(name) + '</a>';
+                }} else {{
+                    out += '<span class="mention mention-item">#' + escapeHtml(parts[0]) + '</span>';
+                }}
+            }} else if (m[3] !== undefined) {{
+                // /[name] legacy — no link
+                out += '<span class="mention mention-item">#' + escapeHtml(m[3]) + '</span>';
+            }} else if (m[4] !== undefined) {{
+                out += '<a href="/memecoins/' + encodeURIComponent(m[4]) + '" class="mention mention-crypto">$' + escapeHtml(m[4]) + '</a>';
+            }} else {{
+                out += '<a href="/brokerage/company/' + encodeURIComponent(m[5]) + '" class="mention mention-stock">%' + escapeHtml(m[5]) + '</a>';
+            }}
             last = m.index + m[0].length;
         }}
         if (last < raw.length) out += escapeHtml(raw.slice(last));
