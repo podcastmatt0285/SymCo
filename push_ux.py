@@ -19,12 +19,35 @@ for ECC / AES-GCM and stdlib hmac/hashlib for HKDF.
 import base64
 import json
 import os
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Cookie, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from database import engine, SessionLocal
 
 router = APIRouter()
+
+_Base = declarative_base()
+
+class PlayerNotification(_Base):
+    """In-game banner notifications — NOT Android push."""
+    __tablename__ = "player_notifications"
+    id         = Column(Integer, primary_key=True, index=True)
+    player_id  = Column(Integer, index=True, nullable=False)
+    title      = Column(String, nullable=False)
+    body       = Column(String, nullable=False)
+    url        = Column(String, default="/")
+    notif_type = Column(String, default="general")
+    is_seen    = Column(Boolean, default=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+try:
+    _Base.metadata.create_all(bind=engine)
+except Exception as _e:
+    print(f"[Push] Could not create player_notifications table: {_e}")
 
 _KEYS_FILE = os.path.join(os.path.dirname(__file__), ".vapid_keys.json")
 _VAPID_KEYS: Optional[dict] = None
@@ -95,34 +118,8 @@ def _db_save_vapid_keys(keys: dict) -> None:
 
 
 # ── In-game notification banners ──────────────────────────────────────────────
-# Stored in player_notifications table. Displayed as dashboard banners.
+# Uses PlayerNotification ORM model (table created via create_all above).
 # NOT sent as web push — shown only inside the game UI.
-
-def _ensure_game_notif_table() -> None:
-    try:
-        from database import engine
-        from sqlalchemy import text
-        with engine.connect() as c:
-            c.execute(text(
-                "CREATE TABLE IF NOT EXISTS player_notifications ("
-                "  id         SERIAL PRIMARY KEY,"
-                "  player_id  INTEGER NOT NULL,"
-                "  title      TEXT    NOT NULL,"
-                "  body       TEXT    NOT NULL,"
-                "  url        TEXT    NOT NULL DEFAULT '/',"
-                "  notif_type TEXT    NOT NULL DEFAULT 'general',"
-                "  is_seen    INTEGER NOT NULL DEFAULT 0,"
-                "  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
-                ")"
-            ))
-            c.execute(text(
-                "CREATE INDEX IF NOT EXISTS idx_pn_player_unseen "
-                "ON player_notifications (player_id, is_seen)"
-            ))
-            c.commit()
-    except Exception as e:
-        print(f"[Push] Could not create player_notifications table: {e}")
-
 
 def create_game_notification(
     player_id: int,
@@ -142,16 +139,15 @@ def create_game_notification(
             return
         push_rate_mark(f"gn-{cooldown_key}")
     try:
-        _ensure_game_notif_table()
-        from database import engine
-        from sqlalchemy import text
-        with engine.connect() as c:
-            c.execute(text(
-                "INSERT INTO player_notifications (player_id, title, body, url, notif_type) "
-                "VALUES (:pid, :title, :body, :url, :ntype)"
-            ), {"pid": player_id, "title": title, "body": body,
-                "url": url, "ntype": notif_type})
-            c.commit()
+        db = SessionLocal()
+        try:
+            db.add(PlayerNotification(
+                player_id=player_id, title=title, body=body,
+                url=url, notif_type=notif_type,
+            ))
+            db.commit()
+        finally:
+            db.close()
     except Exception as e:
         print(f"[Push] create_game_notification error: {e}")
 
@@ -159,19 +155,21 @@ def create_game_notification(
 def get_game_notifications(player_id: int) -> list:
     """Return all unseen in-game notifications for a player, newest first."""
     try:
-        _ensure_game_notif_table()
-        from database import engine
-        from sqlalchemy import text
-        with engine.connect() as c:
-            rows = c.execute(text(
-                "SELECT id, title, body, url, notif_type, created_at "
-                "FROM player_notifications "
-                "WHERE player_id = :pid AND is_seen = 0 "
-                "ORDER BY id DESC LIMIT 20"
-            ), {"pid": player_id}).fetchall()
-        return [{"id": r[0], "title": r[1], "body": r[2],
-                 "url": r[3], "notif_type": r[4], "created_at": r[5]}
-                for r in rows]
+        db = SessionLocal()
+        try:
+            rows = (
+                db.query(PlayerNotification)
+                .filter_by(player_id=player_id, is_seen=False)
+                .order_by(PlayerNotification.id.desc())
+                .limit(20)
+                .all()
+            )
+            return [{"id": r.id, "title": r.title, "body": r.body,
+                     "url": r.url, "notif_type": r.notif_type,
+                     "created_at": r.created_at}
+                    for r in rows]
+        finally:
+            db.close()
     except Exception as e:
         print(f"[Push] get_game_notifications error: {e}")
         return []
@@ -180,14 +178,14 @@ def get_game_notifications(player_id: int) -> list:
 def mark_game_notifications_seen(player_id: int) -> None:
     """Mark all unseen in-game notifications as seen for a player."""
     try:
-        from database import engine
-        from sqlalchemy import text
-        with engine.connect() as c:
-            c.execute(text(
-                "UPDATE player_notifications SET is_seen = 1 "
-                "WHERE player_id = :pid AND is_seen = 0"
-            ), {"pid": player_id})
-            c.commit()
+        db = SessionLocal()
+        try:
+            db.query(PlayerNotification).filter_by(
+                player_id=player_id, is_seen=False
+            ).update({"is_seen": True})
+            db.commit()
+        finally:
+            db.close()
     except Exception as e:
         print(f"[Push] mark_game_notifications_seen error: {e}")
 
@@ -505,16 +503,15 @@ def send_push_notification(
 
         # Also write an in-game banner (same preference gates above already passed)
         try:
-            _ensure_game_notif_table()
-            from database import engine as _eng
-            from sqlalchemy import text as _sqt
-            with _eng.connect() as _gc:
-                _gc.execute(_sqt(
-                    "INSERT INTO player_notifications (player_id, title, body, url, notif_type) "
-                    "VALUES (:pid, :title, :body, :url, :ntype)"
-                ), {"pid": player_id, "title": title, "body": body,
-                    "url": url, "ntype": notif_type})
-                _gc.commit()
+            _gn_db = SessionLocal()
+            try:
+                _gn_db.add(PlayerNotification(
+                    player_id=player_id, title=title, body=body,
+                    url=url, notif_type=notif_type,
+                ))
+                _gn_db.commit()
+            finally:
+                _gn_db.close()
         except Exception as _ge:
             print(f"[Push] in-game write error: {_ge}")
 
