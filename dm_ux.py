@@ -417,6 +417,7 @@ def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None)
             .mention-player {{ background:rgba(34,197,94,0.15);  color:#22c55e; }}
             .mention-item   {{ background:rgba(56,189,248,0.15); color:#38bdf8; }}
             .mention-crypto {{ background:rgba(251,191,36,0.15); color:#fbbf24; }}
+            .mention-stock  {{ background:rgba(249,115,22,0.15); color:#f97316; }}
 
             /* ── Mention autocomplete dropdown ── */
             .mention-dropdown {{
@@ -698,7 +699,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             <div id="input-section" style="display: none; position: relative;">
                 <div class="mention-dropdown" id="mention-dropdown"></div>
                 <div class="chat-input-bar">
-                    <input type="text" id="msg-input" placeholder="Message… @ # $" maxlength="{MAX_DM_LENGTH}" autocomplete="off">
+                    <input type="text" id="msg-input" placeholder="Message… @ # $ %" maxlength="{MAX_DM_LENGTH}" autocomplete="off">
                     <button class="emoji-toggle" onclick="toggleEmoji()" title="Emoji">\U0001f600</button>
                     <button id="send-btn" onclick="sendMessage()">Send</button>
                 </div>
@@ -1628,8 +1629,8 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     let dmMentionSelectedIdx = -1;
     let dmMentionFetchTimer = null;
 
-    const DM_TRIGGER_LABELS = {{'@': 'Players', '#': 'Businesses & Items', '$': 'Crypto'}};
-    const DM_TRIGGER_COLORS = {{'@': '#22c55e', '#': '#38bdf8', '$': '#fbbf24'}};
+    const DM_TRIGGER_LABELS = {{'@': 'Players', '#': 'Businesses & Items', '$': 'Crypto', '%': 'Stocks'}};
+    const DM_TRIGGER_COLORS = {{'@': '#22c55e', '#': '#38bdf8', '$': '#fbbf24', '%': '#f97316'}};
 
     function detectDmMentionTrigger(val, cursorPos) {{
         const before = val.slice(0, cursorPos);
@@ -1637,7 +1638,9 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         if (m) return {{ type: '@', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
         m = before.match(/(?:^|[\s,])(\$\S*)$/);
         if (m) return {{ type: '$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
-        m = before.match(/(?:^|[\s,])(#[^@$#]*)$/);
+        m = before.match(/(?:^|[\s,])(%\S*)$/);
+        if (m) return {{ type: '%', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        m = before.match(/(?:^|[\s,])(#[^@$#%]*)$/);
         if (m && m[1].length > 1) return {{ type: '#', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
         return null;
     }}
@@ -1652,7 +1655,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     async function fetchDmMentionSuggestions(type, query) {{
-        const ep = {{'@': 'players', '#': 'items', '$': 'crypto'}}[type];
+        const ep = {{'@': 'players', '#': 'items', '$': 'crypto', '%': 'stocks'}}[type];
         if (!ep) return;
         try {{
             const r = await fetch('/api/chat/suggest/' + ep + '?q=' + encodeURIComponent(query));
@@ -1675,6 +1678,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             let primary, secondary;
             if (type === '@') {{ primary = escapeHtml(s.name); secondary = '#' + s.id; }}
             else if (type === '#') {{ primary = escapeHtml(s.name); secondary = escapeHtml(s.category || ''); }}
+            else if (type === '%') {{ primary = escapeHtml(s.ticker) + ' · ' + escapeHtml(s.name); secondary = 'stock'; }}
             else {{ primary = escapeHtml(s.symbol) + ' · ' + escapeHtml(s.name); secondary = s.type; }}
             html += `<div class="mention-option${{sel}}" data-idx="${{i}}" onmousedown="event.preventDefault();selectDmMention(${{i}})">
                 <span class="mention-trigger-badge" style="color:${{color}}">${{escapeHtml(type)}}</span>
@@ -1693,6 +1697,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         let replacement;
         if (type === '@')      replacement = '@[' + s.name + '] ';
         else if (type === '#') replacement = '#[' + s.name + '] ';
+        else if (type === '%') replacement = '%[' + s.ticker + '] ';
         else                   replacement = '$[' + s.symbol + '] ';
         const input = document.getElementById('msg-input');
         const after = input.value.slice(input.selectionStart);
@@ -1721,14 +1726,15 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     function formatMessageContent(raw) {{
-        const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]/g;
+        const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]|%\[([^\]]+)\]/g;
         let out = '', last = 0, m;
         while ((m = re.exec(raw)) !== null) {{
             if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
             if (m[1] !== undefined)      out += '<span class="mention mention-player">@' + escapeHtml(m[1]) + '</span>';
             else if (m[2] !== undefined) out += '<span class="mention mention-item">#'   + escapeHtml(m[2]) + '</span>';
             else if (m[3] !== undefined) out += '<span class="mention mention-item">#'   + escapeHtml(m[3]) + '</span>';
-            else                         out += '<span class="mention mention-crypto">$' + escapeHtml(m[4]) + '</span>';
+            else if (m[4] !== undefined) out += '<span class="mention mention-crypto">$' + escapeHtml(m[4]) + '</span>';
+            else                         out += '<span class="mention mention-stock">%'  + escapeHtml(m[5]) + '</span>';
             last = m.index + m[0].length;
         }}
         if (last < raw.length) out += escapeHtml(raw.slice(last));
