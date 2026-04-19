@@ -1823,27 +1823,18 @@ def set_relocation_fee(mayor_id: int, city_id: int, fee_amount: float) -> Tuple[
 # ==========================
 
 def _notify_petrodollar_block(buyer_id: int, currency_type: str, message: str):
-    """Push a notification to the buyer whose trade was blocked by the petrodollar system."""
+    """Log a petrodollar block — in-game notification only, not a push."""
     if buyer_id <= 0:
         return
-    import threading
-    def _send():
-        try:
-            from push_ux import send_push_notification
-            send_push_notification(buyer_id, "Trade Pending — Petrodollar System",
-                                   message, url="/market", notif_type="trades",
-                                   tag=f"petro-block-{buyer_id}")
-        except Exception as _e:
-            print(f"[Cities] Push error (block): {_e}")
-    threading.Thread(target=_send, daemon=True).start()
+    print(f"[Cities] Petrodollar block for player {buyer_id}: {message}")
 
 
 def _broadcast_currency_opportunity(currency_type: str, needed: float, city_name: str):
-    """Notify all players who hold the needed currency that there is a pending trade opportunity."""
+    """In-game banner notification to all players holding the needed currency."""
     import threading
     def _send():
         try:
-            from push_ux import send_push_notification
+            from push_ux import create_game_notification
             import inventory as _inv
             from auth import Player, get_db as _auth_get_db
             _db = _auth_get_db()
@@ -1856,14 +1847,14 @@ def _broadcast_currency_opportunity(currency_type: str, needed: float, city_name
                     except Exception:
                         qty = 0
                     if qty > 0:
-                        send_push_notification(
+                        create_game_notification(
                             _p.id,
                             f"Market Opportunity — {_item_disp.upper()}",
                             f"{city_name} has a pending trade requiring {needed:.2f} {_item_disp}. "
                             f"List yours for sale to profit.",
-                            url="/market",
-                            notif_type="trades",
-                            tag=f"petro-opportunity-{currency_type}"
+                            url="/market", notif_type="trades",
+                            cooldown_key=f"mktopportunity-{_p.id}-{currency_type}",
+                            cooldown_secs=7200,
                         )
             finally:
                 _db.close()
