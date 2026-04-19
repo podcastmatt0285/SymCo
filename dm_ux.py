@@ -1334,7 +1334,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         if (!data.ok) {{ alert(data.error || 'Failed to leave group.'); return; }}
         closeGroupModal();
         conversations = conversations.filter(c => c.id !== currentConvId);
-        currentConvId = null; currentIsGroup = false;
+        currentConvId = null; currentIsGroup = false; currentPlayerRole = null;
         document.getElementById('conv-title').textContent = 'Direct Messages';
         document.getElementById('dm-placeholder').style.display = 'flex';
         document.getElementById('messages').style.display = 'none';
@@ -1929,10 +1929,15 @@ async def api_group_add(request: Request, session_token: Optional[str] = Cookie(
         if result["ok"]:
             pids = get_group_participant_ids(conv_id)
             parts = get_group_participants(conv_id)
-            msg = {"type": "group_update", "conversation_id": conv_id,
-                   "participant_count": len(pids), "participants": parts}
             for pid in pids:
-                await dm_manager.send_to_user(pid, msg)
+                my_role = next((p["role"] for p in parts if p["id"] == pid), "member")
+                await dm_manager.send_to_user(pid, {
+                    "type": "group_update",
+                    "conversation_id": conv_id,
+                    "participant_count": len(pids),
+                    "participants": parts,
+                    "my_role": my_role,
+                })
         return JSONResponse(result)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -1952,10 +1957,15 @@ async def api_group_remove(request: Request, session_token: Optional[str] = Cook
         if result["ok"]:
             pids_after = get_group_participant_ids(conv_id)
             parts = get_group_participants(conv_id)
-            update_msg = {"type": "group_update", "conversation_id": conv_id,
-                          "participant_count": len(pids_after), "participants": parts}
             for pid in pids_after:
-                await dm_manager.send_to_user(pid, update_msg)
+                my_role = next((p["role"] for p in parts if p["id"] == pid), "member")
+                await dm_manager.send_to_user(pid, {
+                    "type": "group_update",
+                    "conversation_id": conv_id,
+                    "participant_count": len(pids_after),
+                    "participants": parts,
+                    "my_role": my_role,
+                })
             if target_pid in pids_before:
                 await dm_manager.send_to_user(target_pid, {
                     "type": "group_removed", "conversation_id": conv_id,

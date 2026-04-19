@@ -87,6 +87,21 @@ def initialize():
     """Initialize the DM module."""
     print("[DM] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    # Add role column to existing dm_group_participants tables (no-op if already present)
+    try:
+        from database import run_ddl_migration
+        run_ddl_migration(engine, [
+            "ALTER TABLE dm_group_participants ADD COLUMN IF NOT EXISTS role VARCHAR NOT NULL DEFAULT 'member'",
+            # Backfill: mark existing creator rows based on GroupConversation.created_by
+            """UPDATE dm_group_participants gp
+               SET role = 'creator'
+               FROM dm_group_conversations gc
+               WHERE gp.conversation_id = gc.id
+                 AND gp.player_id = gc.created_by
+                 AND gp.role = 'member'""",
+        ])
+    except Exception as e:
+        print(f"[DM] DDL migration warning: {e}")
     print("[DM] Module initialized")
 
 

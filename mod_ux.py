@@ -291,6 +291,7 @@ def _build_player_detail(player_id: int, mod_id: int) -> str:
             mute_action = f"""
 <form method="post" action="/api/mod/mute" style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:flex-end">
   <input type="hidden" name="player_id" value="{player_id}">
+  <input type="hidden" name="redirect_to" value="/mod/players?player_id={player_id}">
   <div class="form-group">
     <label>Minutes (0=perm)</label>
     <input type="number" name="minutes" value="30" min="0" style="width:90px">
@@ -334,6 +335,7 @@ def _build_player_detail(player_id: int, mod_id: int) -> str:
         warn_form = f"""
 <form method="post" action="/api/mod/warn" style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:flex-end">
   <input type="hidden" name="player_id" value="{player_id}">
+  <input type="hidden" name="redirect_to" value="/mod/players?player_id={player_id}&msg=Warning+logged.">
   <div class="form-group">
     <label>Warning note</label>
     <input name="note" placeholder="Reason for warning" style="width:240px">
@@ -408,6 +410,7 @@ async def mod_mutes(
 <div class="card">
   <h3>Issue New Mute</h3>
   <form method="post" action="/api/mod/mute" class="form-row">
+    <input type="hidden" name="redirect_to" value="/mod/mutes">
     <div class="form-group">
       <label>Player ID</label>
       <input type="number" name="player_id" placeholder="Player ID" required style="width:110px">
@@ -473,25 +476,29 @@ async def api_mod_mute(
     player_id: int = Form(...),
     minutes: int = Form(0),
     reason: str = Form(""),
+    redirect_to: str = Form("/mod/mutes"),
     session_token: str = Cookie(None),
 ):
     mod, _ = require_moderator(session_token)
     if not mod:
         return JSONResponse({"ok": False, "error": "Not authorized"}, status_code=403)
     result = chat_mute_player(mod.id, player_id, minutes, reason)
-    # If request came from a browser form, redirect back
-    return JSONResponse(result)
+    if result.get("ok"):
+        return RedirectResponse(url=f"{redirect_to}?msg=Player+muted.", status_code=303)
+    return RedirectResponse(url=f"{redirect_to}?err={result.get('error','Failed')}", status_code=303)
 
 
 @router.post("/api/mod/lift-mute")
 async def api_mod_lift_mute(
     player_id: int = Form(...),
+    redirect_to: str = Form("/mod/mutes"),
     session_token: str = Cookie(None),
 ):
     mod, _ = require_moderator(session_token)
     if not mod:
         return JSONResponse({"ok": False, "error": "Not authorized"}, status_code=403)
     result = lift_chat_mute(mod.id, player_id)
+    # Called by JS (apiPost) — return JSON; JS handles reload
     return JSONResponse(result)
 
 
@@ -499,10 +506,13 @@ async def api_mod_lift_mute(
 async def api_mod_warn(
     player_id: int = Form(...),
     note: str = Form(""),
+    redirect_to: str = Form(""),
     session_token: str = Cookie(None),
 ):
     mod, _ = require_moderator(session_token)
     if not mod:
         return JSONResponse({"ok": False, "error": "Not authorized"}, status_code=403)
     log_mod_action(mod.id, "warn", player_id, None, note)
+    if redirect_to:
+        return RedirectResponse(url=f"{redirect_to}?msg=Warning+logged.", status_code=303)
     return JSONResponse({"ok": True})
