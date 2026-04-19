@@ -2063,6 +2063,29 @@ def home(session_token: Optional[str] = Cookie(None)):
     if game_notif_banners:
         dashboard_top = dashboard_top + game_notif_banners
 
+    # Admin / Mod card — only shown to players with elevated access
+    staff_card = ""
+    try:
+        from admins import is_admin, is_moderator
+        if is_admin(player.id):
+            staff_card = """
+            <a href="/admin" class="dc" style="--c:#ef4444;--g:linear-gradient(90deg,#ef4444,#f87171);--glow:rgba(239,68,68,0.15);--btn:#ef4444;">
+                <span class="dc-ico">🛡️</span>
+                <div class="dc-t">Admin Command Center</div>
+                <div class="dc-d">Full administrative control over the simulation — edit player balances, inventories, land and businesses; issue bans, timeouts, and kicks; post patch notes to the Updates channel; manage the land bank, city projects, ETF banks, bond issuance, and moderator roster. Everything that keeps the game running is in here. Handle with care.</div>
+                <span class="dc-btn">Open Admin Panel</span>
+            </a>"""
+        elif is_moderator(player.id):
+            staff_card = """
+            <a href="/mod" class="dc" style="--c:#a78bfa;--g:linear-gradient(90deg,#7c3aed,#a78bfa);--glow:rgba(167,139,250,0.15);--btn:#7c3aed;--fg:#fff;">
+                <span class="dc-ico">🔰</span>
+                <div class="dc-t">Moderator Dashboard</div>
+                <div class="dc-d">Your moderation toolkit for keeping the community healthy. Search players and review their recent chat history, issue temporary or permanent chat mutes, lift mutes early, log formal warnings, and delete individual messages that break the rules. Every action you take is recorded in the mod audit log for accountability. You do not have access to financial or balance tools — those remain admin-only.</div>
+                <span class="dc-btn">Open Mod Panel</span>
+            </a>"""
+    except Exception:
+        pass
+
     return shell(
         "Dashboard",
         f"""
@@ -2204,6 +2227,8 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <div class="dc-d">Personalise your experience — background music, track selection, volume controls, display currency, notification preferences, and account options.</div>
                 <span class="dc-btn">Open Settings</span>
             </a>
+
+            {staff_card}
 
         </div>
         """,
