@@ -438,6 +438,13 @@ except ModuleNotFoundError:
     pass
 
 try:
+    from mod_ux import router as mod_router
+    app.include_router(mod_router)
+    print("Mod routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
     from memecoins_ux import router as memecoins_router
     app.include_router(memecoins_router)
     print("Meme Coins routes registered")

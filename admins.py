@@ -76,6 +76,32 @@ class Moderator(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class ChatMute(Base):
+    """Chat-scoped mute: silences a player in all chat rooms without banning their account."""
+    __tablename__ = "chat_mutes"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    player_id = Column(Integer, index=True, nullable=False)
+    muted_by = Column(Integer, nullable=False)
+    reason = Column(Text, default="")
+    expires_at = Column(DateTime, nullable=True)  # None = permanent chat mute
+    created_at = Column(DateTime, default=datetime.utcnow)
+    lifted = Column(Boolean, default=False)
+    lifted_at = Column(DateTime, nullable=True)
+    lifted_by = Column(Integer, nullable=True)
+
+
+class ModAction(Base):
+    """Audit log of moderator actions (separate from full admin AdminLog)."""
+    __tablename__ = "mod_actions"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    mod_id = Column(Integer, nullable=False)
+    action = Column(String, nullable=False)  # "mute", "lift_mute", "warn", "delete_message", "kick"
+    target_player_id = Column(Integer, nullable=True)
+    room_id = Column(String, nullable=True)
+    details = Column(Text, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 # In-memory cache — refreshed on each relevant operation
 MODERATOR_PLAYER_IDS: set = set()
 
@@ -1775,6 +1801,158 @@ def get_all_moderators() -> list:
         return result
     except Exception as e:
         print(f"[Admins] Error fetching moderators: {e}")
+        return []
+    finally:
+        db.close()
+
+
+# ==========================
+# CHAT MUTE HELPERS
+# ==========================
+
+def chat_mute_player(mod_id: int, player_id: int, minutes: int = 0, reason: str = "") -> dict:
+    """Mute a player in chat. minutes=0 means permanent."""
+    db = get_db()
+    expires = datetime.utcnow() + timedelta(minutes=minutes) if minutes > 0 else None
+    mute = ChatMute(
+        player_id=player_id,
+        muted_by=mod_id,
+        reason=reason,
+        expires_at=expires,
+    )
+    db.add(mute)
+    db.commit()
+    db.refresh(mute)
+    mute_id = mute.id
+    db.close()
+    log_mod_action(mod_id, "mute", player_id, None,
+                   f"{minutes}m - {reason}" if minutes else f"permanent - {reason}")
+    return {"ok": True, "mute_id": mute_id, "expires_at": expires.isoformat() if expires else None}
+
+
+def lift_chat_mute(mod_id: int, player_id: int) -> dict:
+    """Lift all active chat mutes for a player."""
+    db = get_db()
+    now = datetime.utcnow()
+    mutes = db.query(ChatMute).filter(
+        ChatMute.player_id == player_id,
+        ChatMute.lifted == False,
+    ).filter(
+        (ChatMute.expires_at == None) | (ChatMute.expires_at > now)
+    ).all()
+    if not mutes:
+        db.close()
+        return {"ok": False, "error": "No active mute found"}
+    for m in mutes:
+        m.lifted = True
+        m.lifted_at = now
+        m.lifted_by = mod_id
+    db.commit()
+    db.close()
+    log_mod_action(mod_id, "lift_mute", player_id, None, "Mute lifted")
+    return {"ok": True}
+
+
+def get_active_chat_mute(player_id: int) -> Optional[dict]:
+    """Return the active chat mute for a player, or None."""
+    db = get_db()
+    now = datetime.utcnow()
+    mute = db.query(ChatMute).filter(
+        ChatMute.player_id == player_id,
+        ChatMute.lifted == False,
+    ).filter(
+        (ChatMute.expires_at == None) | (ChatMute.expires_at > now)
+    ).order_by(ChatMute.created_at.desc()).first()
+    if not mute:
+        db.close()
+        return None
+    result = {
+        "id": mute.id,
+        "muted_by": mute.muted_by,
+        "reason": mute.reason,
+        "expires_at": mute.expires_at.isoformat() if mute.expires_at else None,
+        "created_at": mute.created_at.isoformat(),
+    }
+    db.close()
+    return result
+
+
+def get_active_chat_mutes() -> list:
+    """Return all currently-active chat mutes."""
+    db = get_db()
+    now = datetime.utcnow()
+    try:
+        from auth import Player
+        mutes = db.query(ChatMute).filter(
+            ChatMute.lifted == False,
+        ).filter(
+            (ChatMute.expires_at == None) | (ChatMute.expires_at > now)
+        ).order_by(ChatMute.created_at.desc()).all()
+        result = []
+        for m in mutes:
+            p = db.query(Player).filter(Player.id == m.player_id).first()
+            mod = db.query(Player).filter(Player.id == m.muted_by).first()
+            result.append({
+                "id": m.id,
+                "player_id": m.player_id,
+                "player_name": p.business_name if p else f"Player {m.player_id}",
+                "muted_by": m.muted_by,
+                "mod_name": mod.business_name if mod else f"Mod {m.muted_by}",
+                "reason": m.reason or "",
+                "expires_at": m.expires_at.isoformat() if m.expires_at else None,
+                "created_at": m.created_at.isoformat() if m.created_at else None,
+            })
+        return result
+    except Exception as e:
+        print(f"[Admins] get_active_chat_mutes error: {e}")
+        return []
+    finally:
+        db.close()
+
+
+# ==========================
+# MOD ACTION LOG
+# ==========================
+
+def log_mod_action(mod_id: int, action: str, target_player_id: int = None,
+                   room_id: str = None, details: str = ""):
+    db = get_db()
+    entry = ModAction(
+        mod_id=mod_id,
+        action=action,
+        target_player_id=target_player_id,
+        room_id=room_id,
+        details=details,
+    )
+    db.add(entry)
+    db.commit()
+    db.close()
+
+
+def get_mod_actions(limit: int = 100) -> list:
+    """Return recent mod actions with actor/target names."""
+    db = get_db()
+    try:
+        from auth import Player
+        actions = db.query(ModAction).order_by(ModAction.created_at.desc()).limit(limit).all()
+        result = []
+        for a in actions:
+            actor = db.query(Player).filter(Player.id == a.mod_id).first()
+            target = db.query(Player).filter(Player.id == a.target_player_id).first() if a.target_player_id else None
+            result.append({
+                "id": a.id,
+                "mod_id": a.mod_id,
+                "mod_name": actor.business_name if actor else f"Mod {a.mod_id}",
+                "action": a.action,
+                "target_player_id": a.target_player_id,
+                "target_name": target.business_name if target else None,
+                "room_id": a.room_id,
+                "details": a.details or "",
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            })
+        return result
+    except Exception as e:
+        print(f"[Admins] get_mod_actions error: {e}")
         return []
     finally:
         db.close()

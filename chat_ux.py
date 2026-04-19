@@ -1561,6 +1561,27 @@ def suggest_crypto(q: str = Query("", max_length=30)):
 
 
 # ==========================
+# MOD CHAT ACTIONS
+# ==========================
+
+@router.post("/api/chat/mod/delete-message")
+async def mod_delete_chat_message(
+    message_id: int = Form(...),
+    session_token: str = Cookie(None),
+):
+    """Delete a chat message — requires moderator or admin."""
+    from admins import require_moderator, log_mod_action
+    from chat import delete_chat_message
+    mod, _ = require_moderator(session_token)
+    if not mod:
+        return JSONResponse({"ok": False, "error": "Not authorized"}, status_code=403)
+    deleted = delete_chat_message(message_id)
+    if deleted:
+        log_mod_action(mod.id, "delete_message", None, None, f"Deleted message #{message_id}")
+    return JSONResponse({"ok": deleted})
+
+
+# ==========================
 # WEBSOCKET ENDPOINT
 # ==========================
 
@@ -1667,6 +1688,20 @@ async def chat_websocket(websocket: WebSocket):
                         "message": "This channel is read-only."
                     })
                     continue
+
+                # Check chat mute
+                try:
+                    from admins import get_active_chat_mute
+                    mute = get_active_chat_mute(player_id)
+                    if mute:
+                        exp = f" until {mute['expires_at']}" if mute.get("expires_at") else " (permanent)"
+                        await manager.send_to_user(player_id, {
+                            "type": "error",
+                            "message": f"You are muted in chat{exp}.",
+                        })
+                        continue
+                except ImportError:
+                    pass
 
                 saved = save_message(room_id, player_id, player_name, content)
                 if saved:
