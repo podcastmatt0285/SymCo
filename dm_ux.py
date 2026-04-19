@@ -412,6 +412,48 @@ def dm_shell(title: str, body: str, balance: float = 0.0, player_id: int = None)
                 flex-shrink: 0;
             }}
 
+            /* ── Mention tags ── */
+            .mention {{ display:inline; padding:1px 4px; border-radius:3px; font-weight:600; font-size:0.82em; }}
+            .mention-player {{ background:rgba(34,197,94,0.15);  color:#22c55e; }}
+            .mention-item   {{ background:rgba(56,189,248,0.15); color:#38bdf8; }}
+            .mention-crypto {{ background:rgba(251,191,36,0.15); color:#fbbf24; }}
+
+            /* ── Mention autocomplete dropdown ── */
+            .mention-dropdown {{
+                display: none;
+                position: absolute;
+                bottom: calc(100% + 4px);
+                left: 0; right: 0;
+                background: #0f1828;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                z-index: 50;
+                max-height: 220px;
+                overflow-y: auto;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+            }}
+            .mention-dropdown.show {{ display: block; }}
+            .mention-dropdown-header {{
+                padding: 5px 10px 3px;
+                font-size: 0.66rem;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border-bottom: 1px solid #1e293b;
+            }}
+            .mention-option {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 7px 10px;
+                cursor: pointer;
+                font-size: 0.82rem;
+            }}
+            .mention-option:hover, .mention-option.selected {{ background: #1e2d3d; }}
+            .mention-trigger-badge {{ font-weight: 700; font-size: 0.85rem; min-width: 12px; }}
+            .mention-primary {{ color: #e2e8f0; }}
+            .mention-secondary {{ color: #64748b; font-size: 0.75rem; margin-left: auto; }}
+
             /* INPUT BAR */
             .chat-input-bar {{
                 display: flex;
@@ -653,9 +695,10 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             <div class="chat-messages" id="messages" style="display: none;"></div>
             <div class="typing-indicator" id="typing-indicator" style="display: none;"></div>
 
-            <div id="input-section" style="display: none;">
+            <div id="input-section" style="display: none; position: relative;">
+                <div class="mention-dropdown" id="mention-dropdown"></div>
                 <div class="chat-input-bar">
-                    <input type="text" id="msg-input" placeholder="Type a message..." maxlength="{MAX_DM_LENGTH}" autocomplete="off">
+                    <input type="text" id="msg-input" placeholder="Message… @ # $" maxlength="{MAX_DM_LENGTH}" autocomplete="off">
                     <button class="emoji-toggle" onclick="toggleEmoji()" title="Emoji">\U0001f600</button>
                     <button id="send-btn" onclick="sendMessage()">Send</button>
                 </div>
@@ -1527,7 +1570,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                     <span class="msg-name" style="color: ${{nameColor}}">${{escapeHtml(data.sender_name)}}</span>
                     <span class="msg-time">${{timeStr}}</span>
                 </div>
-                <div class="msg-text">${{escapeHtml(filteredContent)}}</div>
+                <div class="msg-text">${{formatMessageContent(filteredContent)}}</div>
             </div>
         `;
         container.appendChild(div);
@@ -1577,6 +1620,119 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         input.value = '';
         input.focus();
         clearTypingState();
+    }}
+
+    // ===== MENTION AUTOCOMPLETE =====
+    let dmMentionState = null;
+    let dmMentionSuggestions = [];
+    let dmMentionSelectedIdx = -1;
+    let dmMentionFetchTimer = null;
+
+    const DM_TRIGGER_LABELS = {{'@': 'Players', '#': 'Businesses & Items', '$': 'Crypto'}};
+    const DM_TRIGGER_COLORS = {{'@': '#22c55e', '#': '#38bdf8', '$': '#fbbf24'}};
+
+    function detectDmMentionTrigger(val, cursorPos) {{
+        const before = val.slice(0, cursorPos);
+        let m = before.match(/(?:^|[\s,])(@\S*)$/);
+        if (m) return {{ type: '@', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        m = before.match(/(?:^|[\s,])(\$\S*)$/);
+        if (m) return {{ type: '$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        m = before.match(/(?:^|[\s,])(#[^@$#]*)$/);
+        if (m && m[1].length > 1) return {{ type: '#', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        return null;
+    }}
+
+    function handleDmMentionInput() {{
+        const input = document.getElementById('msg-input');
+        const trigger = detectDmMentionTrigger(input.value, input.selectionStart);
+        if (!trigger) {{ closeDmMentionDropdown(); return; }}
+        dmMentionState = trigger;
+        clearTimeout(dmMentionFetchTimer);
+        dmMentionFetchTimer = setTimeout(() => fetchDmMentionSuggestions(trigger.type, trigger.query), 120);
+    }}
+
+    async function fetchDmMentionSuggestions(type, query) {{
+        const ep = {{'@': 'players', '#': 'items', '$': 'crypto'}}[type];
+        if (!ep) return;
+        try {{
+            const r = await fetch('/api/chat/suggest/' + ep + '?q=' + encodeURIComponent(query));
+            if (!r.ok) return;
+            const data = await r.json();
+            dmMentionSuggestions = data;
+            dmMentionSelectedIdx = data.length ? 0 : -1;
+            renderDmMentionDropdown(type, data);
+        }} catch {{}}
+    }}
+
+    function renderDmMentionDropdown(type, suggestions) {{
+        const dd = document.getElementById('mention-dropdown');
+        if (!dd) return;
+        if (!suggestions.length) {{ dd.classList.remove('show'); dd.innerHTML = ''; return; }}
+        const color = DM_TRIGGER_COLORS[type] || '#e2e8f0';
+        let html = `<div class="mention-dropdown-header">${{DM_TRIGGER_LABELS[type] || type}}</div>`;
+        suggestions.forEach((s, i) => {{
+            const sel = i === dmMentionSelectedIdx ? ' selected' : '';
+            let primary, secondary;
+            if (type === '@') {{ primary = escapeHtml(s.name); secondary = '#' + s.id; }}
+            else if (type === '#') {{ primary = escapeHtml(s.name); secondary = escapeHtml(s.category || ''); }}
+            else {{ primary = escapeHtml(s.symbol) + ' · ' + escapeHtml(s.name); secondary = s.type; }}
+            html += `<div class="mention-option${{sel}}" data-idx="${{i}}" onmousedown="event.preventDefault();selectDmMention(${{i}})">
+                <span class="mention-trigger-badge" style="color:${{color}}">${{escapeHtml(type)}}</span>
+                <span class="mention-primary">${{primary}}</span>
+                <span class="mention-secondary">${{secondary}}</span>
+            </div>`;
+        }});
+        dd.innerHTML = html;
+        dd.classList.add('show');
+    }}
+
+    function selectDmMention(idx) {{
+        if (!dmMentionState || idx < 0 || idx >= dmMentionSuggestions.length) return;
+        const s = dmMentionSuggestions[idx];
+        const type = dmMentionState.type;
+        let replacement;
+        if (type === '@')      replacement = '@[' + s.name + '] ';
+        else if (type === '#') replacement = '#[' + s.name + '] ';
+        else                   replacement = '$[' + s.symbol + '] ';
+        const input = document.getElementById('msg-input');
+        const after = input.value.slice(input.selectionStart);
+        input.value = input.value.slice(0, dmMentionState.start) + replacement + after;
+        const newPos = dmMentionState.start + replacement.length;
+        input.setSelectionRange(newPos, newPos);
+        closeDmMentionDropdown();
+        input.focus();
+    }}
+
+    function closeDmMentionDropdown() {{
+        dmMentionState = null;
+        dmMentionSuggestions = [];
+        dmMentionSelectedIdx = -1;
+        const dd = document.getElementById('mention-dropdown');
+        if (dd) {{ dd.classList.remove('show'); dd.innerHTML = ''; }}
+    }}
+
+    function moveDmMentionSelection(delta) {{
+        if (!dmMentionSuggestions.length) return;
+        dmMentionSelectedIdx = (dmMentionSelectedIdx + delta + dmMentionSuggestions.length) % dmMentionSuggestions.length;
+        document.querySelectorAll('#mention-dropdown .mention-option').forEach((el, i) => {{
+            el.classList.toggle('selected', i === dmMentionSelectedIdx);
+            if (i === dmMentionSelectedIdx) el.scrollIntoView({{block: 'nearest'}});
+        }});
+    }}
+
+    function formatMessageContent(raw) {{
+        const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]/g;
+        let out = '', last = 0, m;
+        while ((m = re.exec(raw)) !== null) {{
+            if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
+            if (m[1] !== undefined)      out += '<span class="mention mention-player">@' + escapeHtml(m[1]) + '</span>';
+            else if (m[2] !== undefined) out += '<span class="mention mention-item">#'   + escapeHtml(m[2]) + '</span>';
+            else if (m[3] !== undefined) out += '<span class="mention mention-item">#'   + escapeHtml(m[3]) + '</span>';
+            else                         out += '<span class="mention mention-crypto">$' + escapeHtml(m[4]) + '</span>';
+            last = m.index + m[0].length;
+        }}
+        if (last < raw.length) out += escapeHtml(raw.slice(last));
+        return out;
     }}
 
     // ===== TYPING =====
@@ -1731,12 +1887,27 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
         const input = document.getElementById('msg-input');
         input.addEventListener('keydown', (e) => {{
+            const ddOpen = document.getElementById('mention-dropdown').classList.contains('show');
+            if (ddOpen) {{
+                if (e.key === 'ArrowDown') {{ e.preventDefault(); moveDmMentionSelection(1); return; }}
+                if (e.key === 'ArrowUp')   {{ e.preventDefault(); moveDmMentionSelection(-1); return; }}
+                if (e.key === 'Tab' || e.key === 'Enter') {{
+                    if (dmMentionSelectedIdx >= 0) {{ e.preventDefault(); selectDmMention(dmMentionSelectedIdx); return; }}
+                }}
+                if (e.key === 'Escape') {{ e.preventDefault(); closeDmMentionDropdown(); return; }}
+            }}
             if (e.key === 'Enter' && !e.shiftKey) {{
                 e.preventDefault();
                 sendMessage();
             }}
         }});
-        input.addEventListener('input', handleTypingInput);
+        input.addEventListener('input', () => {{ handleTypingInput(); handleDmMentionInput(); }});
+
+        document.addEventListener('click', (e) => {{
+            if (!e.target.closest('#mention-dropdown') && !e.target.closest('#msg-input')) {{
+                closeDmMentionDropdown();
+            }}
+        }}, {{ capture: false }});
 
         // Progressive search with debounce
         document.getElementById('player-search').addEventListener('input', () => {{

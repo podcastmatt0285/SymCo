@@ -1112,8 +1112,8 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     let mentionSelectedIdx = -1;
     let mentionFetchTimer = null;
 
-    const TRIGGER_LABELS = {{'@': 'Players', '/': 'Businesses & Items', '$': 'Crypto'}};
-    const TRIGGER_COLORS = {{'@': '#22c55e', '/': '#38bdf8', '$': '#fbbf24'}};
+    const TRIGGER_LABELS = {{'@': 'Players', '#': 'Businesses & Items', '$': 'Crypto'}};
+    const TRIGGER_COLORS = {{'@': '#22c55e', '#': '#38bdf8', '$': '#fbbf24'}};
 
     function detectMentionTrigger(val, cursorPos) {{
         const before = val.slice(0, cursorPos);
@@ -1123,9 +1123,9 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         // '$' — no spaces in query
         m = before.match(/(?:^|[\s,])(\$\S*)$/);
         if (m) return {{ type: '$', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
-        // '/' — spaces allowed (item names can have spaces)
-        m = before.match(/(?:^|[\s,])(\/[^@$/]*)$/);
-        if (m && m[1].length > 1) return {{ type: '/', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
+        // '#' — spaces allowed (item names can have spaces)
+        m = before.match(/(?:^|[\s,])(#[^@$#]*)$/);
+        if (m && m[1].length > 1) return {{ type: '#', start: before.lastIndexOf(m[1]), query: m[1].slice(1) }};
         return null;
     }}
 
@@ -1139,7 +1139,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     async function fetchMentionSuggestions(type, query) {{
-        const ep = {{'@': 'players', '/': 'items', '$': 'crypto'}}[type];
+        const ep = {{'@': 'players', '#': 'items', '$': 'crypto'}}[type];
         if (!ep) return;
         try {{
             const r = await fetch('/api/chat/suggest/' + ep + '?q=' + encodeURIComponent(query));
@@ -1185,7 +1185,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         const type = mentionState.type;
         let replacement;
         if (type === '@')      replacement = '@[' + s.name + '] ';
-        else if (type === '/') replacement = '/[' + s.name + '] ';
+        else if (type === '#') replacement = '#[' + s.name + '] ';
         else                   replacement = '$[' + s.symbol + '] ';
         const input = document.getElementById('msg-input');
         const after = input.value.slice(input.selectionStart);
@@ -1214,13 +1214,15 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
     }}
 
     function formatMessageContent(raw) {{
-        const re = /@\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]/g;
+        // Matches @[name], #[name], $[symbol]; also /[name] for backward compat
+        const re = /@\[([^\]]+)\]|#\[([^\]]+)\]|\/\[([^\]]+)\]|\$\[([^\]]+)\]/g;
         let out = '', last = 0, m;
         while ((m = re.exec(raw)) !== null) {{
             if (m.index > last) out += escapeHtml(raw.slice(last, m.index));
             if (m[1] !== undefined)      out += '<span class="mention mention-player">@' + escapeHtml(m[1]) + '</span>';
-            else if (m[2] !== undefined) out += '<span class="mention mention-item">/'  + escapeHtml(m[2]) + '</span>';
-            else                         out += '<span class="mention mention-crypto">$' + escapeHtml(m[3]) + '</span>';
+            else if (m[2] !== undefined) out += '<span class="mention mention-item">#'  + escapeHtml(m[2]) + '</span>';
+            else if (m[3] !== undefined) out += '<span class="mention mention-item">#'  + escapeHtml(m[3]) + '</span>';
+            else                         out += '<span class="mention mention-crypto">$' + escapeHtml(m[4]) + '</span>';
             last = m.index + m[0].length;
         }}
         if (last < raw.length) out += escapeHtml(raw.slice(last));
