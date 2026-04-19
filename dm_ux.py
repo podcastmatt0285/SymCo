@@ -22,6 +22,7 @@ from dm import (
     search_players, create_group_dm, add_group_participant,
     remove_group_participant, rename_group_dm, get_group_participants,
     get_group_participant_ids, save_group_dm, get_player_group_conversations,
+    set_participant_role, delete_group_dm, get_participant_role,
 )
 from chat import (
     ADMIN_PLAYER_IDS, DEFAULT_BAN_WORDS, MAX_UPLOAD_BYTES,
@@ -718,11 +719,16 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
     <!-- Manage Group Modal -->
     <div id="group-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;justify-content:center;align-items:center;">
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:20px;width:90%;max-width:400px;max-height:85vh;overflow-y:auto;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:20px;width:90%;max-width:420px;max-height:88vh;overflow-y:auto;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-                <h3 style="margin:0;font-size:1rem;color:#e5e7eb;" id="group-modal-title">Group Chat</h3>
+                <div>
+                    <h3 style="margin:0;font-size:1rem;color:#e5e7eb;" id="group-modal-title">Group Chat</h3>
+                    <span id="group-modal-role-badge" style="font-size:0.65rem;color:#a78bfa;"></span>
+                </div>
                 <span style="cursor:pointer;color:#64748b;font-size:1.3rem;" onclick="closeGroupModal()">&times;</span>
             </div>
+
+            <!-- Rename (creator + mod) -->
             <div id="group-rename-section" style="display:none;margin-bottom:14px;">
                 <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Rename Group</label>
                 <div style="display:flex;gap:6px;">
@@ -731,16 +737,42 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                     <button onclick="submitRename()" style="background:#38bdf8;color:#020617;border:none;padding:6px 14px;font-family:inherit;font-size:0.8rem;cursor:pointer;border-radius:3px;">Save</button>
                 </div>
             </div>
+
+            <!-- Members list -->
             <p style="font-size:0.73rem;color:#64748b;margin-bottom:6px;">Members</p>
             <div id="group-member-list" style="margin-bottom:14px;"></div>
-            <div id="group-add-section" style="display:none;margin-bottom:12px;">
+
+            <!-- Add member (creator + mod) -->
+            <div id="group-add-section" style="display:none;margin-bottom:14px;">
                 <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Add Member</label>
                 <input type="text" id="group-add-search" placeholder="Search player..." autocomplete="off"
                     style="width:100%;background:#020617;border:1px solid #1e293b;color:#e5e7eb;padding:7px 10px;font-family:inherit;font-size:0.8rem;border-radius:4px;box-sizing:border-box;margin-bottom:4px;">
                 <div id="group-add-results" style="max-height:110px;overflow-y:auto;"></div>
             </div>
-            <div id="group-leave-section" style="display:none;">
-                <button onclick="leaveGroup()" style="width:100%;background:#ef4444;color:#fff;border:none;padding:8px;font-family:inherit;font-size:0.85rem;cursor:pointer;border-radius:4px;">Leave Group</button>
+
+            <!-- Transfer ownership (creator only) -->
+            <div id="group-transfer-section" style="display:none;margin-bottom:14px;">
+                <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Transfer Ownership</label>
+                <div style="font-size:0.72rem;color:#475569;margin-bottom:6px;">You become a mod; the selected member becomes creator.</div>
+                <div style="display:flex;gap:6px;">
+                    <select id="group-transfer-select"
+                        style="flex:1;background:#020617;border:1px solid #1e293b;color:#e5e7eb;padding:6px 8px;font-family:inherit;font-size:0.8rem;border-radius:4px;">
+                    </select>
+                    <button onclick="transferOwnership()" style="background:#a78bfa;color:#020617;border:none;padding:6px 12px;font-family:inherit;font-size:0.8rem;cursor:pointer;border-radius:3px;">Transfer</button>
+                </div>
+            </div>
+
+            <!-- Leave (mod + member only) -->
+            <div id="group-leave-section" style="display:none;margin-bottom:10px;">
+                <button onclick="leaveGroup()" style="width:100%;background:#1e293b;color:#f87171;border:1px solid #334155;padding:8px;font-family:inherit;font-size:0.85rem;cursor:pointer;border-radius:4px;">Leave Group</button>
+            </div>
+
+            <!-- Danger zone (creator only) -->
+            <div id="group-delete-section" style="display:none;">
+                <div style="border-top:1px solid #1e293b;padding-top:12px;margin-top:4px;">
+                    <p style="font-size:0.7rem;color:#ef4444;margin-bottom:6px;font-weight:600;">DANGER ZONE</p>
+                    <button onclick="deleteGroup()" style="width:100%;background:#ef444422;color:#f87171;border:1px solid #ef444466;padding:8px;font-family:inherit;font-size:0.85rem;cursor:pointer;border-radius:4px;">Delete Group Permanently</button>
+                </div>
             </div>
         </div>
     </div>
@@ -764,6 +796,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     let currentGroupCreatedBy = null;
     let currentGroupName = null;
     let currentGroupParticipants = [];
+    let currentPlayerRole = null;  // "creator", "mod", or "member" for group DMs
     let pendingGroupMembers = [];
     let reconnectDelay = 1000;
     let reconnectTimer = null;
@@ -874,6 +907,8 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                     if (gc) {{
                         if (data.name !== undefined) gc.name = data.name;
                         if (data.participant_count !== undefined) gc.participant_count = data.participant_count;
+                        if (data.created_by !== undefined) gc.created_by = data.created_by;
+                        if (data.my_role !== undefined) gc.my_role = data.my_role;
                         if (currentConvId === data.conversation_id) {{
                             if (data.name !== undefined) {{
                                 document.getElementById('conv-title').textContent = gc.name;
@@ -883,6 +918,9 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                                 document.getElementById('online-status').innerHTML =
                                     `<span style="color:#a78bfa;">&#128101; ${{gc.participant_count}} members</span>`;
                             }}
+                            if (data.created_by !== undefined) currentGroupCreatedBy = data.created_by;
+                            if (data.my_role !== undefined) currentPlayerRole = data.my_role;
+                            if (data.participants !== undefined) currentGroupParticipants = data.participants;
                         }}
                         buildConvList();
                     }}
@@ -891,13 +929,14 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             case 'group_removed':
                 conversations = conversations.filter(c => c.id !== data.conversation_id);
                 if (currentConvId === data.conversation_id) {{
-                    currentConvId = null; currentIsGroup = false;
+                    currentConvId = null; currentIsGroup = false; currentPlayerRole = null;
                     document.getElementById('conv-title').textContent = 'Direct Messages';
                     document.getElementById('dm-placeholder').style.display = 'flex';
                     document.getElementById('messages').style.display = 'none';
                     document.getElementById('input-section').style.display = 'none';
                     document.getElementById('group-manage-btn').style.display = 'none';
-                    appendSystemMsg('You were removed from this group.');
+                    const reason = data.deleted ? 'This group was deleted by the creator.' : 'You were removed from this group.';
+                    appendSystemMsg(reason);
                 }}
                 buildConvList();
                 break;
@@ -920,7 +959,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             btn.className = 'conv-btn' + (c.id === currentConvId ? ' active' : '');
             const unread = unreadCounts[c.id] || 0;
             if (c.is_group) {{
-                btn.onclick = () => {{ openGroupConversation(c.id, c.name, c.created_by, c.participant_count, null); closeSidebar(); }};
+                btn.onclick = () => {{ openGroupConversation(c.id, c.name, c.created_by, c.participant_count, null, c.my_role); closeSidebar(); }};
                 const preview = c.last_message_preview || '';
                 btn.innerHTML = `
                     <div class="conv-avatar" style="color:#a78bfa;font-size:0.85rem;">&#128101;</div>
@@ -990,6 +1029,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         currentGroupCreatedBy = null;
         currentGroupName = null;
         currentGroupParticipants = [];
+        currentPlayerRole = null;
         unreadCounts[convId] = 0;
 
         document.getElementById('conv-title').textContent = otherName;
@@ -1009,7 +1049,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         }}
     }}
 
-    function openGroupConversation(convId, name, createdBy, participantCount, participants) {{
+    function openGroupConversation(convId, name, createdBy, participantCount, participants, myRole) {{
         currentConvId = convId;
         currentOtherId = null;
         currentOtherName = null;
@@ -1017,6 +1057,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         currentGroupCreatedBy = createdBy;
         currentGroupName = name;
         currentGroupParticipants = participants || [];
+        currentPlayerRole = myRole || (createdBy === PLAYER_ID ? 'creator' : 'member');
         unreadCounts[convId] = 0;
 
         document.getElementById('conv-title').textContent = name;
@@ -1104,14 +1145,26 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     // ===== GROUP DM MANAGEMENT =====
     function openGroupManageModal() {{
         if (!currentIsGroup || !currentConvId) return;
+        const role = currentPlayerRole || 'member';
+        const isCreator = role === 'creator';
+        const isMod = role === 'mod';
+        const canManage = isCreator || isMod;
+
         document.getElementById('group-modal-title').textContent = currentGroupName || 'Group Chat';
         document.getElementById('group-name-input').value = currentGroupName || '';
-        const isCreator = currentGroupCreatedBy === PLAYER_ID;
-        document.getElementById('group-rename-section').style.display = isCreator ? 'block' : 'none';
-        document.getElementById('group-add-section').style.display = isCreator ? 'block' : 'none';
-        document.getElementById('group-leave-section').style.display = isCreator ? 'none' : 'block';
+
+        const roleLabels = {{'creator': '👑 Creator', 'mod': '🔰 Group Mod', 'member': 'Member'}};
+        document.getElementById('group-modal-role-badge').textContent = roleLabels[role] || '';
+
+        document.getElementById('group-rename-section').style.display = canManage ? 'block' : 'none';
+        document.getElementById('group-add-section').style.display = canManage ? 'block' : 'none';
         document.getElementById('group-add-results').innerHTML = '';
         document.getElementById('group-add-search').value = '';
+
+        document.getElementById('group-transfer-section').style.display = isCreator ? 'block' : 'none';
+        document.getElementById('group-delete-section').style.display = isCreator ? 'block' : 'none';
+        document.getElementById('group-leave-section').style.display = isCreator ? 'none' : 'block';
+
         loadGroupParticipants(currentConvId);
         document.getElementById('group-modal').style.display = 'flex';
     }}
@@ -1126,6 +1179,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             const data = await resp.json();
             currentGroupParticipants = data.participants || [];
             renderGroupMembers();
+            populateTransferSelect();
         }} catch (e) {{
             document.getElementById('group-member-list').innerHTML = '<p style="color:#ef4444;font-size:0.75rem;">Failed to load members.</p>';
         }}
@@ -1133,24 +1187,105 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
     function renderGroupMembers() {{
         const el = document.getElementById('group-member-list');
-        const isCreator = currentGroupCreatedBy === PLAYER_ID;
+        const role = currentPlayerRole || 'member';
+        const isCreator = role === 'creator';
+        const isMod = role === 'mod';
+
         if (!currentGroupParticipants || currentGroupParticipants.length === 0) {{
             el.innerHTML = '<p style="color:#475569;font-size:0.75rem;">No members loaded.</p>';
             return;
         }}
         el.innerHTML = currentGroupParticipants.map(m => {{
-            const isOwner = m.id === currentGroupCreatedBy;
+            const mRole = m.role || 'member';
             const isMe = m.id === PLAYER_ID;
-            const removeBtn = (isCreator && !isOwner)
-                ? `<button onclick="removeGroupMember(${{m.id}})" style="background:#ef4444;color:#fff;border:none;padding:2px 8px;font-size:0.7rem;cursor:pointer;border-radius:3px;font-family:inherit;">Remove</button>`
-                : '';
-            const ownerBadge = isOwner ? '<span style="color:#a78bfa;font-size:0.65rem;margin-left:4px;">creator</span>' : '';
-            const meBadge = (isMe && !isOwner) ? '<span style="color:#64748b;font-size:0.65rem;margin-left:4px;">you</span>' : '';
+            const roleBadgeColor = mRole === 'creator' ? '#a78bfa' : mRole === 'mod' ? '#38bdf8' : '#475569';
+            const roleBadgeText = mRole === 'creator' ? '👑 creator' : mRole === 'mod' ? '🔰 mod' : '';
+            const badge = roleBadgeText ? `<span style="color:${{roleBadgeColor}};font-size:0.62rem;margin-left:4px;">${{roleBadgeText}}</span>` : '';
+            const meBadge = isMe ? `<span style="color:#64748b;font-size:0.62rem;margin-left:4px;">(you)</span>` : '';
+
+            let actions = '';
+            if (!isMe) {{
+                if (isCreator) {{
+                    // Creator sees: kick, promote/demote
+                    const kickBtn = mRole !== 'creator'
+                        ? `<button onclick="removeGroupMember(${{m.id}})" style="background:#ef444433;color:#f87171;border:1px solid #ef444466;padding:2px 7px;font-size:0.68rem;cursor:pointer;border-radius:3px;font-family:inherit;">Kick</button>`
+                        : '';
+                    const promoteBtn = mRole === 'member'
+                        ? `<button onclick="setMemberRole(${{m.id}},'mod')" style="background:#38bdf833;color:#38bdf8;border:1px solid #38bdf866;padding:2px 7px;font-size:0.68rem;cursor:pointer;border-radius:3px;font-family:inherit;margin-left:3px;">Make Mod</button>`
+                        : '';
+                    const demoteBtn = mRole === 'mod'
+                        ? `<button onclick="setMemberRole(${{m.id}},'member')" style="background:#47556933;color:#94a3b8;border:1px solid #47556966;padding:2px 7px;font-size:0.68rem;cursor:pointer;border-radius:3px;font-family:inherit;margin-left:3px;">Demote</button>`
+                        : '';
+                    actions = kickBtn + promoteBtn + demoteBtn;
+                }} else if (isMod && mRole === 'member') {{
+                    // Mods can only kick regular members
+                    actions = `<button onclick="removeGroupMember(${{m.id}})" style="background:#ef444433;color:#f87171;border:1px solid #ef444466;padding:2px 7px;font-size:0.68rem;cursor:pointer;border-radius:3px;font-family:inherit;">Kick</button>`;
+                }}
+            }}
+
             return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #0f172a;">
-                <span style="font-size:0.8rem;color:#e5e7eb;">${{escapeHtml(m.name)}}${{ownerBadge}}${{meBadge}}</span>
-                ${{removeBtn}}
+                <span style="font-size:0.8rem;color:#e5e7eb;">${{escapeHtml(m.name)}}${{badge}}${{meBadge}}</span>
+                <div style="display:flex;gap:0;">${{actions}}</div>
             </div>`;
         }}).join('');
+    }}
+
+    function populateTransferSelect() {{
+        const sel = document.getElementById('group-transfer-select');
+        if (!sel) return;
+        const others = currentGroupParticipants.filter(m => m.id !== PLAYER_ID);
+        sel.innerHTML = others.map(m =>
+            `<option value="${{m.id}}">${{escapeHtml(m.name)}} (${{m.role || 'member'}})</option>`
+        ).join('');
+    }}
+
+    async function setMemberRole(playerId, newRole) {{
+        const label = newRole === 'mod' ? 'promote to Group Mod' : 'demote to member';
+        if (!confirm(`${{label.charAt(0).toUpperCase() + label.slice(1)}}?`)) return;
+        const resp = await fetch('/api/dm/group/set-role', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId, player_id: playerId, new_role: newRole}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Failed to update role.'); return; }}
+        await loadGroupParticipants(currentConvId);
+    }}
+
+    async function transferOwnership() {{
+        const sel = document.getElementById('group-transfer-select');
+        if (!sel || !sel.value) {{ alert('Select a member to transfer to.'); return; }}
+        const targetId = parseInt(sel.value);
+        const targetName = sel.options[sel.selectedIndex].text;
+        if (!confirm(`Transfer ownership to ${{targetName}}? You will become a Group Mod.`)) return;
+        const resp = await fetch('/api/dm/group/set-role', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId, player_id: targetId, new_role: 'creator'}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Transfer failed.'); return; }}
+        await loadGroupParticipants(currentConvId);
+    }}
+
+    async function deleteGroup() {{
+        if (!confirm('Permanently delete this group and all its messages? This cannot be undone.')) return;
+        const resp = await fetch('/api/dm/group/delete', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Failed to delete group.'); return; }}
+        closeGroupModal();
+        conversations = conversations.filter(c => c.id !== currentConvId);
+        currentConvId = null; currentIsGroup = false; currentPlayerRole = null;
+        document.getElementById('conv-title').textContent = 'Direct Messages';
+        document.getElementById('dm-placeholder').style.display = 'flex';
+        document.getElementById('messages').style.display = 'none';
+        document.getElementById('input-section').style.display = 'none';
+        document.getElementById('group-manage-btn').style.display = 'none';
+        buildConvList();
     }}
 
     async function submitRename() {{
@@ -1348,7 +1483,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             }};
             conversations.unshift(newConv);
             buildConvList();
-            openGroupConversation(data.id, data.name, PLAYER_ID, data.participants.length, null);
+            openGroupConversation(data.id, data.name, PLAYER_ID, data.participants.length, null, 'creator');
         }} catch (e) {{
             alert('Network error. Please try again.');
         }}
@@ -1863,6 +1998,63 @@ async def api_group_participants(
         return JSONResponse({"error": "Not a member of this group"}, status_code=403)
     parts = get_group_participants(conv_id)
     return JSONResponse({"participants": parts})
+
+
+@router.post("/api/dm/group/set-role")
+async def api_group_set_role(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Promote/demote a member or transfer ownership. Creator only."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    try:
+        body = await request.json()
+        conv_id = body.get("conv_id", "")
+        target_id = int(body.get("player_id"))
+        new_role = body.get("new_role", "")
+        result = set_participant_role(conv_id, target_id, new_role, player.id)
+        if result["ok"]:
+            pids = get_group_participant_ids(conv_id)
+            parts = get_group_participants(conv_id)
+            # Find new creator id for created_by field
+            creator_id = next((p["id"] for p in parts if p["role"] == "creator"), None)
+            # Broadcast full update to each participant with their own role
+            for pid in pids:
+                my_role = next((p["role"] for p in parts if p["id"] == pid), "member")
+                msg = {
+                    "type": "group_update",
+                    "conversation_id": conv_id,
+                    "participant_count": len(pids),
+                    "participants": parts,
+                    "my_role": my_role,
+                }
+                if creator_id:
+                    msg["created_by"] = creator_id
+                await dm_manager.send_to_user(pid, msg)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/dm/group/delete")
+async def api_group_delete(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Delete an entire group DM. Creator only."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    try:
+        body = await request.json()
+        conv_id = body.get("conv_id", "")
+        result = delete_group_dm(conv_id, player.id)
+        if result["ok"]:
+            for pid in result.get("participant_ids", []):
+                await dm_manager.send_to_user(pid, {
+                    "type": "group_removed",
+                    "conversation_id": conv_id,
+                    "deleted": True,
+                })
+        return JSONResponse({"ok": result["ok"], "error": result.get("error")})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
 # ==========================
