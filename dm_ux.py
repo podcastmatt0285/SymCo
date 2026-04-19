@@ -16,10 +16,12 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Cookie, Query, Fo
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from dm import (
-    dm_manager, MAX_DM_LENGTH, DM_UPLOAD_BYTES,
+    dm_manager, MAX_DM_LENGTH, DM_UPLOAD_BYTES, MAX_GROUP_PARTICIPANTS,
     make_conversation_id, get_or_create_conversation,
     get_dm_messages, save_dm, get_player_conversations,
-    search_players,
+    search_players, create_group_dm, add_group_participant,
+    remove_group_participant, rename_group_dm, get_group_participants,
+    get_group_participant_ids, save_group_dm, get_player_group_conversations,
 )
 from chat import (
     ADMIN_PLAYER_IDS, DEFAULT_BAN_WORDS, MAX_UPLOAD_BYTES,
@@ -565,8 +567,20 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     avatar = get_avatar(player.id)
 
     conversations = get_player_conversations(player.id)
+    group_conversations = get_player_group_conversations(player.id)
 
-    # Resolve other player names for conversations
+    has_group_dm = False
+    try:
+        from executive import player_has_ability, get_db as get_exec_db
+        _edb = get_exec_db()
+        try:
+            has_group_dm = player_has_ability(_edb, player.id, "dm_threeway")
+        finally:
+            _edb.close()
+    except Exception:
+        pass
+
+    # Resolve other player names for 1:1 conversations
     conv_list = []
     for conv in conversations:
         other_id = conv["player2_id"] if conv["player1_id"] == player.id else conv["player1_id"]
@@ -577,12 +591,18 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             "other_name": other_name,
             "last_message_at": conv["last_message_at"],
             "last_message_preview": conv["last_message_preview"],
+            "is_group": False,
         })
+    # Merge group conversations and sort by recency
+    for gc in group_conversations:
+        conv_list.append(gc)
+    conv_list.sort(key=lambda c: c.get("last_message_at") or "", reverse=True)
 
     conv_json = json.dumps(conv_list)
     ban_words_json = json.dumps(ban_words)
     avatar_json = json.dumps(avatar) if avatar else "null"
     admin_ids_json = json.dumps(list(ADMIN_PLAYER_IDS))
+    has_group_dm_json = json.dumps(has_group_dm)
 
     emojis = "\U0001f600\U0001f602\U0001f923\U0001f60a\U0001f60e\U0001f914\U0001f622\U0001f621\U0001f92e\U0001f973\U0001f389\U0001f525\U0001f4b0\U0001f4c8\U0001f4c9\U0001f3ed\U0001f6e2\ufe0f\u26a1\U0001f3d7\ufe0f\U0001f33e\U0001f48e\U0001f91d\U0001f44d\U0001f44e\u2764\ufe0f\U0001f480\U0001f680\U0001f4ac\u26a0\ufe0f\U0001f41b\u2705\u274c\U0001f3d9\ufe0f\U0001f3db\ufe0f\U0001f4ca\u2753\U0001f3af\U0001f6e1\ufe0f\u2694\ufe0f\U0001fa99\U0001f4b8\U0001f3e6\U0001f4cb"
 
@@ -602,6 +622,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                 <button class="sidebar-btn" onclick="document.getElementById('avatar-input').click()">Upload Pic</button>
                 <input type="text" class="search-input" id="player-search" placeholder="Search player to DM..." autocomplete="off">
                 <div class="search-results" id="search-results"></div>
+                {"<button class='sidebar-btn' style='background:#a78bfa;color:#020617;font-weight:bold;margin-top:8px;' onclick='openCreateGroupModal()'>&#43; New Group DM</button>" if has_group_dm else ""}
             </div>
 
             <div class="sidebar-section" style="flex: 1;">
@@ -618,7 +639,10 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         <div class="chat-main" style="position: relative;">
             <div class="chat-header">
                 <h3 id="conv-title">Direct Messages</h3>
-                <span class="online-status" id="online-status"></span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button id="group-manage-btn" onclick="openGroupManageModal()" style="display:none;background:#1e293b;color:#a78bfa;border:1px solid #334155;padding:4px 10px;font-size:0.75rem;font-family:inherit;cursor:pointer;border-radius:3px;">&#9881; Manage</button>
+                    <span class="online-status" id="online-status"></span>
+                </div>
             </div>
 
             <div id="dm-placeholder" class="dm-placeholder">
@@ -665,10 +689,68 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
+    <!-- Create Group DM Modal -->
+    <div id="create-group-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;justify-content:center;align-items:center;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:20px;width:90%;max-width:420px;max-height:85vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <h3 style="margin:0;font-size:1rem;color:#e5e7eb;">New Group DM</h3>
+                <span style="cursor:pointer;color:#64748b;font-size:1.3rem;" onclick="closeCreateGroupModal()">&times;</span>
+            </div>
+            <p style="font-size:0.73rem;color:#64748b;margin-bottom:10px;">Requires Multi-Party DMs executive ability. Max {MAX_GROUP_PARTICIPANTS} participants.</p>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Group Name</label>
+                <input type="text" id="create-group-name" maxlength="80" placeholder="Enter group name..."
+                    style="width:100%;background:#020617;border:1px solid #1e293b;color:#e5e7eb;padding:8px 10px;font-family:inherit;font-size:0.85rem;border-radius:4px;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:8px;">
+                <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Add Members</label>
+                <input type="text" id="create-group-search" placeholder="Search player..." autocomplete="off"
+                    style="width:100%;background:#020617;border:1px solid #1e293b;color:#e5e7eb;padding:7px 10px;font-family:inherit;font-size:0.8rem;border-radius:4px;box-sizing:border-box;">
+                <div id="create-group-results" style="max-height:120px;overflow-y:auto;margin-top:4px;"></div>
+            </div>
+            <div id="create-group-members" style="margin-bottom:12px;min-height:24px;"></div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="submitCreateGroup()" style="flex:1;background:#a78bfa;color:#020617;border:none;padding:8px;font-family:inherit;font-size:0.85rem;font-weight:bold;cursor:pointer;border-radius:4px;">Create Group</button>
+                <button onclick="closeCreateGroupModal()" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;padding:8px 14px;font-family:inherit;font-size:0.85rem;cursor:pointer;border-radius:4px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Group Modal -->
+    <div id="group-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;justify-content:center;align-items:center;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:20px;width:90%;max-width:400px;max-height:85vh;overflow-y:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <h3 style="margin:0;font-size:1rem;color:#e5e7eb;" id="group-modal-title">Group Chat</h3>
+                <span style="cursor:pointer;color:#64748b;font-size:1.3rem;" onclick="closeGroupModal()">&times;</span>
+            </div>
+            <div id="group-rename-section" style="display:none;margin-bottom:14px;">
+                <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Rename Group</label>
+                <div style="display:flex;gap:6px;">
+                    <input type="text" id="group-name-input" maxlength="80"
+                        style="flex:1;background:#020617;border:1px solid #1e293b;color:#e5e7eb;padding:6px 10px;font-family:inherit;font-size:0.85rem;border-radius:4px;">
+                    <button onclick="submitRename()" style="background:#38bdf8;color:#020617;border:none;padding:6px 14px;font-family:inherit;font-size:0.8rem;cursor:pointer;border-radius:3px;">Save</button>
+                </div>
+            </div>
+            <p style="font-size:0.73rem;color:#64748b;margin-bottom:6px;">Members</p>
+            <div id="group-member-list" style="margin-bottom:14px;"></div>
+            <div id="group-add-section" style="display:none;margin-bottom:12px;">
+                <label style="font-size:0.73rem;color:#64748b;display:block;margin-bottom:4px;">Add Member</label>
+                <input type="text" id="group-add-search" placeholder="Search player..." autocomplete="off"
+                    style="width:100%;background:#020617;border:1px solid #1e293b;color:#e5e7eb;padding:7px 10px;font-family:inherit;font-size:0.8rem;border-radius:4px;box-sizing:border-box;margin-bottom:4px;">
+                <div id="group-add-results" style="max-height:110px;overflow-y:auto;"></div>
+            </div>
+            <div id="group-leave-section" style="display:none;">
+                <button onclick="leaveGroup()" style="width:100%;background:#ef4444;color:#fff;border:none;padding:8px;font-family:inherit;font-size:0.85rem;cursor:pointer;border-radius:4px;">Leave Group</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     // ===== STATE =====
     const PLAYER_ID = {player.id};
     const PLAYER_NAME = {json.dumps(player.business_name)};
+    const HAS_GROUP_DM = {has_group_dm_json};
+    const MAX_GROUP_PARTS = {MAX_GROUP_PARTICIPANTS};
     let conversations = {conv_json};
     let banWords = {ban_words_json};
     const ADMIN_IDS = {admin_ids_json};
@@ -678,6 +760,11 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     let currentConvId = null;
     let currentOtherId = null;
     let currentOtherName = null;
+    let currentIsGroup = false;
+    let currentGroupCreatedBy = null;
+    let currentGroupName = null;
+    let currentGroupParticipants = [];
+    let pendingGroupMembers = [];
     let reconnectDelay = 1000;
     let reconnectTimer = null;
     let pingInterval = null;
@@ -687,6 +774,8 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
     let unreadCounts = {{}};
     let avatarCache = {{}};
     let searchDebounce = null;
+    let groupAddSearchDebounce = null;
+    let createGroupSearchDebounce = null;
 
     // ===== MOBILE SIDEBAR =====
     function toggleSidebar() {{
@@ -746,10 +835,12 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                 if (data.conversation_id === currentConvId) {{
                     appendMessage(data);
                 }} else {{
-                    // Unread for a different conversation
                     unreadCounts[data.conversation_id] = (unreadCounts[data.conversation_id] || 0) + 1;
-                    // Update conversation list preview
-                    updateConvPreview(data.conversation_id, data.content, data.sender_name, data.other_id, data.other_name);
+                    if (data.is_group) {{
+                        updateGroupConvPreview(data.conversation_id, data.content);
+                    }} else {{
+                        updateConvPreview(data.conversation_id, data.content, data.sender_name, data.other_id, data.other_name);
+                    }}
                     buildConvList();
                 }}
                 break;
@@ -777,6 +868,39 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             case 'search_results':
                 renderSearchResults(data.results);
                 break;
+            case 'group_update':
+                {{
+                    const gc = conversations.find(c => c.id === data.conversation_id);
+                    if (gc) {{
+                        if (data.name !== undefined) gc.name = data.name;
+                        if (data.participant_count !== undefined) gc.participant_count = data.participant_count;
+                        if (currentConvId === data.conversation_id) {{
+                            if (data.name !== undefined) {{
+                                document.getElementById('conv-title').textContent = gc.name;
+                                currentGroupName = gc.name;
+                            }}
+                            if (data.participant_count !== undefined) {{
+                                document.getElementById('online-status').innerHTML =
+                                    `<span style="color:#a78bfa;">&#128101; ${{gc.participant_count}} members</span>`;
+                            }}
+                        }}
+                        buildConvList();
+                    }}
+                }}
+                break;
+            case 'group_removed':
+                conversations = conversations.filter(c => c.id !== data.conversation_id);
+                if (currentConvId === data.conversation_id) {{
+                    currentConvId = null; currentIsGroup = false;
+                    document.getElementById('conv-title').textContent = 'Direct Messages';
+                    document.getElementById('dm-placeholder').style.display = 'flex';
+                    document.getElementById('messages').style.display = 'none';
+                    document.getElementById('input-section').style.display = 'none';
+                    document.getElementById('group-manage-btn').style.display = 'none';
+                    appendSystemMsg('You were removed from this group.');
+                }}
+                buildConvList();
+                break;
             case 'error':
                 appendSystemMsg(data.message);
                 break;
@@ -794,21 +918,45 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         conversations.forEach(c => {{
             const btn = document.createElement('button');
             btn.className = 'conv-btn' + (c.id === currentConvId ? ' active' : '');
-            btn.onclick = () => {{ openConversation(c.id, c.other_id, c.other_name); closeSidebar(); }};
-            const letter = (c.other_name || '?')[0].toUpperCase();
-            const hue = (c.other_id * 137) % 360;
             const unread = unreadCounts[c.id] || 0;
-            const preview = c.last_message_preview || '';
-            btn.innerHTML = `
-                <div class="conv-avatar" style="color: hsl(${{hue}},60%,65%);">${{letter}}</div>
-                <div class="conv-info">
-                    <span class="conv-name">${{escapeHtml(c.other_name)}}</span>
-                    <span class="conv-preview">${{escapeHtml(preview)}}</span>
-                </div>
-                <span class="unread-badge ${{unread > 0 ? 'show' : ''}}" id="unread-${{c.id}}">${{unread > 99 ? '99+' : unread}}</span>
-            `;
+            if (c.is_group) {{
+                btn.onclick = () => {{ openGroupConversation(c.id, c.name, c.created_by, c.participant_count, null); closeSidebar(); }};
+                const preview = c.last_message_preview || '';
+                btn.innerHTML = `
+                    <div class="conv-avatar" style="color:#a78bfa;font-size:0.85rem;">&#128101;</div>
+                    <div class="conv-info">
+                        <span class="conv-name">${{escapeHtml(c.name)}}</span>
+                        <span class="conv-preview">${{c.participant_count}} members &middot; ${{escapeHtml(preview)}}</span>
+                    </div>
+                    <span class="unread-badge ${{unread > 0 ? 'show' : ''}}" id="unread-${{c.id}}">${{unread > 99 ? '99+' : unread}}</span>
+                `;
+            }} else {{
+                btn.onclick = () => {{ openConversation(c.id, c.other_id, c.other_name); closeSidebar(); }};
+                const letter = (c.other_name || '?')[0].toUpperCase();
+                const hue = (c.other_id * 137) % 360;
+                const preview = c.last_message_preview || '';
+                btn.innerHTML = `
+                    <div class="conv-avatar" style="color: hsl(${{hue}},60%,65%);">${{letter}}</div>
+                    <div class="conv-info">
+                        <span class="conv-name">${{escapeHtml(c.other_name)}}</span>
+                        <span class="conv-preview">${{escapeHtml(preview)}}</span>
+                    </div>
+                    <span class="unread-badge ${{unread > 0 ? 'show' : ''}}" id="unread-${{c.id}}">${{unread > 99 ? '99+' : unread}}</span>
+                `;
+            }}
             container.appendChild(btn);
         }});
+    }}
+
+    function updateGroupConvPreview(convId, content) {{
+        for (let c of conversations) {{
+            if (c.id === convId) {{
+                c.last_message_preview = content.substring(0, 80);
+                c.last_message_at = new Date().toISOString();
+                break;
+            }}
+        }}
+        conversations.sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));
     }}
 
     function updateConvPreview(convId, content, senderName, otherId, otherName) {{
@@ -838,9 +986,14 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         currentConvId = convId;
         currentOtherId = otherId;
         currentOtherName = otherName;
+        currentIsGroup = false;
+        currentGroupCreatedBy = null;
+        currentGroupName = null;
+        currentGroupParticipants = [];
         unreadCounts[convId] = 0;
 
         document.getElementById('conv-title').textContent = otherName;
+        document.getElementById('group-manage-btn').style.display = 'none';
         document.getElementById('dm-placeholder').style.display = 'none';
         document.getElementById('messages').style.display = 'flex';
         document.getElementById('messages').innerHTML = '';
@@ -853,6 +1006,34 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
         if (ws && ws.readyState === 1) {{
             ws.send(JSON.stringify({{type: 'join', conversation_id: convId, other_id: otherId}}));
+        }}
+    }}
+
+    function openGroupConversation(convId, name, createdBy, participantCount, participants) {{
+        currentConvId = convId;
+        currentOtherId = null;
+        currentOtherName = null;
+        currentIsGroup = true;
+        currentGroupCreatedBy = createdBy;
+        currentGroupName = name;
+        currentGroupParticipants = participants || [];
+        unreadCounts[convId] = 0;
+
+        document.getElementById('conv-title').textContent = name;
+        document.getElementById('online-status').innerHTML =
+            `<span style="color:#a78bfa;">&#128101; ${{participantCount}} members</span>`;
+        document.getElementById('group-manage-btn').style.display = 'inline-block';
+        document.getElementById('dm-placeholder').style.display = 'none';
+        document.getElementById('messages').style.display = 'flex';
+        document.getElementById('messages').innerHTML = '';
+        document.getElementById('typing-indicator').style.display = 'block';
+        document.getElementById('typing-indicator').textContent = '';
+        document.getElementById('input-section').style.display = 'block';
+
+        buildConvList();
+
+        if (ws && ws.readyState === 1) {{
+            ws.send(JSON.stringify({{type: 'join', conversation_id: convId, is_group: true}}));
         }}
     }}
 
@@ -918,6 +1099,259 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
 
         openConversation(convId, otherId, otherName);
         closeSidebar();
+    }}
+
+    // ===== GROUP DM MANAGEMENT =====
+    function openGroupManageModal() {{
+        if (!currentIsGroup || !currentConvId) return;
+        document.getElementById('group-modal-title').textContent = currentGroupName || 'Group Chat';
+        document.getElementById('group-name-input').value = currentGroupName || '';
+        const isCreator = currentGroupCreatedBy === PLAYER_ID;
+        document.getElementById('group-rename-section').style.display = isCreator ? 'block' : 'none';
+        document.getElementById('group-add-section').style.display = isCreator ? 'block' : 'none';
+        document.getElementById('group-leave-section').style.display = isCreator ? 'none' : 'block';
+        document.getElementById('group-add-results').innerHTML = '';
+        document.getElementById('group-add-search').value = '';
+        loadGroupParticipants(currentConvId);
+        document.getElementById('group-modal').style.display = 'flex';
+    }}
+
+    function closeGroupModal() {{
+        document.getElementById('group-modal').style.display = 'none';
+    }}
+
+    async function loadGroupParticipants(convId) {{
+        try {{
+            const resp = await fetch(`/api/dm/group/participants?conv_id=${{encodeURIComponent(convId)}}`);
+            const data = await resp.json();
+            currentGroupParticipants = data.participants || [];
+            renderGroupMembers();
+        }} catch (e) {{
+            document.getElementById('group-member-list').innerHTML = '<p style="color:#ef4444;font-size:0.75rem;">Failed to load members.</p>';
+        }}
+    }}
+
+    function renderGroupMembers() {{
+        const el = document.getElementById('group-member-list');
+        const isCreator = currentGroupCreatedBy === PLAYER_ID;
+        if (!currentGroupParticipants || currentGroupParticipants.length === 0) {{
+            el.innerHTML = '<p style="color:#475569;font-size:0.75rem;">No members loaded.</p>';
+            return;
+        }}
+        el.innerHTML = currentGroupParticipants.map(m => {{
+            const isOwner = m.id === currentGroupCreatedBy;
+            const isMe = m.id === PLAYER_ID;
+            const removeBtn = (isCreator && !isOwner)
+                ? `<button onclick="removeGroupMember(${{m.id}})" style="background:#ef4444;color:#fff;border:none;padding:2px 8px;font-size:0.7rem;cursor:pointer;border-radius:3px;font-family:inherit;">Remove</button>`
+                : '';
+            const ownerBadge = isOwner ? '<span style="color:#a78bfa;font-size:0.65rem;margin-left:4px;">creator</span>' : '';
+            const meBadge = (isMe && !isOwner) ? '<span style="color:#64748b;font-size:0.65rem;margin-left:4px;">you</span>' : '';
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #0f172a;">
+                <span style="font-size:0.8rem;color:#e5e7eb;">${{escapeHtml(m.name)}}${{ownerBadge}}${{meBadge}}</span>
+                ${{removeBtn}}
+            </div>`;
+        }}).join('');
+    }}
+
+    async function submitRename() {{
+        const name = document.getElementById('group-name-input').value.trim();
+        if (!name) return;
+        const resp = await fetch('/api/dm/group/rename', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId, name}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Failed to rename.'); return; }}
+        currentGroupName = data.name;
+        document.getElementById('conv-title').textContent = data.name;
+        document.getElementById('group-modal-title').textContent = data.name;
+        const c = conversations.find(x => x.id === currentConvId);
+        if (c) c.name = data.name;
+        buildConvList();
+    }}
+
+    async function removeGroupMember(playerId) {{
+        if (!confirm('Remove this member from the group?')) return;
+        const resp = await fetch('/api/dm/group/remove', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId, player_id: playerId}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Failed to remove member.'); return; }}
+        await loadGroupParticipants(currentConvId);
+        const c = conversations.find(x => x.id === currentConvId);
+        if (c && c.participant_count) c.participant_count = Math.max(1, c.participant_count - 1);
+        if (c) document.getElementById('online-status').innerHTML =
+            `<span style="color:#a78bfa;">&#128101; ${{c.participant_count}} members</span>`;
+        buildConvList();
+    }}
+
+    async function leaveGroup() {{
+        if (!confirm('Leave this group?')) return;
+        const resp = await fetch('/api/dm/group/remove', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId, player_id: PLAYER_ID}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Failed to leave group.'); return; }}
+        closeGroupModal();
+        conversations = conversations.filter(c => c.id !== currentConvId);
+        currentConvId = null; currentIsGroup = false;
+        document.getElementById('conv-title').textContent = 'Direct Messages';
+        document.getElementById('dm-placeholder').style.display = 'flex';
+        document.getElementById('messages').style.display = 'none';
+        document.getElementById('input-section').style.display = 'none';
+        document.getElementById('group-manage-btn').style.display = 'none';
+        buildConvList();
+    }}
+
+    function handleGroupAddSearch() {{
+        const query = document.getElementById('group-add-search').value.trim();
+        const container = document.getElementById('group-add-results');
+        if (query.length === 0) {{ container.innerHTML = ''; return; }}
+        clearTimeout(groupAddSearchDebounce);
+        groupAddSearchDebounce = setTimeout(async () => {{
+            try {{
+                const resp = await fetch(`/p2p/dms/search?q=${{encodeURIComponent(query)}}`);
+                const data = await resp.json();
+                const existingIds = new Set(currentGroupParticipants.map(m => m.id));
+                const filtered = (data.results || []).filter(r => !existingIds.has(r.id));
+                if (filtered.length === 0) {{ container.innerHTML = '<p style="color:#475569;font-size:0.7rem;padding:4px;">No players found.</p>'; return; }}
+                container.innerHTML = '';
+                filtered.forEach(p => {{
+                    const div = document.createElement('div');
+                    div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:4px 0;';
+                    div.innerHTML = `<span style="font-size:0.8rem;color:#94a3b8;">${{escapeHtml(p.name)}}</span>
+                        <button onclick="addGroupMember(${{p.id}}, this)" style="background:#22c55e;color:#020617;border:none;padding:2px 8px;font-size:0.7rem;cursor:pointer;border-radius:3px;font-family:inherit;">Add</button>`;
+                    container.appendChild(div);
+                }});
+                container._results = filtered;
+            }} catch (e) {{ container.innerHTML = ''; }}
+        }}, 250);
+    }}
+
+    async function addGroupMember(playerId, btn) {{
+        if (btn) btn.disabled = true;
+        const resp = await fetch('/api/dm/group/add', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{conv_id: currentConvId, player_id: playerId}}),
+        }});
+        const data = await resp.json();
+        if (!data.ok) {{ alert(data.error || 'Failed to add member.'); if (btn) btn.disabled = false; return; }}
+        await loadGroupParticipants(currentConvId);
+        const c = conversations.find(x => x.id === currentConvId);
+        if (c) c.participant_count = (c.participant_count || 0) + 1;
+        if (c) document.getElementById('online-status').innerHTML =
+            `<span style="color:#a78bfa;">&#128101; ${{c.participant_count}} members</span>`;
+        document.getElementById('group-add-search').value = '';
+        document.getElementById('group-add-results').innerHTML = '';
+        buildConvList();
+    }}
+
+    // ===== CREATE GROUP DM =====
+    function openCreateGroupModal() {{
+        pendingGroupMembers = [];
+        document.getElementById('create-group-name').value = '';
+        document.getElementById('create-group-search').value = '';
+        document.getElementById('create-group-results').innerHTML = '';
+        renderPendingMembers();
+        closeSidebar();
+        document.getElementById('create-group-modal').style.display = 'flex';
+    }}
+
+    function closeCreateGroupModal() {{
+        document.getElementById('create-group-modal').style.display = 'none';
+    }}
+
+    function renderPendingMembers() {{
+        const el = document.getElementById('create-group-members');
+        if (pendingGroupMembers.length === 0) {{
+            el.innerHTML = '<p style="color:#475569;font-size:0.72rem;margin:4px 0;">You will be added as creator.</p>';
+            return;
+        }}
+        el.innerHTML = pendingGroupMembers.map(m =>
+            `<span style="display:inline-flex;align-items:center;gap:4px;background:#1e293b;padding:3px 8px;border-radius:3px;margin:2px;font-size:0.75rem;color:#e5e7eb;">
+                ${{escapeHtml(m.name)}}
+                <span style="cursor:pointer;color:#ef4444;font-weight:bold;" onclick="removePendingMember(${{m.id}})">&times;</span>
+            </span>`
+        ).join('');
+    }}
+
+    function addPendingMember(id, name) {{
+        if (pendingGroupMembers.find(m => m.id === id)) return;
+        if (pendingGroupMembers.length + 1 >= MAX_GROUP_PARTS) {{
+            alert(`Maximum ${{MAX_GROUP_PARTS}} participants (including yourself).`);
+            return;
+        }}
+        pendingGroupMembers.push({{id, name}});
+        renderPendingMembers();
+        document.getElementById('create-group-search').value = '';
+        document.getElementById('create-group-results').innerHTML = '';
+    }}
+
+    function removePendingMember(id) {{
+        pendingGroupMembers = pendingGroupMembers.filter(m => m.id !== id);
+        renderPendingMembers();
+    }}
+
+    function handleCreateGroupSearch() {{
+        const query = document.getElementById('create-group-search').value.trim();
+        const container = document.getElementById('create-group-results');
+        if (query.length === 0) {{ container.innerHTML = ''; return; }}
+        clearTimeout(createGroupSearchDebounce);
+        createGroupSearchDebounce = setTimeout(async () => {{
+            try {{
+                const resp = await fetch(`/p2p/dms/search?q=${{encodeURIComponent(query)}}`);
+                const data = await resp.json();
+                const existingIds = new Set([PLAYER_ID, ...pendingGroupMembers.map(m => m.id)]);
+                const filtered = (data.results || []).filter(r => !existingIds.has(r.id));
+                if (filtered.length === 0) {{ container.innerHTML = '<p style="color:#475569;font-size:0.7rem;padding:4px;">No players found.</p>'; return; }}
+                container.innerHTML = '';
+                filtered.forEach(p => {{
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    const letter = (p.name || '?')[0].toUpperCase();
+                    const hue = (p.id * 137) % 360;
+                    div.innerHTML = `
+                        <div class="search-result-letter" style="color: hsl(${{hue}},60%,65%);">${{letter}}</div>
+                        <span style="flex:1;">${{escapeHtml(p.name)}}</span>
+                        <button onclick="addPendingMember(${{p.id}}, '${{p.name.replace(/'/g, "\\\\'")}}'); this.closest('.search-result-item').remove();"
+                            style="background:#22c55e;color:#020617;border:none;padding:2px 8px;font-size:0.7rem;cursor:pointer;border-radius:3px;font-family:inherit;">Add</button>
+                    `;
+                    container.appendChild(div);
+                }});
+            }} catch (e) {{ container.innerHTML = ''; }}
+        }}, 250);
+    }}
+
+    async function submitCreateGroup() {{
+        const name = document.getElementById('create-group-name').value.trim();
+        if (!name) {{ alert('Please enter a group name.'); return; }}
+        const member_ids = pendingGroupMembers.map(m => m.id);
+        try {{
+            const resp = await fetch('/api/dm/group/create', {{
+                method: 'POST',
+                headers: {{'Content-Type': 'application/json'}},
+                body: JSON.stringify({{name, member_ids}}),
+            }});
+            const data = await resp.json();
+            if (!data.ok) {{ alert(data.error || 'Failed to create group.'); return; }}
+            closeCreateGroupModal();
+            const newConv = {{
+                id: data.id, name: data.name, created_by: PLAYER_ID,
+                participant_count: data.participants.length, is_group: true,
+                last_message_at: new Date().toISOString(), last_message_preview: '',
+            }};
+            conversations.unshift(newConv);
+            buildConvList();
+            openGroupConversation(data.id, data.name, PLAYER_ID, data.participants.length, null);
+        }} catch (e) {{
+            alert('Network error. Please try again.');
+        }}
     }}
 
     // ===== MESSAGES =====
@@ -1190,6 +1624,12 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             if (e.key === 'Enter') {{ e.preventDefault(); addBanWordFromInput(); }}
         }});
 
+        const groupAddSearch = document.getElementById('group-add-search');
+        if (groupAddSearch) groupAddSearch.addEventListener('input', handleGroupAddSearch);
+
+        const createGroupSearch = document.getElementById('create-group-search');
+        if (createGroupSearch) createGroupSearch.addEventListener('input', handleCreateGroupSearch);
+
         // Reconnect immediately when the tab becomes visible or the device comes
         // back online — browsers freeze backgrounded tabs with a service worker
         // registered, silently killing idle WebSocket connections.
@@ -1323,6 +1763,109 @@ def dm_search_api(q: str = Query(""), session_token: Optional[str] = Cookie(None
 
 
 # ==========================
+# GROUP DM REST ENDPOINTS
+# ==========================
+
+@router.post("/api/dm/group/create")
+async def api_group_create(request: Request, session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    try:
+        body = await request.json()
+        name = body.get("name", "").strip()
+        member_ids = [int(i) for i in body.get("member_ids", []) if int(i) != player.id]
+        result = create_group_dm(player.id, name, member_ids)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/dm/group/add")
+async def api_group_add(request: Request, session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    try:
+        body = await request.json()
+        conv_id = body.get("conv_id", "")
+        new_pid = int(body.get("player_id"))
+        result = add_group_participant(conv_id, new_pid, player.id)
+        if result["ok"]:
+            pids = get_group_participant_ids(conv_id)
+            parts = get_group_participants(conv_id)
+            msg = {"type": "group_update", "conversation_id": conv_id,
+                   "participant_count": len(pids), "participants": parts}
+            for pid in pids:
+                await dm_manager.send_to_user(pid, msg)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/dm/group/remove")
+async def api_group_remove(request: Request, session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    try:
+        body = await request.json()
+        conv_id = body.get("conv_id", "")
+        target_pid = int(body.get("player_id"))
+        pids_before = get_group_participant_ids(conv_id)
+        result = remove_group_participant(conv_id, target_pid, player.id)
+        if result["ok"]:
+            pids_after = get_group_participant_ids(conv_id)
+            parts = get_group_participants(conv_id)
+            update_msg = {"type": "group_update", "conversation_id": conv_id,
+                          "participant_count": len(pids_after), "participants": parts}
+            for pid in pids_after:
+                await dm_manager.send_to_user(pid, update_msg)
+            if target_pid in pids_before:
+                await dm_manager.send_to_user(target_pid, {
+                    "type": "group_removed", "conversation_id": conv_id,
+                })
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.post("/api/dm/group/rename")
+async def api_group_rename(request: Request, session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    try:
+        body = await request.json()
+        conv_id = body.get("conv_id", "")
+        new_name = body.get("name", "").strip()
+        result = rename_group_dm(conv_id, new_name, player.id)
+        if result["ok"]:
+            pids = get_group_participant_ids(conv_id)
+            msg = {"type": "group_update", "conversation_id": conv_id, "name": result["name"]}
+            for pid in pids:
+                await dm_manager.send_to_user(pid, msg)
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.get("/api/dm/group/participants")
+async def api_group_participants(
+    conv_id: str = Query(""),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    pids = get_group_participant_ids(conv_id)
+    if player.id not in pids:
+        return JSONResponse({"error": "Not a member of this group"}, status_code=403)
+    parts = get_group_participants(conv_id)
+    return JSONResponse({"participants": parts})
+
+
+# ==========================
 # WEBSOCKET ENDPOINT
 # ==========================
 
@@ -1357,66 +1900,85 @@ async def dm_websocket(websocket: WebSocket):
 
             if msg_type == "join":
                 conv_id = data.get("conversation_id")
-                other_id = data.get("other_id")
+                is_group_join = data.get("is_group", False) or (conv_id and conv_id.startswith("grp_"))
+
                 if not conv_id:
                     continue
 
-                # Verify the player is part of this conversation
-                parts = conv_id.split(":")
-                if len(parts) != 2:
-                    continue
-                try:
-                    id_a, id_b = int(parts[0]), int(parts[1])
-                except ValueError:
-                    continue
-                if player_id not in (id_a, id_b):
-                    await dm_manager.send_to_user(player_id, {
-                        "type": "error",
-                        "message": "You don't have access to this conversation."
-                    })
-                    continue
-
-                # Ensure conversation exists
-                get_or_create_conversation(id_a, id_b)
-
-                # Send history
-                messages = get_dm_messages(conv_id)
-                for msg in messages:
-                    sid = msg["sender_id"]
-                    if sid not in dm_manager.avatar_cache:
-                        from chat import get_avatar
-                        dm_manager.avatar_cache[sid] = get_avatar(sid)
-                    if dm_manager.avatar_cache.get(sid):
-                        msg["avatar"] = dm_manager.avatar_cache[sid]
-
-                await dm_manager.send_to_user(player_id, {
-                    "type": "history",
-                    "conversation_id": conv_id,
-                    "messages": messages,
-                })
-
-                # Send online status of other player
-                if other_id:
-                    try:
-                        other_id_int = int(other_id)
+                if is_group_join:
+                    participant_ids = get_group_participant_ids(conv_id)
+                    if player_id not in participant_ids:
                         await dm_manager.send_to_user(player_id, {
-                            "type": "online_status",
-                            "player_id": other_id_int,
-                            "online": dm_manager.is_online(other_id_int),
+                            "type": "error",
+                            "message": "You are not a member of this group."
                         })
-                        # Send avatar for other player
-                        if other_id_int not in dm_manager.avatar_cache:
+                        continue
+                    messages = get_dm_messages(conv_id)
+                    for msg in messages:
+                        sid = msg["sender_id"]
+                        if sid not in dm_manager.avatar_cache:
                             from chat import get_avatar
-                            dm_manager.avatar_cache[other_id_int] = get_avatar(other_id_int)
-                        av = dm_manager.avatar_cache.get(other_id_int)
-                        if av:
+                            dm_manager.avatar_cache[sid] = get_avatar(sid)
+                        if dm_manager.avatar_cache.get(sid):
+                            msg["avatar"] = dm_manager.avatar_cache[sid]
+                    await dm_manager.send_to_user(player_id, {
+                        "type": "history",
+                        "conversation_id": conv_id,
+                        "messages": messages,
+                    })
+                else:
+                    other_id = data.get("other_id")
+                    parts = conv_id.split(":")
+                    if len(parts) != 2:
+                        continue
+                    try:
+                        id_a, id_b = int(parts[0]), int(parts[1])
+                    except ValueError:
+                        continue
+                    if player_id not in (id_a, id_b):
+                        await dm_manager.send_to_user(player_id, {
+                            "type": "error",
+                            "message": "You don't have access to this conversation."
+                        })
+                        continue
+
+                    get_or_create_conversation(id_a, id_b)
+
+                    messages = get_dm_messages(conv_id)
+                    for msg in messages:
+                        sid = msg["sender_id"]
+                        if sid not in dm_manager.avatar_cache:
+                            from chat import get_avatar
+                            dm_manager.avatar_cache[sid] = get_avatar(sid)
+                        if dm_manager.avatar_cache.get(sid):
+                            msg["avatar"] = dm_manager.avatar_cache[sid]
+
+                    await dm_manager.send_to_user(player_id, {
+                        "type": "history",
+                        "conversation_id": conv_id,
+                        "messages": messages,
+                    })
+
+                    if other_id:
+                        try:
+                            other_id_int = int(other_id)
                             await dm_manager.send_to_user(player_id, {
-                                "type": "avatar_update",
+                                "type": "online_status",
                                 "player_id": other_id_int,
-                                "avatar": av,
+                                "online": dm_manager.is_online(other_id_int),
                             })
-                    except (ValueError, TypeError):
-                        pass
+                            if other_id_int not in dm_manager.avatar_cache:
+                                from chat import get_avatar
+                                dm_manager.avatar_cache[other_id_int] = get_avatar(other_id_int)
+                            av = dm_manager.avatar_cache.get(other_id_int)
+                            if av:
+                                await dm_manager.send_to_user(player_id, {
+                                    "type": "avatar_update",
+                                    "player_id": other_id_int,
+                                    "avatar": av,
+                                })
+                        except (ValueError, TypeError):
+                            pass
 
             elif msg_type == "message":
                 conv_id = data.get("conversation_id")
@@ -1424,116 +1986,162 @@ async def dm_websocket(websocket: WebSocket):
                 if not conv_id or not content or len(content) > MAX_DM_LENGTH:
                     continue
 
-                # Verify access
-                parts = conv_id.split(":")
-                if len(parts) != 2:
-                    continue
-                try:
-                    id_a, id_b = int(parts[0]), int(parts[1])
-                except ValueError:
-                    continue
-                if player_id not in (id_a, id_b):
-                    continue
-
-                other_id = id_b if player_id == id_a else id_a
-
-                saved = save_dm(conv_id, player_id, player_name, content)
-                if saved:
-                    saved["type"] = "message"
-                    saved["avatar"] = dm_manager.avatar_cache.get(player_id)
-
-                    # Determine other player's name for conv list updates
-                    other_name = dm_manager.player_names.get(other_id) or get_player_name(other_id)
-                    saved["other_id"] = other_id
-                    saved["other_name"] = other_name
-
-                    # Send to sender
-                    await dm_manager.send_to_user(player_id, saved)
-
-                    # Send to recipient (with adjusted other_id/other_name)
-                    recipient_msg = dict(saved)
-                    recipient_msg["other_id"] = player_id
-                    recipient_msg["other_name"] = player_name
-                    await dm_manager.send_to_user(other_id, recipient_msg)
-
-                    # Fire push notification to recipient — run in thread pool so the
-                    # synchronous requests.post() inside doesn't block the event loop.
+                if conv_id.startswith("grp_"):
+                    participant_ids = get_group_participant_ids(conv_id)
+                    if player_id not in participant_ids:
+                        continue
+                    saved = save_group_dm(conv_id, player_id, player_name, content)
+                    if saved:
+                        saved["type"] = "message"
+                        saved["is_group"] = True
+                        saved["avatar"] = dm_manager.avatar_cache.get(player_id)
+                        await dm_manager.broadcast_to_participants(participant_ids, saved)
+                        # Push to offline participants
+                        try:
+                            import asyncio as _aio
+                            from push_ux import send_push_notification
+                            from dm import GroupConversation, get_db as _gddb
+                            _gdb = _gddb()
+                            try:
+                                _gconv = _gdb.query(GroupConversation).filter(
+                                    GroupConversation.id == conv_id).first()
+                                _gname = _gconv.name if _gconv else "Group DM"
+                            finally:
+                                _gdb.close()
+                            _preview = str(saved.get("content", ""))[:80]
+                            for _pid in participant_ids:
+                                if _pid == player_id:
+                                    continue
+                                def _mk_cb(_p):
+                                    def _cb(t):
+                                        exc = t.exception()
+                                        if exc:
+                                            print(f"[Push] group dm → player {_p}: {exc}")
+                                    return _cb
+                                _t = _aio.create_task(_aio.to_thread(
+                                    send_push_notification, _pid,
+                                    f"{player_name} in {_gname}", _preview,
+                                    url="/p2p/dms", notif_type="dm", tag=f"dm-{conv_id}",
+                                ))
+                                _t.add_done_callback(_mk_cb(_pid))
+                        except Exception as _e:
+                            print(f"[Push] group dm push error: {_e}")
+                    dm_manager.clear_typing(conv_id, player_id)
+                    typing_names = dm_manager.get_typing_names(conv_id)
+                    await dm_manager.broadcast_to_participants(participant_ids, {
+                        "type": "typing", "conversation_id": conv_id, "names": typing_names,
+                    })
+                else:
+                    parts = conv_id.split(":")
+                    if len(parts) != 2:
+                        continue
                     try:
-                        import asyncio as _aio
-                        from push_ux import send_push_notification
-                        _preview = str(saved.get("content", ""))[:80]
-                        def _log_push_exc_ws(t):
-                            exc = t.exception()
-                            if exc:
-                                print(f"[Push] task error (dm_websocket → player {other_id}): {exc}")
-                        _t = _aio.create_task(_aio.to_thread(
-                            send_push_notification,
-                            other_id,
-                            player_name,
-                            _preview,
-                            url=f"/p2p/dms?with={player_id}",
-                            notif_type="dm",
-                            tag=f"dm-{conv_id}",
-                            icon=f"/api/avatar/{player_id}",
-                        ))
-                        _t.add_done_callback(_log_push_exc_ws)
-                    except Exception as _e:
-                        print(f"[Push] create_task failed (dm_websocket → player {other_id}): {_e}")
+                        id_a, id_b = int(parts[0]), int(parts[1])
+                    except ValueError:
+                        continue
+                    if player_id not in (id_a, id_b):
+                        continue
 
-                dm_manager.clear_typing(conv_id, player_id)
-                typing_names = dm_manager.get_typing_names(conv_id)
-                # Notify other player about typing update
-                await dm_manager.send_to_user(other_id, {
-                    "type": "typing",
-                    "conversation_id": conv_id,
-                    "names": typing_names,
-                })
+                    other_id = id_b if player_id == id_a else id_a
+
+                    saved = save_dm(conv_id, player_id, player_name, content)
+                    if saved:
+                        saved["type"] = "message"
+                        saved["avatar"] = dm_manager.avatar_cache.get(player_id)
+                        other_name = dm_manager.player_names.get(other_id) or get_player_name(other_id)
+                        saved["other_id"] = other_id
+                        saved["other_name"] = other_name
+                        await dm_manager.send_to_user(player_id, saved)
+                        recipient_msg = dict(saved)
+                        recipient_msg["other_id"] = player_id
+                        recipient_msg["other_name"] = player_name
+                        await dm_manager.send_to_user(other_id, recipient_msg)
+                        try:
+                            import asyncio as _aio
+                            from push_ux import send_push_notification
+                            _preview = str(saved.get("content", ""))[:80]
+                            def _log_push_exc_ws(t):
+                                exc = t.exception()
+                                if exc:
+                                    print(f"[Push] task error (dm_websocket → player {other_id}): {exc}")
+                            _t = _aio.create_task(_aio.to_thread(
+                                send_push_notification, other_id, player_name, _preview,
+                                url=f"/p2p/dms?with={player_id}", notif_type="dm",
+                                tag=f"dm-{conv_id}", icon=f"/api/avatar/{player_id}",
+                            ))
+                            _t.add_done_callback(_log_push_exc_ws)
+                        except Exception as _e:
+                            print(f"[Push] create_task failed (dm_websocket → player {other_id}): {_e}")
+
+                    dm_manager.clear_typing(conv_id, player_id)
+                    typing_names = dm_manager.get_typing_names(conv_id)
+                    await dm_manager.send_to_user(other_id, {
+                        "type": "typing", "conversation_id": conv_id, "names": typing_names,
+                    })
 
             elif msg_type == "typing":
                 conv_id = data.get("conversation_id")
                 if not conv_id:
                     continue
-                parts = conv_id.split(":")
-                if len(parts) != 2:
-                    continue
-                try:
-                    id_a, id_b = int(parts[0]), int(parts[1])
-                except ValueError:
-                    continue
-                if player_id not in (id_a, id_b):
-                    continue
-                other_id = id_b if player_id == id_a else id_a
-
-                dm_manager.set_typing(conv_id, player_id)
-                typing_names = dm_manager.get_typing_names(conv_id, exclude_id=other_id)
-                await dm_manager.send_to_user(other_id, {
-                    "type": "typing",
-                    "conversation_id": conv_id,
-                    "names": typing_names,
-                })
+                if conv_id.startswith("grp_"):
+                    participant_ids = get_group_participant_ids(conv_id)
+                    if player_id not in participant_ids:
+                        continue
+                    dm_manager.set_typing(conv_id, player_id)
+                    typing_names = dm_manager.get_typing_names(conv_id, exclude_id=player_id)
+                    for _pid in participant_ids:
+                        if _pid != player_id:
+                            await dm_manager.send_to_user(_pid, {
+                                "type": "typing", "conversation_id": conv_id, "names": typing_names,
+                            })
+                else:
+                    parts = conv_id.split(":")
+                    if len(parts) != 2:
+                        continue
+                    try:
+                        id_a, id_b = int(parts[0]), int(parts[1])
+                    except ValueError:
+                        continue
+                    if player_id not in (id_a, id_b):
+                        continue
+                    other_id = id_b if player_id == id_a else id_a
+                    dm_manager.set_typing(conv_id, player_id)
+                    typing_names = dm_manager.get_typing_names(conv_id, exclude_id=other_id)
+                    await dm_manager.send_to_user(other_id, {
+                        "type": "typing", "conversation_id": conv_id, "names": typing_names,
+                    })
 
             elif msg_type == "stop_typing":
                 conv_id = data.get("conversation_id")
                 if not conv_id:
                     continue
-                parts = conv_id.split(":")
-                if len(parts) != 2:
-                    continue
-                try:
-                    id_a, id_b = int(parts[0]), int(parts[1])
-                except ValueError:
-                    continue
-                if player_id not in (id_a, id_b):
-                    continue
-                other_id = id_b if player_id == id_a else id_a
-
-                dm_manager.clear_typing(conv_id, player_id)
-                typing_names = dm_manager.get_typing_names(conv_id)
-                await dm_manager.send_to_user(other_id, {
-                    "type": "typing",
-                    "conversation_id": conv_id,
-                    "names": typing_names,
-                })
+                if conv_id.startswith("grp_"):
+                    participant_ids = get_group_participant_ids(conv_id)
+                    if player_id not in participant_ids:
+                        continue
+                    dm_manager.clear_typing(conv_id, player_id)
+                    typing_names = dm_manager.get_typing_names(conv_id)
+                    for _pid in participant_ids:
+                        if _pid != player_id:
+                            await dm_manager.send_to_user(_pid, {
+                                "type": "typing", "conversation_id": conv_id, "names": typing_names,
+                            })
+                else:
+                    parts = conv_id.split(":")
+                    if len(parts) != 2:
+                        continue
+                    try:
+                        id_a, id_b = int(parts[0]), int(parts[1])
+                    except ValueError:
+                        continue
+                    if player_id not in (id_a, id_b):
+                        continue
+                    other_id = id_b if player_id == id_a else id_a
+                    dm_manager.clear_typing(conv_id, player_id)
+                    typing_names = dm_manager.get_typing_names(conv_id)
+                    await dm_manager.send_to_user(other_id, {
+                        "type": "typing", "conversation_id": conv_id, "names": typing_names,
+                    })
 
             elif msg_type == "avatar":
                 avatar_data = data.get("data", "")

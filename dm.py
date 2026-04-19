@@ -8,6 +8,7 @@ P2P direct messaging between players.
 """
 
 import json
+import uuid
 import asyncio
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Set, List
@@ -32,6 +33,7 @@ MAX_DM_LENGTH = 500
 MAX_THREAD_MESSAGES = 50
 CONVERSATION_TTL_DAYS = 3
 DM_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_GROUP_PARTICIPANTS = 12
 
 
 # ==========================
@@ -56,6 +58,24 @@ class Conversation(Base):
     player2_id = Column(Integer, index=True, nullable=False)
     last_message_at = Column(DateTime, default=datetime.utcnow, index=True)
     last_message_preview = Column(String, default="")
+
+
+class GroupConversation(Base):
+    __tablename__ = "dm_group_conversations"
+    id                   = Column(String, primary_key=True)  # "grp_<hex>"
+    name                 = Column(String, nullable=False, default="Group Chat")
+    created_by           = Column(Integer, nullable=False)
+    created_at           = Column(DateTime, default=datetime.utcnow)
+    last_message_at      = Column(DateTime, default=datetime.utcnow, index=True)
+    last_message_preview = Column(String, default="")
+
+
+class GroupParticipant(Base):
+    __tablename__ = "dm_group_participants"
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    conversation_id = Column(String, index=True, nullable=False)
+    player_id       = Column(Integer, index=True, nullable=False)
+    joined_at       = Column(DateTime, default=datetime.utcnow)
 
 
 def get_db():
@@ -233,18 +253,215 @@ def cleanup_expired_conversations():
     expired = db.query(Conversation).filter(
         Conversation.last_message_at < cutoff
     ).all()
-
     for conv in expired:
-        db.query(DirectMessage).filter(
-            DirectMessage.conversation_id == conv.id
-        ).delete()
+        db.query(DirectMessage).filter(DirectMessage.conversation_id == conv.id).delete()
         db.delete(conv)
 
-    if expired:
+    expired_groups = db.query(GroupConversation).filter(
+        GroupConversation.last_message_at < cutoff
+    ).all()
+    for gconv in expired_groups:
+        db.query(DirectMessage).filter(DirectMessage.conversation_id == gconv.id).delete()
+        db.query(GroupParticipant).filter(GroupParticipant.conversation_id == gconv.id).delete()
+        db.delete(gconv)
+
+    if expired or expired_groups:
         db.commit()
-        print(f"[DM] Cleaned up {len(expired)} expired conversations")
+        print(f"[DM] Cleaned up {len(expired)} 1:1 and {len(expired_groups)} group conversations")
 
     db.close()
+
+
+# ==========================
+# GROUP DM HELPERS
+# ==========================
+
+def _has_group_dm_ability(player_id: int) -> bool:
+    try:
+        from executive import player_has_ability, get_db as get_exec_db
+        db = get_exec_db()
+        try:
+            return player_has_ability(db, player_id, "dm_threeway")
+        finally:
+            db.close()
+    except Exception:
+        return False
+
+
+def create_group_dm(creator_id: int, name: str, initial_ids: list) -> dict:
+    if not _has_group_dm_ability(creator_id):
+        return {"ok": False, "error": "Requires a Multi-Party DMs executive ability (VP Partnerships or Chief Comms)."}
+    name = (name or "Group Chat").strip()[:80]
+    participants = list(dict.fromkeys([creator_id] + [int(i) for i in initial_ids if int(i) != creator_id]))
+    if len(participants) > MAX_GROUP_PARTICIPANTS:
+        return {"ok": False, "error": f"Maximum {MAX_GROUP_PARTICIPANTS} participants allowed."}
+    conv_id = "grp_" + uuid.uuid4().hex[:16]
+    db = get_db()
+    try:
+        db.add(GroupConversation(
+            id=conv_id, name=name, created_by=creator_id,
+            created_at=datetime.utcnow(), last_message_at=datetime.utcnow(),
+        ))
+        for pid in participants:
+            db.add(GroupParticipant(conversation_id=conv_id, player_id=pid))
+        db.commit()
+        return {"ok": True, "id": conv_id, "name": name, "participants": participants}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def add_group_participant(conv_id: str, player_id: int, adder_id: int) -> dict:
+    db = get_db()
+    try:
+        conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
+        if not conv:
+            return {"ok": False, "error": "Group not found."}
+        if conv.created_by != adder_id:
+            return {"ok": False, "error": "Only the group creator can add members."}
+        count = db.query(GroupParticipant).filter(GroupParticipant.conversation_id == conv_id).count()
+        if count >= MAX_GROUP_PARTICIPANTS:
+            return {"ok": False, "error": f"Maximum {MAX_GROUP_PARTICIPANTS} participants."}
+        exists = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == player_id,
+        ).first()
+        if exists:
+            return {"ok": False, "error": "Player is already in this group."}
+        db.add(GroupParticipant(conversation_id=conv_id, player_id=player_id))
+        db.commit()
+        return {"ok": True}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def remove_group_participant(conv_id: str, player_id: int, remover_id: int) -> dict:
+    db = get_db()
+    try:
+        conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
+        if not conv:
+            return {"ok": False, "error": "Group not found."}
+        if remover_id != player_id and conv.created_by != remover_id:
+            return {"ok": False, "error": "Only the creator can remove other members."}
+        if player_id == conv.created_by:
+            return {"ok": False, "error": "The creator cannot leave. Delete the group instead."}
+        row = db.query(GroupParticipant).filter(
+            GroupParticipant.conversation_id == conv_id,
+            GroupParticipant.player_id == player_id,
+        ).first()
+        if not row:
+            return {"ok": False, "error": "Player is not in this group."}
+        db.delete(row)
+        db.commit()
+        return {"ok": True}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def rename_group_dm(conv_id: str, new_name: str, requester_id: int) -> dict:
+    db = get_db()
+    try:
+        conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
+        if not conv:
+            return {"ok": False, "error": "Group not found."}
+        if conv.created_by != requester_id:
+            return {"ok": False, "error": "Only the creator can rename this group."}
+        conv.name = (new_name or "Group Chat").strip()[:80]
+        db.commit()
+        return {"ok": True, "name": conv.name}
+    except Exception as e:
+        db.rollback()
+        return {"ok": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def get_group_participant_ids(conv_id: str) -> list:
+    db = get_db()
+    rows = db.query(GroupParticipant).filter(GroupParticipant.conversation_id == conv_id).all()
+    result = [r.player_id for r in rows]
+    db.close()
+    return result
+
+
+def get_group_participants(conv_id: str) -> list:
+    ids = get_group_participant_ids(conv_id)
+    if not ids:
+        return []
+    from auth import get_db as get_auth_db, Player
+    db = get_auth_db()
+    players = db.query(Player).filter(Player.id.in_(ids)).all()
+    result = [{"id": p.id, "name": p.business_name} for p in players]
+    db.close()
+    return result
+
+
+def save_group_dm(conv_id: str, sender_id: int, sender_name: str, content: str) -> Optional[dict]:
+    if not content or len(content) > MAX_DM_LENGTH:
+        return None
+    db = get_db()
+    msg = DirectMessage(
+        conversation_id=conv_id, sender_id=sender_id,
+        sender_name=sender_name, content=content,
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    result = {
+        "id": msg.id, "conversation_id": msg.conversation_id,
+        "sender_id": msg.sender_id, "sender_name": msg.sender_name,
+        "content": msg.content, "timestamp": msg.created_at.isoformat(),
+    }
+    conv = db.query(GroupConversation).filter(GroupConversation.id == conv_id).first()
+    if conv:
+        conv.last_message_at = datetime.utcnow()
+        conv.last_message_preview = content[:80]
+        db.commit()
+    count = db.query(DirectMessage).filter(DirectMessage.conversation_id == conv_id).count()
+    if count > MAX_THREAD_MESSAGES:
+        excess = count - MAX_THREAD_MESSAGES
+        oldest = db.query(DirectMessage).filter(
+            DirectMessage.conversation_id == conv_id
+        ).order_by(DirectMessage.created_at.asc()).limit(excess).all()
+        for old_msg in oldest:
+            db.delete(old_msg)
+        db.commit()
+    db.close()
+    return result
+
+
+def get_player_group_conversations(player_id: int) -> list:
+    db = get_db()
+    cutoff = datetime.utcnow() - timedelta(days=CONVERSATION_TTL_DAYS)
+    part_rows = db.query(GroupParticipant).filter(GroupParticipant.player_id == player_id).all()
+    conv_ids = [r.conversation_id for r in part_rows]
+    if not conv_ids:
+        db.close()
+        return []
+    convs = db.query(GroupConversation).filter(
+        GroupConversation.id.in_(conv_ids),
+        GroupConversation.last_message_at >= cutoff,
+    ).order_by(GroupConversation.last_message_at.desc()).all()
+    result = []
+    for c in convs:
+        count = db.query(GroupParticipant).filter(GroupParticipant.conversation_id == c.id).count()
+        result.append({
+            "id": c.id, "name": c.name, "created_by": c.created_by,
+            "participant_count": count,
+            "last_message_at": c.last_message_at.isoformat() if c.last_message_at else None,
+            "last_message_preview": c.last_message_preview or "",
+            "is_group": True,
+        })
+    db.close()
+    return result
 
 
 # ==========================
@@ -309,6 +526,11 @@ class DMConnectionManager:
 
     def is_online(self, player_id: int) -> bool:
         return player_id in self.connections
+
+    async def broadcast_to_participants(self, participant_ids: list, message: dict):
+        for pid in participant_ids:
+            if pid in self.connections:
+                await self.send_to_user(pid, message)
 
 
 dm_manager = DMConnectionManager()
