@@ -2568,6 +2568,104 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
         except Exception as e:
             print(f"[Bankruptcy] Acquisition stake error: {e}")
 
+        # 8b. Cancel pending acquisition offers; refund escrowed cash to offeror
+        try:
+            db = get_db()
+            pending_offers = db.query(AcquisitionOffer).filter(
+                (AcquisitionOffer.offeror_id == player_id) |
+                (AcquisitionOffer.target_player_id == player_id),
+                AcquisitionOffer.status.in_(["pending", "countered"]),
+            ).all()
+            for offer in pending_offers:
+                offer.status = "expired"
+                cash = offer.cash_component or 0.0
+                if cash > 0 and offer.offeror_id != player_id:
+                    # Target went bankrupt — refund escrow to offeror
+                    _refund_cash_to(offer.offeror_id, cash)
+            # Delete pending diffuse notices
+            db.query(DiffuseNotice).filter(
+                (DiffuseNotice.acquirer_id == player_id) |
+                (DiffuseNotice.target_player_id == player_id),
+                DiffuseNotice.status == "pending",
+            ).delete(synchronize_session=False)
+            db.commit(); db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Acquisition offer/diffuse cleanup error: {e}")
+
+        # 8c. Void active P2P contracts (no breach penalty — player bankrupt)
+        try:
+            from p2p import Contract, ContractStatus, get_db as get_p2p_db
+            p2p_db = get_p2p_db()
+            try:
+                p2p_db.query(Contract).filter(
+                    (Contract.creator_id == player_id) |
+                    (Contract.holder_id == player_id) |
+                    (Contract.buyer_id == player_id),
+                    Contract.status.in_([
+                        ContractStatus.ACTIVE, ContractStatus.LISTED, ContractStatus.DRAFT,
+                    ]),
+                ).update(
+                    {"status": ContractStatus.VOIDED, "breach_reason": "Party declared bankruptcy"},
+                    synchronize_session=False,
+                )
+                p2p_db.commit()
+            finally:
+                p2p_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] P2P contract cleanup error: {e}")
+
+        # 8d. Remove trusted-trade entries
+        try:
+            from trusted_trade import TrustedTraderEntry, get_db as get_tt_db
+            tt_db = get_tt_db()
+            try:
+                tt_db.query(TrustedTraderEntry).filter(
+                    (TrustedTraderEntry.owner_player_id == player_id) |
+                    (TrustedTraderEntry.trusted_player_id == player_id),
+                ).delete(synchronize_session=False)
+                tt_db.commit()
+            finally:
+                tt_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Trusted-trade cleanup error: {e}")
+
+        # 8e. Remove from group DMs; delete empty conversations
+        try:
+            from dm import GroupParticipant, GroupConversation, get_db as get_dm_db
+            dm_db = get_dm_db()
+            try:
+                dm_db.query(GroupParticipant).filter(
+                    GroupParticipant.player_id == player_id,
+                ).delete(synchronize_session=False)
+                for g in dm_db.query(GroupConversation).filter(
+                    GroupConversation.created_by == player_id,
+                ).all():
+                    remaining = dm_db.query(GroupParticipant).filter(
+                        GroupParticipant.conversation_id == g.id,
+                    ).count()
+                    if remaining == 0:
+                        dm_db.delete(g)
+                dm_db.commit()
+            finally:
+                dm_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Group DM cleanup error: {e}")
+
+        # 8f. Remove contact relationships
+        try:
+            from contacts import Contact, get_db as get_ct_db
+            ct_db = get_ct_db()
+            try:
+                ct_db.query(Contact).filter(
+                    (Contact.requester_id == player_id) |
+                    (Contact.recipient_id == player_id),
+                ).delete(synchronize_session=False)
+                ct_db.commit()
+            finally:
+                ct_db.close()
+        except Exception as e:
+            print(f"[Bankruptcy] Contacts cleanup error: {e}")
+
         # 9. Transfer mayor role if applicable
         try:
             from cities import City, CityMember, get_db as get_city_db
