@@ -666,6 +666,8 @@ def stake_native_for_mining(
 
         # Get county native symbol
         county = county_db.query(County).filter(County.id == meme.county_id).first()
+        if not county:
+            return False, f"County for {meme_symbol} not found — the blockchain may have been removed."
         native_symbol = county.crypto_symbol
 
         # Check player's native token balance (stake + gas)
@@ -927,6 +929,8 @@ def place_order(
                     )
 
         county = county_db.query(County).filter(County.id == meme.county_id).first()
+        if not county:
+            return None, f"County for {meme_symbol} not found — the blockchain may have been removed."
         native_symbol = county.crypto_symbol
 
         native_wallet = county_db.query(CryptoWallet).filter(
@@ -1316,6 +1320,8 @@ def cancel_order(player_id: int, order_id: int) -> Tuple[bool, str]:
             # so this is always the precise amount still in escrow.
             refund_native = order.native_reserved if order.native_reserved is not None else unfilled * order.price
             county = county_db.query(County).filter(County.id == meme.county_id).first()
+            if not county:
+                return False, "County for this order's meme coin not found."
             native_wallet = county_db.query(CryptoWallet).filter(
                 CryptoWallet.player_id == player_id,
                 CryptoWallet.crypto_symbol == county.crypto_symbol,
