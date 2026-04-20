@@ -356,6 +356,7 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         return 0.0, 0.0, "Burn amount must be positive"
 
     db = get_db()
+    county_db = None
     try:
         meme = db.query(MemeCoin).filter(MemeCoin.id == meme_id, MemeCoin.is_active == True).first()
         if not meme:
@@ -366,7 +367,6 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         county_db = get_county_db()
         county = county_db.query(County).filter(County.id == meme.county_id).first()
         if not county:
-            county_db.close()
             return 0.0, 0.0, "County not found"
 
         # Check player has enough native tokens in their wallet (burn + gas)
@@ -377,7 +377,6 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         ).first()
         balance = native_wallet.balance if native_wallet else 0.0
         if balance < native_amount:
-            county_db.close()
             return 0.0, 0.0, f"Insufficient {county.crypto_symbol} balance (have {balance:.4f}, need {native_amount:.4f})"
 
         # Calculate current backing price (native tokens per meme coin)
@@ -395,7 +394,6 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         remaining_supply = meme.total_supply - (meme.minted_supply or 0.0)
         if coins_minted > remaining_supply:
             if remaining_supply <= 0:
-                county_db.close()
                 return 0.0, 0.0, "Max supply already reached"
             coins_minted = remaining_supply
             native_amount = coins_minted * backing_price  # adjust burn to match
@@ -403,19 +401,15 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         # Charge gas fee (on top of the burn amount)
         gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
         if gas_err:
-            county_db.close()
             return 0.0, 0.0, gas_err
 
         # Deduct native tokens from player wallet
         if not native_wallet or native_wallet.balance < native_amount:
-            county_db.close()
-            return 0.0, 0.0, "Failed to deduct native tokens"
+            return 0.0, 0.0, "Insufficient balance after gas fee"
         native_wallet.balance -= native_amount
 
         # Burn: reduce county circulating supply
         county.total_crypto_burned = (county.total_crypto_burned or 0.0) + native_amount
-        county_db.commit()
-        county_db.close()
 
         # Add meme coins to player wallet
         meme_wallet = get_or_create_meme_wallet(db, player_id, meme.symbol)
@@ -432,6 +426,8 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         new_backing_price = new_total_burned / max(new_minted, 1.0)
         meme.last_price = new_backing_price
 
+        # Commit both DBs together — county first (simpler), then meme DB
+        county_db.commit()
         db.commit()
 
         print(f"[Memecoins] Burn-to-mint: player {player_id} burned {native_amount:.4f} {county.crypto_symbol} "
@@ -441,11 +437,15 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
 
     except Exception as e:
         db.rollback()
+        if county_db:
+            county_db.rollback()
         print(f"[Memecoins] mint_by_burning error: {e}")
         import traceback; traceback.print_exc()
         return 0.0, 0.0, str(e)
     finally:
         db.close()
+        if county_db:
+            county_db.close()
 
 
 # ==========================
@@ -687,7 +687,6 @@ def stake_native_for_mining(
 
         # Lock native tokens
         native_wallet.balance -= native_amount
-        county_db.commit()
 
         # Create mining deposit
         deposit = MemeCoinMiningDeposit(
@@ -701,6 +700,9 @@ def stake_native_for_mining(
 
         # Update meme coin pool
         meme.mining_pool_native = (meme.mining_pool_native or 0.0) + native_amount
+
+        # Commit both DBs together so neither change persists without the other
+        county_db.commit()
         db.commit()
 
         return True, f"Staked {native_amount:.6f} {native_symbol} to mine {meme_symbol}."
@@ -949,6 +951,8 @@ def place_order(
                 if gas_err:
                     return None, gas_err
                 if native_balance - gas_fee < cost:
+                    county_db.rollback()
+                    db.rollback()
                     return None, (
                         f"Insufficient {native_symbol}. Need {cost:.6f} + {gas_fee:.6f} gas = {cost + gas_fee:.6f}, have {native_balance:.6f}."
                     )
@@ -957,7 +961,12 @@ def place_order(
                     native_wallet.balance -= cost
                 native_reserved = cost
                 county_db.commit()
-            # market buy: we'll try to fill at whatever ask prices are available
+            else:
+                # Market buy: charge gas upfront; fills happen at whatever ask prices exist
+                gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
+                if gas_err:
+                    return None, gas_err
+                county_db.commit()
 
         elif order_type == "sell":
             if meme_balance < quantity:

@@ -1398,6 +1398,7 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             return False, gas_err
         # Recheck balance after gas deduction
         if not wallet or wallet.balance < amount:
+            db.rollback()
             return False, "Insufficient crypto balance (after gas fee)"
 
         price = get_crypto_price_by_symbol(crypto_symbol)
@@ -1434,8 +1435,8 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         except Exception:
             player.cash_balance += net_value
 
-        # Cash comes FROM the county treasury
-        county.treasury_balance -= (net_value + fee)
+        # Cash comes FROM the county treasury (only net_value — fee is exchange revenue, not a treasury expense)
+        county.treasury_balance -= net_value
 
         # Burn the sold crypto (reducing circulating supply)
         county.total_crypto_burned += amount
@@ -1672,6 +1673,11 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         if net_buy_amount > remaining:
             return False, f"Not enough {buy_symbol} supply remaining ({remaining:,.6f} left)"
 
+        # Check buy county treasury can fund the minted tokens
+        buy_treasury = buy_county.treasury_balance or 0.0
+        if buy_treasury < net_cash:
+            return False, f"{buy_symbol} county treasury has insufficient funds (${buy_treasury:,.4f} available, ${net_cash:,.4f} needed). Wait for more {buy_symbol} buyers to build the treasury."
+
         # Execute sell side
         sell_wallet.balance -= sell_amount
         sell_wallet.total_sold += sell_amount
@@ -1695,6 +1701,7 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         buy_wallet.balance += net_buy_amount
         buy_wallet.total_bought += net_buy_amount
         buy_county.total_crypto_minted += net_buy_amount
+        buy_county.treasury_balance = buy_treasury - net_cash
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
