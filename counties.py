@@ -1288,6 +1288,17 @@ def process_mining_payouts(current_tick: int):
                 share = deposit.cash_value_at_deposit / total_deposit_value
                 reward = crypto_to_mint * share
 
+                # Apply executive crypto bonus (matches meme-coin mining behaviour)
+                try:
+                    from executive import get_player_job_bonus, get_db as _exec_get_db
+                    _exec_db = _exec_get_db()
+                    _crypto_bonus = get_player_job_bonus(_exec_db, deposit.player_id, "crypto")
+                    _exec_db.close()
+                    if _crypto_bonus > 0:
+                        reward = round(reward * (1.0 + _crypto_bonus), 8)
+                except Exception:
+                    pass
+
                 if reward > 0:
                     # Credit crypto to player's wallet
                     wallet = db.query(CryptoWallet).filter(
@@ -1398,6 +1409,7 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             return False, gas_err
         # Recheck balance after gas deduction
         if not wallet or wallet.balance < amount:
+            db.rollback()
             return False, "Insufficient crypto balance (after gas fee)"
 
         price = get_crypto_price_by_symbol(crypto_symbol)
@@ -1405,7 +1417,8 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
             return False, "Crypto has no value"
 
         gross_value = amount * price
-        fee = gross_value * EXCHANGE_FEE_PERCENT
+        effective_fee_rate = county.transaction_fee_percent if county.transaction_fee_percent is not None else EXCHANGE_FEE_PERCENT
+        fee = gross_value * effective_fee_rate
         net_value = gross_value - fee
 
         # Check treasury can cover the payout
@@ -1434,8 +1447,8 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         except Exception:
             player.cash_balance += net_value
 
-        # Cash comes FROM the county treasury
-        county.treasury_balance -= (net_value + fee)
+        # Cash comes FROM the county treasury (only net_value — fee is exchange revenue, not a treasury expense)
+        county.treasury_balance -= net_value
 
         # Burn the sold crypto (reducing circulating supply)
         county.total_crypto_burned += amount
@@ -1444,7 +1457,13 @@ def sell_crypto_for_cash(player_id: int, crypto_symbol: str, amount: float) -> T
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if gov:
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
-            gov.cash_balance += gov_fee
+            try:
+                from reserve_banks import convert_to_legal_tender as _clf
+                _g_amt, _g_code = _clf(GOVERNMENT_PLAYER_ID, gov_fee)
+                if _g_code == "USD":
+                    gov.cash_balance += _g_amt
+            except Exception:
+                gov.cash_balance += gov_fee
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -1514,7 +1533,8 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         if price <= 0:
             return False, "Crypto has no value"
 
-        fee = cash_amount * EXCHANGE_FEE_PERCENT
+        effective_fee_rate = county.transaction_fee_percent if county.transaction_fee_percent is not None else EXCHANGE_FEE_PERCENT
+        fee = cash_amount * effective_fee_rate
         net_cash = cash_amount - fee
         crypto_amount = net_cash / price
 
@@ -1567,7 +1587,13 @@ def buy_crypto_with_cash(player_id: int, crypto_symbol: str, cash_amount: float)
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if gov:
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
-            gov.cash_balance += gov_fee
+            try:
+                from reserve_banks import convert_to_legal_tender as _clf
+                _g_amt, _g_code = _clf(GOVERNMENT_PLAYER_ID, gov_fee)
+                if _g_code == "USD":
+                    gov.cash_balance += _g_amt
+            except Exception:
+                gov.cash_balance += gov_fee
 
         # Record the order
         order = CryptoExchangeOrder(
@@ -1649,9 +1675,10 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         if sell_price <= 0 or buy_price <= 0:
             return False, "One or both cryptos have no value"
 
-        # Calculate swap
+        # Calculate swap — use the sell county's governance fee rate
         gross_cash = sell_amount * sell_price
-        fee = gross_cash * EXCHANGE_FEE_PERCENT
+        effective_fee_rate = sell_county.transaction_fee_percent if sell_county.transaction_fee_percent is not None else EXCHANGE_FEE_PERCENT
+        fee = gross_cash * effective_fee_rate
         net_cash = gross_cash - fee
         buy_amount = net_cash / buy_price
 
@@ -1671,6 +1698,11 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         remaining = get_remaining_supply(buy_county)
         if net_buy_amount > remaining:
             return False, f"Not enough {buy_symbol} supply remaining ({remaining:,.6f} left)"
+
+        # Check buy county treasury can fund the minted tokens
+        buy_treasury = buy_county.treasury_balance or 0.0
+        if buy_treasury < net_cash:
+            return False, f"{buy_symbol} county treasury has insufficient funds (${buy_treasury:,.4f} available, ${net_cash:,.4f} needed). Wait for more {buy_symbol} buyers to build the treasury."
 
         # Execute sell side
         sell_wallet.balance -= sell_amount
@@ -1695,12 +1727,19 @@ def swap_crypto(player_id: int, sell_symbol: str, buy_symbol: str, sell_amount: 
         buy_wallet.balance += net_buy_amount
         buy_wallet.total_bought += net_buy_amount
         buy_county.total_crypto_minted += net_buy_amount
+        buy_county.treasury_balance = buy_treasury - net_cash
 
         # Fee distribution
         gov = db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
         if gov:
             gov_fee = fee * EXCHANGE_FEE_TO_GOV_PERCENT
-            gov.cash_balance += gov_fee
+            try:
+                from reserve_banks import convert_to_legal_tender as _clf
+                _g_amt, _g_code = _clf(GOVERNMENT_PLAYER_ID, gov_fee)
+                if _g_code == "USD":
+                    gov.cash_balance += _g_amt
+            except Exception:
+                gov.cash_balance += gov_fee
 
         # Record the order
         order = CryptoExchangeOrder(

@@ -356,6 +356,7 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         return 0.0, 0.0, "Burn amount must be positive"
 
     db = get_db()
+    county_db = None
     try:
         meme = db.query(MemeCoin).filter(MemeCoin.id == meme_id, MemeCoin.is_active == True).first()
         if not meme:
@@ -366,7 +367,6 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         county_db = get_county_db()
         county = county_db.query(County).filter(County.id == meme.county_id).first()
         if not county:
-            county_db.close()
             return 0.0, 0.0, "County not found"
 
         # Check player has enough native tokens in their wallet (burn + gas)
@@ -377,7 +377,6 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         ).first()
         balance = native_wallet.balance if native_wallet else 0.0
         if balance < native_amount:
-            county_db.close()
             return 0.0, 0.0, f"Insufficient {county.crypto_symbol} balance (have {balance:.4f}, need {native_amount:.4f})"
 
         # Calculate current backing price (native tokens per meme coin)
@@ -395,7 +394,6 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         remaining_supply = meme.total_supply - (meme.minted_supply or 0.0)
         if coins_minted > remaining_supply:
             if remaining_supply <= 0:
-                county_db.close()
                 return 0.0, 0.0, "Max supply already reached"
             coins_minted = remaining_supply
             native_amount = coins_minted * backing_price  # adjust burn to match
@@ -403,19 +401,15 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         # Charge gas fee (on top of the burn amount)
         gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
         if gas_err:
-            county_db.close()
             return 0.0, 0.0, gas_err
 
         # Deduct native tokens from player wallet
         if not native_wallet or native_wallet.balance < native_amount:
-            county_db.close()
-            return 0.0, 0.0, "Failed to deduct native tokens"
+            return 0.0, 0.0, "Insufficient balance after gas fee"
         native_wallet.balance -= native_amount
 
         # Burn: reduce county circulating supply
         county.total_crypto_burned = (county.total_crypto_burned or 0.0) + native_amount
-        county_db.commit()
-        county_db.close()
 
         # Add meme coins to player wallet
         meme_wallet = get_or_create_meme_wallet(db, player_id, meme.symbol)
@@ -432,6 +426,8 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         new_backing_price = new_total_burned / max(new_minted, 1.0)
         meme.last_price = new_backing_price
 
+        # Commit both DBs together — county first (simpler), then meme DB
+        county_db.commit()
         db.commit()
 
         print(f"[Memecoins] Burn-to-mint: player {player_id} burned {native_amount:.4f} {county.crypto_symbol} "
@@ -441,11 +437,15 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
 
     except Exception as e:
         db.rollback()
+        if county_db:
+            county_db.rollback()
         print(f"[Memecoins] mint_by_burning error: {e}")
         import traceback; traceback.print_exc()
         return 0.0, 0.0, str(e)
     finally:
         db.close()
+        if county_db:
+            county_db.close()
 
 
 # ==========================
@@ -687,7 +687,6 @@ def stake_native_for_mining(
 
         # Lock native tokens
         native_wallet.balance -= native_amount
-        county_db.commit()
 
         # Create mining deposit
         deposit = MemeCoinMiningDeposit(
@@ -701,6 +700,9 @@ def stake_native_for_mining(
 
         # Update meme coin pool
         meme.mining_pool_native = (meme.mining_pool_native or 0.0) + native_amount
+
+        # Commit both DBs together so neither change persists without the other
+        county_db.commit()
         db.commit()
 
         return True, f"Staked {native_amount:.6f} {native_symbol} to mine {meme_symbol}."
@@ -949,6 +951,8 @@ def place_order(
                 if gas_err:
                     return None, gas_err
                 if native_balance - gas_fee < cost:
+                    county_db.rollback()
+                    db.rollback()
                     return None, (
                         f"Insufficient {native_symbol}. Need {cost:.6f} + {gas_fee:.6f} gas = {cost + gas_fee:.6f}, have {native_balance:.6f}."
                     )
@@ -957,7 +961,12 @@ def place_order(
                     native_wallet.balance -= cost
                 native_reserved = cost
                 county_db.commit()
-            # market buy: we'll try to fill at whatever ask prices are available
+            else:
+                # Market buy: charge gas upfront; fills happen at whatever ask prices exist
+                gas_fee, gas_err = _apply_gas(county, native_wallet, GAS_UNITS_MEME_TRADE)
+                if gas_err:
+                    return None, gas_err
+                county_db.commit()
 
         elif order_type == "sell":
             if meme_balance < quantity:
@@ -1187,6 +1196,11 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
         counter.quantity_filled += fill_qty
         incoming_remaining -= fill_qty
 
+        # Keep native_reserved in sync with actual remaining locked funds
+        # so cancel_order refunds are always accurate regardless of fill path.
+        if counter.order_type == "buy" and counter.order_mode == "limit":
+            counter.native_reserved = max(0.0, (counter.native_reserved or 0.0) - fill_qty * trade_price)
+
         if counter.quantity_filled >= counter.quantity:
             counter.status = "filled"
             counter.filled_at = datetime.utcnow()
@@ -1296,8 +1310,11 @@ def cancel_order(player_id: int, order_id: int) -> Tuple[bool, str]:
         meme = db.query(MemeCoin).filter(MemeCoin.symbol == order.meme_symbol).first()
 
         if order.order_type == "buy" and order.order_mode == "limit":
-            # Refund remaining reserved native tokens
-            refund_native = unfilled * order.price
+            # Refund the actual remaining locked amount tracked in native_reserved.
+            # For fully-unstarted orders this equals unfilled * order.price.
+            # For partially-filled orders native_reserved is decremented per fill
+            # so this is always the precise amount still in escrow.
+            refund_native = order.native_reserved if order.native_reserved is not None else unfilled * order.price
             county = county_db.query(County).filter(County.id == meme.county_id).first()
             native_wallet = county_db.query(CryptoWallet).filter(
                 CryptoWallet.player_id == player_id,
@@ -1328,6 +1345,79 @@ def cancel_order(player_id: int, order_id: int) -> Tuple[bool, str]:
 # ==========================
 # DATA QUERIES
 # ==========================
+
+def get_all_meme_coins_global(sort: str = "volume") -> List[dict]:
+    """
+    Return all active meme coins across every county.
+    Used by the global /memecoins discovery hub.
+    sort: 'volume' | 'change' | 'new' | 'holders' | 'market_cap'
+    Each record includes county_name and native_symbol for display.
+    """
+    db = get_db()
+    try:
+        memes = db.query(MemeCoin).filter(MemeCoin.is_active == True).all()
+
+        from counties import County, get_db as county_get_db
+        county_db = county_get_db()
+        county_cache: dict = {}
+        for c in county_db.query(County).all():
+            county_cache[c.id] = c
+        county_db.close()
+
+        from auth import Player
+        result = []
+        for m in memes:
+            county = county_cache.get(m.county_id)
+            creator = db.query(Player).filter(Player.id == m.creator_id).first()
+            holder_count = db.query(MemeCoinWallet).filter(
+                MemeCoinWallet.meme_symbol == m.symbol,
+                MemeCoinWallet.balance > 0,
+            ).count()
+            change_24h = _get_meme_price_change_24h(db, m.symbol, m.last_price or 0.0)
+            result.append({
+                "id": m.id,
+                "name": m.name,
+                "symbol": m.symbol,
+                "description": m.description,
+                "logo_svg": m.logo_svg or "",
+                "county_id": m.county_id,
+                "county_name": county.name if county else "Unknown",
+                "native_symbol": county.crypto_symbol if county else "???",
+                "creator_name": creator.business_name if creator else f"Player {m.creator_id}",
+                "total_supply": m.total_supply,
+                "minted_supply": m.minted_supply or 0.0,
+                "mining_allocation": m.mining_allocation,
+                "mining_minted": m.mining_minted or 0.0,
+                "mining_pool_native": m.mining_pool_native or 0.0,
+                "mining_enabled": m.mining_enabled,
+                "last_price": m.last_price or 0.0,
+                "all_time_high": m.all_time_high or 0.0,
+                "total_volume_native": m.total_volume_native or 0.0,
+                "total_trades": m.total_trades or 0,
+                "holder_count": holder_count,
+                "price_change_24h": change_24h,
+                "market_cap_native": (m.last_price or 0.0) * (m.minted_supply or 0.0),
+                "created_at": m.created_at,
+            })
+
+        if sort == "volume":
+            result.sort(key=lambda x: x["total_volume_native"], reverse=True)
+        elif sort == "change":
+            result.sort(key=lambda x: x["price_change_24h"], reverse=True)
+        elif sort == "new":
+            result.sort(key=lambda x: x["created_at"], reverse=True)
+        elif sort == "holders":
+            result.sort(key=lambda x: x["holder_count"], reverse=True)
+        elif sort == "market_cap":
+            result.sort(key=lambda x: x["market_cap_native"], reverse=True)
+
+        return result
+    except Exception as e:
+        print(f"[MemeCoin] Error in get_all_meme_coins_global: {e}")
+        return []
+    finally:
+        db.close()
+
 
 def get_all_meme_coins(county_id: int) -> List[dict]:
     """Get all active meme coins for a county."""

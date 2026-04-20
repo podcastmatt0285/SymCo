@@ -293,7 +293,8 @@ def get_wsc_quote(native_symbol: str, native_amount: float) -> Tuple[float, floa
         native_usd_price = _native_usd_price(county_db, county.id) if county else 1.0
         pool = _get_or_create_wsc_pool(db, native_symbol, native_usd_price=native_usd_price)
         _oracle_sync_pool(db, pool, native_usd_price)
-        db.commit()
+        # Read-only quote — do NOT commit; _oracle_sync_pool may adjust pool state
+        # in memory for accurate pricing but we don't persist it here.
         if pool.native_reserve <= 0 or pool.wsc_reserve <= 0:
             return 0.0, 0.0
         amount_with_fee = native_amount * (1.0 - WSC_AMM_FEE)
@@ -321,7 +322,7 @@ def get_native_quote(native_symbol: str, wsc_amount: float) -> Tuple[float, floa
         native_usd_price = _native_usd_price(county_db, county.id) if county else 1.0
         pool = _get_or_create_wsc_pool(db, native_symbol, native_usd_price=native_usd_price)
         _oracle_sync_pool(db, pool, native_usd_price)
-        db.commit()
+        # Read-only quote — do NOT commit
         if pool.native_reserve <= 0 or pool.wsc_reserve <= 0:
             return 0.0, 0.0
         amount_with_fee = wsc_amount * (1.0 - WSC_AMM_FEE)

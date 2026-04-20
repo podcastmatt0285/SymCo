@@ -4,6 +4,7 @@ memecoins_ux.py
 Web UI and API endpoints for the meme coin / shitcoin system.
 
 Routes:
+  GET  /memecoins                             - Global discovery hub (all coins, all counties)
   GET  /county/{county_id}/memecoins          - List all meme coins in county
   GET  /memecoins/launch                      - Launch a new meme coin (form)
   POST /api/memecoins/launch                  - Submit launch form
@@ -251,6 +252,192 @@ input[type=range] { accent-color: #f59e0b; }
 # ==========================
 # COUNTY MEME COIN LIST
 # ==========================
+@router.get("/memecoins", response_class=HTMLResponse)
+async def memecoins_hub(
+    session_token: Optional[str] = Cookie(None),
+    sort: str = Query("volume"),
+    msg: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+):
+    """Global meme coin discovery hub — all coins across all counties. Any player can access."""
+    player = get_current_player(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+
+    from memecoins import get_all_meme_coins_global, MEME_CREATION_FEE_NATIVE
+    from counties import get_db as county_get_db, County, CountyCity, CryptoWallet
+
+    memes = get_all_meme_coins_global(sort=sort)
+
+    # Find any county the player belongs to (via city membership) for the launch shortcut
+    county_db = county_get_db()
+    try:
+        from cities import CityMember, get_db as city_get_db
+        city_db = city_get_db()
+        city_membership = city_db.query(CityMember).filter(
+            CityMember.player_id == player.id
+        ).first()
+        city_db.close()
+
+        player_county = None
+        if city_membership:
+            cc = county_db.query(CountyCity).filter(
+                CountyCity.city_id == city_membership.city_id
+            ).first()
+            if cc:
+                player_county = county_db.query(County).filter(County.id == cc.county_id).first()
+
+        launch_html = ""
+        if player_county:
+            native_wallet = county_db.query(CryptoWallet).filter(
+                CryptoWallet.player_id == player.id,
+                CryptoWallet.crypto_symbol == player_county.crypto_symbol,
+            ).first()
+            native_bal = native_wallet.balance if native_wallet else 0.0
+            if native_bal >= MEME_CREATION_FEE_NATIVE:
+                launch_html = f'<a href="/memecoins/launch?county_id={player_county.id}" class="btn btn-meme">+ Launch Meme Coin</a>'
+            else:
+                launch_html = (
+                    f'<span style="color:#94a3b8;font-size:13px;">'
+                    f'Need {MEME_CREATION_FEE_NATIVE:.0f} {player_county.crypto_symbol} to launch'
+                    f'</span>'
+                )
+        else:
+            launch_html = '<span style="color:#475569;font-size:12px;">Join a county to launch your own coin</span>'
+    finally:
+        county_db.close()
+
+    alert_html = ""
+    if msg:
+        alert_html = f'<div class="alert alert-success">{msg}</div>'
+    if error:
+        alert_html = f'<div class="alert alert-error">{error}</div>'
+
+    sort_options = [
+        ("volume", "Top Volume"),
+        ("market_cap", "Market Cap"),
+        ("change", "Trending"),
+        ("holders", "Most Holders"),
+        ("new", "Newest"),
+    ]
+    sort_tabs = ' '.join(
+        f'<a href="/memecoins?sort={s}" class="sort-tab{" active" if s == sort else ""}">{label}</a>'
+        for s, label in sort_options
+    )
+
+    if memes:
+        cards_html = '<div class="grid grid-3">'
+        for m in memes:
+            logo = m["logo_svg"]
+            logo_html = f'<span class="logo-cell">{logo}</span>' if logo else '<span class="logo-cell logo-placeholder">🪙</span>'
+            change = m["price_change_24h"]
+            if change > 0:
+                chg_html = f'<span class="positive">+{change:.2f}%</span>'
+            elif change < 0:
+                chg_html = f'<span class="negative">{change:.2f}%</span>'
+            else:
+                chg_html = '<span class="neutral">0.00%</span>'
+
+            mining_pct = 0
+            if m["mining_allocation"] > 0:
+                mining_pct = min(100, m["mining_minted"] / m["mining_allocation"] * 100)
+
+            cards_html += f'''
+            <a href="/memecoins/{m["symbol"]}" class="meme-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                    {logo_html}
+                    <div>
+                        <span class="badge badge-meme">{m["symbol"]}</span>
+                        <span style="margin-left:6px;font-weight:600;">{m["name"]}</span>
+                    </div>
+                    <div style="margin-left:auto;">{chg_html}</div>
+                </div>
+                <div style="font-size:20px;font-weight:700;color:#f59e0b;margin-bottom:4px;">
+                    {m["last_price"]:.6f} <span style="font-size:12px;color:#a78bfa;">{m["native_symbol"]}</span>
+                </div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:8px;">
+                    on <span style="color:#a78bfa;">{m["county_name"]}</span> chain
+                </div>
+                <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">{(m["description"] or "")[:80]}{"..." if len(m["description"] or "") > 80 else ""}</div>
+                <div class="mining-bar-bg"><div class="mining-bar-fill" style="width:{mining_pct:.1f}%"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:4px;">
+                    <span>Mining: {mining_pct:.1f}%</span>
+                    <span>Holders: {m["holder_count"]}</span>
+                    <span>Vol: {m["total_volume_native"]:,.2f}</span>
+                </div>
+                <div style="font-size:11px;color:#475569;margin-top:6px;">by {m["creator_name"]}</div>
+            </a>
+            '''
+        cards_html += '</div>'
+    else:
+        cards_html = '<div class="card" style="text-align:center;padding:40px;color:#475569;">No meme coins have been launched yet. Be the first!</div>'
+
+    total_volume = sum(m["total_volume_native"] for m in memes)
+    total_trades = sum(m["total_trades"] for m in memes)
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Meme Coins — Wadsworth</title>
+    {MEME_STYLES}
+    <style>
+    .sort-tab {{
+        display: inline-block;
+        padding: 5px 12px;
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        border-radius: 6px;
+        color: #64748b;
+        font-size: 12px;
+        text-decoration: none;
+        transition: border-color 0.15s, color 0.15s;
+    }}
+    .sort-tab:hover {{ color: #f59e0b; border-color: #f59e0b; text-decoration: none; }}
+    .sort-tab.active {{ color: #f59e0b; border-color: #f59e0b; background: rgba(245,158,11,0.08); }}
+    .logo-placeholder {{ font-size: 22px; }}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>🚀 Meme Coins</h1>
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                Community-launched tokens across all county blockchains
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            {launch_html}
+            <a href="/exchange" class="nav-link">Exchange</a>
+            <a href="/wallet" class="nav-link">Portfolio</a>
+            <a href="/" class="nav-link">Dashboard</a>
+        </div>
+    </div>
+
+    {alert_html}
+
+    <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div style="font-size:13px;color:#94a3b8;">
+                <strong style="color:#f59e0b;">{len(memes)}</strong> active coins &nbsp;·&nbsp;
+                <strong style="color:#a78bfa;">{total_volume:,.2f}</strong> total volume &nbsp;·&nbsp;
+                <strong style="color:#38bdf8;">{total_trades:,}</strong> total trades
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                {sort_tabs}
+            </div>
+        </div>
+    </div>
+
+    {cards_html}
+</div>
+{_nav_loader()}
+</body>
+</html>"""
+
+
 @router.get("/county/{county_id}/memecoins", response_class=HTMLResponse)
 async def county_memecoins(
     county_id: int,
