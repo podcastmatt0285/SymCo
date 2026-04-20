@@ -1196,6 +1196,11 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
         counter.quantity_filled += fill_qty
         incoming_remaining -= fill_qty
 
+        # Keep native_reserved in sync with actual remaining locked funds
+        # so cancel_order refunds are always accurate regardless of fill path.
+        if counter.order_type == "buy" and counter.order_mode == "limit":
+            counter.native_reserved = max(0.0, (counter.native_reserved or 0.0) - fill_qty * trade_price)
+
         if counter.quantity_filled >= counter.quantity:
             counter.status = "filled"
             counter.filled_at = datetime.utcnow()
@@ -1305,8 +1310,11 @@ def cancel_order(player_id: int, order_id: int) -> Tuple[bool, str]:
         meme = db.query(MemeCoin).filter(MemeCoin.symbol == order.meme_symbol).first()
 
         if order.order_type == "buy" and order.order_mode == "limit":
-            # Refund remaining reserved native tokens
-            refund_native = unfilled * order.price
+            # Refund the actual remaining locked amount tracked in native_reserved.
+            # For fully-unstarted orders this equals unfilled * order.price.
+            # For partially-filled orders native_reserved is decremented per fill
+            # so this is always the precise amount still in escrow.
+            refund_native = order.native_reserved if order.native_reserved is not None else unfilled * order.price
             county = county_db.query(County).filter(County.id == meme.county_id).first()
             native_wallet = county_db.query(CryptoWallet).filter(
                 CryptoWallet.player_id == player_id,
