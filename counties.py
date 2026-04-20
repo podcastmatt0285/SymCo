@@ -1748,7 +1748,7 @@ def get_current_governance_cycle(county_id: int, current_tick: int) -> Optional[
     try:
         cycle = db.query(GovernanceCycle).filter(
             GovernanceCycle.county_id == county_id,
-            GovernanceCycle.voting_phase_ends_tick > current_tick,
+            GovernanceCycle.status != GovernanceCycleStatus.COMPLETED,
         ).order_by(GovernanceCycle.cycle_number.desc()).first()
 
         if not cycle:
@@ -2364,26 +2364,17 @@ def process_governance_cycles(current_tick: int):
         counties = db.query(County).all()
 
         for county in counties:
-            # Check for active cycle
+            # Find the most recent non-completed cycle
             active_cycle = db.query(GovernanceCycle).filter(
                 GovernanceCycle.county_id == county.id,
-                GovernanceCycle.voting_phase_ends_tick > current_tick,
-            ).first()
+                GovernanceCycle.status != GovernanceCycleStatus.COMPLETED,
+            ).order_by(GovernanceCycle.cycle_number.desc()).first()
 
             if not active_cycle:
-                # Check if enough time has passed since last cycle
-                last_cycle = db.query(GovernanceCycle).filter(
-                    GovernanceCycle.county_id == county.id,
-                ).order_by(GovernanceCycle.cycle_number.desc()).first()
-
-                should_start = True
-                if last_cycle and (current_tick - last_cycle.voting_phase_ends_tick) < 0:
-                    should_start = False
-
-                if should_start:
-                    db.close()
-                    start_governance_cycle(county.id, current_tick)
-                    db = get_db()
+                # No open cycle — start one immediately
+                db.close()
+                start_governance_cycle(county.id, current_tick)
+                db = get_db()
                 continue
 
             # Transition from proposal phase to voting phase
@@ -2420,6 +2411,14 @@ def process_governance_cycles(current_tick: int):
                         proposal.status = GovernanceProposalStatus.PASSED
                     else:
                         proposal.status = GovernanceProposalStatus.FAILED
+
+                # Expire any proposals still stuck in PENDING (shouldn't happen normally)
+                orphaned = db.query(GovernanceProposal).filter(
+                    GovernanceProposal.cycle_id == active_cycle.id,
+                    GovernanceProposal.status == GovernanceProposalStatus.PENDING,
+                ).all()
+                for proposal in orphaned:
+                    proposal.status = GovernanceProposalStatus.EXPIRED
 
                 db.commit()
 
