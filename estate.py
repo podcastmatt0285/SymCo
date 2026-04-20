@@ -1445,6 +1445,7 @@ def check_idle_players(current_tick: int):
 
         idle_players = db.query(Player).filter(
             Player.last_login < cutoff,
+            Player.is_npc == False,
             Player.id > 0  # Don't delete government
         ).all()
 
