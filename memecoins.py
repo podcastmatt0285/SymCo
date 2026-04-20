@@ -1346,6 +1346,79 @@ def cancel_order(player_id: int, order_id: int) -> Tuple[bool, str]:
 # DATA QUERIES
 # ==========================
 
+def get_all_meme_coins_global(sort: str = "volume") -> List[dict]:
+    """
+    Return all active meme coins across every county.
+    Used by the global /memecoins discovery hub.
+    sort: 'volume' | 'change' | 'new' | 'holders' | 'market_cap'
+    Each record includes county_name and native_symbol for display.
+    """
+    db = get_db()
+    try:
+        memes = db.query(MemeCoin).filter(MemeCoin.is_active == True).all()
+
+        from counties import County, get_db as county_get_db
+        county_db = county_get_db()
+        county_cache: dict = {}
+        for c in county_db.query(County).all():
+            county_cache[c.id] = c
+        county_db.close()
+
+        from auth import Player
+        result = []
+        for m in memes:
+            county = county_cache.get(m.county_id)
+            creator = db.query(Player).filter(Player.id == m.creator_id).first()
+            holder_count = db.query(MemeCoinWallet).filter(
+                MemeCoinWallet.meme_symbol == m.symbol,
+                MemeCoinWallet.balance > 0,
+            ).count()
+            change_24h = _get_meme_price_change_24h(db, m.symbol, m.last_price or 0.0)
+            result.append({
+                "id": m.id,
+                "name": m.name,
+                "symbol": m.symbol,
+                "description": m.description,
+                "logo_svg": m.logo_svg or "",
+                "county_id": m.county_id,
+                "county_name": county.name if county else "Unknown",
+                "native_symbol": county.crypto_symbol if county else "???",
+                "creator_name": creator.business_name if creator else f"Player {m.creator_id}",
+                "total_supply": m.total_supply,
+                "minted_supply": m.minted_supply or 0.0,
+                "mining_allocation": m.mining_allocation,
+                "mining_minted": m.mining_minted or 0.0,
+                "mining_pool_native": m.mining_pool_native or 0.0,
+                "mining_enabled": m.mining_enabled,
+                "last_price": m.last_price or 0.0,
+                "all_time_high": m.all_time_high or 0.0,
+                "total_volume_native": m.total_volume_native or 0.0,
+                "total_trades": m.total_trades or 0,
+                "holder_count": holder_count,
+                "price_change_24h": change_24h,
+                "market_cap_native": (m.last_price or 0.0) * (m.minted_supply or 0.0),
+                "created_at": m.created_at,
+            })
+
+        if sort == "volume":
+            result.sort(key=lambda x: x["total_volume_native"], reverse=True)
+        elif sort == "change":
+            result.sort(key=lambda x: x["price_change_24h"], reverse=True)
+        elif sort == "new":
+            result.sort(key=lambda x: x["created_at"], reverse=True)
+        elif sort == "holders":
+            result.sort(key=lambda x: x["holder_count"], reverse=True)
+        elif sort == "market_cap":
+            result.sort(key=lambda x: x["market_cap_native"], reverse=True)
+
+        return result
+    except Exception as e:
+        print(f"[MemeCoin] Error in get_all_meme_coins_global: {e}")
+        return []
+    finally:
+        db.close()
+
+
 def get_all_meme_coins(county_id: int) -> List[dict]:
     """Get all active meme coins for a county."""
     db = get_db()

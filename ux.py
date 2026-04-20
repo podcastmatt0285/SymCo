@@ -2200,6 +2200,20 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">C-Suite</span>
             </a>
 
+            <a href="/exchange" class="dc" style="--c:#f97316;--g:linear-gradient(90deg,#f97316,#fb923c);--glow:rgba(249,115,22,0.15);--btn:#f97316;">
+                <span class="dc-ico">⛓️</span>
+                <div class="dc-t">Wadsworth Crypto Exchange</div>
+                <div class="dc-d">Buy, sell, and swap county native tokens at oracle-driven prices. Deposit energy to power blockchain nodes and earn block rewards through Bitcoin-like halvings. Each county sets its own exchange fee via governance — deflationary hard-cap assets with real on-chain mechanics.</div>
+                <span class="dc-btn">Open Exchange</span>
+            </a>
+
+            <a href="/memecoins" class="dc" style="--c:#a855f7;--g:linear-gradient(90deg,#a855f7,#d946ef);--glow:rgba(168,85,247,0.15);--btn:#a855f7;">
+                <span class="dc-ico">🚀</span>
+                <div class="dc-t">Meme Coins</div>
+                <div class="dc-d">Community-launched speculative tokens built on county blockchains. Trade via live order books, mint coins by burning native tokens on the bonding curve, or stake to mine. Any player can buy and trade — county members can also launch their own coin and earn creator fees on every trade.</div>
+                <span class="dc-btn">Meme Market</span>
+            </a>
+
             <a href="/p2p" class="dc" style="--c:#f59e0b;--g:linear-gradient(90deg,#f59e0b,#fbbf24);--glow:rgba(245,158,11,0.12);--btn:#f59e0b;">
                 <span class="dc-ico">💬</span>
                 <div class="dc-t">Peer to Peer</div>
