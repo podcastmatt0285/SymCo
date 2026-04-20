@@ -1237,6 +1237,95 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         except:
             pass
 
+        # Void P2P contracts (no breach penalty — party deceased)
+        try:
+            from p2p import Contract, ContractStatus
+            db.query(Contract).filter(
+                ((Contract.creator_id == player_id) |
+                 (Contract.holder_id == player_id) |
+                 (Contract.buyer_id == player_id)),
+                Contract.status.in_([
+                    ContractStatus.ACTIVE, ContractStatus.LISTED, ContractStatus.DRAFT,
+                ]),
+            ).update(
+                {"status": ContractStatus.VOIDED, "breach_reason": "Party deceased"},
+                synchronize_session=False,
+            )
+        except Exception as e:
+            print(f"[Estate] P2P contract cleanup error: {e}")
+
+        # Cancel acquisition stakes and offers; clean up diffuse notices
+        try:
+            from corporate_actions import AcquisitionStake, AcquisitionOffer, DiffuseNotice
+            # Deactivate all active stakes
+            db.query(AcquisitionStake).filter(
+                ((AcquisitionStake.acquirer_id == player_id) |
+                 (AcquisitionStake.target_player_id == player_id)),
+                AcquisitionStake.is_active == True,
+            ).update({"is_active": False}, synchronize_session=False)
+            # Expire pending/countered offers; refund escrow to offeror if target died
+            pending_offers = db.query(AcquisitionOffer).filter(
+                ((AcquisitionOffer.offeror_id == player_id) |
+                 (AcquisitionOffer.target_player_id == player_id)),
+                AcquisitionOffer.status.in_(["pending", "countered"]),
+            ).all()
+            for offer in pending_offers:
+                offer.status = "expired"
+                cash = offer.cash_component or 0.0
+                if cash > 0 and offer.offeror_id != player_id:
+                    # Target died — refund escrow to living offeror
+                    try:
+                        from reserve_banks import convert_to_legal_tender
+                        convert_to_legal_tender(offer.offeror_id, cash)
+                    except Exception as _re:
+                        print(f"[Estate] Offer escrow refund error: {_re}")
+            # Delete pending diffuse notices
+            db.query(DiffuseNotice).filter(
+                ((DiffuseNotice.acquirer_id == player_id) |
+                 (DiffuseNotice.target_player_id == player_id)),
+                DiffuseNotice.status == "pending",
+            ).delete(synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Acquisition/diffuse cleanup error: {e}")
+
+        # Remove trusted-trade entries (both directions)
+        try:
+            from trusted_trade import TrustedTraderEntry
+            db.query(TrustedTraderEntry).filter(
+                (TrustedTraderEntry.owner_player_id == player_id) |
+                (TrustedTraderEntry.trusted_player_id == player_id),
+            ).delete(synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Trusted-trade cleanup error: {e}")
+
+        # Remove from group DMs; delete empty conversations
+        try:
+            from dm import GroupParticipant, GroupConversation
+            db.query(GroupParticipant).filter(
+                GroupParticipant.player_id == player_id,
+            ).delete(synchronize_session=False)
+            # Remove groups that now have no participants
+            for g in db.query(GroupConversation).filter(
+                GroupConversation.created_by == player_id,
+            ).all():
+                remaining = db.query(GroupParticipant).filter(
+                    GroupParticipant.conversation_id == g.id,
+                ).count()
+                if remaining == 0:
+                    db.delete(g)
+        except Exception as e:
+            print(f"[Estate] Group DM cleanup error: {e}")
+
+        # Remove contact relationships (both directions)
+        try:
+            from contacts import Contact
+            db.query(Contact).filter(
+                (Contact.requester_id == player_id) |
+                (Contact.recipient_id == player_id),
+            ).delete(synchronize_session=False)
+        except Exception as e:
+            print(f"[Estate] Contacts cleanup error: {e}")
+
         # Purge any remaining zero-share brokerage positions owned by this player so that
         # deleting the player record below doesn't leave orphan rows with a dead player_id.
         # (Positions with shares_owned > 0 were already transferred to the government above.)
@@ -1356,6 +1445,7 @@ def check_idle_players(current_tick: int):
 
         idle_players = db.query(Player).filter(
             Player.last_login < cutoff,
+            Player.is_npc == False,
             Player.id > 0  # Don't delete government
         ).all()
 

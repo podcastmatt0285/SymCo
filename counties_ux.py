@@ -2528,7 +2528,7 @@ async def county_governance(
         CryptoWallet, GovernanceCycle, GovernanceProposal, GovernanceVote,
         GovernanceProposalType, GovernanceProposalStatus, GovernanceCycleStatus,
         get_current_governance_cycle, get_governance_proposals,
-        get_governance_history, get_player_delegations,
+        get_governance_history, get_player_delegations, get_player_governance_votes,
         GOVERNANCE_VOTE_CYCLE_TICKS, GOVERNANCE_PROPOSAL_WINDOW_TICKS,
         GOVERNANCE_VOTING_WINDOW_TICKS,
     )
@@ -2634,6 +2634,8 @@ async def county_governance(
                 <p style="color: #94a3b8; margin-bottom: 16px;">
                     As a holder of <span class="badge badge-crypto">{county.crypto_symbol}</span>,
                     you can submit governance proposals for the county to vote on.
+                    <strong style="color:#4ade80;">Submitting a proposal is free.</strong>
+                    Voting (in the next phase) burns tokens permanently.
                 </p>
                 <form action="/api/county/governance/propose" method="post">
                     <input type="hidden" name="county_id" value="{county_id}">
@@ -2775,37 +2777,56 @@ async def county_governance(
                 elif p["status"] in (GovernanceProposalStatus.ACTIVE, GovernanceProposalStatus.PENDING):
                     vote_bar_html = '<p style="color: #64748b; font-size: 13px;">No votes cast yet.</p>'
 
+                # Check if player has already voted on this proposal
+                my_votes = get_player_governance_votes(player.id, p["id"]) if is_member else []
+                my_yes_burned = sum(v["tokens_burned"] for v in my_votes if v["vote"] == "yes")
+                my_no_burned  = sum(v["tokens_burned"] for v in my_votes if v["vote"] == "no")
+
+                already_voted_html = ""
+                if my_votes:
+                    parts = []
+                    if my_yes_burned > 0:
+                        parts.append(f'<span style="color:#4ade80;">YES: {my_yes_burned:.6f} {county.crypto_symbol} burned</span>')
+                    if my_no_burned > 0:
+                        parts.append(f'<span style="color:#f87171;">NO: {my_no_burned:.6f} {county.crypto_symbol} burned</span>')
+                    already_voted_html = f'<p style="font-size:12px;margin-top:6px;">Your votes: {" · ".join(parts)} — you can add more weight.</p>'
+
                 # Voting form (only during voting phase, for members with tokens)
                 vote_form_html = ""
                 if (cycle["phase"] == "voting_phase" and
                     p["status"] == GovernanceProposalStatus.ACTIVE and
                     is_member and crypto_balance > 0):
+                    mech_v = p.get("voting_mechanism", "token_weighted")
+                    if mech_v == "quadratic":
+                        weight_formula = "√tokens burned (quadratic — limits large-holder dominance)"
+                    elif mech_v == "delegated":
+                        weight_formula = f"tokens burned + delegated power ({total_delegated_power:.6f} delegated to you)"
+                    else:
+                        weight_formula = "tokens burned (1:1 weight)"
                     vote_form_html = f'''
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e293b;">
-                        <div style="display: flex; gap: 8px;">
-                            <form action="/api/county/governance/vote" method="post" style="flex: 1; display: flex; gap: 8px;">
-                                <input type="hidden" name="proposal_id" value="{p["id"]}">
-                                <input type="hidden" name="vote" value="yes">
-                                <input type="number" name="tokens_to_burn" min="0.000001" step="0.000001"
-                                       max="{crypto_balance}" placeholder="Tokens to burn"
-                                       style="flex:1; padding:8px; background:#0b1220; border:1px solid #1e293b; border-radius:6px; color:#e5e7eb; font-size:13px;" required>
-                                <button type="submit" class="btn btn-vote-yes btn-sm">Vote YES</button>
-                            </form>
-                            <form action="/api/county/governance/vote" method="post" style="display: flex; gap: 8px;">
-                                <input type="hidden" name="proposal_id" value="{p["id"]}">
-                                <input type="hidden" name="vote" value="no">
-                                <input type="number" name="tokens_to_burn" min="0.000001" step="0.000001"
-                                       max="{crypto_balance}" placeholder="Tokens to burn"
-                                       style="width:140px; padding:8px; background:#0b1220; border:1px solid #1e293b; border-radius:6px; color:#e5e7eb; font-size:13px;" required>
-                                <button type="submit" class="btn btn-vote-no btn-sm">Vote NO</button>
-                            </form>
-                        </div>
-                        <p style="font-size: 11px; color: #64748b; margin-top: 6px;">
-                            Tokens are permanently burned when voting. You can vote multiple times to add more weight.
-                            Balance: {crypto_balance:.6f} {county.crypto_symbol}
-                        </p>
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #1e293b;">
+                        <form action="/api/county/governance/vote" method="post">
+                            <input type="hidden" name="proposal_id" value="{p["id"]}">
+                            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                <input type="number" name="tokens_to_burn" id="burn-{p["id"]}"
+                                       min="0.000001" step="0.000001" max="{crypto_balance}"
+                                       placeholder="Tokens to burn" required
+                                       data-mech="{mech_v}" data-delegated="{total_delegated_power}"
+                                       style="width:180px;padding:8px;background:#0b1220;border:1px solid #1e293b;border-radius:6px;color:#e5e7eb;font-size:13px;">
+                                <span id="weight-preview-{p["id"]}" style="color:#94a3b8;font-size:12px;min-width:140px;"></span>
+                                <button type="submit" name="vote" value="yes" class="btn btn-vote-yes btn-sm">Vote YES</button>
+                                <button type="submit" name="vote" value="no" class="btn btn-vote-no btn-sm">Vote NO</button>
+                            </div>
+                            <p style="font-size:11px;color:#64748b;margin-top:6px;">
+                                Tokens are <strong style="color:#fbbf24;">permanently burned</strong> — vote weight = {weight_formula}.
+                                Balance: {crypto_balance:.6f} {county.crypto_symbol}
+                            </p>
+                        </form>
+                        {already_voted_html}
                     </div>
                     '''
+                elif my_votes and cycle["phase"] == "voting_phase":
+                    vote_form_html = f'<div style="margin-top:8px;">{already_voted_html}</div>'
 
                 # Mechanism badge
                 mech = p.get("voting_mechanism", "token_weighted")
@@ -2862,10 +2883,13 @@ async def county_governance(
         </div>
         '''
 
+    # Compute delegated power early (needed for vote weight preview in proposal cards)
+    delegations = get_player_delegations(player.id, county_id) if is_member else {}
+    total_delegated_power = delegations.get("total_delegated_power", 0.0)
+
     # Delegation management section (for county members)
     delegation_html = ""
     if is_member:
-        delegations = get_player_delegations(player.id, county_id)
         delegating_to = delegations.get("delegating_to")
         delegators = delegations.get("delegators", [])
         total_power = delegations.get("total_delegated_power", 0.0)
@@ -3027,6 +3051,31 @@ async def county_governance(
             {history_html}
         </div>
     {_nav_loader()}
+    <script>
+    // Vote weight live preview
+    document.querySelectorAll('input[id^="burn-"]').forEach(input => {{
+        const propId = input.id.slice(5);
+        const mech = input.dataset.mech || 'token_weighted';
+        const delegated = parseFloat(input.dataset.delegated) || 0;
+        const preview = document.getElementById('weight-preview-' + propId);
+        if (!preview) return;
+        input.addEventListener('input', () => {{
+            const tokens = parseFloat(input.value);
+            if (!tokens || tokens <= 0) {{ preview.textContent = ''; return; }}
+            let weight;
+            if (mech === 'quadratic') {{
+                weight = Math.sqrt(tokens);
+                preview.textContent = '→ ' + weight.toFixed(6) + ' weight (√' + tokens.toFixed(6) + ')';
+            }} else if (mech === 'delegated') {{
+                weight = tokens + delegated;
+                preview.textContent = '→ ' + weight.toFixed(6) + ' weight';
+            }} else {{
+                weight = tokens;
+                preview.textContent = '→ ' + weight.toFixed(6) + ' weight';
+            }}
+        }});
+    }});
+    </script>
     </body>
     </html>
     """

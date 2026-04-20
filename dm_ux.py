@@ -1704,7 +1704,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         }} else if (type === '%') {{
             replacement = '%[' + s.ticker + '] ';
         }} else {{
-            replacement = '$[' + s.symbol + '] ';
+            replacement = '$[' + (s.type || 'meme') + '|' + s.symbol + '] ';
         }}
         const input = document.getElementById('msg-input');
         const after = input.value.slice(input.selectionStart);
@@ -1756,7 +1756,17 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
             }} else if (m[3] !== undefined) {{
                 out += '<span class="mention mention-item">#' + escapeHtml(m[3]) + '</span>';
             }} else if (m[4] !== undefined) {{
-                out += '<a href="/memecoins/' + encodeURIComponent(m[4]) + '" class="mention mention-crypto">$' + escapeHtml(m[4]) + '</a>';
+                const cparts = m[4].split('|');
+                const csym   = cparts.length >= 2 ? cparts[1] : cparts[0];
+                const ctype  = cparts.length >= 2 ? cparts[0] : 'meme';
+                const chref  = ctype === 'native' ? '/token/' + encodeURIComponent(csym)
+                             : ctype === 'meme'   ? '/memecoins/' + encodeURIComponent(csym)
+                             : null;
+                if (chref) {{
+                    out += '<a href="' + chref + '" class="mention mention-crypto">$' + escapeHtml(csym) + '</a>';
+                }} else {{
+                    out += '<span class="mention mention-crypto">$' + escapeHtml(csym) + '</span>';
+                }}
             }} else {{
                 out += '<a href="/brokerage/company/' + encodeURIComponent(m[5]) + '" class="mention mention-stock">%' + escapeHtml(m[5]) + '</a>';
             }}
