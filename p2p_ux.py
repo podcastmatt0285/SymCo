@@ -242,6 +242,21 @@ def dm_inbox(session_token: Optional[str] = Cookie(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    from p2p import P2PAccessLog, get_db as get_p2p_db
+    from datetime import timedelta
+    _p2p_db = get_p2p_db()
+    try:
+        _cutoff = datetime.utcnow() - timedelta(minutes=5)
+        _recent = _p2p_db.query(P2PAccessLog).filter(
+            P2PAccessLog.player_id == player.id,
+            P2PAccessLog.accessed_at >= _cutoff
+        ).first()
+    finally:
+        _p2p_db.close()
+    if not _recent:
+        return RedirectResponse(url="/p2p", status_code=303)
+
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
@@ -511,6 +526,21 @@ def contracts_dashboard(session_token: Optional[str] = Cookie(None), tab: str = 
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    from p2p import P2PAccessLog, get_db as get_p2p_db
+    from datetime import timedelta
+    _p2p_db = get_p2p_db()
+    try:
+        _cutoff = datetime.utcnow() - timedelta(minutes=5)
+        _recent = _p2p_db.query(P2PAccessLog).filter(
+            P2PAccessLog.player_id == player.id,
+            P2PAccessLog.accessed_at >= _cutoff
+        ).first()
+    finally:
+        _p2p_db.close()
+    if not _recent:
+        return RedirectResponse(url="/p2p", status_code=303)
+
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 

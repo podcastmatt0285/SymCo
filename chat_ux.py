@@ -712,8 +712,10 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 <h4 style="font-size:0.7rem;color:#64748b;margin-bottom:6px;">TAG LEGEND</h4>
                 <div style="font-size:0.72rem;line-height:1.8;">
                     <div><span style="background:rgba(34,197,94,0.15);color:#22c55e;padding:1px 5px;border-radius:3px;">@Player</span> <span style="color:#64748b;">mention a player</span></div>
-                    <div><span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:1px 5px;border-radius:3px;">#item</span> <span style="color:#64748b;">tag a commodity</span></div>
-                    <div><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:1px 5px;border-radius:3px;">$crypto</span> <span style="color:#64748b;">tag a memecoin</span></div>
+                    <div><span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:1px 5px;border-radius:3px;">#item</span> <span style="color:#64748b;">tag a commodity or market item</span></div>
+                    <div><span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:1px 5px;border-radius:3px;">#business</span> <span style="color:#64748b;">tag a business type → land market</span></div>
+                    <div><span style="background:rgba(251,191,36,0.15);color:#fbbf24;padding:1px 5px;border-radius:3px;">$token</span> <span style="color:#64748b;">tag a native token or meme coin</span></div>
+                    <div><span style="background:rgba(249,115,22,0.15);color:#f97316;padding:1px 5px;border-radius:3px;">%TICKER</span> <span style="color:#64748b;">tag a stock on the brokerage</span></div>
                 </div>
             </div>
         </div>
@@ -1196,7 +1198,7 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
         if (type === '@') {{
             replacement = '@[' + s.id + '|' + s.name + '] ';
         }} else if (type === '#') {{
-            const wtype = (s.category || '').toLowerCase().includes('item') ? 'item' : 'biz';
+            const wtype = s.wtype || ((s.category || '').toLowerCase().includes('item') ? 'item' : 'biz');
             replacement = '#[' + wtype + '|' + s.key + '|' + s.name + '] ';
         }} else if (type === '%') {{
             replacement = '%[' + s.ticker + '] ';
@@ -1247,7 +1249,10 @@ def chat_page(session_token: Optional[str] = Cookie(None)):
                 const parts = m[2].split('|');
                 if (parts.length >= 3) {{
                     const wtype = parts[0], key = parts[1], name = parts[2];
-                    const href = wtype === 'item' ? '/district-market?item=' + encodeURIComponent(key) : '/land';
+                    const href = wtype === 'item'          ? '/market?item='          + encodeURIComponent(key)
+                               : wtype === 'district_item' ? '/district-market?item=' + encodeURIComponent(key)
+                               : wtype === 'district_biz'  ? '/district-market'
+                               : '/land';
                     out += '<a href="' + href + '" class="mention mention-item">#' + escapeHtml(name) + '</a>';
                 }} else {{
                     out += '<span class="mention mention-item">#' + escapeHtml(parts[0]) + '</span>';
@@ -1541,19 +1546,19 @@ def suggest_items(q: str = Query("", max_length=60)):
     q_low = q.lower()
     results = []
     sources = [
-        ("business_types.json",      "Business"),
-        ("district_businesses.json", "District Business"),
-        ("item_types.json",          "Item"),
-        ("district_items.json",      "District Item"),
+        ("business_types.json",      "Business",          "biz"),
+        ("district_businesses.json", "District Business", "district_biz"),
+        ("item_types.json",          "Item",              "item"),
+        ("district_items.json",      "District Item",     "district_item"),
     ]
-    for fname, category in sources:
+    for fname, category, wtype in sources:
         try:
             with open(fname) as f:
                 data = _json.load(f)
             for key, val in data.items():
                 name = val.get("name", key)
                 if q_low in name.lower() or q_low in key.lower():
-                    results.append({"key": key, "name": name, "category": category})
+                    results.append({"key": key, "name": name, "category": category, "wtype": wtype})
                     if len(results) >= 10:
                         break
         except Exception:

@@ -675,6 +675,15 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                 <div id="conv-list"></div>
             </div>
 
+            <div class="sidebar-section" style="font-size:0.68rem;color:#475569;line-height:1.6;">
+                <div style="margin-bottom:6px;"><span style="color:#64748b;font-weight:bold;">TAG KEY</span></div>
+                <div><span style="color:#22c55e;">@</span> Players</div>
+                <div><span style="color:#38bdf8;">#</span> Items · Businesses</div>
+                <div><span style="color:#fbbf24;">$</span> Native tokens · Meme coins</div>
+                <div><span style="color:#f97316;">%</span> Stocks (brokerage)</div>
+                <div style="margin-top:6px;color:#334155;">Messages expire after 3 days.</div>
+            </div>
+
             <div class="sidebar-section">
                 <button class="sidebar-btn" onclick="openBanModal()">Word Filter Settings</button>
             </div>
@@ -1699,7 +1708,7 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
         if (type === '@') {{
             replacement = '@[' + s.id + '|' + s.name + '] ';
         }} else if (type === '#') {{
-            const wtype = (s.category || '').toLowerCase().includes('item') ? 'item' : 'biz';
+            const wtype = s.wtype || ((s.category || '').toLowerCase().includes('item') ? 'item' : 'biz');
             replacement = '#[' + wtype + '|' + s.key + '|' + s.name + '] ';
         }} else if (type === '%') {{
             replacement = '%[' + s.ticker + '] ';
@@ -1748,7 +1757,10 @@ def dm_page(session_token: Optional[str] = Cookie(None)):
                 const parts = m[2].split('|');
                 if (parts.length >= 3) {{
                     const wtype = parts[0], key = parts[1], name = parts[2];
-                    const href = wtype === 'item' ? '/district-market?item=' + encodeURIComponent(key) : '/land';
+                    const href = wtype === 'item'          ? '/market?item='          + encodeURIComponent(key)
+                               : wtype === 'district_item' ? '/district-market?item=' + encodeURIComponent(key)
+                               : wtype === 'district_biz'  ? '/district-market'
+                               : '/land';
                     out += '<a href="' + href + '" class="mention mention-item">#' + escapeHtml(name) + '</a>';
                 }} else {{
                     out += '<span class="mention mention-item">#' + escapeHtml(parts[0]) + '</span>';
