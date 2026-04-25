@@ -1314,7 +1314,7 @@ def _push_corp(player_id: int, title: str, body: str):
         try:
             from push_ux import send_push_notification
             send_push_notification(player_id, title, body,
-                                   url="/corporate",
+                                   url="/corporate-actions/dashboard",
                                    notif_type="corporate",
                                    tag=f"corp-{player_id}-{title[:20]}")
         except Exception as e:

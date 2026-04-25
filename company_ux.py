@@ -361,33 +361,56 @@ def _page(title, subtitle, back_href, back_label, active_nav, body_html):
 # ── /sitemap ──────────────────────────────────────────────────────────────────
 
 SITEMAP_ENTRIES = [
-    ("/",               "Dashboard",       "Your economic overview"),
-    ("/market",         "Market",          "Buy & sell commodities"),
-    ("/brokerage",      "Brokerage",       "Trade stocks & ETFs"),
-    ("/businesses",     "Businesses",      "Manage production lines"),
-    ("/inventory",      "Inventory",       "Your commodity holdings"),
-    ("/land",           "Land",            "Your land parcels"),
-    ("/land-market",    "Real Estate",     "Buy & sell land"),
-    ("/banks",          "Banks",           "Loans & savings"),
-    ("/executives",     "Executives",      "Hire & train executives"),
-    ("/cities",         "Cities",          "City governance & currency"),
-    ("/counties",       "Counties",        "County blockchain & mining"),
-    ("/exchange",       "Exchange",        "Crypto exchange"),
-    ("/estate",         "Estate",          "Wills & legacy planning"),
-    ("/wallet",         "Wallet",          "WSC & yield farming"),
-    ("/stats",          "Stats",           "Leaderboard & analytics"),
-    ("/stats/wiki",     "Wiki",            "Game encyclopedia"),
-    ("/p2p",            "P2P Contracts",   "Peer-to-peer trades"),
-    ("/dm",             "Messages",        "Direct messages"),
-    ("/contacts",       "Contacts",        "Player directory"),
-    ("/settings",       "Settings",        "Account & notifications"),
-    ("/reserve-banks",  "Reserve Banks",   "Bonds & forex"),
-    ("/memecoins",      "Meme Coins",      "County meme tokens"),
-    ("/sitemap",        "Sitemap",         "This page"),
-    ("/company/whitepaper", "Whitepaper",  "About the game"),
-    ("/company/careers",    "Careers",     "Work with us"),
-    ("/company/press-kit",  "Press Kit",   "Logos & media"),
-    ("/privacy-policy",     "Privacy Policy", "Data & privacy"),
+    # ── Core ──────────────────────────────────────────────────────────────────
+    ("/",                          "Dashboard",          "Your wealth, holdings, and live game alerts at a glance"),
+    ("/stats/leaderboard",         "Leaderboard",        "See who owns the most wealth, land, and shares across the server"),
+    ("/chat",                      "Global Chat",        "Live community chat — tag items, businesses, and players with # @ $ %"),
+    ("/world-map",                 "World Map",          "Explore the entire game map: cities, counties, districts, and land parcels"),
+    # ── Production ────────────────────────────────────────────────────────────
+    ("/businesses",                "Businesses",         "Start, manage, and automate production lines that turn raw inputs into revenue"),
+    ("/inventory",                 "Inventory",          "View every commodity you hold, list items for sale, or swap goods with other players"),
+    ("/inventory/swaps",           "Inventory Swaps",    "Propose or accept direct commodity-for-commodity swaps without using the open market"),
+    ("/executives",                "Executives",         "Hire and level up NPC executives to boost production, reduce costs, and unlock features"),
+    ("/executives/marketplace",    "Exec Marketplace",   "Browse executives available for hire — filter by skill, level, and specialty"),
+    # ── Land & Districts ──────────────────────────────────────────────────────
+    ("/land",                      "My Land",            "Your owned parcels — terrain types, zoning, and constructed businesses"),
+    ("/land-market",               "Land Market",        "Auction and buy-it-now listings for parcels across the map"),
+    ("/districts",                 "Districts",          "Browse player-created districts and apply to join one for shared bonuses"),
+    ("/district-market",           "District Market",    "Order book for district-specific goods and specialty commodities"),
+    # ── Markets & Finance ─────────────────────────────────────────────────────
+    ("/market",                    "Commodity Market",   "Continuous double-auction order book for all raw and finished goods — place limit or market orders"),
+    ("/brokerage",                 "Brokerage (WPE)",    "Wadsworth Public Exchange — trade company shares, shorts, ETFs, and IPOs"),
+    ("/banks",                     "Banks & Loans",      "City Bank collateral loans, reserve banks, ETF funds, and the brokerage firm"),
+    ("/reserve-banks",             "Reserve Banks",      "Sovereign bonds, forex rates, and the inter-bank settlement layer"),
+    ("/wallet",                    "Wallet",             "Your WSC stable coin balance, yield farming positions, and faucet claims"),
+    ("/exchange",                  "Crypto Exchange",    "Buy and sell county-native blockchain tokens and meme coins"),
+    ("/memecoins",                 "Meme Coins",         "All active county meme tokens — price charts, holders, and bonding curve data"),
+    ("/gas-tracker",               "Gas Tracker",        "Live transaction fee monitor for the county blockchain layer"),
+    # ── Corporate & Stocks ────────────────────────────────────────────────────
+    ("/brokerage/my-companies",    "My Companies",       "Manage your IPO-listed companies — share price, ownership, and issued shares"),
+    ("/corporate-actions/dashboard","Corporate Actions", "Automate buybacks, stock splits, secondary offerings, and acquisition income stakes"),
+    ("/brokerage/portfolio",       "Portfolio",          "Your full share portfolio — positions, unrealised gains, and dividend history"),
+    ("/brokerage/shorts",          "Short Selling",      "Open and manage short positions on any listed company"),
+    ("/liens",                     "Liens",              "Outstanding financial liens on your account or ones you hold against others"),
+    # ── Governance ────────────────────────────────────────────────────────────
+    ("/cities",                    "Cities",             "Join or found a city, vote in elections, manage currency policy, and raise proposals"),
+    ("/counties",                  "Counties",           "County governance, blockchain token parameters, and mining node controls"),
+    ("/wcpr/list",                 "Press Room",         "Wadsworth City Press Room — official city and county announcements and breaking news"),
+    # ── Social & Contracts ────────────────────────────────────────────────────
+    ("/p2p",                       "P2P Contracts",      "Peer-to-peer binding trade contracts — escrow commodities, cash, land, or shares"),
+    ("/p2p/dms",                   "Direct Messages",    "Private encrypted messages between players — negotiations, deals, and coordination"),
+    ("/contacts",                  "Contacts",           "Full player directory — search by name, city, or company"),
+    # ── Account & Legacy ──────────────────────────────────────────────────────
+    ("/estate",                    "Estate & Will",      "Draft a will to distribute your assets on death — cash, land, shares, and crypto"),
+    ("/settings",                  "Settings",           "Account preferences, push notification controls, display currency, and security"),
+    ("/stats",                     "Stats Hub",          "Economy-wide analytics, personal performance, and production cost breakdowns"),
+    ("/stats/wiki",                "Wiki",               "In-game encyclopedia — every item, business type, executive skill, and mechanic explained"),
+    # ── Company ───────────────────────────────────────────────────────────────
+    ("/sitemap",                   "Sitemap",            "Every page in the game, searchable"),
+    ("/company/whitepaper",        "Whitepaper",         "Full game design document — economy architecture, mechanics, and systems overview"),
+    ("/company/careers",           "Careers",            "Join the Wadsworth team — freelance and paid positions"),
+    ("/company/press-kit",         "Press Kit",          "Brand assets, logos, icons, and official game description for media use"),
+    ("/privacy-policy",            "Privacy Policy",     "How your data is collected, stored, and used"),
 ]
 
 
