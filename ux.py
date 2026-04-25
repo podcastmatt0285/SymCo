@@ -3959,10 +3959,10 @@ def _build_active_items_panel(active_items: list, current_item: str, base_url: s
 
 
 @router.get("/market", response_class=HTMLResponse)
-def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds"):
-    return _market_page_impl(session_token, item)
+def market_page(session_token: Optional[str] = Cookie(None), item: str = "apple_seeds", order_err: str = ""):
+    return _market_page_impl(session_token, item, order_err)
 
-def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_seeds"):
+def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_seeds", order_err: str = ""):
     """Market view with full order book including player names."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
@@ -4223,6 +4223,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
         item_name = item_info.get("name", item.replace("_", " ").title()) if item_info else item.replace("_", " ").title()
         item_desc = item_info.get("description", "") if item_info else ""
         item_cat = item_info.get("category", "other") if item_info else "other"
+        player_item_qty = inv_mod.get_item_quantity(player.id, item)
         
         # Adaptive price formatter: shows enough decimals for small prices
         def _fmt_price(price, d):
@@ -4312,11 +4313,15 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 <!-- Order Placement Form -->
                 <div class="card">
                     <h3>Place Limit Order</h3>
+                    {f'<div style="background:#2d0a0a;border:1px solid #ef4444;border-radius:4px;padding:10px 14px;color:#fca5a5;font-size:0.85rem;margin-bottom:12px;">⚠ {order_err}</div>' if order_err else ''}
+                    <div style="font-size:0.8rem;color:#64748b;margin-bottom:10px;">
+                        You hold: <strong style="color:{'#22c55e' if player_item_qty > 0 else '#64748b'};">{player_item_qty:,.4g} {item_name}</strong>
+                    </div>
                     <form action="/api/market/order" method="post" class="mkt-order-form" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px;">
                         <input type="hidden" name="item_type" value="{item}">
                         <select name="order_type">
-                            <option value="buy">BUY</option>
                             <option value="sell">SELL</option>
+                            <option value="buy">BUY</option>
                         </select>
                         <input type="number" name="quantity" placeholder="Quantity" required>
                         <input type="number" name="price" step="0.0001" placeholder="Price ({disp['code']})" required>
@@ -11211,7 +11216,7 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
     disp = get_player_display_currency(player.id)
     import market
     price_usd = price * disp["usd_per_unit"]
-    market.create_order(
+    order = market.create_order(
         player.id,
         market.OrderType.BUY if order_type == "buy" else market.OrderType.SELL,
         market.OrderMode.LIMIT,
@@ -11219,6 +11224,19 @@ async def place_order(item_type: str = Form(...), order_type: str = Form(...), q
         quantity,
         price_usd
     )
+    if order is None:
+        # Order was rejected — figure out why and surface a clear error
+        import inventory as _inv
+        import urllib.parse
+        if order_type == "sell":
+            held = _inv.get_item_quantity(player.id, item_type)
+            item_label = item_type.replace("_", " ").title()
+            err = f"Order rejected: you have {held:,.4g} {item_label} but tried to sell {quantity:,.4g}."
+        else:
+            from reserve_banks import get_player_cash_balance
+            bal = get_player_cash_balance(player.id)
+            err = f"Order rejected: insufficient funds (balance {bal:,.2f}, cost ≈ {quantity * price_usd:,.2f})."
+        return RedirectResponse(url=f"/market?item={item_type}&order_err={urllib.parse.quote(err)}", status_code=303)
     return RedirectResponse(url=f"/market?item={item_type}", status_code=303)
 
 @router.post("/api/market/cancel-order")
