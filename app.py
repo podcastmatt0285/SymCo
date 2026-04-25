@@ -516,8 +516,9 @@ except ModuleNotFoundError:
     pass
 
 try:
-    from push_ux import router as push_router
+    from push_ux import router as push_router, _ensure_rate_limit_table
     app.include_router(push_router)
+    _ensure_rate_limit_table()
     print("Push notification routes registered")
 except ModuleNotFoundError:
     pass

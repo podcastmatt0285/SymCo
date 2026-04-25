@@ -14,7 +14,7 @@ import os
 import importlib
 from datetime import datetime
 from typing import Dict, Optional, List
-from sqlalchemy import Column, String, Float, DateTime, Integer, Boolean
+from sqlalchemy import Column, String, Float, DateTime, Integer, BigInteger, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -49,7 +49,7 @@ class BankEntity(Base):
     asset_value = Column(Float, default=0.0)    # Value of illiquid assets (land, inventory, etc.)
     
     # Share system
-    total_shares_issued = Column(Integer, default=1000000)  # Total shares in circulation
+    total_shares_issued = Column(BigInteger, default=1000000)  # Total shares in circulation
     share_price = Column(Float, default=1.0)  # Current share price
     
     # Dividend tracking
