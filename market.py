@@ -96,11 +96,12 @@ class Trade(Base):
 # STARTER INVENTORY
 # ==========================
 STARTER_INVENTORY = {
-    "apple_seeds": 1,
-    "orange_seeds": 1,
+    "apple_seeds": 15,
+    "orange_seeds": 5,
     "water": 5000,
     "energy": 1500,
     "paper": 15000,
+    "pollen": 1_000_000,
     "wheat_seeds": 15,
     "barley_seeds": 13,
     "corn_seeds": 15,

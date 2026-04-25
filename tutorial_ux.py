@@ -385,16 +385,19 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
 
         content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            A <strong style="color:#38bdf8;">Mixed Fruit &amp; Vegetable Plantation</strong> (Production) converts water,
-            energy, and seeds into apples and oranges over time. A <strong style="color:#38bdf8;">Local Grocery Store</strong>
-            (Retail) then sells those fruits to generate cash revenue.
+            A <strong style="color:#38bdf8;">Mixed Fruit &amp; Vegetable Plantation</strong> (Production) converts
+            apple seeds, water, paper, and pollen into apples. A <strong style="color:#38bdf8;">Local Grocery Store</strong>
+            (Retail) then sells those apples to generate cash revenue.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             Together, these form a simple <em>vertical supply chain</em>: you produce the goods yourself
             and control the retail price. More complex chains can span dozens of businesses and item types.
         </p>
-        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 6px 0;">
             <strong style="color:#d4af37;">Your task:</strong> Build both businesses on vacant plots.
+            Your starter inventory already contains all the inputs you need —
+            <strong style="color:#84cc16;">apple seeds</strong>, <strong style="color:#38bdf8;">water</strong>,
+            <strong style="color:#e5e7eb;">paper</strong>, and <strong style="color:#f59e0b;">pollen</strong>.
         </p>
         {build_hint}
         <div style="background:#0f172a;border:1px solid #1e293b;padding:10px 14px;border-radius:4px;margin-bottom:16px;line-height:1.9;">
@@ -410,15 +413,16 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             Look at your inventory now. You're holding:
         </p>
         <ul style="color:#94a3b8;line-height:2;margin:0 0 12px 0;padding-left:20px;">
-            <li><strong style="color:#38bdf8;">Water</strong> — being produced by your Water Treatment Facility</li>
+            <li><strong style="color:#38bdf8;">Water</strong> — being produced by your Water Treatment Facility; also consumed by the Plantation</li>
             <li><strong style="color:#f59e0b;">Energy</strong> — your starter supply, consumed by production</li>
-            <li><strong style="color:#22c55e;">Seeds</strong> (apple, orange, and more) — inputs for your Plantation</li>
-            <li><strong style="color:#a855f7;">Land</strong> — three plots actively hosting your new businesses</li>
+            <li><strong style="color:#22c55e;">Seeds</strong> (apple, orange, and more) — primary inputs for your Plantation</li>
+            <li><strong style="color:#fbbf24;">Pollen</strong> — required by the Plantation to grow fruit; your starter supply will last many cycles</li>
+            <li><strong style="color:#e5e7eb;">Paper</strong> — packaging material, consumed each production cycle</li>
         </ul>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
-            Your <strong style="color:#e5e7eb;">Plantation</strong> will soon begin producing
-            <strong style="color:#84cc16;">Apples</strong> and <strong style="color:#f97316;">Oranges</strong>,
-            which your Grocery Store can sell. The more efficiently you manage inputs, the higher your margins.
+            Your <strong style="color:#e5e7eb;">Plantation</strong> will produce its first
+            <strong style="color:#84cc16;">Apples</strong> in about a minute — it runs one production
+            cycle every 60 seconds. Your Grocery Store will then sell them automatically.
         </p>
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
             Next, let's look at what it actually <em>costs</em> to produce an apple — so you know whether to

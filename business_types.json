@@ -17995,7 +17995,7 @@
     ],
     "base_wage_cost": 12.25,
     "class": "production",
-    "cycles_to_complete": 60,
+    "cycles_to_complete": 12,
     "description": "Grows fruit, vegetables and extracts seeds. Each line requires paper packaging.",
     "name": "Mixed Fruit & Vegetable Plantation",
     "production_lines": [
