@@ -189,6 +189,30 @@ def log_action(admin_id: int, action: str, target_player_id: int = None, details
     db.close()
 
 
+def get_player_admin_logs(player_id: int, limit: int = 30) -> list:
+    """Get admin action history targeting a specific player."""
+    db = get_db()
+    logs = (
+        db.query(AdminLog)
+        .filter(AdminLog.target_player_id == player_id)
+        .order_by(AdminLog.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    result = [
+        {
+            "id": log.id,
+            "admin_id": log.admin_id,
+            "action": log.action,
+            "details": log.details,
+            "created_at": log.created_at.isoformat() if log.created_at else None,
+        }
+        for log in logs
+    ]
+    db.close()
+    return result
+
+
 def get_admin_logs(limit: int = 50) -> list:
     db = get_db()
     logs = db.query(AdminLog).order_by(AdminLog.created_at.desc()).limit(limit).all()
@@ -493,6 +517,7 @@ def get_player_detail(player_id: int) -> Optional[dict]:
         "created_at": player.created_at.isoformat() if player.created_at else None,
         "last_login": player.last_login.isoformat() if player.last_login else None,
         "is_admin": player.id in ADMIN_PLAYER_IDS,
+        "tutorial_step": getattr(player, "tutorial_step", 0),
     }
     db.close()
 
@@ -654,6 +679,67 @@ def admin_remove_item(admin_id: int, player_id: int, item_type: str, quantity: f
         if not success:
             return {"ok": False, "error": "Insufficient quantity"}
         log_action(admin_id, "remove_item", player_id, f"-{quantity:.1f} {item_type}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_set_tutorial_step(admin_id: int, player_id: int, step: int) -> dict:
+    """Set a player's tutorial step directly (0=not started, 1-10=active, 11=complete)."""
+    try:
+        import auth
+        db = auth.get_db()
+        player = db.query(auth.Player).filter(auth.Player.id == player_id).first()
+        if not player:
+            db.close()
+            return {"ok": False, "error": "Player not found"}
+        player.tutorial_step = step
+        db.commit()
+        db.close()
+        log_action(admin_id, "set_tutorial_step", player_id, f"tutorial_step → {step}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def admin_get_player_orders(player_id: int) -> list:
+    """Return all open/partial market orders for a player."""
+    try:
+        from market import MarketOrder, OrderStatus, get_db as market_get_db
+        db = market_get_db()
+        try:
+            orders = db.query(MarketOrder).filter(
+                MarketOrder.player_id == player_id,
+                MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+            ).order_by(MarketOrder.created_at.desc()).all()
+            return [
+                {
+                    "id": o.id,
+                    "order_type": o.order_type,
+                    "item_type": o.item_type,
+                    "quantity": o.quantity,
+                    "quantity_filled": o.quantity_filled,
+                    "price": o.price,
+                    "status": o.status,
+                    "created_at": o.created_at.isoformat() if o.created_at else None,
+                }
+                for o in orders
+            ]
+        finally:
+            db.close()
+    except Exception:
+        return []
+
+
+def admin_cancel_market_order(admin_id: int, player_id: int, order_id: int) -> dict:
+    """Admin force-cancels an open market order for a player."""
+    try:
+        from market import cancel_order
+        ok = cancel_order(order_id, player_id)
+        if not ok:
+            return {"ok": False, "error": "Order not found or already closed"}
+        log_action(admin_id, "cancel_market_order", player_id,
+                   f"Cancelled market order #{order_id} for player #{player_id}")
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -1008,6 +1094,71 @@ def get_p2p_overview() -> dict:
         return {"error": str(e)}
 
 
+def get_p2p_contract_detail(contract_id: int) -> Optional[dict]:
+    """Get full detail for a single P2P contract including items, bids, and deliveries."""
+    try:
+        from p2p import get_db as p2p_db, Contract, ContractItem, ContractBid, ContractDelivery
+        db = p2p_db()
+        try:
+            c = db.query(Contract).filter(Contract.id == contract_id).first()
+            if not c:
+                return None
+
+            items = db.query(ContractItem).filter(ContractItem.contract_id == contract_id).all()
+            bids = db.query(ContractBid).filter(ContractBid.contract_id == contract_id).order_by(ContractBid.created_at.desc()).all()
+            deliveries = db.query(ContractDelivery).filter(ContractDelivery.contract_id == contract_id).order_by(ContractDelivery.delivery_number.desc()).limit(20).all()
+
+            return {
+                "id": c.id,
+                "creator_id": c.creator_id,
+                "lister_id": c.lister_id,
+                "holder_id": c.holder_id,
+                "buyer_id": c.buyer_id,
+                "status": c.status,
+                "contract_mode": c.contract_mode,
+                "bid_mode": getattr(c, "bid_mode", None),
+                "delivery_interval": c.delivery_interval,
+                "contract_length": c.contract_length,
+                "total_deliveries": c.total_deliveries,
+                "deliveries_completed": c.deliveries_completed,
+                "price_per_delivery": c.price_per_delivery,
+                "max_price_per_delivery": c.max_price_per_delivery,
+                "next_delivery_tick": c.next_delivery_tick,
+                "listing_type": c.listing_type,
+                "activated_at": c.activated_at.isoformat() if c.activated_at else None,
+                "completed_at": c.completed_at.isoformat() if c.completed_at else None,
+                "breached_at": c.breached_at.isoformat() if c.breached_at else None,
+                "breach_reason": c.breach_reason,
+                "breached_by": c.breached_by,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+                "items": [
+                    {"item_type": i.item_type, "quantity_per_delivery": i.quantity_per_delivery}
+                    for i in items
+                ],
+                "bids": [
+                    {
+                        "id": b.id,
+                        "bidder_id": b.bidder_id,
+                        "bid_amount": b.bid_amount,
+                        "status": b.status,
+                        "created_at": b.created_at.isoformat() if b.created_at else None,
+                    }
+                    for b in bids
+                ],
+                "deliveries": [
+                    {
+                        "delivery_number": d.delivery_number,
+                        "delivered_at": d.delivered_at.isoformat() if d.delivered_at else None,
+                    }
+                    for d in deliveries
+                ],
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # ==========================
 # DM OVERVIEW (for admin monitoring)
 # ==========================
@@ -1333,14 +1484,18 @@ def admin_delete_city(admin_id: int, city_id: int) -> dict:
             get_db as cp_get_db,
         )
 
-        # Verify city exists
+        # Verify city exists and warn if it has members
         city_db = get_city_db()
         city = city_db.query(City).filter(City.id == city_id).first()
         if not city:
             city_db.close()
             return {"ok": False, "error": f"City #{city_id} not found"}
         city_name = city.name
+        member_count = city_db.query(CityMember).filter(CityMember.city_id == city_id).count()
         city_db.close()
+        if member_count > 0:
+            log_action(admin_id, "delete_city_attempt", None,
+                       f"Admin #{admin_id} force-deleted city #{city_id} '{city_name}' which had {member_count} member(s)")
 
         # 1. Remove city_project_instances and vaults
         cp_db = cp_get_db()

@@ -31,7 +31,7 @@ from admins import (
     get_land_bank_entries, admin_add_to_land_bank, admin_remove_from_land_bank,
     get_chat_rooms_overview, get_chat_room_messages, admin_delete_chat_message,
     ban_player, timeout_player, kick_player, revoke_ban, get_active_ban,
-    post_update, get_p2p_overview, get_admin_logs, log_action,
+    post_update, get_p2p_overview, get_p2p_contract_detail, get_admin_logs, get_player_admin_logs, log_action,
     get_dm_threads_overview, get_dm_thread_messages,
     # District admin
     admin_create_district, admin_delete_district, admin_edit_district_tax,
@@ -50,6 +50,10 @@ from admins import (
     admin_delete_county,
     # Moderator management
     add_moderator, remove_moderator, get_all_moderators,
+    # Market orders
+    admin_get_player_orders, admin_cancel_market_order,
+    # Tutorial
+    admin_set_tutorial_step,
 )
 
 router = APIRouter()
@@ -425,6 +429,33 @@ def _ts(iso_str):
     return iso_str[:16].replace("T", " ")
 
 
+def _time_ago(iso_str: str) -> str:
+    """Return human-readable relative time plus tooltip with exact timestamp."""
+    if not iso_str:
+        return "-"
+    from datetime import datetime, timezone
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        delta = datetime.now(timezone.utc) - dt
+        secs = int(delta.total_seconds())
+        if secs < 60:
+            label = "just now"
+        elif secs < 3600:
+            label = f"{secs // 60}m ago"
+        elif secs < 86400:
+            label = f"{secs // 3600}h ago"
+        elif secs < 86400 * 30:
+            label = f"{secs // 86400}d ago"
+        else:
+            label = _ts(iso_str)
+        exact = _ts(iso_str)
+        return f'<span title="{exact}">{label}</span>'
+    except Exception:
+        return _ts(iso_str)
+
+
 # ==========================
 # DASHBOARD (overview)
 # ==========================
@@ -515,7 +546,7 @@ def admin_players(session_token: Optional[str] = Cookie(None), msg: Optional[str
             online = False
         dot = '<span style="color:#22c55e;">●</span>' if online else '<span style="color:#475569;">○</span>'
 
-        rows += f'<tr><td>{dot} #{p["id"]}</td><td><a href="/admin/player/{p["id"]}">{p["business_name"]}</a> {badges}</td><td style="color:#22c55e;">{fmt_usd(p["cash_balance"], disp, precision=0)}</td><td style="color:#64748b;">{_ts(p["last_login"])}</td></tr>'
+        rows += f'<tr><td>{dot} #{p["id"]}</td><td><a href="/admin/player/{p["id"]}">{p["business_name"]}</a> {badges}</td><td style="color:#22c55e;">{fmt_usd(p["cash_balance"], disp, precision=0)}</td><td style="color:#64748b;">{_time_ago(p["last_login"])}</td></tr>'
 
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">All Players ({len(players)})</h2>
@@ -542,8 +573,8 @@ def admin_player_detail(
     admin, is_full, redirect = _mod_guard(session_token)
     if redirect:
         return redirect
-    # Moderators can only access the moderation tab
-    if not is_full:
+    # Moderators can only access the moderation and linked-accounts tabs
+    if not is_full and tab not in ("moderation", "linked"):
         tab = "moderation"
 
     detail = get_player_detail(pid)
@@ -571,9 +602,9 @@ def admin_player_detail(
 
     # Tab navigation — moderators only see the Moderation tab
     if is_full:
-        tab_list = [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("moderation", "Moderation"), ("linked", "Linked Accounts")]
+        tab_list = [("info", "Info"), ("inventory", "Inventory"), ("land", "Land"), ("districts", "Districts"), ("cities", "City/County"), ("businesses", "Businesses"), ("orders", "Market Orders"), ("moderation", "Moderation"), ("linked", "Linked Accounts")]
     else:
-        tab_list = [("moderation", "Moderation")]
+        tab_list = [("moderation", "Moderation"), ("linked", "Linked Accounts")]
     tabs_html = ""
     for t_id, t_label in tab_list:
         active = ' class="active"' if tab == t_id else ""
@@ -593,9 +624,11 @@ def admin_player_detail(
         tab_body = _player_cities_tab(pid)
     elif tab == "businesses" and is_full:
         tab_body = _player_businesses_tab(pid)
+    elif tab == "orders" and is_full:
+        tab_body = _player_orders_tab(pid)
     elif tab == "moderation":
         tab_body = _player_moderation_tab(pid, detail, is_full_admin=is_full)
-    elif tab == "linked" and is_full:
+    elif tab == "linked":
         tab_body = _player_linked_tab(pid)
 
     body = f"""
@@ -610,6 +643,26 @@ def admin_player_detail(
     {tab_body}
     """
     return HTMLResponse(admin_shell(f"Player #{pid}", body, admin.business_name, "/admin/players"))
+
+
+def _player_audit_trail(pid):
+    logs = get_player_admin_logs(pid, limit=20)
+    if not logs:
+        return ""
+    rows = ""
+    for lg in logs:
+        rows += f'<tr><td style="color:#64748b;">{_ts(lg["created_at"])}</td><td>Admin #{lg["admin_id"]}</td><td style="color:#f59e0b;">{lg["action"]}</td><td style="color:#94a3b8;">{lg["details"] or ""}</td></tr>'
+    return f"""
+    <div class="card">
+        <h3>Admin Action History (last 20)</h3>
+        <div class="table-wrap">
+            <table style="font-size:0.72rem;">
+                <tr><th>Time</th><th>By</th><th>Action</th><th>Details</th></tr>
+                {rows}
+            </table>
+        </div>
+    </div>
+    """
 
 
 def _player_info_tab(pid, detail, disp=None):
@@ -689,6 +742,16 @@ def _player_info_tab(pid, detail, disp=None):
         <div class="detail-row"><span class="label">City</span><span class="value">{detail["city"] or "None"}</span></div>
         <div class="detail-row"><span class="label">Registered</span><span class="value">{_ts(detail["created_at"])}</span></div>
         <div class="detail-row"><span class="label">Last Login</span><span class="value">{_ts(detail["last_login"])}</span></div>
+        <div class="detail-row" style="align-items:center;">
+            <span class="label">Tutorial Step</span>
+            <span class="value" style="display:flex;align-items:center;gap:8px;">
+                <span style="color:#f59e0b;">{detail.get("tutorial_step", 0)} / 11</span>
+                <form method="post" action="/admin/player/{detail['id']}/set-tutorial-step" style="display:flex;gap:4px;align-items:center;">
+                    <input type="number" name="step" min="0" max="12" value="{detail.get('tutorial_step', 0)}" style="width:54px;font-size:0.8rem;">
+                    <button type="submit" class="btn btn-blue" style="font-size:0.7rem;padding:3px 8px;">Set</button>
+                </form>
+            </span>
+        </div>
     </div>
     <div class="card">
         <h3>Currency Balances</h3>
@@ -696,6 +759,7 @@ def _player_info_tab(pid, detail, disp=None):
         {balance_rows}
         {set_any_form}
     </div>
+    {_player_audit_trail(pid)}
     <div class="card">
         <div style="border-top:1px solid #7f1d1d;padding-top:16px;">
           <p style="color:#ef4444;font-size:0.85rem;margin:0 0 10px 0;">⚠️ Delete permanently triggers the estate/death liquidation for this player.</p>
@@ -1020,7 +1084,44 @@ def _player_linked_tab(pid: int) -> str:
     """
 
 
-def _player_moderation_tab(pid, detail, is_full_admin: bool = True):
+def _player_orders_tab(pid):
+    orders = admin_get_player_orders(pid)
+    rows = ""
+    for o in orders:
+        qty_left = o["quantity"] - o["quantity_filled"]
+        price_str = f'${o["price"]:,.4f}' if o["price"] else "Market"
+        rows += f"""<tr>
+            <td>#{o["id"]}</td>
+            <td style="color:{'#22c55e' if o['order_type']=='buy' else '#ef4444'};">{o["order_type"].upper()}</td>
+            <td>{o["item_type"].replace("_"," ").title()}</td>
+            <td>{qty_left:,.4g} / {o["quantity"]:,.4g}</td>
+            <td>{price_str}</td>
+            <td style="color:#64748b;">{_ts(o["created_at"])}</td>
+            <td>
+                <form method="post" action="/admin/player/{pid}/cancel-order"
+                      onsubmit="return confirm('Cancel order #{o["id"]}?');">
+                    <input type="hidden" name="order_id" value="{o["id"]}">
+                    <input type="hidden" name="tab" value="orders">
+                    <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Cancel</button>
+                </form>
+            </td>
+        </tr>"""
+    if not rows:
+        rows = '<tr><td colspan="7" style="color:#64748b;text-align:center;">No open orders.</td></tr>'
+    return f"""
+    <div class="card">
+        <h3>Open Market Orders ({len(orders)})</h3>
+        <div class="table-wrap">
+            <table>
+                <tr><th>ID</th><th>Type</th><th>Item</th><th>Qty Left/Total</th><th>Price</th><th>Placed</th><th>Action</th></tr>
+                {rows}
+            </table>
+        </div>
+    </div>
+    """
+
+
+def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
     ban_rows = ""
     for b in detail.get("bans", []):
         exp = _ts(b["expires_at"]) if b["expires_at"] else "Never"
@@ -1237,6 +1338,28 @@ def post_remove_from_city(pid: int, session_token: Optional[str] = Cookie(None),
     return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
 
 
+@router.post("/admin/player/{pid}/cancel-order")
+def post_cancel_player_order(pid: int, session_token: Optional[str] = Cookie(None), order_id: int = Form(...), tab: str = Form("orders")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_cancel_market_order(admin.id, pid, order_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&msg=Order+%23{order_id}+cancelled", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab={tab}&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/set-tutorial-step")
+def post_set_tutorial_step(pid: int, session_token: Optional[str] = Cookie(None), step: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_set_tutorial_step(admin.id, pid, step)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=info&msg=Tutorial+step+set+to+{step}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=info&err={result['error']}", status_code=303)
+
+
 # ==========================
 # CITIES OVERVIEW
 # ==========================
@@ -1264,18 +1387,23 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
             if any(cc == c["id"] for cc in cn.get("city_ids", [])):
                 county_link = f'<a href="/admin/counties">#{cn["id"]} {cn["name"]}</a>'
                 break
-        _cid   = c["id"]
-        _cname = c["name"]
+        _cid      = c["id"]
+        _cname    = c["name"]
+        _cmembers = c.get("member_count", 0)
+        _cmsg     = (
+            f"WARNING: {_cname} has {_cmembers} member(s). "
+            if _cmembers > 0 else ""
+        ) + f"PERMANENTLY delete city {_cname} and ALL its data? This cannot be undone."
         city_rows += f"""<tr>
             <td>#{_cid}</td>
             <td><a href="/admin/cities/{_cid}">{_cname}</a></td>
             <td>{c.get("mayor_name", "-")}</td>
-            <td>{c.get("member_count", 0)}</td>
+            <td>{_cmembers}</td>
             <td>{county_link or '<span style="color:#64748b;">—</span>'}</td>
             <td style="color:#22c55e;">{fmt_usd(c.get("bank_reserves", 0), disp, precision=0)}</td>
             <td>
                 <form method="post" action="/admin/cities/{_cid}/delete"
-                      onsubmit="return confirm('PERMANENTLY delete city {_cname} and ALL its data? This cannot be undone.');">
+                      onsubmit="return confirm('{_cmsg}');">
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Delete</button>
                 </form>
             </td>
@@ -1283,13 +1411,18 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
 
     county_rows = ""
     for cn in counties:
-        _cnid   = cn["id"]
-        _cnname = cn["name"]
+        _cnid     = cn["id"]
+        _cnname   = cn["name"]
+        _cncities = cn.get("city_count", 0)
+        _cnmsg    = (
+            f"WARNING: {_cnname} contains {_cncities} city/cities. "
+            if _cncities > 0 else ""
+        ) + f"PERMANENTLY delete county {_cnname} and ALL its crypto/data? This cannot be undone."
         county_rows += f"""<tr>
             <td>#{_cnid}</td>
             <td><a href="/admin/counties/{_cnid}">{_cnname}</a></td>
             <td style="font-weight:bold;color:#f59e0b;">{cn.get("crypto_symbol","?")}</td>
-            <td>{cn.get("city_count", 0)}</td>
+            <td>{_cncities}</td>
             <td style="color:#94a3b8;">{cn.get("total_supply", 0):,.0f}</td>
             <td>
                 <form method="post" action="/admin/counties/remove-city" style="display:inline;">
@@ -1298,7 +1431,7 @@ def admin_cities(session_token: Optional[str] = Cookie(None), msg: Optional[str]
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 5px;">Remove City</button>
                 </form>
                 <form method="post" action="/admin/counties/{_cnid}/delete" style="display:inline;margin-left:4px;"
-                      onsubmit="return confirm('PERMANENTLY delete county {_cnname} and ALL its crypto/data? This cannot be undone.');">
+                      onsubmit="return confirm('{_cnmsg}');">
                     <button type="submit" class="btn btn-red" style="font-size:0.6rem;padding:3px 6px;">Delete County</button>
                 </form>
             </td>
@@ -1949,7 +2082,8 @@ def post_update_msg(session_token: Optional[str] = Cookie(None), content: str = 
             saved["avatar"] = cm.avatar_cache.get(player.id)
             asyncio.create_task(cm.broadcast_to_room("updates", saved))
         except Exception:
-            pass
+            import logging
+            logging.getLogger(__name__).exception("Failed to broadcast post_update to WebSocket room")
         return RedirectResponse(url="/admin/updates?msg=Update+posted", status_code=303)
     return RedirectResponse(url="/admin/updates?msg=Failed", status_code=303)
 
@@ -2141,7 +2275,7 @@ def admin_p2p(session_token: Optional[str] = Cookie(None)):
         sc_map = {"active": "#22c55e", "listed": "#38bdf8", "breached": "#ef4444", "completed": "#64748b", "draft": "#94a3b8", "voided": "#64748b"}
         sc = sc_map.get(c["status"], "#94a3b8")
         holder = f'#{c["holder_id"]}' if c["holder_id"] else "-"
-        recent_rows += f'<tr><td>#{c["id"]}</td><td>#{c["creator_id"]}</td><td>{holder}</td><td style="color:{sc};">{c["status"].upper()}</td><td>{c["bid_mode"] or "-"}</td><td style="color:#64748b;">{_ts(c["created_at"])}</td></tr>'
+        recent_rows += f'<tr><td><a href="/admin/p2p/{c["id"]}" style="color:#38bdf8;">#{c["id"]}</a></td><td>#{c["creator_id"]}</td><td>{holder}</td><td style="color:{sc};">{c["status"].upper()}</td><td>{c["bid_mode"] or "-"}</td><td style="color:#64748b;">{_ts(c["created_at"])}</td></tr>'
 
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">P2P Contracts</h2>
@@ -2157,6 +2291,79 @@ def admin_p2p(session_token: Optional[str] = Cookie(None)):
     </div>
     """
     return HTMLResponse(admin_shell("P2P", body, player.business_name, "/admin/p2p"))
+
+
+@router.get("/admin/p2p/{contract_id}", response_class=HTMLResponse)
+def admin_p2p_detail(contract_id: int, session_token: Optional[str] = Cookie(None)):
+    player, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    detail = get_p2p_contract_detail(contract_id)
+    if not detail:
+        return HTMLResponse(admin_shell("P2P", '<p style="color:#ef4444;">Contract not found.</p>', player.business_name, "/admin/p2p"))
+    if "error" in detail:
+        return HTMLResponse(admin_shell("P2P", f'<p style="color:#ef4444;">Error: {detail["error"]}</p>', player.business_name, "/admin/p2p"))
+
+    sc_map = {"active": "#22c55e", "listed": "#38bdf8", "breached": "#ef4444", "completed": "#64748b", "draft": "#94a3b8", "voided": "#64748b"}
+    sc = sc_map.get(detail["status"], "#94a3b8")
+
+    item_rows = "".join(
+        f'<tr><td>{i["item_type"].replace("_"," ").title()}</td><td>{i["quantity_per_delivery"]:,.4g}</td></tr>'
+        for i in detail["items"]
+    )
+    bid_rows = "".join(
+        f'<tr><td>#{b["bidder_id"]}</td><td>{fmt_usd(b["bid_amount"], disp, precision=4)}</td><td style="color:#64748b;">{b["status"]}</td><td style="color:#64748b;">{_ts(b["created_at"])}</td></tr>'
+        for b in detail["bids"]
+    )
+    delivery_rows = "".join(
+        f'<tr><td>#{d["delivery_number"]}</td><td style="color:#64748b;">{_ts(d["delivered_at"])}</td></tr>'
+        for d in detail["deliveries"]
+    )
+
+    breach_html = ""
+    if detail.get("breached_at"):
+        breach_html = f'<div class="flash flash-error" style="margin-bottom:10px;">Breached {_ts(detail["breached_at"])} by Player #{detail.get("breached_by","?")} — {detail.get("breach_reason") or "no reason"}</div>'
+
+    body = f"""
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <a href="/admin/p2p" style="color:#64748b;font-size:0.75rem;">← P2P</a>
+        <span style="font-size:0.9rem;font-weight:bold;">Contract #{contract_id}</span>
+        <span style="color:{sc};font-size:0.8rem;font-weight:bold;">{detail["status"].upper()}</span>
+    </div>
+    {breach_html}
+    <div class="card">
+        <h3>Details</h3>
+        <div class="detail-row"><span class="label">Creator</span><span class="value"><a href="/admin/player/{detail["creator_id"]}" style="color:#38bdf8;">#{detail["creator_id"]}</a></span></div>
+        <div class="detail-row"><span class="label">Lister</span><span class="value">{f'<a href="/admin/player/{detail["lister_id"]}" style="color:#38bdf8;">#{detail["lister_id"]}</a>' if detail["lister_id"] else "-"}</span></div>
+        <div class="detail-row"><span class="label">Holder</span><span class="value">{f'<a href="/admin/player/{detail["holder_id"]}" style="color:#38bdf8;">#{detail["holder_id"]}</a>' if detail["holder_id"] else "-"}</span></div>
+        <div class="detail-row"><span class="label">Buyer</span><span class="value">{f'<a href="/admin/player/{detail["buyer_id"]}" style="color:#38bdf8;">#{detail["buyer_id"]}</a>' if detail["buyer_id"] else "-"}</span></div>
+        <div class="detail-row"><span class="label">Mode</span><span class="value">{detail["contract_mode"]} / {detail.get("bid_mode") or "—"}</span></div>
+        <div class="detail-row"><span class="label">Interval</span><span class="value">{detail["delivery_interval"]}</span></div>
+        <div class="detail-row"><span class="label">Length</span><span class="value">{detail["contract_length"]}</span></div>
+        <div class="detail-row"><span class="label">Deliveries</span><span class="value">{detail["deliveries_completed"]} / {detail["total_deliveries"]}</span></div>
+        <div class="detail-row"><span class="label">Price/Delivery</span><span class="value">{fmt_usd(detail["price_per_delivery"] or 0, disp, precision=4)}</span></div>
+        <div class="detail-row"><span class="label">Max Price</span><span class="value">{fmt_usd(detail["max_price_per_delivery"] or 0, disp, precision=4) if detail["max_price_per_delivery"] else "—"}</span></div>
+        <div class="detail-row"><span class="label">Created</span><span class="value">{_ts(detail["created_at"])}</span></div>
+        <div class="detail-row"><span class="label">Activated</span><span class="value">{_ts(detail["activated_at"]) if detail["activated_at"] else "—"}</span></div>
+        <div class="detail-row"><span class="label">Completed</span><span class="value">{_ts(detail["completed_at"]) if detail["completed_at"] else "—"}</span></div>
+    </div>
+    <div class="card">
+        <h3>Items per Delivery</h3>
+        {f'<div class="table-wrap"><table><tr><th>Item</th><th>Qty</th></tr>{item_rows}</table></div>' if item_rows else '<p style="color:#64748b;font-size:0.75rem;">No items recorded.</p>'}
+    </div>
+    <div class="card">
+        <h3>Bids ({len(detail["bids"])})</h3>
+        {f'<div class="table-wrap"><table><tr><th>Bidder</th><th>Amount</th><th>Status</th><th>Placed</th></tr>{bid_rows}</table></div>' if bid_rows else '<p style="color:#64748b;font-size:0.75rem;">No bids.</p>'}
+    </div>
+    <div class="card">
+        <h3>Recent Deliveries ({len(detail["deliveries"])})</h3>
+        {f'<div class="table-wrap"><table><tr><th>#</th><th>Delivered</th></tr>{delivery_rows}</table></div>' if delivery_rows else '<p style="color:#64748b;font-size:0.75rem;">No deliveries yet.</p>'}
+    </div>
+    """
+    return HTMLResponse(admin_shell(f"P2P Contract #{contract_id}", body, player.business_name, "/admin/p2p"))
 
 
 # ==========================
@@ -2380,43 +2587,26 @@ def post_remove_moderator(session_token: Optional[str] = Cookie(None), player_id
 # ETF BANK MANAGEMENT
 # ==========================
 
-_ETF_CONFIGS = [
-    {
-        "bank_id": "apple_seeds_etf",
-        "name": "Apple Seeds ETF",
-        "share_item_type": "apple_seeds_etf_shares",
-        "bank_player_id": -3,
-        "ipo_shares": 10_000_000,
-    },
-    {
-        "bank_id": "energy_etf",
-        "name": "Wadsworth Energy ETF",
-        "share_item_type": "energy_etf_shares",
-        "bank_player_id": -4,
-        "ipo_shares": 10_000_000,
-    },
-    {
-        "bank_id": "city_nav_etf",
-        "name": "City NAV ETF",
-        "share_item_type": "city_nav_etf_shares",
-        "bank_player_id": -6,
-        "ipo_shares": 420_000_000_000,
-    },
-    {
-        "bank_id": "land_bank",
-        "name": "Land Bank",
-        "share_item_type": "land_bank_shares",
-        "bank_player_id": -2,
-        "ipo_shares": 1_000_000_000_000,
-    },
-    {
-        "bank_id": "wbc50_index_fund",
-        "name": "WBC-50 Index Fund",
-        "share_item_type": "wbc50_index_fund_shares",
-        "bank_player_id": -7,
-        "ipo_shares": 500_000_000,
-    },
-]
+def _get_etf_configs() -> list:
+    """Build ETF config list dynamically from loaded bank modules."""
+    try:
+        import banks
+        configs = []
+        for bank_id, module in banks.BANK_MODULES.items():
+            share_item = getattr(module, "SHARE_ITEM_TYPE", None)
+            bank_player_id = getattr(module, "BANK_PLAYER_ID", None)
+            ipo_shares = getattr(module, "IPO_SHARES", None)
+            if share_item and bank_player_id is not None and ipo_shares:
+                configs.append({
+                    "bank_id": bank_id,
+                    "name": getattr(module, "BANK_NAME", bank_id),
+                    "share_item_type": share_item,
+                    "bank_player_id": bank_player_id,
+                    "ipo_shares": ipo_shares,
+                })
+        return sorted(configs, key=lambda c: c["name"])
+    except Exception:
+        return []
 
 
 def _audit_etf(cfg: dict) -> dict:
@@ -2504,7 +2694,7 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
         alert = f'<div style="background:#7f1d1d;color:#fca5a5;padding:8px 12px;border-radius:4px;margin-bottom:12px;font-size:0.8rem;">{err}</div>'
 
     cards_html = ""
-    for cfg in _ETF_CONFIGS:
+    for cfg in _get_etf_configs():
         try:
             a = _audit_etf(cfg)
         except Exception as ex:
