@@ -213,9 +213,119 @@ def get_player_admin_logs(player_id: int, limit: int = 30) -> list:
     return result
 
 
-def get_admin_logs(limit: int = 50) -> list:
+def get_economy_stats() -> dict:
+    """Aggregate real-time economy metrics for the admin dashboard health panel."""
+    stats = {}
+
+    # Active players by last_login window
+    try:
+        players = get_all_players()
+        now = datetime.utcnow()
+        cutoff_24h = now - timedelta(hours=24)
+        cutoff_7d  = now - timedelta(days=7)
+        active_24h = active_7d = 0
+        for p in players:
+            ll = p.get("last_login")
+            if ll:
+                try:
+                    dt = datetime.fromisoformat(ll.replace("Z", "")).replace(tzinfo=None)
+                    if dt >= cutoff_24h:
+                        active_24h += 1
+                    if dt >= cutoff_7d:
+                        active_7d += 1
+                except Exception:
+                    pass
+        stats["active_24h"] = active_24h
+        stats["active_7d"]  = active_7d
+    except Exception:
+        stats["active_24h"] = stats["active_7d"] = 0
+
+    # Market volume and order count
+    try:
+        from market import get_market_stats
+        ms = get_market_stats()
+        stats["market_volume_24h"] = ms.get("volume_24h", 0)
+        stats["active_orders"]     = ms.get("active_orders", 0)
+    except Exception:
+        stats["market_volume_24h"] = stats["active_orders"] = 0
+
+    # Active businesses
+    try:
+        from business import Business, get_db as biz_get_db
+        db = biz_get_db()
+        stats["active_businesses"] = db.query(Business).filter(Business.is_active == True).count()
+        db.close()
+    except Exception:
+        stats["active_businesses"] = 0
+
+    # Total items in circulation across all inventories
+    try:
+        import inventory
+        from sqlalchemy import func
+        db = inventory.get_db()
+        result = db.query(func.sum(inventory.InventoryItem.quantity)).scalar()
+        stats["total_items"] = int(result or 0)
+        db.close()
+    except Exception:
+        stats["total_items"] = 0
+
+    return stats
+
+
+def admin_ban_all_linked(admin_id: int, player_id: int, reason: str = "") -> dict:
+    """Ban every IP-linked account of a player in one sweep."""
+    try:
+        accounts = get_related_accounts(player_id)
+        banned, skipped = [], []
+        for a in accounts:
+            if a["is_banned"]:
+                skipped.append(a["player_id"])
+                continue
+            r = ban_player(admin_id, a["player_id"],
+                           reason or f"Alt account — linked to #{player_id} via shared IP")
+            if r.get("ok"):
+                banned.append(a["player_id"])
+        log_action(admin_id, "ban_all_linked", player_id,
+                   f"Banned {len(banned)} linked account(s) {banned}; {len(skipped)} already banned")
+        return {"ok": True, "banned": banned, "skipped": skipped}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def get_player_push_subscriptions(player_id: int) -> list:
+    """Get all push notification subscriptions registered for a player."""
+    try:
+        from auth import PushSubscription, get_db as auth_get_db
+        db = auth_get_db()
+        subs = (db.query(PushSubscription)
+                  .filter(PushSubscription.player_id == player_id)
+                  .order_by(PushSubscription.created_at.desc())
+                  .all())
+        result = [
+            {
+                "id": s.id,
+                "endpoint_tail": ("…" + s.endpoint[-45:]) if s.endpoint else "?",
+                "created_at": s.created_at.isoformat() if s.created_at else None,
+            }
+            for s in subs
+        ]
+        db.close()
+        return result
+    except Exception:
+        return []
+
+
+def get_admin_logs(limit: int = 100, action_filter: str = "", admin_id_filter: int = 0, days: int = 0) -> list:
     db = get_db()
-    logs = db.query(AdminLog).order_by(AdminLog.created_at.desc()).limit(limit).all()
+    q = db.query(AdminLog).order_by(AdminLog.created_at.desc())
+    if action_filter:
+        q = q.filter(AdminLog.action.ilike(f"%{action_filter}%"))
+    if admin_id_filter:
+        q = q.filter(AdminLog.admin_id == admin_id_filter)
+    if days > 0:
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        q = q.filter(AdminLog.created_at >= cutoff)
+    logs = q.limit(limit).all()
     result = []
     for log in logs:
         result.append({

@@ -31,7 +31,12 @@ from admins import (
     get_land_bank_entries, admin_add_to_land_bank, admin_remove_from_land_bank,
     get_chat_rooms_overview, get_chat_room_messages, admin_delete_chat_message,
     ban_player, timeout_player, kick_player, revoke_ban, get_active_ban,
-    post_update, get_p2p_overview, get_p2p_contract_detail, get_admin_logs, get_player_admin_logs, log_action,
+    post_update, get_p2p_overview, get_p2p_contract_detail,
+    get_admin_logs, get_player_admin_logs, log_action,
+    get_economy_stats,
+    admin_ban_all_linked,
+    get_player_push_subscriptions,
+    chat_mute_player, lift_chat_mute, get_active_chat_mute,
     get_dm_threads_overview, get_dm_thread_messages,
     # District admin
     admin_create_district, admin_delete_district, admin_edit_district_tax,
@@ -480,6 +485,8 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     except Exception:
         online_count = 0
 
+    econ = get_economy_stats()
+
     logs = get_admin_logs(limit=8)
     log_rows = ""
     for log in logs:
@@ -489,9 +496,21 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     body = f"""
     <div class="stat-grid">
         <div class="stat-box"><div class="stat-value">{total_players}</div><div class="stat-label">Players</div></div>
-        <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{online_count}</div><div class="stat-label">Online</div></div>
-        <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{fmt_usd(total_cash, disp, precision=0)}</div><div class="stat-label">Total Cash</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{online_count}</div><div class="stat-label">Online Now</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#22c55e;">{econ["active_24h"]}</div><div class="stat-label">Active 24h</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#38bdf8;">{econ["active_7d"]}</div><div class="stat-label">Active 7d</div></div>
         <div class="stat-box"><div class="stat-value" style="color:#ef4444;">{banned_count}</div><div class="stat-label">Banned</div></div>
+        <div class="stat-box"><div class="stat-value" style="color:#f59e0b;">{timed_out_count}</div><div class="stat-label">Timed Out</div></div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+        <h3 style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Economic Health</h3>
+        <div class="stat-grid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr));">
+            <div class="stat-box"><div class="stat-value" style="color:#22c55e;font-size:1rem;">{fmt_usd(total_cash, disp, precision=0)}</div><div class="stat-label">Cash in Economy</div></div>
+            <div class="stat-box"><div class="stat-value" style="color:#38bdf8;font-size:1rem;">{fmt_usd(econ["market_volume_24h"], disp, precision=0)}</div><div class="stat-label">Market Volume 24h</div></div>
+            <div class="stat-box"><div class="stat-value" style="font-size:1rem;">{econ["active_orders"]:,}</div><div class="stat-label">Open Orders</div></div>
+            <div class="stat-box"><div class="stat-value" style="color:#a78bfa;font-size:1rem;">{econ["active_businesses"]:,}</div><div class="stat-label">Active Businesses</div></div>
+            <div class="stat-box"><div class="stat-value" style="color:#f59e0b;font-size:1rem;">{econ["total_items"]:,}</div><div class="stat-label">Items in Circulation</div></div>
+        </div>
     </div>
 
     <div class="link-grid" style="margin-bottom: 12px;">
@@ -645,6 +664,27 @@ def admin_player_detail(
     return HTMLResponse(admin_shell(f"Player #{pid}", body, admin.business_name, "/admin/players"))
 
 
+def _player_push_panel(pid):
+    subs = get_player_push_subscriptions(pid)
+    if not subs:
+        status_html = '<span style="color:#64748b;">No push subscriptions — player has not enabled push notifications on any device.</span>'
+    else:
+        rows = "".join(
+            f'<div style="font-size:0.72rem;padding:4px 0;border-bottom:1px solid #1e293b;color:#94a3b8;font-family:monospace;">'
+            f'<span style="color:#38bdf8;">#{s["id"]}</span>  '
+            f'<span style="color:#64748b;">{_ts(s["created_at"])}</span>  '
+            f'{s["endpoint_tail"]}</div>'
+            for s in subs
+        )
+        status_html = f'<p style="color:#22c55e;font-size:0.75rem;margin-bottom:6px;">✓ {len(subs)} active subscription(s)</p>{rows}'
+    return f"""
+    <div class="card">
+        <h3>Push Notification Subscriptions</h3>
+        {status_html}
+    </div>
+    """
+
+
 def _player_audit_trail(pid):
     logs = get_player_admin_logs(pid, limit=20)
     if not logs:
@@ -759,6 +799,7 @@ def _player_info_tab(pid, detail, disp=None):
         {balance_rows}
         {set_any_form}
     </div>
+    {_player_push_panel(pid)}
     {_player_audit_trail(pid)}
     <div class="card">
         <div style="border-top:1px solid #7f1d1d;padding-top:16px;">
@@ -1066,6 +1107,16 @@ def _player_linked_tab(pid: int) -> str:
         '</p>'
     )
 
+    unbanned_count = sum(1 for a in accounts if not a["is_banned"])
+    ban_all_btn = ""
+    if unbanned_count:
+        ban_all_btn = f"""
+        <form method="post" action="/admin/player/{pid}/ban-all-linked" style="margin-top:10px;"
+              onsubmit="return confirm('Ban ALL {unbanned_count} unbanned linked account(s)? This cannot be undone.');">
+            <input type="text" name="reason" placeholder="Reason (optional)" style="width:200px;font-size:0.75rem;margin-right:6px;">
+            <button type="submit" class="btn btn-red" style="font-size:0.7rem;">Ban All Linked ({unbanned_count})</button>
+        </form>"""
+
     return f"""
     <div class="card">
         <h3>Linked Accounts <span style="font-size:0.7rem;color:#64748b;">({len(accounts)} found)</span></h3>
@@ -1080,6 +1131,7 @@ def _player_linked_tab(pid: int) -> str:
             </table>
         </div>
         {legend}
+        {ban_all_btn}
     </div>
     """
 
@@ -1143,6 +1195,29 @@ def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
         </form>
     </div>"""
 
+    # Chat mute panel
+    active_mute = get_active_chat_mute(pid)
+    if active_mute:
+        mute_exp = f"until {_ts(active_mute['expires_at'])}" if active_mute.get("expires_at") else "permanent"
+        mute_status = f'<p style="color:#f59e0b;font-size:0.8rem;margin-bottom:8px;">Muted ({mute_exp}) — {active_mute.get("reason") or "no reason"}</p>'
+        mute_action = f'<form method="post" action="/admin/player/{pid}/lift-mute"><button type="submit" class="btn btn-green" style="font-size:0.75rem;">Lift Mute</button></form>'
+    else:
+        mute_status = '<p style="color:#64748b;font-size:0.8rem;margin-bottom:8px;">Not currently muted.</p>'
+        mute_action = f"""
+        <form method="post" action="/admin/player/{pid}/chat-mute">
+            <div class="form-row">
+                <div style="width:90px;flex:0 0 90px;"><div class="form-label">Minutes (0=perm)</div><input type="number" name="minutes" min="0" value="60"></div>
+                <div style="flex:1;"><div class="form-label">Reason</div><input type="text" name="reason" placeholder="Optional"></div>
+                <button type="submit" class="btn btn-yellow" style="font-size:0.75rem;">Mute</button>
+            </div>
+        </form>"""
+    mute_card = f"""
+    <div class="card">
+        <h3>Chat Mute</h3>
+        {mute_status}
+        {mute_action}
+    </div>"""
+
     return f"""
     <div class="card">
         <h3>Kick (disconnect now)</h3>
@@ -1160,6 +1235,7 @@ def _player_moderation_tab(pid, detail, is_full_admin: bool = False):
             </div>
         </form>
     </div>
+    {mute_card}
     {ban_form}
     <div class="card">
         <h3>History</h3>
@@ -1358,6 +1434,40 @@ def post_set_tutorial_step(pid: int, session_token: Optional[str] = Cookie(None)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=info&msg=Tutorial+step+set+to+{step}", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab=info&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/chat-mute")
+def post_chat_mute(pid: int, session_token: Optional[str] = Cookie(None), minutes: int = Form(0), reason: str = Form("")):
+    admin, redirect = _mod_guard(session_token)
+    if redirect:
+        return redirect
+    result = chat_mute_player(admin.id, pid, minutes, reason)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Player+muted", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err={result.get('error', 'error')}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/lift-mute")
+def post_lift_mute(pid: int, session_token: Optional[str] = Cookie(None)):
+    admin, redirect = _mod_guard(session_token)
+    if redirect:
+        return redirect
+    result = lift_chat_mute(admin.id, pid)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&msg=Mute+lifted", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=moderation&err={result.get('error', 'error')}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/ban-all-linked")
+def post_ban_all_linked(pid: int, session_token: Optional[str] = Cookie(None), reason: str = Form("")):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_ban_all_linked(admin.id, pid, reason)
+    if result["ok"]:
+        banned_count = len(result.get("banned", []))
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=linked&msg=Banned+{banned_count}+account(s)", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=linked&err={result.get('error', 'error')}", status_code=303)
 
 
 # ==========================
@@ -2458,25 +2568,71 @@ def post_landbank_remove(session_token: Optional[str] = Cookie(None), land_plot_
 # ==========================
 
 @router.get("/admin/logs", response_class=HTMLResponse)
-def admin_logs(session_token: Optional[str] = Cookie(None)):
+def admin_logs(
+    session_token: Optional[str] = Cookie(None),
+    action: Optional[str] = Query(""),
+    admin_id: Optional[int] = Query(0),
+    days: Optional[int] = Query(0),
+):
     player, redirect = _guard(session_token)
     if redirect:
         return redirect
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
-    logs = get_admin_logs(limit=100)
+    logs = get_admin_logs(limit=200, action_filter=action or "", admin_id_filter=admin_id or 0, days=days or 0)
+    ac_map = {
+        "ban": "#ef4444", "ban_all_linked": "#ef4444",
+        "kick": "#f59e0b", "timeout": "#f59e0b",
+        "revoke_ban": "#22c55e",
+        "edit_balance": "#38bdf8", "edit_currency_balance": "#38bdf8",
+        "set_tutorial_step": "#38bdf8",
+        "post_update": "#a78bfa",
+        "add_item": "#22c55e", "remove_item": "#ef4444",
+        "create_land": "#22c55e", "delete_land": "#ef4444",
+        "add_land_bank": "#22c55e", "remove_land_bank": "#ef4444",
+        "cancel_market_order": "#f59e0b",
+        "delete_city": "#ef4444", "delete_county": "#ef4444",
+    }
     rows = ""
     for log in logs:
         target = f'<a href="/admin/player/{log["target_player_id"]}">#{log["target_player_id"]}</a>' if log["target_player_id"] else "-"
-        ac_map = {"ban": "#ef4444", "kick": "#f59e0b", "timeout": "#f59e0b", "revoke_ban": "#22c55e", "edit_balance": "#38bdf8", "post_update": "#a78bfa", "add_item": "#22c55e", "remove_item": "#ef4444", "create_land": "#22c55e", "delete_land": "#ef4444", "add_land_bank": "#22c55e", "remove_land_bank": "#ef4444"}
         ac = ac_map.get(log["action"], "#94a3b8")
-        rows += f'<tr><td style="color:#64748b;">{_ts(log["created_at"])}</td><td>#{log["admin_id"]}</td><td style="color:{ac};font-weight:bold;">{log["action"].upper()}</td><td>{target}</td><td style="color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{log["details"]}</td></tr>'
+        rows += f'<tr><td style="color:#64748b;white-space:nowrap;">{_ts(log["created_at"])}</td><td><a href="/admin/player/{log["admin_id"]}">#{log["admin_id"]}</a></td><td style="color:{ac};font-weight:bold;">{log["action"]}</td><td>{target}</td><td style="color:#94a3b8;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{log["details"]}">{log["details"]}</td></tr>'
+
+    active_filters = []
+    if action:
+        active_filters.append(f'action contains "{action}"')
+    if admin_id:
+        active_filters.append(f"admin #{admin_id}")
+    if days:
+        active_filters.append(f"last {days} day(s)")
+    filter_summary = f'<span style="color:#f59e0b;font-size:0.75rem;">Filters: {" · ".join(active_filters)}</span>' if active_filters else ""
 
     body = f"""
     <h2 style="font-size:0.9rem;margin-bottom:10px;">Audit Log</h2>
+    <div class="card" style="margin-bottom:10px;">
+        <form method="get" action="/admin/logs" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            <div>
+                <div class="form-label">Action contains</div>
+                <input type="text" name="action" value="{action or ''}" placeholder="ban, edit, item…" style="font-size:0.8rem;width:140px;">
+            </div>
+            <div>
+                <div class="form-label">Admin ID</div>
+                <input type="number" name="admin_id" value="{admin_id or ''}" placeholder="Any" style="font-size:0.8rem;width:80px;">
+            </div>
+            <div>
+                <div class="form-label">Last N days</div>
+                <input type="number" name="days" value="{days or ''}" placeholder="All" min="1" style="font-size:0.8rem;width:70px;">
+            </div>
+            <button type="submit" class="btn btn-blue" style="font-size:0.8rem;">Filter</button>
+            <a href="/admin/logs" class="btn" style="font-size:0.8rem;background:#1e293b;color:#94a3b8;border:1px solid #334155;">Clear</a>
+        </form>
+    </div>
+    {filter_summary}
     <div class="card"><div class="table-wrap">
-        {f'<table><tr><th>Time</th><th>Admin</th><th>Action</th><th>Target</th><th>Details</th></tr>{rows}</table>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No actions recorded.</p>'}
+        {f'<table><tr><th>Time</th><th>Admin</th><th>Action</th><th>Target</th><th>Details</th></tr>{rows}</table>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No matching actions.</p>'}
+        <p style="color:#475569;font-size:0.7rem;margin-top:8px;">Showing up to 200 results.</p>
     </div></div>
     """
     return HTMLResponse(admin_shell("Logs", body, player.business_name, "/admin/logs"))
