@@ -61,6 +61,11 @@ sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/GlobalChatWidget.java" > "${JAV
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/TradeChatWidget.java"  > "${JAVA_DIR}/TradeChatWidget.java"
 echo "  Copied ChatWidgetBase, GlobalChatWidget, TradeChatWidget → ${JAVA_DIR}/"
 
+# Bond yields and Forex rate widgets
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/BondsWidget.java" > "${JAVA_DIR}/BondsWidget.java"
+sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/ForexWidget.java" > "${JAVA_DIR}/ForexWidget.java"
+echo "  Copied BondsWidget, ForexWidget → ${JAVA_DIR}/"
+
 # Custom Application subclass — pre-seeds notification channels with our
 # sound at startup before Chrome/TWA can create them with the system default.
 sed "s/PACKAGE_NAME/${PACKAGE}/g" "${WIDGET_DIR}/WadsworthApplication.java" \
@@ -91,10 +96,14 @@ mkdir -p app/src/main/res/raw
 cp "${WIDGET_DIR}/res/layout/widget_layout.xml"           app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/layout/widget_chat_layout.xml"      app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/layout/widget_wbc_layout.xml"       app/src/main/res/layout/
+cp "${WIDGET_DIR}/res/layout/widget_bonds_layout.xml"     app/src/main/res/layout/
+cp "${WIDGET_DIR}/res/layout/widget_forex_layout.xml"     app/src/main/res/layout/
 cp "${WIDGET_DIR}/res/xml/wadsworth_widget_info.xml"      app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/global_chat_widget_info.xml"    app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/trade_chat_widget_info.xml"     app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/xml/wbc_widget_info.xml"            app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/xml/bonds_widget_info.xml"          app/src/main/res/xml/
+cp "${WIDGET_DIR}/res/xml/forex_widget_info.xml"          app/src/main/res/xml/
 cp "${WIDGET_DIR}/res/drawable/widget_background.xml"     app/src/main/res/drawable/
 echo "  Copied widget layout, xml, drawable resources"
 
@@ -212,6 +221,26 @@ else
     echo "  Injected TradeChatWidget receiver into AndroidManifest.xml"
 fi
 
+# 7. Inject BondsWidget receiver
+BONDS_BLOCK="        <receiver android:name=\"${PACKAGE}.BondsWidget\" android:label=\"Bond Yields\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.BONDS_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/bonds_widget_info\"/></receiver>"
+
+if grep -q "BondsWidget" "$MANIFEST"; then
+    echo "  BondsWidget already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${BONDS_BLOCK}\n    </application>|" "$MANIFEST"
+    echo "  Injected BondsWidget receiver into AndroidManifest.xml"
+fi
+
+# 8. Inject ForexWidget receiver
+FOREX_BLOCK="        <receiver android:name=\"${PACKAGE}.ForexWidget\" android:label=\"Forex Rates\" android:exported=\"true\"><intent-filter><action android:name=\"android.appwidget.action.APPWIDGET_UPDATE\"/><action android:name=\"${PACKAGE}.FOREX_REFRESH\"/></intent-filter><meta-data android:name=\"android.appwidget.provider\" android:resource=\"@xml/forex_widget_info\"/></receiver>"
+
+if grep -q "ForexWidget" "$MANIFEST"; then
+    echo "  ForexWidget already in AndroidManifest.xml — skipping"
+else
+    sed -i "s|</application>|${FOREX_BLOCK}\n    </application>|" "$MANIFEST"
+    echo "  Injected ForexWidget receiver into AndroidManifest.xml"
+fi
+
 # ProGuard/R8 keep rules
 PROGUARD_RULES="app/proguard-rules.pro"
 if grep -q "WadsworthWidget" "$PROGUARD_RULES" 2>/dev/null; then
@@ -227,6 +256,8 @@ else
 -keep class PACKAGE_PLACEHOLDER.ChatWidgetBase { *; }
 -keep class PACKAGE_PLACEHOLDER.GlobalChatWidget { *; }
 -keep class PACKAGE_PLACEHOLDER.TradeChatWidget { *; }
+-keep class PACKAGE_PLACEHOLDER.BondsWidget { *; }
+-keep class PACKAGE_PLACEHOLDER.ForexWidget { *; }
 EOF
     sed -i "s/PACKAGE_PLACEHOLDER/${PACKAGE}/g" "$PROGUARD_RULES"
     echo "  Added ProGuard keep rules"
