@@ -15,6 +15,7 @@ android/wadsworth-signed.aab
 # Runtime state files
 tick_state.txt
 widget_devices.json
+Task
 
 # Keep backup SQL files tracked
 !backups/*.sql
