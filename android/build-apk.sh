@@ -37,6 +37,15 @@ if ! which npm &>/dev/null; then
 fi
 echo "  npm $(npm --version), node $(node --version)"
 
+# Check git identity — must be set before the build so the post-build commit works
+if [ -z "$(git config --global user.email 2>/dev/null)" ]; then
+    echo ""
+    echo "ERROR: git identity not configured. Run:"
+    echo "  git config --global user.email \"you@example.com\""
+    echo "  git config --global user.name  \"Your Name\""
+    exit 1
+fi
+
 echo "=== Step 1: Install Bubblewrap CLI ==="
 npm config set prefix "$HOME/.npm-global"
 export PATH="$HOME/.npm-global/bin:$PATH"
