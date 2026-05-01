@@ -25,7 +25,8 @@ VERSION_NAME="1.0"
 WIDGET_DIR="$(cd "$(dirname "$0")/widget" && pwd)"
 
 echo "=== Step 1: Install Bubblewrap CLI ==="
-npm install -g @bubblewrap/cli 2>/dev/null || true
+npm install -g @bubblewrap/cli
+export PATH="$(npm root -g)/../bin:$PATH"
 which bubblewrap || { echo "bubblewrap not found — install failed"; exit 1; }
 
 echo "=== Step 2: Generate TWA project ==="
