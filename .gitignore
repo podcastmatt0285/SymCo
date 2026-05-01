@@ -5,3 +5,7 @@ __pycache__/
 .env
 .vapid_keys.json
 venv/
+
+# Keep backup SQL files tracked
+!backups/*.sql
+!backups/.gitkeep
