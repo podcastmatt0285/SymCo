@@ -135,6 +135,17 @@ SDK_DIR="${ANDROID_HOME:-$HOME/.bubblewrap/android_sdk}"
 echo "sdk.dir=${SDK_DIR}" > local.properties
 echo "  Set sdk.dir=${SDK_DIR}"
 
+# Accept all Android SDK licenses non-interactively.
+# sdkmanager may live in cmdline-tools/2.1/bin (new layout) or tools/bin (old layout).
+SDKMANAGER="${SDK_DIR}/cmdline-tools/2.1/bin/sdkmanager"
+[ -f "$SDKMANAGER" ] || SDKMANAGER="${SDK_DIR}/tools/bin/sdkmanager"
+if [ -f "$SDKMANAGER" ]; then
+    yes 2>/dev/null | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+    echo "  Android SDK licenses accepted"
+else
+    echo "  WARNING: sdkmanager not found at ${SDK_DIR} — licenses may block build"
+fi
+
 # Gradle's Groovy DSL cannot compile on Java 22+. Point it at Java 17 if needed.
 _JV=$(java -version 2>&1 | grep -oE '"[0-9]+' | grep -oE '[0-9]+' | head -1)
 if [ "${_JV:-0}" -gt 21 ]; then
