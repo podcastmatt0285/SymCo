@@ -7,6 +7,15 @@ __pycache__/
 venv/
 .venv/
 
+# Android build output — regenerated from scratch on every build
+android/twa-project/
+android/wadsworth-signed.apk
+android/wadsworth-signed.aab
+
+# Runtime state files
+tick_state.txt
+widget_devices.json
+
 # Keep backup SQL files tracked
 !backups/*.sql
 !backups/.gitkeep
