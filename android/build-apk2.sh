@@ -24,6 +24,19 @@ VERSION_NAME="1.0"
 
 WIDGET_DIR="$(cd "$(dirname "$0")/widget" && pwd)"
 
+echo "=== Step 0: Check system dependencies ==="
+if ! which java &>/dev/null; then
+    echo "  Java not found — installing openjdk-17-jdk..."
+    sudo apt-get update -qq && sudo apt-get install -y openjdk-17-jdk
+fi
+java -version 2>&1 | head -1
+
+if ! which npm &>/dev/null; then
+    echo "  Node.js/npm not found — installing..."
+    sudo apt-get update -qq && sudo apt-get install -y nodejs npm
+fi
+echo "  npm $(npm --version), node $(node --version)"
+
 echo "=== Step 1: Install Bubblewrap CLI ==="
 npm config set prefix "$HOME/.npm-global"
 export PATH="$HOME/.npm-global/bin:$PATH"
