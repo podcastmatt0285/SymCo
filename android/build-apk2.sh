@@ -135,16 +135,18 @@ SDK_DIR="${ANDROID_HOME:-$HOME/.bubblewrap/android_sdk}"
 echo "sdk.dir=${SDK_DIR}" > local.properties
 echo "  Set sdk.dir=${SDK_DIR}"
 
-# Accept all Android SDK licenses non-interactively.
-# sdkmanager may live in cmdline-tools/2.1/bin (new layout) or tools/bin (old layout).
-SDKMANAGER="${SDK_DIR}/cmdline-tools/2.1/bin/sdkmanager"
-[ -f "$SDKMANAGER" ] || SDKMANAGER="${SDK_DIR}/tools/bin/sdkmanager"
-if [ -f "$SDKMANAGER" ]; then
-    yes 2>/dev/null | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-    echo "  Android SDK licenses accepted"
-else
-    echo "  WARNING: sdkmanager not found at ${SDK_DIR} — licenses may block build"
-fi
+# Accept all Android SDK licenses by writing known hash files directly.
+# This is the standard headless/CI approach — sdkmanager --licenses is interactive.
+mkdir -p "${SDK_DIR}/licenses"
+printf '\n8933bad161af4178b1185d1a37fbf41ea5269c55\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee' \
+    > "${SDK_DIR}/licenses/android-sdk-license"
+printf '\n84831b9409646a918e30573bab4c9c91346d8abd' \
+    > "${SDK_DIR}/licenses/android-sdk-preview-license"
+printf '\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a' \
+    > "${SDK_DIR}/licenses/google-gdk-license"
+printf '\n859f317696f67ef3d7f30a50a5560e7834b43903' \
+    > "${SDK_DIR}/licenses/android-sdk-arm-dbt-license"
+echo "  Android SDK licenses written"
 
 # Gradle's Groovy DSL cannot compile on Java 22+. Point it at Java 17 if needed.
 _JV=$(java -version 2>&1 | grep -oE '"[0-9]+' | grep -oE '[0-9]+' | head -1)
