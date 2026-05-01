@@ -7,3 +7,5 @@
 -keep class cc.notifly.wadsworth.ChatWidgetBase { *; }
 -keep class cc.notifly.wadsworth.GlobalChatWidget { *; }
 -keep class cc.notifly.wadsworth.TradeChatWidget { *; }
+-keep class cc.notifly.wadsworth.BondsWidget { *; }
+-keep class cc.notifly.wadsworth.ForexWidget { *; }
