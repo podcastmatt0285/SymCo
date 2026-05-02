@@ -894,6 +894,7 @@ def _player_land_tab(pid):
 
 
 def _player_districts_tab(pid):
+    from datetime import datetime, timedelta
     from reserve_banks import fmt_usd, get_player_display_currency
     disp = get_player_display_currency(pid)
     _usd = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
@@ -953,7 +954,6 @@ def _player_districts_tab(pid):
 
         # Last payment + next due
         if d["last_tax_payment"]:
-            from datetime import datetime, timedelta
             try:
                 last_dt = datetime.fromisoformat(d["last_tax_payment"])
                 next_dt = last_dt + timedelta(days=30)
@@ -1109,7 +1109,6 @@ def _player_businesses_tab(pid):
         # Status
         if b["dismantling"]:
             d = b["dismantling"]
-            pct = int(100 * (d["ticks_total"] - d["ticks_remaining"]) / max(d["ticks_total"], 1))
             status = f'<span style="color:#f59e0b;">Dismantling ({d["ticks_remaining"]} left)</span>'
         elif b["is_active"]:
             status = '<span style="color:#22c55e;">Active</span>'

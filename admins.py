@@ -1037,7 +1037,7 @@ def get_player_businesses(player_id: int) -> list:
         try:
             from banks.brokerage_firm import CompanyShares, SessionLocal as BrkSession
             bdb = BrkSession()
-            shares = bdb.query(CompanyShares).filter(CompanyShares.owner_id == player_id).all()
+            shares = bdb.query(CompanyShares).filter(CompanyShares.founder_id == player_id).all()
             for cs in shares:
                 if cs.business_id:
                     revenue_map[cs.business_id] = {
