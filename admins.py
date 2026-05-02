@@ -946,12 +946,14 @@ def admin_create_land_plot(admin_id: int, owner_id: int, terrain_type: str, prox
 # ==========================
 
 def get_player_districts(player_id: int) -> list:
-    """Get all districts owned by a player."""
+    """Get all districts owned by a player, enriched with config and tax state."""
     try:
-        from districts import get_player_districts as _get
+        from districts import get_player_districts as _get, DISTRICT_TYPES, DISTRICT_TAX_MULTIPLIER
         districts = _get(player_id)
         result = []
         for d in districts:
+            cfg = DISTRICT_TYPES.get(d.district_type, {})
+            base_tax = cfg.get("base_tax", 0.0)
             result.append({
                 "id": d.id,
                 "district_type": d.district_type,
@@ -960,10 +962,51 @@ def get_player_districts(player_id: int) -> list:
                 "plots_merged": d.plots_merged,
                 "monthly_tax": d.monthly_tax,
                 "occupied_by_business_id": d.occupied_by_business_id,
+                "last_tax_payment": d.last_tax_payment.isoformat() if d.last_tax_payment else None,
+                "source_plot_ids": d.source_plot_ids or "",
+                "base_tax": base_tax,
+                "tax_multiplier": DISTRICT_TAX_MULTIPLIER,
             })
         return result
     except Exception:
         return []
+
+
+def get_player_district_stats(player_id: int) -> dict:
+    """Get PlayerDistrictStats for a player."""
+    try:
+        from districts import SessionLocal as DistSession, PlayerDistrictStats, BASE_MERGE_COST
+        db = DistSession()
+        stats = db.query(PlayerDistrictStats).filter(PlayerDistrictStats.player_id == player_id).first()
+        db.close()
+        if not stats:
+            return {"total_merges_completed": 0, "current_merge_cost": BASE_MERGE_COST, "last_merge_date": None}
+        return {
+            "total_merges_completed": stats.total_merges_completed,
+            "current_merge_cost": stats.current_merge_cost,
+            "last_merge_date": stats.last_merge_date.isoformat() if stats.last_merge_date else None,
+        }
+    except Exception:
+        return {}
+
+
+def admin_reset_business_ticks(admin_id: int, business_id: int) -> dict:
+    """Reset a business's progress_ticks to 0, restarting its production cycle."""
+    try:
+        from business import SessionLocal as BizSession, Business
+        db = BizSession()
+        biz = db.query(Business).filter(Business.id == business_id).first()
+        if not biz:
+            db.close()
+            return {"ok": False, "error": f"Business #{business_id} not found"}
+        owner_id = biz.owner_id
+        biz.progress_ticks = 0
+        db.commit()
+        db.close()
+        log_action(admin_id, "reset_business_ticks", owner_id, f"Reset progress_ticks on business #{business_id}")
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 # ==========================
@@ -971,13 +1014,56 @@ def get_player_districts(player_id: int) -> list:
 # ==========================
 
 def get_player_businesses(player_id: int) -> list:
-    """Get all businesses owned by a player."""
+    """Get all businesses owned by a player, enriched with config and runtime state."""
     try:
-        from business import SessionLocal as BizSession, Business
+        from business import SessionLocal as BizSession, Business, BusinessSale, BUSINESS_TYPES
         db = BizSession()
         businesses = db.query(Business).filter(Business.owner_id == player_id).all()
+
+        # Build a BusinessSale lookup keyed by business_id
+        sale_map = {}
+        try:
+            sales = db.query(BusinessSale).filter(
+                BusinessSale.owner_id == player_id,
+                BusinessSale.ticks_remaining > 0
+            ).all()
+            for s in sales:
+                sale_map[s.business_id] = {"ticks_remaining": s.ticks_remaining, "ticks_total": s.ticks_total}
+        except Exception:
+            pass
+
+        # Build a CompanyShares revenue lookup keyed by business_id
+        revenue_map = {}
+        try:
+            from banks.brokerage_firm import CompanyShares, SessionLocal as BrkSession
+            bdb = BrkSession()
+            shares = bdb.query(CompanyShares).filter(CompanyShares.owner_id == player_id).all()
+            for cs in shares:
+                if cs.business_id:
+                    revenue_map[cs.business_id] = {
+                        "revenue_7d": cs.revenue_7d or 0.0,
+                        "revenue_30d": cs.revenue_30d or 0.0,
+                    }
+            bdb.close()
+        except Exception:
+            pass
+
         result = []
         for b in businesses:
+            cfg = BUSINESS_TYPES.get(b.business_type, {})
+            cycles = cfg.get("cycles_to_complete", 0)
+            wage = cfg.get("base_wage_cost", 0.0)
+
+            try:
+                import json
+                paused_lines = len(json.loads(b.paused_lines or "[]"))
+                paused_products = len(json.loads(b.paused_products or "[]"))
+            except Exception:
+                paused_lines = paused_products = 0
+
+            sale = sale_map.get(b.id)
+            rev = revenue_map.get(b.id)
+
             result.append({
                 "id": b.id,
                 "business_type": b.business_type,
@@ -985,6 +1071,13 @@ def get_player_businesses(player_id: int) -> list:
                 "district_id": b.district_id,
                 "is_active": b.is_active,
                 "progress_ticks": b.progress_ticks,
+                "cycles_to_complete": cycles,
+                "base_wage_cost": wage,
+                "paused_lines": paused_lines,
+                "paused_products": paused_products,
+                "dismantling": sale,
+                "revenue_7d": rev["revenue_7d"] if rev else None,
+                "revenue_30d": rev["revenue_30d"] if rev else None,
             })
         db.close()
         return result

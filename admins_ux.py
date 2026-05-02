@@ -59,6 +59,8 @@ from admins import (
     admin_get_player_orders, admin_cancel_market_order,
     # Tutorial
     admin_set_tutorial_step,
+    # Business / district enrichment
+    get_player_district_stats, admin_reset_business_ticks,
 )
 
 router = APIRouter()
@@ -892,30 +894,88 @@ def _player_land_tab(pid):
 
 
 def _player_districts_tab(pid):
-    from reserve_banks import fmt_usd
+    from reserve_banks import fmt_usd, get_player_display_currency
+    disp = get_player_display_currency(pid)
+    _usd = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
+
     districts = get_player_districts(pid)
-    _usd_disp = {"code": "USD", "symbol": "$", "usd_per_unit": 1.0, "flag": "🇺🇸"}
+    dist_stats = get_player_district_stats(pid)
 
     try:
         from districts import DISTRICT_TYPES
         dist_type_opts = "".join(
-            f'<option value="{k}">{v["name"]} — {fmt_usd(v["base_tax"], _usd_disp, precision=0)}/mo base</option>'
+            f'<option value="{k}">{v["name"]} — {fmt_usd(v["base_tax"], _usd, precision=0)}/mo base</option>'
             for k, v in sorted(DISTRICT_TYPES.items(), key=lambda x: x[1]["name"])
         )
     except Exception:
         dist_type_opts = '<option value="industrial">industrial</option>'
 
+    # Summary
+    total_tax = sum(d["monthly_tax"] for d in districts)
+    occupied_count = sum(1 for d in districts if d["occupied_by_business_id"])
+    last_payments = [d["last_tax_payment"] for d in districts if d["last_tax_payment"]]
+    most_recent_payment = max(last_payments) if last_payments else None
+    last_paid_str = _time_ago(most_recent_payment) if most_recent_payment else "never"
+
+    merge_stats_html = ""
+    if dist_stats:
+        merge_stats_html = (
+            f'<span>Merges completed: <b>{dist_stats["total_merges_completed"]}</b></span>'
+            f'<span>Next merge cost: <b style="color:#f59e0b;">{fmt_usd(dist_stats["current_merge_cost"], _usd, precision=0)}</b></span>'
+            + (f'<span>Last merge: <b>{_time_ago(dist_stats["last_merge_date"])}</b></span>' if dist_stats["last_merge_date"] else "")
+        )
+
+    summary = f"""
+    <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.8rem;">
+            <span>Total monthly tax: <span style="color:#ef4444;font-weight:bold;">{fmt_usd(total_tax, disp)}</span></span>
+            <span><span style="color:#a78bfa;font-weight:bold;">{occupied_count}/{len(districts)}</span> occupied</span>
+            <span>Last tax collected: <span style="color:#94a3b8;">{last_paid_str}</span></span>
+        </div>
+        {f'<div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.75rem;color:#64748b;margin-top:6px;">{merge_stats_html}</div>' if merge_stats_html else ""}
+    </div>"""
+
     rows = ""
     for d in districts:
         did = d["id"]
-        occupied = f"Biz #{d['occupied_by_business_id']}" if d["occupied_by_business_id"] else '<span style="color:#22c55e;">Vacant</span>'
+
+        # Occupancy — link to businesses tab if occupied
+        if d["occupied_by_business_id"]:
+            occupied = f'<a href="/admin/player/{pid}?tab=businesses" style="color:#38bdf8;">Biz #{d["occupied_by_business_id"]}</a>'
+        else:
+            occupied = '<span style="color:#22c55e;">Vacant</span>'
+
+        # Tax formula tooltip
+        base = d["base_tax"]
+        size = d["size"]
+        mult = d["tax_multiplier"]
+        formula = f'title="{fmt_usd(base, _usd, precision=0)} base × {size:.1f} size × {mult:.0f}x = {fmt_usd(d["monthly_tax"], _usd, precision=0)}"'
+
+        # Last payment + next due
+        if d["last_tax_payment"]:
+            from datetime import datetime, timedelta
+            try:
+                last_dt = datetime.fromisoformat(d["last_tax_payment"])
+                next_dt = last_dt + timedelta(days=30)
+                days_left = (next_dt - datetime.utcnow()).days
+                next_str = f"{days_left}d" if days_left >= 0 else '<span style="color:#ef4444;">overdue</span>'
+                last_col = f'<span style="font-size:0.7rem;color:#94a3b8;">{_time_ago(d["last_tax_payment"])}</span><br><span style="font-size:0.65rem;color:#64748b;">next ~{next_str}</span>'
+            except Exception:
+                last_col = '<span style="color:#64748b;font-size:0.7rem;">?</span>'
+        else:
+            last_col = '<span style="color:#64748b;font-size:0.7rem;">never</span>'
+
+        # Source plots
+        source_str = d["source_plot_ids"].replace(",", ", ") if d["source_plot_ids"] else "-"
+
         rows += f"""<tr>
-            <td>#{did}</td>
-            <td>{d["district_type"]}</td>
-            <td style="color:#94a3b8;">{d["terrain_type"]}</td>
-            <td>{d["size"]:.1f}</td>
-            <td>{fmt_usd(d["monthly_tax"], _usd_disp, precision=0)}</td>
+            <td style="font-size:0.75rem;">#{did}</td>
+            <td style="font-size:0.75rem;">{d["district_type"].replace("_"," ").title()}</td>
+            <td style="font-size:0.7rem;color:#94a3b8;">{d["size"]:.1f} ({d["plots_merged"]} plots)</td>
+            <td style="font-size:0.75rem;" {formula}>{fmt_usd(d["monthly_tax"], disp, precision=0)} ℹ</td>
             <td>{occupied}</td>
+            <td>{last_col}</td>
+            <td style="font-size:0.65rem;color:#475569;">{source_str}</td>
             <td>
                 <form method="post" action="/admin/player/{pid}/edit-district-tax" style="display:inline;margin-right:4px;">
                     <input type="hidden" name="district_id" value="{did}">
@@ -934,6 +994,7 @@ def _player_districts_tab(pid):
         </tr>"""
 
     return f"""
+    {summary}
     <div class="card">
         <h3>Grant District</h3>
         <form method="post" action="/admin/player/{pid}/create-district">
@@ -947,7 +1008,7 @@ def _player_districts_tab(pid):
     </div>
     <div class="card">
         <h3>Districts ({len(districts)})</h3>
-        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Terrain</th><th>Size</th><th>Tax/mo</th><th>Status</th><th>Actions</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No districts.</p>'}
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Size</th><th>Tax/mo</th><th>Occupied</th><th>Last Tax</th><th>Source Plots</th><th>Actions</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No districts.</p>'}
     </div>
     """
 
@@ -1014,12 +1075,91 @@ def _player_cities_tab(pid):
 
 
 def _player_businesses_tab(pid):
+    from reserve_banks import fmt_usd, get_player_display_currency
+    disp = get_player_display_currency(pid)
+
     businesses = get_player_businesses(pid)
+    detail = get_player_detail(pid)
+    cash = detail.get("cash_balance", 0) if detail else 0
+
+    total_active = sum(1 for b in businesses if b["is_active"] and not b["dismantling"])
+    total_paused = sum(1 for b in businesses if not b["is_active"] and not b["dismantling"])
+    total_dismantling = sum(1 for b in businesses if b["dismantling"])
+    total_wages = sum(b["base_wage_cost"] for b in businesses if b["is_active"] and not b["dismantling"])
+    wage_warning = ""
+    if total_wages > 0 and cash < total_wages:
+        wage_warning = f'<div class="flash flash-error" style="margin-top:6px;font-size:0.75rem;">⚠️ Cash balance ({fmt_usd(cash, disp)}) is below one wage cycle ({fmt_usd(total_wages, disp)}) — businesses may be failing wage checks.</div>'
+
+    summary = f"""
+    <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.8rem;">
+            <span><span style="color:#22c55e;font-weight:bold;">{total_active}</span> active</span>
+            <span><span style="color:#64748b;font-weight:bold;">{total_paused}</span> paused</span>
+            {"<span><span style='color:#f59e0b;font-weight:bold;'>" + str(total_dismantling) + "</span> dismantling</span>" if total_dismantling else ""}
+            <span>Total wages/cycle: <span style="color:#38bdf8;">{fmt_usd(total_wages, disp)}</span></span>
+        </div>
+        {wage_warning}
+    </div>"""
+
     rows = ""
     for b in businesses:
-        location = f"Plot #{b['land_plot_id']}" if b["land_plot_id"] else (f"District #{b['district_id']}" if b["district_id"] else "-")
-        status = '<span style="color:#22c55e;">Active</span>' if b["is_active"] else '<span style="color:#64748b;">Paused</span>'
-        rows += f'<tr><td>#{b["id"]}</td><td>{b["business_type"].replace("_"," ").title()}</td><td>{location}</td><td>{status}</td><td>{b["progress_ticks"]}</td></tr>'
+        bid = b["id"]
+        location = f'Plot #{b["land_plot_id"]}' if b["land_plot_id"] else (f'District #{b["district_id"]}' if b["district_id"] else "-")
+
+        # Status
+        if b["dismantling"]:
+            d = b["dismantling"]
+            pct = int(100 * (d["ticks_total"] - d["ticks_remaining"]) / max(d["ticks_total"], 1))
+            status = f'<span style="color:#f59e0b;">Dismantling ({d["ticks_remaining"]} left)</span>'
+        elif b["is_active"]:
+            status = '<span style="color:#22c55e;">Active</span>'
+        else:
+            status = '<span style="color:#64748b;">Paused</span>'
+
+        # Paused lines/products badges
+        badges = ""
+        if b["paused_lines"]:
+            badges += f' <span style="font-size:0.65rem;color:#f59e0b;background:#1e293b;padding:1px 4px;border-radius:3px;">{b["paused_lines"]} line(s) paused</span>'
+        if b["paused_products"]:
+            badges += f' <span style="font-size:0.65rem;color:#f59e0b;background:#1e293b;padding:1px 4px;border-radius:3px;">{b["paused_products"]} product(s) paused</span>'
+
+        # Progress bar
+        ctc = b["cycles_to_complete"]
+        ticks = b["progress_ticks"]
+        if ctc > 0:
+            pct = min(int(100 * ticks / ctc), 100)
+            progress = (
+                f'<div style="font-size:0.7rem;color:#94a3b8;">{ticks}/{ctc}</div>'
+                f'<div style="background:#1e293b;border-radius:3px;height:6px;width:80px;margin-top:2px;">'
+                f'<div style="background:#38bdf8;width:{pct}%;height:6px;border-radius:3px;"></div></div>'
+            )
+        else:
+            progress = f'<span style="color:#64748b;font-size:0.7rem;">{ticks}</span>'
+
+        # Revenue (IPO'd only)
+        rev_cell = ""
+        if b["revenue_7d"] is not None:
+            rev_cell = f'<span style="color:#22c55e;font-size:0.7rem;">{fmt_usd(b["revenue_7d"], disp, precision=0)}</span>'
+
+        # Wage cost
+        wage_cell = f'<span style="font-size:0.7rem;color:#94a3b8;">{fmt_usd(b["base_wage_cost"], disp, precision=0)}</span>' if b["base_wage_cost"] else "-"
+
+        rows += f"""<tr>
+            <td style="font-size:0.75rem;">#{bid}</td>
+            <td style="font-size:0.75rem;">{b["business_type"].replace("_"," ").title()}{badges}</td>
+            <td style="font-size:0.75rem;color:#94a3b8;">{location}</td>
+            <td style="font-size:0.75rem;">{status}</td>
+            <td>{progress}</td>
+            <td>{wage_cell}</td>
+            <td>{rev_cell}</td>
+            <td>
+                <form method="post" action="/admin/player/{pid}/reset-business-ticks" style="display:inline;">
+                    <input type="hidden" name="business_id" value="{bid}">
+                    <input type="hidden" name="tab" value="businesses">
+                    <button type="submit" class="btn" style="font-size:0.6rem;padding:2px 5px;background:#1e293b;color:#94a3b8;border:1px solid #334155;" title="Reset cycle to tick 0">↺</button>
+                </form>
+            </td>
+        </tr>"""
 
     # Build vacant plot options
     vacant_plots = [p for p in get_player_land(pid) if not p["occupied_by_business_id"]]
@@ -1028,7 +1168,6 @@ def _player_businesses_tab(pid):
         for p in vacant_plots
     )
 
-    # Build business type options
     try:
         from business import BUSINESS_TYPES
         biz_opts = "".join(
@@ -1056,10 +1195,11 @@ def _player_businesses_tab(pid):
         create_form = '<div class="card"><p style="color:#64748b;font-size:0.75rem;">No vacant land plots — create a land plot first.</p></div>'
 
     return f"""
+    {summary}
     {create_form}
     <div class="card">
         <h3>Businesses ({len(businesses)})</h3>
-        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Location</th><th>Status</th><th>Ticks</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No businesses.</p>'}
+        {f'<div class="table-wrap"><table><tr><th>ID</th><th>Type</th><th>Location</th><th>Status</th><th>Progress</th><th>Wage/cycle</th><th>Rev 7d</th><th>Actions</th></tr>{rows}</table></div>' if rows else '<p style="color:#64748b;font-size:0.75rem;">No businesses.</p>'}
     </div>
     """
 
@@ -1434,6 +1574,17 @@ def post_set_tutorial_step(pid: int, session_token: Optional[str] = Cookie(None)
     if result["ok"]:
         return RedirectResponse(url=f"/admin/player/{pid}?tab=info&msg=Tutorial+step+set+to+{step}", status_code=303)
     return RedirectResponse(url=f"/admin/player/{pid}?tab=info&err={result['error']}", status_code=303)
+
+
+@router.post("/admin/player/{pid}/reset-business-ticks")
+def post_reset_business_ticks(pid: int, session_token: Optional[str] = Cookie(None), business_id: int = Form(...)):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    result = admin_reset_business_ticks(admin.id, business_id)
+    if result["ok"]:
+        return RedirectResponse(url=f"/admin/player/{pid}?tab=businesses&msg=Cycle+reset+for+business+%23{business_id}", status_code=303)
+    return RedirectResponse(url=f"/admin/player/{pid}?tab=businesses&err={result.get('error','error')}", status_code=303)
 
 
 @router.post("/admin/player/{pid}/chat-mute")
