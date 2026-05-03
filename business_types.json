@@ -38,8 +38,6 @@
         "output_qty": 60
       },
       {
-        "output_item": "agave_flower",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -57,10 +55,49 @@
             "item": "pollen",
             "quantity": 30000
           }
-        ]
+        ],
+        "output_item": "agave_flower",
+        "output_qty": 80
       }
     ],
     "startup_cost": 16000
+  },
+  "alluvial_mine": {
+    "allowed_proximity": [
+      "riverside",
+      "lakeside"
+    ],
+    "allowed_terrain": [
+      "marsh",
+      "hills",
+      "forest"
+    ],
+    "base_wage_cost": 220,
+    "class": "production",
+    "cycles_to_complete": 8,
+    "description": "Pans and sluices river and stream sediment to recover gem-bearing gravel. Low capital cost compared to hard-rock mining; yields sapphires, garnets, topaz, and tourmaline.",
+    "name": "Alluvial Mine",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 50
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "alluvial_gravel",
+        "output_qty": 120
+      }
+    ],
+    "startup_cost": 55000
   },
   "apiary": {
     "allowed_proximity": [
@@ -663,6 +700,22 @@
     "description": "Retail shop selling yarn, thread, and craft supplies to hobbyist knitters, weavers, and makers.",
     "name": "Arts & Crafts Store",
     "products": {
+      "agate": {
+        "base_sale_chance": 0.48,
+        "elasticity": 1.0
+      },
+      "chalcedony": {
+        "base_sale_chance": 0.45,
+        "elasticity": 1.0
+      },
+      "mica": {
+        "base_sale_chance": 0.35,
+        "elasticity": 0.8
+      },
+      "obsidian": {
+        "base_sale_chance": 0.5,
+        "elasticity": 1.0
+      },
       "thread": {
         "base_sale_chance": 0.03,
         "elasticity": 1.1
@@ -670,22 +723,6 @@
       "yarn": {
         "base_sale_chance": 0.025,
         "elasticity": 1.3
-      },
-      "obsidian": {
-        "base_sale_chance": 0.5,
-        "elasticity": 1.0
-      },
-      "chalcedony": {
-        "base_sale_chance": 0.45,
-        "elasticity": 1.0
-      },
-      "agate": {
-        "base_sale_chance": 0.48,
-        "elasticity": 1.0
-      },
-      "mica": {
-        "base_sale_chance": 0.35,
-        "elasticity": 0.8
       }
     },
     "startup_cost": 8000
@@ -2687,6 +2724,345 @@
     },
     "startup_cost": 10000
   },
+  "botanical_extract_lab": {
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "base_wage_cost": 200,
+    "class": "production",
+    "cycles_to_complete": 720,
+    "description": "Distills and concentrates floral essential oils, hydrosols, and natural dyes. Enormous quantities of pollen are co-processed with each flower batch.",
+    "name": "Botanical Extract Lab",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 600
+          },
+          {
+            "item": "pollen",
+            "quantity": 80000
+          },
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 600
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "rose_essential_oil",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "lavender",
+            "quantity": 500
+          },
+          {
+            "item": "pollen",
+            "quantity": 65000
+          },
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "lavender_essential_oil",
+        "output_qty": 8
+      },
+      {
+        "inputs": [
+          {
+            "item": "jasmine",
+            "quantity": 400
+          },
+          {
+            "item": "pollen",
+            "quantity": 90000
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 700
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "jasmine_essential_oil",
+        "output_qty": 4
+      },
+      {
+        "inputs": [
+          {
+            "item": "orange_blossom",
+            "quantity": 500
+          },
+          {
+            "item": "pollen",
+            "quantity": 70000
+          },
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 550
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "neroli_oil",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "chrysanthemum",
+            "quantity": 700
+          },
+          {
+            "item": "pollen",
+            "quantity": 55000
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 450
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          }
+        ],
+        "output_item": "chrysanthemum_essential_oil",
+        "output_qty": 6
+      },
+      {
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          },
+          {
+            "item": "water",
+            "quantity": 800
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rose_water",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "orange_blossom",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          },
+          {
+            "item": "water",
+            "quantity": 800
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "orange_blossom_water",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "marigold",
+            "quantity": 400
+          },
+          {
+            "item": "hibiscus",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 35000
+          },
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "floral_dye",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "apple_blossom",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          },
+          {
+            "item": "water",
+            "quantity": 700
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "apple_blossom_water",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "coffee_blossom",
+            "quantity": 200
+          },
+          {
+            "item": "pollen",
+            "quantity": 25000
+          },
+          {
+            "item": "water",
+            "quantity": 700
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "coffee_blossom_water",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "geranium",
+            "quantity": 400
+          },
+          {
+            "item": "pollen",
+            "quantity": 42000
+          },
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 480
+          },
+          {
+            "item": "paper",
+            "quantity": 4
+          }
+        ],
+        "output_item": "geranium_essential_oil",
+        "output_qty": 6
+      },
+      {
+        "inputs": [
+          {
+            "item": "elderflower",
+            "quantity": 300
+          },
+          {
+            "item": "sugar",
+            "quantity": 500
+          },
+          {
+            "item": "pollen",
+            "quantity": 28000
+          },
+          {
+            "item": "water",
+            "quantity": 600
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "elderflower_cordial",
+        "output_qty": 30
+      }
+    ],
+    "startup_cost": 38000
+  },
   "bottling_plant": {
     "allowed_proximity": [
       "urban",
@@ -2921,8 +3297,6 @@
         "output_qty": 40
       },
       {
-        "output_item": "elderflower_cordial",
-        "output_qty": 30,
         "inputs": [
           {
             "item": "elderflower",
@@ -2948,7 +3322,9 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "elderflower_cordial",
+        "output_qty": 30
       }
     ],
     "startup_cost": 38000
@@ -3049,8 +3425,6 @@
         "output_qty": 15
       },
       {
-        "output_item": "tobacco_flower",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -3068,7 +3442,9 @@
             "item": "pollen",
             "quantity": 20000
           }
-        ]
+        ],
+        "output_item": "tobacco_flower",
+        "output_qty": 80
       }
     ],
     "startup_cost": 9500
@@ -4130,8 +4506,6 @@
         "output_qty": 60
       },
       {
-        "output_item": "ceramic",
-        "output_qty": 90,
         "inputs": [
           {
             "item": "feldspar",
@@ -4149,7 +4523,9 @@
             "item": "paper",
             "quantity": 1
           }
-        ]
+        ],
+        "output_item": "ceramic",
+        "output_qty": 90
       }
     ],
     "startup_cost": 18000
@@ -5215,8 +5591,6 @@
         "output_qty": 18
       },
       {
-        "output_item": "coffee_blossom",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -5234,11 +5608,11 @@
             "item": "pollen",
             "quantity": 28000
           }
-        ]
+        ],
+        "output_item": "coffee_blossom",
+        "output_qty": 80
       },
       {
-        "output_item": "coffee_beans",
-        "output_qty": 140,
         "inputs": [
           {
             "item": "coffee_seeds",
@@ -5268,7 +5642,9 @@
             "item": "pollen",
             "quantity": 16000
           }
-        ]
+        ],
+        "output_item": "coffee_beans",
+        "output_qty": 140
       }
     ],
     "startup_cost": 18000
@@ -5857,6 +6233,75 @@
       }
     ],
     "startup_cost": 80000
+  },
+  "crystal_shop": {
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills",
+      "island",
+      "coastal"
+    ],
+    "base_wage_cost": 180,
+    "class": "retail",
+    "cycles_to_complete": 4,
+    "description": "Retail store selling rough crystal specimens, cut gemstones, and mineral curiosities to collectors, hobbyists, and spiritual markets.",
+    "name": "Crystal Shop",
+    "products": {
+      "agate": {
+        "base_sale_chance": 0.55,
+        "elasticity": 1.0
+      },
+      "chalcedony": {
+        "base_sale_chance": 0.5,
+        "elasticity": 1.0
+      },
+      "cut_amethyst": {
+        "base_sale_chance": 0.35,
+        "elasticity": 1.4
+      },
+      "cut_garnet": {
+        "base_sale_chance": 0.38,
+        "elasticity": 1.3
+      },
+      "cut_peridot": {
+        "base_sale_chance": 0.32,
+        "elasticity": 1.4
+      },
+      "cut_tourmaline": {
+        "base_sale_chance": 0.3,
+        "elasticity": 1.5
+      },
+      "obsidian": {
+        "base_sale_chance": 0.6,
+        "elasticity": 0.9
+      },
+      "rough_amethyst": {
+        "base_sale_chance": 0.55,
+        "elasticity": 1.2
+      },
+      "rough_garnet": {
+        "base_sale_chance": 0.5,
+        "elasticity": 1.1
+      },
+      "rough_opal": {
+        "base_sale_chance": 0.4,
+        "elasticity": 1.5
+      },
+      "rough_peridot": {
+        "base_sale_chance": 0.48,
+        "elasticity": 1.2
+      },
+      "rough_tourmaline": {
+        "base_sale_chance": 0.45,
+        "elasticity": 1.2
+      }
+    },
+    "startup_cost": 18000
   },
   "dairy_and_fermentation": {
     "allowed_proximity": [
@@ -8327,6 +8772,449 @@
     ],
     "startup_cost": 75000
   },
+  "floral_studio": {
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "base_wage_cost": 120,
+    "class": "production",
+    "cycles_to_complete": 240,
+    "description": "Artisan studio crafting bouquets, wreaths, corsages and centrepieces. Pollen is required at every stage of the design and preservation process.",
+    "name": "Floral Studio",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "lily",
+            "quantity": 15
+          },
+          {
+            "item": "carnation",
+            "quantity": 25
+          },
+          {
+            "item": "tulip",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 50000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ],
+        "output_item": "bouquet",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "peony",
+            "quantity": 20
+          },
+          {
+            "item": "rose",
+            "quantity": 30
+          },
+          {
+            "item": "lily",
+            "quantity": 15
+          },
+          {
+            "item": "orchid",
+            "quantity": 8
+          },
+          {
+            "item": "carnation",
+            "quantity": 15
+          },
+          {
+            "item": "freesia",
+            "quantity": 12
+          },
+          {
+            "item": "pollen",
+            "quantity": 90000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          }
+        ],
+        "output_item": "wedding_bouquet",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "lily",
+            "quantity": 30
+          },
+          {
+            "item": "chrysanthemum",
+            "quantity": 30
+          },
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "iris",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 60000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          }
+        ],
+        "output_item": "funeral_wreath",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "orchid",
+            "quantity": 10
+          },
+          {
+            "item": "rose",
+            "quantity": 10
+          },
+          {
+            "item": "freesia",
+            "quantity": 8
+          },
+          {
+            "item": "pollen",
+            "quantity": 40000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          }
+        ],
+        "output_item": "corsage",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "hydrangea",
+            "quantity": 20
+          },
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "dahlia",
+            "quantity": 15
+          },
+          {
+            "item": "peony",
+            "quantity": 10
+          },
+          {
+            "item": "pollen",
+            "quantity": 70000
+          },
+          {
+            "item": "glass",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "floral_centerpiece",
+        "output_qty": 8
+      },
+      {
+        "inputs": [
+          {
+            "item": "lavender",
+            "quantity": 40
+          },
+          {
+            "item": "rose",
+            "quantity": 30
+          },
+          {
+            "item": "zinnia",
+            "quantity": 30
+          },
+          {
+            "item": "heather",
+            "quantity": 25
+          },
+          {
+            "item": "pollen",
+            "quantity": 45000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ],
+        "output_item": "dried_flower_bundle",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "dried_flower_bundle",
+            "quantity": 10
+          },
+          {
+            "item": "lavender_essential_oil",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 50000
+          },
+          {
+            "item": "jar",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "potpourri",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "rose",
+            "quantity": 20
+          },
+          {
+            "item": "carnation",
+            "quantity": 20
+          },
+          {
+            "item": "lily",
+            "quantity": 15
+          },
+          {
+            "item": "violet",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 55000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "energy",
+            "quantity": 40
+          }
+        ],
+        "output_item": "flower_crown",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "iris",
+            "quantity": 15
+          },
+          {
+            "item": "peony",
+            "quantity": 10
+          },
+          {
+            "item": "violet",
+            "quantity": 15
+          },
+          {
+            "item": "narcissus",
+            "quantity": 10
+          },
+          {
+            "item": "pollen",
+            "quantity": 65000
+          },
+          {
+            "item": "glass",
+            "quantity": 5
+          },
+          {
+            "item": "paper",
+            "quantity": 10
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ],
+        "output_item": "pressed_flower_art",
+        "output_qty": 5
+      },
+      {
+        "inputs": [
+          {
+            "item": "ranunculus",
+            "quantity": 15
+          },
+          {
+            "item": "snapdragon",
+            "quantity": 20
+          },
+          {
+            "item": "anemone",
+            "quantity": 15
+          },
+          {
+            "item": "lilac",
+            "quantity": 10
+          },
+          {
+            "item": "pollen",
+            "quantity": 52000
+          },
+          {
+            "item": "paper",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 50
+          }
+        ],
+        "output_item": "bouquet",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "magnolia",
+            "quantity": 10
+          },
+          {
+            "item": "gardenia",
+            "quantity": 15
+          },
+          {
+            "item": "wisteria",
+            "quantity": 12
+          },
+          {
+            "item": "orchid",
+            "quantity": 5
+          },
+          {
+            "item": "pollen",
+            "quantity": 75000
+          },
+          {
+            "item": "glass",
+            "quantity": 8
+          },
+          {
+            "item": "energy",
+            "quantity": 65
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "floral_centerpiece",
+        "output_qty": 8
+      },
+      {
+        "inputs": [
+          {
+            "item": "wisteria",
+            "quantity": 20
+          },
+          {
+            "item": "lilac",
+            "quantity": 20
+          },
+          {
+            "item": "geranium",
+            "quantity": 20
+          },
+          {
+            "item": "rose",
+            "quantity": 15
+          },
+          {
+            "item": "pollen",
+            "quantity": 48000
+          },
+          {
+            "item": "jar",
+            "quantity": 15
+          },
+          {
+            "item": "energy",
+            "quantity": 30
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "potpourri",
+        "output_qty": 15
+      }
+    ],
+    "startup_cost": 15000
+  },
   "flour_mill": {
     "allowed_proximity": [
       "riverside",
@@ -8478,6 +9366,897 @@
       }
     ],
     "startup_cost": 12000
+  },
+  "flower_farm": {
+    "allowed_proximity": [
+      "remote",
+      "riverside"
+    ],
+    "allowed_terrain": [
+      "prairie",
+      "hills",
+      "marsh",
+      "savanna",
+      "jungle",
+      "island"
+    ],
+    "base_wage_cost": 65,
+    "class": "production",
+    "cycles_to_complete": 480,
+    "description": "Commercial flower farm growing 35 varieties of cut flowers and blooms. Every line requires massive quantities of pollen for pollination.",
+    "name": "Flower Farm",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 25000
+          }
+        ],
+        "output_item": "rose",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 160
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          }
+        ],
+        "output_item": "lily",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ],
+        "output_item": "tulip",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ],
+        "output_item": "carnation",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          }
+        ],
+        "output_item": "sunflower",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 21000
+          }
+        ],
+        "output_item": "chrysanthemum",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ],
+        "output_item": "snapdragon",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 260
+          },
+          {
+            "item": "energy",
+            "quantity": 130
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 19000
+          }
+        ],
+        "output_item": "zinnia",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 300
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 21000
+          }
+        ],
+        "output_item": "marigold",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ],
+        "output_item": "violet",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 320
+          },
+          {
+            "item": "energy",
+            "quantity": 160
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 21000
+          }
+        ],
+        "output_item": "narcissus",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 330
+          },
+          {
+            "item": "energy",
+            "quantity": 160
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 22000
+          }
+        ],
+        "output_item": "freesia",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 240
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 18000
+          }
+        ],
+        "output_item": "heather",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 240
+          },
+          {
+            "item": "energy",
+            "quantity": 110
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 18000
+          }
+        ],
+        "output_item": "clover_flower",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 280
+          },
+          {
+            "item": "energy",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 20000
+          }
+        ],
+        "output_item": "chamomile",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 290
+          },
+          {
+            "item": "energy",
+            "quantity": 145
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 21000
+          }
+        ],
+        "output_item": "echinacea",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          }
+        ],
+        "output_item": "lavender",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          }
+        ],
+        "output_item": "hydrangea",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 360
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 28000
+          }
+        ],
+        "output_item": "iris",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 380
+          },
+          {
+            "item": "energy",
+            "quantity": 190
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          }
+        ],
+        "output_item": "dahlia",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 340
+          },
+          {
+            "item": "energy",
+            "quantity": 170
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 28000
+          }
+        ],
+        "output_item": "anemone",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 400
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 32000
+          }
+        ],
+        "output_item": "ranunculus",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 340
+          },
+          {
+            "item": "energy",
+            "quantity": 170
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 28000
+          }
+        ],
+        "output_item": "foxglove",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 420
+          },
+          {
+            "item": "energy",
+            "quantity": 210
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 32000
+          }
+        ],
+        "output_item": "hibiscus",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 360
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 30000
+          }
+        ],
+        "output_item": "elderflower",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 440
+          },
+          {
+            "item": "energy",
+            "quantity": 220
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 34000
+          }
+        ],
+        "output_item": "passionflower",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 350
+          },
+          {
+            "item": "energy",
+            "quantity": 175
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 29000
+          }
+        ],
+        "output_item": "geranium",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 45000
+          }
+        ],
+        "output_item": "peony",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 520
+          },
+          {
+            "item": "energy",
+            "quantity": 260
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 48000
+          }
+        ],
+        "output_item": "jasmine",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 500
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 46000
+          }
+        ],
+        "output_item": "gardenia",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 480
+          },
+          {
+            "item": "energy",
+            "quantity": 240
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 42000
+          }
+        ],
+        "output_item": "magnolia",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 460
+          },
+          {
+            "item": "energy",
+            "quantity": 230
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 40000
+          }
+        ],
+        "output_item": "wisteria",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 460
+          },
+          {
+            "item": "energy",
+            "quantity": 230
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 40000
+          }
+        ],
+        "output_item": "lilac",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 600
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 60000
+          },
+          {
+            "item": "fertilizer_npk",
+            "quantity": 20
+          }
+        ],
+        "output_item": "orchid",
+        "output_qty": 100
+      },
+      {
+        "inputs": [
+          {
+            "item": "water",
+            "quantity": 800
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          },
+          {
+            "item": "pollen",
+            "quantity": 55000
+          }
+        ],
+        "output_item": "lotus",
+        "output_qty": 100
+      }
+    ],
+    "startup_cost": 18000
+  },
+  "flower_shop": {
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "base_wage_cost": 80,
+    "class": "retail",
+    "cycles_to_complete": 10,
+    "description": "Retail florist selling fresh-cut flowers and finished arrangements.",
+    "name": "Flower Shop",
+    "products": {
+      "bouquet": {
+        "base_sale_chance": 0.2,
+        "elasticity": 1.5
+      },
+      "carnation": {
+        "base_sale_chance": 0.28,
+        "elasticity": 1.3
+      },
+      "chrysanthemum": {
+        "base_sale_chance": 0.22,
+        "elasticity": 1.3
+      },
+      "corsage": {
+        "base_sale_chance": 0.1,
+        "elasticity": 1.5
+      },
+      "dried_flower_bundle": {
+        "base_sale_chance": 0.15,
+        "elasticity": 1.3
+      },
+      "floral_centerpiece": {
+        "base_sale_chance": 0.08,
+        "elasticity": 1.8
+      },
+      "flower_crown": {
+        "base_sale_chance": 0.1,
+        "elasticity": 1.5
+      },
+      "funeral_wreath": {
+        "base_sale_chance": 0.08,
+        "elasticity": 1.6
+      },
+      "lavender": {
+        "base_sale_chance": 0.2,
+        "elasticity": 1.2
+      },
+      "lily": {
+        "base_sale_chance": 0.25,
+        "elasticity": 1.3
+      },
+      "orchid": {
+        "base_sale_chance": 0.15,
+        "elasticity": 1.8
+      },
+      "peony": {
+        "base_sale_chance": 0.12,
+        "elasticity": 2.0
+      },
+      "potpourri": {
+        "base_sale_chance": 0.15,
+        "elasticity": 1.2
+      },
+      "pressed_flower_art": {
+        "base_sale_chance": 0.05,
+        "elasticity": 2.0
+      },
+      "rose": {
+        "base_sale_chance": 0.3,
+        "elasticity": 1.4
+      },
+      "rose_water": {
+        "base_sale_chance": 0.18,
+        "elasticity": 1.3
+      },
+      "sunflower": {
+        "base_sale_chance": 0.22,
+        "elasticity": 1.2
+      },
+      "tulip": {
+        "base_sale_chance": 0.25,
+        "elasticity": 1.3
+      },
+      "wedding_bouquet": {
+        "base_sale_chance": 0.06,
+        "elasticity": 2.2
+      }
+    },
+    "startup_cost": 5000
   },
   "free_range_pasture": {
     "allowed_proximity": [
@@ -8759,6 +10538,95 @@
     ],
     "startup_cost": 20000
   },
+  "gem_mine": {
+    "allowed_proximity": [
+      "volcanic",
+      "caves",
+      "deposits",
+      "remote"
+    ],
+    "allowed_terrain": [
+      "mountain",
+      "desert",
+      "tundra",
+      "jungle",
+      "hills"
+    ],
+    "base_wage_cost": 800,
+    "class": "production",
+    "cycles_to_complete": 10,
+    "description": "Hard-rock mine extracting gem-bearing ore from volcanic pipes, metamorphic, and granitic formations. Produces kimberlite (diamond source), corundum ore (ruby/sapphire), and pegmatite ore (emerald/aquamarine/tourmaline).",
+    "name": "Gem Mine",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "kimberlite",
+        "output_qty": 80
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 65
+          },
+          {
+            "item": "water",
+            "quantity": 120
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "corundum_ore",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "bio_fuel",
+            "quantity": 55
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "pegmatite_ore",
+        "output_qty": 70
+      }
+    ],
+    "startup_cost": 280000
+  },
   "gin_distillery": {
     "allowed_proximity": [
       "urban",
@@ -8836,8 +10704,6 @@
         "output_qty": 30
       },
       {
-        "output_item": "elderflower_gin",
-        "output_qty": 10,
         "inputs": [
           {
             "item": "elderflower",
@@ -8867,7 +10733,9 @@
             "item": "paper",
             "quantity": 5
           }
-        ]
+        ],
+        "output_item": "elderflower_gin",
+        "output_qty": 10
       }
     ],
     "startup_cost": 42000
@@ -8969,8 +10837,6 @@
         "output_qty": 100
       },
       {
-        "output_item": "glass",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "feldspar",
@@ -8988,7 +10854,9 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "glass",
+        "output_qty": 80
       }
     ],
     "startup_cost": 35000
@@ -9603,8 +11471,6 @@
         "output_qty": 270
       },
       {
-        "output_item": "wheat",
-        "output_qty": 220,
         "inputs": [
           {
             "item": "wheat_seeds",
@@ -9634,11 +11500,11 @@
             "item": "fertilizer_npk",
             "quantity": 60
           }
-        ]
+        ],
+        "output_item": "wheat",
+        "output_qty": 220
       },
       {
-        "output_item": "corn",
-        "output_qty": 300,
         "inputs": [
           {
             "item": "corn_seeds",
@@ -9668,7 +11534,9 @@
             "item": "fertilizer_npk",
             "quantity": 60
           }
-        ]
+        ],
+        "output_item": "corn",
+        "output_qty": 300
       }
     ],
     "startup_cost": 8500
@@ -9969,8 +11837,6 @@
         "output_qty": 70
       },
       {
-        "output_item": "lavender",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -9988,11 +11854,11 @@
             "item": "pollen",
             "quantity": 28000
           }
-        ]
+        ],
+        "output_item": "lavender",
+        "output_qty": 80
       },
       {
-        "output_item": "elderflower",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -10010,11 +11876,11 @@
             "item": "pollen",
             "quantity": 24000
           }
-        ]
+        ],
+        "output_item": "elderflower",
+        "output_qty": 80
       },
       {
-        "output_item": "chamomile",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -10032,7 +11898,9 @@
             "item": "pollen",
             "quantity": 20000
           }
-        ]
+        ],
+        "output_item": "chamomile",
+        "output_qty": 80
       }
     ],
     "startup_cost": 12000
@@ -10494,8 +12362,6 @@
         "output_qty": 4
       },
       {
-        "output_item": "diamond_ring",
-        "output_qty": 2,
         "inputs": [
           {
             "item": "cut_diamond",
@@ -10513,11 +12379,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "diamond_ring",
+        "output_qty": 2
       },
       {
-        "output_item": "ruby_ring",
-        "output_qty": 3,
         "inputs": [
           {
             "item": "cut_ruby",
@@ -10535,11 +12401,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "ruby_ring",
+        "output_qty": 3
       },
       {
-        "output_item": "emerald_necklace",
-        "output_qty": 3,
         "inputs": [
           {
             "item": "cut_emerald",
@@ -10557,11 +12423,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "emerald_necklace",
+        "output_qty": 3
       },
       {
-        "output_item": "sapphire_bracelet",
-        "output_qty": 4,
         "inputs": [
           {
             "item": "cut_sapphire",
@@ -10579,11 +12445,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "sapphire_bracelet",
+        "output_qty": 4
       },
       {
-        "output_item": "amethyst_pendant",
-        "output_qty": 5,
         "inputs": [
           {
             "item": "cut_amethyst",
@@ -10601,11 +12467,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "amethyst_pendant",
+        "output_qty": 5
       },
       {
-        "output_item": "gem_pendant",
-        "output_qty": 4,
         "inputs": [
           {
             "item": "cut_garnet",
@@ -10623,11 +12489,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "gem_pendant",
+        "output_qty": 4
       },
       {
-        "output_item": "gemstone_bracelet",
-        "output_qty": 3,
         "inputs": [
           {
             "item": "cut_tourmaline",
@@ -10645,11 +12511,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "gemstone_bracelet",
+        "output_qty": 3
       },
       {
-        "output_item": "luxury_watch",
-        "output_qty": 2,
         "inputs": [
           {
             "item": "cut_sapphire",
@@ -10671,10 +12537,273 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "luxury_watch",
+        "output_qty": 2
       }
     ],
     "startup_cost": 60000
+  },
+  "lapidary": {
+    "allowed_proximity": [
+      "urban",
+      "road"
+    ],
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills"
+    ],
+    "base_wage_cost": 320,
+    "class": "production",
+    "cycles_to_complete": 6,
+    "description": "Cuts, facets, and polishes rough gemstones into finished gems. Hard gems (diamond, ruby, sapphire, emerald, aquamarine) require diamond dust as cutting abrasive; softer gems use aluminum oxide.",
+    "name": "Lapidary",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "rough_diamond",
+            "quantity": 5
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_diamond",
+        "output_qty": 3
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_ruby",
+            "quantity": 15
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_ruby",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_emerald",
+            "quantity": 10
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 300
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_emerald",
+        "output_qty": 8
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_sapphire",
+            "quantity": 18
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 50
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_sapphire",
+        "output_qty": 12
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_aquamarine",
+            "quantity": 14
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_aquamarine",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_amethyst",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 40
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_amethyst",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_topaz",
+            "quantity": 15
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 35
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_topaz",
+        "output_qty": 12
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_opal",
+            "quantity": 12
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_opal",
+        "output_qty": 8
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_garnet",
+            "quantity": 25
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_garnet",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_tourmaline",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 30
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_tourmaline",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "rough_peridot",
+            "quantity": 22
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 20
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "cut_peridot",
+        "output_qty": 18
+      }
+    ],
+    "startup_cost": 85000
   },
   "lead_mine": {
     "allowed_proximity": [
@@ -10938,20 +13067,20 @@
         "base_sale_chance": 0.001,
         "elasticity": 0.5
       },
-      "luxury_car": {
-        "base_sale_chance": 0.0003,
-        "elasticity": 0.8
-      },
       "diamond_ring": {
         "price": 85000,
         "quantity": 1
       },
-      "ruby_ring": {
-        "price": 62000,
-        "quantity": 1
+      "luxury_car": {
+        "base_sale_chance": 0.0003,
+        "elasticity": 0.8
       },
       "luxury_watch": {
         "price": 48000,
+        "quantity": 1
+      },
+      "ruby_ring": {
+        "price": 62000,
         "quantity": 1
       }
     },
@@ -13146,8 +15275,6 @@
         "output_qty": 55
       },
       {
-        "output_item": "rough_amethyst",
-        "output_qty": 30,
         "inputs": [
           {
             "item": "energy",
@@ -13165,11 +15292,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "rough_amethyst",
+        "output_qty": 30
       },
       {
-        "output_item": "rough_opal",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "energy",
@@ -13187,11 +15314,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "rough_opal",
+        "output_qty": 20
       },
       {
-        "output_item": "rough_peridot",
-        "output_qty": 35,
         "inputs": [
           {
             "item": "energy",
@@ -13209,11 +15336,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "rough_peridot",
+        "output_qty": 35
       },
       {
-        "output_item": "obsidian",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "energy",
@@ -13231,11 +15358,11 @@
             "item": "paper",
             "quantity": 1
           }
-        ]
+        ],
+        "output_item": "obsidian",
+        "output_qty": 80
       },
       {
-        "output_item": "volcanic_ash",
-        "output_qty": 100,
         "inputs": [
           {
             "item": "energy",
@@ -13253,11 +15380,11 @@
             "item": "paper",
             "quantity": 1
           }
-        ]
+        ],
+        "output_item": "volcanic_ash",
+        "output_qty": 100
       },
       {
-        "output_item": "chalcedony",
-        "output_qty": 40,
         "inputs": [
           {
             "item": "energy",
@@ -13275,11 +15402,11 @@
             "item": "paper",
             "quantity": 1
           }
-        ]
+        ],
+        "output_item": "chalcedony",
+        "output_qty": 40
       },
       {
-        "output_item": "agate",
-        "output_qty": 35,
         "inputs": [
           {
             "item": "energy",
@@ -13297,10 +15424,476 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "agate",
+        "output_qty": 35
       }
     ],
     "startup_cost": 150000
+  },
+  "mineral_processing_plant": {
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "mountain",
+      "hills",
+      "prairie",
+      "desert"
+    ],
+    "base_wage_cost": 450,
+    "class": "production",
+    "cycles_to_complete": 8,
+    "description": "Crushes, sorts, and separates ore rocks into gem-quality rough crystals and industrial mineral by-products. Each ore type yields distinct rough gems alongside bulk minerals.",
+    "name": "Mineral Processing Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 500
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "rough_diamond",
+        "output_qty": 2
+      },
+      {
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_garnet",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "chromite",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "ilmenite",
+        "output_qty": 50
+      },
+      {
+        "inputs": [
+          {
+            "item": "kimberlite",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 400
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "diamond_dust",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_ruby",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_sapphire",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "aluminum_oxide",
+        "output_qty": 80
+      },
+      {
+        "inputs": [
+          {
+            "item": "corundum_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "feldspar",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 250
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "rough_emerald",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 200
+          },
+          {
+            "item": "water",
+            "quantity": 80
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_aquamarine",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 120
+          },
+          {
+            "item": "energy",
+            "quantity": 180
+          },
+          {
+            "item": "water",
+            "quantity": 70
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_tourmaline",
+        "output_qty": 20
+      },
+      {
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 50
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "feldspar",
+        "output_qty": 80
+      },
+      {
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 40
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "mica",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "pegmatite_ore",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "water",
+            "quantity": 60
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "spodumene",
+        "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_sapphire",
+        "output_qty": 12
+      },
+      {
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 150
+          },
+          {
+            "item": "energy",
+            "quantity": 80
+          },
+          {
+            "item": "water",
+            "quantity": 120
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_garnet",
+        "output_qty": 30
+      },
+      {
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 200
+          },
+          {
+            "item": "energy",
+            "quantity": 100
+          },
+          {
+            "item": "water",
+            "quantity": 130
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_tourmaline",
+        "output_qty": 15
+      },
+      {
+        "inputs": [
+          {
+            "item": "alluvial_gravel",
+            "quantity": 250
+          },
+          {
+            "item": "energy",
+            "quantity": 120
+          },
+          {
+            "item": "water",
+            "quantity": 140
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "rough_topaz",
+        "output_qty": 10
+      },
+      {
+        "inputs": [
+          {
+            "item": "diamond_dust",
+            "quantity": 20
+          },
+          {
+            "item": "aluminum_oxide",
+            "quantity": 40
+          },
+          {
+            "item": "water",
+            "quantity": 100
+          },
+          {
+            "item": "energy",
+            "quantity": 15000
+          },
+          {
+            "item": "paper",
+            "quantity": 3
+          }
+        ],
+        "output_item": "polishing_compound",
+        "output_qty": 50
+      }
+    ],
+    "startup_cost": 280000
   },
   "oil_refinery": {
     "allowed_proximity": [
@@ -13409,8 +16002,6 @@
         "output_qty": 80
       },
       {
-        "output_item": "polymer_compound",
-        "output_qty": 50,
         "inputs": [
           {
             "item": "plastic",
@@ -13428,7 +16019,9 @@
             "item": "paper",
             "quantity": 5
           }
-        ]
+        ],
+        "output_item": "polymer_compound",
+        "output_qty": 50
       }
     ],
     "startup_cost": 280000
@@ -13462,6 +16055,20 @@
         ],
         "output_item": "oil",
         "output_qty": 40
+      },
+      {
+        "inputs": [
+          {
+            "item": "energy",
+            "quantity": 150
+          },
+          {
+            "item": "paper",
+            "quantity": 1
+          }
+        ],
+        "output_item": "natural_gas",
+        "output_qty": 30
       }
     ],
     "startup_cost": 15000
@@ -13528,8 +16135,6 @@
         "output_qty": 15
       },
       {
-        "output_item": "cherry_blossom",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -13547,7 +16152,9 @@
             "item": "pollen",
             "quantity": 22000
           }
-        ]
+        ],
+        "output_item": "cherry_blossom",
+        "output_qty": 80
       }
     ],
     "startup_cost": 7500
@@ -13678,8 +16285,6 @@
         "output_qty": 12
       },
       {
-        "output_item": "tobacco_flower",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -13697,7 +16302,9 @@
             "item": "pollen",
             "quantity": 20000
           }
-        ]
+        ],
+        "output_item": "tobacco_flower",
+        "output_qty": 80
       }
     ],
     "startup_cost": 10000
@@ -15251,8 +17858,6 @@
         "output_qty": 50
       },
       {
-        "output_item": "dye",
-        "output_qty": 40,
         "inputs": [
           {
             "item": "floral_dye",
@@ -15274,7 +17879,9 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "dye",
+        "output_qty": 40
       }
     ],
     "startup_cost": 48000
@@ -16410,8 +19017,6 @@
         "output_qty": 40
       },
       {
-        "output_item": "perfume",
-        "output_qty": 10,
         "inputs": [
           {
             "item": "rose_essential_oil",
@@ -16441,11 +19046,11 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "perfume",
+        "output_qty": 10
       },
       {
-        "output_item": "lotion",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "rose_water",
@@ -16475,11 +19080,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "lotion",
+        "output_qty": 20
       },
       {
-        "output_item": "soap",
-        "output_qty": 30,
         "inputs": [
           {
             "item": "rose_essential_oil",
@@ -16505,11 +19110,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "soap",
+        "output_qty": 30
       },
       {
-        "output_item": "shampoo",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "chrysanthemum_essential_oil",
@@ -16535,11 +19140,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "shampoo",
+        "output_qty": 20
       },
       {
-        "output_item": "lotion",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "apple_blossom_water",
@@ -16565,11 +19170,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "lotion",
+        "output_qty": 20
       },
       {
-        "output_item": "perfume",
-        "output_qty": 10,
         "inputs": [
           {
             "item": "coffee_blossom_water",
@@ -16595,11 +19200,11 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "perfume",
+        "output_qty": 10
       },
       {
-        "output_item": "mineral_makeup",
-        "output_qty": 30,
         "inputs": [
           {
             "item": "mica",
@@ -16621,11 +19226,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "mineral_makeup",
+        "output_qty": 30
       },
       {
-        "output_item": "toothpaste",
-        "output_qty": 45,
         "inputs": [
           {
             "item": "water",
@@ -16651,7 +19256,9 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "toothpaste",
+        "output_qty": 45
       }
     ],
     "startup_cost": 55000
@@ -17409,8 +20016,6 @@
         "output_qty": 200
       },
       {
-        "output_item": "echinacea_extract",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "echinacea",
@@ -17432,11 +20037,11 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "echinacea_extract",
+        "output_qty": 20
       },
       {
-        "output_item": "foxglove_extract",
-        "output_qty": 10,
         "inputs": [
           {
             "item": "foxglove",
@@ -17458,11 +20063,11 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "foxglove_extract",
+        "output_qty": 10
       },
       {
-        "output_item": "passionflower_extract",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "passionflower",
@@ -17484,11 +20089,11 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "passionflower_extract",
+        "output_qty": 20
       },
       {
-        "output_item": "cardiac_drug",
-        "output_qty": 20,
         "inputs": [
           {
             "item": "foxglove_extract",
@@ -17514,7 +20119,9 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "cardiac_drug",
+        "output_qty": 20
       }
     ],
     "startup_cost": 120000
@@ -17547,6 +20154,14 @@
         "base_sale_chance": 0.06,
         "elasticity": 0.35
       },
+      "bismuth_subsalicylate": {
+        "base_sale_chance": 0.12,
+        "elasticity": 1.3
+      },
+      "cardiac_drug": {
+        "base_sale_chance": 0.1,
+        "elasticity": 1.5
+      },
       "cotton_essential_oil": {
         "base_sale_chance": 0.05,
         "elasticity": 1.2
@@ -17554,6 +20169,10 @@
       "cough_syrup": {
         "base_sale_chance": 0.05,
         "elasticity": 0.35
+      },
+      "echinacea_extract": {
+        "base_sale_chance": 0.12,
+        "elasticity": 1.3
       },
       "medicine": {
         "base_sale_chance": 0.05,
@@ -17571,25 +20190,13 @@
         "base_sale_chance": 0.06,
         "elasticity": 0.3
       },
-      "vitamins": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.2
-      },
-      "bismuth_subsalicylate": {
-        "base_sale_chance": 0.12,
-        "elasticity": 1.3
-      },
-      "echinacea_extract": {
-        "base_sale_chance": 0.12,
-        "elasticity": 1.3
-      },
       "passionflower_extract": {
         "base_sale_chance": 0.12,
         "elasticity": 1.3
       },
-      "cardiac_drug": {
-        "base_sale_chance": 0.1,
-        "elasticity": 1.5
+      "vitamins": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.2
       }
     },
     "startup_cost": 22000
@@ -18142,8 +20749,6 @@
         "output_qty": 12
       },
       {
-        "output_item": "apple_blossom",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -18161,11 +20766,11 @@
             "item": "pollen",
             "quantity": 18000
           }
-        ]
+        ],
+        "output_item": "apple_blossom",
+        "output_qty": 80
       },
       {
-        "output_item": "orange_blossom",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -18183,7 +20788,9 @@
             "item": "pollen",
             "quantity": 20000
           }
-        ]
+        ],
+        "output_item": "orange_blossom",
+        "output_qty": 80
       }
     ],
     "startup_cost": 3000
@@ -18610,6 +21217,74 @@
       }
     ],
     "startup_cost": 200000
+  },
+  "quartz_oscillator_plant": {
+    "allowed_proximity": [
+      "road",
+      "urban"
+    ],
+    "allowed_terrain": [
+      "urban",
+      "prairie",
+      "hills",
+      "mountain"
+    ],
+    "base_wage_cost": 480,
+    "class": "production",
+    "cycles_to_complete": 8,
+    "description": "Precision facility that slices quartz crystals into frequency-specific blanks and packages them as crystal oscillators \u2014 the timing heartbeat of every electronic device.",
+    "name": "Quartz Oscillator Plant",
+    "production_lines": [
+      {
+        "inputs": [
+          {
+            "item": "quartz",
+            "quantity": 100
+          },
+          {
+            "item": "diamond_dust",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 8000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "quartz_crystal_blank",
+        "output_qty": 60
+      },
+      {
+        "inputs": [
+          {
+            "item": "quartz_crystal_blank",
+            "quantity": 50
+          },
+          {
+            "item": "silver",
+            "quantity": 10
+          },
+          {
+            "item": "circuit_board",
+            "quantity": 5
+          },
+          {
+            "item": "energy",
+            "quantity": 6000
+          },
+          {
+            "item": "paper",
+            "quantity": 2
+          }
+        ],
+        "output_item": "crystal_oscillator",
+        "output_qty": 40
+      }
+    ],
+    "startup_cost": 320000
   },
   "refinery": {
     "allowed_proximity": [
@@ -19113,8 +21788,6 @@
         "output_qty": 24
       },
       {
-        "output_item": "chromium",
-        "output_qty": 30,
         "inputs": [
           {
             "item": "chromite",
@@ -19132,11 +21805,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "chromium",
+        "output_qty": 30
       },
       {
-        "output_item": "titanium",
-        "output_qty": 15,
         "inputs": [
           {
             "item": "ilmenite",
@@ -19154,11 +21827,11 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "titanium",
+        "output_qty": 15
       },
       {
-        "output_item": "lithium",
-        "output_qty": 28,
         "inputs": [
           {
             "item": "spodumene",
@@ -19176,11 +21849,11 @@
             "item": "paper",
             "quantity": 2
           }
-        ]
+        ],
+        "output_item": "lithium",
+        "output_qty": 28
       },
       {
-        "output_item": "chromium_oxide",
-        "output_qty": 40,
         "inputs": [
           {
             "item": "chromium",
@@ -19198,7 +21871,9 @@
             "item": "paper",
             "quantity": 3
           }
-        ]
+        ],
+        "output_item": "chromium_oxide",
+        "output_qty": 40
       }
     ],
     "startup_cost": 12000
@@ -22612,8 +25287,6 @@
         "output_qty": 50
       },
       {
-        "output_item": "vanilla_blossom",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -22631,7 +25304,9 @@
             "item": "pollen",
             "quantity": 35000
           }
-        ]
+        ],
+        "output_item": "vanilla_blossom",
+        "output_qty": 80
       }
     ],
     "startup_cost": 20000
@@ -22685,6 +25360,77 @@
       }
     },
     "startup_cost": 2000
+  },
+  "street_flower_cart": {
+    "allowed_proximity": [
+      "urban",
+      "road",
+      "remote",
+      "riverside",
+      "lakeside",
+      "coastal",
+      "oasis",
+      "hot_springs",
+      "caves",
+      "volcanic",
+      "deposits"
+    ],
+    "allowed_terrain": [
+      "prairie",
+      "forest",
+      "desert",
+      "marsh",
+      "mountain",
+      "tundra",
+      "jungle",
+      "savanna",
+      "hills",
+      "island",
+      "coastal",
+      "ocean",
+      "lake"
+    ],
+    "base_wage_cost": 0,
+    "class": "retail",
+    "cycles_to_complete": 60,
+    "description": "A humble wooden cart selling single-stem flowers one at a time. Earns almost nothing per cycle, but costs absolutely nothing to operate \u2014 no startup capital, no wages, no overhead. Can slowly pull a struggling company out of the red while better businesses are being rebuilt.",
+    "is_food_cart": true,
+    "name": "Street Flower Cart",
+    "products": {
+      "bouquet": {
+        "base_sale_chance": 0.02,
+        "elasticity": 1.2
+      },
+      "carnation": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.1
+      },
+      "chrysanthemum": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "lavender": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "lily": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.1
+      },
+      "rose": {
+        "base_sale_chance": 0.04,
+        "elasticity": 1.1
+      },
+      "sunflower": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      },
+      "tulip": {
+        "base_sale_chance": 0.03,
+        "elasticity": 1.1
+      }
+    },
+    "startup_cost": 0
   },
   "sushi_bar": {
     "allowed_proximity": [
@@ -22856,8 +25602,6 @@
         "output_qty": 15
       },
       {
-        "output_item": "tea_flower",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -22875,11 +25619,11 @@
             "item": "pollen",
             "quantity": 26000
           }
-        ]
+        ],
+        "output_item": "tea_flower",
+        "output_qty": 80
       },
       {
-        "output_item": "tea_leaves",
-        "output_qty": 160,
         "inputs": [
           {
             "item": "tea_seeds",
@@ -22905,7 +25649,9 @@
             "item": "pollen",
             "quantity": 16000
           }
-        ]
+        ],
+        "output_item": "tea_leaves",
+        "output_qty": 160
       }
     ],
     "startup_cost": 15000
@@ -24280,8 +27026,6 @@
         "output_qty": 15
       },
       {
-        "output_item": "tobacco_flower",
-        "output_qty": 80,
         "inputs": [
           {
             "item": "water",
@@ -24299,7 +27043,9 @@
             "item": "pollen",
             "quantity": 20000
           }
-        ]
+        ],
+        "output_item": "tobacco_flower",
+        "output_qty": 80
       }
     ],
     "startup_cost": 9000
@@ -25349,2737 +28095,5 @@
       }
     ],
     "startup_cost": 7500
-  },
-  "flower_farm": {
-    "name": "Flower Farm",
-    "description": "Commercial flower farm growing 35 varieties of cut flowers and blooms. Every line requires massive quantities of pollen for pollination.",
-    "class": "production",
-    "startup_cost": 18000,
-    "base_wage_cost": 65,
-    "cycles_to_complete": 480,
-    "allowed_terrain": [
-      "prairie",
-      "hills",
-      "marsh",
-      "savanna",
-      "jungle",
-      "island"
-    ],
-    "allowed_proximity": [
-      "remote",
-      "riverside"
-    ],
-    "production_lines": [
-      {
-        "output_item": "rose",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 400
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 25000
-          }
-        ]
-      },
-      {
-        "output_item": "lily",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 350
-          },
-          {
-            "item": "energy",
-            "quantity": 160
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 22000
-          }
-        ]
-      },
-      {
-        "output_item": "tulip",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 20000
-          }
-        ]
-      },
-      {
-        "output_item": "carnation",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 280
-          },
-          {
-            "item": "energy",
-            "quantity": 140
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 20000
-          }
-        ]
-      },
-      {
-        "output_item": "sunflower",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 350
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 22000
-          }
-        ]
-      },
-      {
-        "output_item": "chrysanthemum",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 21000
-          }
-        ]
-      },
-      {
-        "output_item": "snapdragon",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 280
-          },
-          {
-            "item": "energy",
-            "quantity": 140
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 20000
-          }
-        ]
-      },
-      {
-        "output_item": "zinnia",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 260
-          },
-          {
-            "item": "energy",
-            "quantity": 130
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 19000
-          }
-        ]
-      },
-      {
-        "output_item": "marigold",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 21000
-          }
-        ]
-      },
-      {
-        "output_item": "violet",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 280
-          },
-          {
-            "item": "energy",
-            "quantity": 140
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 20000
-          }
-        ]
-      },
-      {
-        "output_item": "narcissus",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 320
-          },
-          {
-            "item": "energy",
-            "quantity": 160
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 21000
-          }
-        ]
-      },
-      {
-        "output_item": "freesia",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 330
-          },
-          {
-            "item": "energy",
-            "quantity": 160
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 22000
-          }
-        ]
-      },
-      {
-        "output_item": "heather",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 240
-          },
-          {
-            "item": "energy",
-            "quantity": 120
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 18000
-          }
-        ]
-      },
-      {
-        "output_item": "clover_flower",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 240
-          },
-          {
-            "item": "energy",
-            "quantity": 110
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 18000
-          }
-        ]
-      },
-      {
-        "output_item": "chamomile",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 280
-          },
-          {
-            "item": "energy",
-            "quantity": 140
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 20000
-          }
-        ]
-      },
-      {
-        "output_item": "echinacea",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 290
-          },
-          {
-            "item": "energy",
-            "quantity": 145
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 21000
-          }
-        ]
-      },
-      {
-        "output_item": "lavender",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 350
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 30000
-          }
-        ]
-      },
-      {
-        "output_item": "hydrangea",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 400
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 30000
-          }
-        ]
-      },
-      {
-        "output_item": "iris",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 360
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 28000
-          }
-        ]
-      },
-      {
-        "output_item": "dahlia",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 380
-          },
-          {
-            "item": "energy",
-            "quantity": 190
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 30000
-          }
-        ]
-      },
-      {
-        "output_item": "anemone",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 340
-          },
-          {
-            "item": "energy",
-            "quantity": 170
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 28000
-          }
-        ]
-      },
-      {
-        "output_item": "ranunculus",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 400
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 32000
-          }
-        ]
-      },
-      {
-        "output_item": "foxglove",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 340
-          },
-          {
-            "item": "energy",
-            "quantity": 170
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 28000
-          }
-        ]
-      },
-      {
-        "output_item": "hibiscus",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 420
-          },
-          {
-            "item": "energy",
-            "quantity": 210
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 32000
-          }
-        ]
-      },
-      {
-        "output_item": "elderflower",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 360
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 30000
-          }
-        ]
-      },
-      {
-        "output_item": "passionflower",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 440
-          },
-          {
-            "item": "energy",
-            "quantity": 220
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 34000
-          }
-        ]
-      },
-      {
-        "output_item": "geranium",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 350
-          },
-          {
-            "item": "energy",
-            "quantity": 175
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 29000
-          }
-        ]
-      },
-      {
-        "output_item": "peony",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 500
-          },
-          {
-            "item": "energy",
-            "quantity": 250
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 45000
-          }
-        ]
-      },
-      {
-        "output_item": "jasmine",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 520
-          },
-          {
-            "item": "energy",
-            "quantity": 260
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 48000
-          }
-        ]
-      },
-      {
-        "output_item": "gardenia",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 500
-          },
-          {
-            "item": "energy",
-            "quantity": 250
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 46000
-          }
-        ]
-      },
-      {
-        "output_item": "magnolia",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 480
-          },
-          {
-            "item": "energy",
-            "quantity": 240
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 42000
-          }
-        ]
-      },
-      {
-        "output_item": "wisteria",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 460
-          },
-          {
-            "item": "energy",
-            "quantity": 230
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 40000
-          }
-        ]
-      },
-      {
-        "output_item": "lilac",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 460
-          },
-          {
-            "item": "energy",
-            "quantity": 230
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 40000
-          }
-        ]
-      },
-      {
-        "output_item": "orchid",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 600
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 60000
-          },
-          {
-            "item": "fertilizer_npk",
-            "quantity": 20
-          }
-        ]
-      },
-      {
-        "output_item": "lotus",
-        "output_qty": 100,
-        "inputs": [
-          {
-            "item": "water",
-            "quantity": 800
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 55000
-          }
-        ]
-      }
-    ]
-  },
-  "floral_studio": {
-    "name": "Floral Studio",
-    "description": "Artisan studio crafting bouquets, wreaths, corsages and centrepieces. Pollen is required at every stage of the design and preservation process.",
-    "class": "production",
-    "startup_cost": 15000,
-    "base_wage_cost": 120,
-    "cycles_to_complete": 240,
-    "allowed_terrain": [
-      "urban",
-      "prairie",
-      "hills"
-    ],
-    "allowed_proximity": [
-      "urban",
-      "road"
-    ],
-    "production_lines": [
-      {
-        "output_item": "bouquet",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "rose",
-            "quantity": 20
-          },
-          {
-            "item": "lily",
-            "quantity": 15
-          },
-          {
-            "item": "carnation",
-            "quantity": 25
-          },
-          {
-            "item": "tulip",
-            "quantity": 15
-          },
-          {
-            "item": "pollen",
-            "quantity": 50000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 50
-          }
-        ]
-      },
-      {
-        "output_item": "wedding_bouquet",
-        "output_qty": 5,
-        "inputs": [
-          {
-            "item": "peony",
-            "quantity": 20
-          },
-          {
-            "item": "rose",
-            "quantity": 30
-          },
-          {
-            "item": "lily",
-            "quantity": 15
-          },
-          {
-            "item": "orchid",
-            "quantity": 8
-          },
-          {
-            "item": "carnation",
-            "quantity": 15
-          },
-          {
-            "item": "freesia",
-            "quantity": 12
-          },
-          {
-            "item": "pollen",
-            "quantity": 90000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 80
-          }
-        ]
-      },
-      {
-        "output_item": "funeral_wreath",
-        "output_qty": 5,
-        "inputs": [
-          {
-            "item": "lily",
-            "quantity": 30
-          },
-          {
-            "item": "chrysanthemum",
-            "quantity": 30
-          },
-          {
-            "item": "rose",
-            "quantity": 20
-          },
-          {
-            "item": "iris",
-            "quantity": 15
-          },
-          {
-            "item": "pollen",
-            "quantity": 60000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 60
-          }
-        ]
-      },
-      {
-        "output_item": "corsage",
-        "output_qty": 20,
-        "inputs": [
-          {
-            "item": "orchid",
-            "quantity": 10
-          },
-          {
-            "item": "rose",
-            "quantity": 10
-          },
-          {
-            "item": "freesia",
-            "quantity": 8
-          },
-          {
-            "item": "pollen",
-            "quantity": 40000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 30
-          }
-        ]
-      },
-      {
-        "output_item": "floral_centerpiece",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "hydrangea",
-            "quantity": 20
-          },
-          {
-            "item": "rose",
-            "quantity": 20
-          },
-          {
-            "item": "dahlia",
-            "quantity": 15
-          },
-          {
-            "item": "peony",
-            "quantity": 10
-          },
-          {
-            "item": "pollen",
-            "quantity": 70000
-          },
-          {
-            "item": "glass",
-            "quantity": 8
-          },
-          {
-            "item": "energy",
-            "quantity": 60
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ]
-      },
-      {
-        "output_item": "dried_flower_bundle",
-        "output_qty": 20,
-        "inputs": [
-          {
-            "item": "lavender",
-            "quantity": 40
-          },
-          {
-            "item": "rose",
-            "quantity": 30
-          },
-          {
-            "item": "zinnia",
-            "quantity": 30
-          },
-          {
-            "item": "heather",
-            "quantity": 25
-          },
-          {
-            "item": "pollen",
-            "quantity": 45000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          },
-          {
-            "item": "energy",
-            "quantity": 40
-          }
-        ]
-      },
-      {
-        "output_item": "potpourri",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "dried_flower_bundle",
-            "quantity": 10
-          },
-          {
-            "item": "lavender_essential_oil",
-            "quantity": 2
-          },
-          {
-            "item": "pollen",
-            "quantity": 50000
-          },
-          {
-            "item": "jar",
-            "quantity": 15
-          },
-          {
-            "item": "energy",
-            "quantity": 30
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "flower_crown",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "rose",
-            "quantity": 20
-          },
-          {
-            "item": "carnation",
-            "quantity": 20
-          },
-          {
-            "item": "lily",
-            "quantity": 15
-          },
-          {
-            "item": "violet",
-            "quantity": 15
-          },
-          {
-            "item": "pollen",
-            "quantity": 55000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          },
-          {
-            "item": "energy",
-            "quantity": 40
-          }
-        ]
-      },
-      {
-        "output_item": "pressed_flower_art",
-        "output_qty": 5,
-        "inputs": [
-          {
-            "item": "iris",
-            "quantity": 15
-          },
-          {
-            "item": "peony",
-            "quantity": 10
-          },
-          {
-            "item": "violet",
-            "quantity": 15
-          },
-          {
-            "item": "narcissus",
-            "quantity": 10
-          },
-          {
-            "item": "pollen",
-            "quantity": 65000
-          },
-          {
-            "item": "glass",
-            "quantity": 5
-          },
-          {
-            "item": "paper",
-            "quantity": 10
-          },
-          {
-            "item": "energy",
-            "quantity": 50
-          }
-        ]
-      },
-      {
-        "output_item": "bouquet",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "ranunculus",
-            "quantity": 15
-          },
-          {
-            "item": "snapdragon",
-            "quantity": 20
-          },
-          {
-            "item": "anemone",
-            "quantity": 15
-          },
-          {
-            "item": "lilac",
-            "quantity": 10
-          },
-          {
-            "item": "pollen",
-            "quantity": 52000
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 50
-          }
-        ]
-      },
-      {
-        "output_item": "floral_centerpiece",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "magnolia",
-            "quantity": 10
-          },
-          {
-            "item": "gardenia",
-            "quantity": 15
-          },
-          {
-            "item": "wisteria",
-            "quantity": 12
-          },
-          {
-            "item": "orchid",
-            "quantity": 5
-          },
-          {
-            "item": "pollen",
-            "quantity": 75000
-          },
-          {
-            "item": "glass",
-            "quantity": 8
-          },
-          {
-            "item": "energy",
-            "quantity": 65
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ]
-      },
-      {
-        "output_item": "potpourri",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "wisteria",
-            "quantity": 20
-          },
-          {
-            "item": "lilac",
-            "quantity": 20
-          },
-          {
-            "item": "geranium",
-            "quantity": 20
-          },
-          {
-            "item": "rose",
-            "quantity": 15
-          },
-          {
-            "item": "pollen",
-            "quantity": 48000
-          },
-          {
-            "item": "jar",
-            "quantity": 15
-          },
-          {
-            "item": "energy",
-            "quantity": 30
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      }
-    ]
-  },
-  "botanical_extract_lab": {
-    "name": "Botanical Extract Lab",
-    "description": "Distills and concentrates floral essential oils, hydrosols, and natural dyes. Enormous quantities of pollen are co-processed with each flower batch.",
-    "class": "production",
-    "startup_cost": 38000,
-    "base_wage_cost": 200,
-    "cycles_to_complete": 720,
-    "allowed_terrain": [
-      "urban",
-      "prairie",
-      "hills"
-    ],
-    "allowed_proximity": [
-      "urban",
-      "road"
-    ],
-    "production_lines": [
-      {
-        "output_item": "rose_essential_oil",
-        "output_qty": 5,
-        "inputs": [
-          {
-            "item": "rose",
-            "quantity": 600
-          },
-          {
-            "item": "pollen",
-            "quantity": 80000
-          },
-          {
-            "item": "water",
-            "quantity": 400
-          },
-          {
-            "item": "energy",
-            "quantity": 600
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "lavender_essential_oil",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "lavender",
-            "quantity": 500
-          },
-          {
-            "item": "pollen",
-            "quantity": 65000
-          },
-          {
-            "item": "water",
-            "quantity": 350
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "jasmine_essential_oil",
-        "output_qty": 4,
-        "inputs": [
-          {
-            "item": "jasmine",
-            "quantity": 400
-          },
-          {
-            "item": "pollen",
-            "quantity": 90000
-          },
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 700
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "neroli_oil",
-        "output_qty": 5,
-        "inputs": [
-          {
-            "item": "orange_blossom",
-            "quantity": 500
-          },
-          {
-            "item": "pollen",
-            "quantity": 70000
-          },
-          {
-            "item": "water",
-            "quantity": 350
-          },
-          {
-            "item": "energy",
-            "quantity": 550
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "chrysanthemum_essential_oil",
-        "output_qty": 6,
-        "inputs": [
-          {
-            "item": "chrysanthemum",
-            "quantity": 700
-          },
-          {
-            "item": "pollen",
-            "quantity": 55000
-          },
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 450
-          },
-          {
-            "item": "paper",
-            "quantity": 5
-          }
-        ]
-      },
-      {
-        "output_item": "rose_water",
-        "output_qty": 50,
-        "inputs": [
-          {
-            "item": "rose",
-            "quantity": 200
-          },
-          {
-            "item": "pollen",
-            "quantity": 30000
-          },
-          {
-            "item": "water",
-            "quantity": 800
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "orange_blossom_water",
-        "output_qty": 50,
-        "inputs": [
-          {
-            "item": "orange_blossom",
-            "quantity": 200
-          },
-          {
-            "item": "pollen",
-            "quantity": 30000
-          },
-          {
-            "item": "water",
-            "quantity": 800
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "floral_dye",
-        "output_qty": 30,
-        "inputs": [
-          {
-            "item": "marigold",
-            "quantity": 400
-          },
-          {
-            "item": "hibiscus",
-            "quantity": 200
-          },
-          {
-            "item": "pollen",
-            "quantity": 35000
-          },
-          {
-            "item": "water",
-            "quantity": 400
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "apple_blossom_water",
-        "output_qty": 40,
-        "inputs": [
-          {
-            "item": "apple_blossom",
-            "quantity": 200
-          },
-          {
-            "item": "pollen",
-            "quantity": 22000
-          },
-          {
-            "item": "water",
-            "quantity": 700
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "coffee_blossom_water",
-        "output_qty": 40,
-        "inputs": [
-          {
-            "item": "coffee_blossom",
-            "quantity": 200
-          },
-          {
-            "item": "pollen",
-            "quantity": 25000
-          },
-          {
-            "item": "water",
-            "quantity": 700
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "geranium_essential_oil",
-        "output_qty": 6,
-        "inputs": [
-          {
-            "item": "geranium",
-            "quantity": 400
-          },
-          {
-            "item": "pollen",
-            "quantity": 42000
-          },
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "energy",
-            "quantity": 480
-          },
-          {
-            "item": "paper",
-            "quantity": 4
-          }
-        ]
-      },
-      {
-        "output_item": "elderflower_cordial",
-        "output_qty": 30,
-        "inputs": [
-          {
-            "item": "elderflower",
-            "quantity": 300
-          },
-          {
-            "item": "sugar",
-            "quantity": 500
-          },
-          {
-            "item": "pollen",
-            "quantity": 28000
-          },
-          {
-            "item": "water",
-            "quantity": 600
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      }
-    ]
-  },
-  "flower_shop": {
-    "name": "Flower Shop",
-    "description": "Retail florist selling fresh-cut flowers and finished arrangements.",
-    "class": "retail",
-    "startup_cost": 5000,
-    "base_wage_cost": 80,
-    "cycles_to_complete": 10,
-    "allowed_terrain": [
-      "urban",
-      "prairie",
-      "hills"
-    ],
-    "allowed_proximity": [
-      "urban",
-      "road"
-    ],
-    "products": {
-      "rose": {
-        "base_sale_chance": 0.3,
-        "elasticity": 1.4
-      },
-      "lily": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.3
-      },
-      "tulip": {
-        "base_sale_chance": 0.25,
-        "elasticity": 1.3
-      },
-      "carnation": {
-        "base_sale_chance": 0.28,
-        "elasticity": 1.3
-      },
-      "orchid": {
-        "base_sale_chance": 0.15,
-        "elasticity": 1.8
-      },
-      "sunflower": {
-        "base_sale_chance": 0.22,
-        "elasticity": 1.2
-      },
-      "lavender": {
-        "base_sale_chance": 0.2,
-        "elasticity": 1.2
-      },
-      "chrysanthemum": {
-        "base_sale_chance": 0.22,
-        "elasticity": 1.3
-      },
-      "peony": {
-        "base_sale_chance": 0.12,
-        "elasticity": 2.0
-      },
-      "bouquet": {
-        "base_sale_chance": 0.2,
-        "elasticity": 1.5
-      },
-      "wedding_bouquet": {
-        "base_sale_chance": 0.06,
-        "elasticity": 2.2
-      },
-      "funeral_wreath": {
-        "base_sale_chance": 0.08,
-        "elasticity": 1.6
-      },
-      "corsage": {
-        "base_sale_chance": 0.1,
-        "elasticity": 1.5
-      },
-      "floral_centerpiece": {
-        "base_sale_chance": 0.08,
-        "elasticity": 1.8
-      },
-      "dried_flower_bundle": {
-        "base_sale_chance": 0.15,
-        "elasticity": 1.3
-      },
-      "potpourri": {
-        "base_sale_chance": 0.15,
-        "elasticity": 1.2
-      },
-      "flower_crown": {
-        "base_sale_chance": 0.1,
-        "elasticity": 1.5
-      },
-      "pressed_flower_art": {
-        "base_sale_chance": 0.05,
-        "elasticity": 2.0
-      },
-      "rose_water": {
-        "base_sale_chance": 0.18,
-        "elasticity": 1.3
-      }
-    }
-  },
-  "street_flower_cart": {
-    "name": "Street Flower Cart",
-    "description": "A humble wooden cart selling single-stem flowers one at a time. Earns almost nothing per cycle, but costs absolutely nothing to operate \u2014 no startup capital, no wages, no overhead. Can slowly pull a struggling company out of the red while better businesses are being rebuilt.",
-    "class": "retail",
-    "startup_cost": 0,
-    "base_wage_cost": 0,
-    "cycles_to_complete": 60,
-    "allowed_terrain": [
-      "prairie",
-      "forest",
-      "desert",
-      "marsh",
-      "mountain",
-      "tundra",
-      "jungle",
-      "savanna",
-      "hills",
-      "island",
-      "coastal",
-      "ocean",
-      "lake"
-    ],
-    "products": {
-      "rose": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.1
-      },
-      "lily": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.1
-      },
-      "carnation": {
-        "base_sale_chance": 0.04,
-        "elasticity": 1.1
-      },
-      "tulip": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "sunflower": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "chrysanthemum": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "lavender": {
-        "base_sale_chance": 0.03,
-        "elasticity": 1.1
-      },
-      "bouquet": {
-        "base_sale_chance": 0.02,
-        "elasticity": 1.2
-      }
-    },
-    "allowed_proximity": [
-      "urban",
-      "road",
-      "remote",
-      "riverside",
-      "lakeside",
-      "coastal",
-      "oasis",
-      "hot_springs",
-      "caves",
-      "volcanic",
-      "deposits"
-    ],
-    "is_food_cart": true
-  },
-  "gem_mine": {
-    "name": "Gem Mine",
-    "description": "Hard-rock mine extracting gem-bearing ore from volcanic pipes, metamorphic, and granitic formations. Produces kimberlite (diamond source), corundum ore (ruby/sapphire), and pegmatite ore (emerald/aquamarine/tourmaline).",
-    "class": "production",
-    "allowed_terrain": [
-      "mountain",
-      "desert",
-      "tundra",
-      "jungle",
-      "hills"
-    ],
-    "allowed_proximity": [
-      "volcanic",
-      "caves",
-      "deposits",
-      "remote"
-    ],
-    "startup_cost": 280000,
-    "base_wage_cost": 800,
-    "cycles_to_complete": 10,
-    "production_lines": [
-      {
-        "output_item": "kimberlite",
-        "output_qty": 80,
-        "inputs": [
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "bio_fuel",
-            "quantity": 80
-          },
-          {
-            "item": "water",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ]
-      },
-      {
-        "output_item": "corundum_ore",
-        "output_qty": 60,
-        "inputs": [
-          {
-            "item": "energy",
-            "quantity": 250
-          },
-          {
-            "item": "bio_fuel",
-            "quantity": 65
-          },
-          {
-            "item": "water",
-            "quantity": 120
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "pegmatite_ore",
-        "output_qty": 70,
-        "inputs": [
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "bio_fuel",
-            "quantity": 55
-          },
-          {
-            "item": "water",
-            "quantity": 100
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      }
-    ]
-  },
-  "alluvial_mine": {
-    "name": "Alluvial Mine",
-    "description": "Pans and sluices river and stream sediment to recover gem-bearing gravel. Low capital cost compared to hard-rock mining; yields sapphires, garnets, topaz, and tourmaline.",
-    "class": "production",
-    "allowed_terrain": [
-      "marsh",
-      "hills",
-      "forest"
-    ],
-    "allowed_proximity": [
-      "riverside",
-      "lakeside"
-    ],
-    "startup_cost": 55000,
-    "base_wage_cost": 220,
-    "cycles_to_complete": 8,
-    "production_lines": [
-      {
-        "output_item": "alluvial_gravel",
-        "output_qty": 120,
-        "inputs": [
-          {
-            "item": "energy",
-            "quantity": 50
-          },
-          {
-            "item": "water",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ]
-      }
-    ]
-  },
-  "mineral_processing_plant": {
-    "name": "Mineral Processing Plant",
-    "description": "Crushes, sorts, and separates ore rocks into gem-quality rough crystals and industrial mineral by-products. Each ore type yields distinct rough gems alongside bulk minerals.",
-    "class": "production",
-    "allowed_terrain": [
-      "mountain",
-      "hills",
-      "prairie",
-      "desert"
-    ],
-    "allowed_proximity": [
-      "road",
-      "urban"
-    ],
-    "startup_cost": 280000,
-    "base_wage_cost": 450,
-    "cycles_to_complete": 8,
-    "production_lines": [
-      {
-        "output_item": "rough_diamond",
-        "output_qty": 2,
-        "inputs": [
-          {
-            "item": "kimberlite",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "water",
-            "quantity": 100
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ]
-      },
-      {
-        "output_item": "rough_garnet",
-        "output_qty": 40,
-        "inputs": [
-          {
-            "item": "kimberlite",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "water",
-            "quantity": 80
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "chromite",
-        "output_qty": 60,
-        "inputs": [
-          {
-            "item": "kimberlite",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "water",
-            "quantity": 60
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "ilmenite",
-        "output_qty": 50,
-        "inputs": [
-          {
-            "item": "kimberlite",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "water",
-            "quantity": 60
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "diamond_dust",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "kimberlite",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 400
-          },
-          {
-            "item": "water",
-            "quantity": 50
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_ruby",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "corundum_ore",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "water",
-            "quantity": 80
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_sapphire",
-        "output_qty": 20,
-        "inputs": [
-          {
-            "item": "corundum_ore",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "water",
-            "quantity": 70
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "aluminum_oxide",
-        "output_qty": 80,
-        "inputs": [
-          {
-            "item": "corundum_ore",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "water",
-            "quantity": 60
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "feldspar",
-        "output_qty": 60,
-        "inputs": [
-          {
-            "item": "corundum_ore",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 100
-          },
-          {
-            "item": "water",
-            "quantity": 50
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ]
-      },
-      {
-        "output_item": "rough_emerald",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "pegmatite_ore",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 250
-          },
-          {
-            "item": "water",
-            "quantity": 100
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ]
-      },
-      {
-        "output_item": "rough_aquamarine",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "pegmatite_ore",
-            "quantity": 150
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "water",
-            "quantity": 80
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_tourmaline",
-        "output_qty": 20,
-        "inputs": [
-          {
-            "item": "pegmatite_ore",
-            "quantity": 120
-          },
-          {
-            "item": "energy",
-            "quantity": 180
-          },
-          {
-            "item": "water",
-            "quantity": 70
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "feldspar",
-        "output_qty": 80,
-        "inputs": [
-          {
-            "item": "pegmatite_ore",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 120
-          },
-          {
-            "item": "water",
-            "quantity": 50
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "mica",
-        "output_qty": 60,
-        "inputs": [
-          {
-            "item": "pegmatite_ore",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 100
-          },
-          {
-            "item": "water",
-            "quantity": 40
-          },
-          {
-            "item": "paper",
-            "quantity": 1
-          }
-        ]
-      },
-      {
-        "output_item": "spodumene",
-        "output_qty": 40,
-        "inputs": [
-          {
-            "item": "pegmatite_ore",
-            "quantity": 150
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "water",
-            "quantity": 60
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_sapphire",
-        "output_qty": 12,
-        "inputs": [
-          {
-            "item": "alluvial_gravel",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 100
-          },
-          {
-            "item": "water",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_garnet",
-        "output_qty": 30,
-        "inputs": [
-          {
-            "item": "alluvial_gravel",
-            "quantity": 150
-          },
-          {
-            "item": "energy",
-            "quantity": 80
-          },
-          {
-            "item": "water",
-            "quantity": 120
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_tourmaline",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "alluvial_gravel",
-            "quantity": 200
-          },
-          {
-            "item": "energy",
-            "quantity": 100
-          },
-          {
-            "item": "water",
-            "quantity": 130
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "rough_topaz",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "alluvial_gravel",
-            "quantity": 250
-          },
-          {
-            "item": "energy",
-            "quantity": 120
-          },
-          {
-            "item": "water",
-            "quantity": 140
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "polishing_compound",
-        "output_qty": 50,
-        "inputs": [
-          {
-            "item": "diamond_dust",
-            "quantity": 20
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 40
-          },
-          {
-            "item": "water",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 15000
-          },
-          {
-            "item": "paper",
-            "quantity": 3
-          }
-        ]
-      }
-    ]
-  },
-  "lapidary": {
-    "name": "Lapidary",
-    "description": "Cuts, facets, and polishes rough gemstones into finished gems. Hard gems (diamond, ruby, sapphire, emerald, aquamarine) require diamond dust as cutting abrasive; softer gems use aluminum oxide.",
-    "class": "production",
-    "allowed_terrain": [
-      "urban",
-      "prairie",
-      "hills"
-    ],
-    "allowed_proximity": [
-      "urban",
-      "road"
-    ],
-    "startup_cost": 85000,
-    "base_wage_cost": 320,
-    "cycles_to_complete": 6,
-    "production_lines": [
-      {
-        "output_item": "cut_diamond",
-        "output_qty": 3,
-        "inputs": [
-          {
-            "item": "rough_diamond",
-            "quantity": 5
-          },
-          {
-            "item": "diamond_dust",
-            "quantity": 100
-          },
-          {
-            "item": "energy",
-            "quantity": 500
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_ruby",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "rough_ruby",
-            "quantity": 15
-          },
-          {
-            "item": "diamond_dust",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_emerald",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "rough_emerald",
-            "quantity": 10
-          },
-          {
-            "item": "diamond_dust",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 300
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_sapphire",
-        "output_qty": 12,
-        "inputs": [
-          {
-            "item": "rough_sapphire",
-            "quantity": 18
-          },
-          {
-            "item": "diamond_dust",
-            "quantity": 50
-          },
-          {
-            "item": "energy",
-            "quantity": 250
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_aquamarine",
-        "output_qty": 10,
-        "inputs": [
-          {
-            "item": "rough_aquamarine",
-            "quantity": 14
-          },
-          {
-            "item": "diamond_dust",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 250
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_amethyst",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "rough_amethyst",
-            "quantity": 20
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 40
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_topaz",
-        "output_qty": 12,
-        "inputs": [
-          {
-            "item": "rough_topaz",
-            "quantity": 15
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 35
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_opal",
-        "output_qty": 8,
-        "inputs": [
-          {
-            "item": "rough_opal",
-            "quantity": 12
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_garnet",
-        "output_qty": 20,
-        "inputs": [
-          {
-            "item": "rough_garnet",
-            "quantity": 25
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_tourmaline",
-        "output_qty": 15,
-        "inputs": [
-          {
-            "item": "rough_tourmaline",
-            "quantity": 20
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 30
-          },
-          {
-            "item": "energy",
-            "quantity": 200
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "cut_peridot",
-        "output_qty": 18,
-        "inputs": [
-          {
-            "item": "rough_peridot",
-            "quantity": 22
-          },
-          {
-            "item": "aluminum_oxide",
-            "quantity": 20
-          },
-          {
-            "item": "energy",
-            "quantity": 150
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      }
-    ]
-  },
-  "crystal_shop": {
-    "name": "Crystal Shop",
-    "description": "Retail store selling rough crystal specimens, cut gemstones, and mineral curiosities to collectors, hobbyists, and spiritual markets.",
-    "class": "retail",
-    "allowed_terrain": [
-      "urban",
-      "prairie",
-      "hills",
-      "island",
-      "coastal"
-    ],
-    "allowed_proximity": [
-      "urban",
-      "road"
-    ],
-    "startup_cost": 18000,
-    "base_wage_cost": 180,
-    "cycles_to_complete": 4,
-    "products": {
-      "rough_amethyst": {
-        "base_sale_chance": 0.55,
-        "elasticity": 1.2
-      },
-      "rough_opal": {
-        "base_sale_chance": 0.4,
-        "elasticity": 1.5
-      },
-      "rough_garnet": {
-        "base_sale_chance": 0.5,
-        "elasticity": 1.1
-      },
-      "rough_tourmaline": {
-        "base_sale_chance": 0.45,
-        "elasticity": 1.2
-      },
-      "rough_peridot": {
-        "base_sale_chance": 0.48,
-        "elasticity": 1.2
-      },
-      "obsidian": {
-        "base_sale_chance": 0.6,
-        "elasticity": 0.9
-      },
-      "chalcedony": {
-        "base_sale_chance": 0.5,
-        "elasticity": 1.0
-      },
-      "agate": {
-        "base_sale_chance": 0.55,
-        "elasticity": 1.0
-      },
-      "cut_amethyst": {
-        "base_sale_chance": 0.35,
-        "elasticity": 1.4
-      },
-      "cut_garnet": {
-        "base_sale_chance": 0.38,
-        "elasticity": 1.3
-      },
-      "cut_tourmaline": {
-        "base_sale_chance": 0.3,
-        "elasticity": 1.5
-      },
-      "cut_peridot": {
-        "base_sale_chance": 0.32,
-        "elasticity": 1.4
-      }
-    }
-  },
-  "quartz_oscillator_plant": {
-    "name": "Quartz Oscillator Plant",
-    "description": "Precision facility that slices quartz crystals into frequency-specific blanks and packages them as crystal oscillators \u2014 the timing heartbeat of every electronic device.",
-    "class": "production",
-    "allowed_terrain": [
-      "urban",
-      "prairie",
-      "hills",
-      "mountain"
-    ],
-    "allowed_proximity": [
-      "road",
-      "urban"
-    ],
-    "startup_cost": 320000,
-    "base_wage_cost": 480,
-    "cycles_to_complete": 8,
-    "production_lines": [
-      {
-        "output_item": "quartz_crystal_blank",
-        "output_qty": 60,
-        "inputs": [
-          {
-            "item": "quartz",
-            "quantity": 100
-          },
-          {
-            "item": "diamond_dust",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 8000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      },
-      {
-        "output_item": "crystal_oscillator",
-        "output_qty": 40,
-        "inputs": [
-          {
-            "item": "quartz_crystal_blank",
-            "quantity": 50
-          },
-          {
-            "item": "silver",
-            "quantity": 10
-          },
-          {
-            "item": "circuit_board",
-            "quantity": 5
-          },
-          {
-            "item": "energy",
-            "quantity": 6000
-          },
-          {
-            "item": "paper",
-            "quantity": 2
-          }
-        ]
-      }
-    ]
   }
 }

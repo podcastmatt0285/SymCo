@@ -1,0 +1,95 @@
+{
+  "player_id": -2016,
+  "business_name": "GreenGro Agri-Chem",
+  "description": "Fully vertically integrated fertilizer producer. Mines its own phosphate, potash, and sulfur; extracts natural gas; and synthesizes the full NPK fertilizer chain in-house. Only buys utilities from the market.",
+
+  "cash_caps": {
+    "hard_high": 70000000,
+    "soft_high": 30000000,
+    "soft_low":   8000000,
+    "hard_low":   2000000
+  },
+
+  "seed": {
+    "starting_cash": 12000000,
+    "land_plots": [
+      { "terrain_type": "mountain", "proximity_features": ["remote"],   "size": 1 },
+      { "terrain_type": "desert",   "proximity_features": ["coastal"],  "size": 1 }
+    ],
+    "districts": [
+      { "district_type": "industrial", "size": 5.0, "plots_merged": 5 }
+    ]
+  },
+
+  "businesses": [
+    {
+      "business_type": "mineral_mine",
+      "district_id": null,
+      "active_lines": ["phosphate_rock", "potash_ore", "sulfur"]
+    },
+    {
+      "business_type": "oil_rig",
+      "district_id": null,
+      "active_lines": ["oil", "natural_gas"]
+    },
+    {
+      "business_type": "chemical_plant",
+      "district_seed_index": 0,
+      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk"]
+    }
+  ],
+
+  "buy_items": {
+    "water": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 500000,
+      "reorder_at": 100000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    }
+  },
+
+  "sell_items": {
+    "fertilizer_npk": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "oil": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "natural_gas": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "sulfuric_acid": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "ammonia": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "phosphoric_acid": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    }
+  }
+}

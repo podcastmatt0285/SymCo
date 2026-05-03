@@ -1,0 +1,67 @@
+{
+  "player_id": -2018,
+  "business_name": "Green Gate Farmers Market",
+  "description": "Operates five farmers markets, buying fresh artisan farm goods and creating steady demand for dairy, egg, honey, and fresh fruit producers.",
+
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 15000000,
+    "soft_low":   4000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 8000000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "savanna", "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["urban"],  "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    { "business_type": "farmers_market", "district_id": null, "active_lines": [] },
+    { "business_type": "farmers_market", "district_id": null, "active_lines": [] },
+    { "business_type": "farmers_market", "district_id": null, "active_lines": [] },
+    { "business_type": "farmers_market", "district_id": null, "active_lines": [] },
+    { "business_type": "farmers_market", "district_id": null, "active_lines": [] }
+  ],
+
+  "buy_items": {
+    "eggs":         { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.10, "market": "regular" },
+    "milk":         { "target_inventory": 6000,  "reorder_at": 1200, "max_price_multiplier": 1.10, "market": "regular" },
+    "yogurt":       { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "butter":       { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "cream":        { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
+    "honey":        { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "jam":          { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
+    "jelly":        { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
+    "peanut_butter":{ "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
+    "apples":       { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "cherries":     { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
+    "grapes":       { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
+    "sheep_milk":   { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
+    "mussels":      { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
+    "crawfish":     { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" }
+  },
+
+  "sell_items": {
+    "eggs":         { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "milk":         { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "yogurt":       { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "butter":       { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "cream":        { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "honey":        { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "jam":          { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "jelly":        { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "peanut_butter":{ "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "apples":       { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
+    "cherries":     { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "grapes":       { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
+    "sheep_milk":   { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "mussels":      { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
+    "crawfish":     { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" }
+  }
+}
