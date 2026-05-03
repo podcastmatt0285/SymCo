@@ -49,6 +49,10 @@ Items are grouped by category and ranked by value/complexity at the bottom.
 - [ ] **Escrow admin override** — Cancel a stuck P2P escrow and return funds to both parties without triggering a cancellation penalty. P2P detail page is currently read-only.
 - [ ] **Business intervention** — Force-complete a production tick, reset a stuck cycle, or set `progress_ticks` manually from the admin UI. A crashed business blocks a player economically with no fix. (Originally deferred as item 14.)
 
+## Game Items / Supply Chain
+
+- [ ] **Manure item** — Organic fertilizer by-product from `poultry_farm` (pigs, chickens, ducks). Weaker than `fertilizer_npk` (needs 2–3× the quantity for same effect) but free to produce — gives poultry farms a second revenue stream and lets integrated farm owners skip buying fertilizer. Add as optional side-output of poultry_farm lines, and as an alternative optional input in `grain_farm`, `vegetable_farm`, and `flower_farm`.
+
 ---
 
 ## Priority Ranking
