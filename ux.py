@@ -2325,6 +2325,34 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
         except Exception:
             pass
 
+        # --- Quick Buy panel builder ---
+        def _qb_panel(item_type, panel_id, default_qty):
+            item_disp = item_type.replace("_", " ").title()
+            return (
+                f'<div class="qb-panel" id="{panel_id}" data-item="{item_type}">'
+                f'<div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;">Quick Buy: '
+                f'<b style="color:#e2e8f0;">{item_disp}</b></div>'
+                f'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+                f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Quantity</div>'
+                f'<input type="number" class="qb-input qb-qty" value="{default_qty}" min="1" step="1"'
+                f' oninput="qbSchedule(this)"></div>'
+                f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Cap price ({disp["code"]})</div>'
+                f'<input type="number" class="qb-input qb-cap" min="0.000001" step="any" placeholder="auto"'
+                f' oninput="qbSchedule(this)"></div></div>'
+                f'<div class="qb-preview" style="margin-top:8px;min-height:30px;"></div>'
+                f'<form method="post" action="/api/market/quick-buy/execute" style="margin-top:8px;" onsubmit="return qbSubmit(this)">'
+                f'<input type="hidden" name="item_type" value="{item_type}">'
+                f'<input type="hidden" name="quantity" value="{default_qty}">'
+                f'<input type="hidden" name="cap_price" value="">'
+                f'<input type="hidden" name="sort" value="{sort}">'
+                f'<input type="hidden" name="biz_filter" value="{biz_filter}">'
+                f'<div style="display:flex;gap:6px;">'
+                f'<button type="submit" class="btn-sm btn-sm-blue" style="font-size:0.7rem;">Confirm Buy</button>'
+                f'<button type="button" class="btn-sm" style="background:#1e293b;color:#94a3b8;font-size:0.7rem;"'
+                f' onclick="document.getElementById(\'{panel_id}\').style.display=\'none\'">Cancel</button>'
+                f'</div></form></div>'
+            )
+
         # Build a card for each business
         def make_card(d):
             biz          = d["biz"]
@@ -2388,6 +2416,32 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                     else:
                         tip = "Missing — " + " | ".join(missing)
                         dot = f'<span style="color:#ef4444;font-size:0.85rem;flex-shrink:0;" title="{tip}">●</span>'
+                    # Build quick-buy buttons for missing inputs on this line
+                    missing_html = ""
+                    qb_panels    = ""
+                    for req in line.get("inputs", []):
+                        have = inv.get(req["item"], 0)
+                        need = req["quantity"]
+                        if have < need:
+                            safe  = req["item"].replace("'", "").replace('"', "")
+                            pid   = f"qbp-{biz.id}-{li}-{safe}"
+                            dqty  = max(1, int(need * 5 - have))
+                            iname = req["item"].replace("_", " ").title()
+                            missing_html += (
+                                f'<span style="font-size:0.68rem;color:#f59e0b;">'
+                                f'{iname} {have:,.0f}/{need:,}</span>'
+                                f'<button type="button" class="btn-sm btn-sm-blue"'
+                                f' style="font-size:0.62rem;padding:2px 5px;"'
+                                f' onclick="qbToggle(\'{pid}\')">Buy</button> '
+                            )
+                            qb_panels += _qb_panel(req["item"], pid, dqty)
+                    missing_row = (
+                        f'<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;'
+                        f'padding:3px 8px 3px;background:#0a0e1a;border-radius:0 0 3px 3px;'
+                        f'margin-top:-4px;margin-bottom:4px;">'
+                        f'<span style="font-size:0.62rem;color:#475569;">Missing:</span> {missing_html}</div>'
+                    ) if missing_html else ""
+
                     lines_html += f'''<div class="line-row{' paused' if lp else ''}" id="line-{biz.id}-{li}">
                         {dot}
                         <span style="font-size:0.78rem;color:#94a3b8;flex:1;">{inp_str} → {out_str}</span>
@@ -2396,7 +2450,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                             <input type="hidden" name="line_index" value="{li}">
                             <button type="submit" class="btn-sm {'btn-sm-green' if lp else 'btn-sm-orange'}">{'Resume' if lp else 'Pause'}</button>
                         </form>
-                    </div>'''
+                    </div>{missing_row}{qb_panels}'''
                 detail_html = f'''<div class="biz-card-body">
                     <div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Production Lines</div>
                     {lines_html or '<span style="color:#475569;font-size:0.82rem;">No production lines configured</span>'}
@@ -2414,6 +2468,9 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                         dot = f'<span style="color:#22c55e;font-size:0.75rem;" title="In stock: {in_stock:,.0f}">● {in_stock:,.0f}</span>'
                     else:
                         dot = '<span style="color:#ef4444;font-size:0.75rem;" title="No stock — nothing to sell">● Out of stock</span>'
+                    r_safe   = item.replace("'", "").replace('"', "")
+                    r_pid    = f"qbp-r-{biz.id}-{r_safe}"
+                    r_defqty = max(100, 500 - in_stock)
                     retail_rows += f'''<div class="line-row{' paused' if ip else ''}" id="retail-{biz.id}-{item}" style="flex-wrap:wrap;gap:6px;">
                         <span style="font-size:0.82rem;flex:1;">{item.replace("_"," ").title()} <span style="color:#64748b;font-size:0.75rem;">e={stats.get("elasticity","?")}</span> {dot}</span>
                         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
@@ -2423,13 +2480,15 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                                 <input type="number" name="price" step="0.01" min="0.01" placeholder="{disp["code"]}" style="width:90px;padding:3px 5px;font-size:0.78rem;">
                                 <button type="submit" class="btn-sm btn-sm-blue">Set</button>
                             </form>
+                            <button type="button" class="btn-sm btn-sm-blue" style="font-size:0.72rem;"
+                                onclick="qbToggle('{r_pid}')">Restock</button>
                             <form action="/api/business/toggle-retail?sort={sort}&biz_filter={biz_filter}" method="post" style="display:inline;">
                                 <input type="hidden" name="business_id" value="{biz.id}">
                                 <input type="hidden" name="item_type" value="{item}">
                                 <button type="submit" class="btn-sm {'btn-sm-green' if ip else 'btn-sm-orange'}">{'Resume' if ip else 'Pause'}</button>
                             </form>
                         </div>
-                    </div>'''
+                    </div>{_qb_panel(item, r_pid, r_defqty)}'''
                 detail_html = f'''<div class="biz-card-body">
                     <div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Retail Products</div>
                     {retail_rows}
@@ -2522,7 +2581,80 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
 .progress-bar-fill{{height:100%;background:#38bdf8;border-radius:3px;}}
 .line-row{{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#020617;border-radius:4px;margin-bottom:4px;gap:8px;}}
 .line-row.paused{{opacity:0.4;}}
+.qb-panel{{display:none;margin:0 0 6px;background:#060c18;border:1px solid #334155;border-radius:4px;padding:10px;}}
+.qb-input{{padding:4px 6px;font-size:0.78rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:3px;width:100px;}}
 </style>
+<script>
+(function(){{
+  var _t = {{}};
+  window.qbToggle = function(id) {{
+    var p = document.getElementById(id);
+    if (!p) return;
+    var hidden = p.style.display === 'none' || p.style.display === '';
+    document.querySelectorAll('.qb-panel').forEach(function(x){{ x.style.display='none'; }});
+    if (hidden) {{ p.style.display='block'; qbFetch(p); }}
+  }};
+  window.qbSchedule = function(el) {{
+    var p = el.closest('.qb-panel'); if (!p) return;
+    clearTimeout(_t[p.id]);
+    _t[p.id] = setTimeout(function(){{ qbFetch(p); }}, 450);
+  }};
+  window.qbFetch = function(p) {{
+    var item = p.dataset.item;
+    var qty  = p.querySelector('.qb-qty').value || '1';
+    var cap  = p.querySelector('.qb-cap').value;
+    var prev = p.querySelector('.qb-preview');
+    prev.innerHTML = '<span style="color:#475569;">Loading…</span>';
+    var params = new URLSearchParams({{item_type:item, quantity:qty}});
+    if (cap) params.set('cap_price', cap);
+    fetch('/api/market/quick-buy/preview?' + params)
+      .then(function(r){{ return r.json(); }})
+      .then(function(d) {{
+        if (d.error) {{ prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>'; return; }}
+        var capIn = p.querySelector('.qb-cap');
+        if (d.suggested_cap_raw != null && !capIn.value) {{
+          p.dataset.suggestedCap = d.suggested_cap_raw;
+          capIn.placeholder = d.suggested_cap_disp || String(d.suggested_cap_raw);
+        }}
+        var h = '';
+        if (d.fills && d.fills.length) {{
+          h += '<div style="color:#64748b;font-size:0.68rem;margin-bottom:2px;">Order book:</div>';
+          d.fills.forEach(function(f){{
+            h += '<div style="margin-left:8px;color:#94a3b8;font-size:0.7rem;">'+Number(f.qty).toLocaleString()+'× @ '+f.price_disp+'</div>';
+          }});
+          h += '<div style="margin-top:4px;padding-top:4px;border-top:1px solid #1e293b;font-size:0.72rem;">';
+          h += '<span style="color:#22c55e;">'+Number(d.total_filled).toLocaleString()+' filled</span>';
+          if (d.avg_price_disp) h += ' @ '+d.avg_price_disp+' avg';
+          if (d.immediate_cost_disp) h += ' = <b style="color:#38bdf8;">'+d.immediate_cost_disp+'</b>';
+          h += '</div>';
+        }}
+        if (d.unfilled_qty > 0) {{
+          h += '<div style="color:#f59e0b;font-size:0.7rem;margin-top:3px;">'+Number(d.unfilled_qty).toLocaleString()+' unavailable → buy order at cap price</div>';
+          if (d.reservation_disp) h += '<div style="color:#64748b;font-size:0.7rem;">Max reservation: '+d.reservation_disp+'</div>';
+        }}
+        if ((!d.fills || !d.fills.length) && !d.unfilled_qty) h += '<span style="color:#64748b;font-size:0.7rem;">No active sell orders found.</span>';
+        if (d.forex_fee_disp) h += '<div style="color:#64748b;font-size:0.7rem;margin-top:2px;">Forex fee: '+d.forex_fee_disp+'</div>';
+        prev.innerHTML = h;
+      }})
+      .catch(function(){{ prev.innerHTML='<span style="color:#ef4444;font-size:0.7rem;">Preview unavailable.</span>'; }});
+  }};
+  window.qbSubmit = function(form) {{
+    var p   = form.closest('.qb-panel');
+    var qty = p.querySelector('.qb-qty').value;
+    var cap = p.querySelector('.qb-cap').value;
+    if (!cap || parseFloat(cap) <= 0) {{
+      cap = p.dataset.suggestedCap || '';
+      if (!cap || parseFloat(cap) <= 0) {{
+        alert('Please enter a cap price before confirming.');
+        return false;
+      }}
+    }}
+    form.querySelector('[name=quantity]').value  = qty;
+    form.querySelector('[name=cap_price]').value = cap;
+    return true;
+  }};
+}})();
+</script>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
     <div style="display:flex;align-items:center;gap:12px;">
         <a href="/" style="color:#64748b;font-size:0.85rem;">← Dashboard</a>
@@ -11169,6 +11301,161 @@ async def biz_set_price_ajax(item_type: str = Form(...), price: float = Form(...
         return JSONResponse({"ok": True, "display_price": fmt_usd(price_usd, disp)})
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)})
+
+
+# ==========================
+# QUICK BUY
+# ==========================
+
+def _quick_buy_simulate(item_type: str, quantity: float) -> dict:
+    """Walk the ask side of the order book and simulate fills. Read-only."""
+    from market import MarketOrder, OrderType, OrderStatus, Trade
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        asks = (db.query(MarketOrder)
+                .filter(
+                    MarketOrder.order_type == OrderType.SELL,
+                    MarketOrder.status.in_([OrderStatus.ACTIVE, OrderStatus.PARTIALLY_FILLED]),
+                    MarketOrder.item_type  == item_type,
+                )
+                .order_by(MarketOrder.price.asc())
+                .all())
+
+        fills      = []
+        remaining  = float(quantity)
+        total_cost = 0.0
+
+        for ask in asks:
+            if remaining <= 0:
+                break
+            avail = ask.quantity - ask.quantity_filled
+            if avail <= 0:
+                continue
+            fill_qty = min(remaining, avail)
+            cost     = fill_qty * ask.price
+            # Aggregate fills at the same price level
+            if fills and fills[-1]["price_usd"] == ask.price:
+                fills[-1]["qty"]     += fill_qty
+                fills[-1]["cost_usd"] += cost
+            else:
+                fills.append({"qty": fill_qty, "price_usd": ask.price, "cost_usd": cost})
+            total_cost += cost
+            remaining  -= fill_qty
+
+        total_filled = float(quantity) - remaining
+        avg_price    = (total_cost / total_filled) if total_filled > 0 else 0.0
+        last_price   = fills[-1]["price_usd"] if fills else None
+
+        if last_price:
+            suggested_cap = round(last_price * 1.10, 8)
+        else:
+            last_trade = (db.query(Trade)
+                          .filter(Trade.item_type == item_type)
+                          .order_by(Trade.executed_at.desc())
+                          .first())
+            suggested_cap = round(last_trade.price * 1.10, 8) if last_trade else None
+
+        return {
+            "fills":             fills,
+            "total_filled":      total_filled,
+            "total_cost_usd":    total_cost,
+            "avg_price_usd":     avg_price,
+            "unfilled_qty":      remaining,
+            "suggested_cap_usd": suggested_cap,
+        }
+    finally:
+        db.close()
+
+
+@router.get("/api/market/quick-buy/preview")
+async def quick_buy_preview(
+    item_type:  str            = Query(...),
+    quantity:   float          = Query(...),
+    cap_price:  Optional[float] = Query(None),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Read-only order book simulation for the quick buy panel."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    if quantity <= 0:
+        return JSONResponse({"error": "Quantity must be positive"})
+
+    from reserve_banks import get_player_display_currency, fmt_usd
+    disp = get_player_display_currency(player.id)
+
+    try:
+        sim = _quick_buy_simulate(item_type, quantity)
+    except Exception as e:
+        return JSONResponse({"error": f"Preview failed: {e}"})
+
+    fills_disp = [
+        {
+            "qty":        f["qty"],
+            "price_disp": fmt_usd(f["price_usd"], disp, precision=4),
+            "cost_disp":  fmt_usd(f["cost_usd"],  disp),
+        }
+        for f in sim["fills"]
+    ]
+
+    sc_usd  = sim["suggested_cap_usd"]
+    # User-supplied cap (in display currency) → USD for reservation calc
+    if cap_price is not None:
+        active_cap_usd = cap_price * disp["usd_per_unit"]
+    elif sc_usd:
+        active_cap_usd = sc_usd
+    else:
+        active_cap_usd = None
+
+    forex_fee_usd = sim["total_cost_usd"] * 0.002 if disp["code"] != "USD" else 0.0
+    immediate_usd = sim["total_cost_usd"] + forex_fee_usd
+
+    max_reservation_usd = (
+        sim["unfilled_qty"] * active_cap_usd
+        if (active_cap_usd and sim["unfilled_qty"] > 0) else 0.0
+    )
+
+    # Raw display-currency cap (unformatted number) for use as form value
+    sc_raw_disp = round(sc_usd / disp["usd_per_unit"], 6) if sc_usd else None
+
+    return JSONResponse({
+        "fills":               fills_disp,
+        "total_filled":        sim["total_filled"],
+        "avg_price_disp":      fmt_usd(sim["avg_price_usd"], disp, precision=4) if sim["avg_price_usd"] else None,
+        "immediate_cost_disp": fmt_usd(immediate_usd, disp) if sim["total_filled"] > 0 else None,
+        "unfilled_qty":        sim["unfilled_qty"],
+        "suggested_cap_disp":  fmt_usd(sc_usd, disp, precision=4) if sc_usd else None,
+        "suggested_cap_raw":   sc_raw_disp,
+        "reservation_disp":    fmt_usd(max_reservation_usd, disp) if max_reservation_usd > 0 else None,
+        "forex_fee_disp":      fmt_usd(forex_fee_usd, disp) if forex_fee_usd > 0 else None,
+    })
+
+
+@router.post("/api/market/quick-buy/execute")
+async def quick_buy_execute(
+    item_type:   str   = Form(...),
+    quantity:    float = Form(...),
+    cap_price:   float = Form(...),   # in player's display currency
+    sort:        str   = Form("name"),
+    biz_filter:  str   = Form("all"),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Place a limit buy order at cap_price (display currency) for the given item."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    if quantity <= 0 or cap_price <= 0:
+        return RedirectResponse(f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
+
+    from reserve_banks import get_player_display_currency
+    from market import create_order, OrderType, OrderMode
+    disp    = get_player_display_currency(player.id)
+    cap_usd = cap_price * disp["usd_per_unit"]
+
+    create_order(player.id, OrderType.BUY, OrderMode.LIMIT, item_type, quantity, cap_usd)
+    return RedirectResponse(f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
+
 
 @router.get("/api/biz/progress")
 async def biz_progress(session_token: Optional[str] = Cookie(None)):
