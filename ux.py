@@ -2494,6 +2494,26 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                     {retail_rows}
                 </div>'''
 
+            stock_btn_html = (
+                f'<button type="button" class="btn-sm btn-sm-blue" onclick="spToggle({biz.id})"'
+                f' style="font-size:0.8rem;">Stock</button>'
+                if biz_class == "production" else ""
+            )
+            sp_panel_html = (
+                f'<div id="sp-{biz.id}" class="sp-panel" data-bizid="{biz.id}"'
+                f' data-sort="{sort}" data-bizfilter="{biz_filter}">'
+                f'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">'
+                f'<span style="font-size:0.72rem;color:#64748b;">Input deficit for</span>'
+                f'<input type="number" class="qb-input" id="sp-nc-{biz.id}" value="5" min="1" max="100" step="1" style="width:54px;">'
+                f'<span style="font-size:0.72rem;color:#64748b;">cycles</span>'
+                f'<button type="button" class="btn-sm btn-sm-blue" style="font-size:0.7rem;" onclick="spFetch({biz.id})">Recalc</button>'
+                f'<button type="button" class="btn-sm" style="background:#1e293b;color:#94a3b8;font-size:0.7rem;"'
+                f' onclick="document.getElementById(\'sp-{biz.id}\').style.display=\'none\'">Close</button>'
+                f'</div>'
+                f'<div id="sp-body-{biz.id}"><span style="color:#475569;font-size:0.8rem;">Loading…</span></div>'
+                f'</div>'
+            ) if biz_class == "production" else ""
+
             return f'''<div class="biz-card" id="biz-card-{biz.id}" data-name="{biz_name.lower()}" data-bizclass="{biz_class}" data-active="{'true' if biz.is_active else 'false'}" data-dismantling="false" data-progress="{progress_pct:.1f}" data-cycles="{cycles_total}">
                 <div class="biz-card-header">
                     <div style="flex:1;min-width:0;">
@@ -2505,6 +2525,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                         <div style="font-size:0.75rem;color:#64748b;margin-top:3px;">{plot_info} · ID #{biz.id} · Start {fmt_usd(startup_cost, disp)} · Wage {fmt_usd(wage_cost, disp)}/cycle</div>
                     </div>
                     <div class="biz-actions">
+                        {stock_btn_html}
                         <form action="/api/business/toggle?sort={sort}&biz_filter={biz_filter}" method="post" style="display:inline;">
                             <input type="hidden" name="business_id" value="{biz.id}">
                             <button type="submit" class="btn-sm {toggle_cls}">{toggle_lbl}</button>
@@ -2522,6 +2543,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                     </div>
                     <div class="progress-bar-wrap"><div class="progress-bar-fill" id="pb-{biz.id}" style="width:{min(progress_pct,100):.1f}%;"></div></div>
                 </div>
+                {sp_panel_html}
                 {detail_html}
             </div>'''
 
@@ -2582,6 +2604,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
 .line-row{{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:#020617;border-radius:4px;margin-bottom:4px;gap:8px;}}
 .line-row.paused{{opacity:0.4;}}
 .qb-panel{{display:none;margin:0 0 6px;background:#060c18;border:1px solid #334155;border-radius:4px;padding:10px;}}
+.sp-panel{{display:none;margin:0 16px 8px;background:#060c18;border:1px solid #334155;border-radius:4px;padding:12px;}}
 .qb-input{{padding:4px 6px;font-size:0.78rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:3px;width:100px;}}
 </style>
 <script>
@@ -2652,6 +2675,33 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
     form.querySelector('[name=quantity]').value  = qty;
     form.querySelector('[name=cap_price]').value = cap;
     return true;
+  }};
+  window.spToggle = function(bizId) {{
+    var p = document.getElementById('sp-' + bizId);
+    if (!p) return;
+    var hidden = p.style.display === 'none' || p.style.display === '';
+    document.querySelectorAll('.sp-panel').forEach(function(x){{ x.style.display='none'; }});
+    if (hidden) {{ p.style.display='block'; spFetch(bizId); }}
+  }};
+  window.spFetch = function(bizId) {{
+    var p    = document.getElementById('sp-' + bizId);
+    var body = document.getElementById('sp-body-' + bizId);
+    var nc   = document.getElementById('sp-nc-' + bizId);
+    if (!body) return;
+    body.innerHTML = '<span style="color:#475569;font-size:0.8rem;">Loading…</span>';
+    var nCycles   = nc ? (nc.value || '5') : '5';
+    var sort      = p ? (p.dataset.sort || 'name') : 'name';
+    var bizFilter = p ? (p.dataset.bizfilter || 'all') : 'all';
+    fetch('/api/market/quick-buy/stock-plan?business_id=' + bizId
+          + '&n_cycles=' + encodeURIComponent(nCycles)
+          + '&sort=' + encodeURIComponent(sort)
+          + '&biz_filter=' + encodeURIComponent(bizFilter))
+      .then(function(r){{ return r.json(); }})
+      .then(function(d){{
+        if (d.error) {{ body.innerHTML='<span style="color:#ef4444;font-size:0.8rem;">'+d.error+'</span>'; return; }}
+        body.innerHTML = d.html || '';
+      }})
+      .catch(function(){{ body.innerHTML='<span style="color:#ef4444;font-size:0.8rem;">Error loading plan.</span>'; }});
   }};
 }})();
 </script>
@@ -11455,6 +11505,121 @@ async def quick_buy_execute(
 
     create_order(player.id, OrderType.BUY, OrderMode.LIMIT, item_type, quantity, cap_usd)
     return RedirectResponse(f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
+
+
+@router.get("/api/market/quick-buy/stock-plan")
+async def quick_buy_stock_plan(
+    business_id: int             = Query(...),
+    n_cycles:    float           = Query(5.0),
+    sort:        str             = Query("name"),
+    biz_filter:  str             = Query("all"),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Return HTML fragment listing input deficits for n_cycles of production."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "Not authenticated"}, status_code=401)
+    if n_cycles <= 0:
+        return JSONResponse({"error": "n_cycles must be positive"})
+
+    from business import Business, BUSINESS_TYPES, get_district_business_types
+    from land import get_db as get_land_db
+    from reserve_banks import get_player_display_currency, fmt_usd
+    from inventory import get_inventory
+    import json as _json
+
+    disp    = get_player_display_currency(player.id)
+    land_db = get_land_db()
+    try:
+        biz = (land_db.query(Business)
+               .filter(Business.id == business_id, Business.owner_id == player.id)
+               .first())
+        if not biz:
+            return JSONResponse({"error": "Business not found"})
+
+        all_types = {**BUSINESS_TYPES, **get_district_business_types()}
+        config    = all_types.get(biz.business_type, {})
+        if config.get("class") != "production":
+            return JSONResponse({"error": "Not a production business"})
+
+        paused_line_idxs = set(_json.loads(biz.paused_lines or "[]"))
+        inv = get_inventory(player.id)
+
+        # Sum inputs × n_cycles across all non-paused lines
+        needed: dict = {}
+        for li, line in enumerate(config.get("production_lines", [])):
+            if li in paused_line_idxs:
+                continue
+            for req in line.get("inputs", []):
+                item = req["item"]
+                needed[item] = needed.get(item, 0.0) + req["quantity"] * n_cycles
+
+        # Compute deficits
+        deficits = {}
+        for item, total_needed in needed.items():
+            have    = float(inv.get(item, 0))
+            deficit = total_needed - have
+            if deficit > 0:
+                deficits[item] = {"needed": total_needed, "have": have, "deficit": deficit}
+
+        if not deficits:
+            return JSONResponse({
+                "html": (f'<div style="color:#22c55e;font-size:0.8rem;padding:6px 0;">'
+                         f'All inputs stocked for {n_cycles:g} cycles. Nothing to buy.</div>')
+            })
+
+        parts = []
+        for item in sorted(deficits, key=lambda x: -deficits[x]["deficit"]):
+            d     = deficits[item]
+            iname = item.replace("_", " ").title()
+            safe  = item.replace("'", "").replace('"', "")
+            pid   = f"qbp-sp-{biz.id}-{safe}"
+            dqty  = max(1, int(d["deficit"]))
+            try:
+                sim      = _quick_buy_simulate(item, d["deficit"])
+                cost_str = fmt_usd(sim["total_cost_usd"], disp) if sim["total_cost_usd"] > 0 else "—"
+            except Exception:
+                cost_str = "?"
+
+            qb_panel_html = (
+                f'<div class="qb-panel" id="{pid}" data-item="{item}">'
+                f'<div style="font-size:0.72rem;color:#64748b;margin-bottom:8px;">Quick Buy: '
+                f'<b style="color:#e2e8f0;">{iname}</b></div>'
+                f'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">'
+                f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Quantity</div>'
+                f'<input type="number" class="qb-input qb-qty" value="{dqty}" min="1" step="1" oninput="qbSchedule(this)"></div>'
+                f'<div><div style="font-size:0.65rem;color:#64748b;margin-bottom:2px;">Cap price ({disp["code"]})</div>'
+                f'<input type="number" class="qb-input qb-cap" min="0.000001" step="any" placeholder="auto" oninput="qbSchedule(this)"></div>'
+                f'</div>'
+                f'<div class="qb-preview" style="margin-top:8px;min-height:30px;"></div>'
+                f'<form method="post" action="/api/market/quick-buy/execute" style="margin-top:8px;" onsubmit="return qbSubmit(this)">'
+                f'<input type="hidden" name="item_type" value="{item}">'
+                f'<input type="hidden" name="quantity" value="{dqty}">'
+                f'<input type="hidden" name="cap_price" value="">'
+                f'<input type="hidden" name="sort" value="{sort}">'
+                f'<input type="hidden" name="biz_filter" value="{biz_filter}">'
+                f'<div style="display:flex;gap:6px;">'
+                f'<button type="submit" class="btn-sm btn-sm-blue" style="font-size:0.7rem;">Confirm Buy</button>'
+                f'<button type="button" class="btn-sm" style="background:#1e293b;color:#94a3b8;font-size:0.7rem;"'
+                f' onclick="document.getElementById(\'{pid}\').style.display=\'none\'">Cancel</button>'
+                f'</div></form></div>'
+            )
+
+            parts.append(
+                f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;'
+                f'padding:5px 0;border-bottom:1px solid #1e293b;">'
+                f'<span style="font-size:0.8rem;flex:1;color:#e2e8f0;">{iname}</span>'
+                f'<span style="font-size:0.7rem;color:#94a3b8;">{d["have"]:,.0f} / {d["needed"]:,.0f}</span>'
+                f'<span style="font-size:0.7rem;color:#f59e0b;">need {d["deficit"]:,.0f} more</span>'
+                f'<span style="font-size:0.7rem;color:#64748b;">~{cost_str}</span>'
+                f'<button type="button" class="btn-sm btn-sm-blue" style="font-size:0.68rem;padding:2px 6px;"'
+                f' onclick="qbToggle(\'{pid}\')">Buy</button>'
+                f'</div>{qb_panel_html}'
+            )
+
+        return JSONResponse({"html": "".join(parts)})
+    finally:
+        land_db.close()
 
 
 @router.get("/api/biz/progress")
