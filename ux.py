@@ -2344,8 +2344,6 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                 f'<input type="hidden" name="item_type" value="{item_type}">'
                 f'<input type="hidden" name="quantity" value="{default_qty}">'
                 f'<input type="hidden" name="cap_price" value="">'
-                f'<input type="hidden" name="sort" value="{sort}">'
-                f'<input type="hidden" name="biz_filter" value="{biz_filter}">'
                 f'<div style="display:flex;gap:6px;">'
                 f'<button type="submit" class="btn-sm btn-sm-blue" style="font-size:0.7rem;">Confirm Buy</button>'
                 f'<button type="button" class="btn-sm" style="background:#1e293b;color:#94a3b8;font-size:0.7rem;"'
@@ -2500,8 +2498,7 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
                 if biz_class == "production" else ""
             )
             sp_panel_html = (
-                f'<div id="sp-{biz.id}" class="sp-panel" data-bizid="{biz.id}"'
-                f' data-sort="{sort}" data-bizfilter="{biz_filter}">'
+                f'<div id="sp-{biz.id}" class="sp-panel">'
                 f'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">'
                 f'<span style="font-size:0.72rem;color:#64748b;">Input deficit for</span>'
                 f'<input type="number" class="qb-input" id="sp-nc-{biz.id}" value="5" min="1" max="100" step="1" style="width:54px;">'
@@ -2672,9 +2669,23 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
         return false;
       }}
     }}
-    form.querySelector('[name=quantity]').value  = qty;
-    form.querySelector('[name=cap_price]').value = cap;
-    return true;
+    var prev = p.querySelector('.qb-preview');
+    prev.innerHTML = '<span style="color:#475569;font-size:0.8rem;">Placing order…</span>';
+    var data = new FormData(form);
+    data.set('quantity', qty);
+    data.set('cap_price', cap);
+    fetch(form.action, {{method:'POST', body:data}})
+      .then(function(r){{ return r.json(); }})
+      .then(function(d){{
+        if (d.ok) {{
+          prev.innerHTML = '<span style="color:#22c55e;font-size:0.8rem;">✓ '+d.message+'</span>';
+          setTimeout(function(){{ p.style.display='none'; }}, 2500);
+        }} else {{
+          prev.innerHTML = '<span style="color:#ef4444;font-size:0.8rem;">'+(d.error||'Order failed.')+'</span>';
+        }}
+      }})
+      .catch(function(){{ prev.innerHTML='<span style="color:#ef4444;font-size:0.8rem;">Request failed.</span>'; }});
+    return false;
   }};
   window.spToggle = function(bizId) {{
     var p = document.getElementById('sp-' + bizId);
@@ -2689,13 +2700,9 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
     var nc   = document.getElementById('sp-nc-' + bizId);
     if (!body) return;
     body.innerHTML = '<span style="color:#475569;font-size:0.8rem;">Loading…</span>';
-    var nCycles   = nc ? (nc.value || '5') : '5';
-    var sort      = p ? (p.dataset.sort || 'name') : 'name';
-    var bizFilter = p ? (p.dataset.bizfilter || 'all') : 'all';
+    var nCycles = nc ? (nc.value || '5') : '5';
     fetch('/api/market/quick-buy/stock-plan?business_id=' + bizId
-          + '&n_cycles=' + encodeURIComponent(nCycles)
-          + '&sort=' + encodeURIComponent(sort)
-          + '&biz_filter=' + encodeURIComponent(bizFilter))
+          + '&n_cycles=' + encodeURIComponent(nCycles))
       .then(function(r){{ return r.json(); }})
       .then(function(d){{
         if (d.error) {{ body.innerHTML='<span style="color:#ef4444;font-size:0.8rem;">'+d.error+'</span>'; return; }}
@@ -11487,32 +11494,35 @@ async def quick_buy_execute(
     item_type:   str   = Form(...),
     quantity:    float = Form(...),
     cap_price:   float = Form(...),   # in player's display currency
-    sort:        str   = Form("name"),
-    biz_filter:  str   = Form("all"),
     session_token: Optional[str] = Cookie(None),
 ):
     """Place a limit buy order at cap_price (display currency) for the given item."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
-        return player
+        return JSONResponse({"ok": False, "error": "Not authenticated"}, status_code=401)
     if quantity <= 0 or cap_price <= 0:
-        return RedirectResponse(f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
+        return JSONResponse({"ok": False, "error": "Invalid quantity or price"})
 
-    from reserve_banks import get_player_display_currency
+    from reserve_banks import get_player_display_currency, fmt_usd
     from market import create_order, OrderType, OrderMode
     disp    = get_player_display_currency(player.id)
     cap_usd = cap_price * disp["usd_per_unit"]
 
-    create_order(player.id, OrderType.BUY, OrderMode.LIMIT, item_type, quantity, cap_usd)
-    return RedirectResponse(f"/businesses?sort={sort}&biz_filter={biz_filter}", status_code=303)
+    try:
+        create_order(player.id, OrderType.BUY, OrderMode.LIMIT, item_type, quantity, cap_usd)
+        iname = item_type.replace("_", " ").title()
+        return JSONResponse({
+            "ok":      True,
+            "message": f"Order placed: {quantity:,.0f}× {iname} @ {fmt_usd(cap_usd, disp)} cap",
+        })
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
 
 
 @router.get("/api/market/quick-buy/stock-plan")
 async def quick_buy_stock_plan(
     business_id: int             = Query(...),
     n_cycles:    float           = Query(5.0),
-    sort:        str             = Query("name"),
-    biz_filter:  str             = Query("all"),
     session_token: Optional[str] = Cookie(None),
 ):
     """Return HTML fragment listing input deficits for n_cycles of production."""
@@ -11596,8 +11606,6 @@ async def quick_buy_stock_plan(
                 f'<input type="hidden" name="item_type" value="{item}">'
                 f'<input type="hidden" name="quantity" value="{dqty}">'
                 f'<input type="hidden" name="cap_price" value="">'
-                f'<input type="hidden" name="sort" value="{sort}">'
-                f'<input type="hidden" name="biz_filter" value="{biz_filter}">'
                 f'<div style="display:flex;gap:6px;">'
                 f'<button type="submit" class="btn-sm btn-sm-blue" style="font-size:0.7rem;">Confirm Buy</button>'
                 f'<button type="button" class="btn-sm" style="background:#1e293b;color:#94a3b8;font-size:0.7rem;"'
