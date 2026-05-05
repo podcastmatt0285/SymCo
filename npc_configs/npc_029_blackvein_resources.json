@@ -1,0 +1,65 @@
+{
+  "player_id": -2029,
+  "business_name": "Blackvein Resources",
+  "description": "Heavy industrial conglomerate covering petroleum extraction, hard-rock mining, metal refining, and auto-parts manufacture. Produces oil, iron, copper, brass, lead, fuel tanks, car batteries, and spark plugs — the foundational inputs for shipbuilding, vehicle manufacturing, and every downstream metal-dependent business.",
+
+  "cash_caps": {
+    "hard_high": 65000000,
+    "soft_high": 25000000,
+    "soft_low":   5000000,
+    "hard_low":   2000000
+  },
+
+  "seed": {
+    "starting_cash": 10000000,
+    "land_plots": [
+      { "terrain_type": "desert",  "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "desert",  "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "desert",  "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    { "business_type": "oil_rig",            "district_id": null, "active_lines": [] },
+    { "business_type": "oil_rig",            "district_id": null, "active_lines": [] },
+    { "business_type": "oil_rig",            "district_id": null, "active_lines": [] },
+    { "business_type": "mineral_mine",       "district_id": null, "active_lines": [] },
+    { "business_type": "mineral_mine",       "district_id": null, "active_lines": [] },
+    { "business_type": "refinery",           "district_id": null, "active_lines": [] },
+    { "business_type": "lead_mine",          "district_id": null, "active_lines": [] },
+    { "business_type": "auto_parts_factory", "district_id": null, "active_lines": [] }
+  ],
+
+  "buy_items": {
+    "bio_fuel":  { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.10, "market": "regular" },
+    "polyester": { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
+    "rubber":    { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
+    "glass":     { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
+    "energy":    { "target_inventory": 80000, "reorder_at": 16000,"max_price_multiplier": 1.10, "market": "regular" },
+    "paper":     { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "water":     { "target_inventory": 30000, "reorder_at": 6000, "max_price_multiplier": 1.05, "market": "regular" }
+  },
+
+  "sell_items": {
+    "oil":         { "min_inventory_to_keep": 500,  "max_order_quantity": 3000, "market": "regular" },
+    "iron_ore":    { "min_inventory_to_keep": 200,  "max_order_quantity": 2000, "market": "regular" },
+    "copper_ore":  { "min_inventory_to_keep": 200,  "max_order_quantity": 2000, "market": "regular" },
+    "zinc_ore":    { "min_inventory_to_keep": 200,  "max_order_quantity": 2000, "market": "regular" },
+    "iron":        { "min_inventory_to_keep": 1000, "max_order_quantity": 5000, "market": "regular" },
+    "copper":      { "min_inventory_to_keep": 500,  "max_order_quantity": 3000, "market": "regular" },
+    "brass":       { "min_inventory_to_keep": 300,  "max_order_quantity": 2000, "market": "regular" },
+    "lead_ore":    { "min_inventory_to_keep": 100,  "max_order_quantity": 1000, "market": "regular" },
+    "lead":        { "min_inventory_to_keep": 100,  "max_order_quantity": 1000, "market": "regular" },
+    "fuel_tank":   { "min_inventory_to_keep": 20,   "max_order_quantity": 200,  "market": "regular" },
+    "car_battery": { "min_inventory_to_keep": 20,   "max_order_quantity": 200,  "market": "regular" },
+    "spark_plugs": { "min_inventory_to_keep": 50,   "max_order_quantity": 500,  "market": "regular" },
+    "tires":       { "min_inventory_to_keep": 0,    "max_order_quantity": 500,  "market": "regular" },
+    "brake_pads":  { "min_inventory_to_keep": 0,    "max_order_quantity": 500,  "market": "regular" },
+    "nails":       { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" }
+  }
+}

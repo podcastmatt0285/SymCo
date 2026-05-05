@@ -1,0 +1,50 @@
+{
+  "player_id": -2027,
+  "business_name": "Vitreo Glass & Cooperage",
+  "description": "Integrated glass, packaging, and barrel manufacturer. A lumber mill feeds a cooperage producing wine barrels while two glass works turn sand into bottles and jars. Supplies the packaging inputs that unlock every winery, brewery, and distillery downstream.",
+
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 15000000,
+    "soft_low":   3000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 6000000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "forest",  "proximity_features": ["road"],  "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    { "business_type": "glass_works",  "district_id": null, "active_lines": [] },
+    { "business_type": "glass_works",  "district_id": null, "active_lines": [] },
+    { "business_type": "cooperage",    "district_id": null, "active_lines": [] },
+    { "business_type": "cooperage",    "district_id": null, "active_lines": [] },
+    { "business_type": "lumber_mill",  "district_id": null, "active_lines": [] }
+  ],
+
+  "buy_items": {
+    "sand":   { "target_inventory": 30000, "reorder_at": 6000, "max_price_multiplier": 1.05, "market": "regular" },
+    "iron":   { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "water":  { "target_inventory": 20000, "reorder_at": 4000, "max_price_multiplier": 1.05, "market": "regular" },
+    "energy": { "target_inventory": 50000, "reorder_at": 10000,"max_price_multiplier": 1.10, "market": "regular" },
+    "paper":  { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "lumber": { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" }
+  },
+
+  "sell_items": {
+    "glass":       { "min_inventory_to_keep": 500, "max_order_quantity": 5000, "market": "regular" },
+    "bottle":      { "min_inventory_to_keep": 200, "max_order_quantity": 5000, "market": "regular" },
+    "jar":         { "min_inventory_to_keep": 200, "max_order_quantity": 3000, "market": "regular" },
+    "wine_barrel": { "min_inventory_to_keep": 50,  "max_order_quantity": 1000, "market": "regular" },
+    "lumber":      { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "sawdust":     { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "timber":      { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" }
+  }
+}

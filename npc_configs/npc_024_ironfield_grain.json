@@ -1,0 +1,59 @@
+{
+  "player_id": -2024,
+  "business_name": "Ironfield Grain & Milling",
+  "description": "Prairie-scale grain and milling operation. Grows wheat, barley, and corn across three farms and processes the harvest into flour, corn syrup, and yeast. The single largest source of cereal grain and milled goods in the economy.",
+
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 15000000,
+    "soft_low":   3000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 6000000,
+    "starting_inventory": {
+      "wheat_seeds":  500,
+      "barley_seeds": 500,
+      "corn_seeds":   500
+    },
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "hills",   "proximity_features": ["road"], "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    { "business_type": "grain_farm",  "district_id": null, "active_lines": [] },
+    { "business_type": "grain_farm",  "district_id": null, "active_lines": [] },
+    { "business_type": "grain_farm",  "district_id": null, "active_lines": [] },
+    { "business_type": "flour_mill",  "district_id": null, "active_lines": [] },
+    { "business_type": "flour_mill",  "district_id": null, "active_lines": [] }
+  ],
+
+  "buy_items": {
+    "water":         { "target_inventory": 60000, "reorder_at": 12000, "max_price_multiplier": 1.05, "market": "regular" },
+    "energy":        { "target_inventory": 80000, "reorder_at": 16000, "max_price_multiplier": 1.10, "market": "regular" },
+    "paper":         { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.10, "market": "regular" },
+    "wheat_seeds":   { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.20, "market": "regular" },
+    "barley_seeds":  { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.20, "market": "regular" },
+    "corn_seeds":    { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.20, "market": "regular" },
+    "fish_emulsion": { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.15, "market": "regular" },
+    "sugar":         { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.05, "market": "regular" }
+  },
+
+  "sell_items": {
+    "wheat":        { "min_inventory_to_keep": 500, "max_order_quantity": 5000, "market": "regular" },
+    "barley":       { "min_inventory_to_keep": 500, "max_order_quantity": 5000, "market": "regular" },
+    "corn":         { "min_inventory_to_keep": 500, "max_order_quantity": 5000, "market": "regular" },
+    "flour":        { "min_inventory_to_keep": 0,   "max_order_quantity": 3000, "market": "regular" },
+    "corn_syrup":   { "min_inventory_to_keep": 0,   "max_order_quantity": 2000, "market": "regular" },
+    "yeast":        { "min_inventory_to_keep": 0,   "max_order_quantity": 1000, "market": "regular" },
+    "wheat_seeds":  { "min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular" },
+    "barley_seeds": { "min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular" },
+    "corn_seeds":   { "min_inventory_to_keep": 200, "max_order_quantity": 1000, "market": "regular" }
+  }
+}
