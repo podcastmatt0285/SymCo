@@ -1,0 +1,65 @@
+{
+  "player_id": -2023,
+  "business_name": "Golden Grain Beverage Co.",
+  "description": "Craft and commercial beverage producer spanning the full grain-to-glass pipeline. Grows hops, malts barley, brews lager, stout, ale, and cider, distills spirits, and serves the public through an on-site pub.",
+
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 16000000,
+    "soft_low":   4000000,
+    "hard_low":   1000000
+  },
+
+  "seed": {
+    "starting_cash": 8000000,
+    "land_plots": [
+      { "terrain_type": "prairie",  "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "prairie",  "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "urban",    "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "urban",    "proximity_features": ["road"],  "size": 1 },
+      { "terrain_type": "urban",    "proximity_features": ["road"],  "size": 1 }
+    ]
+  },
+
+  "businesses": [
+    { "business_type": "hop_farm",     "district_id": null, "active_lines": [] },
+    { "business_type": "malting_house","district_id": null, "active_lines": [] },
+    { "business_type": "brewery",      "district_id": null, "active_lines": [] },
+    { "business_type": "distillery",   "district_id": null, "active_lines": [] },
+    { "business_type": "pub",          "district_id": null, "active_lines": [] }
+  ],
+
+  "buy_items": {
+    "barley":          { "target_inventory": 20000, "reorder_at": 4000, "max_price_multiplier": 1.05, "market": "regular" },
+    "apples":          { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.10, "market": "regular" },
+    "potatoes":        { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.05, "market": "regular" },
+    "corn":            { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.05, "market": "regular" },
+    "bottle":          { "target_inventory": 20000, "reorder_at": 4000, "max_price_multiplier": 1.05, "market": "regular" },
+    "wine_barrel":     { "target_inventory": 150,   "reorder_at": 30,   "max_price_multiplier": 1.15, "market": "regular" },
+    "rum_molasses":    { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "sugar":           { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" },
+    "water":           { "target_inventory": 40000, "reorder_at": 8000, "max_price_multiplier": 1.05, "market": "regular" },
+    "energy":          { "target_inventory": 40000, "reorder_at": 8000, "max_price_multiplier": 1.10, "market": "regular" },
+    "paper":           { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
+    "isinglass":       { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.20, "market": "regular" },
+    "juniper_berries": { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.15, "market": "regular" },
+    "mint":            { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.15, "market": "regular" }
+  },
+
+  "sell_items": {
+    "hops":                { "min_inventory_to_keep": 2000, "max_order_quantity": 5000, "market": "regular" },
+    "malt":                { "min_inventory_to_keep": 2000, "max_order_quantity": 5000, "market": "regular" },
+    "beer":                { "min_inventory_to_keep": 0,    "max_order_quantity": 5000, "market": "regular" },
+    "lager":               { "min_inventory_to_keep": 0,    "max_order_quantity": 5000, "market": "regular" },
+    "stout":               { "min_inventory_to_keep": 0,    "max_order_quantity": 3000, "market": "regular" },
+    "cider":               { "min_inventory_to_keep": 0,    "max_order_quantity": 3000, "market": "regular" },
+    "apple_cider_vinegar": { "min_inventory_to_keep": 0,    "max_order_quantity": 1000, "market": "regular" },
+    "vodka":               { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
+    "whiskey":             { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
+    "rum":                 { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
+    "moonshine":           { "min_inventory_to_keep": 0,    "max_order_quantity": 1500, "market": "regular" },
+    "gin":                 { "min_inventory_to_keep": 0,    "max_order_quantity": 1500, "market": "regular" },
+    "juniper_berries":     { "min_inventory_to_keep": 500,  "max_order_quantity": 1000, "market": "regular" },
+    "mint":                { "min_inventory_to_keep": 500,  "max_order_quantity": 1000, "market": "regular" }
+  }
+}
