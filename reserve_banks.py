@@ -1812,9 +1812,22 @@ get_player_usd_pcb_balance = get_usd_balance
 
 
 def credit_usd(player_id: int, amount: float):
-    """Credit USD to a player's PlayerCurrencyBalance. Auto-commits."""
+    """Credit income to a player, converting to their legal tender first.
+
+    For real players (ID > 0) this routes through process_income_conversion so
+    ANA/JPY/etc. players receive their own currency instead of USD.
+    NPCs and system accounts (ID ≤ 0) always receive raw USD.
+    Falls back to raw USD if conversion fails.
+    """
     if amount <= 0:
         return
+    if player_id > 0:
+        try:
+            process_income_conversion(player_id, amount)
+            return
+        except Exception as e:
+            print(f"[ReserveBanks] credit_usd tender conversion failed (player {player_id}, ${amount}): {e}")
+            # Fall through to raw USD credit below
     db = get_db()
     try:
         _adjust_currency_balance(db, player_id, "USD", amount)
