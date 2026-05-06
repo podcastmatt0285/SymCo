@@ -498,7 +498,9 @@ def _nav_loader_html() -> str:
           });
 
           // Show loader on any same-origin form submit
+          // Skip AJAX forms — their onsubmit returns false (preventDefault), no navigation occurs
           document.addEventListener('submit', function(e) {
+            if (e.defaultPrevented) return;
             var form = e.target;
             if (!form) return;
             try {
