@@ -12,6 +12,10 @@
 
   "seed": {
     "starting_cash": 2000000,
+    "starting_inventory": {
+      "paper": 3000,
+      "glue":  300
+    },
     "land_plots": [
       { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
     ]
