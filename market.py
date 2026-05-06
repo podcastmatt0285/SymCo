@@ -674,17 +674,35 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
         )
 
     # Push trade notifications (real players only)
+    # Amounts are stored as USD internally; convert to each player's display currency.
     _item_disp = buy_order.item_type.replace("_", " ")
     if buy_order.player_id > 0 and not is_bank_buyer:
+        try:
+            from reserve_banks import get_player_display_currency, fmt_usd as _fmt_usd
+            _b_disp   = get_player_display_currency(buy_order.player_id)
+            _price_b  = _fmt_usd(price, _b_disp, precision=4)
+            _total_b  = _fmt_usd(total_cost, _b_disp)
+        except Exception:
+            _price_b = f"${price:.4f}"
+            _total_b = f"${total_cost:,.2f}"
         _push_market(buy_order.player_id, "Trade Executed",
-                     f"Bought {quantity:,.4g}× {_item_disp} @ ${price:.4f} — "
-                     f"total ${total_cost:,.2f}.")
+                     f"Bought {quantity:,.4g}× {_item_disp} @ {_price_b} — "
+                     f"total {_total_b}.")
     if not is_bank_ipo and sell_order.player_id > 0:
         _seller_net = total_cost - _notif_tax
-        _tax_note = f" (${_notif_tax:.2f} city tax deducted)" if _notif_tax > 0 else ""
+        try:
+            from reserve_banks import get_player_display_currency, fmt_usd as _fmt_usd
+            _s_disp   = get_player_display_currency(sell_order.player_id)
+            _price_s  = _fmt_usd(price, _s_disp, precision=4)
+            _net_s    = _fmt_usd(_seller_net, _s_disp)
+            _tax_note = f" ({_fmt_usd(_notif_tax, _s_disp)} city tax deducted)" if _notif_tax > 0 else ""
+        except Exception:
+            _price_s  = f"${price:.4f}"
+            _net_s    = f"${_seller_net:,.2f}"
+            _tax_note = f" (${_notif_tax:.2f} city tax deducted)" if _notif_tax > 0 else ""
         _push_market(sell_order.player_id, "Trade Executed",
-                     f"Sold {quantity:,.4g}× {_item_disp} @ ${price:.4f} — "
-                     f"proceeds ${_seller_net:,.2f}{_tax_note}.")
+                     f"Sold {quantity:,.4g}× {_item_disp} @ {_price_s} — "
+                     f"proceeds {_net_s}{_tax_note}.")
 
 # ==========================
 # MARKET DATA FUNCTIONS
