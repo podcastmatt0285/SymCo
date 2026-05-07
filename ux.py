@@ -2507,7 +2507,7 @@ def government_dashboard(
 
     kpis = f"""<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:28px;">
         {_kpi("TREASURY (USD)", _usd(gov_treasury),
-              f"Operating: {_usd(gov_auth_cash)} · Reserve: {_usd(gov_usd_reserve)}", "#e2e8f0")}
+              "Petrodollar customs · loan repayments · bond interest", "#e2e8f0")}
         {_kpi("FOREIGN CURRENCIES", _usd(total_foreign_usd),
               f"{len([c for c in gov_currencies if c['code'] != 'USD'])} foreign currencies held", "#38bdf8")}
         {_kpi("BOND PORTFOLIO", _usd(total_bond_face),
@@ -2539,17 +2539,18 @@ def government_dashboard(
     ts = 'style="width:100%;border-collapse:collapse;"'
 
     # ── Treasury breakdown ────────────────────────────────────────────────────
-    treasury_html = f"""
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div style="background:#0a1628;border:1px solid #334155;border-radius:6px;padding:14px 16px;">
-            <div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">OPERATING CASH (auth DB)</div>
-            <div style="color:#e2e8f0;font-size:1.1rem;font-weight:700;">{_usd(gov_auth_cash)}</div>
-            <div style="color:#475569;font-size:0.72rem;margin-top:4px;">Funded by: loan repayments, 50% petrodollar customs, bond interest sweeps</div>
-        </div>
-        <div style="background:#0a1628;border:1px solid #334155;border-radius:6px;padding:14px 16px;">
-            <div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">USD RESERVE BALANCE</div>
-            <div style="color:#38bdf8;font-size:1.1rem;font-weight:700;">{_usd(gov_usd_reserve)}</div>
-            <div style="color:#475569;font-size:0.72rem;margin-top:4px;">Funded by: seeded starting cash, reserve bank income conversions</div>
+    treasury_note = f"""
+    <div style="background:#0a1628;border:1px solid #334155;border-radius:6px;padding:12px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+                <div style="color:#64748b;font-size:0.72rem;margin-bottom:4px;">TOTAL USD CASH</div>
+                <div style="color:#e2e8f0;font-size:1.2rem;font-weight:700;">{_usd(gov_treasury)}</div>
+            </div>
+            <div style="color:#475569;font-size:0.75rem;max-width:420px;line-height:1.5;">
+                Income: 50% petrodollar customs fee, city bank loan repayments (7% interest),
+                bond interest sweeps. Outflows: city bank grants (2% every 12h),
+                bond purchases (25% of surplus above {_usd(100_000)}).
+            </div>
         </div>
     </div>"""
     if gov_currencies:
@@ -2563,7 +2564,9 @@ def government_dashboard(
             + "</tr>"
             for c in gov_currencies
         )
-        treasury_html += f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Currency","Balance","Rate","USD Value","Cumulative Earned"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+        treasury_html = treasury_note + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Currency","Balance","Rate","USD Value","Cumulative Earned"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+    else:
+        treasury_html = treasury_note
 
     # ── Bond portfolio ────────────────────────────────────────────────────────
     if gov_bonds:
