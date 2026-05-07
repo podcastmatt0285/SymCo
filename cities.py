@@ -2722,6 +2722,7 @@ def initialize():
         "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS city_licenses FLOAT DEFAULT 0.0",
         "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS stable_coin_supply FLOAT DEFAULT 0.0",
         "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS stable_coin_symbol VARCHAR(16)",
+        "ALTER TABLE city_banks ADD COLUMN IF NOT EXISTS last_charter_fee_tick INTEGER DEFAULT NULL",
     ])
 
     db = get_db()
