@@ -74,6 +74,10 @@ GOV_BOND_INVEST_THRESHOLD      = 100_000.0   # only invest if cash > this
 GOV_BOND_INVEST_PCT            = 0.25        # invest 25 % of excess cash
 GOV_BOND_MATURITY_DAYS         = 90          # 90-day bonds for liquidity
 
+# City bank charter renewal fee
+CITY_BANK_CHARTER_FEE            = 5_000.0    # flat fee per renewal
+CITY_BANK_CHARTER_INTERVAL_TICKS = 518_400    # 30 days at 5 sec/tick
+
 # Poll durations in ticks (5 sec each)
 APPLICATION_POLL_DURATION_TICKS = 17280  # 24 hours
 BANISHMENT_POLL_DURATION_TICKS = 17280  # 24 hours
@@ -144,6 +148,9 @@ class CityBank(Base):
     # Comptroller level-12 stable coin
     stable_coin_supply = Column(Float, default=0.0)
     stable_coin_symbol = Column(String(16), nullable=True)
+
+    # Charter renewal tracking (tick when fee was last collected; None = never paid)
+    last_charter_fee_tick = Column(Integer, nullable=True, default=None)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -2782,6 +2789,47 @@ def tick_government_bond_investing(current_tick: int):
         rb_db.close()
 
 
+def tick_city_bank_charter_fees(current_tick: int):
+    """Collect $5,000 charter renewal fee from each city bank every 30 days.
+
+    Fee is debited from the city bank's cash_reserves and credited to the
+    federal government's operating cash (auth DB, player_id = 0).
+    Banks that cannot cover the fee are skipped silently.
+    """
+    db = get_db()
+    try:
+        banks = db.query(CityBank).all()
+        total_collected = 0.0
+        for bank in banks:
+            # Due if never paid, or 30 days have elapsed since last payment
+            last = bank.last_charter_fee_tick
+            if last is not None and current_tick - last < CITY_BANK_CHARTER_INTERVAL_TICKS:
+                continue
+            if (bank.cash_reserves or 0.0) < CITY_BANK_CHARTER_FEE:
+                continue  # bank can't cover fee — skip, will retry next day
+            bank.cash_reserves -= CITY_BANK_CHARTER_FEE
+            bank.last_charter_fee_tick = current_tick
+            total_collected += CITY_BANK_CHARTER_FEE
+        db.commit()
+
+        if total_collected > 0:
+            try:
+                from auth import get_db as _adb, Player as _Player
+                _adb_conn = _adb()
+                gov = _adb_conn.query(_Player).filter(_Player.id == GOVERNMENT_PLAYER_ID).first()
+                if gov:
+                    gov.cash_balance = (gov.cash_balance or 0.0) + total_collected
+                    _adb_conn.commit()
+                _adb_conn.close()
+            except Exception as _e:
+                print(f"[Cities] Charter fee gov credit error: {_e}")
+            print(f"[Cities] Charter fees collected: ${total_collected:,.0f} → federal gov")
+    except Exception as e:
+        print(f"[Cities] Charter fee tick error: {e}")
+    finally:
+        db.close()
+
+
 def tick(current_tick: int, now: datetime):
     """
     Cities module tick handler.
@@ -2838,6 +2886,10 @@ def tick(current_tick: int, now: datetime):
         # Government bond auto-investing every 12 hours
         tick_government_bond_investing(current_tick)
 
+        # City bank charter renewal fees (checked daily, due every 30 days)
+        if current_tick % 17280 == 0:
+            tick_city_bank_charter_fees(current_tick)
+
         # Log stats every 6 hours
         if current_tick % 4320 == 0:
             cities = get_all_cities()
@@ -2890,6 +2942,7 @@ __all__ = [
     
     # Government
     'request_government_loan',
+    'tick_city_bank_charter_fees',
     'assume_bank_debt',
     
     # Mayor controls

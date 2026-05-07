@@ -77,6 +77,12 @@ Base         = declarative_base()
 RESERVE_BANKS_TICK_INTERVAL = 720   # app ticks between bond-interest accruals (~1 h)
 TICKS_PER_YEAR              = 8760  # 365 days × 24 hourly ticks
 
+# Federal government taxes on reserve banks (player_id = 0)
+GOVERNMENT_PLAYER_ID        = 0
+BOND_INTEREST_TAX_RATE      = 0.15   # 15% of bond interest paid → federal gov
+RESERVE_BALANCE_TAX_RATE    = 0.001  # 0.1% daily on BankReserveBalance holdings → federal gov
+BOND_ISSUANCE_FEE_RATE      = 0.0025 # 0.25% of face value on new bond → federal gov
+
 # Yield dynamics: yield shifts by ±YIELD_SENSITIVITY per $1 000 net WSC flow per tick.
 # Positive net flow (buys > redeems) → yield falls.
 YIELD_SENSITIVITY  = 0.00001       # yield change per $1 of net demand per tick
@@ -414,9 +420,10 @@ def tick(app_tick: int, now: datetime):
             _snapshot_history(db, bank, now)
         # Inter-bank settlement runs after all yield/FX adjustments are done
         _tick_interbank_settlement(db)
-        # Daily WSC → currency liquidity swap (once per 24 h)
+        # Daily operations (once per 24 h)
         if app_tick % WSC_DAILY_SWAP_TICKS == 0:
             _daily_wsc_liquidity_swap(db)
+            _apply_reserve_balance_tax(db)  # 0.1% reserve balance tax → federal gov
         db.commit()
     except Exception as e:
         db.rollback()
@@ -461,8 +468,33 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         # FIX: only book the amount actually credited so interest_accrued stays in
         # sync with the player's real balance (previously negative hours were tracked
         # even when the floor prevented any deduction).
-        bond.interest_accrued   += actual_credit
+        bond.interest_accrued    += actual_credit
         bank.total_interest_paid += abs(actual_credit)
+
+        # Yield spread tax: bank remits 15% of every interest outflow to federal gov
+        if actual_credit > 0:
+            _adjust_currency_balance(
+                db, GOVERNMENT_PLAYER_ID, bank.currency_code,
+                actual_credit * BOND_INTEREST_TAX_RATE,
+            )
+
+
+def _apply_reserve_balance_tax(db):
+    """Daily 0.1% tax on each bank's foreign-currency reserve balances → federal gov.
+
+    Taxes the accumulated BankReserveBalance rows — the foreign currency holdings
+    reserve banks build up through inter-bank settlements and forex fees.  This
+    creates a natural outflow from reserve balances and a steady multi-currency
+    income stream for the federal government.
+    """
+    reserves = db.query(BankReserveBalance).filter(BankReserveBalance.balance > 0).all()
+    for r in reserves:
+        tax = r.balance * RESERVE_BALANCE_TAX_RATE
+        if tax <= 0:
+            continue
+        r.balance   -= tax
+        r.total_paid += tax
+        _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, r.currency_code, tax)
 
 
 def _push_reserve(player_id: int, title: str, body: str):
@@ -1256,6 +1288,13 @@ def purchase_bond(
                     0.000001,
                     bank.usd_per_unit + face_value_usd * FX_DIRECT_BOND_LINK * bank.usd_per_unit,
                 )
+
+            # Bond issuance fee: 0.25% of face value → federal gov USD balance
+            try:
+                fee = face_value_usd * BOND_ISSUANCE_FEE_RATE
+                _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, "USD", fee)
+            except Exception:
+                pass
 
             db.commit()
         except Exception as bond_err:

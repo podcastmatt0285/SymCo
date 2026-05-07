@@ -2941,12 +2941,17 @@ def government_dashboard(
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <form method="post" action="/api/gov/force-grants">
                 <button type="submit" style="background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                    ⚡ Force City Grants Now
+                    ⚡ Force City Grants
                 </button>
             </form>
             <form method="post" action="/api/gov/force-bond-invest">
                 <button type="submit" style="background:#1e1b4b;border:1px solid #818cf8;color:#a5b4fc;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                    📈 Force Bond Investment Now
+                    📈 Force Bond Investment
+                </button>
+            </form>
+            <form method="post" action="/api/gov/force-charter-fees">
+                <button type="submit" style="background:#1c1917;border:1px solid #d97706;color:#fcd34d;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+                    🏦 Force Charter Fee Collection
                 </button>
             </form>
         </div>""")
@@ -3016,6 +3021,22 @@ def gov_force_bond_invest(session_token: Optional[str] = Cookie(None)):
         from cities import tick_government_bond_investing
         tick_government_bond_investing(0)
         return _RR("/government?success=Bond+investment+tick+completed", status_code=303)
+    except Exception as e:
+        return _RR(f"/government?error={str(e)[:80]}", status_code=303)
+
+
+@router.post("/api/gov/force-charter-fees")
+def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
+    try:
+        from admins import is_admin as _ia
+        if not _ia(player.id):
+            return _RR("/government?error=Admin+only", status_code=303)
+        from cities import tick_city_bank_charter_fees
+        tick_city_bank_charter_fees(0)
+        return _RR("/government?success=Charter+fees+collected", status_code=303)
     except Exception as e:
         return _RR(f"/government?error={str(e)[:80]}", status_code=303)
 

@@ -27,7 +27,8 @@ Base = declarative_base()
 # ==========================
 # CONSTANTS
 # ==========================
-RESERVE_TAX_RATE = 0.0000000001  # 0.00000001% per tick (~3.15% annual on cash reserves)
+AUTONOMOUS_BANK_TAX_RATE = 0.0001  # 0.01% daily → ~3.65% annual on cash reserves
+TICKS_PER_DAY = 17280              # 24 h × 720 ticks/h (5 sec/tick)
 BANKS_DIRECTORY = "./banks"
 
 # ==========================
@@ -326,27 +327,36 @@ def update_bank_assets(bank_id: str, new_asset_value: float):
 
 
 def apply_reserve_tax(bank_id: str, current_tick: int):
+    """Daily tax on autonomous bank cash reserves, credited to the federal government.
+
+    Runs once per day (every TICKS_PER_DAY ticks). Prevents indefinite accumulation
+    and provides a steady revenue stream for the federal government.
     """
-    Apply per-tick tax on cash reserves (operational costs).
-    This creates natural decay and prevents infinite accumulation.
-    """
+    if current_tick % TICKS_PER_DAY != 0:
+        return
     db = get_db()
     try:
         bank = db.query(BankEntity).filter(BankEntity.bank_id == bank_id).first()
-        
         if not bank or bank.cash_reserves <= 0:
             return
-        
-        tax_amount = bank.cash_reserves * RESERVE_TAX_RATE
-        bank.cash_reserves -= tax_amount
+        tax_amount = bank.cash_reserves * AUTONOMOUS_BANK_TAX_RATE
+        bank.cash_reserves   -= tax_amount
         bank.lifetime_expenses += tax_amount
-        
-        # Log every hour
-        if current_tick % 3600 == 0:
-            print(f"[Banks] {bank_id} reserve tax: ${tax_amount:.2f} (reserves: ${bank.cash_reserves:.2f})")
-        
         db.commit()
-        
+
+        # Credit the federal government's operating cash (auth DB, player_id = 0)
+        try:
+            from auth import get_db as _adb, Player as _Player
+            _adb_conn = _adb()
+            gov = _adb_conn.query(_Player).filter(_Player.id == 0).first()
+            if gov:
+                gov.cash_balance = (gov.cash_balance or 0.0) + tax_amount
+                _adb_conn.commit()
+            _adb_conn.close()
+        except Exception as _e:
+            print(f"[Banks] Gov credit error ({bank_id}): {_e}")
+
+        print(f"[Banks] {bank_id} daily reserve tax: ${tax_amount:.4f} → federal gov")
     finally:
         db.close()
 
