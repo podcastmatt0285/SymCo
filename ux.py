@@ -2489,11 +2489,142 @@ def government_dashboard(
     except Exception:
         pass
 
+    # ── 8. Commodity inventory ────────────────────────────────────────────────
+    gov_commodities = {}
+    try:
+        from inventory import get_db as _idb, InventoryItem as _II
+        _db = _idb()
+        for item in _db.query(_II).filter(_II.player_id == 0).all():
+            if item.quantity > 0:
+                gov_commodities[item.item_type] = gov_commodities.get(item.item_type, 0.0) + item.quantity
+        _db.close()
+    except Exception:
+        pass
+
+    # ── 9. Company equity (ShareholderPosition) ───────────────────────────────
+    gov_equity = []
+    try:
+        from banks.brokerage_firm import get_db as _brdb, ShareholderPosition as _SP, CompanyShares as _CS
+        _db = _brdb()
+        _cos = {c.id: c for c in _db.query(_CS).all()}
+        for pos in _db.query(_SP).filter(_SP.player_id == 0, _SP.shares_owned > 0).all():
+            co = _cos.get(pos.company_shares_id)
+            if not co:
+                continue
+            mkt_val = (pos.shares_owned or 0) * (co.current_price or 0.0)
+            gov_equity.append({
+                "ticker": co.ticker_symbol,
+                "name": co.company_name,
+                "shares": pos.shares_owned,
+                "price": co.current_price or 0.0,
+                "mkt_val": mkt_val,
+                "cost_basis": (pos.average_cost_basis or 0.0) * (pos.shares_owned or 0),
+                "pnl": mkt_val - (pos.average_cost_basis or 0.0) * (pos.shares_owned or 0),
+            })
+        _db.close()
+        gov_equity.sort(key=lambda x: x["mkt_val"], reverse=True)
+    except Exception:
+        pass
+
+    # ── 10. Bank shareholdings ─────────────────────────────────────────────────
+    gov_bank_shares = []
+    try:
+        from banks import get_db as _bkdb, BankShareholding as _BSH
+        _db = _bkdb()
+        for sh in _db.query(_BSH).filter(_BSH.player_id == 0, _BSH.shares_owned > 0).all():
+            gov_bank_shares.append({
+                "bank_id": sh.bank_id,
+                "shares": sh.shares_owned,
+                "invested": sh.total_invested,
+                "dividends": sh.total_dividends_received,
+            })
+        _db.close()
+        gov_bank_shares.sort(key=lambda x: x["invested"], reverse=True)
+    except Exception:
+        pass
+
+    # ── 11. Crypto holdings (county tokens + WSC + meme coins) ───────────────
+    gov_county_crypto = []
+    gov_wsc_balance   = 0.0
+    gov_meme_coins    = []
+    try:
+        from counties import get_db as _crydb, CryptoWallet as _CW, County as _Cty, get_crypto_price_by_symbol
+        _db = _crydb()
+        _cty_map = {c.crypto_symbol: c for c in _db.query(_Cty).all()}
+        for w in _db.query(_CW).filter(_CW.player_id == 0, _CW.balance > 0).all():
+            price_usd = 0.0
+            try:
+                price_usd = get_crypto_price_by_symbol(w.crypto_symbol)
+            except Exception:
+                pass
+            cty = _cty_map.get(w.crypto_symbol)
+            gov_county_crypto.append({
+                "symbol":    w.crypto_symbol,
+                "name":      cty.crypto_name if cty else w.crypto_symbol,
+                "county":    cty.name if cty else "—",
+                "balance":   w.balance,
+                "price_usd": price_usd,
+                "usd_val":   w.balance * price_usd,
+                "bought":    w.total_bought,
+                "mined":     w.total_mined,
+            })
+        _db.close()
+        gov_county_crypto.sort(key=lambda x: x["usd_val"], reverse=True)
+    except Exception:
+        pass
+    try:
+        from wallet import get_db as _wdb, WSCWallet as _WSCW
+        _db = _wdb()
+        _wsc = _db.query(_WSCW).filter(_WSCW.player_id == 0).first()
+        gov_wsc_balance = float(_wsc.balance or 0) if _wsc else 0.0
+        _db.close()
+    except Exception:
+        pass
+    try:
+        from memecoins import get_db as _mdb, MemeCoinWallet as _MCW, MemeCoin as _MC
+        _db = _mdb()
+        _mc_map = {m.symbol: m for m in _db.query(_MC).all()}
+        for w in _db.query(_MCW).filter(_MCW.player_id == 0, _MCW.balance > 0).all():
+            mc = _mc_map.get(w.meme_symbol)
+            gov_meme_coins.append({
+                "symbol":  w.meme_symbol,
+                "name":    mc.name if mc else w.meme_symbol,
+                "balance": w.balance,
+                "price":   mc.last_price if mc else 0.0,
+            })
+        _db.close()
+        gov_meme_coins.sort(key=lambda x: x["balance"], reverse=True)
+    except Exception:
+        pass
+
+    # ── 12. Estate listings (government is liquidating) ───────────────────────
+    gov_estate = []
+    try:
+        from estate import get_db as _estdb, GovernmentEstateListing as _GEL
+        _db = _estdb()
+        for lst in _db.query(_GEL).filter(_GEL.sold == False).order_by(_GEL.listed_at.desc()).all():
+            gov_estate.append({
+                "item_type":   lst.item_type,
+                "quantity":    lst.quantity,
+                "price":       lst.listed_price,
+                "total_val":   lst.listed_price * lst.quantity,
+                "deceased_id": lst.deceased_player_id,
+                "listed_at":   lst.listed_at,
+            })
+        _db.close()
+    except Exception:
+        pass
+
     # ── Totals ────────────────────────────────────────────────────────────────
     total_bond_face     = sum(b["face_value"] for b in gov_bonds)
     total_bond_interest = sum(b["interest_accrued"] for b in gov_bonds)
     total_loan_debt     = sum(ln["remaining"] for ln in gov_loans)
-    grand_total         = gov_treasury + total_foreign_usd + total_bond_face + gov_land_value_est
+    total_equity_val    = sum(e["mkt_val"] for e in gov_equity)
+    total_bank_invested = sum(s["invested"] for s in gov_bank_shares)
+    total_crypto_usd    = sum(c["usd_val"] for c in gov_county_crypto) + gov_wsc_balance
+    grand_total         = (gov_treasury + total_foreign_usd + total_bond_face
+                           + gov_land_value_est + total_equity_val
+                           + total_bank_invested + total_crypto_usd)
 
     def _usd(v): return fmt_usd(v, disp)
 
@@ -2512,12 +2643,18 @@ def government_dashboard(
               f"{len([c for c in gov_currencies if c['code'] != 'USD'])} foreign currencies held", "#38bdf8")}
         {_kpi("BOND PORTFOLIO", _usd(total_bond_face),
               f"{len(gov_bonds)} active · {_usd(total_bond_interest)} interest earned", "#fbbf24")}
+        {_kpi("EQUITY & BANK SHARES", _usd(total_equity_val + total_bank_invested),
+              f"{len(gov_equity)} stocks · {len(gov_bank_shares)} bank positions", "#818cf8")}
+        {_kpi("CRYPTO HOLDINGS", _usd(total_crypto_usd),
+              f"{len(gov_county_crypto)} county tokens · {len(gov_meme_coins)} meme · WSC {_usd(gov_wsc_balance)}", "#f472b6")}
+        {_kpi("COMMODITIES", f"{len(gov_commodities)} types",
+              f"{sum(gov_commodities.values()):,.1f} total units held" if gov_commodities else "None held yet", "#fb923c")}
         {_kpi("LAND HOLDINGS", f"{gov_land_total:,} plots",
               f"~{_usd(gov_land_value_est)} estimated (10× annual tax)", "#22c55e")}
         {_kpi("LOANS TO CITY BANKS", _usd(total_loan_debt),
               f"{len(gov_loans)} active loan{'s' if len(gov_loans) != 1 else ''}", "#f87171")}
         {_kpi("TOTAL ASSETS (EST.)", _usd(grand_total),
-              "treasury + foreign + bonds + land est.", "#a78bfa")}
+              "treasury + currencies + bonds + equity + crypto + land", "#a78bfa")}
     </div>"""
 
     # ── Shared helpers ────────────────────────────────────────────────────────
@@ -2694,6 +2831,102 @@ def government_dashboard(
     else:
         counties_html = '<p style="color:#475569;font-size:0.85rem;">No counties founded yet.</p>'
 
+    # ── Company equity ────────────────────────────────────────────────────────
+    if gov_equity:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(f'<a href="/brokerage" style="color:#818cf8;text-decoration:none;font-weight:600;">{e["ticker"]}</a>')
+            + _td(e["name"], "#cbd5e1")
+            + _td(f'{e["shares"]:,}', "#94a3b8", right=True)
+            + _td(_usd(e["price"]), "#94a3b8", right=True)
+            + _td(_usd(e["mkt_val"]), "#818cf8", right=True)
+            + _td(_usd(e["cost_basis"]), "#475569", right=True)
+            + _td(_usd(e["pnl"]), "#4ade80" if e["pnl"] >= 0 else "#f87171", right=True)
+            + "</tr>"
+            for e in gov_equity
+        )
+        equity_html = f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Ticker","Company","Shares","Price","Market Value","Cost Basis","P&L"]) + "</tr></thead><tbody>" + rows + f"<tr style='background:#0a1628;font-weight:700;'>" + _td("TOTAL","#94a3b8") + _td("") + _td("") + _td("") + _td(_usd(total_equity_val),"#818cf8",right=True) + _td("") + _td("") + "</tr></tbody></table>"
+    else:
+        equity_html = '<p style="color:#475569;font-size:0.85rem;">No company shares held. Government accumulates equity through IPO participation and secondary market purchases.</p>'
+
+    # ── Bank shareholdings ────────────────────────────────────────────────────
+    if gov_bank_shares:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(s["bank_id"].replace("_", " ").title(), "#e2e8f0")
+            + _td(f'{s["shares"]:,}', "#94a3b8", right=True)
+            + _td(_usd(s["invested"]), "#818cf8", right=True)
+            + _td(_usd(s["dividends"]), "#4ade80", right=True)
+            + "</tr>"
+            for s in gov_bank_shares
+        )
+        bank_shares_html = f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Bank","Shares","Total Invested","Dividends Received"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+    else:
+        bank_shares_html = '<p style="color:#475569;font-size:0.85rem;">No bank shares held.</p>'
+
+    # ── Commodity inventory ───────────────────────────────────────────────────
+    if gov_commodities:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(item.replace("_", " ").title(), "#e2e8f0")
+            + _td(f"{qty:,.2f}", "#fb923c", right=True)
+            + "</tr>"
+            for item, qty in sorted(gov_commodities.items(), key=lambda x: x[1], reverse=True)
+        )
+        commodity_html = f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Item","Quantity"]) + "</tr></thead><tbody>" + rows + f"<tr style='background:#0a1628;font-weight:700;'>" + _td("TOTAL","#94a3b8") + _td(f"{sum(gov_commodities.values()):,.2f}","#fb923c",right=True) + "</tr></tbody></table>"
+    else:
+        commodity_html = '<p style="color:#475569;font-size:0.85rem;">No commodities held. Government will accumulate inventory as it participates in markets and receives estate seizures.</p>'
+
+    # ── Crypto holdings ───────────────────────────────────────────────────────
+    crypto_parts = []
+    if gov_wsc_balance > 0 or gov_county_crypto or gov_meme_coins:
+        if gov_wsc_balance > 0:
+            crypto_parts.append(f'<div style="margin-bottom:10px;"><span style="color:#64748b;font-size:0.72rem;">WSC (WADSWORTH STABLE COIN)</span><div style="color:#f472b6;font-size:1rem;font-weight:700;margin-top:2px;">{gov_wsc_balance:,.4f} WSC <span style="color:#475569;font-size:0.75rem;">= {_usd(gov_wsc_balance)}</span></div></div>')
+        if gov_county_crypto:
+            rows = "".join(
+                f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+                + _td(f"{c['symbol']}", "#f472b6")
+                + _td(f"{c['name']} — {c['county']}", "#cbd5e1")
+                + _td(f"{c['balance']:,.6f}", "#94a3b8", right=True)
+                + _td(_usd(c["price_usd"]), "#475569", right=True)
+                + _td(_usd(c["usd_val"]), "#f472b6", right=True)
+                + _td(f"{c['mined']:,.4f} mined / {c['bought']:,.4f} bought", "#475569")
+                + "</tr>"
+                for c in gov_county_crypto
+            )
+            crypto_parts.append(f"<p style='color:#64748b;font-size:0.72rem;margin:10px 0 6px 0;'>COUNTY NATIVE TOKENS</p><table {ts}><thead><tr>" + "".join(_th(h) for h in ["Symbol","Token / County","Balance","USD Price","USD Value","Acquisition"]) + "</tr></thead><tbody>" + rows + "</tbody></table>")
+        if gov_meme_coins:
+            rows = "".join(
+                f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+                + _td(m["symbol"], "#f472b6")
+                + _td(m["name"], "#cbd5e1")
+                + _td(f"{m['balance']:,.6f}", "#94a3b8", right=True)
+                + _td(f"{m['price']:,.6f} native", "#475569", right=True)
+                + "</tr>"
+                for m in gov_meme_coins
+            )
+            crypto_parts.append(f"<p style='color:#64748b;font-size:0.72rem;margin:10px 0 6px 0;'>MEME COINS <span style='color:#475569;font-weight:400;'>(priced in county native tokens)</span></p><table {ts}><thead><tr>" + "".join(_th(h) for h in ["Symbol","Name","Balance","Price"]) + "</tr></thead><tbody>" + rows + "</tbody></table>")
+        crypto_html = "".join(crypto_parts)
+    else:
+        crypto_html = '<p style="color:#475569;font-size:0.85rem;">No crypto holdings. Government can acquire county tokens, WSC, and meme coins through market participation.</p>'
+
+    # ── Estate listings ───────────────────────────────────────────────────────
+    if gov_estate:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(lst["item_type"].replace("_"," ").title(), "#e2e8f0")
+            + _td(f'{lst["quantity"]:,.2f}', "#94a3b8", right=True)
+            + _td(_usd(lst["price"]), "#fbbf24", right=True)
+            + _td(_usd(lst["total_val"]), "#fbbf24", right=True)
+            + _td(f'Player #{lst["deceased_id"]}', "#475569")
+            + _td(lst["listed_at"].strftime("%Y-%m-%d") if lst["listed_at"] else "—", "#475569")
+            + "</tr>"
+            for lst in gov_estate
+        )
+        estate_html = f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Assets seized from deleted or inactive player accounts being liquidated by the government.</p>' + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Item","Quantity","Unit Price","Total Value","Estate Of","Listed"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+    else:
+        estate_html = '<p style="color:#475569;font-size:0.85rem;">No estate listings active.</p>'
+
     # ── Flash messages ────────────────────────────────────────────────────────
     flash_html = ""
     if success:
@@ -2734,9 +2967,14 @@ def government_dashboard(
     {admin_html}
     {_sec("Treasury", "#e2e8f0", treasury_html)}
     {_sec("Bond Portfolio", "#fbbf24", bond_html)}
+    {_sec("Company Equity", "#818cf8", equity_html)}
+    {_sec("Bank Shareholdings", "#6366f1", bank_shares_html)}
+    {_sec("Commodity Inventory", "#fb923c", commodity_html)}
+    {_sec("Crypto Holdings", "#f472b6", crypto_html)}
     {_sec("Outstanding Loans to City Banks", "#f87171", loan_html)}
     {_sec("Government-Owned Land", "#22c55e", land_html)}
     {_sec("Active Land Auctions", "#f5d76e", auction_html)}
+    {_sec("Estate Liquidation", "#fbbf24", estate_html)}
     {_sec("Revenue &amp; Fiscal Mechanics", "#94a3b8", fiscal_html)}
     {_sec("Cities Directory", "#34d399", cities_html)}
     {_sec("Counties Directory", "#a78bfa", counties_html)}
