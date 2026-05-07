@@ -2191,6 +2191,13 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">ETF Trading Floor</span>
             </a>
 
+            <a href="/banks" class="dc" style="--c:#86efac;--g:linear-gradient(90deg,#86efac,#bbf7d0);--glow:rgba(134,239,172,0.12);--btn:#86efac;">
+                <span class="dc-ico">🏦</span>
+                <div class="dc-t">Banking</div>
+                <div class="dc-d">The full financial system — WPE stock exchange, IPOs, ETF index funds, short selling, commodity lending, credit ratings, margin trading, and the Reserve Bank for bonds and forex. Your financial hub for investing beyond your own business.</div>
+                <span class="dc-btn">Open Banking</span>
+            </a>
+
             <a href="/exchange" class="dc" style="--c:#f97316;--g:linear-gradient(90deg,#f97316,#fb923c);--glow:rgba(249,115,22,0.15);--btn:#f97316;">
                 <span class="dc-ico">⛓️</span>
                 <div class="dc-t">Wadsworth Crypto Exchange</div>
