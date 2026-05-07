@@ -1,7 +1,7 @@
 {
   "player_id": -2007,
   "business_name": "Cotton Paper Co",
-  "description": "Paper mill supplying the market with paper. Uses cotton as primary feedstock; grass and sawdust as secondary routes so production never fully stalls.",
+  "description": "Paper mill running exclusively on cotton feedstock, supplying the market with paper.",
 
   "cash_caps": {
     "hard_high": 20000000,
@@ -13,9 +13,11 @@
   "seed": {
     "starting_cash": 3000000,
     "starting_inventory": {
-      "paper": 10000,
-      "glue":  1000,
-      "grass": 300000
+      "paper":        50000,
+      "cotton":       20000,
+      "cotton_seeds": 15000,
+      "glue":          2000,
+      "water":         2000
     },
     "land_plots": [
       { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
@@ -32,27 +34,15 @@
 
   "buy_items": {
     "cotton": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
+      "target_inventory": 10000,
+      "reorder_at": 2000,
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
     "cotton_seeds": {
-      "target_inventory": 3000,
-      "reorder_at": 600,
+      "target_inventory": 6000,
+      "reorder_at": 1200,
       "max_price_multiplier": 1.10,
-      "market": "regular"
-    },
-    "grass": {
-      "target_inventory": 300000,
-      "reorder_at": 75000,
-      "max_price_multiplier": 1.10,
-      "market": "regular"
-    },
-    "sawdust": {
-      "target_inventory": 5000,
-      "reorder_at": 1000,
-      "max_price_multiplier": 1.15,
       "market": "regular"
     },
     "glue": {
