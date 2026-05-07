@@ -1794,36 +1794,46 @@ def home(session_token: Optional[str] = Cookie(None)):
 
     # Tutorial banner/overlay
     try:
-        from tutorial_ux import should_show_tutorial_banner, get_tutorial_overlay_html
+        from tutorial_ux import (
+            should_show_tutorial_banner, get_tutorial_overlay_html,
+            get_tutorial3_banner_html, get_tutorial4_banner_html, get_tutorial5_banner_html,
+        )
         tutorial_banner = ""
         tutorial_overlay = get_tutorial_overlay_html(player, "dashboard")
-        if not tutorial_overlay and should_show_tutorial_banner(player):
-            tutorial_banner = f"""
-            <div style="
-                background: linear-gradient(135deg, #0a1628, #0f172a);
-                border: 2px solid #d4af37;
-                border-radius: 6px;
-                padding: 20px 24px;
-                margin-bottom: 24px;
-            ">
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
-                    <span style="background:#d4af37;color:#020617;padding:3px 12px;border-radius:12px;font-size:0.7rem;font-weight:bold;">TUTORIAL AVAILABLE</span>
-                    <span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">Level 1 · Startup Company</span>
+        if not tutorial_overlay:
+            if should_show_tutorial_banner(player):
+                tutorial_banner = f"""
+                <div style="
+                    background: linear-gradient(135deg, #0a1628, #0f172a);
+                    border: 2px solid #d4af37;
+                    border-radius: 6px;
+                    padding: 20px 24px;
+                    margin-bottom: 24px;
+                ">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+                        <span style="background:#d4af37;color:#020617;padding:3px 12px;border-radius:12px;font-size:0.7rem;font-weight:bold;">TUTORIAL AVAILABLE</span>
+                        <span style="color:#d4af37;font-size:0.85rem;font-weight:bold;">Level 1 · Startup Company</span>
+                    </div>
+                    <h3 style="color:#d4af37;margin:0 0 10px 0;font-size:1.05rem;">New to Wadsworth? Start the Tutorial!</h3>
+                    <p style="color:#94a3b8;margin:0 0 16px 0;line-height:1.6;font-size:0.9rem;">
+                        Learn how to build businesses, manage your inventory, trade on the market, and unlock advanced
+                        production chains. Complete the tutorial to earn a <strong style="color:#d4af37;">free, tax-exempt land plot</strong>
+                        with all proximity features — yours to keep or sell.
+                    </p>
+                    <form action="/api/tutorial/start" method="post" style="display:inline;">
+                        <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-right:12px;">
+                            Begin Tutorial →
+                        </button>
+                    </form>
+                    <a href="/api/tutorial/dismiss" style="color:#475569;font-size:0.8rem;">Dismiss</a>
                 </div>
-                <h3 style="color:#d4af37;margin:0 0 10px 0;font-size:1.05rem;">New to Wadsworth? Start the Tutorial!</h3>
-                <p style="color:#94a3b8;margin:0 0 16px 0;line-height:1.6;font-size:0.9rem;">
-                    Learn how to build businesses, manage your inventory, trade on the market, and unlock advanced
-                    production chains. Complete the tutorial to earn a <strong style="color:#d4af37;">free, tax-exempt land plot</strong>
-                    with all proximity features — yours to keep or sell.
-                </p>
-                <form action="/api/tutorial/start" method="post" style="display:inline;">
-                    <button type="submit" style="background:#d4af37;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;margin-right:12px;">
-                        Begin Tutorial →
-                    </button>
-                </form>
-                <a href="/api/tutorial/dismiss" style="color:#475569;font-size:0.8rem;">Dismiss</a>
-            </div>
-            """
+                """
+            else:
+                tutorial_banner = (
+                    get_tutorial3_banner_html(player)
+                    or get_tutorial4_banner_html(player)
+                    or get_tutorial5_banner_html(player)
+                )
     except Exception:
         tutorial_banner = ""
         tutorial_overlay = ""

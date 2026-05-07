@@ -2254,6 +2254,56 @@ def tutorial4_dismiss(session_token: Optional[str] = Cookie(None)):
 T5_TOTAL_STEPS = 6
 
 
+def should_show_tutorial5_banner(player) -> bool:
+    """Show the T5 start banner only after Tutorial 4 is complete and T5 not yet started."""
+    t4 = getattr(player, "tutorial_4_step", 0) or 0
+    t5 = getattr(player, "tutorial_5_step", 0) or 0
+    return t4 >= 7 and t5 == 0
+
+
+def get_tutorial5_banner_html(player) -> str:
+    """Return the T5 start banner HTML, or empty string if not applicable."""
+    if not should_show_tutorial5_banner(player):
+        return ""
+    return """
+    <div style="
+        background: linear-gradient(135deg, #1a0e00, #0f172a);
+        border: 2px solid #f59e0b;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#f59e0b;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                NEW TUTORIAL AVAILABLE
+            </span>
+            <span style="color:#f59e0b;font-size:0.85rem;font-weight:bold;">Level 5 &middot; Acquisitions &amp; Income Stakes</span>
+        </div>
+        <h3 style="color:#f59e0b;margin:0 0 10px 0;font-size:1.05rem;">
+            Master Corporate Acquisitions
+        </h3>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Tutorial 5 covers <strong style="color:#e5e7eb;">Income Stakes</strong> and
+            <strong style="color:#e5e7eb;">Corporate Acquisitions</strong> — buy a percentage
+            of another player's income stream or acquire their business outright using shares.
+            Complete it to earn a <strong style="color:#d4af37;">First Lady executive</strong> reward.
+        </p>
+        <form action="/api/tutorial5/start" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#f59e0b;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Start Tutorial 5 &rarr;
+            </button>
+        </form>
+        <a href="/api/tutorial5/dismiss"
+           style="margin-left:16px;color:#475569;font-size:0.82rem;">
+            Dismiss
+        </a>
+    </div>
+    """
+
+
 def get_tutorial5_step(player_id: int) -> int:
     """Return the player's current Tutorial 5 step (0–7)."""
     try:
