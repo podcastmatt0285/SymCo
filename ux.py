@@ -2278,6 +2278,431 @@ def government_dashboard(session_token: Optional[str] = Cookie(None)):
     disp = get_player_display_currency(player.id)
     from datetime import datetime as _dt
 
+    # ── 1. Government balances ────────────────────────────────────────────────
+    # auth DB cash_balance: funded by loan repayments, petrodollar customs (50%),
+    #                       bond interest sweeps from reserve_banks DB
+    # reserve_banks PlayerCurrencyBalance["USD"]: funded by credit_usd calls
+    # Both are government money — we show them separately and sum for total treasury
+    gov_auth_cash = 0.0
+    try:
+        from auth import get_db as _adb, Player as _Player
+        _db = _adb()
+        _gov = _db.query(_Player).filter(_Player.id == 0).first()
+        gov_auth_cash = float(_gov.cash_balance or 0) if _gov else 0.0
+        _db.close()
+    except Exception:
+        pass
+
+    gov_usd_reserve = 0.0
+    gov_currencies = []
+    try:
+        from reserve_banks import (
+            get_db as _rdb, PlayerCurrencyBalance as _PCB,
+            StateReserveBank as _SRB,
+        )
+        _db = _rdb()
+        _bmap = {b.currency_code: b for b in _db.query(_SRB).all()}
+        for bal in _db.query(_PCB).filter(_PCB.player_id == 0).all():
+            if bal.balance <= 0:
+                continue
+            bk = _bmap.get(bal.currency_code)
+            rate = bk.usd_per_unit if bk else 1.0
+            usd_val = bal.balance * rate
+            if bal.currency_code == "USD":
+                gov_usd_reserve = bal.balance
+            gov_currencies.append({
+                "code": bal.currency_code,
+                "symbol": bk.currency_symbol if bk else "$",
+                "flag": bk.flag_emoji if bk else "",
+                "balance": bal.balance,
+                "rate": rate,
+                "usd_value": usd_val,
+                "total_earned": bal.total_earned,
+            })
+        _db.close()
+        gov_currencies.sort(key=lambda x: x["usd_value"], reverse=True)
+    except Exception:
+        pass
+
+    gov_treasury = gov_auth_cash + gov_usd_reserve
+    total_foreign_usd = sum(c["usd_value"] for c in gov_currencies if c["code"] != "USD")
+
+    # ── 2. Bond portfolio ─────────────────────────────────────────────────────
+    gov_bonds = []
+    try:
+        from reserve_banks import get_db as _rdb, ReserveBankBond as _RBB, StateReserveBank as _SRB
+        _db = _rdb()
+        _bmap = {b.id: b for b in _db.query(_SRB).all()}
+        for bond in _db.query(_RBB).filter(_RBB.holder_player_id == 0, _RBB.status == "active").all():
+            bk = _bmap.get(bond.bank_id)
+            days_left = max(0, (bond.matures_at - _dt.utcnow()).days) if bond.matures_at else 0
+            gov_bonds.append({
+                "id": bond.id,
+                "currency": bk.currency_code if bk else "?",
+                "symbol": bk.currency_symbol if bk else "$",
+                "flag": bk.flag_emoji if bk else "",
+                "face_value": bond.face_value_wsc,
+                "yield_rate": bond.purchase_yield,
+                "interest_accrued": bond.interest_accrued or 0.0,
+                "matures_at": bond.matures_at,
+                "days_left": days_left,
+            })
+        _db.close()
+        gov_bonds.sort(key=lambda x: x["face_value"], reverse=True)
+    except Exception:
+        pass
+
+    # ── 3. Government-owned land ──────────────────────────────────────────────
+    gov_land_total = 0
+    gov_land_by_terrain = {}
+    gov_land_value_est = 0.0
+    try:
+        from land import LandPlot as _LP, get_db as _ldb
+        _db = _ldb()
+        for p in _db.query(_LP).filter(_LP.is_government_owned == True).all():
+            gov_land_total += 1
+            gov_land_by_terrain[p.terrain_type] = gov_land_by_terrain.get(p.terrain_type, 0) + 1
+            gov_land_value_est += (p.monthly_tax or 0) * 12 * 10  # 10× annual tax as rough cap rate
+        _db.close()
+    except Exception:
+        pass
+
+    # ── 4. City bank loans ────────────────────────────────────────────────────
+    gov_loans = []
+    try:
+        from cities import get_db as _cdb, CityBankLoan as _CBL, CityBank as _CB, City as _City
+        _db = _cdb()
+        _banks  = {b.id: b for b in _db.query(_CB).all()}
+        _cities = {c.id: c for c in _db.query(_City).all()}
+        for loan in _db.query(_CBL).filter(_CBL.is_active == True).all():
+            bk   = _banks.get(loan.city_bank_id)
+            city = _cities.get(bk.city_id) if bk else None
+            gov_loans.append({
+                "city_name": city.name if city else f"Bank #{loan.city_bank_id}",
+                "principal": loan.principal,
+                "total_owed": loan.total_owed,
+                "amount_paid": loan.amount_paid,
+                "remaining": loan.total_owed - loan.amount_paid,
+                "installments_remaining": loan.installments_remaining,
+                "installment_amount": loan.installment_amount,
+                "created_at": loan.created_at,
+            })
+        _db.close()
+        gov_loans.sort(key=lambda x: x["remaining"], reverse=True)
+    except Exception:
+        pass
+
+    # ── 5. Active government land auctions ────────────────────────────────────
+    gov_auctions = []
+    try:
+        from land_market import get_db as _lmdb, GovernmentAuction as _GA
+        from land import LandPlot as _LP, get_db as _ldb
+        _lm = _lmdb()
+        _ld = _ldb()
+        for auc in _lm.query(_GA).filter(_GA.is_active == True).order_by(_GA.end_time).all():
+            plot = _ld.query(_LP).filter(_LP.id == auc.land_plot_id).first()
+            gov_auctions.append({
+                "id": auc.id,
+                "terrain": plot.terrain_type.replace("_", " ").title() if plot else "Unknown",
+                "features": plot.proximity_features if plot else "",
+                "size": plot.size if plot else 1.0,
+                "start_price": auc.starting_price,
+                "current_price": auc.current_price,
+                "min_price": auc.minimum_price,
+                "ends": auc.end_time,
+                "hours_left": max(0, int((auc.end_time - _dt.utcnow()).total_seconds() / 3600)) if auc.end_time else 0,
+            })
+        _lm.close()
+        _ld.close()
+    except Exception:
+        pass
+
+    # ── 6. All cities with project tax rates ──────────────────────────────────
+    all_cities = []
+    try:
+        from cities import get_db as _cdb, City as _City, CityBank as _CB, CityMember as _CM, CityBankLoan as _CBL
+        from city_projects import get_city_sales_tax_rate
+        _db = _cdb()
+        _banks   = {b.city_id: b for b in _db.query(_CB).all()}
+        _members = {}
+        for m in _db.query(_CM).all():
+            _members[m.city_id] = _members.get(m.city_id, 0) + 1
+        for city in _db.query(_City).order_by(_City.name).all():
+            bk = _banks.get(city.id)
+            loan_total = 0.0
+            loan_count = 0
+            if bk:
+                for ln in _db.query(_CBL).filter(_CBL.city_bank_id == bk.id, _CBL.is_active == True).all():
+                    loan_count += 1
+                    loan_total += (ln.total_owed - ln.amount_paid)
+            try:
+                sales_tax_rate = get_city_sales_tax_rate(city.id)
+            except Exception:
+                sales_tax_rate = 0.0
+            all_cities.append({
+                "id": city.id,
+                "name": city.name,
+                "mayor_id": city.mayor_id,
+                "currency": city.currency_type or "—",
+                "app_fee": city.application_fee or 50000.0,
+                "reloc_fee": city.relocation_fee or 10000.0,
+                "members": _members.get(city.id, 0),
+                "bank_reserves": bk.cash_reserves if bk else 0.0,
+                "bank_licenses": bk.city_licenses if bk else 0.0,
+                "sales_tax_pct": sales_tax_rate * 100,
+                "loans": loan_count,
+                "loan_debt": loan_total,
+            })
+        _db.close()
+    except Exception:
+        pass
+
+    # ── 7. All counties ───────────────────────────────────────────────────────
+    all_counties = []
+    try:
+        from counties import get_db as _kydb, County as _County
+        _db = _kydb()
+        for c in _db.query(_County).order_by(_County.name).all():
+            circulating = c.total_crypto_minted - c.total_crypto_burned
+            all_counties.append({
+                "name": c.name,
+                "symbol": c.crypto_symbol,
+                "token": c.crypto_name,
+                "treasury": c.treasury_balance,
+                "exchange_fee_pct": (c.transaction_fee_percent or 0.0) * 100,
+                "mining_pool": c.mining_energy_pool,
+                "minted": c.total_crypto_minted,
+                "burned": c.total_crypto_burned,
+                "circulating": circulating,
+                "gas_price": c.gas_price,
+            })
+        _db.close()
+    except Exception:
+        pass
+
+    # ── Totals ────────────────────────────────────────────────────────────────
+    total_bond_face     = sum(b["face_value"] for b in gov_bonds)
+    total_bond_interest = sum(b["interest_accrued"] for b in gov_bonds)
+    total_loan_debt     = sum(ln["remaining"] for ln in gov_loans)
+    grand_total         = gov_treasury + total_foreign_usd + total_bond_face + gov_land_value_est
+
+    def _usd(v): return fmt_usd(v, disp)
+
+    # ── KPI cards ─────────────────────────────────────────────────────────────
+    def _kpi(label, value, sub, color):
+        return f"""<div style="background:#0a0f1e;border:1px solid {color};border-radius:8px;padding:16px 18px;">
+            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">{label}</div>
+            <div style="color:{color};font-size:1.15rem;font-weight:700;">{value}</div>
+            {"" if not sub else f'<div style="color:#475569;font-size:0.7rem;margin-top:3px;">{sub}</div>'}
+        </div>"""
+
+    kpis = f"""<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-bottom:28px;">
+        {_kpi("TREASURY (USD)", _usd(gov_treasury),
+              f"Operating: {_usd(gov_auth_cash)} · Reserve: {_usd(gov_usd_reserve)}", "#e2e8f0")}
+        {_kpi("FOREIGN CURRENCIES", _usd(total_foreign_usd),
+              f"{len([c for c in gov_currencies if c['code'] != 'USD'])} foreign currencies held", "#38bdf8")}
+        {_kpi("BOND PORTFOLIO", _usd(total_bond_face),
+              f"{len(gov_bonds)} active · {_usd(total_bond_interest)} interest earned", "#fbbf24")}
+        {_kpi("LAND HOLDINGS", f"{gov_land_total:,} plots",
+              f"~{_usd(gov_land_value_est)} estimated (10× annual tax)", "#22c55e")}
+        {_kpi("LOANS TO CITY BANKS", _usd(total_loan_debt),
+              f"{len(gov_loans)} active loan{'s' if len(gov_loans) != 1 else ''}", "#f87171")}
+        {_kpi("TOTAL ASSETS (EST.)", _usd(grand_total),
+              "treasury + foreign + bonds + land est.", "#a78bfa")}
+    </div>"""
+
+    # ── Shared helpers ────────────────────────────────────────────────────────
+    def _sec(title, color, content):
+        return f"""<div style="background:#060c1a;border:1px solid {color};border-radius:8px;
+                               padding:20px 22px;margin-bottom:20px;">
+            <h3 style="color:{color};margin:0 0 16px 0;font-size:0.9rem;
+                       letter-spacing:.08em;text-transform:uppercase;">{title}</h3>
+            {content}</div>"""
+
+    def _th(label, right=False):
+        align = "right" if right else "left"
+        return f'<th style="padding:7px 12px;color:#64748b;font-size:0.72rem;letter-spacing:.05em;text-align:{align};font-weight:600;border-bottom:1px solid #1e293b;">{label}</th>'
+
+    def _td(val, color="#cbd5e1", right=False):
+        align = "right" if right else "left"
+        return f'<td style="padding:7px 12px;color:{color};font-size:0.8rem;text-align:{align};">{val}</td>'
+
+    ts = 'style="width:100%;border-collapse:collapse;"'
+
+    # ── Treasury breakdown ────────────────────────────────────────────────────
+    treasury_html = f"""
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div style="background:#0a1628;border:1px solid #334155;border-radius:6px;padding:14px 16px;">
+            <div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">OPERATING CASH (auth DB)</div>
+            <div style="color:#e2e8f0;font-size:1.1rem;font-weight:700;">{_usd(gov_auth_cash)}</div>
+            <div style="color:#475569;font-size:0.72rem;margin-top:4px;">Funded by: loan repayments, 50% petrodollar customs, bond interest sweeps</div>
+        </div>
+        <div style="background:#0a1628;border:1px solid #334155;border-radius:6px;padding:14px 16px;">
+            <div style="color:#64748b;font-size:0.72rem;margin-bottom:6px;">USD RESERVE BALANCE</div>
+            <div style="color:#38bdf8;font-size:1.1rem;font-weight:700;">{_usd(gov_usd_reserve)}</div>
+            <div style="color:#475569;font-size:0.72rem;margin-top:4px;">Funded by: seeded starting cash, reserve bank income conversions</div>
+        </div>
+    </div>"""
+    if gov_currencies:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(f"{c['flag']} {c['code']}", "#e2e8f0")
+            + _td(f"{c['symbol']} {c['balance']:,.4f}")
+            + _td(f"${c['rate']:.6f}")
+            + _td(_usd(c["usd_value"]), "#38bdf8", right=True)
+            + _td(_usd(c["total_earned"]), "#475569", right=True)
+            + "</tr>"
+            for c in gov_currencies
+        )
+        treasury_html += f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Currency","Balance","Rate","USD Value","Cumulative Earned"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+
+    # ── Bond portfolio ────────────────────────────────────────────────────────
+    if gov_bonds:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(f"{b['flag']} {b['currency']}", "#e2e8f0")
+            + _td(_usd(b["face_value"]), "#fbbf24", right=True)
+            + _td(f"{b['yield_rate']*100:.3f}%", "#4ade80")
+            + _td(_usd(b["interest_accrued"]), "#a3e635", right=True)
+            + _td(b["matures_at"].strftime("%Y-%m-%d") if b["matures_at"] else "—", "#94a3b8")
+            + _td(f"{b['days_left']}d", "#64748b" if b["days_left"] > 7 else "#f87171")
+            + "</tr>"
+            for b in gov_bonds
+        )
+        bond_note = f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Government auto-invests surplus cash (&gt;{_usd(100_000)}) into USD bonds at 25% of excess every 12 h. Interest is swept back to operating cash periodically.</p>'
+        bond_html = bond_note + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Currency","Face Value","Yield","Interest Earned","Matures","Days Left"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+    else:
+        bond_html = f'<p style="color:#475569;font-size:0.85rem;">No active bonds. Government will auto-invest once operating cash exceeds {_usd(100_000)}.</p>'
+
+    # ── City bank loans ───────────────────────────────────────────────────────
+    if gov_loans:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(ln["city_name"], "#e2e8f0")
+            + _td(_usd(ln["principal"]), "#94a3b8", right=True)
+            + _td(_usd(ln["total_owed"]), "#94a3b8", right=True)
+            + _td(_usd(ln["amount_paid"]), "#4ade80", right=True)
+            + _td(_usd(ln["remaining"]), "#f87171", right=True)
+            + _td(f"{ln['installments_remaining']} × {_usd(ln['installment_amount'])}", "#64748b")
+            + _td(ln["created_at"].strftime("%Y-%m-%d") if ln["created_at"] else "—", "#475569")
+            + "</tr>"
+            for ln in gov_loans
+        )
+        loan_note = '<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Emergency loans issued automatically when a city bank becomes insolvent. Repaid in 30 installments at 7% interest over 15 days.</p>'
+        loan_html = loan_note + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["City","Principal","Total Owed","Paid","Remaining","Installments","Issued"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+    else:
+        loan_html = '<p style="color:#4ade80;font-size:0.85rem;">No outstanding city bank loans.</p>'
+
+    # ── Land holdings ─────────────────────────────────────────────────────────
+    if gov_land_by_terrain:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(t.replace("_", " ").title(), "#e2e8f0")
+            + _td(f"{n:,}", "#22c55e", right=True)
+            + _td(_usd(n * {"urban":120,"prairie":50,"forest":60,"desert":30,"marsh":40,"mountain":70,"coastal":80,"ocean":100,"lake":60,"tundra":35,"jungle":55,"savanna":45,"hills":52,"island":65}.get(t,50) * 12 * 10), "#4ade80", right=True)
+            + "</tr>"
+            for t, n in sorted(gov_land_by_terrain.items(), key=lambda x: x[1], reverse=True)
+        )
+        land_note = '<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Value estimated as 10× annual land tax (cap rate method). Government-owned plots are exempt from monthly tax collection.</p>'
+        land_html = land_note + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["Terrain","Plots","Est. Value"]) + "</tr></thead><tbody>" + rows + f"<tr style='background:#0a1628;font-weight:700;'>{_td('TOTAL','#94a3b8')}{_td(f'{gov_land_total:,}','#22c55e',right=True)}{_td(_usd(gov_land_value_est),'#4ade80',right=True)}</tr></tbody></table>"
+    else:
+        land_html = '<p style="color:#475569;font-size:0.85rem;">No government-owned land.</p>'
+
+    # ── Active auctions ───────────────────────────────────────────────────────
+    if gov_auctions:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(f"#{a['id']}", "#64748b")
+            + _td(a["terrain"], "#e2e8f0")
+            + _td(a["features"] or "—", "#475569")
+            + _td(f"{a['size']:.1f}", "#94a3b8", right=True)
+            + _td(_usd(a["start_price"]), "#94a3b8", right=True)
+            + _td(_usd(a["current_price"]), "#fbbf24", right=True)
+            + _td(_usd(a["min_price"]), "#475569", right=True)
+            + _td(f"{a['hours_left']}h", "#f87171" if a["hours_left"] < 6 else "#64748b")
+            + "</tr>"
+            for a in gov_auctions
+        )
+        auction_html = f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["#","Terrain","Features","Size","Start Price","Current Price","Floor","Ends In"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+    else:
+        auction_html = '<p style="color:#475569;font-size:0.85rem;">No active government land auctions.</p>'
+
+    # ── Revenue & fiscal mechanics ────────────────────────────────────────────
+    def _row(label, value, note="", color="#cbd5e1"):
+        return f"<tr style='border-bottom:1px solid #0f1a2e;'>{_td(label,'#94a3b8')}{_td(value,color)}{_td(note,'#475569')}</tr>"
+
+    fiscal_html = f"<table {ts}><thead><tr>{_th('Item')}{_th('Rate / Amount')}{_th('Notes')}</tr></thead><tbody>" + "".join([
+        _row("Petrodollar Customs Share",    "50% of customs fee",          "Credited to government operating cash when outsiders trade in city currencies", "#4ade80"),
+        _row("City Bank Emergency Loans",    "7% interest, 30 installments","Government lends to insolvent city banks; repayments return to operating cash", "#fbbf24"),
+        _row("Bond Investment (outflow)",    f"25% of cash above {_usd(100_000)}","Auto-invests surplus into USD reserve bank bonds every 12 h", "#94a3b8"),
+        _row("City Bank Grants (outflow)",   "2% of operating cash",        "Distributed equally to all city banks every 12 h to fund bank reserves", "#f87171"),
+        _row("City Project Sales Tax",       "0.2%–0.6% per project level", "Charged on market sales of city members — goes to city bank reserves, NOT federal gov", "#475569"),
+        _row("Land Monthly Tax",             "Terrain base × size",         "Collected from plot owners monthly — urban $120/plot, coastal $80, prairie $50, etc.", "#475569"),
+        _row("County Crypto Exchange Fee",   "0%–10% (governance-set)",     "Exchange fee on native token trades — goes to county treasury, not federal gov", "#475569"),
+    ]) + "</tbody></table>"
+
+    # ── Cities directory ──────────────────────────────────────────────────────
+    if all_cities:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(f'<a href="/cities/{c["id"]}" style="color:#34d399;text-decoration:none;">{c["name"]}</a>')
+            + _td(f'#{c["mayor_id"]}', "#64748b")
+            + _td(str(c["members"]), "#e2e8f0", right=True)
+            + _td(c["currency"], "#a3e635")
+            + _td(_usd(c["app_fee"]), "#94a3b8", right=True)
+            + _td(_usd(c["reloc_fee"]), "#94a3b8", right=True)
+            + _td(_usd(c["bank_reserves"]), "#38bdf8", right=True)
+            + _td(f'{c["sales_tax_pct"]:.2f}%' if c["sales_tax_pct"] > 0 else "—", "#f59e0b" if c["sales_tax_pct"] > 0 else "#475569", right=True)
+            + _td(f'{c["loans"]} ({_usd(c["loan_debt"])})' if c["loans"] else "—", "#f87171" if c["loans"] else "#475569")
+            + "</tr>"
+            for c in all_cities
+        )
+        cities_html = f"<div style='overflow-x:auto;'><table {ts}><thead><tr>" + "".join(_th(h) for h in ["City","Mayor","Members","Currency","App Fee","Reloc Fee","Bank Reserves","Sales Tax","Gov Loans"]) + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+    else:
+        cities_html = '<p style="color:#475569;font-size:0.85rem;">No cities founded yet.</p>'
+
+    # ── Counties directory ────────────────────────────────────────────────────
+    if all_counties:
+        rows = "".join(
+            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+            + _td(c["name"], "#e2e8f0")
+            + _td(f'{c["token"]} ({c["symbol"]})', "#a78bfa")
+            + _td(_usd(c["treasury"]), "#fbbf24", right=True)
+            + _td(f'{c["exchange_fee_pct"]:.2f}%', "#4ade80", right=True)
+            + _td(f'{c["minted"]:,.2f}', "#94a3b8", right=True)
+            + _td(f'{c["burned"]:,.2f}', "#f87171", right=True)
+            + _td(f'{c["circulating"]:,.2f}', "#38bdf8", right=True)
+            + _td(_usd(c["mining_pool"]), "#f59e0b", right=True)
+            + _td(f'${c["gas_price"]:.6f}', "#64748b", right=True)
+            + "</tr>"
+            for c in all_counties
+        )
+        counties_html = f"<div style='overflow-x:auto;'><table {ts}><thead><tr>" + "".join(_th(h) for h in ["County","Token","Treasury","Exchange Fee","Minted","Burned","Circulating","Mining Pool","Gas Price"]) + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+    else:
+        counties_html = '<p style="color:#475569;font-size:0.85rem;">No counties founded yet.</p>'
+
+    body = f"""
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+        <span style="font-size:2rem;">🏛️</span>
+        <div>
+            <h2 style="margin:0;color:#e2e8f0;">Federal Government of Wadsworth</h2>
+            <p style="margin:4px 0 0;color:#475569;font-size:0.82rem;">
+                Live treasury, fiscal policy, and jurisdictional overview — updated every page load.
+            </p>
+        </div>
+    </div>
+    {kpis}
+    {_sec("Treasury", "#e2e8f0", treasury_html)}
+    {_sec("Bond Portfolio", "#fbbf24", bond_html)}
+    {_sec("Outstanding Loans to City Banks", "#f87171", loan_html)}
+    {_sec("Government-Owned Land", "#22c55e", land_html)}
+    {_sec("Active Land Auctions", "#f5d76e", auction_html)}
+    {_sec("Revenue &amp; Fiscal Mechanics", "#94a3b8", fiscal_html)}
+    {_sec("Cities Directory", "#34d399", cities_html)}
+    {_sec("Counties Directory", "#a78bfa", counties_html)}
+    """
+    return shell("Government", body, player.cash_balance, player.id)
+
     # ── 1. Government cash balance (auth DB, player_id = 0) ──────────────────
     gov_cash = 0.0
     try:
