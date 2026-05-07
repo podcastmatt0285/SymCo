@@ -2801,13 +2801,12 @@ def government_dashboard(
             + _td(c["currency"], "#a3e635")
             + _td(_usd(c["app_fee"]), "#94a3b8", right=True)
             + _td(_usd(c["reloc_fee"]), "#94a3b8", right=True)
-            + _td(_usd(c["bank_reserves"]), "#38bdf8", right=True)
             + _td(f'{c["sales_tax_pct"]:.2f}%' if c["sales_tax_pct"] > 0 else "—", "#f59e0b" if c["sales_tax_pct"] > 0 else "#475569", right=True)
-            + _td(f'{c["loans"]} ({_usd(c["loan_debt"])})' if c["loans"] else "—", "#f87171" if c["loans"] else "#475569")
+            + _td(f'{c["loans"]} loan{"s" if c["loans"] != 1 else ""} · {_usd(c["loan_debt"])} owed' if c["loans"] else "—", "#f87171" if c["loans"] else "#4ade80")
             + "</tr>"
             for c in all_cities
         )
-        cities_html = f"<div style='overflow-x:auto;'><table {ts}><thead><tr>" + "".join(_th(h) for h in ["City","Mayor","Members","Currency","App Fee","Reloc Fee","Bank Reserves","Sales Tax","Gov Loans"]) + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
+        cities_html = f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Fed. loans column shows money owed back to the federal government — all other figures belong to that city.</p><div style="overflow-x:auto;"><table {ts}><thead><tr>' + "".join(_th(h) for h in ["City","Mayor","Members","Currency","App Fee","Reloc Fee","Sales Tax","Fed. Loans Outstanding"]) + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
     else:
         cities_html = '<p style="color:#475569;font-size:0.85rem;">No cities founded yet.</p>'
 
@@ -2958,7 +2957,7 @@ def government_dashboard(
         <div>
             <h2 style="margin:0;color:#e2e8f0;">Federal Government of Wadsworth</h2>
             <p style="margin:4px 0 0;color:#475569;font-size:0.82rem;">
-                Live treasury, fiscal policy, and jurisdictional overview — updated every page load.
+                Federal treasury, holdings, and fiscal operations — updated every page load.
             </p>
         </div>
     </div>
@@ -2976,8 +2975,16 @@ def government_dashboard(
     {_sec("Active Land Auctions", "#f5d76e", auction_html)}
     {_sec("Estate Liquidation", "#fbbf24", estate_html)}
     {_sec("Revenue &amp; Fiscal Mechanics", "#94a3b8", fiscal_html)}
-    {_sec("Cities Directory", "#34d399", cities_html)}
-    {_sec("Counties Directory", "#a78bfa", counties_html)}
+
+    <div style="border-top:2px solid #1e293b;margin:32px 0 24px 0;padding-top:20px;">
+        <div style="color:#334155;font-size:0.72rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">Jurisdictional Overview</div>
+        <p style="color:#475569;font-size:0.8rem;margin:0;">
+            Cities and counties are independent governments with their own treasuries, banks, and elected officials.
+            The data below is federal oversight information — these assets belong to those governments, not to the federal treasury.
+        </p>
+    </div>
+    {_sec("Cities", "#34d399", cities_html)}
+    {_sec("Counties", "#a78bfa", counties_html)}
     """
     return shell("Government", body, player.cash_balance, player.id)
 
