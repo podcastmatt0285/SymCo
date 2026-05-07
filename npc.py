@@ -688,6 +688,19 @@ def _seed_npc(cfg: dict):
                     print(f"[NPC] {cfg['business_name']}: cash rescue "
                           f"${current_cash:,.0f} → ${soft_low_cap:,.0f}")
 
+                # Inventory rescue: ensure the NPC has at least its configured
+                # starting_inventory for each item.  Only tops up items where
+                # the NPC has ZERO — avoids re-seeding normal operating stock.
+                seed_inv = cfg.get("seed", {}).get("starting_inventory", {})
+                if seed_inv:
+                    import inventory as _inv
+                    for item, qty in seed_inv.items():
+                        current_qty = _inv.get_item_quantity(player_id, item)
+                        if current_qty == 0:
+                            _inv.add_item(player_id, item, qty)
+                            print(f"[NPC] {cfg['business_name']}: inventory rescue "
+                                  f"+{qty} {item} (was 0)")
+
                 return
 
             # Config has more businesses than exist in DB — seed the remainder.

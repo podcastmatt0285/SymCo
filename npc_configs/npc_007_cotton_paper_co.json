@@ -1,20 +1,21 @@
 {
   "player_id": -2007,
   "business_name": "Cotton Paper Co",
-  "description": "Paper mill running exclusively on cotton feedstock, supplying the market with paper.",
+  "description": "Paper mill supplying the market with paper. Uses cotton as primary feedstock; grass and sawdust as secondary routes so production never fully stalls.",
 
   "cash_caps": {
-    "hard_high": 15000000,
-    "soft_high":  6000000,
-    "soft_low":   2000000,
+    "hard_high": 20000000,
+    "soft_high":  8000000,
+    "soft_low":   3000000,
     "hard_low":    500000
   },
 
   "seed": {
-    "starting_cash": 2000000,
+    "starting_cash": 3000000,
     "starting_inventory": {
-      "paper": 3000,
-      "glue":  300
+      "paper": 10000,
+      "glue":  1000,
+      "grass": 300000
     },
     "land_plots": [
       { "terrain_type": "prairie", "proximity_features": ["remote"], "size": 1 }
@@ -31,32 +32,44 @@
 
   "buy_items": {
     "cotton": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.10,
+      "market": "regular"
+    },
+    "cotton_seeds": {
       "target_inventory": 3000,
       "reorder_at": 600,
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
-    "cotton_seeds": {
-      "target_inventory": 2000,
-      "reorder_at": 400,
+    "grass": {
+      "target_inventory": 300000,
+      "reorder_at": 75000,
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
+    "sawdust": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
     "glue": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "target_inventory": 500,
+      "reorder_at": 100,
       "max_price_multiplier": 1.10,
       "market": "regular"
     },
     "water": {
-      "target_inventory": 200,
-      "reorder_at": 40,
+      "target_inventory": 2000,
+      "reorder_at": 400,
       "max_price_multiplier": 1.05,
       "market": "regular"
     }
   },
 
   "sell_items": {
-    "paper": { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" }
+    "paper": { "min_inventory_to_keep": 0, "max_order_quantity": 10000, "market": "regular" }
   }
 }
