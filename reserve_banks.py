@@ -456,27 +456,24 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         # Credit (or debit) the player's currency balance.
         # Negative-yield bonds are unusual but legal; clamp the balance at zero so
         # a player can never owe currency back to the bank.
-        actual_credit = hourly
-        if hourly < 0:
-            # Find out how much will actually be deducted (balance may already be 0)
+        if hourly > 0:
+            # Withhold 15% as yield spread tax — player receives 85%, gov receives 15%.
+            # This keeps total outflow == hourly (no currency inflation).
+            _tax = hourly * BOND_INTEREST_TAX_RATE
+            net  = hourly - _tax
+            _adjust_currency_balance(db, bond.holder_player_id, bank.currency_code, net)
+            _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID,  bank.currency_code, _tax)
+            bond.interest_accrued    += net
+            bank.total_interest_paid += net
+            _yield_tax_total         += _tax
+        else:
+            # Negative-yield: deduct from player, no tax applied.
             actual_credit = _get_clamp_amount(db, bond.holder_player_id, bank.currency_code, hourly)
-
-        _adjust_currency_balance(
-            db, bond.holder_player_id, bank.currency_code, hourly,
-            floor=0.0 if hourly < 0 else None,
-        )
-
-        # FIX: only book the amount actually credited so interest_accrued stays in
-        # sync with the player's real balance (previously negative hours were tracked
-        # even when the floor prevented any deduction).
-        bond.interest_accrued    += actual_credit
-        bank.total_interest_paid += abs(actual_credit)
-
-        # Yield spread tax: bank remits 15% of every interest outflow to federal gov
-        if actual_credit > 0:
-            _tax = actual_credit * BOND_INTEREST_TAX_RATE
-            _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, bank.currency_code, _tax)
-            _yield_tax_total += _tax
+            _adjust_currency_balance(
+                db, bond.holder_player_id, bank.currency_code, hourly, floor=0.0
+            )
+            bond.interest_accrued    += actual_credit
+            bank.total_interest_paid += abs(actual_credit)
 
 
     if _yield_tax_total > 0:
@@ -1309,9 +1306,12 @@ def purchase_bond(
                     bank.usd_per_unit + face_value_usd * FX_DIRECT_BOND_LINK * bank.usd_per_unit,
                 )
 
-            # Bond issuance fee: 0.25% of face value → federal gov USD balance
+            # Bond issuance fee: 0.25% of face value → federal gov USD balance.
+            # The fee is taken from the bank's WSC holdings so the bank nets 99.75%
+            # of the bond proceeds — no new currency is created.
             try:
                 fee = face_value_usd * BOND_ISSUANCE_FEE_RATE
+                bank.wsc_holdings -= fee   # bank keeps 99.75%
                 _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, "USD", fee)
                 from govt_ledger import log_gov_event
                 log_gov_event("bond_issuance_fee", "in", fee, "USD",
