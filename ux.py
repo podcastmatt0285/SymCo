@@ -2270,13 +2270,22 @@ def home(session_token: Optional[str] = Cookie(None)):
     )
 
 @router.get("/government", response_class=HTMLResponse)
-def government_dashboard(session_token: Optional[str] = Cookie(None)):
+def government_dashboard(
+    session_token: Optional[str] = Cookie(None),
+    success: str = "",
+    error: str = "",
+):
     """Federal Government of Wadsworth — full fiscal transparency dashboard."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     from datetime import datetime as _dt
+    try:
+        from admins import is_admin as _is_admin
+        _player_is_admin = _is_admin(player.id)
+    except Exception:
+        _player_is_admin = False
 
     # ── 1. Government balances ────────────────────────────────────────────────
     # auth DB cash_balance: funded by loan repayments, petrodollar customs (50%),
@@ -2620,12 +2629,13 @@ def government_dashboard(session_token: Optional[str] = Cookie(None)):
             + _td(_usd(a["current_price"]), "#fbbf24", right=True)
             + _td(_usd(a["min_price"]), "#475569", right=True)
             + _td(f"{a['hours_left']}h", "#f87171" if a["hours_left"] < 6 else "#64748b")
+            + f'<td style="padding:6px 12px;"><a href="/land-market?tab=auctions" style="color:#f5d76e;font-size:0.78rem;font-weight:600;text-decoration:none;border:1px solid #f5d76e44;border-radius:4px;padding:3px 8px;">Bid →</a></td>'
             + "</tr>"
             for a in gov_auctions
         )
-        auction_html = f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["#","Terrain","Features","Size","Start Price","Current Price","Floor","Ends In"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
+        auction_html = f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Click <strong style="color:#f5d76e;">Bid →</strong> to open the land auction on the market.</p>' + f"<table {ts}><thead><tr>" + "".join(_th(h) for h in ["#","Terrain","Features","Size","Start Price","Current Price","Floor","Ends In",""]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
     else:
-        auction_html = '<p style="color:#475569;font-size:0.85rem;">No active government land auctions.</p>'
+        auction_html = f'<p style="color:#475569;font-size:0.85rem;">No active government land auctions. &nbsp;<a href="/land-market?tab=auctions" style="color:#f5d76e;text-decoration:none;">View Land Market →</a></p>'
 
     # ── Revenue & fiscal mechanics ────────────────────────────────────────────
     def _row(label, value, note="", color="#cbd5e1"):
@@ -2681,6 +2691,31 @@ def government_dashboard(session_token: Optional[str] = Cookie(None)):
     else:
         counties_html = '<p style="color:#475569;font-size:0.85rem;">No counties founded yet.</p>'
 
+    # ── Flash messages ────────────────────────────────────────────────────────
+    flash_html = ""
+    if success:
+        flash_html = f'<div style="background:#052e16;border:1px solid #15803d;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#4ade80;font-size:0.85rem;">✓ {success}</div>'
+    elif error:
+        flash_html = f'<div style="background:#1c0505;border:1px solid #b91c1c;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#f87171;font-size:0.85rem;">✗ {error}</div>'
+
+    # ── Admin controls (admin-only) ───────────────────────────────────────────
+    admin_html = ""
+    if _player_is_admin:
+        admin_html = _sec("Admin Controls", "#ef4444", f"""
+        <p style="color:#475569;font-size:0.78rem;margin:0 0 14px 0;">Force-trigger government fiscal tick functions. These run automatically on the game tick schedule; use only to test or manually trigger outside of schedule.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <form method="post" action="/api/gov/force-grants">
+                <button type="submit" style="background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+                    ⚡ Force City Grants Now
+                </button>
+            </form>
+            <form method="post" action="/api/gov/force-bond-invest">
+                <button type="submit" style="background:#1e1b4b;border:1px solid #818cf8;color:#a5b4fc;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+                    📈 Force Bond Investment Now
+                </button>
+            </form>
+        </div>""")
+
     body = f"""
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
         <span style="font-size:2rem;">🏛️</span>
@@ -2691,7 +2726,9 @@ def government_dashboard(session_token: Optional[str] = Cookie(None)):
             </p>
         </div>
     </div>
+    {flash_html}
     {kpis}
+    {admin_html}
     {_sec("Treasury", "#e2e8f0", treasury_html)}
     {_sec("Bond Portfolio", "#fbbf24", bond_html)}
     {_sec("Outstanding Loans to City Banks", "#f87171", loan_html)}
@@ -2703,379 +2740,37 @@ def government_dashboard(session_token: Optional[str] = Cookie(None)):
     """
     return shell("Government", body, player.cash_balance, player.id)
 
-    # ── 1. Government cash balance (auth DB, player_id = 0) ──────────────────
-    gov_cash = 0.0
+@router.post("/api/gov/force-grants")
+def gov_force_grants(session_token: Optional[str] = Cookie(None)):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
     try:
-        from auth import get_db as _adb, Player as _Player
-        _db = _adb()
-        _gov = _db.query(_Player).filter(_Player.id == 0).first()
-        gov_cash = float(_gov.cash_balance or 0) if _gov else 0.0
-        _db.close()
-    except Exception:
-        pass
+        from admins import is_admin as _ia
+        if not _ia(player.id):
+            return _RR("/government?error=Admin+only", status_code=303)
+        from cities import process_government_grants
+        process_government_grants(0)
+        return _RR("/government?success=City+grants+distributed+successfully", status_code=303)
+    except Exception as e:
+        return _RR(f"/government?error={str(e)[:80]}", status_code=303)
 
-    # ── 2. Currency balances (reserve_banks DB, player_id = 0) ───────────────
-    gov_currencies = []
+
+@router.post("/api/gov/force-bond-invest")
+def gov_force_bond_invest(session_token: Optional[str] = Cookie(None)):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
     try:
-        from reserve_banks import (
-            get_db as _rdb, PlayerCurrencyBalance as _PCB,
-            StateReserveBank as _SRB,
-        )
-        _db = _rdb()
-        _bmap = {b.currency_code: b for b in _db.query(_SRB).all()}
-        for bal in _db.query(_PCB).filter(_PCB.player_id == 0).all():
-            if bal.balance <= 0:
-                continue
-            bk = _bmap.get(bal.currency_code)
-            rate = bk.usd_per_unit if bk else 1.0
-            gov_currencies.append({
-                "code": bal.currency_code,
-                "symbol": bk.currency_symbol if bk else "$",
-                "flag": bk.flag_emoji if bk else "",
-                "balance": bal.balance,
-                "rate": rate,
-                "usd_value": bal.balance * rate,
-                "total_earned": bal.total_earned,
-            })
-        _db.close()
-        gov_currencies.sort(key=lambda x: x["usd_value"], reverse=True)
-    except Exception:
-        pass
+        from admins import is_admin as _ia
+        if not _ia(player.id):
+            return _RR("/government?error=Admin+only", status_code=303)
+        from cities import tick_government_bond_investing
+        tick_government_bond_investing(0)
+        return _RR("/government?success=Bond+investment+tick+completed", status_code=303)
+    except Exception as e:
+        return _RR(f"/government?error={str(e)[:80]}", status_code=303)
 
-    # ── 3. Bond portfolio (reserve_banks DB, holder_player_id = 0) ───────────
-    gov_bonds = []
-    try:
-        from reserve_banks import get_db as _rdb, ReserveBankBond as _RBB, StateReserveBank as _SRB
-        _db = _rdb()
-        _bmap = {b.id: b for b in _db.query(_SRB).all()}
-        for bond in _db.query(_RBB).filter(_RBB.holder_player_id == 0, _RBB.status == "active").all():
-            bk = _bmap.get(bond.bank_id)
-            days_left = max(0, (bond.matures_at - _dt.utcnow()).days) if bond.matures_at else 0
-            gov_bonds.append({
-                "id": bond.id,
-                "currency": bk.currency_code if bk else "?",
-                "symbol": bk.currency_symbol if bk else "$",
-                "flag": bk.flag_emoji if bk else "",
-                "face_value": bond.face_value_wsc,
-                "yield_rate": bond.purchase_yield,
-                "interest_accrued": bond.interest_accrued or 0.0,
-                "matures_at": bond.matures_at,
-                "days_left": days_left,
-            })
-        _db.close()
-        gov_bonds.sort(key=lambda x: x["face_value"], reverse=True)
-    except Exception:
-        pass
-
-    # ── 4. Government-owned land (land DB) ────────────────────────────────────
-    gov_land_total = 0
-    gov_land_by_terrain = {}
-    try:
-        from land import LandPlot as _LP, get_db as _ldb
-        _db = _ldb()
-        for p in _db.query(_LP).filter(_LP.is_government_owned == True).all():
-            gov_land_total += 1
-            gov_land_by_terrain[p.terrain_type] = gov_land_by_terrain.get(p.terrain_type, 0) + 1
-        _db.close()
-    except Exception:
-        pass
-
-    # ── 5. City bank loans (cities DB) ────────────────────────────────────────
-    gov_loans = []
-    try:
-        from cities import get_db as _cdb, CityBankLoan as _CBL, CityBank as _CB, City as _City
-        _db = _cdb()
-        _banks = {b.id: b for b in _db.query(_CB).all()}
-        _cities = {c.id: c for c in _db.query(_City).all()}
-        for loan in _db.query(_CBL).filter(_CBL.is_active == True).all():
-            bk = _banks.get(loan.city_bank_id)
-            city = _cities.get(bk.city_id) if bk else None
-            gov_loans.append({
-                "city_name": city.name if city else f"Bank #{loan.city_bank_id}",
-                "principal": loan.principal,
-                "total_owed": loan.total_owed,
-                "amount_paid": loan.amount_paid,
-                "remaining": loan.total_owed - loan.amount_paid,
-                "installments_remaining": loan.installments_remaining,
-                "installment_amount": loan.installment_amount,
-                "created_at": loan.created_at,
-            })
-        _db.close()
-        gov_loans.sort(key=lambda x: x["remaining"], reverse=True)
-    except Exception:
-        pass
-
-    # ── 6. All cities ─────────────────────────────────────────────────────────
-    all_cities = []
-    try:
-        from cities import get_db as _cdb, City as _City, CityBank as _CB, CityMember as _CM, CityBankLoan as _CBL
-        _db = _cdb()
-        _banks   = {b.city_id: b for b in _db.query(_CB).all()}
-        _members = {}
-        for m in _db.query(_CM).all():
-            _members[m.city_id] = _members.get(m.city_id, 0) + 1
-        for city in _db.query(_City).order_by(_City.name).all():
-            bk = _banks.get(city.id)
-            active_loan_count = 0
-            active_loan_total = 0.0
-            if bk:
-                for ln in _db.query(_CBL).filter(_CBL.city_bank_id == bk.id, _CBL.is_active == True).all():
-                    active_loan_count += 1
-                    active_loan_total += (ln.total_owed - ln.amount_paid)
-            all_cities.append({
-                "id": city.id,
-                "name": city.name,
-                "mayor_id": city.mayor_id,
-                "currency": city.currency_type or "—",
-                "app_fee": city.application_fee or 50000.0,
-                "reloc_fee": city.relocation_fee or 10000.0,
-                "members": _members.get(city.id, 0),
-                "bank_reserves": bk.cash_reserves if bk else 0.0,
-                "bank_licenses": bk.city_licenses if bk else 0.0,
-                "loans": active_loan_count,
-                "loan_debt": active_loan_total,
-            })
-        _db.close()
-    except Exception:
-        pass
-
-    # ── 7. All counties ───────────────────────────────────────────────────────
-    all_counties = []
-    try:
-        from counties import get_db as _kydb, County as _County
-        _db = _kydb()
-        for c in _db.query(_County).order_by(_County.name).all():
-            circulating = c.total_crypto_minted - c.total_crypto_burned
-            all_counties.append({
-                "name": c.name,
-                "symbol": c.crypto_symbol,
-                "token": c.crypto_name,
-                "treasury": c.treasury_balance,
-                "tx_fee_pct": (c.transaction_fee_percent or 0.0) * 100,
-                "mining_pool": c.mining_energy_pool,
-                "minted": c.total_crypto_minted,
-                "burned": c.total_crypto_burned,
-                "circulating": circulating,
-                "gas_price": c.gas_price,
-            })
-        _db.close()
-    except Exception:
-        pass
-
-    # ── Totals ────────────────────────────────────────────────────────────────
-    total_currency_usd  = sum(c["usd_value"] for c in gov_currencies)
-    total_bond_face     = sum(b["face_value"] for b in gov_bonds)
-    total_bond_interest = sum(b["interest_accrued"] for b in gov_bonds)
-    total_loan_debt     = sum(ln["remaining"] for ln in gov_loans)
-    grand_total         = gov_cash + total_currency_usd + total_bond_face
-
-    def _usd(v):
-        return fmt_usd(v, disp)
-
-    # ── KPI cards ─────────────────────────────────────────────────────────────
-    kpi_style = "background:#0a0f1e;border:1px solid {c};border-radius:8px;padding:16px 18px;"
-    kpis = f"""
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:28px;">
-        <div style="{kpi_style.format(c='#94a3b8')}">
-            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">CASH BALANCE</div>
-            <div style="color:#e2e8f0;font-size:1.15rem;font-weight:700;">{_usd(gov_cash)}</div>
-        </div>
-        <div style="{kpi_style.format(c='#38bdf8')}">
-            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">CURRENCY HOLDINGS</div>
-            <div style="color:#38bdf8;font-size:1.15rem;font-weight:700;">{_usd(total_currency_usd)}</div>
-            <div style="color:#475569;font-size:0.7rem;">{len(gov_currencies)} currencies</div>
-        </div>
-        <div style="{kpi_style.format(c='#fbbf24')}">
-            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">BOND PORTFOLIO</div>
-            <div style="color:#fbbf24;font-size:1.15rem;font-weight:700;">{_usd(total_bond_face)}</div>
-            <div style="color:#475569;font-size:0.7rem;">{len(gov_bonds)} active · {_usd(total_bond_interest)} interest earned</div>
-        </div>
-        <div style="{kpi_style.format(c='#22c55e')}">
-            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">LAND HOLDINGS</div>
-            <div style="color:#22c55e;font-size:1.15rem;font-weight:700;">{gov_land_total:,} plots</div>
-            <div style="color:#475569;font-size:0.7rem;">{len(gov_land_by_terrain)} terrain types</div>
-        </div>
-        <div style="{kpi_style.format(c='#f87171')}">
-            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">LOANS TO CITIES</div>
-            <div style="color:#f87171;font-size:1.15rem;font-weight:700;">{_usd(total_loan_debt)}</div>
-            <div style="color:#475569;font-size:0.7rem;">{len(gov_loans)} active loan{"s" if len(gov_loans) != 1 else ""}</div>
-        </div>
-        <div style="{kpi_style.format(c='#e2e8f0')}">
-            <div style="color:#64748b;font-size:0.7rem;letter-spacing:.06em;margin-bottom:4px;">TOTAL ASSETS (EST.)</div>
-            <div style="color:#e2e8f0;font-size:1.15rem;font-weight:700;">{_usd(grand_total)}</div>
-            <div style="color:#475569;font-size:0.7rem;">cash + currencies + bonds</div>
-        </div>
-    </div>"""
-
-    # ── Section helper ────────────────────────────────────────────────────────
-    def _sec(title, color, content):
-        return f"""
-        <div style="background:#060c1a;border:1px solid {color};border-radius:8px;
-                    padding:20px 22px;margin-bottom:20px;">
-            <h3 style="color:{color};margin:0 0 16px 0;font-size:0.9rem;
-                       letter-spacing:.08em;text-transform:uppercase;">{title}</h3>
-            {content}
-        </div>"""
-
-    def _th(label):
-        return f'<th style="padding:7px 12px;color:#64748b;font-size:0.72rem;letter-spacing:.05em;text-align:left;font-weight:600;border-bottom:1px solid #1e293b;">{label}</th>'
-
-    def _td(val, color="#cbd5e1", right=False):
-        align = "right" if right else "left"
-        return f'<td style="padding:7px 12px;color:{color};font-size:0.8rem;text-align:{align};">{val}</td>'
-
-    tbl_style = 'style="width:100%;border-collapse:collapse;"'
-
-    # ── Currency balances ─────────────────────────────────────────────────────
-    if gov_currencies:
-        rows = "".join(
-            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
-            + _td(f"{c['flag']} {c['code']}", "#e2e8f0")
-            + _td(f"{c['symbol']} {c['balance']:,.4f}")
-            + _td(f"${c['rate']:.6f}")
-            + _td(_usd(c["usd_value"]), "#38bdf8", right=True)
-            + _td(_usd(c["total_earned"]), "#475569", right=True)
-            + "</tr>"
-            for c in gov_currencies
-        )
-        total_row = (
-            f"<tr style='background:#0a1628;font-weight:700;'>"
-            + _td("TOTAL", "#94a3b8")
-            + _td("") + _td("")
-            + _td(_usd(total_currency_usd), "#38bdf8", right=True)
-            + _td("") + "</tr>"
-        )
-        cur_html = f"<table {tbl_style}><thead><tr>" + "".join(_th(h) for h in ["Currency","Balance","Rate (USD)","USD Value","Total Earned"]) + "</tr></thead><tbody>" + rows + total_row + "</tbody></table>"
-    else:
-        cur_html = '<p style="color:#475569;font-size:0.85rem;">No foreign currency balances.</p>'
-
-    # ── Bond portfolio ────────────────────────────────────────────────────────
-    if gov_bonds:
-        rows = "".join(
-            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
-            + _td(f"{b['flag']} {b['currency']}", "#e2e8f0")
-            + _td(_usd(b["face_value"]), "#fbbf24", right=True)
-            + _td(f"{b['yield_rate']*100:.3f}%", "#4ade80")
-            + _td(_usd(b["interest_accrued"]), "#a3e635", right=True)
-            + _td(b["matures_at"].strftime("%Y-%m-%d") if b["matures_at"] else "—", "#94a3b8")
-            + _td(f"{b['days_left']}d", "#64748b" if b["days_left"] > 7 else "#f87171")
-            + "</tr>"
-            for b in gov_bonds
-        )
-        bond_html = f"<table {tbl_style}><thead><tr>" + "".join(_th(h) for h in ["Currency","Face Value","Yield","Interest Earned","Matures","Days Left"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
-    else:
-        bond_html = '<p style="color:#475569;font-size:0.85rem;">No active bonds.</p>'
-
-    # ── City bank loans ───────────────────────────────────────────────────────
-    if gov_loans:
-        rows = "".join(
-            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
-            + _td(ln["city_name"], "#e2e8f0")
-            + _td(_usd(ln["principal"]), "#94a3b8", right=True)
-            + _td(_usd(ln["total_owed"]), "#94a3b8", right=True)
-            + _td(_usd(ln["amount_paid"]), "#4ade80", right=True)
-            + _td(_usd(ln["remaining"]), "#f87171", right=True)
-            + _td(f"{ln['installments_remaining']} × {_usd(ln['installment_amount'])}", "#64748b")
-            + _td(ln["created_at"].strftime("%Y-%m-%d") if ln["created_at"] else "—", "#475569")
-            + "</tr>"
-            for ln in gov_loans
-        )
-        loan_html = f"<table {tbl_style}><thead><tr>" + "".join(_th(h) for h in ["City","Principal","Total Owed","Paid","Remaining","Installments","Issued"]) + "</tr></thead><tbody>" + rows + "</tbody></table>"
-    else:
-        loan_html = '<p style="color:#4ade80;font-size:0.85rem;">No outstanding city bank loans.</p>'
-
-    # ── Land holdings by terrain ──────────────────────────────────────────────
-    if gov_land_by_terrain:
-        rows = "".join(
-            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
-            + _td(t.replace("_", " ").title(), "#e2e8f0")
-            + _td(f"{n:,}", "#22c55e", right=True)
-            + "</tr>"
-            for t, n in sorted(gov_land_by_terrain.items(), key=lambda x: x[1], reverse=True)
-        )
-        land_html = f"<table {tbl_style}><thead><tr>" + "".join(_th(h) for h in ["Terrain Type","Plot Count"]) + "</tr></thead><tbody>" + rows + f"<tr style='background:#0a1628;font-weight:700;'>{_td('TOTAL','#94a3b8')}{_td(f'{gov_land_total:,}','#22c55e',right=True)}</tr></tbody></table>"
-    else:
-        land_html = '<p style="color:#475569;font-size:0.85rem;">No government-owned land.</p>'
-
-    # ── Fiscal policy ─────────────────────────────────────────────────────────
-    policy_items = [
-        ("City Bank Grant Rate",       "2% of government cash reserves → all city banks, every 12 h"),
-        ("City Bank Loan Interest",    "7% flat per installment (30 installments over 15 days)"),
-        ("Loan Installment Interval",  "Every 12 hours"),
-        ("Bond Investment Threshold",  f"{_usd(100_000)} — only invests surplus above this"),
-        ("Bond Investment Rate",       "25% of cash above threshold, every 12 h"),
-        ("Bond Maturity (Gov Bonds)",  "90 days (USD Federal Reserve bonds only)"),
-        ("Forex Fee (Reserve Banks)",  "0.2% on all automatic income conversions"),
-        ("Legal Tender Switch Fee",    "2% repatriation on outgoing balance, 7-day cooldown"),
-        ("Market Sales Tax",           "City-level — set by each city's active project rate"),
-        ("Land Transaction Fee",       "County-level — set by county governance proposals"),
-    ]
-    policy_rows = "".join(
-        f"<tr style='border-bottom:1px solid #0f1a2e;'>{_td(k,'#94a3b8')}{_td(v,'#cbd5e1')}</tr>"
-        for k, v in policy_items
-    )
-    policy_html = f"<table {tbl_style}><thead><tr>{_th('Parameter')}{_th('Value / Rule')}</tr></thead><tbody>{policy_rows}</tbody></table>"
-
-    # ── Cities directory ──────────────────────────────────────────────────────
-    if all_cities:
-        rows = "".join(
-            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
-            + _td(f'<a href="/cities/{c["id"]}" style="color:#38bdf8;text-decoration:none;">{c["name"]}</a>')
-            + _td(f'#{c["mayor_id"]}', "#64748b")
-            + _td(str(c["members"]), "#e2e8f0", right=True)
-            + _td(c["currency"], "#a3e635")
-            + _td(_usd(c["app_fee"]), "#94a3b8", right=True)
-            + _td(_usd(c["reloc_fee"]), "#94a3b8", right=True)
-            + _td(_usd(c["bank_reserves"]), "#38bdf8", right=True)
-            + _td(f'{c["bank_licenses"]:,.0f}', "#64748b", right=True)
-            + _td(f'{c["loans"]} ({_usd(c["loan_debt"])})' if c["loans"] else "—", "#f87171" if c["loans"] else "#475569")
-            + "</tr>"
-            for c in all_cities
-        )
-        cities_html = f"<div style='overflow-x:auto;'><table {tbl_style}><thead><tr>" + "".join(_th(h) for h in ["City","Mayor","Members","Currency","App Fee","Reloc Fee","Bank Reserves","Licenses","Gov Loans"]) + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
-    else:
-        cities_html = '<p style="color:#475569;font-size:0.85rem;">No cities founded yet.</p>'
-
-    # ── Counties directory ────────────────────────────────────────────────────
-    if all_counties:
-        rows = "".join(
-            f"<tr style='border-bottom:1px solid #0f1a2e;'>"
-            + _td(c["name"], "#e2e8f0")
-            + _td(f'{c["token"]} ({c["symbol"]})', "#a78bfa")
-            + _td(_usd(c["treasury"]), "#fbbf24", right=True)
-            + _td(f'{c["tx_fee_pct"]:.2f}%', "#4ade80", right=True)
-            + _td(f'{c["minted"]:,.2f}', "#94a3b8", right=True)
-            + _td(f'{c["burned"]:,.2f}', "#f87171", right=True)
-            + _td(f'{c["circulating"]:,.2f}', "#38bdf8", right=True)
-            + _td(_usd(c["mining_pool"]), "#f59e0b", right=True)
-            + _td(f'${c["gas_price"]:.6f}', "#64748b", right=True)
-            + "</tr>"
-            for c in all_counties
-        )
-        counties_html = f"<div style='overflow-x:auto;'><table {tbl_style}><thead><tr>" + "".join(_th(h) for h in ["County","Token","Treasury","Tx Fee","Minted","Burned","Circulating","Mining Pool","Gas Price"]) + "</tr></thead><tbody>" + rows + "</tbody></table></div>"
-    else:
-        counties_html = '<p style="color:#475569;font-size:0.85rem;">No counties founded yet.</p>'
-
-    body = f"""
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
-        <span style="font-size:2rem;">🏛️</span>
-        <div>
-            <h2 style="margin:0;color:#e2e8f0;">Federal Government of Wadsworth</h2>
-            <p style="margin:4px 0 0;color:#475569;font-size:0.82rem;">
-                Live treasury, fiscal policy, and jurisdictional overview — updated every page load.
-            </p>
-        </div>
-    </div>
-    {kpis}
-    {_sec("Treasury — Currency Holdings", "#38bdf8", cur_html)}
-    {_sec("Bond Portfolio", "#fbbf24", bond_html)}
-    {_sec("Outstanding Loans to City Banks", "#f87171", loan_html)}
-    {_sec("Government-Owned Land", "#22c55e", land_html)}
-    {_sec("Fiscal Policy &amp; Rates", "#94a3b8", policy_html)}
-    {_sec("Cities Directory", "#34d399", cities_html)}
-    {_sec("Counties Directory", "#a78bfa", counties_html)}
-    """
-    return shell("Government", body, player.cash_balance, player.id)
 
 
 @router.get("/businesses", response_class=HTMLResponse)
