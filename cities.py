@@ -1547,7 +1547,14 @@ def process_government_grants(current_tick: int):
             bank.cash_reserves += grant_per_bank
         
         db.commit()
-        
+
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("city_grant", "out", total_grant, "USD",
+                          f"{len(banks)} city banks",
+                          f"${grant_per_bank:,.2f} each — 2% of operating cash")
+        except Exception:
+            pass
         print(f"[Cities] Government grants distributed: ${grant_per_bank:,.2f} to each of {len(banks)} banks")
         
     except Exception as e:
@@ -1609,7 +1616,14 @@ def request_government_loan(city_id: int, amount: float, current_tick: int) -> T
         db.commit()
         
         print(f"[Cities] Loan granted to bank {bank.id}: ${amount:,.2f} principal, ${total_owed:,.2f} total owed")
-        
+        try:
+            from govt_ledger import log_gov_event
+            city = db.query(City).filter(City.id == city_id).first()
+            log_gov_event("loan_disbursement", "out", amount, "USD",
+                          city.name if city else f"City {city_id}",
+                          f"Emergency loan — ${total_owed:,.2f} total owed at 7% interest")
+        except Exception:
+            pass
         return loan, "Loan granted"
         
     except Exception as e:
@@ -1654,6 +1668,14 @@ def process_loan_repayments(current_tick: int):
                 loan.installments_remaining -= 1
 
                 print(f"[Cities] Loan payment: Bank {bank.id} paid ${payment:,.2f} to government")
+                try:
+                    from govt_ledger import log_gov_event
+                    city_obj = db.query(City).join(CityBank, City.id == CityBank.city_id).filter(CityBank.id == bank.id).first()
+                    log_gov_event("loan_repayment", "in", payment, "USD",
+                                  city_obj.name if city_obj else f"Bank {bank.id}",
+                                  f"Installment — {loan.installments_remaining} remaining")
+                except Exception:
+                    pass
             else:
                 # Bank is insolvent — make partial payment with whatever cash is available,
                 # then request an emergency loan to cover the shortfall.
@@ -2141,6 +2163,13 @@ def handle_outsider_trade(buyer_id: int, seller_id: int, item_type: str, quantit
             gov_share = customs_fee * 0.5  # 50% of customs to gov
             bank.cash_reserves -= gov_share
             government.cash_balance += gov_share
+            try:
+                from govt_ledger import log_gov_event
+                log_gov_event("petrodollar_customs", "in", gov_share, "USD",
+                              city.name if city else "Unknown city",
+                              f"50% customs fee on ${trade_value:,.2f} outsider trade")
+            except Exception:
+                pass
         
         db.commit()
         
@@ -2780,6 +2809,13 @@ def tick_government_bond_investing(current_tick: int):
             f"[Cities] Gov bond invest: ${invest_amount:,.2f} → USD "
             f"{GOV_BOND_MATURITY_DAYS}d bond @ {best_bank.yield_rate * 100:.3f}% p.a."
         )
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("bond_purchase", "out", invest_amount, "USD",
+                          "USD Reserve Bank",
+                          f"{GOV_BOND_MATURITY_DAYS}d bond @ {best_bank.yield_rate*100:.3f}% p.a.")
+        except Exception:
+            pass
     except Exception as e:
         auth_db.rollback()
         rb_db.rollback()
@@ -2823,6 +2859,13 @@ def tick_city_bank_charter_fees(current_tick: int):
                 _adb_conn.close()
             except Exception as _e:
                 print(f"[Cities] Charter fee gov credit error: {_e}")
+            try:
+                from govt_ledger import log_gov_event
+                log_gov_event("charter_fee", "in", total_collected, "USD",
+                              f"{int(total_collected // CITY_BANK_CHARTER_FEE)} city banks",
+                              f"${CITY_BANK_CHARTER_FEE:,.0f}/bank — 30-day charter renewal")
+            except Exception:
+                pass
             print(f"[Cities] Charter fees collected: ${total_collected:,.0f} → federal gov")
     except Exception as e:
         print(f"[Cities] Charter fee tick error: {e}")

@@ -438,6 +438,7 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
         ReserveBankBond.bank_id == bank.id,
         ReserveBankBond.status  == "active",
     ).all()
+    _yield_tax_total = 0.0
     for bond in active_bonds:
         # Interbank bonds (holder_player_id == 0) carry no interest — they are
         # purely a reserve-management instrument and will be expired by _mature_bonds.
@@ -473,10 +474,19 @@ def _accrue_interest(db, bank: StateReserveBank, now: datetime):
 
         # Yield spread tax: bank remits 15% of every interest outflow to federal gov
         if actual_credit > 0:
-            _adjust_currency_balance(
-                db, GOVERNMENT_PLAYER_ID, bank.currency_code,
-                actual_credit * BOND_INTEREST_TAX_RATE,
-            )
+            _tax = actual_credit * BOND_INTEREST_TAX_RATE
+            _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, bank.currency_code, _tax)
+            _yield_tax_total += _tax
+
+
+    if _yield_tax_total > 0:
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("bond_interest_tax", "in", _yield_tax_total, bank.currency_code,
+                          f"{bank.currency_code} Reserve Bank",
+                          f"15% yield spread tax — hourly accrual")
+        except Exception:
+            pass
 
 
 def _apply_reserve_balance_tax(db):
@@ -488,13 +498,23 @@ def _apply_reserve_balance_tax(db):
     income stream for the federal government.
     """
     reserves = db.query(BankReserveBalance).filter(BankReserveBalance.balance > 0).all()
+    totals_by_currency = {}
     for r in reserves:
         tax = r.balance * RESERVE_BALANCE_TAX_RATE
         if tax <= 0:
             continue
-        r.balance   -= tax
+        r.balance    -= tax
         r.total_paid += tax
         _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, r.currency_code, tax)
+        totals_by_currency[r.currency_code] = totals_by_currency.get(r.currency_code, 0.0) + tax
+    for currency, total in totals_by_currency.items():
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("reserve_balance_tax", "in", total, currency,
+                          f"All {currency} reserve banks",
+                          "Daily 0.1% tax on foreign-currency reserve holdings")
+        except Exception:
+            pass
 
 
 def _push_reserve(player_id: int, title: str, body: str):
@@ -1293,6 +1313,10 @@ def purchase_bond(
             try:
                 fee = face_value_usd * BOND_ISSUANCE_FEE_RATE
                 _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, "USD", fee)
+                from govt_ledger import log_gov_event
+                log_gov_event("bond_issuance_fee", "in", fee, "USD",
+                              bank.name,
+                              f"0.25% issuance fee on ${face_value_usd:,.2f} {currency_code} bond")
             except Exception:
                 pass
 

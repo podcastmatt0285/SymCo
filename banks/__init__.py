@@ -356,6 +356,13 @@ def apply_reserve_tax(bank_id: str, current_tick: int):
         except Exception as _e:
             print(f"[Banks] Gov credit error ({bank_id}): {_e}")
 
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("autonomous_bank_tax", "in", tax_amount, "USD",
+                          bank_id.replace("_", " ").title(),
+                          f"Daily 0.01% reserve tax on ${bank.cash_reserves + tax_amount:,.2f} reserves")
+        except Exception:
+            pass
         print(f"[Banks] {bank_id} daily reserve tax: ${tax_amount:.4f} → federal gov")
     finally:
         db.close()

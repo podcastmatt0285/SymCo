@@ -2926,6 +2926,60 @@ def government_dashboard(
     else:
         estate_html = '<p style="color:#475569;font-size:0.85rem;">No estate listings active.</p>'
 
+    # ── Government Activity Ledger ────────────────────────────────────────────
+    _LEDGER_META = {
+        "bond_interest_tax":   ("Bond Interest Tax",     "in",  "#fbbf24"),
+        "reserve_balance_tax": ("Reserve Balance Tax",   "in",  "#f59e0b"),
+        "bond_issuance_fee":   ("Bond Issuance Fee",     "in",  "#fcd34d"),
+        "charter_fee":         ("Charter Renewal Fee",   "in",  "#4ade80"),
+        "autonomous_bank_tax": ("Autonomous Bank Tax",   "in",  "#22c55e"),
+        "loan_repayment":      ("Loan Repayment",         "in",  "#34d399"),
+        "petrodollar_customs": ("Petrodollar Customs",   "in",  "#38bdf8"),
+        "estate_sale":         ("Estate Sale",            "in",  "#a78bfa"),
+        "city_grant":          ("City Bank Grant",       "out", "#f87171"),
+        "bond_purchase":       ("Bond Purchase",         "out", "#818cf8"),
+        "loan_disbursement":   ("Emergency Loan Issued", "out", "#fb923c"),
+    }
+    ledger_html = ""
+    try:
+        from govt_ledger import get_recent_events
+        _ledger_events = get_recent_events(limit=75)
+        if _ledger_events:
+            _lrows = []
+            for ev in _ledger_events:
+                meta = _LEDGER_META.get(ev.event_type, (ev.event_type.replace("_"," ").title(), ev.direction, "#94a3b8"))
+                label, default_dir, badge_color = meta
+                arrow = "↓" if ev.direction == "in" else "↑"
+                arrow_color = "#4ade80" if ev.direction == "in" else "#f87171"
+                amt_color = "#4ade80" if ev.direction == "in" else "#f87171"
+                sign = "+" if ev.direction == "in" else "−"
+                ts_str = ev.timestamp.strftime("%m/%d %H:%M") if ev.timestamp else "—"
+                counterparty = ev.counterparty or "—"
+                desc = ev.description or ""
+                _lrows.append(
+                    f"<tr style='border-bottom:1px solid #0f1a2e;'>"
+                    f"<td style='padding:7px 10px;color:{arrow_color};font-size:1rem;font-weight:700;'>{arrow}</td>"
+                    f"<td style='padding:7px 10px;'><span style='background:{badge_color}22;color:{badge_color};border:1px solid {badge_color}44;border-radius:4px;padding:2px 7px;font-size:0.72rem;font-weight:600;white-space:nowrap;'>{label}</span></td>"
+                    f"<td style='padding:7px 10px;color:{amt_color};font-weight:700;text-align:right;white-space:nowrap;'>{sign}{ev.currency} {ev.amount:,.2f}</td>"
+                    f"<td style='padding:7px 10px;color:#94a3b8;font-size:0.82rem;'>{counterparty}</td>"
+                    f"<td style='padding:7px 10px;color:#64748b;font-size:0.78rem;'>{desc}</td>"
+                    f"<td style='padding:7px 10px;color:#475569;font-size:0.75rem;white-space:nowrap;'>{ts_str}</td>"
+                    f"</tr>"
+                )
+            ledger_html = (
+                f'<p style="color:#475569;font-size:0.75rem;margin:0 0 12px 0;">Showing the 75 most recent government fiscal events. ↓ = money flowing in to federal treasury, ↑ = money flowing out.</p>'
+                f'<table style="width:100%;border-collapse:collapse;">'
+                f'<thead><tr>'
+                + "".join(_th(h) for h in ["", "Event", "Amount", "Counterparty", "Description", "Time"])
+                + f'</tr></thead><tbody>'
+                + "".join(_lrows)
+                + f'</tbody></table>'
+            )
+        else:
+            ledger_html = '<p style="color:#475569;font-size:0.85rem;">No government fiscal events recorded yet. Events will appear here as the economy runs.</p>'
+    except Exception as _le:
+        ledger_html = f'<p style="color:#475569;font-size:0.85rem;">Ledger unavailable: {_le}</p>'
+
     # ── Flash messages ────────────────────────────────────────────────────────
     flash_html = ""
     if success:
@@ -2980,6 +3034,7 @@ def government_dashboard(
     {_sec("Active Land Auctions", "#f5d76e", auction_html)}
     {_sec("Estate Liquidation", "#fbbf24", estate_html)}
     {_sec("Revenue &amp; Fiscal Mechanics", "#94a3b8", fiscal_html)}
+    {_sec("Government Activity Log", "#38bdf8", ledger_html)}
 
     <div style="border-top:2px solid #1e293b;margin:32px 0 24px 0;padding-top:20px;">
         <div style="color:#334155;font-size:0.72rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">Jurisdictional Overview</div>
