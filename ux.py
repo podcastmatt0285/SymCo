@@ -2339,6 +2339,20 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Map</span>
             </a>
 
+            <div class="dc" style="--c:#f59e0b;--g:linear-gradient(135deg,#78350f,#92400e,#b45309);--glow:rgba(245,158,11,0.18);grid-column:span 2;cursor:default;display:block;text-decoration:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.5rem;">📅</span>
+                        <div>
+                            <div class="dc-t" style="margin:0;">Events</div>
+                            <div style="color:#92400e;font-size:0.72rem;margin-top:2px;">Server-wide events, market effects &amp; tasks</div>
+                        </div>
+                    </div>
+                    <a href="/events" style="background:#b45309;color:#fef3c7;border:none;border-radius:6px;padding:6px 14px;font-size:0.78rem;font-weight:600;text-decoration:none;cursor:pointer;">View All</a>
+                </div>
+                {events_card_html}
+            </div>
+
             <a href="/government" class="dc" style="--c:#e2e8f0;--g:linear-gradient(90deg,#94a3b8,#e2e8f0);--glow:rgba(226,232,240,0.12);--btn:#94a3b8;--fg:#020617;">
                 <span class="dc-ico">🏛️</span>
                 <div class="dc-t">Government</div>
