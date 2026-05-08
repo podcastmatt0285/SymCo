@@ -13539,6 +13539,168 @@ async def get_my_open_orders(
         return {"error": str(e)}
 
 
+
+# ==========================
+# EVENTS PAGE
+# ==========================
+
+@router.get("/events", response_class=HTMLResponse)
+def events_page(session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+
+    try:
+        from events import get_event_summary, get_player_level
+        _ev  = get_event_summary()
+        _lvl = get_player_level(player.id)
+    except Exception:
+        _ev  = {"active": [], "upcoming": [], "finished": []}
+        _lvl = {"level": 1, "trophies": 0, "next_threshold": None,
+                "prev_threshold": 0, "progress_pct": 0.0}
+
+    _active   = _ev.get("active",   [])
+    _upcoming = _ev.get("upcoming", [])
+    _finished = _ev.get("finished", [])
+
+    _TYPE_COLOR = {
+        "gov":        "#94a3b8",
+        "bank":       "#fbbf24",
+        "market":     "#34d399",
+        "task":       "#a78bfa",
+        "city":       "#38bdf8",
+        "production": "#fb923c",
+    }
+    _DUR_COLOR = {
+        "daily":   "#f59e0b",
+        "weekly":  "#10b981",
+        "monthly": "#6366f1",
+        "special": "#ec4899",
+        "task":    "#a78bfa",
+    }
+
+    def _badge(label, color):
+        return (f"<span style='background:{color}22;color:{color};border:1px solid {color}44;"
+                f"border-radius:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;"
+                f"text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;'>{label}</span>")
+
+    def _ev_card(ev, status_label, status_color):
+        dur   = ev.get("duration_class", "")
+        etype = ev.get("event_type", "")
+        title = ev.get("title", "Untitled")
+        desc  = ev.get("description", "") or ""
+        ends  = ev.get("ends_at")
+        starts = ev.get("starts_at")
+        trophy = ev.get("trophy_reward", 0)
+        from datetime import datetime as _dt
+        _now = _dt.utcnow()
+        time_str = ""
+        try:
+            if ends:
+                _end = _dt.fromisoformat(ends.replace("Z", ""))
+                delta = _end - _now
+                if delta.total_seconds() > 0:
+                    h, rem = divmod(int(delta.total_seconds()), 3600)
+                    m = rem // 60
+                    time_str = f"Ends in {h}h {m}m"
+                else:
+                    time_str = "Ended"
+            elif starts:
+                _st = _dt.fromisoformat(starts.replace("Z", ""))
+                delta = _st - _now
+                if delta.total_seconds() > 0:
+                    h, rem = divmod(int(delta.total_seconds()), 3600)
+                    m = rem // 60
+                    time_str = f"Starts in {h}h {m}m"
+        except Exception:
+            pass
+        trophy_html = (f"<span style='color:#fbbf24;font-weight:700;'>+{trophy} ★</span>" if trophy else "")
+        return f"""
+        <div style="background:#0a0f1e;border:1px solid #1e293b;border-left:3px solid {status_color};
+                    border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+                        {_badge(dur, _DUR_COLOR.get(dur, '#94a3b8'))}
+                        {_badge(etype, _TYPE_COLOR.get(etype, '#94a3b8'))}
+                        {_badge(status_label, status_color)}
+                    </div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
+                    <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
+                </div>
+                <div style="color:{status_color};font-size:0.75rem;white-space:nowrap;padding-top:2px;">{time_str}</div>
+            </div>
+        </div>"""
+
+    def _section(label, color, events, status_label):
+        if not events:
+            return ""
+        rows = "".join(_ev_card(e, status_label, color) for e in events)
+        return f"""
+        <div style="margin-bottom:28px;">
+            <div style="font-size:0.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+                        color:{color};margin-bottom:12px;padding-bottom:6px;
+                        border-bottom:1px solid {color}33;">{label}</div>
+            {rows}
+        </div>"""
+
+    active_html   = _section("Active", "#4ade80", _active, "active")
+    upcoming_html = _section("Upcoming", "#38bdf8", _upcoming, "upcoming")
+    finished_html = _section("Recently Ended", "#475569", _finished, "ended")
+
+    empty_html = ""
+    if not _active and not _upcoming and not _finished:
+        empty_html = """
+        <div style="text-align:center;padding:60px 0;color:#475569;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🌅</div>
+            <div style="font-size:1rem;font-weight:600;color:#64748b;margin-bottom:6px;">No events right now</div>
+            <div style="font-size:0.82rem;">Daily and weekly events launch regularly. Check back soon.</div>
+        </div>"""
+
+    # Level / trophy progress bar
+    lv       = _lvl["level"]
+    trophies = _lvl["trophies"]
+    nxt      = _lvl["next_threshold"]
+    prev     = _lvl["prev_threshold"]
+    pct      = _lvl["progress_pct"]
+    nxt_str  = f"{nxt:,}" if nxt else "MAX"
+    level_html = f"""
+    <div style="background:#0a0f1e;border:1px solid #1e293b;border-radius:10px;padding:18px 20px;margin-bottom:28px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="background:#1e1b4b;border:1px solid #4338ca;border-radius:10px;
+                             padding:3px 12px;font-size:0.8rem;font-weight:700;color:#a5b4fc;">
+                    <span style="color:#818cf8;">Lv</span> {lv}
+                </span>
+                <span style="color:#fbbf24;font-weight:700;font-size:0.9rem;">{trophies:,} ★</span>
+            </div>
+            <span style="color:#475569;font-size:0.75rem;">Next level: {nxt_str} ★</span>
+        </div>
+        <div style="background:#1e293b;border-radius:4px;height:6px;overflow:hidden;">
+            <div style="background:linear-gradient(90deg,#6366f1,#a78bfa);height:100%;
+                        width:{pct}%;transition:width 0.4s;border-radius:4px;"></div>
+        </div>
+        <div style="color:#475569;font-size:0.7rem;margin-top:6px;">
+            {prev:,} → {nxt_str} ★ &nbsp;·&nbsp; {pct:.1f}% to level {lv + 1}
+        </div>
+    </div>"""
+
+    body = f"""
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <h2 style="margin:0;">Events &amp; Tasks</h2>
+        <span style="color:#475569;font-size:0.8rem;">Server-wide events, market effects &amp; player tasks</span>
+    </div>
+    {level_html}
+    {active_html}
+    {upcoming_html}
+    {finished_html}
+    {empty_html}"""
+
+    return shell("Events & Tasks", body,
+                 balance=getattr(player, "cash_balance", 0.0),
+                 player_id=player.id)
+
+
 # ==========================
 # MODULE LIFECYCLE
 # ==========================
