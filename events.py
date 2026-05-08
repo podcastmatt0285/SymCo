@@ -170,6 +170,47 @@ def get_event_summary() -> dict:
     return {"active": active, "upcoming": upcoming, "finished": finished}
 
 
+def get_player_level(player_id: int) -> dict:
+    """Return the player's current level, trophies, and progress to next level.
+
+    Returns:
+        {"level": int, "trophies": int, "next_threshold": int | None,
+         "prev_threshold": int, "progress_pct": float}
+    """
+    db = SessionLocal()
+    try:
+        row = db.query(PlayerRank).filter(PlayerRank.player_id == player_id).first()
+        trophies = row.trophies if row else 0
+        level    = row.level    if row else 1
+    finally:
+        db.close()
+
+    # Recalculate level from trophies in case it drifted
+    level = 1
+    for i, threshold in enumerate(LEVEL_THRESHOLDS):
+        if trophies >= threshold:
+            level = i + 2
+        else:
+            break
+
+    prev_threshold = LEVEL_THRESHOLDS[level - 2] if level >= 2 else 0
+    next_threshold = LEVEL_THRESHOLDS[level - 1] if level - 1 < len(LEVEL_THRESHOLDS) else None
+
+    if next_threshold is not None:
+        span = next_threshold - prev_threshold
+        progress_pct = ((trophies - prev_threshold) / span * 100) if span > 0 else 100.0
+    else:
+        progress_pct = 100.0  # max level
+
+    return {
+        "level":          level,
+        "trophies":       trophies,
+        "next_threshold": next_threshold,
+        "prev_threshold": prev_threshold,
+        "progress_pct":   round(progress_pct, 1),
+    }
+
+
 # ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 def initialize():

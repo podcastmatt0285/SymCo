@@ -565,6 +565,30 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
         except Exception:
             pass
 
+    # Player level badge for header
+    _level_html = ""
+    if player_id:
+        try:
+            from events import get_player_level
+            _lvl = get_player_level(player_id)
+            _lv  = _lvl["level"]
+            _pct = _lvl["progress_pct"]
+            _nxt = _lvl["next_threshold"]
+            _trp = _lvl["trophies"]
+            _tip = (f"Lv {_lv} · {_trp:,} trophies"
+                    + (f" · {_pct:.0f}% to Lv {_lv+1}" if _nxt else " · MAX"))
+            _level_html = (
+                f'<span title="{_tip}" style="'
+                f'display:inline-flex;align-items:center;gap:4px;'
+                f'background:#1e1b4b;border:1px solid #4338ca;border-radius:12px;'
+                f'padding:2px 9px;font-size:0.72rem;font-weight:700;color:#a5b4fc;'
+                f'cursor:default;user-select:none;">'
+                f'<span style="color:#818cf8;">Lv</span> {_lv}'
+                f'</span>'
+            )
+        except Exception:
+            pass
+
     # Resolve display balance using player's legal tender so the header always
     # shows the currency the player actually works in (not hardcoded USD).
     disp_sym      = "$"
@@ -921,6 +945,7 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             <div class="brand"><img src="/static/logo.png" alt="Wadsworth"> Wadsworth</div>
             <div class="header-right">
                 {lien_html}
+                {_level_html}
                 <span class="balance">{disp_sym}{disp_balance:,.2f}{disp_usd_note}</span>
                 <a href="/api/logout" style="color: #ef4444; font-size: 0.85rem;">Logout</a>
             </div>

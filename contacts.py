@@ -263,6 +263,26 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
     parts = []
 
     # ── Header ──
+    _level_badge = ""
+    try:
+        from events import get_player_level
+        _lvl = get_player_level(subject_id)
+        _lv  = _lvl["level"]
+        _trp = _lvl["trophies"]
+        _pct = _lvl["progress_pct"]
+        _nxt = _lvl["next_threshold"]
+        _tip = (f"{_trp:,} trophies · {_pct:.0f}% to Lv {_lv+1}"
+                if _nxt else f"{_trp:,} trophies · MAX LEVEL")
+        _level_badge = (
+            f'<span title="{_tip}" style="'
+            f'display:inline-flex;align-items:center;gap:4px;'
+            f'background:#1e1b4b;border:1px solid #4338ca;border-radius:10px;'
+            f'padding:2px 8px;font-size:0.72rem;font-weight:700;color:#a5b4fc;">'
+            f'<span style="color:#818cf8;">Lv</span> {_lv} ★</span>'
+        )
+    except Exception:
+        pass
+
     parts.append(f'''
     <div style="display:flex; align-items:center; gap:14px; padding-bottom:16px;
                 border-bottom:1px solid #1e293b; margin-bottom:16px;">
@@ -272,7 +292,10 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
             {name[0].upper() if name else "?"}
         </div>
         <div>
-            <div style="font-size:1.15rem; font-weight:bold; color:#e5e7eb;">{name}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:1.15rem; font-weight:bold; color:#e5e7eb;">{name}</span>
+                {_level_badge}
+            </div>
             <div style="font-size:0.75rem; color:#64748b;">Player ID #{subject_id}</div>
         </div>
     </div>''')
