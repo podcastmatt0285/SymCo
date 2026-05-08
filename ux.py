@@ -2098,6 +2098,105 @@ def home(session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
+    # ── Events card ───────────────────────────────────────────────────────────
+    events_card_html = ""
+    try:
+        from events import get_event_summary
+        _ev = get_event_summary()
+        _active = _ev.get("active", [])
+        _upcoming = _ev.get("upcoming", [])
+        _finished = _ev.get("finished", [])
+    except Exception:
+        _active, _upcoming, _finished = [], [], []
+
+    _TYPE_COLOR = {
+        "gov":        "#94a3b8",
+        "bank":       "#fbbf24",
+        "market":     "#34d399",
+        "task":       "#a78bfa",
+        "city":       "#38bdf8",
+        "production": "#fb923c",
+    }
+    _DUR_COLOR = {
+        "daily":   "#f59e0b",
+        "weekly":  "#10b981",
+        "monthly": "#6366f1",
+        "special": "#ec4899",
+        "task":    "#a78bfa",
+    }
+
+    def _ev_badge(label, color):
+        return (f"<span style='background:{color}22;color:{color};border:1px solid {color}44;"
+                f"border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;"
+                f"text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;'>{label}</span>")
+
+    def _ev_row(ev, status_color):
+        dur   = ev.get("duration_class","")
+        etype = ev.get("event_type","")
+        title = ev.get("title","")
+        desc  = ev.get("description","") or ""
+        ends  = ev.get("ends_at")
+        starts= ev.get("starts_at")
+        from datetime import datetime as _dtnow
+        _now  = _dtnow.utcnow()
+        time_str = ""
+        try:
+            if ends:
+                _end_dt = _dtnow.fromisoformat(ends.replace("Z",""))
+                delta = _end_dt - _now
+                if delta.total_seconds() > 0:
+                    h, rem = divmod(int(delta.total_seconds()), 3600)
+                    m = rem // 60
+                    time_str = f"ends in {h}h {m}m"
+            elif starts:
+                _st_dt = _dtnow.fromisoformat(starts.replace("Z",""))
+                delta = _st_dt - _now
+                if delta.total_seconds() > 0:
+                    h, rem = divmod(int(delta.total_seconds()), 3600)
+                    m = rem // 60
+                    time_str = f"starts in {h}h {m}m"
+        except Exception:
+            pass
+        trophy = ev.get("trophy_reward", 0)
+        trophy_str = f" +{trophy}★" if trophy else ""
+        return (
+            f"<div style='padding:8px 0;border-bottom:1px solid #1c1005;display:flex;align-items:flex-start;gap:8px;'>"
+            f"<div style='flex:1;min-width:0;'>"
+            f"<div style='display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;'>"
+            f"{_ev_badge(dur, _DUR_COLOR.get(dur,'#94a3b8'))}"
+            f"{_ev_badge(etype, _TYPE_COLOR.get(etype,'#94a3b8'))}"
+            f"<span style='color:#fef3c7;font-size:0.82rem;font-weight:600;'>{title}{trophy_str}</span>"
+            f"</div>"
+            f"<div style='color:#92400e;font-size:0.75rem;'>{desc}</div>"
+            f"</div>"
+            f"<div style='color:{status_color};font-size:0.7rem;white-space:nowrap;padding-top:2px;'>{time_str}</div>"
+            f"</div>"
+        )
+
+    if not _active and not _upcoming:
+        events_card_html = (
+            "<div style='text-align:center;padding:24px 0;color:#78350f;'>"
+            "<div style='font-size:1.8rem;margin-bottom:6px;'>🌅</div>"
+            "<div style='font-size:0.85rem;font-weight:600;color:#92400e;'>No events currently active</div>"
+            "<div style='font-size:0.75rem;color:#78350f;margin-top:4px;'>Check back soon — daily and weekly events launch regularly.</div>"
+            "</div>"
+        )
+    else:
+        _parts = []
+        if _active:
+            _parts.append("<div style='color:#fbbf24;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;'>Active</div>")
+            for ev in _active[:4]:
+                _parts.append(_ev_row(ev, "#4ade80"))
+        if _upcoming:
+            _parts.append("<div style='color:#94a3b8;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:10px 0 4px 0;'>Upcoming</div>")
+            for ev in _upcoming[:3]:
+                _parts.append(_ev_row(ev, "#38bdf8"))
+        if _finished:
+            _parts.append("<div style='color:#475569;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:10px 0 4px 0;'>Recently Ended</div>")
+            for ev in _finished[:2]:
+                _parts.append(_ev_row(ev, "#475569"))
+        events_card_html = "".join(_parts)
+
     return shell(
         "Dashboard",
         f"""
