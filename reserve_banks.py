@@ -1311,7 +1311,7 @@ def purchase_bond(
             # of the bond proceeds — no new currency is created.
             try:
                 fee = face_value_usd * BOND_ISSUANCE_FEE_RATE
-                bank.wsc_holdings -= fee   # bank keeps 99.75%
+                bank.wsc_holdings = max(0.0, bank.wsc_holdings - fee)   # bank keeps 99.75%
                 _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, "USD", fee)
                 from govt_ledger import log_gov_event
                 log_gov_event("bond_issuance_fee", "in", fee, "USD",

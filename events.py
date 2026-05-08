@@ -38,8 +38,8 @@ def _cumulative_sum(values):
         result.append(total)
     return result
 
-# 50 levels → 49 thresholds (level 2 through level 50)
-LEVEL_THRESHOLDS = _cumulative_sum(_fib_from_index3(50))
+# 49 thresholds: level 2 through level 50
+LEVEL_THRESHOLDS = _cumulative_sum(_fib_from_index3(49))
 
 
 # ── Models ────────────────────────────────────────────────────────────────────
@@ -177,13 +177,20 @@ def get_player_level(player_id: int) -> dict:
         {"level": int, "trophies": int, "next_threshold": int | None,
          "prev_threshold": int, "progress_pct": float}
     """
-    db = SessionLocal()
+    if player_id <= 0:
+        return {"level": 1, "trophies": 0, "next_threshold": LEVEL_THRESHOLDS[0],
+                "prev_threshold": 0, "progress_pct": 0.0}
+
+    trophies = 0
     try:
-        row = db.query(PlayerRank).filter(PlayerRank.player_id == player_id).first()
-        trophies = row.trophies if row else 0
-        level    = row.level    if row else 1
-    finally:
-        db.close()
+        db = SessionLocal()
+        try:
+            row = db.query(PlayerRank).filter(PlayerRank.player_id == player_id).first()
+            trophies = row.trophies if row else 0
+        finally:
+            db.close()
+    except Exception:
+        pass
 
     # Recalculate level from trophies in case it drifted
     level = 1
