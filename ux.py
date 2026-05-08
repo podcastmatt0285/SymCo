@@ -2134,93 +2134,19 @@ def home(session_token: Optional[str] = Cookie(None)):
     except Exception:
         _active, _upcoming, _finished = [], [], []
 
-    _TYPE_COLOR = {
-        "gov":        "#94a3b8",
-        "bank":       "#fbbf24",
-        "market":     "#34d399",
-        "task":       "#a78bfa",
-        "city":       "#38bdf8",
-        "production": "#fb923c",
-    }
-    _DUR_COLOR = {
-        "daily":   "#f59e0b",
-        "weekly":  "#10b981",
-        "monthly": "#6366f1",
-        "special": "#ec4899",
-        "task":    "#a78bfa",
-    }
-
-    def _ev_badge(label, color):
-        return (f"<span style='background:{color}22;color:{color};border:1px solid {color}44;"
-                f"border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;"
-                f"text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;'>{label}</span>")
-
-    def _ev_row(ev, status_color):
-        dur   = ev.get("duration_class","")
-        etype = ev.get("event_type","")
-        title = ev.get("title","")
-        desc  = ev.get("description","") or ""
-        ends  = ev.get("ends_at")
-        starts= ev.get("starts_at")
-        from datetime import datetime as _dtnow
-        _now  = _dtnow.utcnow()
-        time_str = ""
-        try:
-            if ends:
-                _end_dt = _dtnow.fromisoformat(ends.replace("Z",""))
-                delta = _end_dt - _now
-                if delta.total_seconds() > 0:
-                    h, rem = divmod(int(delta.total_seconds()), 3600)
-                    m = rem // 60
-                    time_str = f"ends in {h}h {m}m"
-            elif starts:
-                _st_dt = _dtnow.fromisoformat(starts.replace("Z",""))
-                delta = _st_dt - _now
-                if delta.total_seconds() > 0:
-                    h, rem = divmod(int(delta.total_seconds()), 3600)
-                    m = rem // 60
-                    time_str = f"starts in {h}h {m}m"
-        except Exception:
-            pass
-        trophy = ev.get("trophy_reward", 0)
-        trophy_str = f" +{trophy}★" if trophy else ""
-        return (
-            f"<div style='padding:8px 0;border-bottom:1px solid #1c1005;display:flex;align-items:flex-start;gap:8px;'>"
-            f"<div style='flex:1;min-width:0;'>"
-            f"<div style='display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:3px;'>"
-            f"{_ev_badge(dur, _DUR_COLOR.get(dur,'#94a3b8'))}"
-            f"{_ev_badge(etype, _TYPE_COLOR.get(etype,'#94a3b8'))}"
-            f"<span style='color:#fef3c7;font-size:0.82rem;font-weight:600;'>{title}{trophy_str}</span>"
-            f"</div>"
-            f"<div style='color:#92400e;font-size:0.75rem;'>{desc}</div>"
-            f"</div>"
-            f"<div style='color:{status_color};font-size:0.7rem;white-space:nowrap;padding-top:2px;'>{time_str}</div>"
-            f"</div>"
-        )
-
-    if not _active and not _upcoming:
-        events_card_html = (
-            "<div style='text-align:center;padding:24px 0;color:#78350f;'>"
-            "<div style='font-size:1.8rem;margin-bottom:6px;'>🌅</div>"
-            "<div style='font-size:0.85rem;font-weight:600;color:#92400e;'>No events currently active</div>"
-            "<div style='font-size:0.75rem;color:#78350f;margin-top:4px;'>Check back soon — daily and weekly events launch regularly.</div>"
-            "</div>"
-        )
+    n_active   = len(_active)
+    n_upcoming = len(_upcoming)
+    if n_active == 0 and n_upcoming == 0:
+        events_card_html = "No events are currently running. Daily and weekly events launch regularly — check back soon for server-wide market effects and player tasks."
     else:
-        _parts = []
-        if _active:
-            _parts.append("<div style='color:#fbbf24;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;'>Active</div>")
-            for ev in _active[:4]:
-                _parts.append(_ev_row(ev, "#4ade80"))
-        if _upcoming:
-            _parts.append("<div style='color:#94a3b8;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:10px 0 4px 0;'>Upcoming</div>")
-            for ev in _upcoming[:3]:
-                _parts.append(_ev_row(ev, "#38bdf8"))
-        if _finished:
-            _parts.append("<div style='color:#475569;font-size:0.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin:10px 0 4px 0;'>Recently Ended</div>")
-            for ev in _finished[:2]:
-                _parts.append(_ev_row(ev, "#475569"))
-        events_card_html = "".join(_parts)
+        _ev_parts = []
+        if n_active:
+            names = ", ".join(e.get("title","Event") for e in _active[:3])
+            suffix = f" +{n_active - 3} more" if n_active > 3 else ""
+            _ev_parts.append(f"{n_active} active: {names}{suffix}.")
+        if n_upcoming:
+            _ev_parts.append(f"{n_upcoming} upcoming event{'s' if n_upcoming != 1 else ''}.")
+        events_card_html = " ".join(_ev_parts)
 
     return shell(
         "Dashboard",
@@ -2364,19 +2290,12 @@ def home(session_token: Optional[str] = Cookie(None)):
                 <span class="dc-btn">Open Map</span>
             </a>
 
-            <div class="dc" style="--c:#f59e0b;--g:linear-gradient(135deg,#78350f,#92400e,#b45309);--glow:rgba(245,158,11,0.18);grid-column:span 2;cursor:default;display:block;text-decoration:none;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.5rem;">📅</span>
-                        <div>
-                            <div class="dc-t" style="margin:0;">Events</div>
-                            <div style="color:#92400e;font-size:0.72rem;margin-top:2px;">Server-wide events, market effects &amp; tasks</div>
-                        </div>
-                    </div>
-                    <a href="/events" style="background:#b45309;color:#fef3c7;border:none;border-radius:6px;padding:6px 14px;font-size:0.78rem;font-weight:600;text-decoration:none;cursor:pointer;">View All</a>
-                </div>
-                {events_card_html}
-            </div>
+            <a href="/events" class="dc" style="--c:#f59e0b;--g:linear-gradient(90deg,#f59e0b,#fbbf24);--glow:rgba(245,158,11,0.14);--btn:#f59e0b;">
+                <span class="dc-ico">📅</span>
+                <div class="dc-t">Events &amp; Tasks</div>
+                <div class="dc-d">{events_card_html}</div>
+                <span class="dc-btn">View Events</span>
+            </a>
 
             <a href="/government" class="dc" style="--c:#e2e8f0;--g:linear-gradient(90deg,#94a3b8,#e2e8f0);--glow:rgba(226,232,240,0.12);--btn:#94a3b8;--fg:#020617;">
                 <span class="dc-ico">🏛️</span>
