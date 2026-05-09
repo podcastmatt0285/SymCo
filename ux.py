@@ -3127,120 +3127,6 @@ def government_dashboard(
             </form>
         </div>""")
 
-    # ── Admin Events section ───────────────────────────────────────────────────
-    events_admin_html = ""
-    if _player_is_admin:
-        try:
-            from beta import (get_beta_stats, get_pending_requests, get_all_requests,
-                              FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES,
-                              ACTIVE_DUTY_TROPHIES)
-            _bs   = get_beta_stats()
-            _preq = get_pending_requests()
-            _areq = get_all_requests()
-
-            # KPI row
-            _ev_kpis = "".join(f"""
-            <div style="background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;
-                        padding:12px 16px;text-align:center;">
-                <div style="font-size:1.3rem;font-weight:800;color:{vc};">{vv}</div>
-                <div style="font-size:0.68rem;color:#475569;text-transform:uppercase;
-                            letter-spacing:.08em;margin-top:2px;">{vl}</div>
-            </div>""" for vv, vl, vc in [
-                (_bs["available"], "Codes Available", "#4ade80" if _bs["available"] > 0 else "#ef4444"),
-                (_bs["assigned"],  "Codes Assigned",  "#fbbf24"),
-                (_bs["pending"],   "Pending Requests", "#f59e0b"),
-                (_bs["approved"],  "Approved",         "#4ade80"),
-                (_bs["rejected"],  "Rejected",         "#64748b"),
-                (_bs["twa_today"], "TWA Logins Today", "#38bdf8"),
-            ])
-
-            # Pending queue
-            if _preq:
-                _pq_rows = "".join(f"""
-                <tr>
-                    <td style="padding:8px 10px;color:#e2e8f0;font-size:0.82rem;">{r['player_name']}</td>
-                    <td style="padding:8px 10px;color:#94a3b8;font-size:0.82rem;font-family:monospace;">{r['google_email']}</td>
-                    <td style="padding:8px 10px;color:#475569;font-size:0.75rem;">{r['requested_at']}</td>
-                    <td style="padding:8px 10px;">
-                        <form method="post" action="/api/admin/beta/approve" style="display:inline;">
-                            <input type="hidden" name="request_id" value="{r['id']}">
-                            <button type="submit" style="background:#15803d;color:#fff;border:none;border-radius:4px;
-                                    padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;margin-right:4px;">
-                                ✓ Approve
-                            </button>
-                        </form>
-                        <form method="post" action="/api/admin/beta/reject" style="display:inline;">
-                            <input type="hidden" name="request_id" value="{r['id']}">
-                            <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:4px;
-                                    padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;">
-                                ✗ Reject
-                            </button>
-                        </form>
-                    </td>
-                </tr>""" for r in _preq)
-                _pending_table = f"""
-                <div style="margin-top:16px;">
-                    <div style="font-size:0.72rem;color:#f59e0b;font-weight:700;letter-spacing:.08em;
-                                text-transform:uppercase;margin-bottom:8px;">Pending Verification ({len(_preq)})</div>
-                    <div style="overflow-x:auto;">
-                    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
-                        <thead>
-                            <tr style="border-bottom:1px solid #1e293b;">
-                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Player</th>
-                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Google Email</th>
-                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Requested</th>
-                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>{_pq_rows}</tbody>
-                    </table>
-                    </div>
-                </div>"""
-            else:
-                _pending_table = '<p style="color:#475569;font-size:0.82rem;margin-top:12px;">No pending requests.</p>'
-
-            # History
-            _status_color = {"approved": "#4ade80", "rejected": "#ef4444", "pending": "#f59e0b"}
-            _hist_rows = "".join(f"""
-            <tr style="border-bottom:1px solid #0f172a;">
-                <td style="padding:6px 10px;color:#e2e8f0;font-size:0.78rem;">{r['player_name']}</td>
-                <td style="padding:6px 10px;color:#94a3b8;font-size:0.78rem;font-family:monospace;">{r['google_email']}</td>
-                <td style="padding:6px 10px;">
-                    <span style="color:{_status_color.get(r['status'],'#94a3b8')};font-size:0.75rem;font-weight:700;">
-                        {r['status'].upper()}
-                    </span>
-                </td>
-                <td style="padding:6px 10px;color:#fbbf24;font-size:0.75rem;font-family:monospace;">{r['promo_code'] or '—'}</td>
-                <td style="padding:6px 10px;color:#475569;font-size:0.72rem;">{r['reviewed_at'] or r['requested_at']}</td>
-            </tr>""" for r in _areq[:30])
-
-            _hist_table = f"""
-            <div style="margin-top:20px;">
-                <div style="font-size:0.72rem;color:#94a3b8;font-weight:700;letter-spacing:.08em;
-                            text-transform:uppercase;margin-bottom:8px;">All Requests (recent 30)</div>
-                <div style="overflow-x:auto;">
-                <table style="width:100%;border-collapse:collapse;">
-                    <thead>
-                        <tr style="border-bottom:1px solid #1e293b;">
-                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Player</th>
-                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Email</th>
-                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Status</th>
-                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Code</th>
-                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>{_hist_rows}</tbody>
-                </table>
-                </div>
-            </div>"""
-
-            _ev_kpi_grid = f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;">{_ev_kpis}</div>'
-            events_admin_html = _sec("Events — Founding Tester Program", "#f59e0b",
-                f"{_ev_kpi_grid}{_pending_table}{_hist_table}")
-        except Exception as _ea_err:
-            events_admin_html = _sec("Events — Founding Tester Program", "#f59e0b",
-                f'<p style="color:#ef4444;font-size:0.82rem;">Error: {_ea_err}</p>')
-
     body = f"""
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
         <span style="font-size:2rem;">🏛️</span>
@@ -3254,7 +3140,6 @@ def government_dashboard(
     {flash_html}
     {kpis}
     {admin_html}
-    {events_admin_html}
     {_sec("Treasury", "#e2e8f0", treasury_html)}
     {_sec("Bond Portfolio", "#fbbf24", bond_html)}
     {_sec("Company Equity", "#818cf8", equity_html)}
@@ -3363,50 +3248,6 @@ def beta_dismiss_notification(
     except Exception:
         pass
     return _RR("/", status_code=303)
-
-
-@router.post("/api/admin/beta/approve")
-def admin_beta_approve(
-    session_token: Optional[str] = Cookie(None),
-    request_id: int = Form(...),
-):
-    from fastapi.responses import RedirectResponse as _RR
-    player = require_auth(session_token)
-    if isinstance(player, _RR): return player
-    try:
-        from admins import is_admin as _ia
-        if not _ia(player.id):
-            return _RR("/government?error=Admin+only", status_code=303)
-        from beta import approve_request
-        ok, msg = approve_request(request_id, player.id)
-        import urllib.parse
-        param = "success" if ok else "error"
-        return _RR(f"/government?{param}={urllib.parse.quote(msg)}", status_code=303)
-    except Exception as e:
-        import urllib.parse
-        return _RR(f"/government?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
-
-
-@router.post("/api/admin/beta/reject")
-def admin_beta_reject(
-    session_token: Optional[str] = Cookie(None),
-    request_id: int = Form(...),
-):
-    from fastapi.responses import RedirectResponse as _RR
-    player = require_auth(session_token)
-    if isinstance(player, _RR): return player
-    try:
-        from admins import is_admin as _ia
-        if not _ia(player.id):
-            return _RR("/government?error=Admin+only", status_code=303)
-        from beta import reject_request
-        ok, msg = reject_request(request_id, player.id)
-        import urllib.parse
-        param = "success" if ok else "error"
-        return _RR(f"/government?{param}={urllib.parse.quote(msg)}", status_code=303)
-    except Exception as e:
-        import urllib.parse
-        return _RR(f"/government?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
 
 
 @router.get("/businesses", response_class=HTMLResponse)

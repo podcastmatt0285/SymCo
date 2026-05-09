@@ -75,6 +75,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
     nav_items = [
         ("/admin", "Home"),
         ("/admin/players", "Players"),
+        ("/admin/beta", "Beta Program"),
         ("/admin/cities", "Cities"),
         ("/admin/moderators", "Moderators"),
         ("/admin/notification-sound", "Notif Sound"),
@@ -518,6 +519,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     <div class="link-grid" style="margin-bottom: 12px;">
         <a href="/admin/updates" class="link-card"><div class="lc-icon">📢</div><div class="lc-title">Post Update</div><div class="lc-desc">Updates channel</div></a>
         <a href="/admin/players" class="link-card"><div class="lc-icon">👥</div><div class="lc-title">Players</div><div class="lc-desc">View &amp; edit all</div></a>
+        <a href="/admin/beta" class="link-card"><div class="lc-icon">📱</div><div class="lc-title">Beta Program</div><div class="lc-desc">Founding tester codes</div></a>
         <a href="/admin/cities" class="link-card"><div class="lc-icon">🏙️</div><div class="lc-title">Cities &amp; Counties</div><div class="lc-desc">Manage memberships</div></a>
         <a href="/admin/chat" class="link-card"><div class="lc-icon">💬</div><div class="lc-title">Chat Rooms</div><div class="lc-desc">Monitor chat</div></a>
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
@@ -4350,3 +4352,154 @@ def admin_careers_mark_reviewed(sub_id: int, session_token: Optional[str] = Cook
     finally:
         db.close()
     return RedirectResponse("/admin/careers", status_code=303)
+
+
+# ==========================
+# BETA PROGRAM
+# ==========================
+
+@router.get("/admin/beta", response_class=HTMLResponse)
+def admin_beta(session_token: Optional[str] = Cookie(None),
+               msg: Optional[str] = Query(None),
+               err: Optional[str] = Query(None)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+
+    flash = ""
+    if msg:
+        flash = f'<div class="flash flash-success">{msg}</div>'
+    elif err:
+        flash = f'<div class="flash flash-error">{err}</div>'
+
+    try:
+        from beta import get_beta_stats, get_pending_requests, get_all_requests
+        bs   = get_beta_stats()
+        preq = get_pending_requests()
+        areq = get_all_requests()
+    except Exception as e:
+        body = f'{flash}<div class="card"><p style="color:#ef4444;">Beta module error: {e}</p></div>'
+        return HTMLResponse(admin_shell("Beta Program", body, admin.business_name, "/admin/beta"))
+
+    # KPI row
+    kpi_cells = "".join(f"""
+    <div class="stat-box">
+        <div class="stat-value" style="color:{vc};">{vv}</div>
+        <div class="stat-label">{vl}</div>
+    </div>""" for vv, vl, vc in [
+        (bs["available"], "Codes Left",      "#22c55e" if bs["available"] > 0 else "#ef4444"),
+        (bs["assigned"],  "Codes Out",        "#fbbf24"),
+        (bs["pending"],   "Pending Review",   "#f59e0b"),
+        (bs["approved"],  "Approved",         "#22c55e"),
+        (bs["rejected"],  "Rejected",         "#64748b"),
+        (bs["twa_today"], "App Logins Today", "#38bdf8"),
+    ])
+
+    # Pending queue
+    if preq:
+        pq_rows = "".join(f"""<tr>
+            <td><a href="/admin/player/{r['player_id']}" style="color:#38bdf8;">{r['player_name']}</a></td>
+            <td style="font-family:monospace;">{r['google_email']}</td>
+            <td style="color:#64748b;font-size:0.75rem;">{r['requested_at']}</td>
+            <td>
+                <form method="post" action="/admin/beta/approve" style="display:inline;">
+                    <input type="hidden" name="request_id" value="{r['id']}">
+                    <button type="submit" style="background:#15803d;color:#fff;border:none;border-radius:4px;
+                            padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;margin-right:4px;">
+                        ✓ Approve
+                    </button>
+                </form>
+                <form method="post" action="/admin/beta/reject" style="display:inline;">
+                    <input type="hidden" name="request_id" value="{r['id']}">
+                    <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:4px;
+                            padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;">
+                        ✗ Reject
+                    </button>
+                </form>
+            </td>
+        </tr>""" for r in preq)
+        pending_section = f"""
+        <div class="card">
+            <h3>Pending Verification ({len(preq)})</h3>
+            <p style="color:#64748b;font-size:0.78rem;margin-bottom:12px;">
+                Check each email in the
+                <a href="https://groups.google.com/g/wadstycoon" target="_blank" rel="noopener"
+                   style="color:#f59e0b;">Wadsworth Tycoon Google Group</a>
+                before approving.
+            </p>
+            <div class="table-wrap">
+                <table>
+                    <tr><th>Player</th><th>Google Email</th><th>Requested</th><th>Action</th></tr>
+                    {pq_rows}
+                </table>
+            </div>
+        </div>"""
+    else:
+        pending_section = '<div class="card"><p style="color:#64748b;">No pending requests.</p></div>'
+
+    # History table
+    sc = {"approved": "#22c55e", "rejected": "#ef4444", "pending": "#f59e0b"}
+    hist_rows = "".join(f"""<tr>
+        <td><a href="/admin/player/{r['player_id']}" style="color:#38bdf8;">{r['player_name']}</a></td>
+        <td style="font-family:monospace;font-size:0.78rem;">{r['google_email']}</td>
+        <td><span style="color:{sc.get(r['status'],'#94a3b8')};font-weight:700;font-size:0.75rem;">{r['status'].upper()}</span></td>
+        <td style="font-family:monospace;color:#fbbf24;font-size:0.75rem;">{r['promo_code'] or '—'}</td>
+        <td style="color:#64748b;font-size:0.72rem;">{r['reviewed_at'] or r['requested_at']}</td>
+    </tr>""" for r in areq[:50])
+
+    history_section = f"""
+    <div class="card">
+        <h3>All Requests</h3>
+        <div class="table-wrap">
+            <table>
+                <tr><th>Player</th><th>Email</th><th>Status</th><th>Code</th><th>Date</th></tr>
+                {hist_rows if hist_rows else '<tr><td colspan="5" style="color:#64748b;">No requests yet.</td></tr>'}
+            </table>
+        </div>
+    </div>"""
+
+    body = f"""
+    {flash}
+    <div class="stat-grid">{kpi_cells}</div>
+    {pending_section}
+    {history_section}"""
+
+    return HTMLResponse(admin_shell("Beta Program", body, admin.business_name, "/admin/beta"))
+
+
+@router.post("/admin/beta/approve")
+def admin_beta_approve(
+    session_token: Optional[str] = Cookie(None),
+    request_id: int = Form(...),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    try:
+        from beta import approve_request
+        import urllib.parse
+        ok, msg = approve_request(request_id, admin.id)
+        param = "msg" if ok else "err"
+        return RedirectResponse(f"/admin/beta?{param}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        import urllib.parse
+        return RedirectResponse(f"/admin/beta?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/beta/reject")
+def admin_beta_reject(
+    session_token: Optional[str] = Cookie(None),
+    request_id: int = Form(...),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse):
+        return admin
+    try:
+        from beta import reject_request
+        import urllib.parse
+        ok, msg = reject_request(request_id, admin.id)
+        param = "msg" if ok else "err"
+        return RedirectResponse(f"/admin/beta?{param}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        import urllib.parse
+        return RedirectResponse(f"/admin/beta?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
