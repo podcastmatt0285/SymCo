@@ -103,7 +103,7 @@ def get_active_events():
             .filter(
                 GameEvent.is_active == True,
                 GameEvent.starts_at <= now,
-                GameEvent.ends_at >= now,
+                (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
             )
             .order_by(GameEvent.ends_at.asc())
             .all()
@@ -139,7 +139,8 @@ def get_recent_finished_events(limit: int = 5):
         return (
             db.query(GameEvent)
             .filter(
-                (GameEvent.ends_at < now) | (GameEvent.is_active == False)
+                GameEvent.is_active == False,
+                GameEvent.ends_at != None,
             )
             .order_by(GameEvent.ends_at.desc())
             .limit(limit)
