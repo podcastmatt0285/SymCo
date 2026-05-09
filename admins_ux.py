@@ -4459,7 +4459,58 @@ def admin_events(session_token: Optional[str] = Cookie(None),
 
         # Beta request queue under Founding Operative
         extra = ""
-        if ev.title == "Founding Operative":
+        if ev.title == "Active Duty":
+            # Show today's logins and a tool to clear a stale record
+            try:
+                from beta import DailyTWALogin, _get_db as _bdb
+                from datetime import date as _dt_date
+                _db = _bdb()
+                try:
+                    today_rows = (
+                        _db.query(DailyTWALogin)
+                        .filter(DailyTWALogin.login_date == _dt_date.today())
+                        .order_by(DailyTWALogin.player_id.asc())
+                        .all()
+                    )
+                finally:
+                    _db.close()
+                rows_html = "".join(
+                    f"<tr><td style='color:#38bdf8;'>{r.player_id}</td>"
+                    f"<td style='color:#4ade80;font-weight:700;'>+{r.trophies_awarded} ★</td>"
+                    f"<td style='color:#64748b;font-size:0.7rem;'>{r.awarded_at.strftime('%H:%M UTC') if r.awarded_at else '—'}</td></tr>"
+                    for r in today_rows
+                )
+                extra = f"""
+                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;">
+                    <div style="font-size:0.68rem;color:#94a3b8;text-transform:uppercase;
+                                letter-spacing:.08em;margin-bottom:10px;">
+                        Today's Logins — {len(today_rows)} player(s) awarded
+                    </div>
+                    {f'<div class="table-wrap"><table><tr><th>Player ID</th><th>Trophies</th><th>Time</th></tr>{rows_html}</table></div>' if today_rows else '<p style="color:#64748b;font-size:0.78rem;">No awards recorded today yet.</p>'}
+                    <div style="margin-top:14px;">
+                        <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;
+                                    letter-spacing:.06em;margin-bottom:6px;">Clear Stale Record</div>
+                        <p style="font-size:0.75rem;color:#475569;margin-bottom:8px;">
+                            If a player has a record from a failed award attempt, delete it so
+                            their next dashboard load retries the award correctly.
+                        </p>
+                        <form method="post" action="/admin/events/reset-active-duty"
+                              style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <input type="number" name="player_id" placeholder="Player ID" required
+                                   style="background:#0f172a;border:1px solid #334155;color:#e2e8f0;
+                                          border-radius:4px;padding:6px 10px;font-size:0.8rem;width:120px;">
+                            <button type="submit"
+                                    style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:4px;
+                                           padding:6px 14px;font-size:0.78rem;font-weight:600;cursor:pointer;">
+                                Clear Today's Record
+                            </button>
+                        </form>
+                    </div>
+                </div>"""
+            except Exception as _ae:
+                extra = f'<p style="color:#ef4444;font-size:0.75rem;margin-top:8px;">Active Duty data error: {_ae}</p>'
+
+        elif ev.title == "Founding Operative":
             try:
                 from beta import get_beta_stats, get_pending_requests, get_all_requests
                 bs   = get_beta_stats()
@@ -4726,5 +4777,35 @@ def admin_events_beta_reject(session_token: Optional[str] = Cookie(None), reques
         ok, msg = reject_request(request_id, admin.id)
         param = "msg" if ok else "err"
         return RedirectResponse(f"/admin/events?{param}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/reset-active-duty")
+def admin_reset_active_duty(session_token: Optional[str] = Cookie(None),
+                             player_id: int = Form(...)):
+    """Delete today's DailyTWALogin row for a player so the award retries on next load."""
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    from datetime import date
+    try:
+        from beta import DailyTWALogin, _get_db as _bdb
+        db = _bdb()
+        try:
+            today = date.today()
+            row = db.query(DailyTWALogin).filter(
+                DailyTWALogin.player_id  == player_id,
+                DailyTWALogin.login_date == today,
+            ).first()
+            if row:
+                db.delete(row)
+                db.commit()
+                msg = f"Cleared today's Active Duty record for player {player_id}. They'll earn trophies on next dashboard load."
+            else:
+                msg = f"No Active Duty record found for player {player_id} today."
+        finally:
+            db.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
