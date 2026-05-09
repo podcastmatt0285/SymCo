@@ -75,7 +75,7 @@ def admin_shell(title: str, body: str, player_name: str = "", active_nav: str = 
     nav_items = [
         ("/admin", "Home"),
         ("/admin/players", "Players"),
-        ("/admin/beta", "Beta Program"),
+        ("/admin/events", "Events"),
         ("/admin/cities", "Cities"),
         ("/admin/moderators", "Moderators"),
         ("/admin/notification-sound", "Notif Sound"),
@@ -519,7 +519,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
     <div class="link-grid" style="margin-bottom: 12px;">
         <a href="/admin/updates" class="link-card"><div class="lc-icon">📢</div><div class="lc-title">Post Update</div><div class="lc-desc">Updates channel</div></a>
         <a href="/admin/players" class="link-card"><div class="lc-icon">👥</div><div class="lc-title">Players</div><div class="lc-desc">View &amp; edit all</div></a>
-        <a href="/admin/beta" class="link-card"><div class="lc-icon">📱</div><div class="lc-title">Beta Program</div><div class="lc-desc">Founding tester codes</div></a>
+        <a href="/admin/events" class="link-card"><div class="lc-icon">📅</div><div class="lc-title">Events</div><div class="lc-desc">Manage game events &amp; beta</div></a>
         <a href="/admin/cities" class="link-card"><div class="lc-icon">🏙️</div><div class="lc-title">Cities &amp; Counties</div><div class="lc-desc">Manage memberships</div></a>
         <a href="/admin/chat" class="link-card"><div class="lc-icon">💬</div><div class="lc-title">Chat Rooms</div><div class="lc-desc">Monitor chat</div></a>
         <a href="/admin/p2p" class="link-card"><div class="lc-icon">📋</div><div class="lc-title">P2P Contracts</div><div class="lc-desc">View activity</div></a>
@@ -4355,13 +4355,13 @@ def admin_careers_mark_reviewed(sub_id: int, session_token: Optional[str] = Cook
 
 
 # ==========================
-# BETA PROGRAM
+# EVENTS MANAGEMENT
 # ==========================
 
-@router.get("/admin/beta", response_class=HTMLResponse)
-def admin_beta(session_token: Optional[str] = Cookie(None),
-               msg: Optional[str] = Query(None),
-               err: Optional[str] = Query(None)):
+@router.get("/admin/events", response_class=HTMLResponse)
+def admin_events(session_token: Optional[str] = Cookie(None),
+                 msg: Optional[str] = Query(None),
+                 err: Optional[str] = Query(None)):
     admin = require_admin(session_token)
     if isinstance(admin, RedirectResponse):
         return admin
@@ -4372,134 +4372,359 @@ def admin_beta(session_token: Optional[str] = Cookie(None),
     elif err:
         flash = f'<div class="flash flash-error">{err}</div>'
 
+    # ── Load all events ───────────────────────────────────────────────────────
+    from events import GameEvent, SessionLocal as _ES
+    edb = _ES()
     try:
-        from beta import get_beta_stats, get_pending_requests, get_all_requests
-        bs   = get_beta_stats()
-        preq = get_pending_requests()
-        areq = get_all_requests()
-    except Exception as e:
-        body = f'{flash}<div class="card"><p style="color:#ef4444;">Beta module error: {e}</p></div>'
-        return HTMLResponse(admin_shell("Beta Program", body, admin.business_name, "/admin/beta"))
+        all_events = edb.query(GameEvent).order_by(GameEvent.id.asc()).all()
+    finally:
+        edb.close()
 
-    # KPI row
-    kpi_cells = "".join(f"""
-    <div class="stat-box">
-        <div class="stat-value" style="color:{vc};">{vv}</div>
-        <div class="stat-label">{vl}</div>
-    </div>""" for vv, vl, vc in [
-        (bs["available"], "Codes Left",      "#22c55e" if bs["available"] > 0 else "#ef4444"),
-        (bs["assigned"],  "Codes Out",        "#fbbf24"),
-        (bs["pending"],   "Pending Review",   "#f59e0b"),
-        (bs["approved"],  "Approved",         "#22c55e"),
-        (bs["rejected"],  "Rejected",         "#64748b"),
-        (bs["twa_today"], "App Logins Today", "#38bdf8"),
-    ])
+    now = datetime.utcnow()
 
-    # Pending queue
-    if preq:
-        pq_rows = "".join(f"""<tr>
-            <td><a href="/admin/player/{r['player_id']}" style="color:#38bdf8;">{r['player_name']}</a></td>
-            <td style="font-family:monospace;">{r['google_email']}</td>
-            <td style="color:#64748b;font-size:0.75rem;">{r['requested_at']}</td>
-            <td>
-                <form method="post" action="/admin/beta/approve" style="display:inline;">
-                    <input type="hidden" name="request_id" value="{r['id']}">
-                    <button type="submit" style="background:#15803d;color:#fff;border:none;border-radius:4px;
-                            padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;margin-right:4px;">
-                        ✓ Approve
-                    </button>
-                </form>
-                <form method="post" action="/admin/beta/reject" style="display:inline;">
-                    <input type="hidden" name="request_id" value="{r['id']}">
-                    <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:4px;
-                            padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;">
-                        ✗ Reject
-                    </button>
-                </form>
-            </td>
-        </tr>""" for r in preq)
-        pending_section = f"""
-        <div class="card">
-            <h3>Pending Verification ({len(preq)})</h3>
-            <p style="color:#64748b;font-size:0.78rem;margin-bottom:12px;">
-                Check each email in the
-                <a href="https://groups.google.com/g/wadstycoon" target="_blank" rel="noopener"
-                   style="color:#f59e0b;">Wadsworth Tycoon Google Group</a>
-                before approving.
-            </p>
-            <div class="table-wrap">
-                <table>
-                    <tr><th>Player</th><th>Google Email</th><th>Requested</th><th>Action</th></tr>
-                    {pq_rows}
-                </table>
+    def _status(ev):
+        if not ev.is_active:
+            return ("STOPPED", "#64748b")
+        if ev.starts_at and ev.starts_at > now:
+            return ("UPCOMING", "#38bdf8")
+        if ev.ends_at and ev.ends_at < now:
+            return ("ENDED", "#475569")
+        return ("ACTIVE", "#22c55e")
+
+    def _fmt_dt(dt):
+        return dt.strftime("%Y-%m-%d %H:%M UTC") if dt else "—"
+
+    def _time_left(ev):
+        if not ev.ends_at:
+            return "No end date"
+        delta = ev.ends_at - now
+        if delta.total_seconds() <= 0:
+            return "Ended"
+        h, r = divmod(int(delta.total_seconds()), 3600)
+        m = r // 60
+        if h >= 48:
+            return f"{h//24}d {h%24}h"
+        return f"{h}h {m}m"
+
+    _dur_color = {
+        "daily": "#f59e0b", "weekly": "#10b981", "monthly": "#6366f1",
+        "special": "#ec4899", "task": "#a78bfa",
+    }
+    _type_color = {
+        "gov": "#94a3b8", "bank": "#fbbf24", "market": "#34d399",
+        "task": "#a78bfa", "city": "#38bdf8", "production": "#fb923c",
+    }
+
+    event_cards = ""
+    for ev in all_events:
+        status_label, status_color = _status(ev)
+        dur_c  = _dur_color.get(ev.duration_class, "#94a3b8")
+        type_c = _type_color.get(ev.event_type,    "#94a3b8")
+
+        def _badge(label, color):
+            return (f'<span style="background:{color}22;color:{color};border:1px solid {color}55;'
+                    f'border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;'
+                    f'text-transform:uppercase;letter-spacing:.04em;">{label}</span>')
+
+        # Controls
+        def _btn(label, action, color, confirm=""):
+            conf = f'onclick="return confirm(\'{confirm}\')"' if confirm else ""
+            return (f'<form method="post" action="/admin/events/{action}" style="display:inline;">'
+                    f'<input type="hidden" name="event_id" value="{ev.id}">'
+                    f'<button type="submit" {conf} style="background:{color};color:#fff;border:none;'
+                    f'border-radius:4px;padding:5px 11px;font-size:0.74rem;font-weight:600;cursor:pointer;">'
+                    f'{label}</button></form> ')
+
+        def _add_time_form(hours, label):
+            return (f'<form method="post" action="/admin/events/add-time" style="display:inline;">'
+                    f'<input type="hidden" name="event_id" value="{ev.id}">'
+                    f'<input type="hidden" name="hours" value="{hours}">'
+                    f'<button type="submit" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;'
+                    f'border-radius:4px;padding:5px 11px;font-size:0.74rem;cursor:pointer;">'
+                    f'{label}</button></form> ')
+
+        is_active_now = ev.is_active and (not ev.ends_at or ev.ends_at > now)
+
+        ctrl = ""
+        if is_active_now:
+            ctrl += _btn("⏸ Pause",   "pause",   "#92400e")
+            ctrl += _btn("⏹ Stop",    "stop",    "#7f1d1d", f"Stop event: {ev.title}?")
+        else:
+            ctrl += _btn("▶ Start",   "start",   "#14532d")
+            ctrl += _btn("↺ Restart", "restart", "#1e3a5f")
+
+        ctrl += _add_time_form(1,    "+1h")
+        ctrl += _add_time_form(24,   "+24h")
+        ctrl += _add_time_form(168,  "+7d")
+
+        # Beta request queue under Founding Operative
+        extra = ""
+        if ev.title == "Founding Operative":
+            try:
+                from beta import get_beta_stats, get_pending_requests, get_all_requests
+                bs   = get_beta_stats()
+                preq = get_pending_requests()
+                areq = get_all_requests()
+
+                kpis = " &nbsp;·&nbsp; ".join([
+                    f'<span style="color:#22c55e;">{bs["available"]} codes left</span>',
+                    f'<span style="color:#fbbf24;">{bs["assigned"]} out</span>',
+                    f'<span style="color:#f59e0b;">{bs["pending"]} pending</span>',
+                    f'<span style="color:#38bdf8;">{bs["twa_today"]} app logins today</span>',
+                ])
+
+                if preq:
+                    pq_rows = "".join(f"""<tr>
+                        <td><a href="/admin/player/{r['player_id']}" style="color:#38bdf8;">{r['player_name']}</a></td>
+                        <td style="font-family:monospace;font-size:0.78rem;">{r['google_email']}</td>
+                        <td style="color:#64748b;font-size:0.72rem;">{r['requested_at']}</td>
+                        <td>
+                            <form method="post" action="/admin/events/beta-approve" style="display:inline;">
+                                <input type="hidden" name="request_id" value="{r['id']}">
+                                <button type="submit" style="background:#15803d;color:#fff;border:none;
+                                        border-radius:4px;padding:3px 9px;font-size:0.72rem;font-weight:600;
+                                        cursor:pointer;margin-right:4px;">✓ Approve</button>
+                            </form>
+                            <form method="post" action="/admin/events/beta-reject" style="display:inline;">
+                                <input type="hidden" name="request_id" value="{r['id']}">
+                                <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;
+                                        border-radius:4px;padding:3px 9px;font-size:0.72rem;font-weight:600;
+                                        cursor:pointer;">✗ Reject</button>
+                            </form>
+                        </td>
+                    </tr>""" for r in preq)
+                    pq_html = f"""
+                    <p style="color:#64748b;font-size:0.75rem;margin:8px 0 6px;">
+                        Verify each email in the
+                        <a href="https://groups.google.com/g/wadstycoon" target="_blank" rel="noopener"
+                           style="color:#f59e0b;">Wadsworth Tycoon Google Group</a> before approving.
+                    </p>
+                    <div class="table-wrap">
+                    <table><tr><th>Player</th><th>Google Email</th><th>Requested</th><th>Action</th></tr>
+                    {pq_rows}</table></div>"""
+                else:
+                    pq_html = '<p style="color:#64748b;font-size:0.78rem;">No pending requests.</p>'
+
+                sc = {"approved": "#22c55e", "rejected": "#ef4444", "pending": "#f59e0b"}
+                hist = "".join(f"""<tr>
+                    <td><a href="/admin/player/{r['player_id']}" style="color:#38bdf8;">{r['player_name']}</a></td>
+                    <td style="font-family:monospace;font-size:0.75rem;">{r['google_email']}</td>
+                    <td style="color:{sc.get(r['status'],'#94a3b8')};font-weight:700;font-size:0.72rem;">{r['status'].upper()}</td>
+                    <td style="font-family:monospace;color:#fbbf24;font-size:0.72rem;">{r['promo_code'] or '—'}</td>
+                    <td style="color:#64748b;font-size:0.7rem;">{r['reviewed_at'] or r['requested_at']}</td>
+                </tr>""" for r in areq[:40])
+                hist_html = f"""
+                <div class="table-wrap" style="margin-top:12px;">
+                <table><tr><th>Player</th><th>Email</th><th>Status</th><th>Code</th><th>Date</th></tr>
+                {hist if hist else '<tr><td colspan="5" style="color:#64748b;">No requests yet.</td></tr>'}
+                </table></div>"""
+
+                extra = f"""
+                <div style="margin-top:14px;padding-top:14px;border-top:1px solid #1e293b;">
+                    <div style="font-size:0.68rem;color:#94a3b8;text-transform:uppercase;
+                                letter-spacing:.08em;margin-bottom:8px;">Promo Code Queue</div>
+                    <div style="font-size:0.78rem;margin-bottom:10px;">{kpis}</div>
+                    <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;
+                                letter-spacing:.06em;margin-bottom:4px;">Pending Verification ({len(preq)})</div>
+                    {pq_html}
+                    <div style="font-size:0.72rem;color:#64748b;font-weight:700;text-transform:uppercase;
+                                letter-spacing:.06em;margin:12px 0 4px;">All Requests</div>
+                    {hist_html}
+                </div>"""
+            except Exception as _be:
+                extra = f'<p style="color:#ef4444;font-size:0.75rem;margin-top:8px;">Beta data error: {_be}</p>'
+
+        event_cards += f"""
+        <div class="card" style="margin-bottom:14px;">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                        gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                <div>
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+                        {_badge(ev.duration_class, dur_c)}
+                        {_badge(ev.event_type, type_c)}
+                        <span style="color:{status_color};font-size:0.72rem;font-weight:700;">● {status_label}</span>
+                    </div>
+                    <div style="font-size:1rem;font-weight:700;color:#e2e8f0;margin-bottom:2px;">
+                        {ev.title}
+                        {'<span style="color:#fbbf24;font-size:0.8rem;"> +' + str(ev.trophy_reward) + ' ★</span>' if ev.trophy_reward else ''}
+                    </div>
+                    <div style="font-size:0.75rem;color:#64748b;">
+                        Starts: {_fmt_dt(ev.starts_at)} &nbsp;·&nbsp;
+                        Ends: {_fmt_dt(ev.ends_at)} &nbsp;·&nbsp;
+                        <span style="color:{status_color};">{_time_left(ev)}</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+                    {ctrl}
+                </div>
             </div>
+            {f'<div style="font-size:0.78rem;color:#475569;margin-bottom:10px;">{ev.description}</div>' if ev.description else ''}
+            {extra}
         </div>"""
-    else:
-        pending_section = '<div class="card"><p style="color:#64748b;">No pending requests.</p></div>'
 
-    # History table
-    sc = {"approved": "#22c55e", "rejected": "#ef4444", "pending": "#f59e0b"}
-    hist_rows = "".join(f"""<tr>
-        <td><a href="/admin/player/{r['player_id']}" style="color:#38bdf8;">{r['player_name']}</a></td>
-        <td style="font-family:monospace;font-size:0.78rem;">{r['google_email']}</td>
-        <td><span style="color:{sc.get(r['status'],'#94a3b8')};font-weight:700;font-size:0.75rem;">{r['status'].upper()}</span></td>
-        <td style="font-family:monospace;color:#fbbf24;font-size:0.75rem;">{r['promo_code'] or '—'}</td>
-        <td style="color:#64748b;font-size:0.72rem;">{r['reviewed_at'] or r['requested_at']}</td>
-    </tr>""" for r in areq[:50])
-
-    history_section = f"""
-    <div class="card">
-        <h3>All Requests</h3>
-        <div class="table-wrap">
-            <table>
-                <tr><th>Player</th><th>Email</th><th>Status</th><th>Code</th><th>Date</th></tr>
-                {hist_rows if hist_rows else '<tr><td colspan="5" style="color:#64748b;">No requests yet.</td></tr>'}
-            </table>
-        </div>
-    </div>"""
+    if not all_events:
+        event_cards = '<div class="card"><p style="color:#64748b;">No events in the database yet.</p></div>'
 
     body = f"""
     {flash}
-    <div class="stat-grid">{kpi_cells}</div>
-    {pending_section}
-    {history_section}"""
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+        <h2 style="margin:0;">Events</h2>
+        <span style="color:#64748b;font-size:0.78rem;">{len(all_events)} event(s) in DB</span>
+    </div>
+    {event_cards}"""
 
-    return HTMLResponse(admin_shell("Beta Program", body, admin.business_name, "/admin/beta"))
+    return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
 
 
-@router.post("/admin/beta/approve")
-def admin_beta_approve(
-    session_token: Optional[str] = Cookie(None),
-    request_id: int = Form(...),
-):
+@router.post("/admin/events/start")
+def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
     admin = require_admin(session_token)
-    if isinstance(admin, RedirectResponse):
-        return admin
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if ev:
+                ev.is_active  = True
+                ev.starts_at  = datetime.utcnow()
+                # Don't touch ends_at — preserve any existing deadline
+                edb.commit()
+                msg = f"'{ev.title}' started."
+            else:
+                msg = "Event not found."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/stop")
+def admin_event_stop(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if ev:
+                ev.is_active = False
+                ev.ends_at   = datetime.utcnow()
+                edb.commit()
+                msg = f"'{ev.title}' stopped."
+            else:
+                msg = "Event not found."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/pause")
+def admin_event_pause(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if ev:
+                ev.is_active = False
+                # ends_at left intact so it can be resumed
+                edb.commit()
+                msg = f"'{ev.title}' paused."
+            else:
+                msg = "Event not found."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/restart")
+def admin_event_restart(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if ev:
+                ev.is_active = True
+                ev.starts_at = datetime.utcnow()
+                ev.ends_at   = None
+                edb.commit()
+                msg = f"'{ev.title}' restarted with no end date."
+            else:
+                msg = "Event not found."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/add-time")
+def admin_event_add_time(session_token: Optional[str] = Cookie(None),
+                         event_id: int = Form(...),
+                         hours: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    from datetime import timedelta
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if ev:
+                base = ev.ends_at if ev.ends_at and ev.ends_at > datetime.utcnow() else datetime.utcnow()
+                ev.ends_at = base + timedelta(hours=hours)
+                edb.commit()
+                label = f"{hours}h" if hours < 48 else f"{hours//24}d"
+                msg = f"Added {label} to '{ev.title}'. New end: {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC')}"
+            else:
+                msg = "Event not found."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/beta-approve")
+def admin_events_beta_approve(session_token: Optional[str] = Cookie(None), request_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
     try:
         from beta import approve_request
-        import urllib.parse
         ok, msg = approve_request(request_id, admin.id)
         param = "msg" if ok else "err"
-        return RedirectResponse(f"/admin/beta?{param}={urllib.parse.quote(msg)}", status_code=303)
+        return RedirectResponse(f"/admin/events?{param}={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
-        import urllib.parse
-        return RedirectResponse(f"/admin/beta?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
 
 
-@router.post("/admin/beta/reject")
-def admin_beta_reject(
-    session_token: Optional[str] = Cookie(None),
-    request_id: int = Form(...),
-):
+@router.post("/admin/events/beta-reject")
+def admin_events_beta_reject(session_token: Optional[str] = Cookie(None), request_id: int = Form(...)):
     admin = require_admin(session_token)
-    if isinstance(admin, RedirectResponse):
-        return admin
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
     try:
         from beta import reject_request
-        import urllib.parse
         ok, msg = reject_request(request_id, admin.id)
         param = "msg" if ok else "err"
-        return RedirectResponse(f"/admin/beta?{param}={urllib.parse.quote(msg)}", status_code=303)
+        return RedirectResponse(f"/admin/events?{param}={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
-        import urllib.parse
-        return RedirectResponse(f"/admin/beta?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
