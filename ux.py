@@ -2371,19 +2371,13 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
 
         </div>
         <script>
-        // Active Duty daily check-in: fire when running as installed app (TWA or PWA).
-        // Manifest uses display:fullscreen, so we check both fullscreen and standalone.
-        // XMLHttpRequest is used instead of fetch so the Android WebView automatically
-        // adds X-Requested-With: cc.notifly.wadsworth.twa, giving server-side confirmation.
+        // Active Duty daily check-in — fires on every dashboard load.
+        // Server deduplicates to once per UTC day per player.
         (function() {{
-            var dm = window.matchMedia('(display-mode: fullscreen)').matches
-                  || window.matchMedia('(display-mode: standalone)').matches;
-            if (dm) {{
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', '/api/twa-checkin', true);
-                xhr.withCredentials = true;
-                xhr.send();
-            }}
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/twa-checkin', true);
+            xhr.withCredentials = true;
+            xhr.send();
         }})();
         </script>
         """,
@@ -13956,14 +13950,10 @@ def events_page(request: Request,
     {empty_html}
     <script>
     (function() {{
-        var dm = window.matchMedia('(display-mode: fullscreen)').matches
-              || window.matchMedia('(display-mode: standalone)').matches;
-        if (dm) {{
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', '/api/twa-checkin', true);
-            xhr.withCredentials = true;
-            xhr.send();
-        }}
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/twa-checkin', true);
+        xhr.withCredentials = true;
+        xhr.send();
     }})();
     </script>"""
 

@@ -149,7 +149,9 @@ def _award_trophies(player_id: int, amount: int, event_id: int = None) -> bool:
         finally:
             edb.close()
     except Exception as _e:
+        import traceback
         print(f"[Beta] Trophy award error: {_e}")
+        print(traceback.format_exc())
         return False
 
 
@@ -469,21 +471,25 @@ def has_pocket_empire(player_id: int) -> bool:
 
 
 def handle_twa_login(player_id: int):
-    """Called on every TWA login. Awards daily trophies and, on first ever TWA
-    login from an approved tester, completes the Pocket Empire event + badge."""
+    """Awards daily Active Duty trophies. Called on every dashboard load;
+    deduplicates to once per UTC calendar day per player."""
     if player_id <= 0:
         return
     today = date.today()
     db    = _get_db()
     try:
-        # Daily Active Duty trophy
         already_today = db.query(DailyTWALogin).filter(
             DailyTWALogin.player_id  == player_id,
             DailyTWALogin.login_date == today,
         ).first()
-        if not already_today:
+        if already_today:
+            print(f"[Beta] Active Duty already awarded today for player {player_id}")
+            # Still check Pocket Empire below
+        else:
             ev_ids  = _get_event_ids()
+            print(f"[Beta] Awarding Active Duty to player {player_id}, event_id={ev_ids.get('duty')}")
             awarded = _award_trophies(player_id, ACTIVE_DUTY_TROPHIES, ev_ids.get("duty"))
+            print(f"[Beta] _award_trophies returned {awarded}")
             if awarded:
                 db.add(DailyTWALogin(
                     player_id        = player_id,
@@ -491,10 +497,13 @@ def handle_twa_login(player_id: int):
                     trophies_awarded = ACTIVE_DUTY_TROPHIES,
                 ))
                 db.commit()
+                print(f"[Beta] Active Duty committed for player {player_id}")
                 _push_notify(player_id, "⚔️ Active Duty",
-                             f"+{ACTIVE_DUTY_TROPHIES} trophies for logging in from the app today!")
+                             f"+{ACTIVE_DUTY_TROPHIES} trophies for logging in today!")
+            else:
+                print(f"[Beta] Active Duty trophy award FAILED for player {player_id}")
 
-        # Pocket Empire (first-ever TWA login as an approved tester)
+        # Pocket Empire (first-ever app login as an approved tester)
         if not has_pocket_empire(player_id):
             req = (db.query(BetaRequest)
                    .filter(BetaRequest.player_id == player_id,
@@ -503,7 +512,6 @@ def handle_twa_login(player_id: int):
             if req:
                 ev_ids = _get_event_ids()
                 _award_trophies(player_id, POCKET_EMPIRE_TROPHIES, ev_ids.get("pocket"))
-                # Welcome notification
                 notif = PersistentNotification(
                     player_id    = player_id,
                     notif_type   = "general",
@@ -519,7 +527,9 @@ def handle_twa_login(player_id: int):
                 _push_notify(player_id, "📱 Pocket Empire Unlocked!",
                              f"Founding Tester badge applied. +{POCKET_EMPIRE_TROPHIES} trophies!")
     except Exception as _e:
-        print(f"[Beta] handle_twa_login error: {_e}")
+        import traceback
+        print(f"[Beta] handle_twa_login error for player {player_id}: {_e}")
+        print(traceback.format_exc())
     finally:
         db.close()
 
