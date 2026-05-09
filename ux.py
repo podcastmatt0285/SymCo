@@ -2148,10 +2148,70 @@ def home(session_token: Optional[str] = Cookie(None)):
             _ev_parts.append(f"{n_upcoming} upcoming event{'s' if n_upcoming != 1 else ''}.")
         events_card_html = " ".join(_ev_parts)
 
+    # ── Persistent notifications (beta promo codes, etc.) ─────────────────────
+    _persist_notif_html = ""
+    try:
+        from beta import get_player_notifications
+        _pnotifs = get_player_notifications(player.id)
+        for _pn in _pnotifs:
+            _pn_id      = _pn["id"]
+            _pn_title   = _pn["title"]
+            _pn_body    = _pn["body"]
+            _pn_payload = _pn.get("payload", {})
+            _pn_code    = _pn_payload.get("code", "")
+            _pn_ps_url  = _pn_payload.get("play_store", "")
+            _pn_grp_url = _pn_payload.get("group_url", "")
+
+            _code_block = ""
+            if _pn_code:
+                _code_block = f"""
+                <div style="margin:14px 0 10px;background:#0a0f1e;border:1px solid #f59e0b;
+                            border-radius:8px;padding:12px 16px;display:flex;align-items:center;
+                            justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                    <div>
+                        <div style="font-size:0.65rem;color:#92400e;letter-spacing:.1em;
+                                    text-transform:uppercase;margin-bottom:4px;">Your Promo Code</div>
+                        <div id="pn-code-{_pn_id}" style="font-size:1.1rem;font-weight:800;
+                             color:#fbbf24;letter-spacing:.15em;font-family:monospace;">{_pn_code}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button onclick="navigator.clipboard.writeText('{_pn_code}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Code',1500)"
+                                style="background:#f59e0b;color:#020617;border:none;border-radius:6px;
+                                       padding:8px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                            Copy Code
+                        </button>
+                        {'<a href="' + _pn_ps_url + '" target="_blank" rel="noopener" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 16px;font-size:0.78rem;font-weight:600;text-decoration:none;">Open Play Store ↗</a>' if _pn_ps_url else ''}
+                    </div>
+                </div>
+                {'<div style="font-size:0.75rem;color:#78350f;margin-top:6px;">Step 1: <a href="' + _pn_grp_url + '" target="_blank" rel="noopener" style="color:#fbbf24;">Join the Google Group</a> &nbsp;→&nbsp; Step 2: Copy the code above &nbsp;→&nbsp; Step 3: Open the Play Store link and redeem the code &nbsp;→&nbsp; Step 4: Log in from the app to earn your Founding Tester badge!</div>' if _pn_grp_url else ''}"""
+
+            _persist_notif_html += f"""
+            <div style="background:linear-gradient(135deg,#1c1008,#1a0f00);border:2px solid #f59e0b;
+                        border-radius:12px;padding:18px 20px;margin-bottom:16px;position:relative;">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;
+                            background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:12px 12px 0 0;"></div>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                    <div style="flex:1;">
+                        <div style="font-size:0.95rem;font-weight:700;color:#fbbf24;margin-bottom:6px;">{_pn_title}</div>
+                        <div style="font-size:0.80rem;color:#92400e;line-height:1.5;">{_pn_body}</div>
+                        {_code_block}
+                    </div>
+                    <form method="post" action="/api/beta/dismiss" style="flex-shrink:0;">
+                        <input type="hidden" name="notif_id" value="{_pn_id}">
+                        <button type="submit" title="Dismiss"
+                                style="background:transparent;border:1px solid #78350f;color:#92400e;
+                                       border-radius:6px;padding:4px 10px;cursor:pointer;font-size:0.8rem;">✕</button>
+                    </form>
+                </div>
+            </div>"""
+    except Exception:
+        pass
+
     return shell(
         "Dashboard",
         f"""
         {dashboard_top}
+        {_persist_notif_html}
         <h2>Welcome, CEO of {player.business_name}</h2>
         <style>
         .dc{{background:linear-gradient(135deg,#0a0f1e,#0f1628);border:1px solid var(--c);border-radius:12px;padding:22px 20px 18px;position:relative;overflow:hidden;transition:transform 0.18s,box-shadow 0.18s;display:block;text-decoration:none;color:inherit;}}
@@ -3067,6 +3127,120 @@ def government_dashboard(
             </form>
         </div>""")
 
+    # ── Admin Events section ───────────────────────────────────────────────────
+    events_admin_html = ""
+    if _player_is_admin:
+        try:
+            from beta import (get_beta_stats, get_pending_requests, get_all_requests,
+                              FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES,
+                              ACTIVE_DUTY_TROPHIES)
+            _bs   = get_beta_stats()
+            _preq = get_pending_requests()
+            _areq = get_all_requests()
+
+            # KPI row
+            _ev_kpis = "".join(f"""
+            <div style="background:#0a0f1e;border:1px solid #1e293b;border-radius:8px;
+                        padding:12px 16px;text-align:center;">
+                <div style="font-size:1.3rem;font-weight:800;color:{vc};">{vv}</div>
+                <div style="font-size:0.68rem;color:#475569;text-transform:uppercase;
+                            letter-spacing:.08em;margin-top:2px;">{vl}</div>
+            </div>""" for vv, vl, vc in [
+                (_bs["available"], "Codes Available", "#4ade80" if _bs["available"] > 0 else "#ef4444"),
+                (_bs["assigned"],  "Codes Assigned",  "#fbbf24"),
+                (_bs["pending"],   "Pending Requests", "#f59e0b"),
+                (_bs["approved"],  "Approved",         "#4ade80"),
+                (_bs["rejected"],  "Rejected",         "#64748b"),
+                (_bs["twa_today"], "TWA Logins Today", "#38bdf8"),
+            ])
+
+            # Pending queue
+            if _preq:
+                _pq_rows = "".join(f"""
+                <tr>
+                    <td style="padding:8px 10px;color:#e2e8f0;font-size:0.82rem;">{r['player_name']}</td>
+                    <td style="padding:8px 10px;color:#94a3b8;font-size:0.82rem;font-family:monospace;">{r['google_email']}</td>
+                    <td style="padding:8px 10px;color:#475569;font-size:0.75rem;">{r['requested_at']}</td>
+                    <td style="padding:8px 10px;">
+                        <form method="post" action="/api/admin/beta/approve" style="display:inline;">
+                            <input type="hidden" name="request_id" value="{r['id']}">
+                            <button type="submit" style="background:#15803d;color:#fff;border:none;border-radius:4px;
+                                    padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;margin-right:4px;">
+                                ✓ Approve
+                            </button>
+                        </form>
+                        <form method="post" action="/api/admin/beta/reject" style="display:inline;">
+                            <input type="hidden" name="request_id" value="{r['id']}">
+                            <button type="submit" style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:4px;
+                                    padding:4px 10px;font-size:0.75rem;font-weight:600;cursor:pointer;">
+                                ✗ Reject
+                            </button>
+                        </form>
+                    </td>
+                </tr>""" for r in _preq)
+                _pending_table = f"""
+                <div style="margin-top:16px;">
+                    <div style="font-size:0.72rem;color:#f59e0b;font-weight:700;letter-spacing:.08em;
+                                text-transform:uppercase;margin-bottom:8px;">Pending Verification ({len(_preq)})</div>
+                    <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                        <thead>
+                            <tr style="border-bottom:1px solid #1e293b;">
+                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Player</th>
+                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Google Email</th>
+                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Requested</th>
+                                <th style="padding:6px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.72rem;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>{_pq_rows}</tbody>
+                    </table>
+                    </div>
+                </div>"""
+            else:
+                _pending_table = '<p style="color:#475569;font-size:0.82rem;margin-top:12px;">No pending requests.</p>'
+
+            # History
+            _status_color = {"approved": "#4ade80", "rejected": "#ef4444", "pending": "#f59e0b"}
+            _hist_rows = "".join(f"""
+            <tr style="border-bottom:1px solid #0f172a;">
+                <td style="padding:6px 10px;color:#e2e8f0;font-size:0.78rem;">{r['player_name']}</td>
+                <td style="padding:6px 10px;color:#94a3b8;font-size:0.78rem;font-family:monospace;">{r['google_email']}</td>
+                <td style="padding:6px 10px;">
+                    <span style="color:{_status_color.get(r['status'],'#94a3b8')};font-size:0.75rem;font-weight:700;">
+                        {r['status'].upper()}
+                    </span>
+                </td>
+                <td style="padding:6px 10px;color:#fbbf24;font-size:0.75rem;font-family:monospace;">{r['promo_code'] or '—'}</td>
+                <td style="padding:6px 10px;color:#475569;font-size:0.72rem;">{r['reviewed_at'] or r['requested_at']}</td>
+            </tr>""" for r in _areq[:30])
+
+            _hist_table = f"""
+            <div style="margin-top:20px;">
+                <div style="font-size:0.72rem;color:#94a3b8;font-weight:700;letter-spacing:.08em;
+                            text-transform:uppercase;margin-bottom:8px;">All Requests (recent 30)</div>
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:1px solid #1e293b;">
+                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Player</th>
+                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Email</th>
+                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Status</th>
+                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Code</th>
+                            <th style="padding:5px 10px;color:#475569;font-weight:600;text-align:left;font-size:0.68rem;">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>{_hist_rows}</tbody>
+                </table>
+                </div>
+            </div>"""
+
+            _ev_kpi_grid = f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;">{_ev_kpis}</div>'
+            events_admin_html = _sec("Events — Founding Tester Program", "#f59e0b",
+                f"{_ev_kpi_grid}{_pending_table}{_hist_table}")
+        except Exception as _ea_err:
+            events_admin_html = _sec("Events — Founding Tester Program", "#f59e0b",
+                f'<p style="color:#ef4444;font-size:0.82rem;">Error: {_ea_err}</p>')
+
     body = f"""
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
         <span style="font-size:2rem;">🏛️</span>
@@ -3080,6 +3254,7 @@ def government_dashboard(
     {flash_html}
     {kpis}
     {admin_html}
+    {events_admin_html}
     {_sec("Treasury", "#e2e8f0", treasury_html)}
     {_sec("Bond Portfolio", "#fbbf24", bond_html)}
     {_sec("Company Equity", "#818cf8", equity_html)}
@@ -3152,6 +3327,86 @@ def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
     except Exception as e:
         return _RR(f"/government?error={str(e)[:80]}", status_code=303)
 
+
+# ── Beta program API routes ───────────────────────────────────────────────────
+
+@router.post("/api/beta/request")
+def beta_submit_request(
+    session_token: Optional[str] = Cookie(None),
+    google_email: str = Form(...),
+):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
+    try:
+        from beta import submit_request
+        ok, msg = submit_request(player.id, google_email)
+        import urllib.parse
+        param = "success" if ok else "error"
+        return _RR(f"/events?{param}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        import urllib.parse
+        return _RR(f"/events?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/api/beta/dismiss")
+def beta_dismiss_notification(
+    session_token: Optional[str] = Cookie(None),
+    notif_id: int = Form(...),
+):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
+    try:
+        from beta import dismiss_notification
+        dismiss_notification(notif_id, player.id)
+    except Exception:
+        pass
+    return _RR("/", status_code=303)
+
+
+@router.post("/api/admin/beta/approve")
+def admin_beta_approve(
+    session_token: Optional[str] = Cookie(None),
+    request_id: int = Form(...),
+):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
+    try:
+        from admins import is_admin as _ia
+        if not _ia(player.id):
+            return _RR("/government?error=Admin+only", status_code=303)
+        from beta import approve_request
+        ok, msg = approve_request(request_id, player.id)
+        import urllib.parse
+        param = "success" if ok else "error"
+        return _RR(f"/government?{param}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        import urllib.parse
+        return _RR(f"/government?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/api/admin/beta/reject")
+def admin_beta_reject(
+    session_token: Optional[str] = Cookie(None),
+    request_id: int = Form(...),
+):
+    from fastapi.responses import RedirectResponse as _RR
+    player = require_auth(session_token)
+    if isinstance(player, _RR): return player
+    try:
+        from admins import is_admin as _ia
+        if not _ia(player.id):
+            return _RR("/government?error=Admin+only", status_code=303)
+        from beta import reject_request
+        ok, msg = reject_request(request_id, player.id)
+        import urllib.parse
+        param = "success" if ok else "error"
+        return _RR(f"/government?{param}={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        import urllib.parse
+        return _RR(f"/government?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
 
 
 @router.get("/businesses", response_class=HTMLResponse)
@@ -13545,10 +13800,18 @@ async def get_my_open_orders(
 # ==========================
 
 @router.get("/events", response_class=HTMLResponse)
-def events_page(session_token: Optional[str] = Cookie(None)):
+def events_page(session_token: Optional[str] = Cookie(None),
+                success: Optional[str] = Query(None),
+                error:   Optional[str] = Query(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    _flash_html = ""
+    if success:
+        _flash_html = f'<div style="background:#052e16;border:1px solid #15803d;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#4ade80;font-size:0.85rem;">✓ {success}</div>'
+    elif error:
+        _flash_html = f'<div style="background:#1c0505;border:1px solid #b91c1c;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#f87171;font-size:0.85rem;">✗ {error}</div>'
 
     try:
         from events import get_event_summary, get_player_level
@@ -13685,12 +13948,135 @@ def events_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>"""
 
+    # ── Beta events panel ─────────────────────────────────────────────────────
+    beta_panel_html = ""
+    try:
+        from beta import (get_available_count, get_total_count, get_player_request,
+                          FOUNDING_OPERATIVE_TROPHIES, POCKET_EMPIRE_TROPHIES,
+                          ACTIVE_DUTY_TROPHIES, PLAY_STORE_URL, GOOGLE_GROUP_URL,
+                          has_pocket_empire)
+        _avail = get_available_count()
+        _total = get_total_count()
+        _used  = _total - _avail
+        _slots_pct = round(_used / _total * 100) if _total else 100
+        _req   = get_player_request(player.id)
+        _has_badge = has_pocket_empire(player.id)
+
+        def _beta_ev_card(icon, title, trophies, desc, status_html, color):
+            return f"""
+            <div style="background:#0a0f1e;border:1px solid {color}44;border-left:3px solid {color};
+                        border-radius:8px;padding:16px 18px;margin-bottom:10px;">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                    <div style="flex:1;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+                            <span style="font-size:1.1rem;">{icon}</span>
+                            <span style="font-size:0.95rem;font-weight:700;color:{color};">{title}</span>
+                            <span style="background:{color}22;color:{color};border:1px solid {color}44;
+                                         border-radius:3px;padding:1px 7px;font-size:0.65rem;font-weight:700;
+                                         text-transform:uppercase;">SPECIAL</span>
+                            <span style="color:#fbbf24;font-size:0.8rem;font-weight:700;">+{trophies} ★</span>
+                        </div>
+                        <div style="font-size:0.80rem;color:#64748b;line-height:1.5;margin-bottom:10px;">{desc}</div>
+                        {status_html}
+                    </div>
+                </div>
+            </div>"""
+
+        # Slots remaining bar
+        _slots_bar = f"""
+        <div style="background:#0a0f1e;border:1px solid #f59e0b44;border-radius:10px;
+                    padding:14px 18px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                <span style="color:#f59e0b;font-size:0.8rem;font-weight:700;">🎟️ Founding Tester Slots</span>
+                <span style="color:{'#ef4444' if _avail == 0 else '#fbbf24'};font-size:0.8rem;font-weight:700;">
+                    {'FULL' if _avail == 0 else f'{_avail} of {_total} remaining'}
+                </span>
+            </div>
+            <div style="background:#1e293b;border-radius:4px;height:6px;overflow:hidden;">
+                <div style="background:linear-gradient(90deg,#f59e0b,#fbbf24);height:100%;
+                            width:{_slots_pct}%;border-radius:4px;"></div>
+            </div>
+        </div>"""
+
+        # Founding Operative status
+        if _req and _req.status == "approved":
+            _ev1_status = '<span style="color:#4ade80;font-weight:700;">✓ Completed — check your dashboard notification for your promo code!</span>'
+        elif _req and _req.status == "pending":
+            _ev1_status = '<span style="color:#fbbf24;">⏳ Verification pending — we\'ll notify you in-game once approved.</span>'
+        elif _req and _req.status == "rejected":
+            _ev1_status = '<span style="color:#ef4444;">✗ Not approved. Contact support if you believe this is an error.</span>'
+        elif _avail == 0:
+            _ev1_status = '<span style="color:#475569;">All slots have been filled for this event.</span>'
+        else:
+            _ev1_status = f"""
+            <form method="post" action="/api/beta/request" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+                <input type="email" name="google_email" required placeholder="your@gmail.com"
+                       style="flex:1;min-width:200px;background:#0f172a;border:1px solid #334155;
+                              color:#e2e8f0;border-radius:6px;padding:8px 12px;font-size:0.82rem;">
+                <button type="submit"
+                        style="background:#f59e0b;color:#020617;border:none;border-radius:6px;
+                               padding:8px 16px;font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;">
+                    Request Code
+                </button>
+            </form>
+            <div style="font-size:0.72rem;color:#475569;margin-top:6px;">
+                First <a href="{GOOGLE_GROUP_URL}" target="_blank" rel="noopener" style="color:#fbbf24;">join the Wadsworth Tycoon group</a>,
+                then enter the Google account email you used to join. We'll verify your membership and send your code.
+            </div>"""
+
+        # Pocket Empire status
+        if _has_badge:
+            _ev2_status = '<span style="color:#4ade80;font-weight:700;">✓ Completed — Founding Tester badge unlocked!</span>'
+        elif _req and _req.status == "approved":
+            _ev2_status = f'<a href="{PLAY_STORE_URL}" target="_blank" rel="noopener" style="color:#38bdf8;font-weight:600;">Download the app ↗</a><span style="color:#475569;"> then log in from it to complete this event.</span>'
+        else:
+            _ev2_status = '<span style="color:#475569;">Complete Founding Operative first to unlock your promo code.</span>'
+
+        # Active Duty (daily) — check today's login
+        try:
+            from beta import DailyTWALogin, _get_db as _bdb
+            from datetime import date as _date
+            _bdb_c = _bdb()
+            _today_login = _bdb_c.query(DailyTWALogin).filter(
+                DailyTWALogin.player_id  == player.id,
+                DailyTWALogin.login_date == _date.today(),
+            ).first()
+            _bdb_c.close()
+            _duty_status = ('<span style="color:#4ade80;font-weight:700;">✓ Logged in from app today!</span>'
+                            if _today_login else
+                            '<span style="color:#94a3b8;">Log in from the Android app today to earn trophies.</span>')
+        except Exception:
+            _duty_status = '<span style="color:#94a3b8;">Log in from the Android app each day to earn daily trophies.</span>'
+
+        beta_panel_html = f"""
+        <div style="margin-bottom:28px;">
+            <div style="font-size:0.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+                        color:#f59e0b;margin-bottom:12px;padding-bottom:6px;
+                        border-bottom:1px solid #f59e0b33;">Founding Tester Program</div>
+            {_slots_bar}
+            {_beta_ev_card("🕵️", "Founding Operative", FOUNDING_OPERATIVE_TROPHIES,
+                "Join the Wadsworth Tycoon Google Group and submit your Google account email. "
+                "We'll verify your membership and deliver an exclusive promo code to your dashboard.",
+                _ev1_status, "#f59e0b")}
+            {_beta_ev_card("📱", "Pocket Empire", POCKET_EMPIRE_TROPHIES,
+                "Download the Wadsworth Android app using your promo code and log in from it for the first time. "
+                "Earns you permanent Founding Tester status visible on your contact card.",
+                _ev2_status, "#38bdf8")}
+            {_beta_ev_card("⚔️", "Active Duty", ACTIVE_DUTY_TROPHIES,
+                "Log in from the Android app each day to earn daily trophies. Resets at UTC midnight.",
+                _duty_status, "#4ade80")}
+        </div>"""
+    except Exception:
+        pass
+
     body = f"""
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
         <h2 style="margin:0;">Events &amp; Tasks</h2>
         <span style="color:#475569;font-size:0.8rem;">Server-wide events, market effects &amp; player tasks</span>
     </div>
+    {_flash_html}
     {level_html}
+    {beta_panel_html}
     {active_html}
     {upcoming_html}
     {finished_html}

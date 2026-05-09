@@ -873,6 +873,15 @@ async def login(
     session_token = create_session(db, player.id)
     db.close()
 
+    # Detect TWA (Android app) login and fire beta rewards
+    twa_header = request.headers.get("X-Requested-With", "")
+    if twa_header == "cc.notifly.wadsworth.twa":
+        try:
+            from beta import handle_twa_login
+            handle_twa_login(player.id)
+        except Exception as _twa_err:
+            print(f"[Auth] TWA handler error: {_twa_err}")
+
     redirect = RedirectResponse(url="/", status_code=303)
     redirect.set_cookie(
         key="session_token",

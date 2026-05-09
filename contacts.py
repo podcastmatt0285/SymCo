@@ -283,6 +283,20 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
     except Exception:
         pass
 
+    _founding_badge = ""
+    try:
+        from beta import has_pocket_empire
+        if has_pocket_empire(subject_id):
+            _founding_badge = (
+                '<span title="Founding Tester — one of the original 48 Android beta players" '
+                'style="display:inline-flex;align-items:center;gap:4px;'
+                'background:#1c1008;border:1px solid #f59e0b;border-radius:10px;'
+                'padding:2px 8px;font-size:0.72rem;font-weight:700;color:#fbbf24;">'
+                '📱 Founding Tester</span>'
+            )
+    except Exception:
+        pass
+
     parts.append(f'''
     <div style="display:flex; align-items:center; gap:14px; padding-bottom:16px;
                 border-bottom:1px solid #1e293b; margin-bottom:16px;">
@@ -295,6 +309,7 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 <span style="font-size:1.15rem; font-weight:bold; color:#e5e7eb;">{name}</span>
                 {_level_badge}
+                {_founding_badge}
             </div>
             <div style="font-size:0.75rem; color:#64748b;">Player ID #{subject_id}</div>
         </div>
