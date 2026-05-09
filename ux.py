@@ -2134,29 +2134,7 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
         pass
 
     # ── Events card ───────────────────────────────────────────────────────────
-    events_card_html = ""
-    try:
-        from events import get_event_summary
-        _ev = get_event_summary()
-        _active = _ev.get("active", [])
-        _upcoming = _ev.get("upcoming", [])
-        _finished = _ev.get("finished", [])
-    except Exception:
-        _active, _upcoming, _finished = [], [], []
-
-    n_active   = len(_active)
-    n_upcoming = len(_upcoming)
-    if n_active == 0 and n_upcoming == 0:
-        events_card_html = "No events are currently running. Daily and weekly events launch regularly — check back soon for server-wide market effects and player tasks."
-    else:
-        _ev_parts = []
-        if n_active:
-            names = ", ".join(e.get("title","Event") for e in _active[:3])
-            suffix = f" +{n_active - 3} more" if n_active > 3 else ""
-            _ev_parts.append(f"{n_active} active: {names}{suffix}.")
-        if n_upcoming:
-            _ev_parts.append(f"{n_upcoming} upcoming event{'s' if n_upcoming != 1 else ''}.")
-        events_card_html = " ".join(_ev_parts)
+    events_card_html = "Server-wide market effects, player tasks &amp; the Founding Tester program. Daily events reset at midnight UTC."
 
     # ── Persistent notifications (beta promo codes, etc.) ─────────────────────
     _persist_notif_html = ""
@@ -2391,6 +2369,13 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
             {staff_card}
 
         </div>
+        <script>
+        // Award Active Duty trophies when the app is open in standalone/TWA mode.
+        // Runs on every dashboard load; the server deduplicates to once per UTC day.
+        if (window.matchMedia('(display-mode: standalone)').matches) {{
+            fetch('/api/twa-checkin', {{credentials: 'include'}}).catch(function(){{}});
+        }}
+        </script>
         """,
         player.cash_balance,
         player.id
@@ -3242,6 +3227,21 @@ def beta_submit_request(
     except Exception as e:
         import urllib.parse
         return _RR(f"/events?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.get("/api/twa-checkin")
+def twa_checkin(session_token: Optional[str] = Cookie(None)):
+    """Called by client-side JS when running in standalone/TWA mode.
+    More reliable than server-side header detection for already-logged-in users."""
+    from fastapi.responses import JSONResponse as _JR
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse): return _JR({"ok": False}, status_code=401)
+    try:
+        from beta import handle_twa_login
+        handle_twa_login(player.id)
+        return _JR({"ok": True})
+    except Exception as e:
+        return _JR({"ok": False, "error": str(e)})
 
 
 @router.post("/api/beta/dismiss")

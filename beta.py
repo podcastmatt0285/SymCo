@@ -115,8 +115,8 @@ def _get_db():
     return SessionLocal()
 
 
-def _award_trophies(player_id: int, amount: int, event_id: int = None):
-    """Add trophies to PlayerRank and recalculate level. Fire-and-forget."""
+def _award_trophies(player_id: int, amount: int, event_id: int = None) -> bool:
+    """Add trophies to PlayerRank and recalculate level. Returns True on success."""
     try:
         from events import PlayerRank, PlayerTaskProgress, LEVEL_THRESHOLDS, SessionLocal as _ES
         edb = _ES()
@@ -127,7 +127,6 @@ def _award_trophies(player_id: int, amount: int, event_id: int = None):
                 edb.add(rank)
             rank.trophies   += amount
             rank.updated_at  = datetime.utcnow()
-            # Recalculate level
             lv = 1
             for i, t in enumerate(LEVEL_THRESHOLDS):
                 if rank.trophies >= t:
@@ -146,10 +145,12 @@ def _award_trophies(player_id: int, amount: int, event_id: int = None):
                                               completed_at=datetime.utcnow())
                     edb.add(prog)
             edb.commit()
+            return True
         finally:
             edb.close()
     except Exception as _e:
         print(f"[Beta] Trophy award error: {_e}")
+        return False
 
 
 def _get_event_ids() -> dict:
@@ -481,15 +482,17 @@ def handle_twa_login(player_id: int):
             DailyTWALogin.login_date == today,
         ).first()
         if not already_today:
-            ev_ids = _get_event_ids()
-            _award_trophies(player_id, ACTIVE_DUTY_TROPHIES, ev_ids.get("duty"))
-            db.add(DailyTWALogin(
-                player_id        = player_id,
-                login_date       = today,
-                trophies_awarded = ACTIVE_DUTY_TROPHIES,
-            ))
-            db.commit()
-            _push_notify(player_id, "⚔️ Active Duty", f"+{ACTIVE_DUTY_TROPHIES} trophies for logging in from the app today!")
+            ev_ids  = _get_event_ids()
+            awarded = _award_trophies(player_id, ACTIVE_DUTY_TROPHIES, ev_ids.get("duty"))
+            if awarded:
+                db.add(DailyTWALogin(
+                    player_id        = player_id,
+                    login_date       = today,
+                    trophies_awarded = ACTIVE_DUTY_TROPHIES,
+                ))
+                db.commit()
+                _push_notify(player_id, "⚔️ Active Duty",
+                             f"+{ACTIVE_DUTY_TROPHIES} trophies for logging in from the app today!")
 
         # Pocket Empire (first-ever TWA login as an approved tester)
         if not has_pocket_empire(player_id):
