@@ -13,7 +13,7 @@ Provides:
 """
 
 from typing import Optional
-from fastapi import APIRouter, Cookie, Form, Query
+from fastapi import APIRouter, Cookie, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from datetime import timedelta
 from datetime import datetime
@@ -1810,10 +1810,20 @@ def dashboard_redirect():
 
 
 @router.get("/", response_class=HTMLResponse)
-def home(session_token: Optional[str] = Cookie(None)):
+def home(request: Request, session_token: Optional[str] = Cookie(None)):
     """Main dashboard."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
+
+    # Award daily Active Duty trophies whenever the dashboard is loaded from the app.
+    # This catches the common case where the player is already logged in and never
+    # hits the login route, so the auth.py TWA hook wouldn't fire.
+    if request.headers.get("X-Requested-With", "") == "cc.notifly.wadsworth.twa":
+        try:
+            from beta import handle_twa_login
+            handle_twa_login(player.id)
+        except Exception:
+            pass
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
@@ -13641,12 +13651,21 @@ async def get_my_open_orders(
 # ==========================
 
 @router.get("/events", response_class=HTMLResponse)
-def events_page(session_token: Optional[str] = Cookie(None),
+def events_page(request: Request,
+                session_token: Optional[str] = Cookie(None),
                 success: Optional[str] = Query(None),
                 error:   Optional[str] = Query(None)):
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
+
+    # Same TWA detection as the dashboard so navigating directly to /events also counts.
+    if request.headers.get("X-Requested-With", "") == "cc.notifly.wadsworth.twa":
+        try:
+            from beta import handle_twa_login
+            handle_twa_login(player.id)
+        except Exception:
+            pass
 
     _flash_html = ""
     if success:
