@@ -526,7 +526,8 @@ def _nav_loader_html() -> str:
             if (event.data && event.data.type === 'PLAY_NOTIFICATION_SOUND') {
               // Android standalone/TWA already plays the OS channel sound — skip to avoid double play
               if (/android/i.test(navigator.userAgent) &&
-                  window.matchMedia('(display-mode: standalone)').matches) return;
+                  (window.matchMedia('(display-mode: standalone)').matches ||
+                   window.matchMedia('(display-mode: fullscreen)').matches)) return;
               try {
                 var snd = new Audio('/static/sounds/notification.mp3');
                 snd.volume = 0.6;
@@ -2370,11 +2371,20 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
 
         </div>
         <script>
-        // Award Active Duty trophies when the app is open in standalone/TWA mode.
-        // Runs on every dashboard load; the server deduplicates to once per UTC day.
-        if (window.matchMedia('(display-mode: standalone)').matches) {{
-            fetch('/api/twa-checkin', {{credentials: 'include'}}).catch(function(){{}});
-        }}
+        // Active Duty daily check-in: fire when running as installed app (TWA or PWA).
+        // Manifest uses display:fullscreen, so we check both fullscreen and standalone.
+        // XMLHttpRequest is used instead of fetch so the Android WebView automatically
+        // adds X-Requested-With: cc.notifly.wadsworth.twa, giving server-side confirmation.
+        (function() {{
+            var dm = window.matchMedia('(display-mode: fullscreen)').matches
+                  || window.matchMedia('(display-mode: standalone)').matches;
+            if (dm) {{
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', '/api/twa-checkin', true);
+                xhr.withCredentials = true;
+                xhr.send();
+            }}
+        }})();
         </script>
         """,
         player.cash_balance,
@@ -3230,16 +3240,19 @@ def beta_submit_request(
 
 
 @router.get("/api/twa-checkin")
-def twa_checkin(session_token: Optional[str] = Cookie(None)):
-    """Called by client-side JS when running in standalone/TWA mode.
-    More reliable than server-side header detection for already-logged-in users."""
+def twa_checkin(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Called by client-side XHR when running as installed app (TWA or PWA fullscreen/standalone).
+    XHR from Chrome Android WebView auto-adds X-Requested-With: cc.notifly.wadsworth.twa."""
     from fastapi.responses import JSONResponse as _JR
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return _JR({"ok": False}, status_code=401)
+    twa_hdr = request.headers.get("X-Requested-With", "")
+    ua      = request.headers.get("User-Agent", "")
+    print(f"[TWA-checkin] player={player.id} X-Requested-With={twa_hdr!r} UA={ua[:80]}")
     try:
         from beta import handle_twa_login
         handle_twa_login(player.id)
-        return _JR({"ok": True})
+        return _JR({"ok": True, "twa": twa_hdr == "cc.notifly.wadsworth.twa"})
     except Exception as e:
         return _JR({"ok": False, "error": str(e)})
 
@@ -13940,7 +13953,19 @@ def events_page(request: Request,
     {active_html}
     {upcoming_html}
     {finished_html}
-    {empty_html}"""
+    {empty_html}
+    <script>
+    (function() {{
+        var dm = window.matchMedia('(display-mode: fullscreen)').matches
+              || window.matchMedia('(display-mode: standalone)').matches;
+        if (dm) {{
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/twa-checkin', true);
+            xhr.withCredentials = true;
+            xhr.send();
+        }}
+    }})();
+    </script>"""
 
     return shell("Events & Tasks", body,
                  balance=getattr(player, "cash_balance", 0.0),
