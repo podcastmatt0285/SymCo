@@ -3233,6 +3233,144 @@ def beta_submit_request(
         return _RR(f"/events?error={urllib.parse.quote(str(e)[:120])}", status_code=303)
 
 
+@router.get("/api/public/ticker")
+async def public_ticker():
+    """Live market data for the login-page tickers — no auth required."""
+    from fastapi.responses import JSONResponse as _JR
+    result = {"commodities": [], "district": [], "stocks": []}
+
+    # ── Commodity market (last traded price per item type) ────────────────────
+    try:
+        from market import Trade, get_db as _mdb
+        _db = _mdb()
+        try:
+            rows = (_db.query(Trade.item_type, Trade.price)
+                    .order_by(Trade.executed_at.desc())
+                    .limit(400).all())
+        finally:
+            _db.close()
+        seen = {}
+        for r in rows:
+            if r.item_type not in seen:
+                seen[r.item_type] = r.price
+        result["commodities"] = [
+            {"label": k.replace("_", " ").title(), "price": v}
+            for k, v in seen.items()
+        ][:40]
+    except Exception:
+        pass
+
+    # ── District market (last traded price per item type) ─────────────────────
+    try:
+        from district_market import DistrictTrade, get_db as _dmdb
+        _db = _dmdb()
+        try:
+            rows = (_db.query(DistrictTrade.item_type, DistrictTrade.price)
+                    .order_by(DistrictTrade.executed_at.desc())
+                    .limit(400).all())
+        finally:
+            _db.close()
+        seen = {}
+        for r in rows:
+            if r.item_type not in seen:
+                seen[r.item_type] = r.price
+        result["district"] = [
+            {"label": k.replace("_", " ").title(), "price": v}
+            for k, v in seen.items()
+        ][:40]
+    except Exception:
+        pass
+
+    # ── Stock exchange (listed companies with price > 0) ──────────────────────
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as _bfdb
+        _db = _bfdb()
+        try:
+            companies = (_db.query(CompanyShares)
+                         .filter(CompanyShares.current_price > 0)
+                         .order_by(CompanyShares.ticker_symbol.asc())
+                         .limit(60).all())
+            result["stocks"] = [
+                {"label": c.ticker_symbol, "name": c.company_name, "price": c.current_price}
+                for c in companies
+            ]
+        finally:
+            _db.close()
+    except Exception:
+        pass
+
+    return _JR(result)
+
+
+@router.get("/api/public/ticker")
+async def public_ticker():
+    """Live market data for the login-page tickers — no auth required."""
+    from fastapi.responses import JSONResponse as _JR
+    result = {"commodities": [], "district": [], "stocks": []}
+
+    # ── Commodity market (last traded price per item type) ────────────────────
+    try:
+        from market import Trade, get_db as _mdb
+        _db = _mdb()
+        try:
+            rows = (_db.query(Trade.item_type, Trade.price)
+                    .order_by(Trade.executed_at.desc())
+                    .limit(400).all())
+        finally:
+            _db.close()
+        seen = {}
+        for r in rows:
+            if r.item_type not in seen:
+                seen[r.item_type] = r.price
+        result["commodities"] = [
+            {"label": k.replace("_", " ").title(), "price": v}
+            for k, v in seen.items()
+        ][:40]
+    except Exception:
+        pass
+
+    # ── District market (last traded price per item type) ─────────────────────
+    try:
+        from district_market import DistrictTrade, get_db as _dmdb
+        _db = _dmdb()
+        try:
+            rows = (_db.query(DistrictTrade.item_type, DistrictTrade.price)
+                    .order_by(DistrictTrade.executed_at.desc())
+                    .limit(400).all())
+        finally:
+            _db.close()
+        seen = {}
+        for r in rows:
+            if r.item_type not in seen:
+                seen[r.item_type] = r.price
+        result["district"] = [
+            {"label": k.replace("_", " ").title(), "price": v}
+            for k, v in seen.items()
+        ][:40]
+    except Exception:
+        pass
+
+    # ── Stock exchange (listed companies with price > 0) ──────────────────────
+    try:
+        from banks.brokerage_firm import CompanyShares, get_db as _bfdb
+        _db = _bfdb()
+        try:
+            companies = (_db.query(CompanyShares)
+                         .filter(CompanyShares.current_price > 0)
+                         .order_by(CompanyShares.ticker_symbol.asc())
+                         .limit(60).all())
+            result["stocks"] = [
+                {"label": c.ticker_symbol, "name": c.company_name, "price": c.current_price}
+                for c in companies
+            ]
+        finally:
+            _db.close()
+    except Exception:
+        pass
+
+    return _JR(result)
+
+
 @router.get("/api/twa-checkin")
 def twa_checkin(request: Request, session_token: Optional[str] = Cookie(None)):
     """Called by client-side XHR when running as installed app (TWA or PWA fullscreen/standalone).

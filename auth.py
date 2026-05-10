@@ -449,8 +449,9 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             color: #e5e7eb;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            padding-bottom: 60px;
         }
 
         .splash {
@@ -458,6 +459,48 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             width: 100%;
             padding: 32px;
         }
+
+        /* ── Market tickers ── */
+        .ticker-band {
+            width: 100%;
+            overflow: hidden;
+            padding: 5px 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .t-comm { background: rgba(56,189,248,0.07); border-bottom: 1px solid rgba(56,189,248,0.12); }
+        .t-dist { background: rgba(245,158,11,0.07);  border-bottom: 1px solid rgba(245,158,11,0.12); }
+        .t-stk  { background: rgba(74,222,128,0.07);  border-bottom: 1px solid rgba(74,222,128,0.12); }
+        .ticker-label {
+            display: inline-block;
+            padding: 0 10px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            vertical-align: middle;
+        }
+        .t-comm .ticker-label { color: #38bdf8; }
+        .t-dist .ticker-label { color: #f59e0b; }
+        .t-stk  .ticker-label { color: #4ade80; }
+        .ticker-track {
+            display: inline-block;
+            animation: tickScroll 40s linear infinite;
+        }
+        .t-dist .ticker-track { animation-duration: 50s; }
+        .t-stk  .ticker-track { animation-duration: 36s; animation-direction: reverse; }
+        @keyframes tickScroll {
+            from { transform: translateX(0); }
+            to   { transform: translateX(-50%); }
+        }
+        .ticker-item {
+            display: inline-block;
+            margin-right: 28px;
+            font-size: 11px;
+            vertical-align: middle;
+        }
+        .t-comm .ticker-item { color: #bae6fd; }
+        .t-dist .ticker-item { color: #fde68a; }
+        .t-stk  .ticker-item { color: #bbf7d0; }
 
         .logo {
             text-align: center;
@@ -616,6 +659,17 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 </head>
 
 <body>
+    <!-- Market tickers -->
+    <div class="ticker-band t-comm">
+        <span class="ticker-label">COMMODITIES</span><div class="ticker-track" id="track-comm"><span class="ticker-item">Loading&hellip;</span></div>
+    </div>
+    <div class="ticker-band t-dist">
+        <span class="ticker-label">DISTRICT&nbsp;MKT</span><div class="ticker-track" id="track-dist"><span class="ticker-item">Loading&hellip;</span></div>
+    </div>
+    <div class="ticker-band t-stk">
+        <span class="ticker-label">WPE&nbsp;STOCKS</span><div class="ticker-track" id="track-stk"><span class="ticker-item">Loading&hellip;</span></div>
+    </div>
+
     <div class="splash">
         <div class="logo"><img src="/static/logo.png" alt="Wadsworth"></div>
 
@@ -670,17 +724,18 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
-    <footer style="position:fixed;bottom:0;left:0;right:0;padding:8px 16px;text-align:center;font-size:0.72rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
-        <a href="/sitemap"            style="color:#64748b;text-decoration:underline;">Sitemap</a>
-        &nbsp;·&nbsp;
-        <a href="/company/whitepaper" style="color:#64748b;text-decoration:underline;">Whitepaper</a>
-        &nbsp;·&nbsp;
-        <a href="/company/careers"    style="color:#64748b;text-decoration:underline;">Careers</a>
-        &nbsp;·&nbsp;
-        <a href="/company/press-kit"  style="color:#64748b;text-decoration:underline;">Press Kit</a>
-        &nbsp;·&nbsp;
-        <a href="/privacy-policy"     style="color:#64748b;text-decoration:underline;">Privacy Policy</a>
-        <br style="margin:2px 0;">
+    <footer style="position:fixed;bottom:0;left:0;right:0;padding:6px 16px;text-align:center;font-size:0.72rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
+        <div style="display:flex;flex-wrap:wrap;gap:3px 10px;justify-content:center;margin-bottom:3px;">
+            <a href="/sitemap"            style="color:#64748b;text-decoration:underline;">Sitemap</a>
+            <a href="/events"             style="color:#64748b;text-decoration:underline;">Events</a>
+            <a href="/leaderboard"        style="color:#64748b;text-decoration:underline;">Leaderboard</a>
+            <a href="/exchange"           style="color:#64748b;text-decoration:underline;">Exchange</a>
+            <a href="/market"             style="color:#64748b;text-decoration:underline;">Market</a>
+            <a href="/company/whitepaper" style="color:#64748b;text-decoration:underline;">Whitepaper</a>
+            <a href="/company/careers"    style="color:#64748b;text-decoration:underline;">Careers</a>
+            <a href="/company/press-kit"  style="color:#64748b;text-decoration:underline;">Press Kit</a>
+            <a href="/privacy-policy"     style="color:#64748b;text-decoration:underline;">Privacy Policy</a>
+        </div>
         <span style="color:#334155;">&copy; 2026 Wadsworth Notifly. All rights reserved.</span>
     </footer>
 
@@ -738,6 +793,30 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
             showNext();
             setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
+        })();
+
+        // ── Market tickers ──
+        (function () {
+            function fmt(v) {
+                if (v == null) return '—';
+                return v >= 1000 ? '$' + (+v).toLocaleString(undefined, {maximumFractionDigits: 0})
+                                 : '$' + (+v).toFixed(2);
+            }
+            function buildTrack(items) {
+                if (!items || !items.length) return '<span class="ticker-item">No data</span>';
+                var html = items.map(function (it) {
+                    return '<span class="ticker-item">' + it.name + ' <strong>' + fmt(it.price) + '</strong></span>';
+                }).join('');
+                return html + html; // duplicate for seamless CSS loop
+            }
+            fetch('/api/public/ticker').then(function (r) { return r.json(); }).then(function (d) {
+                var tc = document.getElementById('track-comm');
+                var td = document.getElementById('track-dist');
+                var ts = document.getElementById('track-stk');
+                if (tc) tc.innerHTML = buildTrack(d.commodities);
+                if (td) td.innerHTML = buildTrack(d.district);
+                if (ts) ts.innerHTML = buildTrack(d.stocks);
+            }).catch(function () {});
         })();
     </script>
     <script>

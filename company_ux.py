@@ -366,6 +366,8 @@ SITEMAP_ENTRIES = [
     ("/stats/leaderboard",         "Leaderboard",        "See who owns the most wealth, land, and shares across the server"),
     ("/chat",                      "Global Chat",        "Live community chat — tag items, businesses, and players with # @ $ %"),
     ("/world-map",                 "World Map",          "Explore the entire game map: cities, counties, districts, and land parcels"),
+    ("/events",                    "Events & Tasks",     "Active server-wide events, daily tasks, and the Founding Tester beta program"),
+    ("/government",                "Government",         "Federal treasury, sovereign bonds, fiscal policy rates, and the full city/county directory"),
     # ── Production ────────────────────────────────────────────────────────────
     ("/businesses",                "Businesses",         "Start, manage, and automate production lines that turn raw inputs into revenue"),
     ("/inventory",                 "Inventory",          "View every commodity you hold, list items for sale, or swap goods with other players"),
