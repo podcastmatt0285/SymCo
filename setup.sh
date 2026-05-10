@@ -16,11 +16,11 @@ if [ -f .env ]; then
     set -a; source .env; set +a
     echo "  [ok] Loaded .env"
 else
-    echo "  [warn] .env not found — using defaults (wadsworth:wadsworth)"
+    echo "  [warn] .env not found — using defaults (symco:symco)"
 fi
 
-DB_URL="${DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/wadsworth}"
-RES_URL="${RESERVE_DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/reserve_banks}"
+DB_URL="${DATABASE_URL:-postgresql://symco:symco@localhost:5432/wadsworth}"
+RES_URL="${RESERVE_DATABASE_URL:-postgresql://symco:symco@localhost:5432/reserve_banks}"
 
 _field() {
     local url="$1"

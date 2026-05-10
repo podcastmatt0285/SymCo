@@ -17,8 +17,8 @@ _dbname() {
     echo "$1" | sed -n 's|.*/\([^?]*\)|\1|p'
 }
 
-DB_MAIN=$(_dbname "${DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/wadsworth}")
-DB_RES=$(_dbname  "${RESERVE_DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/reserve_banks}")
+DB_MAIN=$(_dbname "${DATABASE_URL:-postgresql://symco:symco@localhost:5432/wadsworth}")
+DB_RES=$(_dbname  "${RESERVE_DATABASE_URL:-postgresql://symco:symco@localhost:5432/reserve_banks}")
 
 TARGET="${1:-both}"
 
