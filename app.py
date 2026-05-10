@@ -5,9 +5,10 @@ import subprocess
 # ═══════════════════════════════════════════════════════════════════════════════
 # BOOTSTRAP — runs before any third-party imports
 #   1. Load .env into environment
-#   2. Create venv and re-exec inside it (idempotent)
-#   3. Ensure PostgreSQL is running with DBs, backups restored, permissions set
-#   4. Start Cloudflare tunnel in background
+#   2. Detect package manager; install missing system packages
+#   3. Create venv and re-exec inside it (idempotent)
+#   4. Ensure PostgreSQL is running with DBs, backups restored, permissions set
+#   5. Start Cloudflare tunnel in background
 #
 # Result: `python3 app.py` is the only command needed on a fresh clone.
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -26,6 +27,94 @@ def _load_dotenv():
                 continue
             _k, _, _v = _line.partition("=")
             os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+
+
+def _detect_pkg_manager():
+    """Return the first available package manager, or None."""
+    import shutil
+    for _pm in ("apt-get", "dnf", "yum", "brew", "apk"):
+        if shutil.which(_pm):
+            return _pm
+    return None
+
+
+def _ensure_system_deps():
+    """Install required system packages if any are missing."""
+    import shutil, tempfile
+
+    pm = _detect_pkg_manager()
+
+    needed = []
+
+    # Test whether `python3 -m venv` actually works (not just `import venv` —
+    # venv is always importable as stdlib but may lack ensurepip on Debian).
+    with tempfile.TemporaryDirectory() as _td:
+        _r = subprocess.run([sys.executable, "-m", "venv", _td], capture_output=True)
+        if _r.returncode != 0:
+            if pm == "apt-get":
+                needed += ["python3-venv", "python3-pip"]
+            elif pm in ("dnf", "yum"):
+                needed.append("python3")         # venv + pip bundled on Fedora/RHEL
+            # brew / apk: venv is built into python3
+
+    # pip availability (belt-and-suspenders for Debian minimal installs)
+    if pm == "apt-get":
+        if subprocess.run([sys.executable, "-m", "pip", "--version"],
+                          capture_output=True).returncode != 0:
+            if "python3-pip" not in needed:
+                needed.append("python3-pip")
+
+    # PostgreSQL server + psql client
+    if not shutil.which("psql"):
+        if pm == "apt-get":
+            needed += ["postgresql", "postgresql-client"]
+        elif pm in ("dnf", "yum"):
+            needed += ["postgresql-server", "postgresql"]
+        elif pm == "brew":
+            needed.append("postgresql")
+        elif pm == "apk":
+            needed += ["postgresql", "postgresql-client"]
+
+    # libpq-dev — needed for psycopg2 to compile during pip install
+    if not shutil.which("pg_config"):
+        if pm == "apt-get":
+            needed.append("libpq-dev")
+        elif pm in ("dnf", "yum"):
+            needed.append("libpq-devel")
+        elif pm == "brew":
+            needed.append("libpq")
+
+    # curl — needed to download cloudflared
+    if not shutil.which("curl"):
+        needed.append("curl")
+
+    # git — needed if not already present
+    if not shutil.which("git"):
+        needed.append("git")
+
+    if not needed:
+        return
+
+    if pm is None:
+        print(f"[Bootstrap] WARNING: no known package manager found.")
+        print(f"[Bootstrap] Please install manually: python3-venv postgresql libpq-dev curl git")
+        return
+
+    print(f"[Bootstrap] Installing system packages: {' '.join(needed)}")
+    if pm == "apt-get":
+        subprocess.run(["sudo", "apt-get", "update", "-qq"], check=True)
+        subprocess.run(["sudo", "apt-get", "install", "-y", "-qq"] + needed, check=True)
+    elif pm in ("dnf", "yum"):
+        subprocess.run(["sudo", pm, "install", "-y"] + needed, check=True)
+        # On Fedora/RHEL, new PostgreSQL install needs data dir initialized
+        if "postgresql-server" in needed:
+            subprocess.run(["sudo", "postgresql-setup", "--initdb"], capture_output=True)
+    elif pm == "brew":
+        subprocess.run(["brew", "install"] + needed, check=False)
+    elif pm == "apk":
+        subprocess.run(["sudo", "apk", "add", "--no-cache"] + needed, check=True)
+
+    print("[Bootstrap] System packages ready")
 
 
 def _ensure_venv():
@@ -47,11 +136,30 @@ def _ensure_venv():
     os.execv(venv_py, [venv_py] + sys.argv)  # replaces current process; nothing below runs
 
 
+def _pg_start():
+    """Start PostgreSQL service; tries service, then systemctl, then pg_ctl."""
+    import shutil
+    # On Fedora/RHEL, enable first so systemctl start works
+    pm = _detect_pkg_manager()
+    if pm in ("dnf", "yum") and shutil.which("systemctl"):
+        subprocess.run(["sudo", "systemctl", "enable", "postgresql"], capture_output=True)
+
+    for cmd in (
+        ["sudo", "service", "postgresql", "start"],
+        ["sudo", "systemctl", "start", "postgresql"],
+        ["sudo", "systemctl", "start", "postgresql@15-main"],
+        ["sudo", "systemctl", "start", "postgresql@14-main"],
+    ):
+        r = subprocess.run(cmd, capture_output=True)
+        if r.returncode == 0:
+            return
+
+
 def _ensure_postgres():
     """Idempotently start PostgreSQL, create user/DBs, restore backups, fix ownership."""
     import re, shutil
     if not shutil.which("psql"):
-        print("[Bootstrap] psql not found — skipping DB setup (install postgresql first)")
+        print("[Bootstrap] psql not found — skipping DB setup")
         return
 
     db_url  = os.environ.get("DATABASE_URL",         "postgresql://symco:symco@localhost:5432/wadsworth")
@@ -75,8 +183,7 @@ def _ensure_postgres():
                            capture_output=True, text=True)
         return r.stdout.strip()
 
-    # Start PostgreSQL (no-op if already running)
-    subprocess.run(["sudo", "service", "postgresql", "start"], capture_output=True)
+    _pg_start()
 
     # Create app user if missing
     _pg("postgres", f"""
@@ -124,9 +231,9 @@ def _ensure_postgres():
              os.path.join(_HERE, "backups", "reserve_banks.sql"),
              os.path.join(_HERE, "reserve_banks_backup.sql"))
 
-    # Transfer table ownership to app user + grant all (idempotent, safe to re-run every start)
-    # Required because pg_dump --no-owner restores tables owned by postgres.
-    # symco must own tables to run ALTER TABLE for schema migrations.
+    # Transfer table ownership to app user + grant all (idempotent, safe to re-run every start).
+    # pg_dump --no-owner restores tables owned by the restoring role (postgres),
+    # so symco must be made owner to run ALTER TABLE schema migrations.
     _ownership_sql = f"""
         DO $$ DECLARE r RECORD; BEGIN
           FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
@@ -150,24 +257,44 @@ def _ensure_postgres():
 
 def _start_tunnel():
     """Start Cloudflare tunnel in background; auto-installs cloudflared if missing."""
-    import shutil
+    import shutil, platform
     token = os.environ.get(
         "CLOUDFLARE_TUNNEL_TOKEN",
         "eyJhIjoiYWU3MmMxMWVlNGZlM2IwZDk0MWEzNDE4NGYyZTg0ZDkiLCJ0IjoiMGJjYTI0MTItYzU0Ni00NWU4LWI2ZGItMWU4ZDE4ODMzOGNmIiwicyI6Ik1EYzRZall6Tm1NdFlXRTVOaTAwTkdNM0xUbGpaamt0TTJlbE9XVm1Nelk0TlRRNSJ9",
     )
     if not token:
         return
+
     if not shutil.which("cloudflared"):
         print("[Bootstrap] Installing cloudflared...")
-        deb = "/tmp/cloudflared.deb"
-        r = subprocess.run(
-            ["curl", "-fsSL",
-             "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb",
-             "-o", deb],
-            capture_output=True,
-        )
-        if r.returncode == 0:
-            subprocess.run(["sudo", "dpkg", "-i", deb], capture_output=True)
+        _machine = platform.machine().lower()
+        _arch    = {"x86_64": "amd64", "amd64": "amd64",
+                    "aarch64": "arm64", "arm64": "arm64"}.get(_machine)
+        _system  = platform.system().lower()
+
+        if _arch and _system == "linux":
+            _base = f"https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{_arch}"
+            if shutil.which("dpkg"):
+                _pkg = "/tmp/cloudflared.deb"
+                if subprocess.run(["curl", "-fsSL", _base + ".deb", "-o", _pkg],
+                                  capture_output=True).returncode == 0:
+                    subprocess.run(["sudo", "dpkg", "-i", _pkg], capture_output=True)
+            elif shutil.which("rpm"):
+                _pkg = "/tmp/cloudflared.rpm"
+                if subprocess.run(["curl", "-fsSL", _base + ".rpm", "-o", _pkg],
+                                  capture_output=True).returncode == 0:
+                    subprocess.run(["sudo", "rpm", "-i", "--force", _pkg], capture_output=True)
+            else:
+                # Fallback: download raw binary
+                _bin = "/usr/local/bin/cloudflared"
+                if subprocess.run(["sudo", "curl", "-fsSL", _base, "-o", _bin],
+                                  capture_output=True).returncode == 0:
+                    subprocess.run(["sudo", "chmod", "+x", _bin], capture_output=True)
+        elif _system == "darwin" and shutil.which("brew"):
+            subprocess.run(["brew", "install", "cloudflared"], capture_output=True)
+        else:
+            print(f"[Bootstrap] cloudflared: unsupported platform {_system}/{_machine}")
+
     if shutil.which("cloudflared"):
         proc = subprocess.Popen(
             ["cloudflared", "tunnel", "run", "--token", token],
@@ -178,44 +305,15 @@ def _start_tunnel():
         print("[Bootstrap] cloudflared unavailable — tunnel not started")
 
 
-def _ensure_system_deps():
-    """Install required system packages if any are missing."""
-    import shutil
-
-    needed = []
-
-    # python3-venv: required to create the venv
-    r = subprocess.run([sys.executable, "-c", "import venv"], capture_output=True)
-    if r.returncode != 0:
-        needed.append("python3-venv")
-
-    # postgresql + client library: required for DB and psycopg2
-    if not shutil.which("psql"):
-        needed.extend(["postgresql", "postgresql-client"])
-    if not shutil.which("pg_config"):
-        needed.append("libpq-dev")
-
-    # git: needed if the repo wasn't cloned yet (edge case)
-    if not shutil.which("git"):
-        needed.append("git")
-
-    if needed:
-        print(f"[Bootstrap] Installing system packages: {' '.join(needed)}")
-        subprocess.run(["sudo", "apt-get", "update", "-qq"], check=True)
-        subprocess.run(["sudo", "apt-get", "install", "-y", "-qq"] + needed, check=True)
-        print("[Bootstrap] System packages ready")
-
-
 _load_dotenv()
-_ensure_system_deps()   # installs apt packages before venv creation
-_ensure_venv()          # may os.execv() — code below only runs once inside venv
+_ensure_system_deps()   # detects package manager; installs missing system deps
+_ensure_venv()          # may os.execv() — everything below only runs inside venv
 _ensure_postgres()
 _start_tunnel()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 
 import asyncio
-import os
 from datetime import datetime
 
 # ── Sentry error monitoring ────────────────────────────────────────────────────
