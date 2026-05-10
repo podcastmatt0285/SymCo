@@ -83,9 +83,28 @@ echo "  (must match assetlinks.json in app.py — update it if this is a new key
 echo "=== Step 3: Generate TWA project ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
 
-# Use `yes` to answer all bubblewrap prompts automatically (SDK install, terms, etc).
-# Actual signing is done by Gradle — bubblewrap build is never called.
-yes | bubblewrap init \
+# Bubblewrap init prompts in order:
+#   1. Install Android SDK? (y/n)  ← only on a fresh machine with no SDK
+#   2. Agree to SDK terms? (y/N)   ← only on a fresh machine with no SDK
+#   3. Domain:                     ← must be the real domain, not "y"
+#   4. URL path:                   ← must be "/"
+#   5+. All remaining prompts      ← accept defaults with Enter
+#
+# Detect whether the SDK already exists so we know whether to send y/y first.
+_bw_sdk="${HOME}/.bubblewrap/android_sdk"
+if [ -d "${_bw_sdk}/build-tools" ] || [ -d "${_bw_sdk}/platforms" ]; then
+    _SDK_INSTALLED=1
+else
+    _SDK_INSTALLED=0
+fi
+
+{
+    if [ "${_SDK_INSTALLED}" -eq 0 ]; then
+        printf 'y\ny\n'          # SDK install consent + terms agreement
+    fi
+    printf '%s\n/\n' "${DOMAIN}" # Domain and URL path with real values
+    yes ''                       # Accept all remaining prompts with Enter
+} | NO_UPDATE_NOTIFIER=1 bubblewrap init \
   --manifest "https://${DOMAIN}/manifest.json" \
   --directory . \
   --packageId "${PACKAGE}" \
