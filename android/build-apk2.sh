@@ -22,7 +22,10 @@ PACKAGE="cc.notifly.wadsworth"           # ← change if yours differs
 VERSION_CODE=1
 VERSION_NAME="1.0"
 
-WIDGET_DIR="$(cd "$(dirname "$0")/widget" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+WIDGET_DIR="${SCRIPT_DIR}/widget"
+KEY_PASS="wadsworth123"
+KEYSTORE_ABS="${SCRIPT_DIR}/wadsworth-signing.jks"
 
 echo "=== Step 0: Check system dependencies ==="
 if ! which java &>/dev/null; then
@@ -52,18 +55,43 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 npm install -g @bubblewrap/cli
 which bubblewrap || { echo "bubblewrap not found — install failed"; exit 1; }
 
-echo "=== Step 2: Generate TWA project ==="
+echo "=== Step 2: Create/reuse signing keystore ==="
+# Must happen BEFORE bubblewrap init so we can pass it as flags and avoid
+# interactive prompts. The file lives in android/ so it survives rm -rf twa-project.
+if [ ! -f "${KEYSTORE_ABS}" ]; then
+    keytool -genkey -v \
+        -keystore "${KEYSTORE_ABS}" \
+        -alias android \
+        -keyalg RSA -keysize 2048 \
+        -validity 10000 \
+        -storepass "${KEY_PASS}" \
+        -keypass  "${KEY_PASS}" \
+        -dname "CN=Wadsworth, OU=Game, O=Wadsworth, L=US, ST=US, C=US"
+    echo "  New keystore generated: ${KEYSTORE_ABS}"
+else
+    echo "  Reusing existing keystore: ${KEYSTORE_ABS}"
+fi
+FINGERPRINT=$(keytool -list -v -keystore "${KEYSTORE_ABS}" -alias android \
+    -storepass "${KEY_PASS}" 2>/dev/null | grep "SHA256:" | awk '{print $2}')
+echo "  SHA-256: ${FINGERPRINT}"
+echo "  (must match assetlinks.json in app.py — update it if this is a new keystore)"
+
+echo "=== Step 3: Generate TWA project ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
 
+# Pass keystore path and alias so bubblewrap never prompts for keystore info.
+# Actual signing is done by Gradle in the next step, not by bubblewrap build.
 bubblewrap init \
   --manifest "https://${DOMAIN}/manifest.json" \
   --directory . \
   --packageId "${PACKAGE}" \
   --name "${APP_NAME}" \
   --appVersionCode "${VERSION_CODE}" \
-  --appVersionName "${VERSION_NAME}"
+  --appVersionName "${VERSION_NAME}" \
+  --signingKeyPath "${KEYSTORE_ABS}" \
+  --signingKeyAlias "android"
 
-echo "=== Step 3: Inject widget + notification-sound files ==="
+echo "=== Step 3b: Inject widget + notification-sound files ==="
 
 # Java source directory
 JAVA_DIR="app/src/main/java/$(echo "$PACKAGE" | tr '.' '/')"
@@ -300,27 +328,7 @@ EOF
     echo "  Added ProGuard keep rules"
 fi
 
-echo "=== Step 4: Create/reuse signing keystore (lives outside twa-project) ==="
-# Stored in android/ so it survives 'rm -rf twa-project' on every rebuild.
-cd ..
-KEY_PASS="wadsworth123"
-KEYSTORE_ABS="$(pwd)/wadsworth-signing.jks"
-if [ ! -f "${KEYSTORE_ABS}" ]; then
-    keytool -genkey -v \
-        -keystore "${KEYSTORE_ABS}" \
-        -alias android \
-        -keyalg RSA -keysize 2048 \
-        -validity 10000 \
-        -storepass "${KEY_PASS}" \
-        -keypass  "${KEY_PASS}" \
-        -dname "CN=Wadsworth, OU=Game, O=Wadsworth, L=US, ST=US, C=US"
-    echo "  Key generated: ${KEYSTORE_ABS}"
-else
-    echo "  Reusing existing ${KEYSTORE_ABS}"
-fi
-cd twa-project
-
-echo "=== Step 5: Build and sign APK and AAB with Gradle ==="
+echo "=== Step 4: Build and sign APK and AAB with Gradle ==="
 # Pass signing credentials as project properties — no build.gradle modification needed.
 # bubblewrap build always prompts interactively for passwords and ignores flags.
 chmod +x gradlew
