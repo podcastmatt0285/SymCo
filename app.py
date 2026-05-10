@@ -42,6 +42,12 @@ def _ensure_system_deps():
     """Install required system packages if any are missing."""
     import shutil, tempfile
 
+    # If already running inside the venv, system deps were installed before
+    # venv creation — no need to check or install anything.
+    venv_dir = os.path.join(_HERE, "venv")
+    if sys.executable.startswith(venv_dir):
+        return
+
     pm = _detect_pkg_manager()
 
     needed = []
@@ -231,9 +237,10 @@ def _ensure_postgres():
              os.path.join(_HERE, "backups", "reserve_banks.sql"),
              os.path.join(_HERE, "reserve_banks_backup.sql"))
 
-    # Transfer table ownership to app user + grant all (idempotent, safe to re-run every start).
-    # pg_dump --no-owner restores tables owned by the restoring role (postgres),
-    # so symco must be made owner to run ALTER TABLE schema migrations.
+    # Transfer table ownership + grant privileges only when needed.
+    # pg_dump --no-owner restores tables owned by postgres (the restoring role),
+    # so symco must own them to run ALTER TABLE schema migrations.
+    # Skip this expensive loop when tables are already correctly owned.
     _ownership_sql = f"""
         DO $$ DECLARE r RECORD; BEGIN
           FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
@@ -250,7 +257,13 @@ def _ensure_postgres():
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "{app_user}";
     """
     for _db in [db_main, db_res]:
-        _pg(_db, _ownership_sql)
+        _wrong = _pg_value(
+            f"SELECT COUNT(*) FROM pg_tables "
+            f"WHERE schemaname='public' AND tableowner != '{app_user}'"
+        )
+        if _wrong and _wrong != "0":
+            print(f"[Bootstrap] Fixing table ownership in {_db}...")
+            _pg(_db, _ownership_sql)
 
     print("[Bootstrap] PostgreSQL ready")
 
