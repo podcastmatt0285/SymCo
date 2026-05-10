@@ -96,16 +96,37 @@ _restore() {
 _restore "$DB_MAIN" "backups/wadsworth.sql"     "wadsworth_backup.sql"
 _restore "$DB_RES"  "backups/reserve_banks.sql"  "reserve_banks_backup.sql"
 
-# ── 6. Grant privileges to app user (must run AFTER restore) ─────────────────
-# pg_dump --no-owner --no-privileges strips grants, so we re-apply them here.
-echo "  Granting table privileges to '$APP_USER'..."
+# ── 6. Transfer ownership + grant privileges (must run AFTER restore) ────────
+# pg_dump --no-owner restores tables owned by postgres. Transfer ownership to
+# the app user so it can ALTER TABLE for schema migrations, then grant access.
+echo "  Transferring table ownership to '$APP_USER'..."
+
+_transfer_ownership() {
+    local db="$1"
+    sudo -u postgres psql "$db" -c "
+DO \$\$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public' LOOP
+    EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO \"$APP_USER\"';
+  END LOOP;
+  FOR r IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema='public' LOOP
+    EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequence_name) || ' OWNER TO \"$APP_USER\"';
+  END LOOP;
+END
+\$\$;
+"
+}
+
+_transfer_ownership "$DB_MAIN"
+_transfer_ownership "$DB_RES"
+
+echo "  Granting default privileges to '$APP_USER'..."
 sudo -u postgres psql "$DB_MAIN" -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"$APP_USER\"; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"$APP_USER\";"
 sudo -u postgres psql "$DB_RES"  -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"$APP_USER\"; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"$APP_USER\";"
-
-# Ensure future tables (from migrations) are also accessible
 sudo -u postgres psql "$DB_MAIN" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"$APP_USER\"; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"$APP_USER\";"
 sudo -u postgres psql "$DB_RES"  -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO \"$APP_USER\"; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO \"$APP_USER\";"
-echo "  [ok] Privileges granted"
+echo "  [ok] Ownership transferred and privileges granted"
 
 # ── 7. Create venv and install Python dependencies ───────────────────────────
 echo "  Creating virtual environment..."
