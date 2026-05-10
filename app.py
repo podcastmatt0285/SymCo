@@ -178,8 +178,37 @@ def _start_tunnel():
         print("[Bootstrap] cloudflared unavailable — tunnel not started")
 
 
+def _ensure_system_deps():
+    """Install required system packages if any are missing."""
+    import shutil
+
+    needed = []
+
+    # python3-venv: required to create the venv
+    r = subprocess.run([sys.executable, "-c", "import venv"], capture_output=True)
+    if r.returncode != 0:
+        needed.append("python3-venv")
+
+    # postgresql + client library: required for DB and psycopg2
+    if not shutil.which("psql"):
+        needed.extend(["postgresql", "postgresql-client"])
+    if not shutil.which("pg_config"):
+        needed.append("libpq-dev")
+
+    # git: needed if the repo wasn't cloned yet (edge case)
+    if not shutil.which("git"):
+        needed.append("git")
+
+    if needed:
+        print(f"[Bootstrap] Installing system packages: {' '.join(needed)}")
+        subprocess.run(["sudo", "apt-get", "update", "-qq"], check=True)
+        subprocess.run(["sudo", "apt-get", "install", "-y", "-qq"] + needed, check=True)
+        print("[Bootstrap] System packages ready")
+
+
 _load_dotenv()
-_ensure_venv()      # may os.execv() — code below only runs once inside venv
+_ensure_system_deps()   # installs apt packages before venv creation
+_ensure_venv()          # may os.execv() — code below only runs once inside venv
 _ensure_postgres()
 _start_tunnel()
 
