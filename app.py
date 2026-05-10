@@ -1,13 +1,189 @@
-import subprocess
+import os
 import sys
+import subprocess
 
-# Ensure all dependencies are installed before anything else imports them.
-# Uses the same interpreter that's running this file so it targets the
-# correct venv / site-packages regardless of how the server was launched.
-subprocess.run(
-    [sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--quiet"],
-    check=False,
-)
+# ═══════════════════════════════════════════════════════════════════════════════
+# BOOTSTRAP — runs before any third-party imports
+#   1. Load .env into environment
+#   2. Create venv and re-exec inside it (idempotent)
+#   3. Ensure PostgreSQL is running with DBs, backups restored, permissions set
+#   4. Start Cloudflare tunnel in background
+#
+# Result: `python3 app.py` is the only command needed on a fresh clone.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _load_dotenv():
+    env_path = os.path.join(_HERE, ".env")
+    if not os.path.exists(env_path):
+        return
+    with open(env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if not _line or _line.startswith("#") or "=" not in _line:
+                continue
+            _k, _, _v = _line.partition("=")
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+
+
+def _ensure_venv():
+    """Create venv if needed and re-exec inside it (replaces current process)."""
+    venv_dir = os.path.join(_HERE, "venv")
+    venv_py  = os.path.join(venv_dir, "bin", "python3")
+    if sys.executable.startswith(venv_dir):
+        return  # already running inside venv
+    if not os.path.exists(venv_py):
+        print("[Bootstrap] Creating virtual environment...")
+        subprocess.run([sys.executable, "-m", "venv", venv_dir], check=True)
+        print("[Bootstrap] Installing dependencies...")
+        subprocess.run(
+            [venv_py, "-m", "pip", "install", "-r",
+             os.path.join(_HERE, "requirements.txt"), "--quiet"],
+            check=True,
+        )
+    print("[Bootstrap] Restarting inside venv...")
+    os.execv(venv_py, [venv_py] + sys.argv)  # replaces current process; nothing below runs
+
+
+def _ensure_postgres():
+    """Idempotently start PostgreSQL, create user/DBs, restore backups, fix ownership."""
+    import re, shutil
+    if not shutil.which("psql"):
+        print("[Bootstrap] psql not found — skipping DB setup (install postgresql first)")
+        return
+
+    db_url  = os.environ.get("DATABASE_URL",         "postgresql://symco:symco@localhost:5432/wadsworth")
+    res_url = os.environ.get("RESERVE_DATABASE_URL", "postgresql://symco:symco@localhost:5432/reserve_banks")
+
+    def _parse(url):
+        m = re.match(r"postgresql://([^:@]+):([^@]*)@[^/]+/(\w+)", url)
+        return (m.group(1), m.group(2), m.group(3)) if m else ("symco", "symco", url.rsplit("/", 1)[-1])
+
+    app_user, app_pass, db_main = _parse(db_url)
+    _,        _,        db_res  = _parse(res_url)
+
+    def _pg(db, sql):
+        subprocess.run(
+            ["sudo", "-u", "postgres", "psql", "-v", "ON_ERROR_STOP=0", "-q", db, "-c", sql],
+            capture_output=True,
+        )
+
+    def _pg_value(sql):
+        r = subprocess.run(["sudo", "-u", "postgres", "psql", "-tAc", sql],
+                           capture_output=True, text=True)
+        return r.stdout.strip()
+
+    # Start PostgreSQL (no-op if already running)
+    subprocess.run(["sudo", "service", "postgresql", "start"], capture_output=True)
+
+    # Create app user if missing
+    _pg("postgres", f"""
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{app_user}') THEN
+            CREATE USER "{app_user}" WITH PASSWORD '{app_pass}';
+          END IF;
+        END $$;
+    """)
+
+    # Create databases if missing
+    for _db in [db_main, db_res]:
+        if _pg_value(f"SELECT 1 FROM pg_database WHERE datname='{_db}'") != "1":
+            subprocess.run(
+                ["sudo", "-u", "postgres", "psql", "-c",
+                 f'CREATE DATABASE "{_db}" OWNER "{app_user}";'],
+                capture_output=True,
+            )
+
+    # Restore from backups only when DB is empty (fresh install)
+    def _table_count(dbname):
+        r = subprocess.run(
+            ["sudo", "-u", "postgres", "psql", "-tAc",
+             "SELECT COUNT(*) FROM pg_tables WHERE schemaname='public'", dbname],
+            capture_output=True, text=True,
+        )
+        try:    return int(r.stdout.strip())
+        except: return -1
+
+    def _restore(dbname, *paths):
+        if _table_count(dbname) > 0:
+            return  # already populated
+        for p in paths:
+            if os.path.exists(p):
+                print(f"[Bootstrap] Restoring {dbname} from {os.path.basename(p)}...")
+                with open(p) as fh:
+                    subprocess.run(["sudo", "-u", "postgres", "psql", dbname],
+                                   stdin=fh, capture_output=True)
+                break
+
+    _restore(db_main,
+             os.path.join(_HERE, "backups", "wadsworth.sql"),
+             os.path.join(_HERE, "wadsworth_backup.sql"))
+    _restore(db_res,
+             os.path.join(_HERE, "backups", "reserve_banks.sql"),
+             os.path.join(_HERE, "reserve_banks_backup.sql"))
+
+    # Transfer table ownership to app user + grant all (idempotent, safe to re-run every start)
+    # Required because pg_dump --no-owner restores tables owned by postgres.
+    # symco must own tables to run ALTER TABLE for schema migrations.
+    _ownership_sql = f"""
+        DO $$ DECLARE r RECORD; BEGIN
+          FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+            EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO "{app_user}"';
+          END LOOP;
+          FOR r IN SELECT sequence_name FROM information_schema.sequences
+                   WHERE sequence_schema = 'public' LOOP
+            EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequence_name) || ' OWNER TO "{app_user}"';
+          END LOOP;
+        END $$;
+        GRANT ALL PRIVILEGES ON ALL TABLES    IN SCHEMA public TO "{app_user}";
+        GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "{app_user}";
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO "{app_user}";
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "{app_user}";
+    """
+    for _db in [db_main, db_res]:
+        _pg(_db, _ownership_sql)
+
+    print("[Bootstrap] PostgreSQL ready")
+
+
+def _start_tunnel():
+    """Start Cloudflare tunnel in background; auto-installs cloudflared if missing."""
+    import shutil
+    token = os.environ.get(
+        "CLOUDFLARE_TUNNEL_TOKEN",
+        "eyJhIjoiYWU3MmMxMWVlNGZlM2IwZDk0MWEzNDE4NGYyZTg0ZDkiLCJ0IjoiMGJjYTI0MTItYzU0Ni00NWU4LWI2ZGItMWU4ZDE4ODMzOGNmIiwicyI6Ik1EYzRZall6Tm1NdFlXRTVOaTAwTkdNM0xUbGpaamt0TTJlbE9XVm1Nelk0TlRRNSJ9",
+    )
+    if not token:
+        return
+    if not shutil.which("cloudflared"):
+        print("[Bootstrap] Installing cloudflared...")
+        deb = "/tmp/cloudflared.deb"
+        r = subprocess.run(
+            ["curl", "-fsSL",
+             "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb",
+             "-o", deb],
+            capture_output=True,
+        )
+        if r.returncode == 0:
+            subprocess.run(["sudo", "dpkg", "-i", deb], capture_output=True)
+    if shutil.which("cloudflared"):
+        proc = subprocess.Popen(
+            ["cloudflared", "tunnel", "run", "--token", token],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        print(f"[Bootstrap] Cloudflare tunnel started (pid {proc.pid})")
+    else:
+        print("[Bootstrap] cloudflared unavailable — tunnel not started")
+
+
+_load_dotenv()
+_ensure_venv()      # may os.execv() — code below only runs once inside venv
+_ensure_postgres()
+_start_tunnel()
+
+# ═══════════════════════════════════════════════════════════════════════════════
 
 import asyncio
 import os
