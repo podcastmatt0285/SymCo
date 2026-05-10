@@ -52,12 +52,12 @@ fi
 echo "=== Step 1: Install Bubblewrap CLI ==="
 npm config set prefix "$HOME/.npm-global"
 export PATH="$HOME/.npm-global/bin:$PATH"
+export NO_UPDATE_NOTIFIER=1
 if ! which bubblewrap &>/dev/null; then
     npm install -g @bubblewrap/cli --registry https://registry.npmmirror.com
     which bubblewrap || { echo "bubblewrap not found — install failed"; exit 1; }
-else
-    echo "  bubblewrap already installed ($(bubblewrap --version 2>/dev/null || echo 'version unknown'))"
 fi
+echo "  bubblewrap ready"
 
 echo "=== Step 2: Create/reuse signing keystore ==="
 # Must happen BEFORE bubblewrap init so we can pass it as flags and avoid
