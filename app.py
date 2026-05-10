@@ -153,8 +153,10 @@ def _pg_start():
     for cmd in (
         ["sudo", "service", "postgresql", "start"],
         ["sudo", "systemctl", "start", "postgresql"],
+        ["sudo", "systemctl", "start", "postgresql@16-main"],
         ["sudo", "systemctl", "start", "postgresql@15-main"],
         ["sudo", "systemctl", "start", "postgresql@14-main"],
+        ["sudo", "systemctl", "start", "postgresql@13-main"],
     ):
         r = subprocess.run(cmd, capture_output=True)
         if r.returncode == 0:
@@ -184,8 +186,8 @@ def _ensure_postgres():
             capture_output=True,
         )
 
-    def _pg_value(sql):
-        r = subprocess.run(["sudo", "-u", "postgres", "psql", "-tAc", sql],
+    def _pg_value(sql, db="postgres"):
+        r = subprocess.run(["sudo", "-u", "postgres", "psql", db, "-tAc", sql],
                            capture_output=True, text=True)
         return r.stdout.strip()
 
@@ -257,9 +259,11 @@ def _ensure_postgres():
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "{app_user}";
     """
     for _db in [db_main, db_res]:
+        # Must pass _db explicitly — pg_tables only shows the current DB's tables
         _wrong = _pg_value(
             f"SELECT COUNT(*) FROM pg_tables "
-            f"WHERE schemaname='public' AND tableowner != '{app_user}'"
+            f"WHERE schemaname='public' AND tableowner != '{app_user}'",
+            _db,
         )
         if _wrong and _wrong != "0":
             print(f"[Bootstrap] Fixing table ownership in {_db}...")
