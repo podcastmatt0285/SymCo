@@ -83,10 +83,9 @@ echo "  (must match assetlinks.json in app.py — update it if this is a new key
 echo "=== Step 3: Generate TWA project ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
 
-# Pass keystore path, alias, and password so bubblewrap never prompts.
+# Use `yes` to answer all bubblewrap prompts automatically (SDK install, terms, etc).
 # Actual signing is done by Gradle — bubblewrap build is never called.
-# If bubblewrap still asks anything interactively, pipe Enter to accept defaults.
-printf '\n' | bubblewrap init \
+yes | bubblewrap init \
   --manifest "https://${DOMAIN}/manifest.json" \
   --directory . \
   --packageId "${PACKAGE}" \
@@ -97,16 +96,7 @@ printf '\n' | bubblewrap init \
   --signingKeyAlias "android" \
   --signingKeyPassType "file" \
   --signingKeyStorePassword "${KEY_PASS}" \
-  --signingKeyPassword "${KEY_PASS}" || \
-printf '\n' | bubblewrap init \
-  --manifest "https://${DOMAIN}/manifest.json" \
-  --directory . \
-  --packageId "${PACKAGE}" \
-  --name "${APP_NAME}" \
-  --appVersionCode "${VERSION_CODE}" \
-  --appVersionName "${VERSION_NAME}" \
-  --signingKeyPath "${KEYSTORE_ABS}" \
-  --signingKeyAlias "android"
+  --signingKeyPassword "${KEY_PASS}"
 
 echo "=== Step 3b: Inject widget + notification-sound files ==="
 
