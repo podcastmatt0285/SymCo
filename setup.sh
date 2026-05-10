@@ -84,9 +84,11 @@ _restore() {
 _restore "$DB_MAIN" "backups/wadsworth.sql"     "wadsworth_backup.sql"
 _restore "$DB_RES"  "backups/reserve_banks.sql"  "reserve_banks_backup.sql"
 
-# ── 5. Install Python dependencies ────────────────────────────────────────────
+# ── 5. Create venv and install Python dependencies ───────────────────────────
+echo "  Creating virtual environment..."
+python3 -m venv venv
 echo "  Installing Python packages..."
-python3 -m pip install -r requirements.txt --quiet
+venv/bin/pip install -r requirements.txt --quiet
 echo "  [ok] Python packages installed"
 
 # ── Done ──────────────────────────────────────────────────────────────────────
@@ -94,7 +96,7 @@ echo ""
 echo "=== Setup complete ==="
 echo ""
 echo "  Start the server:"
-echo "    cd $PWD && python3 app.py"
+echo "    cd $PWD && source venv/bin/activate && python3 app.py"
 echo ""
 echo "  To back up databases before a future wipe:"
 echo "    cd $PWD && ./backup.sh"
