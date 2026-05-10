@@ -91,12 +91,16 @@ rm -rf twa-project && mkdir twa-project && cd twa-project
 #   5+. All remaining prompts      ← accept defaults with Enter
 #
 # Detect whether the SDK already exists so we know whether to send y/y first.
+# bubblewrap downloads cmdline-tools on first run; build-tools/platforms only
+# appear after Gradle runs sdkmanager, so we must check for cmdline-tools.
 _bw_sdk="${HOME}/.bubblewrap/android_sdk"
-if [ -d "${_bw_sdk}/build-tools" ] || [ -d "${_bw_sdk}/platforms" ]; then
+if [ -d "${_bw_sdk}/cmdline-tools" ] || [ -d "${_bw_sdk}/tools" ] || \
+   [ -d "${_bw_sdk}/build-tools" ] || [ -d "${_bw_sdk}/platforms" ]; then
     _SDK_INSTALLED=1
 else
     _SDK_INSTALLED=0
 fi
+echo "  SDK installed: ${_SDK_INSTALLED} (checked ${_bw_sdk})"
 
 {
     if [ "${_SDK_INSTALLED}" -eq 0 ]; then
