@@ -52,8 +52,12 @@ fi
 echo "=== Step 1: Install Bubblewrap CLI ==="
 npm config set prefix "$HOME/.npm-global"
 export PATH="$HOME/.npm-global/bin:$PATH"
-npm install -g @bubblewrap/cli
-which bubblewrap || { echo "bubblewrap not found — install failed"; exit 1; }
+if ! which bubblewrap &>/dev/null; then
+    npm install -g @bubblewrap/cli
+    which bubblewrap || { echo "bubblewrap not found — install failed"; exit 1; }
+else
+    echo "  bubblewrap already installed ($(bubblewrap --version 2>/dev/null || echo 'version unknown'))"
+fi
 
 echo "=== Step 2: Create/reuse signing keystore ==="
 # Must happen BEFORE bubblewrap init so we can pass it as flags and avoid
@@ -79,9 +83,22 @@ echo "  (must match assetlinks.json in app.py — update it if this is a new key
 echo "=== Step 3: Generate TWA project ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
 
-# Pass keystore path and alias so bubblewrap never prompts for keystore info.
-# Actual signing is done by Gradle in the next step, not by bubblewrap build.
-bubblewrap init \
+# Pass keystore path, alias, and password so bubblewrap never prompts.
+# Actual signing is done by Gradle — bubblewrap build is never called.
+# If bubblewrap still asks anything interactively, pipe Enter to accept defaults.
+printf '\n' | bubblewrap init \
+  --manifest "https://${DOMAIN}/manifest.json" \
+  --directory . \
+  --packageId "${PACKAGE}" \
+  --name "${APP_NAME}" \
+  --appVersionCode "${VERSION_CODE}" \
+  --appVersionName "${VERSION_NAME}" \
+  --signingKeyPath "${KEYSTORE_ABS}" \
+  --signingKeyAlias "android" \
+  --signingKeyPassType "file" \
+  --signingKeyStorePassword "${KEY_PASS}" \
+  --signingKeyPassword "${KEY_PASS}" || \
+printf '\n' | bubblewrap init \
   --manifest "https://${DOMAIN}/manifest.json" \
   --directory . \
   --packageId "${PACKAGE}" \
@@ -202,7 +219,7 @@ fi
 
 # Notification sound — copy from the live static directory so it matches
 # whatever sound the admin uploaded via the dashboard.
-SOUND_SRC="$(cd "$(dirname "$0")/.." && pwd)/static/sounds/notification.mp3"
+SOUND_SRC="${SCRIPT_DIR}/../static/sounds/notification.mp3"
 if [ -f "$SOUND_SRC" ]; then
     cp "$SOUND_SRC" app/src/main/res/raw/notification.mp3
     echo "  Copied notification.mp3 → res/raw/"
