@@ -16,32 +16,24 @@ set -e
 
 cd "$(dirname "$0")"
 
-# Read connection strings — fall back to defaults matching database.py
-DB_URL="${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/wadsworth}"
-RESERVE_URL="${RESERVE_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/reserve_banks}"
-
-# Parse each URL into pg_dump args
-_pgdump() {
-    local url="$1" outfile="$2"
-    # postgresql://user:pass@host:port/dbname
-    local user pass host port dbname
-    user=$(echo "$url"   | sed -n 's|.*://\([^:]*\):.*|\1|p')
-    pass=$(echo "$url"   | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
-    host=$(echo "$url"   | sed -n 's|.*@\([^:/]*\).*|\1|p')
-    port=$(echo "$url"   | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
-    dbname=$(echo "$url" | sed -n 's|.*/\([^?]*\)|\1|p')
-
-    PGPASSWORD="$pass" pg_dump \
-        -h "$host" -p "$port" -U "$user" \
-        --clean --if-exists --no-owner --no-privileges \
-        "$dbname" > "$outfile"
-    echo "  Dumped $dbname → $outfile ($(wc -c < "$outfile" | tr -d ' ') bytes)"
+_dbname() {
+    echo "$1" | sed -n 's|.*/\([^?]*\)|\1|p'
 }
+
+DB_MAIN=$(_dbname "${DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/wadsworth}")
+DB_RES=$(_dbname  "${RESERVE_DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/reserve_banks}")
 
 echo "=== Wadsworth DB Backup — $(date -u '+%Y-%m-%d %H:%M:%S UTC') ==="
 
-_pgdump "$DB_URL"      "backups/wadsworth.sql"
-_pgdump "$RESERVE_URL" "backups/reserve_banks.sql"
+sudo -u postgres pg_dump \
+    --clean --if-exists --no-owner --no-privileges \
+    "$DB_MAIN" > backups/wadsworth.sql
+echo "  Dumped $DB_MAIN → backups/wadsworth.sql ($(wc -c < backups/wadsworth.sql | tr -d ' ') bytes)"
+
+sudo -u postgres pg_dump \
+    --clean --if-exists --no-owner --no-privileges \
+    "$DB_RES" > backups/reserve_banks.sql
+echo "  Dumped $DB_RES → backups/reserve_banks.sql ($(wc -c < backups/reserve_banks.sql | tr -d ' ') bytes)"
 
 # Commit and push
 git add backups/wadsworth.sql backups/reserve_banks.sql

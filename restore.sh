@@ -13,24 +13,14 @@ set -e
 
 cd "$(dirname "$0")"
 
-DB_URL="${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/wadsworth}"
-RESERVE_URL="${RESERVE_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/reserve_banks}"
+_dbname() {
+    echo "$1" | sed -n 's|.*/\([^?]*\)|\1|p'
+}
+
+DB_MAIN=$(_dbname "${DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/wadsworth}")
+DB_RES=$(_dbname  "${RESERVE_DATABASE_URL:-postgresql://wadsworth:wadsworth@localhost:5432/reserve_banks}")
 
 TARGET="${1:-both}"
-
-_psql() {
-    local url="$1" sqlfile="$2"
-    local user pass host port dbname
-    user=$(echo "$url"   | sed -n 's|.*://\([^:]*\):.*|\1|p')
-    pass=$(echo "$url"   | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
-    host=$(echo "$url"   | sed -n 's|.*@\([^:/]*\).*|\1|p')
-    port=$(echo "$url"   | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
-    dbname=$(echo "$url" | sed -n 's|.*/\([^?]*\)|\1|p')
-
-    echo "  Restoring $dbname from $sqlfile..."
-    PGPASSWORD="$pass" psql -h "$host" -p "$port" -U "$user" "$dbname" < "$sqlfile"
-    echo "  Done."
-}
 
 echo "=== Wadsworth DB Restore — $(date -u '+%Y-%m-%d %H:%M:%S UTC') ==="
 echo "WARNING: This will overwrite live data. Ctrl-C to cancel. Continuing in 5s..."
@@ -38,12 +28,16 @@ sleep 5
 
 if [[ "$TARGET" == "both" || "$TARGET" == "wadsworth" ]]; then
     [[ -f backups/wadsworth.sql ]] || { echo "ERROR: backups/wadsworth.sql not found"; exit 1; }
-    _psql "$DB_URL" "backups/wadsworth.sql"
+    echo "  Restoring $DB_MAIN..."
+    sudo -u postgres psql "$DB_MAIN" < backups/wadsworth.sql
+    echo "  Done."
 fi
 
 if [[ "$TARGET" == "both" || "$TARGET" == "reserve_banks" ]]; then
     [[ -f backups/reserve_banks.sql ]] || { echo "ERROR: backups/reserve_banks.sql not found"; exit 1; }
-    _psql "$RESERVE_URL" "backups/reserve_banks.sql"
+    echo "  Restoring $DB_RES..."
+    sudo -u postgres psql "$DB_RES" < backups/reserve_banks.sql
+    echo "  Done."
 fi
 
 echo "=== Restore complete ==="

@@ -67,27 +67,22 @@ echo "  [ok] Databases ready"
 
 # ── 4. Restore databases ──────────────────────────────────────────────────────
 _restore() {
-    local url="$1" primary="$2" fallback="$3"
-    local user pass host port dbname
-    user=$(_field "$url" user); pass=$(_field "$url" pass)
-    host=$(_field "$url" host); port=$(_field "$url" port)
-    dbname=$(_field "$url" dbname)
-
+    local dbname="$1" primary="$2" fallback="$3"
     local sqlfile=""
     [ -f "$primary" ]  && sqlfile="$primary"
     [ -z "$sqlfile" ] && [ -f "$fallback" ] && sqlfile="$fallback"
 
     if [ -n "$sqlfile" ]; then
         echo "  Restoring '$dbname' from $sqlfile..."
-        PGPASSWORD="$pass" psql -h "$host" -p "$port" -U "$user" "$dbname" < "$sqlfile"
+        sudo -u postgres psql "$dbname" < "$sqlfile"
         echo "  [ok] '$dbname' restored"
     else
         echo "  [warn] No backup found for '$dbname' — starting empty (app will create tables)"
     fi
 }
 
-_restore "$DB_URL"  "backups/wadsworth.sql"     "wadsworth_backup.sql"
-_restore "$RES_URL" "backups/reserve_banks.sql"  "reserve_banks_backup.sql"
+_restore "$DB_MAIN" "backups/wadsworth.sql"     "wadsworth_backup.sql"
+_restore "$DB_RES"  "backups/reserve_banks.sql"  "reserve_banks_backup.sql"
 
 # ── 5. Install Python dependencies ────────────────────────────────────────────
 echo "  Installing Python packages..."
