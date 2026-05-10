@@ -80,46 +80,71 @@ FINGERPRINT=$(keytool -list -v -keystore "${KEYSTORE_ABS}" -alias android \
 echo "  SHA-256: ${FINGERPRINT}"
 echo "  (must match assetlinks.json in app.py — update it if this is a new keystore)"
 
-echo "=== Step 3: Generate TWA project ==="
+echo "=== Step 3: Generate TWA project (no prompts — write twa-manifest.json directly) ==="
 rm -rf twa-project && mkdir twa-project && cd twa-project
 
-# Bubblewrap init prompts in order:
-#   1. Install Android SDK? (y/n)  ← only on a fresh machine with no SDK
-#   2. Agree to SDK terms? (y/N)   ← only on a fresh machine with no SDK
-#   3. Domain:                     ← must be the real domain, not "y"
-#   4. URL path:                   ← must be "/"
-#   5+. All remaining prompts      ← accept defaults with Enter
-#
-# Detect whether the SDK already exists so we know whether to send y/y first.
-# bubblewrap downloads cmdline-tools on first run; build-tools/platforms only
-# appear after Gradle runs sdkmanager, so we must check for cmdline-tools.
-_bw_sdk="${HOME}/.bubblewrap/android_sdk"
-if [ -d "${_bw_sdk}/cmdline-tools" ] || [ -d "${_bw_sdk}/tools" ] || \
-   [ -d "${_bw_sdk}/build-tools" ] || [ -d "${_bw_sdk}/platforms" ]; then
-    _SDK_INSTALLED=1
-else
-    _SDK_INSTALLED=0
-fi
-echo "  SDK installed: ${_SDK_INSTALLED} (checked ${_bw_sdk})"
-
+# Write twa-manifest.json with all values hardcoded. This bypasses `bubblewrap init`
+# and its 20+ interactive prompts entirely. `bubblewrap update` reads this file and
+# generates the full Android project structure from templates — no user input, no
+# network calls, no SDK required for this step.
+cat > twa-manifest.json << TWAMF
 {
-    if [ "${_SDK_INSTALLED}" -eq 0 ]; then
-        printf 'y\ny\n'          # SDK install consent + terms agreement
-    fi
-    printf '%s\n/\n' "${DOMAIN}" # Domain and URL path with real values
-    yes ''                       # Accept all remaining prompts with Enter
-} | NO_UPDATE_NOTIFIER=1 bubblewrap init \
-  --manifest "https://${DOMAIN}/manifest.json" \
-  --directory . \
-  --packageId "${PACKAGE}" \
-  --name "${APP_NAME}" \
-  --appVersionCode "${VERSION_CODE}" \
-  --appVersionName "${VERSION_NAME}" \
-  --signingKeyPath "${KEYSTORE_ABS}" \
-  --signingKeyAlias "android" \
-  --signingKeyPassType "file" \
-  --signingKeyStorePassword "${KEY_PASS}" \
-  --signingKeyPassword "${KEY_PASS}"
+  "packageId": "${PACKAGE}.twa",
+  "host": "${DOMAIN}",
+  "name": "Wadsworth Economic Tycoon Simulator",
+  "launcherName": "Wadsworth",
+  "display": "fullscreen",
+  "themeColor": "#020617",
+  "themeColorDark": "#020617",
+  "navigationColor": "#020617",
+  "navigationColorDark": "#020617",
+  "navigationDividerColor": "#020617",
+  "navigationDividerColorDark": "#020617",
+  "backgroundColor": "#020617",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://${DOMAIN}/static/icons/icon-512.png",
+  "maskableIconUrl": "https://${DOMAIN}/static/icons/android/launchericon-512x512.png",
+  "monochromeIconUrl": "https://${DOMAIN}/static/icons/android/launchericon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "${KEYSTORE_ABS}",
+    "alias": "android"
+  },
+  "appVersion": "${VERSION_NAME}",
+  "appVersionName": "${VERSION_NAME}",
+  "appVersionCode": ${VERSION_CODE},
+  "shortcuts": [
+    { "name": "Businesses", "shortName": "Biz",   "url": "https://${DOMAIN}/businesses", "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" },
+    { "name": "Market",     "shortName": "Market", "url": "https://${DOMAIN}/market",     "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" },
+    { "name": "Banks",      "shortName": "Banks",  "url": "https://${DOMAIN}/banks",      "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" },
+    { "name": "P2P",        "shortName": "P2P",    "url": "https://${DOMAIN}/p2p",        "chosenIconUrl": "https://${DOMAIN}/static/icons/icon-192.png" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://${DOMAIN}/manifest.json",
+  "fallbackType": "customtabs",
+  "features": { "playBilling": { "enabled": false } },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://${DOMAIN}/",
+  "minSdkVersion": 21,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": ["focus-existing", "auto"],
+  "displayOverride": ["window-controls-overlay", "fullscreen"]
+}
+TWAMF
+echo "  twa-manifest.json written"
+
+# Generate the Android project from the manifest. No prompts, no network, no SDK needed.
+NO_UPDATE_NOTIFIER=1 bubblewrap update
+echo "  Android project files generated"
 
 echo "=== Step 3b: Inject widget + notification-sound files ==="
 
