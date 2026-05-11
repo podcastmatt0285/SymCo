@@ -153,10 +153,11 @@ def record_task_progress(player_id: int, metric: str, amount: float):
                 if prog.trophies_awarded > 0:
                     try:
                         from push_ux import send_push_notification
+                        _word = "trophy" if prog.trophies_awarded == 1 else "trophies"
                         send_push_notification(
                             player_id,
                             f"🏆 Task Complete: {ev.title}",
-                            f"You earned {prog.trophies_awarded} trophy{'s' if prog.trophies_awarded != 1 else ''}!",
+                            f"You earned {prog.trophies_awarded} {_word}!",
                             url="/events",
                             notif_type="general",
                             tag=f"task-complete-{ev.id}",
@@ -352,32 +353,40 @@ def _on_event_live(event_id: int):
     """Timer callback: fires when a scheduled event's starts_at arrives."""
     with _timers_lock:
         _pending_timers.pop(event_id, None)
+    title = None
+    body  = None
     db = SessionLocal()
     try:
         ev = db.query(GameEvent).filter(GameEvent.id == event_id).first()
-        if not ev or not ev.is_active:
-            return
-        title = f"🔴 {ev.title} is LIVE!"
-        body  = ev.description or "The event is now active — join in!"
+        if ev and ev.is_active:
+            title = f"🔴 {ev.title} is LIVE!"
+            body  = ev.description or "The event is now active — join in!"
+    except Exception as e:
+        print(f"[Events] _on_event_live DB error: {e}")
     finally:
         db.close()
-    broadcast_event_push(event_id, title, body, tag=f"event-{event_id}-live")
+    if title:
+        broadcast_event_push(event_id, title, body, tag=f"event-{event_id}-live")
 
 
 def _on_event_ended(event_id: int):
     """Timer callback: fires when an event's ends_at arrives."""
     with _timers_lock:
         _pending_timers.pop(event_id, None)
+    title = None
+    body  = None
     db = SessionLocal()
     try:
         ev = db.query(GameEvent).filter(GameEvent.id == event_id).first()
-        if not ev:
-            return
-        title = f"🏁 {ev.title} has ended"
-        body  = "The event is over — check /events for details."
+        if ev:
+            title = f"🏁 {ev.title} has ended"
+            body  = "The event is over — check /events for details."
+    except Exception as e:
+        print(f"[Events] _on_event_ended DB error: {e}")
     finally:
         db.close()
-    broadcast_event_push(event_id, title, body, tag=f"event-{event_id}-ended")
+    if title:
+        broadcast_event_push(event_id, title, body, tag=f"event-{event_id}-ended")
 
 
 def schedule_event_notifications(ev: GameEvent):

@@ -1007,6 +1007,23 @@ def place_order(
         db.commit()
         county_db.commit()
 
+        # Track meme buy volume in USD for weekly task progress — AFTER commit so
+        # we only record progress for trades that actually settled.
+        if order_type == "buy" and order.quantity_filled > 0 and player_id > 0:
+            try:
+                from counties import get_crypto_price_by_symbol as _gcps
+                _usd_per_native = _gcps(native_symbol) or 0.0
+                if _usd_per_native > 0:
+                    fills = db.query(MemeCoinTrade).filter(
+                        MemeCoinTrade.buy_order_id == order.id
+                    ).all()
+                    total_native = sum(t.native_volume for t in fills)
+                    if total_native > 0:
+                        from events import record_task_progress as _rtp
+                        _rtp(player_id, "meme_buy_usd", total_native * _usd_per_native)
+            except Exception:
+                pass
+
         remaining = order.quantity - order.quantity_filled
         if order.status == "filled":
             return order, f"Order fully filled! Traded {order.quantity_filled:.6f} {meme_symbol}."
@@ -1224,17 +1241,6 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
             fee_native=total_fee,
         )
         db.add(trade)
-
-        # Track meme buy volume in USD for weekly task progress
-        try:
-            from counties import get_crypto_price_by_symbol as _gcps
-            _usd_per_native = _gcps(native_symbol) or 0.0
-            if _usd_per_native > 0 and buyer_id > 0:
-                _usd_spent = native_volume * _usd_per_native
-                from events import record_task_progress as _rtp
-                _rtp(buyer_id, "meme_buy_usd", _usd_spent)
-        except Exception:
-            pass
 
         # --- Update meme coin price & stats ---
         old_price = meme.last_price or 0.0

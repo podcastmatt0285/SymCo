@@ -4722,6 +4722,7 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
     import urllib.parse
     try:
         from events import GameEvent, SessionLocal as _ES, broadcast_event_push, schedule_event_notifications
+        ev = None
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4751,6 +4752,7 @@ def admin_event_stop(session_token: Optional[str] = Cookie(None), event_id: int 
     import urllib.parse
     try:
         from events import GameEvent, SessionLocal as _ES, cancel_event_timers, broadcast_event_push
+        ev = None
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4778,6 +4780,7 @@ def admin_event_pause(session_token: Optional[str] = Cookie(None), event_id: int
     import urllib.parse
     try:
         from events import GameEvent, SessionLocal as _ES, cancel_event_timers
+        ev = None
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4814,6 +4817,7 @@ def admin_event_restart(
                 new_end = datetime.fromisoformat(ends_at.strip())
             except ValueError:
                 pass
+        ev = None
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4848,6 +4852,7 @@ def admin_event_add_time(session_token: Optional[str] = Cookie(None),
     from datetime import timedelta
     try:
         from events import GameEvent, SessionLocal as _ES, schedule_event_notifications
+        ev = None
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
