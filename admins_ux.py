@@ -4721,7 +4721,7 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
-        from events import GameEvent, SessionLocal as _ES
+        from events import GameEvent, SessionLocal as _ES, broadcast_event_push, schedule_event_notifications
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4730,11 +4730,15 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
                 ev.starts_at  = datetime.utcnow()
                 # Don't touch ends_at — preserve any existing deadline
                 edb.commit()
+                edb.refresh(ev)
                 msg = f"'{ev.title}' started."
             else:
                 msg = "Event not found."
         finally:
             edb.close()
+        if ev:
+            broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
+            schedule_event_notifications(ev)  # arms end timer if ends_at is future
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
@@ -4746,7 +4750,7 @@ def admin_event_stop(session_token: Optional[str] = Cookie(None), event_id: int 
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
-        from events import GameEvent, SessionLocal as _ES
+        from events import GameEvent, SessionLocal as _ES, cancel_event_timers, broadcast_event_push
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4759,6 +4763,9 @@ def admin_event_stop(session_token: Optional[str] = Cookie(None), event_id: int 
                 msg = "Event not found."
         finally:
             edb.close()
+        if ev:
+            cancel_event_timers(event_id)
+            broadcast_event_push(ev.id, f"🏁 {ev.title} has ended", "The event is over — check /events for details.", tag=f"event-{ev.id}-ended")
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
@@ -4770,7 +4777,7 @@ def admin_event_pause(session_token: Optional[str] = Cookie(None), event_id: int
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
-        from events import GameEvent, SessionLocal as _ES
+        from events import GameEvent, SessionLocal as _ES, cancel_event_timers
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4783,6 +4790,8 @@ def admin_event_pause(session_token: Optional[str] = Cookie(None), event_id: int
                 msg = "Event not found."
         finally:
             edb.close()
+        if ev:
+            cancel_event_timers(event_id)
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
@@ -4798,7 +4807,7 @@ def admin_event_restart(
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
-        from events import GameEvent, SessionLocal as _ES
+        from events import GameEvent, SessionLocal as _ES, cancel_event_timers, broadcast_event_push, schedule_event_notifications
         new_end = None
         if ends_at and ends_at.strip():
             try:
@@ -4813,12 +4822,17 @@ def admin_event_restart(
                 ev.starts_at = datetime.utcnow()
                 ev.ends_at   = new_end
                 edb.commit()
+                edb.refresh(ev)
                 end_str = new_end.strftime("%Y-%m-%d %H:%M UTC") if new_end else "no end date"
                 msg = f"'{ev.title}' restarted — {end_str}."
             else:
                 msg = "Event not found."
         finally:
             edb.close()
+        if ev:
+            cancel_event_timers(event_id)
+            broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
+            schedule_event_notifications(ev)  # arms end timer if new_end is future
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
@@ -4833,7 +4847,7 @@ def admin_event_add_time(session_token: Optional[str] = Cookie(None),
     import urllib.parse
     from datetime import timedelta
     try:
-        from events import GameEvent, SessionLocal as _ES
+        from events import GameEvent, SessionLocal as _ES, schedule_event_notifications
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
@@ -4841,12 +4855,15 @@ def admin_event_add_time(session_token: Optional[str] = Cookie(None),
                 base = ev.ends_at if ev.ends_at and ev.ends_at > datetime.utcnow() else datetime.utcnow()
                 ev.ends_at = base + timedelta(hours=hours)
                 edb.commit()
+                edb.refresh(ev)
                 label = f"{hours}h" if hours < 48 else f"{hours//24}d"
                 msg = f"Added {label} to '{ev.title}'. New end: {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC')}"
             else:
                 msg = "Event not found."
         finally:
             edb.close()
+        if ev:
+            schedule_event_notifications(ev)  # rearms end timer with updated ends_at
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
@@ -4869,10 +4886,11 @@ def admin_event_create(
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
-        from events import GameEvent, SessionLocal as _ES
+        from events import GameEvent, SessionLocal as _ES, broadcast_event_push, schedule_event_notifications
         def _parse(s):
             return datetime.fromisoformat(s) if s and s.strip() else None
-        start = _parse(starts_at) or datetime.utcnow()
+        now   = datetime.utcnow()
+        start = _parse(starts_at) or now
         end   = _parse(ends_at)
         edb = _ES()
         try:
@@ -4895,6 +4913,14 @@ def admin_event_create(
             msg = f"Event '{ev.title}' created (ID {ev.id})."
         finally:
             edb.close()
+        if start > now:
+            # Future event — arm timers; players notified when it goes live
+            schedule_event_notifications(ev)
+            broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}", ev.description or "A new event is coming — stay tuned!", tag=f"event-{ev.id}-scheduled")
+        else:
+            # Starts immediately — notify now and arm end timer
+            broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
+            schedule_event_notifications(ev)  # arms end timer if ends_at is future
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
@@ -4906,7 +4932,8 @@ def admin_event_delete(session_token: Optional[str] = Cookie(None), event_id: in
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
-        from events import GameEvent, PlayerTaskProgress, SessionLocal as _ES
+        from events import GameEvent, PlayerTaskProgress, SessionLocal as _ES, cancel_event_timers
+        cancel_event_timers(event_id)
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()

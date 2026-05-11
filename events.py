@@ -219,77 +219,12 @@ def get_player_level(player_id: int) -> dict:
     }
 
 
-# ── Lifecycle ─────────────────────────────────────────────────────────────────
+# ── Broadcast helper ──────────────────────────────────────────────────────────
 
-def initialize():
-    """Create all events tables."""
-    Base.metadata.create_all(bind=engine)
-
-
-# ── Push notifications ─────────────────────────────────────────────────────────
-
-def _fire_event_notifications(now):
-    """Broadcast push notifications for events going live or starting soon.
-    Called every 60 s from tick(). Uses push_rate_ok/mark for deduplication.
-    """
-    from datetime import timedelta
-    try:
-        from push_ux import send_push_notification, push_rate_ok, push_rate_mark
-        from auth import get_db, PushSubscription
-    except Exception as e:
-        print(f"[Events] notification import failed: {e}")
-        return
-
-    db = SessionLocal()
-    try:
-        candidates = db.query(GameEvent).filter(GameEvent.is_active == True).all()
-    finally:
-        db.close()
-
-    def _broadcast(ev, title, body, rate_key, cooldown_secs):
-        if not push_rate_ok(rate_key, cooldown_secs=cooldown_secs):
-            return
-        push_rate_mark(rate_key)
-        adb = get_db()
-        try:
-            pids = [r[0] for r in adb.query(PushSubscription.player_id).distinct().all()]
-        finally:
-            adb.close()
-        tag = rate_key.replace("_", "-")
-        for pid in pids:
-            try:
-                send_push_notification(pid, title, body, url="/events",
-                                       notif_type="general", tag=tag)
-            except Exception:
-                pass
-
-    for ev in candidates:
-        ends_ok = not ev.ends_at or ev.ends_at > now
-        desc    = ev.description or ""
-
-        if ev.starts_at <= now and ends_ok:
-            _broadcast(ev,
-                f"🔴 {ev.title} is LIVE!",
-                desc or "The event is now active — join in!",
-                f"event_{ev.id}_live", 82800)          # re-fires at most once per 23 h
-
-        elif ev.starts_at > now:
-            secs = (ev.starts_at - now).total_seconds()
-            if secs <= 3660:                            # within ~1 hour
-                _broadcast(ev,
-                    f"⏰ {ev.title} starts in 1 hour!",
-                    desc or "Get ready — the event starts soon!",
-                    f"event_{ev.id}_1h", 7200)
-            elif secs <= 86460:                         # within ~24 hours
-                _broadcast(ev,
-                    f"📅 {ev.title} starts tomorrow",
-                    desc or "Upcoming event — prepare now!",
-                    f"event_{ev.id}_24h", 82800)
-
-
-def broadcast_event_push(event_id: int, title: str, body: str) -> int:
-    """Send a push notification about event_id to every subscribed player.
-    Returns the number of players notified. Called from admin notify-all endpoint.
+def broadcast_event_push(event_id: int, title: str, body: str,
+                          tag: str = None) -> int:
+    """Send a push + in-game notification to every subscribed player.
+    Returns the count sent. Safe to call from any thread.
     """
     try:
         from push_ux import send_push_notification
@@ -299,12 +234,12 @@ def broadcast_event_push(event_id: int, title: str, body: str) -> int:
             pids = [r[0] for r in adb.query(PushSubscription.player_id).distinct().all()]
         finally:
             adb.close()
+        _tag = tag or f"event-{event_id}"
         sent = 0
         for pid in pids:
             try:
                 send_push_notification(pid, title, body, url="/events",
-                                       notif_type="general",
-                                       tag=f"event-{event_id}-manual")
+                                       notif_type="general", tag=_tag)
                 sent += 1
             except Exception:
                 pass
@@ -314,7 +249,111 @@ def broadcast_event_push(event_id: int, title: str, body: str) -> int:
         return 0
 
 
+# ── Event-driven notifications (threading.Timer, no polling) ──────────────────
+
+import threading as _threading
+
+_pending_timers: dict = {}      # event_id → [Timer, ...]
+_timers_lock = _threading.Lock()
+
+
+def cancel_event_timers(event_id: int):
+    """Cancel any scheduled notifications for this event (call on stop/delete)."""
+    with _timers_lock:
+        for t in _pending_timers.pop(event_id, []):
+            t.cancel()
+
+
+def _on_event_live(event_id: int):
+    """Timer callback: fires when a scheduled event's starts_at arrives."""
+    with _timers_lock:
+        _pending_timers.pop(event_id, None)
+    db = SessionLocal()
+    try:
+        ev = db.query(GameEvent).filter(GameEvent.id == event_id).first()
+        if not ev or not ev.is_active:
+            return
+        title = f"🔴 {ev.title} is LIVE!"
+        body  = ev.description or "The event is now active — join in!"
+    finally:
+        db.close()
+    broadcast_event_push(event_id, title, body, tag=f"event-{event_id}-live")
+
+
+def _on_event_ended(event_id: int):
+    """Timer callback: fires when an event's ends_at arrives."""
+    with _timers_lock:
+        _pending_timers.pop(event_id, None)
+    db = SessionLocal()
+    try:
+        ev = db.query(GameEvent).filter(GameEvent.id == event_id).first()
+        if not ev:
+            return
+        title = f"🏁 {ev.title} has ended"
+        body  = "The event is over — check /events for details."
+    finally:
+        db.close()
+    broadcast_event_push(event_id, title, body, tag=f"event-{event_id}-ended")
+
+
+def schedule_event_notifications(ev: GameEvent):
+    """Arm one-shot timers for a future event's starts_at and/or ends_at.
+    Call after create or restart. Cancels any existing timers first.
+    """
+    cancel_event_timers(ev.id)
+    now    = datetime.utcnow()
+    timers = []
+
+    if ev.starts_at and ev.starts_at > now:
+        delay = (ev.starts_at - now).total_seconds()
+        t = _threading.Timer(delay, _on_event_live, args=[ev.id])
+        t.daemon = True
+        t.start()
+        timers.append(t)
+        print(f"[Events] '{ev.title}' go-live notification in {delay/60:.1f} min")
+
+    if ev.ends_at and ev.ends_at > now:
+        delay = (ev.ends_at - now).total_seconds()
+        t = _threading.Timer(delay, _on_event_ended, args=[ev.id])
+        t.daemon = True
+        t.start()
+        timers.append(t)
+        print(f"[Events] '{ev.title}' end notification in {delay/60:.1f} min")
+
+    if timers:
+        with _timers_lock:
+            _pending_timers[ev.id] = timers
+
+
+# ── Lifecycle ─────────────────────────────────────────────────────────────────
+
+def _rearm_on_startup():
+    """After a server restart, reschedule timers for events not yet fired."""
+    try:
+        now = datetime.utcnow()
+        db  = SessionLocal()
+        try:
+            pending = db.query(GameEvent).filter(
+                GameEvent.is_active == True,
+            ).all()
+            for ev in pending:
+                # Only arm if something is still in the future
+                needs_live = ev.starts_at and ev.starts_at > now
+                needs_end  = ev.ends_at and ev.ends_at > now
+                if needs_live or needs_end:
+                    schedule_event_notifications(ev)
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[Events] rearm on startup failed: {e}")
+
+
+def initialize():
+    """Create all events tables, then rearm timers for any pending events."""
+    Base.metadata.create_all(bind=engine)
+    _rearm_on_startup()
+
+
 def tick(current_tick, now):
-    """Fire event notifications every 60 s."""
-    if current_tick % 60 == 0:
-        _fire_event_notifications(now)
+    """No-op — notifications are fired by admin actions and threading.Timer."""
+    pass
