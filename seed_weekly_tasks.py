@@ -46,10 +46,10 @@ WEEKLY_TASKS = [
     {
         "title":          "Tax Contributor",
         "description":    (
-            "Generate $15,000 in city sales tax from your sales in the market or "
-            "district market combined. Sell goods in a city that has a sales tax "
-            "rate configured — the tax deducted from your proceeds counts toward "
-            "this goal. Higher-tax cities help you reach the target faster."
+            "Accumulate $15,000 in sales tax deducted from your sell orders on "
+            "the market and district market combined. Sales tax is automatically "
+            "taken from your proceeds each time a sell order fills — no special "
+            "setup required. Sell more volume to reach the target faster."
         ),
         "duration_class": "weekly",
         "event_type":     "task",
