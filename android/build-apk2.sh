@@ -142,9 +142,14 @@ cat > twa-manifest.json << TWAMF
 TWAMF
 echo "  twa-manifest.json written"
 
-# Generate the Android project from the manifest. No prompts, no network, no SDK needed.
-NO_UPDATE_NOTIFIER=1 bubblewrap update
-echo "  Android project files generated"
+# Generate the Android project from the manifest.
+# bubblewrap update asks for a versionName then auto-increments versionCode
+# regardless of what's in twa-manifest.json — so we pipe the answer and then
+# patch app/build.gradle directly to set the version we actually want.
+echo "${VERSION_NAME}" | NO_UPDATE_NOTIFIER=1 bubblewrap update
+sed -i "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" app/build.gradle
+sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" app/build.gradle
+echo "  Android project generated: versionCode=${VERSION_CODE}, versionName=${VERSION_NAME}"
 
 echo "=== Step 3b: Inject widget + notification-sound files ==="
 
