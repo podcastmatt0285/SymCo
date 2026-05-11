@@ -1,18 +1,19 @@
 """
-land_restoration.py
-
-Land Efficiency Restoration system.
+land_restoration.py  —  Land Efficiency Restoration
 
 Rules:
-  - Eligible: plots with efficiency < 30% (not tutorial reward)
+  - Eligible: plots with efficiency < 30% (not tutorial reward, not already restoring)
   - One active restoration per player at a time; cannot pause, stop, or restart
-  - All eligible plots restored simultaneously at 500× the decay rate
-  - Target: 150% efficiency (buffer above 100%; wages are still floored at 1× base)
-  - Time to complete = time needed by the least efficient plot to reach 150%
-  - Cost per plot = wage_multiplier × $1,000 USD (converted to player's legal tender)
-  - Payment goes to the Federal Government immediately on start
+  - All eligible plots restored simultaneously at 500× the standard decay rate
+  - Target per plot = that plot's max_efficiency × 1.5
+      · First restoration: max 100% → target 150%
+      · Second:            max 150% → target 225%
+      · Third:             max 225% → target 337.5%  … and so on
+  - After completion max_efficiency is updated to the target, giving more headroom per cycle
+  - Wages are floored at 1× base even when efficiency exceeds 100% (no wage reduction above normal)
+  - Cost = wage_multiplier × $1,000 USD per plot at start (no discounts apply)
+  - Payment goes to the Federal Government immediately; logged as land_restoration transaction
   - 60-day cooldown after each restoration completes
-  - COO executive wages bonus and city wage_savings buff reduce cost (cap 40%)
 """
 
 import json
@@ -31,13 +32,13 @@ SessionLocal = sessionmaker(bind=engine)
 Base         = declarative_base()
 
 # ── Constants ──────────────────────────────────────────────────────────────────
-ELIGIBILITY_THRESHOLD     = 30.0        # efficiency % below which a plot is eligible
-RESTORATION_TARGET        = 150.0       # plots restored to 150% efficiency
-RESTORATION_COOLDOWN_DAYS = 60          # cooldown days after completion
-COST_PER_MULT_USD         = 1_000.0    # cost = wage_multiplier × $1 000 per plot
-WAGE_MULT_FLOOR           = 0.005       # matches business.py max(0.005, eff/100)
-EFFICIENCY_DECAY_PER_TICK = 0.00001 / 60   # matches land.py (% per second)
-RESTORATION_RATE_PER_TICK = 500 * EFFICIENCY_DECAY_PER_TICK  # 500× decay rate
+ELIGIBILITY_THRESHOLD     = 30.0          # plots below this % are eligible
+RESTORATION_MULTIPLIER    = 1.5           # target = max_efficiency × 1.5
+RESTORATION_COOLDOWN_DAYS = 60
+COST_PER_MULT_USD         = 1_000.0       # wage_multiplier × $1 000, no discounts
+WAGE_MULT_FLOOR           = 0.005         # matches business.py
+EFFICIENCY_DECAY_PER_TICK = 0.00001 / 60  # matches land.py (% per second)
+RESTORATION_RATE_PER_TICK = 500 * EFFICIENCY_DECAY_PER_TICK
 
 GOVERNMENT_PLAYER_ID = 0
 
@@ -47,8 +48,9 @@ class LandRestoration(Base):
     __tablename__ = "land_restorations"
     id               = Column(Integer, primary_key=True, autoincrement=True)
     player_id        = Column(Integer, nullable=False, index=True)
-    plot_ids_json    = Column(String, nullable=False)   # JSON: [1, 2, 3]
-    plot_starts_json = Column(String, nullable=False)   # JSON: {"1": 12.3, "2": 28.1}
+    plot_ids_json    = Column(String, nullable=False)   # JSON list of int plot IDs
+    plot_starts_json = Column(String, nullable=False)   # JSON {str(id): start_eff}
+    plot_targets_json= Column(String, nullable=False)   # JSON {str(id): target_eff}
     started_at       = Column(DateTime, default=datetime.utcnow)
     completes_at     = Column(DateTime, nullable=False)
     cooldown_until   = Column(DateTime, nullable=False)
@@ -63,13 +65,16 @@ def _db():
 
 def initialize():
     Base.metadata.create_all(engine)
+    # Ensure land_plots has the columns we need (land.py also does this, belt-and-suspenders)
     try:
         from database import run_ddl_migration
         from land import engine as land_engine
-        run_ddl_migration(
-            land_engine,
-            "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_restoring BOOLEAN DEFAULT FALSE"
-        )
+        for ddl in [
+            "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_restoring BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS max_efficiency REAL DEFAULT 100.0",
+            "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS restoration_target REAL",
+        ]:
+            run_ddl_migration(land_engine, ddl)
     except Exception as e:
         print(f"[LandRestoration] Migration warning: {e}")
     print("[LandRestoration] Initialized")
@@ -88,7 +93,6 @@ def get_active_restoration(player_id: int) -> Optional[LandRestoration]:
 
 
 def get_cooldown_until(player_id: int) -> Optional[datetime]:
-    """Return the cooldown expiry for the player's last completed restoration, or None."""
     db = _db()
     try:
         last = db.query(LandRestoration).filter(
@@ -103,62 +107,49 @@ def get_cooldown_until(player_id: int) -> Optional[datetime]:
 
 
 def get_eligible_plots(player_id: int):
-    """LandPlots owned by player with efficiency < 30%, not tutorial reward."""
+    """LandPlots owned by player with efficiency < 30%, not tutorial reward, not restoring."""
     from land import get_db as land_db_fn, LandPlot
     db = land_db_fn()
     try:
         return db.query(LandPlot).filter(
-            LandPlot.owner_id          == player_id,
-            LandPlot.efficiency        < ELIGIBILITY_THRESHOLD,
+            LandPlot.owner_id           == player_id,
+            LandPlot.efficiency         < ELIGIBILITY_THRESHOLD,
             LandPlot.is_tutorial_reward == False,
+            LandPlot.is_restoring       == False,
         ).all()
-    finally:
-        db.close()
-
-
-def get_all_restoring_plot_ids() -> List[int]:
-    """All plot IDs currently in an active restoration (for decay exclusion)."""
-    db = _db()
-    try:
-        rows = db.query(LandRestoration).filter(
-            LandRestoration.status == "active"
-        ).all()
-        ids: List[int] = []
-        for r in rows:
-            try:
-                ids.extend(json.loads(r.plot_ids_json))
-            except Exception:
-                pass
-        return ids
     finally:
         db.close()
 
 
 # ── Cost / time helpers ────────────────────────────────────────────────────────
-def calculate_plot_cost_usd(efficiency: float) -> float:
-    """wage_multiplier × $1 000 for one plot."""
-    eff_frac  = max(WAGE_MULT_FLOOR, efficiency / 100.0)
+def _plot_target(plot) -> float:
+    """Restoration target for this plot = current max_efficiency × 1.5."""
+    return getattr(plot, "max_efficiency", 100.0) * RESTORATION_MULTIPLIER
+
+
+def _plot_cost_usd(plot) -> float:
+    """wage_multiplier × $1 000.  No discounts."""
+    eff_frac  = max(WAGE_MULT_FLOOR, plot.efficiency / 100.0)
     wage_mult = 1.0 / eff_frac
     return wage_mult * COST_PER_MULT_USD
 
 
-def calculate_total_time_seconds(plots) -> float:
-    """Seconds needed for the least efficient plot to reach 150%."""
-    if not plots:
-        return 0.0
-    min_eff  = min(p.efficiency for p in plots)
-    distance = RESTORATION_TARGET - max(0.0, min_eff)
-    return distance / RESTORATION_RATE_PER_TICK
+def _plot_time_seconds(plot) -> float:
+    """Seconds to restore this specific plot from its current efficiency to its target."""
+    target   = _plot_target(plot)
+    distance = target - max(0.0, plot.efficiency)
+    return max(0.0, distance / RESTORATION_RATE_PER_TICK)
 
 
 def _fmt_duration(seconds: float) -> str:
     days  = int(seconds // 86400)
     hours = int((seconds % 86400) // 3600)
+    mins  = int((seconds % 3600) // 60)
     if days > 0:
-        return f"≈{days}d {hours}h"
+        return f"~{days}d {hours}h"
     if hours > 0:
-        return f"≈{hours}h"
-    return f"≈{int(seconds // 60)}m"
+        return f"~{hours}h {mins}m"
+    return f"~{mins}m"
 
 
 # ── Push notification ──────────────────────────────────────────────────────────
@@ -177,13 +168,13 @@ def _fire_push(player_id: int, title: str, body: str):
 # ── Start restoration ──────────────────────────────────────────────────────────
 def start_restoration(player_id: int) -> Tuple[bool, str]:
     """
-    Validate eligibility, charge the player, pay government, and create the
-    restoration record.  Returns (success, message).
+    Validate, charge the player, pay government, and begin the restoration job.
+    Returns (success, message).
     """
     # Cooldown check
     cooldown = get_cooldown_until(player_id)
     if cooldown:
-        days_left = int((cooldown - datetime.utcnow()).total_seconds() / 86400) + 1
+        days_left = max(1, int((cooldown - datetime.utcnow()).total_seconds() / 86400) + 1)
         return False, f"Restoration is on cooldown — {days_left} more day(s)."
 
     # Duplicate check
@@ -195,35 +186,14 @@ def start_restoration(player_id: int) -> Tuple[bool, str]:
     if not plots:
         return False, "No eligible plots (efficiency must be below 30%)."
 
-    plot_ids    = [p.id for p in plots]
-    plot_starts = {str(p.id): round(p.efficiency, 4) for p in plots}
-
-    # Base cost
-    total_cost_usd = sum(calculate_plot_cost_usd(p.efficiency) for p in plots)
-
-    # Executive discount (COO wages effect)
-    exec_discount = 0.0
-    try:
-        from executive import get_player_job_bonus, get_db as exec_db
-        _edb = exec_db()
-        exec_discount = get_player_job_bonus(_edb, player_id, "wages")
-        _edb.close()
-    except Exception:
-        pass
-
-    # City wage_savings buff
-    city_discount = 0.0
-    try:
-        from city_projects import get_city_production_buffs
-        city_discount = get_city_production_buffs(player_id).get("wage_savings", 0.0)
-    except Exception:
-        pass
-
-    discount       = min(0.40, exec_discount + city_discount)
-    total_cost_usd = total_cost_usd * (1.0 - discount)
+    plot_ids      = [p.id for p in plots]
+    plot_starts   = {str(p.id): round(p.efficiency, 4) for p in plots}
+    plot_targets  = {str(p.id): round(_plot_target(p), 4) for p in plots}
+    total_cost_usd = sum(_plot_cost_usd(p) for p in plots)
 
     # Fund check
-    from reserve_banks import can_afford_usd, spend_player_funds, credit_usd, fmt_usd, get_player_display_currency
+    from reserve_banks import (can_afford_usd, spend_player_funds,
+                                credit_usd, fmt_usd, get_player_display_currency)
     if not can_afford_usd(player_id, total_cost_usd):
         disp = get_player_display_currency(player_id)
         return False, f"Insufficient funds — need {fmt_usd(total_cost_usd, disp)}."
@@ -248,35 +218,42 @@ def start_restoration(player_id: int) -> Tuple[bool, str]:
     except Exception:
         pass
 
-    # Timing
-    time_secs      = calculate_total_time_seconds(plots)
+    # Timing — slowest plot drives the completion time
+    total_secs     = max(_plot_time_seconds(p) for p in plots)
     now            = datetime.utcnow()
-    completes_at   = now + timedelta(seconds=time_secs)
+    completes_at   = now + timedelta(seconds=total_secs)
     cooldown_until = completes_at + timedelta(days=RESTORATION_COOLDOWN_DAYS)
 
-    # Write restoration record + mark plots
+    # Write record and mark plots as restoring
     res_db = _db()
     try:
         restoration = LandRestoration(
-            player_id        = player_id,
-            plot_ids_json    = json.dumps(plot_ids),
-            plot_starts_json = json.dumps(plot_starts),
-            started_at       = now,
-            completes_at     = completes_at,
-            cooldown_until   = cooldown_until,
-            total_cost_usd   = total_cost_usd,
-            status           = "active",
+            player_id         = player_id,
+            plot_ids_json     = json.dumps(plot_ids),
+            plot_starts_json  = json.dumps(plot_starts),
+            plot_targets_json = json.dumps(plot_targets),
+            started_at        = now,
+            completes_at      = completes_at,
+            cooldown_until    = cooldown_until,
+            total_cost_usd    = total_cost_usd,
+            status            = "active",
         )
         res_db.add(restoration)
         res_db.flush()
 
+        # Mark each plot and set its per-plot target on the LandPlot row
         from land import get_db as land_db_fn, LandPlot
         ldb = land_db_fn()
-        ldb.query(LandPlot).filter(LandPlot.id.in_(plot_ids)).update(
-            {"is_restoring": True}, synchronize_session=False
-        )
-        ldb.commit()
-        ldb.close()
+        try:
+            for p in plots:
+                target = _plot_target(p)
+                ldb.query(LandPlot).filter(LandPlot.id == p.id).update(
+                    {"is_restoring": True, "restoration_target": round(target, 4)},
+                    synchronize_session=False,
+                )
+            ldb.commit()
+        finally:
+            ldb.close()
 
         res_db.commit()
     except Exception as e:
@@ -288,51 +265,51 @@ def start_restoration(player_id: int) -> Tuple[bool, str]:
     _fire_push(
         player_id,
         "Efficiency Restoration Started",
-        f"{len(plot_ids)} plot(s) being restored — estimated completion {_fmt_duration(time_secs)}.",
+        f"{len(plot_ids)} plot(s) now restoring — done in {_fmt_duration(total_secs)}.",
     )
     return True, f"Restoration started for {len(plot_ids)} plot(s)."
 
 
 # ── Tick processing ────────────────────────────────────────────────────────────
-def _complete_restoration(restoration: LandRestoration, db, ldb):
-    """Mark complete, clear is_restoring flags, notify player."""
+def _complete_restoration(restoration: LandRestoration, res_db, ldb):
+    """
+    Finalise a restoration job:
+      - Set each plot's efficiency to its restoration_target
+      - Advance max_efficiency to the same value (it grows 1.5× per cycle)
+      - Clear restoration_target and is_restoring
+      - Mark the record complete and notify the player
+    """
     from land import LandPlot
     plot_ids = json.loads(restoration.plot_ids_json)
-    ldb.query(LandPlot).filter(LandPlot.id.in_(plot_ids)).update(
-        {LandPlot.efficiency: RESTORATION_TARGET,
-         LandPlot.is_restoring: False},
+
+    # Force each plot to exactly its target, grow max_efficiency, clear flags
+    ldb.query(LandPlot).filter(
+        LandPlot.id.in_(plot_ids),
+        LandPlot.restoration_target != None,
+    ).update(
+        {
+            LandPlot.efficiency:         LandPlot.restoration_target,
+            LandPlot.max_efficiency:     LandPlot.restoration_target,
+            LandPlot.restoration_target: None,
+            LandPlot.is_restoring:       False,
+        },
         synchronize_session=False,
     )
     ldb.commit()
+
     restoration.status = "complete"
-    db.flush()
+    res_db.flush()
 
     _fire_push(
         restoration.player_id,
         "Efficiency Restoration Complete ✓",
-        f"{len(plot_ids)} plot(s) restored to 150%. "
-        f"{RESTORATION_COOLDOWN_DAYS}-day cooldown begins now.",
+        f"{len(plot_ids)} plot(s) restored. "
+        f"{RESTORATION_COOLDOWN_DAYS}-day cooldown starts now.",
     )
-
-    # In-app notification
-    try:
-        from push_ux import send_push_notification
-        from auth import get_db as auth_db_fn
-        adb = auth_db_fn()
-        try:
-            from auth import Player
-            p = adb.query(Player).filter(Player.id == restoration.player_id).first()
-            notif_enabled = getattr(p, "notif_push_tasks_events", True) if p else True
-        finally:
-            adb.close()
-        if notif_enabled:
-            pass  # already sent via _fire_push above
-    except Exception:
-        pass
 
 
 def process_tick():
-    """Apply restoration gain to all active jobs; complete any that are done."""
+    """Apply restoration gain each tick; complete any jobs whose time has elapsed."""
     db = _db()
     try:
         active = db.query(LandRestoration).filter(
@@ -348,20 +325,22 @@ def process_tick():
             for restoration in active:
                 plot_ids = json.loads(restoration.plot_ids_json)
 
-                # Increase efficiency, cap at RESTORATION_TARGET
-                ldb.query(LandPlot).filter(
-                    LandPlot.id.in_(plot_ids),
-                    LandPlot.efficiency < RESTORATION_TARGET,
-                ).update(
-                    {LandPlot.efficiency: func.least(
-                        RESTORATION_TARGET,
-                        LandPlot.efficiency + RESTORATION_RATE_PER_TICK,
-                    )},
-                    synchronize_session=False,
-                )
-
                 if now >= restoration.completes_at:
+                    # Time up — snap to exact targets and close out
                     _complete_restoration(restoration, db, ldb)
+                else:
+                    # Increase efficiency, capped per-plot at restoration_target
+                    ldb.query(LandPlot).filter(
+                        LandPlot.id.in_(plot_ids),
+                        LandPlot.restoration_target != None,
+                        LandPlot.efficiency < LandPlot.restoration_target,
+                    ).update(
+                        {LandPlot.efficiency: func.least(
+                            LandPlot.restoration_target,
+                            LandPlot.efficiency + RESTORATION_RATE_PER_TICK,
+                        )},
+                        synchronize_session=False,
+                    )
 
             ldb.commit()
             db.commit()
@@ -372,7 +351,6 @@ def process_tick():
 
 
 def tick(current_tick: int, now: datetime):
-    """Module tick entry point."""
     try:
         process_tick()
     except Exception as e:
@@ -380,10 +358,44 @@ def tick(current_tick: int, now: datetime):
 
 
 # ── UI renderer ────────────────────────────────────────────────────────────────
-_CARD = (
-    "background:#0f172a;border:1px solid #1e293b;border-radius:8px;"
-    "padding:16px;margin:0 0 18px;"
-)
+_CSS = """
+<style>
+.lr-card{background:#0a1628;border:1px solid #1e293b;border-radius:10px;
+         margin:0 0 20px;overflow:hidden;}
+.lr-header{display:flex;justify-content:space-between;align-items:center;
+           padding:14px 18px;border-bottom:1px solid #1e293b;}
+.lr-title{font-weight:700;font-size:0.95rem;letter-spacing:0.02em;}
+.lr-badge{font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:20px;
+          letter-spacing:0.06em;text-transform:uppercase;}
+.lr-body{padding:14px 18px;}
+.lr-plot-row{padding:10px 0;border-bottom:1px solid #0f1e35;}
+.lr-plot-row:last-child{border-bottom:none;}
+.lr-plot-name{font-size:0.85rem;font-weight:600;color:#e2e8f0;margin-bottom:4px;}
+.lr-plot-meta{font-size:0.75rem;color:#64748b;margin-bottom:6px;}
+.lr-bar-track{background:#1e293b;border-radius:6px;height:7px;overflow:hidden;margin-bottom:4px;}
+.lr-bar-fill{height:100%;border-radius:6px;transition:width .4s;}
+.lr-plot-footer{display:flex;justify-content:space-between;font-size:0.75rem;}
+.lr-divider{border:none;border-top:1px solid #1e293b;margin:12px 0;}
+.lr-summary-row{display:flex;justify-content:space-between;align-items:baseline;
+                margin-bottom:6px;font-size:0.85rem;}
+.lr-summary-label{color:#94a3b8;}
+.lr-summary-value{font-weight:700;color:#f8fafc;}
+.lr-rules{font-size:0.72rem;color:#475569;line-height:1.6;
+          background:#060e1a;border:1px solid #1a2540;border-radius:6px;
+          padding:10px 12px;margin:10px 0;}
+.lr-btn{display:block;width:100%;padding:12px;margin-top:10px;
+        border:none;border-radius:8px;font-weight:700;font-size:0.9rem;
+        letter-spacing:0.03em;cursor:pointer;text-align:center;}
+.lr-progress-wrap{padding:14px 18px 0;}
+.lr-progress-bar{background:#1e293b;border-radius:6px;height:12px;overflow:hidden;margin-bottom:8px;}
+.lr-progress-fill{height:100%;border-radius:6px;
+  background:linear-gradient(90deg,#1d4ed8,#38bdf8,#06b6d4);
+  background-size:200% 100%;animation:lr-shimmer 2s linear infinite;}
+@keyframes lr-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.lr-progress-meta{display:flex;justify-content:space-between;
+                  font-size:0.78rem;color:#64748b;margin-bottom:14px;}
+</style>
+"""
 
 
 def get_restoration_module_html(player, disp: str) -> str:
@@ -400,54 +412,71 @@ def get_restoration_module_html(player, disp: str) -> str:
         elapsed_s = (now - active.started_at).total_seconds()
         progress  = min(100.0, elapsed_s / total_s * 100)
         remaining = max(0.0, (active.completes_at - now).total_seconds())
-        rem_str   = _fmt_duration(remaining)
 
-        plot_ids    = json.loads(active.plot_ids_json)
-        plot_starts = json.loads(active.plot_starts_json)
+        plot_ids      = json.loads(active.plot_ids_json)
+        plot_starts   = json.loads(active.plot_starts_json)
+        plot_targets  = json.loads(active.plot_targets_json)
 
-        from land import get_db as land_db_fn, LandPlot
-        ldb = land_db_fn()
+        from land import get_db as ldb_fn, LandPlot
+        ldb = ldb_fn()
         try:
-            plots = ldb.query(LandPlot).filter(LandPlot.id.in_(plot_ids)).all()
+            plots = {str(p.id): p for p in ldb.query(LandPlot).filter(LandPlot.id.in_(plot_ids)).all()}
         finally:
             ldb.close()
 
-        rows = ""
-        for p in plots:
-            start_eff = plot_starts.get(str(p.id), 0.0)
-            done      = p.efficiency >= RESTORATION_TARGET - 0.05
-            badge     = ('<span style="color:#4ade80;font-size:0.7rem;">✓ Done</span>'
-                         if done else
-                         '<span style="color:#38bdf8;font-size:0.7rem;">Restoring…</span>')
-            rows += f"""<div style="display:flex;justify-content:space-between;align-items:center;
-              padding:6px 0;border-bottom:1px solid #1e293b;font-size:0.8rem;">
-  <span style="color:#94a3b8;">
-    Plot #{p.id} · {(p.terrain_type or 'Plot').replace('_',' ').title()}
-  </span>
-  <span style="color:#e5e7eb;">
-    {start_eff:.1f}% → {min(p.efficiency, RESTORATION_TARGET):.1f}% {badge}
-  </span>
+        plot_rows = ""
+        for pid_int in plot_ids:
+            pid     = str(pid_int)
+            p       = plots.get(pid)
+            if not p:
+                continue
+            start_e  = plot_starts.get(pid, 0.0)
+            target_e = plot_targets.get(pid, 150.0)
+            curr_e   = min(p.efficiency, target_e)
+            span     = target_e - start_e
+            bar_pct  = int(min(100, max(0, (curr_e - start_e) / span * 100))) if span > 0 else 100
+            done     = curr_e >= target_e - 0.1
+            status   = ('<span style="color:#4ade80;font-weight:600;">✓ Done</span>'
+                        if done else
+                        '<span style="color:#38bdf8;">Restoring…</span>')
+            terrain  = (p.terrain_type or "Plot").replace("_", " ").title()
+            plot_rows += f"""<div class="lr-plot-row">
+  <div class="lr-plot-name">Plot #{pid_int} &nbsp;·&nbsp; {terrain}</div>
+  <div class="lr-plot-meta">
+    <span style="color:#ef4444;">{start_e:.1f}%</span> start
+    &nbsp;→&nbsp; <span style="color:#38bdf8;">{curr_e:.1f}%</span> now
+    &nbsp;→&nbsp; <span style="color:#4ade80;">{target_e:.1f}%</span> target
+  </div>
+  <div class="lr-bar-track">
+    <div class="lr-bar-fill"
+         style="width:{bar_pct}%;background:linear-gradient(90deg,#ef4444,#f97316,#22c55e);"></div>
+  </div>
+  <div class="lr-plot-footer">
+    <span style="color:#64748b;font-size:0.72rem;">
+      Progress: {bar_pct}%
+    </span>
+    {status}
+  </div>
 </div>"""
 
-        bar = int(progress)
-        return f"""<div style="{_CARD}">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <span style="font-weight:700;color:#38bdf8;font-size:0.92rem;">⚙ EFFICIENCY RESTORATION</span>
-    <span style="background:#1e3a5f;color:#38bdf8;font-size:0.72rem;
-                 padding:3px 8px;border-radius:4px;font-weight:600;">IN PROGRESS</span>
+        bar_w = int(progress)
+        compl_str = active.completes_at.strftime("%b %d")
+        return f"""{_CSS}<div class="lr-card">
+  <div class="lr-header">
+    <span class="lr-title" style="color:#38bdf8;">⚙ Efficiency Restoration</span>
+    <span class="lr-badge" style="background:#0c2a4a;color:#38bdf8;">In Progress</span>
   </div>
-  <div style="background:#1e293b;border-radius:4px;height:10px;margin-bottom:6px;overflow:hidden;">
-    <div style="height:100%;width:{bar}%;background:linear-gradient(90deg,#3b82f6,#38bdf8);
-                border-radius:4px;"></div>
+  <div class="lr-progress-wrap">
+    <div class="lr-progress-bar">
+      <div class="lr-progress-fill" style="width:{bar_w}%;"></div>
+    </div>
+    <div class="lr-progress-meta">
+      <span>{progress:.1f}% complete · cost paid: {fmt_usd(active.total_cost_usd, disp)}</span>
+      <span>Done {_fmt_duration(remaining)} · {compl_str}</span>
+    </div>
   </div>
-  <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-    <span style="font-size:0.75rem;color:#64748b;">{progress:.1f}% complete</span>
-    <span style="font-size:0.75rem;color:#94a3b8;">Done in {rem_str}</span>
-  </div>
-  {rows}
-  <div style="margin-top:10px;font-size:0.72rem;color:#475569;">
-    Cost paid: {fmt_usd(active.total_cost_usd, disp)} ·
-    {RESTORATION_COOLDOWN_DAYS}-day cooldown starts on completion.
+  <div class="lr-body">
+    {plot_rows}
   </div>
 </div>"""
 
@@ -455,15 +484,15 @@ def get_restoration_module_html(player, disp: str) -> str:
     if cooldown:
         days_left     = max(0, int((cooldown - datetime.utcnow()).total_seconds() / 86400))
         available_str = cooldown.strftime("%b %d, %Y")
-        return f"""<div style="{_CARD}">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-    <span style="font-weight:700;color:#94a3b8;font-size:0.92rem;">⚙ EFFICIENCY RESTORATION</span>
-    <span style="background:#1a1a2e;color:#64748b;font-size:0.72rem;
-                 padding:3px 8px;border-radius:4px;font-weight:600;">COOLDOWN</span>
+        return f"""{_CSS}<div class="lr-card">
+  <div class="lr-header">
+    <span class="lr-title" style="color:#64748b;">⚙ Efficiency Restoration</span>
+    <span class="lr-badge" style="background:#0f172a;color:#475569;">Cooldown</span>
   </div>
-  <div style="font-size:0.82rem;color:#64748b;">
-    Next restoration available <strong style="color:#94a3b8;">{available_str}</strong>
-    ({days_left} day(s) remaining).
+  <div class="lr-body" style="color:#64748b;font-size:0.85rem;">
+    Next restoration available
+    <strong style="color:#94a3b8;">{available_str}</strong>
+    &nbsp;—&nbsp; {days_left} day(s) remaining.
   </div>
 </div>"""
 
@@ -472,102 +501,89 @@ def get_restoration_module_html(player, disp: str) -> str:
     if not plots:
         return ""
 
-    # Discounts
-    exec_discount = 0.0
-    city_discount = 0.0
-    try:
-        from executive import get_player_job_bonus, get_db as exec_db
-        _edb = exec_db()
-        exec_discount = get_player_job_bonus(_edb, player.id, "wages")
-        _edb.close()
-    except Exception:
-        pass
-    try:
-        from city_projects import get_city_production_buffs
-        city_discount = get_city_production_buffs(player.id).get("wage_savings", 0.0)
-    except Exception:
-        pass
-    discount = min(0.40, exec_discount + city_discount)
-
     plot_rows      = ""
     total_cost_usd = 0.0
     max_time_s     = 0.0
+
     for p in plots:
-        cost_usd = calculate_plot_cost_usd(p.efficiency)
-        time_s   = (RESTORATION_TARGET - max(0.0, p.efficiency)) / RESTORATION_RATE_PER_TICK
+        cost_usd  = _plot_cost_usd(p)
+        target    = _plot_target(p)
+        time_s    = _plot_time_seconds(p)
+        wage_mult = 1.0 / max(WAGE_MULT_FLOOR, p.efficiency / 100.0)
+        curr_max  = getattr(p, "max_efficiency", 100.0)
         total_cost_usd += cost_usd
         if time_s > max_time_s:
             max_time_s = time_s
-        wage_mult = 1.0 / max(WAGE_MULT_FLOOR, p.efficiency / 100.0)
-        plot_rows += f"""<div style="display:flex;justify-content:space-between;align-items:flex-start;
-  padding:8px 0;border-bottom:1px solid #1e293b;">
-  <div>
-    <div style="color:#e5e7eb;font-size:0.82rem;font-weight:600;">
-      Plot #{p.id} · {(p.terrain_type or 'plot').replace('_',' ').title()}
-    </div>
-    <div style="color:#64748b;font-size:0.72rem;margin-top:2px;">
-      Efficiency: <span style="color:#ef4444;">{p.efficiency:.1f}%</span>
-      · Wage mult: <span style="color:#ef4444;">{wage_mult:.1f}×</span>
-      → Target: <span style="color:#4ade80;">150%</span>
-      · ETA: {_fmt_duration(time_s)}
-    </div>
+
+        # Mini bar: how degraded is this plot (fill = current/eligibility threshold)
+        bar_pct = max(0, int(p.efficiency / ELIGIBILITY_THRESHOLD * 100))
+        terrain = (p.terrain_type or "Plot").replace("_", " ").title()
+
+        plot_rows += f"""<div class="lr-plot-row">
+  <div class="lr-plot-name">
+    Plot #{p.id} &nbsp;·&nbsp; {terrain}
   </div>
-  <div style="text-align:right;flex-shrink:0;margin-left:12px;">
-    <div style="color:#fbbf24;font-size:0.8rem;font-weight:600;">{fmt_usd(cost_usd, disp)}</div>
-    <div style="color:#64748b;font-size:0.7rem;">{wage_mult:.1f}× × $1k</div>
+  <div class="lr-plot-meta">
+    Current max: <span style="color:#94a3b8;">{curr_max:.1f}%</span>
+    &nbsp;·&nbsp; Wage multiplier: <span style="color:#ef4444;">{wage_mult:.1f}×</span>
+  </div>
+  <div class="lr-bar-track">
+    <div class="lr-bar-fill"
+         style="width:{bar_pct}%;background:linear-gradient(90deg,#7f1d1d,#ef4444);"></div>
+  </div>
+  <div class="lr-plot-footer">
+    <span style="color:#64748b;">
+      {p.efficiency:.1f}%&nbsp;→&nbsp;<span style="color:#4ade80;">{target:.1f}%</span>
+      &nbsp;·&nbsp; new max: <span style="color:#4ade80;">{target:.1f}%</span>
+      &nbsp;·&nbsp; {_fmt_duration(time_s)}
+    </span>
+    <span style="color:#fbbf24;font-weight:700;">{fmt_usd(cost_usd, disp)}</span>
   </div>
 </div>"""
 
-    total_discounted = total_cost_usd * (1.0 - discount)
-    disc_note = ""
-    if discount > 0:
-        disc_note = f"""<div style="font-size:0.72rem;color:#4ade80;margin-bottom:6px;">
-  ✓ {discount * 100:.0f}% discount applied (COO / city buffs):
-  <s style="color:#64748b;">{fmt_usd(total_cost_usd, disp)}</s>
-  → {fmt_usd(total_discounted, disp)}
-</div>"""
+    n       = len(plots)
+    plural  = "" if n == 1 else "s"
+    cost_js = fmt_usd(total_cost_usd, disp).replace("'", "\\'")
+    confirm = f"Restore {n} plot{plural} for {cost_js}?\\n\\nThis cannot be undone. One restoration at a time, no pause or stop, 60-day cooldown after completion."
 
-    n        = len(plots)
-    plural   = "" if n == 1 else "S"
-    cost_str = fmt_usd(total_discounted, disp).replace("'", "\\'")
-    confirm_msg = f"Start efficiency restoration for {n} plot{plural.lower()}?\\nTotal cost: {cost_str}\\nThis cannot be undone."
-    return f"""<div style="{_CARD}">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <span style="font-weight:700;color:#f97316;font-size:0.92rem;">⚙ EFFICIENCY RESTORATION</span>
-    <span style="background:#431407;color:#f97316;font-size:0.72rem;
-                 padding:3px 8px;border-radius:4px;font-weight:600;">
-      {n} PLOT{plural} ELIGIBLE
+    return f"""{_CSS}<div class="lr-card">
+  <div class="lr-header">
+    <span class="lr-title" style="color:#f97316;">⚙ Efficiency Restoration</span>
+    <span class="lr-badge" style="background:#3b1900;color:#f97316;">
+      {n} Plot{plural} Eligible
     </span>
   </div>
-  <div style="font-size:0.78rem;color:#64748b;margin-bottom:10px;">
-    The following plots have fallen below 30% efficiency and can be restored to 150%.
-    All plots are restored simultaneously. Wages stay floored at 1× base while above 100%.
-  </div>
-  {plot_rows}
-  <div style="margin-top:12px;padding-top:10px;border-top:1px solid #1e293b;">
-    {disc_note}
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-      <span style="font-size:0.82rem;color:#94a3b8;">Total cost</span>
-      <span style="font-size:0.9rem;font-weight:700;color:#fbbf24;">
-        {fmt_usd(total_discounted, disp)}
+  <div class="lr-body">
+    <p style="font-size:0.8rem;color:#64748b;margin:0 0 12px;line-height:1.6;">
+      The plots below have fallen below <strong style="color:#f8fafc;">30% efficiency</strong>.
+      Each is restored to <strong style="color:#4ade80;">1.5× its current maximum</strong> —
+      growing the max each time, giving more decay headroom per cycle.
+      Wages are floored at 1× base even while efficiency exceeds 100%.
+    </p>
+    {plot_rows}
+    <hr class="lr-divider">
+    <div class="lr-summary-row">
+      <span class="lr-summary-label">Total cost</span>
+      <span class="lr-summary-value" style="color:#fbbf24;font-size:0.95rem;">
+        {fmt_usd(total_cost_usd, disp)}
       </span>
     </div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-      <span style="font-size:0.82rem;color:#94a3b8;">Est. completion</span>
-      <span style="font-size:0.82rem;color:#94a3b8;">{_fmt_duration(max_time_s)}</span>
+    <div class="lr-summary-row">
+      <span class="lr-summary-label">Est. completion</span>
+      <span class="lr-summary-value" style="color:#94a3b8;">{_fmt_duration(max_time_s)}</span>
     </div>
-    <div style="font-size:0.72rem;color:#475569;margin-bottom:10px;line-height:1.5;">
-      ⚠ Payment is immediate and non-refundable. Restoration cannot be paused, stopped,
-      or restarted. One restoration at a time. A {RESTORATION_COOLDOWN_DAYS}-day cooldown
-      applies after completion. Cost paid to Federal Government.
+    <div class="lr-rules">
+      ⚠&nbsp; Payment is immediate and non-refundable &nbsp;·&nbsp;
+      One restoration at a time &nbsp;·&nbsp;
+      Cannot be paused, stopped, or restarted &nbsp;·&nbsp;
+      {RESTORATION_COOLDOWN_DAYS}-day cooldown after completion &nbsp;·&nbsp;
+      Cost paid to Federal Government
     </div>
     <form action="/api/land-restoration/start" method="post">
-      <button type="submit"
-              onclick="return confirm('{confirm_msg}')"
-              style="width:100%;padding:11px;background:#f97316;color:#fff;border:none;
-                     border-radius:6px;font-weight:700;font-size:0.88rem;cursor:pointer;
-                     letter-spacing:0.03em;">
-        Restore {n} Plot{plural} — {fmt_usd(total_discounted, disp)}
+      <button type="submit" class="lr-btn"
+              onclick="return confirm('{confirm}')"
+              style="background:#f97316;color:#fff;">
+        Restore {n} Plot{plural} &nbsp;—&nbsp; {fmt_usd(total_cost_usd, disp)}
       </button>
     </form>
   </div>

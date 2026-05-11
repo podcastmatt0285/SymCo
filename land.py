@@ -389,6 +389,15 @@ class LandPlot(Base):
     # Set True while an active LandRestoration job covers this plot
     is_restoring = Column(Boolean, default=False)
 
+    # Tracks the highest efficiency a plot has ever been restored to.
+    # Starts at 100.0; grows by 1.5× each completed restoration.
+    # The next restoration targets max_efficiency * 1.5.
+    max_efficiency = Column(Float, default=100.0)
+
+    # Per-plot restoration target set at job start (max_efficiency * 1.5).
+    # Cleared (set NULL) when restoration completes.
+    restoration_target = Column(Float, nullable=True)
+
     # Composite index for efficiency degradation queries (efficiency > 0)
     __table_args__ = (
         Index('ix_land_plots_efficiency', 'efficiency'),
@@ -861,14 +870,13 @@ def collect_hoarding_taxes():
 def _migrate_land_plot_columns():
     """Add any missing columns to land_plots."""
     from database import run_ddl_migration
-    run_ddl_migration(
-        engine,
+    for ddl in [
         "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE",
-    )
-    run_ddl_migration(
-        engine,
         "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_restoring BOOLEAN DEFAULT FALSE",
-    )
+        "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS max_efficiency REAL DEFAULT 100.0",
+        "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS restoration_target REAL",
+    ]:
+        run_ddl_migration(engine, ddl)
 
 
 def initialize():
