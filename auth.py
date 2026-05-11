@@ -707,11 +707,6 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
     <footer style="position:fixed;bottom:0;left:0;right:0;padding:6px 16px;text-align:center;font-size:0.72rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
         <div style="display:flex;flex-wrap:wrap;gap:3px 10px;justify-content:center;margin-bottom:3px;">
-            <a href="/sitemap"            style="color:#64748b;text-decoration:underline;">Sitemap</a>
-            <a href="/events"             style="color:#64748b;text-decoration:underline;">Events</a>
-            <a href="/leaderboard"        style="color:#64748b;text-decoration:underline;">Leaderboard</a>
-            <a href="/exchange"           style="color:#64748b;text-decoration:underline;">Exchange</a>
-            <a href="/market"             style="color:#64748b;text-decoration:underline;">Market</a>
             <a href="/company/whitepaper" style="color:#64748b;text-decoration:underline;">Whitepaper</a>
             <a href="/company/careers"    style="color:#64748b;text-decoration:underline;">Careers</a>
             <a href="/company/press-kit"  style="color:#64748b;text-decoration:underline;">Press Kit</a>

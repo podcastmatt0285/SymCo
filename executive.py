@@ -1282,10 +1282,15 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
 
     job_info = EXECUTIVE_JOBS.get(exec_obj.job, {})
     title_str = job_info.get('title', exec_obj.job)
+    try:
+        from reserve_banks import get_player_display_currency, fmt_usd as _rfmt
+        _fee_str = _rfmt(hiring_fee, get_player_display_currency(player_id), precision=0)
+    except Exception:
+        _fee_str = f"${hiring_fee:,.0f}"
     _fire_exec_push(
         player_id,
         f"{exec_obj.first_name} {exec_obj.last_name} Hired",
-        f"{title_str} — hiring fee ${hiring_fee:,.0f} paid",
+        f"{title_str} — hiring fee {_fee_str} paid",
     )
     return {
         "success": True,
@@ -1338,10 +1343,20 @@ def fire_executive(db, player_id: int, executive_id: int) -> dict:
     db.commit()
 
     total_exit = monthly_wages + severance
+    try:
+        from reserve_banks import get_player_display_currency, fmt_usd as _rfmt
+        _disp = get_player_display_currency(player_id)
+        _sev_str = _rfmt(severance,     _disp, precision=0)
+        _pen_str = _rfmt(monthly_wages, _disp, precision=0)
+        _tot_str = _rfmt(total_exit,    _disp, precision=0)
+    except Exception:
+        _sev_str = f"${severance:,.0f}"
+        _pen_str = f"${monthly_wages:,.0f}"
+        _tot_str = f"${total_exit:,.0f}"
     _fire_exec_push(
         player_id,
         f"{exec_obj.first_name} {exec_obj.last_name} Fired",
-        f"Severance ${severance:,.0f} paid, pension ${monthly_wages:,.0f} owed (total ${total_exit:,.0f})",
+        f"Severance {_sev_str} paid, pension {_pen_str} owed (total {_tot_str})",
     )
     return {
         "success":  True,
@@ -1397,10 +1412,15 @@ def send_to_school(db, player_id: int, executive_id: int) -> dict:
     exec_obj.school_cost_remaining   = 0.0
     db.commit()
 
+    try:
+        from reserve_banks import get_player_display_currency, fmt_usd as _rfmt
+        _cost_str = _rfmt(cost, get_player_display_currency(player_id), precision=0)
+    except Exception:
+        _cost_str = f"${cost:,.0f}"
     _fire_exec_push(
         player_id,
         f"{exec_obj.first_name} {exec_obj.last_name} Enrolled",
-        f"Sent to school — graduates in {ticks} ticks, cost ${cost:,.0f}",
+        f"Sent to school — graduates in {ticks} ticks, cost {_cost_str}",
     )
     return {
         "success": True,

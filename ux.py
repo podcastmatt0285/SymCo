@@ -13999,6 +13999,7 @@ def events_page(request: Request,
         pass
 
     body = f"""
+    <a href="/" style="color:#64748b;font-size:0.85rem;text-decoration:none;display:inline-block;margin-bottom:16px;">← Dashboard</a>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
         <h2 style="margin:0;">Events &amp; Tasks</h2>
         <span style="color:#475569;font-size:0.8rem;">Server-wide events, market effects &amp; player tasks</span>
