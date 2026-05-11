@@ -4298,10 +4298,10 @@ def _inventory_page_impl(session_token: Optional[str] = None, filter: str = "all
         return shell("Inventory", f"Error: {e}", player.cash_balance, player.id)
 
 @router.get("/land", response_class=HTMLResponse)
-def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
-    return _land_impl(session_token, sort, order, success, error)
+def land(session_token: Optional[str] = Cookie(None), sort: str = "id", order: str = "asc", success: str = "", error: str = "", restoration_msg: str = "", restoration_error: str = ""):
+    return _land_impl(session_token, sort, order, success, error, restoration_msg, restoration_error)
 
-def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str = "asc", success: str = "", error: str = ""):
+def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str = "asc", success: str = "", error: str = "", restoration_msg: str = "", restoration_error: str = ""):
     """Land management view with organized layout, sorting, and explanatory info."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return player
@@ -4388,6 +4388,10 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
             land_html += f'<div style="padding:10px 16px; background:#052e16; border:1px solid #16a34a; color:#4ade80; margin:8px 0;">{_land_success[success]}</div>'
         elif error in _land_errors:
             land_html += f'<div style="padding:10px 16px; background:#1a0505; border:1px solid #dc2626; color:#f87171; margin:8px 0;">{_land_errors[error]}</div>'
+        if restoration_msg:
+            land_html += f'<div style="padding:10px 16px; background:#052e16; border:1px solid #16a34a; color:#4ade80; margin:8px 0;">{restoration_msg}</div>'
+        if restoration_error:
+            land_html += f'<div style="padding:10px 16px; background:#1a0505; border:1px solid #dc2626; color:#f87171; margin:8px 0;">{restoration_error}</div>'
 
         # Header with navigation
         land_html += '''
@@ -4469,6 +4473,13 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                     </table>
                 </details>
             </div>'''
+
+            # Efficiency Restoration module
+            try:
+                from land_restoration import get_restoration_module_html
+                land_html += get_restoration_module_html(player, disp)
+            except Exception:
+                pass
 
             # Sort controls
             land_html += f'''
@@ -4622,6 +4633,22 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         import traceback
         traceback.print_exc()
         return shell("Land", f"Error: {e}", player.cash_balance, player.id)
+
+@router.post("/api/land-restoration/start")
+def api_land_restoration_start(session_token: Optional[str] = Cookie(None)):
+    """Initiate efficiency restoration for all eligible plots."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return player
+    try:
+        from land_restoration import start_restoration
+        ok, msg = start_restoration(player.id)
+        if ok:
+            return RedirectResponse(url=f"/land?restoration_msg={msg}", status_code=303)
+        return RedirectResponse(url=f"/land?restoration_error={msg}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/land?restoration_error=Server+error:+{e}", status_code=303)
+
 
 @router.get("/land-market", response_class=HTMLResponse)
 def land_market_page(session_token: Optional[str] = Cookie(None), sort: str = "price", order: str = "asc", terrain: str = "all", tab: str = "auctions", success: str = "", error: str = ""):
@@ -12019,6 +12046,30 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
 
     except Exception as _e:
         print(f"[widget/data] error: {_e}")
+
+    # Land restoration status for Android widget
+    try:
+        from land_restoration import get_active_restoration as _get_ar
+        _ar = _get_ar(player.id)
+        if _ar:
+            _now2   = _dt.utcnow()
+            _tot_s  = max(1.0, (_ar.completes_at - _ar.started_at).total_seconds())
+            _elap   = (_now2 - _ar.started_at).total_seconds()
+            _pct    = min(100.0, _elap / _tot_s * 100)
+            _rem_s  = max(0.0, (_ar.completes_at - _now2).total_seconds())
+            _d      = int(_rem_s // 86400)
+            _h      = int((_rem_s % 86400) // 3600)
+            _rem_str = f"{_d}d {_h}h" if _d else f"{_h}h {int((_rem_s%3600)//60)}m"
+            result["restoration"] = {
+                "active":       True,
+                "progress_pct": round(_pct, 1),
+                "completes_at": _ar.completes_at.isoformat(),
+                "completes_in": _rem_str,
+            }
+        else:
+            result["restoration"] = {"active": False}
+    except Exception:
+        result["restoration"] = {"active": False}
 
     return JSONResponse(result)
 

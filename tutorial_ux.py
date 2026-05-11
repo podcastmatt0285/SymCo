@@ -3458,6 +3458,17 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
           Keep your plots maintained.
         </div>
 
+        <div class="t7-callout" style="border-color:#22c55e;background:#052e16;">
+          <strong style="color:#22c55e;">Restoration:</strong> Once a plot drops below
+          <strong style="color:#fbbf24;">30% efficiency</strong> it becomes eligible for
+          the <strong>Efficiency Restoration</strong> module on your Land dashboard. Restoration
+          brings plots back to <strong style="color:#4ade80;">150%</strong> (buffer above 100%,
+          so wages stay normal while decay eats through the extra headroom). Cost is
+          <strong>wage_multiplier × $1,000</strong> per plot, paid to the Federal Government.
+          Restoration runs at 500× the decay rate and carries a
+          <strong>60-day cooldown</strong> after completion.
+        </div>
+
         <div class="t7-chart">
           <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
             EFFICIENCY → WAGE MULTIPLIER (log scale)
@@ -3995,7 +4006,7 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
           <table class="t7-table">
             <tr><th>System</th><th>Key Formula / Rule</th></tr>
             <tr><td>Efficiency</td>
-                <td>Starts 100%, decays 0.144%/day. Wages = base ÷ (eff/100). Ceiling 200× at 0% efficiency. Tutorial reward plots never decay.</td></tr>
+                <td>Starts 100%, decays 0.144%/day. Wages = base ÷ (eff/100). Ceiling 200× at 0%. Tutorial reward plots never decay. Restoration: &lt;30% → eligible; costs wage_mult × $1k/plot; restores to 150%; 60-day cooldown.</td></tr>
             <tr><td>Market Price</td>
                 <td>Last trade &gt; bid-ask midpoint &gt; best single side &gt; N/A</td></tr>
             <tr><td>Elasticity</td>

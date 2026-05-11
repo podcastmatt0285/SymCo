@@ -386,6 +386,9 @@ class LandPlot(Base):
     # Tutorial reward flag - permanently tax-free, can be sold at market
     is_tutorial_reward = Column(Boolean, default=False)
 
+    # Set True while an active LandRestoration job covers this plot
+    is_restoring = Column(Boolean, default=False)
+
     # Composite index for efficiency degradation queries (efficiency > 0)
     __table_args__ = (
         Index('ix_land_plots_efficiency', 'efficiency'),
@@ -617,11 +620,11 @@ def degrade_efficiency(current_tick: int):
     db = get_db()
 
     # Single bulk UPDATE: subtract decay from all plots with efficiency > 0
-    # max(0, efficiency - decay) is handled by the CASE expression
-    # Tutorial reward plots are permanently pristine — skip efficiency decay
+    # Tutorial reward plots and actively-restoring plots are excluded.
     db.query(LandPlot).filter(
         LandPlot.efficiency > 0,
         LandPlot.is_tutorial_reward == False,
+        LandPlot.is_restoring == False,
     ).update(
         {LandPlot.efficiency: func.greatest(0, LandPlot.efficiency - EFFICIENCY_DECAY_PER_TICK)},
         synchronize_session=False
@@ -635,6 +638,7 @@ def degrade_efficiency(current_tick: int):
         LandPlot.efficiency <= _EFF_FLOOR_THRESHOLD,
         LandPlot.efficiency > 0,
         LandPlot.is_tutorial_reward == False,
+        LandPlot.is_restoring == False,
     ).all()
     for p in floor_plots:
         _fire_eff_floor_push(p.owner_id, p.id, p.terrain_type or "unknown", p.efficiency)
@@ -854,12 +858,16 @@ def collect_hoarding_taxes():
 # ==========================
 # MODULE LIFECYCLE
 # ==========================
-def _migrate_tutorial_reward_column():
-    """Add is_tutorial_reward column to land_plots table if missing."""
+def _migrate_land_plot_columns():
+    """Add any missing columns to land_plots."""
     from database import run_ddl_migration
     run_ddl_migration(
         engine,
         "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE",
+    )
+    run_ddl_migration(
+        engine,
+        "ALTER TABLE land_plots ADD COLUMN IF NOT EXISTS is_restoring BOOLEAN DEFAULT FALSE",
     )
 
 
@@ -870,7 +878,7 @@ def initialize():
     """
     print("[Land] Creating database tables...")
     Base.metadata.create_all(bind=engine)
-    _migrate_tutorial_reward_column()
+    _migrate_land_plot_columns()
 
     stats = get_land_stats()
     print(f"[Land] Current state: {stats['total_plots']} plots, {stats['average_efficiency']:.2f}% avg efficiency")
