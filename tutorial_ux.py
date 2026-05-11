@@ -3451,58 +3451,75 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
         <div class="t7-callout">
           <strong style="color:#38bdf8;">Why does this matter?</strong> Efficiency directly controls
           how much your business pays in wages each production cycle.
-          Lower efficiency = higher wages. At <strong style="color:#fbbf24;">50% efficiency</strong>,
-          wages are <strong style="color:#ef4444;">doubled</strong>. Below 50% they stop getting
-          worse (the floor is 50%).
+          Wages follow <strong style="color:#fbbf24;">wage = base ÷ (efficiency / 100)</strong>.
+          At 50% efficiency wages are <strong style="color:#ef4444;">2×</strong>. At 10% they are
+          <strong style="color:#ef4444;">10×</strong>. At near-zero efficiency they rocket all the
+          way to <strong style="color:#ef4444;">200×</strong> — a business-destroying cost spiral.
+          Keep your plots maintained.
         </div>
 
         <div class="t7-chart">
           <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
-            EFFICIENCY → WAGE MULTIPLIER
+            EFFICIENCY → WAGE MULTIPLIER (log scale)
           </div>
-          <!-- SVG curve -->
-          <svg viewBox="0 0 300 120" style="width:100%;max-width:400px;display:block;">
+          <!-- SVG curve — log-scale y-axis so the 200× peak is visible -->
+          <!-- y mapping (log scale): y = 100 - (log(mult)/log(200)) * 90
+               x mapping: x = 30 + (eff/100) * 260
+               Key points (eff%, mult, x, y):
+                 100 → 1.0  → 290, 100
+                  75 → 1.33 → 225,  95
+                  50 → 2.0  → 160,  88
+                  25 → 4.0  →  95,  76
+                  10 → 10×  →  56,  61
+                   5 → 20×  →  43,  49
+                   2 → 50×  →  35,  34
+                   1 → 100× →  33,  22
+                 0.5 → 200× →  31,  10  (floor)  -->
+          <svg viewBox="0 0 300 125" style="width:100%;max-width:420px;display:block;">
             <defs>
               <linearGradient id="t7grad" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stop-color="#ef4444"/>
-                <stop offset="50%" stop-color="#fbbf24"/>
+                <stop offset="0%"   stop-color="#ef4444"/>
+                <stop offset="30%"  stop-color="#f97316"/>
+                <stop offset="60%"  stop-color="#fbbf24"/>
                 <stop offset="100%" stop-color="#22c55e"/>
               </linearGradient>
             </defs>
             <!-- axes -->
-            <line x1="30" y1="100" x2="290" y2="100" stroke="#334155" stroke-width="1"/>
-            <line x1="30" y1="10"  x2="30"  y2="100" stroke="#334155" stroke-width="1"/>
+            <line x1="34" y1="100" x2="290" y2="100" stroke="#334155" stroke-width="1"/>
+            <line x1="34" y1="8"   x2="34"  y2="100" stroke="#334155" stroke-width="1"/>
             <!-- axis labels -->
-            <text x="155" y="115" fill="#64748b" font-size="8" text-anchor="middle">Efficiency (%)</text>
-            <text x="10"  y="55"  fill="#64748b" font-size="7" text-anchor="middle" transform="rotate(-90,10,55)">Wage ×</text>
-            <!-- tick labels x -->
-            <text x="30"  y="108" fill="#64748b" font-size="7" text-anchor="middle">0</text>
+            <text x="162" y="118" fill="#64748b" font-size="8" text-anchor="middle">Efficiency (%)</text>
+            <text x="11"  y="54"  fill="#64748b" font-size="7" text-anchor="middle" transform="rotate(-90,11,54)">Wage ×</text>
+            <!-- x tick labels -->
+            <text x="34"  y="108" fill="#64748b" font-size="7" text-anchor="middle">0</text>
             <text x="95"  y="108" fill="#64748b" font-size="7" text-anchor="middle">25</text>
             <text x="160" y="108" fill="#64748b" font-size="7" text-anchor="middle">50</text>
             <text x="225" y="108" fill="#64748b" font-size="7" text-anchor="middle">75</text>
             <text x="290" y="108" fill="#64748b" font-size="7" text-anchor="middle">100</text>
-            <!-- tick labels y -->
-            <text x="26" y="100" fill="#64748b" font-size="7" text-anchor="end">1×</text>
-            <text x="26" y="68"  fill="#64748b" font-size="7" text-anchor="end">1.5×</text>
-            <text x="26" y="37"  fill="#64748b" font-size="7" text-anchor="end">2×</text>
-            <!-- curve: wage = base / max(0.5, eff/100)
-                 at eff=100 → 1.0×  at eff=75 → 1.0×  at eff=50 → 2.0× floored
-                 map eff 0..100 → x 30..290, wage_mult 1..2 → y 100..37 (inverted) -->
-            <!-- flat segment 50-100 eff: wage mult = 100/eff
-                 eff=100→mult=1.0 y=100, eff=75→mult=1.33 y=78, eff=50→mult=2.0 y=37 -->
-            <polyline points="
-              30,37 95,37 160,37
-              162,37 192,55 225,63 258,75 290,100"
+            <!-- y tick labels (log scale) -->
+            <text x="30" y="100" fill="#64748b" font-size="6.5" text-anchor="end">1×</text>
+            <text x="30" y="88"  fill="#64748b" font-size="6.5" text-anchor="end">2×</text>
+            <text x="30" y="76"  fill="#64748b" font-size="6.5" text-anchor="end">5×</text>
+            <text x="30" y="61"  fill="#ef4444" font-size="6.5" text-anchor="end">10×</text>
+            <text x="30" y="34"  fill="#ef4444" font-size="6.5" text-anchor="end">50×</text>
+            <text x="30" y="10"  fill="#ef4444" font-size="6.5" text-anchor="end">200×</text>
+            <!-- curve -->
+            <polyline points="31,10 33,22 35,34 43,49 56,61 95,76 160,88 225,95 290,100"
               fill="none" stroke="url(#t7grad)" stroke-width="2.5" stroke-linejoin="round"/>
-            <!-- floor line at eff=50 -->
-            <line x1="160" y1="37" x2="160" y2="100" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
-            <text x="162" y="48" fill="#fbbf24" font-size="6.5">50% floor</text>
-            <!-- highlight point at 100% eff -->
+            <!-- 200× ceiling marker -->
+            <line x1="31" y1="10" x2="290" y2="10" stroke="#ef4444" stroke-width="0.8" stroke-dasharray="3,3"/>
+            <text x="170" y="9" fill="#ef4444" font-size="6" text-anchor="middle">200× ceiling</text>
+            <!-- 50% reference -->
+            <line x1="160" y1="10" x2="160" y2="100" stroke="#fbbf24" stroke-width="0.8" stroke-dasharray="3,3"/>
+            <text x="162" y="84" fill="#fbbf24" font-size="6">2× at 50%</text>
+            <!-- highlight points -->
             <circle cx="290" cy="100" r="3" fill="#22c55e"/>
-            <text x="292" y="98" fill="#22c55e" font-size="6">1.0× (normal)</text>
+            <text x="278" y="97" fill="#22c55e" font-size="5.5">1× normal</text>
+            <circle cx="31" cy="10" r="3" fill="#ef4444"/>
           </svg>
           <div style="font-size:0.72rem;color:#334155;margin-top:4px;">
-            The curve flattens at 50%: wages can't exceed 2× no matter how far efficiency drops.
+            Log-scale y-axis. Wages spiral exponentially — a fully decayed plot costs
+            <strong style="color:#ef4444;">200× base wages</strong> per cycle.
           </div>
         </div>
         """
@@ -3978,7 +3995,7 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
           <table class="t7-table">
             <tr><th>System</th><th>Key Formula / Rule</th></tr>
             <tr><td>Efficiency</td>
-                <td>Starts 100%, decays 0.144%/day. Floor at 50% (wages cap at 2×). Tutorial reward plots never decay.</td></tr>
+                <td>Starts 100%, decays 0.144%/day. Wages = base ÷ (eff/100). Ceiling 200× at 0% efficiency. Tutorial reward plots never decay.</td></tr>
             <tr><td>Market Price</td>
                 <td>Last trade &gt; bid-ask midpoint &gt; best single side &gt; N/A</td></tr>
             <tr><td>Elasticity</td>

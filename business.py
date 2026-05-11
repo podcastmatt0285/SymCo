@@ -297,7 +297,7 @@ def process_business_tick(db):
             plot = db.query(LandPlot).filter(LandPlot.id == biz.land_plot_id).first()
             if not plot:
                 continue
-            eff_multiplier = max(0.5, (plot.efficiency / 100.0))
+            eff_multiplier = max(0.005, (plot.efficiency / 100.0))
         
         if not player:
             continue
