@@ -4648,58 +4648,94 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     create_form = f"""
     <div class="card" style="margin-bottom:18px;">
       <div style="font-size:0.72rem;color:#94a3b8;text-transform:uppercase;
-                  letter-spacing:.08em;margin-bottom:12px;font-weight:700;">➕ Create New Event / Task</div>
+                  letter-spacing:.08em;margin-bottom:4px;font-weight:700;">➕ Create New Event / Task</div>
+      <p style="font-size:0.75rem;color:#475569;margin:0 0 12px;">
+        Creates the event in the database. Leave it <strong style="color:#94a3b8;">inactive</strong>
+        and activate it later with <strong style="color:#94a3b8;">▶ Start</strong> or
+        <strong style="color:#94a3b8;">↺ Restart</strong> from the card below,
+        or tick <strong style="color:#94a3b8;">Active now</strong> to go live immediately.
+      </p>
       <form method="post" action="/admin/events/create">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-          <input name="title" placeholder="Event title (required)" required style="{_inp}">
-          <input name="trophy_reward" type="number" min="0" value="0"
-                 placeholder="Trophy reward" style="{_inp}">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Title *</div>
+            <input name="title" placeholder="e.g. Weekly Meme Challenge" required style="{_inp}">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Trophy reward (0 = none)</div>
+            <input name="trophy_reward" type="number" min="0" value="0" style="{_inp}">
+          </div>
         </div>
-        <textarea name="description" placeholder="Description (optional)" rows="2"
-                  style="{_inp}margin-bottom:8px;resize:vertical;"></textarea>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
-          <select name="duration_class" style="{_sel}">
-            <option value="daily">daily</option>
-            <option value="weekly" selected>weekly</option>
-            <option value="monthly">monthly</option>
-            <option value="special">special</option>
-            <option value="task">task</option>
-          </select>
-          <select name="event_type" style="{_sel}">
-            <option value="gov">gov</option>
-            <option value="bank">bank</option>
-            <option value="market">market</option>
-            <option value="task" selected>task</option>
-            <option value="city">city</option>
-            <option value="production">production</option>
-          </select>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <input type="checkbox" name="start_now" value="1" id="start_now_chk" checked
-                   style="width:auto;">
-            <label for="start_now_chk" style="color:#94a3b8;font-size:0.78rem;white-space:nowrap;">
-              Start immediately</label>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Description shown to players</div>
+          <textarea name="description" placeholder="What players need to do and why it matters…" rows="2"
+                    style="{_inp}resize:vertical;"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Schedule — how often</div>
+            <select name="duration_class" style="{_sel}">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="special">Special / one-off</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Category</div>
+            <select name="event_type" style="{_sel}">
+              <option value="task" selected>Task (tracks player progress)</option>
+              <option value="market">Market (price / supply effect)</option>
+              <option value="gov">Government / policy</option>
+              <option value="bank">Bank / interest rate</option>
+              <option value="city">City</option>
+              <option value="production">Production</option>
+            </select>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
           <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Starts at (UTC) — leave blank to start now</div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Starts at (UTC) — leave blank to start right now</div>
             <input type="datetime-local" name="starts_at" style="{_inp}">
           </div>
           <div>
-            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Ends at (UTC) — leave blank for no deadline</div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Ends at (UTC) — leave blank for no deadline</div>
             <input type="datetime-local" name="ends_at" style="{_inp}">
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-          <input name="task_target" type="number" step="any" min="0"
-                 placeholder="Task target (optional, e.g. 1)" style="{_inp}">
-          <input name="task_metric" placeholder="Task metric (optional, e.g. twa_first_login)"
-                 style="{_inp}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              What players must do (task goal metric)</div>
+            <select name="task_metric" style="{_sel}">
+              <option value="">— not a tracked task —</option>
+              <option value="meme_buy_usd">Spend $ buying meme tokens</option>
+              <option value="executive_action">Fire or hire an executive</option>
+              <option value="city_tax_paid_usd">Generate city tax via market sales</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Target amount (players need to reach this)</div>
+            <input name="task_target" type="number" step="any" min="0"
+                   placeholder="e.g. 2500 for $2,500 · 1 for one action" style="{_inp}">
+          </div>
         </div>
-        <button type="submit" style="background:#14532d;color:#fff;border:none;border-radius:4px;
-                padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;">
-          Create Event
-        </button>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="submit" style="background:#14532d;color:#fff;border:none;border-radius:4px;
+                  padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+            Create Event
+          </button>
+          <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:0.78rem;cursor:pointer;">
+            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;">
+            Active now
+          </label>
+          <span style="font-size:0.72rem;color:#475569;">
+            (unchecked = saved as inactive, start it manually from the card)
+          </span>
+        </div>
       </form>
     </div>"""
 
@@ -4861,8 +4897,10 @@ def admin_event_add_time(session_token: Optional[str] = Cookie(None),
                 ev.ends_at = base + timedelta(hours=hours)
                 edb.commit()
                 edb.refresh(ev)
-                label = f"{hours}h" if hours < 48 else f"{hours//24}d"
-                msg = f"Added {label} to '{ev.title}'. New end: {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC')}"
+                abs_h = abs(hours)
+                label = f"{hours}h" if abs_h < 48 else f"{hours//24}d"
+                verb  = "Added" if hours >= 0 else "Removed"
+                msg = f"{verb} {label.lstrip('-')} {'to' if hours >= 0 else 'from'} '{ev.title}'. New end: {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC')}"
             else:
                 msg = "Event not found."
         finally:
@@ -4886,6 +4924,7 @@ def admin_event_create(
     trophy_reward:  int             = Form(0),
     task_target:    Optional[float] = Form(None),
     task_metric:    Optional[str]   = Form(None),
+    activate_now:   Optional[str]   = Form(None),   # "1" if checkbox ticked
 ):
     admin = require_admin(session_token)
     if isinstance(admin, RedirectResponse): return admin
@@ -4894,9 +4933,11 @@ def admin_event_create(
         from events import GameEvent, SessionLocal as _ES, broadcast_event_push, schedule_event_notifications
         def _parse(s):
             return datetime.fromisoformat(s) if s and s.strip() else None
-        now   = datetime.utcnow()
-        start = _parse(starts_at) or now
-        end   = _parse(ends_at)
+        now        = datetime.utcnow()
+        start      = _parse(starts_at) or now
+        end        = _parse(ends_at)
+        is_active  = activate_now == "1"
+        metric     = (task_metric.strip() or None) if task_metric else None
         edb = _ES()
         try:
             ev = GameEvent(
@@ -4907,25 +4948,25 @@ def admin_event_create(
                 starts_at      = start,
                 ends_at        = end,
                 trophy_reward  = trophy_reward,
-                task_target    = task_target,
-                task_metric    = task_metric.strip() if task_metric else None,
-                is_active      = True,
+                task_target    = task_target if task_target else None,
+                task_metric    = metric,
+                is_active      = is_active,
                 created_by     = admin.id,
             )
             edb.add(ev)
             edb.commit()
             edb.refresh(ev)
-            msg = f"Event '{ev.title}' created (ID {ev.id})."
+            status_word = "created and activated" if is_active else "saved as inactive"
+            msg = f"Event '{ev.title}' {status_word} (ID {ev.id})."
         finally:
             edb.close()
-        if start > now:
-            # Future event — arm timers; players notified when it goes live
-            schedule_event_notifications(ev)
-            broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}", ev.description or "A new event is coming — stay tuned!", tag=f"event-{ev.id}-scheduled")
-        else:
-            # Starts immediately — notify now and arm end timer
-            broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
-            schedule_event_notifications(ev)  # arms end timer if ends_at is future
+        if is_active:
+            if start > now:
+                schedule_event_notifications(ev)
+                broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}", ev.description or "A new event is coming — stay tuned!", tag=f"event-{ev.id}-scheduled")
+            else:
+                broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!", ev.description or "The event is now active — join in!", tag=f"event-{ev.id}-live")
+                schedule_event_notifications(ev)
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
