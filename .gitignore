@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.db
+*.sqlite
 .vapid_keys.json
 venv/
 .venv/
@@ -14,10 +15,13 @@ tick_state.txt
 widget_devices.json
 Task
 
-# Dev-only files
+# Dev-only / scratch files
 cheat.txt
 *_backup.sql
 
-# Keep backup SQL files tracked
+# Claude helper session files — never commit these
+claudeHelper/
+
+# Keep intentional DB backup SQL files tracked (written by backup.sh)
 !backups/*.sql
 !backups/.gitkeep
