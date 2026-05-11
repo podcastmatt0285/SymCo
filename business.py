@@ -59,6 +59,7 @@ class Business(Base):
     # Per-line pause: JSON arrays of paused line indices / product keys
     paused_lines = Column(String, default="[]")      # e.g. "[0, 2]"
     paused_products = Column(String, default="[]")   # e.g. '["bread", "milk"]'
+    is_tutorial_reward = Column(Boolean, default=False)  # True → permanently wage-free
 
 class RetailPrice(Base):
     __tablename__ = "retail_prices"
@@ -101,6 +102,7 @@ def initialize():
     run_ddl_migration(engine, [
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_lines TEXT DEFAULT '[]'",
         "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paused_products TEXT DEFAULT '[]'",
+        "ALTER TABLE businesses ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE",
     ])
     load_business_config()
     print("[Business] Module initialized with production patches and dismantling system")
@@ -253,8 +255,10 @@ def process_business_tick(db):
         if sale:
             continue
         
-        # FIXED: Check if this is a district business and load appropriate config
-        if biz.district_id:
+        # Check if this is a district business and load appropriate config.
+        # Tutorial-reward businesses live on a land plot (not a District object) but
+        # use district business types, so they also load from district_businesses.json.
+        if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
             district_business_types = get_district_business_types()
             config = district_business_types.get(biz.business_type, {})
         else:
@@ -290,7 +294,11 @@ def process_business_tick(db):
             continue
         
         base_wage = config.get("base_wage_cost", 0.0)
-        wage_cost = base_wage / eff_multiplier
+        # Tutorial-reward businesses are permanently wage-free
+        if getattr(biz, 'is_tutorial_reward', False):
+            wage_cost = 0.0
+        else:
+            wage_cost = base_wage / eff_multiplier
 
         # Apply city project production buffs (if player is a city member)
         _city_output_mult = 1.0
@@ -305,14 +313,14 @@ def process_business_tick(db):
         except Exception:
             pass
 
-        wage_cost *= _city_wage_mult
-
-        from reserve_banks import can_afford_usd
-        if not can_afford_usd(player.id, wage_cost):
-            biz_name = config.get("name", biz.business_type)
-            _fire_business_push(player.id, biz.id, "wages",
-                biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
-            continue
+        if wage_cost > 0:
+            wage_cost *= _city_wage_mult
+            from reserve_banks import can_afford_usd
+            if not can_afford_usd(player.id, wage_cost):
+                biz_name = config.get("name", biz.business_type)
+                _fire_business_push(player.id, biz.id, "wages",
+                    biz_name, f"Can't afford wages — ${wage_cost:,.0f} needed to keep running")
+                continue
 
         player_inv = get_player_inventory(player.id)
         lines_successfully_produced = 0

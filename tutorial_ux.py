@@ -2850,7 +2850,10 @@ def tutorial5_dismiss(session_token: Optional[str] = Cookie(None)):
 # ============================================================
 
 T6_TOTAL_STEPS = 6
-T6_TROPHY_REWARD = 15
+# T6 rewards a free district plot + business (no land tax, no wages, no startup cost, forever)
+T6_REWARD_TERRAIN   = "district_food"
+T6_REWARD_BIZ_TYPE  = "fast_food_kitchen"
+T6_REWARD_BIZ_NAME  = "Fast Food Kitchen"
 
 
 def get_tutorial6_step(player_id: int) -> int:
@@ -3077,16 +3080,18 @@ def get_tutorial6_overlay_html(player, current_page: str) -> str:
         </p>
         <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);
                     border-radius:6px;padding:12px 16px;margin-bottom:16px;">
-            <strong style="color:#38bdf8;">&#127942; Reward: {T6_TROPHY_REWARD} Trophies</strong>
-            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;">
-                Added to your trophy count — contributing toward your player level.
-                View your trophies in the <a href="/events" style="color:#38bdf8;">Events &amp; Tasks</a> page.
-            </p>
+            <strong style="color:#38bdf8;">&#127961;&#65039; Reward: Free District Plot + Business</strong>
+            <ul style="color:#94a3b8;font-size:0.85rem;margin:8px 0 0 0;padding-left:18px;line-height:1.8;">
+                <li><strong style="color:#e5e7eb;">District Food Plot</strong> — permanently tax-free, forever</li>
+                <li><strong style="color:#e5e7eb;">Fast Food Kitchen</strong> — no startup cost, no wages, ever</li>
+                <li>Produces burgers and fast food items for the District Market</li>
+                <li>You still need to supply inputs (beef, bread, onions) to run production</li>
+            </ul>
         </div>
         <form action="/api/tutorial6/claim-reward" method="post">
             <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
                     border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
-                Claim {T6_TROPHY_REWARD} Trophies! &#127942;
+                Claim Free District Plot &amp; Business! &#127961;&#65039;
             </button>
         </form>
         """
@@ -3153,7 +3158,8 @@ def get_tutorial6_banner_html(player) -> str:
             <strong style="color:#e5e7eb;">District Market</strong> — specialized local order books
             with their own supply, demand, and tax dynamics. Learn to exploit price differences
             between districts and the main exchange.
-            Complete it to earn <strong style="color:#38bdf8;">15 trophies</strong>.
+            Complete it to earn a <strong style="color:#38bdf8;">free District Food Plot + Fast Food Kitchen</strong>
+            — no land tax, no wages, no startup cost, forever.
         </p>
         <form action="/api/tutorial6/start" method="post" style="display:inline;">
             <button type="submit"
@@ -3214,49 +3220,70 @@ def tutorial6_advance(session_token: Optional[str] = Cookie(None)):
 
 @router.post("/api/tutorial6/claim-reward")
 def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
-    """Step 6 → 7: Award trophies and mark Tutorial 6 complete."""
+    """Step 6 → 7: Grant a permanent tax-free district plot + wage-free business."""
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     if get_tutorial6_step(player.id) != 6:
         return RedirectResponse(url="/", status_code=303)
 
-    # Award trophies
     try:
-        from events import PlayerRank, SessionLocal as _ev_session, LEVEL_THRESHOLDS
+        from land import LandPlot, get_db as _land_db
+        from business import Business
         from datetime import datetime as _dt
-        _db = _ev_session()
-        rank = _db.query(PlayerRank).filter(PlayerRank.player_id == player.id).first()
-        if not rank:
-            rank = PlayerRank(player_id=player.id, trophies=0, level=1)
-            _db.add(rank)
-        rank.trophies = (rank.trophies or 0) + T6_TROPHY_REWARD
-        rank.updated_at = _dt.utcnow()
-        # Recalculate level
-        level = 1
-        for i, threshold in enumerate(LEVEL_THRESHOLDS):
-            if rank.trophies >= threshold:
-                level = i + 2
-            else:
-                break
-        rank.level = level
-        _db.commit()
-        _db.close()
-        # Push notification
+
+        db = _land_db()
+        try:
+            # Free district_food land plot — permanently tax-exempt
+            plot = LandPlot(
+                owner_id=player.id,
+                terrain_type=T6_REWARD_TERRAIN,
+                proximity_features="",
+                efficiency=100.0,
+                size=1.0,
+                monthly_tax=0.0,
+                is_tutorial_reward=True,
+                is_starter_plot=False,
+                is_government_owned=False,
+                created_at=_dt.utcnow(),
+                last_tax_payment=_dt.utcnow(),
+            )
+            db.add(plot)
+            db.flush()
+
+            # Free Fast Food Kitchen — no startup cost charged, permanently wage-free
+            biz = Business(
+                owner_id=player.id,
+                land_plot_id=plot.id,
+                business_type=T6_REWARD_BIZ_TYPE,
+                is_active=True,
+                is_tutorial_reward=True,
+                created_at=_dt.utcnow(),
+            )
+            db.add(biz)
+            db.flush()
+
+            plot.occupied_by_business_id = biz.id
+            db.commit()
+        finally:
+            db.close()
+
         try:
             from push_ux import send_push_notification
             send_push_notification(
                 player.id,
-                "🏆 Tutorial 6 Complete!",
-                f"You earned {T6_TROPHY_REWARD} trophies for completing the District Market tutorial.",
-                url="/events",
+                "🏙️ Tutorial 6 Complete!",
+                "You earned a FREE District Food Plot + Fast Food Kitchen — no land tax, "
+                "no wages, no startup cost, forever. Check your Districts page!",
+                url="/districts",
                 notif_type="tasks_events",
                 tag="tutorial6-complete",
             )
         except Exception:
             pass
+
     except Exception as e:
-        print(f"[Tutorial6] Trophy award error: {e}")
+        print(f"[Tutorial6] Reward grant error: {e}")
 
     set_tutorial6_step(player.id, 7)
     return RedirectResponse(url="/districts?t6_complete=1", status_code=303)

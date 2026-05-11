@@ -1281,17 +1281,18 @@ def _tutorials_tab(player) -> str:
 <div style="display:flex;align-items:center;gap:10px;">
   <span style="color:#38bdf8;font-size:1rem;">&#10003;</span>
   <div>
-    <span style="font-size:0.85rem;font-weight:bold;color:#38bdf8;">15 Trophies — Claimed</span>
+    <span style="font-size:0.85rem;font-weight:bold;color:#38bdf8;">Free District Plot + Business — Claimed</span>
     <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
-      Awarded to your <a href="/events" style="color:#38bdf8;">trophy leaderboard</a> score.
+      Your tax-free District Food Plot and wage-free Fast Food Kitchen are on your
+      <a href="/districts" style="color:#38bdf8;">Districts</a> page.
     </div>
   </div>
 </div>"""
     elif step5 < 7:
-        t6_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; 15 Trophies — complete Tutorial 5 to unlock</div>'
+        t6_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; Free District Plot + Business — complete Tutorial 5 to unlock</div>'
     elif step6 == 0:
         t6_reward = """
-<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#128274; 15 Trophies — finish this tutorial to claim</div>
+<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#127961;&#65039; Free District Plot + Business — finish this tutorial to claim</div>
 <form method="post" action="/api/tutorial6/start" style="display:inline;">
   <button type="submit"
           style="padding:8px 18px;background:#38bdf8;color:#020617;border:none;
@@ -1300,7 +1301,7 @@ def _tutorials_tab(player) -> str:
   </button>
 </form>"""
     else:
-        t6_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; 15 Trophies — finish this tutorial to claim</div>'
+        t6_reward = '<div style="font-size:0.82rem;color:#475569;">&#127961;&#65039; Free District Plot + Business — finish this tutorial to claim</div>'
 
     card6 = _tutorial_card(
         number=6,
