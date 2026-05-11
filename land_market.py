@@ -225,6 +225,10 @@ def list_land_for_sale(seller_id: int, land_plot_id: int, asking_price: float) -
         if plot.occupied_by_business_id is not None:
             print("[LandMarket] Cannot sell occupied land")
             return None
+
+        if getattr(plot, 'is_tutorial_reward', False):
+            print("[LandMarket] Tutorial reward plots cannot be sold")
+            return None
         
         if asking_price <= 0:
             print("[LandMarket] Invalid price")

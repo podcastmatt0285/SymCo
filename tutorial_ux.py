@@ -979,6 +979,12 @@ def restart_tutorial(
             set_tutorial6_step(player.id, 1)
             return RedirectResponse(url="/districts", status_code=303)
 
+    if tutorial_number == 7:
+        step7 = get_tutorial7_step(player.id)
+        if step7 > 0:
+            set_tutorial7_step(player.id, 1)
+            return RedirectResponse(url="/land", status_code=303)
+
     return RedirectResponse(url="/settings?tab=tutorials", status_code=303)
 
 
@@ -3308,4 +3314,881 @@ def tutorial6_dismiss(session_token: Optional[str] = Cookie(None)):
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     set_tutorial6_step(player.id, 7)
+    return RedirectResponse(url="/", status_code=303)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TUTORIAL 7 — Supply, Demand, Elasticity & Land Efficiency
+# ══════════════════════════════════════════════════════════════════════════════
+
+T7_TOTAL_STEPS  = 7
+T7_TROPHY_REWARD = 20
+
+# ── Step / progress helpers ───────────────────────────────────────────────────
+
+def get_tutorial7_step(player_id: int) -> int:
+    db = _get_db()
+    try:
+        p = db.query(_Player).filter(_Player.id == player_id).first()
+        return int(getattr(p, "tutorial_7_step", 0) or 0)
+    finally:
+        db.close()
+
+def set_tutorial7_step(player_id: int, step: int):
+    db = _get_db()
+    try:
+        p = db.query(_Player).filter(_Player.id == player_id).first()
+        if p:
+            p.tutorial_7_step = step
+            db.commit()
+    finally:
+        db.close()
+
+def should_show_tutorial7_banner(player) -> bool:
+    step6 = get_tutorial6_step(player.id)
+    step7 = get_tutorial7_step(player.id)
+    return step6 >= 7 and step7 == 0
+
+
+# ── Overlay HTML (shown on /land page) ───────────────────────────────────────
+
+def get_tutorial7_overlay_html(player, page_key: str) -> str:
+    """Return the Tutorial 7 overlay for the /land page (all steps)."""
+    step = get_tutorial7_step(player.id)
+    if step == 0 or step >= 8:
+        return ""
+    if page_key != "land":
+        return ""
+
+    # ── Shared CSS + chart helpers ────────────────────────────────────────────
+    SHARED_CSS = """
+    <style>
+    .t7-chart{background:#020617;border:1px solid #1e293b;border-radius:6px;
+              padding:12px;margin:10px 0;overflow-x:auto;}
+    .t7-table{width:100%;border-collapse:collapse;font-size:0.78rem;}
+    .t7-table th{background:#0f172a;color:#94a3b8;padding:6px 10px;
+                 text-align:left;font-weight:600;border-bottom:1px solid #1e293b;}
+    .t7-table td{padding:5px 10px;border-bottom:1px solid #0f172a;color:#cbd5e1;}
+    .t7-table tr:last-child td{border-bottom:none;}
+    .t7-bar-wrap{background:#0f172a;border-radius:3px;height:8px;
+                 margin:2px 0;overflow:hidden;min-width:80px;}
+    .t7-bar{height:8px;border-radius:3px;transition:width .4s ease;}
+    .t7-callout{background:rgba(56,189,248,.08);border-left:3px solid #38bdf8;
+                padding:8px 12px;margin:8px 0;font-size:0.82rem;color:#cbd5e1;
+                border-radius:0 4px 4px 0;}
+    .t7-warn{background:rgba(251,191,36,.08);border-left:3px solid #fbbf24;
+             padding:8px 12px;margin:8px 0;font-size:0.82rem;color:#cbd5e1;
+             border-radius:0 4px 4px 0;}
+    .t7-formula{font-family:'JetBrains Mono',monospace;font-size:0.82rem;
+                background:#0a0f1a;border:1px solid #1e293b;padding:6px 12px;
+                border-radius:4px;color:#4ade80;display:inline-block;margin:4px 0;}
+    .t7-anim-bar{animation:t7grow 1.2s ease forwards;}
+    @keyframes t7grow{from{width:0}to{width:var(--tw)}}
+    .t7-pulse{animation:t7pulse 2s ease-in-out infinite;}
+    @keyframes t7pulse{0%,100%{opacity:1}50%{opacity:.5}}
+    </style>
+    """
+
+    # ── Step content ──────────────────────────────────────────────────────────
+
+    if step == 1:
+        title = "What Is Plot Efficiency?"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
+          Every land plot has an <strong style="color:#e5e7eb;">Efficiency</strong> rating from
+          <strong style="color:#4ade80;">0% – 100%</strong>.
+          It starts at <strong style="color:#4ade80;">100%</strong> when you buy or receive the plot
+          and <em>slowly degrades over time</em> through natural wear and tear.
+        </p>
+
+        <!-- Efficiency decay animation -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            EFFICIENCY DECAY OVER TIME (animated)
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+              <span style="width:64px;color:#94a3b8;text-align:right;">Today</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:100%;background:#22c55e;width:0;"></div>
+              </div>
+              <span style="color:#22c55e;width:36px;">100%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+              <span style="width:64px;color:#94a3b8;text-align:right;">6 months</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:97.4%;background:#84cc16;width:0;animation-delay:.2s"></div>
+              </div>
+              <span style="color:#84cc16;width:36px;">97.4%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+              <span style="width:64px;color:#94a3b8;text-align:right;">1 year</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:94.7%;background:#eab308;width:0;animation-delay:.4s"></div>
+              </div>
+              <span style="color:#eab308;width:36px;">94.7%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+              <span style="width:64px;color:#94a3b8;text-align:right;">2 years</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:89.4%;background:#f59e0b;width:0;animation-delay:.6s"></div>
+              </div>
+              <span style="color:#f59e0b;width:36px;">89.4%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+              <span style="width:64px;color:#94a3b8;text-align:right;">3 years</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:84%;background:#ef4444;width:0;animation-delay:.8s"></div>
+              </div>
+              <span style="color:#ef4444;width:36px;">84.0%</span>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:0.72rem;color:#334155;">
+            Decay rate: 0.00001% per minute (≈ 0.144% per day, ≈ 52% total over 3 years)
+          </div>
+        </div>
+
+        <div class="t7-callout">
+          <strong style="color:#38bdf8;">Why does this matter?</strong> Efficiency directly controls
+          how much your business pays in wages each production cycle.
+          Lower efficiency = higher wages. At <strong style="color:#fbbf24;">50% efficiency</strong>,
+          wages are <strong style="color:#ef4444;">doubled</strong>. Below 50% they stop getting
+          worse (the floor is 50%).
+        </div>
+
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            EFFICIENCY → WAGE MULTIPLIER
+          </div>
+          <!-- SVG curve -->
+          <svg viewBox="0 0 300 120" style="width:100%;max-width:400px;display:block;">
+            <defs>
+              <linearGradient id="t7grad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#ef4444"/>
+                <stop offset="50%" stop-color="#fbbf24"/>
+                <stop offset="100%" stop-color="#22c55e"/>
+              </linearGradient>
+            </defs>
+            <!-- axes -->
+            <line x1="30" y1="100" x2="290" y2="100" stroke="#334155" stroke-width="1"/>
+            <line x1="30" y1="10"  x2="30"  y2="100" stroke="#334155" stroke-width="1"/>
+            <!-- axis labels -->
+            <text x="155" y="115" fill="#64748b" font-size="8" text-anchor="middle">Efficiency (%)</text>
+            <text x="10"  y="55"  fill="#64748b" font-size="7" text-anchor="middle" transform="rotate(-90,10,55)">Wage ×</text>
+            <!-- tick labels x -->
+            <text x="30"  y="108" fill="#64748b" font-size="7" text-anchor="middle">0</text>
+            <text x="95"  y="108" fill="#64748b" font-size="7" text-anchor="middle">25</text>
+            <text x="160" y="108" fill="#64748b" font-size="7" text-anchor="middle">50</text>
+            <text x="225" y="108" fill="#64748b" font-size="7" text-anchor="middle">75</text>
+            <text x="290" y="108" fill="#64748b" font-size="7" text-anchor="middle">100</text>
+            <!-- tick labels y -->
+            <text x="26" y="100" fill="#64748b" font-size="7" text-anchor="end">1×</text>
+            <text x="26" y="68"  fill="#64748b" font-size="7" text-anchor="end">1.5×</text>
+            <text x="26" y="37"  fill="#64748b" font-size="7" text-anchor="end">2×</text>
+            <!-- curve: wage = base / max(0.5, eff/100)
+                 at eff=100 → 1.0×  at eff=75 → 1.0×  at eff=50 → 2.0× floored
+                 map eff 0..100 → x 30..290, wage_mult 1..2 → y 100..37 (inverted) -->
+            <!-- flat segment 50-100 eff: wage mult = 100/eff
+                 eff=100→mult=1.0 y=100, eff=75→mult=1.33 y=78, eff=50→mult=2.0 y=37 -->
+            <polyline points="
+              30,37 95,37 160,37
+              162,37 192,55 225,63 258,75 290,100"
+              fill="none" stroke="url(#t7grad)" stroke-width="2.5" stroke-linejoin="round"/>
+            <!-- floor line at eff=50 -->
+            <line x1="160" y1="37" x2="160" y2="100" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="162" y="48" fill="#fbbf24" font-size="6.5">50% floor</text>
+            <!-- highlight point at 100% eff -->
+            <circle cx="290" cy="100" r="3" fill="#22c55e"/>
+            <text x="292" y="98" fill="#22c55e" font-size="6">1.0× (normal)</text>
+          </svg>
+          <div style="font-size:0.72rem;color:#334155;margin-top:4px;">
+            The curve flattens at 50%: wages can't exceed 2× no matter how far efficiency drops.
+          </div>
+        </div>
+        """
+
+    elif step == 2:
+        title = "How the Market Price is Determined"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
+          The <strong style="color:#e5e7eb;">Market Price</strong> of any item is not set by
+          the game — it's discovered through the order book. Players post buy and sell orders;
+          when they cross, a trade executes and that price becomes the new market reference.
+        </p>
+
+        <!-- animated order book -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            ORDER BOOK — HOW PRICES MEET
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.75rem;">
+            <div>
+              <div style="color:#4ade80;font-weight:700;margin-bottom:4px;">BUY ORDERS (Bids)</div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <div style="display:flex;justify-content:space-between;background:#052e16;padding:3px 8px;border-radius:3px;">
+                  <span style="color:#4ade80;">$9.80</span><span style="color:#94a3b8;">50 units</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;background:#052e16;padding:3px 8px;border-radius:3px;">
+                  <span style="color:#4ade80;">$9.60</span><span style="color:#94a3b8;">120 units</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;background:#052e16;padding:3px 8px;border-radius:3px;opacity:.7;">
+                  <span style="color:#4ade80;">$9.40</span><span style="color:#94a3b8;">200 units</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style="color:#ef4444;font-weight:700;margin-bottom:4px;">SELL ORDERS (Asks)</div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <div style="display:flex;justify-content:space-between;background:#1a0505;padding:3px 8px;border-radius:3px;">
+                  <span style="color:#ef4444;">$9.80</span><span style="color:#94a3b8;">80 units</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;background:#1a0505;padding:3px 8px;border-radius:3px;opacity:.7;">
+                  <span style="color:#ef4444;">$10.00</span><span style="color:#94a3b8;">150 units</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;background:#1a0505;padding:3px 8px;border-radius:3px;opacity:.5;">
+                  <span style="color:#ef4444;">$10.20</span><span style="color:#94a3b8;">300 units</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:8px;padding:6px 10px;background:#1e293b;border-radius:4px;
+                      font-size:0.78rem;text-align:center;">
+            Best bid <strong style="color:#4ade80;">$9.80</strong> meets best ask
+            <strong style="color:#ef4444;">$9.80</strong> →
+            <strong style="color:#38bdf8;">TRADE at $9.80 ← new market price</strong>
+          </div>
+        </div>
+
+        <div class="t7-callout">
+          <strong>Price discovery priority:</strong><br>
+          1. Last executed trade price (most recent)<br>
+          2. Midpoint of best bid + best ask (if no recent trades)<br>
+          3. Best bid or best ask alone (if only one side active)<br>
+          4. No price (if no orders at all — item shows N/A on ticker)
+        </div>
+
+        <!-- supply push animation -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            SUPPLY &amp; DEMAND DRIVES THE PRICE
+          </div>
+          <svg viewBox="0 0 300 140" style="width:100%;max-width:420px;display:block;">
+            <!-- axes -->
+            <line x1="30" y1="120" x2="280" y2="120" stroke="#334155" stroke-width="1"/>
+            <line x1="30" y1="15"  x2="30"  y2="120" stroke="#334155" stroke-width="1"/>
+            <text x="155" y="135" fill="#64748b" font-size="8" text-anchor="middle">Quantity</text>
+            <text x="12"  y="67"  fill="#64748b" font-size="7" text-anchor="middle" transform="rotate(-90,12,67)">Price</text>
+            <!-- demand curve (downsloping) -->
+            <polyline points="50,20 100,45 155,70 210,95 260,115"
+              fill="none" stroke="#38bdf8" stroke-width="2"/>
+            <text x="262" y="118" fill="#38bdf8" font-size="7">Demand</text>
+            <!-- supply curve (upsloping) -->
+            <polyline points="50,115 100,90 155,65 210,40 260,20"
+              fill="none" stroke="#f97316" stroke-width="2"/>
+            <text x="262" y="23" fill="#f97316" font-size="7">Supply</text>
+            <!-- equilibrium point -->
+            <circle cx="155" cy="67" r="4" fill="#4ade80" class="t7-pulse"/>
+            <line x1="155" y1="67" x2="155" y2="120" stroke="#4ade80" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="30"  y1="67" x2="155" y2="67"  stroke="#4ade80" stroke-width="1" stroke-dasharray="3,2"/>
+            <text x="157" y="80"  fill="#4ade80" font-size="6.5">Equilibrium</text>
+            <text x="157" y="88"  fill="#4ade80" font-size="6.5">price &amp; qty</text>
+          </svg>
+          <div style="font-size:0.72rem;color:#334155;margin-top:4px;">
+            The order book is this chart in real-time. More sellers → price drops. More buyers → price rises.
+          </div>
+        </div>
+        """
+
+    elif step == 3:
+        title = "Price Elasticity of Demand"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
+          <strong style="color:#e5e7eb;">Elasticity</strong> measures how sensitive
+          your customers are to your price. It's the most important number in your retail strategy.
+          Each item in the game has its own fixed elasticity value built into its config.
+        </p>
+
+        <div class="t7-formula">Sales Multiplier = (Your Price ÷ Market Price) ^ Elasticity</div>
+
+        <div class="t7-callout">
+          Multiplier = <strong>1.0</strong> → normal sales speed (price = market)<br>
+          Multiplier &gt; 1.0 → <strong style="color:#ef4444;">slower</strong> sales (price above market)<br>
+          Multiplier &lt; 1.0 → <strong style="color:#4ade80;">faster</strong> sales (price below market, capped at 20×)
+        </div>
+
+        <!-- elasticity spectrum -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;font-weight:600;">
+            ELASTICITY SPECTRUM
+          </div>
+          <div style="position:relative;height:28px;background:linear-gradient(to right,#22c55e,#38bdf8,#f59e0b,#ef4444);
+                      border-radius:4px;margin-bottom:24px;">
+            <span style="position:absolute;left:2%;top:6px;font-size:0.65rem;color:#020617;font-weight:700;">0.0</span>
+            <span style="position:absolute;left:25%;top:6px;font-size:0.65rem;color:#020617;font-weight:700;">0.5</span>
+            <span style="position:absolute;left:50%;top:6px;font-size:0.65rem;color:#020617;font-weight:700;">1.0</span>
+            <span style="position:absolute;left:74%;top:6px;font-size:0.65rem;color:#020617;font-weight:700;">1.5</span>
+            <span style="position:absolute;right:2%;top:6px;font-size:0.65rem;color:#020617;font-weight:700;">2.0+</span>
+          </div>
+          <table class="t7-table">
+            <tr>
+              <th>Elasticity</th><th>Type</th><th>What It Means</th><th>Examples</th>
+            </tr>
+            <tr>
+              <td><strong style="color:#22c55e;">&lt; 0.5</strong></td>
+              <td>Highly Inelastic</td>
+              <td>Customers barely react to price changes. You can charge 30% above market with minimal sales impact.</td>
+              <td>Gasoline (0.4), Diesel (0.3), Religious books (0.3)</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#38bdf8;">0.5 – 1.0</strong></td>
+              <td>Moderately Inelastic</td>
+              <td>Some sensitivity. 10% markup causes mild slowdown.</td>
+              <td>Apple Pie (0.8), Mica (0.8), Agate (1.0)</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#f59e0b;">1.0 – 1.5</strong></td>
+              <td>Moderately Elastic</td>
+              <td>Customers notice and compare. Keep near market price.</td>
+              <td>Produce, electronics, standard goods</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#ef4444;">&gt; 1.5</strong></td>
+              <td>Highly Elastic</td>
+              <td>Even 3% above market tanks sales significantly. Price competitively or items sit unsold.</td>
+              <td>Floral Centerpiece (1.8), Orchid (1.8), Funeral Wreath (1.6)</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- concrete price impact chart -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            10% PRICE MARKUP — SALES SLOWDOWN BY ELASTICITY
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;font-size:0.75rem;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:90px;color:#22c55e;">ε = 0.3 (fuel)</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:97%;background:#22c55e;width:0;"></div>
+              </div>
+              <span style="color:#22c55e;width:50px;">−3% sales</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:90px;color:#38bdf8;">ε = 0.8 (pie)</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:92.5%;background:#38bdf8;width:0;animation-delay:.15s"></div>
+              </div>
+              <span style="color:#38bdf8;width:50px;">−7.5% sales</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:90px;color:#f59e0b;">ε = 1.2</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:88.5%;background:#f59e0b;width:0;animation-delay:.3s"></div>
+              </div>
+              <span style="color:#f59e0b;width:50px;">−11.5% sales</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:90px;color:#ef4444;">ε = 1.8 (orchid)</span>
+              <div class="t7-bar-wrap" style="flex:1;">
+                <div class="t7-bar t7-anim-bar" style="--tw:82%;background:#ef4444;width:0;animation-delay:.45s"></div>
+              </div>
+              <span style="color:#ef4444;width:50px;">−18% sales</span>
+            </div>
+          </div>
+          <div style="font-size:0.7rem;color:#334155;margin-top:6px;">
+            All above: pricing 10% above market. Same markup, very different consequences.
+          </div>
+        </div>
+        """
+
+    elif step == 4:
+        title = "Optimal Pricing Strategy"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
+          The engine computes a <strong style="color:#e5e7eb;">Sales Multiplier</strong> every tick.
+          This multiplier divides your base sale probability, so a multiplier of 2.0 means your
+          item sells at <em>half</em> the normal rate.
+          Here's how to set prices to maximize revenue, not just margin.
+        </p>
+
+        <div class="t7-callout">
+          <strong>Rule of thumb by elasticity:</strong><br>
+          ε &lt; 0.5 → charge up to <strong style="color:#22c55e;">+30%</strong> above market<br>
+          ε 0.5–1.0 → up to <strong style="color:#38bdf8;">+10%</strong> is safe<br>
+          ε 1.0–1.5 → stay within <strong style="color:#f59e0b;">+8%</strong><br>
+          ε &gt; 1.5 → never more than <strong style="color:#ef4444;">+3%</strong>
+        </div>
+
+        <!-- worked example: gasoline vs orchid -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            WORKED EXAMPLE: GASOLINE (ε=0.4) AT $11 vs MARKET $10
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:0.75rem;text-align:center;">
+            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+              <div style="color:#64748b;font-size:0.65rem;margin-bottom:4px;">MULTIPLIER</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">(11/10)^0.4</div>
+              <div style="color:#4ade80;font-size:0.9rem;margin-top:2px;">= 1.038</div>
+            </div>
+            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+              <div style="color:#64748b;font-size:0.65rem;margin-bottom:4px;">SALES SLOWDOWN</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#f59e0b;">−3.8%</div>
+              <div style="color:#94a3b8;font-size:0.72rem;margin-top:2px;">barely noticeable</div>
+            </div>
+            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+              <div style="color:#64748b;font-size:0.65rem;margin-bottom:4px;">PROFIT GAIN</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#22c55e;">+10%/unit</div>
+              <div style="color:#94a3b8;font-size:0.72rem;margin-top:2px;">net positive</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            SAME MARKUP: ORCHID (ε=1.8) AT $11 vs MARKET $10
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:0.75rem;text-align:center;">
+            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+              <div style="color:#64748b;font-size:0.65rem;margin-bottom:4px;">MULTIPLIER</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">(11/10)^1.8</div>
+              <div style="color:#ef4444;font-size:0.9rem;margin-top:2px;">= 1.185</div>
+            </div>
+            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+              <div style="color:#64748b;font-size:0.65rem;margin-bottom:4px;">SALES SLOWDOWN</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#ef4444;">−18.5%</div>
+              <div style="color:#94a3b8;font-size:0.72rem;margin-top:2px;">significant</div>
+            </div>
+            <div style="background:#0a0f1a;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+              <div style="color:#64748b;font-size:0.65rem;margin-bottom:4px;">NET RESULT</div>
+              <div style="font-size:1.1rem;font-weight:bold;color:#ef4444;">NEGATIVE</div>
+              <div style="color:#94a3b8;font-size:0.72rem;margin-top:2px;">revenue lost</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="t7-warn">
+          <strong style="color:#fbbf24;">Remember:</strong> discounting <em>below</em> market also works.
+          Multiplier &lt; 1.0 means faster sales — great for clearing inventory. The sales rate is floored
+          at 20× normal speed (multiplier floor = 0.05) so you can't dump infinite inventory instantly.
+        </div>
+
+        <!-- sales rate comparison chart -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            APPLE PIE (base_chance=0.04, ε=0.8) — SALES / HOUR AT DIFFERENT PRICES
+          </div>
+          <table class="t7-table">
+            <tr><th>Your Price</th><th>vs Market</th><th>Multiplier</th><th>Sales/hr</th></tr>
+            <tr><td>$9.00</td><td style="color:#4ade80;">−10%</td><td>0.921</td>
+                <td><span style="color:#4ade80;">156/hr</span></td></tr>
+            <tr><td>$10.00</td><td style="color:#94a3b8;">at market</td><td>1.000</td>
+                <td><span style="color:#38bdf8;">144/hr</span></td></tr>
+            <tr><td>$10.80</td><td style="color:#f59e0b;">+8%</td><td>1.063</td>
+                <td><span style="color:#f59e0b;">135/hr</span></td></tr>
+            <tr><td>$11.00</td><td style="color:#ef4444;">+10%</td><td>1.078</td>
+                <td><span style="color:#ef4444;">134/hr</span></td></tr>
+            <tr><td>$12.00</td><td style="color:#ef4444;">+20%</td><td>1.155</td>
+                <td><span style="color:#ef4444;">125/hr</span></td></tr>
+          </table>
+          <div style="font-size:0.7rem;color:#334155;margin-top:4px;">
+            Formula: sales/hr = (base_chance / multiplier) × 3600 ticks/hour
+          </div>
+        </div>
+        """
+
+    elif step == 5:
+        title = "Terrain Types, Proximity Bonuses & Land Tax"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
+          The terrain type of a plot determines which businesses you can build on it
+          and how much monthly land tax you owe. Proximity features multiply the base tax —
+          and usually unlock better business types too.
+        </p>
+
+        <!-- terrain tax table -->
+        <div class="t7-chart" style="max-height:260px;overflow-y:auto;">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:6px;font-weight:600;">
+            TERRAIN BASE TAX (before proximity modifiers)
+          </div>
+          <table class="t7-table">
+            <tr><th>Terrain</th><th>Base Tax/mo</th><th>Characteristics</th></tr>
+            <tr><td>Urban</td>      <td style="color:#ef4444;">$120</td><td>High demand, city-adjacent</td></tr>
+            <tr><td>Ocean</td>      <td style="color:#ef4444;">$100</td><td>Offshore operations</td></tr>
+            <tr><td>Coastal</td>    <td style="color:#f97316;">$80</td> <td>Ocean access, trade</td></tr>
+            <tr><td>Mountain</td>   <td style="color:#f59e0b;">$70</td> <td>Mining potential</td></tr>
+            <tr><td>Island</td>     <td style="color:#f59e0b;">$65</td> <td>Isolated, premium</td></tr>
+            <tr><td>Lake</td>       <td style="color:#eab308;">$60</td> <td>Fishing, aquaculture</td></tr>
+            <tr><td>Forest</td>     <td style="color:#eab308;">$60</td> <td>Lumber, resources</td></tr>
+            <tr><td>Jungle</td>     <td style="color:#84cc16;">$55</td> <td>Exotic resources</td></tr>
+            <tr><td>Hills</td>      <td style="color:#84cc16;">$52</td> <td>Rolling terrain</td></tr>
+            <tr><td>Prairie</td>    <td style="color:#22c55e;">$50</td> <td>Most common, farming</td></tr>
+            <tr><td>Savanna</td>    <td style="color:#22c55e;">$45</td> <td>Tropical grassland</td></tr>
+            <tr><td>Marsh</td>      <td style="color:#22c55e;">$40</td> <td>Unique resources</td></tr>
+            <tr><td>Tundra</td>     <td style="color:#22c55e;">$35</td> <td>Cold, sparse</td></tr>
+            <tr><td>Desert</td>     <td style="color:#4ade80;">$30</td> <td>Cheapest non-district</td></tr>
+          </table>
+        </div>
+
+        <!-- proximity multipliers -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:6px;font-weight:600;">
+            PROXIMITY FEATURES — TAX MULTIPLIERS
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:0.74rem;">
+            <span style="padding:3px 8px;background:#1a0505;border:1px solid #ef4444;border-radius:3px;color:#ef4444;">urban ×2.0</span>
+            <span style="padding:3px 8px;background:#1a0a00;border:1px solid #f97316;border-radius:3px;color:#f97316;">deposits ×1.7</span>
+            <span style="padding:3px 8px;background:#0a1219;border:1px solid #f59e0b;border-radius:3px;color:#f59e0b;">oasis ×1.6</span>
+            <span style="padding:3px 8px;background:#0a1219;border:1px solid #eab308;border-radius:3px;color:#eab308;">coastal ×1.5</span>
+            <span style="padding:3px 8px;background:#091219;border:1px solid #38bdf8;border-radius:3px;color:#38bdf8;">hot springs ×1.4</span>
+            <span style="padding:3px 8px;background:#091219;border:1px solid #38bdf8;border-radius:3px;color:#38bdf8;">riverside ×1.3</span>
+            <span style="padding:3px 8px;background:#091219;border:1px solid #38bdf8;border-radius:3px;color:#38bdf8;">volcanic ×1.3</span>
+            <span style="padding:3px 8px;background:#091219;border:1px solid #94a3b8;border-radius:3px;color:#94a3b8;">road ×1.25</span>
+            <span style="padding:3px 8px;background:#091219;border:1px solid #94a3b8;border-radius:3px;color:#94a3b8;">lakeside ×1.2</span>
+            <span style="padding:3px 8px;background:#091219;border:1px solid #64748b;border-radius:3px;color:#64748b;">caves ×1.1</span>
+            <span style="padding:3px 8px;background:#051a05;border:1px solid #22c55e;border-radius:3px;color:#22c55e;">remote ×0.7 ↓ cheaper!</span>
+          </div>
+          <div style="font-size:0.7rem;color:#334155;margin-top:6px;">
+            Final tax = base_tax × size × proximity_multiplier.
+            Starter plots get an additional 50% discount.
+          </div>
+        </div>
+
+        <!-- hoarding tax -->
+        <div class="t7-warn">
+          <strong style="color:#fbbf24;">⚠️ Hoarding Tax:</strong>
+          Your first 5 plots are free of this tax.
+          Beyond 5, each extra plot incurs a <em>Fibonacci-escalating</em> monthly penalty:
+          plot 6 = $5,000/mo · plot 7 = $5,500/mo · plot 8 = $6,000/mo · plot 9 = $6,500/mo …
+          This tax is collected hourly and scales aggressively.
+          Land-executive bonuses can reduce it.
+        </div>
+        """
+
+    elif step == 6:
+        title = "Production Economics — Costs, Margins & the Full Picture"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
+          Now let's connect everything: your <em>total cost per unit</em> determines your minimum
+          viable price. Your elasticity determines how much above cost you can actually charge
+          while keeping your sell rate healthy.
+        </p>
+
+        <div class="t7-formula">Unit Cost = (Wages + Σ input_item_cost × qty) ÷ output_qty</div>
+
+        <div class="t7-callout">
+          Cost is calculated <strong>iteratively</strong> — the game solves circular dependencies
+          (e.g., Paper needs Water, Water needs Paper) over up to 50 passes until the answer
+          converges within 0.0001 tolerance.
+        </div>
+
+        <!-- full worked example -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            FAST FOOD KITCHEN: FULL ECONOMICS BREAKDOWN
+          </div>
+          <table class="t7-table">
+            <tr><th>Component</th><th>Detail</th><th>Amount</th></tr>
+            <tr><td>Wages</td><td>$15,000/cycle (waived on tutorial reward biz)</td>
+                <td style="color:#f97316;">$15,000</td></tr>
+            <tr><td>Inputs</td><td>250 beef + 500 bread + 100 onions + …</td>
+                <td style="color:#f97316;">~$8,000</td></tr>
+            <tr><td>Total batch cost</td><td>wages + inputs</td>
+                <td style="color:#ef4444;font-weight:bold;">~$23,000</td></tr>
+            <tr><td>Output</td><td>per production cycle</td>
+                <td style="color:#94a3b8;">~400 burgers</td></tr>
+            <tr><td>Cost / burger</td><td>$23,000 ÷ 400</td>
+                <td style="color:#38bdf8;font-weight:bold;">≈ $57.50</td></tr>
+          </table>
+          <div style="margin-top:8px;padding:8px;background:#0a0f1a;border-radius:4px;font-size:0.78rem;">
+            <strong style="color:#4ade80;">Your Tutorial Reward Kitchen:</strong> wages are $0 forever,
+            so your cost is just inputs ÷ output ≈ <strong style="color:#4ade80;">$20/burger</strong>.
+            Much better margins!
+          </div>
+        </div>
+
+        <!-- the full profit flow -->
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;font-weight:600;">
+            THE COMPLETE PROFIT FLOW
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:0.78rem;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;background:#1e293b;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:bold;color:#38bdf8;flex-shrink:0;">1</div>
+              <div><strong style="color:#e5e7eb;">Land tax</strong>
+                <span style="color:#64748b;"> — paid monthly (0 if tutorial reward)</span></div>
+            </div>
+            <div style="margin-left:13px;width:1px;height:10px;background:#334155;"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;background:#1e293b;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:bold;color:#38bdf8;flex-shrink:0;">2</div>
+              <div><strong style="color:#e5e7eb;">Input costs</strong>
+                <span style="color:#64748b;"> — buy raw materials on market</span></div>
+            </div>
+            <div style="margin-left:13px;width:1px;height:10px;background:#334155;"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;background:#1e293b;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:bold;color:#38bdf8;flex-shrink:0;">3</div>
+              <div><strong style="color:#e5e7eb;">Wages</strong>
+                <span style="color:#64748b;"> — paid each production cycle (÷ efficiency multiplier)</span></div>
+            </div>
+            <div style="margin-left:13px;width:1px;height:10px;background:#334155;"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;background:#1e293b;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:bold;color:#38bdf8;flex-shrink:0;">4</div>
+              <div><strong style="color:#e5e7eb;">Set retail price</strong>
+                <span style="color:#64748b;"> — use elasticity to find optimal markup</span></div>
+            </div>
+            <div style="margin-left:13px;width:1px;height:10px;background:#334155;"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;background:#1e293b;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:bold;color:#38bdf8;flex-shrink:0;">5</div>
+              <div><strong style="color:#e5e7eb;">Sales tax</strong>
+                <span style="color:#64748b;"> — deducted from proceeds if you're in a city (contributes to city treasury)</span></div>
+            </div>
+            <div style="margin-left:13px;width:1px;height:10px;background:#334155;"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;background:#22c55e;border-radius:50%;
+                          display:flex;align-items:center;justify-content:center;
+                          font-weight:bold;color:#020617;flex-shrink:0;">✓</div>
+              <div><strong style="color:#4ade80;">Net revenue</strong>
+                <span style="color:#64748b;"> = sale price – wages – sales tax. Your profit.</span></div>
+            </div>
+          </div>
+        </div>
+        """
+
+    elif step == 7:
+        title = "Tutorial 7 Complete — Claim Your Trophies!"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px;">
+          You now understand the full economic engine behind every land plot and retail business
+          in Wadsworth. Here's a quick reference card to keep handy:
+        </p>
+
+        <div class="t7-chart">
+          <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
+            QUICK REFERENCE CARD
+          </div>
+          <table class="t7-table">
+            <tr><th>System</th><th>Key Formula / Rule</th></tr>
+            <tr><td>Efficiency</td>
+                <td>Starts 100%, decays 0.144%/day. Floor at 50% (wages cap at 2×). Tutorial reward plots never decay.</td></tr>
+            <tr><td>Market Price</td>
+                <td>Last trade &gt; bid-ask midpoint &gt; best single side &gt; N/A</td></tr>
+            <tr><td>Elasticity</td>
+                <td>Multiplier = (price/market)^ε · &lt;0.5 inelastic · &gt;1.5 very elastic</td></tr>
+            <tr><td>Optimal markup</td>
+                <td>ε&lt;0.5→+30% · ε&lt;1.0→+10% · ε&lt;1.5→+8% · ε≥1.5→+3%</td></tr>
+            <tr><td>Land tax</td>
+                <td>base × size × proximity_modifier. First 5 plots free of hoarding tax.</td></tr>
+            <tr><td>Unit cost</td>
+                <td>(wages ÷ eff_mult + Σ input costs) ÷ output_qty</td></tr>
+          </table>
+        </div>
+
+        <div style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);
+                    border-radius:6px;padding:12px 16px;margin-bottom:16px;">
+            <strong style="color:#38bdf8;">&#127942; Reward: {T7_TROPHY_REWARD} Trophies</strong>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;">
+                Added to your trophy count toward your player level.
+                View on the <a href="/events" style="color:#38bdf8;">Events &amp; Tasks</a> page.
+            </p>
+        </div>
+        <form action="/api/tutorial7/claim-reward" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;
+                    padding:10px 24px;border-radius:4px;cursor:pointer;
+                    font-size:0.9rem;font-weight:bold;">
+                Claim {T7_TROPHY_REWARD} Trophies! &#127942;
+            </button>
+        </form>
+        """
+
+    else:
+        return ""
+
+    # ── Wrapper ───────────────────────────────────────────────────────────────
+    display_step = min(step, T7_TOTAL_STEPS)
+    return SHARED_CSS + f"""
+    <div id="tutorial7-panel" style="
+        background: linear-gradient(135deg, #0a1628, #0f172a);
+        border: 2px solid #f97316;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#f97316;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                TUTORIAL — STEP {display_step}/{T7_TOTAL_STEPS}
+            </span>
+            <span style="color:#f97316;font-size:0.85rem;font-weight:bold;">
+                Level 7 &middot; Supply, Demand &amp; Efficiency
+            </span>
+            <div style="flex:1;background:#1e293b;height:4px;border-radius:2px;min-width:80px;">
+                <div style="background:#f97316;height:4px;border-radius:2px;
+                            width:{int(display_step / T7_TOTAL_STEPS * 100)}%;"></div>
+            </div>
+        </div>
+        <h3 style="color:#f97316;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
+        {content}
+        <div style="margin-top:14px;">
+            <form action="/api/tutorial7/advance" method="post" style="display:inline;">
+                <button type="submit" style="background:#f97316;color:#020617;border:none;
+                        padding:8px 20px;border-radius:4px;cursor:pointer;
+                        font-size:0.88rem;font-weight:bold;">
+                    {"Claim Reward →" if step == 7 else "Next →"}
+                </button>
+            </form>
+        </div>
+        <a href="/api/tutorial7/dismiss"
+           onclick="return confirm('Skip Tutorial 7? Restart anytime from Settings → Tutorials.');"
+           style="position:absolute;top:12px;right:16px;color:#475569;
+                  font-size:0.72rem;text-decoration:none;">Skip</a>
+    </div>
+    """
+
+
+# ── Banner (shown on Settings → Tutorials tab) ────────────────────────────────
+
+def get_tutorial7_banner_html(player) -> str:
+    if not should_show_tutorial7_banner(player):
+        return ""
+    return """
+    <div style="
+        background: linear-gradient(135deg, #150a00, #0f172a);
+        border: 2px solid #f97316;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#f97316;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                NEW TUTORIAL AVAILABLE
+            </span>
+            <span style="color:#f97316;font-size:0.85rem;font-weight:bold;">
+                Level 7 &middot; Supply, Demand &amp; Efficiency
+            </span>
+        </div>
+        <h3 style="color:#f97316;margin:0 0 10px 0;font-size:1.05rem;">
+            Master the Economics Behind Every Business
+        </h3>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Tutorial 7 is the most detailed tutorial in the game. You'll learn
+            <strong style="color:#e5e7eb;">price elasticity</strong>,
+            <strong style="color:#e5e7eb;">land plot efficiency</strong>,
+            <strong style="color:#e5e7eb;">optimal pricing strategy</strong>,
+            <strong style="color:#e5e7eb;">supply &amp; demand mechanics</strong>,
+            terrain taxes, hoarding penalties, and how to calculate true unit cost.
+            Packed with interactive charts and animated examples.
+            Complete it to earn <strong style="color:#f97316;">20 trophies</strong>.
+        </p>
+        <form action="/api/tutorial7/start" method="post" style="display:inline;">
+            <button type="submit" style="background:#f97316;color:#020617;border:none;
+                    padding:10px 20px;border-radius:4px;font-weight:bold;
+                    font-size:0.9rem;cursor:pointer;">
+                Start Tutorial 7 →
+            </button>
+        </form>
+    </div>
+    """
+
+
+# ── API routes ────────────────────────────────────────────────────────────────
+
+@router.post("/api/tutorial7/start")
+def tutorial7_start(session_token: Optional[str] = Cookie(None)):
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial7_step(player.id) == 0:
+        set_tutorial7_step(player.id, 1)
+    return RedirectResponse(url="/land", status_code=303)
+
+
+@router.post("/api/tutorial7/advance")
+def tutorial7_advance(session_token: Optional[str] = Cookie(None)):
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    step = get_tutorial7_step(player.id)
+    if 1 <= step <= T7_TOTAL_STEPS:
+        next_step = step + 1
+        set_tutorial7_step(player.id, next_step)
+        if next_step > T7_TOTAL_STEPS:
+            return RedirectResponse(url="/land", status_code=303)
+    return RedirectResponse(url="/land", status_code=303)
+
+
+@router.post("/api/tutorial7/claim-reward")
+def tutorial7_claim_reward(session_token: Optional[str] = Cookie(None)):
+    """Step 7 → 8: Award trophies."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial7_step(player.id) != 7:
+        return RedirectResponse(url="/", status_code=303)
+
+    try:
+        from events import PlayerRank, SessionLocal as _ev_session, LEVEL_THRESHOLDS
+        from datetime import datetime as _dt
+        _db = _ev_session()
+        rank = _db.query(PlayerRank).filter(PlayerRank.player_id == player.id).first()
+        if not rank:
+            rank = PlayerRank(player_id=player.id, trophies=0, level=1)
+            _db.add(rank)
+        rank.trophies = (rank.trophies or 0) + T7_TROPHY_REWARD
+        rank.updated_at = _dt.utcnow()
+        level = 1
+        for i, threshold in enumerate(LEVEL_THRESHOLDS):
+            if rank.trophies >= threshold:
+                level = i + 2
+            else:
+                break
+        rank.level = level
+        _db.commit()
+        _db.close()
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(
+                player.id,
+                "🏆 Tutorial 7 Complete!",
+                f"You earned {T7_TROPHY_REWARD} trophies for mastering Supply, Demand & Efficiency!",
+                url="/events",
+                notif_type="tasks_events",
+                tag="tutorial7-complete",
+            )
+        except Exception:
+            pass
+    except Exception as e:
+        print(f"[Tutorial7] Trophy award error: {e}")
+
+    set_tutorial7_step(player.id, 8)
+    return RedirectResponse(url="/land?t7_complete=1", status_code=303)
+
+
+@router.post("/api/tutorial7/restart")
+def tutorial7_restart(session_token: Optional[str] = Cookie(None)):
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if (getattr(player, "tutorial_7_step", 0) or 0) > 0:
+        set_tutorial7_step(player.id, 1)
+    return RedirectResponse(url="/land", status_code=303)
+
+
+@router.get("/api/tutorial7/dismiss")
+@router.post("/api/tutorial7/dismiss")
+def tutorial7_dismiss(session_token: Optional[str] = Cookie(None)):
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_tutorial7_step(player.id, 8)
     return RedirectResponse(url="/", status_code=303)

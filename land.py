@@ -618,7 +618,11 @@ def degrade_efficiency(current_tick: int):
 
     # Single bulk UPDATE: subtract decay from all plots with efficiency > 0
     # max(0, efficiency - decay) is handled by the CASE expression
-    db.query(LandPlot).filter(LandPlot.efficiency > 0).update(
+    # Tutorial reward plots are permanently pristine — skip efficiency decay
+    db.query(LandPlot).filter(
+        LandPlot.efficiency > 0,
+        LandPlot.is_tutorial_reward == False,
+    ).update(
         {LandPlot.efficiency: func.greatest(0, LandPlot.efficiency - EFFICIENCY_DECAY_PER_TICK)},
         synchronize_session=False
     )
@@ -630,6 +634,7 @@ def degrade_efficiency(current_tick: int):
         LandPlot.owner_id > 0,
         LandPlot.efficiency <= _EFF_FLOOR_THRESHOLD,
         LandPlot.efficiency > 0,
+        LandPlot.is_tutorial_reward == False,
     ).all()
     for p in floor_plots:
         _fire_eff_floor_push(p.owner_id, p.id, p.terrain_type or "unknown", p.efficiency)

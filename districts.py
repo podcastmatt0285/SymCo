@@ -322,6 +322,9 @@ def validate_plots_for_merge(plot_ids: List[int], player_id: int) -> tuple[bool,
         if plot.owner_id != player_id:
             db.close()
             return False, f"Plot {plot.id} is not owned by you"
+        if getattr(plot, 'is_tutorial_reward', False):
+            db.close()
+            return False, f"Plot {plot.id} is a Tutorial Reward plot and cannot be merged into a district"
     
     # Validate terrain type (all must match)
     terrain_types = set(plot.terrain_type for plot in plots)

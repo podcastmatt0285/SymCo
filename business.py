@@ -146,7 +146,10 @@ def process_dismantling_tick(db):
             if biz:
                 # Notify owner before deleting
                 try:
-                    _cfg = BUSINESS_TYPES.get(biz.business_type, {})
+                    if biz.district_id or getattr(biz, 'is_tutorial_reward', False):
+                        _cfg = get_district_business_types().get(biz.business_type, {})
+                    else:
+                        _cfg = BUSINESS_TYPES.get(biz.business_type, {})
                     _biz_name = _cfg.get("name", biz.business_type)
                     _fire_business_push(sale.owner_id, biz.id, "dismantled",
                         _biz_name, f"Dismantling complete — full refund of ${sale.total_refund:,.0f} has been paid")
@@ -187,15 +190,21 @@ def start_business_dismantling(player_id: int, business_id: int) -> bool:
             db.close()
             return False 
 
-        config = BUSINESS_TYPES.get(biz.business_type, {})
-        base_cost = config.get("startup_cost", 2500.0)
-        
-        older_businesses = db.query(Business).filter(
-            Business.owner_id == player_id,
-            Business.created_at < biz.created_at
-        ).count()
-        multiplier = max(1, older_businesses)
-        total_refund = (base_cost * multiplier) * 0.5
+        # Tutorial reward businesses were free — no refund on dismantling
+        if getattr(biz, 'is_tutorial_reward', False):
+            total_refund = 0.0
+        else:
+            if biz.district_id:
+                config = get_district_business_types().get(biz.business_type, {})
+            else:
+                config = BUSINESS_TYPES.get(biz.business_type, {})
+            base_cost = config.get("startup_cost", 2500.0)
+            older_businesses = db.query(Business).filter(
+                Business.owner_id == player_id,
+                Business.created_at < biz.created_at
+            ).count()
+            multiplier = max(1, older_businesses)
+            total_refund = (base_cost * multiplier) * 0.5
         refund_per_tick = total_refund / DISMANTLING_TICKS
         
         sale = BusinessSale(

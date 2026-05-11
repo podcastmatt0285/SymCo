@@ -1315,6 +1315,67 @@ def _tutorials_tab(player) -> str:
         can_restart=(step6 > 0),
     )
 
+    # Tutorial 7 — Supply, Demand, Elasticity & Land Efficiency
+    # ─────────────────────────────────────────────────────────────────────────
+    from tutorial_ux import get_tutorial7_step
+    step7 = get_tutorial7_step(player.id)
+    T7_STEPS = 7
+
+    if step6 < 7:          # locked until Tutorial 6 complete
+        t7_status  = "locked"
+        t7_done    = 0
+        t7_current = None
+    elif step7 >= 8:
+        t7_status  = "complete"
+        t7_done    = T7_STEPS
+        t7_current = None
+    elif step7 == 0:
+        t7_status  = "not_started"
+        t7_done    = 0
+        t7_current = None
+    else:
+        t7_status  = "in_progress"
+        t7_done    = min(step7 - 1, T7_STEPS)
+        t7_current = min(step7, T7_STEPS)
+
+    if step7 >= 8:
+        t7_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#fb923c;font-size:1rem;">&#10003;</span>
+  <div>
+    <span style="font-size:0.85rem;font-weight:bold;color:#fb923c;">20 Trophies — Claimed</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      Reward claimed. Check your trophy balance on the Dashboard.
+    </div>
+  </div>
+</div>"""
+    elif step6 < 7:
+        t7_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; 20 Trophies — complete Tutorial 6 to unlock</div>'
+    elif step7 == 0:
+        t7_reward = """
+<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#127942; 20 Trophies — finish this tutorial to claim</div>
+<form method="post" action="/api/tutorial7/start" style="display:inline;">
+  <button type="submit"
+          style="padding:8px 18px;background:#f97316;color:#fff;border:none;
+                 border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;">
+    Start Tutorial 7 →
+  </button>
+</form>"""
+    else:
+        t7_reward = '<div style="font-size:0.82rem;color:#475569;">&#127942; 20 Trophies — finish this tutorial to claim</div>'
+
+    card7 = _tutorial_card(
+        number=7,
+        title="Supply, Demand, Elasticity &amp; Land Efficiency",
+        description="Master the mechanics behind commodity pricing, learn how price elasticity affects your sales volume, and discover how land efficiency multiplies your business profits.",
+        total_steps=T7_STEPS,
+        completed_steps=t7_done,
+        current_step=t7_current,
+        status=t7_status,
+        reward_html=t7_reward,
+        can_restart=(step7 > 0),
+    )
+
     # ── CTA if nothing started ────────────────────────────────────────────────
     cta = ""
     if step == 0:
@@ -1326,7 +1387,7 @@ def _tutorials_tab(player) -> str:
   </a>
 </div>"""
 
-    return card1 + card2 + card3 + card4 + card5 + card6 + cta
+    return card1 + card2 + card3 + card4 + card5 + card6 + card7 + cta
 
 
 # ── Notifications tab ─────────────────────────────────────────────────────────

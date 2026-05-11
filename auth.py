@@ -44,6 +44,7 @@ class Player(Base):
     tutorial_4_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
     tutorial_5_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
     tutorial_6_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
+    tutorial_7_step = Column(Integer, default=0)  # 0=not started, 1-7=active, 8=complete
     is_npc = Column(Boolean, default=False)           # True for NPC accounts
     npc_config_key = Column(String, nullable=True)    # Links to npc_configs/<key>.json
     # Notification preferences
@@ -168,6 +169,9 @@ def migrate_player_table():
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_3_step INTEGER DEFAULT 0",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_4_step INTEGER DEFAULT 0",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_5_step INTEGER DEFAULT 0",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_6_step INTEGER DEFAULT 0",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS tutorial_7_step INTEGER DEFAULT 0",
+        "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_push_tasks_events BOOLEAN DEFAULT TRUE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS is_npc BOOLEAN DEFAULT FALSE",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS npc_config_key VARCHAR(128)",
         "ALTER TABLE players ADD COLUMN IF NOT EXISTS notif_sounds BOOLEAN DEFAULT TRUE",

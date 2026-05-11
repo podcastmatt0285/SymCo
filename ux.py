@@ -3440,10 +3440,12 @@ def _businesses_impl(session_token: Optional[str] = None, sort: str = "name", bi
             progress_pct = d["progress_pct"]
             ds           = d["dismantle"]
             plot         = d["plot"]
-            startup_cost = config.get("startup_cost", 0)
-            wage_cost    = config.get("base_wage_cost", 0)
+            is_tut_reward = getattr(biz, 'is_tutorial_reward', False)
+            startup_cost = 0 if is_tut_reward else config.get("startup_cost", 0)
+            wage_cost    = 0 if is_tut_reward else config.get("base_wage_cost", 0)
             if plot:
-                plot_info = f"Plot #{plot.id} · {plot.terrain_type.title()}"
+                tax_label = '<span style="color:#4ade80;font-weight:bold;">FREE</span>' if getattr(plot, 'is_tutorial_reward', False) else fmt_usd(plot.monthly_tax, disp) + "/mo"
+                plot_info = f"Plot #{plot.id} · {plot.terrain_type.replace('_',' ').title()} · Tax: {tax_label}"
             elif getattr(biz, "district_id", None):
                 plot_info = f"District #{biz.district_id}"
             else:
@@ -4531,7 +4533,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
                                 </div>
                                 <div>
                                     <span style="color: #64748b;">Tax:</span>
-                                    <span style="color: #f59e0b;">{fmt_usd(plot.monthly_tax, disp)}/mo</span>
+                                    {'<span style="color:#4ade80;font-weight:bold;">FREE &#127942; Tutorial Reward</span>' if getattr(plot, "is_tutorial_reward", False) else f'<span style="color: #f59e0b;">{fmt_usd(plot.monthly_tax, disp)}/mo</span>'}
                                 </div>
                             </div>
 
@@ -4606,8 +4608,10 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
 
         # Inject tutorial overlay for land-relevant steps
         try:
-            from tutorial_ux import get_tutorial_overlay_html
+            from tutorial_ux import get_tutorial_overlay_html, get_tutorial7_overlay_html
             tut_overlay = get_tutorial_overlay_html(player, "land")
+            if not tut_overlay:
+                tut_overlay = get_tutorial7_overlay_html(player, "land")
             if tut_overlay:
                 land_html = tut_overlay + land_html
         except Exception:

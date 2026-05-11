@@ -393,7 +393,7 @@ def create_district_page(session_token: Optional[str] = Cookie(None)):
                             <input type="checkbox" name="plot_ids" value="{plot.id}" style="cursor: pointer;">
                             <div>
                                 <div style="font-size: 0.85rem;">Plot #{plot.id}</div>
-                                <div style="font-size: 0.7rem; color: #64748b;">Size: {plot.size:.1f} | Tax: {fmt_usd(plot.monthly_tax, disp, precision=0)}/mo</div>
+                                <div style="font-size: 0.7rem; color: #64748b;">Size: {plot.size:.1f} | Tax: {'<span style="color:#4ade80;font-weight:bold;">FREE (Tutorial Reward — cannot merge)</span>' if getattr(plot, "is_tutorial_reward", False) else fmt_usd(plot.monthly_tax, disp, precision=0) + "/mo"}</div>
                             </div>
                         </label>
                         '''

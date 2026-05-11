@@ -370,6 +370,8 @@ def calculate_estate_value(player_id: int, db) -> dict:
         plots = db.query(LandPlot).filter(LandPlot.owner_id == player_id).all()
         estate["land_count"] = len(plots)
         for plot in plots:
+            if getattr(plot, 'is_tutorial_reward', False):
+                continue  # free-forever; carries no capitalized value
             estate["land"] += (plot.monthly_tax or 50.0) * 12
     except Exception as e:
         print(f"[Estate] Land valuation error: {e}")
@@ -383,7 +385,12 @@ def calculate_estate_value(player_id: int, db) -> dict:
         ).all()
         estate["business_count"] = len(businesses)
         for biz in businesses:
+            if getattr(biz, 'is_tutorial_reward', False):
+                continue  # free-forever; no startup cost was paid
             config = BUSINESS_TYPES.get(biz.business_type, {})
+            if not config and (biz.district_id or getattr(biz, 'is_tutorial_reward', False)):
+                from business import get_district_business_types as _gdbt
+                config = _gdbt().get(biz.business_type, {})
             estate["businesses"] += config.get("startup_cost", 10000)
     except Exception as e:
         print(f"[Estate] Business valuation error: {e}")
@@ -634,7 +641,10 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
             from business import Business, BusinessSale
             plots = db.query(LandPlot).filter(LandPlot.owner_id == player_id).all()
             for plot in plots:
-                plot_value = (plot.monthly_tax or 50.0) * 12 * LIQUIDATION_DISCOUNT
+                if getattr(plot, 'is_tutorial_reward', False):
+                    plot_value = 0.0  # free-forever; no liquidation value
+                else:
+                    plot_value = (plot.monthly_tax or 50.0) * 12 * LIQUIDATION_DISCOUNT
                 liquidation_value += plot_value
 
                 # Remove any businesses on this land
