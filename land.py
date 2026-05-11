@@ -65,7 +65,7 @@ Base = declarative_base()
 # ==========================
 # CONSTANTS
 # ==========================
-EFFICIENCY_DECAY_PER_TICK = 0.00001 / 60  # 0.00001% per minute = per 60 ticks
+EFFICIENCY_DECAY_PER_TICK = 100.0 / (14 * 24 * 720)  # 100% over 14 days; 1 tick = 5s → 720 ticks/hr
 STARTING_EFFICIENCY = 100.0  # All land starts at 100% efficiency
 
 # Land hoarding tax - discourages accumulating excessive plots

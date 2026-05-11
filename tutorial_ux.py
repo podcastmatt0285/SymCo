@@ -3444,7 +3444,7 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
             </div>
           </div>
           <div style="margin-top:8px;font-size:0.72rem;color:#334155;">
-            Decay rate: 0.00001% per minute (≈ 0.144% per day, ≈ 52% total over 3 years)
+            Decay rate: ~7.14% per day (100% → 0% in exactly 14 days)
           </div>
         </div>
 
@@ -4008,7 +4008,7 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
           <table class="t7-table">
             <tr><th>System</th><th>Key Formula / Rule</th></tr>
             <tr><td>Efficiency</td>
-                <td>Starts 100%, decays 0.144%/day. Wages = base ÷ (eff/100). Ceiling 200× at 0%. Tutorial reward plots never decay. Restoration (&lt;30%): target = max × 1.5; max grows each cycle; cost = wage_mult × $1k; 60-day cooldown.</td></tr>
+                <td>Starts 100%, decays ~7.14%/day (0% in 14 days). Wages = base ÷ (eff/100). Ceiling 200× at 0%. Tutorial reward plots never decay. Restoration (&lt;30%): target = max × 1.5; max grows each cycle; cost = wage_mult × $1k; 60-day cooldown.</td></tr>
             <tr><td>Market Price</td>
                 <td>Last trade &gt; bid-ask midpoint &gt; best single side &gt; N/A</td></tr>
             <tr><td>Elasticity</td>

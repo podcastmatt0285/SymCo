@@ -37,7 +37,7 @@ RESTORATION_MULTIPLIER    = 1.5           # target = max_efficiency × 1.5
 RESTORATION_COOLDOWN_DAYS = 60
 COST_PER_MULT_USD         = 1_000.0       # wage_multiplier × $1 000, no discounts
 WAGE_MULT_FLOOR           = 0.005         # matches business.py
-EFFICIENCY_DECAY_PER_TICK = 0.00001 / 60  # matches land.py (% per second)
+EFFICIENCY_DECAY_PER_TICK = 100.0 / (14 * 24 * 720)  # 100% over 14 days; 1 tick = 5s → 720 ticks/hr
 RESTORATION_RATE_PER_TICK = 500 * EFFICIENCY_DECAY_PER_TICK
 
 GOVERNMENT_PLAYER_ID = 0
@@ -521,8 +521,9 @@ def get_restoration_module_html(player, disp: str) -> str:
             for p in player_plots if p.efficiency == min_eff
         )
         # Estimate how long until the worst plot reaches eligibility threshold
-        # decay = EFFICIENCY_DECAY_PER_TICK % per second
-        secs_to_eligible = max(0.0, (min_eff - ELIGIBILITY_THRESHOLD) / EFFICIENCY_DECAY_PER_TICK)
+        # decay = EFFICIENCY_DECAY_PER_TICK % per tick (1 tick = 5s)
+        ticks_to_eligible = max(0.0, (min_eff - ELIGIBILITY_THRESHOLD) / EFFICIENCY_DECAY_PER_TICK)
+        secs_to_eligible = ticks_to_eligible * 5
         eta_str = _fmt_duration(secs_to_eligible) if secs_to_eligible > 0 else "soon"
 
         bar_w = int(min(100, avg_eff))
