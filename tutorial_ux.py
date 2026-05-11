@@ -3202,12 +3202,11 @@ def tutorial6_advance(session_token: Optional[str] = Cookie(None)):
     set_tutorial6_step(player.id, next_step)
 
     T6_REDIRECT = {
-        1: "/districts",
-        2: "/district-market",
-        3: "/district-market",
-        4: "/district-market",
-        5: "/districts",
-        6: "/districts",
+        2: "/districts",       # step 2 overlay is on /districts
+        3: "/district-market", # step 3 overlay is on /district-market
+        4: "/district-market", # step 4 overlay is on /district-market
+        5: "/district-market", # step 5 overlay is on /district-market
+        6: "/districts",       # step 6 (reward) is on /districts
         7: "/",
     }
     return RedirectResponse(url=T6_REDIRECT.get(next_step, "/"), status_code=303)
@@ -3251,7 +3250,7 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
                 "🏆 Tutorial 6 Complete!",
                 f"You earned {T6_TROPHY_REWARD} trophies for completing the District Market tutorial.",
                 url="/events",
-                notif_type="general",
+                notif_type="tasks_events",
                 tag="tutorial6-complete",
             )
         except Exception:

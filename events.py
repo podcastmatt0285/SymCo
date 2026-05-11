@@ -159,7 +159,7 @@ def record_task_progress(player_id: int, metric: str, amount: float):
                             f"🏆 Task Complete: {ev.title}",
                             f"You earned {prog.trophies_awarded} {_word}!",
                             url="/events",
-                            notif_type="general",
+                            notif_type="tasks_events",
                             tag=f"task-complete-{ev.id}",
                         )
                     except Exception:
@@ -324,7 +324,7 @@ def broadcast_event_push(event_id: int, title: str, body: str,
         for pid in pids:
             try:
                 send_push_notification(pid, title, body, url="/events",
-                                       notif_type="general", tag=_tag)
+                                       notif_type="tasks_events", tag=_tag)
                 sent += 1
             except Exception:
                 pass

@@ -500,6 +500,10 @@ def send_push_notification(
             print(f"[Push] govt notifications disabled for player {player_id} — skipping")
             db.close()
             return
+        if notif_type == "tasks_events" and not getattr(player, "notif_push_tasks_events", True):
+            print(f"[Push] tasks/events notifications disabled for player {player_id} — skipping")
+            db.close()
+            return
 
         # Also write an in-game banner (same preference gates above already passed)
         try:
