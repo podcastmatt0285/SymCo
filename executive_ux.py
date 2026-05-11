@@ -1068,6 +1068,11 @@ def api_hire(executive_id: int = Form(...),
     try:
         result = hire_executive(db, player.id, executive_id)
         if result["success"]:
+            try:
+                from events import record_task_progress
+                record_task_progress(player.id, "executive_action", 1.0)
+            except Exception:
+                pass
             return RedirectResponse(url=f"/executives?msg={result['message']}", status_code=303)
         return RedirectResponse(url=f"/executives/marketplace?msg={result['error']}", status_code=303)
     finally:
@@ -1084,6 +1089,12 @@ def api_fire(executive_id: int = Form(...),
     db = get_db()
     try:
         result = fire_executive(db, player.id, executive_id)
+        if result["success"]:
+            try:
+                from events import record_task_progress
+                record_task_progress(player.id, "executive_action", 1.0)
+            except Exception:
+                pass
         msg = result["message"] if result["success"] else result["error"]
         return RedirectResponse(url=f"/executives?msg={msg}", status_code=303)
     finally:

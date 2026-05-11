@@ -546,6 +546,14 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 except Exception:
                     from reserve_banks import credit_usd
                     credit_usd(seller.id, seller_net)
+
+                # Track city tax paid by seller for weekly task progress
+                if _tax_deducted > 0 and sell_order.player_id > 0:
+                    try:
+                        from events import record_task_progress as _rtp
+                        _rtp(sell_order.player_id, "city_tax_paid_usd", _tax_deducted)
+                    except Exception:
+                        pass
             except Exception as e:
                 print(f"[Market] Cash transfer error: {e}")
                 import traceback

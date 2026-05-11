@@ -91,6 +91,90 @@ class PlayerRank(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
 
 
+# ── Task progress helper ──────────────────────────────────────────────────────
+
+def record_task_progress(player_id: int, metric: str, amount: float):
+    """Add `amount` toward every active task event with task_metric == metric.
+
+    Marks completed and awards trophies (+ push notification) when progress
+    reaches task_target.  Safe to call from any thread; swallows all errors.
+    """
+    if player_id <= 0 or amount <= 0:
+        return
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        active_tasks = db.query(GameEvent).filter(
+            GameEvent.is_active == True,
+            GameEvent.event_type == "task",
+            GameEvent.task_metric == metric,
+            GameEvent.starts_at <= now,
+            (GameEvent.ends_at == None) | (GameEvent.ends_at >= now),
+        ).all()
+
+        for ev in active_tasks:
+            prog = db.query(PlayerTaskProgress).filter(
+                PlayerTaskProgress.player_id == player_id,
+                PlayerTaskProgress.event_id == ev.id,
+            ).first()
+            if prog and prog.completed_at:
+                continue  # already completed
+            if not prog:
+                prog = PlayerTaskProgress(
+                    player_id=player_id,
+                    event_id=ev.id,
+                    progress=0.0,
+                )
+                db.add(prog)
+
+            prog.progress = (prog.progress or 0.0) + amount
+
+            if ev.task_target and prog.progress >= ev.task_target and not prog.completed_at:
+                prog.completed_at = now
+                prog.trophies_awarded = ev.trophy_reward or 0
+
+                # Award trophies + recalculate level
+                rank = db.query(PlayerRank).filter(
+                    PlayerRank.player_id == player_id).first()
+                if not rank:
+                    rank = PlayerRank(player_id=player_id, trophies=0, level=1)
+                    db.add(rank)
+                rank.trophies = (rank.trophies or 0) + prog.trophies_awarded
+                rank.updated_at = now
+                level = 1
+                for i, threshold in enumerate(LEVEL_THRESHOLDS):
+                    if rank.trophies >= threshold:
+                        level = i + 2
+                    else:
+                        break
+                rank.level = level
+
+                # Notify the player of completion
+                if prog.trophies_awarded > 0:
+                    try:
+                        from push_ux import send_push_notification
+                        send_push_notification(
+                            player_id,
+                            f"🏆 Task Complete: {ev.title}",
+                            f"You earned {prog.trophies_awarded} trophy{'s' if prog.trophies_awarded != 1 else ''}!",
+                            url="/events",
+                            notif_type="general",
+                            tag=f"task-complete-{ev.id}",
+                        )
+                    except Exception:
+                        pass
+
+        db.commit()
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        print(f"[Events] record_task_progress error: {e}")
+    finally:
+        db.close()
+
+
 # ── Query helpers ─────────────────────────────────────────────────────────────
 
 def get_active_events():

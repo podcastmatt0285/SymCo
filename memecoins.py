@@ -1225,6 +1225,17 @@ def _match_orders(db, county_db, meme: MemeCoin, native_symbol: str, incoming_or
         )
         db.add(trade)
 
+        # Track meme buy volume in USD for weekly task progress
+        try:
+            from counties import get_crypto_price_by_symbol as _gcps
+            _usd_per_native = _gcps(native_symbol) or 0.0
+            if _usd_per_native > 0 and buyer_id > 0:
+                _usd_spent = native_volume * _usd_per_native
+                from events import record_task_progress as _rtp
+                _rtp(buyer_id, "meme_buy_usd", _usd_spent)
+        except Exception:
+            pass
+
         # --- Update meme coin price & stats ---
         old_price = meme.last_price or 0.0
         meme.last_price = trade_price
