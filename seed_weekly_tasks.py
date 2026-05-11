@@ -78,7 +78,7 @@ try:
             task_target    = data["task_target"],
             trophy_reward  = data["trophy_reward"],
             is_active      = False,
-            starts_at      = datetime.utcnow(),
+            starts_at      = datetime(9999, 12, 31),  # placeholder; overwritten on Start
             ends_at        = None,
         )
         db.add(ev)

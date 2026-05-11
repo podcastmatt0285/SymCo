@@ -4626,7 +4626,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                         {'<span style="color:#fbbf24;font-size:0.8rem;"> +' + str(ev.trophy_reward) + ' ★</span>' if ev.trophy_reward else ''}
                     </div>
                     <div style="font-size:0.75rem;color:#64748b;">
-                        Starts: {_fmt_dt(ev.starts_at)} &nbsp;·&nbsp;
+                        Starts: {_fmt_dt(ev.starts_at) if ev.is_active else '—'} &nbsp;·&nbsp;
                         Ends: {_fmt_dt(ev.ends_at)} &nbsp;·&nbsp;
                         <span style="color:{status_color};">{_time_left(ev)}</span>
                     </div>
@@ -4665,12 +4665,16 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
             if ev:
-                ev.is_active  = True
-                ev.starts_at  = datetime.utcnow()
-                # Don't touch ends_at — preserve any existing deadline
+                from datetime import timedelta
+                _auto_days = {"daily": 1, "weekly": 7, "monthly": 30}
+                ev.is_active = True
+                ev.starts_at = datetime.utcnow()
+                if not ev.ends_at or ev.ends_at <= ev.starts_at:
+                    days = _auto_days.get(ev.duration_class)
+                    ev.ends_at = ev.starts_at + timedelta(days=days) if days else None
                 edb.commit()
                 edb.refresh(ev)
-                msg = f"'{ev.title}' started."
+                msg = f"'{ev.title}' started — ends {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC') if ev.ends_at else 'never'}."
             else:
                 msg = "Event not found."
         finally:
@@ -4760,13 +4764,19 @@ def admin_event_restart(
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
             if ev:
+                from datetime import timedelta
+                _auto_days = {"daily": 1, "weekly": 7, "monthly": 30}
                 ev.is_active = True
                 ev.starts_at = datetime.utcnow()
-                ev.ends_at   = new_end
+                if new_end:
+                    ev.ends_at = new_end
+                elif not ev.ends_at or ev.ends_at <= ev.starts_at:
+                    days = _auto_days.get(ev.duration_class)
+                    ev.ends_at = ev.starts_at + timedelta(days=days) if days else None
                 edb.commit()
                 edb.refresh(ev)
-                end_str = new_end.strftime("%Y-%m-%d %H:%M UTC") if new_end else "no end date"
-                msg = f"'{ev.title}' restarted — {end_str}."
+                end_str = ev.ends_at.strftime("%Y-%m-%d %H:%M UTC") if ev.ends_at else "no end date"
+                msg = f"'{ev.title}' restarted — ends {end_str}."
             else:
                 msg = "Event not found."
         finally:
