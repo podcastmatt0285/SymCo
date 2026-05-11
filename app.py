@@ -275,6 +275,12 @@ def _ensure_postgres():
 def _start_tunnel():
     """Start Cloudflare tunnel in background; auto-installs cloudflared if missing."""
     import shutil, platform
+
+    # Don't spawn a second tunnel if one is already running (e.g. uvicorn reload)
+    if subprocess.run(["pgrep", "-x", "cloudflared"], capture_output=True).returncode == 0:
+        print("[Bootstrap] Cloudflare tunnel already running — skipping")
+        return
+
     token = os.environ.get(
         "CLOUDFLARE_TUNNEL_TOKEN",
         "eyJhIjoiYWU3MmMxMWVlNGZlM2IwZDk0MWEzNDE4NGYyZTg0ZDkiLCJ0IjoiMGJjYTI0MTItYzU0Ni00NWU4LWI2ZGItMWU4ZDE4ODMzOGNmIiwicyI6Ik1EYzRZall6Tm1NdFlXRTVOaTAwTkdNM0xUbGpaamt0TTJlbE9XVm1Nelk0TlRRNSJ9",
@@ -293,22 +299,18 @@ def _start_tunnel():
             _base = f"https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{_arch}"
             if shutil.which("dpkg"):
                 _pkg = "/tmp/cloudflared.deb"
-                if subprocess.run(["curl", "-fsSL", _base + ".deb", "-o", _pkg],
-                                  capture_output=True).returncode == 0:
-                    subprocess.run(["sudo", "dpkg", "-i", _pkg], capture_output=True)
+                if subprocess.run(["curl", "-fsSL", _base + ".deb", "-o", _pkg]).returncode == 0:
+                    subprocess.run(["dpkg", "-i", _pkg])
             elif shutil.which("rpm"):
                 _pkg = "/tmp/cloudflared.rpm"
-                if subprocess.run(["curl", "-fsSL", _base + ".rpm", "-o", _pkg],
-                                  capture_output=True).returncode == 0:
-                    subprocess.run(["sudo", "rpm", "-i", "--force", _pkg], capture_output=True)
+                if subprocess.run(["curl", "-fsSL", _base + ".rpm", "-o", _pkg]).returncode == 0:
+                    subprocess.run(["rpm", "-i", "--force", _pkg])
             else:
-                # Fallback: download raw binary
                 _bin = "/usr/local/bin/cloudflared"
-                if subprocess.run(["sudo", "curl", "-fsSL", _base, "-o", _bin],
-                                  capture_output=True).returncode == 0:
-                    subprocess.run(["sudo", "chmod", "+x", _bin], capture_output=True)
+                if subprocess.run(["curl", "-fsSL", _base, "-o", _bin]).returncode == 0:
+                    subprocess.run(["chmod", "+x", _bin])
         elif _system == "darwin" and shutil.which("brew"):
-            subprocess.run(["brew", "install", "cloudflared"], capture_output=True)
+            subprocess.run(["brew", "install", "cloudflared"])
         else:
             print(f"[Bootstrap] cloudflared: unsupported platform {_system}/{_machine}")
 
