@@ -460,47 +460,30 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             padding: 32px;
         }
 
-        /* ── Market tickers ── */
-        .ticker-band {
+        /* ── Market ticker ── */
+        .login-ticker {
             width: 100%;
-            overflow: hidden;
-            padding: 5px 0;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+            padding: 0 8px;
+            font-size: 0.75rem;
+            color: #cbd5e1;
             white-space: nowrap;
+            overflow: hidden;
+            height: 32px;
+            display: flex;
+            align-items: center;
             flex-shrink: 0;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            letter-spacing: 0.02em;
         }
-        .t-comm { background: rgba(56,189,248,0.07); border-bottom: 1px solid rgba(56,189,248,0.12); }
-        .t-dist { background: rgba(245,158,11,0.07);  border-bottom: 1px solid rgba(245,158,11,0.12); }
-        .t-stk  { background: rgba(74,222,128,0.07);  border-bottom: 1px solid rgba(74,222,128,0.12); }
-        .ticker-label {
-            display: inline-block;
-            padding: 0 10px;
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            vertical-align: middle;
+        #tkViewport {
+            overflow: hidden;
+            flex: 1;
+            height: 100%;
+            display: flex;
+            align-items: center;
         }
-        .t-comm .ticker-label { color: #38bdf8; }
-        .t-dist .ticker-label { color: #f59e0b; }
-        .t-stk  .ticker-label { color: #4ade80; }
-        .ticker-track {
-            display: inline-block;
-            animation: tickScroll 40s linear infinite;
-        }
-        .t-dist .ticker-track { animation-duration: 50s; }
-        .t-stk  .ticker-track { animation-duration: 36s; animation-direction: reverse; }
-        @keyframes tickScroll {
-            from { transform: translateX(0); }
-            to   { transform: translateX(-50%); }
-        }
-        .ticker-item {
-            display: inline-block;
-            margin-right: 28px;
-            font-size: 11px;
-            vertical-align: middle;
-        }
-        .t-comm .ticker-item { color: #bae6fd; }
-        .t-dist .ticker-item { color: #fde68a; }
-        .t-stk  .ticker-item { color: #bbf7d0; }
 
         .logo {
             text-align: center;
@@ -659,15 +642,13 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 </head>
 
 <body>
-    <!-- Market tickers -->
-    <div class="ticker-band t-comm">
-        <span class="ticker-label">COMMODITIES</span><div class="ticker-track" id="track-comm"><span class="ticker-item">Loading&hellip;</span></div>
-    </div>
-    <div class="ticker-band t-dist">
-        <span class="ticker-label">DISTRICT&nbsp;MKT</span><div class="ticker-track" id="track-dist"><span class="ticker-item">Loading&hellip;</span></div>
-    </div>
-    <div class="ticker-band t-stk">
-        <span class="ticker-label">WPE&nbsp;STOCKS</span><div class="ticker-track" id="track-stk"><span class="ticker-item">Loading&hellip;</span></div>
+    <!-- Market ticker -->
+    <div class="login-ticker">
+        <div id="tkViewport">
+            <div id="tkTrack" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">
+                Loading market data&hellip;
+            </div>
+        </div>
     </div>
 
     <div class="splash">
@@ -795,28 +776,48 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
         })();
 
-        // ── Market tickers ──
+        // ── Market ticker (same style as in-game) ──
         (function () {
+            var track = document.getElementById('tkTrack');
+            var halfWidth = 0;
+            var offset = 0;
+            var BASE_PX = 0.9;
+            var started = false;
+
             function fmt(v) {
                 if (v == null) return '—';
                 return v >= 1000 ? '$' + (+v).toLocaleString(undefined, {maximumFractionDigits: 0})
                                  : '$' + (+v).toFixed(2);
             }
-            function buildTrack(items) {
-                if (!items || !items.length) return '<span class="ticker-item">No data</span>';
-                var html = items.map(function (it) {
-                    return '<span class="ticker-item">' + it.name + ' <strong>' + fmt(it.price) + '</strong></span>';
-                }).join('');
-                return html + html; // duplicate for seamless CSS loop
+
+            function animate() {
+                if (!halfWidth) halfWidth = track.scrollWidth / 2;
+                offset -= BASE_PX;
+                if (offset < -halfWidth) offset += halfWidth;
+                track.style.transform = 'translateX(' + offset + 'px)';
+                requestAnimationFrame(animate);
             }
+
             fetch('/api/public/ticker').then(function (r) { return r.json(); }).then(function (d) {
-                var tc = document.getElementById('track-comm');
-                var td = document.getElementById('track-dist');
-                var ts = document.getElementById('track-stk');
-                if (tc) tc.innerHTML = buildTrack(d.commodities);
-                if (td) td.innerHTML = buildTrack(d.district);
-                if (ts) ts.innerHTML = buildTrack(d.stocks);
-            }).catch(function () {});
+                var parts = [];
+                (d.commodities || []).forEach(function (it) {
+                    parts.push((it.label || it.name || '') + ': ' + fmt(it.price));
+                });
+                (d.district || []).forEach(function (it) {
+                    parts.push('DM:' + (it.label || it.name || '') + ' ' + fmt(it.price));
+                });
+                (d.stocks || []).forEach(function (it) {
+                    parts.push((it.label || it.name || '') + ' ' + fmt(it.price));
+                });
+                if (!parts.length) parts.push('MARKET OPENING…');
+                var text = parts.join('  |  ');
+                track.textContent = text + '       ' + text;
+                halfWidth = 0; // reset so animate() re-measures
+                if (!started) { started = true; requestAnimationFrame(animate); }
+            }).catch(function () {
+                track.textContent = 'MARKET FEED OFFLINE';
+                if (!started) { started = true; requestAnimationFrame(animate); }
+            });
         })();
     </script>
     <script>

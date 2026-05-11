@@ -674,8 +674,22 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
 
         already_has_fl = _has_first_lady(player.id)
         title = "Bonus Step — Executive Hiring"
+        _more_tutorials_html = """
+        <div style="background:#0a1e3a;border:1px solid #38bdf8;border-radius:6px;
+                    padding:12px 16px;margin-bottom:16px;">
+            <strong style="color:#38bdf8;">📖 More tutorials available in Settings!</strong>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;line-height:1.6;">
+                Tutorials 3, 4, and 5 cover IPO &amp; Banking, ETFs &amp; Market Indices,
+                and Acquisitions &amp; Income Stakes — each with unique rewards.
+                Start them whenever you're ready from
+                <a href="/settings?tab=tutorials" style="color:#38bdf8;font-weight:bold;">
+                    Settings → Tutorials
+                </a>.
+            </p>
+        </div>
+        """
         if already_has_fl:
-            content = """
+            content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
             You've replayed Tutorial 2 — welcome back!
         </p>
@@ -687,6 +701,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 Replaying a tutorial doesn't grant a second reward.
             </p>
         </div>
+        {_more_tutorials_html}
         <form action="/api/tutorial/claim-executive" method="post"
               style="display:inline;">
             <input type="hidden" name="first_lady" value="martha_washington">
@@ -710,6 +725,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
             a forever-free hire who starts age 18, retires at 110, and can level up
             all the way to <strong style="color:#d4af37;">Level 18</strong> through school.
         </p>
+        {_more_tutorials_html}
 
         <!-- YouTube IFrame Player -->
         <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;border:1px solid #1d2f55;margin-bottom:16px;">
