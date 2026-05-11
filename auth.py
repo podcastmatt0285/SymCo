@@ -39,23 +39,25 @@ class Player(Base):
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, default=datetime.utcnow)
-    tutorial_step = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
+    tutorial_step   = Column(Integer, default=0)  # 0=not started, 1-10=active, 11=complete
     tutorial_3_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=reward pending, 8=complete
     tutorial_4_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
     tutorial_5_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
+    tutorial_6_step = Column(Integer, default=0)  # 0=not started, 1-6=active, 7=complete
     is_npc = Column(Boolean, default=False)           # True for NPC accounts
     npc_config_key = Column(String, nullable=True)    # Links to npc_configs/<key>.json
     # Notification preferences
     notif_sounds = Column(Boolean, default=True)       # Play sounds for in-game notifications
     notif_badge  = Column(Boolean, default=True)       # Show unread badge on app icon (Badging API)
-    notif_push_dms       = Column(Boolean, default=True)  # Push: new DMs
-    notif_push_contracts = Column(Boolean, default=True)  # Push: contract updates
-    notif_push_business  = Column(Boolean, default=True)  # Push: business alerts (wages, stock, inputs)
-    notif_push_land      = Column(Boolean, default=True)  # Push: land sales and efficiency floor
-    notif_push_execs     = Column(Boolean, default=True)  # Push: executive hired/fired/quit/retired/school
-    notif_push_trades    = Column(Boolean, default=True)  # Push: trusted trade swap events
-    notif_push_corporate = Column(Boolean, default=True)  # Push: acquisition offers and income sweeps
-    notif_push_govt      = Column(Boolean, default=True)  # Push: gov taxes, liens, city membership
+    notif_push_dms          = Column(Boolean, default=True)  # Push: new DMs
+    notif_push_contracts    = Column(Boolean, default=True)  # Push: contract updates
+    notif_push_business     = Column(Boolean, default=True)  # Push: business alerts (wages, stock, inputs)
+    notif_push_land         = Column(Boolean, default=True)  # Push: land sales and efficiency floor
+    notif_push_execs        = Column(Boolean, default=True)  # Push: executive hired/fired/quit/retired/school
+    notif_push_trades       = Column(Boolean, default=True)  # Push: trusted trade swap events
+    notif_push_corporate    = Column(Boolean, default=True)  # Push: acquisition offers and income sweeps
+    notif_push_govt         = Column(Boolean, default=True)  # Push: gov taxes, liens, city membership
+    notif_push_tasks_events = Column(Boolean, default=True)  # Push: task completions and event notifications
     # Federal Communications Commission (FCC) licence — NULL = none active; datetime = expiry (UTC)
     cco_rental_expires = Column(DateTime, nullable=True, default=None)
 
@@ -707,6 +709,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 
     <footer style="position:fixed;bottom:0;left:0;right:0;padding:6px 16px;text-align:center;font-size:0.72rem;color:#475569;background:#020617;border-top:1px solid #1e293b;">
         <div style="display:flex;flex-wrap:wrap;gap:3px 10px;justify-content:center;margin-bottom:3px;">
+            <a href="/sitemap"            style="color:#64748b;text-decoration:underline;">Sitemap</a>
             <a href="/company/whitepaper" style="color:#64748b;text-decoration:underline;">Whitepaper</a>
             <a href="/company/careers"    style="color:#64748b;text-decoration:underline;">Careers</a>
             <a href="/company/press-kit"  style="color:#64748b;text-decoration:underline;">Press Kit</a>

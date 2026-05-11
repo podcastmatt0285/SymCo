@@ -1252,6 +1252,68 @@ def _tutorials_tab(player) -> str:
         can_restart=(step5 > 0),
     )
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Tutorial 6 — Districts & District Market
+    # ─────────────────────────────────────────────────────────────────────────
+    from tutorial_ux import get_tutorial6_step
+    step6 = get_tutorial6_step(player.id)
+    T6_STEPS = 6
+
+    if step5 < 7:          # locked until Tutorial 5 complete
+        t6_status  = "locked"
+        t6_done    = 0
+        t6_current = None
+    elif step6 >= 7:
+        t6_status  = "complete"
+        t6_done    = T6_STEPS
+        t6_current = None
+    elif step6 == 0:
+        t6_status  = "not_started"
+        t6_done    = 0
+        t6_current = None
+    else:
+        t6_status  = "in_progress"
+        t6_done    = min(step6 - 1, T6_STEPS)
+        t6_current = min(step6, T6_STEPS)
+
+    if step6 >= 7:
+        t6_reward = """
+<div style="display:flex;align-items:center;gap:10px;">
+  <span style="color:#38bdf8;font-size:1rem;">&#10003;</span>
+  <div>
+    <span style="font-size:0.85rem;font-weight:bold;color:#38bdf8;">15 Trophies — Claimed</span>
+    <div style="font-size:0.72rem;color:#64748b;margin-top:2px;">
+      Awarded to your <a href="/events" style="color:#38bdf8;">trophy leaderboard</a> score.
+    </div>
+  </div>
+</div>"""
+    elif step5 < 7:
+        t6_reward = '<div style="font-size:0.82rem;color:#334155;">&#128274; 15 Trophies — complete Tutorial 5 to unlock</div>'
+    elif step6 == 0:
+        t6_reward = """
+<div style="font-size:0.82rem;color:#475569;margin-bottom:10px;">&#128274; 15 Trophies — finish this tutorial to claim</div>
+<form method="post" action="/api/tutorial6/start" style="display:inline;">
+  <button type="submit"
+          style="padding:8px 18px;background:#38bdf8;color:#020617;border:none;
+                 border-radius:4px;font-weight:bold;font-size:0.82rem;cursor:pointer;">
+    Start Tutorial 6 →
+  </button>
+</form>"""
+    else:
+        t6_reward = '<div style="font-size:0.82rem;color:#475569;">&#128274; 15 Trophies — finish this tutorial to claim</div>'
+
+    card6 = _tutorial_card(
+        number=6,
+        title="Districts &amp; District Market",
+        description="Learn how to merge land plots into Districts, explore the District Market order book, exploit price differences between local and main exchange, and understand district tax dynamics.",
+        total_steps=T6_STEPS,
+        completed_steps=t6_done,
+        current_step=t6_current,
+        status=t6_status,
+        reward_html=t6_reward,
+        can_restart=(step6 > 0),
+    )
+
     # ── CTA if nothing started ────────────────────────────────────────────────
     cta = ""
     if step == 0:
@@ -1263,7 +1325,7 @@ def _tutorials_tab(player) -> str:
   </a>
 </div>"""
 
-    return card1 + card2 + card3 + card4 + card5 + cta
+    return card1 + card2 + card3 + card4 + card5 + card6 + cta
 
 
 # ── Notifications tab ─────────────────────────────────────────────────────────
@@ -1294,14 +1356,15 @@ def _notifications_tab(player) -> str:
 
     sounds   = getattr(player, "notif_sounds",         True)
     badge    = getattr(player, "notif_badge",          True)
-    push_dms = getattr(player, "notif_push_dms",       True)
-    push_con = getattr(player, "notif_push_contracts", True)
-    push_biz = getattr(player, "notif_push_business",  True)
-    push_land = getattr(player, "notif_push_land",      True)
-    push_exec = getattr(player, "notif_push_execs",     True)
-    push_trd  = getattr(player, "notif_push_trades",    True)
-    push_corp = getattr(player, "notif_push_corporate", True)
-    push_govt = getattr(player, "notif_push_govt",      True)
+    push_dms  = getattr(player, "notif_push_dms",          True)
+    push_con  = getattr(player, "notif_push_contracts",    True)
+    push_biz  = getattr(player, "notif_push_business",     True)
+    push_land = getattr(player, "notif_push_land",         True)
+    push_exec = getattr(player, "notif_push_execs",        True)
+    push_trd  = getattr(player, "notif_push_trades",       True)
+    push_corp = getattr(player, "notif_push_corporate",    True)
+    push_govt = getattr(player, "notif_push_govt",         True)
+    push_tevt = getattr(player, "notif_push_tasks_events", True)
 
     def _toggle(name: str, checked: bool, label: str, sub: str = "", disabled: bool = False) -> str:
         chk   = "checked" if checked else ""
@@ -1452,14 +1515,15 @@ def _notifications_tab(player) -> str:
   </button>
 </div>
 <div id="push-toggles">
-  {_toggle("notif_push_dms",       push_dms, "Direct Messages",    "Get notified when someone sends you a DM",                              disabled=not has_cco)}
-  {_toggle("notif_push_contracts", push_con, "Contract Updates",   "Offers, acceptances, breaches, and completions",                        disabled=not has_cco)}
-  {_toggle("notif_push_business",  push_biz,  "Business Alerts",  "Can't afford wages, missing inputs, out of stock, dismantling complete", disabled=not has_cco)}
-  {_toggle("notif_push_land",      push_land, "Land Alerts",       "Plot sold, buy order filled, efficiency floor reached",                   disabled=not has_cco)}
-  {_toggle("notif_push_execs",     push_exec, "Executive Alerts",  "Hired, fired, quit, salary missed, retired, school sent and complete",    disabled=not has_cco)}
-  {_toggle("notif_push_trades",    push_trd,  "Trade Alerts",      "Trusted swap proposed, executed, rejected, or expired",                   disabled=not has_cco)}
-  {_toggle("notif_push_corporate", push_corp, "Corporate Alerts",  "Acquisition offers, counter-offers, diffuse notices, renegotiation proposals, buyout events, and income sweeps", disabled=not has_cco)}
-  {_toggle("notif_push_govt",      push_govt, "Government Alerts", "Hoard tax, district tax failure, liens, city membership changes",         disabled=not has_cco)}
+  {_toggle("notif_push_dms",          push_dms,  "Direct Messages",    "Get notified when someone sends you a DM",                              disabled=not has_cco)}
+  {_toggle("notif_push_contracts",    push_con,  "Contract Updates",   "Offers, acceptances, breaches, and completions",                        disabled=not has_cco)}
+  {_toggle("notif_push_business",     push_biz,  "Business Alerts",    "Can't afford wages, missing inputs, out of stock, dismantling complete", disabled=not has_cco)}
+  {_toggle("notif_push_land",         push_land, "Land Alerts",        "Plot sold, buy order filled, efficiency floor reached",                  disabled=not has_cco)}
+  {_toggle("notif_push_execs",        push_exec, "Executive Alerts",   "Hired, fired, quit, salary missed, retired, school sent and complete",   disabled=not has_cco)}
+  {_toggle("notif_push_trades",       push_trd,  "Trade Alerts",       "Trusted swap proposed, executed, rejected, or expired",                  disabled=not has_cco)}
+  {_toggle("notif_push_corporate",    push_corp, "Corporate Alerts",   "Acquisition offers, counter-offers, diffuse notices, renegotiation proposals, buyout events, and income sweeps", disabled=not has_cco)}
+  {_toggle("notif_push_govt",         push_govt, "Government Alerts",  "Hoard tax, district tax failure, liens, city membership changes",        disabled=not has_cco)}
+  {_toggle("notif_push_tasks_events", push_tevt, "Tasks &amp; Events", "Task completions, event go-live / ended alerts, and trophy awards",      disabled=not has_cco)}
 </div>"""
 
     # ── Sounds ────────────────────────────────────────────────────────────────
@@ -1664,17 +1728,18 @@ document.querySelectorAll('input[type=checkbox]').forEach(function(cb) {
 
 @router.post("/api/settings/notifications")
 def api_save_notifications(
-    session_token:        Optional[str] = Cookie(None),
-    notif_push_dms:       Optional[str] = Form(None),
-    notif_push_contracts: Optional[str] = Form(None),
-    notif_push_business:  Optional[str] = Form(None),
-    notif_push_land:      Optional[str] = Form(None),
-    notif_push_execs:     Optional[str] = Form(None),
-    notif_push_trades:    Optional[str] = Form(None),
-    notif_push_corporate: Optional[str] = Form(None),
-    notif_push_govt:      Optional[str] = Form(None),
-    notif_sounds:         Optional[str] = Form(None),
-    notif_badge:          Optional[str] = Form(None),
+    session_token:           Optional[str] = Cookie(None),
+    notif_push_dms:          Optional[str] = Form(None),
+    notif_push_contracts:    Optional[str] = Form(None),
+    notif_push_business:     Optional[str] = Form(None),
+    notif_push_land:         Optional[str] = Form(None),
+    notif_push_execs:        Optional[str] = Form(None),
+    notif_push_trades:       Optional[str] = Form(None),
+    notif_push_corporate:    Optional[str] = Form(None),
+    notif_push_govt:         Optional[str] = Form(None),
+    notif_push_tasks_events: Optional[str] = Form(None),
+    notif_sounds:            Optional[str] = Form(None),
+    notif_badge:             Optional[str] = Form(None),
 ):
     import auth as _auth
     player = _require_auth(session_token)
@@ -1692,16 +1757,17 @@ def api_save_notifications(
             db = _auth.get_db()
             p  = db.query(_auth.Player).filter(_auth.Player.id == player.id).first()
             if p:
-                p.notif_push_dms       = notif_push_dms       == "on"
-                p.notif_push_contracts = notif_push_contracts == "on"
-                p.notif_push_business  = notif_push_business  == "on"
-                p.notif_push_land      = notif_push_land      == "on"
-                p.notif_push_execs     = notif_push_execs     == "on"
-                p.notif_push_trades    = notif_push_trades    == "on"
-                p.notif_push_corporate = notif_push_corporate == "on"
-                p.notif_push_govt      = notif_push_govt      == "on"
-                p.notif_sounds         = notif_sounds         == "on"
-                p.notif_badge          = notif_badge          == "on"
+                p.notif_push_dms          = notif_push_dms          == "on"
+                p.notif_push_contracts    = notif_push_contracts    == "on"
+                p.notif_push_business     = notif_push_business     == "on"
+                p.notif_push_land         = notif_push_land         == "on"
+                p.notif_push_execs        = notif_push_execs        == "on"
+                p.notif_push_trades       = notif_push_trades       == "on"
+                p.notif_push_corporate    = notif_push_corporate    == "on"
+                p.notif_push_govt         = notif_push_govt         == "on"
+                p.notif_push_tasks_events = notif_push_tasks_events == "on"
+                p.notif_sounds            = notif_sounds            == "on"
+                p.notif_badge             = notif_badge             == "on"
                 db.commit()
             db.close()
         except Exception as e:

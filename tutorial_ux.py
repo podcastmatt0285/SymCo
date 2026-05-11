@@ -967,6 +967,18 @@ def restart_tutorial(
             set_tutorial4_step(player.id, 1)
             return RedirectResponse(url="/banks/indices", status_code=303)
 
+    if tutorial_number == 5:
+        step5 = get_tutorial5_step(player.id)
+        if step5 > 0:
+            set_tutorial5_step(player.id, 1)
+            return RedirectResponse(url="/corporate-actions/dashboard", status_code=303)
+
+    if tutorial_number == 6:
+        step6 = get_tutorial6_step(player.id)
+        if step6 > 0:
+            set_tutorial6_step(player.id, 1)
+            return RedirectResponse(url="/districts", status_code=303)
+
     return RedirectResponse(url="/settings?tab=tutorials", status_code=303)
 
 
@@ -2816,4 +2828,458 @@ def tutorial5_dismiss(session_token: Optional[str] = Cookie(None)):
     if not player:
         return RedirectResponse(url="/login", status_code=303)
     set_tutorial5_step(player.id, 7)
+    return RedirectResponse(url="/", status_code=303)
+
+
+# ============================================================
+# TUTORIAL 6 — District Market
+# ============================================================
+#
+# Steps:
+#   0  - Not started (shown in Settings → Tutorials after T5 complete)
+#   1  - What are Districts?           (/districts)
+#   2  - District Market intro + video (/districts)
+#   3  - Browsing the District Market  (/district-market)
+#   4  - Buying & Selling              (/district-market)
+#   5  - District Strategy             (/district-market)
+#   6  - Reward: 15 trophies           (/districts)
+#   7  - Complete
+#
+# Locked until Tutorial 5 is complete (tutorial_5_step >= 7).
+# Must be manually started from Settings → Tutorials.
+# ============================================================
+
+T6_TOTAL_STEPS = 6
+T6_TROPHY_REWARD = 15
+
+
+def get_tutorial6_step(player_id: int) -> int:
+    """Return the player's current Tutorial 6 step (0–7)."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        db.close()
+        if player is None:
+            return 0
+        step = getattr(player, "tutorial_6_step", 0)
+        return step if step is not None else 0
+    except Exception as e:
+        print(f"[Tutorial6] get_tutorial6_step error: {e}")
+        return 0
+
+
+def set_tutorial6_step(player_id: int, step: int):
+    """Set the player's Tutorial 6 step."""
+    try:
+        from auth import get_db, Player
+        db = get_db()
+        player = db.query(Player).filter(Player.id == player_id).first()
+        if player:
+            player.tutorial_6_step = step
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"[Tutorial6] set_tutorial6_step error: {e}")
+
+
+def should_show_tutorial6_banner(player) -> bool:
+    """Return True only when T5 is complete and T6 not yet started."""
+    t5 = getattr(player, "tutorial_5_step", 0) or 0
+    t6 = getattr(player, "tutorial_6_step", 0) or 0
+    return t5 >= 7 and t6 == 0
+
+
+# ── Tutorial 6 overlay HTML generator ─────────────────────────────────────────
+
+def get_tutorial6_overlay_html(player, current_page: str) -> str:
+    """
+    Return the Tutorial 6 overlay panel HTML for the given page.
+    `current_page`: 'districts' | 'district_market'
+    Returns empty string if T6 is not active or wrong page.
+    """
+    step = get_tutorial6_step(player.id)
+    if step == 0 or step >= 7:
+        return ""
+
+    T6_STEP_PAGE = {
+        1: "districts",
+        2: "districts",
+        3: "district_market",
+        4: "district_market",
+        5: "district_market",
+        6: "districts",
+    }
+    expected = T6_STEP_PAGE.get(step, "")
+    if expected and current_page != expected:
+        return ""
+
+    # ── Step content ──────────────────────────────────────────────────────────
+
+    if step == 1:
+        title = "What are Districts?"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            <strong style="color:#e5e7eb;">Districts</strong> are specialized local economies inside
+            Wadsworth. Each district focuses on a particular category of goods — one might specialize
+            in agricultural produce, another in electronics, another in construction materials.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Districts have their own <strong style="color:#38bdf8;">order books</strong> separate from
+            the main market. Prices in a district reflect local supply and demand, so a district with
+            heavy farming activity will have cheaper produce but may import manufactured goods at a premium.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            You can see all available districts on this page. Each card shows its specialization,
+            active members, and a link to its market. Let's learn how the District Market works.
+        </p>
+        <form action="/api/tutorial6/advance" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                OK — Tell Me More →
+            </button>
+        </form>
+        """
+
+    elif step == 2:
+        import json as _json
+        _video_id = ""
+        try:
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            _video_id = _media.get("tutorial_districts_video_id", "")
+        except Exception:
+            pass
+
+        title = "District Market Overview"
+        _video_html = ""
+        if _video_id:
+            _video_html = f"""
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+                    border-radius:6px;border:1px solid #1d4ed8;margin-bottom:14px;">
+            <iframe src="https://www.youtube.com/embed/{_video_id}?rel=0&modestbranding=1"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                    allowfullscreen></iframe>
+        </div>"""
+        else:
+            _video_html = """
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;
+                    padding:12px 16px;margin-bottom:14px;color:#475569;font-size:0.82rem;">
+            📹 Video coming soon — check back after your admin adds the Districts overview video.
+        </div>"""
+
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            The <strong style="color:#e5e7eb;">District Market</strong> operates exactly like the main
+            market — limit orders, an order book, bid/ask matching — but is scoped to goods relevant
+            to that district's specialization. This creates
+            <strong style="color:#38bdf8;">price arbitrage opportunities</strong> between districts
+            and the main exchange.
+        </p>
+        {_video_html}
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Head to the <strong style="color:#38bdf8;">District Market</strong> to see it in action.
+        </p>
+        <form action="/api/tutorial6/advance" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                OK — Open District Market →
+            </button>
+        </form>
+        """
+
+    elif step == 3:
+        title = "Browsing the District Market"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            You're on the <strong style="color:#e5e7eb;">District Market</strong> order book.
+            Use the search bar and category tabs to browse available items. Each item shows its
+            live bid (highest buy offer) and ask (lowest sell offer).
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            The <strong style="color:#38bdf8;">spread</strong> between bid and ask is where margin lives.
+            Tight spreads mean competitive markets; wide spreads signal opportunity for patient traders.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            District market items can be cheaper or more expensive than the main market depending on
+            local production levels. Always compare both before committing.
+        </p>
+        <form action="/api/tutorial6/advance" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                OK — How Do I Place Orders? →
+            </button>
+        </form>
+        """
+
+    elif step == 4:
+        title = "Buying &amp; Selling in the District"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Placing orders works identically to the main market: choose an item, set a price per unit,
+            and enter quantity. The system matches your order with the best available counter-offer.
+        </p>
+        <ul style="color:#94a3b8;line-height:2;margin:0 0 12px 0;padding-left:20px;">
+            <li><strong style="color:#38bdf8;">Buy orders</strong> — set a maximum price you're willing to pay.
+                Fills immediately if a seller is below your limit, otherwise queues.</li>
+            <li><strong style="color:#4ade80;">Sell orders</strong> — set a minimum acceptable price.
+                Fills against the highest existing buy order.</li>
+        </ul>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            District sales are subject to the district's
+            <strong style="color:#f59e0b;">local sales tax</strong>, deducted from your proceeds.
+            High-tax districts generate city revenue — which is paid to whoever governs that city.
+        </p>
+        <form action="/api/tutorial6/advance" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                OK — District Strategy →
+            </button>
+        </form>
+        """
+
+    elif step == 5:
+        title = "District Trading Strategy"
+        content = """
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            The most profitable district traders combine two edges:
+        </p>
+        <ul style="color:#94a3b8;line-height:2;margin:0 0 12px 0;padding-left:20px;">
+            <li><strong style="color:#38bdf8;">Supply chain integration</strong> — produce the goods
+                your district specializes in, then sell locally where demand is highest.</li>
+            <li><strong style="color:#4ade80;">Cross-market arbitrage</strong> — when district prices
+                diverge from the main market, buy low in one and sell high in the other. Act fast —
+                other players see the same opportunity.</li>
+        </ul>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Keep an eye on district <strong style="color:#f59e0b;">tax rates</strong>. Low-tax districts
+            are better for high-volume trading. High-tax districts reduce your margins but benefit
+            whoever controls city governance — that could be you.
+        </p>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Head back to the Districts page to claim your reward!
+        </p>
+        <form action="/api/tutorial6/advance" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                OK — Claim My Reward →
+            </button>
+        </form>
+        """
+
+    elif step == 6:
+        title = "Tutorial 6 Complete — Claim Your Reward!"
+        content = f"""
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
+            Congratulations on completing the <strong style="color:#e5e7eb;">District Market</strong> tutorial!
+            You now know how to navigate local economies, read district order books,
+            and exploit price differences between districts and the main exchange.
+        </p>
+        <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);
+                    border-radius:6px;padding:12px 16px;margin-bottom:16px;">
+            <strong style="color:#38bdf8;">&#127942; Reward: {T6_TROPHY_REWARD} Trophies</strong>
+            <p style="color:#94a3b8;font-size:0.85rem;margin:6px 0 0;">
+                Added to your trophy count — contributing toward your player level.
+                View your trophies in the <a href="/events" style="color:#38bdf8;">Events &amp; Tasks</a> page.
+            </p>
+        </div>
+        <form action="/api/tutorial6/claim-reward" method="post">
+            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+                Claim {T6_TROPHY_REWARD} Trophies! &#127942;
+            </button>
+        </form>
+        """
+
+    else:
+        return ""
+
+    # ── Wrapper ───────────────────────────────────────────────────────────────
+    return f"""
+    <div id="tutorial6-panel" style="
+        background: linear-gradient(135deg, #0a1628, #0f172a);
+        border: 2px solid #38bdf8;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#38bdf8;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                TUTORIAL — STEP {step}/{T6_TOTAL_STEPS}
+            </span>
+            <span style="color:#38bdf8;font-size:0.85rem;font-weight:bold;">Level 6 &middot; District Market</span>
+            <div style="flex:1;background:#1e293b;height:4px;border-radius:2px;min-width:80px;">
+                <div style="background:#38bdf8;height:4px;border-radius:2px;
+                            width:{int(step / T6_TOTAL_STEPS * 100)}%;"></div>
+            </div>
+        </div>
+        <h3 style="color:#38bdf8;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
+        {content}
+        <a href="/api/tutorial6/dismiss"
+           onclick="return confirm('Skip Tutorial 6? You can restart it from Settings → Tutorials.');"
+           style="position:absolute;top:12px;right:16px;color:#475569;font-size:0.72rem;text-decoration:none;">
+            Skip
+        </a>
+    </div>
+    """
+
+
+def get_tutorial6_banner_html(player) -> str:
+    """Return the T6 start banner for Settings → Tutorials. Not auto-shown on dashboard."""
+    if not should_show_tutorial6_banner(player):
+        return ""
+    return """
+    <div style="
+        background: linear-gradient(135deg, #071829, #0f172a);
+        border: 2px solid #38bdf8;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    ">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <span style="background:#38bdf8;color:#020617;padding:3px 12px;border-radius:12px;
+                         font-size:0.7rem;font-weight:bold;letter-spacing:0.05em;">
+                NEW TUTORIAL AVAILABLE
+            </span>
+            <span style="color:#38bdf8;font-size:0.85rem;font-weight:bold;">Level 6 &middot; District Market</span>
+        </div>
+        <h3 style="color:#38bdf8;margin:0 0 10px 0;font-size:1.05rem;">
+            Trade in Local Economies
+        </h3>
+        <p style="color:#94a3b8;line-height:1.7;margin:0 0 16px 0;">
+            Tutorial 6 covers <strong style="color:#e5e7eb;">Districts</strong> and the
+            <strong style="color:#e5e7eb;">District Market</strong> — specialized local order books
+            with their own supply, demand, and tax dynamics. Learn to exploit price differences
+            between districts and the main exchange.
+            Complete it to earn <strong style="color:#38bdf8;">15 trophies</strong>.
+        </p>
+        <form action="/api/tutorial6/start" method="post" style="display:inline;">
+            <button type="submit"
+                    style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
+                           border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;
+                           margin-right:12px;">
+                Start Tutorial 6 &rarr;
+            </button>
+        </form>
+        <a href="/api/tutorial6/dismiss"
+           style="color:#475569;font-size:0.82rem;">
+            Dismiss
+        </a>
+    </div>
+    """
+
+
+# ── Tutorial 6 API routes ─────────────────────────────────────────────────────
+
+@router.post("/api/tutorial6/start")
+def tutorial6_start(session_token: Optional[str] = Cookie(None)):
+    """Start Tutorial 6 (step 0 → 1). Only allowed after Tutorial 5 complete."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    t5 = getattr(player, "tutorial_5_step", 0) or 0
+    if t5 < 7:
+        return RedirectResponse(url="/settings?tab=tutorials&error=Complete+Tutorial+5+first",
+                                status_code=303)
+    if get_tutorial6_step(player.id) == 0:
+        set_tutorial6_step(player.id, 1)
+    return RedirectResponse(url="/districts", status_code=303)
+
+
+@router.post("/api/tutorial6/advance")
+def tutorial6_advance(session_token: Optional[str] = Cookie(None)):
+    """Advance Tutorial 6 to the next step."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    step = get_tutorial6_step(player.id)
+    if step == 0 or step >= 7:
+        return RedirectResponse(url="/", status_code=303)
+
+    next_step = step + 1
+    set_tutorial6_step(player.id, next_step)
+
+    T6_REDIRECT = {
+        1: "/districts",
+        2: "/district-market",
+        3: "/district-market",
+        4: "/district-market",
+        5: "/districts",
+        6: "/districts",
+        7: "/",
+    }
+    return RedirectResponse(url=T6_REDIRECT.get(next_step, "/"), status_code=303)
+
+
+@router.post("/api/tutorial6/claim-reward")
+def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
+    """Step 6 → 7: Award trophies and mark Tutorial 6 complete."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial6_step(player.id) != 6:
+        return RedirectResponse(url="/", status_code=303)
+
+    # Award trophies
+    try:
+        from events import PlayerRank, SessionLocal as _ev_session, LEVEL_THRESHOLDS
+        from datetime import datetime as _dt
+        _db = _ev_session()
+        rank = _db.query(PlayerRank).filter(PlayerRank.player_id == player.id).first()
+        if not rank:
+            rank = PlayerRank(player_id=player.id, trophies=0, level=1)
+            _db.add(rank)
+        rank.trophies = (rank.trophies or 0) + T6_TROPHY_REWARD
+        rank.updated_at = _dt.utcnow()
+        # Recalculate level
+        level = 1
+        for i, threshold in enumerate(LEVEL_THRESHOLDS):
+            if rank.trophies >= threshold:
+                level = i + 2
+            else:
+                break
+        rank.level = level
+        _db.commit()
+        _db.close()
+        # Push notification
+        try:
+            from push_ux import send_push_notification
+            send_push_notification(
+                player.id,
+                "🏆 Tutorial 6 Complete!",
+                f"You earned {T6_TROPHY_REWARD} trophies for completing the District Market tutorial.",
+                url="/events",
+                notif_type="general",
+                tag="tutorial6-complete",
+            )
+        except Exception:
+            pass
+    except Exception as e:
+        print(f"[Tutorial6] Trophy award error: {e}")
+
+    set_tutorial6_step(player.id, 7)
+    return RedirectResponse(url="/districts?t6_complete=1", status_code=303)
+
+
+@router.post("/api/tutorial6/restart")
+def tutorial6_restart(session_token: Optional[str] = Cookie(None)):
+    """Restart Tutorial 6 from step 1 (no second reward)."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if (getattr(player, "tutorial_6_step", 0) or 0) > 0:
+        set_tutorial6_step(player.id, 1)
+    return RedirectResponse(url="/districts", status_code=303)
+
+
+@router.get("/api/tutorial6/dismiss")
+@router.post("/api/tutorial6/dismiss")
+def tutorial6_dismiss(session_token: Optional[str] = Cookie(None)):
+    """Dismiss / skip Tutorial 6."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    set_tutorial6_step(player.id, 7)
     return RedirectResponse(url="/", status_code=303)

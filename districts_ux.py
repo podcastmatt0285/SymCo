@@ -241,8 +241,13 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None)):
             </div>
             '''
         
-        return shell("Districts", html, player.cash_balance, player.id)
-        
+        try:
+            from tutorial_ux import get_tutorial6_overlay_html
+            tut6 = get_tutorial6_overlay_html(player, "districts")
+        except Exception:
+            tut6 = ""
+        return shell("Districts", tut6 + html, player.cash_balance, player.id)
+
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -1129,8 +1134,13 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
         {dm.get_district_ticker_html()}
         '''
         
-        return shell("District Market", market_html, player.cash_balance, player.id)
-        
+        try:
+            from tutorial_ux import get_tutorial6_overlay_html
+            tut6 = get_tutorial6_overlay_html(player, "district_market")
+        except Exception:
+            tut6 = ""
+        return shell("District Market", tut6 + market_html, player.cash_balance, player.id)
+
     except Exception as e:
         import traceback
         traceback.print_exc()
