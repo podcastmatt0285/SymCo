@@ -498,8 +498,56 @@ def get_restoration_module_html(player, disp: str) -> str:
 
     # ── ELIGIBLE PLOTS ────────────────────────────────────────────────────────
     plots = get_eligible_plots(player.id)
+
     if not plots:
-        return ""
+        # Show an "all healthy" summary — the module is always visible
+        from land import get_db as ldb_fn, LandPlot
+        ldb = ldb_fn()
+        try:
+            player_plots = ldb.query(LandPlot).filter(
+                LandPlot.owner_id           == player.id,
+                LandPlot.is_tutorial_reward == False,
+            ).all()
+        finally:
+            ldb.close()
+
+        if not player_plots:
+            return ""  # no non-tutorial plots at all — nothing to show
+
+        avg_eff    = sum(p.efficiency for p in player_plots) / len(player_plots)
+        min_eff    = min(p.efficiency for p in player_plots)
+        worst_name = next(
+            (p.terrain_type or "Plot").replace("_", " ").title()
+            for p in player_plots if p.efficiency == min_eff
+        )
+        # Estimate how long until the worst plot reaches eligibility threshold
+        # decay = EFFICIENCY_DECAY_PER_TICK % per second
+        secs_to_eligible = max(0.0, (min_eff - ELIGIBILITY_THRESHOLD) / EFFICIENCY_DECAY_PER_TICK)
+        eta_str = _fmt_duration(secs_to_eligible) if secs_to_eligible > 0 else "soon"
+
+        bar_w = int(min(100, avg_eff))
+        bar_col = "#22c55e" if avg_eff >= 70 else "#f59e0b" if avg_eff >= 40 else "#ef4444"
+        return f"""{_CSS}<div class="lr-card">
+  <div class="lr-header">
+    <span class="lr-title" style="color:#22c55e;">⚙ Efficiency Restoration</span>
+    <span class="lr-badge" style="background:#052e16;color:#22c55e;">All Plots Healthy</span>
+  </div>
+  <div class="lr-body">
+    <div class="lr-bar-track" style="margin-bottom:8px;">
+      <div class="lr-bar-fill" style="width:{bar_w}%;background:{bar_col};"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:#64748b;margin-bottom:10px;">
+      <span>Avg efficiency <strong style="color:#e2e8f0;">{avg_eff:.1f}%</strong></span>
+      <span>Worst: <strong style="color:#e2e8f0;">{worst_name}</strong> at {min_eff:.1f}%</span>
+    </div>
+    <div style="font-size:0.78rem;color:#475569;line-height:1.6;">
+      Restoration becomes available when any plot drops below
+      <strong style="color:#f8fafc;">30%</strong> efficiency.
+      At current decay rate, the worst plot reaches eligibility in
+      <strong style="color:#fbbf24;">{eta_str}</strong>.
+    </div>
+  </div>
+</div>"""
 
     plot_rows      = ""
     total_cost_usd = 0.0

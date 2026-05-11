@@ -4478,8 +4478,10 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
             try:
                 from land_restoration import get_restoration_module_html
                 land_html += get_restoration_module_html(player, disp)
-            except Exception:
-                pass
+            except Exception as _re:
+                import traceback
+                print(f"[Land/Restoration] render error: {_re}")
+                traceback.print_exc()
 
             # Sort controls
             land_html += f'''
