@@ -226,6 +226,95 @@ def initialize():
     Base.metadata.create_all(bind=engine)
 
 
+# ── Push notifications ─────────────────────────────────────────────────────────
+
+def _fire_event_notifications(now):
+    """Broadcast push notifications for events going live or starting soon.
+    Called every 60 s from tick(). Uses push_rate_ok/mark for deduplication.
+    """
+    from datetime import timedelta
+    try:
+        from push_ux import send_push_notification, push_rate_ok, push_rate_mark
+        from auth import get_db, PushSubscription
+    except Exception as e:
+        print(f"[Events] notification import failed: {e}")
+        return
+
+    db = SessionLocal()
+    try:
+        candidates = db.query(GameEvent).filter(GameEvent.is_active == True).all()
+    finally:
+        db.close()
+
+    def _broadcast(ev, title, body, rate_key, cooldown_secs):
+        if not push_rate_ok(rate_key, cooldown_secs=cooldown_secs):
+            return
+        push_rate_mark(rate_key)
+        adb = get_db()
+        try:
+            pids = [r[0] for r in adb.query(PushSubscription.player_id).distinct().all()]
+        finally:
+            adb.close()
+        tag = rate_key.replace("_", "-")
+        for pid in pids:
+            try:
+                send_push_notification(pid, title, body, url="/events",
+                                       notif_type="general", tag=tag)
+            except Exception:
+                pass
+
+    for ev in candidates:
+        ends_ok = not ev.ends_at or ev.ends_at > now
+        desc    = ev.description or ""
+
+        if ev.starts_at <= now and ends_ok:
+            _broadcast(ev,
+                f"🔴 {ev.title} is LIVE!",
+                desc or "The event is now active — join in!",
+                f"event_{ev.id}_live", 82800)          # re-fires at most once per 23 h
+
+        elif ev.starts_at > now:
+            secs = (ev.starts_at - now).total_seconds()
+            if secs <= 3660:                            # within ~1 hour
+                _broadcast(ev,
+                    f"⏰ {ev.title} starts in 1 hour!",
+                    desc or "Get ready — the event starts soon!",
+                    f"event_{ev.id}_1h", 7200)
+            elif secs <= 86460:                         # within ~24 hours
+                _broadcast(ev,
+                    f"📅 {ev.title} starts tomorrow",
+                    desc or "Upcoming event — prepare now!",
+                    f"event_{ev.id}_24h", 82800)
+
+
+def broadcast_event_push(event_id: int, title: str, body: str) -> int:
+    """Send a push notification about event_id to every subscribed player.
+    Returns the number of players notified. Called from admin notify-all endpoint.
+    """
+    try:
+        from push_ux import send_push_notification
+        from auth import get_db, PushSubscription
+        adb = get_db()
+        try:
+            pids = [r[0] for r in adb.query(PushSubscription.player_id).distinct().all()]
+        finally:
+            adb.close()
+        sent = 0
+        for pid in pids:
+            try:
+                send_push_notification(pid, title, body, url="/events",
+                                       notif_type="general",
+                                       tag=f"event-{event_id}-manual")
+                sent += 1
+            except Exception:
+                pass
+        return sent
+    except Exception as e:
+        print(f"[Events] broadcast failed: {e}")
+        return 0
+
+
 def tick(current_tick, now):
-    """Stub — no mechanical event effects defined yet."""
-    pass
+    """Fire event notifications every 60 s."""
+    if current_tick % 60 == 0:
+        _fire_event_notifications(now)

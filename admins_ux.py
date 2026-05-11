@@ -4447,15 +4447,41 @@ def admin_events(session_token: Optional[str] = Cookie(None),
 
         ctrl = ""
         if is_active_now:
-            ctrl += _btn("⏸ Pause",   "pause",   "#92400e")
-            ctrl += _btn("⏹ Stop",    "stop",    "#7f1d1d", f"Stop event: {ev.title}?")
+            ctrl += _btn("⏸ Pause", "pause", "#92400e")
+            ctrl += _btn("⏹ Stop",  "stop",  "#7f1d1d", f"Stop event: {ev.title}?")
         else:
-            ctrl += _btn("▶ Start",   "start",   "#14532d")
-            ctrl += _btn("↺ Restart", "restart", "#1e3a5f")
+            ctrl += _btn("▶ Start", "start", "#14532d")
+            # Restart with optional new end date
+            ctrl += (
+                f'<form method="post" action="/admin/events/restart"'
+                f' style="display:inline-flex;align-items:center;gap:3px;vertical-align:top;">'
+                f'<input type="hidden" name="event_id" value="{ev.id}">'
+                f'<input type="datetime-local" name="ends_at"'
+                f' title="Optional end date (UTC)" placeholder="end (UTC)"'
+                f' style="background:#0f172a;color:#94a3b8;border:1px solid #334155;'
+                f'border-radius:4px;padding:4px 5px;font-size:0.68rem;width:140px;">'
+                f'<button type="submit" style="background:#1e3a5f;color:#fff;border:none;'
+                f'border-radius:4px;padding:5px 9px;font-size:0.74rem;font-weight:600;'
+                f'cursor:pointer;">↺ Restart</button></form> '
+            )
 
+        ctrl += _add_time_form(-1,   "−1h")
         ctrl += _add_time_form(1,    "+1h")
         ctrl += _add_time_form(24,   "+24h")
         ctrl += _add_time_form(168,  "+7d")
+
+        # Notify all players button
+        ctrl += (
+            f'<form method="post" action="/admin/events/notify-all" style="display:inline;">'
+            f'<input type="hidden" name="event_id" value="{ev.id}">'
+            f'<button type="submit" title="Send push notification to all players now"'
+            f' style="background:#1e293b;color:#f59e0b;border:1px solid #92400e;'
+            f'border-radius:4px;padding:5px 9px;font-size:0.74rem;cursor:pointer;">📣</button>'
+            f'</form> '
+        )
+        # Delete button
+        ctrl += _btn("🗑 Delete", "delete", "#450a0a",
+                     f"Permanently delete '{ev.title}' and all its task progress?")
 
         # Beta request queue under Founding Operative
         extra = ""
@@ -4616,12 +4642,74 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     if not all_events:
         event_cards = '<div class="card"><p style="color:#64748b;">No events in the database yet.</p></div>'
 
+    _inp = ('background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;'
+            'padding:6px 9px;font-size:0.8rem;width:100%;box-sizing:border-box;')
+    _sel = _inp + 'cursor:pointer;'
+    create_form = f"""
+    <div class="card" style="margin-bottom:18px;">
+      <div style="font-size:0.72rem;color:#94a3b8;text-transform:uppercase;
+                  letter-spacing:.08em;margin-bottom:12px;font-weight:700;">➕ Create New Event / Task</div>
+      <form method="post" action="/admin/events/create">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <input name="title" placeholder="Event title (required)" required style="{_inp}">
+          <input name="trophy_reward" type="number" min="0" value="0"
+                 placeholder="Trophy reward" style="{_inp}">
+        </div>
+        <textarea name="description" placeholder="Description (optional)" rows="2"
+                  style="{_inp}margin-bottom:8px;resize:vertical;"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+          <select name="duration_class" style="{_sel}">
+            <option value="daily">daily</option>
+            <option value="weekly" selected>weekly</option>
+            <option value="monthly">monthly</option>
+            <option value="special">special</option>
+            <option value="task">task</option>
+          </select>
+          <select name="event_type" style="{_sel}">
+            <option value="gov">gov</option>
+            <option value="bank">bank</option>
+            <option value="market">market</option>
+            <option value="task" selected>task</option>
+            <option value="city">city</option>
+            <option value="production">production</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" name="start_now" value="1" id="start_now_chk" checked
+                   style="width:auto;">
+            <label for="start_now_chk" style="color:#94a3b8;font-size:0.78rem;white-space:nowrap;">
+              Start immediately</label>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Starts at (UTC) — leave blank to start now</div>
+            <input type="datetime-local" name="starts_at" style="{_inp}">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Ends at (UTC) — leave blank for no deadline</div>
+            <input type="datetime-local" name="ends_at" style="{_inp}">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <input name="task_target" type="number" step="any" min="0"
+                 placeholder="Task target (optional, e.g. 1)" style="{_inp}">
+          <input name="task_metric" placeholder="Task metric (optional, e.g. twa_first_login)"
+                 style="{_inp}">
+        </div>
+        <button type="submit" style="background:#14532d;color:#fff;border:none;border-radius:4px;
+                padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+          Create Event
+        </button>
+      </form>
+    </div>"""
+
     body = f"""
     {flash}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
         <h2 style="margin:0;">Events</h2>
         <span style="color:#64748b;font-size:0.78rem;">{len(all_events)} event(s) in DB</span>
     </div>
+    {create_form}
     {event_cards}"""
 
     return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
@@ -4701,21 +4789,32 @@ def admin_event_pause(session_token: Optional[str] = Cookie(None), event_id: int
 
 
 @router.post("/admin/events/restart")
-def admin_event_restart(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
+def admin_event_restart(
+    session_token: Optional[str] = Cookie(None),
+    event_id:      int           = Form(...),
+    ends_at:       Optional[str] = Form(None),
+):
     admin = require_admin(session_token)
     if isinstance(admin, RedirectResponse): return admin
     import urllib.parse
     try:
         from events import GameEvent, SessionLocal as _ES
+        new_end = None
+        if ends_at and ends_at.strip():
+            try:
+                new_end = datetime.fromisoformat(ends_at.strip())
+            except ValueError:
+                pass
         edb = _ES()
         try:
             ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
             if ev:
                 ev.is_active = True
                 ev.starts_at = datetime.utcnow()
-                ev.ends_at   = None
+                ev.ends_at   = new_end
                 edb.commit()
-                msg = f"'{ev.title}' restarted with no end date."
+                end_str = new_end.strftime("%Y-%m-%d %H:%M UTC") if new_end else "no end date"
+                msg = f"'{ev.title}' restarted — {end_str}."
             else:
                 msg = "Event not found."
         finally:
@@ -4748,6 +4847,103 @@ def admin_event_add_time(session_token: Optional[str] = Cookie(None),
                 msg = "Event not found."
         finally:
             edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/create")
+def admin_event_create(
+    session_token:  Optional[str]   = Cookie(None),
+    title:          str             = Form(...),
+    description:    Optional[str]   = Form(None),
+    duration_class: str             = Form("weekly"),
+    event_type:     str             = Form("task"),
+    starts_at:      Optional[str]   = Form(None),
+    ends_at:        Optional[str]   = Form(None),
+    trophy_reward:  int             = Form(0),
+    task_target:    Optional[float] = Form(None),
+    task_metric:    Optional[str]   = Form(None),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        def _parse(s):
+            return datetime.fromisoformat(s) if s and s.strip() else None
+        start = _parse(starts_at) or datetime.utcnow()
+        end   = _parse(ends_at)
+        edb = _ES()
+        try:
+            ev = GameEvent(
+                title          = title.strip(),
+                description    = description.strip() if description else None,
+                duration_class = duration_class,
+                event_type     = event_type,
+                starts_at      = start,
+                ends_at        = end,
+                trophy_reward  = trophy_reward,
+                task_target    = task_target,
+                task_metric    = task_metric.strip() if task_metric else None,
+                is_active      = True,
+                created_by     = admin.id,
+            )
+            edb.add(ev)
+            edb.commit()
+            edb.refresh(ev)
+            msg = f"Event '{ev.title}' created (ID {ev.id})."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/delete")
+def admin_event_delete(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, PlayerTaskProgress, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if ev:
+                title = ev.title
+                edb.query(PlayerTaskProgress).filter(
+                    PlayerTaskProgress.event_id == event_id).delete()
+                edb.delete(ev)
+                edb.commit()
+                msg = f"Event '{title}' and its task progress deleted."
+            else:
+                msg = "Event not found."
+        finally:
+            edb.close()
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/notify-all")
+def admin_event_notify_all(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import GameEvent, broadcast_event_push, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if not ev:
+                return RedirectResponse("/admin/events?err=Event+not+found", status_code=303)
+            title = ev.title
+            body  = ev.description or "Check out this event!"
+        finally:
+            edb.close()
+        sent = broadcast_event_push(event_id, f"📣 {title}", body)
+        msg  = f"Notified {sent} player(s) about '{title}'."
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
