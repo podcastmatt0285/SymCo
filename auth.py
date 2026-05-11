@@ -462,24 +462,45 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             padding: 32px;
         }
 
-        /* ── Market ticker ── */
+        /* ── Market tickers ── */
+        .login-tickers {
+            width: 100%;
+        }
         .login-ticker {
             width: 100%;
             background: #0f172a;
-            border-bottom: 1px solid #334155;
-            padding: 0 8px;
-            font-size: 0.75rem;
+            border-bottom: 1px solid #1e293b;
+            font-size: 0.72rem;
             color: #cbd5e1;
             white-space: nowrap;
             overflow: hidden;
-            height: 32px;
+            height: 28px;
             display: flex;
             align-items: center;
             flex-shrink: 0;
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             letter-spacing: 0.02em;
         }
-        #tkViewport {
+        .login-tickers .login-ticker:last-child {
+            border-bottom: 1px solid #334155;
+        }
+        .tk-label {
+            padding: 0 8px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
+            border-right: 1px solid #1e293b;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            min-width: 48px;
+            justify-content: center;
+        }
+        .tk-mkt  { color: #38bdf8; }
+        .tk-dm   { color: #a78bfa; }
+        .tk-stk  { color: #4ade80; }
+        .tk-viewport {
             overflow: hidden;
             flex: 1;
             height: 100%;
@@ -644,11 +665,24 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 </head>
 
 <body>
-    <!-- Market ticker -->
-    <div class="login-ticker">
-        <div id="tkViewport">
-            <div id="tkTrack" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">
-                Loading market data&hellip;
+    <!-- Market tickers -->
+    <div class="login-tickers">
+        <div class="login-ticker">
+            <span class="tk-label tk-mkt">MKT</span>
+            <div class="tk-viewport">
+                <div id="tkMkt" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
+            </div>
+        </div>
+        <div class="login-ticker">
+            <span class="tk-label tk-dm">DM</span>
+            <div class="tk-viewport">
+                <div id="tkDm" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
+            </div>
+        </div>
+        <div class="login-ticker">
+            <span class="tk-label tk-stk">STCK</span>
+            <div class="tk-viewport">
+                <div id="tkStk" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
             </div>
         </div>
     </div>
@@ -774,47 +808,63 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
         })();
 
-        // ── Market ticker (same style as in-game) ──
+        // ── Three market tickers ──
         (function () {
-            var track = document.getElementById('tkTrack');
-            var halfWidth = 0;
-            var offset = 0;
-            var BASE_PX = 0.9;
-            var started = false;
-
             function fmt(v) {
                 if (v == null) return '—';
                 return v >= 1000 ? '$' + (+v).toLocaleString(undefined, {maximumFractionDigits: 0})
                                  : '$' + (+v).toFixed(2);
             }
 
-            function animate() {
-                if (!halfWidth) halfWidth = track.scrollWidth / 2;
-                offset -= BASE_PX;
-                if (offset < -halfWidth) offset += halfWidth;
-                track.style.transform = 'translateX(' + offset + 'px)';
-                requestAnimationFrame(animate);
+            function runTicker(el, speed) {
+                var halfWidth = 0;
+                var offset = 0;
+                function tick() {
+                    if (!halfWidth) halfWidth = el.scrollWidth / 2;
+                    offset -= speed;
+                    if (offset < -halfWidth) offset += halfWidth;
+                    el.style.transform = 'translateX(' + offset + 'px)';
+                    requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
             }
 
+            var mkt = document.getElementById('tkMkt');
+            var dm  = document.getElementById('tkDm');
+            var stk = document.getElementById('tkStk');
+
             fetch('/api/public/ticker').then(function (r) { return r.json(); }).then(function (d) {
-                var parts = [];
-                (d.commodities || []).forEach(function (it) {
-                    parts.push((it.label || it.name || '') + ': ' + fmt(it.price));
+                var mktParts = (d.commodities || []).map(function (it) {
+                    return (it.label || it.name || '') + ': ' + fmt(it.price);
                 });
-                (d.district || []).forEach(function (it) {
-                    parts.push('DM:' + (it.label || it.name || '') + ' ' + fmt(it.price));
+                if (!mktParts.length) mktParts.push('MARKET OPENING…');
+                var mktText = mktParts.join('  ·  ');
+                mkt.textContent = mktText + '       ' + mktText;
+
+                var dmParts = (d.district || []).map(function (it) {
+                    return (it.label || it.name || '') + ': ' + fmt(it.price);
                 });
-                (d.stocks || []).forEach(function (it) {
-                    parts.push((it.label || it.name || '') + ' ' + fmt(it.price));
+                if (!dmParts.length) dmParts.push('NO DISTRICT TRADES YET');
+                var dmText = dmParts.join('  ·  ');
+                dm.textContent = dmText + '       ' + dmText;
+
+                var stkParts = (d.stocks || []).map(function (it) {
+                    return (it.label || '') + ' ' + fmt(it.price);
                 });
-                if (!parts.length) parts.push('MARKET OPENING…');
-                var text = parts.join('  |  ');
-                track.textContent = text + '       ' + text;
-                halfWidth = 0; // reset so animate() re-measures
-                if (!started) { started = true; requestAnimationFrame(animate); }
+                if (!stkParts.length) stkParts.push('NO STOCKS LISTED');
+                var stkText = stkParts.join('  ·  ');
+                stk.textContent = stkText + '       ' + stkText;
+
+                runTicker(mkt, 0.9);
+                runTicker(dm,  0.72);
+                runTicker(stk, 0.55);
             }).catch(function () {
-                track.textContent = 'MARKET FEED OFFLINE';
-                if (!started) { started = true; requestAnimationFrame(animate); }
+                mkt.textContent = 'MARKET FEED OFFLINE';
+                dm.textContent  = 'DISTRICT MARKET FEED OFFLINE';
+                stk.textContent = 'STOCK FEED OFFLINE';
+                runTicker(mkt, 0.9);
+                runTicker(dm,  0.72);
+                runTicker(stk, 0.55);
             });
         })();
     </script>
