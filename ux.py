@@ -13876,9 +13876,9 @@ def events_page(request: Request,
             pass
         trophy_html = (f"<span style='color:#fbbf24;font-weight:700;'>+{trophy} ★</span>" if trophy else "")
 
-        # Progress bar for task-type events
+        # Progress bar only for the Tax Contributor task
         progress_html = ""
-        if etype == "task":
+        if ev.get("task_metric") == "city_tax_paid_usd":
             target   = ev.get("task_target") or 0
             ev_prog  = _prog_map.get(ev.get("id"), {})
             current  = ev_prog.get("progress", 0.0)
