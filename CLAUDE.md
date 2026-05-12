@@ -8,6 +8,14 @@ After making changes, use this sequence to pull, build the APK, and stage the bu
 git fetch && git pull && git add . && git commit -m "update" && git push && cd android && ./build-apk2.sh && cd .. && git add android/wadsworth-signed.apk android/wadsworth-signed.aab && git commit -m "build apk" && git push && exit
 ```
 
+## Data Backup & Push Sequence
+
+Dumps fresh copies of both databases and tick state, then commits and pushes everything:
+
+```bash
+sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges wadsworth > wadsworth_backup.sql && sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges reserve_banks > reserve_banks_backup.sql && git add wadsworth_backup.sql reserve_banks_backup.sql tick_state.txt && git commit -m "data backup $(date -u '+%Y-%m-%d %H:%M UTC')" && git push && exit
+```
+
 ## Cloudflare Tunnel
 
 ```bash
