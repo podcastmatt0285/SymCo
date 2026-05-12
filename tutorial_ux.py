@@ -88,8 +88,8 @@ def get_tutorial_step(player_id: int) -> int:
         return 0
 
 
-def set_tutorial_step(player_id: int, step: int):
-    """Set the player's tutorial step."""
+def set_tutorial_step(player_id: int, step: int, is_completion: bool = False):
+    """Set the player's tutorial step. Pass is_completion=True only on genuine completion (not dismiss)."""
     try:
         from auth import get_db, Player
         db = get_db()
@@ -100,6 +100,12 @@ def set_tutorial_step(player_id: int, step: int):
         db.close()
     except Exception as e:
         print(f"[Tutorial] set_tutorial_step error: {e}")
+    if is_completion:
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player_id, 2)  # T1+T2 share this field; step 12 = end of T2
+        except Exception:
+            pass
 
 
 def player_has_businesses(player_id: int) -> bool:
@@ -1025,7 +1031,7 @@ def complete_tutorial(session_token: Optional[str] = Cookie(None)):
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
-    set_tutorial_step(player.id, 12)
+    set_tutorial_step(player.id, 12, is_completion=True)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -1119,12 +1125,7 @@ def claim_first_lady(
     else:
         print(f"[Tutorial] Player {player.id} already has a First Lady — skipping duplicate creation")
 
-    set_tutorial_step(player.id, 12)
-    try:
-        from admin_notifications import notify_tutorial_complete
-        notify_tutorial_complete(player.id, 1)
-    except Exception:
-        pass
+    set_tutorial_step(player.id, 12, is_completion=True)
     return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
 
 
@@ -1163,8 +1164,8 @@ def get_tutorial3_step(player_id: int) -> int:
         return 0
 
 
-def set_tutorial3_step(player_id: int, step: int):
-    """Set the player's Tutorial 3 step."""
+def set_tutorial3_step(player_id: int, step: int, is_completion: bool = False):
+    """Set the player's Tutorial 3 step. Pass is_completion=True only on genuine completion (not dismiss)."""
     try:
         from auth import get_db, Player
         db = get_db()
@@ -1175,6 +1176,12 @@ def set_tutorial3_step(player_id: int, step: int):
         db.close()
     except Exception as e:
         print(f"[Tutorial3] set_tutorial3_step error: {e}")
+    if is_completion:
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player_id, 3)
+        except Exception:
+            pass
 
 
 def should_show_tutorial3_banner(player) -> bool:
@@ -1780,12 +1787,7 @@ def tutorial3_check_ipo_done(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/login", status_code=303)
     step = get_tutorial3_step(player.id)
     if step == 6 and player_has_public_company(player.id):
-        set_tutorial3_step(player.id, 7)
-        try:
-            from admin_notifications import notify_tutorial_complete
-            notify_tutorial_complete(player.id, 3)
-        except Exception:
-            pass
+        set_tutorial3_step(player.id, 7, is_completion=True)
     return RedirectResponse(url="/brokerage/trading?success=ipo_created", status_code=303)
 
 
@@ -1822,8 +1824,8 @@ def get_tutorial4_step(player_id: int) -> int:
         return 0
 
 
-def set_tutorial4_step(player_id: int, step: int):
-    """Set the player's Tutorial 4 step."""
+def set_tutorial4_step(player_id: int, step: int, is_completion: bool = False):
+    """Set the player's Tutorial 4 step. Pass is_completion=True only on genuine completion (not dismiss)."""
     try:
         from auth import get_db, Player
         db = get_db()
@@ -1834,6 +1836,12 @@ def set_tutorial4_step(player_id: int, step: int):
         db.close()
     except Exception as e:
         print(f"[Tutorial4] set_tutorial4_step error: {e}")
+    if is_completion:
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player_id, 4)
+        except Exception:
+            pass
 
 
 def should_show_tutorial4_banner(player) -> bool:
@@ -2268,12 +2276,7 @@ def tutorial4_claim_reward(session_token: Optional[str] = Cookie(None)):
     except Exception as e:
         print(f"[Tutorial4] Failed to grant tax voucher for player {player.id}: {e}")
 
-    set_tutorial4_step(player.id, 7)
-    try:
-        from admin_notifications import notify_tutorial_complete
-        notify_tutorial_complete(player.id, 4)
-    except Exception:
-        pass
+    set_tutorial4_step(player.id, 7, is_completion=True)
     return RedirectResponse(url="/corporate-actions/dashboard?t4_reward=1", status_code=303)
 
 
@@ -2369,8 +2372,8 @@ def get_tutorial5_step(player_id: int) -> int:
         return 0
 
 
-def set_tutorial5_step(player_id: int, step: int):
-    """Set the player's Tutorial 5 step."""
+def set_tutorial5_step(player_id: int, step: int, is_completion: bool = False):
+    """Set the player's Tutorial 5 step. Pass is_completion=True only on genuine completion (not dismiss)."""
     try:
         from auth import get_db, Player
         db = get_db()
@@ -2381,6 +2384,12 @@ def set_tutorial5_step(player_id: int, step: int):
         db.close()
     except Exception as e:
         print(f"[Tutorial5] set_tutorial5_step error: {e}")
+    if is_completion:
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player_id, 5)
+        except Exception:
+            pass
 
 
 # ── Tutorial 5 overlay HTML generator ─────────────────────────────────────────
@@ -2838,12 +2847,7 @@ def tutorial5_claim_reward(
     except Exception as e:
         print(f"[Tutorial5] Failed to create First Lady for player {player.id}: {e}")
 
-    set_tutorial5_step(player.id, 7)
-    try:
-        from admin_notifications import notify_tutorial_complete
-        notify_tutorial_complete(player.id, 5)
-    except Exception:
-        pass
+    set_tutorial5_step(player.id, 7, is_completion=True)
     return RedirectResponse(url="/corporate-actions/dashboard?t5_reward=1", status_code=303)
 
 
@@ -2898,8 +2902,8 @@ def get_tutorial6_step(player_id: int) -> int:
         return 0
 
 
-def set_tutorial6_step(player_id: int, step: int):
-    """Set the player's Tutorial 6 step."""
+def set_tutorial6_step(player_id: int, step: int, is_completion: bool = False):
+    """Set the player's Tutorial 6 step. Pass is_completion=True only on genuine completion (not dismiss)."""
     try:
         from auth import get_db, Player
         db = get_db()
@@ -2910,6 +2914,12 @@ def set_tutorial6_step(player_id: int, step: int):
         db.close()
     except Exception as e:
         print(f"[Tutorial6] set_tutorial6_step error: {e}")
+    if is_completion:
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player_id, 6)
+        except Exception:
+            pass
 
 
 def should_show_tutorial6_banner(player) -> bool:
@@ -3311,12 +3321,7 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
     except Exception as e:
         print(f"[Tutorial6] Reward grant error: {e}")
 
-    set_tutorial6_step(player.id, 7)
-    try:
-        from admin_notifications import notify_tutorial_complete
-        notify_tutorial_complete(player.id, 6)
-    except Exception:
-        pass
+    set_tutorial6_step(player.id, 7, is_completion=True)
     return RedirectResponse(url="/districts?t6_complete=1", status_code=303)
 
 
@@ -3360,7 +3365,8 @@ def get_tutorial7_step(player_id: int) -> int:
     finally:
         db.close()
 
-def set_tutorial7_step(player_id: int, step: int):
+def set_tutorial7_step(player_id: int, step: int, is_completion: bool = False):
+    """Set the player's Tutorial 7 step. Pass is_completion=True only on genuine completion (not dismiss)."""
     from auth import get_db, Player
     db = get_db()
     try:
@@ -3370,6 +3376,12 @@ def set_tutorial7_step(player_id: int, step: int):
             db.commit()
     finally:
         db.close()
+    if is_completion:
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player_id, 7)
+        except Exception:
+            pass
 
 def should_show_tutorial7_banner(player) -> bool:
     step6 = get_tutorial6_step(player.id)
@@ -4224,15 +4236,10 @@ def tutorial7_claim_reward(session_token: Optional[str] = Cookie(None)):
             )
         except Exception:
             pass
-        try:
-            from admin_notifications import notify_tutorial_complete
-            notify_tutorial_complete(player.id, 7)
-        except Exception:
-            pass
     except Exception as e:
         print(f"[Tutorial7] Trophy award error: {e}")
 
-    set_tutorial7_step(player.id, 8)
+    set_tutorial7_step(player.id, 8, is_completion=True)
     return RedirectResponse(url="/land?t7_complete=1", status_code=303)
 
 

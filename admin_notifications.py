@@ -82,14 +82,21 @@ def notify_bankruptcy(player_id: int) -> None:
 
 def notify_moderation(player_id: int, action: str, reason: str = "", duration_min: int = 0) -> None:
     name = _player_name(player_id)
-    detail = f" ({duration_min}m)" if duration_min else ""
+    past  = {"ban": "banned", "kick": "kicked", "mute": "muted", "timeout": "timed out"}
+    verb  = past.get(action, f"{action}ed")
+    if action == "timeout" and duration_min:
+        detail = f" for {duration_min} minute{'s' if duration_min != 1 else ''}"
+    elif duration_min:
+        detail = f" ({duration_min}m)"
+    else:
+        detail = ""
     if reason:
         detail += f": {reason}"
     labels = {"ban": "🚫 Banned", "timeout": "⏱ Timed Out", "kick": "👢 Kicked", "mute": "🔇 Muted"}
-    label = labels.get(action, action.title())
+    label  = labels.get(action, action.title())
     _push_admins(
         f"{label}: {name}",
-        f"{name} was {action}d{detail}.",
+        f"{name} was {verb}{detail}.",
         f"/admin/player/{player_id}",
         tag=f"mod-{action}-{player_id}",
     )
