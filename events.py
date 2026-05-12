@@ -245,6 +245,8 @@ def _serialize_event(ev: GameEvent) -> dict:
         "starts_at":      ev.starts_at.isoformat() if ev.starts_at else None,
         "ends_at":        ev.ends_at.isoformat() if ev.ends_at else None,
         "trophy_reward":  ev.trophy_reward,
+        "task_target":    ev.task_target,
+        "task_metric":    ev.task_metric,
     }
 
 
@@ -254,6 +256,27 @@ def get_event_summary() -> dict:
     upcoming = [_serialize_event(e) for e in get_upcoming_events(5)]
     finished = [_serialize_event(e) for e in get_recent_finished_events(5)]
     return {"active": active, "upcoming": upcoming, "finished": finished}
+
+
+def get_player_task_progress_map(player_id: int, event_ids: list) -> dict:
+    """Return {event_id: {"progress": float, "completed": bool}} for the given event IDs."""
+    if not player_id or not event_ids:
+        return {}
+    db = SessionLocal()
+    try:
+        rows = db.query(PlayerTaskProgress).filter(
+            PlayerTaskProgress.player_id == player_id,
+            PlayerTaskProgress.event_id.in_(event_ids),
+        ).all()
+        return {
+            r.event_id: {
+                "progress":  r.progress or 0.0,
+                "completed": r.completed_at is not None,
+            }
+            for r in rows
+        }
+    finally:
+        db.close()
 
 
 def get_player_level(player_id: int) -> dict:

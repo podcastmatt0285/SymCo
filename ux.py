@@ -13804,7 +13804,7 @@ def events_page(request: Request,
         _flash_html = f'<div style="background:#1c0505;border:1px solid #b91c1c;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#f87171;font-size:0.85rem;">✗ {error}</div>'
 
     try:
-        from events import get_event_summary, get_player_level
+        from events import get_event_summary, get_player_level, get_player_task_progress_map
         _ev  = get_event_summary()
         _lvl = get_player_level(player.id)
     except Exception:
@@ -13815,6 +13815,13 @@ def events_page(request: Request,
     _active   = _ev.get("active",   [])
     _upcoming = _ev.get("upcoming", [])
     _finished = _ev.get("finished", [])
+
+    # Fetch player task progress for all task-type events in one query
+    _task_event_ids = [e["id"] for e in _active + _upcoming + _finished if e.get("event_type") == "task"]
+    try:
+        _prog_map = get_player_task_progress_map(player.id, _task_event_ids)
+    except Exception:
+        _prog_map = {}
 
     _TYPE_COLOR = {
         "gov":        "#94a3b8",
@@ -13838,11 +13845,11 @@ def events_page(request: Request,
                 f"text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;'>{label}</span>")
 
     def _ev_card(ev, status_label, status_color):
-        dur   = ev.get("duration_class", "")
-        etype = ev.get("event_type", "")
-        title = ev.get("title", "Untitled")
-        desc  = ev.get("description", "") or ""
-        ends  = ev.get("ends_at")
+        dur    = ev.get("duration_class", "")
+        etype  = ev.get("event_type", "")
+        title  = ev.get("title", "Untitled")
+        desc   = ev.get("description", "") or ""
+        ends   = ev.get("ends_at")
         starts = ev.get("starts_at")
         trophy = ev.get("trophy_reward", 0)
         from datetime import datetime as _dt
@@ -13868,6 +13875,38 @@ def events_page(request: Request,
         except Exception:
             pass
         trophy_html = (f"<span style='color:#fbbf24;font-weight:700;'>+{trophy} ★</span>" if trophy else "")
+
+        # Progress bar for task-type events
+        progress_html = ""
+        if etype == "task":
+            target   = ev.get("task_target") or 0
+            ev_prog  = _prog_map.get(ev.get("id"), {})
+            current  = ev_prog.get("progress", 0.0)
+            done     = ev_prog.get("completed", False)
+            if target > 0:
+                pct      = min(current / target * 100, 100)
+                bar_color = "#4ade80" if done else "#a78bfa"
+                # Format numbers: if whole dollars, show with $ and commas
+                def _fmt(v):
+                    return f"${v:,.0f}" if v >= 1 else f"${v:,.2f}"
+                label_text = (
+                    f'<span style="color:#4ade80;font-weight:700;">✓ Complete!</span>'
+                    if done else
+                    f'<span style="color:#a78bfa;">{_fmt(current)}</span>'
+                    f'<span style="color:#475569;"> / {_fmt(target)}</span>'
+                )
+                progress_html = f"""
+                <div style="margin-top:10px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                        <span style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Progress</span>
+                        <span style="font-size:0.78rem;">{label_text}</span>
+                    </div>
+                    <div style="background:#1e293b;border-radius:4px;height:6px;overflow:hidden;">
+                        <div style="background:{bar_color};height:100%;width:{pct:.1f}%;border-radius:4px;transition:width 0.4s;"></div>
+                    </div>
+                    <div style="color:#475569;font-size:0.68rem;margin-top:3px;text-align:right;">{pct:.1f}%</div>
+                </div>"""
+
         return f"""
         <div style="background:#0a0f1e;border:1px solid #1e293b;border-left:3px solid {status_color};
                     border-radius:8px;padding:16px 18px;margin-bottom:10px;">
@@ -13880,6 +13919,7 @@ def events_page(request: Request,
                     </div>
                     <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
                     <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
+                    {progress_html}
                 </div>
                 <div style="color:{status_color};font-size:0.75rem;white-space:nowrap;padding-top:2px;">{time_str}</div>
             </div>
