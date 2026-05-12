@@ -13,7 +13,7 @@ git fetch && git pull && git add . && git commit -m "update" && git push && cd a
 Pull first, then dump (pg_dump must run AFTER git pull or git pull will overwrite the fresh files):
 
 ```bash
-git pull && sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges wadsworth > wadsworth_backup.sql && sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges reserve_banks > reserve_banks_backup.sql && git add wadsworth_backup.sql reserve_banks_backup.sql tick_state.txt && git commit -m "data backup $(date -u '+%Y-%m-%d %H:%M UTC')" && git push && exit
+git pull && sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges wadsworth > wadsworth_backup.sql && sudo -u postgres pg_dump --clean --if-exists --no-owner --no-privileges reserve_banks > reserve_banks_backup.sql && git add wadsworth_backup.sql reserve_banks_backup.sql tick_state.txt && git commit -m "data backup $(date -u '+%Y-%m-%d %H:%M UTC')" && git push
 ```
 
 ## Cloudflare Tunnel
