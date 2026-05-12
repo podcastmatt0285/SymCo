@@ -3327,17 +3327,19 @@ T7_TROPHY_REWARD = 20
 # ── Step / progress helpers ───────────────────────────────────────────────────
 
 def get_tutorial7_step(player_id: int) -> int:
-    db = _get_db()
+    from auth import get_db, Player
+    db = get_db()
     try:
-        p = db.query(_Player).filter(_Player.id == player_id).first()
+        p = db.query(Player).filter(Player.id == player_id).first()
         return int(getattr(p, "tutorial_7_step", 0) or 0)
     finally:
         db.close()
 
 def set_tutorial7_step(player_id: int, step: int):
-    db = _get_db()
+    from auth import get_db, Player
+    db = get_db()
     try:
-        p = db.query(_Player).filter(_Player.id == player_id).first()
+        p = db.query(Player).filter(Player.id == player_id).first()
         if p:
             p.tutorial_7_step = step
             db.commit()
