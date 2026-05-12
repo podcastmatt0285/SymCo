@@ -3005,22 +3005,48 @@ def get_tutorial6_overlay_html(player, current_page: str) -> str:
 
         title = "District Market Overview"
         _video_html = ""
+        _btn_attrs = ""
         if _video_id:
             _video_html = f"""
-        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
-                    border-radius:6px;border:1px solid #1d4ed8;margin-bottom:14px;">
-            <iframe src="https://www.youtube.com/embed/{_video_id}?rel=0&modestbranding=1"
-                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    allowfullscreen></iframe>
-        </div>"""
+        <div id="yt6-player-container" style="aspect-ratio:16/9;border-radius:6px;
+             border:1px solid #1d4ed8;margin-bottom:14px;overflow:hidden;background:#000;"></div>
+        <script>
+        (function() {{
+          var WATCH_THRESHOLD = 0.90, unlocked = false;
+          function unlockNext6() {{
+            if (unlocked) return; unlocked = true;
+            var b = document.getElementById('t6-next-btn');
+            if (b) {{ b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; b.removeAttribute('title'); }}
+          }}
+          var tag = document.createElement('script');
+          tag.src = 'https://www.youtube.com/iframe_api';
+          document.head.appendChild(tag);
+          var ytPlayer6;
+          window.onYouTubeIframeAPIReady = function() {{
+            ytPlayer6 = new YT.Player('yt6-player-container', {{
+              videoId: '{_video_id}',
+              playerVars: {{ rel: 0, modestbranding: 1 }},
+              events: {{
+                onReady: function(e) {{ e.target.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin'); }},
+                onStateChange: function(e) {{ if (e.data === YT.PlayerState.ENDED) unlockNext6(); }}
+              }}
+            }});
+          }};
+          setInterval(function() {{
+            if (!ytPlayer6 || typeof ytPlayer6.getDuration !== 'function') return;
+            var d = ytPlayer6.getDuration(), c = ytPlayer6.getCurrentTime();
+            if (d > 0 && c / d >= WATCH_THRESHOLD) {{ unlockNext6(); }}
+          }}, 1000);
+        }})();
+        </script>"""
+            _btn_attrs = 'id="t6-next-btn" disabled style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:not-allowed;font-size:0.9rem;font-weight:bold;opacity:0.4;" title="Watch the video to continue"'
         else:
             _video_html = """
         <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;
                     padding:12px 16px;margin-bottom:14px;color:#475569;font-size:0.82rem;">
             📹 Video coming soon — check back after your admin adds the Districts overview video.
         </div>"""
+            _btn_attrs = 'style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;"'
 
         content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 12px 0;">
@@ -3035,8 +3061,7 @@ def get_tutorial6_overlay_html(player, current_page: str) -> str:
             Head to the <strong style="color:#38bdf8;">District Market</strong> to see it in action.
         </p>
         <form action="/api/tutorial6/advance" method="post">
-            <button type="submit" style="background:#38bdf8;color:#020617;border:none;padding:10px 24px;
-                    border-radius:4px;cursor:pointer;font-size:0.9rem;font-weight:bold;">
+            <button type="submit" {_btn_attrs}>
                 OK — Open District Market →
             </button>
         </form>
@@ -3456,15 +3481,46 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
                 _t7_video_id = _media["videos"][6]["youtube_id"]
         except Exception:
             pass
-        _t7_video_html = f"""
-        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
-                    border-radius:6px;border:1px solid #15803d;margin:12px 0 16px;">
-            <iframe src="https://www.youtube.com/embed/{_t7_video_id}?rel=0&modestbranding=1"
-                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    allowfullscreen></iframe>
-        </div>""" if _t7_video_id else """
+        if _t7_video_id:
+            _t7_video_html = f"""
+        <div id="yt7-player-container" style="aspect-ratio:16/9;border-radius:6px;
+             border:1px solid #15803d;margin:12px 0 16px;overflow:hidden;background:#000;"></div>
+        <script>
+        (function() {{
+          var WATCH_THRESHOLD = 0.90, unlocked = false;
+          function unlockNext7() {{
+            if (unlocked) return; unlocked = true;
+            var b = document.querySelector('form[action="/api/tutorial7/advance"] button');
+            if (b) {{ b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; b.removeAttribute('title'); }}
+          }}
+          // Disable outer Next button — deferred so the button is in the DOM
+          setTimeout(function() {{
+            var b = document.querySelector('form[action="/api/tutorial7/advance"] button');
+            if (b) {{ b.disabled = true; b.style.opacity = '0.4'; b.style.cursor = 'not-allowed'; b.title = 'Watch the video to continue'; }}
+          }}, 0);
+          var tag = document.createElement('script');
+          tag.src = 'https://www.youtube.com/iframe_api';
+          document.head.appendChild(tag);
+          var ytPlayer7;
+          window.onYouTubeIframeAPIReady = function() {{
+            ytPlayer7 = new YT.Player('yt7-player-container', {{
+              videoId: '{_t7_video_id}',
+              playerVars: {{ rel: 0, modestbranding: 1 }},
+              events: {{
+                onReady: function(e) {{ e.target.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin'); }},
+                onStateChange: function(e) {{ if (e.data === YT.PlayerState.ENDED) unlockNext7(); }}
+              }}
+            }});
+          }};
+          setInterval(function() {{
+            if (!ytPlayer7 || typeof ytPlayer7.getDuration !== 'function') return;
+            var d = ytPlayer7.getDuration(), c = ytPlayer7.getCurrentTime();
+            if (d > 0 && c / d >= WATCH_THRESHOLD) {{ unlockNext7(); }}
+          }}, 1000);
+        }})();
+        </script>"""
+        else:
+            _t7_video_html = """
         <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;
                     padding:12px 16px;margin:12px 0 16px;color:#475569;font-size:0.82rem;">
             📹 Video overview coming soon.
