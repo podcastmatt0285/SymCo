@@ -530,7 +530,11 @@ def create_city(founder_id: int, city_name: str, district_ids: List[int]) -> Tup
         
         print(f"[Cities] Created city '{city_name}' (ID: {city.id}) by player {founder_id}")
         print(f"[Cities] Sacrificed {len(districts)} districts, bank reserves: ${CITY_CREATION_COST:,.2f}")
-        
+        try:
+            from admin_notifications import notify_city_created
+            notify_city_created(city_name, city.id, founder_id)
+        except Exception:
+            pass
         return city, "Success"
         
     except Exception as e:

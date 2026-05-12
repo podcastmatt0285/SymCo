@@ -318,6 +318,11 @@ def create_player(db: Session, business_name: str, password: str,
 
     player_id = player.id
     print(f"[Auth] Created player {player_id}: {business_name}")
+    try:
+        from admin_notifications import notify_new_player
+        notify_new_player(business_name, player_id)
+    except Exception:
+        pass
 
     # Seed starting USD balance in the reserve_banks DB (USD is a reserve currency)
     try:

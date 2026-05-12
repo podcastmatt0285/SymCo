@@ -1120,6 +1120,11 @@ def claim_first_lady(
         print(f"[Tutorial] Player {player.id} already has a First Lady — skipping duplicate creation")
 
     set_tutorial_step(player.id, 12)
+    try:
+        from admin_notifications import notify_tutorial_complete
+        notify_tutorial_complete(player.id, 1)
+    except Exception:
+        pass
     return RedirectResponse(url="/executives?tutorial_complete=1", status_code=303)
 
 
@@ -1776,6 +1781,11 @@ def tutorial3_check_ipo_done(session_token: Optional[str] = Cookie(None)):
     step = get_tutorial3_step(player.id)
     if step == 6 and player_has_public_company(player.id):
         set_tutorial3_step(player.id, 7)
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player.id, 3)
+        except Exception:
+            pass
     return RedirectResponse(url="/brokerage/trading?success=ipo_created", status_code=303)
 
 
@@ -2259,6 +2269,11 @@ def tutorial4_claim_reward(session_token: Optional[str] = Cookie(None)):
         print(f"[Tutorial4] Failed to grant tax voucher for player {player.id}: {e}")
 
     set_tutorial4_step(player.id, 7)
+    try:
+        from admin_notifications import notify_tutorial_complete
+        notify_tutorial_complete(player.id, 4)
+    except Exception:
+        pass
     return RedirectResponse(url="/corporate-actions/dashboard?t4_reward=1", status_code=303)
 
 
@@ -2824,6 +2839,11 @@ def tutorial5_claim_reward(
         print(f"[Tutorial5] Failed to create First Lady for player {player.id}: {e}")
 
     set_tutorial5_step(player.id, 7)
+    try:
+        from admin_notifications import notify_tutorial_complete
+        notify_tutorial_complete(player.id, 5)
+    except Exception:
+        pass
     return RedirectResponse(url="/corporate-actions/dashboard?t5_reward=1", status_code=303)
 
 
@@ -3292,6 +3312,11 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
         print(f"[Tutorial6] Reward grant error: {e}")
 
     set_tutorial6_step(player.id, 7)
+    try:
+        from admin_notifications import notify_tutorial_complete
+        notify_tutorial_complete(player.id, 6)
+    except Exception:
+        pass
     return RedirectResponse(url="/districts?t6_complete=1", status_code=303)
 
 
@@ -4197,6 +4222,11 @@ def tutorial7_claim_reward(session_token: Optional[str] = Cookie(None)):
                 notif_type="tasks_events",
                 tag="tutorial7-complete",
             )
+        except Exception:
+            pass
+        try:
+            from admin_notifications import notify_tutorial_complete
+            notify_tutorial_complete(player.id, 7)
         except Exception:
             pass
     except Exception as e:

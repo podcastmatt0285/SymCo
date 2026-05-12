@@ -2813,6 +2813,11 @@ def declare_bankruptcy(player_id: int, current_tick: int) -> dict:
                         f"red-Q until {red_q_expires.strftime('%Y-%m-%d')}")
 
         print(f"[Bankruptcy] Player {player_id} complete: liquidated=${total_liquidated:,.2f}, debts={total_debts_cleared:,.2f}")
+        try:
+            from admin_notifications import notify_bankruptcy
+            notify_bankruptcy(player_id)
+        except Exception:
+            pass
         return {"ok": True, "total_liquidated": total_liquidated,
                 "total_debts_cleared": total_debts_cleared,
                 "restart_cash": BANKRUPTCY_RESTART_CASH,

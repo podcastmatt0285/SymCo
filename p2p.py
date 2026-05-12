@@ -274,6 +274,12 @@ def charge_p2p_access(player_id: int) -> bool:
         description=f"P2P Dashboard access fee: ${effective_fee:,.0f}"
     )
 
+    try:
+        from admin_notifications import notify_p2p_entered
+        notify_p2p_entered(player_id)
+    except Exception:
+        pass
+
     return True
 
 

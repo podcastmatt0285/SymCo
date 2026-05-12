@@ -614,17 +614,30 @@ class DMConnectionManager:
         from chat import get_avatar
         self.avatar_cache[player_id] = get_avatar(player_id)
         print(f"[DM] Player {player_id} ({player_name}) connected. Total: {len(self.connections)}")
+        try:
+            import threading
+            from admin_notifications import notify_player_online
+            threading.Thread(target=notify_player_online, args=(player_id, player_name), daemon=True).start()
+        except Exception:
+            pass
 
     async def disconnect(self, player_id: int, websocket=None):
         # Guard: only evict if this is still the active connection.
         if websocket is not None and self.connections.get(player_id) is not websocket:
             return
+        _dc_name = self.player_names.get(player_id, f"#{player_id}")
         self.connections.pop(player_id, None)
         self.player_names.pop(player_id, None)
         self.avatar_cache.pop(player_id, None)
         for conv_id in list(self.typing_users.keys()):
             self.typing_users[conv_id].discard(player_id)
         print(f"[DM] Player {player_id} disconnected. Total: {len(self.connections)}")
+        try:
+            import threading
+            from admin_notifications import notify_player_offline
+            threading.Thread(target=notify_player_offline, args=(player_id, _dc_name), daemon=True).start()
+        except Exception:
+            pass
 
     async def send_to_user(self, player_id: int, message: dict):
         ws = self.connections.get(player_id)

@@ -909,6 +909,11 @@ def process_gov_review(petition_id: int) -> Tuple[bool, str]:
             db.commit()
 
             print(f"[Counties] New county '{county.name}' created (ID: {county.id}) by City {petition.city_id}")
+            try:
+                from admin_notifications import notify_county_created
+                notify_county_created(county.name, county.id, petition.city_id)
+            except Exception:
+                pass
             return True, f"County '{county.name}' formed successfully!"
 
         else:
@@ -1130,6 +1135,11 @@ def _add_city_to_county(county_id: int, city_id: int, poll_id: int):
         db.add(link)
         db.commit()
         print(f"[Counties] City {city_id} added to county {county_id}")
+        try:
+            from admin_notifications import notify_city_joined_county
+            notify_city_joined_county(city_id, county_id)
+        except Exception:
+            pass
     except Exception as e:
         db.rollback()
         print(f"[Counties] Error adding city to county: {e}")

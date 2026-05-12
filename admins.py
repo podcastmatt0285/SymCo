@@ -362,6 +362,11 @@ def ban_player(admin_id: int, player_id: int, reason: str = "") -> dict:
 
     log_action(admin_id, "ban", player_id, reason)
     print(f"[Admins] Player {player_id} banned by admin {admin_id}: {reason}")
+    try:
+        from admin_notifications import notify_moderation
+        notify_moderation(player_id, "ban", reason)
+    except Exception:
+        pass
     return {"ok": True, "ban_id": ban_id}
 
 
@@ -386,6 +391,11 @@ def timeout_player(admin_id: int, player_id: int, minutes: int, reason: str = ""
 
     log_action(admin_id, "timeout", player_id, f"{minutes}m - {reason}")
     print(f"[Admins] Player {player_id} timed out {minutes}m by admin {admin_id}: {reason}")
+    try:
+        from admin_notifications import notify_moderation
+        notify_moderation(player_id, "timeout", reason, minutes)
+    except Exception:
+        pass
     return {"ok": True, "ban_id": ban_id, "expires_at": expires.isoformat()}
 
 
@@ -405,6 +415,11 @@ def kick_player(admin_id: int, player_id: int, reason: str = "") -> dict:
 
     log_action(admin_id, "kick", player_id, reason)
     print(f"[Admins] Player {player_id} kicked by admin {admin_id}: {reason}")
+    try:
+        from admin_notifications import notify_moderation
+        notify_moderation(player_id, "kick", reason)
+    except Exception:
+        pass
     return {"ok": True}
 
 
@@ -1642,6 +1657,11 @@ def admin_add_city_to_county(admin_id: int, city_id: int, county_id: int) -> dic
         db.commit()
         db.close()
         log_action(admin_id, "county_add_city", None, f"Force-added city #{city_id} to county #{county_id} ({county.name})")
+        try:
+            from admin_notifications import notify_city_joined_county
+            notify_city_joined_county(city_id, county_id, county_name=county.name)
+        except Exception:
+            pass
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -1661,6 +1681,11 @@ def admin_remove_city_from_county(admin_id: int, city_id: int) -> dict:
         db.commit()
         db.close()
         log_action(admin_id, "county_remove_city", None, f"Force-removed city #{city_id} from county #{county_id}")
+        try:
+            from admin_notifications import notify_city_left_county
+            notify_city_left_county(city_id, county_id)
+        except Exception:
+            pass
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -2185,6 +2210,11 @@ def chat_mute_player(mod_id: int, player_id: int, minutes: int = 0, reason: str 
     db.close()
     log_mod_action(mod_id, "mute", player_id, None,
                    f"{minutes}m - {reason}" if minutes else f"permanent - {reason}")
+    try:
+        from admin_notifications import notify_moderation
+        notify_moderation(player_id, "mute", reason, minutes)
+    except Exception:
+        pass
     return {"ok": True, "mute_id": mute_id, "expires_at": expires.isoformat() if expires else None}
 
 
