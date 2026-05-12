@@ -11,13 +11,11 @@ venv/
 android/twa-project/
 
 # Runtime state files
-tick_state.txt
 widget_devices.json
 Task
 
 # Dev-only / scratch files
 cheat.txt
-*_backup.sql
 
 # Claude helper session files — never commit these
 claudeHelper/
