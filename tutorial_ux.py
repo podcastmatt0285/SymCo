@@ -3447,14 +3447,36 @@ def get_tutorial7_overlay_html(player, page_key: str) -> str:
 
     if step == 1:
         title = "What Is Plot Efficiency?"
-        content = """
+        import json as _json
+        _t7_video_id = ""
+        try:
+            with open("wiki_media.json", "r") as _f:
+                _media = _json.load(_f)
+            if len(_media.get("videos", [])) > 6:
+                _t7_video_id = _media["videos"][6]["youtube_id"]
+        except Exception:
+            pass
+        _t7_video_html = f"""
+        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;
+                    border-radius:6px;border:1px solid #15803d;margin:12px 0 16px;">
+            <iframe src="https://www.youtube.com/embed/{_t7_video_id}?rel=0&modestbranding=1"
+                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+        </div>""" if _t7_video_id else """
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;
+                    padding:12px 16px;margin:12px 0 16px;color:#475569;font-size:0.82rem;">
+            📹 Video overview coming soon.
+        </div>"""
+        content = f"""
         <p style="color:#94a3b8;line-height:1.7;margin:0 0 10px;">
           Every land plot has an <strong style="color:#e5e7eb;">Efficiency</strong> rating from
           <strong style="color:#4ade80;">0% – 100%</strong>.
           It starts at <strong style="color:#4ade80;">100%</strong> when you buy or receive the plot
           and <em>slowly degrades over time</em> through natural wear and tear.
         </p>
-
+        {_t7_video_html}
         <!-- Efficiency decay animation -->
         <div class="t7-chart">
           <div style="font-size:0.75rem;color:#64748b;margin-bottom:8px;font-weight:600;">
