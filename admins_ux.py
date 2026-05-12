@@ -2993,7 +2993,7 @@ def admin_etf(session_token: Optional[str] = Cookie(None),
     if redirect:
         return redirect
     from reserve_banks import get_player_display_currency, fmt_usd
-    disp = get_player_display_currency(admin.id)
+    disp = get_player_display_currency(1)  # always USD on admin system pages
 
     alert = ""
     if msg:
