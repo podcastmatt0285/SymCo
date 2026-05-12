@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 """
-export_txt2.py — Export app source + live data files to Wadswtxt/ for NotebookLM ingestion.
+export_txt2.py — Export app source files to ~/Wadswtxt for NotebookLM ingestion.
 
-Copies every relevant .py / .json / .txt / .md file from ~/SymCo into
-SymCo/Wadswtxt/, flattening the tree into <filename>.txt files so NotebookLM
-can load them as individual sources. Also copies live data files (tick state,
-DB backups) that are gitignored at the root but tracked inside Wadswtxt/.
-The output dir is wiped on each run so stale files don't accumulate.
+Copies every relevant .py / .json / .txt / .md file from ~/SymCo,
+flattening the tree into <filename>.txt files so NotebookLM can load
+them as individual sources. The output dir is wiped on each run so
+stale files don't accumulate.
 """
 
 import os
 import shutil
 
 SOURCE_DIR = os.path.expanduser("~/SymCo")
-OUTPUT_DIR = os.path.join(SOURCE_DIR, "Wadswtxt")   # inside the repo so git picks it up
+OUTPUT_DIR = os.path.expanduser("~/Wadswtxt")
 
 # Directories to skip entirely (matched against each dir name during walk)
 SKIP_DIRS = {
@@ -24,13 +23,15 @@ SKIP_DIRS = {
     "claudeHelper",
     "moved",
     "static",
-    "Wadswtxt",   # don't recurse into our own output dir
 }
 
 # Individual filenames to skip regardless of location
 SKIP_FILES = {
     "export_txt2.py",   # this script
     "cheat.txt",
+    "tick_state.txt",
+    "wadsworth_backup.sql",
+    "reserve_banks_backup.sql",
     "backup.sh",
     "restore.sh",
     "setup.sh",
@@ -41,15 +42,8 @@ SKIP_FILES = {
 # Skip one-off patch and migration scripts (already applied to the live DB)
 SKIP_PREFIXES = ("patch_", "migrate_")
 
-# File extensions to include from the source tree
+# File extensions to include
 INCLUDE_EXTENSIONS = (".py", ".txt", ".md", ".json")
-
-# Live data files that are gitignored at the root but should be exported
-LIVE_DATA_FILES = [
-    "tick_state.txt",
-    "wadsworth_backup.sql",
-    "reserve_banks_backup.sql",
-]
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 
@@ -89,16 +83,5 @@ for root, dirs, files in os.walk(SOURCE_DIR):
         shutil.copy2(src, dst)
         copied += 1
         print(f"  {rel}")
-
-# Copy live data files (gitignored at root, tracked inside Wadswtxt/)
-for name in LIVE_DATA_FILES:
-    src = os.path.join(SOURCE_DIR, name)
-    if os.path.isfile(src):
-        dst = os.path.join(OUTPUT_DIR, name + ".txt")
-        shutil.copy2(src, dst)
-        copied += 1
-        print(f"  {name}  [live data]")
-    else:
-        print(f"  {name}  [not found — skipped]")
 
 print(f"\nExported {copied} files → {OUTPUT_DIR}")
