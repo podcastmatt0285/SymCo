@@ -2986,7 +2986,8 @@ def get_tutorial6_overlay_html(player, current_page: str) -> str:
         try:
             with open("wiki_media.json", "r") as _f:
                 _media = _json.load(_f)
-            _video_id = _media.get("tutorial_districts_video_id", "")
+            if len(_media.get("videos", [])) > 5:
+                _video_id = _media["videos"][5]["youtube_id"]
         except Exception:
             pass
 
