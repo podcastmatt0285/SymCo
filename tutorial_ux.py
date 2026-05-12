@@ -3296,7 +3296,7 @@ def tutorial6_advance(session_token: Optional[str] = Cookie(None)):
 
 @router.post("/api/tutorial6/claim-reward")
 def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
-    """Step 6 → 7: Grant a permanent tax-free district plot + wage-free business."""
+    """Step 6 → 7: Grant a permanent tax-free Food Production Zone district + Fast Food Kitchen."""
     player = _get_player_from_cookie(session_token)
     if not player:
         return RedirectResponse(url="/login", status_code=303)
@@ -3304,34 +3304,34 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/", status_code=303)
 
     try:
-        from land import LandPlot, get_db as _land_db
+        from districts import District, get_db as _dist_db
         from business import Business
         from datetime import datetime as _dt
 
-        db = _land_db()
+        db = _dist_db()
         try:
-            # Free district_food land plot — permanently tax-exempt
-            plot = LandPlot(
+            # Free Food Production Zone district — permanently tax-exempt, no merge cost
+            district = District(
                 owner_id=player.id,
-                terrain_type=T6_REWARD_TERRAIN,
-                proximity_features="",
-                efficiency=100.0,
+                district_type="food",
+                terrain_type=T6_REWARD_TERRAIN,   # "district_food"
                 size=1.0,
+                plots_merged=1,
                 monthly_tax=0.0,
                 is_tutorial_reward=True,
-                is_starter_plot=False,
-                is_government_owned=False,
+                source_plot_ids="",
                 created_at=_dt.utcnow(),
                 last_tax_payment=_dt.utcnow(),
             )
-            db.add(plot)
+            db.add(district)
             db.flush()
 
-            # Free Fast Food Kitchen — no startup cost charged, permanently wage-free
+            # Free Fast Food Kitchen on the district — permanently wage-free
             biz = Business(
                 owner_id=player.id,
-                land_plot_id=plot.id,
-                business_type=T6_REWARD_BIZ_TYPE,
+                land_plot_id=None,
+                district_id=district.id,
+                business_type=T6_REWARD_BIZ_TYPE,  # "fast_food_kitchen"
                 is_active=True,
                 is_tutorial_reward=True,
                 created_at=_dt.utcnow(),
@@ -3339,7 +3339,7 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
             db.add(biz)
             db.flush()
 
-            plot.occupied_by_business_id = biz.id
+            district.occupied_by_business_id = biz.id
             db.commit()
         finally:
             db.close()
@@ -3349,9 +3349,9 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
             send_push_notification(
                 player.id,
                 "🏙️ Tutorial 6 Complete!",
-                "You earned a FREE District Food Plot + Fast Food Kitchen — no land tax, "
-                "no wages, no startup cost, forever. Check your Land page!",
-                url="/land",
+                "You earned a FREE Food Production Zone district + Fast Food Kitchen — "
+                "no district tax, no wages, forever. Check your Districts page!",
+                url="/districts",
                 notif_type="tasks_events",
                 tag="tutorial6-complete",
             )
@@ -3365,7 +3365,7 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
         return RedirectResponse(url="/districts?t6_error=1", status_code=303)
 
     set_tutorial6_step(player.id, 7, is_completion=True)
-    return RedirectResponse(url="/land?success=t6_complete", status_code=303)
+    return RedirectResponse(url="/districts?t6_complete=1", status_code=303)
 
 
 @router.post("/api/tutorial6/restart")

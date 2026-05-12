@@ -200,6 +200,7 @@ class District(Base):
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     source_plot_ids = Column(Text, nullable=True)  # Comma-separated IDs of destroyed plots
+    is_tutorial_reward = Column(Boolean, default=False)  # True → permanently tax-free tutorial gift
     
 
 class PlayerDistrictStats(Base):
@@ -567,6 +568,9 @@ def collect_district_taxes(current_month: int):
 
     from reserve_banks import can_afford_usd, spend_player_funds
     for district, owner in district_owner_pairs:
+        # Tutorial reward districts are permanently tax-free
+        if getattr(district, 'is_tutorial_reward', False):
+            continue
         # Apply district/taxes exec bonus to reduce tax amount
         effective_tax = district.monthly_tax
         try:
@@ -656,6 +660,8 @@ def initialize():
     """Initialize districts module."""
     print("[Districts] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    from database import run_ddl_migration
+    run_ddl_migration(engine, "ALTER TABLE districts ADD COLUMN IF NOT EXISTS is_tutorial_reward BOOLEAN DEFAULT FALSE")
     
     stats = get_district_stats()
     print(f"[Districts] Current state: {stats['total_districts']} districts")

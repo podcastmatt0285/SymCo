@@ -200,19 +200,21 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None), t6_complete
                 district_config = DISTRICT_TYPES.get(district.district_type, {})
                 district_name = district_config.get("name", district.district_type.replace("_", " ").title())
                 district_desc = district_config.get("description", "")
-                
+                is_tut_reward = getattr(district, 'is_tutorial_reward', False)
+
                 status = "OCCUPIED" if district.occupied_by_business_id else "VACANT"
                 status_color = "#22c55e" if district.occupied_by_business_id else "#64748b"
-                
-                # Calculate monthly tax
-                monthly_tax = district.monthly_tax
-                
+                border_color = "#f59e0b" if is_tut_reward else status_color
+
+                tut_badge = '<span style="background:#854d0e; color:#fef3c7; font-size:0.7rem; padding:2px 6px; border-radius:3px; margin-left:6px;">🏆 FREE Tutorial Reward</span>' if is_tut_reward else ""
+                tax_display = '<span style="color:#4ade80; font-weight:bold;">FREE</span>' if is_tut_reward else fmt_usd(district.monthly_tax, disp, precision=0)
+
                 html += f'''
-                <div class="card" style="border-left: 4px solid {status_color};">
+                <div class="card" style="border-left: 4px solid {border_color};">
                     <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 16px;">
                         <div style="flex: 1; min-width: 300px;">
                             <h3 style="margin: 0; color: #38bdf8; font-size: 1.3rem;">
-                                {district_name}
+                                {district_name}{tut_badge}
                                 <span class="badge" style="background: {status_color}; color: #020617; margin-left: 8px;">
                                     {status}
                                 </span>
@@ -221,7 +223,7 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None), t6_complete
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-top: 12px;">
                                 <div>
                                     <div style="color: #64748b; font-size: 0.7rem;">TERRAIN</div>
-                                    <div style="color: #e5e7eb; font-size: 0.85rem;">{district.terrain_type.title()}</div>
+                                    <div style="color: #e5e7eb; font-size: 0.85rem;">{district.terrain_type.replace("_", " ").title()}</div>
                                 </div>
                                 <div>
                                     <div style="color: #64748b; font-size: 0.7rem;">SIZE</div>
@@ -233,7 +235,7 @@ def districts_dashboard(session_token: Optional[str] = Cookie(None), t6_complete
                                 </div>
                                 <div>
                                     <div style="color: #64748b; font-size: 0.7rem;">MONTHLY TAX</div>
-                                    <div style="color: #ef4444; font-size: 0.85rem; font-weight: bold;">{fmt_usd(monthly_tax, disp, precision=0)}</div>
+                                    <div style="font-size: 0.85rem; font-weight: bold;">{tax_display}</div>
                                 </div>
                             </div>
                         </div>
