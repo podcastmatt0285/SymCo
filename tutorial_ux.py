@@ -787,6 +787,9 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                     videoId: '{_video_id}',
                     playerVars: {{ rel: 0, modestbranding: 1 }},
                     events: {{
+                        onReady: function(e) {{
+                            e.target.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                        }},
                         onStateChange: function(e) {{
                             // State 0 = ENDED — counts as watched regardless of duration
                             if (e.data === YT.PlayerState.ENDED) unlockSelector();
@@ -1621,6 +1624,9 @@ def get_tutorial3_overlay_html(player, current_page: str) -> str:
                     videoId: '{_t3_video_id}',
                     playerVars: {{ rel: 0, modestbranding: 1 }},
                     events: {{
+                        onReady: function(e) {{
+                            e.target.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                        }},
                         onStateChange: function(e) {{
                             if (e.data === YT.PlayerState.ENDED) unlockReward();
                         }}
@@ -2069,6 +2075,9 @@ def get_tutorial4_overlay_html(player, current_page: str) -> str:
                     videoId: '{_t4_video_id}',
                     playerVars: {{ rel: 0, modestbranding: 1 }},
                     events: {{
+                        onReady: function(e) {{
+                            e.target.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                        }},
                         onStateChange: function(e) {{
                             if (e.data === YT.PlayerState.ENDED) unlockReward4();
                         }}
@@ -2681,6 +2690,9 @@ def get_tutorial5_overlay_html(player, current_page: str) -> str:
                     videoId: '{_t5_video_id}',
                     playerVars: {{ rel: 0, modestbranding: 1 }},
                     events: {{
+                        onReady: function(e) {{
+                            e.target.getIframe().setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                        }},
                         onStateChange: function(e) {{
                             if (e.data === YT.PlayerState.ENDED) unlockReward5();
                         }}
@@ -2999,6 +3011,8 @@ def get_tutorial6_overlay_html(player, current_page: str) -> str:
                     border-radius:6px;border:1px solid #1d4ed8;margin-bottom:14px;">
             <iframe src="https://www.youtube.com/embed/{_video_id}?rel=0&modestbranding=1"
                     style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerpolicy="strict-origin-when-cross-origin"
                     allowfullscreen></iframe>
         </div>"""
         else:
