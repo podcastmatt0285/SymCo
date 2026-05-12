@@ -4386,7 +4386,7 @@ def _land_impl(session_token: Optional[str] = None, sort: str = "id", order: str
         </style>
         <a href="/" style="color: #38bdf8;"><- Dashboard</a>'''
 
-        _land_success = {"listing_cancelled": "Listing cancelled.", "land_listed": "Plot listed on the market."}
+        _land_success = {"listing_cancelled": "Listing cancelled.", "land_listed": "Plot listed on the market.", "t6_complete": "🏆 Tutorial 6 Complete! Your free District Food Plot + Fast Food Kitchen has been added below — no land tax, no wages, forever."}
         _land_errors = {"cancel_failed": "Could not cancel — listing may already be inactive.", "listing_failed": "Could not list plot. Ensure it is vacant and not already listed."}
         if success in _land_success:
             land_html += f'<div style="padding:10px 16px; background:#052e16; border:1px solid #16a34a; color:#4ade80; margin:8px 0;">{_land_success[success]}</div>'

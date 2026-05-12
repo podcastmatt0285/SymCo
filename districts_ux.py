@@ -87,35 +87,51 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
 # ==========================
 
 @router.get("/districts", response_class=HTMLResponse)
-def districts_dashboard(session_token: Optional[str] = Cookie(None)):
+def districts_dashboard(session_token: Optional[str] = Cookie(None), t6_complete: str = "", t6_error: str = ""):
     """Main districts management dashboard."""
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse):
         return player
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
-    
+
     try:
         from districts import (
-            get_player_districts, 
-            get_next_merge_cost, 
+            get_player_districts,
+            get_next_merge_cost,
             get_plots_required,
             DISTRICT_TYPES,
             get_player_merge_stats
         )
         from land import get_player_land
-        
+
         districts = get_player_districts(player.id)
         plots = get_player_land(player.id)
         merge_stats = get_player_merge_stats(player.id)
-        
+
         next_cost = get_next_merge_cost(player.id)
         plots_required = get_plots_required(player.id)
-        
+
+        t6_banner = ""
+        if t6_complete:
+            t6_banner = (
+                '<div style="padding:12px 16px; background:#052e16; border:1px solid #16a34a; color:#4ade80; margin:8px 0; font-size:0.95rem;">'
+                '🏆 Tutorial 6 Complete! Your free District Food Plot + Fast Food Kitchen was added to your '
+                '<a href="/land" style="color:#4ade80; text-decoration:underline;">Land Portfolio</a> — '
+                'no land tax, no wages, forever.'
+                '</div>'
+            )
+        elif t6_error:
+            t6_banner = (
+                '<div style="padding:12px 16px; background:#1a0505; border:1px solid #dc2626; color:#f87171; margin:8px 0; font-size:0.95rem;">'
+                '⚠️ There was a problem granting your Tutorial 6 reward. Please try claiming it again.'
+                '</div>'
+            )
+
         html = f'''
         <a href="/land" style="color: #38bdf8;"><- Land Portfolio</a>
         <h1>🏛️ Districts Management System</h1>
-
+        {t6_banner}
         <div style="margin-bottom: 16px;">
             <a href="/district-market" class="btn-blue" style="display: inline-block; padding: 10px 20px; font-size: 1rem;">
                 📈 District Market

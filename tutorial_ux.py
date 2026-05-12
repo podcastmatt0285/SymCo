@@ -3350,8 +3350,8 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
                 player.id,
                 "🏙️ Tutorial 6 Complete!",
                 "You earned a FREE District Food Plot + Fast Food Kitchen — no land tax, "
-                "no wages, no startup cost, forever. Check your Districts page!",
-                url="/districts",
+                "no wages, no startup cost, forever. Check your Land page!",
+                url="/land",
                 notif_type="tasks_events",
                 tag="tutorial6-complete",
             )
@@ -3359,10 +3359,13 @@ def tutorial6_claim_reward(session_token: Optional[str] = Cookie(None)):
             pass
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"[Tutorial6] Reward grant error: {e}")
+        return RedirectResponse(url="/districts?t6_error=1", status_code=303)
 
     set_tutorial6_step(player.id, 7, is_completion=True)
-    return RedirectResponse(url="/districts?t6_complete=1", status_code=303)
+    return RedirectResponse(url="/land?success=t6_complete", status_code=303)
 
 
 @router.post("/api/tutorial6/restart")
