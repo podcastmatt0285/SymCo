@@ -11836,7 +11836,7 @@ def api_widget_link(device_id: str, session_token: Optional[str] = Cookie(None))
     return JSONResponse({"ok": True})
 
 @router.get("/api/widget/data")
-def api_widget_data(session_token: Optional[str] = Cookie(None),
+def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None),
                     wt: Optional[str] = None,
                     device_id: Optional[str] = None):
     """
@@ -11847,6 +11847,7 @@ def api_widget_data(session_token: Optional[str] = Cookie(None),
     Each ticker item: { label, value, change, up, type }
     """
     from datetime import datetime as _dt
+    print(f"[widget/data] device_id={device_id!r} ua={request.headers.get('user-agent','')[:60]!r}", flush=True)
 
     # Auth: device_id (Android widget) > wt (legacy HMAC token) > session cookie
     if device_id:
