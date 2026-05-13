@@ -13860,7 +13860,7 @@ def events_page(request: Request,
         if etype == "task":
             ev_prog = _prog_map.get(ev.get("id"), {})
             done    = ev_prog.get("completed", False)
-            if ev.get("task_metric") == "city_tax_paid_usd":
+            if ev.get("task_metric") == "market_sales_tax_usd":
                 target  = ev.get("task_target") or 0
                 current = ev_prog.get("progress", 0.0)
                 if target > 0:

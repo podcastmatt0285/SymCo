@@ -53,7 +53,7 @@ WEEKLY_TASKS = [
         ),
         "duration_class": "weekly",
         "event_type":     "task",
-        "task_metric":    "city_tax_paid_usd",
+        "task_metric":    "market_sales_tax_usd",
         "task_target":    15000.0,
         "trophy_reward":  8,
     },

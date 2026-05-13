@@ -467,6 +467,17 @@ def _rearm_on_startup():
 def initialize():
     """Create all events tables, then rearm timers for any pending events."""
     Base.metadata.create_all(bind=engine)
+    # Migrate renamed metric: city_tax_paid_usd → market_sales_tax_usd
+    _db = SessionLocal()
+    try:
+        _db.query(GameEvent).filter(
+            GameEvent.task_metric == "city_tax_paid_usd"
+        ).update({"task_metric": "market_sales_tax_usd"})
+        _db.commit()
+    except Exception:
+        _db.rollback()
+    finally:
+        _db.close()
     _rearm_on_startup()
 
 
