@@ -319,16 +319,30 @@ def _start_tunnel():
         else:
             print(f"[Bootstrap] cloudflared: unsupported platform {_system}/{_machine}")
 
-    if shutil.which("cloudflared"):
+    # shutil.which uses Python's PATH which may differ from the shell's PATH.
+    # Fall back to common install locations used by the official Cloudflare installer.
+    _cf_bin = shutil.which("cloudflared")
+    if not _cf_bin:
+        for _candidate in [
+            "/usr/local/bin/cloudflared",
+            "/usr/bin/cloudflared",
+            os.path.expanduser("~/.local/bin/cloudflared"),
+            "/snap/bin/cloudflared",
+        ]:
+            if os.path.isfile(_candidate) and os.access(_candidate, os.X_OK):
+                _cf_bin = _candidate
+                break
+
+    if _cf_bin:
         _log = open(os.path.join(_HERE, "cloudflared.log"), "a")
         proc = subprocess.Popen(
-            ["cloudflared", "tunnel", "run", "--token", token],
+            [_cf_bin, "tunnel", "run", "--token", token],
             stdout=_log, stderr=_log,
             start_new_session=True,   # detach from uvicorn's process group
         )
-        print(f"[Bootstrap] Cloudflare tunnel started (pid {proc.pid}), log → cloudflared.log")
+        print(f"[Bootstrap] Cloudflare tunnel started (pid {proc.pid}) via {_cf_bin}, log → cloudflared.log")
     else:
-        print("[Bootstrap] cloudflared unavailable — tunnel not started")
+        print("[Bootstrap] cloudflared not found — tunnel not started")
 
 
 _load_dotenv()
