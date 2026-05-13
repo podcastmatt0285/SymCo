@@ -336,7 +336,7 @@ def _start_tunnel():
     if _cf_bin:
         _log = open(os.path.join(_HERE, "cloudflared.log"), "a")
         proc = subprocess.Popen(
-            [_cf_bin, "tunnel", "run", "--token", token],
+            [_cf_bin, "tunnel", "--protocol", "http2", "run", "--token", token],
             stdout=_log, stderr=_log,
             start_new_session=True,   # detach from uvicorn's process group
         )
