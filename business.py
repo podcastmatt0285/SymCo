@@ -585,6 +585,16 @@ def create_business(player_id: int, plot_id: int, business_type_key: str):
             print(f"[Business] Player {player_id} insufficient funds for startup: {_err}")
             db.close()
             return None
+        # Route startup fee to federal government
+        try:
+            from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+            _credit_usd(_GOV_ID, startup_cost)
+            from govt_ledger import log_gov_event as _lge
+            _lge("startup_fee", "in", startup_cost, "USD",
+                 counterparty=str(player_id),
+                 description=f"Business startup: {business_type_key}")
+        except Exception as _gfe:
+            print(f"[Business] Gov fee routing error (non-fatal): {_gfe}")
         business = Business(
             owner_id=player_id,
             land_plot_id=plot.id,
@@ -793,6 +803,16 @@ def create_district_business(owner_id: int, district_id: int, business_type: str
         ok, err = spend_player_funds(owner_id, total_cost)
         if not ok:
             return None, err
+        # Route district startup fee to federal government
+        try:
+            from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+            _credit_usd(_GOV_ID, total_cost)
+            from govt_ledger import log_gov_event as _lge
+            _lge("district_startup_fee", "in", total_cost, "USD",
+                 counterparty=str(owner_id),
+                 description=f"District business startup: {business_type}")
+        except Exception as _gfe:
+            print(f"[Business] Gov district fee routing error (non-fatal): {_gfe}")
 
         # Create business
         business = Business(

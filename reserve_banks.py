@@ -892,6 +892,28 @@ def _interbank_bond_swap(db, buyer_bank: StateReserveBank, seller_bank: StateRes
     )
     db.add(trade)
 
+    # Federal forex transaction fee: 3% per party, paid from each bank's USD reserves.
+    # Reserves may go negative (implicit USD debt) if the bank lacks sufficient USD.
+    _forex_fee_rate = 0.03
+    _fee_per_party  = round(usd_equiv * _forex_fee_rate, 6)
+    if _fee_per_party > 0:
+        _total_forex_fee = 0.0
+        for _fee_bank in (buyer_bank, seller_bank):
+            _usd_res = _get_or_create_bank_reserve(db, _fee_bank.id, "USD")
+            _usd_res.balance -= _fee_per_party  # allow negative (implicit debt)
+            _usd_res.total_paid = (_usd_res.total_paid or 0.0) + _fee_per_party
+            _usd_res.updated_at = datetime.utcnow()
+            _total_forex_fee += _fee_per_party
+        # Credit federal government with the collected forex fees
+        _adjust_currency_balance(db, GOVERNMENT_PLAYER_ID, "USD", _total_forex_fee)
+        try:
+            from govt_ledger import log_gov_event as _lge
+            _lge("forex_fee", "in", _total_forex_fee, "USD",
+                 description=(f"Forex fee: {buyer_bank.currency_code}/"
+                              f"{seller_bank.currency_code} swap ${usd_equiv:,.0f}"))
+        except Exception:
+            pass
+
 
 def _tick_interbank_settlement(db):
     """

@@ -2872,6 +2872,15 @@ def government_dashboard(
         return f"<tr style='border-bottom:1px solid #0f1a2e;'>{_td(label,'#94a3b8')}{_td(value,color)}{_td(note,'#475569')}</tr>"
 
     fiscal_html = f"<table {ts}><thead><tr>{_th('Item')}{_th('Rate / Amount')}{_th('Notes')}</tr></thead><tbody>" + "".join([
+        _row("Federal Sales Tax",            "2.02% of trade value",        "Charged on buyer for every filled market &amp; district market order — goes to federal treasury", "#60a5fa"),
+        _row("Business Startup Fee",         "Varies (×1.0–×N per business)","One-time fee when a player starts a business — goes to federal treasury", "#34d399"),
+        _row("District Startup Fee",         "Varies (×1.0–×N per business)","One-time fee when a player starts a district business — goes to federal treasury", "#6ee7b7"),
+        _row("Executive Hire Fee",           "1 daily wage",                "Paid when a player hires an executive — goes to federal treasury", "#a78bfa"),
+        _row("Executive School Fee",         "Varies by level &amp; discount","Paid when enrolling an executive in school — goes to federal treasury", "#c084fc"),
+        _row("Executive Wages",              "Per pay cycle",               "Regular wage payments flow through federal treasury", "#c084fc"),
+        _row("Land Hoarding Tax",            "Fibonacci-scaled hourly",     "Charged on players holding more than 5 plots — goes to federal treasury", "#fb923c"),
+        _row("Estate / Death Tax",           "15% of inheritance",          "Deducted from estates before heir payout — kept by federal government", "#f472b6"),
+        _row("Forex Transaction Fee",        "3% per party per swap",       "Each reserve bank in an interbank currency swap pays 3% of swap value in USD to federal gov; reserves may go negative", "#38bdf8"),
         _row("Petrodollar Customs Share",    "50% of customs fee",          "Credited to government operating cash when outsiders trade in city currencies", "#4ade80"),
         _row("City Bank Emergency Loans",    "7% interest, 30 installments","Government lends to insolvent city banks; repayments return to operating cash", "#fbbf24"),
         _row("Bond Investment (outflow)",    f"25% of cash above {_usd(100_000)}","Auto-invests surplus into USD reserve bank bonds every 12 h", "#94a3b8"),
@@ -3017,19 +3026,10 @@ def government_dashboard(
         estate_html = '<p style="color:#475569;font-size:0.85rem;">No estate listings active.</p>'
 
     # ── Government Activity Ledger ────────────────────────────────────────────
-    _LEDGER_META = {
-        "bond_interest_tax":   ("Bond Interest Tax",     "in",  "#fbbf24"),
-        "reserve_balance_tax": ("Reserve Balance Tax",   "in",  "#f59e0b"),
-        "bond_issuance_fee":   ("Bond Issuance Fee",     "in",  "#fcd34d"),
-        "charter_fee":         ("Charter Renewal Fee",   "in",  "#4ade80"),
-        "autonomous_bank_tax": ("Autonomous Bank Tax",   "in",  "#22c55e"),
-        "loan_repayment":      ("Loan Repayment",         "in",  "#34d399"),
-        "petrodollar_customs": ("Petrodollar Customs",   "in",  "#38bdf8"),
-        "estate_sale":         ("Estate Sale",            "in",  "#a78bfa"),
-        "city_grant":          ("City Bank Grant",       "out", "#f87171"),
-        "bond_purchase":       ("Bond Purchase",         "out", "#818cf8"),
-        "loan_disbursement":   ("Emergency Loan Issued", "out", "#fb923c"),
-    }
+    try:
+        from govt_ledger import EVENT_META as _LEDGER_META
+    except Exception:
+        _LEDGER_META = {}
     ledger_html = ""
     try:
         from govt_ledger import get_recent_events

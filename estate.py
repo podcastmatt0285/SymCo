@@ -1142,6 +1142,16 @@ def liquidate_estate(player_id: int, cause: str, current_tick: int) -> Optional[
         )
         db.add(deceased)
 
+        # Log death tax to government ledger
+        if total_death_tax > 0:
+            try:
+                from govt_ledger import log_gov_event as _lge
+                _lge("death_tax", "in", total_death_tax, "USD",
+                     counterparty=player.business_name,
+                     description=f"Estate/death tax on ${estate['total']:,.0f} estate")
+            except Exception:
+                pass
+
         # 7. Clean up player data
         # Cancel market orders (active + partially filled)
         try:

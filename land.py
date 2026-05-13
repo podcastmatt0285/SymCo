@@ -856,6 +856,12 @@ def collect_hoarding_taxes():
     if total_collected > 0:
         from reserve_banks import credit_usd
         credit_usd(GOVERNMENT_PLAYER_ID, total_collected)
+        try:
+            from govt_ledger import log_gov_event as _lge
+            _lge("land_hoarding_tax", "in", total_collected, "USD",
+                 description=f"Land hoarding tax: {len(plot_counts)} player(s)")
+        except Exception:
+            pass
 
     db.commit()
     db.close()

@@ -412,6 +412,23 @@ def execute_trade(db, buy_order: DistrictMarketOrder, sell_order: DistrictMarket
             print(f"[DistrictMarket] Cash transfer failed: {_err}")
             db.rollback()
             return
+        # Federal sales tax: 2.02% of trade value, buyer pays to federal government
+        _federal_tax = round(total_cost * 0.0202, 6)
+        if _federal_tax > 0 and buy_order.player_id > 0:
+            try:
+                from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+                _fed_ok, _ = spend_player_funds(buy_order.player_id, _federal_tax)
+                if _fed_ok:
+                    _credit_usd(_GOV_ID, _federal_tax)
+                    try:
+                        from govt_ledger import log_gov_event as _lge
+                        _lge("federal_sales_tax", "in", _federal_tax, "USD",
+                             counterparty=str(buy_order.player_id),
+                             description=f"District market: {quantity:.4f} {buy_order.item_type} @ ${price:.2f}")
+                    except Exception:
+                        pass
+            except Exception as _fte:
+                print(f"[DistrictMarket] Federal tax error (non-fatal): {_fte}")
         # City sales tax
         try:
             from city_projects import get_city_sales_tax_rate, _get_player_city_id

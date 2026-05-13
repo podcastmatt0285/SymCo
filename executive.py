@@ -1264,6 +1264,16 @@ def hire_executive(db, player_id: int, executive_id: int) -> dict:
     ok, err = spend_player_funds(player.id, hiring_fee)
     if not ok:
         return {"success": False, "error": err}
+    # Route hiring fee to federal government
+    try:
+        from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+        _credit_usd(_GOV_ID, hiring_fee)
+        from govt_ledger import log_gov_event as _lge
+        _lge("executive_fee", "in", hiring_fee, "USD",
+             counterparty=str(player_id),
+             description=f"Executive hire: {exec_obj.first_name} {exec_obj.last_name}")
+    except Exception as _gfe:
+        print(f"[Executive] Gov fee routing error (non-fatal): {_gfe}")
     # Apply talent_scout ability: extends hired exec's retirement age
     talent_bonus = get_specific_ability_bonus(db, player_id, "talent_scout")
     if talent_bonus > 0:
@@ -1405,6 +1415,16 @@ def send_to_school(db, player_id: int, executive_id: int) -> dict:
     ok, err = spend_player_funds(player.id, cost)
     if not ok:
         return {"success": False, "error": err}
+    # Route school fee to federal government
+    try:
+        from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+        _credit_usd(_GOV_ID, cost)
+        from govt_ledger import log_gov_event as _lge
+        _lge("executive_fee", "in", cost, "USD",
+             counterparty=str(player_id),
+             description=f"Executive school: {exec_obj.first_name} {exec_obj.last_name}")
+    except Exception as _gfe:
+        print(f"[Executive] Gov school fee routing error (non-fatal): {_gfe}")
 
     exec_obj.is_in_school            = True
     exec_obj.school_ticks_remaining  = ticks
@@ -1694,6 +1714,16 @@ def _process_wages(db, current_tick: int):
             ok, _err = spend_player_funds(player.id, wage)
             if ok:
                 ex.missed_payments = 0  # reset on successful pay
+                # Route wage to federal government
+                try:
+                    from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+                    _credit_usd(_GOV_ID, wage)
+                    from govt_ledger import log_gov_event as _lge
+                    _lge("wage_tax", "in", wage, "USD",
+                         counterparty=str(player.id),
+                         description=f"Wage: {ex.first_name} {ex.last_name}")
+                except Exception:
+                    pass
             else:
                 _quit_for_nonpayment(db, ex, player)
 

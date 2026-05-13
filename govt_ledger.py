@@ -15,17 +15,28 @@ Base = declarative_base()
 
 # Human-readable metadata per event type: (label, default direction, badge color)
 EVENT_META = {
-    "bond_interest_tax":   ("Bond Interest Tax",    "in",  "#fbbf24"),
-    "reserve_balance_tax": ("Reserve Balance Tax",  "in",  "#f59e0b"),
-    "bond_issuance_fee":   ("Bond Issuance Fee",    "in",  "#fcd34d"),
-    "charter_fee":         ("Charter Renewal Fee",  "in",  "#4ade80"),
-    "autonomous_bank_tax": ("Autonomous Bank Tax",  "in",  "#22c55e"),
-    "loan_repayment":      ("Loan Repayment",        "in",  "#34d399"),
-    "petrodollar_customs": ("Petrodollar Customs",  "in",  "#38bdf8"),
-    "estate_sale":         ("Estate Sale",           "in",  "#a78bfa"),
-    "city_grant":          ("City Bank Grant",      "out", "#f87171"),
-    "bond_purchase":       ("Bond Purchase",        "out", "#818cf8"),
-    "loan_disbursement":   ("Emergency Loan Issued","out", "#fb923c"),
+    # ── Existing revenue ──────────────────────────────────────────────────────
+    "bond_interest_tax":   ("Bond Interest Tax",        "in",  "#fbbf24"),
+    "reserve_balance_tax": ("Reserve Balance Tax",      "in",  "#f59e0b"),
+    "bond_issuance_fee":   ("Bond Issuance Fee",        "in",  "#fcd34d"),
+    "charter_fee":         ("Charter Renewal Fee",      "in",  "#4ade80"),
+    "autonomous_bank_tax": ("Autonomous Bank Tax",      "in",  "#22c55e"),
+    "loan_repayment":      ("Loan Repayment",            "in",  "#34d399"),
+    "petrodollar_customs": ("Petrodollar Customs",      "in",  "#38bdf8"),
+    "estate_sale":         ("Estate Sale",               "in",  "#a78bfa"),
+    # ── New tax / fee revenue ─────────────────────────────────────────────────
+    "federal_sales_tax":   ("Federal Sales Tax",        "in",  "#60a5fa"),
+    "startup_fee":         ("Business Startup Fee",     "in",  "#34d399"),
+    "district_startup_fee":("District Startup Fee",     "in",  "#6ee7b7"),
+    "executive_fee":       ("Executive Fee",            "in",  "#a78bfa"),
+    "wage_tax":            ("Wage Payment",             "in",  "#c084fc"),
+    "land_hoarding_tax":   ("Land Hoarding Tax",        "in",  "#fb923c"),
+    "death_tax":           ("Estate / Death Tax",       "in",  "#f472b6"),
+    "forex_fee":           ("Forex Transaction Fee",    "in",  "#38bdf8"),
+    # ── Outlays ───────────────────────────────────────────────────────────────
+    "city_grant":          ("City Bank Grant",          "out", "#f87171"),
+    "bond_purchase":       ("Bond Purchase",            "out", "#818cf8"),
+    "loan_disbursement":   ("Emergency Loan Issued",    "out", "#fb923c"),
 }
 
 

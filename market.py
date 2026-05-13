@@ -404,7 +404,24 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                 print(f"[Market] CRITICAL ERROR: Buyer {buy_order.player_id} insufficient funds: {_err}")
                 db.rollback()
                 return
-            
+            # Federal sales tax: 2.02% on IPO purchase
+            _ipo_fed_tax = round(total_cost * 0.0202, 6)
+            if _ipo_fed_tax > 0 and buy_order.player_id > 0:
+                try:
+                    from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+                    _fed_ok, _ = spend_player_funds(buy_order.player_id, _ipo_fed_tax)
+                    if _fed_ok:
+                        _credit_usd(_GOV_ID, _ipo_fed_tax)
+                        try:
+                            from govt_ledger import log_gov_event as _lge
+                            _lge("federal_sales_tax", "in", _ipo_fed_tax, "USD",
+                                 counterparty=str(buy_order.player_id),
+                                 description=f"Market IPO: {quantity:.4f} {buy_order.item_type} @ ${price:.2f}")
+                        except Exception:
+                            pass
+                except Exception as _fte:
+                    print(f"[Market] IPO federal tax error (non-fatal): {_fte}")
+
             # Route to appropriate bank
             if bank_id.startswith("city_bank_"):
                 # City bank sale - money goes to city bank reserves
@@ -516,6 +533,23 @@ def execute_trade(db, buy_order, sell_order, quantity, price):
                     print(f"[Market] Cash transfer error: Player {buy_order.player_id} insufficient funds: {_err}")
                     db.rollback()
                     return
+                # Federal sales tax: 2.02% of trade value, buyer pays to federal government
+                _federal_tax = round(total_cost * 0.0202, 6)
+                if _federal_tax > 0 and buy_order.player_id > 0:
+                    try:
+                        from reserve_banks import GOVERNMENT_PLAYER_ID as _GOV_ID, credit_usd as _credit_usd
+                        _fed_ok, _ = spend_player_funds(buy_order.player_id, _federal_tax)
+                        if _fed_ok:
+                            _credit_usd(_GOV_ID, _federal_tax)
+                            try:
+                                from govt_ledger import log_gov_event as _lge
+                                _lge("federal_sales_tax", "in", _federal_tax, "USD",
+                                     counterparty=str(buy_order.player_id),
+                                     description=f"Market: {quantity:.4f} {buy_order.item_type} @ ${price:.2f}")
+                            except Exception:
+                                pass
+                    except Exception as _fte:
+                        print(f"[Market] Federal tax error (non-fatal): {_fte}")
                 # City sales tax: compute tax on total_cost, route to city bank
                 _tax_deducted = 0.0
                 _notif_tax = 0.0
