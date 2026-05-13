@@ -3278,18 +3278,19 @@ async def public_ticker():
 
 @router.get("/api/twa-checkin")
 def twa_checkin(request: Request, session_token: Optional[str] = Cookie(None)):
-    """Called by client-side XHR when running as installed app (TWA or PWA fullscreen/standalone).
-    XHR from Chrome Android WebView auto-adds X-Requested-With: cc.notifly.wadsworth.twa."""
+    """Called by client-side XHR on every page load.
+    Only awards Active Duty trophies when the TWA header is present
+    (Chrome WebView in the Android app sets it automatically)."""
     from fastapi.responses import JSONResponse as _JR
     player = require_auth(session_token)
     if isinstance(player, RedirectResponse): return _JR({"ok": False}, status_code=401)
     twa_hdr = request.headers.get("X-Requested-With", "")
-    ua      = request.headers.get("User-Agent", "")
-    print(f"[TWA-checkin] player={player.id} X-Requested-With={twa_hdr!r} UA={ua[:80]}")
+    if twa_hdr != "cc.notifly.wadsworth.twa":
+        return _JR({"ok": True, "twa": False})
     try:
         from beta import handle_twa_login
         handle_twa_login(player.id)
-        return _JR({"ok": True, "twa": twa_hdr == "cc.notifly.wadsworth.twa"})
+        return _JR({"ok": True, "twa": True})
     except Exception as e:
         return _JR({"ok": False, "error": str(e)})
 
