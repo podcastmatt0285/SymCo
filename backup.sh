@@ -12,7 +12,7 @@ cd "$(dirname "$0")"
 echo "=== Wadsworth Backup — $(date -u '+%Y-%m-%d %H:%M:%S UTC') ==="
 
 # Pull first so the dump files are always newer than what's on remote
-git pull
+git pull --rebase
 
 sudo -u postgres pg_dump \
     --clean --if-exists --no-owner --no-privileges \
@@ -30,7 +30,8 @@ if git diff --cached --quiet; then
     echo "  No changes since last backup — nothing to commit."
 else
     git commit -m "data backup $(date -u '+%Y-%m-%d %H:%M UTC')"
-    git push
+    # Rebase again in case remote moved between our pull and now, then push
+    git pull --rebase && git push
     echo "  Backup committed and pushed."
 fi
 
