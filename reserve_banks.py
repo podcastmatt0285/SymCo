@@ -391,6 +391,9 @@ def initialize():
                 # Clamp yield_rate into the new band in case it was already at an
                 # old boundary that falls outside the new range.
                 exists.yield_rate = max(min_y, min(max_y, exists.yield_rate))
+                # Fix any symbol stored as a template literal (e.g. "{J}" → "J")
+                if exists.currency_symbol and '{' in exists.currency_symbol:
+                    exists.currency_symbol = sym
         db.commit()
         print(f"[ReserveBanks] {len(DEFAULT_BANKS)} banks seeded/verified (yield bands synced).")
     except Exception as e:
