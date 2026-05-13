@@ -153,7 +153,9 @@ public class WadsworthWidget extends AppWidgetProvider {
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
-                setError(ctx, views, "Tap to refresh");
+                String err = e.getClass().getSimpleName() + ": " + e.getMessage();
+                if (err.length() > 60) err = err.substring(0, 60);
+                setError(ctx, views, err);
                 mgr.updateAppWidget(widgetId, views);
             }
         }).start();
