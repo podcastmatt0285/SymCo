@@ -13855,26 +13855,26 @@ def events_page(request: Request,
             pass
         trophy_html = (f"<span style='color:#fbbf24;font-weight:700;'>+{trophy} ★</span>" if trophy else "")
 
-        # Progress bar only for the Tax Contributor task
+        # Progress bar for Tax Contributor; completion badge for all other tasks
         progress_html = ""
-        if ev.get("task_metric") == "city_tax_paid_usd":
-            target   = ev.get("task_target") or 0
-            ev_prog  = _prog_map.get(ev.get("id"), {})
-            current  = ev_prog.get("progress", 0.0)
-            done     = ev_prog.get("completed", False)
-            if target > 0:
-                pct      = min(current / target * 100, 100)
-                bar_color = "#4ade80" if done else "#a78bfa"
-                # Format numbers: if whole dollars, show with $ and commas
-                def _fmt(v):
-                    return f"${v:,.0f}" if v >= 1 else f"${v:,.2f}"
-                label_text = (
-                    f'<span style="color:#4ade80;font-weight:700;">✓ Complete!</span>'
-                    if done else
-                    f'<span style="color:#a78bfa;">{_fmt(current)}</span>'
-                    f'<span style="color:#475569;"> / {_fmt(target)}</span>'
-                )
-                progress_html = f"""
+        if etype == "task":
+            ev_prog = _prog_map.get(ev.get("id"), {})
+            done    = ev_prog.get("completed", False)
+            if ev.get("task_metric") == "city_tax_paid_usd":
+                target  = ev.get("task_target") or 0
+                current = ev_prog.get("progress", 0.0)
+                if target > 0:
+                    pct       = min(current / target * 100, 100)
+                    bar_color = "#4ade80" if done else "#a78bfa"
+                    def _fmt(v):
+                        return f"${v:,.0f}" if v >= 1 else f"${v:,.2f}"
+                    label_text = (
+                        f'<span style="color:#4ade80;font-weight:700;">✓ Complete!</span>'
+                        if done else
+                        f'<span style="color:#a78bfa;">{_fmt(current)}</span>'
+                        f'<span style="color:#475569;"> / {_fmt(target)}</span>'
+                    )
+                    progress_html = f"""
                 <div style="margin-top:10px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                         <span style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Progress</span>
@@ -13885,6 +13885,8 @@ def events_page(request: Request,
                     </div>
                     <div style="color:#475569;font-size:0.68rem;margin-top:3px;text-align:right;">{pct:.1f}%</div>
                 </div>"""
+            elif done:
+                progress_html = '<div style="margin-top:8px;"><span style="color:#4ade80;font-weight:700;font-size:0.82rem;">✓ Completed</span></div>'
 
         return f"""
         <div style="background:#0a0f1e;border:1px solid #1e293b;border-left:3px solid {status_color};
