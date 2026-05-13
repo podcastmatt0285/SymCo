@@ -138,7 +138,7 @@ DEFAULT_BANKS = [
     ("TRY", "Central Bank of the Wadsworth Republic","₺","🇹🇷",0.400,  0.029,   0.030, 0.99),
     ("SAR", "Wadsworth Saudi Central Bank",      "﷼",  "🇸🇦", 0.050,  0.267,  -0.010, 0.25),
     ("AED", "Central Bank of Wadsworth UAE",     "د.إ","🇦🇪", 0.040,  0.272,  -0.010, 0.25),
-    ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "J", "🌿", 0.00,  10.00, -99999.00, 420420.00),
+    ("ANA", "Sovereign Reserve Blunt Spliff of Anacostia", "Ɉ", "🌿", 0.00,  10.00, -99999.00, 420420.00),
 ]
 
 # How long a player must wait between legal-tender switches (days).
@@ -391,8 +391,8 @@ def initialize():
                 # Clamp yield_rate into the new band in case it was already at an
                 # old boundary that falls outside the new range.
                 exists.yield_rate = max(min_y, min(max_y, exists.yield_rate))
-                # Fix any symbol stored as a template literal (e.g. "{J}" → "J")
-                if exists.currency_symbol and '{' in exists.currency_symbol:
+                # Sync symbol from seed data (fixes template literals like "{J}" and updates changed symbols)
+                if exists.currency_symbol != sym:
                     exists.currency_symbol = sym
         db.commit()
         print(f"[ReserveBanks] {len(DEFAULT_BANKS)} banks seeded/verified (yield bands synced).")
