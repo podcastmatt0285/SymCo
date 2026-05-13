@@ -543,7 +543,6 @@ async def assetlinks():
             "namespace": "android_app",
             "package_name": "cc.notifly.wadsworth.twa",
             "sha256_cert_fingerprints": [
-                "73:E0:0D:08:1F:93:32:4D:A0:59:19:C6:AC:73:9E:F0:C8:4F:BB:C3:11:5D:A3:43:10:46:0B:A6:E0:DF:C7:1D",
                 "A7:21:91:A3:04:C4:5A:A2:C8:69:76:EF:7C:C6:3D:56:2D:77:57:94:38:1B:C5:F1:A8:8A:73:6A:B7:D9:DF:03",
             ],
         },
