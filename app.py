@@ -276,17 +276,22 @@ def _start_tunnel():
     """Start Cloudflare tunnel in background; auto-installs cloudflared if missing."""
     import shutil, platform
 
-    # Don't spawn a second tunnel if one is already running (e.g. uvicorn reload)
-    if subprocess.run(["pgrep", "-x", "cloudflared"], capture_output=True).returncode == 0:
-        print("[Bootstrap] Cloudflare tunnel already running — skipping")
-        return
-
     token = os.environ.get(
         "CLOUDFLARE_TUNNEL_TOKEN",
         "eyJhIjoiYWU3MmMxMWVlNGZlM2IwZDk0MWEzNDE4NGYyZTg0ZDkiLCJ0IjoiMGJjYTI0MTItYzU0Ni00NWU4LWI2ZGItMWU4ZDE4ODMzOGNmIiwicyI6Ik1EYzRZall6Tm1NdFlXRTVOaTAwTkdNM0xUbGpaamt0TTJlbE9XVm1Nelk0TlRRNSJ9",
     )
     if not token:
         return
+
+    # Don't spawn a second tunnel if one is already running (e.g. uvicorn reload).
+    # Check the process is still alive, not just that the name exists.
+    _pgrep = subprocess.run(["pgrep", "-x", "cloudflared"], capture_output=True)
+    if _pgrep.returncode == 0:
+        _pid = _pgrep.stdout.decode().strip().split("\n")[0]
+        if _pid and os.path.exists(f"/proc/{_pid}"):
+            print("[Bootstrap] Cloudflare tunnel already running — skipping")
+            return
+        # stale entry — proceed to start a fresh one
 
     if not shutil.which("cloudflared"):
         print("[Bootstrap] Installing cloudflared...")
@@ -315,11 +320,13 @@ def _start_tunnel():
             print(f"[Bootstrap] cloudflared: unsupported platform {_system}/{_machine}")
 
     if shutil.which("cloudflared"):
+        _log = open(os.path.join(_HERE, "cloudflared.log"), "a")
         proc = subprocess.Popen(
             ["cloudflared", "tunnel", "run", "--token", token],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=_log, stderr=_log,
+            start_new_session=True,   # detach from uvicorn's process group
         )
-        print(f"[Bootstrap] Cloudflare tunnel started (pid {proc.pid})")
+        print(f"[Bootstrap] Cloudflare tunnel started (pid {proc.pid}), log → cloudflared.log")
     else:
         print("[Bootstrap] cloudflared unavailable — tunnel not started")
 

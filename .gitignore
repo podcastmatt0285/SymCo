@@ -13,6 +13,7 @@ android/twa-project/
 # Runtime state files
 widget_devices.json
 Task
+cloudflared.log
 
 # Dev-only / scratch files
 cheat.txt
