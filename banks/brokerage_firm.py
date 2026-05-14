@@ -939,7 +939,7 @@ def modify_credit_score(player_id: int, event: str) -> int:
         ).first()
         
         if not rating:
-            rating = PlayerCreditRating(player_id=player_id)
+            rating = PlayerCreditRating(player_id=player_id, credit_score=DEFAULT_CREDIT_RATING)
             db.add(rating)
         
         rating.credit_score = max(CREDIT_RATING_MIN, 

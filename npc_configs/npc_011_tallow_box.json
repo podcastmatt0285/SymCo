@@ -9,7 +9,7 @@
     "hard_low": 200000
   },
   "seed": {
-    "starting_cash": 500000,
+    "starting_cash": 1500000,
     "land_plots": [
       {
         "terrain_type": "prairie",
