@@ -1396,7 +1396,6 @@ def create_player_ipo(
     total_shares: int,
     share_class: str = None,
     dividend_config: list = None,
-    npc_bypass: bool = False,
 ):
     """Create an IPO for a player's holding company.
 
@@ -1457,7 +1456,7 @@ def create_player_ipo(
                           f"a higher share price per unit is equivalent.")
 
         firm = get_firm_entity()
-        if config.get("firm_underwritten") and not firm.is_accepting_ipos and not npc_bypass:
+        if config.get("firm_underwritten") and not firm.is_accepting_ipos:
             return None, "The Firm is not currently accepting new underwritten IPOs. Its cash reserves are too low. Try again later or use a Direct Listing instead."
 
         share_price = total_valuation / total_shares
@@ -1491,7 +1490,7 @@ def create_player_ipo(
             return _process_quad_class_ipo(
                 db, founder_id, company_name, ticker_symbol, config,
                 shares_to_offer, total_shares, share_price,
-                dividend_config, total_valuation, npc_bypass=npc_bypass
+                dividend_config, total_valuation
             )
         else:
             return _process_underwritten_ipo(
@@ -1977,7 +1976,7 @@ def _process_series_a_ipo(db, founder_id, company_name, ticker_symbol, config,
 
 def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
                              shares_to_offer, total_shares, share_price,
-                             dividend_config, total_valuation, npc_bypass=False):
+                             dividend_config, total_valuation):
     discount_rate = config.get("discount_rate", 0.10)
     growth_bonus_pct = config.get("growth_bonus_pct", 0.15)
     discounted_price = share_price * (1 - discount_rate)
@@ -1992,12 +1991,11 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     if founder_ownership_pct < min_control:
         return None, f"You must retain at least {min_control*100:.0f}% ownership (Class A) for a Quad-Class IPO. Reduce the number of shares offered."
 
-    if not npc_bypass:
-        if not firm_deduct_cash(standard_proceeds, "underwriting_cost", f"Quad-class {ticker_symbol}"):
-            return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
-        if not firm_deduct_cash(growth_bonus, "growth_bonus", f"Quad-class bonus: {ticker_symbol}"):
-            firm_add_cash(standard_proceeds, "underwriting_refund", f"Refund: {ticker_symbol}", founder_id)
-            return None, "The Firm doesn't have enough reserves for the Quad-Class growth capital injection right now."
+    if not firm_deduct_cash(standard_proceeds, "underwriting_cost", f"Quad-class {ticker_symbol}"):
+        return None, "The Firm doesn't have enough cash reserves to underwrite your IPO right now. Try again later or use a Direct Listing."
+    if not firm_deduct_cash(growth_bonus, "growth_bonus", f"Quad-class bonus: {ticker_symbol}"):
+        firm_add_cash(standard_proceeds, "underwriting_refund", f"Refund: {ticker_symbol}", founder_id)
+        return None, "The Firm doesn't have enough reserves for the Quad-Class growth capital injection right now."
 
     actual_dividend_config = list(dividend_config) if dividend_config else []
     if config.get("fixed_dividend_rate"):
@@ -2039,9 +2037,8 @@ def _process_quad_class_ipo(db, founder_id, company_name, ticker_symbol, config,
     db.refresh(company)
     _finalize_new_company(db, company, "quad_class", founder_id)
 
-    if not npc_bypass:
-        from reserve_banks import credit_usd
-        credit_usd(founder_id, total_payout)
+    from reserve_banks import credit_usd
+    credit_usd(founder_id, total_payout)
 
     # Class A position (founder super-shares — non-lendable, non-shortable)
     if class_a_shares > 0:

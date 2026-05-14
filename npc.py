@@ -611,8 +611,7 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
 
 def _maybe_ipo_npc(player_id: int, cfg: dict):
     """Launch a Quad-Class IPO for an NPC if the config has an 'ipo' block and no
-    active CompanyShares record exists yet.  Uses npc_bypass=True so the firm's
-    cash reserves are not debited and no IPO proceeds are credited to the NPC."""
+    active CompanyShares record exists yet."""
     ipo_cfg = cfg.get("ipo")
     if not ipo_cfg:
         return
@@ -636,7 +635,6 @@ def _maybe_ipo_npc(player_id: int, cfg: dict):
             ipo_type=IPOType.QUAD_CLASS,
             shares_to_offer=ipo_cfg["shares_to_offer"],
             total_shares=ipo_cfg["total_shares"],
-            npc_bypass=True,
         )
         if err:
             print(f"[NPC] IPO failed for {cfg['business_name']}: {err}")
