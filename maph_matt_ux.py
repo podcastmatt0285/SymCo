@@ -147,9 +147,19 @@ function mmRenameToggle(id) {
 
 @router.get("/api/maph/list")
 def api_maph_list():
-    from maph_matt import maph_get
-    tracks = maph_get(active_only=True)
-    return JSONResponse([{"id": t["id"], "youtube_id": t["youtube_id"], "title": t["title"]} for t in tracks])
+    """MAPH pulls directly from wiki_media.json videos — same source as /admin/wiki."""
+    import json, os
+    try:
+        path = os.path.join(os.path.dirname(__file__), "wiki_media.json")
+        with open(path) as f:
+            data = json.load(f)
+        videos = data.get("videos", [])
+        return JSONResponse([
+            {"id": i, "youtube_id": v["youtube_id"], "title": v["title"]}
+            for i, v in enumerate(videos) if v.get("youtube_id")
+        ])
+    except Exception:
+        return JSONResponse([])
 
 
 @router.get("/api/matt/list")
@@ -184,113 +194,15 @@ async def api_matt_submit(
 # ── Admin: MAPH (CH 46) ───────────────────────────────────────────────────────
 
 @router.get("/admin/maph", response_class=HTMLResponse)
-def admin_maph_page(
-    session_token: Optional[str] = Cookie(None),
-    msg: str = "", err: str = "",
-):
-    player, redir = _admin_guard(session_token)
-    if redir:
-        return redir
-    from maph_matt import maph_get
-    tracks = maph_get()
-    table = _video_table(tracks, "/admin/maph/toggle", "/admin/maph/rename", "/admin/maph/delete")
-    html = f"""
-    <a href="/admin" style="color:#38bdf8;">&larr; Admin Dashboard</a>
-    <h1 style="margin:8px 0 4px 0;">📺 MAPH — Channel 46 Playlist Manager</h1>
-    <p style="color:#64748b;margin-bottom:20px;">
-        Official tutorial &amp; educational content.
-        Add YouTube video IDs or URLs. Active videos play in order on CH 46.
-    </p>
-    {_banner(msg, err)}
-
-    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px;margin-bottom:24px;">
-        <h2 style="font-size:0.95rem;color:#e2e8f0;margin:0 0 14px 0;">Add Video to MAPH</h2>
-        <form action="/admin/maph/add" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-            <div>
-                <label style="display:block;color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">YouTube URL or ID</label>
-                <input type="text" name="youtube_url" required placeholder="https://youtube.com/watch?v=... or video ID"
-                       style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:340px;">
-            </div>
-            <div>
-                <label style="display:block;color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">Title</label>
-                <input type="text" name="title" required maxlength="120" placeholder="Video title"
-                       style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:240px;">
-            </div>
-            <button type="submit"
-                    style="background:#1d4ed8;border:1px solid #3b82f6;color:#e2e8f0;padding:8px 18px;font-size:0.85rem;border-radius:4px;cursor:pointer;">
-                Add to MAPH
-            </button>
-        </form>
-    </div>
-
-    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px;">
-        <h2 style="font-size:0.95rem;color:#e2e8f0;margin:0 0 14px 0;">MAPH Playlist ({len(tracks)} video{"s" if len(tracks) != 1 else ""})</h2>
-        {table}
-    </div>
-    {_RENAME_JS}
-    """
-    from ux import shell
-    return HTMLResponse(shell("Admin — MAPH CH 46", html, 0, player.id))
-
-
-@router.post("/admin/maph/add")
-async def admin_maph_add(
-    session_token: Optional[str] = Cookie(None),
-    youtube_url: str = Form(...),
-    title: str = Form(...),
-):
+def admin_maph_page(session_token: Optional[str] = Cookie(None)):
+    """MAPH plays the wiki_media.json videos — redirect admins to the right place."""
     _, redir = _admin_guard(session_token)
     if redir:
         return redir
-    from maph_matt import extract_youtube_id, maph_add
-    ytid = extract_youtube_id(youtube_url.strip())
-    if not ytid:
-        return RedirectResponse("/admin/maph?err=Could+not+extract+YouTube+ID+from+that+URL", status_code=303)
-    maph_add(ytid, title.strip()[:120])
-    return RedirectResponse("/admin/maph?msg=Video+added+to+MAPH", status_code=303)
-
-
-@router.post("/admin/maph/toggle")
-async def admin_maph_toggle(
-    session_token: Optional[str] = Cookie(None),
-    entry_id: int = Form(...),
-):
-    _, redir = _admin_guard(session_token)
-    if redir:
-        return redir
-    from maph_matt import maph_get, maph_toggle
-    tracks = maph_get()
-    t = next((x for x in tracks if x["id"] == entry_id), None)
-    if t:
-        maph_toggle(entry_id, not t.get("is_active", True))
-    return RedirectResponse("/admin/maph", status_code=303)
-
-
-@router.post("/admin/maph/rename")
-async def admin_maph_rename(
-    session_token: Optional[str] = Cookie(None),
-    entry_id: int = Form(...),
-    title: str = Form(...),
-):
-    _, redir = _admin_guard(session_token)
-    if redir:
-        return redir
-    from maph_matt import maph_rename
-    maph_rename(entry_id, title.strip()[:120])
-    return RedirectResponse("/admin/maph?msg=Renamed", status_code=303)
-
-
-@router.post("/admin/maph/delete")
-async def admin_maph_delete(
-    session_token: Optional[str] = Cookie(None),
-    entry_id: int = Form(...),
-):
-    _, redir = _admin_guard(session_token)
-    if redir:
-        return redir
-    from maph_matt import maph_delete
-    maph_delete(entry_id)
-    return RedirectResponse("/admin/maph?msg=Video+removed", status_code=303)
+    return RedirectResponse(
+        "/admin/wiki?msg=MAPH+%28CH+46%29+plays+the+videos+listed+here+%E2%80%94+add+or+remove+them+in+the+Videos+section+below",
+        status_code=303,
+    )
 
 
 # ── Admin: MATT (CH 28) ───────────────────────────────────────────────────────

@@ -61,13 +61,12 @@ def api_deep_dives():
     try:
         path = os.path.join(os.path.dirname(__file__), "wiki_media.json")
         with open(path) as f:
-            entries = json.load(f)
-        dives = [
+            data = json.load(f)
+        audio = data.get("audio", [])
+        return JSONResponse([
             {"youtube_id": e["youtube_id"], "title": e["title"], "description": e.get("description", "")}
-            for e in entries
-            if e.get("kind") == "audio" and e.get("youtube_id")
-        ]
-        return JSONResponse(dives)
+            for e in audio if e.get("youtube_id")
+        ])
     except Exception:
         return JSONResponse([])
 

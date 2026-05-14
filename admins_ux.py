@@ -529,7 +529,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         <a href="/admin/wiki" class="link-card"><div class="lc-icon">📖</div><div class="lc-title">Wiki / Media</div><div class="lc-desc">Tutorial videos &amp; audio</div></a>
         <a href="/admin/soundtrack" class="link-card"><div class="lc-icon">🎵</div><div class="lc-title">WLOL 92.8 FM</div><div class="lc-desc">Music playlist uploads</div></a>
         <a href="/admin/wcpr" class="link-card"><div class="lc-icon">📻</div><div class="lc-title">WCPR 104.1 FM</div><div class="lc-desc">Talk radio uploads</div></a>
-        <a href="/admin/maph" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MAPH · CH 46</div><div class="lc-desc">Tutorial video playlist</div></a>
+        <a href="/admin/wiki" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MAPH · CH 46</div><div class="lc-desc">Tutorial videos (Wiki Media)</div></a>
         <a href="/admin/matt" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MATT · CH 28</div><div class="lc-desc">Community videos &amp; submissions</div></a>
     </div>
 
