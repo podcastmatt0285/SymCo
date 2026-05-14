@@ -1449,6 +1449,7 @@ def _audio_tab() -> str:
     });
 })();
 </script>
+<style>
 .mm-inlay {
     position:absolute; inset:4px; border:1px solid rgba(99,102,241,0.08);
     pointer-events:none; z-index:10; border-radius:2px;
