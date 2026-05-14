@@ -462,7 +462,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-bottom: 60px;
+            padding-bottom: 160px;
         }
 
         .splash {
@@ -471,81 +471,48 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             padding: 32px;
         }
 
-        /* ── Market tickers ── */
+        /* ── Market tickers (walnut, fixed above footer) ── */
         .login-tickers {
-            width: 100%;
-        }
-        .tk-controls-bar {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 8px;
-            background: #0f172a;
-            border-bottom: 1px solid #1e293b;
-            height: 22px;
-        }
-        .tk-controls-spacer {
-            flex: 1;
-        }
-        .tk-controls-label {
-            font-size: 0.52rem;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            color: #1e293b;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
+            position: fixed;
+            bottom: 52px;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: #1A0F0A;
+            border-top: 2px solid rgba(176,141,87,0.45);
+            box-shadow: 0 -12px 40px rgba(0,0,0,0.85);
         }
         .login-ticker {
             width: 100%;
-            background: #0f172a;
-            border-bottom: 1px solid #334155;
-            font-size: 0.8rem;
-            color: #cbd5e1;
+            background: #1A0F0A;
+            border-bottom: 1px solid rgba(176,141,87,0.12);
+            font-size: 0.76rem;
+            color: #c8a96a;
             white-space: nowrap;
             overflow: hidden;
-            height: 34px;
+            height: 28px;
             display: flex;
             align-items: center;
             flex-shrink: 0;
-            font-family: 'JetBrains Mono', 'Courier New', monospace;
-            letter-spacing: 0.02em;
-        }
-        .ticker-btn {
-            background: #1e293b;
-            border: 1px solid #334155;
-            color: #94a3b8;
-            border-radius: 3px;
-            padding: 2px 5px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            font-family: inherit;
-            line-height: 1.5;
-            user-select: none;
-        }
-        .ticker-btn:hover {
-            background: #334155;
-            color: #e2e8f0;
-        }
-        .ticker-btn.active {
-            background: #1d4ed8;
-            border-color: #3b82f6;
-            color: #e2e8f0;
+            font-family: Georgia, 'Times New Roman', serif;
+            letter-spacing: 0.04em;
         }
         .tk-label {
-            padding: 0 8px;
-            font-size: 0.62rem;
+            padding: 0 10px;
+            font-size: 0.56rem;
             font-weight: 700;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.18em;
             flex-shrink: 0;
-            border-right: 1px solid #334155;
+            border-right: 1px solid rgba(176,141,87,0.28);
             height: 100%;
             display: flex;
             align-items: center;
-            min-width: 48px;
+            min-width: 50px;
             justify-content: center;
+            color: #B08D57;
+            font-family: Georgia, serif;
+            text-transform: uppercase;
         }
-        .tk-mkt  { color: #38bdf8; }
-        .tk-dm   { color: #a78bfa; }
-        .tk-stk  { color: #4ade80; }
         .tk-viewport {
             overflow: hidden;
             flex: 1;
@@ -711,36 +678,6 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 </head>
 
 <body>
-    <!-- Market tickers -->
-    <div class="login-tickers">
-        <div class="tk-controls-bar">
-            <button class="ticker-btn" id="tkRestart" title="Restart">&#9198;</button>
-            <button class="ticker-btn" id="tkRewind"  title="Rewind">&#9194;</button>
-            <button class="ticker-btn" id="tkPlay"    title="Pause">&#9208;</button>
-            <button class="ticker-btn" id="tkSpeed"   title="Speed">1&times;</button>
-            <span class="tk-controls-spacer"></span>
-            <span class="tk-controls-label">Ticker Controls</span>
-        </div>
-        <div class="login-ticker">
-            <span class="tk-label tk-mkt">MKT</span>
-            <div class="tk-viewport">
-                <div id="tkMkt" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
-            </div>
-        </div>
-        <div class="login-ticker">
-            <span class="tk-label tk-dm">DM</span>
-            <div class="tk-viewport">
-                <div id="tkDm" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
-            </div>
-        </div>
-        <div class="login-ticker">
-            <span class="tk-label tk-stk">STCK</span>
-            <div class="tk-viewport">
-                <div id="tkStk" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
-            </div>
-        </div>
-    </div>
-
     <div class="splash">
         <div class="logo"><img src="/static/logo.png" alt="Wadsworth"></div>
 
@@ -792,6 +729,28 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerpolicy="strict-origin-when-cross-origin"
                     allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- Market tickers — fixed above footer, walnut aesthetic -->
+    <div class="login-tickers">
+        <div class="login-ticker">
+            <span class="tk-label">MKT</span>
+            <div class="tk-viewport">
+                <div id="tkMkt" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
+            </div>
+        </div>
+        <div class="login-ticker">
+            <span class="tk-label">DM</span>
+            <div class="tk-viewport">
+                <div id="tkDm" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
+            </div>
+        </div>
+        <div class="login-ticker">
+            <span class="tk-label">STCK</span>
+            <div class="tk-viewport">
+                <div id="tkStk" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
+            </div>
         </div>
     </div>
 
@@ -862,75 +821,26 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
         })();
 
-        // ── Three market tickers (mirrors in-game state machine) ──
+        // ── Three market tickers (auto-scroll, walnut aesthetic) ──
         (function () {
-            var STORE  = 'wadsTickerState';
-            var SPEEDS = [0.5, 1, 1.5, 2];
-            var BASE_SPEEDS = [0.9, 0.72, 0.55]; // per-row base px/frame
+            var BASE_SPEEDS = [0.9, 0.72, 0.55]; // per-row px/frame
 
-            var state = { paused: false, speedIdx: 1, direction: 1, offsets: [0, 0, 0] };
-            try {
-                var saved = JSON.parse(localStorage.getItem(STORE) || '{}');
-                if (typeof saved.speedIdx === 'number' && saved.speedIdx >= 0 && saved.speedIdx < SPEEDS.length) state.speedIdx = saved.speedIdx;
-                if (typeof saved.direction === 'number') state.direction = saved.direction;
-            } catch(e) {}
-
-            var tracks    = [document.getElementById('tkMkt'), document.getElementById('tkDm'), document.getElementById('tkStk')];
+            var tracks     = [document.getElementById('tkMkt'), document.getElementById('tkDm'), document.getElementById('tkStk')];
             var halfWidths = [0, 0, 0];
-            var btnPlay    = document.getElementById('tkPlay');
-            var btnRewind  = document.getElementById('tkRewind');
-            var btnRestart = document.getElementById('tkRestart');
-            var btnSpeed   = document.getElementById('tkSpeed');
-
-            function saveState() {
-                try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e) {}
-            }
-
-            function updateUI() {
-                btnPlay.innerHTML  = state.paused ? '&#9654;' : '&#9208;';
-                btnPlay.title      = state.paused ? 'Play' : 'Pause';
-                btnSpeed.innerHTML = SPEEDS[state.speedIdx] + '&times;';
-                btnRewind.classList.toggle('active', state.direction === -1);
-            }
+            var offsets    = [0, 0, 0];
 
             function step() {
-                if (!state.paused) {
-                    var mult = SPEEDS[state.speedIdx] * state.direction;
-                    for (var i = 0; i < tracks.length; i++) {
-                        var el = tracks[i];
-                        if (!halfWidths[i]) halfWidths[i] = el.scrollWidth / 2;
-                        var hw = halfWidths[i] || 1;
-                        state.offsets[i] -= BASE_SPEEDS[i] * mult;
-                        if (state.offsets[i] < -hw) state.offsets[i] += hw;
-                        if (state.offsets[i] > 0)   state.offsets[i] -= hw;
-                        el.style.transform = 'translateX(' + state.offsets[i] + 'px)';
-                    }
+                for (var i = 0; i < tracks.length; i++) {
+                    var el = tracks[i];
+                    if (!halfWidths[i] && el.scrollWidth > 10) halfWidths[i] = el.scrollWidth / 2;
+                    var hw = halfWidths[i] || 1;
+                    offsets[i] -= BASE_SPEEDS[i];
+                    if (offsets[i] < -hw) offsets[i] += hw;
+                    el.style.transform = 'translateX(' + offsets[i] + 'px)';
                 }
                 requestAnimationFrame(step);
             }
 
-            btnPlay.addEventListener('click', function() {
-                state.paused = !state.paused;
-                if (!state.paused) state.direction = 1;
-                updateUI(); saveState();
-            });
-            btnRewind.addEventListener('click', function() {
-                state.direction = state.direction === -1 ? 1 : -1;
-                state.paused = false;
-                updateUI(); saveState();
-            });
-            btnRestart.addEventListener('click', function() {
-                state.offsets = [0, 0, 0];
-                state.direction = 1;
-                state.paused = false;
-                updateUI(); saveState();
-            });
-            btnSpeed.addEventListener('click', function() {
-                state.speedIdx = (state.speedIdx + 1) % SPEEDS.length;
-                updateUI(); saveState();
-            });
-
-            updateUI();
             requestAnimationFrame(step);
 
             function fmt(v) {

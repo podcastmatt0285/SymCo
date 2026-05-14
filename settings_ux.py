@@ -1108,7 +1108,7 @@ def _audio_tab() -> str:
             <!-- Transport controls -->
             <div class="mm-controls">
                 <div class="mm-transport">
-                    <button class="mm-pp-btn" id="mmPp" onclick="mmReplay()">&#9654;</button>
+                    <button class="mm-pp-btn" id="mmPp" onclick="mmPlayPause()">&#9654;</button>
                     <button class="mm-skip-btn" onclick="mmNext()" title="Next">&#9197;</button>
                 </div>
 
@@ -1238,8 +1238,36 @@ def _audio_tab() -> str:
     }
 
     // ── YouTube IFrame API (same approach as tutorials) ───────────────────────
-    var ytPlayer = null;
+    var ytPlayer  = null;
     var pendingId = null;
+    var isPlaying = false;
+    var progTimer = null;
+
+    function startProgress() {
+        if (progTimer) clearInterval(progTimer);
+        progTimer = setInterval(function() {
+            if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+            var cur = ytPlayer.getCurrentTime() || 0;
+            var dur = ytPlayer.getDuration()    || 0;
+            var fill = document.getElementById('mmProgFill');
+            if (fill && dur > 0) fill.style.width = (cur / dur * 100).toFixed(1) + '%';
+            var ctr = document.getElementById('mmCounter');
+            if (ctr && dur > 0) {
+                var rem = Math.max(0, Math.floor(dur - cur));
+                var m = Math.floor(rem / 60), s = rem % 60;
+                ctr.textContent = '-' + m + ':' + (s < 10 ? '0' : '') + s;
+            }
+        }, 500);
+    }
+
+    function stopProgress() {
+        if (progTimer) { clearInterval(progTimer); progTimer = null; }
+    }
+
+    function updatePpBtn() {
+        var btn = document.getElementById('mmPp');
+        if (btn) btn.innerHTML = isPlaying ? '&#9646;&#9646;' : '&#9654;';
+    }
 
     (function loadYtApi() {
         if (window.YT && window.YT.Player) { onYtReady(); return; }
@@ -1260,8 +1288,9 @@ def _audio_tab() -> str:
                     if (pendingId) { e.target.loadVideoById(pendingId); pendingId = null; }
                 },
                 onStateChange: function(e) {
-                    if (e.data === 1) stopStatic();   // PLAYING
-                    if (e.data === 0) mmNext();        // ENDED — auto-advance
+                    if (e.data === 1) { isPlaying = true;  stopStatic(); startProgress(); updatePpBtn(); }
+                    if (e.data === 2) { isPlaying = false; stopProgress(); updatePpBtn(); }
+                    if (e.data === 0) { isPlaying = false; stopProgress(); updatePpBtn(); mmNext(); }
                 }
             }
         });
@@ -1302,7 +1331,7 @@ def _audio_tab() -> str:
         document.getElementById('mmTitle').textContent    = vid ? vid.title : '—';
         document.getElementById('mmTrackRef').textContent = vid ? vid.youtube_id : '';
         document.getElementById('mmM1').textContent       = pl.length || '—';
-        document.getElementById('mmCounter').textContent  = pl.length ? (state.idx+1) + ' / ' + pl.length : '—';
+        if (!isPlaying) document.getElementById('mmCounter').textContent = pl.length ? (state.idx+1) + ' / ' + pl.length : '—';
         buildPlaylist();
     }
 
@@ -1327,6 +1356,10 @@ def _audio_tab() -> str:
     function loadVideo() {
         var pl  = playlists[state.channel];
         var vid = pl[state.idx];
+        isPlaying = false; stopProgress();
+        var fill = document.getElementById('mmProgFill');
+        if (fill) fill.style.width = '0%';
+        updatePpBtn();
         if (!vid) { startStatic(); updateUI(); return; }
         startStatic();
         updateUI();
@@ -1359,13 +1392,14 @@ def _audio_tab() -> str:
         loadVideo();
     };
 
-    window.mmReplay = function() {
-        if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
-            ytPlayer.seekTo(0); ytPlayer.playVideo();
-        } else {
-            loadVideo();
-        }
+    window.mmPlayPause = function() {
+        if (!ytPlayer || typeof ytPlayer.getPlayerState !== 'function') { loadVideo(); return; }
+        var s = ytPlayer.getPlayerState();
+        if (s === 1) { ytPlayer.pauseVideo(); }
+        else         { ytPlayer.playVideo();  }
     };
+
+    window.mmReplay = window.mmPlayPause;
 
     // ── Submit form ───────────────────────────────────────────────────────────
     window.mmSubmit = function() {

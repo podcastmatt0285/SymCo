@@ -413,6 +413,8 @@ SITEMAP_ENTRIES = [
     ("/company/careers",           "Careers",            "Join the Wadsworth team — freelance and paid positions"),
     ("/company/press-kit",         "Press Kit",          "Brand assets, logos, icons, and official game description for media use"),
     ("/privacy-policy",            "Privacy Policy",     "How your data is collected, stored, and used"),
+    # ── Media ─────────────────────────────────────────────────────────────────
+    ("/settings?tab=audio",        "Media Center",       "MAPH (CH 46) tutorial videos and MATT (CH 28) community trading videos — two in-game broadcast channels"),
 ]
 
 
