@@ -648,11 +648,11 @@ def check_economic_triggers() -> int:
 
     auth_db = get_auth_db()
     try:
-        players = auth_db.query(Player).all()
+        players = auth_db.query(Player).filter(Player.id > 0).all()
         total_cash = sum(get_usd_balance(p.id) for p in players)
     finally:
         auth_db.close()
-    
+
     # Calculate current milestone level
     current_milestone = int(total_cash / ECONOMIC_THRESHOLD)
     
@@ -1015,11 +1015,11 @@ def tick(current_tick: int, now: datetime):
             from reserve_banks import get_usd_balance
             auth_db = get_auth_db()
             try:
-                players = auth_db.query(Player).all()
+                players = auth_db.query(Player).filter(Player.id > 0).all()
                 total_cash = sum(get_usd_balance(p.id) for p in players)
             finally:
                 auth_db.close()
-            
+
             current_milestone = int(total_cash / ECONOMIC_THRESHOLD)
             
             # Find which milestones need creation
