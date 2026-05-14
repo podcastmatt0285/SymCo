@@ -1,54 +1,181 @@
 {
   "player_id": -2031,
   "business_name": "Coldsmoke & Cure Co.",
-  "description": "Artisan seafood smokehouse and gelatin processor. Cures, smokes, and pickles fresh fish into shelf-stable products and extracts isinglass from cod and haddock — the clarifying agent required by breweries and wineries. Also produces gelatin from beef for pharmaceutical and confectionery use.",
-
+  "description": "Artisan seafood smokehouse and gelatin processor. Cures, smokes, and pickles fresh fish into shelf-stable products and extracts isinglass from cod and haddock \u2014 the clarifying agent required by breweries and wineries. Also produces gelatin from beef for pharmaceutical and confectionery use.",
   "cash_caps": {
     "hard_high": 30000000,
     "soft_high": 12000000,
-    "soft_low":   2500000,
-    "hard_low":    750000
+    "soft_low": 2500000,
+    "hard_low": 750000
   },
-
   "seed": {
     "starting_cash": 5000000,
     "land_plots": [
-      { "terrain_type": "coastal", "proximity_features": ["ocean"],  "size": 1 },
-      { "terrain_type": "forest",  "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 }
+      {
+        "terrain_type": "coastal",
+        "proximity_features": [
+          "ocean"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "forest",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
-    { "business_type": "seafood_smokehouse", "district_id": null, "active_lines": [] },
-    { "business_type": "seafood_smokehouse", "district_id": null, "active_lines": [] },
-    { "business_type": "gelatin_plant",      "district_id": null, "active_lines": [] }
+    {
+      "business_type": "seafood_smokehouse",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "seafood_smokehouse",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "gelatin_plant",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
-
   "buy_items": {
-    "cod":      { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "haddock":  { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "mackerel": { "target_inventory": 4000,  "reorder_at": 800,  "max_price_multiplier": 1.10, "market": "regular" },
-    "salmon":   { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "herring":  { "target_inventory": 4000,  "reorder_at": 800,  "max_price_multiplier": 1.10, "market": "regular" },
-    "anchovies":{ "target_inventory": 4000,  "reorder_at": 800,  "max_price_multiplier": 1.10, "market": "regular" },
-    "beef":     { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "salt":     { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" },
-    "lumber":   { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "sugar":    { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.05, "market": "regular" },
-    "energy":   { "target_inventory": 20000, "reorder_at": 4000, "max_price_multiplier": 1.10, "market": "regular" },
-    "paper":    { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "water":    { "target_inventory": 10000, "reorder_at": 2000, "max_price_multiplier": 1.05, "market": "regular" }
+    "cod": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "haddock": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "mackerel": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salmon": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "herring": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "anchovies": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "beef": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salt": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "lumber": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "sugar": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 10000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
   },
-
   "sell_items": {
-    "isinglass":       { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "gelatin":         { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "pill_bottle":     { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "smoked_salmon":   { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "smoked_mackerel": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "salt_cod":        { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "pickled_herring": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "dried_anchovies": { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" }
+    "isinglass": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "gelatin": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "pill_bottle": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "smoked_salmon": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "smoked_mackerel": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "salt_cod": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "pickled_herring": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "dried_anchovies": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "CDSC",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

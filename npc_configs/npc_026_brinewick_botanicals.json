@@ -1,47 +1,142 @@
 {
   "player_id": -2026,
   "business_name": "Brinewick Botanicals",
-  "description": "Salt, botanicals, and sand producer requiring only water and energy as inputs. Operates hop and herb farms delivering hops, juniper berries, and mint; salt evaporation pans; and a sand quarry — all bootstrapped from scratch with no upstream dependencies.",
-
+  "description": "Salt, botanicals, and sand producer requiring only water and energy as inputs. Operates hop and herb farms delivering hops, juniper berries, and mint; salt evaporation pans; and a sand quarry \u2014 all bootstrapped from scratch with no upstream dependencies.",
   "cash_caps": {
     "hard_high": 25000000,
     "soft_high": 10000000,
-    "soft_low":   2000000,
-    "hard_low":    500000
+    "soft_low": 2000000,
+    "hard_low": 500000
   },
-
   "seed": {
     "starting_cash": 4000000,
     "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "desert",  "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "desert",  "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "desert",  "proximity_features": ["road"],  "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "desert",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "desert",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "desert",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
-    { "business_type": "hop_farm",     "district_id": null, "active_lines": [] },
-    { "business_type": "hop_farm",     "district_id": null, "active_lines": [] },
-    { "business_type": "hop_farm",     "district_id": null, "active_lines": [] },
-    { "business_type": "salt_works",   "district_id": null, "active_lines": [] },
-    { "business_type": "salt_works",   "district_id": null, "active_lines": [] },
-    { "business_type": "sand_quarry",  "district_id": null, "active_lines": [] }
+    {
+      "business_type": "hop_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "hop_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "hop_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "salt_works",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "salt_works",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "sand_quarry",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
-
   "buy_items": {
-    "water":  { "target_inventory": 60000, "reorder_at": 12000, "max_price_multiplier": 1.05, "market": "regular" },
-    "energy": { "target_inventory": 40000, "reorder_at": 8000,  "max_price_multiplier": 1.10, "market": "regular" },
-    "paper":  { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.10, "market": "regular" }
+    "water": {
+      "target_inventory": 60000,
+      "reorder_at": 12000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 40000,
+      "reorder_at": 8000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
-
   "sell_items": {
-    "hops":            { "min_inventory_to_keep": 500, "max_order_quantity": 5000, "market": "regular" },
-    "juniper_berries": { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
-    "mint":            { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
-    "salt":            { "min_inventory_to_keep": 0,   "max_order_quantity": 5000, "market": "regular" },
-    "sand":            { "min_inventory_to_keep": 0,   "max_order_quantity": 5000, "market": "regular" }
+    "hops": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "juniper_berries": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "mint": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "salt": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "sand": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "BWBT",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

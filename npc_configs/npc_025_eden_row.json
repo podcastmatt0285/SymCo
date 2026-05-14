@@ -2,65 +2,220 @@
   "player_id": -2025,
   "business_name": "Eden Row Co.",
   "description": "Vertically integrated orchard, vineyard, and plantation estate. Grows grapes, apples, oranges, potatoes, and cane; produces sugar, rum molasses, bio-fuel, and caramel. The primary source of fruit, sugar, and fermentation feedstocks in the economy.",
-
   "cash_caps": {
     "hard_high": 50000000,
     "soft_high": 20000000,
-    "soft_low":   4000000,
-    "hard_low":   1500000
+    "soft_low": 4000000,
+    "hard_low": 1500000
   },
-
   "seed": {
     "starting_cash": 8000000,
     "starting_inventory": {
-      "grape_seeds":  100,
-      "apple_seeds":  500,
+      "grape_seeds": 100,
+      "apple_seeds": 500,
       "orange_seeds": 300
     },
     "land_plots": [
-      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "savanna", "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "savanna", "proximity_features": ["road"],   "size": 1 }
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
-    { "business_type": "vineyard_estate", "district_id": null, "active_lines": [] },
-    { "business_type": "vineyard_estate", "district_id": null, "active_lines": [] },
-    { "business_type": "plantation",      "district_id": null, "active_lines": [] },
-    { "business_type": "plantation",      "district_id": null, "active_lines": [] },
-    { "business_type": "cane_plantation", "district_id": null, "active_lines": [] },
-    { "business_type": "cane_plantation", "district_id": null, "active_lines": [] }
+    {
+      "business_type": "vineyard_estate",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "vineyard_estate",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "plantation",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "plantation",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "cane_plantation",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "cane_plantation",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
-
   "buy_items": {
-    "water":        { "target_inventory": 80000, "reorder_at": 16000, "max_price_multiplier": 1.05, "market": "regular" },
-    "energy":       { "target_inventory": 60000, "reorder_at": 12000, "max_price_multiplier": 1.10, "market": "regular" },
-    "paper":        { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.10, "market": "regular" },
-    "apple_seeds":  { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.20, "market": "regular" },
-    "orange_seeds": { "target_inventory": 300,   "reorder_at": 60,    "max_price_multiplier": 1.20, "market": "regular" },
-    "grape_seeds":  { "target_inventory": 100,   "reorder_at": 20,    "max_price_multiplier": 1.20, "market": "regular" },
-    "grass":        { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.05, "market": "regular" }
+    "water": {
+      "target_inventory": 80000,
+      "reorder_at": 16000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 60000,
+      "reorder_at": 12000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "apple_seeds": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    },
+    "orange_seeds": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    },
+    "grape_seeds": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    },
+    "grass": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
   },
-
   "sell_items": {
-    "grapes":              { "min_inventory_to_keep": 200,  "max_order_quantity": 5000, "market": "regular" },
-    "apples":              { "min_inventory_to_keep": 500,  "max_order_quantity": 5000, "market": "regular" },
-    "oranges":             { "min_inventory_to_keep": 300,  "max_order_quantity": 3000, "market": "regular" },
-    "potatoes":            { "min_inventory_to_keep": 0,    "max_order_quantity": 3000, "market": "regular" },
-    "lettuce":             { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "carrots":             { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "sugar":               { "min_inventory_to_keep": 500,  "max_order_quantity": 3000, "market": "regular" },
-    "rum_molasses":        { "min_inventory_to_keep": 200,  "max_order_quantity": 2000, "market": "regular" },
-    "blackstrap_molasses": { "min_inventory_to_keep": 0,    "max_order_quantity": 500,  "market": "regular" },
-    "caramel":             { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "bio_fuel":            { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "cane":                { "min_inventory_to_keep": 1000, "max_order_quantity": 5000, "market": "regular" },
-    "apple_seeds":         { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
-    "orange_seeds":        { "min_inventory_to_keep": 300,  "max_order_quantity": 1000, "market": "regular" },
-    "grape_seeds":         { "min_inventory_to_keep": 50,   "max_order_quantity": 500,  "market": "regular" }
+    "grapes": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "apples": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "oranges": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "potatoes": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "lettuce": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "carrots": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "sugar": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "rum_molasses": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "blackstrap_molasses": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "caramel": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "bio_fuel": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "cane": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "apple_seeds": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "orange_seeds": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "grape_seeds": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "EDRW",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

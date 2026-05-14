@@ -609,6 +609,45 @@ def _seed_businesses(player_id: int, cfg: dict, db, plot_ids: list,
 # SEEDING
 # ===========================
 
+def _maybe_ipo_npc(player_id: int, cfg: dict):
+    """Launch a Quad-Class IPO for an NPC if the config has an 'ipo' block and no
+    active CompanyShares record exists yet.  Uses npc_bypass=True so the firm's
+    cash reserves are not debited and no IPO proceeds are credited to the NPC."""
+    ipo_cfg = cfg.get("ipo")
+    if not ipo_cfg:
+        return
+    try:
+        from banks.brokerage_firm import CompanyShares, create_player_ipo, IPOType
+        db = SessionLocal()
+        try:
+            existing = db.query(CompanyShares).filter(
+                CompanyShares.founder_id == player_id,
+                CompanyShares.is_delisted == False,
+                CompanyShares.parent_company_id == None,
+            ).first()
+            if existing:
+                return
+        finally:
+            db.close()
+        company, err = create_player_ipo(
+            founder_id=player_id,
+            company_name=cfg["business_name"],
+            ticker_symbol=ipo_cfg["ticker"],
+            ipo_type=IPOType.QUAD_CLASS,
+            shares_to_offer=ipo_cfg["shares_to_offer"],
+            total_shares=ipo_cfg["total_shares"],
+            npc_bypass=True,
+        )
+        if err:
+            print(f"[NPC] IPO failed for {cfg['business_name']}: {err}")
+        else:
+            print(f"[NPC] IPO launched: {cfg['business_name']} ({ipo_cfg['ticker']}) — Quad-Class")
+    except Exception as e:
+        import traceback
+        print(f"[NPC] IPO error for {cfg.get('business_name')}: {e}")
+        traceback.print_exc()
+
+
 def _seed_npc(cfg: dict):
     """
     Create the NPC Player row and all starting assets if they don't already exist.
@@ -701,6 +740,7 @@ def _seed_npc(cfg: dict):
                             print(f"[NPC] {cfg['business_name']}: inventory rescue "
                                   f"+{qty} {item} (was 0)")
 
+                _maybe_ipo_npc(player_id, cfg)
                 return
 
             # Config has more businesses than exist in DB — seed the remainder.
@@ -786,6 +826,7 @@ def _seed_npc(cfg: dict):
                              seeded_district_ids=existing_district_ids)
             _NPC_PLAYERS[player_id] = cfg
             print(f"[NPC] Update complete: {cfg['business_name']}")
+            _maybe_ipo_npc(player_id, cfg)
             return
 
         # ---- Full seed from scratch ----
@@ -857,6 +898,7 @@ def _seed_npc(cfg: dict):
 
         _NPC_PLAYERS[player_id] = cfg
         print(f"[NPC] Seeding complete: {cfg['business_name']}")
+        _maybe_ipo_npc(player_id, cfg)
 
     except Exception as e:
         import traceback

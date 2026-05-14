@@ -2,46 +2,74 @@
   "player_id": -2010,
   "business_name": "Quill & Codex",
   "description": "Produces printing ink and binds books, then retails them through its own bookstore. Buys all inputs from market and sells surplus books and ink.",
-
   "cash_caps": {
     "hard_high": 10000000,
-    "soft_high":  4000000,
-    "soft_low":   1500000,
-    "hard_low":    500000
+    "soft_high": 4000000,
+    "soft_low": 1500000,
+    "hard_low": 500000
   },
-
   "seed": {
     "starting_cash": 2000000,
     "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["urban"], "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
     {
       "business_type": "ink_factory",
       "district_id": null,
-      "active_lines": ["ink"]
+      "active_lines": [
+        "ink"
+      ]
     },
     {
       "business_type": "bookbindery",
       "district_id": null,
-      "active_lines": ["religious_book", "law_book", "art_book", "notebook", "encyclopedia"]
+      "active_lines": [
+        "religious_book",
+        "law_book",
+        "art_book",
+        "notebook",
+        "encyclopedia"
+      ]
     },
     {
       "business_type": "bookstore",
       "district_id": null,
-      "active_lines": ["religious_book", "law_book", "art_book", "notebook", "encyclopedia"]
+      "active_lines": [
+        "religious_book",
+        "law_book",
+        "art_book",
+        "notebook",
+        "encyclopedia"
+      ]
     }
   ],
-
   "buy_items": {
     "oil": {
       "target_inventory": 500,
       "reorder_at": 100,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "water": {
@@ -53,7 +81,7 @@
     "energy": {
       "target_inventory": 2000,
       "reorder_at": 500,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "paper": {
@@ -71,17 +99,45 @@
     "glue": {
       "target_inventory": 500,
       "reorder_at": 100,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     }
   },
-
   "sell_items": {
-    "ink":           { "min_inventory_to_keep": 5000, "max_order_quantity": 2000,  "market": "regular" },
-    "religious_book":{ "min_inventory_to_keep": 200,  "max_order_quantity": 500,   "market": "regular" },
-    "law_book":      { "min_inventory_to_keep": 200,  "max_order_quantity": 500,   "market": "regular" },
-    "art_book":      { "min_inventory_to_keep": 200,  "max_order_quantity": 500,   "market": "regular" },
-    "notebook":      { "min_inventory_to_keep": 500,  "max_order_quantity": 1000,  "market": "regular" },
-    "encyclopedia":  { "min_inventory_to_keep": 100,  "max_order_quantity": 200,   "market": "regular" }
+    "ink": {
+      "min_inventory_to_keep": 5000,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "religious_book": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "law_book": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "art_book": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "notebook": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "encyclopedia": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 200,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "QCDX",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

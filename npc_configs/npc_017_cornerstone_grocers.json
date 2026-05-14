@@ -2,108 +2,482 @@
   "player_id": -2017,
   "business_name": "Cornerstone Grocers",
   "description": "Operates five grocery stores, buying the full product range from market and providing steady retail demand for food producers across the economy.",
-
   "cash_caps": {
     "hard_high": 100000000,
-    "soft_high":  40000000,
-    "soft_low":   10000000,
-    "hard_low":    3000000
+    "soft_high": 40000000,
+    "soft_low": 10000000,
+    "hard_low": 3000000
   },
-
   "seed": {
     "starting_cash": 15000000,
     "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["urban"],  "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["urban"],  "size": 1 },
-      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["urban"],  "size": 1 },
-      { "terrain_type": "hills",   "proximity_features": ["road"],   "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
-    { "business_type": "grocery_store", "district_id": null, "active_lines": [] },
-    { "business_type": "grocery_store", "district_id": null, "active_lines": [] },
-    { "business_type": "grocery_store", "district_id": null, "active_lines": [] },
-    { "business_type": "grocery_store", "district_id": null, "active_lines": [] },
-    { "business_type": "grocery_store", "district_id": null, "active_lines": [] }
+    {
+      "business_type": "grocery_store",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "grocery_store",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "grocery_store",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "grocery_store",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "grocery_store",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
-
   "buy_items": {
-    "pasta":               { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "spaghetti":           { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "noodles":             { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "rice_sack":           { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "peanut_butter":       { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
-    "ketchup":             { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
-    "tomato_sauce":        { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
-    "jam":                 { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
-    "jelly":               { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "salsa":               { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "vinegar":             { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "worcestershire_sauce":{ "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "apple_cider_vinegar": { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "yogurt":              { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "sheep_milk":          { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "condensed_milk":      { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "peanut_oil":          { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "peanut_flour":        { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "apples":              { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "oranges":             { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "carrots":             { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "potatoes":            { "target_inventory": 4000,  "reorder_at":  800, "max_price_multiplier": 1.10, "market": "regular" },
-    "lettuce":             { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "canned_anchovies":    { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "canned_clams":        { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "canned_crab":         { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "canned_mackerel":     { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "canned_oysters":      { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "fish_fingers":        { "target_inventory": 3000,  "reorder_at":  600, "max_price_multiplier": 1.10, "market": "regular" },
-    "anchovy_paste":       { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "shrimp_paste":        { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "pickled_herring":     { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "salt_cod":            { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "mussels":             { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "crawfish":            { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" },
-    "envelope":            { "target_inventory": 2000,  "reorder_at":  400, "max_price_multiplier": 1.10, "market": "regular" }
+    "pasta": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "spaghetti": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "noodles": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rice_sack": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "peanut_butter": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "ketchup": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "tomato_sauce": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "jam": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "jelly": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salsa": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "vinegar": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "worcestershire_sauce": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "apple_cider_vinegar": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "yogurt": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "sheep_milk": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "condensed_milk": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "peanut_oil": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "peanut_flour": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "apples": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "oranges": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "carrots": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "potatoes": {
+      "target_inventory": 4000,
+      "reorder_at": 800,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lettuce": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "canned_anchovies": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "canned_clams": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "canned_crab": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "canned_mackerel": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "canned_oysters": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "fish_fingers": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "anchovy_paste": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "shrimp_paste": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "pickled_herring": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "salt_cod": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "mussels": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "crawfish": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "envelope": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
-
   "sell_items": {
-    "pasta":               { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "spaghetti":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "noodles":             { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "rice_sack":           { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "peanut_butter":       { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
-    "ketchup":             { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
-    "tomato_sauce":        { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
-    "jam":                 { "min_inventory_to_keep": 0, "max_order_quantity": 1500, "market": "regular" },
-    "jelly":               { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "salsa":               { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "vinegar":             { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "worcestershire_sauce":{ "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "apple_cider_vinegar": { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "yogurt":              { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "sheep_milk":          { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "condensed_milk":      { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "peanut_oil":          { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "peanut_flour":        { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "apples":              { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "oranges":             { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "carrots":             { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "potatoes":            { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "lettuce":             { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "canned_anchovies":    { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "canned_clams":        { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "canned_crab":         { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "canned_mackerel":     { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "canned_oysters":      { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "fish_fingers":        { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "anchovy_paste":       { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "shrimp_paste":        { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "pickled_herring":     { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "salt_cod":            { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "mussels":             { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "crawfish":            { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" },
-    "envelope":            { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "regular" }
+    "pasta": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "spaghetti": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "noodles": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "rice_sack": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "peanut_butter": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "ketchup": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "tomato_sauce": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "jam": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "jelly": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "salsa": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "vinegar": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "worcestershire_sauce": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "apple_cider_vinegar": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "yogurt": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "sheep_milk": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "condensed_milk": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "peanut_oil": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "peanut_flour": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "apples": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "oranges": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "carrots": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "potatoes": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "lettuce": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "canned_anchovies": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "canned_clams": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "canned_crab": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "canned_mackerel": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "canned_oysters": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "fish_fingers": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "anchovy_paste": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "shrimp_paste": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "pickled_herring": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "salt_cod": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "mussels": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "crawfish": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "envelope": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "CSGR",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

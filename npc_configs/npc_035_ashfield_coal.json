@@ -1,7 +1,7 @@
 {
   "player_id": -2035,
   "business_name": "Ashfield Coal Co.",
-  "description": "Coal mining operation extracting anthracite and bituminous coal from hill seams. The sole market supplier of coal — the critical reducing agent for steel mills, cement kilns, and smelting furnaces across the economy.",
+  "description": "Coal mining operation extracting anthracite and bituminous coal from hill seams. The sole market supplier of coal \u2014 the critical reducing agent for steel mills, cement kilns, and smelting furnaces across the economy.",
   "cash_caps": {
     "hard_high": 20000000,
     "soft_high": 8000000,
@@ -11,24 +11,88 @@
   "seed": {
     "starting_cash": 4000000,
     "land_plots": [
-      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "hills", "proximity_features": ["road"], "size": 1 }
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
   "businesses": [
-    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
-    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
-    { "business_type": "coal_mine", "district_id": null, "active_lines": [] },
-    { "business_type": "coal_mine", "district_id": null, "active_lines": [] }
+    {
+      "business_type": "coal_mine",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "coal_mine",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "coal_mine",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "coal_mine",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
   "buy_items": {
-    "energy": { "target_inventory": 60000, "reorder_at": 12000, "max_price_multiplier": 1.1,  "market": "regular" },
-    "water":  { "target_inventory": 20000, "reorder_at": 4000,  "max_price_multiplier": 1.05, "market": "regular" },
-    "paper":  { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.05, "market": "regular" }
+    "energy": {
+      "target_inventory": 60000,
+      "reorder_at": 12000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "coal": { "min_inventory_to_keep": 500, "max_order_quantity": 10000, "market": "regular" }
+    "coal": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "AFCO",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

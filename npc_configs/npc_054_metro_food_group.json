@@ -310,5 +310,10 @@
       "max_order_quantity": 300,
       "market": "district"
     }
+  },
+  "ipo": {
+    "ticker": "MFGP",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

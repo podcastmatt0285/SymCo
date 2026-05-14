@@ -2,77 +2,144 @@
   "player_id": -2004,
   "business_name": "Neptune N&N",
   "description": "A vertically integrated candy company growing its own sugar cane and water, manufacturing all candy in-house, and retailing through its own sweet shop. Sells surplus cane, sugar, and water on the open market.",
-
   "cash_caps": {
     "hard_high": 10000000,
     "soft_high": 5000000,
-    "soft_low":  1000000,
-    "hard_low":   300000
+    "soft_low": 1000000,
+    "hard_low": 300000
   },
-
   "seed": {
     "starting_cash": 2000000,
     "land_plots": [
-      { "terrain_type": "savanna", "proximity_features": ["oasis"],    "size": 1 },
-      { "terrain_type": "marsh",   "proximity_features": ["riverside"], "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
-      { "terrain_type": "urban",   "proximity_features": ["urban"],     "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": [],            "size": 1 }
+      {
+        "terrain_type": "savanna",
+        "proximity_features": [
+          "oasis"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "marsh",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "urban"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
     {
       "business_type": "cane_plantation",
       "district_id": null,
-      "active_lines": ["sugar", "caramel"]
+      "active_lines": [
+        "sugar",
+        "caramel"
+      ]
     },
     {
       "business_type": "water_facility",
       "district_id": null,
-      "active_lines": ["water"]
+      "active_lines": [
+        "water"
+      ]
     },
     {
       "business_type": "chocolate_factory",
       "district_id": null,
-      "active_lines": ["cocoa_powder", "cocoa_butter", "chocolate"]
+      "active_lines": [
+        "cocoa_powder",
+        "cocoa_butter",
+        "chocolate"
+      ]
     },
     {
       "business_type": "candy_factory",
       "district_id": null,
       "active_lines": [
-        "hard_candy", "lollipop", "gummy_bears",
-        "taffy", "marshmallow", "licorice", "peppermint"
+        "hard_candy",
+        "lollipop",
+        "gummy_bears",
+        "taffy",
+        "marshmallow",
+        "licorice",
+        "peppermint"
       ]
     },
     {
       "business_type": "chocolate_confectioner",
       "district_id": null,
-      "active_lines": ["candy_bar", "truffles", "fudge", "toffee"]
+      "active_lines": [
+        "candy_bar",
+        "truffles",
+        "fudge",
+        "toffee"
+      ]
     },
     {
       "business_type": "candy_store",
       "district_id": null,
       "active_lines": [
-        "chocolate", "candy_bar", "lollipop", "gummy_bears", "hard_candy",
-        "taffy", "fudge", "truffles", "toffee", "licorice",
-        "marshmallow", "peppermint", "caramel"
+        "chocolate",
+        "candy_bar",
+        "lollipop",
+        "gummy_bears",
+        "hard_candy",
+        "taffy",
+        "fudge",
+        "truffles",
+        "toffee",
+        "licorice",
+        "marshmallow",
+        "peppermint",
+        "caramel"
       ]
     },
     {
       "business_type": "farmers_market",
       "district_id": null,
-      "active_lines": ["honey"]
+      "active_lines": [
+        "honey"
+      ]
     }
   ],
-
   "buy_items": {
     "cane": {
       "target_inventory": 2000,
       "reorder_at": 400,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "cocoa_beans": {
@@ -138,7 +205,7 @@
     "energy": {
       "target_inventory": 1500,
       "reorder_at": 300,
-      "max_price_multiplier": 1.20,
+      "max_price_multiplier": 1.2,
       "market": "regular"
     },
     "paper": {
@@ -148,24 +215,96 @@
       "market": "regular"
     }
   },
-
   "sell_items": {
-    "chocolate":   { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "candy_bar":   { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "lollipop":    { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "gummy_bears": { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "hard_candy":  { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "taffy":       { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "fudge":       { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "truffles":    { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular" },
-    "toffee":      { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "licorice":    { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "marshmallow": { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "peppermint":  { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "caramel":     { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular" },
-    "honey":       { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular" },
-    "cane":        { "min_inventory_to_keep": 1200, "max_order_quantity": 500,  "market": "regular" },
-    "sugar":       { "min_inventory_to_keep": 800,  "max_order_quantity": 300,  "market": "regular" },
-    "water":       { "min_inventory_to_keep": 600, "max_order_quantity": 400,  "market": "regular" }
+    "chocolate": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "candy_bar": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "lollipop": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "gummy_bears": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "hard_candy": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "taffy": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "fudge": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "truffles": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "toffee": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "licorice": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "marshmallow": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "peppermint": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "caramel": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "honey": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "cane": {
+      "min_inventory_to_keep": 1200,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "sugar": {
+      "min_inventory_to_keep": 800,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "water": {
+      "min_inventory_to_keep": 600,
+      "max_order_quantity": 400,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "NEPT",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

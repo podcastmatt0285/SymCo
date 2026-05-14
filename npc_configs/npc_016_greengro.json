@@ -2,43 +2,67 @@
   "player_id": -2016,
   "business_name": "GreenGro Agri-Chem",
   "description": "Fully vertically integrated fertilizer producer. Mines its own phosphate, potash, and sulfur; extracts natural gas; and synthesizes the full NPK fertilizer chain in-house. Only buys utilities from the market.",
-
   "cash_caps": {
     "hard_high": 70000000,
     "soft_high": 30000000,
-    "soft_low":   8000000,
-    "hard_low":   2000000
+    "soft_low": 8000000,
+    "hard_low": 2000000
   },
-
   "seed": {
     "starting_cash": 12000000,
     "land_plots": [
-      { "terrain_type": "mountain", "proximity_features": ["remote"],   "size": 1 },
-      { "terrain_type": "desert",   "proximity_features": ["coastal"],  "size": 1 }
+      {
+        "terrain_type": "mountain",
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "desert",
+        "proximity_features": [
+          "coastal"
+        ],
+        "size": 1
+      }
     ],
     "districts": [
-      { "district_type": "industrial", "size": 5.0, "plots_merged": 5 }
+      {
+        "district_type": "industrial",
+        "size": 5.0,
+        "plots_merged": 5
+      }
     ]
   },
-
   "businesses": [
     {
       "business_type": "mineral_mine",
       "district_id": null,
-      "active_lines": ["phosphate_rock", "potash_ore", "sulfur"]
+      "active_lines": [
+        "phosphate_rock",
+        "potash_ore",
+        "sulfur"
+      ]
     },
     {
       "business_type": "oil_rig",
       "district_id": null,
-      "active_lines": ["oil", "natural_gas"]
+      "active_lines": [
+        "oil",
+        "natural_gas"
+      ]
     },
     {
       "business_type": "chemical_plant",
       "district_seed_index": 0,
-      "active_lines": ["sulfuric_acid", "ammonia", "phosphoric_acid", "fertilizer_npk"]
+      "active_lines": [
+        "sulfuric_acid",
+        "ammonia",
+        "phosphoric_acid",
+        "fertilizer_npk"
+      ]
     }
   ],
-
   "buy_items": {
     "water": {
       "target_inventory": 20000,
@@ -49,17 +73,16 @@
     "energy": {
       "target_inventory": 500000,
       "reorder_at": 100000,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "paper": {
       "target_inventory": 5000,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     }
   },
-
   "sell_items": {
     "fertilizer_npk": {
       "min_inventory_to_keep": 500,
@@ -91,5 +114,10 @@
       "max_order_quantity": 5000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "GGAC",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

@@ -2,43 +2,139 @@
   "player_id": -2015,
   "business_name": "Sower & Sons Seed Co.",
   "description": "Produces every seed variety in the game and floods the market with seeds, crops, flowers, and every farm by-product along the way.",
-
   "cash_caps": {
     "hard_high": 60000000,
     "soft_high": 25000000,
-    "soft_low":   6000000,
-    "hard_low":   2000000
+    "soft_low": 6000000,
+    "hard_low": 2000000
   },
-
   "seed": {
     "starting_cash": 15000000,
     "land_plots": [
-      { "terrain_type": "prairie",  "proximity_features": ["remote"],    "size": 1 },
-      { "terrain_type": "savanna",  "proximity_features": ["road"],      "size": 1 },
-      { "terrain_type": "hills",    "proximity_features": ["riverside"],  "size": 1 },
-      { "terrain_type": "prairie",  "proximity_features": ["riverside"],  "size": 1 },
-      { "terrain_type": "hills",    "proximity_features": ["road"],       "size": 1 },
-      { "terrain_type": "hills",    "proximity_features": ["riverside"],  "size": 1 },
-      { "terrain_type": "jungle",   "proximity_features": ["riverside"],  "size": 1 },
-      { "terrain_type": "mountain", "proximity_features": ["volcanic"],   "size": 1 },
-      { "terrain_type": "mountain", "proximity_features": ["riverside"],  "size": 1 },
-      { "terrain_type": "marsh",    "proximity_features": ["riverside"],  "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "remote"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "savanna",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "hills",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "jungle",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "mountain",
+        "proximity_features": [
+          "volcanic"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "mountain",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "marsh",
+        "proximity_features": [
+          "riverside"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
-    { "business_type": "grain_farm",         "district_id": null, "active_lines": [] },
-    { "business_type": "vegetable_farm",     "district_id": null, "active_lines": [] },
-    { "business_type": "orchard",            "district_id": null, "active_lines": [] },
-    { "business_type": "flower_farm",        "district_id": null, "active_lines": [] },
-    { "business_type": "burley_tobacco_farm","district_id": null, "active_lines": [] },
-    { "business_type": "vineyard_estate",    "district_id": null, "active_lines": [] },
-    { "business_type": "cocoa_plantation",   "district_id": null, "active_lines": [] },
-    { "business_type": "coffee_plantation",  "district_id": null, "active_lines": [] },
-    { "business_type": "tea_plantation",     "district_id": null, "active_lines": [] },
-    { "business_type": "rice_paddy",         "district_id": null, "active_lines": [] }
+    {
+      "business_type": "grain_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "vegetable_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "orchard",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "flower_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "burley_tobacco_farm",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "vineyard_estate",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "cocoa_plantation",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "coffee_plantation",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "tea_plantation",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "rice_paddy",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
-
   "buy_items": {
     "water": {
       "target_inventory": 10000,
@@ -49,13 +145,13 @@
     "energy": {
       "target_inventory": 50000,
       "reorder_at": 10000,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "paper": {
       "target_inventory": 5000,
       "reorder_at": 1000,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "pollen": {
@@ -67,13 +163,13 @@
     "fertilizer_npk": {
       "target_inventory": 2000,
       "reorder_at": 500,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "burlap": {
       "target_inventory": 500,
       "reorder_at": 100,
-      "max_price_multiplier": 1.10,
+      "max_price_multiplier": 1.1,
       "market": "regular"
     },
     "wheat_seeds": {
@@ -149,71 +245,331 @@
       "market": "regular"
     }
   },
-
   "sell_items": {
-    "wheat_seeds":    { "min_inventory_to_keep": 500, "max_order_quantity": 5000,  "market": "regular" },
-    "barley_seeds":   { "min_inventory_to_keep": 400, "max_order_quantity": 5000,  "market": "regular" },
-    "corn_seeds":     { "min_inventory_to_keep": 600, "max_order_quantity": 5000,  "market": "regular" },
-    "onion_seeds":    { "min_inventory_to_keep": 250, "max_order_quantity": 2000,  "market": "regular" },
-    "tomato_seeds":   { "min_inventory_to_keep": 300, "max_order_quantity": 2000,  "market": "regular" },
-    "cherry_seeds":   { "min_inventory_to_keep": 150, "max_order_quantity": 1000,  "market": "regular" },
-    "grape_seeds":    { "min_inventory_to_keep": 120, "max_order_quantity": 1000,  "market": "regular" },
-    "cocoa_seeds":    { "min_inventory_to_keep": 120, "max_order_quantity": 1000,  "market": "regular" },
-    "coffee_seeds":   { "min_inventory_to_keep": 180, "max_order_quantity": 1000,  "market": "regular" },
-    "tea_seeds":      { "min_inventory_to_keep": 150, "max_order_quantity": 1000,  "market": "regular" },
-    "rice_seeds":     { "min_inventory_to_keep": 300, "max_order_quantity": 2000,  "market": "regular" },
-    "tobacco_seeds":  { "min_inventory_to_keep": 200, "max_order_quantity": 2000,  "market": "regular" },
-    "wheat":          { "min_inventory_to_keep": 0,   "max_order_quantity": 20000, "market": "regular" },
-    "barley":         { "min_inventory_to_keep": 0,   "max_order_quantity": 20000, "market": "regular" },
-    "corn":           { "min_inventory_to_keep": 0,   "max_order_quantity": 20000, "market": "regular" },
-    "onions":         { "min_inventory_to_keep": 0,   "max_order_quantity": 10000, "market": "regular" },
-    "tomato":         { "min_inventory_to_keep": 0,   "max_order_quantity": 10000, "market": "regular" },
-    "cherries":       { "min_inventory_to_keep": 0,   "max_order_quantity": 5000,  "market": "regular" },
-    "cherry_blossom": { "min_inventory_to_keep": 0,   "max_order_quantity": 5000,  "market": "regular" },
-    "grapes":         { "min_inventory_to_keep": 0,   "max_order_quantity": 10000, "market": "regular" },
-    "cocoa_beans":    { "min_inventory_to_keep": 0,   "max_order_quantity": 5000,  "market": "regular" },
-    "coffee_beans":   { "min_inventory_to_keep": 0,   "max_order_quantity": 5000,  "market": "regular" },
-    "coffee_blossom": { "min_inventory_to_keep": 0,   "max_order_quantity": 3000,  "market": "regular" },
-    "tea_leaves":     { "min_inventory_to_keep": 0,   "max_order_quantity": 10000, "market": "regular" },
-    "tea_flower":     { "min_inventory_to_keep": 0,   "max_order_quantity": 3000,  "market": "regular" },
-    "rice":           { "min_inventory_to_keep": 0,   "max_order_quantity": 20000, "market": "regular" },
-    "burley_leaf":         { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "golden_burley_leaf":  { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "tobacco_flower":      { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "rose":         { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "lily":         { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "tulip":        { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "carnation":    { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "sunflower":    { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "chrysanthemum":{ "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "snapdragon":   { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "zinnia":       { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "marigold":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "violet":       { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "narcissus":    { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "freesia":      { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "heather":      { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "clover_flower":{ "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "chamomile":    { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "echinacea":    { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "lavender":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "hydrangea":    { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "iris":         { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "dahlia":       { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "anemone":      { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "ranunculus":   { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "foxglove":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "hibiscus":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "elderflower":  { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "passionflower":{ "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "geranium":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "peony":        { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "jasmine":      { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "gardenia":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "magnolia":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "wisteria":     { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "lilac":        { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "orchid":       { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" },
-    "lotus":        { "min_inventory_to_keep": 0, "max_order_quantity": 5000, "market": "regular" }
+    "wheat_seeds": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "barley_seeds": {
+      "min_inventory_to_keep": 400,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "corn_seeds": {
+      "min_inventory_to_keep": 600,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "onion_seeds": {
+      "min_inventory_to_keep": 250,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "tomato_seeds": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "cherry_seeds": {
+      "min_inventory_to_keep": 150,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "grape_seeds": {
+      "min_inventory_to_keep": 120,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "cocoa_seeds": {
+      "min_inventory_to_keep": 120,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "coffee_seeds": {
+      "min_inventory_to_keep": 180,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "tea_seeds": {
+      "min_inventory_to_keep": 150,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "rice_seeds": {
+      "min_inventory_to_keep": 300,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "tobacco_seeds": {
+      "min_inventory_to_keep": 200,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "wheat": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 20000,
+      "market": "regular"
+    },
+    "barley": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 20000,
+      "market": "regular"
+    },
+    "corn": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 20000,
+      "market": "regular"
+    },
+    "onions": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "tomato": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "cherries": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "cherry_blossom": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "grapes": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "cocoa_beans": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "coffee_beans": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "coffee_blossom": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "tea_leaves": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "tea_flower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "rice": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 20000,
+      "market": "regular"
+    },
+    "burley_leaf": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "golden_burley_leaf": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "tobacco_flower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "rose": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "lily": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "tulip": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "carnation": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "sunflower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "chrysanthemum": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "snapdragon": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "zinnia": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "marigold": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "violet": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "narcissus": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "freesia": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "heather": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "clover_flower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "chamomile": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "echinacea": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "lavender": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "hydrangea": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "iris": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "dahlia": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "anemone": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "ranunculus": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "foxglove": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "hibiscus": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "elderflower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "passionflower": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "geranium": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "peony": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "jasmine": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "gardenia": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "magnolia": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "wisteria": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "lilac": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "orchid": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "lotus": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "SWRS",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

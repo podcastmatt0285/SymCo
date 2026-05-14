@@ -262,5 +262,10 @@
       "max_order_quantity": 1000,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "APXS",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

@@ -219,5 +219,10 @@
       "max_order_quantity": 30,
       "market": "regular"
     }
+  },
+  "ipo": {
+    "ticker": "CNMW",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }

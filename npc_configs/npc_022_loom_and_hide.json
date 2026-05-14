@@ -2,70 +2,271 @@
   "player_id": -2022,
   "business_name": "Loom & Hide Co.",
   "description": "Full-spectrum apparel and textile manufacturer. Grows cotton, processes wool and hides through a tannery, weaves textiles, and assembles finished clothing through an apparel factory and fashion outlet.",
-
   "cash_caps": {
     "hard_high": 45000000,
     "soft_high": 18000000,
-    "soft_low":   4000000,
-    "hard_low":   1200000
+    "soft_low": 4000000,
+    "hard_low": 1200000
   },
-
   "seed": {
     "starting_cash": 8000000,
     "land_plots": [
-      { "terrain_type": "prairie",  "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "prairie",  "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "urban",    "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "urban",    "proximity_features": ["road"],  "size": 1 },
-      { "terrain_type": "urban",    "proximity_features": ["road"],  "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "urban",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
-
   "businesses": [
-    { "business_type": "cotton_fields",        "district_id": null, "active_lines": [] },
-    { "business_type": "wool_mill",            "district_id": null, "active_lines": [] },
-    { "business_type": "textile_and_tannery",  "district_id": null, "active_lines": [] },
-    { "business_type": "apparel_factory",      "district_id": null, "active_lines": [] },
-    { "business_type": "fashion_outlet",       "district_id": null, "active_lines": [] }
+    {
+      "business_type": "cotton_fields",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "wool_mill",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "textile_and_tannery",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "apparel_factory",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "fashion_outlet",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
-
   "buy_items": {
-    "cotton_seeds":  { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "water":         { "target_inventory": 60000, "reorder_at": 12000,"max_price_multiplier": 1.05, "market": "regular" },
-    "energy":        { "target_inventory": 50000, "reorder_at": 10000,"max_price_multiplier": 1.10, "market": "regular" },
-    "paper":         { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "merino":        { "target_inventory": 80,    "reorder_at": 15,   "max_price_multiplier": 1.15, "market": "regular" },
-    "corriedale":    { "target_inventory": 60,    "reorder_at": 10,   "max_price_multiplier": 1.15, "market": "regular" },
-    "suffolk_sheep": { "target_inventory": 40,    "reorder_at": 8,    "max_price_multiplier": 1.15, "market": "regular" },
-    "cow":           { "target_inventory": 50,    "reorder_at": 10,   "max_price_multiplier": 1.15, "market": "regular" },
-    "oil":           { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.10, "market": "regular" },
-    "bio_fuel":      { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.10, "market": "regular" },
-    "silk_worm":     { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.15, "market": "regular" },
-    "thread":        { "target_inventory": 10000, "reorder_at": 2000, "max_price_multiplier": 1.10, "market": "regular" },
-    "zippers":       { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" },
-    "buttons":       { "target_inventory": 10000, "reorder_at": 2000, "max_price_multiplier": 1.05, "market": "regular" },
-    "polyester":     { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.10, "market": "regular" }
+    "cotton_seeds": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 60000,
+      "reorder_at": 12000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 50000,
+      "reorder_at": 10000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "merino": {
+      "target_inventory": 80,
+      "reorder_at": 15,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "corriedale": {
+      "target_inventory": 60,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "suffolk_sheep": {
+      "target_inventory": 40,
+      "reorder_at": 8,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "cow": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "oil": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "bio_fuel": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "silk_worm": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "thread": {
+      "target_inventory": 10000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "zippers": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "buttons": {
+      "target_inventory": 10000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "polyester": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
-
   "sell_items": {
-    "cotton":          { "min_inventory_to_keep": 2000, "max_order_quantity": 5000, "market": "regular" },
-    "wool":            { "min_inventory_to_keep": 1000, "max_order_quantity": 4000, "market": "regular" },
-    "leather":         { "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
-    "silk":            { "min_inventory_to_keep": 500,  "max_order_quantity": 1500, "market": "regular" },
-    "burlap":          { "min_inventory_to_keep": 1000, "max_order_quantity": 3000, "market": "regular" },
-    "polyester":       { "min_inventory_to_keep": 1000, "max_order_quantity": 3000, "market": "regular" },
-    "denim":           { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "linen":           { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "t_shirt":         { "min_inventory_to_keep": 0,    "max_order_quantity": 3000, "market": "regular" },
-    "jeans":           { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "jacket":          { "min_inventory_to_keep": 0,    "max_order_quantity": 1500, "market": "regular" },
-    "dress":           { "min_inventory_to_keep": 0,    "max_order_quantity": 1500, "market": "regular" },
-    "suit":            { "min_inventory_to_keep": 0,    "max_order_quantity": 1000, "market": "regular" },
-    "coat":            { "min_inventory_to_keep": 0,    "max_order_quantity": 1000, "market": "regular" },
-    "socks":           { "min_inventory_to_keep": 0,    "max_order_quantity": 5000, "market": "regular" },
-    "underwear":       { "min_inventory_to_keep": 0,    "max_order_quantity": 3000, "market": "regular" },
-    "shoes":           { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" },
-    "handbag":         { "min_inventory_to_keep": 0,    "max_order_quantity": 1000, "market": "regular" },
-    "hat":             { "min_inventory_to_keep": 0,    "max_order_quantity": 2000, "market": "regular" }
+    "cotton": {
+      "min_inventory_to_keep": 2000,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "wool": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 4000,
+      "market": "regular"
+    },
+    "leather": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "silk": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "burlap": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "polyester": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "denim": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "linen": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "t_shirt": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "jeans": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "jacket": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "dress": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1500,
+      "market": "regular"
+    },
+    "suit": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "coat": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "socks": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "underwear": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "shoes": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "handbag": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "hat": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
+  },
+  "ipo": {
+    "ticker": "LMHD",
+    "total_shares": 1000000,
+    "shares_to_offer": 600000
   }
 }
