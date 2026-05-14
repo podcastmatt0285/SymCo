@@ -314,8 +314,8 @@ def admin_matt_page(
     </div>
     {_RENAME_JS}
     """
-    from ux import shell
-    return HTMLResponse(shell("Admin — MATT CH 28", html, 0, player.id))
+    from admins_ux import admin_shell
+    return HTMLResponse(admin_shell("MATT — CH 28 Playlist Manager", html, player.business_name, "/admin"))
 
 
 @router.post("/admin/matt/add")

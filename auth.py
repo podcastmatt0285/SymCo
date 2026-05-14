@@ -475,6 +475,25 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         .login-tickers {
             width: 100%;
         }
+        .tk-controls-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: #0f172a;
+            border-bottom: 1px solid #1e293b;
+            height: 22px;
+        }
+        .tk-controls-spacer {
+            flex: 1;
+        }
+        .tk-controls-label {
+            font-size: 0.52rem;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            color: #1e293b;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
         .login-ticker {
             width: 100%;
             background: #0f172a;
@@ -489,15 +508,6 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             flex-shrink: 0;
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             letter-spacing: 0.02em;
-        }
-        .tk-controls {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            flex-shrink: 0;
-            padding: 0 8px;
-            border-right: 1px solid #334155;
-            height: 100%;
         }
         .ticker-btn {
             background: #1e293b;
@@ -703,13 +713,15 @@ def login_page(session_token: Optional[str] = Cookie(None)):
 <body>
     <!-- Market tickers -->
     <div class="login-tickers">
+        <div class="tk-controls-bar">
+            <button class="ticker-btn" id="tkRestart" title="Restart">&#9198;</button>
+            <button class="ticker-btn" id="tkRewind"  title="Rewind">&#9194;</button>
+            <button class="ticker-btn" id="tkPlay"    title="Pause">&#9208;</button>
+            <button class="ticker-btn" id="tkSpeed"   title="Speed">1&times;</button>
+            <span class="tk-controls-spacer"></span>
+            <span class="tk-controls-label">Ticker Controls</span>
+        </div>
         <div class="login-ticker">
-            <div class="tk-controls">
-                <button class="ticker-btn" id="tkRestart" title="Restart">&#9198;</button>
-                <button class="ticker-btn" id="tkRewind"  title="Rewind">&#9194;</button>
-                <button class="ticker-btn" id="tkPlay"    title="Pause">&#9208;</button>
-                <button class="ticker-btn" id="tkSpeed"   title="Speed">1&times;</button>
-            </div>
             <span class="tk-label tk-mkt">MKT</span>
             <div class="tk-viewport">
                 <div id="tkMkt" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
