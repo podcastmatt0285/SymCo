@@ -282,6 +282,15 @@ fi
 # AndroidManifest.xml patches
 MANIFEST="app/src/main/AndroidManifest.xml"
 
+# 0. Ensure INTERNET permission — Bubblewrap normally includes this, but the widget's
+#    direct HttpURLConnection calls throw SecurityException if it's absent.
+if grep -q "android.permission.INTERNET" "$MANIFEST"; then
+    echo "  INTERNET permission already in AndroidManifest.xml — skipping"
+else
+    sed -i 's|<application |<uses-permission android:name="android.permission.INTERNET" />\n    <application |' "$MANIFEST"
+    echo "  Added INTERNET permission to AndroidManifest.xml"
+fi
+
 # 1. Point <application> at our custom Application subclass so channels are
 #    seeded with the custom notification sound on every app launch.
 #    Bubblewrap generates android:name="Application" — replace it rather than
