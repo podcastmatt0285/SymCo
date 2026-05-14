@@ -68,10 +68,12 @@ GOV_LOAN_INSTALLMENT_INTERVAL_TICKS = 8640  # 12 hours
 MAX_CITY_BANK_LOANS = 5
 DEBT_ASSUMPTION_FRACTION = 1 / 25  # Members can assume 1/25th of debt
 
-# Government bond auto-investing
+# Government bond auto-investing / liquidation
 GOV_BOND_INVEST_INTERVAL_TICKS = 8640  # every 12 hours
 GOV_BOND_INVEST_THRESHOLD      = 100_000.0   # only invest if cash > this
 GOV_BOND_INVEST_PCT            = 0.25        # invest 25 % of excess cash
+GOV_BOND_SELL_THRESHOLD        = 50_000.0    # sell nearest-maturity bond if cash falls below this
+GOV_BOND_SELL_INTERVAL_TICKS   = 360         # check every 30 minutes
 GOV_BOND_MATURITY_DAYS         = 90          # 90-day bonds for liquidity
 
 # City bank charter renewal fee
@@ -2830,6 +2832,75 @@ def tick_government_bond_investing(current_tick: int):
         rb_db.close()
 
 
+def tick_government_bond_liquidation(current_tick: int):
+    """
+    Sell the nearest-to-maturity USD bond when government cash falls below
+    GOV_BOND_SELL_THRESHOLD.  Runs every GOV_BOND_SELL_INTERVAL_TICKS ticks.
+    Proceeds are credited directly to government cash_balance.
+    """
+    if current_tick % GOV_BOND_SELL_INTERVAL_TICKS != 0:
+        return
+
+    from auth import Player, get_db as get_auth_db
+    from reserve_banks import get_db as get_rb_db, StateReserveBank, ReserveBankBond
+
+    auth_db = get_auth_db()
+    rb_db   = get_rb_db()
+    try:
+        government = auth_db.query(Player).filter(Player.id == GOVERNMENT_PLAYER_ID).first()
+        if not government or government.cash_balance >= GOV_BOND_SELL_THRESHOLD:
+            return
+
+        # Find the nearest-to-maturity active USD bond held by the government
+        bond = (
+            rb_db.query(ReserveBankBond)
+            .filter(
+                ReserveBankBond.holder_player_id == GOVERNMENT_PLAYER_ID,
+                ReserveBankBond.status           == "active",
+            )
+            .join(StateReserveBank, ReserveBankBond.bank_id == StateReserveBank.id)
+            .filter(StateReserveBank.currency_code == "USD")
+            .order_by(ReserveBankBond.matures_at.asc())
+            .first()
+        )
+        if not bond:
+            return
+
+        bank = rb_db.query(StateReserveBank).filter(StateReserveBank.id == bond.bank_id).first()
+        proceeds = bond.face_value_wsc + (bond.interest_accrued or 0.0)
+
+        # Mark bond sold and update bank holdings
+        bond.status = "sold"
+        bank.net_demand_wsc       -= bond.face_value_wsc
+        bank.total_face_value_wsc  = max(0.0, bank.total_face_value_wsc - bond.face_value_wsc)
+        bank.wsc_holdings          = max(0.0, bank.wsc_holdings - bond.face_value_wsc)
+        rb_db.commit()
+
+        # Credit proceeds directly to government cash
+        government.cash_balance += proceeds
+        auth_db.commit()
+
+        print(
+            f"[Cities] Gov bond liquidation: sold ${bond.face_value_wsc:,.2f} bond "
+            f"(+${bond.interest_accrued or 0:.2f} interest) → ${proceeds:,.2f} to treasury"
+        )
+        try:
+            from govt_ledger import log_gov_event
+            log_gov_event("bond_sale", "in", proceeds, "USD",
+                          "USD Reserve Bank",
+                          f"Early liquidation — treasury cash below ${GOV_BOND_SELL_THRESHOLD:,.0f}")
+        except Exception:
+            pass
+
+    except Exception as e:
+        auth_db.rollback()
+        rb_db.rollback()
+        print(f"[Cities] Gov bond liquidation error: {e}")
+    finally:
+        auth_db.close()
+        rb_db.close()
+
+
 def tick_city_bank_charter_fees(current_tick: int):
     """Collect $5,000 charter renewal fee from each city bank every 30 days.
 
@@ -2933,6 +3004,9 @@ def tick(current_tick: int, now: datetime):
         
         # Government bond auto-investing every 12 hours
         tick_government_bond_investing(current_tick)
+
+        # Government bond liquidation when cash is low (checked every 30 minutes)
+        tick_government_bond_liquidation(current_tick)
 
         # City bank charter renewal fees (checked daily, due every 30 days)
         if current_tick % 17280 == 0:

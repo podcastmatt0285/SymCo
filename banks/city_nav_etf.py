@@ -135,9 +135,15 @@ def calculate_nav() -> float:
 
 
 def calculate_share_price() -> float:
-    """Return current ETF share price = NAV / IPO_SHARES."""
+    """Return current ETF share price = NAV / total_shares_issued."""
     nav = calculate_nav()
-    return nav / IPO_SHARES if IPO_SHARES > 0 else 0.0
+    try:
+        import banks as _banks
+        entity = _banks.get_bank_entity(BANK_ID)
+        denom = entity.total_shares_issued if entity and entity.total_shares_issued > 0 else IPO_SHARES
+    except Exception:
+        denom = IPO_SHARES
+    return nav / denom if denom > 0 else 0.0
 
 
 # ──────────────────────────────────────────────────────────────
@@ -448,7 +454,13 @@ def get_etf_info() -> dict:
     cash = get_etf_cash()
     land_value = calculate_land_portfolio_value()
     nav = cash + land_value
-    share_price = nav / IPO_SHARES if IPO_SHARES > 0 else 0.0
+    try:
+        import banks as _banks
+        _entity = _banks.get_bank_entity(BANK_ID)
+        _denom = _entity.total_shares_issued if _entity and _entity.total_shares_issued > 0 else IPO_SHARES
+    except Exception:
+        _denom = IPO_SHARES
+    share_price = nav / _denom if _denom > 0 else 0.0
 
     try:
         from land import LandPlot, get_db as land_get_db

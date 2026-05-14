@@ -533,6 +533,22 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         <a href="/admin/matt" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MATT · CH 28</div><div class="lc-desc">Community videos &amp; submissions</div></a>
     </div>
 
+    <div class="card" style="margin-bottom:12px;">
+        <h3 style="font-size:0.78rem;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Government Fiscal Controls</h3>
+        <p style="color:#94a3b8;font-size:0.75rem;margin:0 0 12px 0;">Force-trigger government fiscal tick functions. These run automatically on schedule — use only to test or manually trigger outside of the game tick.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <form method="post" action="/api/gov/force-grants">
+                <button type="submit" style="background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">⚡ Force City Grants</button>
+            </form>
+            <form method="post" action="/api/gov/force-bond-invest">
+                <button type="submit" style="background:#1e1b4b;border:1px solid #818cf8;color:#a5b4fc;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">📈 Force Bond Investment</button>
+            </form>
+            <form method="post" action="/api/gov/force-charter-fees">
+                <button type="submit" style="background:#1c1917;border:1px solid #d97706;color:#fcd34d;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">🏦 Force Charter Fees</button>
+            </form>
+        </div>
+    </div>
+
     <div class="card">
         <h3>Recent Actions</h3>
         {f'<div class="table-wrap"><table><tr><th>Time</th><th>Action</th><th>Target</th><th>Details</th></tr>{log_rows}</table></div>' if log_rows else '<p style="color:#64748b;font-size:0.75rem;">No actions yet.</p>'}

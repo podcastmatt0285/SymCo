@@ -3077,28 +3077,7 @@ def government_dashboard(
     elif error:
         flash_html = f'<div style="background:#1c0505;border:1px solid #b91c1c;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#f87171;font-size:0.85rem;">✗ {error}</div>'
 
-    # ── Admin controls (admin-only) ───────────────────────────────────────────
     admin_html = ""
-    if _player_is_admin:
-        admin_html = _sec("Admin Controls", "#ef4444", f"""
-        <p style="color:#475569;font-size:0.78rem;margin:0 0 14px 0;">Force-trigger government fiscal tick functions. These run automatically on the game tick schedule; use only to test or manually trigger outside of schedule.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <form method="post" action="/api/gov/force-grants">
-                <button type="submit" style="background:#7f1d1d;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                    ⚡ Force City Grants
-                </button>
-            </form>
-            <form method="post" action="/api/gov/force-bond-invest">
-                <button type="submit" style="background:#1e1b4b;border:1px solid #818cf8;color:#a5b4fc;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                    📈 Force Bond Investment
-                </button>
-            </form>
-            <form method="post" action="/api/gov/force-charter-fees">
-                <button type="submit" style="background:#1c1917;border:1px solid #d97706;color:#fcd34d;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:0.82rem;font-weight:600;">
-                    🏦 Force Charter Fee Collection
-                </button>
-            </form>
-        </div>""")
 
     body = f"""
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
@@ -3112,7 +3091,6 @@ def government_dashboard(
     </div>
     {flash_html}
     {kpis}
-    {admin_html}
     {_sec("Treasury", "#e2e8f0", treasury_html)}
     {_sec("Bond Portfolio", "#fbbf24", bond_html)}
     {_sec("Company Equity", "#818cf8", equity_html)}
