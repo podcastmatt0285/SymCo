@@ -59,79 +59,86 @@ def _yt_url(ytid: str) -> str:
 
 def _banner(msg: str = "", err: str = "") -> str:
     if msg:
-        return f'<div style="padding:10px 16px;background:#052e16;border:1px solid #16a34a;color:#4ade80;margin-bottom:16px;">{msg}</div>'
+        return f'<div style="padding:10px 16px;background:#052e16;border:1px solid #16a34a;color:#4ade80;margin-bottom:16px;border-radius:4px;">{msg}</div>'
     if err:
-        return f'<div style="padding:10px 16px;background:#1a0505;border:1px solid #dc2626;color:#f87171;margin-bottom:16px;">{err}</div>'
+        return f'<div style="padding:10px 16px;background:#1a0505;border:1px solid #dc2626;color:#f87171;margin-bottom:16px;border-radius:4px;">{err}</div>'
     return ""
 
 
-def _video_table(tracks, toggle_url, rename_url, delete_url, extra_col_header="", extra_col_fn=None):
+def _video_table(tracks, toggle_url, rename_url, delete_url, show_submitter=False):
     if not tracks:
         return '<p style="color:#64748b;padding:20px 0;">No videos in playlist yet.</p>'
     rows = ""
     for t in tracks:
         ytid = t.get("youtube_id", "")
         safe_title = t["title"].replace('"', '&quot;').replace("'", "&#39;")
-        active_color = "#22c55e" if t.get("is_active", True) else "#64748b"
-        active_label = "Active" if t.get("is_active", True) else "Hidden"
-        submitter_cell = f'<td style="padding:8px;color:#64748b;font-size:0.78rem;">{t.get("submitter","")}</td>' if extra_col_header else ""
+        is_active = t.get("is_active", True)
+        status_badge = (
+            '<span class="badge badge-green">Active</span>'
+            if is_active else
+            '<span class="badge badge-yellow">Hidden</span>'
+        )
+        submitter_cell = (
+            f'<td style="color:#94a3b8;font-size:0.7rem;">{t.get("submitter","")}</td>'
+            if show_submitter else ""
+        )
+        toggle_label = "Disable" if is_active else "Enable"
+        toggle_class = "btn btn-gray" if is_active else "btn btn-green"
+        new_active_val = "0" if is_active else "1"
         rows += f"""
-        <tr style="border-bottom:1px solid #0f172a;vertical-align:middle;">
-            <td style="padding:8px;">
+        <tr>
+            <td>
                 <a href="{_yt_url(ytid)}" target="_blank" rel="noopener">
-                    <img src="{_yt_thumb(ytid)}" style="width:100px;height:56px;object-fit:cover;border-radius:4px;display:block;">
+                    <img src="{_yt_thumb(ytid)}" style="width:88px;height:50px;object-fit:cover;border-radius:3px;display:block;border:1px solid #1e293b;">
                 </a>
             </td>
-            <td style="padding:8px;color:#e5e7eb;">
-                <span id="mm-title-{t['id']}">{t['title']}</span>
+            <td>
+                <span id="mm-title-{t['id']}" style="color:#e5e7eb;">{t['title']}</span>
                 <button onclick="mmRenameToggle({t['id']})" title="Rename"
-                        style="background:none;border:none;color:#64748b;cursor:pointer;font-size:0.8rem;padding:0 4px;vertical-align:middle;">✏️</button>
+                        style="background:none;border:none;color:#475569;cursor:pointer;font-size:0.8rem;padding:0 4px;vertical-align:middle;">✏️</button>
                 <form id="mm-rename-{t['id']}" action="{rename_url}" method="post"
                       style="display:none;margin-top:6px;">
                     <input type="hidden" name="entry_id" value="{t['id']}">
-                    <input type="text" name="title" value="{safe_title}" required maxlength="120"
-                           style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:4px 6px;font-size:0.8rem;width:200px;">
-                    <button type="submit"
-                            style="background:#0c4a6e;border:1px solid #0284c7;color:#7dd3fc;padding:3px 8px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-left:4px;">Save</button>
-                    <button type="button" onclick="mmRenameToggle({t['id']})"
-                            style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:3px 8px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-left:2px;">Cancel</button>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                        <input type="text" name="title" value="{safe_title}" required maxlength="120"
+                               style="width:200px;font-size:13px;">
+                        <button type="submit" class="btn btn-blue">Save</button>
+                        <button type="button" onclick="mmRenameToggle({t['id']})" class="btn btn-gray">Cancel</button>
+                    </div>
                 </form>
-                <div style="font-size:0.72rem;color:#475569;margin-top:2px;">{ytid}</div>
+                <div style="font-size:0.65rem;color:#334155;margin-top:2px;">{ytid}</div>
             </td>
             {submitter_cell}
-            <td style="padding:8px;text-align:center;">
-                <span style="color:{active_color};font-size:0.8rem;">{active_label}</span>
-            </td>
-            <td style="padding:8px;text-align:right;white-space:nowrap;">
+            <td style="text-align:center;">{status_badge}</td>
+            <td style="text-align:right;white-space:nowrap;">
                 <form action="{toggle_url}" method="post" style="display:inline;">
                     <input type="hidden" name="entry_id" value="{t['id']}">
-                    <button style="background:#1e293b;border:1px solid #334155;color:#94a3b8;padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-right:4px;">
-                        {'Disable' if t.get('is_active', True) else 'Enable'}
-                    </button>
+                    <input type="hidden" name="new_active" value="{new_active_val}">
+                    <button class="{toggle_class}" style="margin-right:4px;">{toggle_label}</button>
                 </form>
                 <form action="{delete_url}" method="post" style="display:inline;"
                       onsubmit="return confirm('Remove this video?')">
                     <input type="hidden" name="entry_id" value="{t['id']}">
-                    <button style="background:#1a0505;border:1px solid #dc2626;color:#f87171;padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:3px;">
-                        Delete
-                    </button>
+                    <button class="btn btn-red">Delete</button>
                 </form>
             </td>
         </tr>"""
-    extra_th = f'<th style="padding:8px;text-align:left;">Submitted by</th>' if extra_col_header else ""
+    extra_th = '<th>Submitted by</th>' if show_submitter else ""
     return f"""
-    <table style="width:100%;border-collapse:collapse;">
+    <div class="table-wrap">
+    <table>
         <thead>
-            <tr style="border-bottom:1px solid #1e293b;color:#64748b;font-size:0.75rem;">
-                <th style="padding:8px;text-align:left;">Thumbnail</th>
-                <th style="padding:8px;text-align:left;">Title / ID</th>
+            <tr>
+                <th>Thumbnail</th>
+                <th>Title / ID</th>
                 {extra_th}
-                <th style="padding:8px;text-align:center;">Status</th>
-                <th style="padding:8px;text-align:right;">Actions</th>
+                <th style="text-align:center;">Status</th>
+                <th style="text-align:right;">Actions</th>
             </tr>
         </thead>
         <tbody>{rows}</tbody>
-    </table>"""
+    </table>
+    </div>"""
 
 
 _RENAME_JS = """
@@ -140,6 +147,29 @@ function mmRenameToggle(id) {
     var form = document.getElementById('mm-rename-' + id);
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
 }
+
+// Client-side YouTube URL validation
+(function() {
+    var form = document.getElementById('mattAddForm');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        var raw = document.getElementById('mattUrlInput').value.trim();
+        var patterns = [
+            /youtu\.be\/([A-Za-z0-9_-]{11})/,
+            /youtube\.com\/watch\?.*v=([A-Za-z0-9_-]{11})/,
+            /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/,
+            /youtube\.com\/v\/([A-Za-z0-9_-]{11})/,
+            /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,
+            /^[A-Za-z0-9_-]{11}$/,
+        ];
+        var valid = patterns.some(function(p) { return p.test(raw); });
+        if (!valid) {
+            e.preventDefault();
+            var msg = document.getElementById('mattUrlErr');
+            if (msg) { msg.style.display = 'block'; msg.textContent = 'Enter a valid YouTube URL or 11-character video ID.'; }
+        }
+    });
+})();
 </script>"""
 
 
@@ -220,110 +250,101 @@ def admin_matt_page(
     pending = sub_list(status="pending")
     history = [s for s in sub_list() if s.get("status") != "pending"]
 
+    active_count   = sum(1 for t in tracks if t.get("is_active", True))
+    approved_count = sum(1 for s in history if s.get("status") == "approved")
+    rejected_count = sum(1 for s in history if s.get("status") == "rejected")
+
     playlist_table = _video_table(
         tracks, "/admin/matt/toggle", "/admin/matt/rename", "/admin/matt/delete",
-        extra_col_header="Submitted by",
+        show_submitter=True,
     )
 
-    # Pending submissions
+    # ── Pending submissions ───────────────────────────────────────────────────
     if pending:
-        sub_rows = ""
+        sub_cards = ""
         for s in pending:
             ytid = s.get("youtube_id", "")
-            sub_rows += f"""
-            <tr style="border-bottom:1px solid #0f172a;vertical-align:middle;">
-                <td style="padding:8px;">
-                    <a href="{_yt_url(ytid)}" target="_blank" rel="noopener">
-                        <img src="{_yt_thumb(ytid)}" style="width:100px;height:56px;object-fit:cover;border-radius:4px;">
-                    </a>
-                </td>
-                <td style="padding:8px;color:#e5e7eb;">{s['title']}<div style="font-size:0.72rem;color:#475569;">{ytid}</div></td>
-                <td style="padding:8px;color:#94a3b8;font-size:0.82rem;">{s['player_name']}<div style="color:#475569;font-size:0.72rem;">#{s['player_id']}</div></td>
-                <td style="padding:8px;color:#64748b;font-size:0.78rem;">{s.get('note','')[:80]}</td>
-                <td style="padding:8px;color:#475569;font-size:0.72rem;">{s.get('submitted_at','')[:16]}</td>
-                <td style="padding:8px;white-space:nowrap;">
-                    <form action="/admin/matt/approve" method="post" style="display:inline;">
-                        <input type="hidden" name="sub_id" value="{s['id']}">
-                        <button style="background:#052e16;border:1px solid #16a34a;color:#4ade80;padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-right:4px;">
-                            ✓ Approve
-                        </button>
-                    </form>
-                    <form action="/admin/matt/reject" method="post" style="display:inline;">
-                        <input type="hidden" name="sub_id" value="{s['id']}">
-                        <button style="background:#1a0505;border:1px solid #dc2626;color:#f87171;padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-right:4px;">
-                            ✕ Reject
-                        </button>
-                    </form>
-                    <form action="/admin/matt/sub-delete" method="post" style="display:inline;"
-                          onsubmit="return confirm('Delete this submission record?')">
-                        <input type="hidden" name="sub_id" value="{s['id']}">
-                        <button style="background:#1e293b;border:1px solid #334155;color:#64748b;padding:4px 8px;font-size:0.75rem;cursor:pointer;border-radius:3px;">
-                            🗑
-                        </button>
-                    </form>
-                </td>
-            </tr>"""
-        sub_table = f"""
-        <table style="width:100%;border-collapse:collapse;">
-            <thead>
-                <tr style="border-bottom:1px solid #1e293b;color:#64748b;font-size:0.75rem;">
-                    <th style="padding:8px;text-align:left;">Thumbnail</th>
-                    <th style="padding:8px;text-align:left;">Title</th>
-                    <th style="padding:8px;text-align:left;">Player</th>
-                    <th style="padding:8px;text-align:left;">Note</th>
-                    <th style="padding:8px;text-align:left;">Submitted</th>
-                    <th style="padding:8px;text-align:left;">Action</th>
-                </tr>
-            </thead>
-            <tbody>{sub_rows}</tbody>
-        </table>"""
+            note_html = f'<div style="margin-top:6px;color:#94a3b8;font-size:0.7rem;font-style:italic;">{s.get("note","")[:100]}</div>' if s.get("note") else ""
+            sub_cards += f"""
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #1e293b;flex-wrap:wrap;">
+                <a href="{_yt_url(ytid)}" target="_blank" rel="noopener" style="flex-shrink:0;">
+                    <img src="{_yt_thumb(ytid)}" style="width:140px;height:79px;object-fit:cover;border-radius:4px;border:1px solid #1e293b;display:block;">
+                </a>
+                <div style="flex:1;min-width:180px;">
+                    <div style="color:#e5e7eb;font-size:0.85rem;font-weight:bold;margin-bottom:4px;">{s['title']}</div>
+                    <div style="color:#475569;font-size:0.7rem;margin-bottom:4px;">{ytid}</div>
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                        <span class="badge badge-blue">{s['player_name']}</span>
+                        <span style="color:#475569;font-size:0.65rem;">#{s['player_id']}</span>
+                        <span style="color:#475569;font-size:0.65rem;">{s.get('submitted_at','')[:16]}</span>
+                    </div>
+                    {note_html}
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+                        <form action="/admin/matt/approve" method="post" style="display:inline;">
+                            <input type="hidden" name="sub_id" value="{s['id']}">
+                            <button class="btn btn-green">&#10003; Approve</button>
+                        </form>
+                        <form action="/admin/matt/reject" method="post" style="display:inline;">
+                            <input type="hidden" name="sub_id" value="{s['id']}">
+                            <button class="btn btn-red">&#10005; Reject</button>
+                        </form>
+                        <form action="/admin/matt/sub-delete" method="post" style="display:inline;"
+                              onsubmit="return confirm('Delete this submission record?')">
+                            <input type="hidden" name="sub_id" value="{s['id']}">
+                            <button class="btn btn-gray">&#128465; Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>"""
+        sub_section = sub_cards
     else:
-        sub_table = '<p style="color:#64748b;padding:12px 0;">No pending submissions.</p>'
+        sub_section = '<p style="color:#475569;padding:12px 0;">No pending submissions.</p>'
 
-    # Submission history (approved / rejected)
+    # ── Submission history ────────────────────────────────────────────────────
     if history:
         hist_rows = ""
         for s in history:
             ytid = s.get("youtube_id", "")
-            sc = "#4ade80" if s["status"] == "approved" else "#f87171"
+            badge = (
+                '<span class="badge badge-green">approved</span>'
+                if s["status"] == "approved" else
+                '<span class="badge badge-red">rejected</span>'
+            )
             hist_rows += f"""
-            <tr style="border-bottom:1px solid #0f172a;vertical-align:middle;">
-                <td style="padding:6px;">
+            <tr>
+                <td>
                     <a href="{_yt_url(ytid)}" target="_blank" rel="noopener">
-                        <img src="{_yt_thumb(ytid)}" style="width:80px;height:45px;object-fit:cover;border-radius:3px;display:block;">
+                        <img src="{_yt_thumb(ytid)}" style="width:72px;height:40px;object-fit:cover;border-radius:3px;display:block;border:1px solid #1e293b;">
                     </a>
                 </td>
-                <td style="padding:6px;color:#e5e7eb;font-size:0.8rem;">{s['title'][:70]}</td>
-                <td style="padding:6px;color:#94a3b8;font-size:0.75rem;">{s['player_name']}</td>
-                <td style="padding:6px;">
-                    <span style="color:{sc};font-size:0.72rem;font-weight:bold;text-transform:uppercase;">{s['status']}</span>
-                </td>
-                <td style="padding:6px;color:#475569;font-size:0.7rem;">{s.get('submitted_at','')[:16]}</td>
-                <td style="padding:6px;">
+                <td style="color:#e5e7eb;">{s['title'][:65]}</td>
+                <td style="color:#94a3b8;">{s['player_name']}</td>
+                <td>{badge}</td>
+                <td style="color:#475569;">{s.get('submitted_at','')[:16]}</td>
+                <td style="text-align:right;">
                     <form action="/admin/matt/sub-delete" method="post" style="display:inline;"
                           onsubmit="return confirm('Remove this record?')">
                         <input type="hidden" name="sub_id" value="{s['id']}">
-                        <button style="background:#1e293b;border:1px solid #334155;color:#64748b;padding:3px 8px;font-size:0.72rem;cursor:pointer;border-radius:3px;">
-                            Remove
-                        </button>
+                        <button class="btn btn-gray">Remove</button>
                     </form>
                 </td>
             </tr>"""
         hist_table = f"""
         <details style="margin-top:16px;">
-            <summary style="color:#475569;font-size:0.8rem;cursor:pointer;user-select:none;padding:8px 0;">
-                Submission History ({len(history)} handled)
+            <summary style="color:#475569;font-size:0.75rem;cursor:pointer;user-select:none;padding:8px 0;list-style:none;">
+                &#9654; Submission History &mdash; {len(history)} handled
+                ({approved_count} approved, {rejected_count} rejected)
             </summary>
-            <div style="margin-top:8px;overflow-x:auto;">
-                <table style="width:100%;border-collapse:collapse;">
+            <div style="margin-top:8px;" class="table-wrap">
+                <table>
                     <thead>
-                        <tr style="border-bottom:1px solid #1e293b;color:#475569;font-size:0.7rem;">
-                            <th style="padding:6px;text-align:left;">Video</th>
-                            <th style="padding:6px;text-align:left;">Title</th>
-                            <th style="padding:6px;text-align:left;">Player</th>
-                            <th style="padding:6px;text-align:left;">Status</th>
-                            <th style="padding:6px;text-align:left;">Date</th>
-                            <th style="padding:6px;"></th>
+                        <tr>
+                            <th>Video</th>
+                            <th>Title</th>
+                            <th>Player</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>{hist_rows}</tbody>
@@ -333,46 +354,82 @@ def admin_matt_page(
     else:
         hist_table = ""
 
+    # ── Pending section border color (urgent red when queue non-empty) ────────
+    pending_border = "#7f1d1d" if pending else "#1e293b"
+    pending_bg     = "#0d0404" if pending else "#0f172a"
+
     html = f"""
-    <a href="/admin" style="color:#38bdf8;">&larr; Admin Dashboard</a>
-    <h1 style="margin:8px 0 4px 0;">📺 MATT — Channel 28 Playlist Manager</h1>
-    <p style="color:#64748b;margin-bottom:20px;">
-        Community player videos &amp; streams. Review submissions and manage the CH 28 playlist.
-    </p>
+    <a href="/admin" style="color:#64748b;font-size:0.75rem;">&larr; Admin Dashboard</a>
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0 4px 0;flex-wrap:wrap;">
+        <h1 style="font-size:1.1rem;color:#f59e0b;margin:0;">&#128250; MATT &mdash; Channel 28</h1>
+        <span class="badge badge-yellow">CH 28</span>
+        <span style="color:#475569;font-size:0.75rem;">Community player videos &amp; streams</span>
+    </div>
+
     {_banner(msg, err)}
 
-    <div style="background:#1c0a0a;border:1px solid #7f1d1d;border-radius:8px;padding:20px;margin-bottom:24px;">
-        <h2 style="font-size:0.95rem;color:#fca5a5;margin:0 0 14px 0;">
-            Pending Submissions ({len(pending)})
-        </h2>
-        {sub_table}
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+        <div class="stat-box">
+            <div class="stat-value">{len(tracks)}</div>
+            <div class="stat-label">Total Videos</div>
+        </div>
+        <div class="stat-box" style="border-color:#16a34a30;">
+            <div class="stat-value" style="color:#4ade80;">{active_count}</div>
+            <div class="stat-label">Active</div>
+        </div>
+        <div class="stat-box" style="border-color:{'#7f1d1d' if pending else '#1e293b'};">
+            <div class="stat-value" style="color:{'#fca5a5' if pending else '#e5e7eb'};">{len(pending)}</div>
+            <div class="stat-label">Pending Review</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value" style="color:#94a3b8;">{len(history)}</div>
+            <div class="stat-label">Handled</div>
+        </div>
+    </div>
+
+    <div class="card" style="border-color:{pending_border};background:{pending_bg};margin-bottom:16px;">
+        <h3 style="color:#fca5a5;border-bottom-color:{pending_border};">
+            &#128276; Pending Submissions
+            {'<span class="badge badge-red" style="margin-left:8px;">' + str(len(pending)) + ' waiting</span>' if pending else ''}
+        </h3>
+        {sub_section}
         {hist_table}
     </div>
 
-    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px;margin-bottom:24px;">
-        <h2 style="font-size:0.95rem;color:#e2e8f0;margin:0 0 14px 0;">Add Video Directly to MATT</h2>
-        <form action="/admin/matt/add" method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-            <div>
-                <label style="display:block;color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">YouTube URL or ID</label>
-                <input type="text" name="youtube_url" required placeholder="https://youtube.com/watch?v=... or video ID"
-                       style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:320px;">
+    <div class="card" style="border-color:#1e3a5f;margin-bottom:16px;">
+        <h3 style="color:#93c5fd;">&#43; Add Video Directly to MATT</h3>
+        <form id="mattAddForm" action="/admin/matt/add" method="post">
+            <div class="form-row">
+                <div>
+                    <div class="form-label">YouTube URL or Video ID</div>
+                    <input id="mattUrlInput" type="text" name="youtube_url" required
+                           placeholder="https://youtube.com/watch?v=... or 11-char ID"
+                           style="width:100%;">
+                </div>
+                <div>
+                    <div class="form-label">Title</div>
+                    <input type="text" name="title" required maxlength="120"
+                           placeholder="Video title"
+                           style="width:100%;">
+                </div>
+                <div>
+                    <div class="form-label">&nbsp;</div>
+                    <button type="submit" class="btn btn-blue" style="width:100%;">Add to MATT</button>
+                </div>
             </div>
-            <div>
-                <label style="display:block;color:#94a3b8;font-size:0.75rem;margin-bottom:4px;">Title</label>
-                <input type="text" name="title" required maxlength="120" placeholder="Video title"
-                       style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:240px;">
-            </div>
-            <button type="submit"
-                    style="background:#1d4ed8;border:1px solid #3b82f6;color:#e2e8f0;padding:8px 18px;font-size:0.85rem;border-radius:4px;cursor:pointer;">
-                Add to MATT
-            </button>
+            <div id="mattUrlErr" style="display:none;color:#f87171;font-size:0.72rem;margin-top:4px;"></div>
         </form>
     </div>
 
-    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px;">
-        <h2 style="font-size:0.95rem;color:#e2e8f0;margin:0 0 14px 0;">MATT Playlist ({len(tracks)} video{"s" if len(tracks) != 1 else ""})</h2>
+    <div class="card">
+        <h3>
+            &#127909; MATT Playlist
+            <span class="badge badge-green" style="margin-left:8px;">{active_count} active</span>
+            <span class="badge badge-yellow" style="margin-left:4px;">{len(tracks) - active_count} hidden</span>
+        </h3>
         {playlist_table}
     </div>
+
     {_RENAME_JS}
     """
     from admins_ux import admin_shell
@@ -400,15 +457,13 @@ async def admin_matt_add(
 async def admin_matt_toggle(
     session_token: Optional[str] = Cookie(None),
     entry_id: int = Form(...),
+    new_active: int = Form(...),
 ):
     _, redir = _admin_guard(session_token)
     if redir:
         return redir
-    from maph_matt import matt_get, matt_toggle
-    tracks = matt_get()
-    t = next((x for x in tracks if x["id"] == entry_id), None)
-    if t:
-        matt_toggle(entry_id, not t.get("is_active", True))
+    from maph_matt import matt_toggle
+    matt_toggle(entry_id, bool(new_active))
     return RedirectResponse("/admin/matt", status_code=303)
 
 
