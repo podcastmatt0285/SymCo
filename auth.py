@@ -478,20 +478,47 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         .login-ticker {
             width: 100%;
             background: #0f172a;
-            border-bottom: 1px solid #1e293b;
-            font-size: 0.72rem;
+            border-bottom: 1px solid #334155;
+            font-size: 0.8rem;
             color: #cbd5e1;
             white-space: nowrap;
             overflow: hidden;
-            height: 28px;
+            height: 34px;
             display: flex;
             align-items: center;
             flex-shrink: 0;
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             letter-spacing: 0.02em;
         }
-        .login-tickers .login-ticker:last-child {
-            border-bottom: 1px solid #334155;
+        .tk-controls {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex-shrink: 0;
+            padding: 0 8px;
+            border-right: 1px solid #334155;
+            height: 100%;
+        }
+        .ticker-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-family: inherit;
+            line-height: 1.5;
+            user-select: none;
+        }
+        .ticker-btn:hover {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        .ticker-btn.active {
+            background: #1d4ed8;
+            border-color: #3b82f6;
+            color: #e2e8f0;
         }
         .tk-label {
             padding: 0 8px;
@@ -499,7 +526,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             font-weight: 700;
             letter-spacing: 0.1em;
             flex-shrink: 0;
-            border-right: 1px solid #1e293b;
+            border-right: 1px solid #334155;
             height: 100%;
             display: flex;
             align-items: center;
@@ -677,6 +704,12 @@ def login_page(session_token: Optional[str] = Cookie(None)):
     <!-- Market tickers -->
     <div class="login-tickers">
         <div class="login-ticker">
+            <div class="tk-controls">
+                <button class="ticker-btn" id="tkRestart" title="Restart">&#9198;</button>
+                <button class="ticker-btn" id="tkRewind"  title="Rewind">&#9194;</button>
+                <button class="ticker-btn" id="tkPlay"    title="Pause">&#9208;</button>
+                <button class="ticker-btn" id="tkSpeed"   title="Speed">1&times;</button>
+            </div>
             <span class="tk-label tk-mkt">MKT</span>
             <div class="tk-viewport">
                 <div id="tkMkt" style="display:inline-block;white-space:nowrap;will-change:transform;transform:translateX(0);">Loading&hellip;</div>
@@ -817,63 +850,111 @@ def login_page(session_token: Optional[str] = Cookie(None)):
             setInterval(showNext, 5000); // 0.9s fade-out + ~3.2s display + 0.9s fade-in
         })();
 
-        // ── Three market tickers ──
+        // ── Three market tickers (mirrors in-game state machine) ──
         (function () {
+            var STORE  = 'wadsTickerState';
+            var SPEEDS = [0.5, 1, 1.5, 2];
+            var BASE_SPEEDS = [0.9, 0.72, 0.55]; // per-row base px/frame
+
+            var state = { paused: false, speedIdx: 1, direction: 1, offsets: [0, 0, 0] };
+            try {
+                var saved = JSON.parse(localStorage.getItem(STORE) || '{}');
+                if (typeof saved.speedIdx === 'number' && saved.speedIdx >= 0 && saved.speedIdx < SPEEDS.length) state.speedIdx = saved.speedIdx;
+                if (typeof saved.direction === 'number') state.direction = saved.direction;
+            } catch(e) {}
+
+            var tracks    = [document.getElementById('tkMkt'), document.getElementById('tkDm'), document.getElementById('tkStk')];
+            var halfWidths = [0, 0, 0];
+            var btnPlay    = document.getElementById('tkPlay');
+            var btnRewind  = document.getElementById('tkRewind');
+            var btnRestart = document.getElementById('tkRestart');
+            var btnSpeed   = document.getElementById('tkSpeed');
+
+            function saveState() {
+                try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e) {}
+            }
+
+            function updateUI() {
+                btnPlay.innerHTML  = state.paused ? '&#9654;' : '&#9208;';
+                btnPlay.title      = state.paused ? 'Play' : 'Pause';
+                btnSpeed.innerHTML = SPEEDS[state.speedIdx] + '&times;';
+                btnRewind.classList.toggle('active', state.direction === -1);
+            }
+
+            function step() {
+                if (!state.paused) {
+                    var mult = SPEEDS[state.speedIdx] * state.direction;
+                    for (var i = 0; i < tracks.length; i++) {
+                        var el = tracks[i];
+                        if (!halfWidths[i]) halfWidths[i] = el.scrollWidth / 2;
+                        var hw = halfWidths[i] || 1;
+                        state.offsets[i] -= BASE_SPEEDS[i] * mult;
+                        if (state.offsets[i] < -hw) state.offsets[i] += hw;
+                        if (state.offsets[i] > 0)   state.offsets[i] -= hw;
+                        el.style.transform = 'translateX(' + state.offsets[i] + 'px)';
+                    }
+                }
+                requestAnimationFrame(step);
+            }
+
+            btnPlay.addEventListener('click', function() {
+                state.paused = !state.paused;
+                if (!state.paused) state.direction = 1;
+                updateUI(); saveState();
+            });
+            btnRewind.addEventListener('click', function() {
+                state.direction = state.direction === -1 ? 1 : -1;
+                state.paused = false;
+                updateUI(); saveState();
+            });
+            btnRestart.addEventListener('click', function() {
+                state.offsets = [0, 0, 0];
+                state.direction = 1;
+                state.paused = false;
+                updateUI(); saveState();
+            });
+            btnSpeed.addEventListener('click', function() {
+                state.speedIdx = (state.speedIdx + 1) % SPEEDS.length;
+                updateUI(); saveState();
+            });
+
+            updateUI();
+            requestAnimationFrame(step);
+
             function fmt(v) {
                 if (v == null) return '—';
                 return v >= 1000 ? '$' + (+v).toLocaleString(undefined, {maximumFractionDigits: 0})
                                  : '$' + (+v).toFixed(2);
             }
 
-            function runTicker(el, speed) {
-                var halfWidth = 0;
-                var offset = 0;
-                function tick() {
-                    if (!halfWidth) halfWidth = el.scrollWidth / 2;
-                    offset -= speed;
-                    if (offset < -halfWidth) offset += halfWidth;
-                    el.style.transform = 'translateX(' + offset + 'px)';
-                    requestAnimationFrame(tick);
-                }
-                requestAnimationFrame(tick);
-            }
-
-            var mkt = document.getElementById('tkMkt');
-            var dm  = document.getElementById('tkDm');
-            var stk = document.getElementById('tkStk');
-
-            fetch('/api/public/ticker').then(function (r) { return r.json(); }).then(function (d) {
-                var mktParts = (d.commodities || []).map(function (it) {
+            fetch('/api/public/ticker').then(function(r) { return r.json(); }).then(function(d) {
+                var mktParts = (d.commodities || []).map(function(it) {
                     return (it.label || it.name || '') + ': ' + fmt(it.price);
                 });
                 if (!mktParts.length) mktParts.push('MARKET OPENING…');
                 var mktText = mktParts.join('  ·  ');
-                mkt.textContent = mktText + '       ' + mktText;
+                tracks[0].textContent = mktText + '       ' + mktText;
 
-                var dmParts = (d.district || []).map(function (it) {
+                var dmParts = (d.district || []).map(function(it) {
                     return (it.label || it.name || '') + ': ' + fmt(it.price);
                 });
                 if (!dmParts.length) dmParts.push('NO DISTRICT TRADES YET');
                 var dmText = dmParts.join('  ·  ');
-                dm.textContent = dmText + '       ' + dmText;
+                tracks[1].textContent = dmText + '       ' + dmText;
 
-                var stkParts = (d.stocks || []).map(function (it) {
+                var stkParts = (d.stocks || []).map(function(it) {
                     return (it.label || '') + ' ' + fmt(it.price);
                 });
                 if (!stkParts.length) stkParts.push('NO STOCKS LISTED');
                 var stkText = stkParts.join('  ·  ');
-                stk.textContent = stkText + '       ' + stkText;
+                tracks[2].textContent = stkText + '       ' + stkText;
 
-                runTicker(mkt, 0.9);
-                runTicker(dm,  0.72);
-                runTicker(stk, 0.55);
-            }).catch(function () {
-                mkt.textContent = 'MARKET FEED OFFLINE';
-                dm.textContent  = 'DISTRICT MARKET FEED OFFLINE';
-                stk.textContent = 'STOCK FEED OFFLINE';
-                runTicker(mkt, 0.9);
-                runTicker(dm,  0.72);
-                runTicker(stk, 0.55);
+                halfWidths = [0, 0, 0]; // remeasure after content loads
+            }).catch(function() {
+                tracks[0].textContent = 'MARKET FEED OFFLINE       MARKET FEED OFFLINE';
+                tracks[1].textContent = 'DISTRICT MARKET FEED OFFLINE       DISTRICT MARKET FEED OFFLINE';
+                tracks[2].textContent = 'STOCK FEED OFFLINE       STOCK FEED OFFLINE';
+                halfWidths = [0, 0, 0];
             });
         })();
     </script>
