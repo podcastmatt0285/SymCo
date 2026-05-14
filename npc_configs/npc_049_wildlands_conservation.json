@@ -1,0 +1,78 @@
+{
+  "player_id": -2049,
+  "business_name": "Wildlands Conservation Group",
+  "description": "Full-spectrum zoo complex spanning African wildlife, primates, arctic animals, marine life, exotic species, and an aviary. Self-supplies animal feed, veterinary supplies, enclosures, and aquarium tanks in-house. Sells zoo passes, safari tours, conservation memberships, and behind-the-scenes experiences on the district market.",
+  "cash_caps": {
+    "hard_high": 120000000,
+    "soft_high": 55000000,
+    "soft_low": 15000000,
+    "hard_low": 5000000
+  },
+  "seed": {
+    "starting_cash": 35000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "zoo", "size": 10, "plots_merged": 10 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "african_wildlife_preserve", "district_seed_index": 0 },
+    { "business_type": "primate_conservation",      "district_seed_index": 0 },
+    { "business_type": "arctic_habitat_center",     "district_seed_index": 0 },
+    { "business_type": "marine_life_aquarium",      "district_seed_index": 0 },
+    { "business_type": "exotic_animal_facility",    "district_seed_index": 0 },
+    { "business_type": "aviary_sanctuary",          "district_seed_index": 0 },
+    { "business_type": "zoo_infrastructure_factory","district_seed_index": 0 },
+    { "business_type": "zoo_supplies_factory",      "district_seed_index": 0 },
+    { "business_type": "zoo_district",              "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "beef":            { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.1,  "market": "regular" },
+    "grass":           { "target_inventory": 15000, "reorder_at": 3000, "max_price_multiplier": 1.1,  "market": "regular" },
+    "apples":          { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "corn":            { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
+    "wheat":           { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "timber":          { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "lumber":          { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "steel":           { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
+    "concrete":        { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "glass":           { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "sand":            { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.05, "market": "regular" },
+    "plastic":         { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "microchip":       { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "medicine":        { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "bandage":         { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "syringe":         { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "surgical_gloves": { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "active_ingredient":{ "target_inventory": 1000, "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "apple_seeds":     { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "orange_seeds":    { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "hvac_unit":       { "target_inventory": 20,    "reorder_at": 5,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "barracuda":       { "target_inventory": 100,   "reorder_at": 20,   "max_price_multiplier": 1.15, "market": "regular" },
+    "mahi_mahi":       { "target_inventory": 100,   "reorder_at": 20,   "max_price_multiplier": 1.15, "market": "regular" },
+    "city_bus":        { "target_inventory": 5,     "reorder_at": 2,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "school_bus":      { "target_inventory": 5,     "reorder_at": 2,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "fast_food_combo": { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "diploma_certificate":{ "target_inventory": 300,"reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "curriculum_package":{ "target_inventory": 50,  "reorder_at": 10,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "textbook":        { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "paint":           { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "water":           { "target_inventory": 100000,"reorder_at": 20000,"max_price_multiplier": 1.05, "market": "regular" },
+    "salt":            { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.05, "market": "regular" },
+    "energy":          { "target_inventory": 500000,"reorder_at": 100000,"max_price_multiplier": 1.1, "market": "regular" },
+    "paper":           { "target_inventory": 10000, "reorder_at": 2000, "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "zoo_pass":              { "min_inventory_to_keep": 0, "max_order_quantity": 500,  "market": "district" },
+    "safari_tour":           { "min_inventory_to_keep": 0, "max_order_quantity": 100,  "market": "district" },
+    "animal_adoption":       { "min_inventory_to_keep": 0, "max_order_quantity": 200,  "market": "district" },
+    "conservation_membership":{ "min_inventory_to_keep": 0,"max_order_quantity": 150,  "market": "district" },
+    "behind_scenes_tour":    { "min_inventory_to_keep": 0, "max_order_quantity": 80,   "market": "district" },
+    "wildlife_program":      { "min_inventory_to_keep": 0, "max_order_quantity": 60,   "market": "district" },
+    "animal_enclosure":      { "min_inventory_to_keep": 50,"max_order_quantity": 100,  "market": "regular"  },
+    "aquarium_tank":         { "min_inventory_to_keep": 10,"max_order_quantity": 30,   "market": "regular"  },
+    "animal_feed":           { "min_inventory_to_keep": 500,"max_order_quantity": 2000,"market": "regular"  },
+    "veterinary_supplies":   { "min_inventory_to_keep": 100,"max_order_quantity": 500, "market": "regular"  },
+    "animal_microchip":      { "min_inventory_to_keep": 100,"max_order_quantity": 500, "market": "regular"  }
+  }
+}

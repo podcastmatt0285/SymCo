@@ -1,0 +1,40 @@
+{
+  "player_id": -2046,
+  "business_name": "Sentinel Systems",
+  "description": "Security and surveillance equipment manufacturer. Produces security cameras, alarm systems, full surveillance networks, and body scanners from circuit boards, plastics, and copper wire. Primary supplier to prison operators, defense contractors, and commercial security buyers.",
+  "cash_caps": {
+    "hard_high": 35000000,
+    "soft_high": 15000000,
+    "soft_low": 4000000,
+    "hard_low": 1200000
+  },
+  "seed": {
+    "starting_cash": 8000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "tech", "size": 3, "plots_merged": 3 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "security_equipment_factory", "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "circuit_board":  { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "lcd_panel":      { "target_inventory": 1500,  "reorder_at": 300,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "plastic":        { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire":    { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "processor":      { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "memory_module":  { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "steel":          { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "server":         { "target_inventory": 50,    "reorder_at": 10,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "router":         { "target_inventory": 100,   "reorder_at": 20,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":         { "target_inventory": 200000,"reorder_at": 40000, "max_price_multiplier": 1.1,  "market": "regular" },
+    "paper":          { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "security_camera":    { "min_inventory_to_keep": 0,   "max_order_quantity": 500,  "market": "regular" },
+    "alarm_system":       { "min_inventory_to_keep": 0,   "max_order_quantity": 300,  "market": "regular" },
+    "surveillance_system":{ "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "regular" },
+    "body_scanner":       { "min_inventory_to_keep": 0,   "max_order_quantity": 40,   "market": "regular" }
+  }
+}

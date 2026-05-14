@@ -1,0 +1,40 @@
+{
+  "player_id": -2055,
+  "business_name": "Apex Silicon",
+  "description": "Dedicated B2B semiconductor fabrication plant. Produces microchips, processors, memory modules, circuit boards, LCD panels, and battery cells exclusively for the open market — supplying electronics manufacturers, defense contractors, medical equipment makers, and anyone else downstream who needs precision components.",
+  "cash_caps": {
+    "hard_high": 60000000,
+    "soft_high": 25000000,
+    "soft_low": 7000000,
+    "hard_low": 2000000
+  },
+  "seed": {
+    "starting_cash": 15000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "tech", "size": 3, "plots_merged": 3 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "semiconductor_fab", "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "sand":    { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper":  { "target_inventory": 8000,  "reorder_at": 1600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "glass":   { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "plastic":  { "target_inventory": 4000, "reorder_at": 800,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "lead":    { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire":{ "target_inventory": 3000,"reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":  { "target_inventory": 600000,"reorder_at": 120000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "water":   { "target_inventory": 20000, "reorder_at": 4000,  "max_price_multiplier": 1.05, "market": "regular" },
+    "paper":   { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "microchip":     { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
+    "processor":     { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "memory_module": { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" },
+    "circuit_board": { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular" },
+    "lcd_panel":     { "min_inventory_to_keep": 100, "max_order_quantity": 800,  "market": "regular" },
+    "battery_cell":  { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular" }
+  }
+}

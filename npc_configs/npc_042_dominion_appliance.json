@@ -1,0 +1,39 @@
+{
+  "player_id": -2042,
+  "business_name": "Dominion Appliance Co.",
+  "description": "Home appliance manufacturer producing HVAC units, refrigerators, washers, water heaters, and stoves from steel, copper wire, and circuit boards. Supplies the residential and commercial markets with the full range of major household appliances.",
+  "cash_caps": {
+    "hard_high": 40000000,
+    "soft_high": 18000000,
+    "soft_low": 5000000,
+    "hard_low": 1500000
+  },
+  "seed": {
+    "starting_cash": 9000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "industrial", "size": 3, "plots_merged": 3 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "appliance_factory", "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "steel":        { "target_inventory": 6000,  "reorder_at": 1200, "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire":  { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper":       { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "circuit_board":{ "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "plastic":      { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "glass":        { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "rubber":       { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":       { "target_inventory": 200000,"reorder_at": 40000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "paper":        { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "hvac_unit":    { "min_inventory_to_keep": 0, "max_order_quantity": 100, "market": "regular" },
+    "water_heater": { "min_inventory_to_keep": 0, "max_order_quantity": 150, "market": "regular" },
+    "washer_dryer": { "min_inventory_to_keep": 0, "max_order_quantity": 120, "market": "regular" },
+    "refrigerator": { "min_inventory_to_keep": 0, "max_order_quantity": 150, "market": "regular" },
+    "stove":        { "min_inventory_to_keep": 0, "max_order_quantity": 150, "market": "regular" }
+  }
+}

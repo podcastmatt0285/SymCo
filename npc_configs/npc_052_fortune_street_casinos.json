@@ -1,0 +1,78 @@
+{
+  "player_id": -2052,
+  "business_name": "Fortune Street Casinos",
+  "description": "Casino equipment manufacturer and entertainment district operator. Produces slot machines, poker tables, roulette wheels, chips, and playing cards in-house, then runs a full entertainment district offering casino nights, sports events, concerts, and VIP experiences.",
+  "cash_caps": {
+    "hard_high": 60000000,
+    "soft_high": 25000000,
+    "soft_low": 7000000,
+    "hard_low": 2000000
+  },
+  "seed": {
+    "starting_cash": 15000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "entertainment", "size": 4, "plots_merged": 4 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "casino_equipment_factory", "district_seed_index": 0 },
+    { "business_type": "entertainment_district",   "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "steel":           { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "circuit_board":   { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "lcd_panel":       { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "processor":       { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire":     { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "plastic":         { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "lumber":          { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "cotton":          { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "leather":         { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "brass":           { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "paint":           { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "ink":             { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "champagne":       { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.15, "market": "regular" },
+    "beer":            { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "red_wine":        { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "burger":          { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "soda_cup":        { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "corn":            { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.05, "market": "regular" },
+    "fast_food_combo": { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "stadium_seat":    { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "scoreboard":      { "target_inventory": 5,     "reorder_at": 1,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "jumbotron":       { "target_inventory": 2,     "reorder_at": 1,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "athlete_contract":{ "target_inventory": 15,    "reorder_at": 3,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "team_jersey":     { "target_inventory": 200,   "reorder_at": 40,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "sports_ball":     { "target_inventory": 100,   "reorder_at": 20,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "artificial_turf": { "target_inventory": 5,     "reorder_at": 1,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "basketball_hoop": { "target_inventory": 10,    "reorder_at": 2,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "goal_post":       { "target_inventory": 8,     "reorder_at": 2,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "championship_trophy":{ "target_inventory": 5,  "reorder_at": 1,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "concert_stage":   { "target_inventory": 5,     "reorder_at": 1,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "sound_system":    { "target_inventory": 20,    "reorder_at": 5,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "lighting_rig":    { "target_inventory": 15,    "reorder_at": 3,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "pyrotechnics":    { "target_inventory": 200,   "reorder_at": 40,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "band_merchandise":{ "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "movie_screen":    { "target_inventory": 10,    "reorder_at": 2,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "theater_seat":    { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "popcorn_machine": { "target_inventory": 20,    "reorder_at": 5,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "projector":       { "target_inventory": 15,    "reorder_at": 3,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "film_reel":       { "target_inventory": 50,    "reorder_at": 10,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":          { "target_inventory": 350000,"reorder_at": 70000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "paper":           { "target_inventory": 4000,  "reorder_at": 800,  "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "slot_machine":    { "min_inventory_to_keep": 50,  "max_order_quantity": 200,  "market": "regular"  },
+    "poker_table":     { "min_inventory_to_keep": 20,  "max_order_quantity": 80,   "market": "regular"  },
+    "roulette_wheel":  { "min_inventory_to_keep": 10,  "max_order_quantity": 40,   "market": "regular"  },
+    "casino_chips":    { "min_inventory_to_keep": 2000,"max_order_quantity": 10000,"market": "regular"  },
+    "playing_cards":   { "min_inventory_to_keep": 200, "max_order_quantity": 2000, "market": "regular"  },
+    "concert_package": { "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "district" },
+    "sports_package":  { "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "district" },
+    "casino_night":    { "min_inventory_to_keep": 0,   "max_order_quantity": 80,   "market": "district" },
+    "movie_premier":   { "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "district" },
+    "theme_park_pass": { "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "district" },
+    "nightclub_vip":   { "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "district" }
+  }
+}

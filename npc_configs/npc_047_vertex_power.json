@@ -1,0 +1,33 @@
+{
+  "player_id": -2047,
+  "business_name": "Vertex Power & Grid",
+  "description": "Public utility operator running a power company and water treatment plant. Distributes residential electricity and drinking water to the district market — the essential infrastructure every neighborhood district depends on from day one.",
+  "cash_caps": {
+    "hard_high": 50000000,
+    "soft_high": 20000000,
+    "soft_low": 5000000,
+    "hard_low": 1500000
+  },
+  "seed": {
+    "starting_cash": 10000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "utilities", "size": 4, "plots_merged": 4 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "power_company",    "district_seed_index": 0 },
+    { "business_type": "water_treatment",  "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "energy":      { "target_inventory": 300000,"reorder_at": 60000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire": { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "water":       { "target_inventory": 50000, "reorder_at": 10000,"max_price_multiplier": 1.05, "market": "regular" },
+    "paper":       { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "residential_electricity":{ "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "district" },
+    "drinking_water":          { "min_inventory_to_keep": 0, "max_order_quantity": 4000, "market": "district" },
+    "wastewater_service":      { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "district" }
+  }
+}

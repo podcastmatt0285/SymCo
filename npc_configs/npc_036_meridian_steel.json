@@ -1,0 +1,34 @@
+{
+  "player_id": -2036,
+  "business_name": "Meridian Steel Works",
+  "description": "Heavy industrial steel and aluminum complex. Converts iron ore and coal into structural steel, rebar, and aluminum ingots — the foundational metals for construction, vehicle manufacturing, defense, and every metal-dependent district operation.",
+  "cash_caps": {
+    "hard_high": 60000000,
+    "soft_high": 25000000,
+    "soft_low": 6000000,
+    "hard_low": 2000000
+  },
+  "seed": {
+    "starting_cash": 12000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "industrial", "size": 4, "plots_merged": 4 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "steel_mill",       "district_seed_index": 0 },
+    { "business_type": "aluminum_foundry", "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "iron_ore": { "target_inventory": 15000, "reorder_at": 3000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "coal":     { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":   { "target_inventory": 500000,"reorder_at": 100000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "water":    { "target_inventory": 30000, "reorder_at": 6000,  "max_price_multiplier": 1.05, "market": "regular" },
+    "paper":    { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "steel":    { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
+    "rebar":    { "min_inventory_to_keep": 200, "max_order_quantity": 1500, "market": "regular" },
+    "aluminum": { "min_inventory_to_keep": 300, "max_order_quantity": 2000, "market": "regular" }
+  }
+}

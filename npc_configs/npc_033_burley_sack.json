@@ -1,0 +1,41 @@
+{
+  "player_id": -2033,
+  "business_name": "Burley Sack & Bag Co.",
+  "description": "Sack and bag manufacturer producing potato sacks, carrot sacks, and rice sacks from burlap. Runs rice paddies to self-supply rice for rice sacks. The sole market supplier of produce packaging for potato, carrot, and rice growers.",
+  "cash_caps": {
+    "hard_high": 15000000,
+    "soft_high": 6000000,
+    "soft_low": 1500000,
+    "hard_low": 400000
+  },
+  "seed": {
+    "starting_cash": 3000000,
+    "land_plots": [
+      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "lake", "proximity_features": ["road"], "size": 1 },
+      { "terrain_type": "lake", "proximity_features": ["road"], "size": 1 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "bag_and_luggage", "district_id": null, "active_lines": [] },
+    { "business_type": "rice_paddy", "district_id": null, "active_lines": [] },
+    { "business_type": "rice_paddy", "district_id": null, "active_lines": [] }
+  ],
+  "buy_items": {
+    "burlap":      { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
+    "rice_seeds":  { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "water":       { "target_inventory": 30000, "reorder_at": 6000, "max_price_multiplier": 1.05, "market": "regular" },
+    "energy":      { "target_inventory": 50000, "reorder_at": 10000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "paper":       { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "potato_sack": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "carrot_sack": { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "rice_sack":   { "min_inventory_to_keep": 500, "max_order_quantity": 2000, "market": "regular" },
+    "rice":        { "min_inventory_to_keep": 2000,"max_order_quantity": 5000, "market": "regular" },
+    "rice_seeds":  { "min_inventory_to_keep": 500, "max_order_quantity": 1000, "market": "regular" },
+    "sake":        { "min_inventory_to_keep": 0,   "max_order_quantity": 500,  "market": "regular" },
+    "rice_wine":   { "min_inventory_to_keep": 0,   "max_order_quantity": 500,  "market": "regular" }
+  }
+}

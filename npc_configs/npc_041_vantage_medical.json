@@ -1,0 +1,46 @@
+{
+  "player_id": -2041,
+  "business_name": "Vantage Medical Systems",
+  "description": "Medical equipment manufacturer producing the full range of hospital hardware. Assembles medical scanners, surgical tools, hospital beds, defibrillators, ventilators, IV pumps, wheelchairs, and prosthetics from steel, electronics, and polymer components.",
+  "cash_caps": {
+    "hard_high": 55000000,
+    "soft_high": 22000000,
+    "soft_low": 6000000,
+    "hard_low": 2000000
+  },
+  "seed": {
+    "starting_cash": 12000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "medical", "size": 3, "plots_merged": 3 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "medical_equipment_factory", "district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "steel":        { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
+    "aluminum":     { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire":  { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "processor":    { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "circuit_board":{ "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "lcd_panel":    { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "battery_cell": { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "plastic":      { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "rubber":       { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "cotton":       { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":       { "target_inventory": 400000,"reorder_at": 80000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "paper":        { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "medical_scanner": { "min_inventory_to_keep": 0, "max_order_quantity": 20,   "market": "regular" },
+    "surgical_tools":  { "min_inventory_to_keep": 0, "max_order_quantity": 200,  "market": "regular" },
+    "hospital_bed":    { "min_inventory_to_keep": 0, "max_order_quantity": 100,  "market": "regular" },
+    "defibrillator":   { "min_inventory_to_keep": 0, "max_order_quantity": 100,  "market": "regular" },
+    "ventilator":      { "min_inventory_to_keep": 0, "max_order_quantity": 50,   "market": "regular" },
+    "iv_pump":         { "min_inventory_to_keep": 0, "max_order_quantity": 150,  "market": "regular" },
+    "wheelchair":      { "min_inventory_to_keep": 0, "max_order_quantity": 200,  "market": "regular" },
+    "crutches":        { "min_inventory_to_keep": 0, "max_order_quantity": 400,  "market": "regular" },
+    "prosthetic":      { "min_inventory_to_keep": 0, "max_order_quantity": 80,   "market": "regular" }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "player_id": -2043,
+  "business_name": "Ironclad Defense Co.",
+  "description": "Full-spectrum defense contractor operating on government contracts. Manufactures weapons, tactical gear, military vehicles, and support supplies under one military district. Produces rifles, ammunition, tanks, drones, body armor, MREs, and military uniforms.",
+  "cash_caps": {
+    "hard_high": 120000000,
+    "soft_high": 55000000,
+    "soft_low": 15000000,
+    "hard_low": 5000000
+  },
+  "seed": {
+    "starting_cash": 30000000,
+    "land_plots": [],
+    "districts": [
+      { "district_type": "military", "size": 8, "plots_merged": 8 }
+    ]
+  },
+  "businesses": [
+    { "business_type": "weapons_factory",         "district_seed_index": 0 },
+    { "business_type": "tactical_gear_factory",   "district_seed_index": 0 },
+    { "business_type": "military_vehicle_plant",  "district_seed_index": 0 },
+    { "business_type": "military_support_facility","district_seed_index": 0 }
+  ],
+  "buy_items": {
+    "steel":       { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "aluminum":    { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "iron":        { "target_inventory": 4000,  "reorder_at": 800,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "lumber":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "plastic":     { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "brass":       { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "lead":        { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "jet_fuel":    { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "circuit_board":{ "target_inventory": 3000, "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "processor":   { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "copper_wire": { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "polyester":   { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "cotton":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "glass":       { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "battery_cell":{ "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "rubber":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "bus_engine":  { "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
+    "bus_chassis": { "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
+    "chassis":     { "target_inventory": 30,    "reorder_at": 8,     "max_price_multiplier": 1.1,  "market": "regular" },
+    "engine":      { "target_inventory": 30,    "reorder_at": 8,     "max_price_multiplier": 1.1,  "market": "regular" },
+    "security_camera":{ "target_inventory": 200,"reorder_at": 40,    "max_price_multiplier": 1.1,  "market": "regular" },
+    "beef":        { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "bread":       { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
+    "carrots":     { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "potatoes":    { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "leather":     { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
+    "energy":      { "target_inventory": 800000,"reorder_at": 160000,"max_price_multiplier": 1.1,  "market": "regular" },
+    "paper":       { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.05, "market": "regular" }
+  },
+  "sell_items": {
+    "rifle":            { "min_inventory_to_keep": 0,  "max_order_quantity": 500,  "market": "regular" },
+    "ammunition":       { "min_inventory_to_keep": 0,  "max_order_quantity": 10000,"market": "regular" },
+    "grenade":          { "min_inventory_to_keep": 0,  "max_order_quantity": 500,  "market": "regular" },
+    "missile":          { "min_inventory_to_keep": 0,  "max_order_quantity": 50,   "market": "regular" },
+    "body_armor":       { "min_inventory_to_keep": 0,  "max_order_quantity": 200,  "market": "regular" },
+    "combat_helmet":    { "min_inventory_to_keep": 0,  "max_order_quantity": 400,  "market": "regular" },
+    "tactical_vest":    { "min_inventory_to_keep": 0,  "max_order_quantity": 300,  "market": "regular" },
+    "night_vision":     { "min_inventory_to_keep": 0,  "max_order_quantity": 100,  "market": "regular" },
+    "military_radio":   { "min_inventory_to_keep": 0,  "max_order_quantity": 200,  "market": "regular" },
+    "encryption_device":{ "min_inventory_to_keep": 0,  "max_order_quantity": 50,   "market": "regular" },
+    "radar_array":      { "min_inventory_to_keep": 0,  "max_order_quantity": 20,   "market": "regular" },
+    "satellite_uplink": { "min_inventory_to_keep": 0,  "max_order_quantity": 15,   "market": "regular" },
+    "tank":             { "min_inventory_to_keep": 0,  "max_order_quantity": 10,   "market": "regular" },
+    "humvee":           { "min_inventory_to_keep": 0,  "max_order_quantity": 30,   "market": "regular" },
+    "apc":              { "min_inventory_to_keep": 0,  "max_order_quantity": 15,   "market": "regular" },
+    "drone":            { "min_inventory_to_keep": 0,  "max_order_quantity": 50,   "market": "regular" },
+    "mre":              { "min_inventory_to_keep": 0,  "max_order_quantity": 3000, "market": "regular" },
+    "military_uniform": { "min_inventory_to_keep": 0,  "max_order_quantity": 1000, "market": "regular" },
+    "dog_tags":         { "min_inventory_to_keep": 0,  "max_order_quantity": 2000, "market": "regular" },
+    "barracks_bunk":    { "min_inventory_to_keep": 0,  "max_order_quantity": 200,  "market": "regular" }
+  }
+}
