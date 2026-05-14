@@ -809,18 +809,612 @@ def _audio_tab() -> str:
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     MAPH / MATT — Video Channels
+     MAPH / MATT — Video Channels  (same visual language as the radio)
      MAPH = Markets, Analytics & Player Help  (CH 46)
      MATT = Market Action Trading Theater     (CH 28)
      ═══════════════════════════════════════════════════════════════ -->
 <style>
-#mm-wrap { max-width:760px; font-family:Georgia,'Times New Roman',serif; margin-top:40px; }
-.mm-set {
-    position:relative; background:#050A14; border:8px solid #0D1527;
+#mm-wrap { max-width:760px; font-family:Georgia,'Times New Roman',serif; }
+
+/* Outer box — identical properties to the radio */
+.mm-box {
+    position:relative; background:#1A0F0A; border:8px solid #2D1810;
     border-radius:4px; box-shadow:0 40px 100px rgba(0,0,0,0.9);
-    overflow:hidden; color:#E2E8F0;
-    outline:1px solid rgba(99,102,241,0.12); outline-offset:-12px;
+    overflow:hidden; color:#F5F5DC;
+    outline:1px solid rgba(176,141,87,0.3); outline-offset:-12px;
 }
+.mm-inlay {
+    position:absolute; inset:4px; border:1px solid rgba(176,141,87,0.2);
+    pointer-events:none; z-index:20; border-radius:2px;
+}
+
+/* Header — identical to .rp-header */
+.mm-header {
+    height:80px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    border-bottom:1px solid rgba(176,141,87,0.3);
+    background:#241812; padding:0 24px; text-align:center;
+}
+.mm-station-row { display:flex; align-items:center; gap:12px; }
+.mm-station-name {
+    font-size:1rem; letter-spacing:0.15em; font-weight:900;
+    color:#B08D57; text-transform:uppercase; margin:0;
+}
+.mm-slogan {
+    height:18px; overflow:hidden; font-size:0.62rem; font-style:italic;
+    opacity:0.4; text-transform:uppercase; letter-spacing:0.2em;
+    color:#F5F5DC; margin-top:4px;
+}
+
+/* Body — identical grid to .rp-body */
+.mm-body {
+    display:grid; grid-template-columns:200px 1fr;
+    gap:24px; padding:24px;
+}
+.mm-left { display:flex; flex-direction:column; gap:16px; }
+
+/* Channel art (replaces album artwork) */
+.mm-artwork {
+    width:100%; aspect-ratio:1/1; background:black;
+    border:2px solid rgba(166,124,0,0.3); border-radius:2px;
+    overflow:hidden; display:flex; align-items:center; justify-content:center;
+    position:relative;
+}
+.mm-artwork::before {
+    content:''; position:absolute; width:110%; height:110%;
+    border:1px solid rgba(176,141,87,0.12); border-radius:50%;
+    animation:mm-spin-slow 22s linear infinite;
+}
+.mm-artwork::after {
+    content:''; position:absolute; width:70%; height:70%;
+    border:1px solid rgba(176,141,87,0.08); border-radius:50%;
+    animation:mm-spin-slow 16s linear infinite reverse;
+}
+.mm-ch-num {
+    font-size:3rem; font-weight:900; line-height:1;
+    font-family:'JetBrains Mono','Courier New',monospace;
+    color:rgba(176,141,87,0.7);
+    text-shadow:0 0 30px rgba(176,141,87,0.3);
+    animation:mm-art-pulse 5s ease-in-out infinite; z-index:1;
+    display:flex; flex-direction:column; align-items:center;
+}
+.mm-ch-call {
+    font-size:0.52rem; letter-spacing:0.4em; font-weight:900;
+    color:rgba(176,141,87,0.5); text-transform:uppercase;
+    font-family:'JetBrains Mono','Courier New',monospace; margin-top:6px;
+}
+
+/* Track info (identical to .rp-trackinfo) */
+.mm-trackinfo { border-top:1px solid rgba(176,141,87,0.15); padding-top:14px; }
+.mm-track-label {
+    font-size:0.55rem; letter-spacing:0.5em; text-transform:uppercase;
+    color:#B08D57; font-weight:900; opacity:0.6; margin-bottom:4px;
+}
+.mm-track-title {
+    font-size:0.95rem; font-style:italic; text-transform:uppercase;
+    color:white; line-height:1.2; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+}
+.mm-track-ref {
+    font-size:0.6rem; opacity:0.3; text-transform:uppercase;
+    letter-spacing:0.1em; font-weight:bold; color:#F5F5DC; margin-top:2px;
+}
+
+/* Right column */
+.mm-right { display:flex; flex-direction:column; gap:14px; min-width:0; }
+
+/* Screen (replaces waveform canvas) */
+.mm-screen-wrap {
+    background:rgba(0,0,0,0.4); border:1px solid rgba(176,141,87,0.1);
+    border-radius:2px; position:relative; aspect-ratio:16/9; overflow:hidden;
+}
+.mm-screen-wrap::after {
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:15;
+    background:repeating-linear-gradient(
+        0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px
+    );
+}
+.mm-static {
+    position:absolute; inset:0; z-index:10;
+    background:#000; display:flex; align-items:center; justify-content:center;
+}
+.mm-static canvas { width:100%; height:100%; }
+#mmYtContainer { position:absolute; inset:0; z-index:5; }
+#mmYtContainer iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+.mm-ch-badge {
+    position:absolute; top:8px; left:10px; z-index:16;
+    background:rgba(0,0,0,0.7); border:1px solid rgba(176,141,87,0.25);
+    border-radius:3px; padding:2px 7px;
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:0.62rem; font-weight:700; letter-spacing:0.1em; color:#B08D57;
+}
+.mm-watermark {
+    position:absolute; bottom:8px; right:10px; z-index:16;
+    opacity:0.65; pointer-events:none;
+}
+.mm-watermark-logo {
+    width:26px; height:26px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.46rem; font-weight:900; letter-spacing:0.05em;
+    font-family:'JetBrains Mono','Courier New',monospace;
+    color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9);
+}
+.mm-wm-maph .mm-watermark-logo { background:radial-gradient(circle at 35% 35%,#6366f1,#312e81); }
+.mm-wm-matt .mm-watermark-logo { background:radial-gradient(circle at 35% 35%,#f59e0b,#92400e); }
+
+/* Metrics (identical to .rp-metrics) */
+.mm-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.mm-metric { border-left:2px solid rgba(176,141,87,0.3); padding:4px 12px; }
+.mm-metric-label {
+    font-size:0.5rem; letter-spacing:0.12em; text-transform:uppercase;
+    color:#B08D57; font-weight:900; margin-bottom:2px;
+}
+.mm-metric-value { font-size:0.85rem; color:#F5F5DC; }
+.mm-metric-value.mm-green { color:#22c55e; }
+.mm-metric-sub { font-size:0.5rem; text-transform:uppercase; opacity:0.3; font-weight:bold; color:#F5F5DC; }
+
+/* Transport controls (identical to .rp-controls) */
+.mm-controls {
+    border-top:1px solid rgba(176,141,87,0.1); padding-top:14px;
+    display:flex; align-items:center; gap:12px;
+}
+.mm-transport { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.mm-pp-btn {
+    width:48px; height:48px; border-radius:50%;
+    border:1px solid rgba(176,141,87,0.5); background:#241812;
+    color:#B08D57; font-size:1.2rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.2s,color 0.2s;
+}
+.mm-pp-btn:hover { background:#B08D57; color:black; }
+.mm-skip-btn {
+    background:none; border:none; color:#B08D57; opacity:0.4;
+    cursor:pointer; font-size:1.2rem; transition:opacity 0.2s; padding:0;
+}
+.mm-skip-btn:hover { opacity:1; }
+.mm-prog-wrap { flex:1; min-width:0; }
+.mm-prog-header {
+    display:flex; justify-content:space-between; font-size:0.52rem;
+    text-transform:uppercase; letter-spacing:0.15em; color:#B08D57; opacity:0.6; margin-bottom:6px;
+}
+.mm-prog-bar { height:2px; background:rgba(0,0,0,0.4); border-radius:999px; overflow:hidden; }
+.mm-prog-fill {
+    height:100%; background:linear-gradient(to right,#8B4513,#B08D57);
+    width:0%; transition:width 0.5s linear;
+}
+
+/* Channel tuner (replaces the dial knob) */
+.mm-tuner { display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; }
+.mm-tuner-row { display:flex; gap:5px; }
+.mm-tuner-btn {
+    background:#241812; border:1px solid rgba(176,141,87,0.35); color:#B08D57;
+    border-radius:3px; padding:5px 10px; font-size:0.72rem; cursor:pointer;
+    font-family:Georgia,serif; transition:background 0.2s,color 0.2s,border-color 0.2s;
+    user-select:none; letter-spacing:0.04em;
+}
+.mm-tuner-btn:hover { background:#B08D57; color:#1A0F0A; }
+.mm-tuner-btn.mm-on-maph { background:#1e1b4b; border-color:#6366f1; color:#a5b4fc; }
+.mm-tuner-btn.mm-on-matt { background:#1c1007; border-color:#d97706; color:#fcd34d; }
+.mm-tuner-lbl {
+    font-size:0.52rem; text-transform:uppercase; color:#B08D57;
+    font-weight:bold; letter-spacing:0.08em;
+}
+
+/* Playlist panel (identical to .rp-panel) */
+.mm-panel { padding-top:12px; border-top:1px solid rgba(176,141,87,0.1); }
+.mm-panel-hdr {
+    font-size:0.58rem; text-transform:uppercase; letter-spacing:0.2em;
+    color:#B08D57; opacity:0.6; margin-bottom:8px;
+}
+.mm-pl-list { max-height:200px; overflow-y:auto; }
+.mm-pl-item {
+    display:flex; align-items:center; gap:10px; padding:8px 10px;
+    border-radius:3px; cursor:pointer;
+    border-bottom:1px solid rgba(176,141,87,0.06); transition:background 0.15s;
+}
+.mm-pl-item:hover { background:rgba(176,141,87,0.08); }
+.mm-pl-item.mm-pl-active { background:rgba(176,141,87,0.15); }
+.mm-pl-num { font-size:0.6rem; color:#B08D57; opacity:0.6; min-width:18px; text-align:right; }
+.mm-pl-title { flex:1; font-size:0.78rem; color:#F5F5DC; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mm-pl-play { font-size:0.65rem; color:#B08D57; opacity:0.35; }
+.mm-pl-item.mm-pl-active .mm-pl-play { opacity:1; }
+
+/* Decorative cog */
+.mm-cog {
+    position:absolute; bottom:18px; left:18px; opacity:0.05;
+    font-size:2.4rem; animation:mm-spin-slow 15s linear infinite;
+    color:#B08D57; pointer-events:none; line-height:1;
+}
+
+@keyframes mm-art-pulse {
+    0%,100% { transform:scale(1); opacity:0.9; }
+    50%      { transform:scale(1.04); opacity:1; }
+}
+@keyframes mm-spin-slow { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@media(max-width:600px) {
+    .mm-body { grid-template-columns:1fr; }
+    .mm-left { flex-direction:row; flex-wrap:wrap; gap:12px; }
+    .mm-artwork { max-width:160px; }
+}
+</style>
+
+<div id="mm-wrap" style="margin-top:40px;">
+
+<!-- ── Main TV set ──────────────────────────────────────────────── -->
+<div class="mm-box">
+    <div class="mm-inlay"></div>
+
+    <!-- Header -->
+    <div class="mm-header">
+        <div class="mm-station-row">
+            <span id="mmIco" style="color:#B08D57;font-size:1.1rem;">&#128250;</span>
+            <h2 class="mm-station-name" id="mmSname">MAPH &mdash; Channel 46</h2>
+        </div>
+        <div class="mm-slogan"><span id="mmSlogan">Markets, Analytics &amp; Player Help</span></div>
+    </div>
+
+    <!-- Body -->
+    <div class="mm-body">
+
+        <!-- Left: channel art + now-airing info -->
+        <div class="mm-left">
+            <div class="mm-artwork" id="mmArtwork">
+                <div class="mm-ch-num" id="mmChNum">
+                    <span id="mmChNumVal">46</span>
+                    <span class="mm-ch-call" id="mmChCall">MAPH</span>
+                </div>
+            </div>
+            <div class="mm-trackinfo">
+                <div class="mm-track-label" id="mmTrackLbl">Now Airing</div>
+                <div class="mm-track-title" id="mmTitle">&#8212;</div>
+                <div class="mm-track-ref" id="mmTrackRef"></div>
+            </div>
+        </div>
+
+        <!-- Right: screen + metrics + controls + playlist -->
+        <div class="mm-right">
+
+            <!-- Screen -->
+            <div class="mm-screen-wrap">
+                <div class="mm-static" id="mmStatic">
+                    <canvas id="mmStaticCanvas"></canvas>
+                </div>
+                <div id="mmYtContainer"></div>
+                <div class="mm-ch-badge" id="mmChBadge">CH 46 &middot; MAPH</div>
+                <div class="mm-watermark mm-wm-maph" id="mmWatermark">
+                    <div class="mm-watermark-logo" id="mmWatermarkLogo">MAPH</div>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="mm-metrics">
+                <div class="mm-metric">
+                    <div class="mm-metric-label">Library</div>
+                    <div class="mm-metric-value" id="mmM1">&#8212;</div>
+                    <div class="mm-metric-sub">Videos</div>
+                </div>
+                <div class="mm-metric">
+                    <div class="mm-metric-label">Signal</div>
+                    <div class="mm-metric-value mm-green">On Air</div>
+                    <div class="mm-metric-sub">Status</div>
+                </div>
+                <div class="mm-metric">
+                    <div class="mm-metric-label">Channel</div>
+                    <div class="mm-metric-value" id="mmM3">46</div>
+                    <div class="mm-metric-sub" id="mmM3sub">MAPH</div>
+                </div>
+            </div>
+
+            <!-- Transport controls -->
+            <div class="mm-controls">
+                <div class="mm-transport">
+                    <button class="mm-pp-btn" id="mmPp" onclick="mmReplay()">&#9654;</button>
+                    <button class="mm-skip-btn" onclick="mmNext()" title="Next">&#9197;</button>
+                </div>
+
+                <div class="mm-prog-wrap">
+                    <div class="mm-prog-header">
+                        <span>On Air</span>
+                        <span id="mmCounter">&#8212;</span>
+                    </div>
+                    <div class="mm-prog-bar">
+                        <div class="mm-prog-fill" id="mmProgFill"></div>
+                    </div>
+                </div>
+
+                <!-- Channel tuner (replaces frequency knob) -->
+                <div class="mm-tuner">
+                    <div class="mm-tuner-row">
+                        <button class="mm-tuner-btn mm-on-maph" id="mmBtnMaph" onclick="mmTune('maph')">CH&nbsp;46</button>
+                        <button class="mm-tuner-btn" id="mmBtnMatt" onclick="mmTune('matt')">CH&nbsp;28</button>
+                    </div>
+                    <span class="mm-tuner-lbl" id="mmTunerLbl">MAPH</span>
+                </div>
+            </div>
+
+            <!-- Playlist panel -->
+            <div class="mm-panel">
+                <div class="mm-panel-hdr">&#128250; Playlist</div>
+                <div id="mmPlList" class="mm-pl-list">
+                    <div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;">Loading&hellip;</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="mm-cog">&#9881;</div>
+</div>
+
+<!-- ── Submit card (same box style, amber accent for MATT) ──────── -->
+<div class="mm-box" style="margin-top:24px;outline-color:rgba(217,119,6,0.2);">
+    <div class="mm-inlay" style="border-color:rgba(217,119,6,0.15);"></div>
+    <div class="mm-header" style="background:#130A00;">
+        <div class="mm-station-row">
+            <span style="color:#f59e0b;font-size:1.1rem;">&#128228;</span>
+            <h2 class="mm-station-name" style="color:#f59e0b;">Submit to CH 28 &middot; MATT</h2>
+        </div>
+        <div class="mm-slogan"><span>Community &middot; Market Action Trading Theater</span></div>
+    </div>
+    <div style="padding:24px;">
+        <p style="color:#64748b;font-size:0.78rem;margin:0 0 16px 0;border-bottom:1px solid rgba(176,141,87,0.08);padding-bottom:12px;">
+            Share your stream, guide, or trade recap. Submissions are reviewed by admins before appearing on MATT.
+        </p>
+        <div id="mmSubMsg" style="display:none;padding:8px 12px;border-radius:3px;font-size:0.82rem;margin-bottom:14px;font-family:Georgia,serif;"></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+                <div class="mm-track-label" style="margin-bottom:5px;">YouTube URL</div>
+                <input type="text" id="mmSubUrl"
+                       style="width:100%;box-sizing:border-box;background:#0d0800;border:1px solid rgba(176,141,87,0.2);color:#F5F5DC;padding:8px 10px;font-size:0.85rem;border-radius:2px;font-family:Georgia,serif;"
+                       placeholder="youtube.com/watch?v=&hellip; or youtu.be/&hellip;">
+            </div>
+            <div>
+                <div class="mm-track-label" style="margin-bottom:5px;">Video Title</div>
+                <input type="text" id="mmSubTitle" maxlength="120"
+                       style="width:100%;box-sizing:border-box;background:#0d0800;border:1px solid rgba(176,141,87,0.2);color:#F5F5DC;padding:8px 10px;font-size:0.85rem;border-radius:2px;font-family:Georgia,serif;"
+                       placeholder="Title (max 120 chars)">
+            </div>
+            <div>
+                <div class="mm-track-label" style="margin-bottom:5px;">Note for Admins</div>
+                <input type="text" id="mmSubNote"
+                       style="width:100%;box-sizing:border-box;background:#0d0800;border:1px solid rgba(176,141,87,0.2);color:#F5F5DC;padding:8px 10px;font-size:0.85rem;border-radius:2px;font-family:Georgia,serif;"
+                       placeholder="Optional">
+            </div>
+            <div>
+                <button onclick="mmSubmit()"
+                        style="background:#241812;border:1px solid rgba(217,119,6,0.6);color:#f59e0b;padding:8px 20px;font-size:0.85rem;border-radius:3px;cursor:pointer;font-family:Georgia,serif;letter-spacing:0.05em;transition:background 0.2s;"
+                        onmouseover="this.style.background='#f59e0b';this.style.color='#1A0F0A';"
+                        onmouseout="this.style.background='#241812';this.style.color='#f59e0b';">
+                    Submit for Review &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+(function () {
+    var STORE = 'wadsMM';
+    var playlists = { maph: [], matt: [] };
+    var state = { channel: 'maph', idx: 0 };
+
+    try {
+        var sv = JSON.parse(localStorage.getItem(STORE) || '{}');
+        if (sv.channel === 'maph' || sv.channel === 'matt') state.channel = sv.channel;
+        if (typeof sv.idx === 'number') state.idx = sv.idx;
+    } catch(e) {}
+
+    function save() {
+        try { localStorage.setItem(STORE, JSON.stringify({channel:state.channel,idx:state.idx})); } catch(e) {}
+    }
+
+    // ── Static noise ─────────────────────────────────────────────────────────
+    var canvas   = document.getElementById('mmStaticCanvas');
+    var sWrap    = document.getElementById('mmStatic');
+    var ctx      = canvas ? canvas.getContext('2d') : null;
+    var rafNoise = null;
+
+    function startStatic() {
+        if (!ctx || !sWrap) return;
+        sWrap.style.display = 'flex';
+        var w = canvas.width  = canvas.parentElement.offsetWidth  || 480;
+        var h = canvas.height = canvas.parentElement.offsetHeight || 270;
+        function drawNoise() {
+            var img = ctx.createImageData(w, h);
+            for (var i = 0; i < img.data.length; i += 4) {
+                var v = Math.random() * 160 | 0;
+                img.data[i] = img.data[i+1] = img.data[i+2] = v;
+                img.data[i+3] = 255;
+            }
+            ctx.putImageData(img, 0, 0);
+            rafNoise = requestAnimationFrame(drawNoise);
+        }
+        drawNoise();
+    }
+
+    function stopStatic() {
+        if (rafNoise) { cancelAnimationFrame(rafNoise); rafNoise = null; }
+        if (sWrap) sWrap.style.display = 'none';
+    }
+
+    // ── YouTube IFrame API (same approach as tutorials) ───────────────────────
+    var ytPlayer = null;
+    var pendingId = null;
+
+    (function loadYtApi() {
+        if (window.YT && window.YT.Player) { onYtReady(); return; }
+        var tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+    })();
+
+    function onYtReady() {
+        ytPlayer = new YT.Player('mmYtContainer', {
+            width: '100%', height: '100%',
+            videoId: '',
+            playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1 },
+            events: {
+                onReady: function(e) {
+                    var iframe = e.target.getIframe();
+                    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
+                    if (pendingId) { e.target.loadVideoById(pendingId); pendingId = null; }
+                },
+                onStateChange: function(e) {
+                    if (e.data === 1) stopStatic();   // PLAYING
+                    if (e.data === 0) mmNext();        // ENDED — auto-advance
+                }
+            }
+        });
+    }
+
+    var _prevReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function() {
+        if (typeof _prevReady === 'function') _prevReady();
+        onYtReady();
+    };
+
+    // ── UI update ────────────────────────────────────────────────────────────
+    function updateUI() {
+        var isMatt = state.channel === 'matt';
+        var accent = isMatt ? '#f59e0b' : '#B08D57';
+
+        document.getElementById('mmSname').textContent   = isMatt ? 'MATT — Channel 28' : 'MAPH — Channel 46';
+        document.getElementById('mmSlogan').textContent  = isMatt ? 'Market Action Trading Theater' : 'Markets, Analytics & Player Help';
+        document.getElementById('mmIco').style.color     = accent;
+        document.getElementById('mmChNumVal').textContent = isMatt ? '28' : '46';
+        document.getElementById('mmChNumVal').style.color = isMatt ? 'rgba(245,158,11,0.7)' : 'rgba(176,141,87,0.7)';
+        document.getElementById('mmChNumVal').style.textShadow = isMatt ? '0 0 30px rgba(245,158,11,0.3)' : '0 0 30px rgba(176,141,87,0.3)';
+        document.getElementById('mmChCall').textContent  = isMatt ? 'MATT' : 'MAPH';
+        document.getElementById('mmChCall').style.color  = isMatt ? 'rgba(245,158,11,0.5)' : 'rgba(176,141,87,0.5)';
+        document.getElementById('mmTrackLbl').style.color = accent;
+        document.getElementById('mmChBadge').textContent = isMatt ? 'CH 28 · MATT' : 'CH 46 · MAPH';
+        document.getElementById('mmChBadge').style.color = accent;
+        document.getElementById('mmWatermark').className = 'mm-watermark ' + (isMatt ? 'mm-wm-matt' : 'mm-wm-maph');
+        document.getElementById('mmWatermarkLogo').textContent = isMatt ? 'MATT' : 'MAPH';
+        document.getElementById('mmM3').textContent   = isMatt ? '28' : '46';
+        document.getElementById('mmM3sub').textContent = isMatt ? 'MATT' : 'MAPH';
+        document.getElementById('mmTunerLbl').textContent = isMatt ? 'MATT' : 'MAPH';
+        document.getElementById('mmBtnMaph').className = 'mm-tuner-btn' + (state.channel==='maph' ? ' mm-on-maph' : '');
+        document.getElementById('mmBtnMatt').className = 'mm-tuner-btn' + (state.channel==='matt' ? ' mm-on-matt' : '');
+
+        var pl  = playlists[state.channel];
+        var vid = pl[state.idx];
+        document.getElementById('mmTitle').textContent    = vid ? vid.title : '—';
+        document.getElementById('mmTrackRef').textContent = vid ? vid.youtube_id : '';
+        document.getElementById('mmM1').textContent       = pl.length || '—';
+        document.getElementById('mmCounter').textContent  = pl.length ? (state.idx+1) + ' / ' + pl.length : '—';
+        buildPlaylist();
+    }
+
+    function buildPlaylist() {
+        var pl   = playlists[state.channel];
+        var list = document.getElementById('mmPlList');
+        if (!pl.length) {
+            list.innerHTML = '<div style="color:#64748b;font-size:0.75rem;padding:12px 0;text-align:center;font-style:italic;">No videos in playlist yet.</div>';
+            return;
+        }
+        list.innerHTML = pl.map(function(v, i) {
+            var cls = 'mm-pl-item' + (i === state.idx ? ' mm-pl-active' : '');
+            return '<div class="' + cls + '" onclick="mmJump(' + i + ')">'
+                + '<span class="mm-pl-num">' + (i+1) + '</span>'
+                + '<span class="mm-pl-title">' + v.title.replace(/</g,'&lt;') + '</span>'
+                + '<span class="mm-pl-play">&#9654;</span>'
+                + '</div>';
+        }).join('');
+    }
+
+    // ── Playback ─────────────────────────────────────────────────────────────
+    function loadVideo() {
+        var pl  = playlists[state.channel];
+        var vid = pl[state.idx];
+        if (!vid) { startStatic(); updateUI(); return; }
+        startStatic();
+        updateUI();
+        save();
+        if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            ytPlayer.loadVideoById(vid.youtube_id);
+        } else {
+            pendingId = vid.youtube_id;
+        }
+    }
+
+    window.mmTune = function(ch) {
+        if (state.channel === ch) return;
+        state.channel = ch; state.idx = 0;
+        updateUI(); save();
+        if (ytPlayer && typeof ytPlayer.stopVideo === 'function') ytPlayer.stopVideo();
+        startStatic();
+        setTimeout(loadVideo, 600);
+    };
+
+    window.mmNext = function() {
+        var pl = playlists[state.channel];
+        if (!pl.length) return;
+        state.idx = (state.idx + 1) % pl.length;
+        loadVideo();
+    };
+
+    window.mmJump = function(i) {
+        state.idx = i;
+        loadVideo();
+    };
+
+    window.mmReplay = function() {
+        if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+            ytPlayer.seekTo(0); ytPlayer.playVideo();
+        } else {
+            loadVideo();
+        }
+    };
+
+    // ── Submit form ───────────────────────────────────────────────────────────
+    window.mmSubmit = function() {
+        var url   = (document.getElementById('mmSubUrl').value   || '').trim();
+        var title = (document.getElementById('mmSubTitle').value || '').trim();
+        var note  = (document.getElementById('mmSubNote').value  || '').trim();
+        var msgEl = document.getElementById('mmSubMsg');
+        if (!url || !title) {
+            msgEl.style.cssText = 'display:block;padding:8px 12px;border-radius:3px;font-size:0.82rem;margin-bottom:14px;background:#1a0505;color:#f87171;border:1px solid #dc2626;';
+            msgEl.textContent = 'YouTube URL and title are both required.';
+            return;
+        }
+        var fd = new FormData();
+        fd.append('youtube_url', url);
+        fd.append('title', title);
+        fd.append('note', note);
+        fetch('/api/matt/submit', {method:'POST', body:fd})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.ok) {
+                    msgEl.style.cssText = 'display:block;padding:8px 12px;border-radius:3px;font-size:0.82rem;margin-bottom:14px;background:#052e16;color:#4ade80;border:1px solid #16a34a;';
+                    msgEl.textContent = '✓ Submitted! Admins will review your video before it appears on MATT.';
+                    document.getElementById('mmSubUrl').value = document.getElementById('mmSubTitle').value = document.getElementById('mmSubNote').value = '';
+                } else {
+                    msgEl.style.cssText = 'display:block;padding:8px 12px;border-radius:3px;font-size:0.82rem;margin-bottom:14px;background:#1a0505;color:#f87171;border:1px solid #dc2626;';
+                    msgEl.textContent = '✗ ' + (d.error || 'Submission failed.');
+                }
+            })
+            .catch(function() {
+                msgEl.style.cssText = 'display:block;padding:8px 12px;border-radius:3px;font-size:0.82rem;margin-bottom:14px;background:#1a0505;color:#f87171;border:1px solid #dc2626;';
+                msgEl.textContent = '✗ Network error — please try again.';
+            });
+    };
+
+    // ── Boot ─────────────────────────────────────────────────────────────────
+    Promise.all([
+        fetch('/api/maph/list').then(function(r){return r.json();}).catch(function(){return[];}),
+        fetch('/api/matt/list').then(function(r){return r.json();}).catch(function(){return[];})
+    ]).then(function(results) {
+        playlists.maph = results[0] || [];
+        playlists.matt = results[1] || [];
+        var pl = playlists[state.channel];
+        if (state.idx >= pl.length) state.idx = 0;
+        startStatic();
+        updateUI();
+        setTimeout(loadVideo, 400);
+    });
+})();
+</script>
 .mm-inlay {
     position:absolute; inset:4px; border:1px solid rgba(99,102,241,0.08);
     pointer-events:none; z-index:10; border-radius:2px;
