@@ -218,7 +218,7 @@ def admin_matt_page(
     from maph_matt import matt_get, sub_list
     tracks  = matt_get()
     pending = sub_list(status="pending")
-    all_subs = sub_list()
+    history = [s for s in sub_list() if s.get("status") != "pending"]
 
     playlist_table = _video_table(
         tracks, "/admin/matt/toggle", "/admin/matt/rename", "/admin/matt/delete",
@@ -250,8 +250,15 @@ def admin_matt_page(
                     </form>
                     <form action="/admin/matt/reject" method="post" style="display:inline;">
                         <input type="hidden" name="sub_id" value="{s['id']}">
-                        <button style="background:#1a0505;border:1px solid #dc2626;color:#f87171;padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:3px;">
+                        <button style="background:#1a0505;border:1px solid #dc2626;color:#f87171;padding:4px 10px;font-size:0.75rem;cursor:pointer;border-radius:3px;margin-right:4px;">
                             ✕ Reject
+                        </button>
+                    </form>
+                    <form action="/admin/matt/sub-delete" method="post" style="display:inline;"
+                          onsubmit="return confirm('Delete this submission record?')">
+                        <input type="hidden" name="sub_id" value="{s['id']}">
+                        <button style="background:#1e293b;border:1px solid #334155;color:#64748b;padding:4px 8px;font-size:0.75rem;cursor:pointer;border-radius:3px;">
+                            🗑
                         </button>
                     </form>
                 </td>
@@ -273,6 +280,59 @@ def admin_matt_page(
     else:
         sub_table = '<p style="color:#64748b;padding:12px 0;">No pending submissions.</p>'
 
+    # Submission history (approved / rejected)
+    if history:
+        hist_rows = ""
+        for s in history:
+            ytid = s.get("youtube_id", "")
+            sc = "#4ade80" if s["status"] == "approved" else "#f87171"
+            hist_rows += f"""
+            <tr style="border-bottom:1px solid #0f172a;vertical-align:middle;">
+                <td style="padding:6px;">
+                    <a href="{_yt_url(ytid)}" target="_blank" rel="noopener">
+                        <img src="{_yt_thumb(ytid)}" style="width:80px;height:45px;object-fit:cover;border-radius:3px;display:block;">
+                    </a>
+                </td>
+                <td style="padding:6px;color:#e5e7eb;font-size:0.8rem;">{s['title'][:70]}</td>
+                <td style="padding:6px;color:#94a3b8;font-size:0.75rem;">{s['player_name']}</td>
+                <td style="padding:6px;">
+                    <span style="color:{sc};font-size:0.72rem;font-weight:bold;text-transform:uppercase;">{s['status']}</span>
+                </td>
+                <td style="padding:6px;color:#475569;font-size:0.7rem;">{s.get('submitted_at','')[:16]}</td>
+                <td style="padding:6px;">
+                    <form action="/admin/matt/sub-delete" method="post" style="display:inline;"
+                          onsubmit="return confirm('Remove this record?')">
+                        <input type="hidden" name="sub_id" value="{s['id']}">
+                        <button style="background:#1e293b;border:1px solid #334155;color:#64748b;padding:3px 8px;font-size:0.72rem;cursor:pointer;border-radius:3px;">
+                            Remove
+                        </button>
+                    </form>
+                </td>
+            </tr>"""
+        hist_table = f"""
+        <details style="margin-top:16px;">
+            <summary style="color:#475569;font-size:0.8rem;cursor:pointer;user-select:none;padding:8px 0;">
+                Submission History ({len(history)} handled)
+            </summary>
+            <div style="margin-top:8px;overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:1px solid #1e293b;color:#475569;font-size:0.7rem;">
+                            <th style="padding:6px;text-align:left;">Video</th>
+                            <th style="padding:6px;text-align:left;">Title</th>
+                            <th style="padding:6px;text-align:left;">Player</th>
+                            <th style="padding:6px;text-align:left;">Status</th>
+                            <th style="padding:6px;text-align:left;">Date</th>
+                            <th style="padding:6px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>{hist_rows}</tbody>
+                </table>
+            </div>
+        </details>"""
+    else:
+        hist_table = ""
+
     html = f"""
     <a href="/admin" style="color:#38bdf8;">&larr; Admin Dashboard</a>
     <h1 style="margin:8px 0 4px 0;">📺 MATT — Channel 28 Playlist Manager</h1>
@@ -286,6 +346,7 @@ def admin_matt_page(
             Pending Submissions ({len(pending)})
         </h2>
         {sub_table}
+        {hist_table}
     </div>
 
     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px;margin-bottom:24px;">

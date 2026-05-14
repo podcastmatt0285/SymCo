@@ -474,7 +474,7 @@ def login_page(session_token: Optional[str] = Cookie(None)):
         /* ── Market tickers (walnut, fixed above footer) ── */
         .login-tickers {
             position: fixed;
-            bottom: 52px;
+            bottom: 44px; /* fallback — overridden by JS to match actual footer height */
             left: 0;
             right: 0;
             z-index: 100;
@@ -878,6 +878,18 @@ def login_page(session_token: Optional[str] = Cookie(None)):
                 tracks[2].textContent = 'STOCK FEED OFFLINE       STOCK FEED OFFLINE';
                 halfWidths = [0, 0, 0];
             });
+        })();
+
+        // Pin tickers exactly above the footer regardless of footer height or wrapping
+        (function() {
+            var footer  = document.querySelector('footer');
+            var tickers = document.querySelector('.login-tickers');
+            if (!footer || !tickers) return;
+            function pin() { tickers.style.bottom = footer.offsetHeight + 'px'; }
+            pin();
+            window.addEventListener('resize', pin);
+            // Re-pin after fonts/images settle
+            window.addEventListener('load', pin);
         })();
     </script>
     <script>
