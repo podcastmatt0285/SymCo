@@ -855,6 +855,13 @@ except ModuleNotFoundError:
     pass
 
 try:
+    from maph_matt_ux import router as maph_matt_router
+    app.include_router(maph_matt_router)
+    print("MAPH/MATT routes registered")
+except ModuleNotFoundError:
+    pass
+
+try:
     from settings_ux import router as settings_router
     app.include_router(settings_router)
     print("Settings routes registered")

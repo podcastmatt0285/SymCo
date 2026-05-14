@@ -16,7 +16,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 router = APIRouter()
 
 _TABS = [
-    ("audio",         "🎵 Audio"),
+    ("audio",         "🎵 Media"),
     ("tutorials",     "📖 Tutorials"),
     ("notifications", "🔔 Notifications"),
     ("account",       "👤 Account"),
@@ -806,6 +806,361 @@ def _audio_tab() -> str:
         window.gsBuildTrackList = rpBuildTrackList;
     });
 
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MAPH / MATT — Video Channels
+     MAPH = Markets, Analytics & Player Help  (CH 46)
+     MATT = Market Action Trading Theater     (CH 28)
+     ═══════════════════════════════════════════════════════════════ -->
+<style>
+#mm-wrap { max-width:760px; font-family:Georgia,'Times New Roman',serif; margin-top:40px; }
+.mm-set {
+    background:#0d0d0d; border:10px solid #1a1a1a;
+    border-radius:6px; box-shadow:0 30px 80px rgba(0,0,0,0.95),inset 0 0 40px rgba(0,0,0,0.5);
+    overflow:hidden; color:#e5e7eb; position:relative;
+    outline:2px solid rgba(255,255,255,0.04); outline-offset:-14px;
+}
+.mm-bezel-top {
+    height:14px; background:linear-gradient(to bottom,#2a2a2a,#1a1a1a);
+    border-bottom:1px solid #111;
+}
+.mm-bezel-bottom {
+    height:36px; background:linear-gradient(to top,#1c1c1c,#242424);
+    border-top:1px solid #111; display:flex; align-items:center;
+    justify-content:space-between; padding:0 14px; gap:10px;
+}
+.mm-speaker-dots {
+    display:flex; gap:4px; align-items:center;
+}
+.mm-speaker-dot {
+    width:5px; height:5px; border-radius:50%; background:#333; box-shadow:inset 0 1px 2px rgba(0,0,0,0.8);
+}
+.mm-brand {
+    font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase;
+    color:#444; font-family:'JetBrains Mono','Courier New',monospace; font-weight:700;
+}
+/* Screen area */
+.mm-screen-wrap {
+    position:relative; background:#000; aspect-ratio:16/9;
+    overflow:hidden;
+}
+.mm-screen-wrap::after {
+    /* subtle scanlines */
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:5;
+    background:repeating-linear-gradient(
+        0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px
+    );
+}
+.mm-iframe { width:100%; height:100%; border:0; display:block; }
+.mm-static {
+    position:absolute; inset:0; z-index:4;
+    background:#000; display:flex; align-items:center; justify-content:center;
+}
+.mm-static canvas { width:100%; height:100%; }
+/* Channel watermark */
+.mm-watermark {
+    position:absolute; bottom:10px; right:12px; z-index:6;
+    display:flex; align-items:center; gap:5px; pointer-events:none;
+    opacity:0.72;
+}
+.mm-watermark-logo {
+    width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.52rem; font-weight:900; letter-spacing:0.05em;
+    font-family:'JetBrains Mono','Courier New',monospace;
+    color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.9);
+}
+.mm-watermark-maph .mm-watermark-logo { background:radial-gradient(circle at 35% 35%,#6366f1,#312e81); }
+.mm-watermark-matt .mm-watermark-logo { background:radial-gradient(circle at 35% 35%,#f59e0b,#92400e); }
+/* Channel indicator top-left */
+.mm-ch-badge {
+    position:absolute; top:10px; left:12px; z-index:6;
+    background:rgba(0,0,0,0.72); border:1px solid rgba(255,255,255,0.12);
+    border-radius:4px; padding:3px 8px;
+    font-family:'JetBrains Mono','Courier New',monospace;
+    font-size:0.68rem; font-weight:700; letter-spacing:0.1em; color:#e5e7eb;
+}
+/* Controls bar */
+.mm-controls {
+    background:#141414; border-top:1px solid #222;
+    padding:10px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.mm-ch-btn {
+    background:#1e1e1e; border:1px solid #333; color:#a3a3a3;
+    border-radius:4px; padding:5px 12px; font-size:0.78rem; cursor:pointer;
+    font-family:Georgia,serif; transition:background 0.15s,color 0.15s;
+    user-select:none;
+}
+.mm-ch-btn:hover { background:#2a2a2a; color:#e5e7eb; }
+.mm-ch-btn.mm-active { background:#1e1b4b; border-color:#6366f1; color:#a5b4fc; }
+.mm-ch-btn.mm-active-matt { background:#1c1007; border-color:#d97706; color:#fcd34d; }
+.mm-nav-btn {
+    background:#1e1e1e; border:1px solid #333; color:#a3a3a3;
+    border-radius:4px; padding:5px 11px; font-size:0.82rem; cursor:pointer;
+    font-family:inherit; user-select:none;
+}
+.mm-nav-btn:hover { background:#2a2a2a; color:#e5e7eb; }
+.mm-now-playing {
+    flex:1; min-width:0; overflow:hidden;
+    font-size:0.78rem; color:#94a3b8; white-space:nowrap; text-overflow:ellipsis;
+}
+.mm-now-playing strong { color:#e2e8f0; }
+.mm-counter { font-size:0.72rem; color:#475569; font-family:'JetBrains Mono','Courier New',monospace; flex-shrink:0; }
+/* Submit form */
+.mm-submit-wrap {
+    background:#0f172a; border:1px solid #1e293b; border-radius:8px;
+    padding:18px; margin-top:20px;
+}
+</style>
+
+<div id="mm-wrap">
+    <h2 style="font-size:1rem;color:#e2e8f0;margin:0 0 6px 0;font-family:Georgia,serif;">
+        📺 MAPH &nbsp;&amp;&nbsp; MATT
+    </h2>
+    <p style="color:#64748b;font-size:0.82rem;margin:0 0 16px 0;">
+        <strong style="color:#a5b4fc;">CH 46 MAPH</strong> — Markets, Analytics &amp; Player Help &nbsp;·&nbsp;
+        <strong style="color:#fcd34d;">CH 28 MATT</strong> — Market Action Trading Theater
+    </p>
+
+    <div class="mm-set">
+        <div class="mm-bezel-top"></div>
+
+        <!-- Screen -->
+        <div class="mm-screen-wrap" id="mmScreen">
+            <!-- Static overlay shown between channel switches -->
+            <div class="mm-static" id="mmStatic">
+                <canvas id="mmStaticCanvas"></canvas>
+            </div>
+
+            <!-- YouTube embed -->
+            <div id="mmIframeWrap" style="position:absolute;inset:0;z-index:3;display:none;">
+                <iframe id="mmIframe" class="mm-iframe" allow="autoplay;encrypted-media" allowfullscreen></iframe>
+            </div>
+
+            <!-- Channel badge -->
+            <div class="mm-ch-badge" id="mmChBadge">CH 46 · MAPH</div>
+
+            <!-- Watermark -->
+            <div class="mm-watermark mm-watermark-maph" id="mmWatermark">
+                <div class="mm-watermark-logo" id="mmWatermarkLogo">MAPH</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="mm-controls">
+            <button class="mm-ch-btn mm-active" id="mmBtnMaph" onclick="mmTune('maph')">CH 46 · MAPH</button>
+            <button class="mm-ch-btn" id="mmBtnMatt" onclick="mmTune('matt')">CH 28 · MATT</button>
+            <div style="width:1px;height:20px;background:#333;flex-shrink:0;"></div>
+            <button class="mm-nav-btn" onclick="mmPrev()" title="Previous">&#9664;&#9664;</button>
+            <button class="mm-nav-btn" onclick="mmNext()" title="Next">&#9654;&#9654;</button>
+            <div class="mm-now-playing" id="mmNowPlaying"><strong>—</strong></div>
+            <div class="mm-counter" id="mmCounter"></div>
+        </div>
+
+        <div class="mm-bezel-bottom">
+            <div class="mm-speaker-dots">
+                <div class="mm-speaker-dot"></div><div class="mm-speaker-dot"></div>
+                <div class="mm-speaker-dot"></div><div class="mm-speaker-dot"></div>
+                <div class="mm-speaker-dot"></div>
+            </div>
+            <div class="mm-brand">Wadsworth · Media Center</div>
+            <div class="mm-speaker-dots">
+                <div class="mm-speaker-dot"></div><div class="mm-speaker-dot"></div>
+                <div class="mm-speaker-dot"></div><div class="mm-speaker-dot"></div>
+                <div class="mm-speaker-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit a video for MATT -->
+    <div class="mm-submit-wrap">
+        <h3 style="font-size:0.9rem;color:#e2e8f0;margin:0 0 12px 0;font-family:Georgia,serif;">
+            Submit a Video for CH 28 MATT
+        </h3>
+        <p style="color:#64748b;font-size:0.78rem;margin:0 0 12px 0;">
+            Share your stream, guide, or trade recap. Submissions are reviewed by admins before appearing on MATT.
+        </p>
+        <div id="mmSubMsg" style="display:none;padding:8px 12px;border-radius:4px;font-size:0.82rem;margin-bottom:10px;"></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            <input type="text" id="mmSubUrl" placeholder="YouTube URL (youtube.com or youtu.be link)"
+                   style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:100%;box-sizing:border-box;">
+            <input type="text" id="mmSubTitle" placeholder="Video title (max 120 chars)" maxlength="120"
+                   style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:100%;box-sizing:border-box;">
+            <input type="text" id="mmSubNote" placeholder="Note for admins (optional)"
+                   style="background:#020617;border:1px solid #334155;color:#e5e7eb;padding:8px 10px;font-size:0.85rem;border-radius:4px;width:100%;box-sizing:border-box;">
+            <button onclick="mmSubmit()"
+                    style="align-self:flex-start;background:#92400e;border:1px solid #d97706;color:#fcd34d;padding:8px 20px;font-size:0.85rem;border-radius:4px;cursor:pointer;font-family:Georgia,serif;">
+                Submit for Review →
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var STORE = 'wadsMM';
+    var playlists = { maph: [], matt: [] };
+    var state = { channel: 'maph', idx: 0 };
+
+    try {
+        var sv = JSON.parse(localStorage.getItem(STORE) || '{}');
+        if (sv.channel === 'maph' || sv.channel === 'matt') state.channel = sv.channel;
+        if (typeof sv.idx === 'number') state.idx = sv.idx;
+    } catch(e) {}
+
+    function save() {
+        try { localStorage.setItem(STORE, JSON.stringify({channel:state.channel,idx:state.idx})); } catch(e) {}
+    }
+
+    // Static noise canvas
+    var canvas  = document.getElementById('mmStaticCanvas');
+    var sWrap   = document.getElementById('mmStatic');
+    var ctx     = canvas ? canvas.getContext('2d') : null;
+    var rafNoise = null;
+
+    function startStatic() {
+        if (!ctx) return;
+        sWrap.style.display = 'flex';
+        document.getElementById('mmIframeWrap').style.display = 'none';
+        var w = canvas.width = canvas.parentElement.offsetWidth || 640;
+        var h = canvas.height = canvas.parentElement.offsetHeight || 360;
+        function drawNoise() {
+            var img = ctx.createImageData(w, h);
+            for (var i = 0; i < img.data.length; i += 4) {
+                var v = Math.random() * 180 | 0;
+                img.data[i] = img.data[i+1] = img.data[i+2] = v;
+                img.data[i+3] = 255;
+            }
+            ctx.putImageData(img, 0, 0);
+            rafNoise = requestAnimationFrame(drawNoise);
+        }
+        drawNoise();
+    }
+
+    function stopStatic() {
+        if (rafNoise) { cancelAnimationFrame(rafNoise); rafNoise = null; }
+        if (sWrap) sWrap.style.display = 'none';
+        document.getElementById('mmIframeWrap').style.display = 'block';
+    }
+
+    function updateUI() {
+        var isMatt = state.channel === 'matt';
+        document.getElementById('mmChBadge').textContent = isMatt ? 'CH 28 · MATT' : 'CH 46 · MAPH';
+        var wm   = document.getElementById('mmWatermark');
+        var logo = document.getElementById('mmWatermarkLogo');
+        wm.className   = 'mm-watermark ' + (isMatt ? 'mm-watermark-matt' : 'mm-watermark-maph');
+        logo.textContent = isMatt ? 'MATT' : 'MAPH';
+        document.getElementById('mmBtnMaph').className = 'mm-ch-btn' + (state.channel==='maph' ? ' mm-active' : '');
+        document.getElementById('mmBtnMatt').className = 'mm-ch-btn' + (state.channel==='matt' ? ' mm-active-matt' : '');
+
+        var pl  = playlists[state.channel];
+        var vid = pl[state.idx];
+        document.getElementById('mmNowPlaying').innerHTML = vid
+            ? '<strong>' + vid.title.replace(/</g,'&lt;') + '</strong>'
+            : '<strong>—</strong>';
+        document.getElementById('mmCounter').textContent = pl.length
+            ? (state.idx+1) + ' / ' + pl.length
+            : '';
+    }
+
+    function loadVideo() {
+        var pl  = playlists[state.channel];
+        var vid = pl[state.idx];
+        if (!vid) { startStatic(); updateUI(); return; }
+        var iframe = document.getElementById('mmIframe');
+        iframe.src = 'https://www.youtube.com/embed/' + vid.youtube_id
+            + '?autoplay=1&rel=0&modestbranding=1';
+        stopStatic();
+        updateUI();
+        save();
+    }
+
+    function mmTune(ch) {
+        if (state.channel === ch) return;
+        startStatic();
+        state.channel = ch;
+        state.idx = 0;
+        updateUI();
+        save();
+        setTimeout(loadVideo, 600);
+    }
+    window.mmTune = mmTune;
+
+    window.mmPrev = function() {
+        var pl = playlists[state.channel];
+        if (!pl.length) return;
+        state.idx = (state.idx - 1 + pl.length) % pl.length;
+        loadVideo();
+    };
+    window.mmNext = function() {
+        var pl = playlists[state.channel];
+        if (!pl.length) return;
+        state.idx = (state.idx + 1) % pl.length;
+        loadVideo();
+    };
+
+    // Submission form
+    window.mmSubmit = function() {
+        var url   = (document.getElementById('mmSubUrl').value || '').trim();
+        var title = (document.getElementById('mmSubTitle').value || '').trim();
+        var note  = (document.getElementById('mmSubNote').value || '').trim();
+        var msgEl = document.getElementById('mmSubMsg');
+        if (!url || !title) {
+            msgEl.style.display = 'block';
+            msgEl.style.background = '#1a0505';
+            msgEl.style.color = '#f87171';
+            msgEl.style.border = '1px solid #dc2626';
+            msgEl.textContent = 'YouTube URL and title are both required.';
+            return;
+        }
+        var fd = new FormData();
+        fd.append('youtube_url', url);
+        fd.append('title', title);
+        fd.append('note', note);
+        fetch('/api/matt/submit', {method:'POST', body:fd})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                msgEl.style.display = 'block';
+                if (d.ok) {
+                    msgEl.style.background = '#052e16';
+                    msgEl.style.color = '#4ade80';
+                    msgEl.style.border = '1px solid #16a34a';
+                    msgEl.textContent = '✓ Submitted! Admins will review your video before it appears on MATT.';
+                    document.getElementById('mmSubUrl').value = '';
+                    document.getElementById('mmSubTitle').value = '';
+                    document.getElementById('mmSubNote').value = '';
+                } else {
+                    msgEl.style.background = '#1a0505';
+                    msgEl.style.color = '#f87171';
+                    msgEl.style.border = '1px solid #dc2626';
+                    msgEl.textContent = '✗ ' + (d.error || 'Submission failed.');
+                }
+            })
+            .catch(function() {
+                msgEl.style.display = 'block';
+                msgEl.style.background = '#1a0505';
+                msgEl.style.color = '#f87171';
+                msgEl.style.border = '1px solid #dc2626';
+                msgEl.textContent = '✗ Network error — please try again.';
+            });
+    };
+
+    // Load playlists then start
+    Promise.all([
+        fetch('/api/maph/list').then(function(r){return r.json();}).catch(function(){return[];}),
+        fetch('/api/matt/list').then(function(r){return r.json();}).catch(function(){return[];})
+    ]).then(function(results) {
+        playlists.maph = results[0] || [];
+        playlists.matt = results[1] || [];
+        // Clamp saved index
+        var pl = playlists[state.channel];
+        if (state.idx >= pl.length) state.idx = 0;
+        startStatic();
+        updateUI();
+        setTimeout(loadVideo, 300);
+    });
 })();
 </script>
     """
