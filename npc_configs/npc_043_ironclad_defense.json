@@ -12,66 +12,457 @@
     "starting_cash": 30000000,
     "land_plots": [],
     "districts": [
-      { "district_type": "military", "size": 8, "plots_merged": 8 }
+      {
+        "district_type": "military",
+        "size": 8,
+        "plots_merged": 8
+      }
     ]
   },
   "businesses": [
-    { "business_type": "weapons_factory",         "district_seed_index": 0 },
-    { "business_type": "tactical_gear_factory",   "district_seed_index": 0 },
-    { "business_type": "military_vehicle_plant",  "district_seed_index": 0 },
-    { "business_type": "military_support_facility","district_seed_index": 0 }
+    {
+      "business_type": "weapons_factory",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "tactical_gear_factory",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "military_vehicle_plant",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "military_support_facility",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "steel":       { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "aluminum":    { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "iron":        { "target_inventory": 4000,  "reorder_at": 800,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "lumber":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "plastic":     { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "copper":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "brass":       { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "lead":        { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "jet_fuel":    { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "circuit_board":{ "target_inventory": 3000, "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "processor":   { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "copper_wire": { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "polyester":   { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "cotton":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "glass":       { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "battery_cell":{ "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "rubber":      { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "bus_engine":  { "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "bus_chassis": { "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "chassis":     { "target_inventory": 30,    "reorder_at": 8,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "engine":      { "target_inventory": 30,    "reorder_at": 8,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "security_camera":{ "target_inventory": 200,"reorder_at": 40,    "max_price_multiplier": 1.1,  "market": "regular" },
-    "beef":        { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "bread":       { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "carrots":     { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "potatoes":    { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "leather":     { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "energy":      { "target_inventory": 800000,"reorder_at": 160000,"max_price_multiplier": 1.1,  "market": "regular" },
-    "paper":       { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.05, "market": "regular" }
+    "steel": {
+      "target_inventory": 10000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "aluminum": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lumber": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "plastic": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "copper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "brass": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lead": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "jet_fuel": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "circuit_board": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "processor": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "copper_wire": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "polyester": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "cotton": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "glass": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "battery_cell": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rubber": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "chassis": {
+      "target_inventory": 30,
+      "reorder_at": 8,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "engine": {
+      "target_inventory": 30,
+      "reorder_at": 8,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "security_camera": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "beef": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "bread": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "carrots": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "potatoes": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "leather": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 800000,
+      "reorder_at": 160000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 10000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "aramid_fabric": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "artillery_shell": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "ballistic_plate": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "blast_resistant_glass": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "composite_armor_panel": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "diesel_engine": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "explosive_reactive_armor": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "fire_control_system": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "gallium_arsenide": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "kevlar_fiber": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "maraging_steel": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "memory_module": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "missile_guidance_unit": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "molybdenum": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "night_vision_optic": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "nitroglycerin": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "nylon": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "precision_spring": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rdx_explosive": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "rocket_motor": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "smokeless_powder": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "stainless_steel": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "targeting_optic": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "thermite": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "titanium_alloy": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "tungsten_carbide": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "white_phosphorus": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "yttrium": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "rifle":            { "min_inventory_to_keep": 0,  "max_order_quantity": 500,  "market": "regular" },
-    "ammunition":       { "min_inventory_to_keep": 0,  "max_order_quantity": 10000,"market": "regular" },
-    "grenade":          { "min_inventory_to_keep": 0,  "max_order_quantity": 500,  "market": "regular" },
-    "missile":          { "min_inventory_to_keep": 0,  "max_order_quantity": 50,   "market": "regular" },
-    "body_armor":       { "min_inventory_to_keep": 0,  "max_order_quantity": 200,  "market": "regular" },
-    "combat_helmet":    { "min_inventory_to_keep": 0,  "max_order_quantity": 400,  "market": "regular" },
-    "tactical_vest":    { "min_inventory_to_keep": 0,  "max_order_quantity": 300,  "market": "regular" },
-    "night_vision":     { "min_inventory_to_keep": 0,  "max_order_quantity": 100,  "market": "regular" },
-    "military_radio":   { "min_inventory_to_keep": 0,  "max_order_quantity": 200,  "market": "regular" },
-    "encryption_device":{ "min_inventory_to_keep": 0,  "max_order_quantity": 50,   "market": "regular" },
-    "radar_array":      { "min_inventory_to_keep": 0,  "max_order_quantity": 20,   "market": "regular" },
-    "satellite_uplink": { "min_inventory_to_keep": 0,  "max_order_quantity": 15,   "market": "regular" },
-    "tank":             { "min_inventory_to_keep": 0,  "max_order_quantity": 10,   "market": "regular" },
-    "humvee":           { "min_inventory_to_keep": 0,  "max_order_quantity": 30,   "market": "regular" },
-    "apc":              { "min_inventory_to_keep": 0,  "max_order_quantity": 15,   "market": "regular" },
-    "drone":            { "min_inventory_to_keep": 0,  "max_order_quantity": 50,   "market": "regular" },
-    "mre":              { "min_inventory_to_keep": 0,  "max_order_quantity": 3000, "market": "regular" },
-    "military_uniform": { "min_inventory_to_keep": 0,  "max_order_quantity": 1000, "market": "regular" },
-    "dog_tags":         { "min_inventory_to_keep": 0,  "max_order_quantity": 2000, "market": "regular" },
-    "barracks_bunk":    { "min_inventory_to_keep": 0,  "max_order_quantity": 200,  "market": "regular" }
+    "rifle": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "ammunition": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10000,
+      "market": "regular"
+    },
+    "grenade": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "missile": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "body_armor": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "combat_helmet": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 400,
+      "market": "regular"
+    },
+    "tactical_vest": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "night_vision": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "regular"
+    },
+    "military_radio": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "encryption_device": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "radar_array": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 20,
+      "market": "regular"
+    },
+    "satellite_uplink": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 15,
+      "market": "regular"
+    },
+    "tank": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 10,
+      "market": "regular"
+    },
+    "humvee": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 30,
+      "market": "regular"
+    },
+    "apc": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 15,
+      "market": "regular"
+    },
+    "drone": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "regular"
+    },
+    "mre": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "military_uniform": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "dog_tags": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "barracks_bunk": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    }
   }
 }

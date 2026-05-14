@@ -1,7 +1,7 @@
 {
   "player_id": -2053,
   "business_name": "Laureate Education Co.",
-  "description": "Full-service education district operator. Publishes curriculum packages, manufactures school supplies and uniforms, serves cafeteria meals, and produces classroom furniture — then runs a high school and university district awarding diplomas, degrees, and vocational certificates.",
+  "description": "Full-service education district operator. Publishes curriculum packages, manufactures school supplies and uniforms, serves cafeteria meals, and produces classroom furniture \u2014 then runs a high school and university district awarding diplomas, degrees, and vocational certificates.",
   "cash_caps": {
     "hard_high": 80000000,
     "soft_high": 35000000,
@@ -12,78 +12,381 @@
     "starting_cash": 20000000,
     "land_plots": [],
     "districts": [
-      { "district_type": "education", "size": 8, "plots_merged": 8 }
+      {
+        "district_type": "education",
+        "size": 8,
+        "plots_merged": 8
+      }
     ]
   },
   "businesses": [
-    { "business_type": "educational_publishing",    "district_seed_index": 0 },
-    { "business_type": "school_supplies_factory",   "district_seed_index": 0 },
-    { "business_type": "school_cafeteria",          "district_seed_index": 0 },
-    { "business_type": "school_uniform_factory",    "district_seed_index": 0 },
-    { "business_type": "classroom_furniture_factory","district_seed_index": 0 },
-    { "business_type": "education_district",        "district_seed_index": 0 }
+    {
+      "business_type": "educational_publishing",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "school_supplies_factory",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "school_cafeteria",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "school_uniform_factory",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "classroom_furniture_factory",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "education_district",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "textbook":        { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
-    "encyclopedia":    { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "law_book":        { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "paper":           { "target_inventory": 30000, "reorder_at": 6000, "max_price_multiplier": 1.05, "market": "regular" },
-    "ink":             { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
-    "leather":         { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "glass":           { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "plastic":         { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "rubber":          { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "lumber":          { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "cotton":          { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "paint":           { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "polyester":       { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "buttons":         { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "steel":           { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "brass":           { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "lcd_panel":       { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "circuit_board":   { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "processor":       { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "aluminum":        { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "copper_wire":     { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "glue":            { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "bread":           { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "beef":            { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "carrots":         { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "milk":            { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "apples":          { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "pasta":           { "target_inventory": 1500,  "reorder_at": 300,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "jam":             { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "laptop":          { "target_inventory": 300,   "reorder_at": 60,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "desktop_computer":{ "target_inventory": 100,   "reorder_at": 20,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "server":          { "target_inventory": 30,    "reorder_at": 6,    "max_price_multiplier": 1.1,  "market": "regular" },
-    "microscope":      { "target_inventory": 100,   "reorder_at": 20,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "lab_equipment":   { "target_inventory": 100,   "reorder_at": 20,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "school_bus":      { "target_inventory": 10,    "reorder_at": 2,    "max_price_multiplier": 1.1,  "market": "regular" },
-    "airline_ticket":  { "target_inventory": 50,    "reorder_at": 10,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "vocational_kit":  { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "silk":            { "target_inventory": 500,   "reorder_at": 100,  "max_price_multiplier": 1.15, "market": "regular" },
-    "energy":          { "target_inventory": 400000,"reorder_at": 80000,"max_price_multiplier": 1.1,  "market": "regular" }
+    "textbook": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "encyclopedia": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 30000,
+      "reorder_at": 6000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "ink": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "leather": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "glass": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "plastic": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rubber": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lumber": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "cotton": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paint": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "polyester": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "buttons": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "steel": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "brass": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lcd_panel": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "circuit_board": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "processor": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "aluminum": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "copper_wire": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "glue": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "bread": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "beef": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "carrots": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "milk": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "apples": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "pasta": {
+      "target_inventory": 1500,
+      "reorder_at": 300,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "jam": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "laptop": {
+      "target_inventory": 300,
+      "reorder_at": 60,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "desktop_computer": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "server": {
+      "target_inventory": 30,
+      "reorder_at": 6,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "microscope": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lab_equipment": {
+      "target_inventory": 100,
+      "reorder_at": 20,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "school_bus": {
+      "target_inventory": 10,
+      "reorder_at": 2,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "airline_ticket": {
+      "target_inventory": 50,
+      "reorder_at": 10,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "vocational_kit": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 400000,
+      "reorder_at": 80000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "artificial_turf": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "basketball_hoop": {
+      "target_inventory": 10,
+      "reorder_at": 2,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "guitar_pickup": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "curriculum_package":    { "min_inventory_to_keep": 50,  "max_order_quantity": 200,  "market": "regular"  },
-    "standardized_test":     { "min_inventory_to_keep": 100, "max_order_quantity": 2000, "market": "regular"  },
-    "diploma_certificate":   { "min_inventory_to_keep": 100, "max_order_quantity": 1000, "market": "regular"  },
-    "lab_kit":               { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular"  },
-    "dissection_kit":        { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular"  },
-    "art_supplies":          { "min_inventory_to_keep": 50,  "max_order_quantity": 500,  "market": "regular"  },
-    "sports_equipment":      { "min_inventory_to_keep": 50,  "max_order_quantity": 300,  "market": "regular"  },
-    "band_instruments":      { "min_inventory_to_keep": 20,  "max_order_quantity": 150,  "market": "regular"  },
-    "notebook":              { "min_inventory_to_keep": 100, "max_order_quantity": 2000, "market": "regular"  },
-    "school_lunch":          { "min_inventory_to_keep": 0,   "max_order_quantity": 2000, "market": "regular"  },
-    "school_uniform":        { "min_inventory_to_keep": 0,   "max_order_quantity": 1000, "market": "regular"  },
-    "student_desk":          { "min_inventory_to_keep": 50,  "max_order_quantity": 400,  "market": "regular"  },
-    "smartboard":            { "min_inventory_to_keep": 10,  "max_order_quantity": 80,   "market": "regular"  },
-    "projector":             { "min_inventory_to_keep": 20,  "max_order_quantity": 150,  "market": "regular"  },
-    "high_school_diploma":   { "min_inventory_to_keep": 0,   "max_order_quantity": 200,  "market": "district" },
-    "bachelors_degree":      { "min_inventory_to_keep": 0,   "max_order_quantity": 100,  "market": "district" },
-    "masters_degree":        { "min_inventory_to_keep": 0,   "max_order_quantity": 50,   "market": "district" },
-    "vocational_certificate":{ "min_inventory_to_keep": 0,   "max_order_quantity": 150,  "market": "district" },
-    "research_grant":        { "min_inventory_to_keep": 0,   "max_order_quantity": 20,   "market": "district" },
-    "study_abroad":          { "min_inventory_to_keep": 0,   "max_order_quantity": 40,   "market": "district" }
+    "curriculum_package": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "standardized_test": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "diploma_certificate": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "lab_kit": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "dissection_kit": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "art_supplies": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 500,
+      "market": "regular"
+    },
+    "sports_equipment": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 300,
+      "market": "regular"
+    },
+    "band_instruments": {
+      "min_inventory_to_keep": 20,
+      "max_order_quantity": 150,
+      "market": "regular"
+    },
+    "notebook": {
+      "min_inventory_to_keep": 100,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "school_lunch": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "school_uniform": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "student_desk": {
+      "min_inventory_to_keep": 50,
+      "max_order_quantity": 400,
+      "market": "regular"
+    },
+    "smartboard": {
+      "min_inventory_to_keep": 10,
+      "max_order_quantity": 80,
+      "market": "regular"
+    },
+    "projector": {
+      "min_inventory_to_keep": 20,
+      "max_order_quantity": 150,
+      "market": "regular"
+    },
+    "high_school_diploma": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "district"
+    },
+    "bachelors_degree": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 100,
+      "market": "district"
+    },
+    "masters_degree": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 50,
+      "market": "district"
+    },
+    "vocational_certificate": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 150,
+      "market": "district"
+    },
+    "research_grant": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 20,
+      "market": "district"
+    },
+    "study_abroad": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 40,
+      "market": "district"
+    }
   }
 }

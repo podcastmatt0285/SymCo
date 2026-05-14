@@ -12,40 +12,193 @@
     "starting_cash": 40000000,
     "land_plots": [],
     "districts": [
-      { "district_type": "military", "size": 5, "plots_merged": 5 }
+      {
+        "district_type": "military",
+        "size": 5,
+        "plots_merged": 5
+      }
     ]
   },
   "businesses": [
-    { "business_type": "naval_shipyard",          "district_seed_index": 0 },
-    { "business_type": "military_support_facility","district_seed_index": 0 }
+    {
+      "business_type": "naval_shipyard",
+      "district_seed_index": 0
+    },
+    {
+      "business_type": "military_support_facility",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "steel":        { "target_inventory": 20000, "reorder_at": 4000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "aluminum":     { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "copper_wire":  { "target_inventory": 10000, "reorder_at": 2000,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "circuit_board":{ "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "processor":    { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "ship_hull":    { "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "marine_engine":{ "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "radar_array":  { "target_inventory": 20,    "reorder_at": 5,     "max_price_multiplier": 1.1,  "market": "regular" },
-    "missile":      { "target_inventory": 200,   "reorder_at": 50,    "max_price_multiplier": 1.1,  "market": "regular" },
-    "beef":         { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "bread":        { "target_inventory": 3000,  "reorder_at": 600,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "carrots":      { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "potatoes":     { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "cotton":       { "target_inventory": 2000,  "reorder_at": 400,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "polyester":    { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "leather":      { "target_inventory": 500,   "reorder_at": 100,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "lumber":       { "target_inventory": 1000,  "reorder_at": 200,   "max_price_multiplier": 1.1,  "market": "regular" },
-    "energy":       { "target_inventory": 1000000,"reorder_at":200000,"max_price_multiplier": 1.1,  "market": "regular" },
-    "paper":        { "target_inventory": 5000,  "reorder_at": 1000,  "max_price_multiplier": 1.05, "market": "regular" }
+    "steel": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "missile": {
+      "target_inventory": 200,
+      "reorder_at": 50,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "beef": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "bread": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "carrots": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "potatoes": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "cotton": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "polyester": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "leather": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "lumber": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 1000000,
+      "reorder_at": 200000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "destroyer_hull": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "fire_control_system": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "marine_piping": {
+      "target_inventory": 500,
+      "reorder_at": 100,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "naval_gun_system": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "nuclear_reactor_core": {
+      "target_inventory": 3,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.2,
+      "market": "regular"
+    },
+    "plastic": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "radar_system": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "sonar_system": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "submarine_hull": {
+      "target_inventory": 3,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "torpedo": {
+      "target_inventory": 200,
+      "reorder_at": 40,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    },
+    "turbofan_engine": {
+      "target_inventory": 5,
+      "reorder_at": 1,
+      "max_price_multiplier": 1.15,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "destroyer":        { "min_inventory_to_keep": 0, "max_order_quantity": 3,    "market": "regular" },
-    "submarine":        { "min_inventory_to_keep": 0, "max_order_quantity": 3,    "market": "regular" },
-    "mre":              { "min_inventory_to_keep": 0, "max_order_quantity": 3000, "market": "regular" },
-    "military_uniform": { "min_inventory_to_keep": 0, "max_order_quantity": 1000, "market": "regular" },
-    "dog_tags":         { "min_inventory_to_keep": 0, "max_order_quantity": 2000, "market": "regular" },
-    "barracks_bunk":    { "min_inventory_to_keep": 0, "max_order_quantity": 200,  "market": "regular" }
+    "submarine": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3,
+      "market": "regular"
+    },
+    "mre": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "military_uniform": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 1000,
+      "market": "regular"
+    },
+    "dog_tags": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    },
+    "barracks_bunk": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 200,
+      "market": "regular"
+    },
+    "naval_destroyer": {
+      "min_inventory_to_keep": 0,
+      "max_order_quantity": 3,
+      "market": "regular"
+    }
   }
 }

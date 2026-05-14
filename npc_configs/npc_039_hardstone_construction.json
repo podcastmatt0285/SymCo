@@ -12,22 +12,73 @@
     "starting_cash": 8000000,
     "land_plots": [],
     "districts": [
-      { "district_type": "industrial", "size": 3, "plots_merged": 3 }
+      {
+        "district_type": "industrial",
+        "size": 3,
+        "plots_merged": 3
+      }
     ]
   },
   "businesses": [
-    { "business_type": "concrete_plant", "district_seed_index": 0 }
+    {
+      "business_type": "concrete_plant",
+      "district_seed_index": 0
+    }
   ],
   "buy_items": {
-    "sand":   { "target_inventory": 15000, "reorder_at": 3000, "max_price_multiplier": 1.1,  "market": "regular" },
-    "coal":   { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.1,  "market": "regular" },
-    "rebar":  { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "water":  { "target_inventory": 20000, "reorder_at": 4000, "max_price_multiplier": 1.05, "market": "regular" },
-    "energy": { "target_inventory": 200000,"reorder_at": 40000,"max_price_multiplier": 1.1,  "market": "regular" },
-    "paper":  { "target_inventory": 3000,  "reorder_at": 600,  "max_price_multiplier": 1.05, "market": "regular" }
+    "sand": {
+      "target_inventory": 15000,
+      "reorder_at": 3000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "coal": {
+      "target_inventory": 8000,
+      "reorder_at": 1600,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "rebar": {
+      "target_inventory": 2000,
+      "reorder_at": 400,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 200000,
+      "reorder_at": 40000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 3000,
+      "reorder_at": 600,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "volcanic_ash": {
+      "target_inventory": 1000,
+      "reorder_at": 200,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "cement":   { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" },
-    "concrete": { "min_inventory_to_keep": 500, "max_order_quantity": 3000, "market": "regular" }
+    "cement": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    },
+    "concrete": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 3000,
+      "market": "regular"
+    }
   }
 }

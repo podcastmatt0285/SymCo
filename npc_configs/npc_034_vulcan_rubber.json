@@ -1,7 +1,7 @@
 {
   "player_id": -2034,
   "business_name": "Vulcan Rubber & Fiber",
-  "description": "Industrial rubber and fibre processor. Vulcanizes crude oil into synthetic rubber and fiberglass, and weaves cotton into burlap — three foundational materials that vehicle manufacturers, shipbuilders, sack producers, and dozens of downstream industries depend on.",
+  "description": "Industrial rubber and fibre processor. Vulcanizes crude oil into synthetic rubber and fiberglass, and weaves cotton into burlap \u2014 three foundational materials that vehicle manufacturers, shipbuilders, sack producers, and dozens of downstream industries depend on.",
   "cash_caps": {
     "hard_high": 30000000,
     "soft_high": 12000000,
@@ -11,30 +11,88 @@
   "seed": {
     "starting_cash": 5000000,
     "land_plots": [
-      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 },
-      { "terrain_type": "prairie", "proximity_features": ["road"], "size": 1 }
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      },
+      {
+        "terrain_type": "prairie",
+        "proximity_features": [
+          "road"
+        ],
+        "size": 1
+      }
     ]
   },
   "businesses": [
-    { "business_type": "rubber_plant", "district_id": null, "active_lines": [] },
-    { "business_type": "rubber_plant", "district_id": null, "active_lines": [] },
-    { "business_type": "rubber_plant", "district_id": null, "active_lines": [] }
+    {
+      "business_type": "rubber_plant",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "rubber_plant",
+      "district_id": null,
+      "active_lines": []
+    },
+    {
+      "business_type": "rubber_plant",
+      "district_id": null,
+      "active_lines": []
+    }
   ],
   "buy_items": {
-    "oil":     { "target_inventory": 10000, "reorder_at": 2000, "max_price_multiplier": 1.1,  "market": "regular" },
-    "glass":   { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.1,  "market": "regular" },
-    "cotton":  { "target_inventory": 8000,  "reorder_at": 1600, "max_price_multiplier": 1.1,  "market": "regular" },
-    "leather": { "target_inventory": 2000,  "reorder_at": 400,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "glue":    { "target_inventory": 1000,  "reorder_at": 200,  "max_price_multiplier": 1.1,  "market": "regular" },
-    "water":   { "target_inventory": 20000, "reorder_at": 4000, "max_price_multiplier": 1.05, "market": "regular" },
-    "energy":  { "target_inventory": 100000,"reorder_at": 20000,"max_price_multiplier": 1.1,  "market": "regular" },
-    "paper":   { "target_inventory": 5000,  "reorder_at": 1000, "max_price_multiplier": 1.05, "market": "regular" }
+    "oil": {
+      "target_inventory": 10000,
+      "reorder_at": 2000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "glass": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "water": {
+      "target_inventory": 20000,
+      "reorder_at": 4000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    },
+    "energy": {
+      "target_inventory": 100000,
+      "reorder_at": 20000,
+      "max_price_multiplier": 1.1,
+      "market": "regular"
+    },
+    "paper": {
+      "target_inventory": 5000,
+      "reorder_at": 1000,
+      "max_price_multiplier": 1.05,
+      "market": "regular"
+    }
   },
   "sell_items": {
-    "rubber":    { "min_inventory_to_keep": 1000, "max_order_quantity": 5000, "market": "regular" },
-    "fiberglass":{ "min_inventory_to_keep": 500,  "max_order_quantity": 2000, "market": "regular" },
-    "burlap":    { "min_inventory_to_keep": 1000, "max_order_quantity": 3000, "market": "regular" },
-    "shoes":     { "min_inventory_to_keep": 0,    "max_order_quantity": 1000, "market": "regular" }
+    "rubber": {
+      "min_inventory_to_keep": 1000,
+      "max_order_quantity": 5000,
+      "market": "regular"
+    },
+    "fiberglass": {
+      "min_inventory_to_keep": 500,
+      "max_order_quantity": 2000,
+      "market": "regular"
+    }
   }
 }
