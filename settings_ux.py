@@ -1257,6 +1257,7 @@ def _audio_tab() -> str:
 
     function startStatic() {
         if (!ctx || !sWrap) return;
+        if (rafNoise) { cancelAnimationFrame(rafNoise); rafNoise = null; }
         sWrap.style.display = 'flex';
         var w = canvas.width  = canvas.parentElement.offsetWidth  || 480;
         var h = canvas.height = canvas.parentElement.offsetHeight || 270;
@@ -1461,8 +1462,9 @@ def _audio_tab() -> str:
     window.mmPlayPause = function() {
         if (!ytPlayer || typeof ytPlayer.getPlayerState !== 'function') { loadVideo(); return; }
         var s = ytPlayer.getPlayerState();
-        if (s === 1) { ytPlayer.pauseVideo(); }
-        else         { ytPlayer.playVideo();  }
+        if (s === 1)  { ytPlayer.pauseVideo(); }
+        else if (s < 0) { loadVideo(); }
+        else            { ytPlayer.playVideo(); }
     };
 
     window.mmReplay = window.mmPlayPause;
