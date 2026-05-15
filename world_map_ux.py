@@ -112,6 +112,7 @@ def _build_world_map(player) -> str:
         ldb = get_land_db()
         terrain_rows = (
             ldb.query(LandPlot.terrain_type, func.count(LandPlot.id))
+            .filter(LandPlot.is_government_owned == False)
             .group_by(LandPlot.terrain_type)
             .all()
         )

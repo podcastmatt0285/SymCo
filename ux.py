@@ -2449,13 +2449,16 @@ def government_dashboard(
     # ── 3. Government-owned land ──────────────────────────────────────────────
     gov_land_total = 0
     gov_land_by_terrain = {}
+    gov_land_tax_by_terrain = {}
     gov_land_value_est = 0.0
     try:
         from land import LandPlot as _LP, get_db as _ldb
         _db = _ldb()
         for p in _db.query(_LP).filter(_LP.is_government_owned == True).all():
             gov_land_total += 1
-            gov_land_by_terrain[p.terrain_type] = gov_land_by_terrain.get(p.terrain_type, 0) + 1
+            t = p.terrain_type
+            gov_land_by_terrain[t] = gov_land_by_terrain.get(t, 0) + 1
+            gov_land_tax_by_terrain[t] = gov_land_tax_by_terrain.get(t, 0) + (p.monthly_tax or 0)
             gov_land_value_est += (p.monthly_tax or 0) * 12 * 10  # 10× annual tax as rough cap rate
         _db.close()
     except Exception:
@@ -2669,16 +2672,28 @@ def government_dashboard(
         from memecoins import get_db as _mdb, MemeCoinWallet as _MCW, MemeCoin as _MC
         _db = _mdb()
         _mc_map = {m.symbol: m for m in _db.query(_MC).all()}
+        _county_sym_prices = {c["symbol"]: c["price_usd"] for c in gov_county_crypto}
+        try:
+            from counties import get_db as _crydb2, County as _Cty2
+            _cdb2 = _crydb2()
+            _county_id_to_sym = {c.id: c.crypto_symbol for c in _cdb2.query(_Cty2).all()}
+            _cdb2.close()
+        except Exception:
+            _county_id_to_sym = {}
         for w in _db.query(_MCW).filter(_MCW.player_id == 0, _MCW.balance > 0).all():
             mc = _mc_map.get(w.meme_symbol)
+            meme_price = mc.last_price if mc else 0.0
+            county_sym = _county_id_to_sym.get(mc.county_id if mc else 0, "")
+            native_usd = _county_sym_prices.get(county_sym, 0.0)
             gov_meme_coins.append({
                 "symbol":  w.meme_symbol,
                 "name":    mc.name if mc else w.meme_symbol,
                 "balance": w.balance,
-                "price":   mc.last_price if mc else 0.0,
+                "price":   meme_price,
+                "usd_val": w.balance * meme_price * native_usd,
             })
         _db.close()
-        gov_meme_coins.sort(key=lambda x: x["balance"], reverse=True)
+        gov_meme_coins.sort(key=lambda x: x["usd_val"], reverse=True)
     except Exception:
         pass
 
@@ -2706,9 +2721,11 @@ def government_dashboard(
     total_loan_debt     = sum(ln["remaining"] for ln in gov_loans)
     total_equity_val    = sum(e["mkt_val"] for e in gov_equity)
     total_bank_invested = sum(s["invested"] for s in gov_bank_shares)
-    total_crypto_usd    = sum(c["usd_val"] for c in gov_county_crypto) + gov_wsc_balance
+    total_crypto_usd    = (sum(c["usd_val"] for c in gov_county_crypto)
+                           + gov_wsc_balance
+                           + sum(m["usd_val"] for m in gov_meme_coins))
     grand_total         = (gov_treasury + total_foreign_usd + total_bond_face
-                           + gov_land_value_est + total_equity_val
+                           + total_bond_interest + gov_land_value_est + total_equity_val
                            + total_bank_invested + total_crypto_usd)
 
     def _usd(v): return fmt_usd(v, disp)
@@ -2739,7 +2756,7 @@ def government_dashboard(
         {_kpi("LOANS TO CITY BANKS", _usd(total_loan_debt),
               f"{len(gov_loans)} active loan{'s' if len(gov_loans) != 1 else ''}", "#f87171")}
         {_kpi("TOTAL ASSETS (EST.)", _usd(grand_total),
-              "treasury + currencies + bonds + equity + crypto + land", "#a78bfa")}
+              "treasury + currencies + bonds + interest + equity + crypto + land", "#a78bfa")}
     </div>"""
 
     # ── Shared helpers ────────────────────────────────────────────────────────
@@ -2833,7 +2850,7 @@ def government_dashboard(
             f"<tr style='border-bottom:1px solid #0f1a2e;'>"
             + _td(t.replace("_", " ").title(), "#e2e8f0")
             + _td(f"{n:,}", "#22c55e", right=True)
-            + _td(_usd(n * {"urban":120,"prairie":50,"forest":60,"desert":30,"marsh":40,"mountain":70,"coastal":80,"ocean":100,"lake":60,"tundra":35,"jungle":55,"savanna":45,"hills":52,"island":65}.get(t,50) * 12 * 10), "#4ade80", right=True)
+            + _td(_usd(gov_land_tax_by_terrain.get(t, 0) * 12 * 10), "#4ade80", right=True)
             + "</tr>"
             for t, n in sorted(gov_land_by_terrain.items(), key=lambda x: x[1], reverse=True)
         )
@@ -2995,10 +3012,11 @@ def government_dashboard(
                 + _td(m["name"], "#cbd5e1")
                 + _td(f"{m['balance']:,.6f}", "#94a3b8", right=True)
                 + _td(f"{m['price']:,.6f} native", "#475569", right=True)
+                + _td(_usd(m["usd_val"]) if m["usd_val"] > 0 else "—", "#f472b6", right=True)
                 + "</tr>"
                 for m in gov_meme_coins
             )
-            crypto_parts.append(f"<p style='color:#64748b;font-size:0.72rem;margin:10px 0 6px 0;'>MEME COINS <span style='color:#475569;font-weight:400;'>(priced in county native tokens)</span></p><table {ts}><thead><tr>" + "".join(_th(h) for h in ["Symbol","Name","Balance","Price"]) + "</tr></thead><tbody>" + rows + "</tbody></table>")
+            crypto_parts.append(f"<p style='color:#64748b;font-size:0.72rem;margin:10px 0 6px 0;'>MEME COINS <span style='color:#475569;font-weight:400;'>(priced in county native tokens)</span></p><table {ts}><thead><tr>" + "".join(_th(h) for h in ["Symbol","Name","Balance","Price","USD Value"]) + "</tr></thead><tbody>" + rows + "</tbody></table>")
         crypto_html = "".join(crypto_parts)
     else:
         crypto_html = '<p style="color:#475569;font-size:0.85rem;">No crypto holdings. Government can acquire county tokens, WSC, and meme coins through market participation.</p>'
