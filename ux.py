@@ -1062,31 +1062,36 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             function _fmt(n, dec) {{ return (+n).toFixed(dec); }}
 
             function _buildTicker(snap) {{
+                /* window._tkCategories = ['commodity','district','forex','stocks','crypto','memes','land']
+                   If set, only those categories appear in this page's ticker.
+                   If unset/null, all categories are included (default for generic pages). */
+                var cats = window._tkCategories || null;
+                function want(k) {{ return !cats || cats.indexOf(k) >= 0; }}
                 var parts = [];
-                (snap.commodities || []).forEach(function(c) {{
+                if (want('commodity')) (snap.commodities || []).forEach(function(c) {{
                     var chg = (c.change_24h >= 0 ? '+' : '') + _fmt(c.change_24h, 2) + '%';
                     parts.push(c.label.toUpperCase() + ': $' + _fmt(c.price, 4) + ' (' + chg + ')');
                 }});
-                (snap.district || []).forEach(function(c) {{
+                if (want('district')) (snap.district || []).forEach(function(c) {{
                     var chg = (c.change_24h >= 0 ? '+' : '') + _fmt(c.change_24h, 2) + '%';
                     parts.push('[D] ' + c.label.toUpperCase() + ': $' + _fmt(c.price, 4) + ' (' + chg + ')');
                 }});
-                (snap.forex || []).forEach(function(f) {{
+                if (want('forex')) (snap.forex || []).forEach(function(f) {{
                     var chg = (f.change_24h >= 0 ? '+' : '') + _fmt(f.change_24h, 4) + '%';
                     parts.push(f.pair + ': ' + _fmt(f.rate, 6) + ' (' + chg + ')');
                 }});
-                (snap.stocks || []).forEach(function(s) {{
+                if (want('stocks')) (snap.stocks || []).forEach(function(s) {{
                     var chg = (s.change_24h >= 0 ? '+' : '') + _fmt(s.change_24h, 2) + '%';
                     parts.push(s.ticker + ': $' + _fmt(s.price, 4) + ' (' + chg + ')');
                 }});
-                (snap.crypto || []).forEach(function(c) {{
+                if (want('crypto')) (snap.crypto || []).forEach(function(c) {{
                     parts.push(c.symbol + ': $' + _fmt(c.price_usd, 6));
                 }});
-                (snap.memes || []).slice(0, 10).forEach(function(m) {{
+                if (want('memes')) (snap.memes || []).slice(0, 10).forEach(function(m) {{
                     var chg = (m.change_24h >= 0 ? '+' : '') + _fmt(m.change_24h, 2) + '%';
                     parts.push(m.symbol + ': ' + _fmt(m.price, 8) + ' (' + chg + ')');
                 }});
-                if (snap.land && snap.land.active_auctions > 0) {{
+                if (want('land') && snap.land && snap.land.active_auctions > 0) {{
                     parts.push('LAND: ' + snap.land.active_auctions + ' auctions · avg $' +
                         Number(snap.land.avg_auction_price).toLocaleString());
                 }}

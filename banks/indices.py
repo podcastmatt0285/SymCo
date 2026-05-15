@@ -1032,7 +1032,7 @@ def indices_landing(session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
-    return _shell("Market Indices", tut4 + body, getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
+    return _shell("Market Indices", tut4 + body + "<script>window._tkCategories=['stocks'];</script>", getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
 
 
 @router.get("/banks/indices/{code}", response_class=HTMLResponse)
@@ -1347,7 +1347,7 @@ def index_detail(code: str, session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
-    return _shell(meta["name"], tut4 + body,
+    return _shell(meta["name"], tut4 + body + "<script>window._tkCategories=['stocks'];</script>",
                   getattr(player, 'cash_balance', 0), getattr(player, 'id', None))
 
 

@@ -305,8 +305,7 @@ def _build_world_map(player) -> str:
   </a>
 </div>"""
 
-    pulse = _market_pulse()
-    return pulse + stats_bar + terrain_html + counties_section + indep_section + cta
+    return stats_bar + terrain_html + counties_section + indep_section + cta
 
 
 @router.get("/api/my-properties", response_class=JSONResponse)
@@ -421,53 +420,6 @@ def api_move_business(
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-
-def _market_pulse() -> str:
-    items = []
-    try:
-        from database import SessionLocal
-        from market import Trade as _CT
-        from sqlalchemy import func
-        db = SessionLocal()
-        try:
-            sub = (db.query(_CT.item_type, func.max(_CT.executed_at).label("lat"))
-                     .group_by(_CT.item_type).subquery())
-            tops = (db.query(_CT)
-                      .join(sub, (_CT.item_type == sub.c.item_type) &
-                                 (_CT.executed_at == sub.c.lat))
-                      .limit(8).all())
-            for t in tops:
-                p = float(t.price or 0)
-                items.append({
-                    "label": t.item_type.replace("_", " ").title(),
-                    "price": f"${p:,.4f}",
-                })
-        finally:
-            db.close()
-    except Exception:
-        pass
-
-    if not items:
-        return ""
-
-    cards = "".join(
-        '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;'
-        'padding:10px 14px;min-width:0;">'
-        f'<div style="font-size:0.62rem;color:#64748b;text-transform:uppercase;'
-        f'letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
-        f'{it["label"]}</div>'
-        f'<div style="font-size:0.9rem;font-weight:700;color:#34d399;">{it["price"]}</div>'
-        '</div>'
-        for it in items
-    )
-    return (
-        '<div style="margin-bottom:24px;">'
-        '<div style="font-size:0.72rem;font-weight:bold;color:#94a3b8;text-transform:uppercase;'
-        'letter-spacing:.06em;margin-bottom:10px;">📊 Commodity Pulse</div>'
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;">'
-        + cards +
-        '</div></div>'
-    )
 
 
 _MY_PROPS_MODAL = r"""
@@ -1037,7 +989,7 @@ def world_map(session_token: Optional[str] = Cookie(None)):
 </p>
 {_build_world_map(player)}
 {_MY_PROPS_MODAL}
-<script>var _SELF_ID={player.id};</script>
+<script>var _SELF_ID={player.id}; window._tkCategories=['land'];</script>
 """
     from ux import shell
     return HTMLResponse(shell("World Map", body, player.cash_balance, player.id))

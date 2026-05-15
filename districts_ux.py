@@ -1157,7 +1157,7 @@ def district_market_page(session_token: Optional[str] = Cookie(None), item: str 
             tut6 = get_tutorial6_overlay_html(player, "district_market")
         except Exception:
             tut6 = ""
-        return shell("District Market", tut6 + market_html, player.cash_balance, player.id)
+        return shell("District Market", tut6 + market_html + "<script>window._tkCategories=['district'];</script>", player.cash_balance, player.id)
 
     except Exception as e:
         import traceback
