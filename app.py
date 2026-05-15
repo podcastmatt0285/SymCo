@@ -492,6 +492,13 @@ async def lifespan(app: FastAPI):
         print("DB migrations applied")
     except Exception as _me:
         print(f"DB migration error: {_me}")
+    # Wiki DB init (migrates wiki_media.json → DB on first run)
+    try:
+        import wiki as _wiki_mod
+        _wiki_mod.initialize()
+        print("Wiki DB initialized")
+    except Exception as _we:
+        print(f"Wiki init error: {_we}")
     load_modules()
     initialize_modules()
     tick_task = asyncio.create_task(tick_loop())

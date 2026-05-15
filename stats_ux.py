@@ -3052,15 +3052,14 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
     except Exception:
         pass
 
-    # Load wiki media from JSON (managed via /admin/wiki)
-    _media: dict = {"videos": [], "audio": []}
+    # Load wiki media from DB (managed via /admin/wiki)
     try:
-        with open("wiki_media.json") as _f:
-            _media = json.load(_f)
+        import wiki as _wiki_mod
+        from wiki import CATEGORY_LABELS as _CAT_LABELS
+        _videos = _wiki_mod.list_entries(kind="video")
+        _audio  = _wiki_mod.list_entries(kind="audio")
     except Exception:
-        pass
-    _videos: list = _media.get("videos", [])
-    _audio:  list = _media.get("audio",  [])
+        _videos, _audio, _CAT_LABELS = [], [], {}
 
     # Live counts for new tabs
     bank_count = 0
@@ -3131,15 +3130,19 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
 <div class="ws"><span class="ws-t">📺 Video Tutorials</span><span class="ws-l"></span></div>
 <div class="wg-lg">
     {"".join(
-        f'<div class="wvc" data-search="{v["title"]} {v.get("description","")}">'
-        f'<div class="wvc-embed">'
+        f'<div class="wvc" data-search="{v["title"]} {v.get("description","")} {v.get("category","")}">'
+        + (f'<div style="position:absolute;top:6px;left:6px;background:#1e293b99;color:#94a3b8;font-size:0.62rem;padding:2px 6px;border-radius:3px;pointer-events:none;">📂 {_CAT_LABELS.get(v.get("category",""),"")}</div>' if v.get("pinned") else "")
+        + f'<div class="wvc-embed">'
         f'<iframe src="https://www.youtube.com/embed/{v["youtube_id"]}"'
         f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
         f' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
         f'</div>'
         f'<div class="wvc-info">'
+        f'{"<span style=\'color:#f59e0b;font-size:0.7rem;\'>📌 </span>" if v.get("pinned") else ""}'
         f'<div class="wvc-title">{v["title"]}</div>'
-        f'<div class="wvc-desc">{v.get("description","")}</div>'
+        f'<div class="wvc-desc">{v.get("description","")}'
+        f'{"<span style=\'color:#475569;font-size:0.68rem;margin-left:6px;\'>📂 " + _CAT_LABELS.get(v.get("category",""),"") + "</span>" if v.get("category") and v.get("category") != "reference" else ""}'
+        f'</div>'
         f'</div></div>'
         for v in _videos
     )}
@@ -3153,13 +3156,14 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
 <div class="ws"><span class="ws-t">🎙️ Audio Deep Dives</span><span class="ws-l"></span></div>
 <div class="wg">
     {"".join(
-        f'<div class="wvc" data-search="audio deep dive {a["title"]} {a.get("description","")}">'
+        f'<div class="wvc" data-search="audio deep dive {a["title"]} {a.get("description","")} {a.get("category","")}">'
         f'<div class="wvc-embed">'
         f'<iframe src="https://www.youtube.com/embed/{a["youtube_id"]}"'
         f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
         f' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
         f'</div>'
         f'<div class="wvc-info">'
+        f'{"<span style=\'color:#f59e0b;font-size:0.7rem;\'>📌 </span>" if a.get("pinned") else ""}'
         f'<div class="wvc-title">🎙️ {a["title"]}</div>'
         f'<div class="wvc-desc">{a.get("description","")}</div>'
         f'</div></div>'

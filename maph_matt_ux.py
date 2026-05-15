@@ -177,16 +177,13 @@ function mmRenameToggle(id) {
 
 @router.get("/api/maph/list")
 def api_maph_list():
-    """MAPH pulls directly from wiki_media.json videos — same source as /admin/wiki."""
-    import json, os
+    """MAPH pulls from wiki_media DB — same source as /admin/wiki."""
     try:
-        path = os.path.join(os.path.dirname(__file__), "wiki_media.json")
-        with open(path) as f:
-            data = json.load(f)
-        videos = data.get("videos", [])
+        import wiki as _wiki
+        videos = _wiki.list_entries(kind="video")
         return JSONResponse([
-            {"id": i, "youtube_id": v["youtube_id"], "title": v["title"]}
-            for i, v in enumerate(videos) if v.get("youtube_id")
+            {"id": v["id"], "youtube_id": v["youtube_id"], "title": v["title"]}
+            for v in videos if v.get("youtube_id")
         ])
     except Exception:
         return JSONResponse([])

@@ -490,11 +490,35 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
 
     econ = get_economy_stats()
 
-    logs = get_admin_logs(limit=8)
+    logs = get_admin_logs(limit=15)
     log_rows = ""
     for log in logs:
         target = f"#{log['target_player_id']}" if log["target_player_id"] else "-"
         log_rows += f'<tr><td style="color:#64748b;">{_ts(log["created_at"])}</td><td>{log["action"]}</td><td>{target}</td><td style="color:#94a3b8;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{log["details"][:50]}</td></tr>'
+
+    # System health
+    import os as _os
+    _tick_file = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "tick_state.txt")
+    _current_tick = 0
+    _tick_mtime = ""
+    try:
+        with open(_tick_file) as _tf:
+            _current_tick = int(_tf.read().strip())
+        import time as _time
+        _mtime = _os.path.getmtime(_tick_file)
+        _ago_s = int(_time.time() - _mtime)
+        _tick_mtime = (f"{_ago_s}s ago" if _ago_s < 60
+                       else f"{_ago_s//60}m ago" if _ago_s < 3600
+                       else f"{_ago_s//3600}h ago")
+    except Exception:
+        pass
+    _error_count = sum(1 for l in logs if "error" in (l.get("action","")).lower())
+    _beta_twa_today = 0
+    try:
+        from beta import get_beta_stats as _bstats
+        _beta_twa_today = _bstats().get("twa_today", 0)
+    except Exception:
+        pass
 
     body = f"""
     <div class="stat-grid">
@@ -529,7 +553,7 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         <a href="/admin/wiki" class="link-card"><div class="lc-icon">📖</div><div class="lc-title">Wiki / Media</div><div class="lc-desc">Tutorial videos &amp; audio</div></a>
         <a href="/admin/soundtrack" class="link-card"><div class="lc-icon">🎵</div><div class="lc-title">WLOL 92.8 FM</div><div class="lc-desc">Music playlist uploads</div></a>
         <a href="/admin/wcpr" class="link-card"><div class="lc-icon">📻</div><div class="lc-title">WCPR 104.1 FM</div><div class="lc-desc">Talk radio uploads</div></a>
-        <a href="/admin/wiki" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MAPH · CH 46</div><div class="lc-desc">Tutorial videos (Wiki Media)</div></a>
+        <a href="/admin/maph" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MAPH · CH 46</div><div class="lc-desc">Manage TV channel playlist</div></a>
         <a href="/admin/matt" class="link-card"><div class="lc-icon">📺</div><div class="lc-title">MATT · CH 28</div><div class="lc-desc">Community videos &amp; submissions</div></a>
     </div>
 
@@ -549,8 +573,22 @@ def admin_dashboard(session_token: Optional[str] = Cookie(None)):
         </div>
     </div>
 
+    <div class="card" style="margin-bottom:12px;">
+        <h3 style="font-size:0.78rem;color:#38bdf8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">System Health</h3>
+        <div class="stat-grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr));">
+            <div class="stat-box"><div class="stat-value" style="font-size:1rem;">{_current_tick:,}</div><div class="stat-label">Current Tick</div></div>
+            <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:#94a3b8;">{_tick_mtime or "—"}</div><div class="stat-label">Last Tick Save</div></div>
+            <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:#22c55e;">{online_count}</div><div class="stat-label">Online Now</div></div>
+            <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:#f472b6;">{_beta_twa_today}</div><div class="stat-label">Active Duty Today</div></div>
+            <div class="stat-box"><div class="stat-value" style="font-size:1rem;color:{"#ef4444" if _error_count else "#22c55e"};">{_error_count}</div><div class="stat-label">Errors in Log</div></div>
+        </div>
+    </div>
+
     <div class="card">
-        <h3>Recent Actions</h3>
+        <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            Recent Actions
+            <a href="/admin/logs" style="font-size:0.7rem;color:#64748b;font-weight:normal;">All Logs →</a>
+        </h3>
         {f'<div class="table-wrap"><table><tr><th>Time</th><th>Action</th><th>Target</th><th>Details</th></tr>{log_rows}</table></div>' if log_rows else '<p style="color:#64748b;font-size:0.75rem;">No actions yet.</p>'}
     </div>
     """
@@ -3466,128 +3504,157 @@ def admin_etf_set_brokerage_cash(
 # WIKI MEDIA MANAGEMENT  —  /admin/wiki
 # ============================================================
 
-_WIKI_MEDIA_PATH = os.path.join(os.path.dirname(__file__), "wiki_media.json")
-
-
-def _load_wiki_media() -> dict:
-    try:
-        with open(_WIKI_MEDIA_PATH) as f:
-            data = json.load(f)
-        data.setdefault("videos", [])
-        data.setdefault("audio", [])
-        return data
-    except Exception:
-        return {"videos": [], "audio": []}
-
-
-def _save_wiki_media(data: dict) -> None:
-    with open(_WIKI_MEDIA_PATH, "w") as f:
-        json.dump(data, f, indent=4)
-
-
 def _extract_yt_id(raw: str) -> str:
     """Return bare 11-char YouTube video ID from any URL or ID string."""
     raw = raw.strip()
-    # youtu.be/ID
     m = re.search(r"youtu\.be/([A-Za-z0-9_-]{11})", raw)
     if m:
         return m.group(1)
-    # youtube.com/watch?v=ID or /embed/ID or /v/ID
     m = re.search(r"(?:v=|/embed/|/v/)([A-Za-z0-9_-]{11})", raw)
     if m:
         return m.group(1)
-    # bare 11-char ID
     if re.fullmatch(r"[A-Za-z0-9_-]{11}", raw):
         return raw
     return ""
 
 
+def _wiki_entry_row(entry: dict, edit_id: int = None) -> str:
+    from wiki import CATEGORY_LABELS
+    eid   = entry["id"]
+    ytid  = entry["youtube_id"]
+    title = entry["title"]
+    desc  = entry["description"]
+    cat   = CATEGORY_LABELS.get(entry["category"], entry["category"])
+    thumb = f"https://img.youtube.com/vi/{ytid}/mqdefault.jpg"
+    pin_label = "📌 Unpin" if entry["pinned"] else "Pin"
+
+    if edit_id == eid:
+        # Inline edit form
+        from wiki import WIKI_CATEGORIES, CATEGORY_LABELS as _CL
+        cat_opts = "".join(
+            f'<option value="{c}" {"selected" if c == entry["category"] else ""}>{_CL.get(c, c)}</option>'
+            for c in WIKI_CATEGORIES
+        )
+        return (
+            f'<tr style="background:#1e1b4b;">'
+            f'<td style="width:100px;"><img src="{thumb}" style="width:96px;border-radius:4px;"></td>'
+            f'<td><form method="post" action="/admin/wiki/edit">'
+            f'<input type="hidden" name="entry_id" value="{eid}">'
+            f'<input name="title" value="{title}" required style="width:100%;margin-bottom:4px;">'
+            f'<textarea name="description" rows="2" style="width:100%;margin-bottom:4px;">{desc}</textarea>'
+            f'<select name="category" style="width:100%;margin-bottom:6px;">{cat_opts}</select>'
+            f'<button class="btn btn-blue" style="font-size:0.7rem;padding:4px 10px;">Save</button>'
+            f'</form></td>'
+            f'<td><a href="/admin/wiki" class="btn btn-gray" style="font-size:0.7rem;padding:4px 10px;display:inline-block;">Cancel</a></td>'
+            f'</tr>'
+        )
+
+    return (
+        f'<tr>'
+        f'<td style="width:100px;"><a href="https://youtube.com/watch?v={ytid}" target="_blank">'
+        f'<img src="{thumb}" style="width:96px;border-radius:4px;"></a></td>'
+        f'<td><strong style="color:#e5e7eb;">{title}</strong>'
+        f'{"<span style=\"color:#f59e0b;margin-left:6px;font-size:0.7rem;\">📌 PINNED</span>" if entry["pinned"] else ""}<br>'
+        f'<span style="font-size:0.75rem;color:#94a3b8;">{desc[:120]}</span><br>'
+        f'<code style="font-size:0.68rem;color:#64748b;">{ytid}</code>'
+        f'<span style="font-size:0.68rem;color:#475569;margin-left:8px;">📂 {cat}</span></td>'
+        f'<td style="white-space:nowrap;vertical-align:top;padding-top:8px;">'
+        f'<a href="/admin/wiki?edit_id={eid}" class="btn btn-blue" style="font-size:0.68rem;padding:3px 8px;display:inline-block;margin-bottom:3px;">Edit</a> '
+        f'<form method="post" action="/admin/wiki/pin" style="display:inline;">'
+        f'<input type="hidden" name="entry_id" value="{eid}">'
+        f'<button class="btn btn-yellow" style="font-size:0.68rem;padding:3px 8px;">{pin_label}</button>'
+        f'</form><br>'
+        f'<form method="post" action="/admin/wiki/move" style="display:inline;">'
+        f'<input type="hidden" name="entry_id" value="{eid}">'
+        f'<input type="hidden" name="direction" value="-1">'
+        f'<button class="btn btn-gray" style="font-size:0.68rem;padding:3px 8px;" title="Move up">▲</button>'
+        f'</form> '
+        f'<form method="post" action="/admin/wiki/move" style="display:inline;">'
+        f'<input type="hidden" name="entry_id" value="{eid}">'
+        f'<input type="hidden" name="direction" value="1">'
+        f'<button class="btn btn-gray" style="font-size:0.68rem;padding:3px 8px;" title="Move down">▼</button>'
+        f'</form><br>'
+        f'<form method="post" action="/admin/wiki/delete" '
+        f'onsubmit="return confirm(\'Delete this entry?\');" style="display:inline;">'
+        f'<input type="hidden" name="entry_id" value="{eid}">'
+        f'<button class="btn btn-red" style="font-size:0.68rem;padding:3px 8px;margin-top:3px;">Delete</button>'
+        f'</form>'
+        f'</td></tr>'
+    )
+
+
 @router.get("/admin/wiki", response_class=HTMLResponse)
 def admin_wiki(
     session_token: Optional[str] = Cookie(None),
-    msg: Optional[str] = Query(None),
-    err: Optional[str] = Query(None),
+    msg:     Optional[str] = Query(None),
+    err:     Optional[str] = Query(None),
+    edit_id: Optional[int] = Query(None),
+    filter_cat: Optional[str] = Query(None),
 ):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
 
-    data = _load_wiki_media()
-    videos = data["videos"]
-    audio  = data["audio"]
+    import wiki as _wiki
+    from wiki import WIKI_CATEGORIES, CATEGORY_LABELS
 
-    def _entry_row(entry: dict, kind: str, idx: int) -> str:
-        ytid  = entry.get("youtube_id", "")
-        title = entry.get("title", "")
-        desc  = entry.get("description", "")
-        thumb = f"https://img.youtube.com/vi/{ytid}/mqdefault.jpg"
-        return (
-            f'<tr>'
-            f'<td style="width:100px;"><a href="https://youtube.com/watch?v={ytid}" target="_blank">'
-            f'<img src="{thumb}" style="width:96px;border-radius:4px;"></a></td>'
-            f'<td><strong style="color:#e5e7eb;">{title}</strong><br>'
-            f'<span style="font-size:0.78rem;color:#94a3b8;">{desc[:120]}</span><br>'
-            f'<code style="font-size:0.7rem;color:#64748b;">{ytid}</code></td>'
-            f'<td>'
-            f'<form method="post" action="/admin/wiki/delete" '
-            f'onsubmit="return confirm(\'Delete this entry?\');">'
-            f'<input type="hidden" name="kind" value="{kind}">'
-            f'<input type="hidden" name="idx" value="{idx}">'
-            f'<button class="btn btn-red" style="font-size:0.72rem;padding:4px 10px;">Delete</button>'
-            f'</form>'
-            f'</td></tr>'
-        )
+    videos = _wiki.list_entries(kind="video", category=filter_cat or None)
+    audio  = _wiki.list_entries(kind="audio", category=filter_cat or None)
 
-    vid_rows  = "".join(_entry_row(e, "video", i) for i, e in enumerate(videos))
-    aud_rows  = "".join(_entry_row(e, "audio", i) for i, e in enumerate(audio))
-    empty_vid = '<tr><td colspan="3" style="color:#64748b;font-size:0.8rem;padding:16px;">No video entries yet.</td></tr>'
-    empty_aud = '<tr><td colspan="3" style="color:#64748b;font-size:0.8rem;padding:16px;">No audio deep dive entries yet.</td></tr>'
+    vid_rows = "".join(_wiki_entry_row(e, edit_id) for e in videos)
+    aud_rows = "".join(_wiki_entry_row(e, edit_id) for e in audio)
+    empty_v = '<tr><td colspan="3" style="color:#64748b;font-size:0.8rem;padding:16px;">No video entries yet.</td></tr>'
+    empty_a = '<tr><td colspan="3" style="color:#64748b;font-size:0.8rem;padding:16px;">No audio deep dive entries yet.</td></tr>'
 
-    msg_html = (f'<div class="card" style="background:rgba(34,197,94,0.1);border-color:#22c55e;'
-                f'color:#86efac;margin-bottom:16px;">{msg}</div>') if msg else ""
-    err_html = (f'<div class="card" style="background:rgba(239,68,68,0.1);border-color:#ef4444;'
-                f'color:#fca5a5;margin-bottom:16px;">{err}</div>') if err else ""
+    msg_html = (f'<div class="flash flash-success">{msg}</div>') if msg else ""
+    err_html = (f'<div class="flash flash-error">{err}</div>') if err else ""
 
-    add_form = """
+    # Category filter tabs
+    all_count   = len(_wiki.list_entries())
+    cat_tab_html = f'<a href="/admin/wiki" class="{"active" if not filter_cat else ""}">All ({all_count})</a>'
+    for c in WIKI_CATEGORIES:
+        c_entries = _wiki.list_entries(category=c)
+        if c_entries:
+            active = ' class="active"' if filter_cat == c else ""
+            cat_tab_html += f'<a href="/admin/wiki?filter_cat={c}"{active}>{CATEGORY_LABELS.get(c, c)} ({len(c_entries)})</a>'
+
+    cat_opts = "".join(
+        f'<option value="{c}">{CATEGORY_LABELS.get(c, c)}</option>'
+        for c in WIKI_CATEGORIES
+    )
+
+    add_form = f"""
 <div class="card" style="margin-top:24px;">
     <h3 style="font-size:0.85rem;color:#e5e7eb;margin-bottom:16px;">➕ Add Entry</h3>
     <form method="post" action="/admin/wiki/add">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
             <div>
-                <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">
-                    YouTube URL or Video ID *
-                </label>
-                <input name="youtube_url" required placeholder="https://youtu.be/... or 11-char ID"
-                       style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid #334155;
-                              border-radius:6px;color:#e5e7eb;font-size:0.85rem;">
+                <div class="form-label">YouTube URL or Video ID *</div>
+                <input name="youtube_url" required placeholder="https://youtu.be/… or 11-char ID">
             </div>
             <div>
-                <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">
-                    Section *
-                </label>
-                <select name="kind" style="width:100%;padding:8px 10px;background:#1e293b;
-                        border:1px solid #334155;border-radius:6px;color:#e5e7eb;font-size:0.85rem;">
+                <div class="form-label">Type *</div>
+                <select name="kind">
                     <option value="video">📺 Video Tutorial</option>
                     <option value="audio">🎙️ Audio Deep Dive</option>
                 </select>
             </div>
         </div>
-        <div style="margin-bottom:12px;">
-            <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">Title *</label>
-            <input name="title" required placeholder="e.g. Getting Started in Wadsworth"
-                   style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid #334155;
-                          border-radius:6px;color:#e5e7eb;font-size:0.85rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+                <div class="form-label">Title *</div>
+                <input name="title" required placeholder="e.g. Getting Started in Wadsworth">
+            </div>
+            <div>
+                <div class="form-label">Category</div>
+                <select name="category">{cat_opts}</select>
+            </div>
         </div>
         <div style="margin-bottom:16px;">
-            <label style="font-size:0.75rem;color:#94a3b8;display:block;margin-bottom:4px;">
-                Description (shown under the embed)
-            </label>
-            <textarea name="description" rows="2" placeholder="Brief description shown under the embed…"
-                      style="width:100%;padding:8px 10px;background:#1e293b;border:1px solid #334155;
-                             border-radius:6px;color:#e5e7eb;font-size:0.85rem;resize:vertical;
-                             font-family:inherit;"></textarea>
+            <div class="form-label">Description (shown under the embed)</div>
+            <textarea name="description" rows="2" placeholder="Brief description…"></textarea>
         </div>
-        <button class="btn" type="submit">Add to Wiki</button>
+        <button class="btn btn-green" type="submit">Add to Wiki</button>
     </form>
 </div>
 """
@@ -3595,28 +3662,24 @@ def admin_wiki(
     body = f"""
 {msg_html}{err_html}
 <h2 style="font-size:1rem;color:#e5e7eb;margin-bottom:4px;">Wiki Media Manager</h2>
-<p style="font-size:0.8rem;color:#64748b;margin-bottom:20px;">
-    Paste any YouTube URL (watch / share / embed) or bare 11-character video ID.
-    Entries appear on <a href="/stats/wiki" target="_blank" style="color:#38bdf8;">/stats/wiki</a> immediately.
+<p style="font-size:0.8rem;color:#64748b;margin-bottom:16px;">
+    Paste any YouTube URL or bare 11-character video ID.
+    Changes appear on <a href="/stats/wiki" target="_blank" style="color:#38bdf8;">/stats/wiki</a> immediately.
+    Titles and descriptions are HTML-escaped automatically.
 </p>
+<div class="tabs" style="margin-bottom:16px;">{cat_tab_html}</div>
 
 <h3 style="font-size:0.85rem;color:#38bdf8;margin-bottom:10px;">📺 Video Tutorials ({len(videos)})</h3>
 <div class="table-wrap">
-<table>
-    <tr><th>Thumbnail</th><th>Details</th><th></th></tr>
-    {vid_rows or empty_vid}
-</table>
-</div>
+<table><tr><th>Thumbnail</th><th>Details</th><th style="width:120px;"></th></tr>
+{vid_rows or empty_v}
+</table></div>
 
-<h3 style="font-size:0.85rem;color:#38bdf8;margin-top:24px;margin-bottom:10px;">
-    🎙️ Audio Deep Dives ({len(audio)})
-</h3>
+<h3 style="font-size:0.85rem;color:#a78bfa;margin-top:24px;margin-bottom:10px;">🎙️ Audio Deep Dives ({len(audio)})</h3>
 <div class="table-wrap">
-<table>
-    <tr><th>Thumbnail</th><th>Details</th><th></th></tr>
-    {aud_rows or empty_aud}
-</table>
-</div>
+<table><tr><th>Thumbnail</th><th>Details</th><th style="width:120px;"></th></tr>
+{aud_rows or empty_a}
+</table></div>
 
 {add_form}
 """
@@ -3630,45 +3693,87 @@ def admin_wiki_add(
     kind:        str  = Form(...),
     title:       str  = Form(...),
     description: str  = Form(""),
+    category:    str  = Form("reference"),
 ):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
-
     ytid = _extract_yt_id(youtube_url)
     if not ytid:
         return RedirectResponse(url="/admin/wiki?err=Could+not+extract+a+valid+YouTube+video+ID", status_code=303)
-
-    data = _load_wiki_media()
-    entry = {"youtube_id": ytid, "title": title.strip(), "description": description.strip()}
-    if kind == "audio":
-        data["audio"].append(entry)
-    else:
-        data["videos"].append(entry)
-    _save_wiki_media(data)
-
+    import wiki as _wiki
+    entry = _wiki.add_entry(ytid, kind, title, description, category, created_by=admin.id)
     log_action(admin.id, "wiki_media_add", None, f"{kind}: {title[:60]} ({ytid})")
     return RedirectResponse(url=f"/admin/wiki?msg=Added+{kind}%3A+{title[:40]}", status_code=303)
+
+
+@router.post("/admin/wiki/edit")
+def admin_wiki_edit(
+    session_token: Optional[str] = Cookie(None),
+    entry_id:    int = Form(...),
+    title:       str = Form(...),
+    description: str = Form(""),
+    category:    str = Form("reference"),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    import wiki as _wiki
+    ok = _wiki.update_entry(entry_id, title=title, description=description, category=category)
+    if ok:
+        log_action(admin.id, "wiki_media_edit", None, f"id={entry_id}: {title[:60]}")
+        return RedirectResponse(url=f"/admin/wiki?msg=Entry+updated", status_code=303)
+    return RedirectResponse(url="/admin/wiki?err=Entry+not+found", status_code=303)
+
+
+@router.post("/admin/wiki/pin")
+def admin_wiki_pin(
+    session_token: Optional[str] = Cookie(None),
+    entry_id: int = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    import wiki as _wiki
+    entries = _wiki.list_entries()
+    entry = next((e for e in entries if e["id"] == entry_id), None)
+    if entry:
+        _wiki.update_entry(entry_id, pinned=not entry["pinned"])
+        log_action(admin.id, "wiki_media_pin", None, f"id={entry_id} pinned={not entry['pinned']}")
+    return RedirectResponse(url="/admin/wiki", status_code=303)
+
+
+@router.post("/admin/wiki/move")
+def admin_wiki_move(
+    session_token: Optional[str] = Cookie(None),
+    entry_id:  int = Form(...),
+    direction: int = Form(...),
+):
+    admin, redirect = _guard(session_token)
+    if redirect:
+        return redirect
+    import wiki as _wiki
+    _wiki.move_entry(entry_id, direction)
+    return RedirectResponse(url="/admin/wiki", status_code=303)
 
 
 @router.post("/admin/wiki/delete")
 def admin_wiki_delete(
     session_token: Optional[str] = Cookie(None),
-    kind: str = Form(...),
-    idx:  int = Form(...),
+    entry_id: int = Form(...),
 ):
     admin, redirect = _guard(session_token)
     if redirect:
         return redirect
-
-    data = _load_wiki_media()
-    lst  = data["audio"] if kind == "audio" else data["videos"]
-    if 0 <= idx < len(lst):
-        removed = lst.pop(idx)
-        _save_wiki_media(data)
-        log_action(admin.id, "wiki_media_delete", None, f"{kind}: {removed.get('title','?')}")
+    import wiki as _wiki
+    entries = _wiki.list_entries()
+    entry = next((e for e in entries if e["id"] == entry_id), None)
+    ok = _wiki.delete_entry(entry_id)
+    if ok:
+        title = entry["title"] if entry else "?"
+        log_action(admin.id, "wiki_media_delete", None, f"id={entry_id}: {title[:60]}")
         return RedirectResponse(url="/admin/wiki?msg=Entry+deleted", status_code=303)
-    return RedirectResponse(url="/admin/wiki?err=Invalid+index", status_code=303)
+    return RedirectResponse(url="/admin/wiki?err=Entry+not+found", status_code=303)
 
 
 # ── Admin: Item Routes ────────────────────────────────────────
