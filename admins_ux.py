@@ -3549,12 +3549,16 @@ def _wiki_entry_row(entry: dict, edit_id: int = None) -> str:
             f'</tr>'
         )
 
+    _pinned_badge = (
+        '<span style="color:#f59e0b;margin-left:6px;font-size:0.7rem;">📌 PINNED</span>'
+        if entry["pinned"] else ""
+    )
     return (
         f'<tr>'
         f'<td style="width:100px;"><a href="https://youtube.com/watch?v={ytid}" target="_blank">'
         f'<img src="{thumb}" style="width:96px;border-radius:4px;"></a></td>'
         f'<td><strong style="color:#e5e7eb;">{title}</strong>'
-        f'{"<span style=\"color:#f59e0b;margin-left:6px;font-size:0.7rem;\">📌 PINNED</span>" if entry["pinned"] else ""}<br>'
+        f'{_pinned_badge}<br>'
         f'<span style="font-size:0.75rem;color:#94a3b8;">{desc[:120]}</span><br>'
         f'<code style="font-size:0.68rem;color:#64748b;">{ytid}</code>'
         f'<span style="font-size:0.68rem;color:#475569;margin-left:8px;">📂 {cat}</span></td>'
