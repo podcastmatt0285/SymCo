@@ -9,8 +9,9 @@ Shows a live political atlas of the Wadsworth game world:
 """
 
 from typing import Optional
-from fastapi import APIRouter, Cookie, Query
+from fastapi import APIRouter, Cookie, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -331,7 +332,6 @@ def api_my_properties(
     try:
         from land import get_db as _ldb, LandPlot
         from business import Business, BUSINESS_TYPES, get_district_business_types
-        import json as _json
 
         ldb = _ldb()
         _dist_types = get_district_business_types()
@@ -357,13 +357,13 @@ def api_my_properties(
         for p in plots:
             biz = biz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
             plots_out.append({
-                "id":         p.id,
-                "terrain":    p.terrain_type,
-                "efficiency": round(p.efficiency or 0, 1),
+                "id":          p.id,
+                "terrain":     p.terrain_type,
+                "efficiency":  round(p.efficiency or 0, 1),
                 "monthly_tax": round(p.monthly_tax or 0, 2),
-                "biz_type":   biz["type"] if biz else None,
-                "biz_name":   biz["name"] if biz else None,
-                "biz_class":  biz["class"] if biz else None,
+                "biz_type":    biz["type"]  if biz else None,
+                "biz_name":    biz["name"]  if biz else None,
+                "biz_class":   biz["class"] if biz else None,
             })
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -371,16 +371,75 @@ def api_my_properties(
     return JSONResponse({"player_id": target_id, "player_name": player_name, "plots": plots_out})
 
 
+class _MoveBizBody(BaseModel):
+    from_plot_id: int
+    to_plot_id: int
+
+
+@router.post("/api/move-business", response_class=JSONResponse)
+def api_move_business(
+    body: _MoveBizBody,
+    session_token: Optional[str] = Cookie(None),
+):
+    viewer = _require_auth(session_token)
+    if isinstance(viewer, RedirectResponse):
+        return JSONResponse({"error": "auth"}, status_code=401)
+
+    try:
+        from land import get_db as _ldb, LandPlot
+        from business import Business
+
+        ldb = _ldb()
+        from_plot = ldb.query(LandPlot).filter_by(id=body.from_plot_id).first()
+        to_plot   = ldb.query(LandPlot).filter_by(id=body.to_plot_id).first()
+
+        if not from_plot or not to_plot:
+            ldb.close()
+            return JSONResponse({"error": "plot not found"}, status_code=404)
+        if from_plot.owner_id != viewer.id or to_plot.owner_id != viewer.id:
+            ldb.close()
+            return JSONResponse({"error": "not your plot"}, status_code=403)
+        if not from_plot.occupied_by_business_id:
+            ldb.close()
+            return JSONResponse({"error": "no business on source plot"}, status_code=400)
+        if to_plot.occupied_by_business_id:
+            ldb.close()
+            return JSONResponse({"error": "destination plot occupied"}, status_code=400)
+
+        biz_id = from_plot.occupied_by_business_id
+        biz = ldb.query(Business).filter_by(id=biz_id).first()
+
+        from_plot.occupied_by_business_id = None
+        to_plot.occupied_by_business_id   = biz_id
+        if biz:
+            biz.land_plot_id = body.to_plot_id
+
+        ldb.commit()
+        ldb.close()
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 _MY_PROPS_MODAL = r"""
-<div id="mpModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);
+<div id="mpModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);
      flex-direction:column;align-items:stretch;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;
-              background:#0a0f1a;border-bottom:1px solid #1e293b;flex-shrink:0;">
+              background:#0a0f1a;border-bottom:1px solid #1e293b;flex-shrink:0;flex-wrap:wrap;gap:6px;">
     <div>
       <span id="mpTitle" style="font-size:1rem;font-weight:700;color:#f1f5f9;">My Properties</span>
       <span id="mpCount" style="font-size:0.75rem;color:#64748b;margin-left:10px;"></span>
+      <span id="mpMoveHint" style="display:none;font-size:0.72rem;color:#f59e0b;
+            margin-left:12px;background:#451a03;padding:2px 8px;border-radius:4px;">
+        Move mode — click an empty plot to place, Esc to cancel
+      </span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <button id="mpMoveBuildingBtn" onclick="mpEnterMoveMode()"
+              style="display:none;background:#1e293b;border:1px solid #334155;color:#fbbf24;
+                     padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.72rem;">
+        📦 Move Building
+      </button>
       <button onclick="mpZoom(1.2)" style="background:#1e293b;border:none;color:#94a3b8;
               padding:4px 10px;border-radius:4px;cursor:pointer;font-size:1rem;">+</button>
       <button onclick="mpZoom(1/1.2)" style="background:#1e293b;border:none;color:#94a3b8;
@@ -391,7 +450,7 @@ _MY_PROPS_MODAL = r"""
               padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>
     </div>
   </div>
-  <canvas id="mpCanvas" style="flex:1;width:100%;cursor:grab;touch-action:none;"></canvas>
+  <canvas id="mpCanvas" style="flex:1;width:100%;cursor:grab;touch-action:none;display:block;"></canvas>
   <div id="mpTooltip" style="display:none;position:fixed;background:#0f172a;border:1px solid #334155;
        border-radius:6px;padding:8px 12px;font-size:0.75rem;color:#e2e8f0;pointer-events:none;
        max-width:200px;z-index:10000;line-height:1.6;"></div>
@@ -400,11 +459,21 @@ _MY_PROPS_MODAL = r"""
 <script>
 (function(){
   /* ── constants ── */
-  var TW = 64, TH = 38;   // tile width / height (px at scale=1)
-  var COLS_PER_ROW = 8;    // plots per row in the iso grid
+  var TW=64, TH=38, COLS=8;
+  var SPRITE_BASE='/static/iso/buildings/';
 
-  /* ── terrain ground colours ── */
-  var TERRAIN_COLOR = {
+  /* ── downtown buildings shown below player plots ── */
+  var DOWNTOWN=[
+    {label:'Commodity\nMarket', sprite:'commercial',     col:0},
+    {label:'District\nMarket',  sprite:'shop_medium',    col:1},
+    {label:'Land\nRegistry',    sprite:'mansion',        col:2},
+    {label:'Stock\nExchange',   sprite:'university',     col:3},
+    {label:'City Hall',         sprite:'mansion',        col:4},
+    {label:'Reserve\nBank',     sprite:'commercial',     col:5},
+  ];
+
+  /* ── terrain colours ── */
+  var TERRAIN_COLOR={
     urban:'#64748b', prairie:'#86efac', forest:'#16a34a', desert:'#fbbf24',
     marsh:'#22d3ee', mountain:'#94a3b8', tundra:'#bae6fd', jungle:'#4ade80',
     savanna:'#d97706', hills:'#a3e635', island:'#f472b6', coastal:'#60a5fa',
@@ -412,315 +481,407 @@ _MY_PROPS_MODAL = r"""
     district_food:'#f97316', district_hospital:'#ec4899', district_industrial:'#f59e0b',
     district_medical:'#a78bfa', district_neighborhood:'#34d399', district_transport:'#60a5fa',
   };
-  var TERRAIN_DARK = {};  // auto-derived darker shade for iso left/right faces
-  Object.keys(TERRAIN_COLOR).forEach(function(k){
-    var c = TERRAIN_COLOR[k];
-    TERRAIN_DARK[k] = shadeColor(c, -40);
-  });
 
-  /* ── business type → sprite filename ── */
-  function spriteFor(bizType, bizClass){
-    if (!bizType) return null;
-    var t = bizType;
-    if (t.match(/mine|alluvial|quarry|mineral/))           return 'warehouse';
-    if (t.match(/solar|power_plant|powerplant/))           return 'powerplant';
-    if (t.match(/water_facility|water_tower|watertower/))  return 'watertower';
-    if (t.match(/plantation|cotton|agave|apiary|pasture|paddock|farm|field|orchard/)) return 'park';
-    if (t.match(/lumber|timber|logging/))                  return 'park_medium';
-    if (t.match(/hospital|clinic|medical|infirmary/))      return 'hospital';
-    if (t.match(/university|college/))                     return 'university';
-    if (t.match(/school|academy/))                         return 'school';
-    if (t.match(/police/))                                 return 'police_station';
-    if (t.match(/fire_station|firehouse/))                 return 'fire_station';
-    if (t.match(/airport|aviation/))                       return 'airport';
-    if (t.match(/stadium|arena|coliseum/))                 return 'stadium';
-    if (t.match(/warehouse|storage|depot|silo/))           return 'warehouse';
-    if (t.match(/grocery|supermarket|market|mall/))        return 'shop_medium';
-    if (t.match(/shop|store|boutique|kiosk|stationery|arts_and_crafts/)) return 'shop_small';
-    if (t.match(/refinery|factory|mill|foundry|plant|smelter|distillery|brewery|winery|cannery|processing/)) return 'industrial';
-    if (t.match(/ritual|church|temple|shrine/))            return 'space';
-    if (bizClass === 'retail')                             return 'shop_medium';
+  /* ── sprite picker ── */
+  function spriteFor(t, cls){
+    if(!t) return null;
+    if(/mine|alluvial|quarry|mineral/.test(t))                       return 'warehouse';
+    if(/solar|power_plant|powerplant/.test(t))                       return 'powerplant';
+    if(/water_facility|water_tower|watertower/.test(t))              return 'watertower';
+    if(/plantation|cotton|agave|apiary|pasture|paddock|farm|field|orchard/.test(t)) return 'park';
+    if(/lumber|timber|logging/.test(t))                              return 'park_medium';
+    if(/hospital|clinic|medical|infirmary/.test(t))                  return 'hospital';
+    if(/university|college/.test(t))                                 return 'university';
+    if(/school|academy/.test(t))                                     return 'school';
+    if(/police/.test(t))                                             return 'police_station';
+    if(/fire_station|firehouse/.test(t))                             return 'fire_station';
+    if(/airport|aviation/.test(t))                                   return 'airport';
+    if(/stadium|arena|coliseum/.test(t))                             return 'stadium';
+    if(/warehouse|storage|depot|silo/.test(t))                       return 'warehouse';
+    if(/grocery|supermarket|market|mall/.test(t))                    return 'shop_medium';
+    if(/shop|store|boutique|kiosk|stationery|arts_and_crafts/.test(t)) return 'shop_small';
+    if(/refinery|factory|mill|foundry|plant|smelter|distillery|brewery|winery|cannery|processing/.test(t)) return 'industrial';
+    if(/ritual|church|temple|shrine/.test(t))                        return 'space';
+    if(cls==='retail') return 'shop_medium';
     return 'industrial';
   }
 
-  /* ── colour helper ── */
-  function shadeColor(hex, amt){
-    var n = parseInt(hex.slice(1), 16);
-    var r = Math.min(255, Math.max(0, (n>>16)+amt));
-    var g = Math.min(255, Math.max(0, ((n>>8)&0xff)+amt));
-    var b = Math.min(255, Math.max(0, (n&0xff)+amt));
-    return '#'+ ((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
+  /* ── shade helper ── */
+  function shade(hex,amt){
+    var n=parseInt(hex.slice(1),16);
+    var r=Math.min(255,Math.max(0,(n>>16)+amt));
+    var g=Math.min(255,Math.max(0,((n>>8)&0xff)+amt));
+    var b=Math.min(255,Math.max(0,(n&0xff)+amt));
+    return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
   }
 
   /* ── state ── */
-  var cv, ctx, plots=[], imgs={}, scale=1, offX=0, offY=0;
-  var dragging=false, dragSX=0, dragSY=0, dragOX=0, dragOY=0;
-  var hoveredIdx=-1;
-  var SPRITE_BASE = '/static/iso/buildings/';
+  var cv,ctx,plots=[],imgs={},scale=1,offX=0,offY=0;
+  var dragActive=false,dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
+  var hovId=-1;
+  var moveMode=false,selId=-1;
+  var selfId=-1,viewingId=-1;
 
-  /* ── open / close ── */
-  window.openMyProperties = function(pid){
-    var modal = document.getElementById('mpModal');
-    modal.style.display = 'flex';
-    cv = document.getElementById('mpCanvas');
-    ctx = cv.getContext('2d');
-    resizeCv();
-    document.getElementById('mpTitle').textContent = (pid === _SELF_ID)
-      ? 'My Properties' : 'Properties';
-    fetch('/api/my-properties' + (pid ? '?player_id='+pid : ''))
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (d.error){ alert('Could not load properties: '+d.error); return; }
-        plots = d.plots;
-        document.getElementById('mpTitle').textContent =
-          (pid === _SELF_ID ? 'My' : d.player_name+"'s") + ' Properties';
-        document.getElementById('mpCount').textContent =
-          plots.length + ' plot' + (plots.length===1?'':'s');
-        mpReset();
-        preloadSprites(function(){ render(); });
-      });
-  };
+  /* ── layout helpers ── */
+  function nRows(){ return Math.ceil((plots.length||1)/COLS); }
+  function roadRow(){ return nRows(); }
+  function downRow(){ return nRows()+1; }
+  function plotCoord(i){ return {col:i%COLS, row:Math.floor(i/COLS)}; }
 
-  window.closeMpModal = function(){
-    document.getElementById('mpModal').style.display = 'none';
-  };
-
-  /* ── spiral layout: returns {col,row} for index i ── */
-  function spiralCoord(i){
-    var col = i % COLS_PER_ROW;
-    var row = Math.floor(i / COLS_PER_ROW);
-    return {col: col, row: row};
+  /* ── iso math ── */
+  function g2s(col,row){
+    return {sx:(col-row)*(TW/2)*scale+offX, sy:(col+row)*(TH/2)*scale+offY};
   }
 
-  /* ── iso coordinate math ── */
-  function gridToScreen(col, row){
-    return {
-      sx: (col - row) * (TW/2) * scale + offX,
-      sy: (col + row) * (TH/2) * scale + offY,
-    };
-  }
-
-  function screenToGrid(sx, sy){
-    var x = (sx - offX) / scale, y = (sy - offY) / scale;
-    var col = (x/(TW/2) + y/(TH/2)) / 2;
-    var row = (y/(TH/2) - x/(TW/2)) / 2;
-    return {col: Math.round(col), row: Math.round(row)};
-  }
-
-  /* ── draw a single iso diamond ── */
-  function drawDiamond(sx, sy, color, darkColor){
-    var hw = (TW/2)*scale, hh = (TH/2)*scale;
-    /* top face */
+  /* ── draw helpers ── */
+  function drawDiamond(sx,sy,color){
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
     ctx.beginPath();
-    ctx.moveTo(sx + hw, sy);
-    ctx.lineTo(sx + hw*2, sy + hh);
-    ctx.lineTo(sx + hw, sy + hh*2);
-    ctx.lineTo(sx, sy + hh);
+    ctx.moveTo(sx+hw,sy);
+    ctx.lineTo(sx+hw*2,sy+hh);
+    ctx.lineTo(sx+hw,sy+hh*2);
+    ctx.lineTo(sx,sy+hh);
     ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
+    ctx.fillStyle=color; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=0.5; ctx.stroke();
   }
 
-  /* ── draw building sprite centred on tile ── */
-  function drawSprite(sx, sy, spriteName){
-    var img = imgs[spriteName];
-    if (!img || !img.complete || !img.naturalWidth) return;
-    var hw = (TW/2)*scale;
-    var hh = (TH/2)*scale;
-    var sh = img.naturalHeight / img.naturalWidth * TW * scale * 1.6;
-    var sw = TW * scale * 1.1;
-    var dx = sx + hw - sw/2;
-    var dy = sy + hh*2 - sh;
-    ctx.drawImage(img, dx, dy, sw, sh);
+  function drawSprite(sx,sy,name){
+    var img=imgs[name];
+    if(!img||!img.complete||!img.naturalWidth) return;
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    var sh=img.naturalHeight/img.naturalWidth*TW*scale*1.6;
+    var sw=TW*scale*1.1;
+    ctx.drawImage(img,sx+hw-sw/2,sy+hh*2-sh,sw,sh);
   }
 
-  /* ── main render ── */
+  /* ── render ── */
   function render(){
-    if (!cv || !ctx) return;
-    ctx.clearRect(0, 0, cv.width, cv.height);
+    if(!cv||!ctx) return;
+    var W=cv.offsetWidth,H=cv.offsetHeight;
+    ctx.clearRect(0,0,W,H);
 
-    if (plots.length === 0){
-      ctx.fillStyle = '#475569';
-      ctx.font = '16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('No plots owned.', cv.width/2, cv.height/2);
-      ctx.textAlign = 'left';
+    if(!plots.length){
+      ctx.fillStyle='#475569'; ctx.font='16px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('No plots owned.',W/2,H/2); ctx.textAlign='left';
       return;
     }
 
-    /* sort by col+row for correct iso depth */
-    var items = plots.map(function(p, i){
-      var pos = spiralCoord(i);
-      return {p:p, col:pos.col, row:pos.row, depth:pos.col+pos.row};
+    /* build draw list */
+    var items=[];
+    plots.forEach(function(p,i){
+      var c=plotCoord(i);
+      items.push({type:'plot',p:p,col:c.col,row:c.row,depth:c.col+c.row});
     });
-    items.sort(function(a,b){ return a.depth-b.depth; });
+    var rr=roadRow();
+    for(var rc=0;rc<COLS;rc++) items.push({type:'road',col:rc,row:rr,depth:rc+rr});
+    var dr=downRow();
+    DOWNTOWN.forEach(function(d){
+      items.push({type:'down',d:d,col:d.col,row:dr,depth:d.col+dr});
+    });
+    items.sort(function(a,b){return a.depth-b.depth;});
 
-    items.forEach(function(it, i){
-      var s = gridToScreen(it.col, it.row);
-      var color = TERRAIN_COLOR[it.p.terrain] || '#86efac';
-      var dark  = TERRAIN_DARK[it.p.terrain]  || '#4ade80';
-      var isHovered = (hoveredIdx === it.p.id);
+    items.forEach(function(it){
+      var s=g2s(it.col,it.row);
+      var hw=(TW/2)*scale,hh=(TH/2)*scale;
 
-      if (isHovered){
+      if(it.type==='road'){
+        drawDiamond(s.sx,s.sy,'#374151');
         ctx.save();
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur  = 12*scale;
+        ctx.strokeStyle='rgba(253,224,71,0.45)';
+        ctx.lineWidth=Math.max(1,scale);
+        ctx.setLineDash([3*scale,4*scale]);
+        ctx.beginPath();
+        /* dashes running NW→SE (col direction) across tile centre */
+        ctx.moveTo(s.sx+hw*0.55,s.sy+hh*1.55);
+        ctx.lineTo(s.sx+hw*1.45,s.sy+hh*0.45);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        return;
       }
-      drawDiamond(s.sx, s.sy, isHovered ? shadeColor(color,20) : color, dark);
-      if (isHovered) ctx.restore();
 
-      if (it.p.biz_type){
-        var spr = spriteFor(it.p.biz_type, it.p.biz_class);
-        if (spr) drawSprite(s.sx, s.sy, spr);
+      if(it.type==='down'){
+        drawDiamond(s.sx,s.sy,'#1e293b');
+        if(it.d.sprite) drawSprite(s.sx,s.sy,it.d.sprite);
+        if(scale>0.5){
+          ctx.save();
+          ctx.font='bold '+Math.round(9*scale)+'px sans-serif';
+          ctx.textAlign='center';
+          ctx.fillStyle='rgba(148,163,184,0.92)';
+          var lines=it.d.label.split('\n');
+          var lx=s.sx+hw, ly=s.sy-4*scale;
+          lines.forEach(function(ln,li){
+            ctx.fillText(ln,lx,ly+li*11*scale);
+          });
+          ctx.restore();
+        }
+        return;
+      }
+
+      /* player plot */
+      var p=it.p;
+      var color=TERRAIN_COLOR[p.terrain]||'#86efac';
+      var isHov=(hovId===p.id);
+      var isSel=(selId===p.id);
+
+      if(isHov||isSel){
+        ctx.save();
+        ctx.shadowColor=isSel?'#f59e0b':'#60a5fa';
+        ctx.shadowBlur=14*scale;
+      }
+      drawDiamond(s.sx,s.sy,isSel?shade(color,40):isHov?shade(color,20):color);
+      if(isHov||isSel) ctx.restore();
+
+      if(p.biz_type&&!(moveMode&&isSel)){
+        var spr=spriteFor(p.biz_type,p.biz_class);
+        if(spr) drawSprite(s.sx,s.sy,spr);
+      }
+
+      /* selection "lift" icon */
+      if(isSel&&moveMode){
+        ctx.fillStyle='#f59e0b'; ctx.font='bold '+Math.round(14*scale)+'px sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('↑',s.sx+hw,s.sy+hh);
+        ctx.textAlign='left';
       }
     });
+
+    /* move mode banner */
+    if(moveMode){
+      ctx.fillStyle='rgba(0,0,0,0.55)';
+      ctx.fillRect(0,0,W,26);
+      ctx.fillStyle='#fbbf24'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('Click an empty plot to place  ·  Esc to cancel',W/2,17);
+      ctx.textAlign='left';
+    }
   }
 
   /* ── preload sprites ── */
   function preloadSprites(cb){
-    var needed = {};
+    var needed={};
     plots.forEach(function(p){
-      if (p.biz_type){ var s = spriteFor(p.biz_type, p.biz_class); if(s) needed[s]=1; }
+      if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class); if(s) needed[s]=1;}
     });
-    var keys = Object.keys(needed), done=0;
-    if (!keys.length){ cb(); return; }
+    DOWNTOWN.forEach(function(d){if(d.sprite) needed[d.sprite]=1;});
+    var keys=Object.keys(needed), pending=0;
     keys.forEach(function(k){
-      if (imgs[k]){ done++; if(done===keys.length) cb(); return; }
-      var img = new Image();
-      img.onload = img.onerror = function(){ done++; if(done===keys.length) cb(); };
-      img.src = SPRITE_BASE + k + '.png';
-      imgs[k] = img;
+      if(imgs[k]&&imgs[k].complete&&imgs[k].naturalWidth>0) return;
+      pending++;
+      var img=new Image();
+      img.onload=img.onerror=function(){if(--pending===0) cb();};
+      img.src=SPRITE_BASE+k+'.png';
+      imgs[k]=img;
     });
+    if(pending===0) cb();
   }
 
-  /* ── canvas resize ── */
+  /* ── resize canvas (DPR-correct) ── */
   function resizeCv(){
-    if (!cv) return;
-    cv.width  = cv.offsetWidth  * window.devicePixelRatio;
-    cv.height = cv.offsetHeight * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    cv.width  = cv.offsetWidth;
-    cv.height = cv.offsetHeight;
+    if(!cv||!ctx) return;
+    var dpr=window.devicePixelRatio||1;
+    cv.width=cv.offsetWidth*dpr;
+    cv.height=cv.offsetHeight*dpr;
+    ctx.scale(dpr,dpr);
   }
 
-  /* ── zoom / reset ── */
-  window.mpZoom = function(factor){
-    scale = Math.max(0.3, Math.min(4, scale*factor));
-    render();
-  };
-  window.mpReset = function(){
-    if (!cv) return;
-    scale = 1;
-    var rows = Math.ceil((plots.length||1) / COLS_PER_ROW);
-    offX = cv.offsetWidth/2  - (COLS_PER_ROW * TW/2) * scale / 2;
-    offY = cv.offsetHeight/2 - (rows * TH/2) * scale / 2 - TH*scale;
+  /* ── zoom ── */
+  window.mpZoom=function(f){
+    var W=cv.offsetWidth,H=cv.offsetHeight;
+    var cx=W/2,cy=H/2;
+    offX=cx-(cx-offX)*f; offY=cy-(cy-offY)*f;
+    scale=Math.max(0.3,Math.min(4,scale*f));
     render();
   };
 
-  /* ── find plot at screen pos ── */
-  function plotAt(mx, my){
-    for (var i=plots.length-1; i>=0; i--){
-      var pos = spiralCoord(i);
-      var s = gridToScreen(pos.col, pos.row);
-      var hw = (TW/2)*scale, hh = (TH/2)*scale;
-      var dx = mx - (s.sx + hw), dy = my - (s.sy + hh);
-      if (Math.abs(dx/hw) + Math.abs(dy/hh) <= 1) return i;
+  /* ── reset ── */
+  window.mpReset=function(){
+    if(!cv) return;
+    scale=1;
+    var rows=nRows();
+    var midCol=(COLS-1)/2, midRow=(rows-1)/2;
+    offX=cv.offsetWidth/2  - (midCol-midRow)*(TW/2)*scale;
+    offY=cv.offsetHeight/3 - (midCol+midRow)*(TH/2)*scale;
+    render();
+  };
+
+  /* ── hit test ── */
+  function plotAt(mx,my){
+    for(var i=plots.length-1;i>=0;i--){
+      var c=plotCoord(i),s=g2s(c.col,c.row);
+      var hw=(TW/2)*scale,hh=(TH/2)*scale;
+      var dx=mx-(s.sx+hw),dy=my-(s.sy+hh);
+      if(Math.abs(dx/hw)+Math.abs(dy/hh)<=1) return i;
     }
     return -1;
   }
 
   /* ── tooltip ── */
-  function showTooltip(plot, mx, my){
-    var tt = document.getElementById('mpTooltip');
-    var html = '<strong style="color:#f59e0b;">Plot #'+plot.id+'</strong><br>'
-      + '<span style="color:#94a3b8;">'+plot.terrain+'</span><br>';
-    if (plot.biz_name){
-      html += '<span style="color:#4ade80;">'+plot.biz_name+'</span><br>';
+  function showTip(p,mx,my){
+    var tt=document.getElementById('mpTooltip');
+    var html='<strong style="color:#f59e0b;">Plot #'+p.id+'</strong><br>'
+      +'<span style="color:#94a3b8;">'+p.terrain+'</span><br>';
+    if(moveMode&&selId===p.id){
+      html+='<span style="color:#fbbf24;">Selected — pick a destination</span>';
+    } else if(p.biz_name){
+      html+='<span style="color:#4ade80;">'+p.biz_name+'</span><br>';
+      if(viewingId===selfId) html+='<span style="color:#64748b;font-size:0.68rem;">Click to move building</span><br>';
+      html+='Eff: '+p.efficiency+'%  Tax: $'+p.monthly_tax+'/mo';
     } else {
-      html += '<span style="color:#475569;">Vacant</span><br>';
+      html+='<span style="color:#475569;">Vacant</span>';
+      if(moveMode) html+='<br><span style="color:#34d399;">Click to place here</span>';
     }
-    html += 'Efficiency: '+plot.efficiency+'%<br>'
-          + 'Tax: $'+plot.monthly_tax+'/mo';
-    tt.innerHTML = html;
-    tt.style.display = 'block';
-    tt.style.left = Math.min(mx+12, window.innerWidth-220)+'px';
-    tt.style.top  = Math.min(my+12, window.innerHeight-120)+'px';
+    tt.innerHTML=html;
+    tt.style.display='block';
+    tt.style.left=Math.min(mx+14,window.innerWidth-220)+'px';
+    tt.style.top =Math.min(my+14,window.innerHeight-130)+'px';
+  }
+  function hideTip(){ document.getElementById('mpTooltip').style.display='none'; }
+
+  /* ── move mode ── */
+  window.mpEnterMoveMode=function(){
+    moveMode=true; selId=-1;
+    document.getElementById('mpMoveHint').style.display='';
+    document.getElementById('mpMoveBuildingBtn').style.display='none';
+    render();
+  };
+  function cancelMove(){
+    moveMode=false; selId=-1;
+    document.getElementById('mpMoveHint').style.display='none';
+    if(viewingId===selfId)
+      document.getElementById('mpMoveBuildingBtn').style.display='';
+    render();
+  }
+  function doMove(fromId,toId){
+    fetch('/api/move-business',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({from_plot_id:fromId,to_plot_id:toId})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.error){alert('Move failed: '+d.error);return;}
+      var fp=plots.find(function(p){return p.id===fromId;});
+      var tp=plots.find(function(p){return p.id===toId;});
+      if(fp&&tp){
+        tp.biz_type=fp.biz_type; tp.biz_name=fp.biz_name; tp.biz_class=fp.biz_class;
+        fp.biz_type=null; fp.biz_name=null; fp.biz_class=null;
+      }
+      cancelMove();
+    });
   }
 
-  function hideTooltip(){
-    document.getElementById('mpTooltip').style.display = 'none';
-  }
+  /* ── open / close ── */
+  window.openMyProperties=function(pid){
+    selfId=window._SELF_ID||0; viewingId=pid||selfId;
+    var modal=document.getElementById('mpModal');
+    modal.style.display='flex';
+    cv=document.getElementById('mpCanvas');
+    ctx=cv.getContext('2d');
+    moveMode=false; selId=-1; hovId=-1;
+    document.getElementById('mpMoveHint').style.display='none';
+    document.getElementById('mpMoveBuildingBtn').style.display='none';
+    resizeCv();
+    document.getElementById('mpTitle').textContent='Loading…';
+    document.getElementById('mpCount').textContent='';
+    fetch('/api/my-properties'+(pid&&pid!==selfId?'?player_id='+pid:''))
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.error){alert('Could not load: '+d.error);return;}
+        plots=d.plots;
+        document.getElementById('mpTitle').textContent=
+          (viewingId===selfId?'My':d.player_name+"'s")+' Properties';
+        document.getElementById('mpCount').textContent=
+          plots.length+' plot'+(plots.length===1?'':'s');
+        if(viewingId===selfId)
+          document.getElementById('mpMoveBuildingBtn').style.display='';
+        mpReset();
+        preloadSprites(function(){render();});
+        wireEvents();
+      });
+  };
 
-  /* ── mouse / touch events ── */
-  document.addEventListener('DOMContentLoaded', function(){
-    /* lazily wire events once modal first opened */
-  });
+  window.closeMpModal=function(){
+    document.getElementById('mpModal').style.display='none';
+    moveMode=false; selId=-1;
+    if(cv) cv._wired=false;
+  };
 
+  /* ── events ── */
   function wireEvents(){
-    if (cv._wired) return;
-    cv._wired = true;
+    if(cv._wired) return;
+    cv._wired=true;
 
-    cv.addEventListener('mousedown', function(e){
-      dragging=true; dragSX=e.clientX; dragSY=e.clientY; dragOX=offX; dragOY=offY;
-      cv.style.cursor='grabbing';
+    cv.addEventListener('mousedown',function(e){
+      dragActive=true; didDrag=false;
+      dragSX=e.clientX; dragSY=e.clientY; dragOX=offX; dragOY=offY;
     });
-    window.addEventListener('mouseup', function(){
-      dragging=false; cv.style.cursor='grab';
+    window.addEventListener('mouseup',function(e){
+      if(dragActive&&!didDrag){
+        /* treat as click */
+        var rect=cv.getBoundingClientRect();
+        var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+        var idx=plotAt(mx,my);
+        if(idx>=0){
+          var p=plots[idx];
+          if(moveMode){
+            if(p.id===selId){ cancelMove(); }
+            else if(!p.biz_type&&selId>=0){ doMove(selId,p.id); }
+            else if(p.biz_type){ selId=p.id; render(); }
+          } else if(p.biz_type&&viewingId===selfId){
+            selId=p.id; moveMode=true;
+            document.getElementById('mpMoveHint').style.display='';
+            document.getElementById('mpMoveBuildingBtn').style.display='none';
+            render();
+          }
+        } else {
+          if(moveMode) cancelMove();
+        }
+      }
+      dragActive=false; didDrag=false; cv.style.cursor='grab';
     });
-    cv.addEventListener('mousemove', function(e){
-      if (dragging){
-        offX = dragOX + (e.clientX-dragSX); offY = dragOY + (e.clientY-dragSY);
-        render();
+    cv.addEventListener('mousemove',function(e){
+      if(dragActive){
+        var dx=e.clientX-dragSX,dy=e.clientY-dragSY;
+        if(Math.abs(dx)>3||Math.abs(dy)>3){
+          didDrag=true; offX=dragOX+dx; offY=dragOY+dy;
+          cv.style.cursor='grabbing'; render();
+        }
       } else {
-        var rect=cv.getBoundingClientRect(), mx=e.clientX-rect.left, my=e.clientY-rect.top;
-        var idx = plotAt(mx, my);
-        var newHov = idx>=0 ? plots[idx].id : -1;
-        if (newHov !== hoveredIdx){ hoveredIdx=newHov; render(); }
-        if (idx>=0){ showTooltip(plots[idx], e.clientX, e.clientY); }
-        else { hideTooltip(); }
+        var rect=cv.getBoundingClientRect();
+        var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+        var idx=plotAt(mx,my);
+        var nh=idx>=0?plots[idx].id:-1;
+        if(nh!==hovId){hovId=nh;render();}
+        if(idx>=0) showTip(plots[idx],e.clientX,e.clientY);
+        else hideTip();
       }
     });
-    cv.addEventListener('mouseleave', function(){ hoveredIdx=-1; hideTooltip(); render(); });
+    cv.addEventListener('mouseleave',function(){hovId=-1;hideTip();render();});
 
-    cv.addEventListener('wheel', function(e){
+    cv.addEventListener('wheel',function(e){
       e.preventDefault();
       var rect=cv.getBoundingClientRect();
-      var mx=e.clientX-rect.left, my=e.clientY-rect.top;
-      var factor = e.deltaY<0 ? 1.1 : 1/1.1;
-      offX = mx - (mx-offX)*factor;
-      offY = my - (my-offY)*factor;
-      scale = Math.max(0.3, Math.min(4, scale*factor));
-      render();
-    }, {passive:false});
+      var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+      var f=e.deltaY<0?1.12:1/1.12;
+      offX=mx-(mx-offX)*f; offY=my-(my-offY)*f;
+      scale=Math.max(0.3,Math.min(4,scale*f)); render();
+    },{passive:false});
 
-    /* touch pan */
     var t0=null;
-    cv.addEventListener('touchstart', function(e){
-      if(e.touches.length===1){ t0={x:e.touches[0].clientX,y:e.touches[0].clientY,ox:offX,oy:offY}; }
+    cv.addEventListener('touchstart',function(e){
+      if(e.touches.length===1) t0={x:e.touches[0].clientX,y:e.touches[0].clientY,ox:offX,oy:offY};
     },{passive:true});
-    cv.addEventListener('touchmove', function(e){
+    cv.addEventListener('touchmove',function(e){
       if(e.touches.length===1&&t0){
         offX=t0.ox+(e.touches[0].clientX-t0.x);
-        offY=t0.oy+(e.touches[0].clientY-t0.y);
-        render();
+        offY=t0.oy+(e.touches[0].clientY-t0.y); render();
       }
     },{passive:true});
 
-    window.addEventListener('resize', function(){ resizeCv(); render(); });
-    document.addEventListener('keydown', function(e){
-      if(e.key==='Escape') closeMpModal();
+    window.addEventListener('resize',function(){resizeCv();render();});
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'){ if(moveMode) cancelMove(); else closeMpModal(); }
     });
   }
-
-  /* patch openMyProperties to wire events after canvas exists */
-  var _origOpen = window.openMyProperties;
-  window.openMyProperties = function(pid){
-    _origOpen(pid);
-    setTimeout(function(){ wireEvents(); }, 50);
-  };
 
 })();
 </script>
