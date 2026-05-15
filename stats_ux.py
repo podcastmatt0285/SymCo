@@ -3114,6 +3114,86 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
         for slug, ico, name, desc, cnt, tag in _REF
     )
 
+    _PIN_ICON = '<span style="color:#f59e0b;font-size:0.7rem;">📌 </span>'
+
+    def _cat_badge(entry):
+        cat = entry.get("category")
+        if not cat or cat == "reference":
+            return ""
+        return '<span style="color:#475569;font-size:0.68rem;margin-left:6px;">📂 ' + _CAT_LABELS.get(cat, "") + '</span>'
+
+    def _video_card(v):
+        pin_abs = ""
+        if v.get("pinned"):
+            lbl = _CAT_LABELS.get(v.get("category", ""), "")
+            pin_abs = (
+                '<div style="position:absolute;top:6px;left:6px;background:#1e293b99;'
+                'color:#94a3b8;font-size:0.62rem;padding:2px 6px;border-radius:3px;'
+                'pointer-events:none;">📂 ' + lbl + '</div>'
+            )
+        pin_icon = _PIN_ICON if v.get("pinned") else ""
+        title = v.get("title", "")
+        desc  = v.get("description", "")
+        cat   = v.get("category", "")
+        yt    = v.get("youtube_id", "")
+        return (
+            '<div class="wvc" data-search="' + title + ' ' + desc + ' ' + cat + '">'
+            + pin_abs
+            + '<div class="wvc-embed">'
+            '<iframe src="https://www.youtube.com/embed/' + yt + '"'
+            ' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
+            ' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+            '</div>'
+            '<div class="wvc-info">'
+            + pin_icon
+            + '<div class="wvc-title">' + title + '</div>'
+            '<div class="wvc-desc">' + desc
+            + _cat_badge(v)
+            + '</div></div></div>'
+        )
+
+    _videos_html = "".join(_video_card(v) for v in _videos)
+
+    def _audio_card(a):
+        pin_icon = _PIN_ICON if a.get("pinned") else ""
+        title = a.get("title", "")
+        desc  = a.get("description", "")
+        cat   = a.get("category", "")
+        yt    = a.get("youtube_id", "")
+        return (
+            '<div class="wvc" data-search="audio deep dive ' + title + ' ' + desc + ' ' + cat + '">'
+            '<div class="wvc-embed">'
+            '<iframe src="https://www.youtube.com/embed/' + yt + '"'
+            ' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
+            ' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+            '</div>'
+            '<div class="wvc-info">'
+            + pin_icon
+            + '<div class="wvc-title">🎙️ ' + title + '</div>'
+            '<div class="wvc-desc">' + desc + '</div>'
+            '</div></div>'
+        )
+
+    _AUDIO_PLACEHOLDERS = [
+        ("🏙️", "The Economics of Districts"),
+        ("👔", "Executive Strategy Masterclass"),
+        ("🏗️", "City Projects &amp; Urban Planning"),
+        ("📈", "Market Manipulation 101"),
+        ("💰", "Building Your First Production Empire"),
+        ("🌐", "Forex, Crypto &amp; Reserve Banking"),
+    ]
+    if _audio:
+        _audio_html = "".join(_audio_card(a) for a in _audio)
+    else:
+        _audio_html = "".join(
+            '<div class="wac" data-search="audio deep dive ' + ttl + '">'
+            '<div class="wac-ico">' + ico + '</div>'
+            '<div><div class="wac-lbl">Audio Deep Dive</div>'
+            '<div class="wac-title">' + ttl + '</div>'
+            '<div class="wac-soon">⏳ Coming soon</div></div></div>'
+            for ico, ttl in _AUDIO_PLACEHOLDERS
+        )
+
     body = f"""
 <div class="whero">
     <div class="whero-tag">Living Encyclopedia</div>
@@ -3129,23 +3209,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
 
 <div class="ws"><span class="ws-t">📺 Video Tutorials</span><span class="ws-l"></span></div>
 <div class="wg-lg">
-    {"".join(
-        f'<div class="wvc" data-search="{v["title"]} {v.get("description","")} {v.get("category","")}">'
-        + (f'<div style="position:absolute;top:6px;left:6px;background:#1e293b99;color:#94a3b8;font-size:0.62rem;padding:2px 6px;border-radius:3px;pointer-events:none;">📂 {_CAT_LABELS.get(v.get("category",""),"")}</div>' if v.get("pinned") else "")
-        + f'<div class="wvc-embed">'
-        f'<iframe src="https://www.youtube.com/embed/{v["youtube_id"]}"'
-        f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
-        f' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
-        f'</div>'
-        f'<div class="wvc-info">'
-        f'{"<span style=\'color:#f59e0b;font-size:0.7rem;\'>📌 </span>" if v.get("pinned") else ""}'
-        f'<div class="wvc-title">{v["title"]}</div>'
-        f'<div class="wvc-desc">{v.get("description","")}'
-        f'{"<span style=\'color:#475569;font-size:0.68rem;margin-left:6px;\'>📂 " + _CAT_LABELS.get(v.get("category",""),"") + "</span>" if v.get("category") and v.get("category") != "reference" else ""}'
-        f'</div>'
-        f'</div></div>'
-        for v in _videos
-    )}
+    {_videos_html}
     <div class="wvc" data-search="more tutorials coming soon" style="display:flex;flex-direction:column;align-items:center;justify-content:center;
          min-height:220px;border-style:dashed;opacity:0.4;">
         <div style="font-size:2.5rem;margin-bottom:10px;">🎬</div>
@@ -3155,34 +3219,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
 
 <div class="ws"><span class="ws-t">🎙️ Audio Deep Dives</span><span class="ws-l"></span></div>
 <div class="wg">
-    {"".join(
-        f'<div class="wvc" data-search="audio deep dive {a["title"]} {a.get("description","")} {a.get("category","")}">'
-        f'<div class="wvc-embed">'
-        f'<iframe src="https://www.youtube.com/embed/{a["youtube_id"]}"'
-        f' allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share"'
-        f' referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
-        f'</div>'
-        f'<div class="wvc-info">'
-        f'{"<span style=\'color:#f59e0b;font-size:0.7rem;\'>📌 </span>" if a.get("pinned") else ""}'
-        f'<div class="wvc-title">🎙️ {a["title"]}</div>'
-        f'<div class="wvc-desc">{a.get("description","")}</div>'
-        f'</div></div>'
-        for a in _audio
-    ) if _audio else
-    "".join(
-        f'<div class="wac" data-search="audio deep dive {ttl}"><div class="wac-ico">{ico}</div>'
-        f'<div><div class="wac-lbl">Audio Deep Dive</div>'
-        f'<div class="wac-title">{ttl}</div>'
-        f'<div class="wac-soon">⏳ Coming soon</div></div></div>'
-        for ico, ttl in [
-            ("🏙️", "The Economics of Districts"),
-            ("👔", "Executive Strategy Masterclass"),
-            ("🏗️", "City Projects &amp; Urban Planning"),
-            ("📈", "Market Manipulation 101"),
-            ("💰", "Building Your First Production Empire"),
-            ("🌐", "Forex, Crypto &amp; Reserve Banking"),
-        ]
-    )}
+    {_audio_html}
 </div>
 
 <p id="hub-none" style="color:#607098;text-align:center;padding:24px;display:none;font-style:italic;">
