@@ -935,6 +935,25 @@ def login_page(session_token: Optional[str] = Cookie(None)):
       window.addEventListener('pageshow',function(e){if(e.persisted)hide();});
     })();
     </script>
+    <script>
+    // Android widget device-link: read _wdid from URL (appended by LauncherActivity)
+    // and persist it to sessionStorage so the shell JS can link it after login.
+    (function(){
+      try {
+        var p = new URLSearchParams(window.location.search);
+        var wdid = p.get('_wdid');
+        if (wdid) {
+          sessionStorage.setItem('_wdid', wdid);
+          // Inject as hidden input into login + register forms so it survives POST
+          document.querySelectorAll('form').forEach(function(f) {
+            var inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = '_wdid'; inp.value = wdid;
+            f.appendChild(inp);
+          });
+        }
+      } catch(e) {}
+    })();
+    </script>
 </body>
 </html>
 """
@@ -944,7 +963,8 @@ async def login(
     request: Request,
     response: Response,
     business_name: str = Form(...),
-    password: str = Form(...)
+    password: str = Form(...),
+    _wdid: str = Form(None)
 ):
     """Handle login form submission."""
     db = get_db()
@@ -1034,7 +1054,8 @@ async def login(
         except Exception as _twa_err:
             print(f"[Auth] TWA handler error: {_twa_err}")
 
-    redirect = RedirectResponse(url="/", status_code=303)
+    dest = "/?_wdid=" + _wdid if _wdid else "/"
+    redirect = RedirectResponse(url=dest, status_code=303)
     redirect.set_cookie(
         key="session_token",
         value=session_token,
@@ -1050,7 +1071,8 @@ async def register(
     response: Response,
     business_name: str = Form(...),
     password: str = Form(...),
-    password_confirm: str = Form(...)
+    password_confirm: str = Form(...),
+    _wdid: str = Form(None)
 ):
     """Handle registration form submission."""
     db = get_db()
@@ -1155,7 +1177,8 @@ async def register(
     session_token = create_session(db, player.id)
     db.close()
 
-    redirect = RedirectResponse(url="/", status_code=303)
+    dest = "/?_wdid=" + _wdid if _wdid else "/"
+    redirect = RedirectResponse(url=dest, status_code=303)
     redirect.set_cookie(
         key="session_token",
         value=session_token,
