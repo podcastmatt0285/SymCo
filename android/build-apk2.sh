@@ -151,6 +151,15 @@ sed -i "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" app/build.gradle
 sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" app/build.gradle
 echo "  Android project generated: versionCode=${VERSION_CODE}, versionName=${VERSION_NAME}"
 
+# AGP 8+ deprecates package= in the manifest; namespace must be in build.gradle instead.
+# Remove package= attribute from the generated manifest.
+sed -i 's/ package="[^"]*"//' app/src/main/AndroidManifest.xml
+# Ensure namespace is declared in build.gradle (bubblewrap may not add it).
+if ! grep -q "namespace" app/build.gradle; then
+    sed -i "s/applicationId \"${PACKAGE}.twa\"/namespace \"${PACKAGE}.twa\"\n        applicationId \"${PACKAGE}.twa\"/" app/build.gradle
+fi
+echo "  Removed package= from manifest; ensured namespace in build.gradle"
+
 echo "=== Step 3b: Inject widget + notification-sound files ==="
 
 # Java source directory
