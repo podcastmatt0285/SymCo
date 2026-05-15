@@ -645,7 +645,7 @@ _MY_PROPS_MODAL = r"""
 
     items.forEach(function(it){
       var s=g2s(it.vc,it.vr);
-      if(s.sx+hw0*2<-cullM||s.sx-cullM>W||s.sy+hh0*2<-cullM||s.sy-hh0<H+TH*scale*5) return;
+      if(s.sx+hw0*2<-cullM||s.sx>W+cullM||s.sy+hh0*2<-cullM||s.sy>H+cullM) return;
 
       if(it.t==='water'){ drawWater(s.sx,s.sy); return; }
       if(it.t==='cross'){ drawDiamond(s.sx,s.sy,'#1f2937'); return; }
@@ -714,6 +714,7 @@ _MY_PROPS_MODAL = r"""
 
   window.mpReset=function(){
     if(!cv) return;
+    resizeCv();
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var W=cv.offsetWidth,H=cv.offsetHeight;
     var isoW=(tv+1)*TW, isoH=(tv+3)*TH;
@@ -840,7 +841,6 @@ _MY_PROPS_MODAL = r"""
     document.getElementById('mpInfo').style.display='none';
     document.getElementById('mpMoveHint').style.display='none';
     document.getElementById('mpMoveBuildingBtn').style.display='none';
-    resizeCv();
     document.getElementById('mpTitle').textContent='Loading…';
     document.getElementById('mpCount').textContent='';
     fetch('/api/my-properties'+(pid&&pid!==selfId?'?player_id='+pid:''))
