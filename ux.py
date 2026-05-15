@@ -2371,11 +2371,6 @@ def government_dashboard(
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
     from datetime import datetime as _dt
-    try:
-        from admins import is_admin as _is_admin
-        _player_is_admin = _is_admin(player.id)
-    except Exception:
-        _player_is_admin = False
 
     # ── 1. Government balances ────────────────────────────────────────────────
     # auth DB cash_balance: funded by loan repayments, petrodollar customs (50%),
@@ -3077,8 +3072,6 @@ def government_dashboard(
     elif error:
         flash_html = f'<div style="background:#1c0505;border:1px solid #b91c1c;border-radius:6px;padding:10px 16px;margin-bottom:18px;color:#f87171;font-size:0.85rem;">✗ {error}</div>'
 
-    admin_html = ""
-
     body = f"""
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
         <span style="font-size:2rem;">🏛️</span>
@@ -3124,12 +3117,12 @@ def gov_force_grants(session_token: Optional[str] = Cookie(None)):
     try:
         from admins import is_admin as _ia
         if not _ia(player.id):
-            return _RR("/government?error=Admin+only", status_code=303)
+            return _RR("/admin?error=Admin+only", status_code=303)
         from cities import process_government_grants
         process_government_grants(0)
-        return _RR("/government?success=City+grants+distributed+successfully", status_code=303)
+        return _RR("/admin?success=City+grants+distributed+successfully", status_code=303)
     except Exception as e:
-        return _RR(f"/government?error={str(e)[:80]}", status_code=303)
+        return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
 
 
 @router.post("/api/gov/force-bond-invest")
@@ -3140,12 +3133,12 @@ def gov_force_bond_invest(session_token: Optional[str] = Cookie(None)):
     try:
         from admins import is_admin as _ia
         if not _ia(player.id):
-            return _RR("/government?error=Admin+only", status_code=303)
+            return _RR("/admin?error=Admin+only", status_code=303)
         from cities import tick_government_bond_investing
         tick_government_bond_investing(0)
-        return _RR("/government?success=Bond+investment+tick+completed", status_code=303)
+        return _RR("/admin?success=Bond+investment+tick+completed", status_code=303)
     except Exception as e:
-        return _RR(f"/government?error={str(e)[:80]}", status_code=303)
+        return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
 
 
 @router.post("/api/gov/force-charter-fees")
@@ -3156,12 +3149,12 @@ def gov_force_charter_fees(session_token: Optional[str] = Cookie(None)):
     try:
         from admins import is_admin as _ia
         if not _ia(player.id):
-            return _RR("/government?error=Admin+only", status_code=303)
+            return _RR("/admin?error=Admin+only", status_code=303)
         from cities import tick_city_bank_charter_fees
         tick_city_bank_charter_fees(0)
-        return _RR("/government?success=Charter+fees+collected", status_code=303)
+        return _RR("/admin?success=Charter+fees+collected", status_code=303)
     except Exception as e:
-        return _RR(f"/government?error={str(e)[:80]}", status_code=303)
+        return _RR(f"/admin?error={str(e)[:80]}", status_code=303)
 
 
 # ── Beta program API routes ───────────────────────────────────────────────────

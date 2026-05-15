@@ -2867,6 +2867,8 @@ def tick_government_bond_liquidation(current_tick: int):
             return
 
         bank = rb_db.query(StateReserveBank).filter(StateReserveBank.id == bond.bank_id).first()
+        if not bank:
+            return
         proceeds = bond.face_value_wsc + (bond.interest_accrued or 0.0)
 
         # Mark bond sold and update bank holdings
