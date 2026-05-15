@@ -964,7 +964,7 @@ async def login(
     response: Response,
     business_name: str = Form(...),
     password: str = Form(...),
-    _wdid: str = Form(None)
+    wdid: Optional[str] = Form(None, alias="_wdid")
 ):
     """Handle login form submission."""
     db = get_db()
@@ -1054,7 +1054,7 @@ async def login(
         except Exception as _twa_err:
             print(f"[Auth] TWA handler error: {_twa_err}")
 
-    dest = "/?_wdid=" + _wdid if _wdid else "/"
+    dest = "/?_wdid=" + wdid if wdid else "/"
     redirect = RedirectResponse(url=dest, status_code=303)
     redirect.set_cookie(
         key="session_token",
@@ -1072,7 +1072,7 @@ async def register(
     business_name: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(...),
-    _wdid: str = Form(None)
+    wdid: Optional[str] = Form(None, alias="_wdid")
 ):
     """Handle registration form submission."""
     db = get_db()
@@ -1177,7 +1177,7 @@ async def register(
     session_token = create_session(db, player.id)
     db.close()
 
-    dest = "/?_wdid=" + _wdid if _wdid else "/"
+    dest = "/?_wdid=" + wdid if wdid else "/"
     redirect = RedirectResponse(url=dest, status_code=303)
     redirect.set_cookie(
         key="session_token",
