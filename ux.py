@@ -1903,7 +1903,11 @@ def dashboard_redirect():
 def home(request: Request, session_token: Optional[str] = Cookie(None)):
     """Main dashboard."""
     player = require_auth(session_token)
-    if isinstance(player, RedirectResponse): return player
+    if isinstance(player, RedirectResponse):
+        wdid = request.query_params.get("_wdid")
+        if wdid:
+            return RedirectResponse(url=f"/login?_wdid={wdid}", status_code=303)
+        return player
 
     # Award daily Active Duty trophies whenever the dashboard is loaded from the app.
     # This catches the common case where the player is already logged in and never
