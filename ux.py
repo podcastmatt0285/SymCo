@@ -2347,10 +2347,14 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
         <script>
         // Active Duty daily check-in — fires on every dashboard load.
         // Server deduplicates to once per UTC day per player.
+        // Chrome 108+ removed automatic X-Requested-With headers in TWA,
+        // so we set it explicitly, gated on standalone display mode.
         (function() {{
+            if (!window.matchMedia('(display-mode: standalone)').matches) return;
             var xhr = new XMLHttpRequest();
             xhr.open('GET', '/api/twa-checkin', true);
             xhr.withCredentials = true;
+            xhr.setRequestHeader('X-Requested-With', 'cc.notifly.wadsworth.twa');
             xhr.send();
         }})();
         </script>
@@ -14084,9 +14088,11 @@ def events_page(request: Request,
     {empty_html}
     <script>
     (function() {{
+        if (!window.matchMedia('(display-mode: standalone)').matches) return;
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/twa-checkin', true);
         xhr.withCredentials = true;
+        xhr.setRequestHeader('X-Requested-With', 'cc.notifly.wadsworth.twa');
         xhr.send();
     }})();
     </script>"""
