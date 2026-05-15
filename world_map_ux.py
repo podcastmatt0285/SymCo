@@ -425,6 +425,7 @@ def api_move_business(
 _MY_PROPS_MODAL = r"""
 <div id="mpModal" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;
      flex-direction:column;align-items:stretch;">
+  <!-- Header bar -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;
               background:#060c18;border-bottom:1px solid #1e293b;flex-shrink:0;flex-wrap:wrap;gap:6px;">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -432,14 +433,14 @@ _MY_PROPS_MODAL = r"""
       <span id="mpCount" style="font-size:0.72rem;color:#475569;"></span>
       <span id="mpMoveHint" style="display:none;font-size:0.7rem;color:#f59e0b;
             background:rgba(69,26,3,0.8);padding:2px 8px;border-radius:4px;">
-        Pick a building — Esc to cancel
+        Select a plot to swap — Esc to cancel
       </span>
     </div>
     <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-      <button id="mpMoveBuildingBtn" onclick="mpEnterMoveMode()"
+      <button id="mpSwapBtn" onclick="mpEnterSwapMode()"
               style="display:none;background:#1e293b;border:1px solid #334155;color:#fbbf24;
                      padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.7rem;">
-        📦 Move
+        ⇄ Swap Plots
       </button>
       <button onclick="mpZoom(1.25)" style="background:#1e293b;border:none;color:#94a3b8;
               padding:4px 10px;border-radius:4px;cursor:pointer;font-size:1rem;line-height:1;">+</button>
@@ -451,16 +452,50 @@ _MY_PROPS_MODAL = r"""
               padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>
     </div>
   </div>
+  <!-- Canvas area -->
   <div style="position:relative;flex:1;overflow:hidden;">
     <canvas id="mpCanvas" style="width:100%;height:100%;cursor:grab;touch-action:none;display:block;"></canvas>
     <div id="mpInfo" style="display:none;position:absolute;top:10px;right:10px;
          background:rgba(6,12,24,0.97);border:1px solid #334155;border-radius:8px;
-         padding:12px 14px;font-size:0.75rem;color:#e2e8f0;width:190px;line-height:1.6;
+         padding:12px 14px;font-size:0.75rem;color:#e2e8f0;width:200px;line-height:1.6;
          box-shadow:0 4px 24px rgba(0,0,0,0.6);">
       <button onclick="document.getElementById('mpInfo').style.display='none'"
               style="position:absolute;top:6px;right:8px;background:none;border:none;
                      color:#475569;cursor:pointer;font-size:0.75rem;">✕</button>
       <div id="mpInfoContent"></div>
+    </div>
+  </div>
+  <!-- Mini radio bar pinned to bottom of modal -->
+  <div id="mpRadioBar" style="
+       display:flex;align-items:center;gap:8px;padding:5px 12px;
+       background:#1A0F0A;border-top:1px solid #B08D57;flex-shrink:0;
+       font-size:0.72rem;color:#F5F5DC;font-family:Georgia,serif;">
+    <span style="font-size:1rem;color:#B08D57;flex-shrink:0;">📻</span>
+    <div style="flex:1;min-width:0;overflow:hidden;">
+      <div id="mpRadioSname" style="font-size:0.55rem;color:#B08D57;opacity:0.7;
+           text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;">WLOL 92.8 FM</div>
+      <div id="mpRadioTitle" style="color:#e5e7eb;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;">—</div>
+    </div>
+    <button onclick="mpRadioPlay()" id="mpRadioPP"
+            style="background:none;border:none;color:#B08D57;font-size:1rem;cursor:pointer;padding:0;">▶</button>
+    <button onclick="mpRadioSkip()"
+            style="background:none;border:none;color:#B08D57;opacity:0.6;font-size:0.9rem;cursor:pointer;padding:0;">⏭</button>
+    <input id="mpRadioVol" type="range" min="0" max="1" step="0.05" value="0.35"
+           oninput="mpRadioSetVol(this.value)"
+           style="width:48px;accent-color:#B08D57;cursor:pointer;">
+    <div onclick="mpRadioTune()" title="Switch station"
+         style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;">
+      <div style="width:20px;height:20px;border-radius:50%;
+                  background:linear-gradient(to bottom,#3d2b1f,#1a0f0a);
+                  border:1px solid rgba(176,141,87,0.5);position:relative;">
+        <div id="mpRadioKnob" style="position:absolute;top:2px;left:50%;width:2px;height:6px;
+             background:#B08D57;border-radius:999px;
+             transform:translateX(-50%) rotate(180deg);transform-origin:50% 100%;
+             transition:transform 0.5s ease;"></div>
+      </div>
+      <span id="mpRadioKlbl" style="font-size:0.42rem;text-transform:uppercase;
+            color:#B08D57;font-weight:bold;letter-spacing:0.06em;">WLOL</span>
     </div>
   </div>
   <div id="mpTooltip" style="display:none;position:fixed;background:rgba(6,12,24,0.95);
@@ -473,13 +508,29 @@ _MY_PROPS_MODAL = r"""
   var TW=64, TH=38, BLOCK=4;
   var SPRITE_BASE='/static/iso/buildings/';
 
+  /* 18-building downtown — laid out in 3 rows of 6 cols, centred on the grid */
   var DOWNTOWN=[
-    {label:'Commodity Market', sprite:'commercial',  url:'/market',          col:0},
-    {label:'District Market',  sprite:'shop_medium', url:'/district-market', col:1},
-    {label:'Land Registry',    sprite:'mansion',     url:'/land-market',     col:2},
-    {label:'Stock Exchange',   sprite:'university',  url:'/brokerage',       col:3},
-    {label:'City Hall',        sprite:'mansion',     url:'/cities',          col:4},
-    {label:'Reserve Bank',     sprite:'commercial',  url:'/reserve-bank',    col:5},
+    /* row 0 — financial row */
+    {label:'Reserve Bank',       sprite:'commercial',  url:'/reserve-bank',         row:0,col:0},
+    {label:'Land Bank',          sprite:'commercial',  url:'/banks/land-bank',       row:0,col:1},
+    {label:'Apple Seeds ETF',    sprite:'university',  url:'/banks/apple-seeds-etf', row:0,col:2},
+    {label:'Energy ETF',         sprite:'industrial',  url:'/banks/energy-etf',      row:0,col:3},
+    {label:'City Nav ETF',       sprite:'university',  url:'/banks/city-nav-etf',    row:0,col:4},
+    {label:'WBC50 Index Fund',   sprite:'commercial',  url:'/banks/wbc50-index-fund',row:0,col:5},
+    /* row 1 — markets & exchanges */
+    {label:'Commodity Market',   sprite:'shop_medium', url:'/market',                row:1,col:0},
+    {label:'District Market',    sprite:'shop_medium', url:'/district-market',       row:1,col:1},
+    {label:'Land Registry',      sprite:'mansion',     url:'/land-market',           row:1,col:2},
+    {label:'Stock Exchange',     sprite:'university',  url:'/brokerage',             row:1,col:3},
+    {label:'Forex Exchange',     sprite:'commercial',  url:'/reserve-banks/forex',   row:1,col:4},
+    {label:'Bond Market',        sprite:'commercial',  url:'/reserve-banks/bonds',   row:1,col:5},
+    /* row 2 — city services */
+    {label:'City Hall',          sprite:'mansion',     url:'/cities',                row:2,col:0},
+    {label:'County Office',      sprite:'mansion',     url:'/counties',              row:2,col:1},
+    {label:'Executives',         sprite:'university',  url:'/executives',            row:2,col:2},
+    {label:'P2P Trading',        sprite:'shop_small',  url:'/p2p',                   row:2,col:3},
+    {label:'Businesses',         sprite:'industrial',  url:'/businesses',            row:2,col:4},
+    {label:'Memecoin Exchange',  sprite:'space',       url:'/memecoins',             row:2,col:5},
   ];
 
   var TERRAIN_COLOR={
@@ -583,43 +634,71 @@ _MY_PROPS_MODAL = r"""
 
   var cv,ctx,plots=[],imgs={},scale=1,offX=0,offY=0;
   var dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
-  var hovId=-1,selId=-1,moveMode=false;
+  var hovId=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
   var _cache={gs:-1,items:null};
+
+  /* Downtown layout: 3 rows × 6 cols, centred on the player grid.
+     Player grid occupies vc in [0, tv-1]. Downtown sits at vr < 0,
+     separated by a road at vr=-1 so it reads "behind" in iso perspective. */
+  var DT_COLS=6, DT_ROWS=3;
+
+  function dtOffset(gs){
+    /* horizontal centre: visual centre of downtown vs visual centre of grid */
+    var tv=totalVC(gs);
+    var dtWidth=p2v((DT_COLS-1)*2)+1; /* visual span of downtown cols */
+    return Math.round((tv - dtWidth)/2);
+  }
 
   function getItems(){
     var gs=gridSz(plots.length||1);
     if(_cache.gs===gs) return _cache.items;
     var tv=totalVC(gs), items=[];
+    var dtOff=dtOffset(gs);
 
-    /* water scenery border */
-    for(var bi=-1;bi<=tv+1;bi++){
-      items.push({t:'water',vc:-1,  vr:bi,   depth:-1+bi});
-      items.push({t:'water',vc:tv+1,vr:bi,   depth:tv+1+bi});
-      if(bi>=-1&&bi<=tv){
-        items.push({t:'water',vc:bi,vr:-1,   depth:bi-1});
-        items.push({t:'water',vc:bi,vr:tv+1, depth:bi+tv+1});
+    /* water border — extend to cover downtown rows too */
+    var vrMin=-DT_ROWS-2, vrMax=tv+1;
+    var vcMin=-1,         vcMax=tv+1;
+    for(var bi=vrMin;bi<=vrMax;bi++){
+      items.push({t:'water',vc:vcMin,vr:bi,depth:vcMin+bi});
+      items.push({t:'water',vc:vcMax,vr:bi,depth:vcMax+bi});
+    }
+    for(var bi2=vcMin;bi2<=vcMax;bi2++){
+      items.push({t:'water',vc:bi2,vr:vrMin,  depth:bi2+vrMin});
+      items.push({t:'water',vc:bi2,vr:vrMax+1,depth:bi2+vrMax+1});
+    }
+
+    /* downtown blocks — 3 rows of 6 buildings */
+    for(var dr=0;dr<DT_ROWS;dr++){
+      var vr0=-(DT_ROWS-dr);      /* vr = -3,-2,-1 */
+      /* separator road row before downtown */
+      if(dr===0){
+        for(var sc0=0;sc0<tv;sc0++)
+          items.push({t:'road',vc:sc0,vr:vr0-1,depth:sc0+vr0-1});
+      }
+      /* fill row with water for tiles not occupied by buildings */
+      for(var dc=0;dc<DT_COLS;dc++){
+        var dvc=dtOff+p2v(dc*2);
+        var d=null;
+        DOWNTOWN.forEach(function(bd){if(bd.row===dr&&bd.col===dc)d=bd;});
+        items.push({t:'down',vc:dvc,vr:vr0,depth:dvc+vr0,d:d});
       }
     }
 
-    /* full NxN grid with road lanes */
-    for(var vr2=0;vr2<tv;vr2++){
+    /* separator road between downtown and player grid */
+    for(var sc=0;sc<tv;sc++)
+      items.push({t:'road',vc:sc,vr:0,depth:sc});
+
+    /* player plot grid — starts at vr=1 */
+    for(var vr2=1;vr2<=tv;vr2++){
       for(var vc2=0;vc2<tv;vc2++){
-        var rc=isRd(vc2),rr=isRd(vr2);
+        var rc=isRd(vc2),rr=isRd(vr2-1);
         var type=rc||rr?(rc&&rr?'cross':'road'):'cell';
         var pi=-1;
-        if(type==='cell'){ pi=v2p(vr2)*gs+v2p(vc2); if(pi>=plots.length) pi=-1; }
+        if(type==='cell'){ pi=v2p(vr2-1)*gs+v2p(vc2); if(pi>=plots.length) pi=-1; }
         items.push({t:type,vc:vc2,vr:vr2,depth:vc2+vr2,pi:pi});
       }
     }
-
-    /* separator road + downtown */
-    for(var sc=0;sc<tv;sc++)
-      items.push({t:'road',vc:sc,vr:tv,depth:sc+tv});
-    DOWNTOWN.forEach(function(d){
-      var dvc=p2v(d.col*2);
-      items.push({t:'down',vc:dvc,vr:tv+1,depth:dvc+tv+1,d:d});
-    });
 
     items.sort(function(a,b){return a.depth-b.depth;});
     _cache={gs:gs,items:items};
@@ -663,29 +742,29 @@ _MY_PROPS_MODAL = r"""
 
       var p=plots[it.pi];
       var color=TERRAIN_COLOR[p.terrain]||'#86efac';
-      var isHov=(hovId===p.id), isSel=(selId===p.id);
+      var isHov=(hovId===it.pi), isSel=(swapAIdx===it.pi);
       drawDiamond(s.sx,s.sy,
         isSel?shade(color,50):isHov?shade(color,25):color,
         isSel?'#f59e0b':isHov?'#60a5fa':null);
 
-      if(p.biz_type&&!(moveMode&&isSel)){
+      if(p.biz_type){
         var spr=spriteFor(p.biz_type,p.biz_class);
         if(spr) drawSprite(s.sx,s.sy,spr);
       }
-      if(isSel&&moveMode){
-        ctx.fillStyle='#f59e0b';
-        ctx.font='bold '+Math.max(10,Math.round(14*scale))+'px sans-serif';
+      if(isSel&&swapMode){
+        ctx.fillStyle='rgba(245,158,11,0.7)';
+        ctx.font='bold '+Math.max(10,Math.round(13*scale))+'px sans-serif';
         ctx.textAlign='center';
-        ctx.fillText('↑',s.sx+(TW/2)*scale,s.sy+(TH/2)*scale*0.8);
+        ctx.fillText('⇄',s.sx+(TW/2)*scale,s.sy+(TH/2)*scale*0.9);
         ctx.textAlign='left';
       }
     });
 
-    if(moveMode){
+    if(swapMode){
       ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,26);
       ctx.fillStyle='#fbbf24'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
-      ctx.fillText(selId>=0?'Click an empty plot to place  ·  Esc to cancel'
-        :'Click a building to pick it up  ·  Esc to cancel',W/2,17);
+      ctx.fillText(swapAIdx>=0?'Now click another plot to swap with it  ·  Esc to cancel'
+        :'Click any plot to pick it up for swapping  ·  Esc to cancel',W/2,17);
       ctx.textAlign='left';
     }
   }
@@ -717,11 +796,15 @@ _MY_PROPS_MODAL = r"""
     resizeCv();
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var W=cv.offsetWidth,H=cv.offsetHeight;
-    var isoW=(tv+1)*TW, isoH=(tv+3)*TH;
-    var fit=Math.min(W/isoW, H/isoH)*0.88;
-    scale=Math.max(0.2,Math.min(1.8,fit));
-    var midV=(tv-1)/2;
-    offX=W/2; offY=H/2-midV*TH*scale;
+    /* total iso extent: tv cols wide, (tv + DT_ROWS + 2) rows tall */
+    var totalRows=tv+DT_ROWS+2;
+    var isoW=(tv+2)*TW, isoH=(totalRows+2)*TH;
+    var fit=Math.min(W/isoW, H/isoH)*0.86;
+    scale=Math.max(0.18,Math.min(1.8,fit));
+    /* centre on the whole scene including downtown */
+    var midVc=(tv-1)/2, midVr=(tv/2+1-(DT_ROWS/2));
+    offX=W/2-(midVc-midVr)*(TW/2)*scale;
+    offY=H/2-(midVc+midVr)*(TH/2)*scale;
     render();
   };
 
@@ -734,20 +817,24 @@ _MY_PROPS_MODAL = r"""
   function hitTest(mx,my){
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var hwh=(TW/2)*scale, hhh=(TH/2)*scale;
-    var dtVr=tv+1;
+    var dtOff=dtOffset(gs);
+    /* downtown tiles */
     for(var di=0;di<DOWNTOWN.length;di++){
-      var d=DOWNTOWN[di], s=g2s(p2v(d.col*2),dtVr);
-      var dx=mx-(s.sx+hwh),dy=my-(s.sy+hhh);
-      if(Math.abs(dx/hwh)+Math.abs(dy/hhh)<=1) return {downtown:d};
+      var d=DOWNTOWN[di];
+      var dvc=dtOff+p2v(d.col*2), dvr=-(DT_ROWS-d.row);
+      var s=g2s(dvc,dvr);
+      var ddx=mx-(s.sx+hwh),ddy=my-(s.sy+hhh);
+      if(Math.abs(ddx/hwh)+Math.abs(ddy/hhh)<=1) return {downtown:d};
     }
-    for(var vr=tv-1;vr>=0;vr--){
+    /* player grid: vr=1..tv */
+    for(var vr=tv;vr>=1;vr--){
       for(var vc=tv-1;vc>=0;vc--){
-        if(isRd(vc)||isRd(vr)) continue;
+        if(isRd(vc)||isRd(vr-1)) continue;
         var s2=g2s(vc,vr);
         var dx2=mx-(s2.sx+hwh),dy2=my-(s2.sy+hhh);
         if(Math.abs(dx2/hwh)+Math.abs(dy2/hhh)<=1){
-          var pi=v2p(vr)*gs+v2p(vc);
-          if(pi<plots.length) return {plot:plots[pi]};
+          var pi=v2p(vr-1)*gs+v2p(vc);
+          if(pi<plots.length) return {plot:plots[pi],pi:pi};
           return {govt:true};
         }
       }
@@ -783,52 +870,46 @@ _MY_PROPS_MODAL = r"""
         +'font-size:0.68rem;color:#64748b;">'
         +'Eff <span style="color:#cbd5e1;">'+p.efficiency+'%</span>'
         +' &emsp; Tax <span style="color:#cbd5e1;">$'+p.monthly_tax+'/mo</span></div>';
-      if(viewingId===selfId&&p.biz_type){
-        html+='<button onclick="mpPickup('+p.id+')" style="margin-top:8px;width:100%;'
+      if(viewingId===selfId){
+        html+='<button onclick="mpStartSwapFrom('+hit.pi+')" style="margin-top:8px;width:100%;'
           +'background:#1e293b;border:1px solid #334155;color:#fbbf24;padding:4px;'
-          +'border-radius:4px;cursor:pointer;font-size:0.7rem;">📦 Move Building</button>';
+          +'border-radius:4px;cursor:pointer;font-size:0.7rem;">⇄ Swap This Plot</button>';
       }
     }
     document.getElementById('mpInfoContent').innerHTML=html;
     panel.style.display='block';
   }
 
-  window.mpPickup=function(pid){
-    selId=pid; moveMode=true;
+  window.mpStartSwapFrom=function(pi){
     document.getElementById('mpInfo').style.display='none';
+    swapMode=true; swapAIdx=pi;
     document.getElementById('mpMoveHint').style.display='';
-    document.getElementById('mpMoveBuildingBtn').style.display='none';
+    document.getElementById('mpSwapBtn').style.display='none';
     render();
   };
 
-  function cancelMove(){
-    moveMode=false; selId=-1;
+  function cancelSwap(){
+    swapMode=false; swapAIdx=-1;
     document.getElementById('mpMoveHint').style.display='none';
-    if(viewingId===selfId) document.getElementById('mpMoveBuildingBtn').style.display='';
+    if(viewingId===selfId) document.getElementById('mpSwapBtn').style.display='';
     render();
   }
 
-  window.mpEnterMoveMode=function(){
-    moveMode=true; selId=-1;
+  window.mpEnterSwapMode=function(){
+    swapMode=true; swapAIdx=-1;
     document.getElementById('mpMoveHint').style.display='';
-    document.getElementById('mpMoveBuildingBtn').style.display='none';
+    document.getElementById('mpSwapBtn').style.display='none';
+    document.getElementById('mpInfo').style.display='none';
     render();
   };
 
-  function doMove(fromId,toId){
-    fetch('/api/move-business',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({from_plot_id:fromId,to_plot_id:toId})
-    }).then(function(r){return r.json();}).then(function(d){
-      if(d.error){alert('Move failed: '+d.error);return;}
-      var fp=plots.find(function(p){return p.id===fromId;});
-      var tp=plots.find(function(p){return p.id===toId;});
-      if(fp&&tp){
-        tp.biz_type=fp.biz_type; tp.biz_name=fp.biz_name; tp.biz_class=fp.biz_class;
-        fp.biz_type=null; fp.biz_name=null; fp.biz_class=null;
-      }
-      cancelMove();
-    });
+  /* Visual-only swap: swap all display data between two plot indices */
+  function doSwap(idxA, idxB){
+    var a=plots[idxA], b=plots[idxB];
+    var tmp={terrain:a.terrain,biz_type:a.biz_type,biz_name:a.biz_name,biz_class:a.biz_class};
+    a.terrain=b.terrain; a.biz_type=b.biz_type; a.biz_name=b.biz_name; a.biz_class=b.biz_class;
+    b.terrain=tmp.terrain; b.biz_type=tmp.biz_type; b.biz_name=tmp.biz_name; b.biz_class=tmp.biz_class;
+    cancelSwap();
   }
 
   window.openMyProperties=function(pid){
@@ -836,11 +917,11 @@ _MY_PROPS_MODAL = r"""
     document.getElementById('mpModal').style.display='flex';
     cv=document.getElementById('mpCanvas');
     ctx=cv.getContext('2d');
-    moveMode=false; selId=-1; hovId=-1;
+    swapMode=false; swapAIdx=-1; hovId=-1;
     _cache={gs:-1,items:null};
     document.getElementById('mpInfo').style.display='none';
     document.getElementById('mpMoveHint').style.display='none';
-    document.getElementById('mpMoveBuildingBtn').style.display='none';
+    document.getElementById('mpSwapBtn').style.display='none';
     document.getElementById('mpTitle').textContent='Loading…';
     document.getElementById('mpCount').textContent='';
     fetch('/api/my-properties'+(pid&&pid!==selfId?'?player_id='+pid:''))
@@ -852,16 +933,17 @@ _MY_PROPS_MODAL = r"""
           (viewingId===selfId?'My':d.player_name+"'s")+' Properties';
         document.getElementById('mpCount').textContent=
           plots.length+' plot'+(plots.length===1?'':'s');
-        if(viewingId===selfId) document.getElementById('mpMoveBuildingBtn').style.display='';
+        if(viewingId===selfId) document.getElementById('mpSwapBtn').style.display='';
         mpReset();
         preloadSprites(function(){render();});
+        mpRadioSync();
         wireEvents();
       });
   };
 
   window.closeMpModal=function(){
     document.getElementById('mpModal').style.display='none';
-    moveMode=false; selId=-1;
+    swapMode=false; swapAIdx=-1;
     if(cv) cv._wired=false;
   };
 
@@ -902,15 +984,20 @@ _MY_PROPS_MODAL = r"""
         var rect=cv.getBoundingClientRect();
         var mx=e.clientX-rect.left, my=e.clientY-rect.top;
         var hit=hitTest(mx,my);
-        if(moveMode){
-          if(hit&&hit.plot){
-            if(hit.plot.id===selId){ cancelMove(); }
-            else if(!hit.plot.biz_type&&selId>=0){ doMove(selId,hit.plot.id); }
-            else if(hit.plot.biz_type){ selId=hit.plot.id; render(); }
-          } else if(hit&&hit.govt){ showInfo(hit); }
-          else { cancelMove(); }
+        if(swapMode){
+          if(hit&&hit.plot&&hit.pi!==undefined){
+            if(swapAIdx<0){
+              swapAIdx=hit.pi; render();
+            } else if(hit.pi===swapAIdx){
+              cancelSwap();
+            } else {
+              doSwap(swapAIdx,hit.pi);
+            }
+          } else {
+            cancelSwap();
+          }
         } else {
-          if(hit){ showInfo(hit); if(hit.plot) hovId=hit.plot.id; }
+          if(hit){ showInfo(hit); if(hit.plot) hovId=hit.pi; }
           else document.getElementById('mpInfo').style.display='none';
         }
       }
@@ -926,7 +1013,7 @@ _MY_PROPS_MODAL = r"""
         var rect=cv.getBoundingClientRect();
         var mx=e.clientX-rect.left, my=e.clientY-rect.top;
         var hit=hitTest(mx,my);
-        var nh=hit&&hit.plot?hit.plot.id:-1;
+        var nh=(hit&&hit.plot&&hit.pi!==undefined)?hit.pi:-1;
         if(nh!==hovId){hovId=nh;render();}
         if(hit) showTip(hit,e.clientX,e.clientY);
         else hideTip();
@@ -958,9 +1045,49 @@ _MY_PROPS_MODAL = r"""
 
     window.addEventListener('resize',function(){resizeCv();mpReset();});
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'){if(moveMode)cancelMove();else closeMpModal();}
+      if(e.key==='Escape'){if(swapMode)cancelSwap();else closeMpModal();}
     });
   }
+
+  /* ── Mini radio bar bridging to shell player ──────────────────────────── */
+  function mpRadioSync(){
+    /* mirror station label from shell bar if it exists */
+    var sname=document.getElementById('gsbar-sname');
+    var title=document.getElementById('gs-title');
+    var mps=document.getElementById('mpRadioSname');
+    var mpt=document.getElementById('mpRadioTitle');
+    var knob=document.getElementById('mpRadioKnob');
+    var klbl=document.getElementById('mpRadioKlbl');
+    var pp=document.getElementById('mpRadioPP');
+    if(sname&&mps) mps.textContent=sname.textContent;
+    if(title&&mpt) mpt.textContent=title.textContent;
+    var isWcpr=(localStorage.getItem('wadsStation')==='wcpr');
+    if(knob) knob.style.transform='translateX(-50%) rotate('+(isWcpr?'0':'180')+'deg)';
+    if(klbl) klbl.textContent=isWcpr?'WCPR':'WLOL';
+    var shellAudio=document.getElementById(isWcpr?'wcpr-shell-audio':'gs-audio');
+    if(pp) pp.innerHTML=(shellAudio&&!shellAudio.paused)?'&#9646;&#9646;':'&#9658;';
+  }
+
+  window.mpRadioPlay=function(){
+    try{ window.gsBarPlay(); }catch(e){}
+    setTimeout(mpRadioSync,200);
+  };
+  window.mpRadioSkip=function(){
+    try{ window.gsBarSkip(); }catch(e){}
+    setTimeout(mpRadioSync,400);
+  };
+  window.mpRadioTune=function(){
+    try{ window.gsBarTune(); }catch(e){}
+    setTimeout(mpRadioSync,600);
+  };
+  window.mpRadioSetVol=function(v){
+    try{ window.gsSetVolume(v); }catch(e){}
+  };
+
+  /* keep title in sync while modal is open */
+  setInterval(function(){
+    if(document.getElementById('mpModal').style.display!=='none') mpRadioSync();
+  },2000);
 
 })();
 </script>
