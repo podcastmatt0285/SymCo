@@ -1040,6 +1040,109 @@ def shell(title: str, body: str, balance: float = 0.0, player_id: int = None) ->
             /* persist position on unload so next page load resumes cleanly */
             window.addEventListener('pagehide', saveState);
             window.addEventListener('beforeunload', saveState);
+
+            /* Live-market WS hook: update ticker content without page reload */
+            window._tkUpdate = function(newContent) {{
+                track.innerHTML = newContent + '     ' + newContent;
+                measureHalf();
+            }};
+        }})();
+        </script>
+        <script data-cfasync="false">
+        /* ── Live Markets WebSocket client ─────────────────────────────────
+           Connects to /ws/markets, receives price snapshots every ~30 s,
+           updates [data-mkt="<type>:<symbol>"] elements and the ticker bar.
+           Reconnects automatically after 15 s on disconnect.
+        ── */
+        (function() {{
+            var _proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            var _url   = _proto + '//' + location.host + '/ws/markets';
+            var _ws, _reconnTimer;
+
+            function _fmt(n, dec) {{ return (+n).toFixed(dec); }}
+
+            function _buildTicker(snap) {{
+                var parts = [];
+                (snap.commodities || []).forEach(function(c) {{
+                    var chg = (c.change_24h >= 0 ? '+' : '') + _fmt(c.change_24h, 2) + '%';
+                    parts.push(c.label.toUpperCase() + ': $' + _fmt(c.price, 4) + ' (' + chg + ')');
+                }});
+                (snap.district || []).forEach(function(c) {{
+                    var chg = (c.change_24h >= 0 ? '+' : '') + _fmt(c.change_24h, 2) + '%';
+                    parts.push('[D] ' + c.label.toUpperCase() + ': $' + _fmt(c.price, 4) + ' (' + chg + ')');
+                }});
+                (snap.forex || []).forEach(function(f) {{
+                    var chg = (f.change_24h >= 0 ? '+' : '') + _fmt(f.change_24h, 4) + '%';
+                    parts.push(f.pair + ': ' + _fmt(f.rate, 6) + ' (' + chg + ')');
+                }});
+                (snap.stocks || []).forEach(function(s) {{
+                    var chg = (s.change_24h >= 0 ? '+' : '') + _fmt(s.change_24h, 2) + '%';
+                    parts.push(s.ticker + ': $' + _fmt(s.price, 4) + ' (' + chg + ')');
+                }});
+                (snap.crypto || []).forEach(function(c) {{
+                    parts.push(c.symbol + ': $' + _fmt(c.price_usd, 6));
+                }});
+                (snap.memes || []).slice(0, 10).forEach(function(m) {{
+                    var chg = (m.change_24h >= 0 ? '+' : '') + _fmt(m.change_24h, 2) + '%';
+                    parts.push(m.symbol + ': ' + _fmt(m.price, 8) + ' (' + chg + ')');
+                }});
+                if (snap.land && snap.land.active_auctions > 0) {{
+                    parts.push('LAND: ' + snap.land.active_auctions + ' auctions · avg $' +
+                        Number(snap.land.avg_auction_price).toLocaleString());
+                }}
+                return parts.length ? parts.join(' │ ') : null;
+            }}
+
+            function _applySnap(snap) {{
+                document.querySelectorAll('[data-mkt]').forEach(function(el) {{
+                    var key = el.getAttribute('data-mkt');
+                    var colon = key.indexOf(':');
+                    if (colon < 0) return;
+                    var kind = key.slice(0, colon);
+                    var sym  = key.slice(colon + 1);
+                    var val  = null;
+                    if (kind === 'commodity') {{
+                        var c = (snap.commodities || []).find(function(x) {{ return x.symbol === sym; }});
+                        if (c) val = '$' + _fmt(c.price, 4);
+                    }} else if (kind === 'district') {{
+                        var c = (snap.district || []).find(function(x) {{ return x.symbol === sym; }});
+                        if (c) val = '$' + _fmt(c.price, 4);
+                    }} else if (kind === 'forex') {{
+                        var f = (snap.forex || []).find(function(x) {{ return x.symbol === sym; }});
+                        if (f) val = _fmt(f.rate, 6);
+                    }} else if (kind === 'stock') {{
+                        var s = (snap.stocks || []).find(function(x) {{ return x.ticker === sym; }});
+                        if (s) val = '$' + _fmt(s.price, 4);
+                    }} else if (kind === 'crypto') {{
+                        var c = (snap.crypto || []).find(function(x) {{ return x.symbol === sym; }});
+                        if (c) val = '$' + _fmt(c.price_usd, 6);
+                    }} else if (kind === 'meme') {{
+                        var m = (snap.memes || []).find(function(x) {{ return x.symbol === sym; }});
+                        if (m) val = _fmt(m.price, 8);
+                    }}
+                    if (val !== null) el.textContent = val;
+                }});
+                var ticker = _buildTicker(snap);
+                if (ticker && typeof window._tkUpdate === 'function') window._tkUpdate(ticker);
+            }}
+
+            function connect() {{
+                _ws = new WebSocket(_url);
+                _ws.onmessage = function(e) {{
+                    try {{
+                        var snap = JSON.parse(e.data);
+                        if (snap.type === 'snapshot') _applySnap(snap);
+                    }} catch(err) {{}}
+                }};
+                _ws.onclose = function() {{ _reconnTimer = setTimeout(connect, 15000); }};
+                _ws.onerror = function() {{ _ws.close(); }};
+            }}
+
+            connect();
+            window.addEventListener('pagehide', function() {{
+                clearTimeout(_reconnTimer);
+                if (_ws) _ws.close();
+            }});
         }})();
         </script>
 
