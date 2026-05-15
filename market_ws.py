@@ -237,11 +237,11 @@ def collect_snapshot() -> dict:
 # ── Game-tick integration ─────────────────────────────────────────────────────
 
 async def tick(current_tick: int, now: datetime):
+    global _last_snapshot, _connections
     if current_tick % _BROADCAST_EVERY != 0:
         return
     if not _connections:
         return
-    global _last_snapshot, _connections
     try:
         loop = asyncio.get_event_loop()
         snap = await loop.run_in_executor(None, collect_snapshot)
