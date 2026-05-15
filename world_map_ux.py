@@ -305,7 +305,8 @@ def _build_world_map(player) -> str:
   </a>
 </div>"""
 
-    return stats_bar + terrain_html + counties_section + indep_section + cta
+    pulse = _market_pulse()
+    return pulse + stats_bar + terrain_html + counties_section + indep_section + cta
 
 
 @router.get("/api/my-properties", response_class=JSONResponse)
@@ -421,58 +422,114 @@ def api_move_business(
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+def _market_pulse() -> str:
+    items = []
+    try:
+        from database import SessionLocal
+        from market import Trade as _CT
+        from sqlalchemy import func
+        db = SessionLocal()
+        try:
+            sub = (db.query(_CT.item_type, func.max(_CT.executed_at).label("lat"))
+                     .group_by(_CT.item_type).subquery())
+            tops = (db.query(_CT)
+                      .join(sub, (_CT.item_type == sub.c.item_type) &
+                                 (_CT.executed_at == sub.c.lat))
+                      .limit(8).all())
+            for t in tops:
+                p = float(t.price or 0)
+                items.append({
+                    "label": t.item_type.replace("_", " ").title(),
+                    "price": f"${p:,.4f}",
+                })
+        finally:
+            db.close()
+    except Exception:
+        pass
+
+    if not items:
+        return ""
+
+    cards = "".join(
+        '<div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;'
+        'padding:10px 14px;min-width:0;">'
+        f'<div style="font-size:0.62rem;color:#64748b;text-transform:uppercase;'
+        f'letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+        f'{it["label"]}</div>'
+        f'<div style="font-size:0.9rem;font-weight:700;color:#34d399;">{it["price"]}</div>'
+        '</div>'
+        for it in items
+    )
+    return (
+        '<div style="margin-bottom:24px;">'
+        '<div style="font-size:0.72rem;font-weight:bold;color:#94a3b8;text-transform:uppercase;'
+        'letter-spacing:.06em;margin-bottom:10px;">📊 Commodity Pulse</div>'
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;">'
+        + cards +
+        '</div></div>'
+    )
+
+
 _MY_PROPS_MODAL = r"""
-<div id="mpModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);
+<div id="mpModal" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;
      flex-direction:column;align-items:stretch;">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;
-              background:#0a0f1a;border-bottom:1px solid #1e293b;flex-shrink:0;flex-wrap:wrap;gap:6px;">
-    <div>
-      <span id="mpTitle" style="font-size:1rem;font-weight:700;color:#f1f5f9;">My Properties</span>
-      <span id="mpCount" style="font-size:0.75rem;color:#64748b;margin-left:10px;"></span>
-      <span id="mpMoveHint" style="display:none;font-size:0.72rem;color:#f59e0b;
-            margin-left:12px;background:#451a03;padding:2px 8px;border-radius:4px;">
-        Move mode — click an empty plot to place, Esc to cancel
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;
+              background:#060c18;border-bottom:1px solid #1e293b;flex-shrink:0;flex-wrap:wrap;gap:6px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="mpTitle" style="font-size:0.95rem;font-weight:700;color:#f1f5f9;">My Properties</span>
+      <span id="mpCount" style="font-size:0.72rem;color:#475569;"></span>
+      <span id="mpMoveHint" style="display:none;font-size:0.7rem;color:#f59e0b;
+            background:rgba(69,26,3,0.8);padding:2px 8px;border-radius:4px;">
+        Pick a building — Esc to cancel
       </span>
     </div>
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+    <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
       <button id="mpMoveBuildingBtn" onclick="mpEnterMoveMode()"
               style="display:none;background:#1e293b;border:1px solid #334155;color:#fbbf24;
-                     padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.72rem;">
-        📦 Move Building
+                     padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.7rem;">
+        📦 Move
       </button>
-      <button onclick="mpZoom(1.2)" style="background:#1e293b;border:none;color:#94a3b8;
-              padding:4px 10px;border-radius:4px;cursor:pointer;font-size:1rem;">+</button>
-      <button onclick="mpZoom(1/1.2)" style="background:#1e293b;border:none;color:#94a3b8;
-              padding:4px 10px;border-radius:4px;cursor:pointer;font-size:1rem;">−</button>
-      <button onclick="mpReset()" style="background:#1e293b;border:none;color:#94a3b8;
-              padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.72rem;">Reset</button>
+      <button onclick="mpZoom(1.25)" style="background:#1e293b;border:none;color:#94a3b8;
+              padding:4px 10px;border-radius:4px;cursor:pointer;font-size:1rem;line-height:1;">+</button>
+      <button onclick="mpZoom(1/1.25)" style="background:#1e293b;border:none;color:#94a3b8;
+              padding:4px 10px;border-radius:4px;cursor:pointer;font-size:1rem;line-height:1;">−</button>
+      <button onclick="mpReset()" style="background:#1e293b;border:none;color:#64748b;
+              padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.68rem;">Fit</button>
       <button onclick="closeMpModal()" style="background:#7f1d1d;border:none;color:#fca5a5;
               padding:4px 12px;border-radius:4px;cursor:pointer;font-weight:bold;">✕</button>
     </div>
   </div>
-  <canvas id="mpCanvas" style="flex:1;width:100%;cursor:grab;touch-action:none;display:block;"></canvas>
-  <div id="mpTooltip" style="display:none;position:fixed;background:#0f172a;border:1px solid #334155;
-       border-radius:6px;padding:8px 12px;font-size:0.75rem;color:#e2e8f0;pointer-events:none;
-       max-width:200px;z-index:10000;line-height:1.6;"></div>
+  <div style="position:relative;flex:1;overflow:hidden;">
+    <canvas id="mpCanvas" style="width:100%;height:100%;cursor:grab;touch-action:none;display:block;"></canvas>
+    <div id="mpInfo" style="display:none;position:absolute;top:10px;right:10px;
+         background:rgba(6,12,24,0.97);border:1px solid #334155;border-radius:8px;
+         padding:12px 14px;font-size:0.75rem;color:#e2e8f0;width:190px;line-height:1.6;
+         box-shadow:0 4px 24px rgba(0,0,0,0.6);">
+      <button onclick="document.getElementById('mpInfo').style.display='none'"
+              style="position:absolute;top:6px;right:8px;background:none;border:none;
+                     color:#475569;cursor:pointer;font-size:0.75rem;">✕</button>
+      <div id="mpInfoContent"></div>
+    </div>
+  </div>
+  <div id="mpTooltip" style="display:none;position:fixed;background:rgba(6,12,24,0.95);
+       border:1px solid #334155;border-radius:5px;padding:5px 10px;font-size:0.72rem;
+       color:#e2e8f0;pointer-events:none;max-width:170px;z-index:10000;line-height:1.5;"></div>
 </div>
 
 <script>
 (function(){
-  /* ── constants ── */
-  var TW=64, TH=38, COLS=8;
+  var TW=64, TH=38, BLOCK=4;
   var SPRITE_BASE='/static/iso/buildings/';
 
-  /* ── downtown buildings shown below player plots ── */
   var DOWNTOWN=[
-    {label:'Commodity\nMarket', sprite:'commercial',     col:0},
-    {label:'District\nMarket',  sprite:'shop_medium',    col:1},
-    {label:'Land\nRegistry',    sprite:'mansion',        col:2},
-    {label:'Stock\nExchange',   sprite:'university',     col:3},
-    {label:'City Hall',         sprite:'mansion',        col:4},
-    {label:'Reserve\nBank',     sprite:'commercial',     col:5},
+    {label:'Commodity Market', sprite:'commercial',  url:'/market',          col:0},
+    {label:'District Market',  sprite:'shop_medium', url:'/district-market', col:1},
+    {label:'Land Registry',    sprite:'mansion',     url:'/land-market',     col:2},
+    {label:'Stock Exchange',   sprite:'university',  url:'/brokerage',       col:3},
+    {label:'City Hall',        sprite:'mansion',     url:'/cities',          col:4},
+    {label:'Reserve Bank',     sprite:'commercial',  url:'/reserve-bank',    col:5},
   ];
 
-  /* ── terrain colours ── */
   var TERRAIN_COLOR={
     urban:'#64748b', prairie:'#86efac', forest:'#16a34a', desert:'#fbbf24',
     marsh:'#22d3ee', mountain:'#94a3b8', tundra:'#bae6fd', jungle:'#4ade80',
@@ -482,31 +539,29 @@ _MY_PROPS_MODAL = r"""
     district_medical:'#a78bfa', district_neighborhood:'#34d399', district_transport:'#60a5fa',
   };
 
-  /* ── sprite picker ── */
-  function spriteFor(t, cls){
+  function spriteFor(t,cls){
     if(!t) return null;
-    if(/mine|alluvial|quarry|mineral/.test(t))                       return 'warehouse';
-    if(/solar|power_plant|powerplant/.test(t))                       return 'powerplant';
-    if(/water_facility|water_tower|watertower/.test(t))              return 'watertower';
+    if(/mine|alluvial|quarry|mineral/.test(t))           return 'warehouse';
+    if(/solar|power_plant|powerplant/.test(t))           return 'powerplant';
+    if(/water_facility|water_tower|watertower/.test(t))  return 'watertower';
     if(/plantation|cotton|agave|apiary|pasture|paddock|farm|field|orchard/.test(t)) return 'park';
-    if(/lumber|timber|logging/.test(t))                              return 'park_medium';
-    if(/hospital|clinic|medical|infirmary/.test(t))                  return 'hospital';
-    if(/university|college/.test(t))                                 return 'university';
-    if(/school|academy/.test(t))                                     return 'school';
-    if(/police/.test(t))                                             return 'police_station';
-    if(/fire_station|firehouse/.test(t))                             return 'fire_station';
-    if(/airport|aviation/.test(t))                                   return 'airport';
-    if(/stadium|arena|coliseum/.test(t))                             return 'stadium';
-    if(/warehouse|storage|depot|silo/.test(t))                       return 'warehouse';
-    if(/grocery|supermarket|market|mall/.test(t))                    return 'shop_medium';
+    if(/lumber|timber|logging/.test(t))                  return 'park_medium';
+    if(/hospital|clinic|medical|infirmary/.test(t))      return 'hospital';
+    if(/university|college/.test(t))                     return 'university';
+    if(/school|academy/.test(t))                         return 'school';
+    if(/police/.test(t))                                 return 'police_station';
+    if(/fire_station|firehouse/.test(t))                 return 'fire_station';
+    if(/airport|aviation/.test(t))                       return 'airport';
+    if(/stadium|arena|coliseum/.test(t))                 return 'stadium';
+    if(/warehouse|storage|depot|silo/.test(t))           return 'warehouse';
+    if(/grocery|supermarket|market|mall/.test(t))        return 'shop_medium';
     if(/shop|store|boutique|kiosk|stationery|arts_and_crafts/.test(t)) return 'shop_small';
     if(/refinery|factory|mill|foundry|plant|smelter|distillery|brewery|winery|cannery|processing/.test(t)) return 'industrial';
-    if(/ritual|church|temple|shrine/.test(t))                        return 'space';
+    if(/ritual|church|temple|shrine/.test(t))            return 'space';
     if(cls==='retail') return 'shop_medium';
     return 'industrial';
   }
 
-  /* ── shade helper ── */
   function shade(hex,amt){
     var n=parseInt(hex.slice(1),16);
     var r=Math.min(255,Math.max(0,(n>>16)+amt));
@@ -515,247 +570,301 @@ _MY_PROPS_MODAL = r"""
     return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
   }
 
-  /* ── state ── */
-  var cv,ctx,plots=[],imgs={},scale=1,offX=0,offY=0;
-  var dragActive=false,dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
-  var hovId=-1;
-  var moveMode=false,selId=-1;
-  var selfId=-1,viewingId=-1;
+  /* grid: smallest N in {8,16,32} where N*N >= plot count */
+  function gridSz(n){ var s=8; while(s*s<n&&s<32) s*=2; return s; }
 
-  /* ── layout helpers ── */
-  function nRows(){ return Math.ceil((plots.length||1)/COLS); }
-  function roadRow(){ return nRows(); }
-  function downRow(){ return nRows()+1; }
-  function plotCoord(i){ return {col:i%COLS, row:Math.floor(i/COLS)}; }
+  /* plot-col to visual-col (road lanes inserted every BLOCK cols) */
+  function p2v(pc){ return pc+Math.floor(pc/BLOCK); }
+  function totalVC(gs){ return p2v(gs-1)+1; }
+  function isRd(v){ return v%(BLOCK+1)===BLOCK; }
+  function v2p(vc){ return vc-Math.floor(vc/(BLOCK+1)); }
 
-  /* ── iso math ── */
-  function g2s(col,row){
-    return {sx:(col-row)*(TW/2)*scale+offX, sy:(col+row)*(TH/2)*scale+offY};
+  function g2s(vc,vr){
+    return {sx:(vc-vr)*(TW/2)*scale+offX, sy:(vc+vr)*(TH/2)*scale+offY};
   }
 
-  /* ── draw helpers ── */
-  function drawDiamond(sx,sy,color){
+  function drawDiamond(sx,sy,color,glow){
     var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    if(glow){ctx.save();ctx.shadowColor=glow;ctx.shadowBlur=14*scale;}
     ctx.beginPath();
-    ctx.moveTo(sx+hw,sy);
-    ctx.lineTo(sx+hw*2,sy+hh);
-    ctx.lineTo(sx+hw,sy+hh*2);
-    ctx.lineTo(sx,sy+hh);
+    ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+    ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
     ctx.closePath();
     ctx.fillStyle=color; ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=0.5; ctx.stroke();
+    ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=0.5; ctx.stroke();
+    if(glow) ctx.restore();
   }
 
+  /* isometric-city anchor formula: dy = sy + TH*scale - sh + sh*0.15 */
   function drawSprite(sx,sy,name){
     var img=imgs[name];
     if(!img||!img.complete||!img.naturalWidth) return;
-    var hw=(TW/2)*scale,hh=(TH/2)*scale;
-    var sh=img.naturalHeight/img.naturalWidth*TW*scale*1.6;
-    var sw=TW*scale*1.1;
-    ctx.drawImage(img,sx+hw-sw/2,sy+hh*2-sh,sw,sh);
+    var ratio=img.naturalHeight/img.naturalWidth;
+    var sw=TW*scale*1.2;
+    var sh=Math.min(sw*ratio, sw*3.5);
+    var hw=(TW/2)*scale;
+    ctx.drawImage(img, sx+hw-sw/2, sy+TH*scale-sh+sh*0.15, sw, sh);
   }
 
-  /* ── render ── */
+  function drawRoad(sx,sy,cross){
+    drawDiamond(sx,sy,cross?'#1f2937':'#2d3748');
+    if(!cross){
+      var hw=(TW/2)*scale,hh=(TH/2)*scale;
+      ctx.save();
+      ctx.strokeStyle='rgba(253,224,71,0.32)';
+      ctx.lineWidth=Math.max(0.6,0.7*scale);
+      ctx.setLineDash([3*scale,4*scale]);
+      ctx.beginPath();
+      ctx.moveTo(sx+hw*0.58,sy+hh*1.52); ctx.lineTo(sx+hw*1.42,sy+hh*0.48);
+      ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+    }
+  }
+
+  function drawWater(sx,sy){
+    drawDiamond(sx,sy,'#0c2340');
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    ctx.save(); ctx.globalAlpha=0.22; ctx.fillStyle='#38bdf8';
+    ctx.beginPath();
+    ctx.ellipse(sx+hw,sy+hh, hw*0.5,hh*0.35, 0,0,Math.PI*2);
+    ctx.fill(); ctx.globalAlpha=1; ctx.restore();
+  }
+
+  var cv,ctx,plots=[],imgs={},scale=1,offX=0,offY=0;
+  var dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
+  var hovId=-1,selId=-1,moveMode=false;
+  var selfId=-1,viewingId=-1;
+  var _cache={gs:-1,items:null};
+
+  function getItems(){
+    var gs=gridSz(plots.length||1);
+    if(_cache.gs===gs) return _cache.items;
+    var tv=totalVC(gs), items=[];
+
+    /* water scenery border */
+    for(var bi=-1;bi<=tv+1;bi++){
+      items.push({t:'water',vc:-1,  vr:bi,   depth:-1+bi});
+      items.push({t:'water',vc:tv+1,vr:bi,   depth:tv+1+bi});
+      if(bi>=-1&&bi<=tv){
+        items.push({t:'water',vc:bi,vr:-1,   depth:bi-1});
+        items.push({t:'water',vc:bi,vr:tv+1, depth:bi+tv+1});
+      }
+    }
+
+    /* full NxN grid with road lanes */
+    for(var vr2=0;vr2<tv;vr2++){
+      for(var vc2=0;vc2<tv;vc2++){
+        var rc=isRd(vc2),rr=isRd(vr2);
+        var type=rc||rr?(rc&&rr?'cross':'road'):'cell';
+        var pi=-1;
+        if(type==='cell'){ pi=v2p(vr2)*gs+v2p(vc2); if(pi>=plots.length) pi=-1; }
+        items.push({t:type,vc:vc2,vr:vr2,depth:vc2+vr2,pi:pi});
+      }
+    }
+
+    /* separator road + downtown */
+    for(var sc=0;sc<tv;sc++)
+      items.push({t:'road',vc:sc,vr:tv,depth:sc+tv});
+    DOWNTOWN.forEach(function(d){
+      var dvc=p2v(d.col*2);
+      items.push({t:'down',vc:dvc,vr:tv+1,depth:dvc+tv+1,d:d});
+    });
+
+    items.sort(function(a,b){return a.depth-b.depth;});
+    _cache={gs:gs,items:items};
+    return items;
+  }
+
   function render(){
     if(!cv||!ctx) return;
     var W=cv.offsetWidth,H=cv.offsetHeight;
-    ctx.clearRect(0,0,W,H);
+    var grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#010912'); grad.addColorStop(0.6,'#040e1c'); grad.addColorStop(1,'#030a06');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
 
     if(!plots.length){
-      ctx.fillStyle='#475569'; ctx.font='16px sans-serif'; ctx.textAlign='center';
-      ctx.fillText('No plots owned.',W/2,H/2); ctx.textAlign='left';
+      ctx.fillStyle='#475569';ctx.font='16px sans-serif';ctx.textAlign='center';
+      ctx.fillText('No plots owned.',W/2,H/2);ctx.textAlign='left';
       return;
     }
 
-    /* build draw list */
-    var items=[];
-    plots.forEach(function(p,i){
-      var c=plotCoord(i);
-      items.push({type:'plot',p:p,col:c.col,row:c.row,depth:c.col+c.row});
-    });
-    var rr=roadRow();
-    for(var rc=0;rc<COLS;rc++) items.push({type:'road',col:rc,row:rr,depth:rc+rr});
-    var dr=downRow();
-    DOWNTOWN.forEach(function(d){
-      items.push({type:'down',d:d,col:d.col,row:dr,depth:d.col+dr});
-    });
-    items.sort(function(a,b){return a.depth-b.depth;});
+    var items=getItems();
+    var hw0=(TW/2)*scale,hh0=(TH/2)*scale;
+    var cullM=TW*scale*4;
 
     items.forEach(function(it){
-      var s=g2s(it.col,it.row);
-      var hw=(TW/2)*scale,hh=(TH/2)*scale;
+      var s=g2s(it.vc,it.vr);
+      if(s.sx+hw0*2<-cullM||s.sx-cullM>W||s.sy+hh0*2<-cullM||s.sy-hh0<H+TH*scale*5) return;
 
-      if(it.type==='road'){
-        drawDiamond(s.sx,s.sy,'#374151');
-        ctx.save();
-        ctx.strokeStyle='rgba(253,224,71,0.45)';
-        ctx.lineWidth=Math.max(1,scale);
-        ctx.setLineDash([3*scale,4*scale]);
+      if(it.t==='water'){ drawWater(s.sx,s.sy); return; }
+      if(it.t==='cross'){ drawDiamond(s.sx,s.sy,'#1f2937'); return; }
+      if(it.t==='road') { drawRoad(s.sx,s.sy,false); return; }
+      if(it.t==='down') { drawDiamond(s.sx,s.sy,'#1a2535'); if(it.d.sprite) drawSprite(s.sx,s.sy,it.d.sprite); return; }
+
+      if(it.pi<0){
+        drawDiamond(s.sx,s.sy,'#101a10');
+        ctx.save(); ctx.globalAlpha=0.1; ctx.strokeStyle='#4ade80'; ctx.lineWidth=0.5;
         ctx.beginPath();
-        /* dashes running NW→SE (col direction) across tile centre */
-        ctx.moveTo(s.sx+hw*0.55,s.sy+hh*1.55);
-        ctx.lineTo(s.sx+hw*1.45,s.sy+hh*0.45);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-        return;
+        var hw2=(TW/2)*scale,hh2=(TH/2)*scale;
+        ctx.moveTo(s.sx+hw2,s.sy); ctx.lineTo(s.sx+hw2,s.sy+hh2*2); ctx.stroke();
+        ctx.restore(); return;
       }
 
-      if(it.type==='down'){
-        drawDiamond(s.sx,s.sy,'#1e293b');
-        if(it.d.sprite) drawSprite(s.sx,s.sy,it.d.sprite);
-        if(scale>0.5){
-          ctx.save();
-          ctx.font='bold '+Math.round(9*scale)+'px sans-serif';
-          ctx.textAlign='center';
-          ctx.fillStyle='rgba(148,163,184,0.92)';
-          var lines=it.d.label.split('\n');
-          var lx=s.sx+hw, ly=s.sy-4*scale;
-          lines.forEach(function(ln,li){
-            ctx.fillText(ln,lx,ly+li*11*scale);
-          });
-          ctx.restore();
-        }
-        return;
-      }
-
-      /* player plot */
-      var p=it.p;
+      var p=plots[it.pi];
       var color=TERRAIN_COLOR[p.terrain]||'#86efac';
-      var isHov=(hovId===p.id);
-      var isSel=(selId===p.id);
-
-      if(isHov||isSel){
-        ctx.save();
-        ctx.shadowColor=isSel?'#f59e0b':'#60a5fa';
-        ctx.shadowBlur=14*scale;
-      }
-      drawDiamond(s.sx,s.sy,isSel?shade(color,40):isHov?shade(color,20):color);
-      if(isHov||isSel) ctx.restore();
+      var isHov=(hovId===p.id), isSel=(selId===p.id);
+      drawDiamond(s.sx,s.sy,
+        isSel?shade(color,50):isHov?shade(color,25):color,
+        isSel?'#f59e0b':isHov?'#60a5fa':null);
 
       if(p.biz_type&&!(moveMode&&isSel)){
         var spr=spriteFor(p.biz_type,p.biz_class);
         if(spr) drawSprite(s.sx,s.sy,spr);
       }
-
-      /* selection "lift" icon */
       if(isSel&&moveMode){
-        ctx.fillStyle='#f59e0b'; ctx.font='bold '+Math.round(14*scale)+'px sans-serif';
+        ctx.fillStyle='#f59e0b';
+        ctx.font='bold '+Math.max(10,Math.round(14*scale))+'px sans-serif';
         ctx.textAlign='center';
-        ctx.fillText('↑',s.sx+hw,s.sy+hh);
+        ctx.fillText('↑',s.sx+(TW/2)*scale,s.sy+(TH/2)*scale*0.8);
         ctx.textAlign='left';
       }
     });
 
-    /* move mode banner */
     if(moveMode){
-      ctx.fillStyle='rgba(0,0,0,0.55)';
-      ctx.fillRect(0,0,W,26);
+      ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,26);
       ctx.fillStyle='#fbbf24'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
-      ctx.fillText('Click an empty plot to place  ·  Esc to cancel',W/2,17);
+      ctx.fillText(selId>=0?'Click an empty plot to place  ·  Esc to cancel'
+        :'Click a building to pick it up  ·  Esc to cancel',W/2,17);
       ctx.textAlign='left';
     }
   }
 
-  /* ── preload sprites ── */
   function preloadSprites(cb){
     var needed={};
-    plots.forEach(function(p){
-      if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class); if(s) needed[s]=1;}
-    });
-    DOWNTOWN.forEach(function(d){if(d.sprite) needed[d.sprite]=1;});
-    var keys=Object.keys(needed), pending=0;
+    plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});
+    DOWNTOWN.forEach(function(d){if(d.sprite)needed[d.sprite]=1;});
+    var keys=Object.keys(needed),pending=0;
     keys.forEach(function(k){
       if(imgs[k]&&imgs[k].complete&&imgs[k].naturalWidth>0) return;
       pending++;
       var img=new Image();
-      img.onload=img.onerror=function(){if(--pending===0) cb();};
-      img.src=SPRITE_BASE+k+'.png';
-      imgs[k]=img;
+      img.onload=img.onerror=function(){if(--pending===0)cb();};
+      img.src=SPRITE_BASE+k+'.png'; imgs[k]=img;
     });
     if(pending===0) cb();
   }
 
-  /* ── resize canvas (DPR-correct) ── */
   function resizeCv(){
     if(!cv||!ctx) return;
     var dpr=window.devicePixelRatio||1;
-    cv.width=cv.offsetWidth*dpr;
-    cv.height=cv.offsetHeight*dpr;
+    cv.width=cv.offsetWidth*dpr; cv.height=cv.offsetHeight*dpr;
     ctx.scale(dpr,dpr);
   }
 
-  /* ── zoom ── */
-  window.mpZoom=function(f){
-    var W=cv.offsetWidth,H=cv.offsetHeight;
-    var cx=W/2,cy=H/2;
-    offX=cx-(cx-offX)*f; offY=cy-(cy-offY)*f;
-    scale=Math.max(0.3,Math.min(4,scale*f));
-    render();
-  };
-
-  /* ── reset ── */
   window.mpReset=function(){
     if(!cv) return;
-    scale=1;
-    var rows=nRows();
-    var midCol=(COLS-1)/2, midRow=(rows-1)/2;
-    offX=cv.offsetWidth/2  - (midCol-midRow)*(TW/2)*scale;
-    offY=cv.offsetHeight/3 - (midCol+midRow)*(TH/2)*scale;
+    var gs=gridSz(plots.length||1), tv=totalVC(gs);
+    var W=cv.offsetWidth,H=cv.offsetHeight;
+    var isoW=(tv+1)*TW, isoH=(tv+3)*TH;
+    var fit=Math.min(W/isoW, H/isoH)*0.88;
+    scale=Math.max(0.2,Math.min(1.8,fit));
+    var midV=(tv-1)/2;
+    offX=W/2; offY=H/2-midV*TH*scale;
     render();
   };
 
-  /* ── hit test ── */
-  function plotAt(mx,my){
-    for(var i=plots.length-1;i>=0;i--){
-      var c=plotCoord(i),s=g2s(c.col,c.row);
-      var hw=(TW/2)*scale,hh=(TH/2)*scale;
-      var dx=mx-(s.sx+hw),dy=my-(s.sy+hh);
-      if(Math.abs(dx/hw)+Math.abs(dy/hh)<=1) return i;
+  window.mpZoom=function(f){
+    var W=cv.offsetWidth,H=cv.offsetHeight,cx=W/2,cy=H/2;
+    offX=cx-(cx-offX)*f; offY=cy-(cy-offY)*f;
+    scale=Math.max(0.2,Math.min(4,scale*f)); render();
+  };
+
+  function hitTest(mx,my){
+    var gs=gridSz(plots.length||1), tv=totalVC(gs);
+    var hwh=(TW/2)*scale, hhh=(TH/2)*scale;
+    var dtVr=tv+1;
+    for(var di=0;di<DOWNTOWN.length;di++){
+      var d=DOWNTOWN[di], s=g2s(p2v(d.col*2),dtVr);
+      var dx=mx-(s.sx+hwh),dy=my-(s.sy+hhh);
+      if(Math.abs(dx/hwh)+Math.abs(dy/hhh)<=1) return {downtown:d};
     }
-    return -1;
+    for(var vr=tv-1;vr>=0;vr--){
+      for(var vc=tv-1;vc>=0;vc--){
+        if(isRd(vc)||isRd(vr)) continue;
+        var s2=g2s(vc,vr);
+        var dx2=mx-(s2.sx+hwh),dy2=my-(s2.sy+hhh);
+        if(Math.abs(dx2/hwh)+Math.abs(dy2/hhh)<=1){
+          var pi=v2p(vr)*gs+v2p(vc);
+          if(pi<plots.length) return {plot:plots[pi]};
+          return {govt:true};
+        }
+      }
+    }
+    return null;
   }
 
-  /* ── tooltip ── */
-  function showTip(p,mx,my){
-    var tt=document.getElementById('mpTooltip');
-    var html='<strong style="color:#f59e0b;">Plot #'+p.id+'</strong><br>'
-      +'<span style="color:#94a3b8;">'+p.terrain+'</span><br>';
-    if(moveMode&&selId===p.id){
-      html+='<span style="color:#fbbf24;">Selected — pick a destination</span>';
-    } else if(p.biz_name){
-      html+='<span style="color:#4ade80;">'+p.biz_name+'</span><br>';
-      if(viewingId===selfId) html+='<span style="color:#64748b;font-size:0.68rem;">Click to move building</span><br>';
-      html+='Eff: '+p.efficiency+'%  Tax: $'+p.monthly_tax+'/mo';
+  function showInfo(hit){
+    var panel=document.getElementById('mpInfo');
+    var html='';
+    if(!hit||hit.govt){
+      html='<strong style="color:#64748b;">Government Land</strong>'
+        +'<div style="color:#475569;margin-top:6px;font-size:0.7rem;">'
+        +'<a href="/land-market" style="color:#38bdf8;">Browse Land Market →</a></div>';
+    } else if(hit.downtown){
+      var d=hit.downtown;
+      html='<strong style="color:#60a5fa;">'+d.label+'</strong>'
+        +(d.url?'<div style="margin-top:6px;"><a href="'+d.url
+          +'" style="color:#38bdf8;font-size:0.72rem;">Open →</a></div>':'');
     } else {
-      html+='<span style="color:#475569;">Vacant</span>';
-      if(moveMode) html+='<br><span style="color:#34d399;">Click to place here</span>';
+      var p=hit.plot;
+      html='<div style="display:flex;justify-content:space-between;align-items:baseline;">'
+        +'<strong style="color:#f59e0b;">Plot #'+p.id+'</strong>'
+        +'<span style="font-size:0.62rem;color:#475569;text-transform:capitalize;">'
+        +p.terrain+'</span></div>';
+      if(p.biz_name){
+        html+='<div style="color:#4ade80;margin-top:4px;">'+p.biz_name+'</div>'
+          +'<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;">'+p.biz_class+'</div>';
+      } else {
+        html+='<div style="color:#475569;margin-top:4px;">Vacant</div>';
+      }
+      html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;'
+        +'font-size:0.68rem;color:#64748b;">'
+        +'Eff <span style="color:#cbd5e1;">'+p.efficiency+'%</span>'
+        +' &emsp; Tax <span style="color:#cbd5e1;">$'+p.monthly_tax+'/mo</span></div>';
+      if(viewingId===selfId&&p.biz_type){
+        html+='<button onclick="mpPickup('+p.id+')" style="margin-top:8px;width:100%;'
+          +'background:#1e293b;border:1px solid #334155;color:#fbbf24;padding:4px;'
+          +'border-radius:4px;cursor:pointer;font-size:0.7rem;">📦 Move Building</button>';
+      }
     }
-    tt.innerHTML=html;
-    tt.style.display='block';
-    tt.style.left=Math.min(mx+14,window.innerWidth-220)+'px';
-    tt.style.top =Math.min(my+14,window.innerHeight-130)+'px';
+    document.getElementById('mpInfoContent').innerHTML=html;
+    panel.style.display='block';
   }
-  function hideTip(){ document.getElementById('mpTooltip').style.display='none'; }
 
-  /* ── move mode ── */
+  window.mpPickup=function(pid){
+    selId=pid; moveMode=true;
+    document.getElementById('mpInfo').style.display='none';
+    document.getElementById('mpMoveHint').style.display='';
+    document.getElementById('mpMoveBuildingBtn').style.display='none';
+    render();
+  };
+
+  function cancelMove(){
+    moveMode=false; selId=-1;
+    document.getElementById('mpMoveHint').style.display='none';
+    if(viewingId===selfId) document.getElementById('mpMoveBuildingBtn').style.display='';
+    render();
+  }
+
   window.mpEnterMoveMode=function(){
     moveMode=true; selId=-1;
     document.getElementById('mpMoveHint').style.display='';
     document.getElementById('mpMoveBuildingBtn').style.display='none';
     render();
   };
-  function cancelMove(){
-    moveMode=false; selId=-1;
-    document.getElementById('mpMoveHint').style.display='none';
-    if(viewingId===selfId)
-      document.getElementById('mpMoveBuildingBtn').style.display='';
-    render();
-  }
+
   function doMove(fromId,toId){
     fetch('/api/move-business',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({from_plot_id:fromId,to_plot_id:toId})
     }).then(function(r){return r.json();}).then(function(d){
       if(d.error){alert('Move failed: '+d.error);return;}
@@ -769,14 +878,14 @@ _MY_PROPS_MODAL = r"""
     });
   }
 
-  /* ── open / close ── */
   window.openMyProperties=function(pid){
     selfId=window._SELF_ID||0; viewingId=pid||selfId;
-    var modal=document.getElementById('mpModal');
-    modal.style.display='flex';
+    document.getElementById('mpModal').style.display='flex';
     cv=document.getElementById('mpCanvas');
     ctx=cv.getContext('2d');
     moveMode=false; selId=-1; hovId=-1;
+    _cache={gs:-1,items:null};
+    document.getElementById('mpInfo').style.display='none';
     document.getElementById('mpMoveHint').style.display='none';
     document.getElementById('mpMoveBuildingBtn').style.display='none';
     resizeCv();
@@ -786,13 +895,12 @@ _MY_PROPS_MODAL = r"""
       .then(function(r){return r.json();})
       .then(function(d){
         if(d.error){alert('Could not load: '+d.error);return;}
-        plots=d.plots;
+        plots=d.plots; _cache={gs:-1,items:null};
         document.getElementById('mpTitle').textContent=
           (viewingId===selfId?'My':d.player_name+"'s")+' Properties';
         document.getElementById('mpCount').textContent=
           plots.length+' plot'+(plots.length===1?'':'s');
-        if(viewingId===selfId)
-          document.getElementById('mpMoveBuildingBtn').style.display='';
+        if(viewingId===selfId) document.getElementById('mpMoveBuildingBtn').style.display='';
         mpReset();
         preloadSprites(function(){render();});
         wireEvents();
@@ -805,70 +913,89 @@ _MY_PROPS_MODAL = r"""
     if(cv) cv._wired=false;
   };
 
-  /* ── events ── */
+  var _tt=null;
+  function showTip(hit,mx,my){
+    if(!_tt) _tt=document.getElementById('mpTooltip');
+    var html='';
+    if(hit.plot){
+      var p=hit.plot;
+      html='<span style="color:#f59e0b;font-weight:600;">'
+        +p.terrain.charAt(0).toUpperCase()+p.terrain.slice(1)+'</span>';
+      html+=p.biz_name
+        ?'<br><span style="color:#4ade80;">'+p.biz_name+'</span>'
+        :'<br><span style="color:#475569;">Vacant</span>';
+      html+='<br><span style="color:#64748b;font-size:0.65rem;">click for details</span>';
+    } else if(hit.downtown){
+      html='<span style="color:#60a5fa;">'+hit.downtown.label+'</span>'
+        +'<br><span style="color:#64748b;font-size:0.65rem;">click to open</span>';
+    } else if(hit.govt){
+      html='<span style="color:#475569;">Government land</span>';
+    }
+    _tt.innerHTML=html;
+    _tt.style.display='block';
+    _tt.style.left=Math.min(mx+12,window.innerWidth-180)+'px';
+    _tt.style.top =Math.min(my+10,window.innerHeight-70)+'px';
+  }
+  function hideTip(){ if(_tt) _tt.style.display='none'; }
+
   function wireEvents(){
     if(cv._wired) return;
     cv._wired=true;
 
     cv.addEventListener('mousedown',function(e){
-      dragActive=true; didDrag=false;
-      dragSX=e.clientX; dragSY=e.clientY; dragOX=offX; dragOY=offY;
+      didDrag=false; dragSX=e.clientX; dragSY=e.clientY; dragOX=offX; dragOY=offY;
     });
     window.addEventListener('mouseup',function(e){
-      if(dragActive&&!didDrag){
-        /* treat as click */
+      if(!didDrag&&e.target===cv){
         var rect=cv.getBoundingClientRect();
-        var mx=e.clientX-rect.left,my=e.clientY-rect.top;
-        var idx=plotAt(mx,my);
-        if(idx>=0){
-          var p=plots[idx];
-          if(moveMode){
-            if(p.id===selId){ cancelMove(); }
-            else if(!p.biz_type&&selId>=0){ doMove(selId,p.id); }
-            else if(p.biz_type){ selId=p.id; render(); }
-          } else if(p.biz_type&&viewingId===selfId){
-            selId=p.id; moveMode=true;
-            document.getElementById('mpMoveHint').style.display='';
-            document.getElementById('mpMoveBuildingBtn').style.display='none';
-            render();
-          }
+        var mx=e.clientX-rect.left, my=e.clientY-rect.top;
+        var hit=hitTest(mx,my);
+        if(moveMode){
+          if(hit&&hit.plot){
+            if(hit.plot.id===selId){ cancelMove(); }
+            else if(!hit.plot.biz_type&&selId>=0){ doMove(selId,hit.plot.id); }
+            else if(hit.plot.biz_type){ selId=hit.plot.id; render(); }
+          } else if(hit&&hit.govt){ showInfo(hit); }
+          else { cancelMove(); }
         } else {
-          if(moveMode) cancelMove();
+          if(hit){ showInfo(hit); if(hit.plot) hovId=hit.plot.id; }
+          else document.getElementById('mpInfo').style.display='none';
         }
       }
-      dragActive=false; didDrag=false; cv.style.cursor='grab';
+      didDrag=false; cv.style.cursor='grab';
     });
+
     cv.addEventListener('mousemove',function(e){
-      if(dragActive){
-        var dx=e.clientX-dragSX,dy=e.clientY-dragSY;
-        if(Math.abs(dx)>3||Math.abs(dy)>3){
-          didDrag=true; offX=dragOX+dx; offY=dragOY+dy;
-          cv.style.cursor='grabbing'; render();
-        }
-      } else {
+      var dx=e.clientX-dragSX, dy=e.clientY-dragSY;
+      if(e.buttons&&(Math.abs(dx)>3||Math.abs(dy)>3)){
+        didDrag=true; offX=dragOX+dx; offY=dragOY+dy;
+        cv.style.cursor='grabbing'; render();
+      } else if(!didDrag){
         var rect=cv.getBoundingClientRect();
-        var mx=e.clientX-rect.left,my=e.clientY-rect.top;
-        var idx=plotAt(mx,my);
-        var nh=idx>=0?plots[idx].id:-1;
+        var mx=e.clientX-rect.left, my=e.clientY-rect.top;
+        var hit=hitTest(mx,my);
+        var nh=hit&&hit.plot?hit.plot.id:-1;
         if(nh!==hovId){hovId=nh;render();}
-        if(idx>=0) showTip(plots[idx],e.clientX,e.clientY);
+        if(hit) showTip(hit,e.clientX,e.clientY);
         else hideTip();
       }
     });
+
     cv.addEventListener('mouseleave',function(){hovId=-1;hideTip();render();});
 
     cv.addEventListener('wheel',function(e){
       e.preventDefault();
       var rect=cv.getBoundingClientRect();
-      var mx=e.clientX-rect.left,my=e.clientY-rect.top;
+      var mx=e.clientX-rect.left, my=e.clientY-rect.top;
       var f=e.deltaY<0?1.12:1/1.12;
       offX=mx-(mx-offX)*f; offY=my-(my-offY)*f;
-      scale=Math.max(0.3,Math.min(4,scale*f)); render();
+      scale=Math.max(0.2,Math.min(4,scale*f)); render();
     },{passive:false});
 
     var t0=null;
     cv.addEventListener('touchstart',function(e){
-      if(e.touches.length===1) t0={x:e.touches[0].clientX,y:e.touches[0].clientY,ox:offX,oy:offY};
+      if(e.touches.length===1)
+        t0={x:e.touches[0].clientX,y:e.touches[0].clientY,ox:offX,oy:offY};
     },{passive:true});
     cv.addEventListener('touchmove',function(e){
       if(e.touches.length===1&&t0){
@@ -877,9 +1004,9 @@ _MY_PROPS_MODAL = r"""
       }
     },{passive:true});
 
-    window.addEventListener('resize',function(){resizeCv();render();});
+    window.addEventListener('resize',function(){resizeCv();mpReset();});
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'){ if(moveMode) cancelMove(); else closeMpModal(); }
+      if(e.key==='Escape'){if(moveMode)cancelMove();else closeMpModal();}
     });
   }
 
