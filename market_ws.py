@@ -241,7 +241,7 @@ async def tick(current_tick: int, now: datetime):
         return
     if not _connections:
         return
-    global _last_snapshot
+    global _last_snapshot, _connections
     try:
         loop = asyncio.get_event_loop()
         snap = await loop.run_in_executor(None, collect_snapshot)
