@@ -139,7 +139,7 @@ def collect_snapshot() -> dict:
         from reserve_banks import StateReserveBank as _SRB, BondYieldHistory as _BYH
         rdb = ReserveSessionLocal()
         try:
-            for bank in rdb.query(_SRB).filter(_SRB.is_active == True).all():
+            for bank in rdb.query(_SRB).all():
                 rate = float(bank.usd_per_unit or 0)
                 chg = 0.0
                 try:
@@ -191,7 +191,7 @@ def collect_snapshot() -> dict:
         from counties import get_db as _cdb, County as _Cty, get_crypto_price_by_symbol
         cdb = _cdb()
         try:
-            for county in cdb.query(_Cty).filter(_Cty.is_active == True).all():
+            for county in cdb.query(_Cty).all():
                 try:
                     usd = float(get_crypto_price_by_symbol(county.crypto_symbol) or 0)
                 except Exception:
