@@ -11962,8 +11962,11 @@ def _load_device_map():
 
 def _save_device_map():
     import json as _json
-    with open(_WIDGET_DEVICE_FILE, 'w') as _f:
-        _json.dump(_WIDGET_DEVICE_MAP, _f)
+    try:
+        with open(_WIDGET_DEVICE_FILE, 'w') as _f:
+            _json.dump(_WIDGET_DEVICE_MAP, _f)
+    except Exception as _e:
+        print(f"[widget] Failed to save device map: {_e}")
 
 _load_device_map()
 
@@ -11975,7 +11978,25 @@ def api_widget_link(device_id: str, session_token: Optional[str] = Cookie(None))
         return JSONResponse({"error": "not authenticated"}, status_code=401)
     _WIDGET_DEVICE_MAP[device_id] = player.id
     _save_device_map()
+    print(f"[widget] Linked device {device_id[:12]}… → player {player.id} ({player.business_name})")
     return JSONResponse({"ok": True})
+
+
+@router.get("/api/widget/status")
+def api_widget_status(device_id: Optional[str] = None,
+                      session_token: Optional[str] = Cookie(None)):
+    """Return whether the given device_id is linked to any player account."""
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "not authenticated"}, status_code=401)
+    if not device_id:
+        return JSONResponse({"linked": False, "reason": "no device_id"})
+    pid = _WIDGET_DEVICE_MAP.get(device_id)
+    if not pid:
+        _load_device_map()
+        pid = _WIDGET_DEVICE_MAP.get(device_id)
+    linked = pid == player.id
+    return JSONResponse({"linked": linked, "player_id": pid})
 
 @router.get("/api/widget/data")
 def api_widget_data(request: Request, session_token: Optional[str] = Cookie(None),

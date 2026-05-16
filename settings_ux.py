@@ -19,6 +19,7 @@ _TABS = [
     ("audio",         "🎵 Media"),
     ("tutorials",     "📖 Tutorials"),
     ("notifications", "🔔 Notifications"),
+    ("widgets",       "📱 Widgets"),
     ("account",       "👤 Account"),
 ]
 
@@ -2607,6 +2608,138 @@ def api_cco_rental(
     return RedirectResponse(url="/settings?tab=notifications", status_code=303)
 
 
+def _widgets_tab(player) -> str:
+    return """
+<div style="max-width:680px;">
+    <h2 style="color:#e5e7eb;margin:0 0 6px 0;font-size:1.1rem;">Android Home-Screen Widgets</h2>
+    <p style="color:#94a3b8;font-size:0.88rem;margin:0 0 20px 0;">
+        Widgets show your live balance, recent transactions, market data, and chat — directly
+        on your Android home screen without opening the app.
+    </p>
+
+    <!-- Device Link Status -->
+    <div id="widget-status-box" style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px 18px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span id="widget-status-icon" style="font-size:1.2rem;">⏳</span>
+            <span id="widget-status-text" style="color:#94a3b8;font-size:0.9rem;">Checking device link status…</span>
+        </div>
+        <button id="widget-link-btn"
+                onclick="linkDevice()"
+                style="background:#6366f1;color:#fff;border:none;padding:10px 20px;border-radius:6px;
+                       cursor:pointer;font-size:0.85rem;font-weight:600;width:100%;">
+            Link This Device to My Account
+        </button>
+        <p style="color:#475569;font-size:0.78rem;margin:10px 0 0 0;">
+            Tap this button while logged in to authorise your Android device to display your data
+            in home-screen widgets. You only need to do this once per device.
+        </p>
+    </div>
+
+    <!-- Available Widgets -->
+    <h3 style="color:#cbd5e1;font-size:0.95rem;margin:0 0 12px 0;">Available Widgets</h3>
+    <div style="display:grid;gap:10px;">
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;">
+            <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px;">Balance + Alerts</div>
+            <div style="color:#64748b;font-size:0.82rem;">Your live balance and last 10 transactions. Tap to open the app.</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;">
+            <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px;">WBC-50 Index</div>
+            <div style="color:#64748b;font-size:0.82rem;">Live Wadsworth Business Composite index value, 7-day sparkline, and top 5 constituents.</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;">
+            <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px;">Bond Yields</div>
+            <div style="color:#64748b;font-size:0.82rem;">Live yield rates for all reserve-bank currencies with 24-hour change indicators.</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;">
+            <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px;">Forex Rates</div>
+            <div style="color:#64748b;font-size:0.82rem;">Foreign exchange rates vs USD for all active currencies.</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;">
+            <div style="color:#e2e8f0;font-weight:600;margin-bottom:4px;">Global Chat / Trade Chat</div>
+            <div style="color:#64748b;font-size:0.82rem;">Live feed of the last 25 messages from the Global or Trade chat rooms.</div>
+        </div>
+    </div>
+
+    <!-- Setup Instructions -->
+    <h3 style="color:#cbd5e1;font-size:0.95rem;margin:20px 0 12px 0;">Setup Instructions</h3>
+    <ol style="color:#94a3b8;font-size:0.85rem;line-height:2;padding-left:20px;margin:0;">
+        <li>Install the Wadsworth app from the Play Store (or sideload the APK)</li>
+        <li>Open the app and log in to your account</li>
+        <li>Come to <strong style="color:#e5e7eb;">Settings → Widgets</strong> and tap <em>Link This Device</em></li>
+        <li>Long-press your home screen → Widgets → find "Wadsworth" widgets → drag one to your screen</li>
+        <li>If a widget shows <em>"Open app to log in"</em>, open the app and tap Link This Device again</li>
+    </ol>
+</div>
+
+<script>
+(function() {
+    var stored = null;
+    try { stored = sessionStorage.getItem('_wdid'); } catch(e) {}
+
+    var statusIcon = document.getElementById('widget-status-icon');
+    var statusText = document.getElementById('widget-status-text');
+
+    if (!stored) {
+        statusIcon.textContent = '⚠️';
+        statusText.textContent = 'No device ID found. Are you using the Android app? Open the app first, then come back here.';
+        statusText.style.color = '#f59e0b';
+    } else {
+        // Check if this device is already linked
+        fetch('/api/widget/status?device_id=' + encodeURIComponent(stored), {credentials:'same-origin'})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.linked) {
+                    statusIcon.textContent = '✅';
+                    statusText.textContent = 'This device is linked to your account. Widgets should work!';
+                    statusText.style.color = '#4ade80';
+                } else {
+                    statusIcon.textContent = '🔴';
+                    statusText.textContent = 'This device is not linked yet. Tap the button below to link it.';
+                    statusText.style.color = '#f87171';
+                }
+            })
+            .catch(function() {
+                statusIcon.textContent = '❓';
+                statusText.textContent = 'Could not check status. Check your connection.';
+            });
+    }
+
+    window.linkDevice = function() {
+        var btn = document.getElementById('widget-link-btn');
+        var wdid = null;
+        try { wdid = sessionStorage.getItem('_wdid'); } catch(e) {}
+        if (!wdid) {
+            alert('No device ID detected. Please open this page from inside the Wadsworth Android app.');
+            return;
+        }
+        btn.textContent = 'Linking…';
+        btn.disabled = true;
+        fetch('/api/widget/link?device_id=' + encodeURIComponent(wdid), {credentials:'same-origin'})
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.ok) {
+                    statusIcon.textContent = '✅';
+                    statusText.textContent = 'Device linked! Your widgets will now show live data.';
+                    statusText.style.color = '#4ade80';
+                    btn.textContent = '✓ Linked!';
+                    btn.style.background = '#16a34a';
+                } else {
+                    btn.textContent = 'Link This Device to My Account';
+                    btn.disabled = false;
+                    alert('Link failed: ' + (d.error || 'unknown error'));
+                }
+            })
+            .catch(function() {
+                btn.textContent = 'Link This Device to My Account';
+                btn.disabled = false;
+                alert('Network error — check your connection and try again.');
+            });
+    };
+})();
+</script>
+"""
+
+
 def _account_tab(player) -> str:
     try:
         from corporate_actions import is_player_bankrupt
@@ -2699,6 +2832,8 @@ def settings_page(
         content = _tutorials_tab(player)
     elif tab == "notifications":
         content = _notifications_tab(player)
+    elif tab == "widgets":
+        content = _widgets_tab(player)
     elif tab == "account":
         content = _account_tab(player)
     else:
