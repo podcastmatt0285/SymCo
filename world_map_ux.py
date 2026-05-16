@@ -323,7 +323,9 @@ def api_my_properties(
         import auth as _auth
         adb = _auth.get_db()
         target = adb.query(_auth.Player).filter_by(id=target_id).first()
-        player_name = getattr(target, "username", None) or f"Player {target_id}"
+        player_name = (getattr(target, "business_name", None)
+                       or getattr(target, "username", None)
+                       or f"Player {target_id}")
         adb.close()
     except Exception:
         player_name = f"Player {target_id}"
@@ -383,7 +385,9 @@ def api_my_properties(
                 try:
                     adb2 = _auth.get_db()
                     other = adb2.query(_auth.Player).filter_by(id=other_id).first()
-                    other_name = getattr(other, "username", None) or f"Player {other_id}"
+                    other_name = (getattr(other, "business_name", None)
+                                  or getattr(other, "username", None)
+                                  or f"Player {other_id}")
                     adb2.close()
 
                     ldb2 = _ldb2()
@@ -791,12 +795,6 @@ _MY_PROPS_MODAL = r"""
     grad.addColorStop(0,'#010912'); grad.addColorStop(0.6,'#040e1c'); grad.addColorStop(1,'#030a06');
     ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
 
-    if(!plots.length){
-      ctx.fillStyle='#475569';ctx.font='16px sans-serif';ctx.textAlign='center';
-      ctx.fillText('No plots owned.',W/2,H/2);ctx.textAlign='left';
-      return;
-    }
-
     var items=getItems();
     var islands=getIslands();
     var hw0=(TW/2)*scale,hh0=(TH/2)*scale;
@@ -899,6 +897,19 @@ _MY_PROPS_MODAL = r"""
       ctx.textAlign='left';ctx.textBaseline='alphabetic';
       ctx.restore();
     });
+
+    /* "no plots" notice drawn in centre of player grid when grid is empty */
+    if(!plots.length){
+      var gs0=gridSz(1),tv0=totalVC(gs0),midVc0=(tv0-1)/2,midVr0=(tv0+1)/2;
+      var ps=g2s(midVc0,midVr0);
+      ctx.save();
+      ctx.font='13px sans-serif';
+      ctx.fillStyle='rgba(71,85,105,0.85)';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('No plots yet — visit Land Market',ps.sx+(TW/2)*scale,ps.sy+(TH/2)*scale);
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.restore();
+    }
 
     if(swapMode){
       ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,26);
@@ -1107,8 +1118,9 @@ _MY_PROPS_MODAL = r"""
         plots=d.plots; contacts=d.contacts||[]; _cache={key:'',items:null}; _islands=null;
         document.getElementById('mpTitle').textContent=
           (viewingId===selfId?'My':d.player_name+"'s")+' Properties';
-        document.getElementById('mpCount').textContent=
-          plots.length+' plot'+(plots.length===1?'':'s');
+        var pStr=plots.length+' plot'+(plots.length===1?'':'s');
+        var cStr=contacts.length?(' · '+contacts.length+' contact'+(contacts.length===1?'':'s')):'';
+        document.getElementById('mpCount').textContent=pStr+cStr;
         if(viewingId===selfId) document.getElementById('mpSwapBtn').style.display='';
         mpReset();
         preloadSprites(function(){render();});
