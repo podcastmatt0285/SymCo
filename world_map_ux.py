@@ -645,6 +645,51 @@ _MY_PROPS_MODAL = r"""
     deposits:  {f:'rgba(251,146,60,0.20)',  k:'rgba(251,146,60,0.38)'},
     remote:    {f:'rgba(0,0,0,0.22)',       k:null},
   };
+  /* Terrain → PNG tile name(s) from /static/iso/tiles/ (tipsy/isometric-tiles, CC0).
+     Multiple entries rotate deterministically per grid position for variety. */
+  var TERRAIN_TILE={
+    prairie:  ['terrain_grass','terrain_grass_v2','terrain_grass_v3','terrain_grass_v4'],
+    hills:    ['terrain_grass_v2','terrain_grass_v4','terrain_grass_v5','terrain_savanna_v3'],
+    forest:   ['terrain_grass_v3','terrain_grass','terrain_grass_v4','terrain_grass_v5'],
+    jungle:   ['terrain_grass_v3','terrain_grass_v5','terrain_grass_v2','terrain_grass'],
+    marsh:    ['terrain_grass_v4','terrain_grass_v5','terrain_grass_v3'],
+    island:   ['terrain_grass_v2','terrain_savanna','terrain_arid'],
+    savanna:  ['terrain_savanna','terrain_savanna_v2','terrain_savanna_v3'],
+    desert:   ['terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4'],
+    mountain: ['terrain_snow_v3','terrain_snow_v4','terrain_arid_v3','terrain_snow2'],
+    tundra:   ['terrain_snow','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4'],
+    urban:    ['terrain_arid_v3','terrain_arid_v4','terrain_arid2'],
+    coastal:  ['terrain_water_a','terrain_arid','terrain_savanna'],
+    ocean:    ['terrain_water_b','terrain_water_a','terrain_water_b'],
+    lake:     ['terrain_water_a','terrain_water_b','terrain_water_a'],
+    district_food:              ['terrain_savanna_v3','terrain_grass_v4'],
+    district_hospital:          ['terrain_arid2','terrain_arid_v3'],
+    district_industrial:        ['terrain_arid_v4','terrain_arid_v3'],
+    district_medical:           ['terrain_arid2','terrain_arid_v4'],
+    district_neighborhood:      ['terrain_grass_v2','terrain_grass_v3'],
+    district_transport:         ['terrain_arid_v3','terrain_arid_v4'],
+    district_utilities:         ['terrain_arid_v4','terrain_arid3'],
+    district_zoo:               ['terrain_grass_v3','terrain_savanna_v2'],
+    district_aerospace:         ['terrain_snow_v3','terrain_arid_v3'],
+    district_coastal:           ['terrain_water_a','terrain_arid'],
+    district_education:         ['terrain_grass_v2','terrain_savanna_v3'],
+    district_entertainment:     ['terrain_arid_v4','terrain_arid3'],
+    district_food_court:        ['terrain_savanna_v2','terrain_grass_v5'],
+    district_mall:              ['terrain_arid2','terrain_arid_v3'],
+    district_military:          ['terrain_grass_v4','terrain_savanna_v3'],
+    district_prison:            ['terrain_arid_v3','terrain_arid2'],
+    district_shipyard:          ['terrain_water_a','terrain_arid_v3'],
+    district_tech:              ['terrain_snow_v3','terrain_arid_v4'],
+    district_airport:           ['terrain_arid_v3','terrain_snow_v3'],
+    district_convention_center: ['terrain_arid2','terrain_arid_v2'],
+    district_entertainment_district:['terrain_arid_v4','terrain_arid3'],
+    district_mega_mall:         ['terrain_arid_v2','terrain_arid2'],
+    district_military_base:     ['terrain_grass_v4','terrain_savanna_v3'],
+    district_prison_complex:    ['terrain_arid_v3','terrain_snow_v3'],
+    district_research_campus:   ['terrain_snow_v3','terrain_arid_v4'],
+    district_seaport:           ['terrain_water_a','terrain_water_b'],
+    district_tech_park:         ['terrain_snow_v4','terrain_arid_v4'],
+  };
 
   function spriteFor(t,cls){
     if(!t) return null;
@@ -754,9 +799,15 @@ _MY_PROPS_MODAL = r"""
     });
   }
 
-  /* Terrain-aware diamond with diagonal gradient shading + proximity overlays.
-     Replaces the old drawDiamond + drawTileOverlay('tile…') combo for land plots. */
-  function drawTerrainDiamond(sx,sy,terrain,prox,isHov,isSel){
+  /* Pick a terrain tile name deterministically from TERRAIN_TILE variants array */
+  function tileFor(terrain,vc,vr){
+    var v=TERRAIN_TILE[terrain]; if(!v||!v.length) return null;
+    return v[(Math.abs(vc||0)*3+Math.abs(vr||0)*7)%v.length];
+  }
+
+  /* Terrain-aware diamond: canvas gradient base + tipsy PNG texture + proximity overlays.
+     vc,vr are grid coords used for deterministic tile variant selection. */
+  function drawTerrainDiamond(sx,sy,terrain,prox,isHov,isSel,vc,vr){
     var hw=(TW/2)*scale,hh=(TH/2)*scale;
     var sc=TERRAIN_SCHEME[terrain]||TERRAIN_SCHEME.prairie;
     var base=isSel?shade(sc.c,50):isHov?shade(sc.c,25):sc.c;
@@ -772,6 +823,8 @@ _MY_PROPS_MODAL = r"""
     ctx.fillStyle=gr; ctx.fill();
     ctx.strokeStyle=sc.s; ctx.lineWidth=0.5; ctx.stroke();
     if(glow) ctx.restore();
+    /* overlay the tipsy terrain tile for real texture if loaded */
+    var tn=tileFor(terrain,vc,vr); if(tn) drawTileOverlay(sx,sy,tn,0.65);
     drawProxOverlay(sx,sy,prox);
   }
 
@@ -973,7 +1026,7 @@ _MY_PROPS_MODAL = r"""
         var isl=islands[it.ci];
         var cp=it.cpi>=0?isl.c.plots[it.cpi]:null;
         var isHovC=(hovCI===it.ci&&hovCPi===it.cpi&&it.cpi>=0);
-        if(cp) drawTerrainDiamond(s.sx,s.sy,cp.terrain,cp.proximity,isHovC,false);
+        if(cp) drawTerrainDiamond(s.sx,s.sy,cp.terrain,cp.proximity,isHovC,false,it.vc,it.vr);
         else drawDiamond(s.sx,s.sy,'#0d1a0d',null);
         if(cp&&cp.biz_type){var csp=spriteFor(cp.biz_type,cp.biz_class);if(csp)drawSprite(s.sx,s.sy,csp);}
         if(!cp){
@@ -1016,7 +1069,7 @@ _MY_PROPS_MODAL = r"""
 
       var p=plots[it.pi];
       var isHov=(hovId===it.pi), isSel=(swapAIdx===it.pi);
-      drawTerrainDiamond(s.sx,s.sy,p.terrain,p.proximity,isHov,isSel);
+      drawTerrainDiamond(s.sx,s.sy,p.terrain,p.proximity,isHov,isSel,it.vc,it.vr);
 
       if(p.biz_type){
         var spr=spriteFor(p.biz_type,p.biz_class);
@@ -1083,8 +1136,15 @@ _MY_PROPS_MODAL = r"""
     DOWNTOWN.forEach(function(d){if(d.sprite)needed[d.sprite]=1;});
     contacts.forEach(function(c){c.plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});});
     var keys=Object.keys(needed);
-    /* also load tile texture images (water/dirt/tile variants) */
-    var TILES=['tile1','tile2','tile3','water1','water2','water3','dirt1','dirt2','dirt3'];
+    /* also load tile texture images: water/dirt/tile + all tipsy terrain variants */
+    var TILES=[
+      'tile1','tile2','tile3','water1','water2','water3','dirt1','dirt2','dirt3',
+      'terrain_grass','terrain_grass_v2','terrain_grass_v3','terrain_grass_v4','terrain_grass_v5',
+      'terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4',
+      'terrain_savanna','terrain_savanna2','terrain_savanna3','terrain_savanna_v2','terrain_savanna_v3',
+      'terrain_snow','terrain_snow2','terrain_snow3','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4',
+      'terrain_water_a','terrain_water_b'
+    ];
     var pending=0;
     function dec(){if(--pending===0)cb();}
     keys.forEach(function(k){
