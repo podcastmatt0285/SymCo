@@ -573,6 +573,7 @@ _MY_PROPS_MODAL = r"""
   var TILE_BASE='/static/iso/tiles/';
   var ISO_BASE='/assets/iso/';
   var KENNEY_BASE='/assets/kenney/';
+  var FARMLIFE_BASE='/assets/farmlife/';
   var tileImgs={};
 
   /* 3×3 downtown block — 8 buildings surrounding a central park.
@@ -878,11 +879,19 @@ _MY_PROPS_MODAL = r"""
     ctx.drawImage(img, sx+hw-sw/2, sy+TH*scale-sh+sh*0.15, sw, sh);
   }
 
+  /* Kenney tree sprites are tiny pixels (11-19px wide) — scale them to ~40% tile width */
+  var DECOR_WIDTH={
+    'kenney_treeShort':0.42,'kenney_treeTall':0.42,
+    'kenney_treeAltShort':0.42,'kenney_treeAltTall':0.42,
+    'kenney_coniferShort':0.44,'kenney_coniferTall':0.44,
+    'kenney_coniferAltShort':0.44,'kenney_coniferAltTall':0.44,
+  };
+
   function drawDecorSprite(sx,sy,name,alpha){
     var img=tileImgs[name];
     if(!img||!img.complete||!img.naturalWidth) return;
     var ratio=img.naturalHeight/img.naturalWidth;
-    var sw=TW*scale;
+    var sw=TW*scale*(DECOR_WIDTH[name]||1.0);
     var sh=Math.min(sw*ratio,sw*2.5);
     var hw=(TW/2)*scale;
     ctx.save();
@@ -893,17 +902,27 @@ _MY_PROPS_MODAL = r"""
 
   function decorFor(terrain,vc,vr){
     var h=Math.abs(vc*5+vr*11);
-    if(/forest|jungle/.test(terrain))   return 'decor_tree'+((h%6)+1);
-    if(/prairie|hills|marsh/.test(terrain)) return h%2?'decor_bush2':'decor_bush1';
+    if(/forest/.test(terrain)){
+      var f=['kenney_coniferTall','kenney_coniferAltTall','decor_tree1','decor_tree2','kenney_treeTall','decor_tree3'];
+      return f[h%f.length];
+    }
+    if(/jungle/.test(terrain)){
+      var j=['kenney_treeTall','kenney_treeAltTall','decor_tree4','decor_tree5','kenney_coniferTall','decor_tree6'];
+      return j[h%j.length];
+    }
+    if(/prairie|hills|marsh/.test(terrain)){
+      var p=['kenney_treeShort','kenney_treeAltShort','decor_bush2','decor_bush1','kenney_coniferShort'];
+      return p[h%p.length];
+    }
     if(/savanna|island/.test(terrain))  return h%3?'decor_bush1':'decor_bush2';
     if(/coastal/.test(terrain))         return h%5?'decor_bush'+(h%2+1):'decor_tent';
     return null;
   }
 
-  function drawRoad(sx,sy,cross){
+  /* rc=true → column road (vc fixed, EW kenney sprite); rc=false → row road (NS sprite) */
+  function drawRoad(sx,sy,cross,rc){
     var hw=(TW/2)*scale, hh=(TH/2)*scale;
     ctx.save();
-    /* asphalt: NW-lit gradient matching terrain tile light direction */
     var gr=ctx.createLinearGradient(sx,sy,sx+hw*2,sy+hh*2);
     gr.addColorStop(0,'#343d47'); gr.addColorStop(0.5,'#282f38'); gr.addColorStop(1,'#1d232a');
     ctx.beginPath();
@@ -912,35 +931,43 @@ _MY_PROPS_MODAL = r"""
     ctx.closePath();
     ctx.fillStyle=gr; ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=0.6; ctx.stroke();
-    /* dashed centre-line on straight lanes; omit on intersections */
-    if(!cross){
-      ctx.strokeStyle='rgba(255,220,55,0.5)';
-      ctx.lineWidth=Math.max(0.5,0.65*scale);
-      ctx.setLineDash([2.5*scale,2.8*scale]);
-      ctx.beginPath();
-      ctx.moveTo(sx+hw*0.55,sy+hh*1.52); ctx.lineTo(sx+hw*1.45,sy+hh*0.48);
-      ctx.stroke(); ctx.setLineDash([]);
-    }
     ctx.restore();
+    /* kenney sprite overlay adds lane markings at correct isometric perspective */
+    var spriteName=cross?'kenney_crossroad':(rc?'kenney_roadEW':'kenney_roadNS');
+    drawTileOverlay(sx,sy,spriteName,0.60);
   }
 
-  function drawWater(sx,sy,vc,vr){
+  /* adjMask bits: 1=N(vc-1) 2=S(vc+1) 4=E(vr-1) 8=W(vr+1) — land neighbours */
+  var _WTiles={
+    0:'kenney_water',
+    1:'kenney_waterN',  2:'kenney_waterS',  4:'kenney_waterE',  8:'kenney_waterW',
+    5:'kenney_waterNE', 9:'kenney_waterNW', 6:'kenney_waterES',10:'kenney_waterSW',
+    /* inner concave corners: 3 land sides → use the open-direction single tile */
+    13:'kenney_waterE', 11:'kenney_waterS', 7:'kenney_waterW',  14:'kenney_waterN',
+    /* opposite pairs / full surround → center */
+    3:'kenney_water',  12:'kenney_water',  15:'kenney_water',
+  };
+  function drawWater(sx,sy,vc,vr,adjMask){
+    var tile=_WTiles[adjMask|0]||'kenney_water';
     drawDiamond(sx,sy,'#071828');
-    drawTileOverlay(sx,sy,'kenney_water',0.85);
-    var ph=(vc*0.6+vr*0.4+_waveT*0.7)%(Math.PI*2);
-    var a=0.05+0.04*Math.sin(ph);
-    var hw=(TW/2)*scale,hh=(TH/2)*scale;
-    ctx.save();
-    var gr=ctx.createLinearGradient(sx+hw*0.2,sy+hh,sx+hw*1.8,sy+hh);
-    gr.addColorStop(0,'rgba(56,189,248,0)');
-    gr.addColorStop(0.5,'rgba(56,189,248,'+a+')');
-    gr.addColorStop(1,'rgba(56,189,248,0)');
-    ctx.beginPath();
-    ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
-    ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
-    ctx.closePath();
-    ctx.fillStyle=gr; ctx.fill();
-    ctx.restore();
+    drawTileOverlay(sx,sy,tile,0.92);
+    /* shimmer only on open-water tiles (no or single land neighbor) */
+    if((adjMask|0)<=8){
+      var ph=(vc*0.6+vr*0.4+_waveT*0.7)%(Math.PI*2);
+      var a=0.05+0.04*Math.sin(ph);
+      var hw=(TW/2)*scale,hh=(TH/2)*scale;
+      ctx.save();
+      var gr=ctx.createLinearGradient(sx+hw*0.2,sy+hh,sx+hw*1.8,sy+hh);
+      gr.addColorStop(0,'rgba(56,189,248,0)');
+      gr.addColorStop(0.5,'rgba(56,189,248,'+a+')');
+      gr.addColorStop(1,'rgba(56,189,248,0)');
+      ctx.beginPath();
+      ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+      ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
+      ctx.closePath();
+      ctx.fillStyle=gr; ctx.fill();
+      ctx.restore();
+    }
   }
 
   var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
@@ -1020,10 +1047,11 @@ _MY_PROPS_MODAL = r"""
             else  items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
             continue;
           }
-          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth});continue;}
+          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth,rc:false});continue;}
           if(vr2>=1&&vr2<=tv){
             var rc=isRd(vc2),rr=isRd(vr2-1);
-            if(rc||rr){items.push({t:rc&&rr?'cross':'road',vc:vc2,vr:vr2,depth:depth});}
+            if(rc&&rr){items.push({t:'cross',vc:vc2,vr:vr2,depth:depth});}
+            else if(rc||rr){items.push({t:'road',vc:vc2,vr:vr2,depth:depth,rc:!!rc});}
             else{var pi=v2p(vr2-1)*gs+v2p(vc2);items.push({t:'cell',vc:vc2,vr:vr2,depth:depth,pi:pi<plots.length?pi:-1});}
             continue;
           }
@@ -1033,10 +1061,11 @@ _MY_PROPS_MODAL = r"""
         var isl=islByVc[vc2];
         if(isl){
           var lvc=vc2-isl.baseVc;
-          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth});continue;}
+          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth,rc:false});continue;}
           if(vr2>=1&&vr2<=isl.ctv){
             var crc=isRd(lvc),crr=isRd(vr2-1);
-            if(crc||crr){items.push({t:crc&&crr?'cross':'road',vc:vc2,vr:vr2,depth:depth});}
+            if(crc&&crr){items.push({t:'cross',vc:vc2,vr:vr2,depth:depth});}
+            else if(crc||crr){items.push({t:'road',vc:vc2,vr:vr2,depth:depth,rc:!!crc});}
             else{
               var cpi=v2p(vr2-1)*isl.cgs+v2p(lvc);
               items.push({t:'cplot',vc:vc2,vr:vr2,depth:depth,ci:isl.ci,cpi:cpi<isl.c.plots.length?cpi:-1});
@@ -1050,6 +1079,21 @@ _MY_PROPS_MODAL = r"""
     }
 
     items.sort(function(a,b){return a.depth-b.depth;});
+
+    /* Water adjacency: build land position set, then tag each water tile with
+       a 4-bit mask (N=1 S=2 E=4 W=8) indicating which neighbours are land.
+       N=(vc-1,vr)  S=(vc+1,vr)  E=(vc,vr-1)  W=(vc,vr+1) */
+    var _lset=new Set();
+    items.forEach(function(it){if(it.t!=='water')_lset.add(it.vc+','+it.vr);});
+    items.forEach(function(it){
+      if(it.t!=='water') return;
+      var n=_lset.has((it.vc-1)+','+it.vr)?1:0;
+      var s=_lset.has((it.vc+1)+','+it.vr)?2:0;
+      var e=_lset.has(it.vc+','+(it.vr-1))?4:0;
+      var w=_lset.has(it.vc+','+(it.vr+1))?8:0;
+      it.adjMask=n|s|e|w;
+    });
+
     _cache={key:ckey,items:items};
     return items;
   }
@@ -1071,9 +1115,9 @@ _MY_PROPS_MODAL = r"""
       var s=g2s(it.vc,it.vr);
       if(s.sx+hw0*2<-cullM||s.sx>W+cullM||s.sy+hh0*2<-cullM||s.sy>H+cullM) return;
 
-      if(it.t==='water'){ drawWater(s.sx,s.sy,it.vc,it.vr); return; }
-      if(it.t==='cross'){ drawRoad(s.sx,s.sy,true,it.vc,it.vr); return; }
-      if(it.t==='road') { drawRoad(s.sx,s.sy,false,it.vc,it.vr); return; }
+      if(it.t==='water'){ drawWater(s.sx,s.sy,it.vc,it.vr,it.adjMask||0); return; }
+      if(it.t==='cross'){ drawRoad(s.sx,s.sy,true,false); return; }
+      if(it.t==='road') { drawRoad(s.sx,s.sy,false,!!it.rc); return; }
 
       /* contact island tile */
       if(it.t==='cplot'){
@@ -1221,15 +1265,39 @@ _MY_PROPS_MODAL = r"""
     ];
     /* external tiles: iso + kenney assets, each with an explicit URL */
     var EXT_TILES=[
-      {k:'iso_water2',       url:ISO_BASE+'water2.png'},
-      {k:'kenney_grass',     url:KENNEY_BASE+'grass.png'},
-      {k:'kenney_water',     url:KENNEY_BASE+'water.png'},
-      {k:'kenney_beach',     url:KENNEY_BASE+'beach.png'},
-      {k:'kenney_hillN',      url:KENNEY_BASE+'hillN.png'},
-      {k:'kenney_hillS',      url:KENNEY_BASE+'hillS.png'},
-      {k:'kenney_hillW',      url:KENNEY_BASE+'hillW.png'},
-      {k:'kenney_grassWhole', url:KENNEY_BASE+'grassWhole.png'},
-      {k:'kenney_lot',        url:KENNEY_BASE+'lotN.png'},
+      /* isometric-city */
+      {k:'iso_water2',          url:ISO_BASE+'water2.png'},
+      /* kenney: terrain + lot */
+      {k:'kenney_grass',        url:KENNEY_BASE+'grass.png'},
+      {k:'kenney_grassWhole',   url:KENNEY_BASE+'grassWhole.png'},
+      {k:'kenney_beach',        url:KENNEY_BASE+'beach.png'},
+      {k:'kenney_hillN',        url:KENNEY_BASE+'hillN.png'},
+      {k:'kenney_hillS',        url:KENNEY_BASE+'hillS.png'},
+      {k:'kenney_hillW',        url:KENNEY_BASE+'hillW.png'},
+      {k:'kenney_lot',          url:KENNEY_BASE+'lotN.png'},
+      /* kenney: water — centre + 4 edges + 4 outer corners */
+      {k:'kenney_water',        url:KENNEY_BASE+'water.png'},
+      {k:'kenney_waterN',       url:KENNEY_BASE+'waterN.png'},
+      {k:'kenney_waterS',       url:KENNEY_BASE+'waterS.png'},
+      {k:'kenney_waterE',       url:KENNEY_BASE+'waterE.png'},
+      {k:'kenney_waterW',       url:KENNEY_BASE+'waterW.png'},
+      {k:'kenney_waterNE',      url:KENNEY_BASE+'waterNE.png'},
+      {k:'kenney_waterNW',      url:KENNEY_BASE+'waterNW.png'},
+      {k:'kenney_waterES',      url:KENNEY_BASE+'waterES.png'},
+      {k:'kenney_waterSW',      url:KENNEY_BASE+'waterSW.png'},
+      /* kenney: roads — directional + crossroad */
+      {k:'kenney_roadNS',       url:KENNEY_BASE+'roadNS.png'},
+      {k:'kenney_roadEW',       url:KENNEY_BASE+'roadEW.png'},
+      {k:'kenney_crossroad',    url:KENNEY_BASE+'crossroad.png'},
+      /* kenney: trees — deciduous + conifers (drawn at ~42% tile width) */
+      {k:'kenney_treeShort',     url:KENNEY_BASE+'treeShort.png'},
+      {k:'kenney_treeTall',      url:KENNEY_BASE+'treeTall.png'},
+      {k:'kenney_treeAltShort',  url:KENNEY_BASE+'treeAltShort.png'},
+      {k:'kenney_treeAltTall',   url:KENNEY_BASE+'treeAltTall.png'},
+      {k:'kenney_coniferShort',  url:KENNEY_BASE+'coniferShort.png'},
+      {k:'kenney_coniferTall',   url:KENNEY_BASE+'coniferTall.png'},
+      {k:'kenney_coniferAltShort',url:KENNEY_BASE+'coniferAltShort.png'},
+      {k:'kenney_coniferAltTall', url:KENNEY_BASE+'coniferAltTall.png'},
     ];
     var pending=0;
     function _onImg(){if(--pending===0)cb();}
