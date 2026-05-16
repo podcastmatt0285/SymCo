@@ -358,9 +358,11 @@ def api_my_properties(
 
         for p in plots:
             biz = biz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
+            _prox_str = p.proximity_features or ""
             plots_out.append({
                 "id":          p.id,
                 "terrain":     p.terrain_type,
+                "proximity":   [f.strip() for f in _prox_str.split(",") if f.strip()],
                 "efficiency":  round(p.efficiency or 0, 1),
                 "monthly_tax": round(p.monthly_tax or 0, 2),
                 "biz_type":    biz["type"]  if biz else None,
@@ -411,9 +413,11 @@ def api_my_properties(
                     cplots = []
                     for p in other_plots:
                         ob = obiz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
+                        _cprox_str = p.proximity_features or ""
                         cplots.append({
                             "id":          p.id,
                             "terrain":     p.terrain_type,
+                            "proximity":   [f.strip() for f in _cprox_str.split(",") if f.strip()],
                             "efficiency":  round(p.efficiency or 0, 1),
                             "monthly_tax": round(p.monthly_tax or 0, 2),
                             "biz_type":    ob["type"]  if ob else None,
@@ -590,13 +594,56 @@ _MY_PROPS_MODAL = r"""
   /* downtown occupies vr = -DT_N .. -1; road separator at vr=0; player grid vr=1..tv */
   var DT_VR_TOP=-DT_N; /* = -3 */
 
-  var TERRAIN_COLOR={
-    urban:'#64748b', prairie:'#86efac', forest:'#16a34a', desert:'#fbbf24',
-    marsh:'#22d3ee', mountain:'#94a3b8', tundra:'#bae6fd', jungle:'#4ade80',
-    savanna:'#d97706', hills:'#a3e635', island:'#f472b6', coastal:'#60a5fa',
-    ocean:'#1e40af', lake:'#38bdf8',
-    district_food:'#f97316', district_hospital:'#ec4899', district_industrial:'#f59e0b',
-    district_medical:'#a78bfa', district_neighborhood:'#34d399', district_transport:'#60a5fa',
+  /* Per-terrain color scheme: c=top fill, s=stroke/edge */
+  var TERRAIN_SCHEME={
+    urban:    {c:'#4a5568',s:'#2d3748'}, prairie:  {c:'#3d6634',s:'#254020'},
+    forest:   {c:'#145228',s:'#0a3018'}, desert:   {c:'#b8861e',s:'#7a5a10'},
+    marsh:    {c:'#1e6a58',s:'#124038'}, mountain: {c:'#5a6070',s:'#38404a'},
+    tundra:   {c:'#6898b4',s:'#405a70'}, jungle:   {c:'#147828',s:'#0a4818'},
+    savanna:  {c:'#9a6c2e',s:'#604018'}, hills:    {c:'#4a6828',s:'#2e4018'},
+    island:   {c:'#5a9020',s:'#385810'}, coastal:  {c:'#2860a0',s:'#183860'},
+    ocean:    {c:'#102858',s:'#081430'}, lake:     {c:'#1a5088',s:'#0e3050'},
+    district_food:         {c:'#7a3a1a',s:'#4a2010'},
+    district_hospital:     {c:'#781850',s:'#480a30'},
+    district_industrial:   {c:'#785018',s:'#483208'},
+    district_medical:      {c:'#522088',s:'#321058'},
+    district_neighborhood: {c:'#1e6040',s:'#104028'},
+    district_transport:    {c:'#1e3c70',s:'#0e2040'},
+    district_utilities:    {c:'#504018',s:'#302808'},
+    district_zoo:          {c:'#2a6020',s:'#183a10'},
+    district_aerospace:    {c:'#183060',s:'#0a1838'},
+    district_coastal:      {c:'#185068',s:'#0a2c38'},
+    district_education:    {c:'#3a2870',s:'#221840'},
+    district_entertainment:{c:'#701850',s:'#401030'},
+    district_food_court:   {c:'#7a3e18',s:'#4a2408'},
+    district_mall:         {c:'#4a2870',s:'#2a1040'},
+    district_military:     {c:'#303a20',s:'#1a2210'},
+    district_prison:       {c:'#3a2e20',s:'#201808'},
+    district_shipyard:     {c:'#182e50',s:'#0a1830'},
+    district_tech:         {c:'#12205a',s:'#080e30'},
+    district_airport:         {c:'#2a3858',s:'#141c30'},
+    district_convention_center:{c:'#582858',s:'#301430'},
+    district_entertainment_district:{c:'#681858',s:'#380830'},
+    district_mega_mall:    {c:'#4a3278',s:'#281848'},
+    district_military_base:{c:'#202e18',s:'#101808'},
+    district_prison_complex:{c:'#2e2418',s:'#180e08'},
+    district_research_campus:{c:'#143a68',s:'#081e38'},
+    district_seaport:      {c:'#143858',s:'#081e30'},
+    district_tech_park:    {c:'#0a1e58',s:'#041030'},
+  };
+  /* Proximity overlay tints: fill + optional stroke color */
+  var PROX_TINT={
+    urban:     {f:'rgba(100,116,139,0.22)', k:'rgba(148,163,184,0.35)'},
+    coastal:   {f:'rgba(56,189,248,0.18)',  k:'rgba(56,189,248,0.30)'},
+    riverside: {f:'rgba(96,165,250,0.16)',  k:'rgba(96,165,250,0.25)'},
+    lakeside:  {f:'rgba(56,189,248,0.13)',  k:'rgba(56,189,248,0.20)'},
+    oasis:     {f:'rgba(74,222,128,0.22)',  k:'rgba(74,222,128,0.38)'},
+    hot_springs:{f:'rgba(255,255,255,0.10)',k:'rgba(255,255,255,0.22)'},
+    caves:     {f:'rgba(0,0,0,0.28)',       k:null},
+    volcanic:  {f:'rgba(239,68,68,0.20)',   k:'rgba(239,68,68,0.35)'},
+    road:      {f:'rgba(120,100,70,0.18)',  k:'rgba(161,128,80,0.28)'},
+    deposits:  {f:'rgba(251,146,60,0.20)',  k:'rgba(251,146,60,0.38)'},
+    remote:    {f:'rgba(0,0,0,0.22)',       k:null},
   };
 
   function spriteFor(t,cls){
@@ -663,6 +710,70 @@ _MY_PROPS_MODAL = r"""
 
   /* Deterministic tile variant 1-3 based on position — avoids flicker on re-render */
   function tileVar(vc,vr){ return (Math.abs(vc)*3+Math.abs(vr)*7)%3+1; }
+
+  /* Proximity feature overlays drawn as semi-transparent colored fills */
+  function drawProxOverlay(sx,sy,prox){
+    if(!prox||!prox.length) return;
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    prox.forEach(function(p){
+      var t=PROX_TINT[p]; if(!t) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+      ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
+      ctx.closePath();
+      ctx.clip();
+      if(t.f){ctx.fillStyle=t.f;ctx.fill();}
+      if(t.k){ctx.strokeStyle=t.k;ctx.lineWidth=1;ctx.stroke();}
+      /* deposits: scattered orange dots */
+      if(p==='deposits'){
+        ctx.fillStyle='rgba(251,146,60,0.65)';
+        var seed=sx*0.37+sy*0.19;
+        [[0.30,0.45],[0.65,0.35],[0.50,0.68],[0.72,0.60],[0.40,0.75]].forEach(function(d,i){
+          var ox=sx+d[0]*TW*scale, oy=sy+d[1]*TH*scale;
+          ctx.beginPath();ctx.arc(ox,oy,Math.max(1,1.4*scale),0,Math.PI*2);ctx.fill();
+        });
+      }
+      /* volcanic: radial red glow from center */
+      if(p==='volcanic'){
+        var cx2=sx+hw,cy2=sy+hh;
+        var gr=ctx.createRadialGradient(cx2,cy2,0,cx2,cy2,hw*0.9);
+        gr.addColorStop(0,'rgba(239,68,68,0.28)');
+        gr.addColorStop(1,'rgba(239,68,68,0)');
+        ctx.fillStyle=gr;ctx.fill();
+      }
+      /* oasis: green radial glow from center */
+      if(p==='oasis'){
+        var cx3=sx+hw,cy3=sy+hh;
+        var gr2=ctx.createRadialGradient(cx3,cy3,0,cx3,cy3,hw*0.7);
+        gr2.addColorStop(0,'rgba(74,222,128,0.35)');
+        gr2.addColorStop(1,'rgba(74,222,128,0)');
+        ctx.fillStyle=gr2;ctx.fill();
+      }
+      ctx.restore();
+    });
+  }
+
+  /* Terrain-aware diamond with diagonal gradient shading + proximity overlays.
+     Replaces the old drawDiamond + drawTileOverlay('tile…') combo for land plots. */
+  function drawTerrainDiamond(sx,sy,terrain,prox,isHov,isSel){
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    var sc=TERRAIN_SCHEME[terrain]||TERRAIN_SCHEME.prairie;
+    var base=isSel?shade(sc.c,50):isHov?shade(sc.c,25):sc.c;
+    var glow=isSel?'#f59e0b':isHov?'#60a5fa':null;
+    if(glow){ctx.save();ctx.shadowColor=glow;ctx.shadowBlur=14*scale;}
+    ctx.beginPath();
+    ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+    ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
+    ctx.closePath();
+    /* diagonal NW→SE gradient simulates isometric top-left light source */
+    var gr=ctx.createLinearGradient(sx,sy,sx+hw*2,sy+hh*2);
+    gr.addColorStop(0,shade(base,20)); gr.addColorStop(0.5,base); gr.addColorStop(1,shade(base,-25));
+    ctx.fillStyle=gr; ctx.fill();
+    ctx.strokeStyle=sc.s; ctx.lineWidth=0.5; ctx.stroke();
+    if(glow) ctx.restore();
+    drawProxOverlay(sx,sy,prox);
+  }
 
   /* Draw a tile sprite clipped to the isometric diamond at (sx,sy) */
   function drawTileOverlay(sx,sy,name,alpha){
@@ -861,10 +972,9 @@ _MY_PROPS_MODAL = r"""
       if(it.t==='cplot'){
         var isl=islands[it.ci];
         var cp=it.cpi>=0?isl.c.plots[it.cpi]:null;
-        var ccolor=cp?(TERRAIN_COLOR[cp.terrain]||'#86efac'):'#0d1a0d';
         var isHovC=(hovCI===it.ci&&hovCPi===it.cpi&&it.cpi>=0);
-        drawDiamond(s.sx,s.sy,isHovC?shade(ccolor,22):ccolor,isHovC?'#38bdf8':null);
-        if(cp) drawTileOverlay(s.sx,s.sy,'tile'+tileVar(it.vc,it.vr),0.18);
+        if(cp) drawTerrainDiamond(s.sx,s.sy,cp.terrain,cp.proximity,isHovC,false);
+        else drawDiamond(s.sx,s.sy,'#0d1a0d',null);
         if(cp&&cp.biz_type){var csp=spriteFor(cp.biz_type,cp.biz_class);if(csp)drawSprite(s.sx,s.sy,csp);}
         if(!cp){
           ctx.save();ctx.globalAlpha=0.08;ctx.strokeStyle='#38bdf8';ctx.lineWidth=0.5;
@@ -905,12 +1015,8 @@ _MY_PROPS_MODAL = r"""
       }
 
       var p=plots[it.pi];
-      var color=TERRAIN_COLOR[p.terrain]||'#86efac';
       var isHov=(hovId===it.pi), isSel=(swapAIdx===it.pi);
-      drawDiamond(s.sx,s.sy,
-        isSel?shade(color,50):isHov?shade(color,25):color,
-        isSel?'#f59e0b':isHov?'#60a5fa':null);
-      drawTileOverlay(s.sx,s.sy,'tile'+tileVar(it.vc,it.vr),0.18);
+      drawTerrainDiamond(s.sx,s.sy,p.terrain,p.proximity,isHov,isSel);
 
       if(p.biz_type){
         var spr=spriteFor(p.biz_type,p.biz_class);
@@ -1202,7 +1308,10 @@ _MY_PROPS_MODAL = r"""
     if(hit.plot){
       var p=hit.plot;
       html='<span style="color:#f59e0b;font-weight:600;">'
-        +p.terrain.charAt(0).toUpperCase()+p.terrain.slice(1)+'</span>';
+        +p.terrain.charAt(0).toUpperCase()+p.terrain.slice(1).replace(/_/g,' ')+'</span>';
+      if(p.proximity&&p.proximity.length)
+        html+='<br><span style="color:#94a3b8;font-size:0.65rem;">'
+          +p.proximity.map(function(x){return x.replace(/_/g,' ');}).join(' · ')+'</span>';
       html+=p.biz_name
         ?'<br><span style="color:#4ade80;">'+p.biz_name+'</span>'
         :'<br><span style="color:#475569;">Vacant</span>';
