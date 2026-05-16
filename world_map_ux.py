@@ -773,7 +773,6 @@ _MY_PROPS_MODAL = r"""
       /* deposits: scattered orange dots */
       if(p==='deposits'){
         ctx.fillStyle='rgba(251,146,60,0.65)';
-        var seed=sx*0.37+sy*0.19;
         [[0.30,0.45],[0.65,0.35],[0.50,0.68],[0.72,0.60],[0.40,0.75]].forEach(function(d,i){
           var ox=sx+d[0]*TW*scale, oy=sy+d[1]*TH*scale;
           ctx.beginPath();ctx.arc(ox,oy,Math.max(1,1.4*scale),0,Math.PI*2);ctx.fill();
@@ -1256,7 +1255,10 @@ _MY_PROPS_MODAL = r"""
       var cp=hit.cplot, c=hit.contact;
       html='<strong style="color:#38bdf8;">'+c.player_name+'</strong>';
       if(cp){
-        html+='<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;margin-top:2px;">'+cp.terrain+' plot</div>';
+        html+='<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;margin-top:2px;">'+cp.terrain+'</div>';
+        if(cp.proximity&&cp.proximity.length)
+          html+='<div style="font-size:0.62rem;color:#475569;margin-top:1px;">'
+            +cp.proximity.map(function(x){return x.replace(/_/g,' ');}).join(' · ')+'</div>';
         if(cp.biz_name) html+='<div style="color:#4ade80;margin-top:4px;">'+cp.biz_name+'</div>'
           +'<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;">'+cp.biz_class+'</div>';
         else html+='<div style="color:#475569;margin-top:4px;">Vacant</div>';
@@ -1273,6 +1275,9 @@ _MY_PROPS_MODAL = r"""
         +'<strong style="color:#f59e0b;">Plot #'+p.id+'</strong>'
         +'<span style="font-size:0.62rem;color:#475569;text-transform:capitalize;">'
         +p.terrain+'</span></div>';
+      if(p.proximity&&p.proximity.length)
+        html+='<div style="font-size:0.62rem;color:#64748b;margin-top:1px;">'
+          +p.proximity.map(function(x){return x.replace(/_/g,' ');}).join(' · ')+'</div>';
       if(p.biz_name){
         html+='<div style="color:#4ade80;margin-top:4px;">'+p.biz_name+'</div>'
           +'<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;">'+p.biz_class+'</div>';
@@ -1319,9 +1324,9 @@ _MY_PROPS_MODAL = r"""
   /* Visual-only swap: swap all display data between two plot indices */
   function doSwap(idxA, idxB){
     var a=plots[idxA], b=plots[idxB];
-    var tmp={terrain:a.terrain,biz_type:a.biz_type,biz_name:a.biz_name,biz_class:a.biz_class};
-    a.terrain=b.terrain; a.biz_type=b.biz_type; a.biz_name=b.biz_name; a.biz_class=b.biz_class;
-    b.terrain=tmp.terrain; b.biz_type=tmp.biz_type; b.biz_name=tmp.biz_name; b.biz_class=tmp.biz_class;
+    var tmp={terrain:a.terrain,proximity:a.proximity,biz_type:a.biz_type,biz_name:a.biz_name,biz_class:a.biz_class};
+    a.terrain=b.terrain; a.proximity=b.proximity; a.biz_type=b.biz_type; a.biz_name=b.biz_name; a.biz_class=b.biz_class;
+    b.terrain=tmp.terrain; b.proximity=tmp.proximity; b.biz_type=tmp.biz_type; b.biz_name=tmp.biz_name; b.biz_class=tmp.biz_class;
     cancelSwap();
   }
 

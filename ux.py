@@ -13898,8 +13898,8 @@ def events_page(request: Request,
 
     _BETA_TITLES = {"Founding Operative", "Pocket Empire", "Active Duty"}
     _active   = [e for e in _ev.get("active",   []) if e.get("title") not in _BETA_TITLES]
-    _upcoming = _ev.get("upcoming", [])
-    _finished = _ev.get("finished", [])
+    _upcoming = [e for e in _ev.get("upcoming", []) if e.get("title") not in _BETA_TITLES]
+    _finished = [e for e in _ev.get("finished", []) if e.get("title") not in _BETA_TITLES]
 
     # Fetch player task progress for all task-type events in one query
     _task_event_ids = [e["id"] for e in _active + _upcoming + _finished if e.get("event_type") == "task"]
