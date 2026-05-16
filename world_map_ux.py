@@ -572,6 +572,7 @@ _MY_PROPS_MODAL = r"""
   var SPRITE_BASE='/static/iso/buildings/';
   var TILE_BASE='/static/iso/tiles/';
   var ISO_BASE='/assets/iso/';
+  var KENNEY_BASE='/assets/kenney/';
   var tileImgs={};
 
   /* 3×3 downtown block — 8 buildings surrounding a central park.
@@ -649,47 +650,47 @@ _MY_PROPS_MODAL = r"""
   /* Terrain → PNG tile name(s) from /static/iso/tiles/ (tipsy/isometric-tiles, CC0).
      Multiple entries rotate deterministically per grid position for variety. */
   var TERRAIN_TILE={
-    prairie:  ['terrain_grass','terrain_grass_v2','terrain_grass_v3','terrain_grass_v4'],
-    hills:    ['terrain_grass_v2','terrain_grass_v4','terrain_grass_v5','terrain_savanna_v3'],
-    forest:   ['terrain_grass_v3','terrain_grass','terrain_grass_v4','terrain_grass_v5'],
-    jungle:   ['terrain_grass_v3','terrain_grass_v5','terrain_grass_v2','terrain_grass'],
-    marsh:    ['terrain_grass_v4','terrain_grass_v5','terrain_grass_v3'],
-    island:   ['terrain_grass_v2','terrain_savanna','terrain_arid'],
+    prairie:  ['kenney_grass','terrain_grass','terrain_grass_v2','terrain_grass_v3'],
+    hills:    ['kenney_grass','kenney_hillN','terrain_grass_v4','terrain_grass_v5'],
+    forest:   ['kenney_grass','terrain_grass_v3','terrain_grass_v4','terrain_grass_v5'],
+    jungle:   ['kenney_grass','terrain_grass_v5','terrain_grass_v3','terrain_grass_v2'],
+    marsh:    ['terrain_grass_v4','kenney_grass','terrain_grass_v5','terrain_grass_v3'],
+    island:   ['kenney_beach','kenney_grass','terrain_savanna'],
     savanna:  ['terrain_savanna','terrain_savanna_v2','terrain_savanna_v3'],
     desert:   ['terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4'],
-    mountain: ['terrain_snow_v3','terrain_snow_v4','terrain_arid_v3','terrain_snow2'],
+    mountain: ['kenney_hillN','terrain_snow_v3','terrain_snow_v4','terrain_snow2'],
     tundra:   ['terrain_snow','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4'],
     urban:    ['tile1','tile2','tile3'],
-    coastal:  ['iso_water2','terrain_water_a','terrain_savanna'],
-    ocean:    ['iso_water2','terrain_water_b','iso_water2'],
-    lake:     ['iso_water2','terrain_water_b','terrain_water_a'],
+    coastal:  ['kenney_beach','kenney_water','terrain_water_a'],
+    ocean:    ['kenney_water','iso_water2','kenney_water'],
+    lake:     ['kenney_water','iso_water2','terrain_water_b'],
     district_food:              ['terrain_savanna_v3','terrain_grass_v4'],
-    district_hospital:          ['terrain_arid2','terrain_arid_v3'],
-    district_industrial:        ['terrain_arid_v4','terrain_arid_v3'],
-    district_medical:           ['terrain_arid2','terrain_arid_v4'],
-    district_neighborhood:      ['terrain_grass_v2','terrain_grass_v3'],
-    district_transport:         ['terrain_arid_v3','terrain_arid_v4'],
-    district_utilities:         ['terrain_arid_v4','terrain_arid3'],
-    district_zoo:               ['terrain_grass_v3','terrain_savanna_v2'],
-    district_aerospace:         ['terrain_snow_v3','terrain_arid_v3'],
-    district_coastal:           ['terrain_water_a','terrain_arid'],
-    district_education:         ['terrain_grass_v2','terrain_savanna_v3'],
-    district_entertainment:     ['terrain_arid_v4','terrain_arid3'],
+    district_hospital:          ['tile2','tile3'],
+    district_industrial:        ['tile1','tile2'],
+    district_medical:           ['tile2','tile3'],
+    district_neighborhood:      ['kenney_grass','terrain_grass_v2'],
+    district_transport:         ['tile1','tile3'],
+    district_utilities:         ['tile1','terrain_arid_v4'],
+    district_zoo:               ['kenney_grass','terrain_savanna_v2'],
+    district_aerospace:         ['tile2','terrain_snow_v3'],
+    district_coastal:           ['kenney_water','kenney_beach'],
+    district_education:         ['kenney_grass','terrain_savanna_v3'],
+    district_entertainment:     ['tile1','terrain_arid_v4'],
     district_food_court:        ['terrain_savanna_v2','terrain_grass_v5'],
-    district_mall:              ['terrain_arid2','terrain_arid_v3'],
-    district_military:          ['terrain_grass_v4','terrain_savanna_v3'],
-    district_prison:            ['terrain_arid_v3','terrain_arid2'],
-    district_shipyard:          ['terrain_water_a','terrain_arid_v3'],
-    district_tech:              ['terrain_snow_v3','terrain_arid_v4'],
-    district_airport:           ['terrain_arid_v3','terrain_snow_v3'],
-    district_convention_center: ['terrain_arid2','terrain_arid_v2'],
-    district_entertainment_district:['terrain_arid_v4','terrain_arid3'],
-    district_mega_mall:         ['terrain_arid_v2','terrain_arid2'],
-    district_military_base:     ['terrain_grass_v4','terrain_savanna_v3'],
-    district_prison_complex:    ['terrain_arid_v3','terrain_snow_v3'],
-    district_research_campus:   ['terrain_snow_v3','terrain_arid_v4'],
-    district_seaport:           ['terrain_water_a','terrain_water_b'],
-    district_tech_park:         ['terrain_snow_v4','terrain_arid_v4'],
+    district_mall:              ['tile2','tile3'],
+    district_military:          ['tile1','terrain_grass_v4'],
+    district_prison:            ['tile1','terrain_arid_v3'],
+    district_shipyard:          ['kenney_water','terrain_arid_v3'],
+    district_tech:              ['tile2','tile3'],
+    district_airport:           ['tile1','tile2','tile3'],
+    district_convention_center: ['tile2','tile3'],
+    district_entertainment_district:['tile1','terrain_arid_v4'],
+    district_mega_mall:         ['tile2','tile3'],
+    district_military_base:     ['tile1','terrain_grass_v4'],
+    district_prison_complex:    ['tile1','tile2'],
+    district_research_campus:   ['tile2','terrain_snow_v3'],
+    district_seaport:           ['kenney_water','iso_water2'],
+    district_tech_park:         ['tile2','tile3'],
   };
 
   function spriteFor(t,cls){
@@ -903,13 +904,13 @@ _MY_PROPS_MODAL = r"""
   }
 
   function drawRoad(sx,sy,cross,vc,vr){
-    drawDiamond(sx,sy,cross?'#1f2937':'#2d3748');
-    drawTileOverlay(sx,sy,'dirt'+tileVar(vc||0,vr||0),0.20);
+    drawDiamond(sx,sy,cross?'#1f2937':'#232d3a');
+    drawTileOverlay(sx,sy,cross?'kenney_crossroad':'kenney_road',0.80);
     if(!cross){
       var hw=(TW/2)*scale,hh=(TH/2)*scale;
       ctx.save();
-      ctx.strokeStyle='rgba(253,224,71,0.32)';
-      ctx.lineWidth=Math.max(0.6,0.7*scale);
+      ctx.strokeStyle='rgba(253,224,71,0.22)';
+      ctx.lineWidth=Math.max(0.5,0.6*scale);
       ctx.setLineDash([3*scale,4*scale]);
       ctx.beginPath();
       ctx.moveTo(sx+hw*0.58,sy+hh*1.52); ctx.lineTo(sx+hw*1.42,sy+hh*0.48);
@@ -919,7 +920,7 @@ _MY_PROPS_MODAL = r"""
 
   function drawWater(sx,sy,vc,vr){
     drawDiamond(sx,sy,'#071828');
-    drawTileOverlay(sx,sy,'iso_water2',0.78);
+    drawTileOverlay(sx,sy,'kenney_water',0.85);
     var ph=(vc*0.6+vr*0.4+_waveT*0.7)%(Math.PI*2);
     var a=0.05+0.04*Math.sin(ph);
     var hw=(TW/2)*scale,hh=(TH/2)*scale;
@@ -1126,6 +1127,20 @@ _MY_PROPS_MODAL = r"""
         var dec=decorFor(p.terrain,it.vc,it.vr);
         if(dec) drawDecorSprite(s.sx,s.sy,dec);
       }
+      /* efficiency border: green ≥90, yellow ≥70, red <70 */
+      if(p.efficiency>0&&!isHov&&!isSel){
+        var efc=p.efficiency>=90?'rgba(74,222,128,0.55)':
+                p.efficiency>=70?null:
+                p.efficiency>=50?'rgba(251,191,36,0.55)':'rgba(239,68,68,0.55)';
+        if(efc){
+          var hw_e=(TW/2)*scale,hh_e=(TH/2)*scale;
+          ctx.save();ctx.strokeStyle=efc;ctx.lineWidth=Math.max(1,1.5*scale);
+          ctx.beginPath();
+          ctx.moveTo(s.sx+hw_e,s.sy);ctx.lineTo(s.sx+hw_e*2,s.sy+hh_e);
+          ctx.lineTo(s.sx+hw_e,s.sy+hh_e*2);ctx.lineTo(s.sx,s.sy+hh_e);
+          ctx.closePath();ctx.stroke();ctx.restore();
+        }
+      }
       if(isSel&&swapMode){
         ctx.fillStyle='rgba(245,158,11,0.7)';
         ctx.font='bold '+Math.max(10,Math.round(13*scale))+'px sans-serif';
@@ -1198,8 +1213,17 @@ _MY_PROPS_MODAL = r"""
       'decor_bush1','decor_bush2','decor_tent',
       'decor_tree1','decor_tree2','decor_tree3','decor_tree4','decor_tree5','decor_tree6'
     ];
-    /* iso assets served from /assets/iso/ — keyed with 'iso_' prefix */
-    var ISO_TILES={'iso_water2':'water2.png'};
+    /* external tiles: iso + kenney assets, each with an explicit URL */
+    var EXT_TILES=[
+      {k:'iso_water2',       url:ISO_BASE+'water2.png'},
+      {k:'kenney_grass',     url:KENNEY_BASE+'grass.png'},
+      {k:'kenney_water',     url:KENNEY_BASE+'water.png'},
+      {k:'kenney_beach',     url:KENNEY_BASE+'beach.png'},
+      {k:'kenney_road',      url:KENNEY_BASE+'road.png'},
+      {k:'kenney_crossroad', url:KENNEY_BASE+'crossroad.png'},
+      {k:'kenney_dirt',      url:KENNEY_BASE+'dirt.png'},
+      {k:'kenney_hillN',     url:KENNEY_BASE+'hillN.png'},
+    ];
     var pending=0;
     function _onImg(){if(--pending===0)cb();}
     keys.forEach(function(k){
@@ -1214,11 +1238,11 @@ _MY_PROPS_MODAL = r"""
       var img=new Image(); img.onload=img.onerror=_onImg;
       img.src=TILE_BASE+k+'.png'; tileImgs[k]=img;
     });
-    Object.keys(ISO_TILES).forEach(function(k){
-      if(tileImgs[k]&&tileImgs[k].complete&&tileImgs[k].naturalWidth>0) return;
+    EXT_TILES.forEach(function(e){
+      if(tileImgs[e.k]&&tileImgs[e.k].complete&&tileImgs[e.k].naturalWidth>0) return;
       pending++;
       var img=new Image(); img.onload=img.onerror=_onImg;
-      img.src=ISO_BASE+ISO_TILES[k]; tileImgs[k]=img;
+      img.src=e.url; tileImgs[e.k]=img;
     });
     if(pending===0) cb();
   }
@@ -1383,13 +1407,33 @@ _MY_PROPS_MODAL = r"""
     render();
   };
 
-  /* Visual-only swap: swap all display data between two plot indices */
   function doSwap(idxA, idxB){
     var a=plots[idxA], b=plots[idxB];
+    if(!a.biz_type&&!b.biz_type) return cancelSwap();
+    if(a.biz_type&&b.biz_type){
+      cancelSwap();
+      alert('Both plots have a business — move one to a vacant plot first.');
+      return;
+    }
+    /* capture IDs before visual mutation */
+    var fromId=a.biz_type?a.id:b.id, toId=a.biz_type?b.id:a.id;
+    /* optimistic visual swap */
     var tmp={terrain:a.terrain,proximity:a.proximity,biz_type:a.biz_type,biz_name:a.biz_name,biz_class:a.biz_class};
     a.terrain=b.terrain; a.proximity=b.proximity; a.biz_type=b.biz_type; a.biz_name=b.biz_name; a.biz_class=b.biz_class;
     b.terrain=tmp.terrain; b.proximity=tmp.proximity; b.biz_type=tmp.biz_type; b.biz_name=tmp.biz_name; b.biz_class=tmp.biz_class;
     cancelSwap();
+    fetch('/api/move-business',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({from_plot_id:fromId,to_plot_id:toId})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(!d.ok){
+        /* revert visual swap */
+        var tmp2={terrain:a.terrain,proximity:a.proximity,biz_type:a.biz_type,biz_name:a.biz_name,biz_class:a.biz_class};
+        a.terrain=b.terrain; a.proximity=b.proximity; a.biz_type=b.biz_type; a.biz_name=b.biz_name; a.biz_class=b.biz_class;
+        b.terrain=tmp2.terrain; b.proximity=tmp2.proximity; b.biz_type=tmp2.biz_type; b.biz_name=tmp2.biz_name; b.biz_class=tmp2.biz_class;
+        render(); alert('Move failed: '+(d.error||'unknown error'));
+      }
+    }).catch(function(e){render(); alert('Move failed: '+e.message);});
   }
 
   window.openMyProperties=function(pid){
