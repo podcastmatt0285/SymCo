@@ -571,6 +571,7 @@ _MY_PROPS_MODAL = r"""
   var TW=64, TH=38, BLOCK=4;
   var SPRITE_BASE='/static/iso/buildings/';
   var TILE_BASE='/static/iso/tiles/';
+  var ISO_BASE='/assets/iso/';
   var tileImgs={};
 
   /* 3×3 downtown block — 8 buildings surrounding a central park.
@@ -659,9 +660,9 @@ _MY_PROPS_MODAL = r"""
     mountain: ['terrain_snow_v3','terrain_snow_v4','terrain_arid_v3','terrain_snow2'],
     tundra:   ['terrain_snow','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4'],
     urban:    ['tile1','tile2','tile3'],
-    coastal:  ['terrain_water_a','terrain_arid','terrain_savanna'],
-    ocean:    ['terrain_water_b','terrain_water_a','terrain_water_b'],
-    lake:     ['terrain_water_a','terrain_water_b','terrain_water_a'],
+    coastal:  ['iso_water2','terrain_water_a','terrain_savanna'],
+    ocean:    ['iso_water2','terrain_water_b','iso_water2'],
+    lake:     ['iso_water2','terrain_water_b','terrain_water_a'],
     district_food:              ['terrain_savanna_v3','terrain_grass_v4'],
     district_hospital:          ['terrain_arid2','terrain_arid_v3'],
     district_industrial:        ['terrain_arid_v4','terrain_arid_v3'],
@@ -919,8 +920,24 @@ _MY_PROPS_MODAL = r"""
   }
 
   function drawWater(sx,sy,vc,vr){
-    drawDiamond(sx,sy,'#0c2340');
-    drawTileOverlay(sx,sy,'water'+tileVar(vc||0,vr||0),0.70);
+    drawDiamond(sx,sy,'#071828');
+    drawTileOverlay(sx,sy,'iso_water2',0.78);
+    /* animated highlight wave */
+    var t=Date.now()/1000;
+    var ph=((vc||0)*0.6+(vr||0)*0.4+t*0.7)%(Math.PI*2);
+    var alpha=(0.05+0.04*Math.sin(ph)).toFixed(3);
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    ctx.save();
+    var gr=ctx.createLinearGradient(sx+hw*0.2,sy+hh,sx+hw*1.8,sy+hh);
+    gr.addColorStop(0,'rgba(56,189,248,0)');
+    gr.addColorStop(0.5,'rgba(56,189,248,'+alpha+')');
+    gr.addColorStop(1,'rgba(56,189,248,0)');
+    ctx.beginPath();
+    ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+    ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
+    ctx.closePath();
+    ctx.fillStyle=gr; ctx.fill();
+    ctx.restore();
   }
 
   var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
@@ -929,6 +946,15 @@ _MY_PROPS_MODAL = r"""
   var selfId=-1,viewingId=-1;
   var _cache={key:'',items:null},_islands=null;
   var C_GAP=3; /* water tiles between the player island and each contact island */
+
+  /* Water animation loop — runs at ~12fps only while the modal is open */
+  var _waveAF=null, _waveLast=0;
+  function _waveLoop(ts){
+    if(!cv||document.getElementById('mpModal').style.display==='none'){_waveAF=null;return;}
+    if(ts-_waveLast>83){_waveLast=ts;render();}
+    _waveAF=requestAnimationFrame(_waveLoop);
+  }
+  function startWaveAnim(){if(!_waveAF)_waveAF=requestAnimationFrame(_waveLoop);}
 
   /* Compute (and cache) the layout of contact islands.
      Each island sits to the right of the player grid, separated by C_GAP water tiles.
@@ -1174,6 +1200,8 @@ _MY_PROPS_MODAL = r"""
       'decor_bush1','decor_bush2','decor_tent',
       'decor_tree1','decor_tree2','decor_tree3','decor_tree4','decor_tree5','decor_tree6'
     ];
+    /* iso assets served from /assets/iso/ — keyed with 'iso_' prefix */
+    var ISO_TILES={'iso_water2':'water2.png'};
     var pending=0;
     function dec(){if(--pending===0)cb();}
     keys.forEach(function(k){
@@ -1187,6 +1215,12 @@ _MY_PROPS_MODAL = r"""
       pending++;
       var img=new Image(); img.onload=img.onerror=dec;
       img.src=TILE_BASE+k+'.png'; tileImgs[k]=img;
+    });
+    Object.keys(ISO_TILES).forEach(function(k){
+      if(tileImgs[k]&&tileImgs[k].complete&&tileImgs[k].naturalWidth>0) return;
+      pending++;
+      var img=new Image(); img.onload=img.onerror=dec;
+      img.src=ISO_BASE+ISO_TILES[k]; tileImgs[k]=img;
     });
     if(pending===0) cb();
   }
@@ -1384,7 +1418,7 @@ _MY_PROPS_MODAL = r"""
         document.getElementById('mpCount').textContent=pStr+cStr;
         if(viewingId===selfId) document.getElementById('mpSwapBtn').style.display='';
         mpReset();
-        preloadSprites(function(){render();});
+        preloadSprites(function(){render();startWaveAnim();});
         mpRadioSync();
         wireEvents();
       });
@@ -1393,6 +1427,7 @@ _MY_PROPS_MODAL = r"""
   window.closeMpModal=function(){
     document.getElementById('mpModal').style.display='none';
     swapMode=false; swapAIdx=-1; hovCI=-1; hovCPi=-1;
+    if(_waveAF){cancelAnimationFrame(_waveAF);_waveAF=null;}
     if(cv) cv._wired=false;
   };
 
