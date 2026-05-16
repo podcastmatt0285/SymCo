@@ -368,7 +368,62 @@ def api_my_properties(
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-    return JSONResponse({"player_id": target_id, "player_name": player_name, "plots": plots_out})
+    # Include contacts' plots when viewing your own properties (max 6 contacts)
+    contacts_out = []
+    if target_id == viewer.id:
+        try:
+            from contacts import get_contacts
+            from land import get_db as _ldb2, LandPlot as _LandPlot2
+            from business import Business as _Biz2, BUSINESS_TYPES as _BT2, get_district_business_types as _gdbt2
+
+            contact_list = get_contacts(viewer.id)[:6]
+            _dt2 = _gdbt2()
+
+            for (_row, other_id, _notes) in contact_list:
+                try:
+                    adb2 = _auth.get_db()
+                    other = adb2.query(_auth.Player).filter_by(id=other_id).first()
+                    other_name = getattr(other, "username", None) or f"Player {other_id}"
+                    adb2.close()
+
+                    ldb2 = _ldb2()
+                    other_plots = (ldb2.query(_LandPlot2)
+                                       .filter(_LandPlot2.owner_id == other_id,
+                                               _LandPlot2.is_government_owned == False)
+                                       .order_by(_LandPlot2.id)
+                                       .all())
+                    obiz_ids = [p.occupied_by_business_id for p in other_plots if p.occupied_by_business_id]
+                    obiz_map = {}
+                    if obiz_ids:
+                        for b in ldb2.query(_Biz2).filter(_Biz2.id.in_(obiz_ids)).all():
+                            cfg = _BT2.get(b.business_type) or _dt2.get(b.business_type) or {}
+                            obiz_map[b.id] = {
+                                "type":  b.business_type,
+                                "name":  cfg.get("name", b.business_type.replace("_", " ").title()),
+                                "class": cfg.get("class", "production"),
+                            }
+                    ldb2.close()
+
+                    cplots = []
+                    for p in other_plots:
+                        ob = obiz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
+                        cplots.append({
+                            "id":          p.id,
+                            "terrain":     p.terrain_type,
+                            "efficiency":  round(p.efficiency or 0, 1),
+                            "monthly_tax": round(p.monthly_tax or 0, 2),
+                            "biz_type":    ob["type"]  if ob else None,
+                            "biz_name":    ob["name"]  if ob else None,
+                            "biz_class":   ob["class"] if ob else None,
+                        })
+                    contacts_out.append({"player_id": other_id, "player_name": other_name, "plots": cplots})
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    return JSONResponse({"player_id": target_id, "player_name": player_name,
+                         "plots": plots_out, "contacts": contacts_out})
 
 
 class _MoveBizBody(BaseModel):
@@ -628,67 +683,104 @@ _MY_PROPS_MODAL = r"""
     ctx.fill(); ctx.globalAlpha=1; ctx.restore();
   }
 
-  var cv,ctx,plots=[],imgs={},scale=1,offX=0,offY=0;
+  var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
   var dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
-  var hovId=-1,swapAIdx=-1,swapMode=false;
+  var hovId=-1,hovCI=-1,hovCPi=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
-  var _cache={gs:-1,items:null};
+  var _cache={key:'',items:null},_islands=null;
+  var C_GAP=3; /* water tiles between the player island and each contact island */
+
+  /* Compute (and cache) the layout of contact islands.
+     Each island sits to the right of the player grid, separated by C_GAP water tiles.
+     baseVc is the leftmost visual column of the contact's grid. */
+  function getIslands(){
+    if(_islands) return _islands;
+    var gs=gridSz(plots.length||1), tv=totalVC(gs);
+    var nextVc=tv+C_GAP;
+    _islands=contacts.map(function(c,ci){
+      var cgs=gridSz(c.plots.length||1), ctv=totalVC(cgs);
+      var isl={ci:ci,c:c,cgs:cgs,ctv:ctv,baseVc:nextVc};
+      nextVc+=ctv+C_GAP;
+      return isl;
+    });
+    return _islands;
+  }
 
   function getItems(){
-    var gs=gridSz(plots.length||1);
-    if(_cache.gs===gs) return _cache.items;
-    var tv=totalVC(gs);
+    var gs=gridSz(plots.length||1), tv=totalVC(gs);
+    var ckey=gs+'_'+contacts.length;
+    if(_cache.key===ckey) return _cache.items;
+    var islands=getIslands();
     var dtVcB=getDtVcBase(gs);
     var items=[];
 
-    /* Build downtown lookup: "vc,vr" → {d:building} | {park:true} */
+    /* Scene bounds */
+    var vcLo=-1;
+    var vcHi=islands.length>0
+      ? islands[islands.length-1].baseVc+islands[islands.length-1].ctv
+      : tv;
+    var maxCtv=islands.reduce(function(m,isl){return Math.max(m,isl.ctv);},tv);
+    var vrLo=DT_VR_TOP-1, vrHi=maxCtv+1;
+
+    /* Downtown tile lookup */
     var dtMap={};
     DOWNTOWN.forEach(function(d){
       dtMap[(dtVcB+d.col)+','+(DT_VR_TOP+d.row)]={d:d};
     });
-    /* centre tile = park */
     dtMap[(dtVcB+1)+','+(DT_VR_TOP+1)]={park:true};
 
-    /* Full bounding box — every cell is explicitly assigned a tile type.
-       This eliminates bare canvas gaps around the downtown block.
-       vcLo/vcHi and vrLo/vrHi are the water-border edge rows/cols. */
-    var vcLo=-1, vcHi=tv;
-    var vrLo=DT_VR_TOP-1, vrHi=tv+1; /* one row above downtown, one below grid */
+    /* Quick vc → island lookup */
+    var islByVc={};
+    islands.forEach(function(isl){
+      for(var v=isl.baseVc;v<isl.baseVc+isl.ctv;v++) islByVc[v]=isl;
+    });
 
     for(var vr2=vrLo;vr2<=vrHi;vr2++){
       for(var vc2=vcLo;vc2<=vcHi;vc2++){
         var depth=vc2+vr2;
-        /* outer border → water */
+        /* outer border */
         if(vc2===vcLo||vc2===vcHi||vr2===vrLo||vr2===vrHi){
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
-        /* downtown zone (vr < 0) */
-        if(vr2<0){
-          var key=vc2+','+vr2, e=dtMap[key];
-          if(e){
-            items.push(e.park
-              ?{t:'park',vc:vc2,vr:vr2,depth:depth}
-              :{t:'down',vc:vc2,vr:vr2,depth:depth,d:e.d});
-          } else {
-            items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
+        /* player island (vc 0..tv-1) */
+        if(vc2>=0&&vc2<tv){
+          if(vr2<0){
+            var key=vc2+','+vr2, e=dtMap[key];
+            if(e) items.push(e.park?{t:'park',vc:vc2,vr:vr2,depth:depth}:{t:'down',vc:vc2,vr:vr2,depth:depth,d:e.d});
+            else  items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
+            continue;
           }
-          continue;
+          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth});continue;}
+          if(vr2>=1&&vr2<=tv){
+            var rc=isRd(vc2),rr=isRd(vr2-1);
+            if(rc||rr){items.push({t:rc&&rr?'cross':'road',vc:vc2,vr:vr2,depth:depth});}
+            else{var pi=v2p(vr2-1)*gs+v2p(vc2);items.push({t:'cell',vc:vc2,vr:vr2,depth:depth,pi:pi<plots.length?pi:-1});}
+            continue;
+          }
+          items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
-        /* road separator (vr=0) */
-        if(vr2===0){ items.push({t:'road',vc:vc2,vr:0,depth:depth}); continue; }
-        /* player grid (vr≥1) */
-        var rc=isRd(vc2),rr=isRd(vr2-1);
-        if(rc||rr){
-          items.push({t:rc&&rr?'cross':'road',vc:vc2,vr:vr2,depth:depth});
-        } else {
-          var pi=v2p(vr2-1)*gs+v2p(vc2);
-          items.push({t:'cell',vc:vc2,vr:vr2,depth:depth,pi:pi<plots.length?pi:-1});
+        /* contact island */
+        var isl=islByVc[vc2];
+        if(isl){
+          var lvc=vc2-isl.baseVc;
+          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth});continue;}
+          if(vr2>=1&&vr2<=isl.ctv){
+            var crc=isRd(lvc),crr=isRd(vr2-1);
+            if(crc||crr){items.push({t:crc&&crr?'cross':'road',vc:vc2,vr:vr2,depth:depth});}
+            else{
+              var cpi=v2p(vr2-1)*isl.cgs+v2p(lvc);
+              items.push({t:'cplot',vc:vc2,vr:vr2,depth:depth,ci:isl.ci,cpi:cpi<isl.c.plots.length?cpi:-1});
+            }
+            continue;
+          }
+          items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
+        items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
       }
     }
 
     items.sort(function(a,b){return a.depth-b.depth;});
-    _cache={gs:gs,items:items};
+    _cache={key:ckey,items:items};
     return items;
   }
 
@@ -706,6 +798,7 @@ _MY_PROPS_MODAL = r"""
     }
 
     var items=getItems();
+    var islands=getIslands();
     var hw0=(TW/2)*scale,hh0=(TH/2)*scale;
     var cullM=TW*scale*4;
 
@@ -716,6 +809,23 @@ _MY_PROPS_MODAL = r"""
       if(it.t==='water'){ drawWater(s.sx,s.sy); return; }
       if(it.t==='cross'){ drawDiamond(s.sx,s.sy,'#1f2937'); return; }
       if(it.t==='road') { drawRoad(s.sx,s.sy,false); return; }
+
+      /* contact island tile */
+      if(it.t==='cplot'){
+        var isl=islands[it.ci];
+        var cp=it.cpi>=0?isl.c.plots[it.cpi]:null;
+        var ccolor=cp?(TERRAIN_COLOR[cp.terrain]||'#86efac'):'#0d1a0d';
+        var isHovC=(hovCI===it.ci&&hovCPi===it.cpi&&it.cpi>=0);
+        drawDiamond(s.sx,s.sy,isHovC?shade(ccolor,22):ccolor,isHovC?'#38bdf8':null);
+        if(cp&&cp.biz_type){var csp=spriteFor(cp.biz_type,cp.biz_class);if(csp)drawSprite(s.sx,s.sy,csp);}
+        if(!cp){
+          ctx.save();ctx.globalAlpha=0.08;ctx.strokeStyle='#38bdf8';ctx.lineWidth=0.5;
+          var hw2c=(TW/2)*scale,hh2c=(TH/2)*scale;
+          ctx.beginPath();ctx.moveTo(s.sx+hw2c,s.sy);ctx.lineTo(s.sx+hw2c,s.sy+hh2c*2);ctx.stroke();
+          ctx.restore();
+        }
+        return;
+      }
       if(it.t==='park') {
         drawDiamond(s.sx,s.sy,'#14532d');
         drawSprite(s.sx,s.sy,'park');
@@ -766,6 +876,30 @@ _MY_PROPS_MODAL = r"""
       }
     });
 
+    /* second pass: contact island name labels (pill above road separator) */
+    islands.forEach(function(isl){
+      var lvc=isl.baseVc+(isl.ctv-1)/2, lvr=-0.4;
+      var s=g2s(lvc,lvr);
+      var hw=(TW/2)*scale;
+      var lbl=isl.c.player_name;
+      ctx.save();
+      ctx.font='bold '+Math.max(9,Math.round(11*scale))+'px sans-serif';
+      var tw=ctx.measureText(lbl).width;
+      var ph=Math.max(14,Math.round(16*scale));
+      var px=s.sx+hw-tw/2-6, py=s.sy-ph/2;
+      ctx.fillStyle='rgba(14,30,60,0.88)';
+      ctx.beginPath();
+      ctx.rect(px,py,tw+12,ph);
+      ctx.fill();
+      ctx.strokeStyle='rgba(56,189,248,0.35)';ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle='#7dd3fc';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(lbl,s.sx+hw,s.sy+1);
+      ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.restore();
+    });
+
     if(swapMode){
       ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,26);
       ctx.fillStyle='#fbbf24'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center';
@@ -779,6 +913,7 @@ _MY_PROPS_MODAL = r"""
     var needed={park:1};
     plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});
     DOWNTOWN.forEach(function(d){if(d.sprite)needed[d.sprite]=1;});
+    contacts.forEach(function(c){c.plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});});
     var keys=Object.keys(needed),pending=0;
     keys.forEach(function(k){
       if(imgs[k]&&imgs[k].complete&&imgs[k].naturalWidth>0) return;
@@ -801,17 +936,19 @@ _MY_PROPS_MODAL = r"""
     if(!cv) return;
     resizeCv();
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
+    var islands=getIslands();
     var W=cv.offsetWidth, H=cv.offsetHeight;
-    /* scene spans vc=[vcLo..vcHi], vr=[vrLo..vrHi] where vcLo=-1,vcHi=tv,vrLo=DT_VR_TOP-1,vrHi=tv+1
-       iso screen extent = (vcHi+vrHi - vcLo - vrLo) for both W and H (diamond):
-       isoW = ((tv-(-1)) + (tv+1 - (DT_VR_TOP-1))) * TW/2 = (tv+1 + tv-DT_VR_TOP+2) * TW/2
-       Simplified: fit to canvas using total tile spans */
-    var vcSpan=tv+2, vrSpan=tv-DT_VR_TOP+2; /* DT_VR_TOP negative so this is tv+DT_N+2 */
+    var vcLo=-1;
+    var vcHi=islands.length>0
+      ? islands[islands.length-1].baseVc+islands[islands.length-1].ctv
+      : tv;
+    var maxCtv=islands.reduce(function(m,isl){return Math.max(m,isl.ctv);},tv);
+    var vrLo=DT_VR_TOP-1, vrHi=maxCtv+1;
+    var vcSpan=vcHi-vcLo, vrSpan=vrHi-vrLo;
     var isoW=(vcSpan+vrSpan)*TW/2, isoH=(vcSpan+vrSpan)*TH/2;
     var fit=Math.min(W/isoW, H/isoH)*0.85;
-    scale=Math.max(0.15, Math.min(1.8, fit));
-    /* geometric centre of bounding box → screen centre */
-    var midVc=((-1)+tv)/2, midVr=((DT_VR_TOP-1)+(tv+1))/2;
+    scale=Math.max(0.1, Math.min(1.8, fit));
+    var midVc=(vcLo+vcHi)/2, midVr=(vrLo+vrHi)/2;
     offX=W/2-(midVc-midVr)*(TW/2)*scale;
     offY=H/2-(midVc+midVr)*(TH/2)*scale;
     render();
@@ -827,19 +964,35 @@ _MY_PROPS_MODAL = r"""
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var hwh=(TW/2)*scale, hhh=(TH/2)*scale;
     var dtVcB=getDtVcBase(gs);
-    /* downtown tiles (8 buildings — park center is not interactive) */
+    var islands=getIslands();
+    /* downtown */
     for(var di=0;di<DOWNTOWN.length;di++){
       var d=DOWNTOWN[di];
-      var s=g2s(dtVcB+d.col, DT_VR_TOP+d.row);
-      var ddx=mx-(s.sx+hwh), ddy=my-(s.sy+hhh);
+      var s=g2s(dtVcB+d.col,DT_VR_TOP+d.row);
+      var ddx=mx-(s.sx+hwh),ddy=my-(s.sy+hhh);
       if(Math.abs(ddx/hwh)+Math.abs(ddy/hhh)<=1) return {downtown:d};
     }
-    /* player grid: vr=1..tv */
+    /* contact islands (iterate in reverse so foreground beats background) */
+    for(var ii=islands.length-1;ii>=0;ii--){
+      var isl=islands[ii];
+      for(var cvr=isl.ctv;cvr>=1;cvr--){
+        for(var cvc=isl.ctv-1;cvc>=0;cvc--){
+          if(isRd(cvc)||isRd(cvr-1)) continue;
+          var cs=g2s(isl.baseVc+cvc,cvr);
+          var cdx=mx-(cs.sx+hwh),cdy=my-(cs.sy+hhh);
+          if(Math.abs(cdx/hwh)+Math.abs(cdy/hhh)<=1){
+            var cpi=v2p(cvr-1)*isl.cgs+v2p(cvc);
+            return {contact:isl.c,ci:ii,cpi:cpi,cplot:cpi<isl.c.plots.length?isl.c.plots[cpi]:null};
+          }
+        }
+      }
+    }
+    /* player grid */
     for(var vr=tv;vr>=1;vr--){
       for(var vc=tv-1;vc>=0;vc--){
         if(isRd(vc)||isRd(vr-1)) continue;
         var s2=g2s(vc,vr);
-        var dx2=mx-(s2.sx+hwh), dy2=my-(s2.sy+hhh);
+        var dx2=mx-(s2.sx+hwh),dy2=my-(s2.sy+hhh);
         if(Math.abs(dx2/hwh)+Math.abs(dy2/hhh)<=1){
           var pi=v2p(vr-1)*gs+v2p(vc);
           if(pi<plots.length) return {plot:plots[pi],pi:pi};
@@ -862,6 +1015,21 @@ _MY_PROPS_MODAL = r"""
       html='<strong style="color:#60a5fa;">'+d.label+'</strong>'
         +(d.url?'<div style="margin-top:6px;"><a href="'+d.url
           +'" style="color:#38bdf8;font-size:0.72rem;">Open →</a></div>':'');
+    } else if(hit.contact){
+      var cp=hit.cplot, c=hit.contact;
+      html='<strong style="color:#38bdf8;">'+c.player_name+'</strong>';
+      if(cp){
+        html+='<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;margin-top:2px;">'+cp.terrain+' plot</div>';
+        if(cp.biz_name) html+='<div style="color:#4ade80;margin-top:4px;">'+cp.biz_name+'</div>'
+          +'<div style="color:#64748b;font-size:0.68rem;text-transform:capitalize;">'+cp.biz_class+'</div>';
+        else html+='<div style="color:#475569;margin-top:4px;">Vacant</div>';
+        html+='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;font-size:0.68rem;color:#64748b;">'
+          +'Eff <span style="color:#cbd5e1;">'+cp.efficiency+'%</span>'
+          +' &emsp; Tax <span style="color:#cbd5e1;">$'+cp.monthly_tax+'/mo</span></div>';
+      }
+      html+='<button onclick="openMyProperties('+c.player_id+')" style="margin-top:10px;width:100%;'
+        +'background:#0f2040;border:1px solid #38bdf8;color:#7dd3fc;padding:4px;'
+        +'border-radius:4px;cursor:pointer;font-size:0.7rem;">🏙️ View '+c.player_name+"'s Properties</button>";
     } else {
       var p=hit.plot;
       html='<div style="display:flex;justify-content:space-between;align-items:baseline;">'
@@ -936,7 +1104,7 @@ _MY_PROPS_MODAL = r"""
       .then(function(r){return r.json();})
       .then(function(d){
         if(d.error){alert('Could not load: '+d.error);return;}
-        plots=d.plots; _cache={gs:-1,items:null};
+        plots=d.plots; contacts=d.contacts||[]; _cache={key:'',items:null}; _islands=null;
         document.getElementById('mpTitle').textContent=
           (viewingId===selfId?'My':d.player_name+"'s")+' Properties';
         document.getElementById('mpCount').textContent=
@@ -951,7 +1119,7 @@ _MY_PROPS_MODAL = r"""
 
   window.closeMpModal=function(){
     document.getElementById('mpModal').style.display='none';
-    swapMode=false; swapAIdx=-1;
+    swapMode=false; swapAIdx=-1; hovCI=-1; hovCPi=-1;
     if(cv) cv._wired=false;
   };
 
@@ -970,6 +1138,13 @@ _MY_PROPS_MODAL = r"""
     } else if(hit.downtown){
       html='<span style="color:#60a5fa;">'+hit.downtown.label+'</span>'
         +'<br><span style="color:#64748b;font-size:0.65rem;">click to open</span>';
+    } else if(hit.contact){
+      var cp=hit.cplot;
+      html='<span style="color:#38bdf8;font-weight:600;">'+hit.contact.player_name+'</span>';
+      if(cp) html+=cp.biz_name
+        ?'<br><span style="color:#4ade80;">'+cp.biz_name+'</span>'
+        :'<br><span style="color:#475569;">Vacant</span>';
+      html+='<br><span style="color:#64748b;font-size:0.65rem;">click for details</span>';
     } else if(hit.govt){
       html='<span style="color:#475569;">Government land</span>';
     }
@@ -1022,7 +1197,9 @@ _MY_PROPS_MODAL = r"""
         var mx=e.clientX-rect.left, my=e.clientY-rect.top;
         var hit=hitTest(mx,my);
         var nh=(hit&&hit.plot&&hit.pi!==undefined)?hit.pi:-1;
-        if(nh!==hovId){hovId=nh;render();}
+        var nci=(hit&&hit.contact)?hit.ci:-1;
+        var ncpi=(hit&&hit.contact)?hit.cpi:-1;
+        if(nh!==hovId||nci!==hovCI||ncpi!==hovCPi){hovId=nh;hovCI=nci;hovCPi=ncpi;render();}
         if(hit) showTip(hit,e.clientX,e.clientY);
         else hideTip();
       }
