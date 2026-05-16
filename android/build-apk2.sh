@@ -142,11 +142,42 @@ cat > twa-manifest.json << TWAMF
 TWAMF
 echo "  twa-manifest.json written"
 
+# Pre-configure bubblewrap so it never asks JDK/SDK prompts.
+# Both paths must be non-empty in ~/.bubblewrap/config.json before running bubblewrap.
+_JDK_PATH="${JAVA_HOME:-}"
+[ -z "$_JDK_PATH" ] && _JDK_PATH=$(update-alternatives --list java 2>/dev/null | grep -E 'java-(17|21)' | head -1 | sed 's|/bin/java||')
+[ -z "$_JDK_PATH" ] && _JDK_PATH=$(ls -d /usr/lib/jvm/java-21-openjdk* /usr/lib/jvm/java-17-openjdk* 2>/dev/null | head -1)
+_SDK_PATH="${ANDROID_HOME:-$HOME/.bubblewrap/android_sdk}"
+# Write config so bubblewrap skips both interactive setup prompts entirely.
+mkdir -p "$HOME/.bubblewrap"
+printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' "$_JDK_PATH" "$_SDK_PATH" > "$HOME/.bubblewrap/config.json"
+echo "  bubblewrap config: jdk=${_JDK_PATH}, sdk=${_SDK_PATH}"
+
+# Install Android SDK command-line tools if the SDK is not yet set up.
+if [ ! -d "${_SDK_PATH}/platform-tools" ]; then
+    echo "=== Installing Android SDK ==="
+    mkdir -p "${_SDK_PATH}/cmdline-tools"
+    _CMDTOOLS_ZIP="/tmp/cmdline-tools-latest.zip"
+    if [ ! -f "$_CMDTOOLS_ZIP" ]; then
+        curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip" \
+             -o "$_CMDTOOLS_ZIP"
+    fi
+    unzip -q "$_CMDTOOLS_ZIP" -d "${_SDK_PATH}/cmdline-tools"
+    # sdkmanager requires the directory to be named "latest"
+    mv "${_SDK_PATH}/cmdline-tools/cmdline-tools" "${_SDK_PATH}/cmdline-tools/latest" 2>/dev/null || true
+    export ANDROID_HOME="${_SDK_PATH}"
+    export PATH="${_SDK_PATH}/cmdline-tools/latest/bin:${_SDK_PATH}/platform-tools:$PATH"
+    # Accept licenses and install required components
+    yes | sdkmanager --licenses > /dev/null 2>&1 || true
+    sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+    echo "  Android SDK installed at ${_SDK_PATH}"
+fi
+export ANDROID_HOME="${_SDK_PATH}"
+export PATH="${_SDK_PATH}/cmdline-tools/latest/bin:${_SDK_PATH}/platform-tools:$PATH"
+
 # Generate the Android project from the manifest.
-# bubblewrap update asks for a versionName then auto-increments versionCode
-# regardless of what's in twa-manifest.json — so we pipe the answer and then
-# patch app/build.gradle directly to set the version we actually want.
-echo "${VERSION_NAME}" | NO_UPDATE_NOTIFIER=1 bubblewrap update
+# bubblewrap update asks for the new versionName — pipe it as the only required input.
+printf "%s\n" "${VERSION_NAME}" | NO_UPDATE_NOTIFIER=1 JAVA_HOME="${_JDK_PATH}" bubblewrap update
 sed -i "s/versionCode [0-9]*/versionCode ${VERSION_CODE}/" app/build.gradle
 sed -i "s/versionName \"[^\"]*\"/versionName \"${VERSION_NAME}\"/" app/build.gradle
 echo "  Android project generated: versionCode=${VERSION_CODE}, versionName=${VERSION_NAME}"
