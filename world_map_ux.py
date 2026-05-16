@@ -650,47 +650,47 @@ _MY_PROPS_MODAL = r"""
   /* Terrain → PNG tile name(s) from /static/iso/tiles/ (tipsy/isometric-tiles, CC0).
      Multiple entries rotate deterministically per grid position for variety. */
   var TERRAIN_TILE={
-    prairie:  ['kenney_grass','terrain_grass','terrain_grass_v2','terrain_grass_v3'],
-    hills:    ['kenney_grass','kenney_hillN','terrain_grass_v4','terrain_grass_v5'],
-    forest:   ['kenney_grass','terrain_grass_v3','terrain_grass_v4','terrain_grass_v5'],
+    prairie:  ['kenney_grass','kenney_grassWhole','terrain_grass','terrain_grass_v2','terrain_grass_v3'],
+    hills:    ['kenney_grass','kenney_hillN','kenney_hillS','kenney_hillW','terrain_grass_v4','terrain_grass_v5'],
+    forest:   ['kenney_grass','kenney_grassWhole','terrain_grass_v3','terrain_grass_v4','terrain_grass_v5'],
     jungle:   ['kenney_grass','terrain_grass_v5','terrain_grass_v3','terrain_grass_v2'],
     marsh:    ['terrain_grass_v4','kenney_grass','terrain_grass_v5','terrain_grass_v3'],
     island:   ['kenney_beach','kenney_grass','terrain_savanna'],
-    savanna:  ['terrain_savanna','terrain_savanna_v2','terrain_savanna_v3'],
+    savanna:  ['kenney_grassWhole','terrain_savanna','terrain_savanna_v2','terrain_savanna_v3'],
     desert:   ['terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4'],
-    mountain: ['kenney_hillN','terrain_snow_v3','terrain_snow_v4','terrain_snow2'],
+    mountain: ['kenney_hillN','kenney_hillS','kenney_hillW','terrain_snow_v3','terrain_snow_v4','terrain_snow2'],
     tundra:   ['terrain_snow','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4'],
-    urban:    ['tile1','tile2','tile3'],
+    urban:    ['kenney_lot','tile1','tile2','tile3'],
     coastal:  ['kenney_beach','kenney_water','terrain_water_a'],
     ocean:    ['kenney_water','iso_water2','kenney_water'],
     lake:     ['kenney_water','iso_water2','terrain_water_b'],
-    district_food:              ['terrain_savanna_v3','terrain_grass_v4'],
-    district_hospital:          ['tile2','tile3'],
-    district_industrial:        ['tile1','tile2'],
-    district_medical:           ['tile2','tile3'],
-    district_neighborhood:      ['kenney_grass','terrain_grass_v2'],
-    district_transport:         ['tile1','tile3'],
-    district_utilities:         ['tile1','terrain_arid_v4'],
-    district_zoo:               ['kenney_grass','terrain_savanna_v2'],
-    district_aerospace:         ['tile2','terrain_snow_v3'],
+    district_food:              ['terrain_savanna_v3','kenney_grassWhole'],
+    district_hospital:          ['kenney_lot','tile2'],
+    district_industrial:        ['kenney_lot','tile1'],
+    district_medical:           ['kenney_lot','tile2'],
+    district_neighborhood:      ['kenney_grassWhole','kenney_grass','terrain_grass_v2'],
+    district_transport:         ['kenney_lot','tile1'],
+    district_utilities:         ['kenney_lot','tile1'],
+    district_zoo:               ['kenney_grassWhole','kenney_grass','terrain_savanna_v2'],
+    district_aerospace:         ['kenney_lot','tile2'],
     district_coastal:           ['kenney_water','kenney_beach'],
-    district_education:         ['kenney_grass','terrain_savanna_v3'],
-    district_entertainment:     ['tile1','terrain_arid_v4'],
-    district_food_court:        ['terrain_savanna_v2','terrain_grass_v5'],
-    district_mall:              ['tile2','tile3'],
-    district_military:          ['tile1','terrain_grass_v4'],
-    district_prison:            ['tile1','terrain_arid_v3'],
+    district_education:         ['kenney_grassWhole','kenney_grass','terrain_savanna_v3'],
+    district_entertainment:     ['kenney_lot','tile1'],
+    district_food_court:        ['terrain_savanna_v2','kenney_grassWhole'],
+    district_mall:              ['kenney_lot','tile2'],
+    district_military:          ['kenney_lot','terrain_grass_v4'],
+    district_prison:            ['kenney_lot','terrain_arid_v3'],
     district_shipyard:          ['kenney_water','terrain_arid_v3'],
-    district_tech:              ['tile2','tile3'],
-    district_airport:           ['tile1','tile2','tile3'],
-    district_convention_center: ['tile2','tile3'],
-    district_entertainment_district:['tile1','terrain_arid_v4'],
-    district_mega_mall:         ['tile2','tile3'],
-    district_military_base:     ['tile1','terrain_grass_v4'],
-    district_prison_complex:    ['tile1','tile2'],
-    district_research_campus:   ['tile2','terrain_snow_v3'],
+    district_tech:              ['kenney_lot','tile2'],
+    district_airport:           ['kenney_lot','tile1','tile2'],
+    district_convention_center: ['kenney_lot','tile2'],
+    district_entertainment_district:['kenney_lot','tile1'],
+    district_mega_mall:         ['kenney_lot','tile2'],
+    district_military_base:     ['kenney_lot','terrain_grass_v4'],
+    district_prison_complex:    ['kenney_lot','tile1'],
+    district_research_campus:   ['kenney_lot','tile2'],
     district_seaport:           ['kenney_water','iso_water2'],
-    district_tech_park:         ['tile2','tile3'],
+    district_tech_park:         ['kenney_lot','tile2'],
   };
 
   function spriteFor(t,cls){
@@ -754,9 +754,6 @@ _MY_PROPS_MODAL = r"""
     var b=Math.min(255,Math.max(0,(n&0xff)+amt));
     return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
   }
-
-  /* Deterministic tile variant 1-3 based on position — avoids flicker on re-render */
-  function tileVar(vc,vr){ return (Math.abs(vc)*3+Math.abs(vr)*7)%3+1; }
 
   /* Proximity feature overlays drawn as semi-transparent colored fills */
   function drawProxOverlay(sx,sy,prox){
@@ -903,19 +900,28 @@ _MY_PROPS_MODAL = r"""
     return null;
   }
 
-  function drawRoad(sx,sy,cross,vc,vr){
-    drawDiamond(sx,sy,cross?'#1f2937':'#232d3a');
-    drawTileOverlay(sx,sy,cross?'kenney_crossroad':'kenney_road',0.80);
+  function drawRoad(sx,sy,cross){
+    var hw=(TW/2)*scale, hh=(TH/2)*scale;
+    ctx.save();
+    /* asphalt: NW-lit gradient matching terrain tile light direction */
+    var gr=ctx.createLinearGradient(sx,sy,sx+hw*2,sy+hh*2);
+    gr.addColorStop(0,'#343d47'); gr.addColorStop(0.5,'#282f38'); gr.addColorStop(1,'#1d232a');
+    ctx.beginPath();
+    ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+    ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
+    ctx.closePath();
+    ctx.fillStyle=gr; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=0.6; ctx.stroke();
+    /* dashed centre-line on straight lanes; omit on intersections */
     if(!cross){
-      var hw=(TW/2)*scale,hh=(TH/2)*scale;
-      ctx.save();
-      ctx.strokeStyle='rgba(253,224,71,0.22)';
-      ctx.lineWidth=Math.max(0.5,0.6*scale);
-      ctx.setLineDash([3*scale,4*scale]);
+      ctx.strokeStyle='rgba(255,220,55,0.5)';
+      ctx.lineWidth=Math.max(0.5,0.65*scale);
+      ctx.setLineDash([2.5*scale,2.8*scale]);
       ctx.beginPath();
-      ctx.moveTo(sx+hw*0.58,sy+hh*1.52); ctx.lineTo(sx+hw*1.42,sy+hh*0.48);
-      ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+      ctx.moveTo(sx+hw*0.55,sy+hh*1.52); ctx.lineTo(sx+hw*1.45,sy+hh*0.48);
+      ctx.stroke(); ctx.setLineDash([]);
     }
+    ctx.restore();
   }
 
   function drawWater(sx,sy,vc,vr){
@@ -1204,7 +1210,7 @@ _MY_PROPS_MODAL = r"""
     var keys=Object.keys(needed);
     /* also load tile texture images: water/dirt/tile + all tipsy terrain variants */
     var TILES=[
-      'tile1','tile2','tile3','water1','water2','water3','dirt1','dirt2','dirt3',
+      'tile1','tile2','tile3',
       'terrain_grass','terrain_grass_v2','terrain_grass_v3','terrain_grass_v4','terrain_grass_v5',
       'terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4',
       'terrain_savanna','terrain_savanna2','terrain_savanna3','terrain_savanna_v2','terrain_savanna_v3',
@@ -1219,10 +1225,11 @@ _MY_PROPS_MODAL = r"""
       {k:'kenney_grass',     url:KENNEY_BASE+'grass.png'},
       {k:'kenney_water',     url:KENNEY_BASE+'water.png'},
       {k:'kenney_beach',     url:KENNEY_BASE+'beach.png'},
-      {k:'kenney_road',      url:KENNEY_BASE+'road.png'},
-      {k:'kenney_crossroad', url:KENNEY_BASE+'crossroad.png'},
-      {k:'kenney_dirt',      url:KENNEY_BASE+'dirt.png'},
-      {k:'kenney_hillN',     url:KENNEY_BASE+'hillN.png'},
+      {k:'kenney_hillN',      url:KENNEY_BASE+'hillN.png'},
+      {k:'kenney_hillS',      url:KENNEY_BASE+'hillS.png'},
+      {k:'kenney_hillW',      url:KENNEY_BASE+'hillW.png'},
+      {k:'kenney_grassWhole', url:KENNEY_BASE+'grassWhole.png'},
+      {k:'kenney_lot',        url:KENNEY_BASE+'lotN.png'},
     ];
     var pending=0;
     function _onImg(){if(--pending===0)cb();}
