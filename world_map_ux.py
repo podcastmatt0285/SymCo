@@ -566,6 +566,8 @@ _MY_PROPS_MODAL = r"""
 (function(){
   var TW=64, TH=38, BLOCK=4;
   var SPRITE_BASE='/static/iso/buildings/';
+  var TILE_BASE='/static/iso/tiles/';
+  var tileImgs={};
 
   /* 3×3 downtown block — 8 buildings surrounding a central park.
      Raw vc coordinates used (no p2v road-gap math) so tiles are adjacent. */
@@ -599,23 +601,54 @@ _MY_PROPS_MODAL = r"""
 
   function spriteFor(t,cls){
     if(!t) return null;
-    if(/mine|alluvial|quarry|mineral/.test(t))           return 'warehouse';
-    if(/solar|power_plant|powerplant/.test(t))           return 'powerplant';
-    if(/water_facility|water_tower|watertower/.test(t))  return 'watertower';
-    if(/plantation|cotton|agave|apiary|pasture|paddock|farm|field|orchard/.test(t)) return 'park';
-    if(/lumber|timber|logging/.test(t))                  return 'park_medium';
-    if(/hospital|clinic|medical|infirmary/.test(t))      return 'hospital';
-    if(/university|college/.test(t))                     return 'university';
-    if(/school|academy/.test(t))                         return 'school';
-    if(/police/.test(t))                                 return 'police_station';
-    if(/fire_station|firehouse/.test(t))                 return 'fire_station';
-    if(/airport|aviation/.test(t))                       return 'airport';
-    if(/stadium|arena|coliseum/.test(t))                 return 'stadium';
-    if(/warehouse|storage|depot|silo/.test(t))           return 'warehouse';
-    if(/grocery|supermarket|market|mall/.test(t))        return 'shop_medium';
-    if(/shop|store|boutique|kiosk|stationery|arts_and_crafts/.test(t)) return 'shop_small';
-    if(/refinery|factory|mill|foundry|plant|smelter|distillery|brewery|winery|cannery|processing/.test(t)) return 'industrial';
-    if(/ritual|church|temple|shrine/.test(t))            return 'space';
+    /* extraction / mining */
+    if(/mine|alluvial|quarry|mineral|oil_rig/.test(t))                return 'warehouse';
+    /* energy */
+    if(/solar|power_plant|powerplant/.test(t))                        return 'powerplant';
+    /* water utility */
+    if(/water_facility|water_tower|watertower/.test(t))               return 'watertower';
+    /* health */
+    if(/hospital|clinic|medical|infirmary|pharmaceutical/.test(t))    return 'hospital';
+    /* education */
+    if(/university|college/.test(t))                                  return 'university';
+    if(/school|academy/.test(t))                                      return 'school';
+    /* emergency */
+    if(/police/.test(t))                                              return 'police_station';
+    if(/fire_station|firehouse/.test(t))                              return 'fire_station';
+    /* transport hub */
+    if(/airport|aviation/.test(t))                                    return 'airport';
+    /* sports & entertainment */
+    if(/stadium|arena|coliseum/.test(t))                              return 'stadium';
+    /* marine leisure (boat yards, marinas, dive ops) */
+    if(/marina|boat_yard|dive_op/.test(t))                            return 'tennis';
+    /* storage / logistics */
+    if(/warehouse|storage|depot|silo/.test(t))                        return 'warehouse';
+    /* luxury & upscale commerce */
+    if(/jeweler|lapidary|luxury_show|publishing_house/.test(t))       return 'mansion';
+    /* aquatic harvesting / marine fleets */
+    if(/aquaculture|pearl_oyster|shellfish|crustacean|freshwater_fish|shrimp_fleet|trawler|deep_sea|purse_seine/.test(t)) return 'park_large';
+    /* open field agriculture */
+    if(/rice_paddy|cotton_fields|vegetable_farm|grain_farm|peanut_farm|flower_farm|poultry_farm|free_range/.test(t)) return 'park_large';
+    /* orchards, vineyards & tree crops */
+    if(/orchard|vineyard|hop_farm|tea_plant|coffee_plant|cocoa_plant|spice_plant/.test(t)) return 'trees';
+    /* general plantation / farm / pasture */
+    if(/plantation|agave|apiary|pasture|paddock|farm|field/.test(t))  return 'park';
+    /* timber / forestry */
+    if(/lumber|timber|logging/.test(t))                               return 'park_medium';
+    /* sit-down dining & bars */
+    if(/restaurant|sushi_bar|wine_bar|bistro|pub|gourmet/.test(t))    return 'house_medium';
+    /* small food vendors & cafes */
+    if(/coffeehouse|burrito_truck|fish_cart|hot_dog_cart|pie_bakery|pastry_kitchen|soup_kitchen|kitchen|street_flower/.test(t)) return 'house_small';
+    /* artisan production "houses" */
+    if(/malting_house|pipe_tobacco_house|tobacco_curing_house|smokehouse/.test(t)) return 'residential';
+    /* big-box & general retail */
+    if(/grocery|supermarket|market|mall|auto_deal|gas_station|home_goods|fashion|pet_store|pharmacy/.test(t)) return 'commercial';
+    /* small specialty shops */
+    if(/shop|store|boutique|kiosk|bookstore|bakery_retail|crystal|tobacco_shop|flower_shop|butcher|stationery|arts_and_crafts/.test(t)) return 'shop_small';
+    /* heavy production */
+    if(/refinery|factory|mill|foundry|plant|smelter|distillery|brewery|winery|cannery|processing|tannery|works|cooperage/.test(t)) return 'industrial';
+    /* ritual / spiritual */
+    if(/ritual|church|temple|shrine/.test(t))                         return 'space';
     if(cls==='retail') return 'shop_medium';
     return 'industrial';
   }
@@ -626,6 +659,25 @@ _MY_PROPS_MODAL = r"""
     var g=Math.min(255,Math.max(0,((n>>8)&0xff)+amt));
     var b=Math.min(255,Math.max(0,(n&0xff)+amt));
     return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
+  }
+
+  /* Deterministic tile variant 1-3 based on position — avoids flicker on re-render */
+  function tileVar(vc,vr){ return (Math.abs(vc)*3+Math.abs(vr)*7)%3+1; }
+
+  /* Draw a tile sprite clipped to the isometric diamond at (sx,sy) */
+  function drawTileOverlay(sx,sy,name,alpha){
+    var img=tileImgs[name];
+    if(!img||!img.complete||!img.naturalWidth) return;
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    ctx.save();
+    ctx.globalAlpha=alpha||0.5;
+    ctx.beginPath();
+    ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
+    ctx.lineTo(sx+hw,sy+hh*2); ctx.lineTo(sx,sy+hh);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(img,sx,sy,TW*scale,TH*scale);
+    ctx.restore();
   }
 
   /* grid: smallest N in {8,16,32} where N*N >= plot count */
@@ -664,8 +716,9 @@ _MY_PROPS_MODAL = r"""
     ctx.drawImage(img, sx+hw-sw/2, sy+TH*scale-sh+sh*0.15, sw, sh);
   }
 
-  function drawRoad(sx,sy,cross){
+  function drawRoad(sx,sy,cross,vc,vr){
     drawDiamond(sx,sy,cross?'#1f2937':'#2d3748');
+    drawTileOverlay(sx,sy,'dirt'+tileVar(vc||0,vr||0),0.20);
     if(!cross){
       var hw=(TW/2)*scale,hh=(TH/2)*scale;
       ctx.save();
@@ -678,13 +731,9 @@ _MY_PROPS_MODAL = r"""
     }
   }
 
-  function drawWater(sx,sy){
+  function drawWater(sx,sy,vc,vr){
     drawDiamond(sx,sy,'#0c2340');
-    var hw=(TW/2)*scale,hh=(TH/2)*scale;
-    ctx.save(); ctx.globalAlpha=0.22; ctx.fillStyle='#38bdf8';
-    ctx.beginPath();
-    ctx.ellipse(sx+hw,sy+hh, hw*0.5,hh*0.35, 0,0,Math.PI*2);
-    ctx.fill(); ctx.globalAlpha=1; ctx.restore();
+    drawTileOverlay(sx,sy,'water'+tileVar(vc||0,vr||0),0.70);
   }
 
   var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
@@ -804,9 +853,9 @@ _MY_PROPS_MODAL = r"""
       var s=g2s(it.vc,it.vr);
       if(s.sx+hw0*2<-cullM||s.sx>W+cullM||s.sy+hh0*2<-cullM||s.sy>H+cullM) return;
 
-      if(it.t==='water'){ drawWater(s.sx,s.sy); return; }
-      if(it.t==='cross'){ drawDiamond(s.sx,s.sy,'#1f2937'); return; }
-      if(it.t==='road') { drawRoad(s.sx,s.sy,false); return; }
+      if(it.t==='water'){ drawWater(s.sx,s.sy,it.vc,it.vr); return; }
+      if(it.t==='cross'){ drawRoad(s.sx,s.sy,true,it.vc,it.vr); return; }
+      if(it.t==='road') { drawRoad(s.sx,s.sy,false,it.vc,it.vr); return; }
 
       /* contact island tile */
       if(it.t==='cplot'){
@@ -815,6 +864,7 @@ _MY_PROPS_MODAL = r"""
         var ccolor=cp?(TERRAIN_COLOR[cp.terrain]||'#86efac'):'#0d1a0d';
         var isHovC=(hovCI===it.ci&&hovCPi===it.cpi&&it.cpi>=0);
         drawDiamond(s.sx,s.sy,isHovC?shade(ccolor,22):ccolor,isHovC?'#38bdf8':null);
+        if(cp) drawTileOverlay(s.sx,s.sy,'tile'+tileVar(it.vc,it.vr),0.18);
         if(cp&&cp.biz_type){var csp=spriteFor(cp.biz_type,cp.biz_class);if(csp)drawSprite(s.sx,s.sy,csp);}
         if(!cp){
           ctx.save();ctx.globalAlpha=0.08;ctx.strokeStyle='#38bdf8';ctx.lineWidth=0.5;
@@ -860,6 +910,7 @@ _MY_PROPS_MODAL = r"""
       drawDiamond(s.sx,s.sy,
         isSel?shade(color,50):isHov?shade(color,25):color,
         isSel?'#f59e0b':isHov?'#60a5fa':null);
+      drawTileOverlay(s.sx,s.sy,'tile'+tileVar(it.vc,it.vr),0.18);
 
       if(p.biz_type){
         var spr=spriteFor(p.biz_type,p.biz_class);
@@ -925,13 +976,22 @@ _MY_PROPS_MODAL = r"""
     plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});
     DOWNTOWN.forEach(function(d){if(d.sprite)needed[d.sprite]=1;});
     contacts.forEach(function(c){c.plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});});
-    var keys=Object.keys(needed),pending=0;
+    var keys=Object.keys(needed);
+    /* also load tile texture images (water/dirt/tile variants) */
+    var TILES=['tile1','tile2','tile3','water1','water2','water3','dirt1','dirt2','dirt3'];
+    var pending=0;
+    function dec(){if(--pending===0)cb();}
     keys.forEach(function(k){
       if(imgs[k]&&imgs[k].complete&&imgs[k].naturalWidth>0) return;
       pending++;
-      var img=new Image();
-      img.onload=img.onerror=function(){if(--pending===0)cb();};
+      var img=new Image(); img.onload=img.onerror=dec;
       img.src=SPRITE_BASE+k+'.png'; imgs[k]=img;
+    });
+    TILES.forEach(function(k){
+      if(tileImgs[k]&&tileImgs[k].complete&&tileImgs[k].naturalWidth>0) return;
+      pending++;
+      var img=new Image(); img.onload=img.onerror=dec;
+      img.src=TILE_BASE+k+'.png'; tileImgs[k]=img;
     });
     if(pending===0) cb();
   }
@@ -1105,7 +1165,7 @@ _MY_PROPS_MODAL = r"""
     cv=document.getElementById('mpCanvas');
     ctx=cv.getContext('2d');
     swapMode=false; swapAIdx=-1; hovId=-1;
-    _cache={gs:-1,items:null};
+    _cache={key:'',items:null};
     document.getElementById('mpInfo').style.display='none';
     document.getElementById('mpMoveHint').style.display='none';
     document.getElementById('mpSwapBtn').style.display='none';
