@@ -658,7 +658,7 @@ _MY_PROPS_MODAL = r"""
     desert:   ['terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4'],
     mountain: ['terrain_snow_v3','terrain_snow_v4','terrain_arid_v3','terrain_snow2'],
     tundra:   ['terrain_snow','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4'],
-    urban:    ['terrain_arid_v3','terrain_arid_v4','terrain_arid2'],
+    urban:    ['tile1','tile2','tile3'],
     coastal:  ['terrain_water_a','terrain_arid','terrain_savanna'],
     ocean:    ['terrain_water_b','terrain_water_a','terrain_water_b'],
     lake:     ['terrain_water_a','terrain_water_b','terrain_water_a'],
@@ -879,6 +879,30 @@ _MY_PROPS_MODAL = r"""
     ctx.drawImage(img, sx+hw-sw/2, sy+TH*scale-sh+sh*0.15, sw, sh);
   }
 
+  /* Like drawSprite but sources from tileImgs (decor sprites in /static/iso/tiles/) */
+  function drawSpriteFromTiles(sx,sy,name,alpha){
+    var img=tileImgs[name];
+    if(!img||!img.complete||!img.naturalWidth) return;
+    var ratio=img.naturalHeight/img.naturalWidth;
+    var sw=TW*scale;
+    var sh=Math.min(sw*ratio,sw*2.5);
+    var hw=(TW/2)*scale;
+    ctx.save();
+    ctx.globalAlpha=alpha||0.88;
+    ctx.drawImage(img,sx+hw-sw/2,sy+TH*scale-sh+sh*0.1,sw,sh);
+    ctx.restore();
+  }
+
+  /* Return a decor sprite name for a vacant terrain plot, or null if none */
+  function decorFor(terrain,vc,vr){
+    var h=Math.abs((vc||0)*5+(vr||0)*11);
+    if(/forest|jungle/.test(terrain))  return 'decor_tree'+((h%6)+1);
+    if(/prairie|hills|marsh/.test(terrain)) return h%2===0?'decor_bush1':'decor_bush2';
+    if(/savanna|island/.test(terrain)) return h%3===0?'decor_bush2':'decor_bush1';
+    if(/coastal/.test(terrain))        return h%5===0?'decor_tent':(h%2?'decor_bush1':'decor_bush2');
+    return null;
+  }
+
   function drawRoad(sx,sy,cross,vc,vr){
     drawDiamond(sx,sy,cross?'#1f2937':'#2d3748');
     drawTileOverlay(sx,sy,'dirt'+tileVar(vc||0,vr||0),0.20);
@@ -1028,6 +1052,7 @@ _MY_PROPS_MODAL = r"""
         if(cp) drawTerrainDiamond(s.sx,s.sy,cp.terrain,cp.proximity,isHovC,false,it.vc,it.vr);
         else drawDiamond(s.sx,s.sy,'#0d1a0d',null);
         if(cp&&cp.biz_type){var csp=spriteFor(cp.biz_type,cp.biz_class);if(csp)drawSprite(s.sx,s.sy,csp);}
+        else if(cp){var cdec=decorFor(cp.terrain,it.vc,it.vr);if(cdec)drawSpriteFromTiles(s.sx,s.sy,cdec);}
         if(!cp){
           ctx.save();ctx.globalAlpha=0.08;ctx.strokeStyle='#38bdf8';ctx.lineWidth=0.5;
           var hw2c=(TW/2)*scale,hh2c=(TH/2)*scale;
@@ -1073,6 +1098,9 @@ _MY_PROPS_MODAL = r"""
       if(p.biz_type){
         var spr=spriteFor(p.biz_type,p.biz_class);
         if(spr) drawSprite(s.sx,s.sy,spr);
+      } else {
+        var dec=decorFor(p.terrain,it.vc,it.vr);
+        if(dec) drawSpriteFromTiles(s.sx,s.sy,dec);
       }
       if(isSel&&swapMode){
         ctx.fillStyle='rgba(245,158,11,0.7)';
@@ -1142,7 +1170,9 @@ _MY_PROPS_MODAL = r"""
       'terrain_arid','terrain_arid2','terrain_arid3','terrain_arid_v2','terrain_arid_v3','terrain_arid_v4',
       'terrain_savanna','terrain_savanna2','terrain_savanna3','terrain_savanna_v2','terrain_savanna_v3',
       'terrain_snow','terrain_snow2','terrain_snow3','terrain_snow_v2','terrain_snow_v3','terrain_snow_v4',
-      'terrain_water_a','terrain_water_b'
+      'terrain_water_a','terrain_water_b',
+      'decor_bush1','decor_bush2','decor_tent',
+      'decor_tree1','decor_tree2','decor_tree3','decor_tree4','decor_tree5','decor_tree6'
     ];
     var pending=0;
     function dec(){if(--pending===0)cb();}
