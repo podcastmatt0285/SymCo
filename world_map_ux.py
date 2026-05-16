@@ -970,11 +970,73 @@ _MY_PROPS_MODAL = r"""
     }
   }
 
-  var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
+  /* ── Vehicle animation ─────────────────────────────────────────────────── */
+  /* Screen angles for each road direction (constant for TW=64, TH=38) */
+  var _ROW_ANGLE=Math.atan2(TH/2,TW/2);   /* row road  ≈  30.6° */
+  var _COL_ANGLE=Math.atan2(TH/2,-TW/2);  /* col road  ≈ 149.4° */
+  /* Each entry: dir=row|col, li=lane index, f0=start fraction (0-1),
+     cps=cycles per second, ck=tileImgs key for the car sprite */
+  var _CAR_DEFS=[
+    {dir:'row',li:0,f0:0.00,cps:0.055,ck:'car_red'},
+    {dir:'row',li:0,f0:0.48,cps:0.038,ck:'car_blue'},
+    {dir:'row',li:0,f0:0.74,cps:0.062,ck:'car_red'},
+    {dir:'row',li:1,f0:0.20,cps:0.045,ck:'car_blue'},
+    {dir:'col',li:0,f0:0.12,cps:0.048,ck:'car_blue'},
+    {dir:'col',li:1,f0:0.65,cps:0.042,ck:'car_red'},
+    {dir:'col',li:2,f0:0.35,cps:0.058,ck:'car_blue'},
+  ];
+  function buildCarLanes(items){
+    var rowG={},colG={};
+    items.forEach(function(it){
+      if(it.t!=='road') return;
+      if(!it.rc){(rowG[it.vr]||(rowG[it.vr]=[])).push(it);}
+      else      {(colG[it.vc]||(colG[it.vc]=[])).push(it);}
+    });
+    var row=[],col=[];
+    Object.keys(rowG).sort(function(a,b){return a-b;}).forEach(function(k){
+      var t=rowG[k].sort(function(a,b){return a.vc-b.vc;});
+      if(t.length>=2) row.push({tiles:t});
+    });
+    Object.keys(colG).sort(function(a,b){return a-b;}).forEach(function(k){
+      var t=colG[k].sort(function(a,b){return a.vr-b.vr;});
+      if(t.length>=2) col.push({tiles:t});
+    });
+    return {row:row,col:col};
+  }
+  function drawCars(lanes,W,H){
+    if(!lanes||scale<0.35) return;
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    var carW=TW*scale*0.52,carH=carW*(64/144);
+    var cullM=TW*scale*6;
+    _CAR_DEFS.forEach(function(def){
+      var pool=def.dir==='row'?lanes.row:lanes.col;
+      if(!pool||def.li>=pool.length) return;
+      var lane=pool[def.li].tiles;
+      if(lane.length<2) return;
+      var img=tileImgs[def.ck];
+      if(!img||!img.complete||!img.naturalWidth) return;
+      var pos=(def.f0+_waveT*def.cps)%1.0;
+      var fi=pos*lane.length;
+      var i0=Math.floor(fi)%lane.length;
+      var i1=(i0+1)%lane.length;
+      var frac=fi-Math.floor(fi);
+      var s0=g2s(lane[i0].vc,lane[i0].vr);
+      var s1=g2s(lane[i1].vc,lane[i1].vr);
+      var cx=(s0.sx+hw)+((s1.sx+hw)-(s0.sx+hw))*frac;
+      var cy=(s0.sy+hh)+((s1.sy+hh)-(s0.sy+hh))*frac;
+      if(cx<-cullM||cx>W+cullM||cy<-cullM||cy>H+cullM) return;
+      var angle=def.dir==='row'?_ROW_ANGLE:_COL_ANGLE;
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(angle);
+      ctx.drawImage(img,-carW/2,-carH/2,carW,carH);
+      ctx.restore();
+    });
+  }
   var dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
   var hovId=-1,hovCI=-1,hovCPi=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
-  var _cache={key:'',items:null},_islands=null;
+  var _cache={key:'',items:null},_islands=null,_carLanes=null;
   var C_GAP=3;
   var _mpModal=null; /* cached once on first use */
   var _waveT=0;     /* Date.now()/1000 set once per render frame */
@@ -1094,6 +1156,7 @@ _MY_PROPS_MODAL = r"""
       it.adjMask=n|s|e|w;
     });
 
+    _carLanes=null;
     _cache={key:ckey,items:items};
     return items;
   }
@@ -1200,6 +1263,10 @@ _MY_PROPS_MODAL = r"""
       }
     });
 
+    /* animated vehicles on top of all road tiles */
+    if(!_carLanes) _carLanes=buildCarLanes(items);
+    drawCars(_carLanes,W,H);
+
     /* second pass: contact island name labels (pill above road separator) */
     islands.forEach(function(isl){
       var lvc=isl.baseVc+(isl.ctv-1)/2, lvr=-0.4;
@@ -1289,6 +1356,9 @@ _MY_PROPS_MODAL = r"""
       {k:'kenney_roadNS',       url:KENNEY_BASE+'roadNS.png'},
       {k:'kenney_roadEW',       url:KENNEY_BASE+'roadEW.png'},
       {k:'kenney_crossroad',    url:KENNEY_BASE+'crossroad.png'},
+      /* Farm Life vehicles (144×64 RGBA top-down sprites, rotated to road angle) */
+      {k:'car_red',  url:FARMLIFE_BASE+'Cars/Red%20car.png'},
+      {k:'car_blue', url:FARMLIFE_BASE+'Cars/Blue%20car.png'},
       /* kenney: trees — deciduous + conifers (drawn at ~42% tile width) */
       {k:'kenney_treeShort',     url:KENNEY_BASE+'treeShort.png'},
       {k:'kenney_treeTall',      url:KENNEY_BASE+'treeTall.png'},
