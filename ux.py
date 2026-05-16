@@ -13896,7 +13896,8 @@ def events_page(request: Request,
         _lvl = {"level": 1, "trophies": 0, "next_threshold": None,
                 "prev_threshold": 0, "progress_pct": 0.0}
 
-    _active   = _ev.get("active",   [])
+    _BETA_TITLES = {"Founding Operative", "Pocket Empire", "Active Duty"}
+    _active   = [e for e in _ev.get("active",   []) if e.get("title") not in _BETA_TITLES]
     _upcoming = _ev.get("upcoming", [])
     _finished = _ev.get("finished", [])
 
@@ -13960,26 +13961,29 @@ def events_page(request: Request,
             pass
         trophy_html = (f"<span style='color:#fbbf24;font-weight:700;'>+{trophy} ★</span>" if trophy else "")
 
-        # Progress bar for Tax Contributor; completion badge for all other tasks
+        # Progress bar for tasks with a numeric target; completion badge for all other tasks
         progress_html = ""
         if etype == "task":
             ev_prog = _prog_map.get(ev.get("id"), {})
             done    = ev_prog.get("completed", False)
-            if ev.get("task_metric") == "market_sales_tax_usd":
-                target  = ev.get("task_target") or 0
-                current = ev_prog.get("progress", 0.0)
-                if target > 0:
-                    pct       = min(current / target * 100, 100)
-                    bar_color = "#4ade80" if done else "#a78bfa"
-                    def _fmt(v):
+            target  = ev.get("task_target") or 0
+            current = ev_prog.get("progress", 0.0)
+            if target > 0:
+                pct       = min(current / target * 100, 100)
+                bar_color = "#4ade80" if done else "#a78bfa"
+                metric    = ev.get("task_metric", "") or ""
+                is_usd    = "_usd" in metric
+                def _fmt(v):
+                    if is_usd:
                         return f"${v:,.0f}" if v >= 1 else f"${v:,.2f}"
-                    label_text = (
-                        f'<span style="color:#4ade80;font-weight:700;">✓ Complete!</span>'
-                        if done else
-                        f'<span style="color:#a78bfa;">{_fmt(current)}</span>'
-                        f'<span style="color:#475569;"> / {_fmt(target)}</span>'
-                    )
-                    progress_html = f"""
+                    return f"{v:,.2f}"
+                label_text = (
+                    f'<span style="color:#4ade80;font-weight:700;">✓ Complete!</span>'
+                    if done else
+                    f'<span style="color:#a78bfa;">{_fmt(current)}</span>'
+                    f'<span style="color:#475569;"> / {_fmt(target)}</span>'
+                )
+                progress_html = f"""
                 <div style="margin-top:10px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                         <span style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.05em;">Progress</span>

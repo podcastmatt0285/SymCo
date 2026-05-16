@@ -144,6 +144,10 @@ def _award_trophies(player_id: int, amount: int, event_id: int = None) -> bool:
                                               progress=1.0, trophies_awarded=amount,
                                               completed_at=datetime.utcnow())
                     edb.add(prog)
+                else:
+                    prog.progress         = (prog.progress or 0) + 1.0
+                    prog.trophies_awarded = (prog.trophies_awarded or 0) + amount
+                    prog.completed_at     = datetime.utcnow()
             edb.commit()
             return True
         finally:
