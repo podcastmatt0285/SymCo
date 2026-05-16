@@ -880,8 +880,7 @@ _MY_PROPS_MODAL = r"""
     ctx.drawImage(img, sx+hw-sw/2, sy+TH*scale-sh+sh*0.15, sw, sh);
   }
 
-  /* Like drawSprite but sources from tileImgs (decor sprites in /static/iso/tiles/) */
-  function drawSpriteFromTiles(sx,sy,name,alpha){
+  function drawDecorSprite(sx,sy,name,alpha){
     var img=tileImgs[name];
     if(!img||!img.complete||!img.naturalWidth) return;
     var ratio=img.naturalHeight/img.naturalWidth;
@@ -894,13 +893,12 @@ _MY_PROPS_MODAL = r"""
     ctx.restore();
   }
 
-  /* Return a decor sprite name for a vacant terrain plot, or null if none */
   function decorFor(terrain,vc,vr){
-    var h=Math.abs((vc||0)*5+(vr||0)*11);
-    if(/forest|jungle/.test(terrain))  return 'decor_tree'+((h%6)+1);
-    if(/prairie|hills|marsh/.test(terrain)) return h%2===0?'decor_bush1':'decor_bush2';
-    if(/savanna|island/.test(terrain)) return h%3===0?'decor_bush2':'decor_bush1';
-    if(/coastal/.test(terrain))        return h%5===0?'decor_tent':(h%2?'decor_bush1':'decor_bush2');
+    var h=Math.abs(vc*5+vr*11);
+    if(/forest|jungle/.test(terrain))   return 'decor_tree'+((h%6)+1);
+    if(/prairie|hills|marsh/.test(terrain)) return h%2?'decor_bush2':'decor_bush1';
+    if(/savanna|island/.test(terrain))  return h%3?'decor_bush1':'decor_bush2';
+    if(/coastal/.test(terrain))         return h%5?'decor_bush'+(h%2+1):'decor_tent';
     return null;
   }
 
@@ -922,15 +920,13 @@ _MY_PROPS_MODAL = r"""
   function drawWater(sx,sy,vc,vr){
     drawDiamond(sx,sy,'#071828');
     drawTileOverlay(sx,sy,'iso_water2',0.78);
-    /* animated highlight wave */
-    var t=Date.now()/1000;
-    var ph=((vc||0)*0.6+(vr||0)*0.4+t*0.7)%(Math.PI*2);
-    var alpha=(0.05+0.04*Math.sin(ph)).toFixed(3);
+    var ph=(vc*0.6+vr*0.4+_waveT*0.7)%(Math.PI*2);
+    var a=0.05+0.04*Math.sin(ph);
     var hw=(TW/2)*scale,hh=(TH/2)*scale;
     ctx.save();
     var gr=ctx.createLinearGradient(sx+hw*0.2,sy+hh,sx+hw*1.8,sy+hh);
     gr.addColorStop(0,'rgba(56,189,248,0)');
-    gr.addColorStop(0.5,'rgba(56,189,248,'+alpha+')');
+    gr.addColorStop(0.5,'rgba(56,189,248,'+a+')');
     gr.addColorStop(1,'rgba(56,189,248,0)');
     ctx.beginPath();
     ctx.moveTo(sx+hw,sy); ctx.lineTo(sx+hw*2,sy+hh);
@@ -945,12 +941,13 @@ _MY_PROPS_MODAL = r"""
   var hovId=-1,hovCI=-1,hovCPi=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
   var _cache={key:'',items:null},_islands=null;
-  var C_GAP=3; /* water tiles between the player island and each contact island */
+  var C_GAP=3;
+  var _mpModal=null; /* cached once on first use */
+  var _waveT=0;     /* Date.now()/1000 set once per render frame */
 
-  /* Water animation loop — runs at ~12fps only while the modal is open */
   var _waveAF=null, _waveLast=0;
   function _waveLoop(ts){
-    if(!cv||document.getElementById('mpModal').style.display==='none'){_waveAF=null;return;}
+    if(!cv||(_mpModal||(_mpModal=document.getElementById('mpModal'))).style.display==='none'){_waveAF=null;return;}
     if(ts-_waveLast>83){_waveLast=ts;render();}
     _waveAF=requestAnimationFrame(_waveLoop);
   }
@@ -1052,6 +1049,7 @@ _MY_PROPS_MODAL = r"""
 
   function render(){
     if(!cv||!ctx) return;
+    _waveT=Date.now()/1000;
     var W=cv.offsetWidth,H=cv.offsetHeight;
     var grad=ctx.createLinearGradient(0,0,0,H);
     grad.addColorStop(0,'#010912'); grad.addColorStop(0.6,'#040e1c'); grad.addColorStop(1,'#030a06');
@@ -1078,7 +1076,7 @@ _MY_PROPS_MODAL = r"""
         if(cp) drawTerrainDiamond(s.sx,s.sy,cp.terrain,cp.proximity,isHovC,false,it.vc,it.vr);
         else drawDiamond(s.sx,s.sy,'#0d1a0d',null);
         if(cp&&cp.biz_type){var csp=spriteFor(cp.biz_type,cp.biz_class);if(csp)drawSprite(s.sx,s.sy,csp);}
-        else if(cp){var cdec=decorFor(cp.terrain,it.vc,it.vr);if(cdec)drawSpriteFromTiles(s.sx,s.sy,cdec);}
+        else if(cp){var cdec=decorFor(cp.terrain,it.vc,it.vr);if(cdec)drawDecorSprite(s.sx,s.sy,cdec);}
         if(!cp){
           ctx.save();ctx.globalAlpha=0.08;ctx.strokeStyle='#38bdf8';ctx.lineWidth=0.5;
           var hw2c=(TW/2)*scale,hh2c=(TH/2)*scale;
@@ -1126,7 +1124,7 @@ _MY_PROPS_MODAL = r"""
         if(spr) drawSprite(s.sx,s.sy,spr);
       } else {
         var dec=decorFor(p.terrain,it.vc,it.vr);
-        if(dec) drawSpriteFromTiles(s.sx,s.sy,dec);
+        if(dec) drawDecorSprite(s.sx,s.sy,dec);
       }
       if(isSel&&swapMode){
         ctx.fillStyle='rgba(245,158,11,0.7)';
@@ -1203,23 +1201,23 @@ _MY_PROPS_MODAL = r"""
     /* iso assets served from /assets/iso/ — keyed with 'iso_' prefix */
     var ISO_TILES={'iso_water2':'water2.png'};
     var pending=0;
-    function dec(){if(--pending===0)cb();}
+    function _onImg(){if(--pending===0)cb();}
     keys.forEach(function(k){
       if(imgs[k]&&imgs[k].complete&&imgs[k].naturalWidth>0) return;
       pending++;
-      var img=new Image(); img.onload=img.onerror=dec;
+      var img=new Image(); img.onload=img.onerror=_onImg;
       img.src=SPRITE_BASE+k+'.png'; imgs[k]=img;
     });
     TILES.forEach(function(k){
       if(tileImgs[k]&&tileImgs[k].complete&&tileImgs[k].naturalWidth>0) return;
       pending++;
-      var img=new Image(); img.onload=img.onerror=dec;
+      var img=new Image(); img.onload=img.onerror=_onImg;
       img.src=TILE_BASE+k+'.png'; tileImgs[k]=img;
     });
     Object.keys(ISO_TILES).forEach(function(k){
       if(tileImgs[k]&&tileImgs[k].complete&&tileImgs[k].naturalWidth>0) return;
       pending++;
-      var img=new Image(); img.onload=img.onerror=dec;
+      var img=new Image(); img.onload=img.onerror=_onImg;
       img.src=ISO_BASE+ISO_TILES[k]; tileImgs[k]=img;
     });
     if(pending===0) cb();
