@@ -508,30 +508,26 @@ _MY_PROPS_MODAL = r"""
   var TW=64, TH=38, BLOCK=4;
   var SPRITE_BASE='/static/iso/buildings/';
 
-  /* 18-building downtown — laid out in 3 rows of 6 cols, centred on the grid */
+  /* 3×3 downtown block — 8 buildings surrounding a central park.
+     Raw vc coordinates used (no p2v road-gap math) so tiles are adjacent. */
   var DOWNTOWN=[
-    /* row 0 — financial row */
-    {label:'Reserve Bank',       sprite:'commercial',  url:'/reserve-bank',         row:0,col:0},
-    {label:'Land Bank',          sprite:'commercial',  url:'/banks/land-bank',       row:0,col:1},
-    {label:'Apple Seeds ETF',    sprite:'university',  url:'/banks/apple-seeds-etf', row:0,col:2},
-    {label:'Energy ETF',         sprite:'industrial',  url:'/banks/energy-etf',      row:0,col:3},
-    {label:'City Nav ETF',       sprite:'university',  url:'/banks/city-nav-etf',    row:0,col:4},
-    {label:'WBC50 Index Fund',   sprite:'commercial',  url:'/banks/wbc50-index-fund',row:0,col:5},
-    /* row 1 — markets & exchanges */
-    {label:'Commodity Market',   sprite:'shop_medium', url:'/market',                row:1,col:0},
-    {label:'District Market',    sprite:'shop_medium', url:'/district-market',       row:1,col:1},
-    {label:'Land Registry',      sprite:'mansion',     url:'/land-market',           row:1,col:2},
-    {label:'Stock Exchange',     sprite:'university',  url:'/brokerage',             row:1,col:3},
-    {label:'Forex Exchange',     sprite:'commercial',  url:'/reserve-banks/forex',   row:1,col:4},
-    {label:'Bond Market',        sprite:'commercial',  url:'/reserve-banks/bonds',   row:1,col:5},
-    /* row 2 — city services */
-    {label:'City Hall',          sprite:'mansion',     url:'/cities',                row:2,col:0},
-    {label:'County Office',      sprite:'mansion',     url:'/counties',              row:2,col:1},
-    {label:'Executives',         sprite:'university',  url:'/executives',            row:2,col:2},
-    {label:'P2P Trading',        sprite:'shop_small',  url:'/p2p',                   row:2,col:3},
-    {label:'Businesses',         sprite:'industrial',  url:'/businesses',            row:2,col:4},
-    {label:'Memecoin Exchange',  sprite:'space',       url:'/memecoins',             row:2,col:5},
+    {label:'Reserve Bank',     sprite:'commercial',  url:'/reserve-bank',    row:0,col:0},
+    {label:'Stock Exchange',   sprite:'university',  url:'/brokerage',       row:0,col:1},
+    {label:'Commodity Market', sprite:'shop_medium', url:'/market',          row:0,col:2},
+    {label:'Land Registry',    sprite:'mansion',     url:'/land-market',     row:1,col:0},
+    /* (1,1) = center park tile — intentionally absent from this array */
+    {label:'District Market',  sprite:'shop_medium', url:'/district-market', row:1,col:2},
+    {label:'City Hall',        sprite:'mansion',     url:'/cities',          row:2,col:0},
+    {label:'Businesses',       sprite:'industrial',  url:'/businesses',      row:2,col:1},
+    {label:'Memecoin Exchange',sprite:'space',       url:'/memecoins',       row:2,col:2},
   ];
+  var DT_N=3; /* side length of the square downtown block */
+
+  /* downtown top-left visual col (raw, consecutive — no p2v road spacing) */
+  function getDtVcBase(gs){ return Math.max(0, Math.round((totalVC(gs)-DT_N)/2)); }
+
+  /* downtown occupies vr = -DT_N .. -1; road separator at vr=0; player grid vr=1..tv */
+  var DT_VR_TOP=-DT_N; /* = -3 */
 
   var TERRAIN_COLOR={
     urban:'#64748b', prairie:'#86efac', forest:'#16a34a', desert:'#fbbf24',
@@ -638,65 +634,56 @@ _MY_PROPS_MODAL = r"""
   var selfId=-1,viewingId=-1;
   var _cache={gs:-1,items:null};
 
-  /* Downtown layout: 3 rows × 6 cols, centred on the player grid.
-     Player grid occupies vc in [0, tv-1]. Downtown sits at vr < 0,
-     separated by a road at vr=-1 so it reads "behind" in iso perspective. */
-  var DT_COLS=6, DT_ROWS=3;
-
-  function dtOffset(gs){
-    /* horizontal centre: visual centre of downtown vs visual centre of grid */
-    var tv=totalVC(gs);
-    var dtWidth=p2v((DT_COLS-1)*2)+1; /* visual span of downtown cols */
-    return Math.round((tv - dtWidth)/2);
-  }
-
   function getItems(){
     var gs=gridSz(plots.length||1);
     if(_cache.gs===gs) return _cache.items;
-    var tv=totalVC(gs), items=[];
-    var dtOff=dtOffset(gs);
+    var tv=totalVC(gs);
+    var dtVcB=getDtVcBase(gs);
+    var items=[];
 
-    /* water border — extend to cover downtown rows too */
-    var vrMin=-DT_ROWS-2, vrMax=tv+1;
-    var vcMin=-1,         vcMax=tv+1;
-    for(var bi=vrMin;bi<=vrMax;bi++){
-      items.push({t:'water',vc:vcMin,vr:bi,depth:vcMin+bi});
-      items.push({t:'water',vc:vcMax,vr:bi,depth:vcMax+bi});
-    }
-    for(var bi2=vcMin;bi2<=vcMax;bi2++){
-      items.push({t:'water',vc:bi2,vr:vrMin,  depth:bi2+vrMin});
-      items.push({t:'water',vc:bi2,vr:vrMax+1,depth:bi2+vrMax+1});
-    }
+    /* Build downtown lookup: "vc,vr" → {d:building} | {park:true} */
+    var dtMap={};
+    DOWNTOWN.forEach(function(d){
+      dtMap[(dtVcB+d.col)+','+(DT_VR_TOP+d.row)]={d:d};
+    });
+    /* centre tile = park */
+    dtMap[(dtVcB+1)+','+(DT_VR_TOP+1)]={park:true};
 
-    /* downtown blocks — 3 rows of 6 buildings */
-    for(var dr=0;dr<DT_ROWS;dr++){
-      var vr0=-(DT_ROWS-dr);      /* vr = -3,-2,-1 */
-      /* separator road row before downtown */
-      if(dr===0){
-        for(var sc0=0;sc0<tv;sc0++)
-          items.push({t:'road',vc:sc0,vr:vr0-1,depth:sc0+vr0-1});
-      }
-      /* fill row with water for tiles not occupied by buildings */
-      for(var dc=0;dc<DT_COLS;dc++){
-        var dvc=dtOff+p2v(dc*2);
-        var d=null;
-        DOWNTOWN.forEach(function(bd){if(bd.row===dr&&bd.col===dc)d=bd;});
-        items.push({t:'down',vc:dvc,vr:vr0,depth:dvc+vr0,d:d});
-      }
-    }
+    /* Full bounding box — every cell is explicitly assigned a tile type.
+       This eliminates bare canvas gaps around the downtown block.
+       vcLo/vcHi and vrLo/vrHi are the water-border edge rows/cols. */
+    var vcLo=-1, vcHi=tv;
+    var vrLo=DT_VR_TOP-1, vrHi=tv+1; /* one row above downtown, one below grid */
 
-    /* separator road between downtown and player grid */
-    for(var sc=0;sc<tv;sc++)
-      items.push({t:'road',vc:sc,vr:0,depth:sc});
-
-    /* player plot grid — starts at vr=1 */
-    for(var vr2=1;vr2<=tv;vr2++){
-      for(var vc2=0;vc2<tv;vc2++){
+    for(var vr2=vrLo;vr2<=vrHi;vr2++){
+      for(var vc2=vcLo;vc2<=vcHi;vc2++){
+        var depth=vc2+vr2;
+        /* outer border → water */
+        if(vc2===vcLo||vc2===vcHi||vr2===vrLo||vr2===vrHi){
+          items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
+        }
+        /* downtown zone (vr < 0) */
+        if(vr2<0){
+          var key=vc2+','+vr2, e=dtMap[key];
+          if(e){
+            items.push(e.park
+              ?{t:'park',vc:vc2,vr:vr2,depth:depth}
+              :{t:'down',vc:vc2,vr:vr2,depth:depth,d:e.d});
+          } else {
+            items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
+          }
+          continue;
+        }
+        /* road separator (vr=0) */
+        if(vr2===0){ items.push({t:'road',vc:vc2,vr:0,depth:depth}); continue; }
+        /* player grid (vr≥1) */
         var rc=isRd(vc2),rr=isRd(vr2-1);
-        var type=rc||rr?(rc&&rr?'cross':'road'):'cell';
-        var pi=-1;
-        if(type==='cell'){ pi=v2p(vr2-1)*gs+v2p(vc2); if(pi>=plots.length) pi=-1; }
-        items.push({t:type,vc:vc2,vr:vr2,depth:vc2+vr2,pi:pi});
+        if(rc||rr){
+          items.push({t:rc&&rr?'cross':'road',vc:vc2,vr:vr2,depth:depth});
+        } else {
+          var pi=v2p(vr2-1)*gs+v2p(vc2);
+          items.push({t:'cell',vc:vc2,vr:vr2,depth:depth,pi:pi<plots.length?pi:-1});
+        }
       }
     }
 
@@ -729,7 +716,26 @@ _MY_PROPS_MODAL = r"""
       if(it.t==='water'){ drawWater(s.sx,s.sy); return; }
       if(it.t==='cross'){ drawDiamond(s.sx,s.sy,'#1f2937'); return; }
       if(it.t==='road') { drawRoad(s.sx,s.sy,false); return; }
-      if(it.t==='down') { drawDiamond(s.sx,s.sy,'#1a2535'); if(it.d.sprite) drawSprite(s.sx,s.sy,it.d.sprite); return; }
+      if(it.t==='park') {
+        drawDiamond(s.sx,s.sy,'#14532d');
+        drawSprite(s.sx,s.sy,'park');
+        return;
+      }
+      if(it.t==='down') {
+        drawDiamond(s.sx,s.sy,'#1e2d4a');
+        if(it.d&&it.d.sprite) drawSprite(s.sx,s.sy,it.d.sprite);
+        if(it.d&&scale>=0.45){
+          ctx.save();
+          ctx.font='bold '+Math.max(7,Math.round(8*scale))+'px sans-serif';
+          ctx.fillStyle='rgba(148,163,184,0.88)';
+          ctx.textAlign='center';
+          var hw_d=(TW/2)*scale;
+          ctx.fillText(it.d.label,s.sx+hw_d,(s.sy+TH*2*scale)+2);
+          ctx.textAlign='left';
+          ctx.restore();
+        }
+        return;
+      }
 
       if(it.pi<0){
         drawDiamond(s.sx,s.sy,'#101a10');
@@ -770,7 +776,7 @@ _MY_PROPS_MODAL = r"""
   }
 
   function preloadSprites(cb){
-    var needed={};
+    var needed={park:1};
     plots.forEach(function(p){if(p.biz_type){var s=spriteFor(p.biz_type,p.biz_class);if(s)needed[s]=1;}});
     DOWNTOWN.forEach(function(d){if(d.sprite)needed[d.sprite]=1;});
     var keys=Object.keys(needed),pending=0;
@@ -795,14 +801,17 @@ _MY_PROPS_MODAL = r"""
     if(!cv) return;
     resizeCv();
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
-    var W=cv.offsetWidth,H=cv.offsetHeight;
-    /* total iso extent: tv cols wide, (tv + DT_ROWS + 2) rows tall */
-    var totalRows=tv+DT_ROWS+2;
-    var isoW=(tv+2)*TW, isoH=(totalRows+2)*TH;
-    var fit=Math.min(W/isoW, H/isoH)*0.86;
-    scale=Math.max(0.18,Math.min(1.8,fit));
-    /* centre on the whole scene including downtown */
-    var midVc=(tv-1)/2, midVr=(tv/2+1-(DT_ROWS/2));
+    var W=cv.offsetWidth, H=cv.offsetHeight;
+    /* scene spans vc=[vcLo..vcHi], vr=[vrLo..vrHi] where vcLo=-1,vcHi=tv,vrLo=DT_VR_TOP-1,vrHi=tv+1
+       iso screen extent = (vcHi+vrHi - vcLo - vrLo) for both W and H (diamond):
+       isoW = ((tv-(-1)) + (tv+1 - (DT_VR_TOP-1))) * TW/2 = (tv+1 + tv-DT_VR_TOP+2) * TW/2
+       Simplified: fit to canvas using total tile spans */
+    var vcSpan=tv+2, vrSpan=tv-DT_VR_TOP+2; /* DT_VR_TOP negative so this is tv+DT_N+2 */
+    var isoW=(vcSpan+vrSpan)*TW/2, isoH=(vcSpan+vrSpan)*TH/2;
+    var fit=Math.min(W/isoW, H/isoH)*0.85;
+    scale=Math.max(0.15, Math.min(1.8, fit));
+    /* geometric centre of bounding box → screen centre */
+    var midVc=((-1)+tv)/2, midVr=((DT_VR_TOP-1)+(tv+1))/2;
     offX=W/2-(midVc-midVr)*(TW/2)*scale;
     offY=H/2-(midVc+midVr)*(TH/2)*scale;
     render();
@@ -817,13 +826,12 @@ _MY_PROPS_MODAL = r"""
   function hitTest(mx,my){
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var hwh=(TW/2)*scale, hhh=(TH/2)*scale;
-    var dtOff=dtOffset(gs);
-    /* downtown tiles */
+    var dtVcB=getDtVcBase(gs);
+    /* downtown tiles (8 buildings — park center is not interactive) */
     for(var di=0;di<DOWNTOWN.length;di++){
       var d=DOWNTOWN[di];
-      var dvc=dtOff+p2v(d.col*2), dvr=-(DT_ROWS-d.row);
-      var s=g2s(dvc,dvr);
-      var ddx=mx-(s.sx+hwh),ddy=my-(s.sy+hhh);
+      var s=g2s(dtVcB+d.col, DT_VR_TOP+d.row);
+      var ddx=mx-(s.sx+hwh), ddy=my-(s.sy+hhh);
       if(Math.abs(ddx/hwh)+Math.abs(ddy/hhh)<=1) return {downtown:d};
     }
     /* player grid: vr=1..tv */
@@ -831,7 +839,7 @@ _MY_PROPS_MODAL = r"""
       for(var vc=tv-1;vc>=0;vc--){
         if(isRd(vc)||isRd(vr-1)) continue;
         var s2=g2s(vc,vr);
-        var dx2=mx-(s2.sx+hwh),dy2=my-(s2.sy+hhh);
+        var dx2=mx-(s2.sx+hwh), dy2=my-(s2.sy+hhh);
         if(Math.abs(dx2/hwh)+Math.abs(dy2/hhh)<=1){
           var pi=v2p(vr-1)*gs+v2p(vc);
           if(pi<plots.length) return {plot:plots[pi],pi:pi};
