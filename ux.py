@@ -1921,6 +1921,43 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
     from reserve_banks import get_player_display_currency, fmt_usd
     disp = get_player_display_currency(player.id)
 
+    # Reseed guard: silently re-run registration seeding if a new player has $0
+    _reseed_banner = ""
+    try:
+        _tut_step = getattr(player, "tutorial_step", 0) or 0
+        if _tut_step <= 1:
+            from reserve_banks import get_usd_balance, credit_usd
+            _balance = get_usd_balance(player.id)
+            if _balance < 1.0:
+                credit_usd(player.id, 50000.0)
+                print(f"[Dashboard] Reseeded $50k for player {player.id}")
+                try:
+                    from land import LandPlot, get_db as _ldb_fn, create_starter_plot
+                    _ldb = _ldb_fn()
+                    _land_count = _ldb.query(LandPlot).filter(LandPlot.owner_id == player.id).count()
+                    _ldb.close()
+                    for _ in range(max(0, 3 - _land_count)):
+                        create_starter_plot(player.id)
+                    print(f"[Dashboard] Reseeded land plots for player {player.id}")
+                except Exception as _le:
+                    print(f"[Dashboard] Land reseed error: {_le}")
+                try:
+                    from market import give_starter_inventory
+                    give_starter_inventory(player.id)
+                    print(f"[Dashboard] Reseeded inventory for player {player.id}")
+                except Exception as _ie:
+                    print(f"[Dashboard] Inventory reseed error: {_ie}")
+                _reseed_banner = """
+                <div style="background:linear-gradient(135deg,#052e16,#0a3d20);border:1px solid #16a34a;border-radius:6px;padding:14px 18px;margin-bottom:20px;">
+                    <strong style="color:#4ade80;">&#10003; Account setup complete!</strong>
+                    <p style="color:#86efac;font-size:0.85rem;margin:6px 0 0;">
+                        Your starting resources are ready: <strong>$50,000 USD</strong>, <strong>3 land plots</strong>, and a <strong>starter inventory</strong>.
+                        Check your <a href="/wallet" style="color:#4ade80;text-decoration:underline;">Wallet</a> and <a href="/land" style="color:#4ade80;text-decoration:underline;">Land</a> pages to get started.
+                    </p>
+                </div>"""
+    except Exception as _rs_err:
+        print(f"[Dashboard] Reseed check error: {_rs_err}")
+
     # Tutorial banner/overlay
     try:
         from tutorial_ux import (
@@ -2189,7 +2226,7 @@ def home(request: Request, session_token: Optional[str] = Cookie(None)):
     except Exception:
         game_notif_banners = ""
 
-    dashboard_top = tutorial_overlay or tutorial_banner
+    dashboard_top = _reseed_banner + (tutorial_overlay or tutorial_banner)
     if acq_banners:
         dashboard_top = dashboard_top + acq_banners
     if crypto_inherit_banners:

@@ -512,6 +512,16 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
                 }, 10000);
             })();
             </script>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #1e293b;">
+                <p style="color:#475569;font-size:0.8rem;margin:0 0 6px 0;">
+                    Plantation not producing? Make sure it has water input and is set to run.
+                </p>
+                <a href="/api/tutorial/skip-apple-wait"
+                   onclick="return confirm('Skip the apple wait? You can still sell on the Market anytime.');"
+                   style="color:#475569;font-size:0.78rem;text-decoration:underline;">
+                    My plantation isn't working — skip this step
+                </a>
+            </div>
             """
 
         content = f"""
@@ -840,7 +850,7 @@ def get_tutorial_overlay_html(player, current_page: str) -> str:
         <h3 style="color:#d4af37;margin:0 0 12px 0;font-size:1.05rem;">{title}</h3>
         {content}
         <a href="/api/tutorial/dismiss"
-           onclick="return confirm('Skip the tutorial? You can always restart by creating a new account.');"
+           onclick="return confirm('Skip the tutorial? You can resume or restart it anytime from Settings → Tutorials.');"
            style="position:absolute;top:12px;right:16px;color:#475569;font-size:0.72rem;text-decoration:none;">
             Skip Tutorial
         </a>
@@ -912,6 +922,17 @@ def check_apple(session_token: Optional[str] = Cookie(None)):
     if not player:
         return JSONResponse({"has_apple": False})
     return JSONResponse({"has_apple": player_has_apple_in_inventory(player.id)})
+
+
+@router.get("/api/tutorial/skip-apple-wait")
+def skip_apple_wait(session_token: Optional[str] = Cookie(None)):
+    """Step 7 escape hatch: bypass the apple-listing check and advance to step 8."""
+    player = _get_player_from_cookie(session_token)
+    if not player:
+        return RedirectResponse(url="/login", status_code=303)
+    if get_tutorial_step(player.id) == 7:
+        set_tutorial_step(player.id, 8)
+    return RedirectResponse(url=STEP_REDIRECT.get(8, "/"), status_code=303)
 
 
 def _has_tutorial_reward_plot(player_id: int) -> bool:
