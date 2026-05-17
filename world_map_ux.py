@@ -1077,11 +1077,11 @@ _MY_PROPS_MODAL = r"""
       if(cx<-cullM||cx>W+cullM||cy<-cullM||cy>H+cullM) return;
       /* pick frame: 6 animation-fps, staggered by phase offset */
       var f=_WALK_SRC[Math.floor((_waveT*6+def.ph)%8)|0];
-      var charH=TH*scale*2.5, charW=charH*(f[2]/f[3]);
+      var charH=TH*scale*3.5, charW=charH*(f[2]/f[3]);
       /* offset to sidewalk side (perpendicular to road) so walkers don't
          overlap cars — shift by ~30% of hh perpendicular to lane direction */
       var perpX=(def.dir==='row'?-hh:hh)*0.35;
-      var perpY=(def.dir==='row'? hw: hw)*0.35;
+      var perpY=(def.dir==='row'? hw:-hw)*0.35;
       ctx.save();
       ctx.drawImage(img,f[0],f[1],f[2],f[3],
         cx+perpX-charW/2, cy+perpY-charH, charW, charH);
@@ -1420,7 +1420,7 @@ _MY_PROPS_MODAL = r"""
       /* Farm Life vehicles and characters */
       {k:'car_red',   url:FARMLIFE_BASE+'Cars/Red%20car.png'},
       {k:'car_blue',  url:FARMLIFE_BASE+'Cars/Blue%20car.png'},
-      {k:'char_walk', url:FARMLIFE_BASE+'Character%20Animations/Walk.png'},
+      {k:'char_walk', url:TILE_BASE+'char_walk.png'},
       /* kenney: trees — deciduous + conifers (drawn at ~42% tile width) */
       {k:'kenney_treeShort',     url:KENNEY_BASE+'treeShort.png'},
       {k:'kenney_treeTall',      url:KENNEY_BASE+'treeTall.png'},
