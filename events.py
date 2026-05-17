@@ -236,6 +236,11 @@ def get_recent_finished_events(limit: int = 5):
 
 
 def _serialize_event(ev: GameEvent) -> dict:
+    import json as _json
+    try:
+        _ed = _json.loads(ev.effect_data or "{}")
+    except Exception:
+        _ed = {}
     return {
         "id":             ev.id,
         "title":          ev.title,
@@ -247,6 +252,7 @@ def _serialize_event(ev: GameEvent) -> dict:
         "trophy_reward":  ev.trophy_reward,
         "task_target":    ev.task_target,
         "task_metric":    ev.task_metric,
+        "effect_data":    _ed,
     }
 
 

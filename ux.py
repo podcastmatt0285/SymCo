@@ -14055,6 +14055,121 @@ def events_page(request: Request,
             elif done:
                 progress_html = '<div style="margin-top:8px;"><span style="color:#4ade80;font-weight:700;font-size:0.82rem;">✓ Completed</span></div>'
 
+        # Crypto Scam buy panel (active events only)
+        cs_panel = ""
+        _effect = ev.get("effect_data") or {}
+        if _effect.get("type") == "crypto_scam" and status_label == "active":
+            _ev_id   = ev.get("id")
+            from reserve_banks import get_usd_balance
+            _bal     = get_usd_balance(player.id)
+            _max_wsc = int(_bal * 0.90)
+            cs_panel = f"""
+            <div style="margin-top:14px;background:#050d1a;border:1px solid #1e3a5f;
+                        border-radius:6px;padding:14px 16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                    <span style="font-size:0.9rem;">💸</span>
+                    <span style="font-size:0.82rem;font-weight:700;color:#fbbf24;">
+                        Live WSC Purchase
+                    </span>
+                    <span style="font-size:0.68rem;color:#475569;margin-left:auto;">
+                        Rate: 1 WSC = $1.00 &nbsp;·&nbsp; Cash burned on purchase
+                    </span>
+                </div>
+                <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
+                    Cash balance:&nbsp;
+                    <b id="cs-bal-{_ev_id}" style="color:#e2e8f0;">
+                        ${_bal:,.2f}
+                    </b>
+                    &nbsp;·&nbsp; Max you can buy:&nbsp;
+                    <b id="cs-max-{_ev_id}" style="color:#fbbf24;">
+                        {_max_wsc:,} WSC
+                    </b>
+                </div>
+                <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:0.65rem;color:#64748b;margin-bottom:3px;">
+                            WSC amount (whole units only)
+                        </div>
+                        <input type="number"
+                               id="cs-amt-{_ev_id}"
+                               min="1" max="{_max_wsc}" step="1" value="1"
+                               style="width:130px;padding:6px 8px;font-size:0.82rem;
+                                      background:#0f172a;border:1px solid #334155;
+                                      color:#e2e8f0;border-radius:4px;"
+                               oninput="csSchedule({_ev_id})">
+                    </div>
+                    <button onclick="csBuy({_ev_id})"
+                            style="padding:7px 18px;background:#1d4ed8;border:none;
+                                   border-radius:4px;color:#fff;font-size:0.82rem;
+                                   font-weight:700;cursor:pointer;white-space:nowrap;">
+                        Buy WSC
+                    </button>
+                </div>
+                <div id="cs-preview-{_ev_id}"
+                     style="font-size:0.78rem;color:#64748b;min-height:22px;"></div>
+                <div id="cs-status-{_ev_id}"
+                     style="font-size:0.78rem;min-height:22px;margin-top:4px;"></div>
+            </div>
+            <script>
+            (function(){{
+                var _evId={_ev_id}, _t=null;
+                function _fmt(n){{
+                    return '$'+n.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}});
+                }}
+                function csFetch(){{
+                    var amt=parseInt(document.getElementById('cs-amt-'+_evId).value)||1;
+                    var prev=document.getElementById('cs-preview-'+_evId);
+                    prev.innerHTML='<span style="color:#475569;">Calculating…</span>';
+                    fetch('/api/events/crypto-scam/rate?event_id='+_evId+'&amount='+amt)
+                        .then(function(r){{return r.json();}})
+                        .then(function(d){{
+                            if(d.error){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
+                            prev.innerHTML=
+                                '<span style="color:#94a3b8;">You pay: </span>'+
+                                '<b style="color:#f87171;">'+_fmt(d.cost_usd)+'</b>'+
+                                '<span style="color:#475569;"> (burned forever)</span>'+
+                                ' &rarr; '+
+                                '<b style="color:#fbbf24;">'+amt.toLocaleString()+' WSC</b>'+
+                                '<span style="color:#475569;"> &nbsp;&middot;&nbsp; max: '+
+                                (d.max_wsc||0).toLocaleString()+' WSC</span>';
+                        }});
+                }}
+                window.csSchedule=function(id){{
+                    if(id!==_evId) return;
+                    clearTimeout(_t);
+                    _t=setTimeout(csFetch,350);
+                }};
+                window.csBuy=function(id){{
+                    if(id!==_evId) return;
+                    var amt=parseInt(document.getElementById('cs-amt-'+_evId).value)||0;
+                    if(amt<1){{alert('Enter a valid whole number of WSC (minimum 1).');return;}}
+                    var st=document.getElementById('cs-status-'+_evId);
+                    st.innerHTML='<span style="color:#475569;">Processing…</span>';
+                    var fd=new FormData();
+                    fd.append('event_id',_evId);
+                    fd.append('wsc_amount',amt);
+                    fetch('/api/events/crypto-scam/buy',{{method:'POST',body:fd}})
+                        .then(function(r){{return r.json();}})
+                        .then(function(d){{
+                            if(d.ok){{
+                                st.innerHTML='<span style="color:#4ade80;">✓ '+d.message+'</span>';
+                                if(d.new_cash_balance!==undefined){{
+                                    var b=document.getElementById('cs-bal-'+_evId);
+                                    if(b) b.textContent=_fmt(d.new_cash_balance).replace('$','$');
+                                    var mx=document.getElementById('cs-max-'+_evId);
+                                    if(mx) mx.textContent=Math.floor(d.new_cash_balance*0.90).toLocaleString()+' WSC';
+                                }}
+                                csFetch();
+                            }} else {{
+                                st.innerHTML='<span style="color:#ef4444;">✗ '+(d.error||'Purchase failed.')+'</span>';
+                            }}
+                        }})
+                        .catch(function(){{st.innerHTML='<span style="color:#ef4444;">Network error.</span>';}});
+                }};
+                csFetch();
+            }})();
+            </script>"""
+
         return f"""
         <div style="background:#0a0f1e;border:1px solid #1e293b;border-left:3px solid {status_color};
                     border-radius:8px;padding:16px 18px;margin-bottom:10px;">
@@ -14068,6 +14183,7 @@ def events_page(request: Request,
                     <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
                     <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
                     {progress_html}
+                    {cs_panel}
                 </div>
                 <div style="color:{status_color};font-size:0.75rem;white-space:nowrap;padding-top:2px;">{time_str}</div>
             </div>
@@ -14274,6 +14390,71 @@ def events_page(request: Request,
     return shell("Events & Tasks", body,
                  balance=getattr(player, "cash_balance", 0.0),
                  player_id=player.id)
+
+
+@router.get("/api/events/crypto-scam/rate", response_class=JSONResponse)
+def api_crypto_scam_rate(
+    event_id: int = Query(...),
+    amount:   int = Query(1),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "auth"}, status_code=401)
+    try:
+        import json as _j
+        from events import get_active_events
+        ev = next((e for e in get_active_events() if e.id == event_id), None)
+        if not ev:
+            return JSONResponse({"error": "Event not active."})
+        if _j.loads(ev.effect_data or "{}").get("type") != "crypto_scam":
+            return JSONResponse({"error": "Not a Crypto Scam event."})
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)})
+    from reserve_banks import get_usd_balance
+    balance = get_usd_balance(player.id)
+    max_wsc = int(balance * 0.90)
+    amount  = max(1, int(amount))
+    err     = f"Exceeds 90% limit — max {max_wsc:,} WSC." if amount > max_wsc else None
+    return JSONResponse({
+        "rate":         1.0,
+        "amount":       amount,
+        "cost_usd":     float(amount),
+        "max_wsc":      max_wsc,
+        "cash_balance": round(balance, 2),
+        "error":        err,
+    })
+
+
+@router.post("/api/events/crypto-scam/buy", response_class=JSONResponse)
+async def api_crypto_scam_buy(
+    request: Request,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "auth"}, status_code=401)
+    try:
+        data      = await request.form()
+        event_id  = int(data.get("event_id", 0))
+        wsc_amount = int(data.get("wsc_amount", 0))
+    except Exception:
+        return JSONResponse({"error": "Invalid input."})
+    try:
+        import json as _j
+        from events import get_active_events
+        ev = next((e for e in get_active_events() if e.id == event_id), None)
+        if not ev:
+            return JSONResponse({"error": "Event not active."})
+        if _j.loads(ev.effect_data or "{}").get("type") != "crypto_scam":
+            return JSONResponse({"error": "Not a Crypto Scam event."})
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)})
+    from wallet import buy_wsc_with_cash
+    ok, msg, info = buy_wsc_with_cash(player.id, wsc_amount)
+    if not ok:
+        return JSONResponse({"error": msg})
+    return JSONResponse({"ok": True, "message": msg, **info})
 
 
 # ==========================

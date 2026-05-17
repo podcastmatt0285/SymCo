@@ -995,6 +995,62 @@ def redeem_wsc_for_cash(player_id: int, amount: float) -> Tuple[bool, str]:
     return True, f"Redeemed {amount:.4f} WSC → ${amount:.2f} in-game cash credited."
 
 
+def buy_wsc_with_cash(player_id: int, wsc_amount: int) -> Tuple[bool, str, dict]:
+    """
+    Crypto Scam event: burn cash and mint WSC at 1:1 peg.
+    Only whole WSC units; max spend = 90% of USD balance.
+    Returns (ok, message, info_dict).
+    """
+    if not isinstance(wsc_amount, int) or wsc_amount < 1:
+        return False, "Amount must be a whole number of WSC (minimum 1).", {}
+
+    from reserve_banks import get_usd_balance, debit_usd
+    balance  = get_usd_balance(player_id)
+    max_wsc  = int(balance * 0.90)
+
+    if wsc_amount > max_wsc:
+        return False, (
+            f"Exceeds 90% cash limit. "
+            f"Max: {max_wsc:,} WSC (balance: ${balance:,.2f})."
+        ), {}
+
+    cost = float(wsc_amount)
+
+    # Atomic cash deduction — burns the cash permanently
+    if not debit_usd(player_id, cost):
+        return False, "Insufficient cash balance.", {}
+
+    # Mint WSC directly to player's wallet
+    wallet_db = get_db()
+    try:
+        wsc_w = _get_or_create_wsc_wallet(wallet_db, player_id)
+        wsc_w.balance += cost
+
+        treasury = _get_or_create_treasury(wallet_db)
+        treasury.total_minted  += cost
+        treasury.total_native_burned += cost
+        treasury.last_updated   = datetime.utcnow()
+
+        wallet_db.commit()
+        new_wsc = float(wsc_w.balance)
+    except Exception as exc:
+        wallet_db.rollback()
+        # Refund the cash on mint failure
+        from reserve_banks import credit_usd
+        credit_usd(player_id, cost)
+        return False, f"Mint failed: {exc}", {}
+    finally:
+        wallet_db.close()
+
+    new_cash = get_usd_balance(player_id)
+    return True, f"Bought {wsc_amount:,} WSC for ${cost:,.2f}.", {
+        "wsc_purchased":     wsc_amount,
+        "cash_burned":       cost,
+        "new_wsc_balance":   new_wsc,
+        "new_cash_balance":  new_cash,
+    }
+
+
 def _atomic_wsc_refund(player_id: int, amount: float) -> None:
     """Unconditionally add `amount` back to a player's WSC balance.
     Used as a compensation action when the downstream cash-credit fails."""
