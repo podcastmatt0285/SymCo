@@ -608,16 +608,16 @@ _MY_PROPS_MODAL = r"""
     /* (2,2) = center park tile */
     {label:'District Market',  sprite:'shop_medium', url:'/district-market', row:2,col:3},
     {label:'Memecoin Exchange',sprite:'space',       url:'/memecoins',       row:2,col:4},
-    {label:'Police Station',   sprite:'industrial',  url:'/cities',          row:3,col:0},
-    {label:'Fire Station',     sprite:'industrial',  url:'/cities',          row:3,col:1},
-    {label:'Trade Center',     sprite:'shop_medium', url:'/market',          row:3,col:2},
-    {label:'Post Office',      sprite:'industrial',  url:'/',                row:3,col:3},
-    {label:'Businesses',       sprite:'industrial',  url:'/businesses',      row:3,col:4},
-    {label:'Hospital',         sprite:'industrial',  url:'/cities',          row:4,col:0},
-    {label:'University',       sprite:'university',  url:'/cities',          row:4,col:1},
-    {label:'Tech Hub',         sprite:'space',       url:'/businesses',      row:4,col:2},
-    {label:'Convention Ctr',   sprite:'shop_medium', url:'/cities',          row:4,col:3},
-    {label:'Courthouse',       sprite:'mansion',     url:'/cities',          row:4,col:4},
+    {label:'Treasury Dept.',    sprite:'mansion',     url:'/government',      row:3,col:0},
+    {label:'Dept. of Finance',  sprite:'mansion',     url:'/government',      row:3,col:1},
+    {label:'Trade Bureau',      sprite:'shop_medium', url:'/market',          row:3,col:2},
+    {label:'Dept. of Justice',  sprite:'mansion',     url:'/government',      row:3,col:3},
+    {label:'Chamb. of Commerce',sprite:'shop_medium', url:'/businesses',      row:3,col:4},
+    {label:'Revenue Authority', sprite:'mansion',     url:'/government',      row:4,col:0},
+    {label:'Securities Comm.',  sprite:'university',  url:'/brokerage',       row:4,col:1},
+    {label:'National Mint',     sprite:'commercial',  url:'/reserve-bank',    row:4,col:2},
+    {label:'Federal Archives',  sprite:'mansion',     url:'/government',      row:4,col:3},
+    {label:'Courthouse',        sprite:'mansion',     url:'/cities',          row:4,col:4},
   ];
   var DT_N=5; /* side length of the square downtown block */
 

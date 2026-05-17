@@ -4768,7 +4768,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
                         {_badge(ev.duration_class, dur_c)}
                         {_badge(ev.event_type, type_c)}
-                        {'<span style="background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;">💸 CRYPTO SCAM</span>' if _is_cs else ''}
+                        {('<span style="background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;">💸 CRYPTO SCAM' + (f' · pool\xa0{_ed["wsc_pool"]:,}\xa0WSC' if isinstance(_ed.get("wsc_pool"), (int,float)) else '') + '</span>') if _is_cs else ''}
                         <span style="color:{status_color};font-size:0.72rem;font-weight:700;">● {status_label}</span>
                     </div>
                     <div style="font-size:1rem;font-weight:700;color:#e2e8f0;margin-bottom:2px;">

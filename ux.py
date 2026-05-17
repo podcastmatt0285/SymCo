@@ -14140,6 +14140,12 @@ def events_page(request: Request,
                                       color:#e2e8f0;border-radius:4px;"
                                oninput="csSchedule({_ev_id})">
                     </div>
+                    <button onclick="csMax({_ev_id})"
+                            style="padding:7px 10px;background:#1e293b;border:1px solid #334155;
+                                   border-radius:4px;color:#fbbf24;font-size:0.75rem;
+                                   font-weight:700;cursor:pointer;white-space:nowrap;">
+                        Max
+                    </button>
                     <button onclick="csBuy({_ev_id})"
                             style="padding:7px 18px;background:#1d4ed8;border:none;
                                    border-radius:4px;color:#fff;font-size:0.82rem;
@@ -14154,32 +14160,36 @@ def events_page(request: Request,
             </div>
             <script>
             (function(){{
-                var _evId={_ev_id}, _t=null;
+                var _evId={_ev_id}, _t=null, _curMax={_max_wsc};
                 function _fmtLocal(n,sym,code){{
                     var s=n.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:4}});
-                    return code==='USD'? '$'+s : sym+s+' '+code;
+                    return code==='USD'? '$'+s : sym+s+'\xa0'+code;
                 }}
                 function csFetch(){{
-                    var amt=parseInt(document.getElementById('cs-amt-'+_evId).value)||1;
+                    var inp=document.getElementById('cs-amt-'+_evId);
+                    var amt=Math.max(1,parseInt(inp.value)||1);
                     var prev=document.getElementById('cs-preview-'+_evId);
                     prev.innerHTML='<span style="color:#475569;">Calculating…</span>';
                     fetch('/api/events/crypto-scam/rate?event_id='+_evId+'&amount='+amt)
                         .then(function(r){{return r.json();}})
                         .then(function(d){{
+                            if(d.max_wsc!==undefined){{
+                                _curMax=d.max_wsc;
+                                if(inp) inp.max=_curMax;
+                                var mx=document.getElementById('cs-max-'+_evId);
+                                if(mx) mx.textContent=_curMax.toLocaleString()+' WSC';
+                            }}
+                            if(d.error&&!d.max_wsc){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
                             if(d.error){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
                             var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
                             var costStr=_fmtLocal(d.cost_local,sym,code);
-                            var usdNote=code!=='USD'?' <span style="color:#475569;font-size:0.72rem;">(≈ $'+d.cost_usd.toFixed(2)+' USD)</span>':'';
+                            var usdNote=code!=='USD'?' <span style="color:#475569;font-size:0.72rem;">(≈\xa0$'+d.cost_usd.toFixed(2)+' USD)</span>':'';
                             prev.innerHTML=
-                                '<span style="color:#94a3b8;">You pay: </span>'+
+                                '<span style="color:#94a3b8;">You pay:\xa0</span>'+
                                 '<b style="color:#f87171;">'+costStr+'</b>'+usdNote+
-                                '<span style="color:#475569;"> &mdash; burned forever</span>'+
-                                ' &rarr; '+
-                                '<b style="color:#fbbf24;">'+amt.toLocaleString()+' WSC</b>'+
-                                '<span style="color:#475569;"> &nbsp;&middot;&nbsp; max: '+
-                                (d.max_wsc||0).toLocaleString()+' WSC</span>';
-                            var mx=document.getElementById('cs-max-'+_evId);
-                            if(mx) mx.textContent=(d.max_wsc||0).toLocaleString()+' WSC';
+                                '<span style="color:#475569;">\xa0— burned forever</span>'+
+                                ' → '+
+                                '<b style="color:#fbbf24;">'+amt.toLocaleString()+' WSC</b>';
                         }});
                 }}
                 window.csSchedule=function(id){{
@@ -14187,10 +14197,21 @@ def events_page(request: Request,
                     clearTimeout(_t);
                     _t=setTimeout(csFetch,350);
                 }};
+                window.csMax=function(id){{
+                    if(id!==_evId) return;
+                    var inp=document.getElementById('cs-amt-'+_evId);
+                    if(inp&&_curMax>0){{inp.value=_curMax;csFetch();}}
+                    else if(_curMax===0){{alert('No available cash to convert.');}}
+                }};
                 window.csBuy=function(id){{
                     if(id!==_evId) return;
-                    var amt=parseInt(document.getElementById('cs-amt-'+_evId).value)||0;
-                    if(amt<1){{alert('Enter a valid whole number of WSC (minimum 1).');return;}}
+                    var inp=document.getElementById('cs-amt-'+_evId);
+                    var amt=parseInt(inp.value)||0;
+                    if(amt<1){{alert('Enter at least 1 WSC (whole units only).');return;}}
+                    if(_curMax>0&&amt>_curMax){{
+                        alert('Exceeds 90% cash limit. Max:\xa0'+_curMax.toLocaleString()+' WSC.');
+                        inp.value=_curMax; csFetch(); return;
+                    }}
                     var st=document.getElementById('cs-status-'+_evId);
                     st.innerHTML='<span style="color:#475569;">Processing…</span>';
                     var fd=new FormData();
@@ -14200,7 +14221,7 @@ def events_page(request: Request,
                         .then(function(r){{return r.json();}})
                         .then(function(d){{
                             if(d.ok){{
-                                st.innerHTML='<span style="color:#4ade80;">&#10003; '+d.message+'</span>';
+                                st.innerHTML='<span style="color:#4ade80;">&#10003;\xa0'+d.message+'</span>';
                                 if(d.new_cash_balance!==undefined){{
                                     var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
                                     var b=document.getElementById('cs-bal-'+_evId);
@@ -14208,7 +14229,7 @@ def events_page(request: Request,
                                 }}
                                 csFetch();
                             }} else {{
-                                st.innerHTML='<span style="color:#ef4444;">&#10007; '+(d.error||'Purchase failed.')+'</span>';
+                                st.innerHTML='<span style="color:#ef4444;">&#10007;\xa0'+(d.error||'Purchase failed.')+'</span>';
                             }}
                         }})
                         .catch(function(){{st.innerHTML='<span style="color:#ef4444;">Network error.</span>';}});
