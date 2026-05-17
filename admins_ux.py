@@ -4914,6 +4914,14 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
 
 
+def _invalidate_event_cache():
+    try:
+        from events import invalidate_effects_cache
+        invalidate_effects_cache()
+    except Exception:
+        pass
+
+
 @router.post("/admin/events/start")
 def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int = Form(...)):
     admin = require_admin(session_token)
@@ -4934,6 +4942,7 @@ def admin_event_start(session_token: Optional[str] = Cookie(None), event_id: int
                     days = _auto_days.get(ev.duration_class)
                     ev.ends_at = ev.starts_at + timedelta(days=days) if days else None
                 edb.commit()
+                _invalidate_event_cache()
                 edb.refresh(ev)
                 msg = f"'{ev.title}' started — ends {ev.ends_at.strftime('%Y-%m-%d %H:%M UTC') if ev.ends_at else 'never'}."
             else:
@@ -4963,6 +4972,7 @@ def admin_event_stop(session_token: Optional[str] = Cookie(None), event_id: int 
                 ev.is_active = False
                 ev.ends_at   = datetime.utcnow()
                 edb.commit()
+                _invalidate_event_cache()
                 msg = f"'{ev.title}' stopped."
             else:
                 msg = "Event not found."
@@ -4991,6 +5001,7 @@ def admin_event_pause(session_token: Optional[str] = Cookie(None), event_id: int
                 ev.is_active = False
                 # ends_at left intact so it can be resumed
                 edb.commit()
+                _invalidate_event_cache()
                 msg = f"'{ev.title}' paused."
             else:
                 msg = "Event not found."
@@ -5035,6 +5046,7 @@ def admin_event_restart(
                     days = _auto_days.get(ev.duration_class)
                     ev.ends_at = ev.starts_at + timedelta(days=days) if days else None
                 edb.commit()
+                _invalidate_event_cache()
                 edb.refresh(ev)
                 end_str = ev.ends_at.strftime("%Y-%m-%d %H:%M UTC") if ev.ends_at else "no end date"
                 msg = f"'{ev.title}' restarted — ends {end_str}."
@@ -5139,6 +5151,7 @@ def admin_event_create(
             )
             edb.add(ev)
             edb.commit()
+            _invalidate_event_cache()
             edb.refresh(ev)
             status_word = "created and activated" if is_active else "saved as inactive"
             msg = f"Event '{ev.title}' {status_word} (ID {ev.id})."

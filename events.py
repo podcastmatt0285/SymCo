@@ -264,13 +264,23 @@ def get_event_summary() -> dict:
     return {"active": active, "upcoming": upcoming, "finished": finished}
 
 
+_effects_cache: list = []
+_effects_cache_ts: float = 0.0
+_EFFECTS_TTL: float = 30.0  # seconds
+
+
 def get_active_effects() -> list[dict]:
     """Return a list of effect dicts from all currently active non-task events.
 
     Each entry: {"event_id", "title", "event_type", "effect_data"}.
-    Used by market, production, etc. to check if an event modifier is live.
+    Cached for 30 s so high-frequency callers (market, production ticks)
+    do not create a DB round-trip on every request.
     """
-    import json as _json
+    import json as _json, time as _time
+    global _effects_cache, _effects_cache_ts
+    now = _time.time()
+    if _effects_cache_ts and (now - _effects_cache_ts) < _EFFECTS_TTL:
+        return _effects_cache
     events = get_active_events()
     result = []
     for ev in events:
@@ -282,12 +292,20 @@ def get_active_effects() -> list[dict]:
             ed = {}
         if ed:
             result.append({
-                "event_id":   ev.id,
-                "title":      ev.title,
-                "event_type": ev.event_type,
+                "event_id":    ev.id,
+                "title":       ev.title,
+                "event_type":  ev.event_type,
                 "effect_data": ed,
             })
+    _effects_cache    = result
+    _effects_cache_ts = now
     return result
+
+
+def invalidate_effects_cache() -> None:
+    """Call after creating/updating/stopping events so the cache refreshes immediately."""
+    global _effects_cache_ts
+    _effects_cache_ts = 0.0
 
 
 def get_active_market_price_factor() -> float:

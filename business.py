@@ -257,6 +257,11 @@ def process_business_tick(db):
     from land import LandPlot
     from auth import Player
     import market
+    try:
+        from events import get_active_production_factor as _get_prod_factor
+        _ev_prod_factor = _get_prod_factor()
+    except Exception:
+        _ev_prod_factor = 1.0
     
     active_biz = db.query(Business).filter(Business.is_active == True).all()
     for biz in active_biz:
@@ -421,13 +426,7 @@ def process_business_tick(db):
                     except Exception:
                         pass
                 # Apply city project output multiplier + active event production bonus
-                _event_prod_factor = 1.0
-                try:
-                    from events import get_active_production_factor
-                    _event_prod_factor = get_active_production_factor()
-                except Exception:
-                    pass
-                effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult * _event_prod_factor))
+                effective_output_qty = max(1, round(line["output_qty"] * _city_output_mult * _ev_prod_factor))
                 add_item(player.id, line["output_item"], effective_output_qty)
                 # Update WMA cost basis for the newly produced output
                 try:

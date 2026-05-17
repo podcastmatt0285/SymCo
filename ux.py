@@ -14219,7 +14219,8 @@ def events_page(request: Request,
 
         # Effect banner for non-task, non-crypto_scam events with effect_data
         effect_html = ""
-        if etype != "task" and not _effect.get("type") == "crypto_scam" and _effect:
+        if etype != "task" and not (_effect.get("type") == "crypto_scam") and _effect:
+            import html as _html
             _eff_rows = []
             pf = _effect.get("price_factor")
             if isinstance(pf, (int, float)) and pf != 1.0:
@@ -14233,11 +14234,14 @@ def events_page(request: Request,
                 _pct = abs(prod_f - 1.0) * 100
                 _col = "#4ade80" if prod_f > 1.0 else "#f87171"
                 _eff_rows.append(f'<span style="color:{_col};">{_dir} Production output {_pct:.0f}% {"higher" if prod_f > 1.0 else "lower"}</span>')
-            # Generic key-value fallback for other effect keys
+            # Generic key-value fallback for other effect keys (HTML-escaped)
             _known = {"price_factor", "production_factor", "type"}
             for _k, _v in _effect.items():
                 if _k not in _known:
-                    _eff_rows.append(f'<span style="color:#94a3b8;">{_k}: {_v}</span>')
+                    _eff_rows.append(
+                        f'<span style="color:#94a3b8;">'
+                        f'{_html.escape(str(_k))}: {_html.escape(str(_v))}</span>'
+                    )
             if _eff_rows:
                 effect_html = (
                     '<div style="margin-top:10px;padding:10px 12px;background:#050d1a;'
