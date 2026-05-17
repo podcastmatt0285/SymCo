@@ -372,18 +372,19 @@ def api_my_properties(
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-    # Include contacts' plots when viewing your own properties (max 6 contacts)
+    # Include contacts' plots when viewing your own properties (max 5 contacts + admin)
     contacts_out = []
+    _ADMIN_ID = 1
     if target_id == viewer.id:
         try:
             from contacts import get_contacts
             from land import get_db as _ldb2, LandPlot as _LandPlot2
             from business import Business as _Biz2, BUSINESS_TYPES as _BT2, get_district_business_types as _gdbt2
 
-            contact_list = get_contacts(viewer.id)[:6]
             _dt2 = _gdbt2()
 
-            for (_row, other_id, _notes) in contact_list:
+            def _build_contact_entry(other_id, include_govt=False):
+                """Fetch plots + biz info for one contact; returns dict or None."""
                 try:
                     adb2 = _auth.get_db()
                     other = adb2.query(_auth.Player).filter_by(id=other_id).first()
@@ -391,13 +392,11 @@ def api_my_properties(
                                   or getattr(other, "username", None)
                                   or f"Player {other_id}")
                     adb2.close()
-
                     ldb2 = _ldb2()
-                    other_plots = (ldb2.query(_LandPlot2)
-                                       .filter(_LandPlot2.owner_id == other_id,
-                                               _LandPlot2.is_government_owned == False)
-                                       .order_by(_LandPlot2.id)
-                                       .all())
+                    q = ldb2.query(_LandPlot2).filter(_LandPlot2.owner_id == other_id)
+                    if not include_govt:
+                        q = q.filter(_LandPlot2.is_government_owned == False)
+                    other_plots = q.order_by(_LandPlot2.id).all()
                     obiz_ids = [p.occupied_by_business_id for p in other_plots if p.occupied_by_business_id]
                     obiz_map = {}
                     if obiz_ids:
@@ -409,7 +408,6 @@ def api_my_properties(
                                 "class": cfg.get("class", "production"),
                             }
                     ldb2.close()
-
                     cplots = []
                     for p in other_plots:
                         ob = obiz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
@@ -424,9 +422,24 @@ def api_my_properties(
                             "biz_name":    ob["name"]  if ob else None,
                             "biz_class":   ob["class"] if ob else None,
                         })
-                    contacts_out.append({"player_id": other_id, "player_name": other_name, "plots": cplots})
+                    return {"player_id": other_id, "player_name": other_name, "plots": cplots}
                 except Exception:
-                    pass
+                    return None
+
+            # Admin is always first contact (shows government holdings)
+            if viewer.id != _ADMIN_ID:
+                admin_entry = _build_contact_entry(_ADMIN_ID, include_govt=True)
+                if admin_entry:
+                    contacts_out.append(admin_entry)
+
+            # Regular p2p contacts (up to 5 more)
+            contact_list = get_contacts(viewer.id)[:5]
+            for (_row, other_id, _notes) in contact_list:
+                if other_id == _ADMIN_ID:
+                    continue  # already added admin above
+                entry = _build_contact_entry(other_id)
+                if entry:
+                    contacts_out.append(entry)
         except Exception:
             pass
 
@@ -696,6 +709,9 @@ _MY_PROPS_MODAL = r"""
 
   function spriteFor(t,cls){
     if(!t) return null;
+    /* government / civic */
+    if(/city_hall|capitol|courthouse|government|municipal|reserve_bank|central_bank/.test(t)) return 'mansion';
+    if(/military|barracks|armory/.test(t))                                          return 'warehouse';
     /* extraction / mining */
     if(/mine|alluvial|quarry|mineral|oil_rig/.test(t))                return 'warehouse';
     /* energy */
@@ -1037,21 +1053,25 @@ _MY_PROPS_MODAL = r"""
   }
 
   /* ── Walker animation ──────────────────────────────────────────────────── */
-  /* Walk.png row 0 (south-facing): 8 frames, each 24×72, stride=80px from x=24 */
+  /* Walk.png has 3 rows of 8 frames each (24×72px, 80px stride from x=24).
+     Each row is a different character variant for visual diversity. */
   var _WALK_SRC=(function(){
-    var f=[];
-    for(var i=0;i<8;i++) f.push([24+i*80,24,24,72]);
-    return f;
+    var rows=[];
+    [24,136,248].forEach(function(rowY){
+      var frames=[];
+      for(var i=0;i<8;i++) frames.push([24+i*80,rowY,24,72]);
+      rows.push(frames);
+    });
+    return rows;
   })();
-  /* Walkers are slower pedestrians; phase offsets spread animation so they
-     don't all step in sync. cps=cycles-per-second along the lane. */
+  /* row=0/1/2 picks the character variant; ph staggers animation phase */
   var _WALKER_DEFS=[
-    {dir:'row',li:0,f0:0.05,cps:0.018,ph:0.0},
-    {dir:'row',li:0,f0:0.38,cps:0.013,ph:2.7},
-    {dir:'row',li:0,f0:0.72,cps:0.021,ph:5.1},
-    {dir:'row',li:1,f0:0.22,cps:0.016,ph:1.4},
-    {dir:'col',li:0,f0:0.55,cps:0.015,ph:3.8},
-    {dir:'col',li:1,f0:0.85,cps:0.019,ph:6.2},
+    {dir:'row',li:0,f0:0.05,cps:0.018,ph:0.0,row:0},
+    {dir:'row',li:0,f0:0.38,cps:0.013,ph:2.7,row:1},
+    {dir:'row',li:0,f0:0.72,cps:0.021,ph:5.1,row:2},
+    {dir:'row',li:1,f0:0.22,cps:0.016,ph:1.4,row:0},
+    {dir:'col',li:0,f0:0.55,cps:0.015,ph:3.8,row:1},
+    {dir:'col',li:1,f0:0.85,cps:0.019,ph:6.2,row:2},
   ];
   function drawWalkers(lanes,W,H){
     if(!lanes||scale<0.35) return;
@@ -1075,9 +1095,9 @@ _MY_PROPS_MODAL = r"""
       var cx=(s0.sx+hw)+((s1.sx+hw)-(s0.sx+hw))*frac;
       var cy=(s0.sy+hh*1.7)+((s1.sy+hh*1.7)-(s0.sy+hh*1.7))*frac;
       if(cx<-cullM||cx>W+cullM||cy<-cullM||cy>H+cullM) return;
-      /* pick frame: 6 animation-fps, staggered by phase offset */
-      var f=_WALK_SRC[Math.floor((_waveT*6+def.ph)%8)|0];
-      var charH=TH*scale*1.5, charW=charH*(f[2]/f[3]);
+      /* pick frame: 6 animation-fps, staggered by phase; pick character row */
+      var f=_WALK_SRC[def.row||0][Math.floor((_waveT*6+def.ph)%8)|0];
+      var charH=TH*scale*0.5, charW=charH*(f[2]/f[3]);
       /* offset to sidewalk side (perpendicular to road) so walkers don't
          overlap cars — shift by ~30% of hh perpendicular to lane direction */
       var perpX=(def.dir==='row'?-hh:hh)*0.35;
