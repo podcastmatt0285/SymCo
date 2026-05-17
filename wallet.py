@@ -998,56 +998,73 @@ def redeem_wsc_for_cash(player_id: int, amount: float) -> Tuple[bool, str]:
 def buy_wsc_with_cash(player_id: int, wsc_amount: int) -> Tuple[bool, str, dict]:
     """
     Crypto Scam event: burn cash and mint WSC at 1:1 peg.
-    Only whole WSC units; max spend = 90% of USD balance.
+    Only whole WSC units; max spend = 90% of legal-tender balance.
     Returns (ok, message, info_dict).
     """
     if not isinstance(wsc_amount, int) or wsc_amount < 1:
         return False, "Amount must be a whole number of WSC (minimum 1).", {}
 
-    from reserve_banks import get_usd_balance, debit_usd
-    balance  = get_usd_balance(player_id)
-    max_wsc  = int(balance * 0.90)
+    from reserve_banks import (
+        get_player_display_currency, get_player_currency_balance,
+        spend_player_funds, credit_usd,
+    )
+    disp           = get_player_display_currency(player_id)
+    tender         = disp["code"]
+    rate           = disp["usd_per_unit"]   # USD per 1 unit of tender
+    sym            = disp["symbol"]
+    tender_balance = get_player_currency_balance(player_id, tender)
+    usd_equiv      = tender_balance * rate
+    max_wsc        = int(usd_equiv * 0.90)
 
     if wsc_amount > max_wsc:
+        bal_str = f"{sym}{tender_balance:,.2f} {tender}" if tender != "USD" else f"${tender_balance:,.2f}"
         return False, (
             f"Exceeds 90% cash limit. "
-            f"Max: {max_wsc:,} WSC (balance: ${balance:,.2f})."
+            f"Max: {max_wsc:,} WSC (balance: {bal_str})."
         ), {}
 
-    cost = float(wsc_amount)
+    usd_cost     = float(wsc_amount)  # 1 WSC = $1 USD
+    foreign_cost = usd_cost / rate    # cost in player's tender
 
-    # Atomic cash deduction — burns the cash permanently
-    if not debit_usd(player_id, cost):
-        return False, "Insufficient cash balance.", {}
+    # Atomic debit using player's legal tender (handles USD + foreign + fallback)
+    ok, err = spend_player_funds(player_id, usd_cost)
+    if not ok:
+        return False, err, {}
 
     # Mint WSC directly to player's wallet
     wallet_db = get_db()
     try:
         wsc_w = _get_or_create_wsc_wallet(wallet_db, player_id)
-        wsc_w.balance += cost
+        wsc_w.balance += usd_cost
 
         treasury = _get_or_create_treasury(wallet_db)
-        treasury.total_minted  += cost
-        treasury.total_native_burned += cost
-        treasury.last_updated   = datetime.utcnow()
+        treasury.total_minted        += usd_cost
+        treasury.total_native_burned += usd_cost
+        treasury.last_updated         = datetime.utcnow()
 
         wallet_db.commit()
         new_wsc = float(wsc_w.balance)
     except Exception as exc:
         wallet_db.rollback()
-        # Refund the cash on mint failure
-        from reserve_banks import credit_usd
-        credit_usd(player_id, cost)
-        return False, f"Mint failed: {exc}", {}
+        # Refund in their legal tender on mint failure
+        credit_usd(player_id, usd_cost)
+        return False, f"Mint failed; funds refunded. ({exc})", {}
     finally:
         wallet_db.close()
 
-    new_cash = get_usd_balance(player_id)
-    return True, f"Bought {wsc_amount:,} WSC for ${cost:,.2f}.", {
+    new_tender_balance = get_player_currency_balance(player_id, tender)
+    cost_str = (
+        f"{sym}{foreign_cost:,.2f} {tender} (≈ ${usd_cost:,.2f})"
+        if tender != "USD" else f"${usd_cost:,.2f}"
+    )
+    return True, f"Bought {wsc_amount:,} WSC for {cost_str}.", {
         "wsc_purchased":     wsc_amount,
-        "cash_burned":       cost,
+        "cash_burned":       foreign_cost,
+        "cash_burned_usd":   usd_cost,
         "new_wsc_balance":   new_wsc,
-        "new_cash_balance":  new_cash,
+        "new_cash_balance":  new_tender_balance,
+        "currency_code":     tender,
+        "currency_symbol":   sym,
     }
 
 

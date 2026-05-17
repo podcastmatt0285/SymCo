@@ -14060,9 +14060,22 @@ def events_page(request: Request,
         _effect = ev.get("effect_data") or {}
         if _effect.get("type") == "crypto_scam" and status_label == "active":
             _ev_id   = ev.get("id")
-            from reserve_banks import get_usd_balance
-            _bal     = get_usd_balance(player.id)
-            _max_wsc = int(_bal * 0.90)
+            from reserve_banks import get_player_display_currency, get_player_currency_balance
+            _disp    = get_player_display_currency(player.id)
+            _tender  = _disp["code"]
+            _rate    = _disp["usd_per_unit"]
+            _sym     = _disp["symbol"]
+            _bal     = get_player_currency_balance(player.id, _tender)
+            _usd_eq  = _bal * _rate
+            _max_wsc = int(_usd_eq * 0.90)
+            _rate_str = (
+                f"1 WSC = {_sym}{1.0/_rate:,.4f} {_tender} (≈ $1.00 USD)"
+                if _tender != "USD" else "1 WSC = $1.00 USD"
+            )
+            _bal_str = (
+                f"{_sym}{_bal:,.2f} {_tender} (≈ ${_usd_eq:,.2f})"
+                if _tender != "USD" else f"${_bal:,.2f}"
+            )
             cs_panel = f"""
             <div style="margin-top:14px;background:#050d1a;border:1px solid #1e3a5f;
                         border-radius:6px;padding:14px 16px;">
@@ -14072,13 +14085,13 @@ def events_page(request: Request,
                         Live WSC Purchase
                     </span>
                     <span style="font-size:0.68rem;color:#475569;margin-left:auto;">
-                        Rate: 1 WSC = $1.00 &nbsp;·&nbsp; Cash burned on purchase
+                        {_rate_str} &nbsp;·&nbsp; Cash burned on purchase
                     </span>
                 </div>
                 <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
-                    Cash balance:&nbsp;
+                    Balance:&nbsp;
                     <b id="cs-bal-{_ev_id}" style="color:#e2e8f0;">
-                        ${_bal:,.2f}
+                        {_bal_str}
                     </b>
                     &nbsp;·&nbsp; Max you can buy:&nbsp;
                     <b id="cs-max-{_ev_id}" style="color:#fbbf24;">
@@ -14113,8 +14126,9 @@ def events_page(request: Request,
             <script>
             (function(){{
                 var _evId={_ev_id}, _t=null;
-                function _fmt(n){{
-                    return '$'+n.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}});
+                function _fmtLocal(n,sym,code){{
+                    var s=n.toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:4}});
+                    return code==='USD'? '$'+s : sym+s+' '+code;
                 }}
                 function csFetch(){{
                     var amt=parseInt(document.getElementById('cs-amt-'+_evId).value)||1;
@@ -14124,14 +14138,19 @@ def events_page(request: Request,
                         .then(function(r){{return r.json();}})
                         .then(function(d){{
                             if(d.error){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
+                            var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
+                            var costStr=_fmtLocal(d.cost_local,sym,code);
+                            var usdNote=code!=='USD'?' <span style="color:#475569;font-size:0.72rem;">(≈ $'+d.cost_usd.toFixed(2)+' USD)</span>':'';
                             prev.innerHTML=
                                 '<span style="color:#94a3b8;">You pay: </span>'+
-                                '<b style="color:#f87171;">'+_fmt(d.cost_usd)+'</b>'+
-                                '<span style="color:#475569;"> (burned forever)</span>'+
+                                '<b style="color:#f87171;">'+costStr+'</b>'+usdNote+
+                                '<span style="color:#475569;"> &mdash; burned forever</span>'+
                                 ' &rarr; '+
                                 '<b style="color:#fbbf24;">'+amt.toLocaleString()+' WSC</b>'+
                                 '<span style="color:#475569;"> &nbsp;&middot;&nbsp; max: '+
                                 (d.max_wsc||0).toLocaleString()+' WSC</span>';
+                            var mx=document.getElementById('cs-max-'+_evId);
+                            if(mx) mx.textContent=(d.max_wsc||0).toLocaleString()+' WSC';
                         }});
                 }}
                 window.csSchedule=function(id){{
@@ -14152,16 +14171,15 @@ def events_page(request: Request,
                         .then(function(r){{return r.json();}})
                         .then(function(d){{
                             if(d.ok){{
-                                st.innerHTML='<span style="color:#4ade80;">✓ '+d.message+'</span>';
+                                st.innerHTML='<span style="color:#4ade80;">&#10003; '+d.message+'</span>';
                                 if(d.new_cash_balance!==undefined){{
+                                    var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
                                     var b=document.getElementById('cs-bal-'+_evId);
-                                    if(b) b.textContent=_fmt(d.new_cash_balance).replace('$','$');
-                                    var mx=document.getElementById('cs-max-'+_evId);
-                                    if(mx) mx.textContent=Math.floor(d.new_cash_balance*0.90).toLocaleString()+' WSC';
+                                    if(b) b.textContent=_fmtLocal(d.new_cash_balance,sym,code);
                                 }}
                                 csFetch();
                             }} else {{
-                                st.innerHTML='<span style="color:#ef4444;">✗ '+(d.error||'Purchase failed.')+'</span>';
+                                st.innerHTML='<span style="color:#ef4444;">&#10007; '+(d.error||'Purchase failed.')+'</span>';
                             }}
                         }})
                         .catch(function(){{st.innerHTML='<span style="color:#ef4444;">Network error.</span>';}});
@@ -14411,18 +14429,28 @@ def api_crypto_scam_rate(
             return JSONResponse({"error": "Not a Crypto Scam event."})
     except Exception as exc:
         return JSONResponse({"error": str(exc)})
-    from reserve_banks import get_usd_balance
-    balance = get_usd_balance(player.id)
-    max_wsc = int(balance * 0.90)
-    amount  = max(1, int(amount))
-    err     = f"Exceeds 90% limit — max {max_wsc:,} WSC." if amount > max_wsc else None
+    from reserve_banks import get_player_display_currency, get_player_currency_balance
+    disp           = get_player_display_currency(player.id)
+    tender         = disp["code"]
+    rate           = disp["usd_per_unit"]
+    tender_balance = get_player_currency_balance(player.id, tender)
+    usd_equiv      = tender_balance * rate
+    max_wsc        = int(usd_equiv * 0.90)
+    amount         = max(1, int(amount))
+    usd_cost       = float(amount)
+    foreign_cost   = usd_cost / rate
+    err            = f"Exceeds 90% limit — max {max_wsc:,} WSC." if amount > max_wsc else None
     return JSONResponse({
-        "rate":         1.0,
-        "amount":       amount,
-        "cost_usd":     float(amount),
-        "max_wsc":      max_wsc,
-        "cash_balance": round(balance, 2),
-        "error":        err,
+        "rate":            1.0,
+        "amount":          amount,
+        "cost_usd":        round(usd_cost, 2),
+        "cost_local":      round(foreign_cost, 4),
+        "currency_code":   tender,
+        "currency_symbol": disp["symbol"],
+        "max_wsc":         max_wsc,
+        "cash_balance":    round(tender_balance, 4),
+        "cash_balance_usd": round(usd_equiv, 2),
+        "error":           err,
     })
 
 
