@@ -988,6 +988,8 @@ _MY_PROPS_MODAL = r"""
   function buildCarLanes(items){
     var rowG={},colG={};
     items.forEach(function(it){
+      /* bridge tiles are always vr=0 row-direction — include them in rowG */
+      if(it.t==='bridge'){(rowG[it.vr]||(rowG[it.vr]=[])).push(it);return;}
       if(it.t!=='road') return;
       if(!it.rc){(rowG[it.vr]||(rowG[it.vr]=[])).push(it);}
       else      {(colG[it.vc]||(colG[it.vc]=[])).push(it);}
@@ -1137,6 +1139,8 @@ _MY_PROPS_MODAL = r"""
           }
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
+        /* bridge: vr=0 road corridor crosses the water gap between islands */
+        if(vr2===0&&vc2>=0){items.push({t:'bridge',vc:vc2,vr:vr2,depth:depth});continue;}
         items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
       }
     }
@@ -1179,9 +1183,10 @@ _MY_PROPS_MODAL = r"""
       var s=g2s(it.vc,it.vr);
       if(s.sx+hw0*2<-cullM||s.sx>W+cullM||s.sy+hh0*2<-cullM||s.sy>H+cullM) return;
 
-      if(it.t==='water'){ drawWater(s.sx,s.sy,it.vc,it.vr,it.adjMask||0); return; }
-      if(it.t==='cross'){ drawRoad(s.sx,s.sy,true,false); return; }
-      if(it.t==='road') { drawRoad(s.sx,s.sy,false,!!it.rc); return; }
+      if(it.t==='water') { drawWater(s.sx,s.sy,it.vc,it.vr,it.adjMask||0); return; }
+      if(it.t==='bridge'){ drawDiamond(s.sx,s.sy,'#071828'); drawTileOverlay(s.sx,s.sy,'kenney_bridgeNS',0.95); return; }
+      if(it.t==='cross') { drawRoad(s.sx,s.sy,true,false); return; }
+      if(it.t==='road')  { drawRoad(s.sx,s.sy,false,!!it.rc); return; }
 
       /* contact island tile */
       if(it.t==='cplot'){
@@ -1353,10 +1358,12 @@ _MY_PROPS_MODAL = r"""
       {k:'kenney_waterNW',      url:KENNEY_BASE+'waterNW.png'},
       {k:'kenney_waterES',      url:KENNEY_BASE+'waterES.png'},
       {k:'kenney_waterSW',      url:KENNEY_BASE+'waterSW.png'},
-      /* kenney: roads — directional + crossroad */
+      /* kenney: roads — directional + crossroad + bridges */
       {k:'kenney_roadNS',       url:KENNEY_BASE+'roadNS.png'},
       {k:'kenney_roadEW',       url:KENNEY_BASE+'roadEW.png'},
       {k:'kenney_crossroad',    url:KENNEY_BASE+'crossroad.png'},
+      {k:'kenney_bridgeNS',     url:KENNEY_BASE+'bridgeNS.png'},
+      {k:'kenney_bridgeEW',     url:KENNEY_BASE+'bridgeEW.png'},
       /* Farm Life vehicles (144×64 RGBA top-down sprites, rotated to road angle) */
       {k:'car_red',  url:FARMLIFE_BASE+'Cars/Red%20car.png'},
       {k:'car_blue', url:FARMLIFE_BASE+'Cars/Blue%20car.png'},
