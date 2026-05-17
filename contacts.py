@@ -16,6 +16,9 @@ from database import engine, SessionLocal
 
 Base = declarative_base()
 
+ADMIN_PLAYER_ID = 1          # Admin is everyone's contact; no limit applies
+MAX_CONTACTS = 46            # Non-admin players may have at most this many contacts
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # MODEL
@@ -64,6 +67,11 @@ def get_contact_row(player_id: int, other_id: int) -> Optional[Contact]:
 def send_contact_request(requester_id: int, recipient_id: int) -> Tuple[bool, str]:
     if requester_id == recipient_id:
         return False, "Cannot add yourself as a contact."
+    # Admin has no contact limit; admin is not counted in others' limits either
+    if requester_id != ADMIN_PLAYER_ID:
+        current = [oid for (_, oid, _) in get_contacts(requester_id) if oid != ADMIN_PLAYER_ID]
+        if len(current) >= MAX_CONTACTS:
+            return False, f"Contact limit reached ({MAX_CONTACTS} max). Remove an existing contact to add new ones."
     existing = get_contact_row(requester_id, recipient_id)
     if existing:
         if existing.status == "accepted":
@@ -94,6 +102,18 @@ def send_contact_request(requester_id: int, recipient_id: int) -> Tuple[bool, st
 
 
 def accept_contact_request(recipient_id: int, contact_id: int) -> Tuple[bool, str]:
+    # Check acceptor's limit (admin exempt; admin requester doesn't count)
+    if recipient_id != ADMIN_PLAYER_ID:
+        db_check = get_db()
+        try:
+            row_check = db_check.query(Contact).filter(Contact.id == contact_id).first()
+            requester = row_check.requester_id if row_check else None
+        finally:
+            db_check.close()
+        if requester != ADMIN_PLAYER_ID:
+            current = [oid for (_, oid, _) in get_contacts(recipient_id) if oid != ADMIN_PLAYER_ID]
+            if len(current) >= MAX_CONTACTS:
+                return False, f"You've reached your contact limit ({MAX_CONTACTS} max). Remove an existing contact first."
     db = get_db()
     try:
         row = db.query(Contact).filter(
@@ -209,9 +229,6 @@ def get_outgoing_requests(player_id: int) -> List[Contact]:
         ).order_by(Contact.created_at.desc()).all()
     finally:
         db.close()
-
-
-ADMIN_PLAYER_ID = 1
 
 
 def ensure_admin_contact(player_id: int) -> None:

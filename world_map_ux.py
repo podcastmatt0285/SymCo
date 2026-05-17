@@ -372,7 +372,7 @@ def api_my_properties(
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
-    # Include contacts' plots when viewing your own properties (max 5 contacts + admin)
+    # Include contacts' plots when viewing your own properties (up to 46 contacts + admin)
     contacts_out = []
     _ADMIN_ID = 1
     if target_id == viewer.id:
@@ -432,8 +432,8 @@ def api_my_properties(
                 if admin_entry:
                     contacts_out.append(admin_entry)
 
-            # Regular p2p contacts (up to 5 more)
-            contact_list = get_contacts(viewer.id)[:5]
+            # Regular p2p contacts (up to 46, admin excluded from count)
+            contact_list = get_contacts(viewer.id)[:46]
             for (_row, other_id, _notes) in contact_list:
                 if other_id == _ADMIN_ID:
                     continue  # already added admin above
@@ -589,26 +589,40 @@ _MY_PROPS_MODAL = r"""
   var FARMLIFE_BASE='/assets/farmlife/';
   var tileImgs={};
 
-  /* 3×3 downtown block — 8 buildings surrounding a central park.
-     Raw vc coordinates used (no p2v road-gap math) so tiles are adjacent. */
+  /* 5×5 downtown block — 24 buildings surrounding a central park.
+     Raw vc coordinates — tiles are adjacent, no p2v road-gap math.
+     Downtown sits just below the player island at vr = tv+1 .. tv+DT_N. */
   var DOWNTOWN=[
     {label:'Reserve Bank',     sprite:'commercial',  url:'/reserve-bank',    row:0,col:0},
     {label:'Stock Exchange',   sprite:'university',  url:'/brokerage',       row:0,col:1},
     {label:'Commodity Market', sprite:'shop_medium', url:'/market',          row:0,col:2},
+    {label:'Investment Bank',  sprite:'commercial',  url:'/brokerage',       row:0,col:3},
+    {label:'Crypto Exchange',  sprite:'space',       url:'/memecoins',       row:0,col:4},
     {label:'Land Registry',    sprite:'mansion',     url:'/land-market',     row:1,col:0},
-    /* (1,1) = center park tile — intentionally absent from this array */
-    {label:'District Market',  sprite:'shop_medium', url:'/district-market', row:1,col:2},
+    {label:'City Bank',        sprite:'commercial',  url:'/reserve-bank',    row:1,col:1},
+    {label:'Credit Union',     sprite:'commercial',  url:'/reserve-bank',    row:1,col:2},
+    {label:'Insurance Co',     sprite:'mansion',     url:'/',                row:1,col:3},
+    {label:'Financial Hub',    sprite:'commercial',  url:'/brokerage',       row:1,col:4},
     {label:'City Hall',        sprite:'mansion',     url:'/cities',          row:2,col:0},
-    {label:'Businesses',       sprite:'industrial',  url:'/businesses',      row:2,col:1},
-    {label:'Memecoin Exchange',sprite:'space',       url:'/memecoins',       row:2,col:2},
+    {label:'Law Courts',       sprite:'mansion',     url:'/cities',          row:2,col:1},
+    /* (2,2) = center park tile */
+    {label:'District Market',  sprite:'shop_medium', url:'/district-market', row:2,col:3},
+    {label:'Memecoin Exchange',sprite:'space',       url:'/memecoins',       row:2,col:4},
+    {label:'Police Station',   sprite:'industrial',  url:'/cities',          row:3,col:0},
+    {label:'Fire Station',     sprite:'industrial',  url:'/cities',          row:3,col:1},
+    {label:'Trade Center',     sprite:'shop_medium', url:'/market',          row:3,col:2},
+    {label:'Post Office',      sprite:'industrial',  url:'/',                row:3,col:3},
+    {label:'Businesses',       sprite:'industrial',  url:'/businesses',      row:3,col:4},
+    {label:'Hospital',         sprite:'industrial',  url:'/cities',          row:4,col:0},
+    {label:'University',       sprite:'university',  url:'/cities',          row:4,col:1},
+    {label:'Tech Hub',         sprite:'space',       url:'/businesses',      row:4,col:2},
+    {label:'Convention Ctr',   sprite:'shop_medium', url:'/cities',          row:4,col:3},
+    {label:'Courthouse',       sprite:'mansion',     url:'/cities',          row:4,col:4},
   ];
-  var DT_N=3; /* side length of the square downtown block */
+  var DT_N=5; /* side length of the square downtown block */
 
   /* downtown top-left visual col (raw, consecutive — no p2v road spacing) */
   function getDtVcBase(gs){ return Math.max(0, Math.round((totalVC(gs)-DT_N)/2)); }
-
-  /* downtown occupies vr = -DT_N .. -1; road separator at vr=0; player grid vr=1..tv */
-  var DT_VR_TOP=-DT_N; /* = -3 */
 
   /* Per-terrain color scheme: c=top fill, s=stroke/edge */
   var TERRAIN_SCHEME={
@@ -1113,7 +1127,7 @@ _MY_PROPS_MODAL = r"""
   var hovId=-1,hovCI=-1,hovCPi=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
   var _cache={key:'',items:null},_islands=null,_carLanes=null;
-  var C_GAP=3;
+  var C_GAP=6; /* must be >= DT_N+1 so downtown fits below player before contacts */
   var _mpModal=null; /* cached once on first use */
   var _waveT=0;     /* Date.now()/1000 set once per render frame */
 
@@ -1160,6 +1174,7 @@ _MY_PROPS_MODAL = r"""
     var islands=getIslands();
     var slotSize=islands.length>0?islands[0].slotSize:(tv+C_GAP);
     var dtVcB=getDtVcBase(gs);
+    var dtVrBase=tv+1; /* downtown sits immediately below player island */
     var items=[];
 
     /* Scene bounds — cover all island slots in both dimensions */
@@ -1169,14 +1184,14 @@ _MY_PROPS_MODAL = r"""
       maxVrEnd=Math.max(maxVrEnd,isl.vrOff+isl.ctv);
     });
     var vcLo=-1, vcHi=maxVcEnd;
-    var vrLo=DT_VR_TOP-1, vrHi=maxVrEnd+1;
+    var vrLo=-1, vrHi=Math.max(maxVrEnd,dtVrBase+DT_N)+1;
 
-    /* Downtown tile lookup (always relative to player slot at vcOff=0,vrOff=0) */
+    /* Downtown tile lookup: centered below player island */
     var dtMap={};
     DOWNTOWN.forEach(function(d){
-      dtMap[(dtVcB+d.col)+','+(DT_VR_TOP+d.row)]={d:d};
+      dtMap[(dtVcB+d.col)+','+(dtVrBase+d.row)]={d:d};
     });
-    dtMap[(dtVcB+1)+','+(DT_VR_TOP+1)]={park:true};
+    dtMap[(dtVcB+2)+','+(dtVrBase+2)]={park:true}; /* center tile (2,2) of 5×5 */
 
     /* 2-D (vc,vr) → island lookup for contact islands.
        Include the road row (lvr=0) and the plot rows (lvr=1..ctv). */
@@ -1196,14 +1211,8 @@ _MY_PROPS_MODAL = r"""
         if(vc2===vcLo||vc2===vcHi||vr2===vrLo||vr2===vrHi){
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
-        /* player island: vc in [0..tv-1], vr in [-DT_N..tv] */
-        if(vc2>=0&&vc2<tv&&vr2<=tv){
-          if(vr2<0){
-            var key=vc2+','+vr2, e=dtMap[key];
-            if(e) items.push(e.park?{t:'park',vc:vc2,vr:vr2,depth:depth}:{t:'down',vc:vc2,vr:vr2,depth:depth,d:e.d});
-            else  items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
-            continue;
-          }
+        /* player island: vc in [0..tv-1], vr in [0..tv] */
+        if(vc2>=0&&vc2<tv&&vr2>=0&&vr2<=tv){
           if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth,rc:false});continue;}
           if(vr2>=1&&vr2<=tv){
             var rc=isRd(vc2),rr=isRd(vr2-1);
@@ -1213,6 +1222,13 @@ _MY_PROPS_MODAL = r"""
             continue;
           }
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
+        }
+        /* downtown block: centered below player island */
+        if(vc2>=dtVcB&&vc2<dtVcB+DT_N&&vr2>=dtVrBase&&vr2<dtVrBase+DT_N){
+          var dtKey=vc2+','+vr2, dte=dtMap[dtKey];
+          if(dte) items.push(dte.park?{t:'park',vc:vc2,vr:vr2,depth:depth}:{t:'down',vc:vc2,vr:vr2,depth:depth,d:dte.d});
+          else items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
+          continue;
         }
         /* contact island — look up by 2-D position */
         var isl2=islByPos[vc2+','+vr2];
@@ -1517,7 +1533,7 @@ _MY_PROPS_MODAL = r"""
       maxVrEnd2=Math.max(maxVrEnd2,isl.vrOff+isl.ctv);
     });
     var vcLo=-1, vcHi=maxVcEnd2;
-    var vrLo=DT_VR_TOP-1, vrHi=maxVrEnd2+1;
+    var vrLo=-1, vrHi=Math.max(maxVrEnd2,tv+1+DT_N)+1;
     var vcSpan=vcHi-vcLo, vrSpan=vrHi-vrLo;
     var isoW=(vcSpan+vrSpan)*TW/2, isoH=(vcSpan+vrSpan)*TH/2;
     var fit=Math.min(W/isoW, H/isoH)*0.85;
@@ -1538,11 +1554,12 @@ _MY_PROPS_MODAL = r"""
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var hwh=(TW/2)*scale, hhh=(TH/2)*scale;
     var dtVcB=getDtVcBase(gs);
+    var dtVrBase=tv+1;
     var islands=getIslands();
     /* downtown */
     for(var di=0;di<DOWNTOWN.length;di++){
       var d=DOWNTOWN[di];
-      var s=g2s(dtVcB+d.col,DT_VR_TOP+d.row);
+      var s=g2s(dtVcB+d.col,dtVrBase+d.row);
       var ddx=mx-(s.sx+hwh),ddy=my-(s.sy+hhh);
       if(Math.abs(ddx/hwh)+Math.abs(ddy/hhh)<=1) return {downtown:d};
     }
