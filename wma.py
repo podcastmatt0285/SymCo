@@ -157,12 +157,104 @@ def get_all_wma(player_id: int) -> dict:
 # PRODUCTION COST BASIS
 # ==========================
 
+def get_player_production_context(player_id: int) -> dict:
+    """
+    Load all player-specific data needed for cost-basis computation IN ONE PASS.
+    Returns a dict to be passed as `player_ctx` to compute_production_cost_basis().
+
+    Fetches: per-biz-type land efficiency, city buffs, exec bonuses, theoretical costs.
+    Calling this once before a loop of compute_production_cost_basis() calls avoids
+    thousands of redundant DB connections.
+    """
+    from collections import defaultdict as _dd
+    from database import SessionLocal as _SL
+    db = _SL()
+    try:
+        # ── Land efficiency: one query, grouped by business_type ─────────────
+        biz_eff: dict = {}
+        default_eff = 100.0
+        try:
+            from business import Business
+            from land import LandPlot
+            biz_rows = db.query(Business).filter(
+                Business.owner_id    == player_id,
+                Business.is_active   == True,
+                Business.land_plot_id.isnot(None),
+            ).all()
+            if biz_rows:
+                pid_to_btype = {b.land_plot_id: b.business_type for b in biz_rows}
+                plots = db.query(LandPlot).filter(
+                    LandPlot.id.in_(list(pid_to_btype.keys()))
+                ).all()
+                plot_eff = {p.id: p.efficiency for p in plots}
+                # Group by business_type so each item uses its own business's efficiency
+                type_effs: dict = _dd(list)
+                for pid, btype in pid_to_btype.items():
+                    if pid in plot_eff:
+                        type_effs[btype].append(plot_eff[pid])
+                biz_eff = {bt: sum(effs) / len(effs) for bt, effs in type_effs.items()}
+                all_effs = list(plot_eff.values())
+                if all_effs:
+                    default_eff = sum(all_effs) / len(all_effs)
+        except Exception:
+            pass
+
+        # ── City buffs (one call) ────────────────────────────────────────────
+        city_output_mult = city_wage_mult = city_input_mult = 1.0
+        try:
+            from city_projects import get_city_production_buffs
+            cb = get_city_production_buffs(player_id)
+            city_output_mult = cb.get("output_multiplier", 1.0)
+            city_wage_mult   = cb.get("wage_multiplier",   1.0)
+            city_input_mult  = cb.get("input_multiplier",  1.0)
+        except Exception:
+            pass
+
+        # ── Exec bonuses (three queries but on the same db session) ──────────
+        exec_output_bonus = exec_wage_reduction = exec_input_cost_reduction = 0.0
+        try:
+            from executive import get_player_job_bonus, get_specific_ability_bonus
+            exec_output_bonus         = get_player_job_bonus(db, player_id, "production")
+            exec_wage_reduction       = get_player_job_bonus(db, player_id, "wages")
+            exec_input_cost_reduction = get_specific_ability_bonus(db, player_id, "supply_chain_opt")
+        except Exception:
+            pass
+
+        # ── Theoretical costs (cached after first call) ───────────────────────
+        theo_costs: dict = {}
+        try:
+            from production_costs import get_calculator
+            theo_costs = get_calculator().get_all_costs()
+        except Exception:
+            pass
+
+        return {
+            "biz_eff":                   biz_eff,         # {biz_key: avg_eff_pct}
+            "default_eff":               default_eff,     # fallback when biz_key not in biz_eff
+            "city_output_mult":          city_output_mult,
+            "city_wage_mult":            city_wage_mult,
+            "city_input_mult":           city_input_mult,
+            "exec_output_bonus":         exec_output_bonus,
+            "exec_wage_reduction":       exec_wage_reduction,
+            "exec_input_cost_reduction": exec_input_cost_reduction,
+            "theo_costs":                theo_costs,
+        }
+    finally:
+        db.close()
+
+
 def compute_production_cost_basis(player_id: int,
                                   biz_config: dict,
                                   line: dict,
-                                  wma_cache: dict | None = None) -> dict:
+                                  wma_cache: dict | None = None,
+                                  biz_key: str = "",
+                                  player_ctx: dict | None = None) -> dict:
     """
     Compute the WMA-based cost basis for one production line.
+
+    Pass `player_ctx` (from get_player_production_context) and `biz_key` when
+    calling in a loop — avoids per-item DB connections and gives accurate
+    per-business-type land efficiency instead of a cross-business average.
 
     Applies (in the same order as the game tick):
       1. Land efficiency  — degradation raises effective wage
@@ -178,6 +270,26 @@ def compute_production_cost_basis(player_id: int,
         subsidy_rate, eff_pct,
         exec_output_bonus, exec_wage_reduction, exec_input_cost_reduction
     """
+    if player_ctx is not None:
+        # Fast path: use pre-fetched context — no DB connection needed
+        eff_pct = player_ctx["biz_eff"].get(biz_key, player_ctx["default_eff"])
+        eff_multiplier       = max(0.5, eff_pct / 100.0)
+        city_output_mult     = player_ctx["city_output_mult"]
+        city_wage_mult       = player_ctx["city_wage_mult"]
+        city_input_mult      = player_ctx["city_input_mult"]
+        exec_output_bonus    = player_ctx["exec_output_bonus"]
+        exec_wage_reduction  = player_ctx["exec_wage_reduction"]
+        exec_input_cost_reduction = player_ctx["exec_input_cost_reduction"]
+        theo_costs           = player_ctx["theo_costs"]
+        wma_data             = wma_cache if wma_cache is not None else get_all_wma(player_id)
+        return _compute_cb_inner(
+            biz_config, line, wma_data, theo_costs,
+            eff_pct, eff_multiplier,
+            city_output_mult, city_wage_mult, city_input_mult,
+            exec_output_bonus, exec_wage_reduction, exec_input_cost_reduction,
+        )
+
+    # Slow path: fetch everything from DB (backward-compatible, used by business.py tick)
     from database import SessionLocal as _SL
     db = _SL()
     try:
@@ -191,6 +303,10 @@ def compute_production_cost_basis(player_id: int,
                 Business.is_active   == True,
                 Business.land_plot_id.isnot(None),
             ).all()
+            # Use biz_key to filter to the specific business type when known
+            if biz_key:
+                matching = [b for b in biz_rows if b.business_type == biz_key]
+                biz_rows = matching if matching else biz_rows
             plot_ids = [b.land_plot_id for b in biz_rows]
             if plot_ids:
                 plots = db.query(LandPlot).filter(LandPlot.id.in_(plot_ids)).all()
@@ -222,23 +338,6 @@ def compute_production_cost_basis(player_id: int,
             pass
 
         # ── Recipe base values ───────────────────────────────────────────────
-        base_wage       = biz_config.get("base_wage_cost", 0.0)
-        base_output_qty = line.get("output_qty", 1)
-        inputs          = line.get("inputs", [])
-        startup_cost    = biz_config.get("startup_cost", 0.0)
-
-        # ── Step 1: Adjusted wage ────────────────────────────────────────────
-        # Efficiency < 1 ⇒ wages rise (business runs less efficiently).
-        actual_wage = (
-            base_wage
-            / eff_multiplier
-            * city_wage_mult
-            * (1.0 - min(0.95, exec_wage_reduction))
-        )
-
-        # ── Step 2: Gross batch cost — WMA prices with theoretical fallback ──
-        # Priority: player's WMA record → theoretical (vertical integration) → 0
-        # Only flag an input as "missing" if there is truly no price source at all.
         wma_data = wma_cache if wma_cache is not None else get_all_wma(player_id)
         try:
             from production_costs import get_calculator
@@ -247,87 +346,104 @@ def compute_production_cost_basis(player_id: int,
         except Exception:
             theo_costs = {}
 
-        input_breakdown  = []
-        gross_input_cost = 0.0
-        missing_wma      = []   # inputs with NO price source at all
-
-        for req in inputs:
-            item     = req["item"]
-            base_qty = req["quantity"]
-            eff_qty  = max(1, round(base_qty * city_input_mult))
-            wma      = wma_data.get(item, {}).get("wma_cost", 0.0)
-            has_wma  = wma > 0
-
-            if has_wma:
-                price_used = wma
-                price_source = "wma"
-            else:
-                theo = theo_costs.get(item, 0.0)
-                if theo > 0:
-                    price_used   = theo
-                    price_source = "theoretical"
-                else:
-                    price_used   = 0.0
-                    price_source = "unknown"
-                    missing_wma.append(item)
-
-            # supply_chain_opt lowers effective input cost (not quantity)
-            eff_price = price_used * (1.0 - min(0.95, exec_input_cost_reduction))
-            line_cost = eff_qty * eff_price
-            gross_input_cost += line_cost
-
-            input_breakdown.append({
-                "item":          item,
-                "base_qty":      base_qty,
-                "effective_qty": eff_qty,
-                "wma_cost":      wma,
-                "price_used":    price_used,
-                "price_source":  price_source,   # "wma" | "theoretical" | "unknown"
-                "effective_cost": eff_price,
-                "line_cost":     line_cost,
-                "has_wma":       has_wma,
-            })
-
-        gross_batch_cost = gross_input_cost + actual_wage
-
-        # ── Step 3: City production subsidy ──────────────────────────────────
-        net_batch_cost = gross_batch_cost * (1.0 - PRODUCTION_SUBSIDY_RATE)
-
-        # ── Step 4: Actual output qty ─────────────────────────────────────────
-        actual_output_qty = max(1, round(
-            base_output_qty * city_output_mult * (1.0 + exec_output_bonus)
-        ))
-
-        # ── Step 5: Unit cost + CapEx amortisation ───────────────────────────
-        op_unit_cost   = net_batch_cost / actual_output_qty if actual_output_qty > 0 else 0.0
-        capex_per_unit = startup_cost / CAPEX_AMORTIZE_UNITS
-        true_unit_cost = op_unit_cost + capex_per_unit
-
-        theo_count = sum(1 for i in input_breakdown if i["price_source"] == "theoretical")
-        return {
-            "unit_cost":               true_unit_cost,
-            "operational_unit_cost":   op_unit_cost,
-            "capex_per_unit":          capex_per_unit,
-            "batch_cost_gross":        gross_batch_cost,
-            "batch_cost_net":          net_batch_cost,
-            "actual_wage":             actual_wage,
-            "gross_input_cost":        gross_input_cost,
-            "actual_output_qty":       actual_output_qty,
-            "inputs":                  input_breakdown,
-            # has_all_wma: True only when every input price came from the player's own WMA ledger
-            "has_all_wma":             len(missing_wma) == 0 and theo_count == 0,
-            # has_all_priced: True when every input has SOME price (WMA or theoretical)
-            "has_all_priced":          len(missing_wma) == 0,
-            "theoretical_fallback_count": theo_count,
-            "missing_wma_items":       missing_wma,
-            "subsidy_rate":            PRODUCTION_SUBSIDY_RATE,
-            "eff_pct":                 eff_pct,
-            "exec_output_bonus":       exec_output_bonus,
-            "exec_wage_reduction":     exec_wage_reduction,
-            "exec_input_cost_reduction": exec_input_cost_reduction,
-        }
+        return _compute_cb_inner(
+            biz_config, line, wma_data, theo_costs,
+            eff_pct, eff_multiplier,
+            city_output_mult, city_wage_mult, city_input_mult,
+            exec_output_bonus, exec_wage_reduction, exec_input_cost_reduction,
+        )
     finally:
         db.close()
+
+
+def _compute_cb_inner(
+    biz_config: dict, line: dict,
+    wma_data: dict, theo_costs: dict,
+    eff_pct: float, eff_multiplier: float,
+    city_output_mult: float, city_wage_mult: float, city_input_mult: float,
+    exec_output_bonus: float, exec_wage_reduction: float, exec_input_cost_reduction: float,
+) -> dict:
+    """Pure-computation core — no DB I/O."""
+    base_wage       = biz_config.get("base_wage_cost", 0.0)
+    base_output_qty = line.get("output_qty", 1)
+    inputs          = line.get("inputs", [])
+    startup_cost    = biz_config.get("startup_cost", 0.0)
+
+    actual_wage = (
+        base_wage / eff_multiplier
+        * city_wage_mult
+        * (1.0 - min(0.95, exec_wage_reduction))
+    )
+
+    input_breakdown  = []
+    gross_input_cost = 0.0
+    missing_wma      = []
+
+    for req in inputs:
+        item     = req["item"]
+        base_qty = req["quantity"]
+        eff_qty  = max(1, round(base_qty * city_input_mult))
+        wma      = wma_data.get(item, {}).get("wma_cost", 0.0)
+        has_wma  = wma > 0
+
+        if has_wma:
+            price_used   = wma
+            price_source = "wma"
+        else:
+            theo = theo_costs.get(item, 0.0)
+            if theo > 0:
+                price_used   = theo
+                price_source = "theoretical"
+            else:
+                price_used   = 0.0
+                price_source = "unknown"
+                missing_wma.append(item)
+
+        eff_price = price_used * (1.0 - min(0.95, exec_input_cost_reduction))
+        line_cost = eff_qty * eff_price
+        gross_input_cost += line_cost
+        input_breakdown.append({
+            "item":           item,
+            "base_qty":       base_qty,
+            "effective_qty":  eff_qty,
+            "wma_cost":       wma,
+            "price_used":     price_used,
+            "price_source":   price_source,
+            "effective_cost": eff_price,
+            "line_cost":      line_cost,
+            "has_wma":        has_wma,
+        })
+
+    gross_batch_cost  = gross_input_cost + actual_wage
+    net_batch_cost    = gross_batch_cost * (1.0 - PRODUCTION_SUBSIDY_RATE)
+    actual_output_qty = max(1, round(
+        base_output_qty * city_output_mult * (1.0 + exec_output_bonus)
+    ))
+    op_unit_cost   = net_batch_cost / actual_output_qty if actual_output_qty > 0 else 0.0
+    capex_per_unit = startup_cost / CAPEX_AMORTIZE_UNITS
+    true_unit_cost = op_unit_cost + capex_per_unit
+    theo_count     = sum(1 for i in input_breakdown if i["price_source"] == "theoretical")
+
+    return {
+        "unit_cost":                  true_unit_cost,
+        "operational_unit_cost":      op_unit_cost,
+        "capex_per_unit":             capex_per_unit,
+        "batch_cost_gross":           gross_batch_cost,
+        "batch_cost_net":             net_batch_cost,
+        "actual_wage":                actual_wage,
+        "gross_input_cost":           gross_input_cost,
+        "actual_output_qty":          actual_output_qty,
+        "inputs":                     input_breakdown,
+        "has_all_wma":                len(missing_wma) == 0 and theo_count == 0,
+        "has_all_priced":             len(missing_wma) == 0,
+        "theoretical_fallback_count": theo_count,
+        "missing_wma_items":          missing_wma,
+        "subsidy_rate":               PRODUCTION_SUBSIDY_RATE,
+        "eff_pct":                    eff_pct,
+        "exec_output_bonus":          exec_output_bonus,
+        "exec_wage_reduction":        exec_wage_reduction,
+        "exec_input_cost_reduction":  exec_input_cost_reduction,
+    }
 
 
 def get_player_cost_basis_items(player_id: int) -> list:
@@ -371,8 +487,11 @@ def get_player_cost_basis_items(player_id: int) -> list:
     except FileNotFoundError:
         pass
 
-    # Fetch WMA data once for all items rather than once per item inside the loop.
-    wma_cache = get_all_wma(player_id)
+    # Fetch all player-specific data ONCE before the loop.
+    # This is the key performance fix: without this, compute_production_cost_basis
+    # opens a new DB connection and runs 6-8 queries for every item (200+ items = 1200+ queries).
+    wma_cache   = get_all_wma(player_id)
+    player_ctx  = get_player_production_context(player_id)
 
     results = []
     seen: set = set()
@@ -388,7 +507,10 @@ def get_player_cost_basis_items(player_id: int) -> list:
                 continue
             seen.add(output)
 
-            cb       = compute_production_cost_basis(player_id, biz_data, line, wma_cache=wma_cache)
+            cb       = compute_production_cost_basis(
+                player_id, biz_data, line,
+                wma_cache=wma_cache, biz_key=biz_key, player_ctx=player_ctx,
+            )
             meta     = item_types.get(output, {})
             name     = (meta.get("name") if isinstance(meta, dict) else None) \
                        or output.replace("_", " ").title()
@@ -396,20 +518,20 @@ def get_player_cost_basis_items(player_id: int) -> list:
                        or "unknown"
 
             results.append({
-                "item_key":    output,
-                "name":        name,
-                "category":    category,
-                "unit_cost":   cb["unit_cost"],
-                "has_all_wma": cb["has_all_wma"],
-                "has_all_priced": cb["has_all_priced"],
+                "item_key":                  output,
+                "name":                      name,
+                "category":                  category,
+                "unit_cost":                 cb["unit_cost"],
+                "has_all_wma":               cb["has_all_wma"],
+                "has_all_priced":            cb["has_all_priced"],
                 "theoretical_fallback_count": cb["theoretical_fallback_count"],
-                "missing_wma": cb["missing_wma_items"],
-                "business":    biz_data.get("name", biz_key),
-                "business_key": biz_key,
-                "detail":      cb,
+                "missing_wma":               cb["missing_wma_items"],
+                "business":                  biz_data.get("name", biz_key),
+                "business_key":              biz_key,
+                "detail":                    cb,
             })
 
-    return results
+    return results, wma_cache
 
 
 # ==========================

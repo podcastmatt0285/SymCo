@@ -2890,6 +2890,7 @@ def wiki_shell(title: str, body: str, player_name: str = "", active: str = "") -
         ("banks",         "/stats/wiki/banks",         "🏦 Banks"),
         ("counties",      "/stats/wiki/counties",      "🗺️ Counties"),
         ("crypto",        "/stats/wiki/crypto",        "🪙 Crypto"),
+        ("costs",         "/stats/production-costs",   "📊 Costs"),
     ]
     nav = "".join(
         f'<a href="{hr}" class="{"active" if active == k else ""}">{lb}</a>'
@@ -3448,24 +3449,30 @@ async def wiki_items_page(
         pass
 
     try:
-        from market import get_market_price
+        from market import get_all_market_prices
+        _all_prices = get_all_market_prices()  # one DB round trip for all items
     except Exception:
-        get_market_price = lambda x: None  # noqa: E731
+        _all_prices = {}
 
-    cats = sorted({v.get("category", "misc") for v in items.values() if isinstance(v, dict)})
+    # Build category counts in O(n) with Counter
+    from collections import Counter as _Counter
+    _cat_counts = _Counter(
+        v.get("category", "misc") for v in items.values() if isinstance(v, dict)
+    )
+    total_items = sum(_cat_counts.values())
+    cats = sorted(_cat_counts.keys())
     pool = {k: v for k, v in items.items()
             if isinstance(v, dict) and (category == "all" or v.get("category") == category)}
 
     filters = (
         f'<a href="/stats/wiki/items?category=all" class="wft {"active" if category=="all" else ""}">'
-        f'All ({sum(1 for v in items.values() if isinstance(v, dict))})</a>'
+        f'All ({total_items})</a>'
     )
     for cat in cats:
-        cnt = sum(1 for v in items.values() if isinstance(v, dict) and v.get("category") == cat)
         act = " active" if category == cat else ""
         filters += (
             f'<a href="/stats/wiki/items?category={cat}" class="wft{act}">'
-            f'{cat.replace("_"," ").title()} ({cnt})</a>'
+            f'{cat.replace("_"," ").title()} ({_cat_counts[cat]})</a>'
         )
 
     cards = ""
@@ -3473,12 +3480,9 @@ async def wiki_items_page(
         name = item.get("name", key.replace("_", " ").title())
         desc = item.get("description", "")[:80]
         cat  = item.get("category", "misc")
-        try:
-            price = get_market_price(key)
-            price_str = fmt_usd(price, disp) if price else "No market data"
-            price_cls = "ora" if price else ""
-        except Exception:
-            price_str, price_cls = "No market data", ""
+        price     = _all_prices.get(key)
+        price_str = fmt_usd(price, disp) if price else "No market data"
+        price_cls = "ora" if price else ""
         safe = name.lower().replace('"', '')
         cards += (
             f'<div class="wc wcs" data-n="{safe}" data-c="{cat}">'
@@ -4019,26 +4023,42 @@ async def wiki_banks(session_token: Optional[str] = Cookie(None)):
   {ticks}
 </svg>'''
 
+        # Batch-fetch all yield history and bonds in two queries instead of N per bank
+        all_bank_ids = [rb.id for rb in rb_all]
+        _all_hist = (rdb.query(_BYH)
+                     .filter(_BYH.bank_id.in_(all_bank_ids), _BYH.recorded_at >= cutoff)
+                     .order_by(_BYH.recorded_at)
+                     .all()) if all_bank_ids else []
+        from collections import defaultdict as _dd_rb
+        _hist_by_bank: dict = _dd_rb(list)
+        for h in _all_hist:
+            _hist_by_bank[h.bank_id].append(h)
+
+        _all_bonds = (rdb.query(_RBB)
+                      .filter(_RBB.bank_id.in_(all_bank_ids))
+                      .order_by(_RBB.bank_id, _RBB.purchased_at.desc())
+                      .all()) if all_bank_ids else []
+        _bonds_by_bank: dict = _dd_rb(list)
+        for b in _all_bonds:
+            _bonds_by_bank[b.bank_id].append(b)
+
         for rb in rb_all:
             yield_color = "#f5a855" if rb.yield_rate > 0.05 else ("#90c4f0" if rb.yield_rate < 0 else "#f5d76e")
 
-            # Yield history chart
-            hist = (rdb.query(_BYH)
-                    .filter(_BYH.bank_id == rb.id, _BYH.recorded_at >= cutoff)
-                    .order_by(_BYH.recorded_at)
-                    .all())
-            chart_svg = _yield_svg(hist, rb.currency_code)
+            chart_svg = _yield_svg(_hist_by_bank[rb.id], rb.currency_code)
 
-            # Active bond holders
-            bonds = (rdb.query(_RBB)
-                     .filter(_RBB.bank_id == rb.id)
-                     .order_by(_RBB.purchased_at.desc())
-                     .limit(50)
-                     .all())
+            # Bond holders (limited to 50 most recent)
+            bonds = _bonds_by_bank[rb.id][:50]
+            # Batch player name lookup for all bond holders in this bank
+            _holder_ids = list({b.holder_player_id for b in bonds if b.holder_player_id})
+            _holder_map = {}
+            if _holder_ids:
+                _hplayers = db.query(_RBPlayer).filter(_RBPlayer.id.in_(_holder_ids)).all()
+                _holder_map = {p.id: p.business_name for p in _hplayers}
+
             bond_rows = ""
             for bond in bonds:
-                holder = db.query(_RBPlayer).filter(_RBPlayer.id == bond.holder_player_id).first()
-                holder_name = holder.business_name if holder else f"Player #{bond.holder_player_id}"
+                holder_name = _holder_map.get(bond.holder_player_id) or f"Player #{bond.holder_player_id}"
                 due = bond.matures_at.strftime("%b %d, %Y") if bond.matures_at else "—"
                 days_left = (bond.matures_at - datetime.utcnow()).days if bond.matures_at else 0
                 dl_color = "#f87171" if days_left < 0 else ("#f5a855" if days_left <= 3 else "#6ee7b7")

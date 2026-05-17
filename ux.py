@@ -11298,6 +11298,7 @@ def production_costs_page(
                 items = calc.get_all_items_sorted(sort_by=sort, ascending=(order == "asc"))
 
             # Category tabs
+            _by_cat = calc.get_by_category()   # call once; avoid N-per-category repeat
             cat_tabs = (
                 f'<a href="/stats/production-costs?mode=vertical&category=all'
                 f'&sort={sort}&order={order}" '
@@ -11308,7 +11309,7 @@ def production_costs_page(
                 f'All ({summary["total_items"]})</a>'
             )
             for cat in categories:
-                cnt   = len(calc.get_by_category().get(cat, []))
+                cnt   = len(_by_cat.get(cat, []))
                 color = cat_colors.get(cat, "#64748b")
                 sel   = category == cat
                 cat_tabs += (
@@ -11435,10 +11436,11 @@ def production_costs_page(
         # MODE B — WMA Cost Basis (player-personalised)
         # ════════════════════════════════════════════════════════════════════
         else:
-            from wma import get_player_cost_basis_items, get_all_wma
+            from wma import get_player_cost_basis_items
 
-            all_raw   = get_player_cost_basis_items(player.id)
-            wma_data  = get_all_wma(player.id)
+            # get_player_cost_basis_items now returns (results, wma_cache) — avoids
+            # opening hundreds of DB connections (one per item) and a duplicate get_all_wma call.
+            all_raw, wma_data = get_player_cost_basis_items(player.id)
             raw_items = list(all_raw)  # copy; filters below will reassign this
 
             # Apply filters
@@ -11610,7 +11612,8 @@ def production_costs_page(
                 f'<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">'
                 f'<thead><tr style="border-bottom:2px solid #1e293b;text-align:left;">'
                 f'{_th("Item","name")} {_th("Category","category")} '
-                f'{_th("My Unit Cost","cost","right")} {_th("CapEx/unit","cost","right")} '
+                f'{_th("My Unit Cost","cost","right")} '
+                f'<th style="padding:12px 8px;text-align:right;color:#94a3b8;">CapEx/unit</th>'
                 f'<th style="padding:12px 8px;">Producer / Buffs</th>'
                 f'</tr></thead><tbody>'
                 f'{complete_rows}'

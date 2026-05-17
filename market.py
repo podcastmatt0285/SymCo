@@ -786,6 +786,81 @@ def get_order_book(item_type: str) -> dict:
     return {"bids": bids, "asks": asks}
 
 
+def get_all_market_prices(item_keys: "list[str] | None" = None) -> "dict[str, float]":
+    """
+    Bulk fetch of latest trade price (or best bid/ask midpoint) for all items.
+    Returns {item_type: price}. Much faster than calling get_market_price() per item.
+    If item_keys is provided, only those items are fetched.
+    """
+    from sqlalchemy import text as _text
+    db = get_db()
+    try:
+        # Latest trade price per item in one query using a subquery
+        filter_clause = ""
+        params: dict = {}
+        if item_keys:
+            placeholders = ",".join(f":k{i}" for i in range(len(item_keys)))
+            filter_clause = f"WHERE item_type IN ({placeholders})"
+            params = {f"k{i}": k for i, k in enumerate(item_keys)}
+
+        rows = db.execute(_text(f"""
+            SELECT item_type, price FROM trades t
+            WHERE t.id = (
+                SELECT id FROM trades t2
+                WHERE t2.item_type = t.item_type
+                ORDER BY executed_at DESC LIMIT 1
+            )
+            {filter_clause}
+        """), params).fetchall()
+        prices = {r[0]: r[1] for r in rows}
+
+        # For items without a trade, fall back to best bid/ask midpoint
+        need_fallback = set(item_keys or []) - set(prices.keys()) if item_keys else set()
+        if not item_keys:
+            # Get all item_types that have active orders
+            order_rows = db.execute(_text("""
+                SELECT item_type,
+                       MAX(CASE WHEN order_type='buy'  THEN price END) AS best_bid,
+                       MIN(CASE WHEN order_type='sell' THEN price END) AS best_ask
+                FROM market_orders WHERE status='active' AND price IS NOT NULL
+                GROUP BY item_type
+            """)).fetchall()
+            for r in order_rows:
+                if r[0] not in prices:
+                    bid, ask = r[1], r[2]
+                    if bid is not None and ask is not None:
+                        prices[r[0]] = (bid + ask) / 2
+                    elif bid is not None:
+                        prices[r[0]] = bid
+                    elif ask is not None:
+                        prices[r[0]] = ask
+        elif need_fallback:
+            ph2 = ",".join(f":f{i}" for i in range(len(need_fallback)))
+            p2  = {f"f{i}": k for i, k in enumerate(need_fallback)}
+            fb_rows = db.execute(_text(f"""
+                SELECT item_type,
+                       MAX(CASE WHEN order_type='buy'  THEN price END),
+                       MIN(CASE WHEN order_type='sell' THEN price END)
+                FROM market_orders
+                WHERE status='active' AND price IS NOT NULL AND item_type IN ({ph2})
+                GROUP BY item_type
+            """), p2).fetchall()
+            for r in fb_rows:
+                bid, ask = r[1], r[2]
+                if bid is not None and ask is not None:
+                    prices[r[0]] = (bid + ask) / 2
+                elif bid is not None:
+                    prices[r[0]] = bid
+                elif ask is not None:
+                    prices[r[0]] = ask
+        return prices
+    except Exception as e:
+        print(f"[Market] get_all_market_prices error: {e}")
+        return {}
+    finally:
+        db.close()
+
+
 def get_market_price(item_type: str) -> Optional[float]:
     """Midpoint bid/ask or last trade price."""
     db = get_db()
