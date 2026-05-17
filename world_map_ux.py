@@ -387,41 +387,45 @@ def api_my_properties(
                 """Fetch plots + biz info for one contact; returns dict or None."""
                 try:
                     adb2 = _auth.get_db()
-                    other = adb2.query(_auth.Player).filter_by(id=other_id).first()
-                    other_name = (getattr(other, "business_name", None)
-                                  or getattr(other, "username", None)
-                                  or f"Player {other_id}")
-                    adb2.close()
+                    try:
+                        other = adb2.query(_auth.Player).filter_by(id=other_id).first()
+                        other_name = (getattr(other, "business_name", None)
+                                      or getattr(other, "username", None)
+                                      or f"Player {other_id}")
+                    finally:
+                        adb2.close()
                     ldb2 = _ldb2()
-                    q = ldb2.query(_LandPlot2).filter(_LandPlot2.owner_id == other_id)
-                    if not include_govt:
-                        q = q.filter(_LandPlot2.is_government_owned == False)
-                    other_plots = q.order_by(_LandPlot2.id).all()
-                    obiz_ids = [p.occupied_by_business_id for p in other_plots if p.occupied_by_business_id]
-                    obiz_map = {}
-                    if obiz_ids:
-                        for b in ldb2.query(_Biz2).filter(_Biz2.id.in_(obiz_ids)).all():
-                            cfg = _BT2.get(b.business_type) or _dt2.get(b.business_type) or {}
-                            obiz_map[b.id] = {
-                                "type":  b.business_type,
-                                "name":  cfg.get("name", b.business_type.replace("_", " ").title()),
-                                "class": cfg.get("class", "production"),
-                            }
-                    ldb2.close()
-                    cplots = []
-                    for p in other_plots:
-                        ob = obiz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
-                        _cprox_str = p.proximity_features or ""
-                        cplots.append({
-                            "id":          p.id,
-                            "terrain":     p.terrain_type,
-                            "proximity":   [f.strip() for f in _cprox_str.split(",") if f.strip()],
-                            "efficiency":  round(p.efficiency or 0, 1),
-                            "monthly_tax": round(p.monthly_tax or 0, 2),
-                            "biz_type":    ob["type"]  if ob else None,
-                            "biz_name":    ob["name"]  if ob else None,
-                            "biz_class":   ob["class"] if ob else None,
-                        })
+                    try:
+                        q = ldb2.query(_LandPlot2).filter(_LandPlot2.owner_id == other_id)
+                        if not include_govt:
+                            q = q.filter(_LandPlot2.is_government_owned == False)
+                        other_plots = q.order_by(_LandPlot2.id).all()
+                        obiz_ids = [p.occupied_by_business_id for p in other_plots if p.occupied_by_business_id]
+                        obiz_map = {}
+                        if obiz_ids:
+                            for b in ldb2.query(_Biz2).filter(_Biz2.id.in_(obiz_ids)).all():
+                                cfg = _BT2.get(b.business_type) or _dt2.get(b.business_type) or {}
+                                obiz_map[b.id] = {
+                                    "type":  b.business_type,
+                                    "name":  cfg.get("name", b.business_type.replace("_", " ").title()),
+                                    "class": cfg.get("class", "production"),
+                                }
+                        cplots = []
+                        for p in other_plots:
+                            ob = obiz_map.get(p.occupied_by_business_id) if p.occupied_by_business_id else None
+                            _cprox_str = p.proximity_features or ""
+                            cplots.append({
+                                "id":          p.id,
+                                "terrain":     p.terrain_type,
+                                "proximity":   [f.strip() for f in _cprox_str.split(",") if f.strip()],
+                                "efficiency":  round(p.efficiency or 0, 1),
+                                "monthly_tax": round(p.monthly_tax or 0, 2),
+                                "biz_type":    ob["type"]  if ob else None,
+                                "biz_name":    ob["name"]  if ob else None,
+                                "biz_class":   ob["class"] if ob else None,
+                            })
+                    finally:
+                        ldb2.close()
                     return {"player_id": other_id, "player_name": other_name, "plots": cplots}
                 except Exception:
                     return None

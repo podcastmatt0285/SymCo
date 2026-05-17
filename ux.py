@@ -14092,7 +14092,7 @@ def events_page(request: Request,
             from reserve_banks import get_player_display_currency, get_player_currency_balance
             _disp    = get_player_display_currency(player.id)
             _tender  = _disp["code"]
-            _rate    = _disp["usd_per_unit"]
+            _rate    = _disp["usd_per_unit"] or 1.0   # guard zero/None
             _sym     = _disp["symbol"]
             _bal     = get_player_currency_balance(player.id, _tender)
             _usd_eq  = _bal * _rate
@@ -14179,7 +14179,6 @@ def events_page(request: Request,
                                 var mx=document.getElementById('cs-max-'+_evId);
                                 if(mx) mx.textContent=_curMax.toLocaleString()+' WSC';
                             }}
-                            if(d.error&&!d.max_wsc){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
                             if(d.error){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
                             var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
                             var costStr=_fmtLocal(d.cost_local,sym,code);
@@ -14221,7 +14220,7 @@ def events_page(request: Request,
                         .then(function(r){{return r.json();}})
                         .then(function(d){{
                             if(d.ok){{
-                                st.innerHTML='<span style="color:#4ade80;">&#10003;\xa0'+d.message+'</span>';
+                                var _stOk=document.createElement('span');_stOk.style.color='#4ade80';_stOk.textContent='\u2713\xa0'+d.message;st.replaceChildren(_stOk);
                                 if(d.new_cash_balance!==undefined){{
                                     var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
                                     var b=document.getElementById('cs-bal-'+_evId);
@@ -14521,7 +14520,7 @@ def api_crypto_scam_rate(
     from reserve_banks import get_player_display_currency, get_player_currency_balance
     disp           = get_player_display_currency(player.id)
     tender         = disp["code"]
-    rate           = disp["usd_per_unit"]
+    rate           = disp["usd_per_unit"] or 1.0   # guard zero/None
     tender_balance = get_player_currency_balance(player.id, tender)
     usd_equiv      = tender_balance * rate
     max_wsc        = int(usd_equiv * 0.90)
