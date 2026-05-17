@@ -211,6 +211,82 @@ def get_outgoing_requests(player_id: int) -> List[Contact]:
         db.close()
 
 
+ADMIN_PLAYER_ID = 1
+
+
+def ensure_admin_contact(player_id: int) -> None:
+    """Ensure player_id has an accepted contact row with the admin (player_id=1).
+    Idempotent — safe to call on every login or registration.
+    """
+    if player_id == ADMIN_PLAYER_ID:
+        return
+    existing = get_contact_row(player_id, ADMIN_PLAYER_ID)
+    if existing and existing.status == "accepted":
+        return
+    db = get_db()
+    try:
+        if existing:
+            row = db.query(Contact).filter(Contact.id == existing.id).first()
+            if row:
+                row.status       = "accepted"
+                row.updated_at   = datetime.utcnow()
+                db.commit()
+        else:
+            db.add(Contact(
+                requester_id=ADMIN_PLAYER_ID,
+                recipient_id=player_id,
+                status="accepted",
+            ))
+            db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[Contacts] ensure_admin_contact({player_id}) failed: {e}")
+    finally:
+        db.close()
+
+
+def seed_admin_contact_all_players() -> int:
+    """Retroactively ensure every existing player has admin as an accepted contact.
+    Returns the number of rows created or updated.
+    """
+    from auth import Player as _Player, get_db as _auth_get_db
+    auth_db = _auth_get_db()
+    try:
+        all_ids = [r.id for r in auth_db.query(_Player.id).filter(_Player.id != ADMIN_PLAYER_ID).all()]
+    finally:
+        auth_db.close()
+
+    count = 0
+    for pid in all_ids:
+        existing = get_contact_row(pid, ADMIN_PLAYER_ID)
+        if existing and existing.status == "accepted":
+            continue
+        db = get_db()
+        try:
+            if existing:
+                row = db.query(Contact).filter(Contact.id == existing.id).first()
+                if row:
+                    row.status     = "accepted"
+                    row.updated_at = datetime.utcnow()
+                    db.commit()
+                    count += 1
+            else:
+                db.add(Contact(
+                    requester_id=ADMIN_PLAYER_ID,
+                    recipient_id=pid,
+                    status="accepted",
+                ))
+                db.commit()
+                count += 1
+        except Exception as e:
+            db.rollback()
+            print(f"[Contacts] seed_admin_contact_all_players pid={pid} error: {e}")
+        finally:
+            db.close()
+    print(f"[Contacts] seed_admin_contact_all_players: seeded {count}/{len(all_ids)} players")
+    return count
+
+
 def search_players(query: str, viewer_id: int, limit: int = 12) -> list:
     """Search players by business name. Returns list of dicts."""
     from auth import Player, get_db as get_auth_db

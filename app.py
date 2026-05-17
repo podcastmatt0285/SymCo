@@ -499,6 +499,12 @@ async def lifespan(app: FastAPI):
         print("Wiki DB initialized")
     except Exception as _we:
         print(f"Wiki init error: {_we}")
+    # Retroactively seed admin as accepted contact for all existing players
+    try:
+        from contacts import seed_admin_contact_all_players
+        seed_admin_contact_all_players()
+    except Exception as _ce:
+        print(f"[App] Admin contact seed error: {_ce}")
     load_modules()
     initialize_modules()
     tick_task = asyncio.create_task(tick_loop())

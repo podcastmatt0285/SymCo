@@ -346,6 +346,14 @@ def create_player(db: Session, business_name: str, password: str,
         import traceback
         traceback.print_exc()
     
+    # Ensure admin is an accepted contact for every new player
+    try:
+        from contacts import ensure_admin_contact
+        ensure_admin_contact(player_id)
+        print(f"[Auth] Seeded admin contact for player {player_id}")
+    except Exception as e:
+        print(f"[Auth] Failed to seed admin contact: {e}")
+
     # Give starter inventory
     try:
         from market import give_starter_inventory
