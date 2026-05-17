@@ -1125,18 +1125,30 @@ _MY_PROPS_MODAL = r"""
   }
   function startWaveAnim(){if(!_waveAF)_waveAF=requestAnimationFrame(_waveLoop);}
 
-  /* Compute (and cache) the layout of contact islands.
-     Each island sits to the right of the player grid, separated by C_GAP water tiles.
-     baseVc is the leftmost visual column of the contact's grid. */
+  /* Z-order (Morton) curve: given entity index n, return {x,y} slot position.
+     Player is n=0 → (0,0); contact ci is n=ci+1.
+     Pattern: 4 entities → 2×2 block; 16 entities → 2×2 of 2×2; etc. */
+  function zOrderXY(n){
+    var x=0,y=0;
+    for(var i=0;i<16;i++){x|=((n>>(2*i))&1)<<i;y|=((n>>(2*i+1))&1)<<i;}
+    return {x:x,y:y};
+  }
+
+  /* Compute (and cache) the layout of contact islands using a 2-D Z-curve grid.
+     Each island has vcOff and vrOff (slot-position × slotSize) so that groups
+     of 4 player areas form 2×2 blocks that themselves nest into larger squares. */
   function getIslands(){
     if(_islands) return _islands;
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
-    var nextVc=tv+C_GAP;
+    /* uniform slot size = largest island width + gap */
+    var maxCtv=tv;
+    contacts.forEach(function(c){maxCtv=Math.max(maxCtv,totalVC(gridSz(c.plots.length||1)));});
+    var slotSize=maxCtv+C_GAP;
     _islands=contacts.map(function(c,ci){
       var cgs=gridSz(c.plots.length||1), ctv=totalVC(cgs);
-      var isl={ci:ci,c:c,cgs:cgs,ctv:ctv,baseVc:nextVc};
-      nextVc+=ctv+C_GAP;
-      return isl;
+      var z=zOrderXY(ci+1);           /* ci+1: player occupies slot 0 */
+      return {ci:ci,c:c,cgs:cgs,ctv:ctv,
+              vcOff:z.x*slotSize, vrOff:z.y*slotSize, slotSize:slotSize};
     });
     return _islands;
   }
@@ -1146,28 +1158,35 @@ _MY_PROPS_MODAL = r"""
     var ckey=gs+'_'+contacts.length;
     if(_cache.key===ckey) return _cache.items;
     var islands=getIslands();
+    var slotSize=islands.length>0?islands[0].slotSize:(tv+C_GAP);
     var dtVcB=getDtVcBase(gs);
     var items=[];
 
-    /* Scene bounds */
-    var vcLo=-1;
-    var vcHi=islands.length>0
-      ? islands[islands.length-1].baseVc+islands[islands.length-1].ctv
-      : tv;
-    var maxCtv=islands.reduce(function(m,isl){return Math.max(m,isl.ctv);},tv);
-    var vrLo=DT_VR_TOP-1, vrHi=maxCtv+1;
+    /* Scene bounds — cover all island slots in both dimensions */
+    var maxVcEnd=tv, maxVrEnd=tv;
+    islands.forEach(function(isl){
+      maxVcEnd=Math.max(maxVcEnd,isl.vcOff+isl.ctv);
+      maxVrEnd=Math.max(maxVrEnd,isl.vrOff+isl.ctv);
+    });
+    var vcLo=-1, vcHi=maxVcEnd;
+    var vrLo=DT_VR_TOP-1, vrHi=maxVrEnd+1;
 
-    /* Downtown tile lookup */
+    /* Downtown tile lookup (always relative to player slot at vcOff=0,vrOff=0) */
     var dtMap={};
     DOWNTOWN.forEach(function(d){
       dtMap[(dtVcB+d.col)+','+(DT_VR_TOP+d.row)]={d:d};
     });
     dtMap[(dtVcB+1)+','+(DT_VR_TOP+1)]={park:true};
 
-    /* Quick vc → island lookup */
-    var islByVc={};
+    /* 2-D (vc,vr) → island lookup for contact islands.
+       Include the road row (lvr=0) and the plot rows (lvr=1..ctv). */
+    var islByPos={};
     islands.forEach(function(isl){
-      for(var v=isl.baseVc;v<isl.baseVc+isl.ctv;v++) islByVc[v]=isl;
+      for(var lv=0;lv<isl.ctv;lv++){
+        for(var lr=0;lr<=isl.ctv;lr++){
+          islByPos[(isl.vcOff+lv)+','+(isl.vrOff+lr)]=isl;
+        }
+      }
     });
 
     for(var vr2=vrLo;vr2<=vrHi;vr2++){
@@ -1177,8 +1196,8 @@ _MY_PROPS_MODAL = r"""
         if(vc2===vcLo||vc2===vcHi||vr2===vrLo||vr2===vrHi){
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
-        /* player island (vc 0..tv-1) */
-        if(vc2>=0&&vc2<tv){
+        /* player island: vc in [0..tv-1], vr in [-DT_N..tv] */
+        if(vc2>=0&&vc2<tv&&vr2<=tv){
           if(vr2<0){
             var key=vc2+','+vr2, e=dtMap[key];
             if(e) items.push(e.park?{t:'park',vc:vc2,vr:vr2,depth:depth}:{t:'down',vc:vc2,vr:vr2,depth:depth,d:e.d});
@@ -1195,25 +1214,29 @@ _MY_PROPS_MODAL = r"""
           }
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
-        /* contact island */
-        var isl=islByVc[vc2];
-        if(isl){
-          var lvc=vc2-isl.baseVc;
-          if(vr2===0){items.push({t:'road',vc:vc2,vr:0,depth:depth,rc:false});continue;}
-          if(vr2>=1&&vr2<=isl.ctv){
-            var crc=isRd(lvc),crr=isRd(vr2-1);
+        /* contact island — look up by 2-D position */
+        var isl2=islByPos[vc2+','+vr2];
+        if(isl2){
+          var lvc2=vc2-isl2.vcOff, lvr2=vr2-isl2.vrOff;
+          if(lvr2===0){items.push({t:'road',vc:vc2,vr:vr2,depth:depth,rc:false});continue;}
+          if(lvr2>=1&&lvr2<=isl2.ctv){
+            var crc=isRd(lvc2),crr=isRd(lvr2-1);
             if(crc&&crr){items.push({t:'cross',vc:vc2,vr:vr2,depth:depth});}
             else if(crc||crr){items.push({t:'road',vc:vc2,vr:vr2,depth:depth,rc:!!crc});}
             else{
-              var cpi=v2p(vr2-1)*isl.cgs+v2p(lvc);
-              items.push({t:'cplot',vc:vc2,vr:vr2,depth:depth,ci:isl.ci,cpi:cpi<isl.c.plots.length?cpi:-1});
+              var cpi=v2p(lvr2-1)*isl2.cgs+v2p(lvc2);
+              items.push({t:'cplot',vc:vc2,vr:vr2,depth:depth,ci:isl2.ci,cpi:cpi<isl2.c.plots.length?cpi:-1});
             }
             continue;
           }
           items.push({t:'water',vc:vc2,vr:vr2,depth:depth}); continue;
         }
-        /* bridge: vr=0 road corridor crosses the water gap between islands */
-        if(vr2===0&&vc2>=0){items.push({t:'bridge',vc:vc2,vr:vr2,depth:depth});continue;}
+        /* bridge: road corridors at vr = k*slotSize cross the water gaps between
+           island columns (same logic as the original vr=0 bridge row, now repeated
+           for every row of the Z-curve grid). */
+        if(vc2>=0&&slotSize>0&&vr2>=0&&(vr2%slotSize===0)){
+          items.push({t:'bridge',vc:vc2,vr:vr2,depth:depth});continue;
+        }
         items.push({t:'water',vc:vc2,vr:vr2,depth:depth});
       }
     }
@@ -1349,7 +1372,7 @@ _MY_PROPS_MODAL = r"""
 
     /* second pass: contact island name labels (pill above road separator) */
     islands.forEach(function(isl){
-      var lvc=isl.baseVc+(isl.ctv-1)/2, lvr=-0.4;
+      var lvc=isl.vcOff+(isl.ctv-1)/2, lvr=isl.vrOff-0.4;
       var s=g2s(lvc,lvr);
       var hw=(TW/2)*scale;
       var lbl=isl.c.player_name;
@@ -1488,12 +1511,13 @@ _MY_PROPS_MODAL = r"""
     var gs=gridSz(plots.length||1), tv=totalVC(gs);
     var islands=getIslands();
     var W=cv.offsetWidth, H=cv.offsetHeight;
-    var vcLo=-1;
-    var vcHi=islands.length>0
-      ? islands[islands.length-1].baseVc+islands[islands.length-1].ctv
-      : tv;
-    var maxCtv=islands.reduce(function(m,isl){return Math.max(m,isl.ctv);},tv);
-    var vrLo=DT_VR_TOP-1, vrHi=maxCtv+1;
+    var maxVcEnd2=tv, maxVrEnd2=tv;
+    islands.forEach(function(isl){
+      maxVcEnd2=Math.max(maxVcEnd2,isl.vcOff+isl.ctv);
+      maxVrEnd2=Math.max(maxVrEnd2,isl.vrOff+isl.ctv);
+    });
+    var vcLo=-1, vcHi=maxVcEnd2;
+    var vrLo=DT_VR_TOP-1, vrHi=maxVrEnd2+1;
     var vcSpan=vcHi-vcLo, vrSpan=vrHi-vrLo;
     var isoW=(vcSpan+vrSpan)*TW/2, isoH=(vcSpan+vrSpan)*TH/2;
     var fit=Math.min(W/isoW, H/isoH)*0.85;
@@ -1528,7 +1552,7 @@ _MY_PROPS_MODAL = r"""
       for(var cvr=isl.ctv;cvr>=1;cvr--){
         for(var cvc=isl.ctv-1;cvc>=0;cvc--){
           if(isRd(cvc)||isRd(cvr-1)) continue;
-          var cs=g2s(isl.baseVc+cvc,cvr);
+          var cs=g2s(isl.vcOff+cvc, isl.vrOff+cvr);
           var cdx=mx-(cs.sx+hwh),cdy=my-(cs.sy+hhh);
           if(Math.abs(cdx/hwh)+Math.abs(cdy/hhh)<=1){
             var cpi=v2p(cvr-1)*isl.cgs+v2p(cvc);
