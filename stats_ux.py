@@ -4555,8 +4555,7 @@ async def wiki_counties(session_token: Optional[str] = Cookie(None)):
     from counties import County as _County, CountyCity as _CC
     from cities import City as _City, CityMember as _CM
     from auth import Player as _Player
-
-    counties_all = db.query(_County).order_by(_County.name).all()
+    from collections import defaultdict as _dd2
 
     def _fmt2(n):
         if n is None: return "—"
@@ -4565,42 +4564,64 @@ async def wiki_counties(session_token: Optional[str] = Cookie(None)):
         if abs(n) >= 1e3:  return f"${n/1e3:.1f}K"
         return f"${n:,.2f}"
 
+    # Batch all queries upfront — no N+1
+    counties_all = db.query(_County).order_by(_County.name).all()
+    all_cc       = db.query(_CC).all()
+    all_city_ids = list({r.city_id for r in all_cc})
+    all_cities   = db.query(_City).filter(_City.id.in_(all_city_ids)).all() if all_city_ids else []
+    all_members  = db.query(_CM).filter(_CM.city_id.in_(all_city_ids)).all() if all_city_ids else []
+    all_member_pids = list({m.player_id for m in all_members})
+    all_players_q   = db.query(_Player).filter(_Player.id.in_(all_member_pids)).all() if all_member_pids else []
+    db.close()
+
+    # Build lookup maps
+    county_city_ids: dict = _dd2(list)   # county_id → [city_id]
+    for cc in all_cc:
+        county_city_ids[cc.county_id].append(cc.city_id)
+    city_map   = {c.id: c for c in all_cities}
+    member_map: dict = _dd2(list)         # city_id → [CityMember]
+    for m in all_members:
+        member_map[m.city_id].append(m)
+    player_map = {p.id: p.business_name for p in all_players_q}
+
     counties_html = ""
     for county in counties_all:
-        # Cities in this county
-        cc_rows = db.query(_CC).filter(_CC.county_id == county.id).all()
-        city_ids = [r.city_id for r in cc_rows]
-        cities = db.query(_City).filter(_City.id.in_(city_ids)).all() if city_ids else []
+        city_ids = county_city_ids.get(county.id, [])
 
         city_cards = ""
-        for city in cities:
-            members = db.query(_CM).filter(_CM.city_id == city.id).all()
+        for cid in sorted(city_ids):
+            city = city_map.get(cid)
+            if not city:
+                continue
+            members = sorted(member_map.get(cid, []), key=lambda m: (not m.is_mayor))
             member_rows = ""
             for m in members:
-                p = db.query(_Player).filter(_Player.id == m.player_id).first()
-                pname = p.business_name if p else f"Player #{m.player_id}"
-                role = "👑 Mayor" if m.is_mayor else "👤 Member"
-                member_rows += f"""
-<div class="wco-member">
-  <span class="wco-role">{role}</span>
-  <span class="wco-pname">{pname}</span>
-  <span class="wco-since">since {m.joined_at.strftime('%b %Y') if m.joined_at else '—'}</span>
-</div>"""
+                pname = player_map.get(m.player_id) or f"Player #{m.player_id}"
+                role  = "👑 Mayor" if m.is_mayor else "👤 Member"
+                member_rows += (
+                    f'<div class="wco-member">'
+                    f'<span class="wco-role">{role}</span>'
+                    f'<span class="wco-pname">{pname}</span>'
+                    f'<span class="wco-since">since {m.joined_at.strftime("%b %Y") if m.joined_at else "—"}</span>'
+                    f'</div>'
+                )
             if not member_rows:
                 member_rows = '<div class="wco-member" style="color:#607098;font-style:italic;">No members yet</div>'
-            city_cards += f"""
-<div class="wco-city-card">
-  <div class="wco-city-name">🏙️ {city.name}</div>
-  <div class="wco-city-currency">Currency: <strong>{city.currency_type or "None"}</strong></div>
-  <div class="wco-members-list">{member_rows}</div>
-</div>"""
+            city_cards += (
+                f'<div class="wco-city-card">'
+                f'<div class="wco-city-name">🏙️ {city.name}</div>'
+                f'<div class="wco-city-currency">Currency: <strong>{city.currency_type or "None"}</strong></div>'
+                f'<div class="wco-members-list">{member_rows}</div>'
+                f'</div>'
+            )
         if not city_cards:
             city_cards = '<p style="color:#607098;font-style:italic;font-size:.82rem;">No cities in this county yet.</p>'
 
         # Supply stats
-        circulating = county.total_crypto_minted - county.total_crypto_burned
-        pct_mined = (county.total_crypto_minted / county.max_supply * 100) if county.max_supply else 0
-        price_display = f"{county.crypto_symbol} / USD via treasury"
+        circulating  = county.total_crypto_minted - county.total_crypto_burned
+        pct_mined    = (county.total_crypto_minted / county.max_supply * 100) if county.max_supply else 0
+        halvings_done = int(county.total_crypto_minted / 210000) if county.total_crypto_minted else 0
+        block_reward  = 50 / (2 ** halvings_done) if halvings_done >= 0 else 50
 
         counties_html += f"""
 <div class="wco-county">
@@ -4608,6 +4629,11 @@ async def wiki_counties(session_token: Optional[str] = Cookie(None)):
     <div class="wco-county-left">
       <div class="wco-county-name">{county.name}</div>
       <div class="wco-token-badge">{county.crypto_symbol} &middot; {county.crypto_name}</div>
+      <p style="color:#607098;font-size:0.78rem;margin:6px 0 0;max-width:340px;">
+        Bitcoin-style halvings every 210,000 tokens. Current block reward:
+        <strong style="color:#f5d76e;">{block_reward:.4f} {county.crypto_symbol}</strong>
+        after {halvings_done} halving{"s" if halvings_done != 1 else ""}.
+      </p>
     </div>
     <div class="wco-token-stats">
       <div class="wco-ts"><span>Max Supply</span><strong>{county.max_supply:,.0f}</strong></div>
@@ -4620,13 +4646,18 @@ async def wiki_counties(session_token: Optional[str] = Cookie(None)):
       <div class="wco-ts"><span>Gas Price</span><strong>{county.gas_price:.6f} {county.crypto_symbol}</strong></div>
     </div>
   </div>
+  <div style="margin-bottom:8px;">
+    <div style="background:#0d1a2e;border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#94a3b8;line-height:1.7;">
+      <strong style="color:#90c4f0;">Governance:</strong> County parliament votes on block reward parameters,
+      transaction fees, and city membership. Cities within the county share the native token as their
+      energy currency for mining. Meme coins can be launched on this chain by burning native tokens.
+    </div>
+  </div>
   <div class="wco-cities-grid">{city_cards}</div>
 </div>"""
 
     if not counties_html:
         counties_html = '<div class="wco-empty">No counties have been formed yet. Be the first to unite your city!</div>'
-
-    db.close()
 
     body = f"""
 <style>
@@ -4744,13 +4775,21 @@ async def wiki_crypto(session_token: Optional[str] = Cookie(None)):
     # ── Meme Coins ───────────────────────────────────────────
     memes = db.query(_MC).filter(_MC.is_active == True).order_by(_MC.total_volume_native.desc()).all()
     county_map = {c.id: c for c in counties_all}
+
+    # Batch creator lookups
+    creator_ids  = list({mc.creator_id for mc in memes if mc.creator_id})
+    creator_rows = db.query(_Player).filter(_Player.id.in_(creator_ids)).all() if creator_ids else []
+    creator_map  = {p.id: p.business_name for p in creator_rows}
+
+    db.close()
+
     meme_html = ""
     for mc in memes:
-        county = county_map.get(mc.county_id)
-        native_sym = county.crypto_symbol if county else "???"
-        creator = db.query(_Player).filter(_Player.id == mc.creator_id).first()
-        creator_name = creator.business_name if creator else f"Player #{mc.creator_id}"
-        halving_pct = (mc.mining_minted / mc.mining_allocation * 100) if mc.mining_allocation else 0
+        county       = county_map.get(mc.county_id)
+        native_sym   = county.crypto_symbol if county else "???"
+        creator_name = creator_map.get(mc.creator_id) or f"Player #{mc.creator_id}"
+        halving_pct  = (mc.mining_minted / mc.mining_allocation * 100) if mc.mining_allocation else 0
+        supply_pct   = (mc.minted_supply / mc.total_supply * 100) if mc.total_supply else 0
         meme_html += f"""
 <div class="wc-meme-card">
   <div class="wc-meme-header">
@@ -4759,24 +4798,32 @@ async def wiki_crypto(session_token: Optional[str] = Cookie(None)):
       <div class="wc-meme-name">{mc.name}</div>
       <div class="wc-meme-county">on {county.name if county else "Unknown"} chain ({native_sym})</div>
     </div>
-    <div class="wc-meme-price">{_tokfmt(mc.last_price)} {native_sym}</div>
+    <div>
+      <div class="wc-meme-price">{_tokfmt(mc.last_price)} {native_sym}</div>
+      <div style="color:#607098;font-size:0.7rem;text-align:right;margin-top:2px;">current price</div>
+    </div>
   </div>
   {f'<div class="wc-meme-desc">{mc.description}</div>' if mc.description else ""}
   <div class="wc-meme-stats">
-    <div class="wc-ts2"><span>Total Supply</span><strong>{_tokfmt(mc.total_supply)}</strong></div>
-    <div class="wc-ts2"><span>Minted</span><strong>{_tokfmt(mc.minted_supply)}</strong></div>
+    <div class="wc-ts2"><span>Total Supply</span><strong>{_tokfmt(mc.total_supply)} ({supply_pct:.1f}% minted)</strong></div>
+    <div class="wc-ts2"><span>Circulating</span><strong>{_tokfmt(mc.minted_supply)}</strong></div>
+    <div class="wc-ts2"><span>Volume (native)</span><strong>{_tokfmt(mc.total_volume_native)} {native_sym}</strong></div>
+    <div class="wc-ts2"><span>Total Trades</span><strong>{mc.total_trades:,}</strong></div>
+    <div class="wc-ts2"><span>ATH</span><strong>{_tokfmt(mc.all_time_high)} {native_sym}</strong></div>
     <div class="wc-ts2"><span>Mining Pool</span><strong>{_tokfmt(mc.mining_pool_native)} {native_sym}</strong></div>
     <div class="wc-ts2"><span>Mining Progress</span><strong>{halving_pct:.1f}% of allocation</strong></div>
-    <div class="wc-ts2"><span>Volume</span><strong>{_tokfmt(mc.total_volume_native)} {native_sym}</strong></div>
-    <div class="wc-ts2"><span>Trades</span><strong>{mc.total_trades:,}</strong></div>
-    <div class="wc-ts2"><span>ATH</span><strong>{_tokfmt(mc.all_time_high)} {native_sym}</strong></div>
     <div class="wc-ts2"><span>Creator</span><strong>{creator_name}</strong></div>
+  </div>
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/meme-coins/{mc.symbol}" style="display:inline-block;padding:4px 12px;background:#1e2d4a;
+       color:#90c4f0;border:1px solid #2a3f6a;border-radius:6px;font-size:0.75rem;">📈 Trade {mc.symbol}</a>
+    <span style="display:inline-block;padding:4px 12px;background:{"rgba(34,197,94,.1)" if mc.mining_enabled else "rgba(100,116,139,.1)"};
+       color:{"#22c55e" if mc.mining_enabled else "#64748b"};border:1px solid {"rgba(34,197,94,.25)" if mc.mining_enabled else "rgba(100,116,139,.2)"};
+       border-radius:6px;font-size:0.75rem;">{"⛏️ Mining active" if mc.mining_enabled else "⛔ Mining complete"}</span>
   </div>
 </div>"""
     if not meme_html:
         meme_html = '<p class="wc-empty">No meme coins have been launched yet.</p>'
-
-    db.close()
 
     body = f"""
 <style>
@@ -4882,6 +4929,13 @@ def tick(current_tick: int, now: datetime):
                     record_price_snapshot(item_type, price)
         except:
             pass
+
+
+@router.get("/stats/wiki/production-costs", response_class=HTMLResponse)
+async def wiki_production_costs_redirect(session_token: Optional[str] = Cookie(None)):
+    """Redirect wiki hub card to the real production costs calculator."""
+    from fastapi.responses import RedirectResponse as _RR2
+    return _RR2("/stats/production-costs", status_code=302)
 
 
 # ==========================
