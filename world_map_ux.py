@@ -1035,7 +1035,59 @@ _MY_PROPS_MODAL = r"""
       ctx.restore();
     });
   }
-  var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
+
+  /* ── Walker animation ──────────────────────────────────────────────────── */
+  /* Walk.png row 0 (south-facing): 8 frames, each 24×72, stride=80px from x=24 */
+  var _WALK_SRC=(function(){
+    var f=[];
+    for(var i=0;i<8;i++) f.push([24+i*80,24,24,72]);
+    return f;
+  })();
+  /* Walkers are slower pedestrians; phase offsets spread animation so they
+     don't all step in sync. cps=cycles-per-second along the lane. */
+  var _WALKER_DEFS=[
+    {dir:'row',li:0,f0:0.05,cps:0.018,ph:0.0},
+    {dir:'row',li:0,f0:0.38,cps:0.013,ph:2.7},
+    {dir:'row',li:0,f0:0.72,cps:0.021,ph:5.1},
+    {dir:'row',li:1,f0:0.22,cps:0.016,ph:1.4},
+    {dir:'col',li:0,f0:0.55,cps:0.015,ph:3.8},
+    {dir:'col',li:1,f0:0.85,cps:0.019,ph:6.2},
+  ];
+  function drawWalkers(lanes,W,H){
+    if(!lanes||scale<0.35) return;
+    var img=tileImgs['char_walk'];
+    if(!img||!img.complete||!img.naturalWidth) return;
+    var hw=(TW/2)*scale,hh=(TH/2)*scale;
+    var cullM=TW*scale*4;
+    _WALKER_DEFS.forEach(function(def){
+      var pool=def.dir==='row'?lanes.row:lanes.col;
+      if(!pool||def.li>=pool.length) return;
+      var lane=pool[def.li].tiles;
+      if(lane.length<2) return;
+      var pos=(def.f0+_waveT*def.cps)%1.0;
+      var fi=pos*lane.length;
+      var i0=Math.floor(fi)%lane.length;
+      var i1=(i0+1)%lane.length;
+      var frac=fi-Math.floor(fi);
+      var s0=g2s(lane[i0].vc,lane[i0].vr);
+      var s1=g2s(lane[i1].vc,lane[i1].vr);
+      /* foot position: tile centre-y + slight forward offset toward bottom of tile */
+      var cx=(s0.sx+hw)+((s1.sx+hw)-(s0.sx+hw))*frac;
+      var cy=(s0.sy+hh*1.7)+((s1.sy+hh*1.7)-(s0.sy+hh*1.7))*frac;
+      if(cx<-cullM||cx>W+cullM||cy<-cullM||cy>H+cullM) return;
+      /* pick frame: 6 animation-fps, staggered by phase offset */
+      var f=_WALK_SRC[Math.floor((_waveT*6+def.ph)%8)|0];
+      var charH=TH*scale*2.5, charW=charH*(f[2]/f[3]);
+      /* offset to sidewalk side (perpendicular to road) so walkers don't
+         overlap cars — shift by ~30% of hh perpendicular to lane direction */
+      var perpX=(def.dir==='row'?-hh:hh)*0.35;
+      var perpY=(def.dir==='row'? hw: hw)*0.35;
+      ctx.save();
+      ctx.drawImage(img,f[0],f[1],f[2],f[3],
+        cx+perpX-charW/2, cy+perpY-charH, charW, charH);
+      ctx.restore();
+    });
+  }
   var dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
   var hovId=-1,hovCI=-1,hovCPi=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
@@ -1269,9 +1321,10 @@ _MY_PROPS_MODAL = r"""
       }
     });
 
-    /* animated vehicles on top of all road tiles */
+    /* animated vehicles and pedestrians on top of all road/bridge tiles */
     if(!_carLanes) _carLanes=buildCarLanes(items);
     drawCars(_carLanes,W,H);
+    drawWalkers(_carLanes,W,H);
 
     /* second pass: contact island name labels (pill above road separator) */
     islands.forEach(function(isl){
@@ -1364,9 +1417,10 @@ _MY_PROPS_MODAL = r"""
       {k:'kenney_crossroad',    url:KENNEY_BASE+'crossroad.png'},
       {k:'kenney_bridgeNS',     url:KENNEY_BASE+'bridgeNS.png'},
       {k:'kenney_bridgeEW',     url:KENNEY_BASE+'bridgeEW.png'},
-      /* Farm Life vehicles (144×64 RGBA top-down sprites, rotated to road angle) */
-      {k:'car_red',  url:FARMLIFE_BASE+'Cars/Red%20car.png'},
-      {k:'car_blue', url:FARMLIFE_BASE+'Cars/Blue%20car.png'},
+      /* Farm Life vehicles and characters */
+      {k:'car_red',   url:FARMLIFE_BASE+'Cars/Red%20car.png'},
+      {k:'car_blue',  url:FARMLIFE_BASE+'Cars/Blue%20car.png'},
+      {k:'char_walk', url:FARMLIFE_BASE+'Character%20Animations/Walk.png'},
       /* kenney: trees — deciduous + conifers (drawn at ~42% tile width) */
       {k:'kenney_treeShort',     url:KENNEY_BASE+'treeShort.png'},
       {k:'kenney_treeTall',      url:KENNEY_BASE+'treeTall.png'},
