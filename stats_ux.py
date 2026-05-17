@@ -2192,78 +2192,140 @@ async def stats_business_detail(
     proximity_html = "".join([f'<span class="terrain-tag">{p}</span>' for p in proximity])
     
     # Production lines
+    # Fetch market prices for all input/output items in one shot
+    try:
+        from market import get_all_market_prices
+        _all_prices = get_all_market_prices()
+    except Exception:
+        _all_prices = {}
+
+    def _item_link(ikey: str, qty: float = 0) -> str:
+        iname = ikey.replace("_", " ").title()
+        price = _all_prices.get(ikey)
+        cost_str = ""
+        if price and qty:
+            cost_str = f' <span style="color:#94a3b8;font-size:0.72rem;">(≈ {fmt_usd(price * qty, disp)})</span>'
+        return (
+            f'<a href="/stats/wiki/items?category=all" style="color:#90c4f0;">{iname}</a>'
+            f'<span style="color:#64748b;"> ×{qty:g}</span>{cost_str}'
+        )
+
     prod_html = ""
-    if "production_lines" in biz:
-        for line in biz["production_lines"]:
-            output = line.get("output_item", "?")
-            output_qty = line.get("output_qty", 1)
-            inputs = line.get("inputs", [])
-            
-            input_str = ", ".join([f'{inp["quantity"]} {inp["item"]}' for inp in inputs])
-            
-            prod_html += f"""
-            <div class="recipe-item">
-                <span>{input_str if input_str else 'No inputs'}</span>
-                <span class="recipe-arrow">→</span>
-                <strong>{output_qty} {output.replace('_', ' ')}</strong>
-            </div>
-            """
-    
+    for li, line in enumerate(biz.get("production_lines", []), 1):
+        output    = line.get("output_item", "?")
+        out_qty   = line.get("output_qty", 1)
+        inputs    = line.get("inputs", [])
+        out_price = _all_prices.get(output)
+        out_val   = out_price * out_qty if out_price else None
+
+        # Input cost estimate
+        _no_inp_fallback = '<span style="color:#64748b;">No inputs required</span>'
+        total_input_cost = 0.0
+        inp_rows = ""
+        for inp in inputs:
+            ik  = inp.get("item", "")
+            iqt = inp.get("quantity", 0)
+            ip  = _all_prices.get(ik, 0) or 0
+            total_input_cost += ip * iqt
+            inp_rows += (
+                f'<div style="display:flex;justify-content:space-between;padding:3px 0;'
+                f'border-bottom:1px solid #1a2540;">'
+                f'<span style="color:#94a3b8;">{_item_link(ik, iqt)}</span>'
+                f'<span style="color:#64748b;font-size:0.72rem;">{fmt_usd(ip*iqt, disp) if ip else "—"}</span>'
+                f'</div>'
+            ) if ik else ""
+
+        margin_html = ""
+        if out_val is not None and total_input_cost > 0:
+            margin = out_val - total_input_cost - wage
+            col = "#22c55e" if margin >= 0 else "#ef4444"
+            margin_html = (
+                f'<div style="margin-top:6px;padding:4px 8px;background:#0f172a;border-radius:4px;'
+                f'font-size:0.75rem;display:flex;justify-content:space-between;">'
+                f'<span style="color:#94a3b8;">Est. profit/cycle (excl. land)</span>'
+                f'<span style="color:{col};font-weight:600;">{fmt_usd(margin, disp)}</span></div>'
+            )
+
+        out_val_html = (
+            f' <span style="color:#22c55e;font-size:0.8rem;">= {fmt_usd(out_val, disp)}</span>'
+            if out_val else ""
+        )
+        prod_html += (
+            f'<div style="margin-bottom:18px;">'
+            f'<div style="font-weight:600;color:#e2e8f0;margin-bottom:6px;">'
+            f'Line {li}: <a href="/stats/wiki/items?category=all" style="color:#38bdf8;">'
+            f'{output.replace("_"," ").title()} ×{out_qty:g}</a>{out_val_html}</div>'
+            f'<div style="background:#0d1a2e;border-radius:6px;padding:8px 10px;">'
+            f'<div style="color:#64748b;font-size:0.72rem;margin-bottom:4px;text-transform:uppercase;'
+            f'letter-spacing:.05em;">Inputs (market cost est.)</div>'
+            f'{inp_rows or _no_inp_fallback}'
+            f'</div>'
+            f'{margin_html}'
+            f'</div>'
+        )
+
     # Retail products
     retail_html = ""
     if "products" in biz:
         for item, config in biz["products"].items():
-            elasticity = config.get("elasticity", 1.0)
+            elasticity  = config.get("elasticity", 1.0)
             sale_chance = config.get("base_sale_chance", 0.1)
-            retail_html += f"""
-            <div class="stat-row">
-                <span class="stat-label">{item.replace('_', ' ').title()}</span>
-                <span class="stat-value">Elasticity: {elasticity} | Sale Chance: {sale_chance*100:.1f}%</span>
-            </div>
-            """
-    
-    dist_badge = '<span class="badge badge-gray" style="margin-left:6px;">District Business</span>' if is_district else ""
-    body = f"""
-    <h1 class="page-title">{name}{dist_badge}</h1>
-    <p style="color: #94a3b8; margin-bottom: 24px;">{desc}</p>
+            iname = item.replace("_", " ").title()
+            retail_html += (
+                f'<div class="wkv">'
+                f'<span class="wk">{iname}</span>'
+                f'<span class="wv dim" style="font-size:0.75rem;">'
+                f'Elasticity {elasticity} · {sale_chance*100:.1f}% sale chance</span></div>'
+            )
 
-    <div class="grid">
-        <div class="card" style="cursor: default;">
-            <div class="card-header">
-                <span class="card-title">Statistics</span>
-                <span class="badge {'badge-green' if biz_class == 'production' else 'badge-blue'}">{biz_class}</span>
-            </div>
-            <div class="stat-row"><span class="stat-label">Startup Cost</span><span class="stat-value">{fmt_usd(cost, disp, precision=0)}</span></div>
-            <div class="stat-row"><span class="stat-label">Cycle Time</span><span class="stat-value">{cycles_display}</span></div>
-            <div class="stat-row"><span class="stat-label">Wage Cost</span><span class="stat-value">{fmt_usd(wage, disp)}/cycle</span></div>
-        </div>
-        
-        <div class="card" style="cursor: default;">
-            <div class="card-header">
-                <span class="card-title">Location Requirements</span>
-            </div>
-            <div style="margin-bottom: 8px;"><strong style="color: #94a3b8;">Terrain:</strong><br>{terrain_html or 'Any'}</div>
-            <div><strong style="color: #94a3b8;">Proximity:</strong><br>{proximity_html or 'Any'}</div>
-        </div>
+    dist_badge = (
+        '<span class="wb wb-o" style="margin-left:8px;font-size:0.65rem;">District Business</span>'
+        if is_district else ""
+    )
+    biz_badge_col = "wb-grn" if biz_class == "production" else "wb-b"
+    body = f"""
+<div style="margin-bottom:4px;">
+  <a href="/stats/wiki/businesses" style="color:#607098;font-size:0.8rem;">← Businesses</a>
+</div>
+<h1 class="wpt" style="margin-top:4px;">{name}
+  <span class="wb {biz_badge_col}" style="vertical-align:middle;font-size:0.65rem;">{biz_class}</span>
+  {dist_badge}
+</h1>
+<p class="wpd">{desc}</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0;">
+  <div class="wc wcs" style="cursor:default;">
+    <div class="wc-title">📊 Economics</div>
+    <div class="wkv"><span class="wk">Startup Cost</span><span class="wv ora">{fmt_usd(cost, disp, precision=0)}</span></div>
+    <div class="wkv"><span class="wk">Cycle Time</span><span class="wv">{cycles_display}</span></div>
+    <div class="wkv"><span class="wk">Base Wage / cycle</span><span class="wv dim">{fmt_usd(wage, disp)}</span></div>
+  </div>
+  <div class="wc wcs" style="cursor:default;">
+    <div class="wc-title">🗺️ Location</div>
+    <div style="margin-bottom:8px;">
+      <div style="color:#64748b;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Terrain</div>
+      {terrain_html or '<span style="color:#607098;">Any terrain</span>'}
     </div>
-    
-    {'<div class="detail-section"><div class="card" style="cursor: default;"><div class="detail-title">Production Lines</div>' + prod_html + '</div></div>' if prod_html else ''}
-    
-    {'<div class="detail-section"><div class="card" style="cursor: default;"><div class="detail-title">Retail Products</div>' + retail_html + '</div></div>' if retail_html else ''}
-    
-    <a href="/stats/businesses" style="display: inline-block; margin-top: 16px;">← Back to Businesses</a>
-    """
-    
+    <div>
+      <div style="color:#64748b;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Proximity</div>
+      {proximity_html or '<span style="color:#607098;">No proximity required</span>'}
+    </div>
+  </div>
+</div>
+
+{'<div class="wc wcs" style="cursor:default;margin-bottom:16px;"><div class="wc-title">⚗️ Production Lines</div>' + prod_html + '</div>' if prod_html else ''}
+{'<div class="wc wcs" style="cursor:default;margin-bottom:16px;"><div class="wc-title">🏪 Retail Products</div>' + retail_html + '</div>' if retail_html else ''}
+"""
+
     # Inject tutorial overlay for stats_business step (step 8: free_range_pasture)
+    tut_overlay = ""
     try:
         from tutorial_ux import get_tutorial_overlay_html
-        tut_overlay = get_tutorial_overlay_html(player, "stats_business")
-        if tut_overlay:
-            body = tut_overlay + body
+        tut_overlay = get_tutorial_overlay_html(player, "stats_business") or ""
     except Exception:
         pass
 
-    return HTMLResponse(stats_shell(name, body, player.cash_balance, player.business_name, player.id))
+    return HTMLResponse(wiki_shell(name, tut_overlay + body, player.business_name, "businesses"))
 
 
 @router.get("/stats/items", response_class=HTMLResponse)
@@ -2948,7 +3010,7 @@ a{color:#90c4f0;text-decoration:none;}a:hover{color:#f5d76e;}
 /* KEY-VALUE ROW */
 .wkv{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #0f1a30;font-size:0.82rem;}
 .wkv:last-child{border-bottom:none;}.wk{color:#607098;}.wv{color:#dde8ff;font-weight:500;}
-.wv.ora{color:#f5a855;}.wv.yel{color:#f5d76e;}.wv.blu{color:#90c4f0;}
+.wv.ora{color:#f5a855;}.wv.yel{color:#f5d76e;}.wv.blu{color:#90c4f0;}.wv.dim{color:#607098;}
 /* BADGES */
 .wb{display:inline-block;padding:2px 8px;border-radius:20px;font-size:0.68rem;font-weight:600;letter-spacing:0.04em;}
 .wb-o{background:rgba(245,168,85,0.15);color:#f5a855;border:1px solid rgba(245,168,85,0.3);}
@@ -3108,6 +3170,7 @@ async def wiki_hub(session_token: Optional[str] = Cookie(None)):
         ("banks",         "🏦", "Banks",         f"Brokerage firm, {bank_count} active banks, {listed_count} public listings, ETFs, city banks, and all {reserve_count} reserve banks with live yield charts.", f"{bank_count} banks",    "Finance"),
         ("counties",      "🗺️", "Counties",      "County federations with native blockchains — tokenomics, treasury, mining pools, city members, and governance.", f"{county_count} counties", "Governance"),
         ("crypto",        "🪙", "Crypto",        f"WSC stable coin, {native_count} county native tokens, and {meme_count} community-launched meme coins with live order-book prices.", f"{meme_count + native_count} tokens", "Crypto"),
+        ("production-costs", "📊", "Production Costs", "Live cost-basis calculator for every business you own — WMA input costs, wage, land efficiency, and city multipliers baked in.", "Live data", "Calculator"),
     ]
     ref_html = "".join(
         f'<a href="/stats/wiki/{slug}" class="wc">'
@@ -3294,29 +3357,71 @@ async def wiki_businesses(
         pool = {k: v for k, v in business_types.items() if isinstance(v, dict) and v.get("class") == category}
 
     _BADGE = {"production": "wb-grn", "retail": "wb-b"}
+    _TERRAIN_COLOR = {
+        "desert": "#b45309", "arctic": "#0ea5e9", "tropical": "#16a34a",
+        "forest": "#15803d", "hills": "#92400e", "plains": "#65a30d",
+        "coast": "#0284c7", "marsh": "#0d9488", "volcanic": "#dc2626",
+        "savanna": "#ca8a04", "tundra": "#475569", "mountain": "#6b7280",
+        "urban": "#7c3aed", "industrial": "#4338ca", "rural": "#84cc16",
+    }
     cards = ""
     for key, biz in sorted(pool.items(), key=lambda x: x[1].get("name", x[0])):
         name    = biz.get("name", key.replace("_", " ").title())
-        desc    = biz.get("description", "")[:90]
+        desc    = biz.get("description", "")
         cost    = biz.get("startup_cost", 0)
         cycles  = biz.get("cycles_to_complete", 1)
+        wage    = biz.get("base_wage_cost", 0)
         bclass  = biz.get("class", "production")
+        terrain = biz.get("allowed_terrain", [])
+        prox    = biz.get("allowed_proximity", [])
+        lines   = biz.get("production_lines", [])
         is_dist = key in dist_keys
         bc      = _BADGE.get(bclass, "wb-g")
         dtag    = '<span class="wb wb-o" style="font-size:0.62rem;margin-right:4px;">district</span>' if is_dist else ""
         safe_name = name.lower().replace('"', '')
         safe_desc = desc.lower().replace('"', '')
+
+        # Terrain badges
+        t_html = ""
+        for t in terrain[:5]:
+            col = _TERRAIN_COLOR.get(t, "#475569")
+            t_html += (
+                f'<span style="display:inline-block;background:{col}22;color:{col};'
+                f'border:1px solid {col}55;border-radius:3px;padding:1px 5px;'
+                f'font-size:0.62rem;margin:1px;">{t.replace("_"," ")}</span>'
+            )
+        if len(terrain) > 5:
+            t_html += f'<span style="color:#607098;font-size:0.62rem;">+{len(terrain)-5}</span>'
+
+        # Output items summary
+        outputs = [l.get("output_item", "").replace("_", " ") for l in lines if l.get("output_item")]
+        out_str = ", ".join(outputs[:3]) + (f" +{len(outputs)-3} more" if len(outputs) > 3 else "")
+        out_el = (
+            f'<div class="wkv"><span class="wk">Outputs</span>'
+            f'<span class="wv" style="font-size:0.72rem;text-align:right;max-width:65%;">{out_str}</span></div>'
+        ) if out_str else ""
+
+        prox_str = ", ".join(p.replace("_", " ") for p in prox[:3])
+        prox_el = (
+            f'<div class="wkv"><span class="wk">Proximity</span>'
+            f'<span class="wv dim" style="font-size:0.72rem;">{prox_str}</span></div>'
+        ) if prox_str else ""
+
         cards += (
             f'<a href="/stats/business/{key}" class="wc"'
             f' data-n="{safe_name}" data-d="{safe_desc}" data-c="{bclass}">'
-            f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">'
+            f'<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;">'
             f'{dtag}<span class="wb {bc}">{bclass}</span>'
             f'<span class="wc-title" style="margin:0;">{name}</span></div>'
-            f'<div class="wc-desc">{desc}</div>'
-            f'<div class="wkv" style="margin-top:10px;">'
+            f'<div class="wc-desc" style="margin-bottom:8px;">{desc}</div>'
+            f'<div style="margin-bottom:6px;">{t_html}</div>'
+            f'<div class="wkv">'
             f'<span class="wk">Startup Cost</span><span class="wv ora">{fmt_usd(cost, disp, precision=0)}</span></div>'
             f'<div class="wkv"><span class="wk">Cycle Time</span>'
             f'<span class="wv">{cycles:,} ticks</span></div>'
+            f'<div class="wkv"><span class="wk">Base Wage</span>'
+            f'<span class="wv dim">{fmt_usd(wage, disp)}/cycle</span></div>'
+            f'{out_el}{prox_el}'
             f'</a>'
         )
 
@@ -3415,11 +3520,58 @@ async def wiki_districts_page(session_token: Optional[str] = Cookie(None)):
             f'</div>'
         )
 
+    fib_table = ""
+    fib_a, fib_b = 1, 1
+    for _i in range(8):
+        fib_table += (
+            f'<div style="display:flex;justify-content:space-between;padding:3px 0;'
+            f'border-bottom:1px solid #1a2540;font-size:0.78rem;">'
+            f'<span style="color:#94a3b8;">Merge #{_i+1}</span>'
+            f'<span style="color:#e2e8f0;">{fib_a:,} → {fib_b:,} plots</span></div>'
+        )
+        fib_a, fib_b = fib_b, fib_a + fib_b
+
     body = f"""
 <h1 class="wpt">🏙️ Districts</h1>
-<p class="wpd">Districts are formed by merging land plots (Fibonacci sequence).
-Monthly tax = Base Tax × Size × {int(DISTRICT_TAX_MULTIPLIER)}.
-*Example shows size = 1 with no modifiers.</p>
+<p class="wpd">Districts are formed by merging adjacent land plots into a single
+administrative zone. Each district type unlocks exclusive businesses, generates
+monthly tax revenue, and grants production bonuses to city residents.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0 24px;">
+  <div class="wc wcs" style="cursor:default;">
+    <div class="wc-title">📐 Fibonacci Formation</div>
+    <p style="color:#94a3b8;font-size:0.8rem;margin:6px 0 10px;">
+      Land plots merge following the Fibonacci sequence. Each merge requires the
+      plot count of the previous two merges combined — early merges are cheap,
+      later ones require exponentially more land.
+    </p>
+    {fib_table}
+    <p style="color:#607098;font-size:0.72rem;margin-top:8px;">
+      All merged plots must be adjacent and the same terrain type.
+    </p>
+  </div>
+  <div class="wc wcs" style="cursor:default;">
+    <div class="wc-title">💰 Tax Formula</div>
+    <p style="color:#94a3b8;font-size:0.8rem;margin:6px 0 10px;">
+      Monthly district tax = Base Tax × District Size × {int(DISTRICT_TAX_MULTIPLIER)}<br>
+      Tax is paid to the district owner each in-game month.
+    </p>
+    <div class="wkv"><span class="wk">Tax Multiplier</span><span class="wv yel">×{int(DISTRICT_TAX_MULTIPLIER)}</span></div>
+    <div class="wkv"><span class="wk">Paid to</span><span class="wv">District Owner</span></div>
+    <div class="wkv"><span class="wk">Frequency</span><span class="wv">Monthly (in-game)</span></div>
+    <div style="margin-top:12px;padding:8px;background:#0f172a;border-radius:6px;">
+      <div class="wc-title" style="font-size:0.78rem;margin-bottom:6px;">Economic Bonuses</div>
+      <div style="color:#94a3b8;font-size:0.75rem;line-height:1.6;">
+        ✦ Unlocks district-exclusive businesses<br>
+        ✦ Grants city-wide production output multipliers<br>
+        ✦ Attracts higher-tier residents &amp; businesses<br>
+        ✦ Can host district market for additional revenue
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2 class="wpt" style="font-size:1.1rem;margin-bottom:12px;">District Types</h2>
 <div class="wg">{cards if cards else '<div class="wnone">District data unavailable.</div>'}</div>
 """
     return HTMLResponse(wiki_shell("Districts", body, player.business_name, "districts"))
@@ -3454,6 +3606,29 @@ async def wiki_items_page(
     except Exception:
         pass
 
+    # Build reverse-index: which businesses produce / use each item
+    from collections import defaultdict as _dd
+    _produced_by: dict = _dd(list)   # item_key → [(biz_name, biz_key)]
+    _used_in:     dict = _dd(list)   # item_key → [(biz_name, biz_key)]
+    for _src in ("business_types.json", "district_businesses.json"):
+        try:
+            with open(_src) as _f:
+                _biz_data = json.load(_f)
+            for _bk, _bv in _biz_data.items():
+                if not isinstance(_bv, dict):
+                    continue
+                _bn = _bv.get("name", _bk.replace("_", " ").title())
+                for _line in _bv.get("production_lines", []):
+                    _out = _line.get("output_item")
+                    if _out:
+                        _produced_by[_out].append((_bn, _bk))
+                    for _inp in _line.get("inputs", []):
+                        _ik = _inp.get("item")
+                        if _ik:
+                            _used_in[_ik].append((_bn, _bk))
+        except Exception:
+            pass
+
     try:
         from market import get_all_market_prices
         _all_prices = get_all_market_prices()  # one DB round trip for all items
@@ -3481,30 +3656,58 @@ async def wiki_items_page(
             f'{cat.replace("_"," ").title()} ({_cat_counts[cat]})</a>'
         )
 
+    def _biz_links(pairs: list, limit: int = 4) -> str:
+        shown = pairs[:limit]
+        extra = len(pairs) - limit
+        html = " ".join(
+            f'<a href="/stats/business/{bk}" style="display:inline-block;background:#1e2d4a;'
+            f'color:#90c4f0;border-radius:4px;padding:1px 6px;font-size:0.7rem;margin:2px 2px 2px 0;">'
+            f'{bn}</a>' for bn, bk in shown
+        )
+        if extra > 0:
+            html += f'<span style="color:#607098;font-size:0.7rem;"> +{extra} more</span>'
+        return html
+
     cards = ""
     for key, item in sorted(pool.items(), key=lambda x: x[1].get("name", x[0])):
         name = item.get("name", key.replace("_", " ").title())
-        desc = item.get("description", "")[:80]
+        desc = item.get("description", "")
         cat  = item.get("category", "misc")
         price     = _all_prices.get(key)
-        price_str = fmt_usd(price, disp) if price else "No market data"
-        price_cls = "ora" if price else ""
+        price_str = fmt_usd(price, disp) if price else "—"
+        price_cls = "ora" if price else "dim"
         safe = name.lower().replace('"', '')
+        producers = _produced_by.get(key, [])
+        consumers = _used_in.get(key, [])
+
+        prod_row = (
+            f'<div class="wkv" style="align-items:flex-start;margin-top:6px;">'
+            f'<span class="wk" style="min-width:70px;padding-top:3px;">Produced&nbsp;by</span>'
+            f'<div style="flex:1;">{_biz_links(producers)}</div></div>'
+        ) if producers else ""
+        used_row = (
+            f'<div class="wkv" style="align-items:flex-start;">'
+            f'<span class="wk" style="min-width:70px;padding-top:3px;">Used&nbsp;in</span>'
+            f'<div style="flex:1;">{_biz_links(consumers)}</div></div>'
+        ) if consumers else ""
+
         cards += (
             f'<div class="wc wcs" data-n="{safe}" data-c="{cat}">'
-            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">'
             f'<div class="wc-title" style="margin:0;">{name}</div>'
             f'<span class="wb wb-g">{cat.replace("_"," ").title()}</span></div>'
-            f'<div class="wc-desc">{desc}</div>'
-            f'<div class="wkv" style="margin-top:10px;"><span class="wk">Market Price</span>'
+            f'<div class="wc-desc" style="margin-bottom:8px;">{desc}</div>'
+            f'<div class="wkv"><span class="wk">Market Price</span>'
             f'<span class="wv {price_cls}">{price_str}</span></div>'
+            f'{prod_row}{used_row}'
             f'</div>'
         )
 
     body = f"""
-<h1 class="wpt">📦 Items</h1>
-<p class="wpd">Every craftable and tradeable item in the Wadsworth economy.
-Prices update live from the market.</p>
+<h1 class="wpt">📦 Items &amp; Resources</h1>
+<p class="wpd">Every craftable and tradeable item in the Wadsworth economy. Prices update live
+from the market. Each card shows which businesses produce the item and which businesses consume
+it as an input — click any business name to see its full recipe sheet.</p>
 <div class="wfilters">{filters}</div>
 <div class="wsw">
     <span class="wsw-ico">🔍</span>
