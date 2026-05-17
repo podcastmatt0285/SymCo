@@ -853,6 +853,14 @@ def get_all_market_prices(item_keys: "list[str] | None" = None) -> "dict[str, fl
                     prices[r[0]] = bid
                 elif ask is not None:
                     prices[r[0]] = ask
+        # Apply active event price factor (market/bank/gov events with price_factor in effect_data)
+        try:
+            from events import get_active_market_price_factor
+            _pf = get_active_market_price_factor()
+            if _pf != 1.0:
+                prices = {k: v * _pf for k, v in prices.items()}
+        except Exception:
+            pass
         return prices
     except Exception as e:
         print(f"[Market] get_all_market_prices error: {e}")
@@ -862,18 +870,29 @@ def get_all_market_prices(item_keys: "list[str] | None" = None) -> "dict[str, fl
 
 
 def get_market_price(item_type: str) -> Optional[float]:
-    """Midpoint bid/ask or last trade price."""
+    """Midpoint bid/ask or last trade price, adjusted by any active event price factor."""
     db = get_db()
     last_trade = db.query(Trade).filter(Trade.item_type == item_type).order_by(Trade.executed_at.desc()).first()
     if last_trade:
+        price = last_trade.price
         db.close()
-        return last_trade.price
-    
-    best_bid = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.BUY, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.desc()).first()
-    best_ask = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.SELL, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.asc()).first()
-    db.close()
-    if best_bid and best_ask: return (best_bid.price + best_ask.price) / 2
-    return best_bid.price if best_bid else best_ask.price if best_ask else None
+    else:
+        best_bid = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.BUY, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.desc()).first()
+        best_ask = db.query(MarketOrder).filter(MarketOrder.item_type == item_type, MarketOrder.order_type == OrderType.SELL, MarketOrder.status == OrderStatus.ACTIVE, MarketOrder.price != None).order_by(MarketOrder.price.asc()).first()
+        db.close()
+        if best_bid and best_ask:
+            price = (best_bid.price + best_ask.price) / 2
+        else:
+            price = best_bid.price if best_bid else best_ask.price if best_ask else None
+    if price is not None:
+        try:
+            from events import get_active_market_price_factor
+            _pf = get_active_market_price_factor()
+            if _pf != 1.0:
+                price = price * _pf
+        except Exception:
+            pass
+    return price
 
 def cancel_order(order_id: int, player_id: int) -> bool:
     db = get_db()

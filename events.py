@@ -264,6 +264,62 @@ def get_event_summary() -> dict:
     return {"active": active, "upcoming": upcoming, "finished": finished}
 
 
+def get_active_effects() -> list[dict]:
+    """Return a list of effect dicts from all currently active non-task events.
+
+    Each entry: {"event_id", "title", "event_type", "effect_data"}.
+    Used by market, production, etc. to check if an event modifier is live.
+    """
+    import json as _json
+    events = get_active_events()
+    result = []
+    for ev in events:
+        if ev.event_type == "task":
+            continue
+        try:
+            ed = _json.loads(ev.effect_data or "{}")
+        except Exception:
+            ed = {}
+        if ed:
+            result.append({
+                "event_id":   ev.id,
+                "title":      ev.title,
+                "event_type": ev.event_type,
+                "effect_data": ed,
+            })
+    return result
+
+
+def get_active_market_price_factor() -> float:
+    """Return combined price multiplier from active market/bank/gov events.
+
+    effect_data field checked: {"price_factor": <float>}
+    Returns 1.0 if no active price-altering events.
+    """
+    factor = 1.0
+    for eff in get_active_effects():
+        ed = eff.get("effect_data", {})
+        pf = ed.get("price_factor")
+        if isinstance(pf, (int, float)) and pf > 0:
+            factor *= pf
+    return factor
+
+
+def get_active_production_factor() -> float:
+    """Return combined production output multiplier from active production/city events.
+
+    effect_data field checked: {"production_factor": <float>}
+    Returns 1.0 if no active production-altering events.
+    """
+    factor = 1.0
+    for eff in get_active_effects():
+        ed = eff.get("effect_data", {})
+        pf = ed.get("production_factor")
+        if isinstance(pf, (int, float)) and pf > 0:
+            factor *= pf
+    return factor
+
+
 def get_player_task_progress_map(player_id: int, event_ids: list) -> dict:
     """Return {event_id: {"progress": float, "completed": bool}} for the given event IDs."""
     if not player_id or not event_ids:

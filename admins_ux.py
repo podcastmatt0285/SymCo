@@ -4738,6 +4738,28 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             except Exception as _be:
                 extra = f'<p style="color:#ef4444;font-size:0.75rem;margin-top:8px;">Beta data error: {_be}</p>'
 
+        import json as _ej
+        _ed = {}
+        try:
+            _ed = _ej.loads(ev.effect_data or "{}")
+        except Exception:
+            pass
+        _is_cs = _ed.get("type") == "crypto_scam"
+        _meta_parts = []
+        if ev.event_type == "task" and ev.task_metric:
+            tgt = f" / target {ev.task_target:,.0f}" if ev.task_target else ""
+            _meta_parts.append(f'<span style="color:#a78bfa;">metric: {ev.task_metric}{tgt}</span>')
+        if _ed and not _is_cs:
+            _ed_display = _ej.dumps(_ed, separators=(",", ":"))
+            _meta_parts.append(
+                f'<span style="color:#f59e0b;font-family:monospace;font-size:0.72rem;">'
+                f'effect: {_ed_display}</span>'
+            )
+        _meta_html = (
+            '<div style="font-size:0.75rem;margin-top:4px;display:flex;flex-wrap:wrap;gap:8px;">'
+            + "".join(_meta_parts)
+            + "</div>"
+        ) if _meta_parts else ""
         event_cards += f"""
         <div class="card" style="margin-bottom:14px;">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;
@@ -4746,7 +4768,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
                         {_badge(ev.duration_class, dur_c)}
                         {_badge(ev.event_type, type_c)}
-                        {'<span style="background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;">💸 CRYPTO SCAM</span>' if __import__('json').loads(ev.effect_data or '{}').get('type') == 'crypto_scam' else ''}
+                        {'<span style="background:#fbbf2422;color:#fbbf24;border:1px solid #fbbf2455;border-radius:3px;padding:1px 6px;font-size:0.65rem;font-weight:700;">💸 CRYPTO SCAM</span>' if _is_cs else ''}
                         <span style="color:{status_color};font-size:0.72rem;font-weight:700;">● {status_label}</span>
                     </div>
                     <div style="font-size:1rem;font-weight:700;color:#e2e8f0;margin-bottom:2px;">
@@ -4758,6 +4780,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
                         Ends: {_fmt_dt(ev.ends_at)} &nbsp;·&nbsp;
                         <span style="color:{status_color};">{_time_left(ev)}</span>
                     </div>
+                    {_meta_html}
                 </div>
                 <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
                     {ctrl}
@@ -4770,12 +4793,122 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     if not all_events:
         event_cards = '<div class="card"><p style="color:#64748b;">No events in the database yet.</p></div>'
 
+    _inp = ('background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:4px;'
+            'padding:6px 9px;font-size:0.8rem;width:100%;box-sizing:border-box;')
+    _sel = _inp + 'cursor:pointer;'
+    create_form = f"""
+    <div class="card" style="margin-bottom:18px;">
+      <div style="font-size:0.72rem;color:#94a3b8;text-transform:uppercase;
+                  letter-spacing:.08em;margin-bottom:4px;font-weight:700;">➕ Create New Event / Task</div>
+      <p style="font-size:0.75rem;color:#475569;margin:0 0 12px;">
+        Creates the event in the database as <strong style="color:#94a3b8;">inactive</strong> by default.
+        Activate it with <strong style="color:#94a3b8;">▶ Start</strong> below, or tick
+        <strong style="color:#94a3b8;">Active now</strong> to go live immediately.
+      </p>
+      <form method="post" action="/admin/events/create">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Title *</div>
+            <input name="title" placeholder="e.g. Weekly Meme Challenge" required style="{_inp}">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Trophy reward (0 = none)</div>
+            <input name="trophy_reward" type="number" min="0" value="0" style="{_inp}">
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Description shown to players</div>
+          <textarea name="description" placeholder="What players need to do and why it matters…" rows="2"
+                    style="{_inp}resize:vertical;"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Schedule — how often</div>
+            <select name="duration_class" style="{_sel}">
+              <option value="daily">Daily</option>
+              <option value="weekly" selected>Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="special">Special / one-off</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Category</div>
+            <select name="event_type" style="{_sel}">
+              <option value="task" selected>Task (tracks player progress)</option>
+              <option value="market">Market (price effect)</option>
+              <option value="production">Production (output effect)</option>
+              <option value="gov">Government / policy</option>
+              <option value="bank">Bank / interest rate</option>
+              <option value="city">City</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Starts at (UTC) — blank = right now</div>
+            <input type="datetime-local" name="starts_at" style="{_inp}">
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Ends at (UTC) — blank = no deadline</div>
+            <input type="datetime-local" name="ends_at" style="{_inp}">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Task metric (task events only)</div>
+            <select name="task_metric" style="{_sel}">
+              <option value="">— not a tracked task —</option>
+              <option value="meme_buy_usd">Spend $ buying meme tokens</option>
+              <option value="executive_action">Fire or hire an executive</option>
+              <option value="market_sales_tax_usd">Generate market sales tax (USD)</option>
+              <option value="beta_group_verified">Join beta Google Group</option>
+              <option value="twa_first_login">First app login (Pocket Empire)</option>
+              <option value="daily_twa_login">Daily app login (Active Duty)</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+              Target amount (0 = unlimited / badge-only)</div>
+            <input name="task_target" type="number" step="any" min="0"
+                   placeholder="e.g. 2500 for $2,500 · 1 for one action" style="{_inp}">
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">
+            Effect data JSON (non-task events) — e.g.
+            <code style="color:#f59e0b;">{{"price_factor":1.25}}</code> for a 25% price boost,
+            <code style="color:#f59e0b;">{{"production_factor":1.5}}</code> for 50% more output,
+            <code style="color:#f59e0b;">{{"type":"crypto_scam","wsc_pool":10000}}</code> for WSC event
+          </div>
+          <textarea name="effect_data" placeholder='{{"price_factor": 1.0}}' rows="2"
+                    style="{_inp}font-family:monospace;resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="submit" style="background:#14532d;color:#fff;border:none;border-radius:4px;
+                  padding:7px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;">
+            Create Event
+          </button>
+          <label style="display:flex;align-items:center;gap:6px;color:#94a3b8;font-size:0.78rem;cursor:pointer;">
+            <input type="checkbox" name="activate_now" value="1" style="width:auto;margin:0;">
+            Active now
+          </label>
+          <span style="font-size:0.72rem;color:#475569;">
+            (unchecked = saved inactive, start manually from the card below)
+          </span>
+        </div>
+      </form>
+    </div>"""
+
     body = f"""
     {flash}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
         <h2 style="margin:0;">Events</h2>
         <span style="color:#64748b;font-size:0.78rem;">{len(all_events)} event(s) in DB</span>
     </div>
+    {create_form}
     {event_cards}"""
 
     return HTMLResponse(admin_shell("Events", body, admin.business_name, "/admin/events"))
@@ -4947,6 +5080,81 @@ def admin_event_add_time(session_token: Optional[str] = Cookie(None),
             edb.close()
         if ev:
             schedule_event_notifications(ev)  # rearms end timer with updated ends_at
+        return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
+    except Exception as e:
+        return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)
+
+
+@router.post("/admin/events/create")
+def admin_event_create(
+    session_token:  Optional[str]   = Cookie(None),
+    title:          str             = Form(...),
+    description:    Optional[str]   = Form(None),
+    duration_class: str             = Form("weekly"),
+    event_type:     str             = Form("task"),
+    starts_at:      Optional[str]   = Form(None),
+    ends_at:        Optional[str]   = Form(None),
+    trophy_reward:  int             = Form(0),
+    task_target:    Optional[float] = Form(None),
+    task_metric:    Optional[str]   = Form(None),
+    effect_data:    Optional[str]   = Form(None),
+    activate_now:   Optional[str]   = Form(None),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse, json as _json
+    try:
+        from events import GameEvent, SessionLocal as _ES, broadcast_event_push, schedule_event_notifications
+        def _parse(s):
+            return datetime.fromisoformat(s) if s and s.strip() else None
+        now       = datetime.utcnow()
+        start     = _parse(starts_at) or now
+        end       = _parse(ends_at)
+        is_active = activate_now == "1"
+        metric    = (task_metric.strip() or None) if task_metric else None
+        # Validate / normalise effect_data JSON
+        ed_str = "{}"
+        if effect_data and effect_data.strip():
+            try:
+                ed_str = _json.dumps(_json.loads(effect_data.strip()))
+            except Exception:
+                return RedirectResponse(
+                    f"/admin/events?err={urllib.parse.quote('effect_data is not valid JSON')}",
+                    status_code=303)
+        edb = _ES()
+        try:
+            ev = GameEvent(
+                title          = title.strip(),
+                description    = description.strip() if description else None,
+                duration_class = duration_class,
+                event_type     = event_type,
+                starts_at      = start,
+                ends_at        = end,
+                trophy_reward  = trophy_reward,
+                task_target    = task_target if task_target else None,
+                task_metric    = metric,
+                effect_data    = ed_str,
+                is_active      = is_active,
+                created_by     = admin.id,
+            )
+            edb.add(ev)
+            edb.commit()
+            edb.refresh(ev)
+            status_word = "created and activated" if is_active else "saved as inactive"
+            msg = f"Event '{ev.title}' {status_word} (ID {ev.id})."
+        finally:
+            edb.close()
+        if is_active:
+            if start > now:
+                schedule_event_notifications(ev)
+                broadcast_event_push(ev.id, f"📅 Upcoming: {ev.title}",
+                                     ev.description or "A new event is coming — stay tuned!",
+                                     tag=f"event-{ev.id}-scheduled")
+            else:
+                broadcast_event_push(ev.id, f"🔴 {ev.title} is LIVE!",
+                                     ev.description or "The event is now active — join in!",
+                                     tag=f"event-{ev.id}-live")
+                schedule_event_notifications(ev)
         return RedirectResponse(f"/admin/events?msg={urllib.parse.quote(msg)}", status_code=303)
     except Exception as e:
         return RedirectResponse(f"/admin/events?err={urllib.parse.quote(str(e)[:120])}", status_code=303)

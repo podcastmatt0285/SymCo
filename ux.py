@@ -5707,6 +5707,31 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
                 </div>
             </div>'''
 
+        # Active event price-effect banner
+        _mkt_event_banner = ""
+        try:
+            from events import get_active_effects
+            _mkt_effs = [e for e in get_active_effects() if "price_factor" in e.get("effect_data", {})]
+            if _mkt_effs:
+                _banner_parts = []
+                for _eff in _mkt_effs:
+                    _pf = _eff["effect_data"]["price_factor"]
+                    _dir = "▲" if _pf > 1.0 else "▼"
+                    _pct = abs(_pf - 1.0) * 100
+                    _col = "#fca5a5" if _pf > 1.0 else "#86efac"
+                    _banner_parts.append(
+                        f'<b style="color:{_col};">{_eff["title"]}</b>: prices {_dir} {_pct:.0f}%'
+                    )
+                _mkt_event_banner = (
+                    '<div style="background:#1a1a0a;border:1px solid #92400e;border-radius:6px;'
+                    'padding:10px 14px;margin-bottom:14px;font-size:0.82rem;">'
+                    '<span style="color:#f59e0b;font-weight:700;margin-right:8px;">⚡ Active Market Event</span>'
+                    + " &nbsp;·&nbsp; ".join(_banner_parts)
+                    + "</div>"
+                )
+        except Exception:
+            pass
+
         # Build market HTML
         market_html = f'''
         <style>
@@ -5725,6 +5750,7 @@ def _market_page_impl(session_token: Optional[str] = None, item: str = "apple_se
         <div class="mkt-main-flex" style="display: flex; gap: 20px; max-width: 100%;">
             <div style="flex: 2; min-width: 0;">
                 <h1>📈 Market</h1>
+                {_mkt_event_banner}
                 <div style="margin-bottom: 16px; padding: 12px; background: #0f172a; border-left: 4px solid {cat_colors.get(item_cat, "#64748b")};">
                     <div style="font-size: 1.2rem; font-weight: bold; color: #38bdf8;">{item_name}</div>
                     <div style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">{item_desc}</div>
@@ -14191,6 +14217,40 @@ def events_page(request: Request,
             }})();
             </script>"""
 
+        # Effect banner for non-task, non-crypto_scam events with effect_data
+        effect_html = ""
+        if etype != "task" and not _effect.get("type") == "crypto_scam" and _effect:
+            _eff_rows = []
+            pf = _effect.get("price_factor")
+            if isinstance(pf, (int, float)) and pf != 1.0:
+                _dir = "▲" if pf > 1.0 else "▼"
+                _pct = abs(pf - 1.0) * 100
+                _col = "#f87171" if pf > 1.0 else "#4ade80"
+                _eff_rows.append(f'<span style="color:{_col};">{_dir} Market prices {_pct:.0f}% {"higher" if pf > 1.0 else "lower"}</span>')
+            prod_f = _effect.get("production_factor")
+            if isinstance(prod_f, (int, float)) and prod_f != 1.0:
+                _dir = "▲" if prod_f > 1.0 else "▼"
+                _pct = abs(prod_f - 1.0) * 100
+                _col = "#4ade80" if prod_f > 1.0 else "#f87171"
+                _eff_rows.append(f'<span style="color:{_col};">{_dir} Production output {_pct:.0f}% {"higher" if prod_f > 1.0 else "lower"}</span>')
+            # Generic key-value fallback for other effect keys
+            _known = {"price_factor", "production_factor", "type"}
+            for _k, _v in _effect.items():
+                if _k not in _known:
+                    _eff_rows.append(f'<span style="color:#94a3b8;">{_k}: {_v}</span>')
+            if _eff_rows:
+                effect_html = (
+                    '<div style="margin-top:10px;padding:10px 12px;background:#050d1a;'
+                    'border:1px solid #1e3a5f;border-radius:6px;">'
+                    '<div style="font-size:0.65rem;color:#64748b;text-transform:uppercase;'
+                    'letter-spacing:.07em;margin-bottom:6px;">Active Effect</div>'
+                    + "".join(
+                        f'<div style="font-size:0.80rem;font-weight:600;margin-bottom:3px;">{r}</div>'
+                        for r in _eff_rows
+                    )
+                    + "</div>"
+                )
+
         return f"""
         <div style="background:#0a0f1e;border:1px solid #1e293b;border-left:3px solid {status_color};
                     border-radius:8px;padding:16px 18px;margin-bottom:10px;">
@@ -14204,6 +14264,7 @@ def events_page(request: Request,
                     <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
                     <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
                     {progress_html}
+                    {effect_html}
                     {cs_panel}
                 </div>
                 <div style="color:{status_color};font-size:0.75rem;white-space:nowrap;padding-top:2px;">{time_str}</div>
