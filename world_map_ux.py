@@ -1088,6 +1088,7 @@ _MY_PROPS_MODAL = r"""
       ctx.restore();
     });
   }
+  var cv,ctx,plots=[],contacts=[],imgs={},scale=1,offX=0,offY=0;
   var dragSX=0,dragSY=0,dragOX=0,dragOY=0,didDrag=false;
   var hovId=-1,hovCI=-1,hovCPi=-1,swapAIdx=-1,swapMode=false;
   var selfId=-1,viewingId=-1;
