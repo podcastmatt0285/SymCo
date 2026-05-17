@@ -433,6 +433,16 @@ def mint_by_burning(meme_id: int, player_id: int, native_amount: float) -> tuple
         print(f"[Memecoins] Burn-to-mint: player {player_id} burned {native_amount:.4f} {county.crypto_symbol} "
               f"-> minted {coins_minted:.4f} {meme.symbol} @ {backing_price:.6f} backing price")
 
+        try:
+            from stats_ux import log_transaction as _log
+            _log(
+                player_id, "meme_burn_mint", "crypto", -native_amount,
+                f"Burned {native_amount:.4f} {county.crypto_symbol} → minted {coins_minted:.4f} {meme.symbol}",
+                item_type=meme.symbol, quantity=coins_minted,
+            )
+        except Exception:
+            pass
+
         return coins_minted, new_backing_price, None
 
     except Exception as e:
@@ -806,6 +816,8 @@ def process_meme_mining_payouts():
             MemeCoin.mining_enabled == True,
         ).all()
 
+        _all_meme_rewards: list = []  # (player_id, amount, symbol) — logged after commit
+
         for meme in active_memes:
             if meme.mining_minted >= meme.mining_allocation:
                 continue  # Fully minted
@@ -856,6 +868,7 @@ def process_meme_mining_payouts():
                 wallet.balance += player_reward
                 wallet.total_mined += player_reward
                 dep.total_earned += player_reward
+                _all_meme_rewards.append((dep.player_id, player_reward, meme.symbol))
 
             # Update meme coin totals
             meme.mining_minted = min(
@@ -872,6 +885,17 @@ def process_meme_mining_payouts():
                 print(f"[MemeCoin] {meme.symbol} mining complete.")
 
         db.commit()
+
+        try:
+            from stats_ux import log_transaction as _log
+            for _pid, _amt, _sym in _all_meme_rewards:
+                _log(
+                    _pid, "meme_mining_reward", "crypto", _amt,
+                    f"Meme mining reward: {_amt:.6f} {_sym}",
+                    item_type=_sym, quantity=_amt,
+                )
+        except Exception:
+            pass
 
     except Exception as e:
         db.rollback()

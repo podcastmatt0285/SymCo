@@ -992,6 +992,16 @@ def redeem_wsc_for_cash(player_id: int, amount: float) -> Tuple[bool, str]:
     finally:
         auth_db.close()
 
+    try:
+        from stats_ux import log_transaction as _log
+        _log(
+            player_id, "wsc_redemption", "crypto", amount,
+            f"Redeemed {amount:.4f} WSC for in-game cash",
+            item_type="WSC", quantity=amount,
+        )
+    except Exception:
+        pass
+
     return True, f"Redeemed {amount:.4f} WSC → ${amount:.2f} in-game cash credited."
 
 
@@ -1051,6 +1061,16 @@ def buy_wsc_with_cash(player_id: int, wsc_amount: int) -> Tuple[bool, str, dict]
         return False, f"Mint failed; funds refunded. ({exc})", {}
     finally:
         wallet_db.close()
+
+    try:
+        from stats_ux import log_transaction as _log
+        _log(
+            player_id, "wsc_purchase", "crypto", -usd_cost,
+            f"Purchased {wsc_amount:,} WSC (Crypto Scam event)",
+            item_type="WSC", quantity=float(wsc_amount),
+        )
+    except Exception:
+        pass
 
     new_tender_balance = get_player_currency_balance(player_id, tender)
     cost_str = (

@@ -1261,6 +1261,7 @@ def process_mining_payouts(current_tick: int):
         # transaction so a concurrent scheduler or manual trigger cannot run
         # two payouts simultaneously against the same energy pool.
         counties = db.query(County).filter(County.mining_energy_pool > 0).with_for_update().all()
+        _all_rewards: list = []  # (player_id, reward, symbol) — logged after commit
 
         for county in counties:
             energy_to_consume = county.mining_energy_pool * MINING_ENERGY_CONSUMPTION_RATE
@@ -1326,6 +1327,7 @@ def process_mining_payouts(current_tick: int):
 
                     wallet.balance += reward
                     wallet.total_mined += reward
+                    _all_rewards.append((deposit.player_id, reward, county.crypto_symbol))
 
                 # Mark as consumed (energy used up)
                 deposit.consumed = True
@@ -1339,6 +1341,13 @@ def process_mining_payouts(current_tick: int):
             print(f"[Counties] Mining payout: County '{county.name}' minted {crypto_to_mint:.6f} {county.crypto_symbol} (reward: {block_reward:.4f}, halvings: {halvings}, supply: {(county.total_crypto_minted or 0):,.2f}/{(county.max_supply or MAX_TOKEN_SUPPLY):,.0f})")
 
         db.commit()
+
+        for _pid, _amt, _sym in _all_rewards:
+            log_transaction(
+                _pid, "county_mining_reward", "crypto", _amt,
+                f"Mining reward: {_amt:.6f} {_sym}",
+                item_type=_sym, quantity=_amt,
+            )
 
     except Exception as e:
         db.rollback()

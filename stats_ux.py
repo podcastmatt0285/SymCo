@@ -1236,6 +1236,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "county_mining_deposit": "⛏️",
         # Crypto
         "crypto_buy": "₿", "crypto_sell": "₿", "crypto_swap": "🔄",
+        "county_mining_reward": "⛏️", "meme_mining_reward": "💎", "meme_burn_mint": "🔥",
+        "wsc_purchase": "🪙", "wsc_redemption": "💱",
         # Governance
         "governance_proposal": "🗳️", "governance_vote": "🗳️",
         # Treasury
@@ -1273,6 +1275,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "city_subsidy": "#22c55e", "county_mining_deposit": "#92400e",
         # Crypto / Governance / Treasury
         "crypto_buy": "#f59e0b", "crypto_sell": "#f59e0b", "crypto_swap": "#f59e0b",
+        "county_mining_reward": "#92400e", "meme_mining_reward": "#a78bfa", "meme_burn_mint": "#f97316",
+        "wsc_purchase": "#0891b2", "wsc_redemption": "#22c55e",
         "governance_proposal": "#6366f1", "governance_vote": "#6366f1",
         "treasury_grant": "#22c55e",
         # Bonds / Forex
@@ -1299,7 +1303,8 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "dividend":        ("dividend",),             # dividend + dividend_paid
         "bonds":           ("bond_",),                # bond_purchase/sell/maturity/called
         "bond_income":     ("bond_maturity", "bond_called"),  # only payout events
-        "crypto":          ("crypto_",),
+        "crypto":          ("crypto_", "wsc_", "meme_burn_mint", "meme_mining_reward", "county_mining_reward"),
+        "wsc":             ("wsc_",),
         "forex":           ("forex_",),
         # Business & Income
         "retail":          ("retail_sale",),
@@ -1308,7 +1313,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         "treasury":        ("treasury_",),
         # Land & Property
         "land":            ("land_buy", "land_sell"),
-        "mining":          ("county_mining",),
+        "mining":          ("county_mining", "meme_mining_reward"),
         # District & City Government
         "district":        ("district_merge", "district_tax"),
         "city":            ("city_", "county_"),      # city_* + county_mining_deposit
@@ -1610,6 +1615,7 @@ async def stats_personal(session_token: Optional[str] = Cookie(None)):
         ("bonds",           "Bonds",           count_by_tab.get("bonds", 0)),
         ("bond_income",     "Bond Payouts",    count_by_tab.get("bond_income", 0)),
         ("crypto",          "Crypto",          count_by_tab.get("crypto", 0)),
+        ("wsc",             "WSC",             count_by_tab.get("wsc", 0)),
         ("forex",           "Forex",           count_by_tab.get("forex", 0)),
         # — Business & Income —
         ("retail",          "Retail Sales",    count_by_tab.get("retail", 0)),
