@@ -4921,7 +4921,15 @@ def admin_events(session_token: Optional[str] = Cookie(None),
     {flash}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
         <h2 style="margin:0;">Events</h2>
-        <span style="color:#64748b;font-size:0.78rem;">{len(all_events)} event(s) in DB</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="color:#64748b;font-size:0.78rem;">{len(all_events)} event(s) in DB</span>
+            <form method="post" action="/admin/events/seed-defaults" style="display:inline;">
+                <button type="submit" style="background:#1e293b;border:1px solid #334155;border-radius:4px;
+                        color:#94a3b8;font-size:0.74rem;padding:5px 12px;cursor:pointer;">
+                    ⟳ Seed Default Tasks
+                </button>
+            </form>
+        </div>
     </div>
     {create_form}
     {event_cards}"""
@@ -4935,6 +4943,26 @@ def _invalidate_event_cache():
         invalidate_effects_cache()
     except Exception:
         pass
+
+
+@router.post("/admin/events/seed-defaults")
+def admin_seed_default_events(session_token: Optional[str] = Cookie(None)):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse
+    try:
+        from events import _seed_default_tasks
+        _seed_default_tasks()
+        _invalidate_event_cache()
+        return RedirectResponse(
+            f"/admin/events?msg={urllib.parse.quote('Default weekly tasks seeded. Activate them below.')}",
+            status_code=303,
+        )
+    except Exception as e:
+        return RedirectResponse(
+            f"/admin/events?err={urllib.parse.quote(str(e)[:120])}",
+            status_code=303,
+        )
 
 
 @router.post("/admin/events/start")
