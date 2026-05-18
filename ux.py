@@ -14097,7 +14097,10 @@ def events_page(request: Request,
             _sym     = _disp["symbol"]
             _bal     = get_player_currency_balance(player.id, _tender)
             _usd_eq  = _bal * _rate
-            _max_wsc = int(_usd_eq * 0.90)
+            _pool    = _effect.get("wsc_pool")
+            _max_wsc_bal = int(_usd_eq * 0.90)
+            _max_wsc = (min(_max_wsc_bal, int(_pool)) if isinstance(_pool, (int, float)) else _max_wsc_bal)
+            _pool_int = int(_pool) if isinstance(_pool, (int, float)) else None
             _rate_str = (
                 f"1 WSC = {_sym}{1.0/_rate:,.4f} {_tender} (≈ $1.00 USD)"
                 if _tender != "USD" else "1 WSC = $1.00 USD"
@@ -14106,6 +14109,7 @@ def events_page(request: Request,
                 f"{_sym}{_bal:,.2f} {_tender} (≈ ${_usd_eq:,.2f})"
                 if _tender != "USD" else f"${_bal:,.2f}"
             )
+            _pool_str = f"{_pool_int:,} WSC remaining" if _pool_int is not None else "Unlimited"
             cs_panel = f"""
             <div style="margin-top:14px;background:#050d1a;border:1px solid #1e3a5f;
                         border-radius:6px;padding:14px 16px;">
@@ -14118,13 +14122,17 @@ def events_page(request: Request,
                         {_rate_str} &nbsp;·&nbsp; Cash burned on purchase
                     </span>
                 </div>
-                <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
+                <div style="font-size:0.75rem;color:#64748b;margin-bottom:6px;">
                     Balance:&nbsp;
                     <b id="cs-bal-{_ev_id}" style="color:#e2e8f0;">
                         {_bal_str}
                     </b>
+                </div>
+                <div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;">
+                    Pool:&nbsp;
+                    <b id="cs-pool-{_ev_id}" style="color:#fbbf24;">{_pool_str}</b>
                     &nbsp;·&nbsp; Max you can buy:&nbsp;
-                    <b id="cs-max-{_ev_id}" style="color:#fbbf24;">
+                    <b id="cs-max-{_ev_id}" style="color:#a78bfa;">
                         {_max_wsc:,} WSC
                     </b>
                 </div>
@@ -14180,6 +14188,10 @@ def events_page(request: Request,
                                 var mx=document.getElementById('cs-max-'+_evId);
                                 if(mx) mx.textContent=_curMax.toLocaleString()+' WSC';
                             }}
+                            if(d.pool_remaining!==undefined&&d.pool_remaining!==null){{
+                                var pl=document.getElementById('cs-pool-'+_evId);
+                                if(pl) pl.textContent=d.pool_remaining.toLocaleString()+' WSC remaining';
+                            }}
                             if(d.error){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
                             var sym=d.currency_symbol||'$', code=d.currency_code||'USD';
                             var costStr=_fmtLocal(d.cost_local,sym,code);
@@ -14201,7 +14213,7 @@ def events_page(request: Request,
                     if(id!==_evId) return;
                     var inp=document.getElementById('cs-amt-'+_evId);
                     if(inp&&_curMax>0){{inp.value=_curMax;csFetch();}}
-                    else if(_curMax===0){{alert('No available cash to convert.');}}
+                    else if(_curMax===0){{alert('No available cash to convert, or the pool is depleted.');}}
                 }};
                 window.csBuy=function(id){{
                     if(id!==_evId) return;
@@ -14209,7 +14221,7 @@ def events_page(request: Request,
                     var amt=parseInt(inp.value)||0;
                     if(amt<1){{alert('Enter at least 1 WSC (whole units only).');return;}}
                     if(_curMax>0&&amt>_curMax){{
-                        alert('Exceeds 90% cash limit. Max:\xa0'+_curMax.toLocaleString()+' WSC.');
+                        alert('Exceeds limit. Max:\xa0'+_curMax.toLocaleString()+' WSC.');
                         inp.value=_curMax; csFetch(); return;
                     }}
                     var st=document.getElementById('cs-status-'+_evId);
@@ -14514,21 +14526,27 @@ def api_crypto_scam_rate(
         ev = next((e for e in get_active_events() if e.id == event_id), None)
         if not ev:
             return JSONResponse({"error": "Event not active."})
-        if _j.loads(ev.effect_data or "{}").get("type") != "crypto_scam":
+        eff = _j.loads(ev.effect_data or "{}")
+        if eff.get("type") != "crypto_scam":
             return JSONResponse({"error": "Not a Crypto Scam event."})
+        pool = eff.get("wsc_pool")
     except Exception as exc:
         return JSONResponse({"error": str(exc)})
     from reserve_banks import get_player_display_currency, get_player_currency_balance
     disp           = get_player_display_currency(player.id)
     tender         = disp["code"]
-    rate           = disp["usd_per_unit"] or 1.0   # guard zero/None
+    rate           = disp["usd_per_unit"] or 1.0
     tender_balance = get_player_currency_balance(player.id, tender)
     usd_equiv      = tender_balance * rate
-    max_wsc        = int(usd_equiv * 0.90)
+    max_wsc_bal    = int(usd_equiv * 0.90)
+    max_wsc        = (min(max_wsc_bal, int(pool)) if isinstance(pool, (int, float)) else max_wsc_bal)
     amount         = max(1, int(amount))
     usd_cost       = float(amount)
     foreign_cost   = usd_cost / rate
-    err            = f"Exceeds 90% limit — max {max_wsc:,} WSC." if amount > max_wsc else None
+    err            = None
+    if amount > max_wsc:
+        err = f"Exceeds limit — max {max_wsc:,} WSC."
+    pool_remaining = int(pool) if isinstance(pool, (int, float)) else None
     return JSONResponse({
         "rate":            1.0,
         "amount":          amount,
@@ -14537,6 +14555,7 @@ def api_crypto_scam_rate(
         "currency_code":   tender,
         "currency_symbol": disp["symbol"],
         "max_wsc":         max_wsc,
+        "pool_remaining":  pool_remaining,
         "cash_balance":    round(tender_balance, 4),
         "cash_balance_usd": round(usd_equiv, 2),
         "error":           err,
@@ -14552,24 +14571,67 @@ async def api_crypto_scam_buy(
     if isinstance(player, RedirectResponse):
         return JSONResponse({"error": "auth"}, status_code=401)
     try:
-        data      = await request.form()
-        event_id  = int(data.get("event_id", 0))
+        data       = await request.form()
+        event_id   = int(data.get("event_id", 0))
         wsc_amount = int(data.get("wsc_amount", 0))
     except Exception:
         return JSONResponse({"error": "Invalid input."})
+    if wsc_amount < 1:
+        return JSONResponse({"error": "Enter at least 1 WSC (whole units only)."})
+
+    import json as _j
+    from events import GameEvent, SessionLocal as _ES, invalidate_effects_cache
+
+    # Check pool and decrement atomically before debiting cash
+    pool_had_limit = False
+    edb = _ES()
     try:
-        import json as _j
-        from events import get_active_events
-        ev = next((e for e in get_active_events() if e.id == event_id), None)
-        if not ev:
+        ev_row = edb.query(GameEvent).filter(GameEvent.id == event_id).with_for_update().first()
+        if not ev_row or not ev_row.is_active:
+            edb.close()
             return JSONResponse({"error": "Event not active."})
-        if _j.loads(ev.effect_data or "{}").get("type") != "crypto_scam":
+        eff = _j.loads(ev_row.effect_data or "{}")
+        if eff.get("type") != "crypto_scam":
+            edb.close()
             return JSONResponse({"error": "Not a Crypto Scam event."})
+        pool = eff.get("wsc_pool")
+        if isinstance(pool, (int, float)):
+            pool_had_limit = True
+            pool_int = int(pool)
+            if wsc_amount > pool_int:
+                edb.close()
+                return JSONResponse({"error": f"Only {pool_int:,} WSC remaining in the pool."})
+            eff["wsc_pool"] = pool_int - wsc_amount
+            ev_row.effect_data = _j.dumps(eff)
+            edb.commit()
+            invalidate_effects_cache()
     except Exception as exc:
+        try: edb.rollback()
+        except Exception: pass
+        edb.close()
         return JSONResponse({"error": str(exc)})
+    edb.close()
+
     from wallet import buy_wsc_with_cash
     ok, msg, info = buy_wsc_with_cash(player.id, wsc_amount)
     if not ok:
+        # Refund pool on purchase failure
+        if pool_had_limit:
+            try:
+                edb2 = _ES()
+                try:
+                    ev2 = edb2.query(GameEvent).filter(GameEvent.id == event_id).with_for_update().first()
+                    if ev2:
+                        eff2 = _j.loads(ev2.effect_data or "{}")
+                        if isinstance(eff2.get("wsc_pool"), (int, float)):
+                            eff2["wsc_pool"] = int(eff2["wsc_pool"]) + wsc_amount
+                            ev2.effect_data = _j.dumps(eff2)
+                            edb2.commit()
+                            invalidate_effects_cache()
+                finally:
+                    edb2.close()
+            except Exception:
+                pass
         return JSONResponse({"error": msg})
     return JSONResponse({"ok": True, "message": msg, **info})
 

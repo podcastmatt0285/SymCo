@@ -4843,6 +4843,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
               <option value="gov">Government / policy</option>
               <option value="bank">Bank / interest rate</option>
               <option value="city">City</option>
+              <option value="crypto_scam">Crypto Scam (WSC buy event)</option>
             </select>
           </div>
         </div>
