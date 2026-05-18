@@ -544,6 +544,25 @@ def _rearm_on_startup():
         print(f"[Events] rearm on startup failed: {e}")
 
 
+import json as _json_mod
+
+_DEFAULT_SPECIAL_EVENTS = [
+    {
+        "title":          "Crypto Scam",
+        "description":    (
+            "A limited-time event where you can purchase WSC (Wadsworth Stable Coin) "
+            "directly with your cash. WSC is pegged at $1.00 USD — your cash is burned "
+            "instantly to mint whole WSC units. You may spend up to 90% of your available "
+            "cash balance. Use the buy panel on this card to enter an amount, preview the "
+            "cost in your currency, and confirm the purchase."
+        ),
+        "duration_class": "special",
+        "event_type":     "crypto_scam",
+        "effect_data":    {"type": "crypto_scam", "wsc_pool": 10000},
+        "trophy_reward":  0,
+    },
+]
+
 _DEFAULT_WEEKLY_TASKS = [
     {
         "title":          "Meme Token Buyer",
@@ -588,7 +607,7 @@ _DEFAULT_WEEKLY_TASKS = [
 
 
 def _seed_default_tasks():
-    """Create the default weekly task events if they don't already exist."""
+    """Create the default weekly task events and special events if they don't already exist."""
     db = SessionLocal()
     try:
         for data in _DEFAULT_WEEKLY_TASKS:
@@ -611,6 +630,28 @@ def _seed_default_tasks():
                 ends_at        = None,
             )
             db.add(ev)
+
+        for data in _DEFAULT_SPECIAL_EVENTS:
+            existing = db.query(GameEvent).filter(
+                GameEvent.event_type     == data["event_type"],
+                GameEvent.duration_class == data["duration_class"],
+                GameEvent.title          == data["title"],
+            ).first()
+            if existing:
+                continue
+            ev = GameEvent(
+                title          = data["title"],
+                description    = data["description"],
+                duration_class = data["duration_class"],
+                event_type     = data["event_type"],
+                effect_data    = _json_mod.dumps(data.get("effect_data", {})),
+                trophy_reward  = data.get("trophy_reward", 0),
+                is_active      = False,
+                starts_at      = datetime(9999, 12, 31),
+                ends_at        = None,
+            )
+            db.add(ev)
+
         db.commit()
     except Exception as e:
         db.rollback()
