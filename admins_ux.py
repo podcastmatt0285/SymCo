@@ -4791,6 +4791,25 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             </div>
             {f'<div style="font-size:0.78rem;color:#475569;margin-bottom:10px;">{ev.description}</div>' if ev.description else ''}
             {extra}
+            {f'''<div style="margin-top:10px;padding:10px 12px;background:#050d1a;border:1px solid #1e3a5f;border-radius:6px;">
+              <div style="font-size:0.7rem;color:#fbbf24;font-weight:700;margin-bottom:6px;">💸 WSC Pool Editor</div>
+              <form method="post" action="/admin/events/update-pool" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <input type="hidden" name="event_id" value="{ev.id}">
+                <div style="font-size:0.72rem;color:#94a3b8;">Current pool:
+                  <b style="color:#fbbf24;">{_ed.get("wsc_pool", 0):,} WSC</b>
+                </div>
+                <input type="number" name="wsc_pool" min="0" step="1"
+                       value="{int(_ed.get("wsc_pool", 10000))}"
+                       style="width:130px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;
+                              border-radius:4px;padding:5px 8px;font-size:0.8rem;">
+                <button type="submit"
+                        style="background:#1e3a5f;color:#fff;border:none;border-radius:4px;
+                               padding:5px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;">
+                  Set Pool
+                </button>
+                <span style="font-size:0.68rem;color:#475569;">Updates immediately, even while active.</span>
+              </form>
+            </div>''' if _is_cs else ''}
         </div>"""
 
     if not all_events:
@@ -4956,6 +4975,43 @@ def admin_seed_default_events(session_token: Optional[str] = Cookie(None)):
         _invalidate_event_cache()
         return RedirectResponse(
             f"/admin/events?msg={urllib.parse.quote('Default weekly tasks seeded. Activate them below.')}",
+            status_code=303,
+        )
+    except Exception as e:
+        return RedirectResponse(
+            f"/admin/events?err={urllib.parse.quote(str(e)[:120])}",
+            status_code=303,
+        )
+
+
+@router.post("/admin/events/update-pool")
+def admin_event_update_pool(
+    session_token: Optional[str] = Cookie(None),
+    event_id: int = Form(...),
+    wsc_pool: int = Form(...),
+):
+    admin = require_admin(session_token)
+    if isinstance(admin, RedirectResponse): return admin
+    import urllib.parse, json as _j
+    try:
+        from events import GameEvent, SessionLocal as _ES
+        edb = _ES()
+        try:
+            ev = edb.query(GameEvent).filter(GameEvent.id == event_id).first()
+            if not ev:
+                return RedirectResponse("/admin/events?err=Event+not+found", status_code=303)
+            try:
+                ed = _j.loads(ev.effect_data or "{}")
+            except Exception:
+                ed = {}
+            ed["wsc_pool"] = max(0, wsc_pool)
+            ev.effect_data = _j.dumps(ed)
+            edb.commit()
+        finally:
+            edb.close()
+        _invalidate_event_cache()
+        return RedirectResponse(
+            f"/admin/events?msg={urllib.parse.quote(f'Pool updated to {wsc_pool:,} WSC.')}",
             status_code=303,
         )
     except Exception as e:
