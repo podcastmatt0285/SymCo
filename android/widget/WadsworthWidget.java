@@ -46,7 +46,6 @@ public class WadsworthWidget extends AppWidgetProvider {
         for (int id : widgetIds) updateWidget(ctx, mgr, id);
     }
 
-    /** Refresh button tap triggers this broadcast. */
     @Override
     public void onReceive(Context ctx, Intent intent) {
         super.onReceive(ctx, intent);
@@ -70,15 +69,12 @@ public class WadsworthWidget extends AppWidgetProvider {
 
         int piFlags = Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0;
 
-        // Tap balance → open the app (explicit package avoids browser fallback)
         Intent launch = new Intent(Intent.ACTION_VIEW, Uri.parse(BASE_URL));
         launch.setPackage(ctx.getPackageName());
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent openApp = PendingIntent.getActivity(ctx, 0, launch, piFlags);
         views.setOnClickPendingIntent(id(ctx, "widget_balance"), openApp);
 
-        // Refresh button → broadcast back to this provider
-        // Do NOT set a click on widget_root; this avoids root-level intent stealing the tap.
         Intent refresh = new Intent(ACTION_REFRESH);
         refresh.setComponent(new ComponentName(ctx, WadsworthWidget.class));
         int refreshFlags = Build.VERSION.SDK_INT >= 23
@@ -87,8 +83,7 @@ public class WadsworthWidget extends AppWidgetProvider {
         PendingIntent refreshPi = PendingIntent.getBroadcast(ctx, 1, refresh, refreshFlags);
         views.setOnClickPendingIntent(id(ctx, "widget_refresh"), refreshPi);
 
-        // Loading state
-        views.setTextViewText(id(ctx, "widget_balance"), "Loading\u2026");
+        views.setTextViewText(id(ctx, "widget_balance"), "Loading…");
         for (int i = 1; i <= 10; i++)
             views.setTextViewText(id(ctx, "widget_notif" + i), "");
         views.setTextViewText(id(ctx, "widget_tickers"), "");
@@ -105,19 +100,23 @@ public class WadsworthWidget extends AppWidgetProvider {
                 URL url = new URL(dataUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(8000);
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
                 conn.setRequestProperty("Accept", "application/json");
+                conn.setRequestProperty("User-Agent",
+                        "Mozilla/5.0 (Linux; Android 10) Wadsworth/1.0");
                 conn.connect();
 
-                if (conn.getResponseCode() != 200) {
-                    setError(ctx, views, "Open app to log in");
+                int code = conn.getResponseCode();
+                if (code != 200) {
+                    setError(ctx, views, code == 401 ? "Open app to log in"
+                            : "Server error " + code);
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
 
                 BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream()));
+                        new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) sb.append(line);
@@ -126,9 +125,8 @@ public class WadsworthWidget extends AppWidgetProvider {
                 JSONObject data = new JSONObject(sb.toString());
 
                 views.setTextViewText(id(ctx, "widget_balance"),
-                        data.optString("balance", "\u2014"));
+                        data.optString("balance", "—"));
 
-                // Notifications — show up to 10 most recent
                 JSONArray notifs = data.optJSONArray("notifications");
                 String[] notifIds = {
                     "widget_notif1", "widget_notif2", "widget_notif3", "widget_notif4",
@@ -149,11 +147,13 @@ public class WadsworthWidget extends AppWidgetProvider {
                     }
                 }
                 views.setTextViewText(id(ctx, "widget_tickers"), "");
-
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
-                setError(ctx, views, "Tap ↻ to refresh");
+                String msg = e.getClass().getSimpleName();
+                if (e.getMessage() != null)
+                    msg += ": " + e.getMessage().substring(0, Math.min(40, e.getMessage().length()));
+                setError(ctx, views, msg);
                 mgr.updateAppWidget(widgetId, views);
             }
         }).start();

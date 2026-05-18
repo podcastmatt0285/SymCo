@@ -99,19 +99,23 @@ public class WBCWidget extends AppWidgetProvider {
                 URL url = new URL(dataUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(8000);
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
                 conn.setRequestProperty("Accept", "application/json");
+                conn.setRequestProperty("User-Agent",
+                        "Mozilla/5.0 (Linux; Android 10) Wadsworth/1.0");
                 conn.connect();
 
-                if (conn.getResponseCode() != 200) {
-                    views.setTextViewText(id(ctx, "widget_wbc_value"), "Open app to log in");
+                int code = conn.getResponseCode();
+                if (code != 200) {
+                    views.setTextViewText(id(ctx, "widget_wbc_value"),
+                            code == 401 ? "Open app to log in" : "Server error " + code);
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
 
                 BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream()));
+                        new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) sb.append(line);
@@ -147,7 +151,10 @@ public class WBCWidget extends AppWidgetProvider {
                 mgr.updateAppWidget(widgetId, views);
 
             } catch (Exception e) {
-                views.setTextViewText(id(ctx, "widget_wbc_value"), "Tap \u21bb to refresh");
+                String em = e.getClass().getSimpleName();
+                if (e.getMessage() != null)
+                    em += ": " + e.getMessage().substring(0, Math.min(40, e.getMessage().length()));
+                views.setTextViewText(id(ctx, "widget_wbc_value"), em);
                 mgr.updateAppWidget(widgetId, views);
             }
         }).start();
