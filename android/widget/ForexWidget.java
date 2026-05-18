@@ -107,10 +107,10 @@ public class ForexWidget extends AppWidgetProvider {
                         "Mozilla/5.0 (Linux; Android 10) Wadsworth/1.0");
                 conn.connect();
 
-                int code = conn.getResponseCode();
-                if (code != 200) {
+                int httpCode = conn.getResponseCode();
+                if (httpCode != 200) {
                     views.setTextViewText(id(ctx, "widget_forex_subtitle"),
-                            code == 401 ? "Open app to log in" : "Server error " + code);
+                            httpCode == 401 ? "Open app to log in" : "Server error " + httpCode);
                     mgr.updateAppWidget(widgetId, views);
                     return;
                 }
