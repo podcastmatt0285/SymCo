@@ -1033,20 +1033,33 @@ def place_order(
 
         # Track meme buy volume in USD for weekly task progress — AFTER commit so
         # we only record progress for trades that actually settled.
-        if order_type == "buy" and order.quantity_filled > 0 and player_id > 0:
-            try:
-                from counties import get_crypto_price_by_symbol as _gcps
-                _usd_per_native = _gcps(native_symbol) or 0.0
-                if _usd_per_native > 0:
+        try:
+            from counties import get_crypto_price_by_symbol as _gcps
+            from events import record_task_progress as _rtp
+            _usd_per_native = _gcps(native_symbol) or 0.0
+            if _usd_per_native > 0:
+                if order_type == "buy" and order.quantity_filled > 0 and player_id > 0:
+                    # Incoming buy filled immediately
                     fills = db.query(MemeCoinTrade).filter(
                         MemeCoinTrade.buy_order_id == order.id
                     ).all()
                     total_native = sum(t.native_volume for t in fills)
                     if total_native > 0:
-                        from events import record_task_progress as _rtp
                         _rtp(player_id, "meme_buy_usd", total_native * _usd_per_native)
-            except Exception:
-                pass
+                elif order_type == "sell" and order.quantity_filled > 0:
+                    # Incoming sell filled resting buy limit orders — credit each buyer
+                    fills = db.query(MemeCoinTrade).filter(
+                        MemeCoinTrade.sell_order_id == order.id
+                    ).all()
+                    buyer_totals: dict = {}
+                    for t in fills:
+                        if t.buyer_id > 0:
+                            buyer_totals[t.buyer_id] = buyer_totals.get(t.buyer_id, 0.0) + t.native_volume
+                    for bid, tvol in buyer_totals.items():
+                        if tvol > 0:
+                            _rtp(bid, "meme_buy_usd", tvol * _usd_per_native)
+        except Exception:
+            pass
 
         remaining = order.quantity - order.quantity_filled
         if order.status == "filled":
