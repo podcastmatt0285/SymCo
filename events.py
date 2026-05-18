@@ -544,6 +544,81 @@ def _rearm_on_startup():
         print(f"[Events] rearm on startup failed: {e}")
 
 
+_DEFAULT_WEEKLY_TASKS = [
+    {
+        "title":          "Meme Token Buyer",
+        "description":    (
+            "Spend $2,500 USD equivalent buying any meme token on the meme coin "
+            "order book. Purchases are tracked in real-time at current native token "
+            "prices. Every fill counts — market and limit orders both apply."
+        ),
+        "duration_class": "weekly",
+        "event_type":     "task",
+        "task_metric":    "meme_buy_usd",
+        "task_target":    2500.0,
+        "trophy_reward":  5,
+    },
+    {
+        "title":          "Executive Shuffle",
+        "description":    (
+            "Fire or hire at least one executive this week. The boardroom never "
+            "sleeps — shake up your leadership team to complete this task."
+        ),
+        "duration_class": "weekly",
+        "event_type":     "task",
+        "task_metric":    "executive_action",
+        "task_target":    1.0,
+        "trophy_reward":  3,
+    },
+    {
+        "title":          "Tax Contributor",
+        "description":    (
+            "Accumulate $15,000 in sales tax deducted from your sell orders on "
+            "the market and district market combined. Sales tax is automatically "
+            "taken from your proceeds each time a sell order fills — no special "
+            "setup required. Sell more volume to reach the target faster."
+        ),
+        "duration_class": "weekly",
+        "event_type":     "task",
+        "task_metric":    "market_sales_tax_usd",
+        "task_target":    15000.0,
+        "trophy_reward":  8,
+    },
+]
+
+
+def _seed_default_tasks():
+    """Create the default weekly task events if they don't already exist."""
+    db = SessionLocal()
+    try:
+        for data in _DEFAULT_WEEKLY_TASKS:
+            existing = db.query(GameEvent).filter(
+                GameEvent.task_metric    == data["task_metric"],
+                GameEvent.duration_class == "weekly",
+            ).first()
+            if existing:
+                continue
+            ev = GameEvent(
+                title          = data["title"],
+                description    = data["description"],
+                duration_class = data["duration_class"],
+                event_type     = data["event_type"],
+                task_metric    = data["task_metric"],
+                task_target    = data["task_target"],
+                trophy_reward  = data["trophy_reward"],
+                is_active      = False,
+                starts_at      = datetime(9999, 12, 31),
+                ends_at        = None,
+            )
+            db.add(ev)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"[Events] seed default tasks failed: {e}")
+    finally:
+        db.close()
+
+
 def initialize():
     """Create all events tables, then rearm timers for any pending events."""
     Base.metadata.create_all(bind=engine)
@@ -558,6 +633,7 @@ def initialize():
         _db.rollback()
     finally:
         _db.close()
+    _seed_default_tasks()
     _rearm_on_startup()
 
 
