@@ -4836,7 +4836,7 @@ def admin_events(session_token: Optional[str] = Cookie(None),
           </div>
           <div>
             <div style="font-size:0.68rem;color:#64748b;margin-bottom:3px;">Category</div>
-            <select name="event_type" style="{_sel}">
+            <select name="event_type" style="{_sel}" onchange="evTypeChange(this)">
               <option value="task" selected>Task (tracks player progress)</option>
               <option value="market">Market (price effect)</option>
               <option value="production">Production (output effect)</option>
@@ -4903,6 +4903,17 @@ def admin_events(session_token: Optional[str] = Cookie(None),
             (unchecked = saved inactive, start manually from the card below)
           </span>
         </div>
+        <script>
+        function evTypeChange(sel) {{
+          var ef = document.querySelector('textarea[name="effect_data"]');
+          if (!ef) return;
+          if (sel.value === 'crypto_scam') {{
+            if (!ef.value || ef.value.trim() === '' || ef.value.trim() === '{{"price_factor": 1.0}}') {{
+              ef.value = '{{"type":"crypto_scam","wsc_pool":10000}}';
+            }}
+          }}
+        }}
+        </script>
       </form>
     </div>"""
 

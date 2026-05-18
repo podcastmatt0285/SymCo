@@ -14050,8 +14050,10 @@ def events_page(request: Request,
         trophy_html = (f"<span style='color:#fbbf24;font-weight:700;'>+{trophy} ★</span>" if trophy else "")
 
         # Progress bar for tasks with a numeric target; completion badge for all other tasks
+        # meme_buy_usd shows a quick-buy panel instead (see below)
         progress_html = ""
-        if etype == "task":
+        _metric = ev.get("task_metric", "") or ""
+        if etype == "task" and _metric != "meme_buy_usd":
             ev_prog = _prog_map.get(ev.get("id"), {})
             done    = ev_prog.get("completed", False)
             target  = ev.get("task_target") or 0
@@ -14084,6 +14086,135 @@ def events_page(request: Request,
                 </div>"""
             elif done:
                 progress_html = '<div style="margin-top:8px;"><span style="color:#4ade80;font-weight:700;font-size:0.82rem;">✓ Completed</span></div>'
+
+        # Meme Token quick-buy panel (replaces progress bar for meme_buy_usd tasks)
+        meme_panel = ""
+        if etype == "task" and _metric == "meme_buy_usd" and status_label == "active":
+            _mev_id = ev.get("id")
+            try:
+                from memecoins import get_all_meme_coins_global as _gmcg
+                _memes = _gmcg(sort="volume")[:30]
+            except Exception:
+                _memes = []
+            _mopts = "".join(
+                f'<option value="{m["symbol"]}">{m["symbol"]} — {m["name"]}</option>'
+                for m in _memes
+            )
+            meme_panel = f"""
+            <div style="margin-top:14px;background:#050d1a;border:1px solid #1e3a5f;
+                        border-radius:6px;padding:14px 16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                    <span style="font-size:0.9rem;">\U0001f4b0</span>
+                    <span style="font-size:0.82rem;font-weight:700;color:#a78bfa;">
+                        Quick Buy Meme Tokens
+                    </span>
+                    <span style="font-size:0.68rem;color:#475569;margin-left:auto;">
+                        Market order · fills from the order book
+                    </span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
+                    <div>
+                        <div style="font-size:0.65rem;color:#64748b;margin-bottom:3px;">Token</div>
+                        <select id="mm-sym-{_mev_id}"
+                                style="padding:6px 8px;font-size:0.82rem;background:#0f172a;
+                                       border:1px solid #334155;color:#e2e8f0;border-radius:4px;
+                                       min-width:140px;"
+                                onchange="mmSchedule({_mev_id})">
+                            {_mopts}
+                        </select>
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem;color:#64748b;margin-bottom:3px;">Amount (tokens)</div>
+                        <input type="number" id="mm-qty-{_mev_id}"
+                               min="1" step="1" value="100"
+                               style="width:110px;padding:6px 8px;font-size:0.82rem;
+                                      background:#0f172a;border:1px solid #334155;
+                                      color:#e2e8f0;border-radius:4px;"
+                               oninput="mmSchedule({_mev_id})">
+                    </div>
+                    <button onclick="mmBuy({_mev_id})"
+                            style="padding:7px 18px;background:#7c3aed;border:none;
+                                   border-radius:4px;color:#fff;font-size:0.82rem;
+                                   font-weight:700;cursor:pointer;white-space:nowrap;">
+                        Buy
+                    </button>
+                </div>
+                <div id="mm-preview-{_mev_id}"
+                     style="font-size:0.75rem;color:#64748b;min-height:22px;background:#0a0f1e;
+                            border-radius:4px;padding:6px 10px;margin-bottom:6px;"></div>
+                <div id="mm-status-{_mev_id}"
+                     style="font-size:0.78rem;min-height:22px;"></div>
+            </div>
+            <script>
+            (function(){{
+                var _evId={_mev_id}, _t=null;
+                function mmFetch(){{
+                    var sym=document.getElementById('mm-sym-'+_evId);
+                    var qty=document.getElementById('mm-qty-'+_evId);
+                    var prev=document.getElementById('mm-preview-'+_evId);
+                    if(!sym||!qty) return;
+                    var s=sym.value, q=parseInt(qty.value)||1;
+                    if(q<1) return;
+                    prev.innerHTML='<span style="color:#475569;">Loading…</span>';
+                    fetch('/api/events/meme-quick-buy/preview?symbol='+encodeURIComponent(s)+'&qty='+q)
+                        .then(function(r){{return r.json();}})
+                        .then(function(d){{
+                            if(d.error){{prev.innerHTML='<span style="color:#ef4444;">'+d.error+'</span>';return;}}
+                            var h='';
+                            if(d.fills&&d.fills.length){{
+                                h+='<div style="color:#64748b;font-size:0.68rem;margin-bottom:2px;">Order book:</div>';
+                                d.fills.forEach(function(f){{
+                                    h+='<div style="margin-left:8px;color:#94a3b8;font-size:0.7rem;">'+
+                                        Number(f.qty).toLocaleString(undefined,{{maximumFractionDigits:4}})+
+                                        ' @ '+Number(f.price).toLocaleString(undefined,{{maximumFractionDigits:6}})+
+                                        ' '+d.native_symbol+'</div>';
+                                }});
+                                h+='<div style="margin-top:4px;padding-top:4px;border-top:1px solid #1e293b;font-size:0.72rem;">';
+                                h+='<span style="color:#a78bfa;">'+Number(d.total_filled).toLocaleString(undefined,{{maximumFractionDigits:4}})+' tokens</span>';
+                                h+=' → <b style="color:#f87171;">'+Number(d.total_cost_native).toLocaleString(undefined,{{maximumFractionDigits:6}})+'\xa0'+d.native_symbol+'</b>';
+                                if(d.usd_equiv) h+=' <span style="color:#475569;font-size:0.68rem;">(≈\xa0$'+Number(d.usd_equiv).toLocaleString(undefined,{{minimumFractionDigits:2,maximumFractionDigits:2}})+')</span>';
+                                h+='</div>';
+                            }}
+                            if(d.unfilled_qty>0) h+='<div style="color:#f59e0b;font-size:0.7rem;margin-top:2px;">'+Number(d.unfilled_qty).toLocaleString(undefined,{{maximumFractionDigits:4}})+' tokens unavailable — no sell orders</div>';
+                            if(!d.fills||!d.fills.length) h='<span style="color:#64748b;font-size:0.7rem;">No sell orders on the book for this token.</span>';
+                            prev.innerHTML=h;
+                        }})
+                        .catch(function(){{prev.innerHTML='<span style="color:#ef4444;font-size:0.7rem;">Preview unavailable.</span>';}});
+                }}
+                window.mmSchedule=function(id){{
+                    if(id!==_evId) return;
+                    clearTimeout(_t);
+                    _t=setTimeout(mmFetch,350);
+                }};
+                window.mmBuy=function(id){{
+                    if(id!==_evId) return;
+                    var sym=document.getElementById('mm-sym-'+_evId);
+                    var qty=document.getElementById('mm-qty-'+_evId);
+                    var st=document.getElementById('mm-status-'+_evId);
+                    if(!sym||!qty) return;
+                    var s=sym.value, q=parseInt(qty.value)||0;
+                    if(q<1){{alert('Enter at least 1 token.');return;}}
+                    st.innerHTML='<span style="color:#475569;">Placing order…</span>';
+                    var fd=new FormData();
+                    fd.append('symbol',s);
+                    fd.append('qty',q);
+                    fetch('/api/events/meme-quick-buy/execute',{{method:'POST',body:fd}})
+                        .then(function(r){{return r.json();}})
+                        .then(function(d){{
+                            if(d.ok){{
+                                var sp=document.createElement('span');sp.style.color='#4ade80';
+                                sp.textContent='✓\xa0'+d.message;
+                                st.replaceChildren(sp);
+                                mmFetch();
+                            }} else {{
+                                st.innerHTML='<span style="color:#ef4444;">✗\xa0'+(d.error||'Order failed.')+'</span>';
+                            }}
+                        }})
+                        .catch(function(){{st.innerHTML='<span style="color:#ef4444;">Network error.</span>';}});
+                }};
+                mmFetch();
+            }})();
+            </script>"""
 
         # Crypto Scam buy panel (active events only)
         cs_panel = ""
@@ -14301,6 +14432,7 @@ def events_page(request: Request,
                     <div style="font-size:0.95rem;font-weight:700;color:#e2e8f0;margin-bottom:4px;">{title} {trophy_html}</div>
                     <div style="font-size:0.80rem;color:#64748b;line-height:1.5;">{desc}</div>
                     {progress_html}
+                    {meme_panel}
                     {effect_html}
                     {cs_panel}
                 </div>
@@ -14509,6 +14641,129 @@ def events_page(request: Request,
     return shell("Events & Tasks", body,
                  balance=getattr(player, "cash_balance", 0.0),
                  player_id=player.id)
+
+
+@router.get("/api/events/meme-quick-buy/coins", response_class=JSONResponse)
+def api_meme_qb_coins(session_token: Optional[str] = Cookie(None)):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "auth"}, status_code=401)
+    try:
+        from memecoins import get_all_meme_coins_global as _gmcg
+        coins = _gmcg(sort="volume")
+        return JSONResponse([
+            {"symbol": c["symbol"], "name": c["name"],
+             "last_price": c["last_price"], "native_symbol": c["native_symbol"]}
+            for c in coins[:50]
+        ])
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)})
+
+
+@router.get("/api/events/meme-quick-buy/preview", response_class=JSONResponse)
+def api_meme_qb_preview(
+    symbol: str = Query(...),
+    qty:    float = Query(1),
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "auth"}, status_code=401)
+    if qty <= 0:
+        return JSONResponse({"error": "qty must be > 0"})
+    try:
+        from memecoins import MemeCoinOrder, get_db as _mdb, MemeCoin
+        db = _mdb()
+        try:
+            sym = symbol.upper()
+            meme = db.query(MemeCoin).filter(MemeCoin.symbol == sym, MemeCoin.is_active == True).first()
+            if not meme:
+                return JSONResponse({"error": f"{sym} not found or inactive."})
+            asks = (db.query(MemeCoinOrder)
+                    .filter(
+                        MemeCoinOrder.meme_symbol == sym,
+                        MemeCoinOrder.order_type == "sell",
+                        MemeCoinOrder.status.in_(["active", "partial"]),
+                    )
+                    .order_by(MemeCoinOrder.price.asc())
+                    .all())
+            fills = []
+            remaining = float(qty)
+            total_cost = 0.0
+            for ask in asks:
+                if remaining <= 0:
+                    break
+                avail = ask.quantity - ask.quantity_filled
+                if avail <= 0:
+                    continue
+                fill_qty = min(remaining, avail)
+                cost = fill_qty * ask.price
+                if fills and fills[-1]["price"] == ask.price:
+                    fills[-1]["qty"] += fill_qty
+                    fills[-1]["cost"] += cost
+                else:
+                    fills.append({"qty": fill_qty, "price": ask.price, "cost": cost})
+                total_cost += cost
+                remaining -= fill_qty
+            total_filled = float(qty) - remaining
+        finally:
+            db.close()
+        from counties import get_db as _cdb, County, CryptoWallet
+        cdb = _cdb()
+        try:
+            county = cdb.query(County).filter(County.id == meme.county_id).first()
+            native_symbol = county.crypto_symbol if county else "???"
+            from counties import calculate_crypto_price
+            usd_per_native = calculate_crypto_price(county.id) if county else 0.0
+        finally:
+            cdb.close()
+        usd_equiv = total_cost * usd_per_native if usd_per_native else None
+        return JSONResponse({
+            "fills":            fills,
+            "total_filled":     round(total_filled, 6),
+            "total_cost_native": round(total_cost, 8),
+            "unfilled_qty":     round(remaining, 6),
+            "native_symbol":    native_symbol,
+            "usd_equiv":        round(usd_equiv, 2) if usd_equiv else None,
+        })
+    except Exception as exc:
+        return JSONResponse({"error": str(exc)})
+
+
+@router.post("/api/events/meme-quick-buy/execute", response_class=JSONResponse)
+async def api_meme_qb_execute(
+    request: Request,
+    session_token: Optional[str] = Cookie(None),
+):
+    player = require_auth(session_token)
+    if isinstance(player, RedirectResponse):
+        return JSONResponse({"error": "auth"}, status_code=401)
+    try:
+        data   = await request.form()
+        symbol = str(data.get("symbol", "")).upper()
+        qty    = float(data.get("qty", 0))
+    except Exception:
+        return JSONResponse({"error": "Invalid input."})
+    if not symbol:
+        return JSONResponse({"error": "No token selected."})
+    if qty < 1:
+        return JSONResponse({"error": "Enter at least 1 token."})
+    from memecoins import place_order as _po
+    order, message = _po(
+        player_id=player.id,
+        meme_symbol=symbol,
+        order_type="buy",
+        order_mode="market",
+        quantity=qty,
+        price=None,
+    )
+    if order is None:
+        return JSONResponse({"error": message})
+    if order.status == "cancelled":
+        return JSONResponse({"error": message})
+    return JSONResponse({"ok": True, "message": message,
+                         "filled": order.quantity_filled,
+                         "status": order.status})
 
 
 @router.get("/api/events/crypto-scam/rate", response_class=JSONResponse)
