@@ -127,11 +127,20 @@ class PlayerLoginIP(Base):
 class Session(Base):
     """Session model for authentication."""
     __tablename__ = "sessions"
-    
+
     session_token = Column(String, primary_key=True, index=True)
     player_id = Column(Integer, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
+
+
+class WidgetDeviceLink(Base):
+    """Maps a hashed Android device ID to a player — persists across restarts."""
+    __tablename__ = "widget_device_links"
+
+    device_hash = Column(String, primary_key=True, index=True)
+    player_id   = Column(Integer, nullable=False, index=True)
+    linked_at   = Column(DateTime, default=datetime.utcnow)
 
 # ==========================
 # SESSION STORAGE

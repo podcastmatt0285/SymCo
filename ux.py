@@ -11975,27 +11975,48 @@ def api_widget_token(session_token: Optional[str] = Cookie(None)):
         return JSONResponse({"error": "not authenticated"}, status_code=401)
     return JSONResponse({"token": _make_widget_token(player.id), "player_id": player.id})
 
-_WIDGET_DEVICE_MAP: dict = {}  # device_hash → player_id, in-memory (survives restarts via file)
-import os as _os
-_WIDGET_DEVICE_FILE = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "widget_devices.json")
+_WIDGET_DEVICE_MAP: dict = {}  # device_hash → player_id, hot cache populated from DB on startup
 
 def _load_device_map():
+    """Load all widget device links from the database into the in-memory cache."""
     global _WIDGET_DEVICE_MAP
-    import json as _json
-    if _os.path.exists(_WIDGET_DEVICE_FILE):
-        try:
-            with open(_WIDGET_DEVICE_FILE) as _f:
-                _WIDGET_DEVICE_MAP = _json.load(_f)
-        except Exception:
-            pass
-
-def _save_device_map():
-    import json as _json
     try:
-        with open(_WIDGET_DEVICE_FILE, 'w') as _f:
-            _json.dump(_WIDGET_DEVICE_MAP, _f)
+        import auth as _auth_mod
+        _auth_mod.Base.metadata.create_all(bind=_auth_mod.engine)
+        _db = _auth_mod.get_db()
+        try:
+            rows = _db.query(_auth_mod.WidgetDeviceLink).all()
+            _WIDGET_DEVICE_MAP = {r.device_hash: r.player_id for r in rows}
+            if rows:
+                print(f"[widget] Loaded {len(rows)} device link(s) from DB")
+        finally:
+            _db.close()
     except Exception as _e:
-        print(f"[widget] Failed to save device map: {_e}")
+        print(f"[widget] _load_device_map failed: {_e}")
+
+def _save_device_link(device_hash: str, player_id: int):
+    """Upsert a single device→player link into the database."""
+    try:
+        import auth as _auth_mod
+        from datetime import datetime as _dt
+        _db = _auth_mod.get_db()
+        try:
+            row = _db.query(_auth_mod.WidgetDeviceLink).filter(
+                _auth_mod.WidgetDeviceLink.device_hash == device_hash
+            ).first()
+            if row:
+                row.player_id = player_id
+                row.linked_at = _dt.utcnow()
+            else:
+                _db.add(_auth_mod.WidgetDeviceLink(
+                    device_hash=device_hash,
+                    player_id=player_id,
+                ))
+            _db.commit()
+        finally:
+            _db.close()
+    except Exception as _e:
+        print(f"[widget] _save_device_link failed: {_e}")
 
 _load_device_map()
 
@@ -12006,7 +12027,7 @@ def api_widget_link(device_id: str, session_token: Optional[str] = Cookie(None))
     if isinstance(player, RedirectResponse):
         return JSONResponse({"error": "not authenticated"}, status_code=401)
     _WIDGET_DEVICE_MAP[device_id] = player.id
-    _save_device_map()
+    _save_device_link(device_id, player.id)
     print(f"[widget] Linked device {device_id[:12]}… → player {player.id} ({player.business_name})")
     return JSONResponse({"ok": True})
 
