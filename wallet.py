@@ -1020,7 +1020,7 @@ def buy_wsc_with_cash(player_id: int, wsc_amount: int) -> Tuple[bool, str, dict]
     )
     disp           = get_player_display_currency(player_id)
     tender         = disp["code"]
-    rate           = disp["usd_per_unit"]   # USD per 1 unit of tender
+    rate           = disp["usd_per_unit"] or 1.0
     sym            = disp["symbol"]
     tender_balance = get_player_currency_balance(player_id, tender)
     usd_equiv      = tender_balance * rate

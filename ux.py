@@ -13996,12 +13996,13 @@ def events_page(request: Request,
         _prog_map = {}
 
     _TYPE_COLOR = {
-        "gov":        "#94a3b8",
-        "bank":       "#fbbf24",
-        "market":     "#34d399",
-        "task":       "#a78bfa",
-        "city":       "#38bdf8",
-        "production": "#fb923c",
+        "gov":          "#94a3b8",
+        "bank":         "#fbbf24",
+        "market":       "#34d399",
+        "task":         "#a78bfa",
+        "city":         "#38bdf8",
+        "production":   "#fb923c",
+        "crypto_scam":  "#fbbf24",
     }
     _DUR_COLOR = {
         "daily":   "#f59e0b",
