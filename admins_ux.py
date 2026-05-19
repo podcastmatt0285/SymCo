@@ -2828,15 +2828,22 @@ def admin_annuities(session_token: Optional[str] = Cookie(None)):
         finally:
             tdb.close()
 
-        # Build payout contracts table
-        def _name(pid):
+        # Batch-load all player names in one query instead of N+1 lookups
+        all_pids = {c.player_id for c in all_active}
+        _player_names = {}
+        if all_pids:
             try:
-                import auth as _a; adb = _a.get_db()
-                p = adb.query(_a.Player).filter(_a.Player.id == pid).first()
-                n = p.business_name if p else f"#{pid}"
-                adb.close(); return n
+                import auth as _a
+                _adb = _a.get_db()
+                try:
+                    _players = _adb.query(_a.Player).filter(_a.Player.id.in_(all_pids)).all()
+                    _player_names = {p.id: (p.business_name or f"#{p.id}") for p in _players}
+                finally:
+                    _adb.close()
             except Exception:
-                return f"#{pid}"
+                pass
+        def _name(pid):
+            return _player_names.get(pid, f"#{pid}")
 
         payout_rows = ""
         for c in sorted(active_payout, key=lambda x: (x.payments_remaining or 999)):

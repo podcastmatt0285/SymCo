@@ -4362,6 +4362,13 @@ def open_immediate_annuity(player_id: int, purchase_price: float, term_days: int
         cid = contract.id
     except Exception as e:
         db.rollback()
+        # Funds were already deducted — refund the player so no money is lost
+        try:
+            from reserve_banks import credit_usd as _cu
+            _cu(player_id, purchase_price)
+            firm_deduct_cash(purchase_price, "refund", f"Compensating refund: SPIA creation failed")
+        except Exception:
+            pass
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
@@ -4447,6 +4454,14 @@ def open_deferred_annuity(player_id: int, initial_premium: float,
         cid = contract.id
     except Exception as e:
         db.rollback()
+        # Funds were already deducted — refund the player so no money is lost
+        if initial_premium > 0:
+            try:
+                from reserve_banks import credit_usd as _cu
+                _cu(player_id, initial_premium)
+                firm_deduct_cash(initial_premium, "refund", f"Compensating refund: deferred annuity creation failed")
+            except Exception:
+                pass
         return {"ok": False, "error": str(e)}
     finally:
         db.close()
@@ -4635,7 +4650,8 @@ def surrender_annuity(player_id: int, contract_id: int, current_tick: int) -> di
         payout = max(0.0, payout)
 
         from reserve_banks import credit_usd
-        firm_deduct_cash(payout, "annuity_surrender", f"Surrender payout to player {player_id}")
+        if not firm_deduct_cash(payout, "annuity_surrender", f"Surrender payout to player {player_id}"):
+            return {"ok": False, "error": "Firm reserves insufficient to process surrender — try again later"}
         credit_usd(player_id, payout)
 
         contract.status = "surrendered"
@@ -4822,7 +4838,11 @@ def _process_annuity_payments(current_tick: int):
             net_pmt = round(max(0.0, pmt * (1.0 + exec_bonus) - tax), 4)
             pmt_cache[c.id] = (net_pmt, tax)
 
-            firm_deduct_cash(pmt, "annuity_payment", f"Annuity payment to player {c.player_id}")
+            if not firm_deduct_cash(pmt, "annuity_payment", f"Annuity payment to player {c.player_id}"):
+                # Firm reserves too low — skip this payment, retry next tick
+                pmt_cache[c.id] = (0.0, 0.0)
+                print(f"[Brokerage] Insufficient reserves for annuity payment on contract {c.id} — deferred")
+                continue
             credit_usd(c.player_id, net_pmt)
             if tax > 0:
                 credit_usd(0, tax)
