@@ -451,15 +451,15 @@ def build_contact_card_html(subject_id: int, disp: dict, fmt_usd_fn) -> str:
 
     # ── Debt ──
     try:
-        from reserve_banks import BankDebt, get_db as get_rb_db2
-        rdb2 = get_rb_db2()
+        from estate import calculate_total_debts as _ctd
+        from database import SessionLocal as _dsl
+        _ddb = _dsl()
         try:
-            debts = rdb2.query(BankDebt).filter(BankDebt.player_id == subject_id).all()
+            total_debt = _ctd(subject_id, _ddb)
         finally:
-            rdb2.close()
-        if debts:
-            total_debt = sum(d.amount_owed for d in debts)
-            parts.append(_sec("Debt", f'<span style="color:#ef4444; font-weight:bold;">{F(total_debt, disp)}</span> across {len(debts)} loan(s)', "💳"))
+            _ddb.close()
+        if total_debt > 0:
+            parts.append(_sec("Debt", f'<span style="color:#ef4444; font-weight:bold;">{F(total_debt, disp)}</span>', "💳"))
         else:
             parts.append(_sec("Debt", '<span style="color:#22c55e;">No outstanding debt</span>', "💳"))
     except Exception:

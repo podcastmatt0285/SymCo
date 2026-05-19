@@ -12601,18 +12601,18 @@ def api_widget_p2p_contacts(device_id: Optional[str] = None,
             except Exception:
                 pass
 
-            # Total debt
+            # Total debt (bank liens + brokerage liens + margin debt)
             debt = ""
             try:
-                from reserve_banks import BankDebt, get_db as _get_rbdb
-                _rbd = _get_rbdb()
+                from estate import calculate_total_debts as _ctd
+                from database import SessionLocal as _DEBTSL
+                _ddb = _DEBTSL()
                 try:
-                    _debts = _rbd.query(BankDebt).filter(BankDebt.player_id == other_id).all()
-                    _dtotal = sum(d.amount_owed for d in _debts)
-                    if _dtotal:
+                    _dtotal = _ctd(other_id, _ddb)
+                    if _dtotal > 0:
                         debt = fmt_usd(_dtotal, _disp, precision=0)
                 finally:
-                    _rbd.close()
+                    _ddb.close()
             except Exception:
                 pass
 

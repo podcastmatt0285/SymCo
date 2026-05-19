@@ -38,7 +38,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CURRENCY  YIELD  24H CHANGE  7D CHART"
+        android:text="CURRENCY  YIELD  24H CHANGE"
         android:textColor="#334155"
         android:textSize="7sp"
         android:textStyle="bold"
