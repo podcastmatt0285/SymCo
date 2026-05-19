@@ -2292,6 +2292,104 @@ async def api_group_delete(request: Request, session_token: Optional[str] = Cook
 
 
 # ==========================
+# JSON API ENDPOINTS (Flutter / native clients)
+# ==========================
+
+@router.get("/api/dm/conversations")
+def api_dm_conversations(session_token: Optional[str] = Cookie(None)):
+    """Return all 1:1 and group conversations for the authenticated player, sorted by most recent."""
+    try:
+        import auth as _auth
+        auth_db = _auth.get_db()
+        player = _auth.get_player_from_session(auth_db, session_token)
+        auth_db.close()
+        if not player:
+            return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+        player_id = player.id
+
+        # 1:1 conversations
+        one_to_one = get_player_conversations(player_id)
+        for c in one_to_one:
+            other_id = c["player2_id"] if c["player1_id"] == player_id else c["player1_id"]
+            c["other_player_id"] = other_id
+            c["other_name"] = get_player_name(other_id)
+            c["is_group"] = False
+
+        # Group conversations
+        groups = get_player_group_conversations(player_id)
+
+        # Merge and sort by last_message_at descending
+        all_convs = one_to_one + groups
+        all_convs.sort(
+            key=lambda x: x.get("last_message_at") or "",
+            reverse=True,
+        )
+
+        return JSONResponse({"conversations": all_convs})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/api/dm/messages")
+def api_dm_messages(
+    conv_id: str = Query(...),
+    limit: int = Query(50, ge=1, le=100),
+    before: Optional[int] = Query(None),
+    session_token: Optional[str] = Cookie(None),
+):
+    """Return messages for a conversation. Supports cursor pagination via `before` (message id)."""
+    try:
+        import auth as _auth
+        auth_db = _auth.get_db()
+        player = _auth.get_player_from_session(auth_db, session_token)
+        auth_db.close()
+        if not player:
+            return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+        player_id = player.id
+
+        # Verify player is a participant in this conversation
+        from dm import get_db as dm_get_db, Conversation, GroupConversation, GroupParticipant, DirectMessage
+        db = dm_get_db()
+        try:
+            is_1to1 = db.query(Conversation).filter(
+                Conversation.id == conv_id,
+                ((Conversation.player1_id == player_id) | (Conversation.player2_id == player_id)),
+            ).first()
+            is_group = db.query(GroupParticipant).filter(
+                GroupParticipant.conversation_id == conv_id,
+                GroupParticipant.player_id == player_id,
+            ).first() if not is_1to1 else None
+
+            if not is_1to1 and not is_group:
+                return JSONResponse({"error": "Not a participant"}, status_code=403)
+
+            q = db.query(DirectMessage).filter(DirectMessage.conversation_id == conv_id)
+            if before is not None:
+                q = q.filter(DirectMessage.id < before)
+            messages_raw = q.order_by(DirectMessage.created_at.desc()).limit(limit).all()
+
+            messages = [
+                {
+                    "id": m.id,
+                    "conversation_id": m.conversation_id,
+                    "sender_id": m.sender_id,
+                    "sender_name": m.sender_name,
+                    "content": m.content,
+                    "timestamp": m.created_at.isoformat(),
+                }
+                for m in reversed(messages_raw)
+            ]
+            has_more = len(messages_raw) == limit
+            return JSONResponse({"messages": messages, "has_more": has_more})
+        finally:
+            db.close()
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ==========================
 # WEBSOCKET ENDPOINT
 # ==========================
 
