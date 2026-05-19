@@ -24,7 +24,12 @@ sudo -u postgres pg_dump \
     reserve_banks > reserve_banks_backup.sql
 echo "  Dumped reserve_banks → reserve_banks_backup.sql"
 
-git add wadsworth_backup.sql reserve_banks_backup.sql tick_state.txt
+sudo -u postgres pg_dump \
+    --clean --if-exists --no-owner --no-privileges \
+    counties > counties_backup.sql
+echo "  Dumped counties → counties_backup.sql"
+
+git add wadsworth_backup.sql reserve_banks_backup.sql counties_backup.sql tick_state.txt
 
 if git diff --cached --quiet; then
     echo "  No changes since last backup — nothing to commit."
