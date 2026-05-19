@@ -134,20 +134,23 @@ public class P2PWidget extends AppWidgetProvider {
         final int requestedIndex = prefs.getInt(KEY_INDEX, 0);
 
         new Thread(() -> {
+            HttpURLConnection conn = null;
+            BufferedReader reader = null;
             try {
                 String dataUrl = BASE_URL + "/api/widget/p2p-contacts";
                 if (deviceHash != null)
                     dataUrl += "?device_id=" + Uri.encode(deviceHash);
 
                 URL url = new URL(dataUrl);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setConnectTimeout(10000);
                 conn.setReadTimeout(10000);
                 conn.setRequestProperty("Accept", "application/json");
+                // Disable keep-alive to prevent stale pooled sockets after device sleep
+                conn.setRequestProperty("Connection", "close");
                 conn.setRequestProperty("User-Agent",
                         "Mozilla/5.0 (Linux; Android 10) Wadsworth/1.0");
-                conn.connect();
 
                 int httpCode = conn.getResponseCode();
                 if (httpCode != 200) {
@@ -157,12 +160,11 @@ public class P2PWidget extends AppWidgetProvider {
                     return;
                 }
 
-                BufferedReader reader = new BufferedReader(
+                reader = new BufferedReader(
                         new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) sb.append(line);
-                conn.disconnect();
 
                 JSONObject data     = new JSONObject(sb.toString());
                 JSONArray  contacts = data.optJSONArray("contacts");
@@ -329,6 +331,9 @@ public class P2PWidget extends AppWidgetProvider {
                 views.setTextViewText(id(ctx, "widget_p2p_name"), em);
                 views.setTextViewText(id(ctx, "widget_p2p_page"), "");
                 mgr.updateAppWidget(widgetId, views);
+            } finally {
+                try { if (reader != null) reader.close(); } catch (Exception ignored) {}
+                try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
             }
         }).start();
     }
